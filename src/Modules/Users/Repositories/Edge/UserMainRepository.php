@@ -50,7 +50,7 @@ class UserMainRepository extends FilterBase
 			->where($this->idField . ' = :id')
 			->setParameter('id', $id);
 
-		return $queryBuilder->executeQuery()->fetchAllAssociative();
+		return $queryBuilder->executeQuery()->fetchAssociative();
 	}
 
 	/**

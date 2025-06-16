@@ -84,13 +84,10 @@ export class LocalFilesUploader extends BaseUploader
 						progressBar.textContent = Math.round(progress) + "%";
 					});
 
-					for (const result of results)
-					{
-						if (!result?.success)
-							console.error('Error for file:', file.name, result?.error_message || 'Unknown error');
-						else
-							this.#filePreviews.removeFromPreview(id);
-					}
+					if (!results.success)
+						console.error('Error for file:', file.name, results.error_message || 'Unknown error');
+					else
+						this.#filePreviews.removeFromPreview(id);
 
 				}
 				catch(error)
