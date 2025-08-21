@@ -25,6 +25,15 @@ use App\Framework\Dashboards\DashboardsAggregator;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
+/**
+ * HomeController - Main controller for the Garlic Hub platform start page
+ *
+ * This class manages the display of the main page (dashboard) and the
+ * legal notices of the Digital Signage Management Platform.
+ *
+ * @author  Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ * @since   2024
+ */
 class HomeController
 {
 	private DashboardsAggregator $dashboardAggregator;

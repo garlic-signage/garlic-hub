@@ -28,7 +28,12 @@ use App\Framework\Exceptions\FrameworkException;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
-/** works only on Linux */
+/**
+ * Works only in Linux
+ * Represents a system dashboard that provides system statistics and localized content.
+ *
+ * Implements the DashboardInterface to provide an ID, title, and rendered content for the dashboard.
+ */
 readonly class SystemDashboard implements DashboardInterface
 {
 	private SystemStats $systemStats;

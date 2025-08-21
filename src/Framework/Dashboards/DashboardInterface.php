@@ -21,6 +21,10 @@ declare(strict_types=1);
 
 namespace App\Framework\Dashboards;
 
+/**
+ * Service for aggregating and rendering dashboard components.
+ * Manages the collection of dashboard widgets and their content rendering.
+ */
 interface DashboardInterface
 {
 	public function getId(): string;

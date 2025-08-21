@@ -21,6 +21,9 @@ declare(strict_types=1);
 
 namespace App\Framework\Dashboards;
 
+/**
+ * Aggregates multiple dashboards and provides methods to register and render them.
+ */
 class DashboardsAggregator
 {
 	/**
