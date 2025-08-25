@@ -26,6 +26,17 @@ use App\Framework\Core\Session;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Framework\Utils\FormParameters\ScalarType;
 
+/**
+ * Represents a set of configurable parameters for a specific module. Extends functionality from the BaseEditParameters class
+ * and provides a structure for defining and managing module-specific parameters.
+ *
+ * This class includes predefined constants that act as identifiers for different configurable parameters.
+ * It also defines a structure in the form of `$moduleParameters` that specifies metadata for each parameter such
+ * as its scalar type, default value, and parsing status.
+ *
+ * The constructor merges these module-specific parameters with default parameters inherited from the parent class,
+ * initializing the combined set of parameters for use.
+ */
 class Parameters extends BaseEditParameters
 {
 	public const string PARAMETER_API_ENDPOINT = 'api_endpoint';

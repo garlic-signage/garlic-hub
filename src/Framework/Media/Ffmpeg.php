@@ -41,8 +41,6 @@ use stdClass;
  * Ffmpeg::init() will take the video file name as an argument,
  * determine if it is local or on a remote server and call ffprobe (Ffmpeg::probeFile()) to read
  * metadata of the video and sets these data to the internal property Ffmpeg::media_properties = array()
- *
- * Class Ffmpeg
  */
 class Ffmpeg
 {

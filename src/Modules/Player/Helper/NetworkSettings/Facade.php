@@ -31,6 +31,12 @@ use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Facade class provides an interface to manage player-related functionality.
+ * It supports initializing translation and session handlers, loading and editing player data,
+ * managing form configurations, updating network data, handling service errors, and preparing UI templates.
+ * This class collaborates with multiple services like PlayerService, Translator, Builder, and Parameters to perform its tasks.
+ */
 class Facade
 {
 	private readonly Builder $settingsFormBuilder;

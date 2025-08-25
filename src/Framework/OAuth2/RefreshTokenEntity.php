@@ -25,6 +25,11 @@ use League\OAuth2\Server\Entities\RefreshTokenEntityInterface;
 use League\OAuth2\Server\Entities\Traits\EntityTrait;
 use League\OAuth2\Server\Entities\Traits\RefreshTokenTrait;
 
+/**
+ * Represents the entity for a refresh token in the system.
+ * Implements the RefreshTokenEntityInterface to define the necessary contract for a refresh token entity.
+ * Combines functionality provided by RefreshTokenTrait and EntityTrait.
+ */
 class RefreshTokenEntity implements RefreshTokenEntityInterface
 {
 	use RefreshTokenTrait, EntityTrait;

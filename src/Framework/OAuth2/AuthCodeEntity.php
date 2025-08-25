@@ -25,6 +25,10 @@ use League\OAuth2\Server\Entities\AuthCodeEntityInterface;
 use League\OAuth2\Server\Entities\Traits\EntityTrait;
 use League\OAuth2\Server\Entities\Traits\TokenEntityTrait;
 
+/**
+ * Represents an authorization code entity used in OAuth2 authorization processes.
+ * Provides functionality to get and set the redirect URI associated with the authorization code.
+ */
 class AuthCodeEntity implements AuthCodeEntityInterface
 {
 	use EntityTrait, TokenEntityTrait;

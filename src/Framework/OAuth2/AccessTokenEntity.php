@@ -26,6 +26,11 @@ use League\OAuth2\Server\Entities\Traits\AccessTokenTrait;
 use League\OAuth2\Server\Entities\Traits\EntityTrait;
 use League\OAuth2\Server\Entities\Traits\TokenEntityTrait;
 
+/**
+ * Represents an access token entity used in the authorization process.
+ * Implements the AccessTokenEntityInterface.
+ * Utilizes AccessTokenTrait, EntityTrait, and TokenEntityTrait for added functionality.
+ */
 class AccessTokenEntity implements AccessTokenEntityInterface
 {
 	use AccessTokenTrait, EntityTrait, TokenEntityTrait;

@@ -29,6 +29,13 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
+/**
+ * Middleware responsible for injecting environment-specific data into the request.
+ *
+ * This middleware adds configuration, locale, and translation-related data
+ * as attributes in the PSR-7 request object, enabling their access throughout
+ * the application lifecycle.
+ */
 class EnvironmentMiddleware implements MiddlewareInterface
 {
 	private Config $config;

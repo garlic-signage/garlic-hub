@@ -23,6 +23,11 @@ namespace App\Framework\Media;
 
 use stdClass;
 
+/**
+ * Represents media properties, including video and audio stream details, file metadata,
+ * and container information. This class provides methods to retrieve, reset, and populate
+ * media-related data.
+ */
 class MediaProperties
 {
 	private int $width = 0;

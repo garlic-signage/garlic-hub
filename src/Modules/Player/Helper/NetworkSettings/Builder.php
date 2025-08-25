@@ -28,6 +28,9 @@ use App\Framework\Utils\FormParameters\BaseEditParameters;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * The Builder class is responsible for constructing and validating forms and handling user input.
+ */
 readonly class Builder
 {
 	private FormElementsCreator $formElementsCreator;

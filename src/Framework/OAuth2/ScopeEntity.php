@@ -23,6 +23,10 @@ namespace App\Framework\OAuth2;
 
 use League\OAuth2\Server\Entities\ScopeEntityInterface;
 
+/**
+ * Represents an entity that defines a scope and provides methods
+ * for retrieving its identifier and serializing its data to JSON.
+ */
 class ScopeEntity implements ScopeEntityInterface
 {
 	/**

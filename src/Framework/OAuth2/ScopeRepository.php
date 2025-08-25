@@ -27,6 +27,10 @@ use League\OAuth2\Server\Entities\ClientEntityInterface;
 use League\OAuth2\Server\Entities\ScopeEntityInterface;
 use League\OAuth2\Server\Repositories\ScopeRepositoryInterface;
 
+/**
+ * Repository class for handling OAuth2 scope-related operations.
+ * Extends the SqlBase class to interact with the database for storing and retrieving scope data.
+ */
 class ScopeRepository extends SqlBase implements ScopeRepositoryInterface
 {
 	public function __construct(Connection $connection)

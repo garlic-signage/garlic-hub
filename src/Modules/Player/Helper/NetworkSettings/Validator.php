@@ -30,6 +30,12 @@ use App\Framework\Exceptions\ModuleException;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Class Validator
+ *
+ * Extends the functionality provided by BaseValidator. The Validator class is responsible
+ * for validating user input while leveraging network parameters and CSRF token verification.
+ */
 class Validator extends BaseValidator
 {
 	private Parameters $networkParameters;

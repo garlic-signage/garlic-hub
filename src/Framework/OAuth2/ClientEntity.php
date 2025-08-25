@@ -26,6 +26,10 @@ use League\OAuth2\Server\Entities\ClientEntityInterface;
 use League\OAuth2\Server\Entities\Traits\ClientTrait;
 use League\OAuth2\Server\Entities\Traits\EntityTrait;
 
+/**
+ * Represents a client entity that implements the ClientEntityInterface.
+ * Handles initialization and validation of client-related data.
+ */
 class ClientEntity implements ClientEntityInterface
 {
 	use ClientTrait;

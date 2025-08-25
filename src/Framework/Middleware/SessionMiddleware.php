@@ -29,6 +29,13 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Slim\Flash\Messages;
 
+/**
+ * Middleware for handling session, cookie, and flash message functionalities.
+ *
+ * This middleware adds session, cookie, and flash message objects as attributes
+ * to the server request, enabling these resources to be accessed in subsequent
+ * request handling.
+ */
 class SessionMiddleware implements MiddlewareInterface
 {
 	private Session $session;

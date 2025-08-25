@@ -30,6 +30,14 @@ use Doctrine\DBAL\Exception;
 use League\OAuth2\Server\Entities\ClientEntityInterface;
 use League\OAuth2\Server\Repositories\ClientRepositoryInterface;
 
+/**
+ * Repository class for managing OAuth2 clients.
+ *
+ * This class provides functionality to retrieve and validate client entities
+ * for OAuth2 authentication and authorization purposes. It extends the SqlBase
+ * class and utilizes predefined traits to simplify CRUD operations
+ * and query execution.
+ */
 class ClientsRepository extends SqlBase implements ClientRepositoryInterface
 {
 	use CrudTraits, FindOperationsTrait;
