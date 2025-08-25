@@ -29,6 +29,10 @@ use App\Framework\Utils\FormParameters\BaseEditParameters;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * BaseValidator provides utility methods for common validation tasks such as
+ * validating emails, JSON strings, passwords, and CSRF tokens.
+ */
 class BaseValidator
 {
 	public function __construct(

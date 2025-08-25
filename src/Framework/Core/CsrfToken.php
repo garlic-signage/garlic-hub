@@ -23,6 +23,21 @@ namespace App\Framework\Core;
 
 use Exception;
 
+/**
+ * Handles CSRF token generation, validation, and management.
+ *
+ * This class provides functionality to generate secure CSRF tokens,
+ * validate received tokens against the stored session token, and manage
+ * token lifecycle, including destruction.
+ *
+ * Constants:
+ * - CSRF_TOKEN_SESSION_KEY: The key used to store the CSRF token in the session.
+ * - CSRF_TOKEN_LENGTH: The length of the randomly generated CSRF token.
+ *
+ * Dependencies:
+ * - Session: Used to retrieve and persist the CSRF token within a session.
+ * - Crypt: Used to securely generate random strings for the token.
+ */
 class CsrfToken
 {
 	public const string CSRF_TOKEN_SESSION_KEY = 'csrf_token';

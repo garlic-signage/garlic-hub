@@ -23,6 +23,10 @@ namespace App\Framework\Core;
 use App\Framework\Exceptions\FrameworkException;
 use DateTime;
 
+/**
+ * Manages the creation, retrieval, validation, and deletion of browser cookies,
+ * with additional support for hashing and integrity verification of cookie data.
+ */
 class Cookie
 {
 	private Crypt $crypt;

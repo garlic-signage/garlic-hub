@@ -23,6 +23,12 @@ namespace App\Framework\Core;
 
 use App\Framework\Exceptions\CoreException;
 
+/**
+ * The SystemStats class provides functionality to collect and manage
+ * system statistics such as RAM usage, disk usage, and system load.
+ * It works primarily on Linux-based systems and extracts data
+ * using shell commands executed via a ShellExecutor.
+ */
 class SystemStats
 {
 	private ShellExecutor $shellExecutor;

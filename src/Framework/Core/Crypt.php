@@ -21,14 +21,17 @@ declare(strict_types=1);
 
 namespace App\Framework\Core;
 
-use Defuse\Crypto\Exception\BadFormatException;
-use Defuse\Crypto\Exception\EnvironmentIsBrokenException;
 use Defuse\Crypto\Key;
 use Exception;
 
-class Crypt
+/**
+ * This class provides cryptographic functionality including generating
+ * random strings, random numbers, password hashing, and creating hash
+ * values for strings.
+ */
+readonly class Crypt
 {
-	private readonly Key $encryptionKey;
+	private Key $encryptionKey;
 
 	public function __construct(Key $encryptionKey)
 	{

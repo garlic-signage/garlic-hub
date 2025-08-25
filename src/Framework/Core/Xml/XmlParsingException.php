@@ -26,6 +26,9 @@ use App\Framework\Exceptions\BaseException;
 use LibXMLError;
 use Throwable;
 
+/**
+ * Exception thrown when an error occurs during XML parsing.
+ */
 class XmlParsingException extends BaseException
 {
 	/**

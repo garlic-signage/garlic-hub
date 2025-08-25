@@ -21,6 +21,9 @@ declare(strict_types=1);
 
 namespace App\Framework\Core;
 
+/**
+ * A class for sanitizing various types of input data.
+ */
 class Sanitizer
 {
 	private string $allowedTags;
