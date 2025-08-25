@@ -21,6 +21,9 @@ declare(strict_types=1);
 
 namespace App\Framework\Core\Translate;
 
+/**
+ * Interface for loading translations for a specific language and module.
+ */
 interface TranslationLoaderInterface
 {
 	/**

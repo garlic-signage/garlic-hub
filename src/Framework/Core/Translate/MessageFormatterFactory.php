@@ -25,6 +25,9 @@ use App\Framework\Exceptions\FrameworkException;
 use IntlException;
 use MessageFormatter;
 
+/**
+ * Factory responsible for creating instances of MessageFormatter.
+ */
 class MessageFormatterFactory
 {
 	/**

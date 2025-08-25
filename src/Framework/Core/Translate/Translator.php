@@ -31,6 +31,14 @@ use Psr\SimpleCache\InvalidArgumentException;
 
 use function intl_get_error_message;
 
+/**
+ * Class Translator
+ *
+ * This class provides functionality for managing translations within an application.
+ * It supports translation lookups, pluralization handling, and replacement of placeholders
+ * within translation strings. Translations can be loaded, cached, and retrieved using a
+ * dynamic key and module approach.
+ */
 class Translator
 {
 	protected Locales $locales;

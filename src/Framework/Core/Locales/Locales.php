@@ -25,6 +25,15 @@ use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 
+/**
+ * Class Locales
+ *
+ * This class manages locale-related functionalities such as retrieving
+ * available locales, determining the current locale, and extracting specific
+ * locale configurations like language code, country code, and formatting.
+ * It ensures that the locale configurations are correctly loaded and validated
+ * against the system's configuration.
+ */
 class Locales
 {
 	const string CONFIG_MODULE_NAME = 'locales';

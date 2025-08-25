@@ -23,6 +23,10 @@ namespace App\Framework\Core\Translate;
 
 use App\Framework\Exceptions\CoreException;
 
+/**
+ * Implements a translation loader that retrieves translations from INI files.
+ * Files are expected to be located under a base directory, organized by language code and module names.
+ */
 class IniTranslationLoader implements TranslationLoaderInterface
 {
 	protected string $baseDirectory;

@@ -21,6 +21,13 @@ declare(strict_types=1);
 
 namespace App\Framework\Core\Config;
 
+/**
+ * ConfigLoaderInterface provides a contract for loading configuration data.
+ *
+ * This interface is designed to enable the retrieval of configuration settings
+ * for a specified module. Implementations should define how configuration data
+ * is sourced, parsed, and returned.
+ */
 interface ConfigLoaderInterface
 {
 	/**
