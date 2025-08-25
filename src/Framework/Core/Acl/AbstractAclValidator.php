@@ -27,6 +27,13 @@ use App\Framework\Exceptions\FrameworkException;
 use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 
+/**
+ * Abstract class AbstractAclValidator.
+ *
+ * Provides methods to validate access control levels (ACL) for a specific module.
+ * Handles determining different types of administrative, editor, and viewer permissions
+ * and their access on specific entities such as companies or units.
+ */
 abstract class AbstractAclValidator
 {
 	protected AclHelper $helper;

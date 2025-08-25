@@ -23,6 +23,9 @@ namespace App\Framework\Controller;
 
 use Psr\Http\Message\ResponseInterface;
 
+/**
+ * Handles JSON-based HTTP responses.
+ */
 class JsonResponseHandler
 {
     /**

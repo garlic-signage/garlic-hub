@@ -32,6 +32,12 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
+/**
+ * Represents a command used to execute database migrations.
+ *
+ * This command allows the execution of database migrations, with an optional
+ * rollback functionality. A specific migration version can also be targeted.
+ */
 #[AsCommand(
 	name: 'db:migrate',
 	description: 'Executes a database migration.'

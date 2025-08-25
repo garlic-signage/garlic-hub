@@ -21,6 +21,10 @@ declare(strict_types=1);
 
 namespace App\Framework\Core\Acl;
 
+/**
+ * Enumeration representing different access control list (ACL) sections.
+ * Defines various levels of access permissions for users or roles.
+ */
 enum AclSections: string
 {
 	case MODULEADMIN = 'moduleadmin';

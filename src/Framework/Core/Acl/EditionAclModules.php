@@ -24,6 +24,12 @@ namespace App\Framework\Core\Acl;
 
 use App\Framework\Core\Config\Config;
 
+/**
+ * A class that provides access control list (ACL) modules based on platform editions.
+ *
+ * The class defines sets of modules specific to each platform edition and allows retrieving
+ * the relevant modules for a given edition.
+ */
 class EditionAclModules
 {
 	private const array EDGE_MODULES = ['users', 'mediapool', 'player', 'playlists'];

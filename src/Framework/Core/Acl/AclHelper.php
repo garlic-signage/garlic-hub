@@ -27,6 +27,11 @@ use App\Modules\Users\Services\UsersService;
 use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 
+/**
+ * A helper class for managing Access Control Level (ACL) operations.
+ * This class provides methods to verify different access levels such as module admin,
+ * sub-admin, editor, viewer, and more.
+ */
 class AclHelper
 {
 	protected const string SECTION_GLOBAL_ACLS = 'GlobalACLs';

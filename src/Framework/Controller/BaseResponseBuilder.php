@@ -29,6 +29,10 @@ use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Abstract class responsible for building standardized response structures.
+ * Provides utility methods for generating JSON responses for various scenarios.
+ */
 abstract class BaseResponseBuilder
 {
 	public function __construct(
