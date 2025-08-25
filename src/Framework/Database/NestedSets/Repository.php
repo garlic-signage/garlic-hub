@@ -27,6 +27,12 @@ use App\Framework\Exceptions\DatabaseException;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
+/**
+ * Class Repository
+ *
+ * This class extends the functionality of SqlBase and provides additional methods
+ * for handling hierarchical or tree-like structured data stored in relational databases.
+ */
 class Repository extends SqlBase
 {
 	use CrudTraits;

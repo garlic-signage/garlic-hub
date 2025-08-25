@@ -23,6 +23,11 @@ namespace App\Framework\Database\NestedSets;
 
 use App\Framework\Exceptions\DatabaseException;
 
+/**
+ * Class Calculator provides functionality to manipulate and calculate hierarchical tree structures,
+ * including determining positions and levels for nodes and performing
+ * calculations necessary for subtree movement.
+ */
 class Calculator
 {
 	public const string REGION_BEFORE = 'before';

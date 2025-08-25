@@ -26,7 +26,14 @@ use Doctrine\DBAL\Exception;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
 
-class Runner
+/**
+ * Class Runner
+ *
+ * This class is responsible for managing database migrations, providing functionalities to apply
+ * and roll back migrations. It interacts with a repository layer and a filesystem to execute
+ * migration tasks and maintain a migration history.
+ */
+class Runnßer
 {
 	private Repository $migrateRepository;
 	private Filesystem $filesystem;

@@ -26,6 +26,10 @@ use App\Framework\Database\BaseRepositories\Traits\FindOperationsTrait;
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
 use Doctrine\DBAL\Exception;
 
+/**
+ * A base class for filtering operations, extending the SQLBase class
+ * and providing methods for complex data retrieval based on filtering criteria.
+ */
 abstract class FilterBase extends SqlBase
 {
 	use CrudTraits, FindOperationsTrait;

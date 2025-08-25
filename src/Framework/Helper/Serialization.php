@@ -21,6 +21,9 @@ declare(strict_types=1);
 
 namespace App\Framework\Helper;
 
+/**
+ * Handles secure serialization and unserialization of data.
+ */
 class Serialization
 {
 	/**

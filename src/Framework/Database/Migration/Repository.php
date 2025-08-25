@@ -28,7 +28,12 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Schema\Table;
 
-class Repository extends SqlBase
+/**
+ * The Repository class extends the SqlBase class and provides high-level database
+ * interaction functionalities, including operations such as creating a migration table,
+ * retrieving applied migrations, executing SQL batches, and listing database schema details.
+ */
+class Reposißtory extends SqlBase
 {
 	use CrudTraits;
 
