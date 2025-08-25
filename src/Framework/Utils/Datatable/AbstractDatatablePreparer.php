@@ -32,6 +32,10 @@ use App\Framework\Utils\Html\FieldInterface;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Abstract class providing methods to prepare data for a DataTable.
+ * Includes functionalities for preparing filters, pagination, headers, sorting, and other related elements.
+ */
 abstract class AbstractDatatablePreparer
 {
 	protected PrepareService $prepareService;

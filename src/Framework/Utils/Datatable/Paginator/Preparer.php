@@ -26,6 +26,10 @@ use App\Framework\Utils\Datatable\UrlBuilder;
 use App\Framework\Utils\FormParameters\BaseFilterParameters;
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
 
+/**
+ * Class responsible for preparing URLs and UI components such as pagination links and dropdown settings
+ * based on filtering and sorting parameters.
+ */
 class Preparer
 {
 	private BaseFilterParameters $baseFilter;

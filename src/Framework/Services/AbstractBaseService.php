@@ -23,6 +23,13 @@ namespace App\Framework\Services;
 
 use Psr\Log\LoggerInterface;
 
+/**
+ * AbstractBaseService serves as a foundational class providing shared functionality
+ * to manage and interact with logging, unique identifier (UID), and error messages.
+ *
+ * It includes capabilities such as adding and retrieving error messages, checking
+ * error states, and maintaining a unique identifier.
+ */
 abstract class AbstractBaseService
 {
 	protected readonly LoggerInterface $logger;

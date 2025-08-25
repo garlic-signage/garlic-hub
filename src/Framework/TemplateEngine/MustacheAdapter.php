@@ -23,6 +23,10 @@ namespace App\Framework\TemplateEngine;
 
 use Mustache\Engine;
 
+/**
+ * Adapter implementation for integrating the Mustache templating engine.
+ * Provides functionality to render Mustache templates with given data.
+ */
 class MustacheAdapter implements AdapterInterface
 {
 	private Engine $mustache;

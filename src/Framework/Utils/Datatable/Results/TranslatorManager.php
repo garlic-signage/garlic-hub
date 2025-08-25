@@ -27,6 +27,9 @@ use App\Framework\Exceptions\FrameworkException;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Manages the translation process for provided header fields and language modules.
+ */
 class TranslatorManager
 {
 	private readonly Translator $translator;

@@ -29,6 +29,9 @@ use App\Framework\Utils\Html\FieldInterface;
 use App\Framework\Utils\Html\FieldType;
 use App\Framework\Utils\Html\FormBuilder;
 
+/**
+ * Abstract class responsible for creating form elements with the help of a form builder and translator.
+ */
 abstract class AbstractBaseFormElementsCreator
 {
 	protected readonly FormBuilder $formBuilder;

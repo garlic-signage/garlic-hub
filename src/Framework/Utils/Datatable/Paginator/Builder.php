@@ -21,6 +21,9 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Datatable\Paginator;
 
+/**
+ * The Builder class is responsible for configuring and generating pagination-related data, such as pager links and dropdown settings.
+ */
 class Builder
 {
 	private int $currentPage;

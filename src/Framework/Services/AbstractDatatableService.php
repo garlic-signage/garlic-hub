@@ -25,6 +25,11 @@ use App\Framework\Database\BaseRepositories\FilterBase;
 use App\Framework\Utils\FormParameters\BaseParameters;
 use Doctrine\DBAL\Exception;
 
+/**
+ * Abstract base class for managing datatables in different contexts.
+ * Provides base functionality for fetching and handling data
+ * with filters and parameters for both module administrators and users.
+ */
 abstract class AbstractDatatableService extends AbstractBaseService
 {
 	use SearchFilterParamsTrait;

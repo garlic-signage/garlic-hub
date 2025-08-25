@@ -21,6 +21,9 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Datatable\Results;
 
+/**
+ * Provides methods for formatting various user interface elements such as spans, links, buttons, icons, and actions.
+ */
 class BodyPreparer
 {
 	/**

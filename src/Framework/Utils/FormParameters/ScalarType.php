@@ -21,6 +21,12 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\FormParameters;
 
+/**
+ * Enum ScalarType
+ *
+ * Represents various scalar and structured data types that can be used
+ * to provide type-safe constants for handling and processing specific data formats.
+ */
 enum ScalarType: int
 {
 	case INT = 1;

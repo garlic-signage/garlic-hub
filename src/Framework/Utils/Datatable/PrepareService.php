@@ -34,6 +34,13 @@ use App\Framework\Utils\Html\FormBuilder;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Class PrepareService
+ *
+ * Provides functionality for configuring and preparing various components
+ * such as forms, pagination, and datatable headers. It integrates multiple
+ * preparer classes to ensure proper setup and formatting of required data structures.
+ */
 class PrepareService
 {
 	private HeaderPreparer $headerPreparer;

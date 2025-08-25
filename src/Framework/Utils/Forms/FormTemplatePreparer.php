@@ -21,6 +21,10 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Forms;
 
+/**
+ * Class responsible for preparing templates for user interface forms.
+ * It organizes and returns both the main layout and current layout based on provided data sections.
+ */
 class FormTemplatePreparer
 {
 	public function __construct()

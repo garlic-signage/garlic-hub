@@ -26,6 +26,11 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\FormParameters\BaseFilterParameters;
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
 
+/**
+ * Abstract class for building datatable structures.
+ * Provides methods to configure and structure data tables with pagination, dropdowns, and more.
+ * Requires implementation of certain methods to define table-specific behaviors.
+ */
 abstract class AbstractDatatableBuilder
 {
 	protected Translator $translator;

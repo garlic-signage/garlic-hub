@@ -21,6 +21,12 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Datatable\Results;
 
+/**
+ * Represents a builder for managing table header fields.
+ *
+ * This class is responsible for creating and storing header fields
+ * with their respective configuration, such as name and sortability.
+ */
 class Builder
 {
 	/** @var list<HeaderField>  */

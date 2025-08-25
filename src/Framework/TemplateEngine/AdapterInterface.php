@@ -21,6 +21,13 @@ declare(strict_types=1);
 
 namespace App\Framework\TemplateEngine;
 
+/**
+ * AdapterInterface provides a contract for rendering templates with specific data.
+ *
+ * This interface ensures a consistent implementation for rendering templates
+ * by requiring a render method that accepts a template name and an optional
+ * set of data.
+ */
 interface AdapterInterface
 {
 	/**

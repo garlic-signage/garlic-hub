@@ -22,6 +22,9 @@ declare(strict_types=1);
 namespace App\Framework\Utils\Datatable;
 
 
+/**
+ * A class to build and manage URLs with customizable parameters.
+ */
 class UrlBuilder
 {
 	private string $site = '';

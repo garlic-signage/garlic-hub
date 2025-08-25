@@ -25,6 +25,11 @@ use App\Framework\Core\Sanitizer;
 use App\Framework\Core\Session;
 use App\Framework\Exceptions\ModuleException;
 
+/**
+ * Represents a base class for handling edit parameters in a module, extending the base functionalities
+ * of the `BaseParameters` class. This includes managing session data and defining a structured way
+ * to handle and validate parameters such as CSRF tokens.
+ */
 abstract class BaseEditParameters extends BaseParameters
 {
 	protected Session $session;

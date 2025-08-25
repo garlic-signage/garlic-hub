@@ -26,6 +26,10 @@ use App\Framework\Utils\Datatable\Results\HeaderField;
 use App\Framework\Utils\Html\FieldInterface;
 use App\Framework\Utils\Html\FormBuilder;
 
+/**
+ * BuildService is responsible for constructing and managing form fields, results, and pagination settings
+ * for various application components.
+ */
 class BuildService
 {
 	private FormBuilder $formBuilder;

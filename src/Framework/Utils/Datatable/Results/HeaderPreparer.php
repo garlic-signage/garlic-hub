@@ -30,6 +30,12 @@ use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * The HeaderPreparer class is responsible for configuring header-related data,
+ * including setting up language translations, managing URLs for page controls,
+ * and preparing sortable headers for tables.
+ * It integrates with TranslatorManager and UrlBuilder to facilitate these operations.
+ */
 class HeaderPreparer
 {
 	private BaseFilterParameters $filterParameter;
