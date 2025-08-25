@@ -33,7 +33,7 @@ use League\Flysystem\FilesystemException;
  * and roll back migrations. It interacts with a repository layer and a filesystem to execute
  * migration tasks and maintain a migration history.
  */
-class Runnßer
+class Runner
 {
 	private Repository $migrateRepository;
 	private Filesystem $filesystem;
