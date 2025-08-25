@@ -27,7 +27,7 @@ namespace App\Framework\Core\Locales;
  * Provides a contract for extracting locale information based on a
  * ´´whitelist of allowed locales.
  */
-interface LocaleEx´tractorInterface
+interface LocaleExtractorInterface
 {
 	/**
 	 * @param string[] $whiteList

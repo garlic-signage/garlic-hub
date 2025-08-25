@@ -33,7 +33,7 @@ use Doctrine\DBAL\Schema\Table;
  * interaction functionalities, including operations such as creating a migration table,
  * retrieving applied migrations, executing SQL batches, and listing database schema details.
  */
-class Reposißtory extends SqlBase
+class Repository extends SqlBase
 {
 	use CrudTraits;
 
