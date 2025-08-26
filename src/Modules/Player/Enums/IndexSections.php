@@ -21,6 +21,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Enums;
 
+/**
+ * Represents different sections or categories used for indexing purposes.
+ */
 enum IndexSections : string
 {
 	case META = 'meta';

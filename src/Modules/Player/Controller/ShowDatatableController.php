@@ -33,6 +33,11 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * A controller responsible for displaying and managing datatables within the application.
+ * This class handles the preparation of the data grid, processes submitted user input,
+ * and formats the UI template for rendering.
+ */
 readonly class ShowDatatableController
 {
 	private ControllerFacade $facade;

@@ -28,6 +28,10 @@ use App\Modules\Player\Services\PlayerIndexService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
+/**
+ * Controller responsible for handling the index functionality for the Player.
+ * It orchestrates services and response handlers to process requests and return appropriate responses.
+ */
 readonly class PlayerIndexController
 {
 	private PlayerIndexService $indexService;

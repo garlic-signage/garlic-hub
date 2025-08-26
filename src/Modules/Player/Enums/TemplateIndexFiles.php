@@ -21,6 +21,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Enums;
 
+/**
+ * Enum representing a set of template index file names.
+ */
 enum TemplateIndexFiles : string
 {
 	case GARLIC  = 'garlic.smil';

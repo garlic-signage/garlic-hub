@@ -21,6 +21,13 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Enums;
 
+/**
+ * Represents a set of commands that can be issued to a player.
+ *
+ * This enum contains various string-based commands that may be used to
+ * control or modify the player's behavior, perform maintenance tasks,
+ * or update its configuration.
+ */
 enum PlayerCommands : string
 {
 	case UPDATE_CONFIGURATION  = 'update_configuration';

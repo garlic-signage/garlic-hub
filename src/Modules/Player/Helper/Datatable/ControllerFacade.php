@@ -34,6 +34,11 @@ use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Facade class responsible for managing the datatable's configuration, preparation, processing, and rendering.
+ * It interacts with datatable components such as the builder, preparer, and specific player service in order
+ * to streamline complex operations and present a cohesive interface.
+ */
 class ControllerFacade implements DatatableFacadeInterface
 {
 	private readonly DatatableBuilder $datatableBuilder;

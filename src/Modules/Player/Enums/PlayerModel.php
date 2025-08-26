@@ -21,6 +21,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Enums;
 
+/**
+ * Enum representing different types of player models.
+ *
+ * Each constant corresponds to a specific player model or software,
+ * along with its features or compatibility level.
+ */
 enum PlayerModel: int
 {
 	case UNKNOWN        = 0; // IAdea 1x0 Series SD Video 1920px images

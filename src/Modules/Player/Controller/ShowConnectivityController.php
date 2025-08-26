@@ -34,6 +34,11 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 use Slim\Flash\Messages;
 
+/**
+ * Controller class responsible for managing the connectivity details
+ * of players in the system. Handles form rendering, data validation,
+ * and data storage operations related to player connectivity.
+ */
 class ShowConnectivityController
 {
 	private readonly Facade $facade;

@@ -21,6 +21,14 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Enums;
 
+/**
+ * Represents the activity status of a player.
+ *
+ * The PlayerActivity enum provides three possible statuses:
+ * - ALL: Represents all players, regardless of their activity status.
+ * - ACTIVE: Represents players who are currently active.
+ * - INACTIVE: Represents players who are currently inactive.
+ */
 enum PlayerActivity: string
 {
 	case ALL = 'all';

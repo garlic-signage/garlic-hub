@@ -21,6 +21,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Enums;
 
+/**
+ * Represents various types of player reports within the system.
+ *
+ * This enum defines constants corresponding to specific report types
+ * that can be associated with player data or actions.
+ */
 enum PlayerReports : string
 {
 	case INVENTORY            = 'inventory';

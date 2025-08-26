@@ -27,6 +27,10 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\FormParameters\BaseFilterParameters;
 use App\Framework\Utils\FormParameters\ScalarType;
 
+/**
+ * Extends the BaseFilterParameters class and manages specific parameters related to players.
+ * Defines module-specific parameters and provides functionality to add additional parameters.
+ */
 class Parameters extends BaseFilterParameters
 {
 	const string PARAMETER_ACTIVITY = 'activity';

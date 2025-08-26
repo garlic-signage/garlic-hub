@@ -33,6 +33,13 @@ use DateTime;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Class DatatablePreparer
+ *
+ * Extends the AbstractDatatablePreparer to process and organize data for use in datatables. This class
+ * handles the preparation of table body and player context menus with necessary translations, formatting,
+ * and element mapping.
+ */
 class DatatablePreparer extends AbstractDatatablePreparer
 {
 	private TimeUnitsCalculator $timeUnitsCalculator;

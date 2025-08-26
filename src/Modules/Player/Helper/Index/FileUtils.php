@@ -24,6 +24,9 @@ namespace App\Modules\Player\Helper\Index;
 use App\Framework\Exceptions\ModuleException;
 use Slim\Psr7\Stream;
 
+/**
+ * Utility class for handling file operations.
+ */
 class FileUtils
 {
 	/**

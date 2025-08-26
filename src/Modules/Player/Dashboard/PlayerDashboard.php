@@ -30,6 +30,10 @@ use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Represents a dashboard specifically for player-related information.
+ * Implements the DashboardInterface.
+ */
 readonly class PlayerDashboard implements DashboardInterface
 {
 	private PlayerService $playerService;

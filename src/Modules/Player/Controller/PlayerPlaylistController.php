@@ -31,6 +31,9 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Handles operations related to the management of a player's playlist.
+ */
 readonly class PlayerPlaylistController
 {
 	public function __construct(private Orchestrator $orchestrator)

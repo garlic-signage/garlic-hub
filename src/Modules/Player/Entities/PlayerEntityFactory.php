@@ -24,6 +24,9 @@ namespace App\Modules\Player\Entities;
 use App\Framework\Core\Config\Config;
 use App\Modules\Player\IndexCreation\UserAgentHandler;
 
+/**
+ * Responsible for creating instances of PlayerEntity.
+ */
 readonly class PlayerEntityFactory
 {
 	private Config $config;

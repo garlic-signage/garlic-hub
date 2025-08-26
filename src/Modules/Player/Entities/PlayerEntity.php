@@ -26,6 +26,26 @@ use App\Modules\Player\Enums\PlayerModel;
 use App\Modules\Player\IndexCreation\UserAgentHandler;
 use DateTime;
 
+/**
+ * Represents a player entity, encapsulating various properties related to a player's
+ * configurations, status, and associated data.
+ *
+ * The class provides methods to retrieve these properties, which include player metadata,
+ * playlist details, geographical location, configuration settings, administrative controls,
+ * and more. These properties can be dynamically initialized during object construction
+ * using the provided data array.
+ *
+ * This entity also interacts with associated components like the configuration handler
+ * (`Config`) and user agent handler (`UserAgentHandler`) to build additional derived properties
+ * such as model information and unique IDs.
+ *
+ * Key responsibilities include:
+ * - Managing player-specific metadata like ID, name, status, and durations.
+ * - Handling playlist-associated data, including playlist names, modes, and zones.
+ * - Working with complex data structures like reports, commands, categories, and properties.
+ * - Offering methods for accessing remote administration and screen time settings.
+ * - Providing access to configuration and system URLs like API endpoints and report servers.
+ */
 class PlayerEntity
 {
 	private readonly Config $config;

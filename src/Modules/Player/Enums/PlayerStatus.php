@@ -21,6 +21,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Enums;
 
+/**
+ * Enumeration representing the various statuses of a player system.
+ *
+ * This enumeration defines integer-based constants that correspond to specific states
+ * or phases that the player can be in throughout its lifecycle.
+ */
 enum PlayerStatus: int
 {
 	case UNREGISTERED    = 0;

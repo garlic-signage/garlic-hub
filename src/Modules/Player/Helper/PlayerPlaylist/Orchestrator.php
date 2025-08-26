@@ -35,6 +35,13 @@ use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Class Orchestrator
+ *
+ * This class orchestrates the operations related to players and playlists.
+ * It validates inputs, manages the lifecycle of a playlist with a player,
+ * and interacts with services to execute these operations.
+ */
 class Orchestrator
 {
 	/** @var array<string,string>  */

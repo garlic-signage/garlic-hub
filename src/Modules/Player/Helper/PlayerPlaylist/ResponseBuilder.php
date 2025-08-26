@@ -10,6 +10,12 @@ use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Handles building JSON error responses for various scenarios related to players and playlists.
+ * Extends the functionality of the BaseResponseBuilder class by providing pre-defined error handlers.
+ *
+ * Each method translates specific error messages and returns them in a JSON response format.
+ */
 class ResponseBuilder extends BaseResponseBuilder
 {
 	/**
