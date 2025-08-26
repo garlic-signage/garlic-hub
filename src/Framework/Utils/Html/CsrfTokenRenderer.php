@@ -22,6 +22,17 @@ declare(strict_types=1);
 namespace App\Framework\Utils\Html;
 
 
+/**
+ * A renderer for CSRF token fields that generates a hidden input element.
+ *
+ * This class is responsible for rendering CSRF token fields as hidden HTML input elements
+ * by utilizing the attributes and properties defined in the provided field object.
+ *
+ * It extends AbstractInputFieldRenderer for common input rendering functionality
+ * and implements the FieldRenderInterface to comply with standardized field rendering.
+ *
+ * @method string buildAttributes() Constructs the HTML attributes for the input element.
+ */
 class CsrfTokenRenderer extends AbstractInputFieldRenderer implements FieldRenderInterface
 {
 	public function render(FieldInterface $field): string

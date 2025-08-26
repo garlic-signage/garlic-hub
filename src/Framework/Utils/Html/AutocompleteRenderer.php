@@ -21,6 +21,24 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Html;
 
+/**
+ * Renders an autocomplete input field with an associated datalist for suggestions.
+ *
+ * This class is used to generate the HTML structure required for rendering
+ * an autocomplete input field, handling the necessary attributes and relation
+ * to its hidden input and datalist elements. It ensures the field is properly
+ * identified and labeled.
+ *
+ * Implements:
+ * - FieldRenderInterface: Ensures compatibility with the field rendering system.
+ *
+ * Extends:
+ * - AbstractInputFieldRenderer: Provides base functionality for rendering input fields.
+ *
+ * Methods:
+ * - render(FieldInterface $field): Generates the HTML for an autocomplete field,
+ *   linking an input element, its hidden counterpart, and a datalist for suggestions.
+ */
 class AutocompleteRenderer extends AbstractInputFieldRenderer implements FieldRenderInterface
 {
 

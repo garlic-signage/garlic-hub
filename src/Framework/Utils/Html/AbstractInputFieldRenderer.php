@@ -21,6 +21,9 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Html;
 
+/**
+ * Abstract class responsible for rendering input fields with attributes and properties.
+ */
 abstract class AbstractInputFieldRenderer
 {
 	/** @var array<string,mixed>|array<empty,empty> */

@@ -22,6 +22,11 @@ declare(strict_types=1);
 namespace App\Framework\Utils\Html;
 
 
+/**
+ * Represents an email input field within a form.
+ * This class extends the AbstractInputField to provide
+ * additional functionality specific to email input types.
+ */
 class EmailField extends AbstractInputField
 {
 }

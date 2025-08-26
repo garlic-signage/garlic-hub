@@ -21,6 +21,9 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Html;
 
+/**
+ * Represents a checkbox input field.
+ */
 class CheckboxField extends AbstractInputField
 {
 	private bool $checked = false;

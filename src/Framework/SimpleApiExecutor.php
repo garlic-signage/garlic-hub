@@ -28,6 +28,10 @@ use GuzzleHttp\RequestOptions;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
+/**
+ * SimpleApiExecutor is a class responsible for handling API requests and managing their responses.
+ * It extends the AbstractBaseService to utilize core functionalities such as logging.
+ */
 class SimpleApiExecutor extends AbstractBaseService
 {
 	private string $bodyContents = '';

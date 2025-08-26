@@ -21,6 +21,10 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Html;
 
+/**
+ * Renders an HTML checkbox input field based on the provided field object.
+ * Ensures the correct state and data are applied to the checkbox field during rendering.
+ */
 class CheckboxRenderer extends AbstractInputFieldRenderer implements FieldRenderInterface
 {
 	public function render(CheckboxField|FieldInterface $field): string

@@ -23,6 +23,10 @@ namespace App\Framework\Utils\Html;
 
 use InvalidArgumentException;
 
+/**
+ * Factory class for rendering various types of fields.
+ * The class is responsible for returning appropriate renderers for given field types.
+ */
 class FieldsRenderFactory
 {
 	/** @var array<string,FieldRenderInterface>  */

@@ -21,6 +21,13 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Html;
 
+/**
+ * Renders a hidden input field.
+ *
+ * This class is responsible for rendering an HTML hidden input field by implementing the FieldRenderInterface
+ * and extending the AbstractInputFieldRenderer. It applies the necessary attributes to the input element
+ * using the `buildAttributes` method.
+ */
 class HiddenRenderer extends AbstractInputFieldRenderer implements FieldRenderInterface
 {
 

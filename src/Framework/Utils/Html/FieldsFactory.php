@@ -24,6 +24,9 @@ namespace App\Framework\Utils\Html;
 use App\Framework\Core\CsrfToken;
 use Exception;
 
+/**
+ * Factory class responsible for creating various field objects.
+ */
 class FieldsFactory
 {
 	/**

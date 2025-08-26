@@ -21,6 +21,13 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Html;
 
+/**
+ * A renderer class that generates the HTML for an input field of type "number".
+ *
+ * This class extends the functionality of AbstractInputFieldRenderer and
+ * implements the FieldRenderInterface. It is intended to render input fields
+ * specifically as numeric input fields in HTML.
+ */
 class NumberRenderer extends AbstractInputFieldRenderer implements FieldRenderInterface
 {
 	public function render(FieldInterface $field): string

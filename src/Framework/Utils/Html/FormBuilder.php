@@ -25,6 +25,11 @@ use App\Framework\Core\CsrfToken;
 use App\Framework\Exceptions\FrameworkException;
 use Exception;
 
+/**
+ * Class responsible for building and managing form fields. It leverages field factories
+ * and render factories to create and render different types of form fields. Additionally,
+ * it handles CSRF token management for enhanced security.
+ */
 class FormBuilder
 {
 	private FieldsFactory $fieldsFactory;

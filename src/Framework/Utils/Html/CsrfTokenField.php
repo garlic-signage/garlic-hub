@@ -25,6 +25,18 @@ namespace App\Framework\Utils\Html;
 use App\Framework\Core\CsrfToken;
 use Exception;
 
+/**
+ * Represents a CSRF token input field that is integrated with a CSRF token object to ensure security.
+ *
+ * This class is typically used to automatically populate an input field with a CSRF token value
+ * to prevent cross-site request forgery attacks.
+ *
+ * Extends functionality provided by AbstractInputField to include CSRF token integration.
+ *
+ * Implements methods to set and handle the CSRF token value.
+ *
+ * @throws Exception if there is an error during the initialization of the CSRF token field.
+ */
 class CsrfTokenField extends AbstractInputField
 {
 	/**

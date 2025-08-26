@@ -21,6 +21,10 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Html;
 
+/**
+ * A renderer class responsible for generating the HTML for a dropdown field.
+ * Extends AbstractInputFieldRenderer and implements FieldRenderInterface.
+ */
 class DropdownRenderer extends AbstractInputFieldRenderer implements FieldRenderInterface
 {
 

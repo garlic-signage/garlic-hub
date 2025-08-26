@@ -21,6 +21,10 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Html;
 
+/**
+ * Represents a password input field form element.
+ * Provides methods to set and retrieve the pattern attribute for the field.
+ */
 class PasswordField extends AbstractInputField
 {
 	public function setPattern(string $pattern): static

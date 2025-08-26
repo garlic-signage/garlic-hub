@@ -21,6 +21,10 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Html;
 
+/**
+ * Represents a URL input field in a form.
+ * Allows customization of placeholder text and URL validation pattern.
+ */
 class UrlField extends AbstractInputField
 {
 	private string $placeholder;

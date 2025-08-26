@@ -27,7 +27,7 @@ use SimpleXMLElement;
 
 /**
  * This is just a little helper for using SimpleXMl in php
- * In fact it just provides a wrapper for the php function
+ * In fact, it just provides a wrapper for the php function
  * to deal with libxml errors.
  *
  * It throws an exception if simplexml_load_string() (or maybe simplexml_load_file())

@@ -21,6 +21,17 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Html;
 
+/**
+ * Renders a clipboard-enabled text input field with additional action buttons
+ * for copying, deleting, and refreshing the value of the field.
+ *
+ * This class is designed to generate HTML for fields that implement
+ * ClipboardTextField. It ensures that the field includes interactive
+ * elements for user interaction, such as clipboard copying and refresh actions.
+ *
+ * Implements the FieldRenderInterface to ensure consistency with
+ * other field renderers.
+ */
 class ClipboardTextRenderer extends AbstractInputFieldRenderer implements FieldRenderInterface
 {
 	public function render(FieldInterface $field): string

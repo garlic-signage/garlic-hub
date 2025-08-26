@@ -21,6 +21,11 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Html;
 
+/**
+ * Represents a text input field in a form.
+ * This class provides functionality specific to handling and managing
+ * text-based input within a user interface.
+ */
 class TextField extends AbstractInputField
 {
 

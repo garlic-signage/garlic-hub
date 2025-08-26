@@ -21,6 +21,15 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Html;
 
+/**
+ * PasswordRenderer is responsible for rendering password fields with a customizable
+ * layout and features, specifically designed to incorporate toggling for visibility.
+ *
+ * This class generates the necessary HTML markup for password input fields, enhancing
+ * their functionality by integrating toggle mechanisms for showing or hiding the
+ * password. It ensures accessibility by including attributes like `aria-describedby`
+ * for improved user experience and support for error indications.
+ */
 class PasswordRenderer extends AbstractInputFieldRenderer implements FieldRenderInterface
 {
 	public function render(FieldInterface $field): string

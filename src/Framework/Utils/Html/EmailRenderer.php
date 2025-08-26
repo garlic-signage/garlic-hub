@@ -22,6 +22,9 @@ declare(strict_types=1);
 namespace App\Framework\Utils\Html;
 
 
+/**
+ * Renders an email input field with attributes and error description support.
+ */
 class EmailRenderer extends AbstractInputFieldRenderer implements FieldRenderInterface
 {
 

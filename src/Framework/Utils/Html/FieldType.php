@@ -21,6 +21,13 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Html;
 
+/**
+ * Enumeration of field types used for defining various input or data handling methods.
+ *
+ * Each case represents a specific type of field that can be used in forms, validation,
+ * or other input mechanisms. The corresponding string values define the internal representation
+ * for the respective field type.
+ */
 enum FieldType: string
 {
 	case TEXT         = 'text';

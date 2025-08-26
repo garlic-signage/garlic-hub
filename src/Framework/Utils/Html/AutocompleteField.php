@@ -21,6 +21,10 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Html;
 
+/**
+ * Represents an input field with autocomplete functionality.
+ * Extends the AbstractInputField to provide additional behavior for handling autocomplete attributes.
+ */
 class AutocompleteField extends AbstractInputField
 {
 	private string $dataLabel;

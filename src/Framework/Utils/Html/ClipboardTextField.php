@@ -21,6 +21,10 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Html;
 
+/**
+ * Class representing a text field component with clipboard functionality.
+ * Allows setting and retrieving titles for delete and refresh actions.
+ */
 class ClipboardTextField extends AbstractInputField
 {
 	private string $deleteTitle = '';

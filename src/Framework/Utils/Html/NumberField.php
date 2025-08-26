@@ -21,6 +21,12 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Html;
 
+/**
+ * Represents a number input field with optional minimum and maximum constraints.
+ *
+ * During initialization, the 'min' and 'max' attributes can be set, if provided
+ * in the attributes array.
+ */
 class NumberField extends AbstractInputField
 {
 

@@ -21,6 +21,19 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Html;
 
+/**
+ * Renders a URL input field based on the provided field data.
+ *
+ * This method generates an HTML input element of type "text" with attributes
+ * such as pattern, placeholder, and aria-describedby dynamically populated from
+ * the provided field object. If the provided field is not an instance of
+ * UrlField, the method returns an empty string.
+ *
+ * @param UrlField|FieldInterface $field The field object to render.
+ *
+ * @return string The rendered HTML string for the input field or an empty string
+ *                if the field is not an instance of UrlField.
+ */
 class UrlRenderer extends AbstractInputFieldRenderer implements FieldRenderInterface
 {
 	public function render(UrlField|FieldInterface $field): string

@@ -21,6 +21,11 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Html;
 
+/**
+ * Interface FieldRenderInterface
+ *
+ * Defines a contract for rendering a field into a string representation.
+ */
 interface FieldRenderInterface
 {
 	public function render(FieldInterface $field): string;

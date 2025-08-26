@@ -25,7 +25,7 @@ use App\Framework\Core\Session;
 use App\Framework\Core\Translate\Translator;
 
 /**
- * Interface for managing the behavior of a datatables.
+ * Interface for managing the behavior of datatables.
  * Use this Facade for OverviewControllers
  */
 interface DatatableFacadeInterface

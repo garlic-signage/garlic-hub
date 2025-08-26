@@ -21,6 +21,11 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Html;
 
+/**
+ * Represents a form input field of type "hidden".
+ * This class extends the AbstractInputField to handle
+ * specific functionality related to hidden form fields.
+ */
 class HiddenField extends AbstractInputField
 {
 

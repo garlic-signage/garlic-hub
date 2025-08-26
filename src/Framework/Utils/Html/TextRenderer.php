@@ -21,6 +21,10 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Html;
 
+/**
+ * Class responsible for rendering a text input field.
+ * It extends the abstract input field renderer and implements the field rendering interface.
+ */
 class TextRenderer extends AbstractInputFieldRenderer implements FieldRenderInterface
 {
 	public function render(FieldInterface $field): string

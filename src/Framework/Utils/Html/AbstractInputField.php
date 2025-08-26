@@ -21,6 +21,11 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Html;
 
+/**
+ * Represents an abstract input field with properties
+ * defining its name, label, type, attributes, and validation rules.
+ * Provides methods for manipulating and retrieving these properties.
+ */
 class AbstractInputField implements FieldInterface
 {
 	private string $name;

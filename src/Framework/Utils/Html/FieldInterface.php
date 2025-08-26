@@ -21,6 +21,9 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Html;
 
+/**
+ * Interface for defining the structure and behavior of a form field.
+ */
 interface FieldInterface
 {
 	public function getName(): string;

@@ -29,6 +29,11 @@ use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
+/**
+ * Service class that extends AbstractBaseService to handle various operations
+ * for managing hierarchical nodes within a repository.
+ * Provides functionality for retrieving, adding, deleting, and moving nodes and trees.
+ */
 class Service extends AbstractBaseService
 {
 	private readonly Repository $repository;
