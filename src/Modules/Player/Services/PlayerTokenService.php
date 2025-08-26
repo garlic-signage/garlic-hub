@@ -30,6 +30,11 @@ use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
+/**
+ * Service class for handling player tokens. This service provides functionalities
+ * for storing, retrieving, verifying, and cleaning up player tokens, as well as
+ * refreshing existing tokens.
+ */
 class PlayerTokenService extends AbstractBaseService
 {
     private readonly PlayerTokenRepository $playerTokenRepository;

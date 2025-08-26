@@ -26,6 +26,11 @@ use DateMalformedStringException;
 use DateTime;
 use Exception;
 
+/**
+ * The ScreenTimesPreparer class extends AbstractPreparer and implements PreparerInterface.
+ * This class processes screen time data of player entities for specific models,
+ * and prepares structured screen time strings for use in wall clock operations.
+ */
 class ScreenTimesPreparer extends AbstractPreparer implements PreparerInterface
 {
 	private string $current_date = 'now';

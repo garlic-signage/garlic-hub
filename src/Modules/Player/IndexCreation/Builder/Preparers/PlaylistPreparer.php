@@ -24,6 +24,9 @@ namespace App\Modules\Player\IndexCreation\Builder\Preparers;
 
 use App\Modules\Playlists\Collector\Contracts\PlaylistStructureInterface;
 
+/**
+ * Handles the preparation of playlist data based on the provided structure and configuration.
+ */
 class PlaylistPreparer extends AbstractPreparer implements PreparerInterface
 {
 	private PlaylistStructureInterface $playlistStructure;

@@ -25,6 +25,9 @@ use App\Modules\Player\Entities\PlayerEntity;
 use App\Modules\Player\Enums\IndexSections;
 use Exception;
 
+/**
+ * Factory class responsible for creating instances of preparers based on the provided index section.
+ */
 class PreparerFactory
 {
 	/**

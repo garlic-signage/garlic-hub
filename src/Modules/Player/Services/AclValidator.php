@@ -28,6 +28,10 @@ use App\Framework\Exceptions\FrameworkException;
 use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 
+/**
+ * AclValidator class is responsible for handling access control validation
+ * for player-related operations.
+ */
 class AclValidator extends AbstractAclValidator
 {
 

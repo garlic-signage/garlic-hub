@@ -25,6 +25,10 @@ use App\Modules\Player\Entities\PlayerEntity;
 use App\Modules\Player\Enums\PlayerModel;
 use App\Modules\Player\Enums\TemplateIndexFiles;
 
+/**
+ * Provides functionality to select the appropriate index template file
+ * based on the player's model and firmware version.
+ */
 class IndexTemplateSelector
 {
 	public function select(PlayerEntity $playerEntity): TemplateIndexFiles

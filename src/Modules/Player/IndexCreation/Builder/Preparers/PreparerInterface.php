@@ -21,6 +21,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\IndexCreation\Builder\Preparers;
 
+/**
+ * Interface PreparerInterface
+ *
+ * Defines a contract for preparing a structured list of associative arrays,
+ * each containing string keys and mixed values.
+ */
 interface PreparerInterface
 {
 	/**

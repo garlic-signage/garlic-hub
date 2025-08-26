@@ -31,6 +31,11 @@ use App\Modules\Playlists\Collector\Builder\PlaylistBuilderFactory;
 use Exception;
 use League\Flysystem\FilesystemException;
 
+/**
+ * Responsible for creating and handling index files for released players.
+ * This class operates by utilizing the provided dependencies to build the appropriate playlist structure,
+ * select a template, prepare data for the template, render it, and ultimately handle the output file.
+ */
 class IndexCreator
 {
 	private readonly PlaylistBuilderFactory $playlistBuilderFactory;

@@ -26,6 +26,11 @@ use App\Modules\Player\Enums\PlayerActivity;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
+/**
+ * The PlayerRepository class is responsible for managing database operations
+ * related to players. It extends the FilterBase class, utilizing functionality for data filtering
+ * and query composition for player entities.
+ */
 class PlayerRepository extends FilterBase
 {
 	public function __construct(Connection $connection)

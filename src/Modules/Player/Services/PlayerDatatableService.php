@@ -30,6 +30,12 @@ use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Log\LoggerInterface;
 
+/**
+ * Service class responsible for handling player data operations for a datatable.
+ * Provides methods to load and manage player data based on the user's access level.
+ * Extends the AbstractDatatableService to utilize common datatable functionalities.
+ * Utilizes the SearchFilterParamsTrait to apply search filters.
+ */
 class PlayerDatatableService extends AbstractDatatableService
 {
 	use SearchFilterParamsTrait;

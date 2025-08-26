@@ -25,6 +25,9 @@ use App\Framework\Services\AbstractBaseService;
 use App\Framework\SimpleApiExecutor;
 use Psr\Log\LoggerInterface;
 
+/**
+ * This service class handles interactions with a REST API for player-related operations.
+ */
 class PlayerRestAPIService extends AbstractBaseService
 {
     private readonly SimpleApiExecutor $apiExecutor;

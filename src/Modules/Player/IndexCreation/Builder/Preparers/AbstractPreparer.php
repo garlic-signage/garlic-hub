@@ -23,6 +23,14 @@ namespace App\Modules\Player\IndexCreation\Builder\Preparers;
 
 use App\Modules\Player\Entities\PlayerEntity;
 
+/**
+ * Represents an abstract base class for preparing or handling operations
+ * related to the PlayerEntity. This class cannot be instantiated directly
+ * but provides a foundational structure for derived classes.
+ *
+ * The class ensures the encapsulation of the PlayerEntity instance,
+ * making it available to subclasses through inheritance.
+ */
 abstract class AbstractPreparer
 {
 	protected readonly PlayerEntity $playerEntity;

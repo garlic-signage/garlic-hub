@@ -21,6 +21,13 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\IndexCreation\Builder\Preparers;
 
+/**
+ * MetaPreparer is responsible for preparing metadata for a player entity.
+ *
+ * This class extends the AbstractPreparer and implements the PreparerInterface,
+ * providing functionality to generate structured metadata arrays based on
+ * player and playlist details from a player entity.
+ */
 class MetaPreparer extends AbstractPreparer implements PreparerInterface
 {
 	/**

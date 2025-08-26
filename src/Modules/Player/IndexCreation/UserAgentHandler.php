@@ -23,6 +23,9 @@ namespace App\Modules\Player\IndexCreation;
 
 use App\Modules\Player\Enums\PlayerModel;
 
+/**
+ * Handles the parsing and extraction of user agent information for identifying devices and their properties.
+ */
 class UserAgentHandler
 {
 	private readonly PlayerDetector $playerDetector;

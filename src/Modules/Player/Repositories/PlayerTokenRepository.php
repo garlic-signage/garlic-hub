@@ -27,6 +27,10 @@ use App\Framework\Database\BaseRepositories\Traits\FindOperationsTrait;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
+/**
+ * Repository class responsible for managing player tokens in the database.
+ * Provides methods to query, update, and manage tokens associated with players.
+ */
 class PlayerTokenRepository extends SqlBase
 {
 	use CrudTraits;

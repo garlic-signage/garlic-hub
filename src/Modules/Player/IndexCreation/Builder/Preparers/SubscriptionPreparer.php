@@ -23,6 +23,11 @@ namespace App\Modules\Player\IndexCreation\Builder\Preparers;
 
 use App\Framework\Exceptions\CoreException;
 
+/**
+ * Handles the preparation of subscription data for processing.
+ * Collects and organizes various subscription configurations and reports
+ * specific to the player's entity.
+ */
 class SubscriptionPreparer extends AbstractPreparer implements PreparerInterface
 {
 	/**

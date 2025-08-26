@@ -29,6 +29,10 @@ use App\Modules\Player\IndexCreation\Builder\Preparers\PreparerFactory;
 use App\Modules\Playlists\Collector\Contracts\PlaylistStructureInterface;
 use Exception;
 
+/**
+ * Handles the preparation of template data for various types of media players
+ * and playlists by utilizing specific preparer instances.
+ */
 class TemplatePreparer
 {
 	private PlayerEntity $playerEntity;

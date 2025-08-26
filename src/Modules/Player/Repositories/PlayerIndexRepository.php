@@ -29,7 +29,9 @@ use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Query\QueryBuilder;
 
 /**
- * To save overhead of FilterBase
+ * Repository class for handling player data operations in the database.
+ * Provides methods such as fetching player by ID, updating last access timestamp,
+ * and managing serialization/deserialization of player-specific attributes.
  */
 class PlayerIndexRepository extends SqlBase
 {

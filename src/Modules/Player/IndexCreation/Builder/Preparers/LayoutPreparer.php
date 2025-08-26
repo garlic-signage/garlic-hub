@@ -23,6 +23,11 @@ namespace App\Modules\Player\IndexCreation\Builder\Preparers;
 
 use App\Modules\Playlists\Helper\PlaylistMode;
 
+/**
+ * Class LayoutPreparer is responsible for preparing layouts for a player entity.
+ * It determines the layout structure and regions based on the playlist mode and other properties.
+ * Supports single layout and multizone configurations.
+ */
 class LayoutPreparer extends AbstractPreparer implements PreparerInterface
 {
 	/**

@@ -24,6 +24,9 @@ namespace App\Modules\Player\IndexCreation;
 use App\Framework\Core\Config\Config;
 use App\Modules\Player\Enums\PlayerModel;
 
+/**
+ * A class responsible for detecting the player model based on a provided model name.
+ */
 class PlayerDetector
 {
 	protected PlayerModel $modelId;

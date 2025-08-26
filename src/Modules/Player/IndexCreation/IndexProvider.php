@@ -26,6 +26,10 @@ use App\Framework\Exceptions\ModuleException;
 use App\Modules\Player\Entities\PlayerEntity;
 use League\Flysystem\FilesystemException;
 
+/**
+ * Handles the generation and management of SMIL index files based on different scenarios
+ * such as forbidden, new, unreleased, released, testing, and scenarios related to corrupt content.
+ */
 class IndexProvider
 {
 	private readonly Config $config;

@@ -45,7 +45,6 @@ use Throwable;
  	3. Write SMIL if it is different from previous stored
 	4. send to player
 */
-
 class PlayerIndexService extends AbstractBaseService
 {
 	private readonly PlayerDataAssembler $playerDataAssembler;

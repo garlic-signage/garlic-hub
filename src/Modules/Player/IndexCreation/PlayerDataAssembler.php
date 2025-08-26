@@ -30,6 +30,11 @@ use App\Modules\Player\Enums\PlayerStatus;
 use App\Modules\Player\Repositories\PlayerIndexRepository;
 use Doctrine\DBAL\Exception;
 
+/**
+ * This class is responsible for assembling and managing player data.
+ * It interacts with various components such as user agent handler, repositories,
+ * configuration settings, and entity factories to process and retrieve player-related information.
+ */
 class PlayerDataAssembler
 {
 	/**

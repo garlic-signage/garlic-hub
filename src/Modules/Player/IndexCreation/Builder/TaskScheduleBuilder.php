@@ -21,6 +21,13 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\IndexCreation\Builder;
 
+/**
+ * Class TaskScheduleBuilder
+ *
+ * Manages the creation and modification of task schedules by replacing or adding specific blocks
+ * within a task template. The class provides methods to update various parts of the task template,
+ * such as reboot tasks, clear cache commands, configuration settings, firmware updates, and more.
+ */
 class TaskScheduleBuilder
 {
 	private bool $isReplacedSomething = false;

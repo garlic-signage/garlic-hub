@@ -26,6 +26,9 @@ use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
 use Psr\Log\LoggerInterface;
 
+/**
+ * Class responsible for managing index files within the filesystem.
+ */
 class IndexFile
 {
 	private readonly Filesystem $fileSystem;

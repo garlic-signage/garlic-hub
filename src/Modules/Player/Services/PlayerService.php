@@ -33,6 +33,13 @@ use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
+/**
+ * PlayerService class provides functionalities for managing players, including updating player information,
+ * replacing master playlists, and fetching player data with access control validation.
+ *
+ * This service interacts with the PlayerRepository for data persistence, the PlaylistsService for handling
+ * associated playlists, and utilizes an AclValidator for enforcing access control logic.
+ */
 class PlayerService extends AbstractBaseService
 {
 	private readonly PlayerRepository $playerRepository;
