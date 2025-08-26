@@ -24,6 +24,11 @@ namespace App\Modules\Auth;
 use App\Framework\Core\Session;
 use App\Framework\Exceptions\UserException;
 
+/**
+ * Handles user-related session operations by interacting with a session object.
+ * Provides methods to retrieve the user's unique ID, username, and locale from the session.
+ * Throws exceptions if the user data is not available or invalid in the session.
+ */
 readonly class UserSession
 {
 	private Session $session;

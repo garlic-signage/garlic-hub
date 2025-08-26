@@ -31,6 +31,11 @@ use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 
+/**
+ * Authentication service responsible for managing user authentication,
+ * autologin, and associated functionality using a user service,
+ * cookies, and logging.
+ */
 class AuthService
 {
 	public const string COOKIE_NAME_AUTO_LOGIN = 'UserLogin';

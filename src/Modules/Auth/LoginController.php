@@ -32,6 +32,11 @@ use Psr\Cache\InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
+/**
+ * The LoginController is responsible for handling login-related functionality,
+ * including rendering the login page, processing authentication attempts,
+ * managing user session, handling logout actions, and managing CSRF tokens.
+ */
 readonly class LoginController
 {
 	private AuthService $authService;

@@ -30,6 +30,9 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Throwable;
 
+/**
+ * Handles OAuth2 authentication and authorization flows.
+ */
 class OAuth2Controller
 {
 	private AuthService $authService;
