@@ -24,6 +24,11 @@ namespace App\Framework\Database\BaseRepositories\Traits;
 use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Query\QueryBuilder;
 
+/**
+ * Trait CrudTraits
+ *
+ * Provides a set of common CRUD (Create, Read, Update, Delete) operations for managing database records.
+ */
 trait CrudTraits
 {
 	/**

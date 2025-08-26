@@ -23,6 +23,10 @@ namespace App\Framework\Database\BaseRepositories\Traits;
 
 use Doctrine\DBAL\Exception;
 
+
+/**
+ * @deprecated
+ */
 trait TransactionsTrait
 {
 	/**

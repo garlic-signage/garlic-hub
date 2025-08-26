@@ -24,6 +24,14 @@ namespace App\Framework\Database\BaseRepositories;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
+/**
+ * Represents a transaction manager that encapsulates connection-based transaction handling.
+ * Provides methods to begin, commit, and roll back transactions, as well as check transaction status.
+ *
+ * This class is immutable and relies on an internal connection instance for managing transactions.
+ *
+ * Throws exceptions on failure of transaction-related operations.
+ */
 readonly class Transactions
 {
 	private Connection $connection;

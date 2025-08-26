@@ -25,6 +25,9 @@ use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Query\QueryBuilder;
 
+/**
+ * @deprecated
+ */
 // Todo: Make a class from this and inject it to make testing easier.
 trait FindOperationsTrait
 {
