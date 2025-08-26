@@ -28,7 +28,12 @@ use App\Framework\Exceptions\DatabaseException;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
-class NodesRepository  extends SqlBase
+/**
+ * NodesRepository is responsible for interacting with the 'mediapool_nodes' database table.
+ * This class provides methods for retrieving and managing node-related data such as node details,
+ * user root nodes, and node ownership information.
+ */
+class NodesRepository extends SqlBase
 {
 	use CrudTraits;
 	use FindOperationsTrait;

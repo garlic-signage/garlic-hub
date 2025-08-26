@@ -24,6 +24,10 @@ namespace App\Modules\Mediapool\Repositories;
 use App\Framework\Database\BaseRepositories\SqlBase;
 use Doctrine\DBAL\Connection;
 
+/**
+ * Handles interaction with the 'mediapool_queue' database table.
+ * Extends the SqlBase class to provide database operations for queue records.
+ */
 class QueueRepository extends SqlBase
 {
 

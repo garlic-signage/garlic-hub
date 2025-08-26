@@ -29,6 +29,10 @@ use GuzzleHttp\Exception\GuzzleException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
+/**
+ * Class responsible for handling upload-related operations, including uploading files
+ * from local storage, external links, and integrating with third-party stock image providers.
+ */
 class UploadController extends AbstractAsyncController
 {
 	private readonly UploadService $uploadService;

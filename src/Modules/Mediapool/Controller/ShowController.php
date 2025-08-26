@@ -28,6 +28,10 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * ShowController is responsible for managing the layout and data for the mediapool interface.
+ * It integrates with various services and utilizes translation for multi-language support.
+ */
 class ShowController
 {
 

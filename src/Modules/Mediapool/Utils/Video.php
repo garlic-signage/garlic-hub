@@ -32,6 +32,11 @@ use ImagickException;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
 
+/**
+ * This class handles video file operations, including upload validation, metadata extraction,
+ * and thumbnail generation. It extends the AbstractMediaHandler class to integrate with the
+ * existing media handling framework.
+ */
 class Video extends AbstractMediaHandler
 {
 	private Imagick $imagick;

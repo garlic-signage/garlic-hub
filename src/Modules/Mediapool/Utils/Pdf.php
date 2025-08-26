@@ -31,6 +31,11 @@ use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
 use Psr\Http\Message\UploadedFileInterface;
 
+/**
+ * Class Pdf extends the AbstractMediaHandler and provides functionality to handle PDF files.
+ * Includes methods for constructing the PDF handler, validating file size before and after upload,
+ * and creating a thumbnail for a given PDF file.
+ */
 class Pdf extends AbstractMediaHandler
 {
 	private int $maxDocumentSize;

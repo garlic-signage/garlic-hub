@@ -27,6 +27,12 @@ use App\Framework\Exceptions\ModuleException;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
 
+/**
+ * Class Miscellaneous
+ *
+ * Handles miscellaneous media-related operations, such as file upload checks
+ * and thumbnail creation, while enforcing file size constraints.
+ */
 class Miscellaneous extends AbstractMediaHandler
 {
 	private int $maxSize;

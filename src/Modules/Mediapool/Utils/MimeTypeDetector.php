@@ -24,6 +24,10 @@ namespace App\Modules\Mediapool\Utils;
 use App\Framework\Exceptions\ModuleException;
 use InvalidArgumentException;
 
+/**
+ * MimeTypeDetector class is responsible for detecting MIME types of files
+ * and streams, as well as determining file extensions from MIME types.
+ */
 class MimeTypeDetector
 {
 	/** @var array<string,string>  */

@@ -35,7 +35,7 @@ use League\Flysystem\FilesystemException;
  * We use flysystem for file operations with systemDir as base
  * and Intervention image for image manipulations
  *
- * Be aware that flysystem requires "relative" path while
+ * Be aware that the flysystem requires a "relative" path while the
  * intervention image expects an absolute path.
  *
  */

@@ -24,6 +24,9 @@ namespace App\Modules\Mediapool\Utils;
 use finfo;
 use RuntimeException;
 
+/**
+ * A wrapper class for handling file information and MIME type detection.
+ */
 class FileInfoWrapper
 {
 	private finfo $fileInfo;

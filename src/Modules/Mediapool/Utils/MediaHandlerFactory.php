@@ -27,6 +27,9 @@ use App\Framework\Media\Ffmpeg;
 use App\Framework\Utils\Widget\ConfigXML;
 use League\Flysystem\Filesystem;
 
+/**
+ * Factory class responsible for creating media handlers based on the provided MIME type.
+ */
 class MediaHandlerFactory
 {
 	private Config $config;

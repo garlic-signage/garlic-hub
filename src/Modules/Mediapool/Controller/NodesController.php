@@ -33,6 +33,11 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Throwable;
 
+/**
+ * Controller for managing operations related to nodes within the system.
+ * Handles listing, adding, editing, moving, and deleting nodes with appropriate
+ * validation and security checks such as CSRF token validation.
+ */
 class NodesController extends AbstractAsyncController
 {
 	private readonly NodesService $nodesService;

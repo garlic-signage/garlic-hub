@@ -30,6 +30,11 @@ use App\Framework\Media\Ffmpeg;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
 
+/**
+ * Handles the processing and validation of audio files within the media pool.
+ * This includes checking file size limits, setting metadata, deriving audio duration,
+ * and creating appropriate thumbnail representations.
+ */
 class Audio extends AbstractMediaHandler
 {
 	private Ffmpeg $ffmpeg;

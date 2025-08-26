@@ -25,6 +25,9 @@ use League\Flysystem\Filesystem;
 use League\Flysystem\ZipArchive\FilesystemZipArchiveProvider;
 use League\Flysystem\ZipArchive\ZipArchiveAdapter;
 
+/**
+ * Factory class for creating Filesystem instances based on a ZIP archive.
+ */
 class ZipFilesystemFactory
 {
 	public function __construct() {}

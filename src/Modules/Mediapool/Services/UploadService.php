@@ -37,6 +37,11 @@ use Ramsey\Uuid\Uuid;
 use Slim\Psr7\UploadedFile;
 use Throwable;
 
+/**
+ * UploadService class provides functionality for managing media uploads, including file uploads, external media handling,
+ * and integration with metadata and database operations. This class leverages dependencies such as media factories,
+ * services, and repositories to handle media processing efficiently.
+ */
 readonly class UploadService
 {
 	public function __construct(

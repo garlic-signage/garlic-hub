@@ -30,6 +30,14 @@ use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
 use Psr\Http\Message\UploadedFileInterface;
 
+/**
+ * AbstractMediaHandler class serves as a base handler for managing media file operations.
+ * It includes abstract methods for verifying and processing files, and concrete methods
+ * for handling file uploads, metadata, dimensions, and storage utilities.
+ *
+ * This class is designed to work with media files, including their configuration,
+ * filesystem operations, and auxiliary properties like dimensions and metadata.
+ */
 abstract class AbstractMediaHandler
 {
 	protected Config $config;

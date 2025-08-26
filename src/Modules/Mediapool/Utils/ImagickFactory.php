@@ -23,6 +23,9 @@ namespace App\Modules\Mediapool\Utils;
 
 use Imagick;
 
+/**
+ * Factory class for creating instances of the Imagick class.
+ */
 class ImagickFactory
 {
 	public function createImagick(): Imagick

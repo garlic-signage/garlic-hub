@@ -32,6 +32,13 @@ use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
+/**
+ * Class MediaService
+ *
+ * Handles functionality related to media, including listing, fetching, updating,
+ * moving, deleting, and cloning media records. It also manages media file paths
+ * and integrates with ACL for permission management.
+ */
 class MediaService
 {
 	private readonly FilesRepository $mediaRepository;

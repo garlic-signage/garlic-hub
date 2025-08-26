@@ -29,6 +29,10 @@ use App\Framework\Exceptions\ModuleException;
 use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 
+/**
+ * AclValidator class provides functionality for validating access control
+ * permissions on directories based on the user's role, ownership, and visibility settings.
+ */
 class AclValidator extends AbstractAclValidator
 {
 	public const int VISIBILITY_PUBLIC = 2;

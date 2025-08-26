@@ -28,6 +28,11 @@ use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
+/**
+ * MediaController is responsible for handling media-related operations.
+ * It provides endpoints for listing, fetching details, editing, deleting,
+ * moving, and cloning media items.
+ */
 class MediaController extends AbstractAsyncController
 {
 	private readonly MediaService $mediaService;

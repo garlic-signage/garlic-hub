@@ -29,6 +29,10 @@ use App\Modules\Mediapool\Repositories\NodesRepository;
 use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 
+/**
+ * Class NodesService
+ * Provides services for managing nodes within a hierarchical structure.
+ */
 class NodesService
 {
 	private readonly NodesRepository $nodesRepository;

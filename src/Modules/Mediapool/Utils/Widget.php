@@ -32,6 +32,12 @@ use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
 use Psr\Http\Message\UploadedFileInterface;
 
+/**
+ * Class Widget extends AbstractMediaHandler
+ *
+ * This class handles functionalities related to managing widgets, including
+ * checking file size constraints before and after uploads, and creating thumbnails.
+ */
 class Widget extends AbstractMediaHandler
 {
 	private int $maxDownloadSize;

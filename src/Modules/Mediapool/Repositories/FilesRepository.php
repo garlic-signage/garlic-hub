@@ -27,6 +27,12 @@ use App\Framework\Database\BaseRepositories\Traits\FindOperationsTrait;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
+/**
+ * Class FilesRepository
+ *
+ * A repository for managing file data in the mediapool. Handles CRUD operations
+ * and retrieving file metadata with related user and ownership details.
+ */
 class FilesRepository extends SqlBase
 {
 	use CrudTraits;
