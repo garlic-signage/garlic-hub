@@ -27,6 +27,17 @@ use App\Framework\Database\BaseRepositories\Traits\FindOperationsTrait;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
+/**
+ * Class UserTokensRepository interacts with the `user_tokens` table in the database.
+ * It provides methods to manage user token records, such as retrieving specific tokens,
+ * finding valid tokens for a particular user, and refreshing token expiration.
+ *
+ * Extends the base functionality of the SqlBase class and utilizes:
+ * - CrudTraits: for basic CRUD operations.
+ * - FindOperationsTrait: for extending find-related operations.
+ *
+ * Constructor establishes the table name and the primary identifier.
+ */
 class UserTokensRepository extends SqlBase
 {
 	use CrudTraits;

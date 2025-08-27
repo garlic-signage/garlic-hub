@@ -31,6 +31,10 @@ use App\Modules\Users\Repositories\Enterprise\UserSecurityRepository;
 use App\Modules\Users\Repositories\Enterprise\UserVipRepository;
 use Doctrine\DBAL\Connection;
 
+/**
+ * Factory class responsible for creating and managing user-related repository instances
+ * based on the platform edition configuration.
+ */
 class UserRepositoryFactory
 {
 	private readonly Config $config;

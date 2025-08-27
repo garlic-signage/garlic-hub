@@ -24,6 +24,13 @@ namespace App\Modules\Users\Repositories\Core;
 use App\Framework\Database\BaseRepositories\SqlBase;
 use Doctrine\DBAL\Connection;
 
+/**
+ * Repository class for managing user statistics data.
+ * Extends the base SQL repository functionality to interact
+ * with the 'user_stats' table using 'UID' as the primary identifier.
+ *
+ * @param Connection $connection Database connection instance used for executing queries.
+ */
 class UserStatsRepository extends SqlBase
 {
 	public function __construct(Connection $connection)

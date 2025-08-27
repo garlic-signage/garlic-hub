@@ -24,6 +24,10 @@ namespace App\Modules\Users\Repositories\Enterprise;
 use App\Framework\Database\BaseRepositories\SqlBase;
 use Doctrine\DBAL\Connection;
 
+/**
+ * Repository class for managing VIP user data interactions with the database.
+ * Extends the SqlBase class to facilitate database operations specific to the 'user_security' table.
+ */
 class UserVipRepository extends SqlBase
 {
 	public function __construct(Connection $connection)

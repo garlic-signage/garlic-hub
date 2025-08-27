@@ -21,6 +21,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Users;
 
+/**
+ * Represents the various statuses that can be assigned to a user.
+ * Each status is associated with a specific integer value.
+ */
 enum UserStatus: int {
 	case DELETED         = 0;
 	case BLOCKED         = 1;

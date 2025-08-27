@@ -39,12 +39,6 @@ use Psr\SimpleCache\InvalidArgumentException;
  * This class relies on Translator for error message translation and handles
  * input parameters via the Parameters class. It is designed to perform precise
  * validation on user-provided data during form submissions or similar processes.
- *
- * @throws ModuleException           If an error occurs during module execution.
- * @throws CoreException             For core-level errors encountered during validation.
- * @throws FrameworkException        If a framework-related issue arises during processing.
- * @throws PhpfastcacheSimpleCacheException  For caching-related issues affecting validation.
- * @throws InvalidArgumentException  In the event of an invalid argument within the validation logic.
  */
 class Validator extends BaseValidator
 {

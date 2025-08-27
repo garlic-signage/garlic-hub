@@ -32,6 +32,11 @@ use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
+/**
+ * Service class responsible for managing administrative operations
+ * related to user management, including user creation, modification,
+ * and deletion, as well as token and directory operations.
+ */
 class UsersAdminService extends AbstractBaseService
 {
 	private readonly UserMainRepository $userMainRepository;

@@ -24,6 +24,11 @@ namespace App\Modules\Users\Services;
 use App\Framework\Core\Acl\AbstractAclValidator;
 use App\Framework\Core\Acl\AclHelper;
 
+/**
+ * Class AclValidator is responsible for validating ACL (Access Control List) rules.
+ * It extends the AbstractAclValidator and provides specific implementations for user-related ACL validation.
+ * The constructor initializes the parent AbstractAclValidator with predefined parameters for user validation.
+ */
 class AclValidator extends AbstractAclValidator
 {
 	public function __construct(AclHelper $aclValidatorHelper)

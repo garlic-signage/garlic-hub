@@ -30,6 +30,11 @@ use App\Framework\Exceptions\UserException;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
+/**
+ * Repository class for managing user ACLs (Access Control Lists).
+ * Extends the base functionality provided by SqlBase and incorporates additional traits for CRUD
+ * operations and specific data retrieval functionalities.
+ */
 class UserAclRepository extends SqlBase
 {
 	use CrudTraits;

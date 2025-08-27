@@ -29,6 +29,10 @@ use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Log\LoggerInterface;
 
+/**
+ * Service class for handling operations related to the Users datatable.
+ * Extends the AbstractDatatableService to leverage common functionality.
+ */
 class UsersDatatableService extends AbstractDatatableService
 {
 	private readonly UserMainRepository $userMainRepository;

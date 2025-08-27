@@ -24,6 +24,9 @@ namespace App\Modules\Users\Repositories\Core;
 use App\Framework\Database\BaseRepositories\SqlBase;
 use Doctrine\DBAL\Connection;
 
+/**
+ * Repository class for handling user contact data operations.
+ */
 class UserContactRepository extends SqlBase
 {
 	public function __construct(Connection $connection)

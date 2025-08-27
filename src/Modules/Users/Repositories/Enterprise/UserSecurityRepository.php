@@ -24,6 +24,12 @@ namespace App\Modules\Users\Repositories\Enterprise;
 use App\Framework\Database\BaseRepositories\SqlBase;
 use Doctrine\DBAL\Connection;
 
+/**
+ * UserSecurityRepository is a class that extends SqlBase and manages database interactions
+ * related to the user security table. It utilizes a connection instance for operations and
+ * sets 'user_security' as the table name with 'UID' as the primary key.
+ *
+ */
 class UserSecurityRepository extends SqlBase
 {
 	public function __construct(Connection $connection)
