@@ -27,6 +27,10 @@ use App\Framework\Exceptions\ModuleException;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * A readonly class responsible for building forms and handling user inputs.
+ * This class utilizes form element creation, input validation, and parameter parsing functionality.
+ */
 readonly class Builder
 {
 	private FormElementsCreator $formElementsCreator;

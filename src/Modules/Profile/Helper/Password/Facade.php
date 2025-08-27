@@ -35,6 +35,10 @@ use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * A facade class that encapsulates interactions between multiple services and components
+ * to provide a simplified API for managing user profiles, passwords, and related parameters.
+ */
 class Facade
 {
 	private readonly Builder $passwordFormBuilder;

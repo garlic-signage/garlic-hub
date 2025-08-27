@@ -31,6 +31,11 @@ use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
+/**
+ * Class ProfileService
+ *
+ * Service for managing user profiles including password updates, locale changes, and user token operations.
+ */
 class ProfileService extends AbstractBaseService
 {
 	private readonly UserMainRepository $userMainRepository;

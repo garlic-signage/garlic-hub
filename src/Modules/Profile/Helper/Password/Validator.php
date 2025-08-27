@@ -30,6 +30,10 @@ use App\Framework\Exceptions\ModuleException;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Validator class extends the functionality of BaseValidator to handle
+ * input validation operations, such as validating user inputs and form tokens.
+ */
 class Validator extends BaseValidator
 {
 	private Parameters $inputEditParameters;

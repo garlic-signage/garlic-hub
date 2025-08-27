@@ -26,6 +26,10 @@ use App\Framework\Core\Session;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Framework\Utils\FormParameters\ScalarType;
 
+/**
+ * Extends the BaseEditParameters class and manages parameters specific to profile-related operations.
+ * Provides predefined constants for password-related parameters and mechanisms to handle them within the context of the application.
+ */
 class Parameters extends BaseEditParameters
 {
 	public const string PARAMETER_PASSWORD           = 'password';

@@ -30,6 +30,9 @@ use DateTime;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
 
+/**
+ * This service handles operations related to user tokens, such as generating, finding, refreshing, and deleting tokens.
+ */
 class UserTokenService extends AbstractBaseService
 {
 	private const string TOKEN_EXP_HOURS_PWD_INIT = '24';

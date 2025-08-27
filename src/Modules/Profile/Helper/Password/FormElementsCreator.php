@@ -33,6 +33,14 @@ use App\Framework\Utils\Html\PasswordField;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Class FormElementsCreator
+ *
+ * Provides methods to create various types of form fields for user interfaces,
+ * ensuring consistency and reusability of form elements.
+ * This class extends the AbstractBaseFormElementsCreator to utilize fundamental
+ * form creation functionalities.
+ */
 class FormElementsCreator extends AbstractBaseFormElementsCreator
 {
 	/**

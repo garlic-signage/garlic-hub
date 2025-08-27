@@ -24,6 +24,14 @@ namespace App\Modules\Profile\Controller;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
+/**
+ * Handles the display of user settings.
+ *
+ * This controller is responsible for redirecting the user to the settings page where
+ * specific preferences can be managed. In the current implementation, the user is
+ * only allowed to edit their password. Future versions will include additional settings
+ * such as company information, contact details, and multi-factor authentication options.
+ */
 class ShowSettingsController
 {
 

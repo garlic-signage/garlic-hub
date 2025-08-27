@@ -28,6 +28,9 @@ use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
+/**
+ * Handles operations related to setting and managing user locale preferences.
+ */
 class EditLocalesController
 {
 	private ProfileService $profileService;

@@ -36,6 +36,12 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 use Slim\Flash\Messages;
 
+/**
+ * The ShowPasswordController class is responsible for handling password-related
+ * actions, such as displaying password forms, storing new passwords, and managing
+ * forced password changes. It interacts with a facade to manage the business logic
+ * and prepares templates for rendering the user interface.
+ */
 class ShowPasswordController
 {
 	private readonly Facade $facade;
