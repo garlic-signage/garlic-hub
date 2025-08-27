@@ -24,6 +24,9 @@ namespace App\Modules\Playlists\Helper\ExportSmil\Utils;
 use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 
+/**
+ * A class to manage and represent properties including fit, media alignment, and volume.
+ */
 class Properties
 {
 	private Config $config;

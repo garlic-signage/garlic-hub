@@ -28,6 +28,9 @@ use App\Framework\TemplateEngine\AdapterInterface;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * This class is responsible for preparing and rendering templates by utilizing a provided AdapterInterface and TriggerPreparer.
+ */
 readonly class TemplatePreparer
 {
 	public function __construct(private AdapterInterface $template, private TriggerPreparer $triggerPreparer)

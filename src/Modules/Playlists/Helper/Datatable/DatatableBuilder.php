@@ -35,6 +35,12 @@ use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Class DatatableBuilder
+ *
+ * Extends the AbstractDatatableBuilder class to provide functionality for constructing
+ * and managing parameters, titles, form elements, and table fields for a datatable.
+ */
 class DatatableBuilder extends AbstractDatatableBuilder
 {
 	private AclValidator $aclValidator;

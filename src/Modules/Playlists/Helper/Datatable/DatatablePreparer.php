@@ -34,6 +34,12 @@ use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * This class is responsible for preparing data tables related to playlists.
+ * It handles the transformation of raw data into a structured format suitable for rendering
+ * in a tabular format. It also manages playlist-specific logic, such as determining actions,
+ * formatting context menus, and ensuring proper ACL validation.
+ */
 class DatatablePreparer extends AbstractDatatablePreparer
 {
 	/** @var array<int,bool> */

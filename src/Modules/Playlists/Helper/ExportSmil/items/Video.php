@@ -23,6 +23,11 @@ namespace App\Modules\Playlists\Helper\ExportSmil\items;
 
 use App\Modules\Playlists\Helper\ItemDatasource;
 
+/**
+ * Represents a Video class that extends the Media class.
+ * Responsible for generating video-specific tags and gathering attributes and parameters
+ * required for the SMIL (Synchronized Multimedia Integration Language) format.
+ */
 class Video extends Media
 {
 

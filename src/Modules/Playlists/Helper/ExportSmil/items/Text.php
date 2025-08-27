@@ -21,6 +21,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\ExportSmil\items;
 
+/**
+ * Represents a text-based media object capable of generating SMIL (Synchronized Multimedia Integration Language) tags.
+ * This class extends the base Media functionality, adding specific behavior for text media.
+ */
 class Text extends Media
 {
 

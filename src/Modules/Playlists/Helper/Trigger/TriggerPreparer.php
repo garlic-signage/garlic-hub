@@ -27,6 +27,11 @@ use App\Framework\Exceptions\FrameworkException;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * The TriggerPreparer class is responsible for preparing template data for triggers in the system.
+ * It works with translations and organizes data associated with various trigger settings, ensuring
+ * localization and modularity of the related information.
+ */
 class TriggerPreparer
 {
 	private string $moduleName = 'playlists';

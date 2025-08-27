@@ -36,6 +36,9 @@ use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Handles orchestration of validation, fetching, and saving processes.
+ */
 class Orchestrator
 {
 	/** @var array<string,string>  */

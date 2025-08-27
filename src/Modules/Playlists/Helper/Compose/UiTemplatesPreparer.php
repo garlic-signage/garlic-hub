@@ -27,6 +27,11 @@ use App\Framework\Exceptions\FrameworkException;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * This class is responsible for preparing various UI templates for playlists.
+ * It provides methods to build external editors, multizone editors, and circular editors.
+ * These methods structure the template data and layout configuration for use in the application's interface.
+ */
 readonly class UiTemplatesPreparer
 {
 	CONST string MODULE_NAME = 'playlists';

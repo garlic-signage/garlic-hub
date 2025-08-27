@@ -21,6 +21,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\ExportSmil\items;
 
+/**
+ * Represents an audio element that extends the functionality of the Video class.
+ *
+ * This class handles the creation of an SMIL-compliant <audio> tag with the appropriate attributes and parameters.
+ */
 class Audio extends Video
 {
 

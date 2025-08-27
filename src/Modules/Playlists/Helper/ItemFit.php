@@ -21,6 +21,16 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper;
 
+/**
+ * ItemFit enum represents different strategies for fitting an item into a given space.
+ *
+ * Enums:
+ * - FILL: The item is resized to fill the entire space.
+ * - MEET: The item is resized to fit within the constraints while maintaining its aspect ratio.
+ * - MEETBEST: The item is resized to meet the most suitable dimensions, optimizing for quality.
+ * - SLICE: The item is resized and cropped to completely cover the space.
+ * - SCROLL: The item maintains its original size, allowing scrolling to view contents outside the bounds.
+ */
 enum ItemFit: string
 {
 	case FILL     = 'fill';

@@ -29,6 +29,13 @@ use App\Modules\Playlists\Services\AclValidator;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Class RightsChecker
+ *
+ * Provides methods to check rights and permissions based on the system's edition and specific business rules.
+ * Handles translation and validation of various actions, such as inserting media, playlists, templates, and channels.
+ * Utilizes dependencies for access control and translations.
+ */
 class RightsChecker
 {
 	CONST string MODULE_NAME = 'playlists';

@@ -26,6 +26,10 @@ use App\Framework\Exceptions\CoreException;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
 
+/**
+ * Manages the creation and export of SMIL files for a specific playlist.
+ * Provides functionality to initialize export and write SMIL files.
+ */
 class LocalWriter
 {
 	private readonly Config $config;

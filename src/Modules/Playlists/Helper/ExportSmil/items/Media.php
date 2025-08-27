@@ -24,6 +24,11 @@ namespace App\Modules\Playlists\Helper\ExportSmil\items;
 use App\Modules\Playlists\Helper\ItemDatasource;
 use App\Modules\Playlists\Helper\ItemFlags;
 
+/**
+ * Abstract class representing a generic media object.
+ * Provides methods for setting media links, generating prefetch tags,
+ * and collecting media-related attributes and parameters.
+ */
 abstract class Media extends Base
 {
 	protected string $link = '';

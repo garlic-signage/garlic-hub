@@ -32,6 +32,11 @@ use App\Framework\Utils\Html\FormBuilder;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Class FormElementsCreator
+ *
+ * Responsible for creating various form elements used in the application.
+ */
 class FormElementsCreator extends AbstractBaseFormElementsCreator
 {
 

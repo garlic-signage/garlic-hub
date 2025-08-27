@@ -23,6 +23,9 @@ namespace App\Modules\Playlists\Helper\ExportSmil\Utils;
 
 use App\Modules\Playlists\Helper\ExportSmil\items\Base;
 
+/**
+ * The Trigger class processes a set of triggers, determines their type, and generates corresponding representations.
+ */
 class Trigger
 {
 	/** @var array<string,string>  */

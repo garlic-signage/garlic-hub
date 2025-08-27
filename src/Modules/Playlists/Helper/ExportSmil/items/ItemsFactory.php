@@ -29,6 +29,9 @@ use App\Modules\Playlists\Helper\ExportSmil\Utils\Properties;
 use App\Modules\Playlists\Helper\ExportSmil\Utils\Trigger;
 use App\Modules\Playlists\Helper\ItemType;
 
+/**
+ * Factory class responsible for creating items of various types.
+ */
 class ItemsFactory
 {
 	public const string MEDIA_TYPE_IMAGE       = 'image';

@@ -21,6 +21,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper;
 
+/**
+ * Represents a set of flags that define the states or capabilities of an item.
+ * The flags are defined as integer values and can be used to manage state conditions,
+ * such as whether an item is disabled, locked, or has logging functionality enabled.
+ */
 enum ItemFlags: int
 {
 	case disabled = 1;

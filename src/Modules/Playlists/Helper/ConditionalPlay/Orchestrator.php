@@ -35,6 +35,12 @@ use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * The Orchestrator class provides operations for handling and orchestrating user input,
+ * validation, data fetching, preparation of templates, and saving conditional play configurations.
+ * It integrates multiple services like response building, user session handling, validation,
+ * and template preparation to ensure a cohesive workflow for processing requests.
+ */
 class Orchestrator
 {
 	/** @var array<string,string>  */

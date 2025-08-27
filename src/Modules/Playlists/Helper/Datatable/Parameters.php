@@ -28,6 +28,22 @@ use App\Framework\Utils\FormParameters\BaseFilterParameters;
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
 use App\Framework\Utils\FormParameters\ScalarType;
 
+/**
+ * Class Parameters
+ *
+ * Represents the parameters used for filtering and managing playlist-related data.
+ * This class extends BaseFilterParameters and implements BaseFilterParametersInterface.
+ * It is specifically designed to manage parameters associated with playlists,
+ * including the playlist name, mode, and ID.
+ *
+ * Constants in this class define keys for playlist-specific parameters, while
+ * moduleParameters holds metadata about each parameter, such as its scalar type,
+ * default value, and parsing state.
+ *
+ * Constructor initializes the parameters, merging them with default parameters,
+ * and sets default sorting behavior for the playlist ID column.
+ *
+ */
 class Parameters extends BaseFilterParameters implements BaseFilterParametersInterface
 {
 	const string PARAMETER_PLAYLIST_NAME = 'playlist_name';

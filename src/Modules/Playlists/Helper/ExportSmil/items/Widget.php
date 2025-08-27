@@ -21,6 +21,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\ExportSmil\items;
 
+/**
+ * Represents a Widget class that extends the Media class.
+ * Provides methods for generating SMIL tag structure and managing widget-specific attributes and parameters.
+ */
 class Widget extends Media
 {
 

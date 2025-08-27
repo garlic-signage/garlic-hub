@@ -33,6 +33,13 @@ use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Class Builder
+ *
+ * This class is responsible for handling the configuration of parameters,
+ * building forms, and processing user inputs for playlists. It encapsulates
+ * ACL validation, parameter management, and form creation functionalities.
+ */
 class Builder
 {
 	private readonly FormElementsCreator $formElementsCreator;

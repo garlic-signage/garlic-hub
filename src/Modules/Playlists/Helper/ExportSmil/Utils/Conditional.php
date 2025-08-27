@@ -21,6 +21,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\ExportSmil\Utils;
 
+/**
+ * The Conditional class handles conditions based on date, time, and weekdays,
+ * allowing the generation of a specific expression attribute based on the provided input.
+ */
 class Conditional
 {
 	/** @var array<string,mixed>  */

@@ -31,6 +31,10 @@ use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * The Facade class is responsible for orchestrating operations related to the playlists feature.
+ * It acts as an intermediary between several components such as the form builder, playlists service, and translator.
+ */
 class Facade
 {
 	private readonly Builder $settingsFormBuilder;

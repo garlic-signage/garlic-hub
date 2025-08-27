@@ -29,6 +29,10 @@ use App\Framework\TemplateEngine\AdapterInterface;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Class responsible for preparing template data for conditional play functionality.
+ * This class handles template data transformation and rendering.
+ */
 class TemplatePreparer
 {
 	/** @var array<string,mixed>|array<empty,empty>  */

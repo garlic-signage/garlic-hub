@@ -21,6 +21,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper;
 
+/**
+ * Enumeration of item types utilized within the application.
+ *
+ * This enum defines various constants representing different types of items.
+ * Each case corresponds to a distinct type, uniquely identified by a string value.
+ */
 enum ItemType: string
 {
 	case MEDIAPOOL = 'mediapool';

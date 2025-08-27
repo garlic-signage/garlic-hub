@@ -25,6 +25,11 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\Widget\ConfigXML;
 
+/**
+ * A class responsible for preparing and processing content data based on specific configurations
+ * and request data. It validates mandatory fields, processes input types, and interacts with
+ * configuration data to determine editable preferences.
+ */
 readonly class ContentDataPreparer
 {
 	private ConfigXML $configXml;

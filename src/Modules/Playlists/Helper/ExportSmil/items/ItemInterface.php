@@ -21,6 +21,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\ExportSmil\items;
 
+/**
+ * Interface ItemInterface
+ *
+ * Represents a contract for an item containing methods to handle various attributes and behaviors related to SMIL tags and other item-specific properties.
+ */
 interface ItemInterface
 {
 	/**

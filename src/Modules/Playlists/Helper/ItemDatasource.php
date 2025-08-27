@@ -21,6 +21,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper;
 
+/**
+ * Defines the data source types for items.
+ *
+ * This enum represents the possible sources from which an item can originate,
+ * such as a file, a data stream, or a video input.
+ */
 enum ItemDatasource: string
 {
 	case FILE     = 'file';

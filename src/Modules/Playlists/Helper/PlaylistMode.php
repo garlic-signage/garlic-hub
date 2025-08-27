@@ -21,6 +21,16 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper;
 
+/**
+ * Represents the various operational modes of a playlist.
+ *
+ * Enum cases:
+ * - MASTER: Defines the master playlist mode.
+ * - INTERNAL: Defines an internal playlist mode used within the system.
+ * - EXTERNAL: Defines an external playlist mode sourced from outside the system.
+ * - MULTIZONE: Defines a playlist mode spanning multiple zones or areas.
+ * - CHANNEL: Defines a playlist mode associated with a specific channel.
+ */
 enum PlaylistMode: string {
 	case MASTER    = 'master';
 	case INTERNAL  = 'internal';

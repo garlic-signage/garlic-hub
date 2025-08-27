@@ -34,6 +34,11 @@ use App\Modules\Playlists\Helper\ItemFlags;
 use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Helper\PlaylistMode;
 
+/**
+ * The `PlaylistContent` class is responsible for managing and constructing playlist content,
+ * including handling media items, external media, and sub-playlists. This class provides methods
+ * to initialize, build, and manipulate the playlist data and its representations.
+ */
 class PlaylistContent
 {
 	private readonly ItemsFactory $itemsFactory;

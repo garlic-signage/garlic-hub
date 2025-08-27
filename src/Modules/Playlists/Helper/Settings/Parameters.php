@@ -26,6 +26,16 @@ use App\Framework\Core\Session;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Framework\Utils\FormParameters\ScalarType;
 
+/**
+ * Handles the parameters for managing playlists.
+ *
+ * This class is responsible for defining and managing parameters related
+ * to playlists such as playlist ID, name, mode, and time limits.
+ * It extends BaseEditParameters to inherit core parameter management functionality.
+ *
+ * Constants defined within the class specify the names of these parameters.
+ * Methods within the class allow dynamically adding supported parameters.
+ */
 class Parameters extends BaseEditParameters
 {
 	public const string PARAMETER_PLAYLIST_ID = 'playlist_id';

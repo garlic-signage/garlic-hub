@@ -28,6 +28,20 @@ use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Class ResponseBuilder
+ *
+ * Extends the BaseResponseBuilder class and provides methods for handling JSON error responses
+ * for various scenarios like invalid item ID, playlist not found, or item not found.
+ *
+ * Each method processes the given response by returning an error response with a
+ * translated error message, specific to the respective scenario.
+ *
+ * @throws CoreException If there is a core system processing error.
+ * @throws PhpfastcacheSimpleCacheException If there is an issue with caching during response processing.
+ * @throws InvalidArgumentException If invalid arguments are passed to translation or caching methods.
+ * @throws FrameworkException If there is a general framework-related issue during execution.
+ */
 class ResponseBuilder extends BaseResponseBuilder
 {
 	/**

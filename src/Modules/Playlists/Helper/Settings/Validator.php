@@ -31,6 +31,13 @@ use App\Modules\Playlists\Helper\PlaylistMode;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Class Validator
+ *
+ * Extends the BaseValidator to perform additional validation for user inputs,
+ * specifically related to playlist management. Handles CSRF token validation
+ * and checks for the presence and validity of required playlist parameters.
+ */
 class Validator extends BaseValidator
 {
 	private Parameters $inputEditParameters;
