@@ -26,6 +26,14 @@ use App\Framework\Core\Session;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Framework\Utils\FormParameters\ScalarType;
 
+/**
+ * Represents a parameter set configuration for user-related administrative operations.
+ *
+ * This class extends the BaseEditParameters to handle specific administrative parameters
+ * such as username, email, locale, password, and password confirmation. It provides
+ * default values and scalar types for each parameter and initializes the parameter set
+ * during object construction.
+ */
 class Parameters extends BaseEditParameters
 {
 	public const string PARAMETER_ADMIN_NAME     = 'username';

@@ -27,6 +27,31 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\FormParameters\BaseFilterParameters;
 use App\Framework\Utils\FormParameters\ScalarType;
 
+/**
+ * Class Parameters
+ *
+ * Extends the BaseFilterParameters class to define and manage specific parameters
+ * related to filtering user data. Utilizes constants to define known parameter names
+ * for the system and configures default behaviors via the $moduleParameters array.
+ *
+ * Constants:
+ * - PARAMETER_USERNAME: Represents the username parameter.
+ * - PARAMETER_EMAIL: Represents the email parameter.
+ * - PARAMETER_FIRSTNAME: Represents the first name parameter.
+ * - PARAMETER_SURNAME: Represents the surname parameter.
+ * - PARAMETER_COMPANY_NAME: Represents the company name parameter.
+ * - PARAMETER_STATUS: Represents the user status parameter.
+ * - PARAMETER_FROM_STATUS: Used for database operations that include higher user statuses.
+ *
+ * Properties:
+ * - $moduleParameters: Stores parameter configuration (type, default value, parsed status)
+ *   as an associative array.
+ *
+ * Methods:
+ * - __construct(Sanitizer $sanitizer, Session $session): Initializes the class with
+ *   inherited properties and merges default parameters with module-specific parameters.
+ *   Throws a ModuleException if initialization fails.
+ */
 class Parameters extends BaseFilterParameters
 {
 	const string PARAMETER_USERNAME     = 'username';

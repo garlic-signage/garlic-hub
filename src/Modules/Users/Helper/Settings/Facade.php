@@ -31,6 +31,11 @@ use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * The Facade class serves as a mediator between various system components, providing streamlined access
+ * and functionality for managing user data and configurations. It acts as a single interface to complex
+ * subsystems, including user management and settings services.
+ */
 class Facade
 {
 	private readonly Builder $settingsFormBuilder;

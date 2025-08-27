@@ -30,6 +30,10 @@ use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Builder class is responsible for managing form element creation, parameter configuration,
+ * permission validation, and handling user input.
+ */
 class Builder
 {
 	private readonly FormElementsCreator $formElementsCreator;

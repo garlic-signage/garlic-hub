@@ -34,6 +34,9 @@ use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
+/**
+ * Handles user-token-related actions such as deletion and refresh.
+ */
 class UserTokenController extends AbstractAsyncController
 {
 

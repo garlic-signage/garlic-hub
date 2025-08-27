@@ -26,6 +26,11 @@ use App\Framework\Core\Session;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Framework\Utils\FormParameters\ScalarType;
 
+/**
+ * Represents a class for managing user-related parameters in a module.
+ * Extends the base functionality of `BaseEditParameters` to handle specific parameters
+ * such as username, email, user ID, status, and locale.
+ */
 class Parameters extends BaseEditParameters
 {
 	const string PARAMETER_USER_NAME  = 'username';

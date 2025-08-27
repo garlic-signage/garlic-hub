@@ -31,6 +31,21 @@ use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Class Facade
+ *
+ * This class serves as a unified API for managing user-related functionalities in an application.
+ * It operates as a "facade," providing simplified methods to interact with underlying services,
+ * configurations, and settings required for user management, including processes such as
+ * user creation, form preparation, and error handling.
+ *
+ * Responsibilities include:
+ * - Initializing system with a translator instance.
+ * - Verifying if specific operations are permitted under certain circumstances.
+ * - Handling user creation and configuration of form parameters.
+ * - Fetching and translating service error messages.
+ * - Preparing data for user interface templates.
+ */
 class Facade
 {
 	private readonly Builder $settingsFormBuilder;

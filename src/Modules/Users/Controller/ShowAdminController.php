@@ -33,6 +33,12 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 use Slim\Flash\Messages;
 
+/**
+ * Class ShowAdminController
+ *
+ * Handles the administrative user interface for managing users, including rendering user-related forms,
+ * processing form submissions, and performing user actions such as storing and editing user data.
+ */
 class ShowAdminController
 {
 	private readonly Facade $facade;

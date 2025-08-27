@@ -34,6 +34,9 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 use Slim\Flash\Messages;
 
+/**
+ * A controller responsible for managing the initialization and display of the initial admin screen.
+ */
 class ShowInitialAdminController
 {
 	private readonly Facade $facade;

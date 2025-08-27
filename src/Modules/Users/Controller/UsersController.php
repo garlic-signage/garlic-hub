@@ -33,6 +33,10 @@ use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
+/**
+ * UsersController handles user-related operations and interacts with services
+ * for processing datatables and parameters.
+ */
 class UsersController extends AbstractAsyncController
 {
 	private UsersDatatableService $usersDatatableService;

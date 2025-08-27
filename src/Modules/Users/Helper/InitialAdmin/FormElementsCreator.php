@@ -30,6 +30,11 @@ use App\Framework\Utils\Html\PasswordField;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Class FormElementsCreator
+ *
+ * Responsible for creating various form input fields with specific configurations.
+ */
 class FormElementsCreator extends AbstractBaseFormElementsCreator
 {
 

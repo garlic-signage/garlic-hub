@@ -34,6 +34,11 @@ use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * This class acts as a facade to handle operations related to a datatable framework.
+ * It integrates multiple services and components to streamline data management
+ * for users and administrators.
+ */
 class ControllerFacade implements DatatableFacadeInterface
 {
 	private readonly DatatableBuilder $datatableBuilder;

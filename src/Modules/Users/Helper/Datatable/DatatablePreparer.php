@@ -32,6 +32,12 @@ use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * DatatablePreparer is responsible for preparing table data based on
+ * filter results and header fields. It extends the AbstractDatatablePreparer
+ * class to incorporate core datatable preparation functionalities while
+ * adding custom logic for field formatting, user actions, and validations.
+ */
 class DatatablePreparer extends AbstractDatatablePreparer
 {
 	private AclValidator $aclValidator;

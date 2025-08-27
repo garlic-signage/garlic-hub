@@ -30,6 +30,12 @@ use App\Framework\Exceptions\ModuleException;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Class Validator
+ *
+ * A class responsible for validating user input, including form tokens, usernames,
+ * email addresses, and password integrity.
+ */
 class Validator extends BaseValidator
 {
 	private Parameters $inputEditParameters;
