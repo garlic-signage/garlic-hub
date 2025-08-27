@@ -21,6 +21,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Collector\Contracts;
 
+/**
+ * Interface ContentReaderInterface
+ *
+ * Provides methods for initializing and loading data related to a playlist.
+ */
 interface ContentReaderInterface
 {
 	public function init(int $playlistId): static;

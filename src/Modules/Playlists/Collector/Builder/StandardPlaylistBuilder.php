@@ -23,6 +23,11 @@ namespace App\Modules\Playlists\Collector\Builder;
 
 use App\Modules\Playlists\Collector\Contracts\PlaylistStructureInterface;
 
+/**
+ * Builds a playlist structure by gathering playlist items, prefetches, and exclusives
+ * associated with the current playlist identifier. It formats the collected items
+ * and uses a factory to create the playlist structure.
+ */
 class StandardPlaylistBuilder extends AbstractPlaylistBuilder
 {
 	public function buildPlaylist(): PlaylistStructureInterface

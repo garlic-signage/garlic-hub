@@ -21,6 +21,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Collector\Contracts;
 
+/**
+ * Interface ExternalContentReaderInterface
+ *
+ * Provides methods for initializing a content reader with a given URL
+ * and loading playlist items from external sources.
+ */
 interface ExternalContentReaderInterface
 {
 	public function init(string $url): static;

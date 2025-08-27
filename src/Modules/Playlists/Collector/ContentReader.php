@@ -29,6 +29,12 @@ use App\Modules\Playlists\Collector\Contracts\ContentReaderInterface;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
 
+/**
+ * Provides functionality to manage and read playlist content from the filesystem.
+ *
+ * This class implements methods to load various playlist-related files based on
+ * a specified playlist ID. The paths to the files are configured during construction.
+ */
 class ContentReader implements ContentReaderInterface
 {
 	private string $playlistsPath;

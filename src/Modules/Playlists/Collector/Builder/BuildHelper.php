@@ -26,6 +26,10 @@ use App\Modules\Playlists\Collector\Contracts\ExternalContentReaderInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
+/**
+ * The BuildHelper class is designed to collect and manipulate playlist content, including items, prefetches,
+ * and exclusive content. It interacts with internal and external content sources and utilizes a logger for error handling.
+ */
 class BuildHelper
 {
 	private ContentReaderInterface $contentReader;

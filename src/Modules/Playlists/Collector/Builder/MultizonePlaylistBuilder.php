@@ -23,6 +23,14 @@ namespace App\Modules\Playlists\Collector\Builder;
 
 use App\Modules\Playlists\Collector\Contracts\PlaylistStructureInterface;
 
+/**
+ * Class MultizonePlaylistBuilder
+ *
+ * This class extends the AbstractPlaylistBuilder to handle the construction
+ * of a playlist for multiple zones. It processes zone-specific data, formats
+ * the playlist items, prefetch data, and exclusive data for each zone, and
+ * constructs a PlaylistStructureInterface using the aggregated information.
+ */
 class MultizonePlaylistBuilder extends AbstractPlaylistBuilder
 {
 	public function buildPlaylist(): PlaylistStructureInterface

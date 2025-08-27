@@ -23,6 +23,9 @@ namespace App\Modules\Playlists\Collector\Builder;
 
 use App\Modules\Playlists\Helper\ExportSmil\items\Base;
 
+/**
+ * Helper class for formatting content into specific sequences or modifying region attributes for multi-zone displays.
+ */
 class FormatHelper
 {
 	public static function wrapWithSequence(string $content): string

@@ -23,6 +23,9 @@ namespace App\Modules\Playlists\Collector;
 
 use App\Modules\Playlists\Collector\Contracts\PlaylistStructureInterface;
 
+/**
+ * Factory class for creating instances of SimplePlaylistStructure.
+ */
 class SimplePlaylistStructureFactory
 {
 

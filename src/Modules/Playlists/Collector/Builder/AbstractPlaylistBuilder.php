@@ -25,6 +25,10 @@ use App\Modules\Player\Entities\PlayerEntity;
 use App\Modules\Playlists\Collector\Contracts\PlaylistBuilderInterface;
 use App\Modules\Playlists\Collector\SimplePlaylistStructureFactory;
 
+/**
+ * An abstract class that serves as a blueprint for building playlists.
+ * Defines a structure and common properties required for creating playlist builders.
+ */
 abstract class AbstractPlaylistBuilder implements PlaylistBuilderInterface
 {
 	protected PlayerEntity $playerEntity;

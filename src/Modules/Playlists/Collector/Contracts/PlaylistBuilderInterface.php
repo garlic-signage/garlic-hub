@@ -22,6 +22,11 @@ declare(strict_types=1);
 namespace App\Modules\Playlists\Collector\Contracts;
 
 
+/**
+ * Interface PlaylistBuilderInterface
+ *
+ * Provides a contract for building a playlist structure.
+ */
 interface PlaylistBuilderInterface
 {
 	public function buildPlaylist(): PlaylistStructureInterface;

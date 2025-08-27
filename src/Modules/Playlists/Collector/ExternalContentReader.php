@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace App\Modules\Playlists\Collector;
 
 
-
 use App\Framework\Exceptions\ModuleException;
 use App\Modules\Playlists\Collector\Contracts\ExternalContentReaderInterface;
 use GuzzleHttp\Client;
@@ -31,6 +30,13 @@ use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
 use Psr\Http\Message\ResponseInterface;
 
+/**
+ * Class ExternalContentReader
+ *
+ * This class is responsible for reading external content, managing cached files, and ensuring the content is updated when necessary.
+ * It uses a FileSystem instance for file operations, a Client instance for HTTP requests,
+ * and manages cached data related to a playlist represented by a remote URL.
+ */
 class ExternalContentReader implements ExternalContentReaderInterface
 {
 	private string $cachePath;

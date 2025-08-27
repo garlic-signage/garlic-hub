@@ -23,6 +23,10 @@ namespace App\Modules\Playlists\Collector;
 
 use App\Modules\Playlists\Collector\Contracts\PlaylistStructureInterface;
 
+/**
+ * Represents a simple playlist structure that implements the PlaylistStructureInterface.
+ * This class handles items, prefetch, and exclusive properties for a playlist.
+ */
 class SimplePlaylistStructure implements PlaylistStructureInterface
 {
 	private string $items;

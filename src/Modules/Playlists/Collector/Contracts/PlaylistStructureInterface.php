@@ -21,6 +21,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Collector\Contracts;
 
+/**
+ * Defines the structure and required methods for a playlist.
+ */
 interface PlaylistStructureInterface
 {
 	public function getItems(): string;

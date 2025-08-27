@@ -27,6 +27,11 @@ use App\Modules\Playlists\Collector\SimplePlaylistStructureFactory;
 use App\Modules\Playlists\Helper\PlaylistMode;
 use App\Modules\Playlists\Collector\Contracts\PlaylistBuilderInterface;
 
+/**
+ * Factory class responsible for creating instances of PlaylistBuilderInterface.
+ * Determines the appropriate playlist builder implementation based on the
+ * playlist mode of the provided PlayerEntity.
+ */
 class PlaylistBuilderFactory
 {
 	private BuildHelper $buildHelper;
