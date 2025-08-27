@@ -32,6 +32,9 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 use Slim\Flash\Messages;
 
+/**
+ * Controller responsible for handling the display and editing of playlists in a compose interface.
+ */
 class ShowComposeController
 {
 	private readonly PlaylistsService $playlistsService;

@@ -32,6 +32,11 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * TriggerController is a readonly class responsible for handling trigger-related operations.
+ * This class interacts with an Orchestrator instance to process and validate trigger data,
+ * as well as perform save and fetch actions.
+ */
 readonly class TriggerController
 {
 	public function __construct(private readonly Orchestrator $orchestrator) {}

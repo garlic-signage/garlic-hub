@@ -31,6 +31,10 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Represents a controller responsible for managing the display and functionality
+ * of a datatable, integrating a facade and template preparation for generating responses.
+ */
 readonly class ShowDatatableController
 {
 	private DatatableFacadeInterface $facade;

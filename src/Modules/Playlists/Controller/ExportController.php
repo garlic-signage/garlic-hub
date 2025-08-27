@@ -29,6 +29,10 @@ use App\Modules\Playlists\Services\ExportService;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+
+/**
+ * Handles export-related functionality within the application.
+ */
 class ExportController extends AbstractAsyncController
 {
 	private readonly ExportService $exportService;

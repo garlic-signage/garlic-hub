@@ -27,6 +27,11 @@ use App\Modules\Playlists\Services\WidgetsService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
+/**
+ * Handles operations related to Widgets.
+ *
+ * This controller is responsible for fetching and saving widget data.
+ */
 class WidgetsController extends AbstractAsyncController
 {
 	private readonly WidgetsService $widgetsService;

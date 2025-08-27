@@ -33,6 +33,9 @@ use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
+/**
+ * Controller responsible for handling operations on items.
+ */
 class ItemsController extends AbstractAsyncController
 {
 	private readonly ItemsService $itemsService;

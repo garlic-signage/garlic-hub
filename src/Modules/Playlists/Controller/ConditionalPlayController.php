@@ -32,6 +32,9 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/**
+ * Handles conditional play logic by interfacing with an Orchestrator to validate and process requests.
+ */
 readonly class ConditionalPlayController
 {
 	public function __construct(private Orchestrator $orchestrator) {}

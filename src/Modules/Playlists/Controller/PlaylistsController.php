@@ -35,6 +35,9 @@ use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
+/**
+ * Controller responsible for handling various playlist-related operations such as deletion, shuffle toggling, zone management, and data retrieval.
+ */
 class PlaylistsController extends AbstractAsyncController
 {
 	private readonly PlaylistsService $playlistsService;

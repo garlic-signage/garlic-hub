@@ -33,6 +33,9 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 use Slim\Flash\Messages;
 
+/**
+ * Controller class responsible for handling settings related to playlists.
+ */
 class ShowSettingsController
 {
 	private readonly Facade $facade;
