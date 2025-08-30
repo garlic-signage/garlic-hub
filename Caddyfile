@@ -5,8 +5,7 @@ localhost {
         output file var/logs/frankenphp.log
         format console
       	level ERROR
-  }
-
+    }
 
     root * ./public
 
