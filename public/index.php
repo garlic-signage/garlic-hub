@@ -19,7 +19,6 @@
 */
 declare(strict_types=1);
 
-// phpinfo();
 use Slim\Psr7\Response;
 
 $app = require __DIR__ . '/../config/bootstrap.php';
