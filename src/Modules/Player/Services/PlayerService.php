@@ -100,7 +100,9 @@ class PlayerService extends AbstractBaseService
 			}
 			$affected = $this->playerRepository->update($playerId, ['playlist_id' => $playlistId]);
 
-			return ['affected' => $affected, 'playlist_name' => $playlistName];
+			$is_intranet = $playlist['is_intranet'] ?? 0;
+
+			return ['affected' => $affected, 'playlist_name' => $playlistName, 'is_intranet' => $is_intranet];
 		}
 		catch (Throwable $e)
 		{

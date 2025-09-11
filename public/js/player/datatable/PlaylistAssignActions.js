@@ -72,19 +72,22 @@ export class PlaylistAssignActions
 						}
 						removePlaylist.dataset.actionId = playlist_id;
 
-						let pushPlaylist = parentWithDataId.querySelector(".push-playlist");
-						if (pushPlaylist === null)
+						if (result.is_intranet === 1)
 						{
-							const li2 = document.createElement("li");
-							pushPlaylist = document.createElement("a");
-							pushPlaylist.href = "#";
-							pushPlaylist.dataset.action   = "push";
-							pushPlaylist.className = "bi bi-arrow-left-circle-fill push-playlist";
-							li2.appendChild(pushPlaylist);
-							actions.appendChild(li2);
-							this.#pushHandler.addPushPlaylistListener(pushPlaylist)
+							let pushPlaylist = parentWithDataId.querySelector(".push-playlist");
+							if (pushPlaylist === null)
+							{
+								const li2 = document.createElement("li");
+								pushPlaylist = document.createElement("a");
+								pushPlaylist.href = "#";
+								pushPlaylist.dataset.action   = "push";
+								pushPlaylist.className = "bi bi-arrow-left-circle-fill push-playlist";
+								li2.appendChild(pushPlaylist);
+								actions.appendChild(li2);
+								this.#pushHandler.addPushPlaylistListener(pushPlaylist)
+							}
+							pushPlaylist.dataset.actionId = playerId;
 						}
-						pushPlaylist.dataset.actionId = playerId;
 
 						let linkPlaylist = parentWithDataId.querySelector(".playlist-link");
 						if (linkPlaylist === null)

@@ -121,7 +121,7 @@ class PlayerServiceTest extends TestCase
 
 		$result = $this->service->replaceMasterPlaylist(1, 10);
 
-		static::assertSame(['affected' => 1, 'playlist_name' => 'Master Playlist'], $result);
+		static::assertSame(['affected' => 1, 'playlist_name' => 'Master Playlist', 'is_intranet' => 0], $result);
 	}
 
 	#[Group('units')]
@@ -161,7 +161,7 @@ class PlayerServiceTest extends TestCase
 
 		$result = $this->service->replaceMasterPlaylist(1, 0);
 
-		static::assertSame(['affected' => 1, 'playlist_name' => ''], $result);
+		static::assertSame(['affected' => 1, 'playlist_name' => '', 'is_intranet' => 0], $result);
 	}
 
 	#[Group('units')]
