@@ -51,7 +51,8 @@ export class RemoveHandler
 
 			parentWithDataId.querySelector(".playlist_id").innerText = result.playlist_name;
 			parentWithDataId.querySelector(".playlist-link").parentElement.remove();
-			parentWithDataId.querySelector(".push-playlist").parentElement.remove();
+			if (parentWithDataId.querySelector(".push-playlist") !== null)
+				parentWithDataId.querySelector(".push-playlist").parentElement.remove();
 			event.target.parentElement.remove();
 		});
 	}
