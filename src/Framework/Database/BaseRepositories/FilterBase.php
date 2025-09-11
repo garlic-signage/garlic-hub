@@ -32,7 +32,8 @@ use Doctrine\DBAL\Exception;
  */
 abstract class FilterBase extends SqlBase
 {
-	use CrudTraits, FindOperationsTrait;
+	use CrudTraits;
+	use FindOperationsTrait;
 
 	/**
 	 * @param array<string, array<string, mixed>> $fields
@@ -234,7 +235,7 @@ abstract class FilterBase extends SqlBase
 			default:
 				if (empty($parameter['value']))
 					break;
-				$value = '%'.str_replace('*', '%', $parameter['value']).'%';
+				$value = '%'.str_replace('*', '%', (string) $parameter['value']).'%';
 				$where[$this->table.'.'.$key] = $this->generateWhereClause($value, 'LIKE');
 		}
 		return $where;
