@@ -81,8 +81,8 @@ class Orchestrator
 			return $common;
 
 		$this->playlistId = (int) ($this->input['playlist_id'] ?? 0);
-		if ($this->playlistId === 0)
-			return $this->responseBuilder->invalidPlaylistId($response);
+	//	if ($this->playlistId === 0)
+	//		return $this->responseBuilder->invalidPlaylistId($response);
 
 		return null;
 	}

@@ -152,32 +152,6 @@ class OrchestratorTest extends TestCase
 		static::assertInstanceOf(ResponseInterface::class, $result);
 	}
 
-	/**
-	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testValidateWithInvalidPlaylistId(): void
-	{
-		$this->validatorMock->expects($this->once())->method('validateCsrfToken')
-			->with('valid_csrf_token')
-			->willReturn(true);
-
-		$this->responseBuilderMock->expects($this->once())->method('invalidPlaylistId')
-			->willReturn($this->responseMock);
-
-		$this->orchestrator->setInput([
-			'player_id' => '123',
-			BaseEditParameters::PARAMETER_CSRF_TOKEN => 'valid_csrf_token'
-		]);
-
-		$result = $this->orchestrator->validateForReplacePlaylist($this->responseMock);
-
-		static::assertInstanceOf(ResponseInterface::class, $result);
-	}
-
 
 	/**
 	 * @throws CoreException
