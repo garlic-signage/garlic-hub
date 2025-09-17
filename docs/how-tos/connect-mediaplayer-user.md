@@ -6,7 +6,7 @@ This guide walks you through connecting SMIL Media Players to Garlic-Hub. The pr
 
 | Component | Requirements |
 |-----------|--------------|
-| **Media Player** | One of the following compatible options:<br>• [Garlic-Player (open source)](https://garlic-player.com/garlic-player/downloads)<br>• [IAdea-Player](https://iadea.com) |
+| **Media Player** | One of the following compatible options:<br>• [Garlic-Player (open source)](https://garlic-signage.com/garlic-player/downloads)<br>• [IAdea-Player](https://iadea.com) |
 | **Garlic-Hub** | Access to `http://<your-domain>/smil-index` |
 | **Network** | Connection between player and CMS |
 
