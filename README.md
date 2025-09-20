@@ -7,6 +7,13 @@
 
 Garlic-Hub is a comprehensive Digital Signage Management solution that handles core CMS tasks alongside device management. From single-screen setups to distributed networks, it provides centralized control with flexibility for various signage environments.
 
+## Live Demo
+To see garlic-hub it in action use the demo:
+
+https://garlic-hub.com  
+login: admin  
+password: Demo1234!  
+
 > **Feature Freeze: Currently Working on:**
 >- fixing errors and testing
 
