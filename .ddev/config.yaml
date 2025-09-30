@@ -13,7 +13,7 @@ database:
 bind_all_interfaces: true
 omit_containers: [db]
 host_webserver_port: "8090"
-webimage_extra_packages: [ffmpeg, imagemagick, libmagickwand-dev, php8.3-xdebug]
+webimage_extra_packages: [ffmpeg, imagemagick, libmagickwand-dev, php8.4-xdebug]
 use_dns_when_possible: true
 composer_version: "2"
 web_environment:
