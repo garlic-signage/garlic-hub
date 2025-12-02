@@ -1,4 +1,4 @@
-name: docker-hub image
+name: docker-hub image for dev builds
 
 on:
   workflow_dispatch:
