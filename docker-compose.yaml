@@ -11,8 +11,3 @@ services:
     volumes:
       - garlic-hub-public-var:/var/www/public/var
       - garlic-hub-var:/var/www/var
-
-# for later use
-volumes:
-  garlic-hub-public-var:
-  garlic-hub-var:
