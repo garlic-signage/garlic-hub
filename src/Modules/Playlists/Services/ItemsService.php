@@ -174,23 +174,26 @@ class ItemsService extends AbstractBaseService
 			{
 				case ItemType::MEDIAPOOL->value:
 					$thumbnailPath = $this->mediaService->getPathThumbnails();
-					$tmp = $value;
+					$ext = 'jpg';
+					$extMap = ['svg'  => 'svg', 'svg+xml' => 'svg',	'gif'  => 'jpg', 'jpeg' => 'jpg'];
 					if (str_starts_with($value['mimetype'], 'image/'))
 					{
-						/** @var string $s */
-						$s = strrchr($value['mimetype'], '/');
-						$ext = str_replace('jpeg', 'jpg', substr($s, 1));
+						$s = (string) strrchr($value['mimetype'], '/');
+						$mimeTypePart = substr($s, 1);
+
+						if (isset($extMap[$mimeTypePart]))
+							$ext = $extMap[$mimeTypePart];
+						 else
+							$ext = $mimeTypePart;
 					}
-					else
-						$ext = 'jpg';
 
-					if ($value['mimetype'] === 'application/widget' && $value['content_data'] == '')
-						$tmp['paths']['thumbnail'] = $thumbnailPath.'/'.$value['file_resource'].'.svg';
-					else
-						$tmp['paths']['thumbnail'] = $thumbnailPath.'/'.$value['file_resource'].'.'.$ext;
+					$filename = $value['file_resource'];
+					$isSvgWidget = ($value['mimetype'] === 'application/widget' && $value['content_data'] == '');
+					$finalExt = $isSvgWidget ? 'svg' : $ext;
 
-					$items[] = $tmp;
-					break;
+					$tmp = $value;
+					$tmp['paths']['thumbnail'] = $thumbnailPath . '/' . $filename . '.' . $finalExt;
+					$items[] = $tmp;					break;
 				case ItemType::PLAYLIST->value:
 					$tmp = $value;
 					$tmp['paths']['thumbnail'] = 'public/images/icons/playlist.svg';
