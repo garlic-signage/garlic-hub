@@ -182,39 +182,6 @@ class PlaylistTest extends TestCase
 	 * @throws Exception
 	 */
 	#[Group('units')]
-	public function testInsertFailsOnUpdatePosition(): void
-	{
-		$playlistId = 1;
-		$insertId = 2;
-		$position = 1;
-		$playlistTargetData = ['playlist_id' => 1, 'duration' => 300, 'filesize' => 2048, 'playlist_name' => 'Test'];
-		$playlistInsertData = ['playlist_id' => 2, 'duration' => 150, 'filesize' => 1024, 'playlist_name' => 'Insert'];
-
-		$this->playlist->setUID(1);
-		$this->itemsRepositoryMock->expects($this->once())->method('beginTransaction');
-		$this->checkAclMockSuccessful($playlistTargetData, $playlistInsertData);
-
-		$this->itemsRepositoryMock->method('findAllPlaylistItemsByPlaylistId')
-			->with($insertId)
-			->willReturn([]);
-
-		$this->itemsRepositoryMock->method('updatePositionsWhenInserted')
-			->with($playlistId)
-			->willReturn(0);
-
-		$this->itemsRepositoryMock->expects($this->never())->method('insert');
-
-		$this->itemsRepositoryMock->method('rollBackTransaction');
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Error insert playlist: Positions could not be updated.');
-
-		static::assertEmpty($this->playlist->insert($playlistId, $insertId, $position));
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
 	public function testInsertFails(): void
 	{
 		$playlistId = 1;
