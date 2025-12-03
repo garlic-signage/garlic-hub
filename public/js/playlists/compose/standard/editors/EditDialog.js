@@ -43,6 +43,7 @@ export class EditDialog
 	closeDialog()
 	{
 		this.#dialogElement.close();
+		this.#editItemForm.removeEventListener("submit", this.#saveCallback);
 	}
 
 	setId(id)
@@ -75,11 +76,14 @@ export class EditDialog
 	onSave(callback)
 	{
 		this.#saveCallback = callback
-		this.#editItemForm.addEventListener("submit", this.#saveCallback);
+		this.#editItemForm.addEventListener("submit", this.#saveCallback, { once: true });
 	}
+
+	removeListener
 
 	onCancel()
 	{
+
 		this.cancelHandler = (e) => {
 			e.preventDefault();
 			this.#cancelButton.removeEventListener("click", this.cancelHandler);
