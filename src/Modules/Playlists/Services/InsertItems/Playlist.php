@@ -61,8 +61,7 @@ class Playlist extends AbstractInsertItem
 			/*			if (!$this->allowedByTimeLimit($targetId, $playlistTargetData['time_limit']))
 							throw new ModuleException('items', 'Playlist time limit exceeds');
 			*/
-			if ($this->itemsRepository->updatePositionsWhenInserted($playlistId, $position) === 0)
-				throw new ModuleException('items', 'Positions could not be updated.');
+			$this->itemsRepository->updatePositionsWhenInserted($playlistId, $position);
 
 			$saveItem = [
 				'playlist_id'   => $playlistId,

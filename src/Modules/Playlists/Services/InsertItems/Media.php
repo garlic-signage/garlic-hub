@@ -77,6 +77,7 @@ class Media extends AbstractInsertItem
 			*/
 			$itemDuration =  $this->playlistMetricsCalculator->calculateRemainingMediaDuration($playlistData, $media);
 			$this->itemsRepository->updatePositionsWhenInserted($playlistId, $position);
+
 			$saveItem = [
 				'playlist_id'   => $playlistId,
 				'datasource'    => 'file',
