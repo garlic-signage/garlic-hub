@@ -21,14 +21,16 @@ export class WidgetForm
 	html_form = "";
 	values = {};
 	preferences = {};
+	namespace = null;
 	constructor()
 	{
 	}
 
-	parsePreferences(prefs, vals)
+	parsePreferences(prefs, vals, namespace = null)
 	{
 		this.values       = vals;
 		this.preferences   = prefs;
+		this.namespace     = namespace;
 		let size = Object.keys(this.preferences).length;
 		if (size === 0)
 			return;
@@ -83,30 +85,31 @@ export class WidgetForm
 			{
 				default:
 				case "text":
-					result[key] = document.getElementById(key).value;
+					result[key] = document.getElementById(this._elementId(key)).value;
 					break;
 				case "radio":
 					for (const [options_key, options_value] of Object.entries(props.options))
 					{
-						if (document.getElementById(key + "_" + options_key).checked)
+						if (document.getElementById(this._elementId(key + "_" + options_key)).checked)
 						{
-							result[key] = document.getElementById(key + "_" + options_key).value;
+							result[key] = document.getElementById(this._elementId(key + "_" + options_key)).value;
 							break;
 						}
 					}
 					break;
 				case "colorOpacity":
-					result[key] = document.getElementById(key).value;
+					result[key] = document.getElementById(this._elementId(key)).value;
 					break;
 				case "integer":
-					result[key] = document.getElementById(key).value;
+					result[key] = document.getElementById(this._elementId(key)).value;
 					break;
 				case "color":
-					result[key] = document.getElementById(key).value;
+					result[key] = document.getElementById(this._elementId(key)).value;
 					break;
 				case "list":
 				case "combo":
-					result[key] = document.getElementById(key)[document.getElementById(key).selectedIndex].value;
+					const el = document.getElementById(this._elementId(key));
+					result[key] = el[el.selectedIndex].value;
 					break;
 			}
 
@@ -123,7 +126,7 @@ export class WidgetForm
 	generateEdit(key, props, value)
 	{
 		let the_value = this.checkForDefaultValue(props, value);
-		return '<input type="text"' + ' id="' + key + '"' + ' name="' + key + '"' + this.checkToolTip(props) + this.checkMandatory(props) + the_value + '/>';
+		return '<input type="text"' + ' id="' + this._elementId(key) + '"' + ' name="' + key + '"' + this.checkToolTip(props) + this.checkMandatory(props) + the_value + '/>';
 	}
 
 	generateRadio(key, props, value)
@@ -140,7 +143,7 @@ export class WidgetForm
 				if (value === options_value)
 					checked = ' checked="checked"';
 			}
-			html += '<input type="radio"' + ' id="' + key + "_" + options_key + '"' + ' name="' + key + '"' + ' value="' + options_value +'"' + checked + '/>'  + options_key;
+			html += '<input type="radio"' + ' id="' + this._elementId(key + "_" + options_key) + '"' + ' name="' + key + '"' + ' value="' + options_value +'"' + checked + '/>'  + options_key;
 		}
 		return html;
 	}
@@ -153,18 +156,18 @@ export class WidgetForm
 			min_max += ' min="'+min+'"';
 		if (max !== undefined)
 			min_max += ' max="'+max+'"';
-		return '<input type="number"' + ' id="' + key + '"' + ' name="' + key + '"' + min_max + this.checkToolTip(props) + this.checkMandatory(props) + the_value + '/>';
+		return '<input type="number"' + ' id="' + this._elementId(key) + '"' + ' name="' + key + '"' + min_max + this.checkToolTip(props) + this.checkMandatory(props) + the_value + '/>';
 	}
 
 	generateColor(key, props, value)
 	{
 		let the_value = this.checkForDefaultColorValue(props, value);
-		return '<input type="color"' + ' id="' + key + '"' + ' name="' + key + '"' + this.checkToolTip(props) + this.checkMandatory(props) +  the_value + '/>';
+		return '<input type="color"' + ' id="' + this._elementId(key) + '"' + ' name="' + key + '"' + this.checkToolTip(props) + this.checkMandatory(props) +  the_value + '/>';
 	}
 
 	generateDropDown(key, props, value)
 	{
-		let html = '<select id="' + key + '" name="' + key + '" />';
+		let html = '<select id="' + this._elementId(key) + '" name="' + key + '" />';
 
 		for (const [options_key, options_value] of Object.entries(props.options))
 		{
@@ -232,5 +235,13 @@ export class WidgetForm
 			return "";
 
 		return " required";
+	}
+
+	_elementId(key)
+	{
+		if (this.namespace === null)
+			return key;
+
+		return this.namespace + '_' + key;
 	}
 }
