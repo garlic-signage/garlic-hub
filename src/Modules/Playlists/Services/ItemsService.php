@@ -193,7 +193,12 @@ class ItemsService extends AbstractBaseService
 
 					$tmp = $value;
 					$tmp['paths']['thumbnail'] = $thumbnailPath . '/' . $filename . '.' . $finalExt;
-					$items[] = $tmp;					break;
+					// ugly workaround fix this later.
+					if ($value['mimetype'] === 'application/widget' && !file_exists($tmp['paths']['thumbnail']))
+						$tmp['paths']['thumbnail'] = $thumbnailPath . '/' . $filename . '.png';
+
+					$items[] = $tmp;
+					break;
 				case ItemType::PLAYLIST->value:
 					$tmp = $value;
 					$tmp['paths']['thumbnail'] = 'public/images/icons/playlist.svg';

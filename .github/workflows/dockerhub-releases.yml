@@ -28,4 +28,4 @@ jobs:
         push: true
         tags: |
           sagiadinos/garlic-hub:latest
-          sagiadinos/garlic-hub:1.0
+          sagiadinos/garlic-hub:1.0.1
