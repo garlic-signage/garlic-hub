@@ -79,8 +79,6 @@ export class EditDialog
 		this.#editItemForm.addEventListener("submit", this.#saveCallback, { once: true });
 	}
 
-	removeListener
-
 	onCancel()
 	{
 
