@@ -33,11 +33,11 @@ The environment is regularly deleted and rebuilt.
 
 Garlic-Hub is being developed in three phases, each delivering a distinct edition:
 
-| Edition                  | Target Environment                 | Key Features                                                             | Status              |
-|--------------------------|------------------------------------|--------------------------------------------------------------------------|---------------------|
-| **Edge** (Phase 1)       | Single-device or small deployments | Basic media management, SMIL playlist creation, lightweight architecture | ✅ Release Candidate |
-| **Core** (Phase 2)       | Mid-sized networks, NAS            | Limited device management, enhanced content creation                     | 🔄 Planned          |
-| **Enterprise** (Phase 3) | Large-scale networks               | SaaS/on-premise, role-based permissions, advanced analytics              | 🔄 Planned          |
+| Edition                  | Target Environment                 | Key Features                                                             | Status            |
+|--------------------------|------------------------------------|--------------------------------------------------------------------------|-------------------|
+| **Edge** (Phase 1)       | Single-device or small deployments | Basic media management, SMIL playlist creation, lightweight architecture | ✅ Released Public |
+| **Core** (Phase 2)       | Mid-sized networks, NAS            | Limited device management, enhanced content creation                     | 🔄 Planned        |
+| **Enterprise** (Phase 3) | Large-scale networks               | SaaS/on-premise, role-based permissions, advanced analytics              | 🔄 Planned        |
 
 Each edition builds upon previous features, ensuring a smooth upgrade path as Garlic-Hub evolves into a comprehensive, SMIL-based digital signage solution.
 
