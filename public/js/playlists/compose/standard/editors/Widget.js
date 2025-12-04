@@ -42,7 +42,7 @@ export class Widget
 	{
 		this.#editDialog.setTitle(this.#widgetData.data.item_name);
 		this.#editDialog.setId(this.#widgetData.data.item_id);
-		this.#widgetForm.parsePreferences(this.#widgetData.data.preferences, this.#widgetData.data.values);
+		this.#widgetForm.parsePreferences(this.#widgetData.data.preferences, this.#widgetData.data.values, this.#widgetData.data.item_id);
 		this.#editDialog.setContent(this.#widgetForm.getForm());
 
 		let saveCallBack = async (e) =>
