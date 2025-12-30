@@ -19,6 +19,7 @@
 
 export const PlayerApiConfig = {
     BASE_URI: "/async/player",
+	ACLS_URI: "/async/player/acls",
     PLAYLIST_URI: "/async/player/playlist",
 	PUSH_URI: "/async/player/push"
 };

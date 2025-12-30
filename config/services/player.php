@@ -34,6 +34,7 @@ use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
 use App\Framework\Utils\Datatable\PrepareService;
 use App\Framework\Utils\Datatable\TimeUnitsCalculator;
 use App\Modules\Auth\UserSession;
+use App\Modules\Player\Controller\PlayerController;
 use App\Modules\Player\Controller\PlayerPlaylistController;
 use App\Modules\Player\Controller\PlayerIndexController;
 use App\Modules\Player\Controller\ShowDatatableController;
@@ -212,6 +213,14 @@ $dependencies[Orchestrator::class] = DI\factory(function (ContainerInterface $co
 $dependencies[PlayerPlaylistController::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new PlayerPlaylistController($container->get(Orchestrator::class));
+});
+$dependencies[PlayerController::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new PlayerController(
+		$container->get(JsonResponseHandler::class),
+		$container->get(UserSession::class),
+		$container->get(PlayerService::class)
+	);
 });
 
 

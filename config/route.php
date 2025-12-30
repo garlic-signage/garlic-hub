@@ -27,6 +27,7 @@ use App\Modules\Mediapool\Controller\MediaController;
 use App\Modules\Mediapool\Controller\NodesController;
 use App\Modules\Mediapool\Controller\ShowController;
 use App\Modules\Mediapool\Controller\UploadController;
+use App\Modules\Player\Controller\PlayerController;
 use App\Modules\Player\Controller\PlayerPlaylistController;
 use App\Modules\Player\Controller\PlayerIndexController;
 use App\Modules\Player\Controller\ShowConnectivityController;
@@ -167,6 +168,8 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 
 	$group->patch('/player/playlist', resolve([PlayerPlaylistController::class, 'replacePlaylist'], $container));
 	$group->patch('/player/push', resolve([PlayerPlaylistController::class, 'pushPlaylist'], $container));
+	$group->get('/player/acls/{player_id:\d+}', resolve([PlayerController::class, 'determineRights'], $container));
+	$group->get('/player/{player_id:\d+}', resolve([PlayerController::class, 'fetchPlayer'], $container));
 
 	$group->get('/users/find/{username}', resolve([UsersController::class, 'findByName'], $container));
 
