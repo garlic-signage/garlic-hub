@@ -66,8 +66,8 @@ class PlayerController
 		if ($this->playerData === [])
 			return $this->responseHandler->jsonSuccess($response, $responseData);
 
-	//	$responseData['can_edit']  = true;
-	//	$responseData['is_delete'] = true;
+		$responseData['can_edit']  = true;
+		$responseData['is_delete'] = true;
 
 		return $this->responseHandler->jsonSuccess($response, $responseData);
 	}
