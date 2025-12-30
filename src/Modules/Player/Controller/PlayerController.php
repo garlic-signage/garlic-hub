@@ -58,7 +58,7 @@ class PlayerController
 	public function determineRights(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
 		$playerId = (int) ($args['player_id'] ?? 0);
-		$responseData = ['can_edit' => false, ['can_delete' => false]];
+		$responseData = ['can_edit' => false, 'can_delete' => false];
 		if ($playerId === 0)
 			return $this->responseHandler->jsonSuccess($response, $responseData);
 
@@ -66,8 +66,8 @@ class PlayerController
 		if ($this->playerData === [])
 			return $this->responseHandler->jsonSuccess($response, $responseData);
 
-		$responseData['can_edit']  = true;
-		$responseData['is_delete'] = true;
+	//	$responseData['can_edit']  = true;
+	//	$responseData['is_delete'] = true;
 
 		return $this->responseHandler->jsonSuccess($response, $responseData);
 	}

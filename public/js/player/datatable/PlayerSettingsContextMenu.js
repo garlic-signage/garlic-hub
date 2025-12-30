@@ -19,31 +19,41 @@
 export class PlayerSettingsContextMenu
 {
 	#menu = {};
+	#playerService;
 
-	constructor(contextMenuTemplate)
+	constructor(contextMenuTemplate, playerService)
 	{
 		this.#menu = contextMenuTemplate.content.cloneNode(true).firstElementChild;
+		this.#playerService = playerService;
 	}
 
 	init(openActions)
 	{
 		for (let i = 0; i < openActions.length; i++)
 		{
-			openActions[i].addEventListener('click', (event) => {
+			openActions[i].addEventListener('click', async (event) => {
 				event.preventDefault();
-				this.#menu.style.left = `${event.pageX}px`;
-				this.#menu.style.top = `${event.pageY}px`;
-				document.body.appendChild(this.#menu);
+				const currentId = event.target.dataset.id;
+				const responseData = await this.#playerService.determineRights(currentId);
+				let currentMenu = this.#menu;
+				if (responseData.can_edit === false)
+					return;
+
+				if (responseData.can_delete === false)
+					currentMenu.querySelectorAll(".delete").forEach(el => el.remove());
+
+				currentMenu.style.left = `${event.pageX}px`;
+				currentMenu.style.top = `${event.pageY}px`;
+				document.body.appendChild(currentMenu);
 				event.stopPropagation(); // not to close menu immediately
 
-				const currentId = event.target.dataset.id;
-				const links = this.#menu.querySelectorAll('a');
+				const links = currentMenu.querySelectorAll('a');
 				links.forEach(link =>
 				{
 					link.href = link.href + currentId;
 				});
 
-				document.addEventListener('click', () => this.#menu.remove(), { once: true });});
+				document.addEventListener('click', () => currentMenu.remove(), { once: true });});
 		}
 
 	}

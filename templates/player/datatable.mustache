@@ -3,7 +3,7 @@
 <template id="playerSettingsContextMenuTemplate">
 	<ul class="context-menu">
 		{{#create_player_settings_contextmenu}}
-		<li>
+		<li class="{{{PLAYER_SETTING}}}">
 			<a href="/player/{{{PLAYER_SETTING}}}/">{{{LANG_PLAYER_SETTING}}}</a>
 		</li>
 		{{/create_player_settings_contextmenu}}

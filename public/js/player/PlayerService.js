@@ -32,6 +32,13 @@ export class PlayerService extends BaseService
         return await this._sendRequest(url, "PATCH", data);
     }
 
+	determineRights(playerId)
+	{
+		const url = PlayerApiConfig.ACLS_URI + "/" + playerId;
+		return this._sendRequestAsync(url, "GET");
+	}
+
+
 	pushPlaylist(playerId)
 	{
 		const url = PlayerApiConfig.PUSH_URI;
@@ -39,6 +46,15 @@ export class PlayerService extends BaseService
 			player_id: playerId,
 		};
 		return this._sendRequestAsync(url, "PATCH", data);
+	}
+
+	delete(playerId)
+	{
+		const url = PlayerApiConfig.BASE_URI;
+		const data = {
+			player_id: playerId,
+		};
+		return this._sendRequestAsync(url, "DELETE", data);
 	}
 
 }

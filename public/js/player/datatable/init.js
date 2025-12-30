@@ -29,12 +29,13 @@ import {WaitOverlay} from "../../core/WaitOverlay.js";
 
 document.addEventListener("DOMContentLoaded", function()
 {
+	const playerService = new PlayerService(new FetchClient())
 	const contextMenu = new PlayerSettingsContextMenu(
-		document.getElementById("playerSettingsContextMenuTemplate")
+		document.getElementById("playerSettingsContextMenuTemplate"),
+		playerService
 	);
 	contextMenu.init(document.getElementsByClassName("player-contextmenu"));
 
-	const playerService = new PlayerService(new FetchClient())
     const autocompleteFactory = new AutocompleteFactory();
 	const flashMessageHandler = new FlashMessageHandler();
 	const pushHandler = new PushHandler(flashMessageHandler, playerService, new WaitOverlay());
