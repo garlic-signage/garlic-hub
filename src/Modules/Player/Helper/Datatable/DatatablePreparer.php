@@ -204,6 +204,11 @@ class DatatablePreparer extends AbstractDatatablePreparer
 				'LANG_PLAYER_SETTING' => $value
 			];
 		}
+		$data[] = [
+			'PLAYER_SETTING' => 'delete',
+			'LANG_PLAYER_SETTING' => $this->translator->translate('delete', 'main')
+		];
+
 		return $data;
 	}
 
