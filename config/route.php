@@ -170,6 +170,7 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 	$group->patch('/player/push', resolve([PlayerPlaylistController::class, 'pushPlaylist'], $container));
 	$group->get('/player/acls/{player_id:\d+}', resolve([PlayerController::class, 'determineRights'], $container));
 	$group->get('/player/{player_id:\d+}', resolve([PlayerController::class, 'fetchPlayer'], $container));
+	$group->delete('/player', resolve([PlayerController::class, 'delete'], $container));
 
 	$group->get('/users/find/{username}', resolve([UsersController::class, 'findByName'], $container));
 
