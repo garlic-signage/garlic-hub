@@ -195,21 +195,21 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	public function formatPlayerContextMenu(): array
 	{
 		$list = $this->translator->translateArrayForOptions('player_settings_selects', 'player');
-		$data = [];
+		$create = [];
 
 		foreach ($list as $key => $value)
 		{
-			$data[] = [
+			$create[] = [
 				'PLAYER_SETTING' => $key,
 				'LANG_PLAYER_SETTING' => $value
 			];
 		}
-		$data[] = [
-			'PLAYER_SETTING' => 'delete',
-			'LANG_PLAYER_SETTING' => $this->translator->translate('delete', 'main')
-		];
 
-		return $data;
+		$ret = ['create_player_settings_contextmenu' => $create];
+		$ret['LANG_PLAYER_DELETE'] = $this->translator->translate('delete', 'main');
+		$ret['LANG_PLAYER_DELETE_CONFIRM'] = $this->translator->translate('delete_confirm', 'player');
+
+		return $ret;
 	}
 
 
