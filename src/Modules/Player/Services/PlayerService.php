@@ -78,6 +78,22 @@ class PlayerService extends AbstractBaseService
 	}
 
 	/**
+	 * @throws CoreException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 */
+	public function delete(int $playerId): int
+	{
+		$player = $this->fetchAclCheckedPlayerData($playerId);
+		if ($player === [])
+			return 0;
+
+		return 1;
+		return $this->playerRepository->delete($playerId);
+	}
+
+	/**
 	 * @return array<string,mixed>
 	 */
 	public function replaceMasterPlaylist(int $playerId, int $playlistId): array
