@@ -41,4 +41,9 @@ export class Utils
 
 		return `${size} ${sizes[i]}`;
 	}
+
+	static async confirmAction(message)
+	{
+		return confirm(message);
+	}
 }
