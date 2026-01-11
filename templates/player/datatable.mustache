@@ -1,11 +1,17 @@
 {{> datatable}}
 
 <template id="playerSettingsContextMenuTemplate">
+
+	{{#player_settings_contextmenu}}
 	<ul class="context-menu">
 		{{#create_player_settings_contextmenu}}
 		<li class="{{{PLAYER_SETTING}}}">
 			<a href="/player/{{{PLAYER_SETTING}}}/">{{{LANG_PLAYER_SETTING}}}</a>
 		</li>
 		{{/create_player_settings_contextmenu}}
+		<li class="delete" data-confirm="{{{LANG_PLAYER_DELETE_CONFIRM}}}">
+			{{{LANG_PLAYER_DELETE}}}
+		</li>
 	</ul>
+	{{/player_settings_contextmenu}}
 </template>
