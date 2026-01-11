@@ -89,7 +89,6 @@ class PlayerService extends AbstractBaseService
 		if ($player === [])
 			return 0;
 
-		return 1;
 		return $this->playerRepository->delete($playerId);
 	}
 

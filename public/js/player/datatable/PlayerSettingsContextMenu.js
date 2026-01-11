@@ -58,7 +58,9 @@ export class PlayerSettingsContextMenu
 								const result = await this.#playerService.delete(currentId);
 								if (result.success === true)
 								{
-
+									const ul = document.querySelector('ul[data-id="'+currentId+'"]');
+									const li = ul?.closest('li');
+									li?.remove();
 								}
 								else
 									this.#flashMessagehandler.showError(result.error_message);
