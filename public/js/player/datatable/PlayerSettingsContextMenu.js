@@ -16,14 +16,18 @@
  You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+import {Utils} from "../../core/Utils.js";
+
 export class PlayerSettingsContextMenu
 {
 	#menu = {};
 	#playerService;
+	#flashMessagehandler
 
-	constructor(contextMenuTemplate, playerService)
+	constructor(contextMenuTemplate, flashMessagehandler, playerService)
 	{
 		this.#menu = contextMenuTemplate.content.cloneNode(true).firstElementChild;
+		this.#flashMessagehandler = flashMessagehandler;
 		this.#playerService = playerService;
 	}
 
@@ -33,15 +37,37 @@ export class PlayerSettingsContextMenu
 		{
 			openActions[i].addEventListener('click', async (event) => {
 				event.preventDefault();
-				const currentId = event.target.dataset.id;
+				const currentId    = Number(event.target.dataset.id);
 				const responseData = await this.#playerService.determineRights(currentId);
-				let currentMenu = this.#menu;
+				let currentMenu    = this.#menu;
 				if (responseData.can_edit === false)
 					return;
-
+				const deletes = currentMenu.querySelectorAll(".delete");
 				if (responseData.can_delete === false)
-					currentMenu.querySelectorAll(".delete").forEach(el => el.remove());
+				{
+					deletes.forEach(el => el.remove());
+					return;
+				}
+				else
+				{
+					deletes.forEach(el => {
+						el.addEventListener('click', async (event) => {
+							const ok = await Utils.confirmAction(el.dataset.confirm);
+							if (ok)
+							{
+								const result = await this.#playerService.delete(currentId);
+								if (result.success === true)
+								{
 
+								}
+								else
+									this.#flashMessagehandler.showError(result.error_message);
+							}
+							event.preventDefault();
+						});
+					});
+
+				}
 				currentMenu.style.left = `${event.pageX}px`;
 				currentMenu.style.top = `${event.pageY}px`;
 				document.body.appendChild(currentMenu);
