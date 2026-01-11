@@ -24,6 +24,7 @@ use App\Framework\Core\Acl\AclHelper;
 use App\Framework\Core\BaseValidator;
 use App\Framework\Core\Config\Config;
 use App\Framework\Core\Crypt;
+use App\Framework\Core\CsrfToken;
 use App\Framework\Core\Sanitizer;
 use App\Framework\Core\Session;
 use App\Framework\Core\Translate\Translator;
@@ -219,7 +220,8 @@ $dependencies[PlayerController::class] = DI\factory(function (ContainerInterface
 	return new PlayerController(
 		$container->get(JsonResponseHandler::class),
 		$container->get(UserSession::class),
-		$container->get(PlayerService::class)
+		$container->get(PlayerService::class),
+		$container->get(CsrfToken::class)
 	);
 });
 

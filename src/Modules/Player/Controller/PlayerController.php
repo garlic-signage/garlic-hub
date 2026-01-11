@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace App\Modules\Player\Controller;
 
 use App\Framework\Controller\JsonResponseHandler;
+use App\Framework\Core\CsrfToken;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
@@ -44,6 +45,7 @@ class PlayerController
 		private readonly JsonResponseHandler $responseHandler,
 		private readonly UserSession         $userSession,
 		private readonly PlayerService       $playerService,
+		private readonly CsrfToken 		 	 $csrfToken
 	) {}
 
 	/**
@@ -89,6 +91,25 @@ class PlayerController
 		$this->fetchPlayerData($playerId);
 		if ($this->playerData === [])
 			return $this->responseHandler->jsonError($response, 'No player found');
+
+		return $this->responseHandler->jsonSuccess($response, $this->playerData);
+	}
+
+	public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	{
+		$requestData = $request->getParsedBody();
+
+		if (!$this->csrfToken->validateToken($requestData['csrf_token'] ?? ''))
+			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.', 200);
+
+		$playerId = (int) ($requestData['player_id'] ?? 0);
+		if ($playerId === 0)
+			return $this->responseHandler->jsonError($response, 'No playerId', 200);
+
+		$UID = $this->userSession->getUID();
+		$this->playerService->setUID($UID);
+		if ($this->playerService->delete($playerId) === 0)
+			return $this->responseHandler->jsonError($response, 'Player not deleted.', 200);
 
 		return $this->responseHandler->jsonSuccess($response, $this->playerData);
 	}
