@@ -31,58 +31,52 @@ export class PlayerSettingsContextMenu
 		this.#playerService = playerService;
 	}
 
-	init(openActions)
-	{
-		for (let i = 0; i < openActions.length; i++)
-		{
+	init(openActions) {
+		for (let i = 0; i < openActions.length; i++) {
 			openActions[i].addEventListener('click', async (event) => {
 				event.preventDefault();
-				const currentId    = Number(event.target.dataset.id);
+				const currentId = Number(event.target.dataset.id);
 				const responseData = await this.#playerService.determineRights(currentId);
-				let currentMenu    = this.#menu;
-				if (responseData.can_edit === false)
-					return;
-				const deletes = currentMenu.querySelectorAll(".delete");
-				if (responseData.can_delete === false)
-				{
-					deletes.forEach(el => el.remove());
+
+				if (!responseData.can_edit) return;
+
+				const deleteMenuItem = this.#menu.querySelector(".delete");
+
+				if (!responseData.can_delete) {
+					deleteMenuItem.remove();
 					return;
 				}
-				else
-				{
-					deletes.forEach(el => {
-						el.addEventListener('click', async (event) => {
-							const ok = await Utils.confirmAction(el.dataset.confirm);
-							if (ok)
-							{
-								const result = await this.#playerService.delete(currentId);
-								if (result.success === true)
-								{
-									const ul = document.querySelector('ul[data-id="'+currentId+'"]');
-									const li = ul?.closest('li');
-									li?.remove();
-								}
-								else
-									this.#flashMessagehandler.showError(result.error_message);
-							}
-							event.preventDefault();
-						});
-					});
 
-				}
-				currentMenu.style.left = `${event.pageX}px`;
-				currentMenu.style.top = `${event.pageY}px`;
-				document.body.appendChild(currentMenu);
-				event.stopPropagation(); // not to close menu immediately
+				const controller = new AbortController();
 
-				const links = currentMenu.querySelectorAll('a');
-				links.forEach(link =>
-				{
+				deleteMenuItem.addEventListener('click', async (e) => {
+					e.preventDefault();
+					const ok = await Utils.confirmAction(deleteMenuItem.dataset.confirm);
+					if (ok)
+					{
+						const result = await this.#playerService.delete(currentId);
+						if (result.success)
+							document.querySelector(`ul[data-id="${currentId}"]`)?.closest('li')?.remove();
+						 else
+							this.#flashMessagehandler.showError(result.error_message);
+					}
+				}, { signal: controller.signal });
+
+				this.#menu.style.left = `${event.pageX}px`;
+				this.#menu.style.top = `${event.pageY}px`;
+				document.body.appendChild(this.#menu);
+
+				this.#menu.querySelectorAll('a').forEach(link => {
 					link.href = link.href + currentId;
 				});
 
-				document.addEventListener('click', () => currentMenu.remove(), { once: true });});
-		}
+				document.addEventListener('click', () => {
+					controller.abort(); // Killt delete-Listener
+					this.#menu.remove();
+				}, { once: true });
 
+				event.stopPropagation();
+			});
+		}
 	}
 }
