@@ -48,6 +48,7 @@ use DateTime;
  */
 class PlayerEntity
 {
+	const int DEFAULT_PLAYER_REFRESH = 300;
 	private readonly Config $config;
 	private int $playerId;
 	private int $playlistId;
@@ -126,7 +127,7 @@ class PlayerEntity
 			$this->lastUpdatePlaylist   = $check;
 		$this->duration             = $data['duration'] ?? 0;
 		$this->status               = $data['status'] ?? 0;
-		$this->refresh              = $data['refresh'] ?? 900;
+		$this->refresh              = $data['refresh'] ?? self::DEFAULT_PLAYER_REFRESH;
 		$this->licenceId            = $data['licence_id'] ?? 0;
 		$this->model                = $userAgentHandler->getModel();
 		$this->isIntranet           = $data['is_intranet'] ?? false;

@@ -143,7 +143,7 @@ class PlayerEntityTest extends TestCase
 		static::assertEquals(new DateTime('2025-01-01 00:00:00'), $this->playerEntity->getLastUpdatePlaylist());
 		static::assertSame(0, $this->playerEntity->getDuration());
 		static::assertSame(0, $this->playerEntity->getStatus());
-		static::assertSame(900, $this->playerEntity->getRefresh());
+		static::assertSame(PlayerEntity::DEFAULT_PLAYER_REFRESH, $this->playerEntity->getRefresh());
 		static::assertSame(0, $this->playerEntity->getLicenceId());
 		static::assertSame('', $this->playerEntity->getPlaylistName());
 		static::assertSame('', $this->playerEntity->getPlaylistMode());

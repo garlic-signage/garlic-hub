@@ -160,7 +160,7 @@ class PlayerDataAssembler
 			'playlist_id' => 0,
 			'UID'         => $ownerId,
 			'status'      => PlayerStatus::UNRELEASED->value,
-			'refresh'     => 900,
+			'refresh'     => PlayerEntity::DEFAULT_PLAYER_REFRESH,
 			'licence_id'  => 0,
 			'commands'    => [],
 			'reports'     => [],
