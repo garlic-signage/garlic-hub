@@ -12,6 +12,7 @@ This guide walks you through connecting SMIL Media Players to Garlic-Hub. The pr
 
 ## 2. Determining Your Content URL
 
+
 Players require an index file to enable content playback. This index serves as a comprehensive guide that provides:
 - Location of media files
 - Destination for log data
@@ -25,6 +26,8 @@ If Garlic-Hub is hosted at `http://localhost:8090`, your content URL will be: `h
 ## 3. Connecting Your Player
 
 ### 3.1. Garlic-Player Connection
+
+**Important: if you need ports use the latest garlic-player dev-release not the stable.** 
 
 1. Connect a keyboard to your device and start the Garlic-Player
 2. Press `Ctrl+S` to open the settings dialog
