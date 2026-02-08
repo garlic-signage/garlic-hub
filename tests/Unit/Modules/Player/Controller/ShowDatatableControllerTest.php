@@ -98,7 +98,7 @@ class ShowDatatableControllerTest extends TestCase
 			->willReturn($templateData);
 
 		$this->facadeMock->expects($this->once())->method('preparePlayerSettingsContextMenu')->willReturn( ['a contextmenu stub']);
-		$templateData['this_layout']['data']['create_player_settings_contextmenu'] = ['a contextmenu stub'];
+		$templateData['this_layout']['data']['player_settings_contextmenu'] = ['a contextmenu stub'];
 
 		$this->responseMock->method('getBody')->willReturn($this->streamInterfaceMock);
 		$this->streamInterfaceMock->expects($this->once())->method('write')
