@@ -169,7 +169,7 @@ class PlaylistsRepositoryTest extends TestCase
 		];
 
 		$this->queryBuilderMock->expects($this->once())->method('select')
-			->with('playlists.*')->willReturnSelf();
+			->with('playlists.*, \'user\'')->willReturnSelf();
 		$this->queryBuilderMock->expects($this->once())->method('from')
 			->with('playlists')->willReturnSelf();
 
