@@ -166,7 +166,7 @@ class UserMainRepositoryTest extends TestCase
 			->willReturn($this->queryBuilderMock);
 
 		$this->queryBuilderMock->expects($this->once())->method('select')
-			->with('user_main.*')->willReturnSelf();
+			->with('user_main.*, \'moduleadmin\'')->willReturnSelf();
 		$this->queryBuilderMock->expects($this->once())->method('from')
 			->with('user_main')->willReturnSelf();
 		$this->queryBuilderMock->expects($this->never())->method('leftJoin');
