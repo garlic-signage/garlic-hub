@@ -559,7 +559,7 @@ class ItemsServiceTest extends TestCase
 
 		static::assertArrayHasKey('items', $result);
 		static::assertCount(1, $result['items']);
-		static::assertEquals('/path/to/thumbnails/image_checksum.svg', $result['items'][0]['paths']['thumbnail']);
+		static::assertEquals('/path/to/thumbnails/image_checksum.png', $result['items'][0]['paths']['thumbnail']);
 	}
 
 
