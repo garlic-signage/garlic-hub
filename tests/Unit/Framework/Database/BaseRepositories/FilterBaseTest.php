@@ -178,7 +178,7 @@ class FilterBaseTest extends TestCase
 		];
 
 		$this->queryBuilderMock->expects($this->once())->method('select')
-			->with('selected_filtered_user')->willReturnSelf();
+			->with('selected_filtered_user, \'moduleadmin\'')->willReturnSelf();
 
 		$this->setStandardMocks();
 
@@ -246,7 +246,7 @@ class FilterBaseTest extends TestCase
 		$companyId = [3, 5, 6];
 		$UID = 12;
 		$this->queryBuilderMock->expects($this->once())->method('select')
-			->with('selected_filtered')->willReturnSelf();
+			->with('selected_filtered, \'subadmin\'')->willReturnSelf();
 
 		$this->setStandardMocks();
 
@@ -326,7 +326,7 @@ class FilterBaseTest extends TestCase
 		$UID = 14;
 
 		$this->queryBuilderMock->expects($this->once())->method('select')
-			->with('selected_filtered')->willReturnSelf();
+			->with('selected_filtered, \'user\'')->willReturnSelf();
 		$this->queryBuilderMock->expects($this->once())->method('from')
 			->with('table')->willReturnSelf();
 
