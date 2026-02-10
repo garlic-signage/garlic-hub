@@ -170,7 +170,7 @@ class PlayerTokenServiceTest extends TestCase
 			'player_id' => $playerId,
 			'access_token' => $encryptedToken,
 			'token_type' => 'Bearer',
-			'expires_at' => '2025-12-31 23:59:59',
+			'expires_at' => '2035-12-31 23:59:59',
 		];
 
 		$this->cryptMock->expects($this->once())->method('getEncryptionKey')
@@ -184,7 +184,7 @@ class PlayerTokenServiceTest extends TestCase
 
 		static::assertEquals('test-token', $result['access_token']);
 		static::assertEquals('Bearer', $result['token_type']);
-		static::assertEquals('2025-12-31 23:59:59', $result['expires_at']);
+		static::assertEquals('2035-12-31 23:59:59', $result['expires_at']);
 	}
 
 	#[Group('units')]
@@ -252,7 +252,7 @@ class PlayerTokenServiceTest extends TestCase
 			'player_id' => $playerId,
 			'access_token' => $encryptedToken,
 			'token_type' => 'Bearer',
-			'expires_at' => '2025-12-31 23:59:59',
+			'expires_at' => '2035-12-31 23:59:59',
 		];
 
 		$this->cryptMock->expects($this->once())->method('getEncryptionKey')
