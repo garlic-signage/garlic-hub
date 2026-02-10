@@ -115,7 +115,7 @@ class DatatablePreparerTest extends TestCase
 		$this->timeUnitsCalculatorMock->expects($this->once())->method('calculateLastAccess')
 			->willReturnSelf();
 		$this->timeUnitsCalculatorMock->expects($this->once())->method('getLastAccessTimeStamp')
-			->willReturn(1600);
+			->willReturn(599);
 
 		$this->timeUnitsCalculatorMock->expects($this->once())->method('printDistance')
 			->willReturn('some string');
@@ -187,7 +187,7 @@ class DatatablePreparerTest extends TestCase
 		$this->timeUnitsCalculatorMock->expects($this->once())->method('calculateLastAccess')
 			->willReturnSelf();
 		$this->timeUnitsCalculatorMock->expects($this->once())->method('getLastAccessTimeStamp')
-			->willReturn(2400);
+			->willReturn(700);
 
 		$this->timeUnitsCalculatorMock->expects($this->once())->method('printDistance')
 			->willReturn('some string');
@@ -735,23 +735,30 @@ class DatatablePreparerTest extends TestCase
 	public function testFormatPlaylistContextMenu(): void
 	{
 		$this->datatablePreparer->setTranslator($this->translatorMock);
-//		$configMock = $this->createMock(Config::class);
-//		$this->aclValidatorMock->method('getConfig')->willReturn($configMock);
-//		$configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
-		$this->translatorMock->method('translateArrayForOptions')
+
+		$this->translatorMock->expects($this->once())->method('translateArrayForOptions')
 			->with('player_settings_selects', 'player')
-			->willReturn(['edit' => 'Edit', 'delete' => 'Delete']);
+			->willReturn(['edit' => 'Edit', 'connectivity' => 'Connectivity']);
+
+		$this->translatorMock->expects($this->exactly(2))->method('translate')->willReturnMap([
+			['delete', 'main', [], 'Delete'],
+			['delete_confirm', 'player', [], 'DeleteConfirm'],
+		]);
 
 		$result = $this->datatablePreparer->formatPlayerContextMenu();
 
-		static::assertCount(2, $result);
-		static::assertEquals(
+		$expected = ['create_player_settings_contextmenu' =>
 			[
-				['PLAYER_SETTING' => 'edit', 'LANG_PLAYER_SETTING' => 'Edit'],
-				['PLAYER_SETTING' => 'delete', 'LANG_PLAYER_SETTING' => 'Delete']
+					['PLAYER_SETTING' => 'edit', 'LANG_PLAYER_SETTING' => 'Edit'],
+					['PLAYER_SETTING' => 'connectivity', 'LANG_PLAYER_SETTING' => 'Connectivity']
 			],
-			$result
-		);
+			'LANG_PLAYER_DELETE' => 'Delete',
+			'LANG_PLAYER_DELETE_CONFIRM' => 'DeleteConfirm'
+		];
+
+
+		static::assertCount(3, $result);
+		static::assertEquals($expected, $result);
 	}
 
 }
