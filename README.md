@@ -7,6 +7,8 @@
 
 Garlic-Hub is a comprehensive Digital Signage Management solution that handles core CMS tasks alongside device management. From single-screen setups to distributed networks, it provides centralized control with flexibility for various signage environments.
 
+> **Currently Working on: Image Template Editor**
+
 ## Live Demo
 To see garlic-hub it in action, use the live demo at:
 
@@ -15,10 +17,6 @@ login: admin
 password: Demo1234!  
 
 The environment is regularly deleted and rebuilt.
-
-
-> **Feature Freeze: Currently Working on:**
->- fixing errors and testing
 
 ![Garlic-Hub Mediapool Screenshot](docs/media/showcase.gif)
 
@@ -42,21 +40,22 @@ Garlic-Hub is being developed in three phases, each delivering a distinct editio
 Each edition builds upon previous features, ensuring a smooth upgrade path as Garlic-Hub evolves into a comprehensive, SMIL-based digital signage solution.
 
 ### Current Features (Edge Edition)
-| Section                  | Status | description                                                                                                                            |
-|--------------------------|--------|----------------------------------------------------------------------------------------------------------------------------------------|
-| **Core Framework**       | ✅      | Database, migrations, logging, routing, middleware and error handling with SLIM 4                                                      |
-| **Initial admin user**   | ✅      | Set initial admin user after installation                                                                                              |
-| **User management**      | ✅      | Basic user management                                                                                                                  |
-| **Authentication**       | ✅      | Session-based login with remember-me functionality and basic OAuth2 token authorization                                                |
-| **Media Management**     | ✅      | Hierarchical content organization with multi-source uploads (local, external links, screencasts, camera, stock platforms with API-key) |
-| **SMIL Playlists**       | ✅      | Playlist management and export in industry-standard SMIL format                                                                        |
-| **Push support**         | ✅      | Push playlist to a local player                                                                                                        |
-| **Multi-Zone Content**   | ✅      | Graphic display zone editor                                                                                                            |
-| **Conditional Play**     | ✅      | Define datetime conditions for media playback                                                                                          |
-| **Trigger**              | ✅      | Trigger to play media or nested playlists by priority based on Accesskeys, Touch/Click, Datetime, and Network                          |
-| **Multi-Zone Content**   | ✅      | Graphic display zone editor                                                                                                            |
-| **Local Player Support** | ✅      | Integration with one local media player                                                                                                |
-| **Internationalization** | ✅      | Locale-specific configurations and adaptable UI (English, Spanish, French, Russian, Greek, German)                                     |
+| Section                      | Status | description                                                                                                                            |
+|------------------------------|--------|----------------------------------------------------------------------------------------------------------------------------------------|
+| **Core Framework**           | ✅      | Database, migrations, logging, routing, middleware and error handling with SLIM 4                                                      |
+| **Initial admin user**       | ✅      | Set initial admin user after installation                                                                                              |
+| **User management**          | ✅      | Basic user management                                                                                            |
+| **Template Editor (images)** | 🚧       | Template Editor for Images based on fabric.js                                                                                                                  |
+| **Authentication**           | ✅      | Session-based login with remember-me functionality and basic OAuth2 token authorization                                                |
+| **Media Management**         | ✅      | Hierarchical content organization with multi-source uploads (local, external links, screencasts, camera, stock platforms with API-key) |
+| **SMIL Playlists**           | ✅      | Playlist management and export in industry-standard SMIL format                                                                        |
+| **Push support**             | ✅      | Push playlist to a local player                                                                                                        |
+| **Multi-Zone Content**       | ✅      | Graphic display zone editor                                                                                                            |
+| **Conditional Play**         | ✅      | Define datetime conditions for media playback                                                                                          |
+| **Trigger**                  | ✅      | Trigger to play media or nested playlists by priority based on Accesskeys, Touch/Click, Datetime, and Network                          |
+| **Multi-Zone Content**       | ✅      | Graphic display zone editor                                                                                                            |
+| **Local Player Support**     | ✅      | Integration with one local media player                                                                                                |
+| **Internationalization**     | ✅      | Locale-specific configurations and adaptable UI (English, Spanish, French, Russian, Greek, German)                                     |
 
 ### Coming In Future Releases 
 - Online documentation
