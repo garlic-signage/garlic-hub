@@ -28,7 +28,7 @@ class TemplatesRepository extends FilterBase
 {
 	public function __construct(Connection $connection)
 	{
-		parent::__construct($connection,'player', 'player_id');
+		parent::__construct($connection,'templates', 'template_id');
 	}
 
 	protected function prepareJoin(): array
