@@ -19,7 +19,7 @@
 */
 declare(strict_types=1);
 
-namespace App\Modules\Templates\Repositories;
+namespace App\Modules\Templates\Services;
 
 use App\Framework\Core\Acl\AbstractAclValidator;
 use App\Framework\Core\Acl\AclHelper;
