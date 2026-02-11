@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace App\Modules\Templates\Repositories;
 
 use App\Framework\Database\BaseRepositories\FilterBase;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 
 class TemplatesRepository extends FilterBase
@@ -33,26 +34,46 @@ class TemplatesRepository extends FilterBase
 
 	protected function prepareJoin(): array
 	{
-		// TODO: Implement prepareJoin() method.
+		return ['user_main' => 'user_main.UID=' . $this->table . '.UID'];
 	}
 
 	protected function prepareUserJoin(): array
 	{
-		// TODO: Implement prepareUserJoin() method.
+		return [];
 	}
 
+	/**
+	 * @return string[]
+	 */
 	protected function prepareSelectFiltered(): array
 	{
-		// TODO: Implement prepareSelectFiltered() method.
+		return [$this->table.'.*'];
 	}
 
+	/**
+	 * @return string[]
+	 */
 	protected function prepareSelectFilteredForUser(): array
 	{
-		// TODO: Implement prepareSelectFilteredForUser() method.
+		return array_merge($this->prepareSelectFiltered(),['user_main.username', 'user_main.company_id']);
 	}
 
 	protected function prepareWhereForFiltering(array $filterFields): array
 	{
-		// TODO: Implement prepareWhereForFiltering() method.
+		$where = [];
+		foreach ($filterFields as $key => $parameter)
+		{
+			switch ($key)
+			{
+				default:
+					$clause = $this->determineWhereForFiltering($key, $parameter);
+					if (!empty($clause))
+					{
+						$where = array_merge($where, $clause);
+					}
+			}
+		}
+		return $where;
 	}
+
 }
