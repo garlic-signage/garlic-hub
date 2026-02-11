@@ -114,6 +114,9 @@ $app->group('', function (RouteCollectorProxy $group) use ($container)
 	$group->get('/player', resolve([\App\Modules\Player\Controller\ShowDatatableController::class, 'show'], $container));
 	$group->get('/player/connectivity/{player_id}', resolve([ShowConnectivityController::class, 'show'], $container));
 	$group->post('/player/connectivity', resolve([ShowConnectivityController::class, 'store'], $container));
+
+	$group->get('/templates', resolve([\App\Modules\Templates\Controller\ShowDatatableController::class, 'show'], $container));
+
 })->add($container->get(FinalRenderMiddleware::class));
 
 $app->group('/api', function (RouteCollectorProxy $group) use ($container)
