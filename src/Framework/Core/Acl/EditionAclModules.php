@@ -32,9 +32,9 @@ use App\Framework\Core\Config\Config;
  */
 class EditionAclModules
 {
-	private const array EDGE_MODULES = ['users', 'mediapool', 'player', 'playlists'];
-	private const array CORE_MODULES = ['users', 'mediapool', 'player', 'playlists'];
-	private const array ENTERPRISE_MODULES = ['users', 'mediapool', 'player', 'playlists'];
+	private const array EDGE_MODULES = ['users', 'mediapool', 'player', 'playlists', 'templates'];
+	private const array CORE_MODULES = ['users', 'mediapool', 'player', 'playlists', 'templates'];
+	private const array ENTERPRISE_MODULES = ['users', 'mediapool', 'player', 'playlists', 'templates'];
 
 	/**
 	 * @return string[]
