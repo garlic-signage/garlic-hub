@@ -51,15 +51,16 @@ class UserAclRepositoryTest extends TestCase
 //		['users', 'mediapool', 'player', 'playlists'];
 		$this->ConfigMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_CORE);
 
-		$this->ConfigMock->expects($this->exactly(4))->method('getConfigValue')
+		$this->ConfigMock->expects($this->exactly(5))->method('getConfigValue')
 			->willReturnMap([
 			['moduleadmin', 'users', 'GlobalACLs', '2'],
 			['moduleadmin', 'mediapool', 'GlobalACLs', '8'],
 			['moduleadmin', 'player', 'GlobalACLs', '8'],
 			['moduleadmin', 'playlists', 'GlobalACLs', '8'],
+			['moduleadmin', 'templates', 'GlobalACLs', '8'],
 		]);
 
-		$this->ConnectionMock->expects($this->exactly(6))->method('executeStatement');
+		$this->ConnectionMock->expects($this->exactly(7))->method('executeStatement');
 		$this->Repository->addAdminRights($this->ConfigMock, 1);
 	}
 }
