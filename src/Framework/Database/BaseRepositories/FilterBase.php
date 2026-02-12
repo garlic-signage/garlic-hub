@@ -177,8 +177,8 @@ abstract class FilterBase extends SqlBase
 	{
 		// no sort column
 		if (!array_key_exists(BaseFilterParametersInterface::PARAMETER_SORT_COLUMN, $fields) ||
-			empty($fields[BaseFilterParametersInterface::PARAMETER_SORT_COLUMN]) ||
-			!array_key_exists('value', $fields[BaseFilterParametersInterface::PARAMETER_SORT_COLUMN]))
+			!array_key_exists('value', $fields[BaseFilterParametersInterface::PARAMETER_SORT_COLUMN]) ||
+			$fields[BaseFilterParametersInterface::PARAMETER_SORT_COLUMN]['value'] === '')
 			return [];
 
 		// validate
