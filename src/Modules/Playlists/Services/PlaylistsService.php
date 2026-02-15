@@ -162,7 +162,7 @@ class PlaylistsService extends AbstractBaseService
 			/** @var array{UID: int, company_id: int, playlist_id: int, multizone:string, ...} $playlist */
 			$playlist = $this->loadWithUserById($playlistId);
 
-			if ($playlist['multizone'] !== [])
+			if ($playlist['multizone'] !== null)
 				return unserialize($playlist['multizone']);
 
 			return [];
