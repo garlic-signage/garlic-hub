@@ -25,7 +25,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
-use App\Modules\Player\Helper\Datatable\ControllerFacade;
 use App\Modules\Templates\Helper\Datatable\DatatableFacade;
 use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
@@ -59,7 +58,11 @@ readonly class ShowDatatableController
 	 */
 	public function show(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
+
 		$this->facade->configure($request->getAttribute('translator'), $request->getAttribute('session'));
+		if (!$this->facade->checkRights())
+			return $response->withHeader('Location', '/player')->withStatus(302);
+
 		$this->facade->processSubmittedUserInput();
 
 		$this->facade->prepareDataGrid();

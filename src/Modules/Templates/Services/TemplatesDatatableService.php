@@ -37,6 +37,16 @@ class TemplatesDatatableService extends AbstractDatatableService
 		parent::__construct($logger);
 	}
 
+	public function checkDisplayRights(): bool
+	{
+		if ($this->aclValidator->isModuleAdmin($this->UID))
+			return true;
+		if ($this->aclValidator->isSubAdmin($this->UID))
+			return true;
+
+		return false;
+	}
+
 
 	public function loadDatatable(): void
 	{
