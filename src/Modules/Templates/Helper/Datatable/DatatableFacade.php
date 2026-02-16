@@ -65,6 +65,11 @@ class DatatableFacade implements DatatableFacadeInterface
 		$this->datatableBuilder->setTranslator($translator);
 	}
 
+	public function checkRights(): bool
+	{
+		return $this->templatesService->checkDisplayRights();
+	}
+
 	/**
 	 * @throws CoreException
 	 * @throws Exception
@@ -112,7 +117,7 @@ class DatatableFacade implements DatatableFacadeInterface
 			'filter_elements'     => $this->datatablePreparer->prepareFilterForm($datatableStructure['form']),
 			'pagination_dropdown' => $pagination['dropdown'],
 			'pagination_links'    => $pagination['links'],
-			'has_add'			  => [],
+			'has_add'			  => $this->datatablePreparer->prepareAdd('file-plus', 'templates/canvas-fabricjs'),
 			'results_header'      => $this->datatablePreparer->prepareTableHeader($datatableStructure['header'], ['templates', 'main']),
 			'results_list'        => $this->prepareList($datatableStructure['header']),
 			'results_count'       => $this->templatesService->getCurrentTotalResult(),
