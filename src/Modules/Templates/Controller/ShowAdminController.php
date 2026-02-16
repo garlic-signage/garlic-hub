@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -20,9 +20,24 @@
 declare(strict_types=1);
 
 
-namespace App\Modules\Player\Controller;
+namespace App\Modules\Templates\Controller;
 
-class ShowDeleteController
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+
+class ShowAdminController
 {
+	public function create(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+	{
+		$template = ['type' => $args['type'] ?? 'canvas'];
+
+	}
+
+
+	public function edit(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+	{
+		$templateId = (int) ($args['template_id'] ?? 0);
+
+	}
 
 }
