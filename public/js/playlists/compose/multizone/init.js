@@ -29,7 +29,9 @@ import { FetchClient } from "../../../core/FetchClient.js";
 window.onload = async function ()
 {
     let MyCanvas                = new fabric.Canvas("canvas", {stopContextMenu: true, fireRightClick: true, preserveObjectStacking: true})
-    let MyLabeledZoneFactory    = new LabeledZoneFactory();
+	MyCanvas.selection = false;
+
+	let MyLabeledZoneFactory    = new LabeledZoneFactory();
     let MyCanvasView            = new CanvasView(MyCanvas);
 
     const MyAutocompleteFactory = new AutocompleteFactory();
