@@ -140,10 +140,10 @@ export class ZonesModel
 		if (zones.hasOwnProperty("resolution"))
 		{
 			this.#export_unit = zones.export_unit;
-			this.#Zones       = this.#prepareZones(zones.zones)
-			this.#zoom        = zones.zoom;
 			this.#screen_width = zones.resolution.split("x")[0];
 			this.#screen_height = zones.resolution.split("x")[1];
+			this.#Zones       = this.#prepareZones(zones.zones)
+			this.#zoom        = zones.zoom;
 		}
 		else // the old format
 		{
