@@ -36,16 +36,16 @@ use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Facade class responsible for managing the datatable's configuration, preparation, processing, and rendering.
- * It interacts with datatable components such as the builder, preparer, and specific player service in order
+ * It interacts with datatable components such as the builder, preparer, and specific player service
  * to streamline complex operations and present a cohesive interface.
  */
 class DatatableFacade implements DatatableFacadeInterface
 {
 	private int $UID;
 
-	public function __construct(private readonly DatatableBuilder $datatableBuilder,
-								private readonly DatatablePreparer $datatablePreparer,
-								private TemplatesDatatableService $templatesService)
+	public function __construct(private readonly DatatableBuilder          $datatableBuilder,
+								private readonly DatatablePreparer         $datatablePreparer,
+								private readonly TemplatesDatatableService $templatesService)
 	{
 	}
 
@@ -71,9 +71,6 @@ class DatatableFacade implements DatatableFacadeInterface
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws ModuleException
 	 */
 	public function processSubmittedUserInput(): void
@@ -117,7 +114,7 @@ class DatatableFacade implements DatatableFacadeInterface
 			'filter_elements'     => $this->datatablePreparer->prepareFilterForm($datatableStructure['form']),
 			'pagination_dropdown' => $pagination['dropdown'],
 			'pagination_links'    => $pagination['links'],
-			'has_add'			  => $this->datatablePreparer->prepareAdd('file-plus', 'templates/canvas-fabricjs'),
+			'has_add'			  => $this->datatablePreparer->prepareAdd('file-plus', 'templates/settings/canvas'),
 			'results_header'      => $this->datatablePreparer->prepareTableHeader($datatableStructure['header'], ['templates', 'main']),
 			'results_list'        => $this->prepareList($datatableStructure['header']),
 			'results_count'       => $this->templatesService->getCurrentTotalResult(),
