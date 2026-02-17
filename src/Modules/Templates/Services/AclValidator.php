@@ -25,6 +25,7 @@ use App\Framework\Core\Acl\AbstractAclValidator;
 use App\Framework\Core\Acl\AclHelper;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Modules\Auth\UserSession;
 use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 
@@ -35,9 +36,14 @@ use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 class AclValidator extends AbstractAclValidator
 {
 
-	public function __construct(AclHelper $aclHelper)
+	public function __construct(private readonly UserSession $userSession, AclHelper $aclHelper)
 	{
 		parent::__construct('templates', $aclHelper);
+	}
+
+	public function canCreate(): bool
+	{
+		return $this->isSimpleAdmin($this->userSession->getUID());
 	}
 
 	/**
