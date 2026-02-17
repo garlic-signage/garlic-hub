@@ -22,14 +22,26 @@ declare(strict_types=1);
 namespace App\Modules\Templates\Repositories;
 
 use App\Framework\Database\BaseRepositories\FilterBase;
-use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception;
 
 class TemplatesRepository extends FilterBase
 {
 	public function __construct(Connection $connection)
 	{
 		parent::__construct($connection,'templates', 'template_id');
+	}
+
+	/**
+	 * @return array<string,mixed>|array<empty,empty>
+	 * @throws Exception
+	 */
+	public function findFirstWithUserName(int $templateId): array
+	{
+		$select = $this->prepareSelectFilteredForUser();
+		$join   = ['user_main' => 'user_main.UID=' . $this->table . '.UID'];
+		$where  = ['template_id' => ['value' => $templateId, 'operator' => '=']];
+		return $this->getFirstDataSet($this->findAllByWithFields($select, $where, $join));
 	}
 
 	protected function prepareJoin(): array

@@ -22,19 +22,42 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Controller;
 
+use App\Modules\Templates\Helper\Settings\Orchestrator;
+use App\Modules\Templates\Helper\Settings\TemplatePreparer;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-class ShowAdminController
+class ShowSettingsController
 {
+
+	public function __construct(private readonly Orchestrator $orchestrator, private readonly TemplatePreparer $templatePreparer)
+	{}
+
 	public function create(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
-		$template = ['type' => $args['type'] ?? 'canvas'];
+		$type = $args['type'] ?? 'canvas';
+
+		if (!$this->orchestrator->checkCreateRights())
+			return $response->withHeader('Location', '/player')->withStatus(302);
+
+		$formData = $this->orchestrator->buildCreateNewParameter();
+
+		$templateData = $this->templatePreparer->prepareCreate($formData);
+		$response->getBody()->write(serialize($templateData));
+
+		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
+	}
+
+	public function edit(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+	{
+		$templateId = (int) ($args['template_id'] ?? 0);
+		$answer = $this->orchestrator->setInput($args)->validate($response);
+		if ($answer !== null)
+			return $answer;
 
 	}
 
-
-	public function edit(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+	public function compose(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
 		$templateId = (int) ($args['template_id'] ?? 0);
 

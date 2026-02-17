@@ -19,7 +19,7 @@
 */
 declare(strict_types=1);
 
-namespace App\Modules\Player\Helper\NetworkSettings;
+namespace App\Modules\Templates\Helper\Settings;
 
 use App\Framework\Core\BaseValidator;
 use App\Framework\Core\CsrfToken;
@@ -27,23 +27,16 @@ use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Utils\FormParameters\BaseParameters;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
-/**
- * Class Validator
- *
- * Extends the functionality provided by BaseValidator. The Validator class is responsible
- * for validating user input while leveraging network parameters and CSRF token verification.
- */
+
 class Validator extends BaseValidator
 {
-	private Parameters $networkParameters;
-
-	public function __construct(Translator $translator, Parameters $settingsParameters, CsrfToken $csrfToken)
+	public function __construct(Translator $translator, private readonly Parameters $settingsParameters, CsrfToken $csrfToken)
 	{
 		parent::__construct($translator, $csrfToken);
-		$this->networkParameters = $settingsParameters;
 	}
 
 	/**
@@ -56,13 +49,11 @@ class Validator extends BaseValidator
 	 */
 	public function validateUserInput(): array
 	{
-		$errors = $this->validateFormCsrfToken($this->networkParameters);
+		$errors = $this->validateFormCsrfToken($this->settingsParameters);
 
-		$isIntranet  = $this->networkParameters->getValueOfParameter(Parameters::PARAMETER_IS_INTRANET);
-		$apiEndpoint = $this->networkParameters->getValueOfParameter(Parameters::PARAMETER_API_ENDPOINT);
-
-		if ($isIntranet === true && $apiEndpoint === '')
-			$errors[] = $this->translator->translate('no_api_endpoint', 'player');
+		$name  = $this->settingsParameters->getValueOfParameter(Parameters::PARAMETER_NAME);
+		if ($name === '')
+			$errors[] = $this->translator->translate('name_noexists', 'templates');
 
 		return $errors;
 	}

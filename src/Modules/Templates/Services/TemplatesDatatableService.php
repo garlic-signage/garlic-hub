@@ -39,9 +39,7 @@ class TemplatesDatatableService extends AbstractDatatableService
 
 	public function checkDisplayRights(): bool
 	{
-		if ($this->aclValidator->isModuleAdmin($this->UID))
-			return true;
-		if ($this->aclValidator->isSubAdmin($this->UID))
+		if ($this->aclValidator->isSimpleAdmin($this->UID))
 			return true;
 
 		return false;
