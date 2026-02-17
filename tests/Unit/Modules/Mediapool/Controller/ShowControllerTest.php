@@ -151,7 +151,7 @@ class ShowControllerTest extends TestCase
 		$this->nodesServiceMock->method('isModuleAdmin')->willReturn(false);
 		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
 
-		$this->translatorMock->expects($this->exactly(59))->method('translate');
+		$this->translatorMock->expects($this->exactly(56))->method('translate');
 
 		$this->mockResponse();
 

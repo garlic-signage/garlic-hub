@@ -146,11 +146,7 @@ class ShowController
 		{
 			$data['this_layout']['this_layout'] = ['folder_dialog_visibility' =>
 				['LANG_FOLDER_VISIBILITY' => $translator->translate('visibility', 'main'),
-					'visibility_options' => [
-						$translator->translate('visibility_global', 'main'),
-						$translator->translate('visibility_company', 'main'),
-						$translator->translate('visibility_user', 'main'),
-					]
+					'visibility_options' => $translator->translateArrayForOptions('visibility_selects', 'main')
 				]
 			];
 
