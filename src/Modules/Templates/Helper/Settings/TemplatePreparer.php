@@ -51,7 +51,7 @@ class TemplatePreparer
 		$dataSections['additional_css']    = ['/css/templates/settings.css'];
 		$dataSections['footer_modules']    = [];
 		$dataSections['template_name']     = 'templates/edit';
-		$dataSections['form_action']       = '/templates';
+		$dataSections['form_action']       = '/templates/settings';
 		$dataSections['save_button_label'] = $this->translator->translate('save', 'main');
 
 		return $this->formTemplatePreparer->prepareUITemplate($dataSections);
