@@ -118,6 +118,8 @@ $app->group('', function (RouteCollectorProxy $group) use ($container)
 	$group->get('/templates', resolve([\App\Modules\Templates\Controller\ShowDatatableController::class, 'show'], $container));
 	$group->get('/templates/settings/{type:canvas|svg|html}', resolve([\App\Modules\Templates\Controller\ShowSettingsController::class, 'create'], $container));
 	$group->get('/templates/settings/{template_id:\d+}', resolve([\App\Modules\Templates\Controller\ShowSettingsController::class, 'edit'], $container));
+	$group->post('/templates/settings', resolve([\App\Modules\Templates\Controller\ShowSettingsController::class, 'store'], $container));
+
 	$group->get('/templates/composer/{template_id:\d+}', resolve([\App\Modules\Templates\Controller\ShowSettingsController::class, 'compose'], $container));
 
 
