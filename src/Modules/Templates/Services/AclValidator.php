@@ -36,14 +36,14 @@ use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 class AclValidator extends AbstractAclValidator
 {
 
-	public function __construct(private readonly UserSession $userSession, AclHelper $aclHelper)
+	public function __construct(AclHelper $aclHelper)
 	{
 		parent::__construct('templates', $aclHelper);
 	}
 
-	public function canCreate(): bool
+	public function canCreate(int $UID): bool
 	{
-		return $this->isSimpleAdmin($this->userSession->getUID());
+		return $this->isSimpleAdmin($UID);
 	}
 
 	/**

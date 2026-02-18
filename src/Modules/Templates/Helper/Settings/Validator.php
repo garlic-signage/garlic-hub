@@ -27,7 +27,6 @@ use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Utils\FormParameters\BaseParameters;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
@@ -47,10 +46,27 @@ class Validator extends BaseValidator
 	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws InvalidArgumentException
 	 */
-	public function validateUserInput(): array
+	public function validateCreateInput(): array
+	{
+		$errors = $this->validateEditInput();
+		$type  = $this->settingsParameters->getValueOfParameter(Parameters::PARAMETER_TYPE);
+		if ($type === '')
+			$errors[] = $this->translator->translate('template_type_noexists', 'templates');
+
+		return $errors;
+	}
+
+	/**
+	 * @return string[]
+	 * @throws ModuleException
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws InvalidArgumentException
+	 */
+	public function validateEditInput(): array
 	{
 		$errors = $this->validateFormCsrfToken($this->settingsParameters);
-
 		$name  = $this->settingsParameters->getValueOfParameter(Parameters::PARAMETER_NAME);
 		if ($name === '')
 			$errors[] = $this->translator->translate('name_noexists', 'templates');

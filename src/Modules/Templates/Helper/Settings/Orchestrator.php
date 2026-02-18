@@ -22,17 +22,13 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Helper\Settings;
 
-use App\Framework\Core\BaseValidator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Framework\Utils\FormParameters\BaseEditParameters;
-use App\Modules\Templates\Services\AclValidator;
 use App\Modules\Templates\Services\TemplateService;
 use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\Http\Message\ResponseInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 
 /**
@@ -42,54 +38,17 @@ class Orchestrator
 {
 	/** @var array<string,string>  */
 	private array $input;
-	private int $itemId;
 
 	public function __construct(
-		private readonly Builder  $builder,
-		private readonly AclValidator $aclValidator,
-		private readonly BaseValidator    $validator,
-		private readonly TemplateService  $templatesService,
+		private readonly CreateFormBuilder $createFormBuilder,
+		private readonly SettingsParametersPolicy $settingsParametersPolicy,
+		private readonly CreateFormWriter  $createFormWriter,
+		private readonly CreateFormInputHandler  $createFormInputHandler
 	) {}
-
-	/**
-	 * @param array<string,string> $input
-	 */
-	public function setInput(array $input): static
-	{
-		$this->input = $input;
-		return $this;
-	}
 
 	public function checkCreateRights(): bool
 	{
-		return $this->aclValidator->canCreate();
-	}
-
-
-	/**
-	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
-	 * @throws FrameworkException
-	 */
-	public function buildCreateNewParameter(): array
-	{
-		return $this->builder->buildForm([]);
-	}
-
-
-	/**
-	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
-	 * @throws FrameworkException
-	 */
-	public function validateWithToken(ResponseInterface $response): ?ResponseInterface
-	{
-		if (!$this->validator->validateCsrfToken($this->input[BaseEditParameters::PARAMETER_CSRF_TOKEN]))
-			return $this->responseBuilder->csrfTokenMismatch($response);
-
-		return $this->validate($response);
+		return $this->settingsParametersPolicy->checkCreateRights();
 	}
 
 	/**
@@ -98,44 +57,13 @@ class Orchestrator
 	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
-	public function validate(ResponseInterface $response): ?ResponseInterface
+	public function buildCreateForm(array $post = []): array
 	{
-		$this->itemId = (int) ($this->input['item_id'] ?? 0);
-		if ($this->itemId === 0)
-			return $this->responseBuilder->invalidItemId($response);
-
-		return null;
+		$this->settingsParametersPolicy->addCreateFormElements();
+		return $this->createFormBuilder->build($post);
 	}
 
-	/**
-	 * @throws UserException
-	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
-	 * @throws FrameworkException
-	 */
-	public function fetchSettings(ResponseInterface $response): ?ResponseInterface
-	{
-		$this->templatesService->setUID($this->userSession->getUID());
-		$itemData = $this->templatesService->fetchBeginTriggerByItemId($this->itemId)->getItemData();
-		if ($itemData === [])
-			return $this->responseBuilder->itemNotFound($response);
-
-		$this->templatePreparer->prepare($this->itemId);
-
-		$data = [
-			'item_data' => $itemData,
-			'touchable_medialist' => $this->templatesService->getTouchableMedia(),
-			'html' => $this->templatePreparer->render()
-		];
-
-		return $this->responseBuilder->generalSuccess($response, $data);
-	}
-
-
-	/**
-	 * @param ResponseInterface $response
-	 * @return ResponseInterface|null
+	/**.
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
@@ -144,22 +72,25 @@ class Orchestrator
 	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
-	public function saveSettings(ResponseInterface $response): ?ResponseInterface
+	public function storeCreateSettings(): array
 	{
-		$this->templatesService->setUID($this->userSession->getUID());
+		$errors = $this->createFormInputHandler->validate();
 
-		unset($this->input['csrf_token']);
-		unset($this->input['item_id']);
+		if ($errors === [])
+			return ['success' => false, 'errors' => $errors];
 
-		$item = $this->templatesService->fetchAccessibleItem($this->itemId);
-		if ($item === [])
-			return $this->responseBuilder->itemNotFound($response);
+		$saveData = $this->createFormInputHandler->getParsed();
+		$errors = $this->createFormWriter->store($saveData);
+		if ($errors === [])
+			return ['success' => false, 'errors' => $errors];
 
-		$this->templatesService->saveBeginTrigger($this->itemId, $this->input);
-
-		return $this->responseBuilder->generalSuccess($response, []);
+		return ['success' => true];
 	}
 
+	public function storeEditSettings(): array
+	{
+		return ['success' => true];
+	}
 
 
 

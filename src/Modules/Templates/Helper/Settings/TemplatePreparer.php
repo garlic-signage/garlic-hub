@@ -33,16 +33,29 @@ class TemplatePreparer
 
 	}
 
-	public function prepareCreate(array $formData): array
+	public function prepareEditSettings(array $dataSections): array
 	{
-		$dataSections                      = $formData;
+		$dataSections['title']             = $this->translator->translate('setting', 'templates');
+		return $this->prepareSettings($dataSections);
+	}
+
+
+	public function prepareCreateSettings(array $dataSections): array
+	{
 		$dataSections['title']             = $this->translator->translate('add', 'templates');
-		$dataSections['additional_css']    = ['/css/templates/edit.css'];
+		return $this->prepareSettings($dataSections);
+	}
+
+	private function prepareSettings(array $dataSections): array
+	{
+		$dataSections['additional_css']    = ['/css/templates/settings.css'];
 		$dataSections['footer_modules']    = [];
 		$dataSections['template_name']     = 'templates/edit';
 		$dataSections['form_action']       = '/templates';
 		$dataSections['save_button_label'] = $this->translator->translate('save', 'main');
 
 		return $this->formTemplatePreparer->prepareUITemplate($dataSections);
+
 	}
+
 }

@@ -26,11 +26,15 @@ use App\Modules\Templates\Helper\Settings\Orchestrator;
 use App\Modules\Templates\Helper\Settings\TemplatePreparer;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Slim\Flash\Messages;
 
 class ShowSettingsController
 {
 
-	public function __construct(private readonly Orchestrator $orchestrator, private readonly TemplatePreparer $templatePreparer)
+	private Messages $flash;
+
+	public function __construct(private readonly Orchestrator $orchestrator,
+								private readonly TemplatePreparer $templatePreparer)
 	{}
 
 	public function create(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
@@ -38,29 +42,79 @@ class ShowSettingsController
 		$type = $args['type'] ?? 'canvas';
 
 		if (!$this->orchestrator->checkCreateRights())
+		{
+			$this->flash = $request->getAttribute('flash');
+			$this->flash->addMessage('error', 'No rights');
 			return $response->withHeader('Location', '/player')->withStatus(302);
+		}
 
-		$formData = $this->orchestrator->buildCreateNewParameter();
+		$formData = $this->orchestrator->buildCreateForm();
+		$prepared = $this->templatePreparer->prepareCreateSettings($formData);
 
-		$templateData = $this->templatePreparer->prepareCreate($formData);
-		$response->getBody()->write(serialize($templateData));
-
+		$response->getBody()->write(serialize($prepared));
 		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
 	}
 
 	public function edit(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
 		$templateId = (int) ($args['template_id'] ?? 0);
-		$answer = $this->orchestrator->setInput($args)->validate($response);
-		if ($answer !== null)
-			return $answer;
+		return $response->withHeader('Location', '/templates')->withStatus(302);
+	}
+
+	public function store(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	{
+		/** @var array{template_id?: int, type: string, name:string, ...}  $post */
+		$post        = $request->getParsedBody();
+		$templateId  = (int) ($post['template_id'] ?? 0);
+		$this->flash = $request->getAttribute('flash');
+
+		if ($templateId === 0)
+			return $this->storeNewSettings($response, $post);
+		else
+			return $this->storeEditSettings($response, $post);
 
 	}
 
 	public function compose(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
 		$templateId = (int) ($args['template_id'] ?? 0);
+		return $response->withHeader('Location', '/templates')->withStatus(302);
 
+	}
+
+	private function storeNewSettings(ResponseInterface $response, array $post): ResponseInterface
+	{
+		if (!$this->orchestrator->checkCreateRights())
+		{
+			$this->flash->addMessage('error', 'No rights');
+			return $response->withHeader('Location', '/player')->withStatus(302);
+		}
+		$viewData = $this->orchestrator->storeCreateSettings();
+
+		if (!$viewData['success'])
+		{
+			foreach ($viewData['errors'] as $errorText)
+			{
+				$this->flash->addMessageNow('error', $errorText);
+			}
+
+			$formData = $this->orchestrator->buildCreateForm();
+			$prepared = $this->templatePreparer->prepareCreateSettings($formData);
+
+			$response->getBody()->write(serialize($prepared));
+			return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
+
+		}
+		else
+		{
+			$this->flash->addMessage('success', $viewData['success_message']);
+			return $response->withHeader('Location', '/templates')->withStatus(302);
+		}
+	}
+
+	private function storeEditSettings(ResponseInterface $response, array $post): ResponseInterface
+	{
+		return $response->withHeader('Location', '/templates')->withStatus(302);
 	}
 
 }

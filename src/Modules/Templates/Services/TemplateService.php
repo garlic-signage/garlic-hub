@@ -26,6 +26,8 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Services\AbstractBaseService;
+use App\Framework\Utils\FormParameters\BaseParameters;
+use App\Modules\Templates\Helper\Settings\Parameters;
 use App\Modules\Templates\Services\AclValidator;
 use App\Modules\Templates\Repositories\TemplatesRepository;
 use Doctrine\DBAL\Exception;
@@ -99,18 +101,23 @@ class TemplateService extends AbstractBaseService
 		return $template;
 	}
 
+	public function insert(array $saveData): int
+	{
+		return (int) $this->templatesRepository->insert($this->collectDataForSettingsInsert($saveData));
+	}
+
 	/**
 	 * @param array<string,mixed> $postData
 	 * @return array<string,mixed>
 	 */
 	private function collectDataForSettingsInsert(array $postData): array
 	{
-		if (array_key_exists('UID', $postData))
-			$saveData['UID'] = $postData['UID'];
+		if (array_key_exists(BaseParameters::PARAMETER_UID, $postData))
+			$saveData[BaseParameters::PARAMETER_UID] = $postData[BaseParameters::PARAMETER_UID];
 		else
-			$saveData['UID'] = $this->UID;
+			$saveData[BaseParameters::PARAMETER_UID] = $this->UID;
 
-		$saveData['type'] = $postData['type'];
+		$saveData[Parameters::PARAMETER_TYPE] = $postData[Parameters::PARAMETER_TYPE];
 
 		return $this->collectCommonSettings($postData, $saveData);
 	}
@@ -121,7 +128,7 @@ class TemplateService extends AbstractBaseService
 	 */
 	private function collectDataForSettingsUpdate(array $postData): array
 	{
-		$saveData['UID'] = $postData['UID'];
+		$saveData[BaseParameters::PARAMETER_UID] = $postData[BaseParameters::PARAMETER_UID];
 		return $this->collectCommonSettings($postData, $saveData);
 	}
 
@@ -133,8 +140,11 @@ class TemplateService extends AbstractBaseService
 	 */
 	private function collectCommonSettings(array $postData, array $saveData): array
 	{
-		if (isset($postData['name']))
-			$saveData['name'] = $postData['name'];
+		if (isset($postData[Parameters::PARAMETER_NAME]))
+			$saveData[Parameters::PARAMETER_NAME] = $postData[Parameters::PARAMETER_NAME];
+
+		if (isset($postData[Parameters::PARAMETER_VISIBILITY]))
+			$saveData[Parameters::PARAMETER_VISIBILITY] = $postData[Parameters::PARAMETER_VISIBILITY];
 
 		return $saveData;
 	}

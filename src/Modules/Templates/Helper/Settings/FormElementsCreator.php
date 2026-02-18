@@ -21,16 +21,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Helper\Settings;
 
-use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Utils\Forms\AbstractBaseFormElementsCreator;
-use App\Framework\Utils\Html\CheckboxField;
 use App\Framework\Utils\Html\FieldInterface;
 use App\Framework\Utils\Html\FieldType;
-use App\Framework\Utils\Html\FormBuilder;
-use App\Framework\Utils\Html\UrlField;
-use App\Modules\Auth\UserSession;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
@@ -81,14 +76,13 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 		]);
 	}
 
-
 	/**
 	 * @throws CoreException
 	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
-	public function createVisibilityField(string|int $value, string $username, int $UID): FieldInterface
+	public function createVisibilityField(string|int $value): FieldInterface
 	{
 		return $this->formBuilder->createField([
 			'type'          => FieldType::DROPDOWN,
@@ -99,6 +93,19 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 			'value'         => $value,
 			'options' => $this->translator->translateArrayForOptions(Parameters::PARAMETER_VISIBILITY.'_selects', 'main'),
 			'default_value' => 'public'
+		]);
+	}
+
+	/**
+	 * @throws FrameworkException
+	 */
+	public function createHiddenTypeField(string $value): FieldInterface
+	{
+		return $this->formBuilder->createField([
+			'type' => FieldType::HIDDEN,
+			'id' => 'type',
+			'name' => 'type',
+			'value' => $value,
 		]);
 	}
 

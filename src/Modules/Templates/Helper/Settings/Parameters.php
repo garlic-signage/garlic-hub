@@ -30,6 +30,7 @@ class Parameters extends BaseEditParameters
 {
 	public const string PARAMETER_NAME = 'name';
 	public const string PARAMETER_VISIBILITY = 'visibility';
+	public const string PARAMETER_TYPE = 'type';
 
 	/**
 	 * @var array<string, array{scalar_type: ScalarType, default_value: mixed, parsed: bool}>
@@ -43,4 +44,15 @@ class Parameters extends BaseEditParameters
 		parent::__construct('templates', $sanitizer, $session);
 		$this->currentParameters = array_merge($this->defaultParameters, $this->moduleParameters);
 	}
+
+	public function addVisibility(): void
+	{
+		$this->addParameter(self::PARAMETER_VISIBILITY, ScalarType::STRING, 'private');
+	}
+
+	public function addType(): void
+	{
+		$this->addParameter(self::PARAMETER_TYPE, ScalarType::STRING, 'canvas');
+	}
+
 }

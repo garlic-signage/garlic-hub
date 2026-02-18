@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -19,40 +19,24 @@
 */
 declare(strict_types=1);
 
+
 namespace App\Modules\Templates\Helper\Settings;
 
-use App\Framework\Core\Translate\Translator;
-use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Framework\Utils\FormParameters\BaseParameters;
 use App\Modules\Auth\UserSession;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
-/**
- * The Builder class is responsible for constructing and validating forms and handling user input.
- */
-readonly class Builder
+class SettingsFormBuilder
 {
-
 	public function __construct(private readonly Parameters $parameters,
-								private readonly UserSession $userSession,
-								private readonly Validator $validator,
 								private readonly FormElementsCreator $formElementsCreator)
-	{}
-
-	/**
-	 * @param array<string,mixed> $settingsData
-	 * @return array<string,mixed>
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
-	 */
-	public function buildForm(array $settingsData): array
 	{
+
+	}
+
+	public function buildForm(array $settingsData, UserSession $userSession): array
+	{
+
 		$form       = [];
 		$form[Parameters::PARAMETER_NAME] = $this->formElementsCreator->createNameField(
 			($settingsData[Parameters::PARAMETER_NAME] ?? ''),
@@ -60,37 +44,27 @@ readonly class Builder
 
 		if ($this->parameters->hasParameter(BaseParameters::PARAMETER_UID))
 		{
-			$form['UID'] = $this->formElementsCreator->createUIDField(
-				$settingsData[BaseParameters::PARAMETER_UID] ?? $this->userSession->getUID(),
-					$settingsData['username'] ?? $this->userSession->getUsername(),
-				$this->userSession->getUID()
+			$form[BaseParameters::PARAMETER_UID] = $this->formElementsCreator->createUIDField(
+				$settingsData[BaseParameters::PARAMETER_UID] ?? $userSession->getUID(),
+				$settingsData['username'] ?? $userSession->getUsername(),
+				$userSession->getUID()
 			);
+		}
+
+		if ($this->parameters->hasParameter(Parameters::PARAMETER_VISIBILITY))
+		{
+			$form[Parameters::PARAMETER_VISIBILITY] = $this->formElementsCreator->createVisibilityField(
+				$settingsData[Parameters::PARAMETER_VISIBILITY] ?? '');
 		}
 
 		if ($settingsData !== [])
 			$form['template_id'] = $this->formElementsCreator->createHiddenTemplateIdField((int) $settingsData['template_id']);
+		else
+			$form['type'] = $this->formElementsCreator->createHiddenTypeField('canvas');
 
 		$form[BaseEditParameters::PARAMETER_CSRF_TOKEN] = $this->formElementsCreator->createCSRFTokenField();
 
 		return $this->formElementsCreator->prepareForm($form);
-	}
-
-
-	/**
-	 * @param array{player_id:int, player_name:string, is_intranet:int, api_endpoint:string} $post
-	 * @return string[]
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
-	 */
-	public function handleUserInput(array $post): array
-	{
-		$this->parameters->setUserInputs($post)
-			->parseInputAllParameters();
-
-		return $this->validator->validateUserInput();
 	}
 
 }
