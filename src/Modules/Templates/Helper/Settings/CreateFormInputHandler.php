@@ -29,12 +29,13 @@ class CreateFormInputHandler
 	{
 	}
 
-	public function validate()
+	public function validate(array $post)
 	{
+		$this->parameters->setUserInputs($post);
 		$this->parameters->parseInputAllParameters();
 		$errors = $this->validator->validateCreateInput();
 
-		if ($errors != [])
+		if ($errors !== [])
 			return $errors;
 
 		return [];

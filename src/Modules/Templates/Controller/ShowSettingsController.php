@@ -89,7 +89,7 @@ class ShowSettingsController
 			$this->flash->addMessage('error', 'No rights');
 			return $response->withHeader('Location', '/player')->withStatus(302);
 		}
-		$viewData = $this->orchestrator->storeCreateSettings();
+		$viewData = $this->orchestrator->storeCreateSettings($post);
 
 		if (!$viewData['success'])
 		{
@@ -107,7 +107,7 @@ class ShowSettingsController
 		}
 		else
 		{
-			$this->flash->addMessage('success', $viewData['success_message']);
+			$this->flash->addMessage('success', 'Templated saved successfully');
 			return $response->withHeader('Location', '/templates')->withStatus(302);
 		}
 	}

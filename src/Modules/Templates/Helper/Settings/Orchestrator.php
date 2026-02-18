@@ -72,16 +72,17 @@ class Orchestrator
 	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
-	public function storeCreateSettings(): array
+	public function storeCreateSettings(array $post): array
 	{
-		$errors = $this->createFormInputHandler->validate();
+		$this->settingsParametersPolicy->addCreateFormElements();
+		$errors = $this->createFormInputHandler->validate($post);
 
-		if ($errors === [])
+		if ($errors !== [])
 			return ['success' => false, 'errors' => $errors];
 
 		$saveData = $this->createFormInputHandler->getParsed();
 		$errors = $this->createFormWriter->store($saveData);
-		if ($errors === [])
+		if ($errors !== [])
 			return ['success' => false, 'errors' => $errors];
 
 		return ['success' => true];
