@@ -30,6 +30,7 @@ use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
 use App\Framework\Utils\Datatable\PrepareService;
 use App\Framework\Utils\Forms\FormTemplatePreparer;
 use App\Modules\Auth\UserSession;
+use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Templates\Controller\ShowDatatableController;
 use App\Modules\Templates\Controller\ShowSettingsController;
 use App\Modules\Templates\Helper\Datatable\DatatableBuilder;
@@ -48,6 +49,7 @@ use App\Modules\Templates\Repositories\TemplatesRepository;
 use App\Modules\Templates\Services\AclValidator;
 use App\Modules\Templates\Services\TemplatesDatatableService;
 use App\Modules\Templates\Services\TemplateService;
+use App\Modules\Templates\Services\TemplatesUsageService;
 use Psr\Container\ContainerInterface;
 
 $dependencies = [];
@@ -143,11 +145,20 @@ $dependencies[ShowSettingsController::class] = DI\factory(function (ContainerInt
 
 
 // Datatable
+$dependencies[TemplatesUsageService::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new TemplatesUsageService(
+		$container->get(TemplatesRepository::class),
+		$container->get(ItemsRepository::class)
+	);
+});
+
 $dependencies[TemplatesDatatableService::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new TemplatesDatatableService(
 		$container->get(TemplatesRepository::class),
 		$container->get(Parameters::class),
+		$container->get(TemplatesUsageService::class),
 		$container->get(AclValidator::class),
 		$container->get('ModuleLogger')
 	);
