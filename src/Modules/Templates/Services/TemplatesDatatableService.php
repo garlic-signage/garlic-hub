@@ -31,6 +31,7 @@ class TemplatesDatatableService extends AbstractDatatableService
 {
 	public function __construct(private readonly TemplatesRepository $templatesRepository,
 								private readonly BaseParameters $parameters,
+								private readonly TemplatesUsageService $templatesUsageService,
 								private readonly AclValidator $aclValidator,
 								LoggerInterface $logger)
 	{
@@ -68,5 +69,14 @@ class TemplatesDatatableService extends AbstractDatatableService
 		{
 			$this->fetchForUser($this->templatesRepository, $this->parameters);
 		}
+	}
+
+	public function getTemplatesInUse(array $templateIds)
+	{
+		if (empty($templateIds))
+			return [];
+
+		return $this->templatesUsageService->determineTemplatesInUse($templateIds);
+
 	}
 }
