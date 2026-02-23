@@ -171,6 +171,7 @@ $dependencies[DatatablePreparer::class] = DI\factory(function (ContainerInterfac
 {
 	return new DatatablePreparer(
 		$container->get(PrepareService::class),
+		$container->get(AclValidator::class),
 		$container->get(Parameters::class)
 	);
 });
