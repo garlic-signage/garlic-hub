@@ -256,4 +256,14 @@ class ItemsRepository extends SqlBase
 		return $this->connection->executeQuery($sql)->fetchAllAssociative();
 	}
 
+	public function countFileResourcesByTemplateId(array $templateIds): array
+	{
+		if (empty($templateIds))
+			return [];
+
+		$ids   = implode(',', $templateIds);
+		$sql = 'SELECT file_resource as template_id, COUNT(*) as count FROM ' . $this->getTable() . ' WHERE item_type = \'' . ItemType::TEMPLATE->value . '\' AND CAST(file_resource AS UNSIGNED) IN(' . $ids . ') GROUP BY file_resource';
+		return $this->connection->executeQuery($sql)->fetchAllAssociative();
+	}
+
 }
