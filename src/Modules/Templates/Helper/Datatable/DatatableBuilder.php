@@ -145,6 +145,7 @@ class DatatableBuilder extends AbstractDatatableBuilder
 		if ($this->parameters->hasParameter(BaseParameters::PARAMETER_UID))
 			$this->buildService->createDatatableField('UID', true);
 
+		$this->buildService->createDatatableField('used', false);
 
 		$this->datatableStructure['header'] = $this->buildService->getDatatableFields();
 

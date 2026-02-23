@@ -50,7 +50,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	/**
 	 * @param array<int,bool> $usedTemplates
 	 */
-	public function setUsedPlaylists(array $usedTemplates): static
+	public function setUsedTemplates(array $usedTemplates): static
 	{
 		$this->usedTemplates = $usedTemplates;
 		return $this;
@@ -90,6 +90,14 @@ class DatatablePreparer extends AbstractDatatablePreparer
 						break;
 					case 'type':
 						$resultElements['is_text'] = $this->prepareService->getBodyPreparer()->formatText($this->translator->translateArrayForOptions('types_selects', 'templates')[$template['type']]);
+						break;
+					case 'used':
+						$count = 0;
+						if (in_array($template['template_id'], $this->usedTemplates))
+							$count  = $this->usedTemplates[$template['template_id']];
+
+						$resultElements['is_text'] = $this->prepareService->getBodyPreparer()->formatText((string) $count);
+
 						break;
 					case 'name':
 						$resultElements['is_link'] = $this->prepareService->getBodyPreparer()->formatLink(

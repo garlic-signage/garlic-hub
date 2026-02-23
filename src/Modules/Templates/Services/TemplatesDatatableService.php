@@ -73,7 +73,7 @@ class TemplatesDatatableService extends AbstractDatatableService
 
 	public function getTemplatesInUse(array $templateIds)
 	{
-		if (empty($templateIds))
+		if ($templateIds === [])
 			return [];
 
 		return $this->templatesUsageService->determineTemplatesInUse($templateIds);

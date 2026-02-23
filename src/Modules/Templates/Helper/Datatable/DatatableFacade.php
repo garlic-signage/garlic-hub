@@ -146,7 +146,7 @@ class DatatableFacade implements DatatableFacadeInterface
 		$showedIds = array_column($currentResults, 'template_id');
 
 		$used = $this->templatesService->getTemplatesInUse($showedIds);
-		$this->datatablePreparer->setUsedPlaylists($used);
+		$this->datatablePreparer->setUsedTemplates($used);
 
 		return $this->datatablePreparer->prepareTableBody($currentResults, $fields, $this->UID);
 	}
