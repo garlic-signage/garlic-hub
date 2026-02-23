@@ -141,11 +141,14 @@ class DatatableFacade implements DatatableFacadeInterface
 	 */
 	private function prepareList(array $fields): array
 	{
-		return $this->datatablePreparer->prepareTableBody(
-			$this->templatesService->getCurrentFilterResults(),
-			$fields,
-			$this->UID
-		);
+		/** @var list<array{"UID": int, "company_id": int, template_id:int, name:string, username:string, ...}> $currentResults */
+		$currentResults = $this->templatesService->getCurrentFilterResults();
+		$showedIds = array_column($currentResults, 'template_id');
+
+		$used = $this->templatesService->getTemplatesInUse($showedIds);
+		$this->datatablePreparer->setUsedPlaylists($used);
+
+		return $this->datatablePreparer->prepareTableBody($currentResults, $fields, $this->UID);
 	}
 
 }
