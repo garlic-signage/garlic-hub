@@ -27,6 +27,7 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Services\AbstractBaseService;
 use App\Framework\Utils\FormParameters\BaseParameters;
+use App\Modules\Auth\UserSession;
 use App\Modules\Templates\Helper\Settings\Parameters;
 use App\Modules\Templates\Services\AclValidator;
 use App\Modules\Templates\Repositories\TemplatesRepository;
@@ -40,18 +41,18 @@ class TemplateService extends AbstractBaseService
 	public function __construct(
 		private readonly TemplatesRepository $templatesRepository,
 		private readonly AclValidator $aclValidator,
+		private readonly UserSession $userSession,
 		LoggerInterface $logger)
 	{
 		parent::__construct($logger);
 	}
 
-	public function updateSecure(array $postData): int
+	public function checkCreateRights(): bool
 	{
-		$playlistId = $postData['playlist_id'];
-		$this->loadWithUserById($playlistId);
-		$saveData = $this->collectDataForSettingsUpdate($postData);
+		if ($this->aclValidator->canCreate($this->userSession->getUID()))
+			return true;
 
-		return $this->update($playlistId, $saveData);
+		return false;
 	}
 
 	/**
@@ -60,7 +61,7 @@ class TemplateService extends AbstractBaseService
 	 */
 	public function update(int $templateId, array $saveData): int
 	{
-		return $this->templatesRepository->update($templateId, $saveData);
+		return $this->templatesRepository->update($templateId, $this->collectDataForSettingsUpdate($saveData));
 	}
 
 	public function delete(int $templateId): int
@@ -95,7 +96,7 @@ class TemplateService extends AbstractBaseService
 		if ($template === [])
 			throw new ModuleException('playlists', 'No template with Id: '.$templateId.' found.');
 
-		if (!$this->aclValidator->isTemplateEditable($this->UID, $template))
+		if (!$this->aclValidator->isTemplateEditable($this->userSession->getUID(), $template))
 			throw new ModuleException('templates', 'Template is not editable.');
 
 		return $template;

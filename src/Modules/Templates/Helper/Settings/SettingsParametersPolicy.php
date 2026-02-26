@@ -24,27 +24,27 @@ namespace App\Modules\Templates\Helper\Settings;
 
 use App\Modules\Auth\UserSession;
 use App\Modules\Templates\Services\AclValidator;
+use App\Modules\Templates\Services\TemplateService;
 
 class SettingsParametersPolicy
 {
 	public function __construct(private readonly Parameters $parameters,
 								private readonly AclValidator $aclValidator,
-								private readonly UserSession $userSession,)
+								private readonly UserSession $userSession
+	)
 	{}
 
 
-	public function checkCreateRights()
-	{
-		if ($this->aclValidator->canCreate($this->userSession->getUID()))
-			return true;
-
-		return false;
-	}
-
-	public function addCreateFormElements()
+	public function addEditFormElements()
 	{
 		$this->parameters->addOwner();
 		$this->parameters->addVisibility();
+	}
+
+
+	public function addCreateFormElements()
+	{
+		$this->addEditFormElements();
 		$this->parameters->addType();
 	}
 

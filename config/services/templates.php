@@ -37,8 +37,9 @@ use App\Modules\Templates\Helper\Datatable\DatatableBuilder;
 use App\Modules\Templates\Helper\Datatable\DatatableFacade;
 use App\Modules\Templates\Helper\Datatable\DatatablePreparer;
 use App\Modules\Templates\Helper\Datatable\Parameters;
-use App\Modules\Templates\Helper\Settings\CreateFormBuilder;
-use App\Modules\Templates\Helper\Settings\CreateFormInputHandler;
+use App\Modules\Templates\Helper\Settings\SettingsFormBuilder;
+use App\Modules\Templates\Helper\Settings\TemplateFormBuilder;
+use App\Modules\Templates\Helper\Settings\FormInputHandler;
 use App\Modules\Templates\Helper\Settings\CreateFormWriter;
 use App\Modules\Templates\Helper\Settings\FormElementsCreator;
 use App\Modules\Templates\Helper\Settings\Orchestrator;
@@ -69,6 +70,7 @@ $dependencies[TemplateService::class] = DI\factory(function (ContainerInterface 
 	return new TemplateService(
 		$container->get(TemplatesRepository::class),
 		$container->get(AclValidator::class),
+		$container->get(UserSession::class),
 		$container->get('ModuleLogger')
 	);
 });
@@ -95,41 +97,34 @@ $dependencies[Validator::class] = DI\factory(function (ContainerInterface $conta
 		$container->get(CsrfToken::class),
 	);
 });
-$dependencies[CreateFormWriter::class] = DI\factory(function (ContainerInterface $container)
+$dependencies[FormInputHandler::class] = DI\factory(function (ContainerInterface $container)
 {
-	return new CreateFormWriter(
-		$container->get(UserSession::class),
-		$container->get(TemplateService::class),
-	);
-});
-$dependencies[CreateFormInputHandler::class] = DI\factory(function (ContainerInterface $container)
-{
-	return new CreateFormInputHandler(
+	return new FormInputHandler(
 		$container->get(\App\Modules\Templates\Helper\Settings\Parameters::class),
 		$container->get(Validator::class),
 	);
 });
-$dependencies[\App\Modules\Templates\Helper\Settings\SettingsFormBuilder::class] = DI\factory(function (ContainerInterface $container)
+$dependencies[SettingsFormBuilder::class] = DI\factory(function (ContainerInterface $container)
 {
-	return new \App\Modules\Templates\Helper\Settings\SettingsFormBuilder(
+	return new SettingsFormBuilder(
 		$container->get(\App\Modules\Templates\Helper\Settings\Parameters::class),
 		$container->get(FormElementsCreator::class)
 	);
 });
-$dependencies[CreateFormBuilder::class] = DI\factory(function (ContainerInterface $container)
+$dependencies[TemplateFormBuilder::class] = DI\factory(function (ContainerInterface $container)
 {
-	return new CreateFormBuilder(
+	return new TemplateFormBuilder(
 		$container->get(UserSession::class),
-		$container->get(\App\Modules\Templates\Helper\Settings\SettingsFormBuilder::class),
+		$container->get(SettingsFormBuilder::class),
 	);
 });
 $dependencies[Orchestrator::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new Orchestrator(
-		$container->get(CreateFormBuilder::class),
+		$container->get(TemplateFormBuilder::class),
 		$container->get(SettingsParametersPolicy::class),
-		$container->get(CreateFormWriter::class),
-		$container->get(CreateFormInputHandler::class)
+		$container->get(TemplateService::class),
+		$container->get(FormInputHandler::class)
 	);
 });
 $dependencies[ShowSettingsController::class] = DI\factory(function (ContainerInterface $container)

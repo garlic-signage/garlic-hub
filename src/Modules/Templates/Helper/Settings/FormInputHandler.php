@@ -22,24 +22,58 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Helper\Settings;
 
-class CreateFormInputHandler
+class FormInputHandler
 {
 	public function __construct(private readonly Parameters $parameters,
 								private readonly Validator $validator)
 	{
 	}
 
-	public function validate(array $post)
+	/**
+	 * @param array $post
+	 * @return array|string[]
+	 * @throws \App\Framework\Exceptions\CoreException
+	 * @throws \App\Framework\Exceptions\FrameworkException
+	 * @throws \App\Framework\Exceptions\ModuleException
+	 * @throws \Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException
+	 * @throws \Psr\SimpleCache\InvalidArgumentException
+	 */
+	public function validateCreate(array $post)
 	{
-		$this->parameters->setUserInputs($post);
-		$this->parameters->parseInputAllParameters();
+		$this->parse($post);
 		$errors = $this->validator->validateCreateInput();
-
 		if ($errors !== [])
 			return $errors;
 
 		return [];
 	}
+
+	/**
+	 * @param array $post
+	 * @return string[]
+	 * @throws \App\Framework\Exceptions\CoreException
+	 * @throws \App\Framework\Exceptions\FrameworkException
+	 * @throws \App\Framework\Exceptions\ModuleException
+	 * @throws \Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException
+	 * @throws \Psr\SimpleCache\InvalidArgumentException
+	 */
+	public function validateEdit(array $post)
+	{
+		$this->parse($post);
+
+		$errors = $this->validator->validateEditInput();
+		if ($errors !== [])
+			return $errors;
+
+		return [];
+	}
+
+	private function parse(array $post)
+	{
+		$this->parameters->setUserInputs($post);
+		$this->parameters->parseInputAllParameters();
+	}
+
 
 	public function getParsed(): array
 	{

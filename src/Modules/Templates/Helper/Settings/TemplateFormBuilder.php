@@ -30,11 +30,11 @@ use Psr\SimpleCache\InvalidArgumentException;
 /**
  * The Builder class is responsible for constructing and validating forms and handling user input.
  */
-class CreateFormBuilder
+class TemplateFormBuilder
 {
 
 	public function __construct(private readonly UserSession         $userSession,
-								private readonly SettingsFormBuilder $formBuilder)
+								private readonly SettingsFormBuilder $settingsformBuilder)
 	{}
 
 	/**
@@ -47,7 +47,7 @@ class CreateFormBuilder
 	 */
 	public function build(array $settingsData): array
 	{
-		return $this->formBuilder->buildForm($settingsData, $this->userSession);
+		return $this->settingsformBuilder->buildForm($settingsData, $this->userSession);
 
 	}
 }

@@ -26,6 +26,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
+use App\Modules\Templates\Services\TemplateService;
 use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
@@ -36,19 +37,30 @@ use Psr\SimpleCache\InvalidArgumentException;
 class Orchestrator
 {
 	/** @var array<string,string>  */
-	private array $input;
+	private array $template;
 
 	public function __construct(
-		private readonly CreateFormBuilder $createFormBuilder,
+		private readonly TemplateFormBuilder      $templateFormBuilder,
 		private readonly SettingsParametersPolicy $settingsParametersPolicy,
-		private readonly CreateFormWriter  $createFormWriter,
-		private readonly CreateFormInputHandler  $createFormInputHandler
+		private readonly TemplateService          $templateService,
+		private readonly FormInputHandler         $formInputHandler
 	) {}
 
 	public function checkCreateRights(): bool
 	{
-		return $this->settingsParametersPolicy->checkCreateRights();
+		return $this->templateService->checkCreateRights();
 	}
+
+	public function checkEditRights(int $templateId): bool
+	{
+		$template =  $this->templateService->loadWithUserById($templateId);
+		if ($template == [])
+			return false;
+
+		$this->template = $template;
+		return true;
+	}
+
 
 	/**
 	 * @throws CoreException
@@ -59,36 +71,57 @@ class Orchestrator
 	public function buildCreateForm(array $post = []): array
 	{
 		$this->settingsParametersPolicy->addCreateFormElements();
-		return $this->createFormBuilder->build($post);
+		return $this->templateFormBuilder->build($post);
 	}
 
-	/**.
+	public function buildEditForm(): array
+	{
+		$this->settingsParametersPolicy->addEditFormElements();
+		return $this->templateFormBuilder->build($this->template);
+	}
+
+
+	/**
+	 * @param array<string, string> $post
+	 * @return array{success: bool, errors?: string[]}
+	 */
+	public function storeCreateSettings(array $post): array
+	{
+		$this->settingsParametersPolicy->addCreateFormElements();
+		$errors = $this->formInputHandler->validateCreate($post);
+
+		if ($errors !== [])
+			return ['success' => false, 'errors' => $errors];
+
+		$saveData = $this->formInputHandler->getParsed();
+
+		if ($this->templateService->insert($saveData) === 0)
+			return ['success' => false, 'errors' => ['No save possible']];
+
+		return ['success' => true];
+	}
+
+	/**
+	 * @param array $post
+	 * @return array{success: bool, errors?: string[]}
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws InvalidArgumentException
 	 * @throws ModuleException
 	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws UserException
 	 */
-	public function storeCreateSettings(array $post): array
+	public function storeEditSettings(int $templateId, array $post): array
 	{
-		$this->settingsParametersPolicy->addCreateFormElements();
-		$errors = $this->createFormInputHandler->validate($post);
-
+		$this->settingsParametersPolicy->addEditFormElements();
+		$errors = $this->formInputHandler->validateEdit($post);
 		if ($errors !== [])
 			return ['success' => false, 'errors' => $errors];
 
-		$saveData = $this->createFormInputHandler->getParsed();
-		$errors = $this->createFormWriter->store($saveData);
-		if ($errors !== [])
-			return ['success' => false, 'errors' => $errors];
+		$saveData = $this->formInputHandler->getParsed();
+		if ($this->templateService->update($templateId, $saveData) === 0)
+			return ['success' => false, 'errors' => ['No save possible']];
 
-		return ['success' => true];
-	}
-
-	public function storeEditSettings(): array
-	{
 		return ['success' => true];
 	}
 

@@ -58,7 +58,19 @@ class ShowSettingsController
 	public function edit(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
 		$templateId = (int) ($args['template_id'] ?? 0);
-		return $response->withHeader('Location', '/templates')->withStatus(302);
+
+		if (!$this->orchestrator->checkEditRights($templateId))
+		{
+			$this->flash = $request->getAttribute('flash');
+			$this->flash->addMessage('error', 'No rights');
+			return $response->withHeader('Location', '/templates')->withStatus(302);
+		}
+
+		$formData = $this->orchestrator->buildEditForm();
+		$prepared = $this->templatePreparer->prepareEditSettings($formData);
+
+		$response->getBody()->write(serialize($prepared));
+		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
 	}
 
 	public function store(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -69,9 +81,9 @@ class ShowSettingsController
 		$this->flash = $request->getAttribute('flash');
 
 		if ($templateId === 0)
-			return $this->storeNewSettings($response, $post);
+			return $this->insert($response, $post);
 		else
-			return $this->storeEditSettings($response, $post);
+			return $this->update($response, $templateId, $post);
 
 	}
 
@@ -82,13 +94,14 @@ class ShowSettingsController
 
 	}
 
-	private function storeNewSettings(ResponseInterface $response, array $post): ResponseInterface
+	private function insert(ResponseInterface $response, array $post): ResponseInterface
 	{
 		if (!$this->orchestrator->checkCreateRights())
 		{
 			$this->flash->addMessage('error', 'No rights');
 			return $response->withHeader('Location', '/player')->withStatus(302);
 		}
+		/** @var array{success: string, errors?: string[]} $viewData */
 		$viewData = $this->orchestrator->storeCreateSettings($post);
 
 		if (!$viewData['success'])
@@ -112,9 +125,34 @@ class ShowSettingsController
 		}
 	}
 
-	private function storeEditSettings(ResponseInterface $response, array $post): ResponseInterface
+	private function update(ResponseInterface $response, int $templateId, array $post): ResponseInterface
 	{
-		return $response->withHeader('Location', '/templates')->withStatus(302);
+		if (!$this->orchestrator->checkEditRights($templateId))
+		{
+			$this->flash->addMessage('error', 'No rights');
+			return $response->withHeader('Location', '/player')->withStatus(302);
+		}
+
+		$viewData = $this->orchestrator->storeEditSettings($templateId, $post);
+		if (!$viewData['success'])
+		{
+			foreach ($viewData['errors'] as $errorText)
+			{
+				$this->flash->addMessageNow('error', $errorText);
+			}
+
+			$formData = $this->orchestrator->buildEditForm();
+			$prepared = $this->templatePreparer->prepareEditSettings($formData);
+
+			$response->getBody()->write(serialize($prepared));
+			return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
+
+		}
+		else
+		{
+			$this->flash->addMessage('success', 'Templated saved successfully');
+			return $response->withHeader('Location', '/templates')->withStatus(302);
+		}
 	}
 
 }
