@@ -110,7 +110,8 @@ class DatatablePreparerTest extends TestCase
 
 		$this->translatorMock->method('translate')
 			->willReturnMap([
-				['edit', 'main', [], 'edit'],
+				['composer', 'playlists', [], 'Compose'],
+				['composer', 'playlists', [], 'Compose'],
 				['copy_playlist', 'playlists', [], 'copy'],
 				['edit_settings', 'playlists', [], 'Edit setting'],
 				['delete', 'main', [], 'Delete'],
@@ -120,7 +121,7 @@ class DatatablePreparerTest extends TestCase
 		$this->aclValidatorMock->method('isAllowedToDeletePlaylist')->willReturn(true);
 
 		$this->bodyPreparerMock->expects($this->once())->method('formatLink')
-			->with('Playlist Name', 'edit', 'playlists/compose/1', 'playlist_name_1');
+			->with('Playlist Name', 'Compose', 'playlists/compose/1', 'playlist_name_1');
 
 		$result = $this->datatablePreparer->prepareTableBody(
 			[
