@@ -92,7 +92,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 					case 'playlist_name':
 						$resultElements['is_link'] = $this->prepareService->getBodyPreparer()->formatLink(
 							$playlist['playlist_name'],
-							$this->translator->translate('edit', 'main'),
+							$this->translator->translate('composer', 'playlists'),
 							'playlists/compose/'.$playlist['playlist_id'],
 							'playlist_name_'.$playlist['playlist_id']
 						);
@@ -121,7 +121,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 							'playlists/?playlist_copy_id='.$playlist['playlist_id'],
 							'copy', 'copy'), */
 						$this->prepareService->getBodyPreparer()->formatAction(
-							$this->translator->translate('composer', 'templates'),
+							$this->translator->translate('composer', 'playlists'),
 							'playlists/compose/'.$playlist['playlist_id'],
 							'composer', (string) $playlist['playlist_id'], 'music-note-list'),
 						$this->prepareService->getBodyPreparer()->formatAction(
