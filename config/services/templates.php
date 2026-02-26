@@ -143,7 +143,6 @@ $dependencies[ShowSettingsController::class] = DI\factory(function (ContainerInt
 $dependencies[TemplatesUsageService::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new TemplatesUsageService(
-		$container->get(TemplatesRepository::class),
 		$container->get(ItemsRepository::class)
 	);
 });

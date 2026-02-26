@@ -13,13 +13,10 @@ use Doctrine\DBAL\Exception;
 readonly class TemplatesUsageService
 {
     private TemplatesRepository $templatesRepository;
-    private ItemsRepository $itemsRepository;
     // private readonly ChannelRepository $channelRepository;
 
-    public function __construct(TemplatesRepository $playerRepository, ItemsRepository $itemsRepository /*ChannelRepository $channelRepository*/)
+    public function __construct(private readonly ItemsRepository $itemsRepository /*ChannelRepository $channelRepository*/)
 	{
-        $this->templatesRepository = $playerRepository;
-        $this->itemsRepository  = $itemsRepository;
         // $this->channelRepository = $channelRepository;
     }
 
