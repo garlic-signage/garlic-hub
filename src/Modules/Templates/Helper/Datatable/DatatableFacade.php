@@ -122,7 +122,7 @@ class DatatableFacade implements DatatableFacadeInterface
 			'template_name'       => 'templates/datatable',
 			'module_name'		  => 'templates',
 			'additional_css'      => ['/css/templates/datatable.css'],
-			'footer_modules'      => [],
+			'footer_modules'      => ['/js/templates/datatable/init.js'],
 			'sort'				  => $this->datatablePreparer->prepareSort(),
 			'page'      		  => $this->datatablePreparer->preparePage()
 		];
