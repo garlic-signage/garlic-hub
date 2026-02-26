@@ -121,9 +121,13 @@ class DatatablePreparer extends AbstractDatatablePreparer
 							'playlists/?playlist_copy_id='.$playlist['playlist_id'],
 							'copy', 'copy'), */
 						$this->prepareService->getBodyPreparer()->formatAction(
+							$this->translator->translate('composer', 'templates'),
+							'playlists/compose/'.$playlist['playlist_id'],
+							'composer', (string) $playlist['playlist_id'], 'music-note-list'),
+						$this->prepareService->getBodyPreparer()->formatAction(
 							$this->translator->translate('edit_settings', 'playlists'),
 							'playlists/settings/'.$playlist['playlist_id'],
-							'edit', (string) $playlist['playlist_id'], 'pencil')
+							'edit', (string) $playlist['playlist_id'], 'gear')
 					];
 					if (!array_key_exists($playlist['playlist_id'], $this->usedPlaylists) &&
 						$this->aclValidator->isAllowedToDeletePlaylist($currentUID, $playlist))
