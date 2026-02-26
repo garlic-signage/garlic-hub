@@ -42,6 +42,7 @@ use App\Modules\Playlists\Controller\TriggerController;
 use App\Modules\Playlists\Controller\WidgetsController;
 use App\Modules\Profile\Controller\EditLocalesController;
 use App\Modules\Profile\Controller\ShowPasswordController;
+use App\Modules\Templates\Controller\TemplatesController;
 use App\Modules\Users\Controller\ShowAdminController;
 use App\Modules\Users\Controller\ShowInitialAdminController;
 use App\Modules\Users\Controller\UsersController;
@@ -185,5 +186,8 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 
 	$group->post('/profile/tokens', resolve([UserTokenController::class, 'refresh'], $container));
 	$group->delete('/profile/tokens', resolve([UserTokenController::class, 'delete'], $container));
+
+	$group->delete('/templates', resolve([TemplatesController::class, 'delete'], $container));
+
 
 })->add(function ($request, $handler) {return $handler->handle($request)->withHeader('Content-Type', 'text/html');});

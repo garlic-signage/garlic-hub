@@ -18,6 +18,7 @@
 */
 
 import {BaseService}        from "../core/Base/BaseService.js";
+import {TemplatesApiConfig} from "./TemplatesApiConfig.js";
 
 export class TemplatesService extends BaseService
 {
