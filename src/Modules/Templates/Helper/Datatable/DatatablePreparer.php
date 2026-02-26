@@ -102,7 +102,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 					case 'name':
 						$resultElements['is_link'] = $this->prepareService->getBodyPreparer()->formatLink(
 							$template[$innerKey],
-							$template[$innerKey],
+							$this->translator->translate('composer', 'templates'). ': '.$template[$innerKey],
 							'/templates/composer/' . $template['template_id'],
 							(string) $template['template_id']
 						);
@@ -115,14 +115,14 @@ class DatatablePreparer extends AbstractDatatablePreparer
 				if ($template['UID'] == $currentUID || $this->aclValidator->isTemplateEditable($currentUID, $template))
 				{
 					$list['has_action'] = [
-						/*		$this->prepareService->getBodyPreparer()->formatAction(
-									$this->translator->translate('copy_playlist', 'playlists'),
-									'playlists/?playlist_copy_id='.$playlist['playlist_id'],
-									'copy', 'copy'), */
 						$this->prepareService->getBodyPreparer()->formatAction(
-							$this->translator->translate('edit_settings', 'templates'),
+							$this->translator->translate('composer', 'templates'),
+							'templates/composer/'.$template['template_id'],
+							'composer', (string) $template['template_id'], 'columns'),
+						$this->prepareService->getBodyPreparer()->formatAction(
+							$this->translator->translate('settings', 'main'),
 							'templates/settings/'.$template['template_id'],
-							'edit', (string) $template['template_id'], 'pencil')
+							'edit', (string) $template['template_id'], 'gear')
 					];
 					if (!array_key_exists($template['template_id'], $this->usedTemplates) &&
 						$this->aclValidator->isAllowedToDeleteTemplate($currentUID, $template))
