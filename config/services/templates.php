@@ -49,7 +49,7 @@ use App\Modules\Templates\Helper\Settings\Validator;
 use App\Modules\Templates\Repositories\TemplatesRepository;
 use App\Modules\Templates\Services\AclValidator;
 use App\Modules\Templates\Services\TemplatesDatatableService;
-use App\Modules\Templates\Services\TemplateService;
+use App\Modules\Templates\Services\TemplatesService;
 use App\Modules\Templates\Services\TemplatesUsageService;
 use Psr\Container\ContainerInterface;
 
@@ -65,9 +65,9 @@ $dependencies[AclValidator::class] = DI\factory(function (ContainerInterface $co
 		$container->get(AclHelper::class),
 	);
 });
-$dependencies[TemplateService::class] = DI\factory(function (ContainerInterface $container)
+$dependencies[TemplatesService::class] = DI\factory(function (ContainerInterface $container)
 {
-	return new TemplateService(
+	return new TemplatesService(
 		$container->get(TemplatesRepository::class),
 		$container->get(AclValidator::class),
 		$container->get(UserSession::class),
@@ -123,7 +123,7 @@ $dependencies[Orchestrator::class] = DI\factory(function (ContainerInterface $co
 	return new Orchestrator(
 		$container->get(TemplateFormBuilder::class),
 		$container->get(SettingsParametersPolicy::class),
-		$container->get(TemplateService::class),
+		$container->get(TemplatesService::class),
 		$container->get(FormInputHandler::class)
 	);
 });

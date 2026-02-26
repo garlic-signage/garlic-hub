@@ -26,7 +26,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Templates\Services\TemplateService;
+use App\Modules\Templates\Services\TemplatesService;
 use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
@@ -42,7 +42,7 @@ class Orchestrator
 	public function __construct(
 		private readonly TemplateFormBuilder      $templateFormBuilder,
 		private readonly SettingsParametersPolicy $settingsParametersPolicy,
-		private readonly TemplateService          $templateService,
+		private readonly TemplatesService         $templateService,
 		private readonly FormInputHandler         $formInputHandler
 	) {}
 

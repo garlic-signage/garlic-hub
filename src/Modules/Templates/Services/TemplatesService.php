@@ -36,7 +36,7 @@ use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
-class TemplateService extends AbstractBaseService
+class TemplatesService extends AbstractBaseService
 {
 	public function __construct(
 		private readonly TemplatesRepository $templatesRepository,

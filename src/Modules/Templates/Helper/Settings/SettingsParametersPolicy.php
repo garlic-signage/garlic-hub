@@ -24,7 +24,7 @@ namespace App\Modules\Templates\Helper\Settings;
 
 use App\Modules\Auth\UserSession;
 use App\Modules\Templates\Services\AclValidator;
-use App\Modules\Templates\Services\TemplateService;
+use App\Modules\Templates\Services\TemplatesService;
 
 class SettingsParametersPolicy
 {
