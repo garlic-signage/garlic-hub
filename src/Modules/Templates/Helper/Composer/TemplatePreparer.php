@@ -76,7 +76,7 @@ class TemplatePreparer
 			'LANG_INSERT' => $this->translator->translate('insert', 'main'),
 			'LANG_SAVE' => $this->translator->translate('save', 'main'),
 			'LANG_CLOSE' => $this->translator->translate('close', 'main'),
-			'LANG_CONFIRM_CLOSE_EDITOR' => $this->translator->translate('confirm_close_editor', 'templates'),
+			'LANG_CONFIRM_CLOSE_EDITOR' => $this->translator->translate('confirm_close_composer', 'templates'),
 			'LANG_CANCEL' => $this->translator->translate('cancel', 'main'),
 			'LANG_TRANSFER' => $this->translator->translate('transfer', 'main'),
 		];
