@@ -10,6 +10,18 @@ from a single self-hosted interface. No SaaS, no per-device fees, no vendor lock
 
 > **Currently Working on: Image Template Editor**
 
+## Part of the GarlicSignage Ecosystem
+
+| Project | Role |
+|---|---|
+| [garlic-player](https://github.com/garlic-signage/garlic-player) | SMIL media player |
+| **garlic-hub** | Device & content management ← you are here |
+| [garlic-launcher](https://github.com/garlic-signage/garlic-launcher) | Root-free Android kiosk launcher |
+| [garlic-daemon](https://github.com/garlic-signage/garlic-daemon) | systemd-based player maintenance |
+| [garlic-proxy](https://github.com/garlic-signage/garlic-proxy) | Proxy for restricted networks |
+
+![Garlic-Hub Mediapool Screenshot](docs/media/showcase.gif)
+
 ## Live Demo
 To see garlic-hub it in action, use the live demo at:
 
@@ -19,7 +31,6 @@ password: Demo1234!
 
 The environment is regularly deleted and rebuilt.
 
-![Garlic-Hub Mediapool Screenshot](docs/media/showcase.gif)
 
 ## Quick Start
 
