@@ -32,7 +32,21 @@ export class TemplatesService extends BaseService
 		return await this._sendRequest(url, "DELETE", data);
 	}
 
+	async loadTemplateContent(templateId)
+	{
+		const url =TemplatesApiConfig.BASE_URI + '/' + templateId;
+		return await this._sendRequest(url, "GET");
+	}
 
+	async saveTemplateContent(templateId, content)
+	{
+		const url =TemplatesApiConfig.BASE_URI + '/' + templateId;
+		const data = {
+			template_id: templateId,
+			content: content
+		};
+		return await this._sendRequest(url, "PATCH", data);
+	}
 
 }
 
