@@ -29,12 +29,13 @@ use App\Modules\Auth\UserSession;
 class SettingsFormBuilder
 {
 	public function __construct(private readonly Parameters $parameters,
+								private readonly UserSession $userSession,
 								private readonly FormElementsCreator $formElementsCreator)
 	{
 
 	}
 
-	public function buildForm(array $settingsData, UserSession $userSession): array
+	public function buildForm(array $settingsData): array
 	{
 
 		$form       = [];
@@ -45,9 +46,9 @@ class SettingsFormBuilder
 		if ($this->parameters->hasParameter(BaseParameters::PARAMETER_UID))
 		{
 			$form[BaseParameters::PARAMETER_UID] = $this->formElementsCreator->createUIDField(
-				$settingsData[BaseParameters::PARAMETER_UID] ?? $userSession->getUID(),
-				$settingsData['username'] ?? $userSession->getUsername(),
-				$userSession->getUID()
+				$settingsData[BaseParameters::PARAMETER_UID] ?? $this->userSession->getUID(),
+				$settingsData['username'] ?? $this->userSession->getUsername(),
+				$this->userSession->getUID()
 			);
 		}
 

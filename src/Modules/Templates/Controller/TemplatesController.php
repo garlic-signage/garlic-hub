@@ -59,4 +59,8 @@ class TemplatesController
 		return $this->responseHandler->jsonSuccess($response);
 	}
 
+	public function storeContent(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	{
+	}
+
 }

@@ -38,9 +38,7 @@ use App\Modules\Templates\Helper\Datatable\DatatableFacade;
 use App\Modules\Templates\Helper\Datatable\DatatablePreparer;
 use App\Modules\Templates\Helper\Datatable\Parameters;
 use App\Modules\Templates\Helper\Settings\SettingsFormBuilder;
-use App\Modules\Templates\Helper\Settings\TemplateFormBuilder;
 use App\Modules\Templates\Helper\Settings\FormInputHandler;
-use App\Modules\Templates\Helper\Settings\CreateFormWriter;
 use App\Modules\Templates\Helper\Settings\FormElementsCreator;
 use App\Modules\Templates\Helper\Settings\Orchestrator;
 use App\Modules\Templates\Helper\Settings\SettingsParametersPolicy;
@@ -108,20 +106,15 @@ $dependencies[SettingsFormBuilder::class] = DI\factory(function (ContainerInterf
 {
 	return new SettingsFormBuilder(
 		$container->get(\App\Modules\Templates\Helper\Settings\Parameters::class),
+		$container->get(UserSession::class),
 		$container->get(FormElementsCreator::class)
 	);
 });
-$dependencies[TemplateFormBuilder::class] = DI\factory(function (ContainerInterface $container)
-{
-	return new TemplateFormBuilder(
-		$container->get(UserSession::class),
-		$container->get(SettingsFormBuilder::class),
-	);
-});
+
 $dependencies[Orchestrator::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new Orchestrator(
-		$container->get(TemplateFormBuilder::class),
+		$container->get(SettingsFormBuilder::class),
 		$container->get(SettingsParametersPolicy::class),
 		$container->get(TemplatesService::class),
 		$container->get(FormInputHandler::class)

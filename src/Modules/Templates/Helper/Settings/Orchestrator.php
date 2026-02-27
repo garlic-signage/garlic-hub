@@ -40,7 +40,7 @@ class Orchestrator
 	private array $template;
 
 	public function __construct(
-		private readonly TemplateFormBuilder      $templateFormBuilder,
+		private readonly SettingsFormBuilder      $settingsFormBuilder,
 		private readonly SettingsParametersPolicy $settingsParametersPolicy,
 		private readonly TemplatesService         $templateService,
 		private readonly FormInputHandler         $formInputHandler
@@ -71,13 +71,13 @@ class Orchestrator
 	public function buildCreateForm(array $post = []): array
 	{
 		$this->settingsParametersPolicy->addCreateFormElements();
-		return $this->templateFormBuilder->build($post);
+		return $this->settingsFormBuilder->buildForm($post);
 	}
 
 	public function buildEditForm(): array
 	{
 		$this->settingsParametersPolicy->addEditFormElements();
-		return $this->templateFormBuilder->build($this->template);
+		return $this->settingsFormBuilder->buildForm($this->template);
 	}
 
 
