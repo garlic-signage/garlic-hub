@@ -95,6 +95,9 @@ class Orchestrator
 
 	public function getContent()
 	{
+		if ( $this->template['content'] === null)
+			return [];
+
 		return $this->template['content'];
 	}
 

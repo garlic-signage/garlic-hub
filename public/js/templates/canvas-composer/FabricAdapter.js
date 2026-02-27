@@ -36,7 +36,10 @@ export class FabricAdapter
 	{
 		this.#waitOverlay.start();
 		const jsonResponse = await this.#templatesService.loadTemplateContent(templateId);
-		await this.loadJsonFromString(jsonResponse.canvas);
+		if (jsonResponse.content.length > 0)
+		{
+			await this.loadJsonFromString(jsonResponse.content);
+		}
 		this.#waitOverlay.stop();
 	}
 

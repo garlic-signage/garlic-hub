@@ -22,15 +22,25 @@ export class TextProperties {
 	MyFontHandler = {};
 	property = document.getElementById("text_properties");
 	fontFamily = document.getElementById("font_family")
-	textAlign = new ToggleButton(document.getElementById("text_align"))
-	textBold = new ToggleButton(document.getElementById("text_bold"))
-	textItalic = new ToggleButton(document.getElementById("text_italic"))
-	textUnderline = new ToggleButton(document.getElementById("text_underline"))
+	textAlign ;
+	textBold;
+	textItalic;
+	textUnderline;
 	used_fonts = [];
+	#toggleButtonFactory
 
-	constructor(MyCanvasView, MyFontHandler) {
+	constructor(MyCanvasView, MyFontHandler, toggleButtonFactory)
+	{
 		this.MyCanvasView = MyCanvasView;
 		this.MyFontHandler = MyFontHandler;
+		this.#toggleButtonFactory = toggleButtonFactory;
+
+		this.textAlign     = toggleButtonFactory.create(document.getElementById("text_align"))
+		this.textBold      = toggleButtonFactory.create(document.getElementById("text_bold"))
+		this.textItalic    = toggleButtonFactory.create(document.getElementById("text_italic"))
+		this.textUnderline = toggleButtonFactory.create(document.getElementById("text_underline"))
+
+
 		this.buildFontDropdown();
 	}
 

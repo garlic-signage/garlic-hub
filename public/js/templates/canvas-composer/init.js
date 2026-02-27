@@ -20,8 +20,46 @@
 import {TemplatesService} from "../TemplatesService.js";
 import {FetchClient}      from "../../core/FetchClient.js";
 import {WaitOverlay}      from "../../core/WaitOverlay.js";
+import {CanvasView}       from "./CanvasView.js";
+import {SvgItemsParser}   from "./SvgItemsParser.js";
+import {CanvasDialog}     from "./CanvasDialog.js";
+import {MediaSelector}    from "../../mediapool/selector/MediaSelector.js";
+import {ContextMenu}      from "./ContextMenu.js";
+import {GlobalProperties} from "./ItemProperties/GlobalProperties.js";
+import {GroupProperties}  from "./ItemProperties/GroupProperties.js";
+import {SelectiveProperties} from "./ItemProperties/SelectiveProperties.js";
+import {TextProperties} from "./ItemProperties/TextProperties.js";
+import {ItemProperties} from "./ItemProperties.js";
+import {CanvasEvents} from "./CanvasEvents.js";
+import {FontHandler} from "./FontHandler.js";
+import {ToggleButtonFactory} from "./ItemProperties/ToggleButtonFactory.js";
+import {FabricAdapter} from "./FabricAdapter.js";
 
 document.addEventListener("DOMContentLoaded", function (event) {
+
+	const templateId = document.getElementById("template_id").value;
+	const canvasView     = new CanvasView(new fabric.Canvas('canvas',
+		{
+			stopContextMenu: true,
+			fireRightClick: true,
+			preserveObjectStacking: true
+		}
+	), {});
+	const toggleButtonFactory = new ToggleButtonFactory();
+	let MySvgItemsParser = new SvgItemsParser(canvasView);
+	// needed for load media
+	let MyMediaSelector = {} // = new MediaSelector();
+
+	let MyCanvasDialog   = new CanvasDialog(MyMediaSelector, MySvgItemsParser);
+	let MyContextMenu    = new ContextMenu(canvasView, MyCanvasDialog);
+
+	let MyGlobalProperties    = new GlobalProperties(canvasView);
+	let MyGroupProperties     = new GroupProperties(canvasView, toggleButtonFactory);
+	let MySelectiveProperties = new SelectiveProperties(canvasView);
+	let MyTextProperties      = new TextProperties(canvasView, new FontHandler(FontsList), toggleButtonFactory);
+	let MyItemProperties      = new ItemProperties(MyGlobalProperties, MyGroupProperties, MySelectiveProperties, MyTextProperties);
+
+	let MyCanvasEvents   = new CanvasEvents(MyContextMenu, canvasView, MyCanvasDialog, MyMediaSelector, MyItemProperties);
 
 	const fabricAdapter  = new FabricAdapter(
 		MySvgItemsParser,
@@ -29,52 +67,11 @@ document.addEventListener("DOMContentLoaded", function (event) {
 		new TemplatesService(new FetchClient()),
 		new WaitOverlay()
 	);
-
-	const templateId = document.getElementById("content_id").value;
-	fabricAdapter.loadFromDataBase(templateId);
-
-	/*
-	let MyCanvasView     = new CanvasView(new fabric.Canvas('canvas',
-		{
-			stopContextMenu: true,
-			fireRightClick: true,
-			preserveObjectStacking: true
-		}
-	), {});
-	let MySvgItemsParser = new SvgItemsParser(MyCanvasView);
-	// needed for load media
-	let MyMediaSelector  = new MediaSelector();
-
-	let MyCanvasDialog   = new CanvasDialog(MyMediaSelector, MySvgItemsParser);
-	let MyContextMenu    = new ContextMenu(MyCanvasView, MyCanvasDialog);
-
-	let MyGlobalProperties    = new GlobalProperties(MyCanvasView);
-	let MyGroupProperties     = new GroupProperties(MyCanvasView);
-	let MySelectiveProperties = new SelectiveProperties(MyCanvasView);
-	let MyTextProperties      = new TextProperties(MyCanvasView, new FontHandler(FontsList));
-
-	let MyItemProperties = new ItemProperties(MyGlobalProperties, MyGroupProperties, MySelectiveProperties, MyTextProperties);
-
-	let MyCanvasEvents   = new CanvasEvents(MyContextMenu, MyCanvasView, MyCanvasDialog, MyMediaSelector, MyItemProperties);
-	let MyTemplateModel  = new TemplateModel(MySvgItemsParser, MyCanvasEvents);
-
-	let content_id = document.getElementById("content_id").value;
-
-	let is_template_editor_dev =  document.getElementById("is_template_editor_dev").value;
-	if (is_template_editor_dev === undefined || is_template_editor_dev === "false")
-	{
-		// Load mechanism set in CMS
-		MyTemplateModel.loadFromDataBase(content_id);
-	}
-	else
-	{
-		// this should be used only for developing
-		MyTemplateModel.loadFromLocalFile("./data/template_1.svg");
-	}
+	fabricAdapter.loadTemplateFromDataBase(templateId);
 
 	MyCanvasEvents.initInsertObjects();
-	MyItemProperties.initEventListener(MyCanvasView);
-	MyCanvasEvents.initSaveEvent(MyTemplateModel);
+	MyItemProperties.initEventListener(canvasView);
+	MyCanvasEvents.initSaveEvent(fabricAdapter);
 	MyCanvasEvents.initRangeSliderEvents();
 	MyCanvasEvents.initCloseEvent();
 
@@ -82,6 +79,6 @@ document.addEventListener("DOMContentLoaded", function (event) {
 		if (MyCanvasEvents.isAutoResize())
 			MySvgItemsParser.zoomToViewPort();
 	}
-*/
+
 });
 

@@ -46,9 +46,9 @@ export class CanvasDialog
 	displayMediaSelector()
 	{
 		let template_editor = document.getElementById("edit_dialog").innerHTML;
-		this.MyMediaSelector.setDomContainer("mediaselector_tree", "mediaselector_content");
-		this.MyMediaSelector.setMediaFilter("image");
-		this.MyMediaSelector.initTreeView();
+//		this.MyMediaSelector.setDomContainer("mediaselector_tree", "mediaselector_content");
+//		this.MyMediaSelector.setMediaFilter("image");
+//		this.MyMediaSelector.initTreeView();
 
 		this.edit_dialog = document.createElement("div");
 		this.edit_dialog.className = 'dialog_overlay_wrapper';
@@ -56,7 +56,7 @@ export class CanvasDialog
 		this.edit_dialog.innerHTML = template_editor;
 
 		document.body.append(this.edit_dialog);
-		this.MyMediaSelector.initTreeView();
+//		this.MyMediaSelector.initTreeView();
 		this.is_open = true;
 	}
 
@@ -73,7 +73,7 @@ export class CanvasDialog
 	{
 		let edit_insert = document.getElementById("element_edit_insert");
 		edit_insert.style.display = "inline";
-		edit_insert.onclick = () =>
+/*		edit_insert.onclick = () =>
 		{
 			let link = this.MyMediaSelector.getSelectedMediaLink().replace("preview", "original");
 			fabric.Image.fromURL(link, (img) =>
@@ -87,6 +87,8 @@ export class CanvasDialog
 				this.remove();
 			},{crossOrigin: 'anonymous'});
 		}
+
+ */
 	}
 
 	initTransferEvent(target, MyCanvasView)

@@ -89,6 +89,7 @@ class TemplatePreparer
 			'main_layout' => [
 				'LANG_PAGE_TITLE' => $title,
 				'additional_css'  => ['/css/templates/canvas.css'],
+				'footer_scripts' => ['/js/external/fabric.min.js', '/js/templates/canvas-composer/fonts_preview.js'],
 				'footer_modules'   => ['/js/templates/canvas-composer/init.js']
 			],
 			'this_layout' => [

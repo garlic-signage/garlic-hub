@@ -17,14 +17,17 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
 export class GroupProperties
 {
 	MyCanvasView = {};
-	group         = new ToggleButton(document.getElementById("object_group"))
+	group;
 
-	constructor(MyCanvasView)
+	constructor(MyCanvasView, toggleButtonFactory)
 	{
 		this.MyCanvasView = MyCanvasView;
+		this.toggleButtonFactory = toggleButtonFactory;
+		this.group         = toggleButtonFactory.create(document.getElementById("object_group"))
 	}
 
 	activate(object)
