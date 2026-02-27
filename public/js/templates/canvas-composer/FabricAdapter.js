@@ -36,7 +36,8 @@ export class FabricAdapter
 	{
 		this.#waitOverlay.start();
 		const jsonResponse = await this.#templatesService.loadTemplateContent(templateId);
-		if (jsonResponse.content.length > 0)
+		const content = jsonResponse.content;
+		if (jsonResponse.content > 0)
 		{
 			await this.loadJsonFromString(jsonResponse.content);
 		}
@@ -74,7 +75,6 @@ export class FabricAdapter
 				fabric.Canvas.prototype.historyRedo = []
 				this.MySvgItemsParser.MyCanvasView.getCanvas()._historySaveAction();
 				this.MySvgItemsParser.MyCanvasView.getCanvas().renderAll();
-				MyProgress.stop();
 			},
 			(item, object) => {
 

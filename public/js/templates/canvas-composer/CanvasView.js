@@ -33,6 +33,8 @@ export class CanvasView
 	insert_octagon = document.getElementById("object_add_octagon");
 	undo = document.getElementById("undo");
 	redo = document.getElementById("redo");
+	#image_width = document.getElementById("image_width");
+	#image_height = document.getElementById("image_height");
 	width = 0;
 	height = 0;
 	changed = false;
@@ -43,6 +45,14 @@ export class CanvasView
 	{
 		this.canvas = canvas;
 		this.lang = lang;
+		this.setCanvasDimensions(this.#image_width.value, this.#image_height.value);
+
+		this.#image_width.addEventListener('change', () => {
+			this.setCanvasDimensions(this.#image_width.value, this.#image_height.value);
+		});
+		this.#image_height.addEventListener('change', () => {
+			this.setCanvasDimensions(this.#image_width.value, this.#image_height.value);
+		});
 	}
 
 	addCanvas(object)
