@@ -28,9 +28,7 @@ use App\Modules\Templates\Services\TemplatesService;
 
 class SettingsParametersPolicy
 {
-	public function __construct(private readonly Parameters $parameters,
-								private readonly AclValidator $aclValidator,
-								private readonly UserSession $userSession
+	public function __construct(private readonly Parameters $parameters
 	)
 	{}
 
