@@ -84,6 +84,7 @@ $dependencies[\App\Modules\Templates\Helper\Composer\Orchestrator::class] = DI\f
 {
 	return new  \App\Modules\Templates\Helper\Composer\Orchestrator(
 		$container->get(\App\Modules\Templates\Helper\Composer\TemplatePreparer::class),
+		$container->get(TemplatesUsageService::class),
 		$container->get(TemplatesService::class)
 	);
 });

@@ -189,6 +189,8 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 	$group->delete('/profile/tokens', resolve([UserTokenController::class, 'delete'], $container));
 
 	$group->delete('/templates', resolve([TemplatesController::class, 'delete'], $container));
+	$group->get('/templates', resolve([TemplatesController::class, 'loadContent'], $container));
+	$group->patch('/templates', resolve([TemplatesController::class, 'saveContent'], $container));
 
 
 })->add(function ($request, $handler) {return $handler->handle($request)->withHeader('Content-Type', 'text/html');});

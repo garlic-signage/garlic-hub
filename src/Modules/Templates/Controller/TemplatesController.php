@@ -25,6 +25,7 @@ namespace App\Modules\Templates\Controller;
 use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Core\CsrfToken;
 use App\Modules\Auth\UserSession;
+use App\Modules\Templates\Helper\Composer\Orchestrator;
 use App\Modules\Templates\Services\TemplatesService;
 use App\Modules\Templates\Services\TemplatesUsageService;
 use Psr\Http\Message\ServerRequestInterface;
@@ -33,14 +34,14 @@ use Psr\Http\Message\ResponseInterface;
 class TemplatesController
 {
 	public function __construct(
+		private readonly Orchestrator $orchestrator,
 		private readonly JsonResponseHandler $responseHandler,
-		private readonly TemplatesService    $templatesService,
-		private readonly TemplatesUsageService $templatesUsageService,
 		private readonly CsrfToken           $csrfToken
 	) {}
 
 	public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
+		/** @var array{template_id?: int, csrf_token?: string} $requestData */
 		$requestData = $request->getParsedBody();
 
 		if (!$this->csrfToken->validateToken($requestData['csrf_token'] ?? ''))
@@ -50,17 +51,30 @@ class TemplatesController
 		if ($templateId === 0)
 			return $this->responseHandler->jsonError($response, 'No template Id', 200);
 
-		if ($this->templatesUsageService->determineTemplatesInUse([$templateId]) !== [])
-			return $this->responseHandler->jsonError($response, 'Template is in use.', 200);
-
-		if ($this->templatesService->delete($templateId) === 0)
-			return $this->responseHandler->jsonError($response, 'Template not deleted.', 200);
+		$error = $this->orchestrator->delete($templateId);
+		if ($error !== '')
+			return $this->responseHandler->jsonError($response, $error, 200);
 
 		return $this->responseHandler->jsonSuccess($response);
 	}
 
+	public function loadContent(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+	{
+		$templateId = (int) ($args['template_id'] ?? 0);
+
+		if (!$this->orchestrator->checkEditRights($templateId))
+			return $this->responseHandler->jsonError($response, 'No rights', 200);
+
+
+		return $this->responseHandler->jsonSuccess($response, ['content' => $this->orchestrator->getContent()]);
+	}
+
 	public function storeContent(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
+		if (!$this->csrfToken->validateToken($requestData['csrf_token'] ?? ''))
+			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.', 200);
+
+		return $this->responseHandler->jsonSuccess($response);
 	}
 
 }

@@ -26,6 +26,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Modules\Templates\Services\TemplatesService;
+use App\Modules\Templates\Services\TemplatesUsageService;
 use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
@@ -40,13 +41,14 @@ class Orchestrator
 
 	public function __construct(
 		private readonly TemplatePreparer    $templatePreparer,
-		private readonly TemplatesService    $templateService,
+		private readonly TemplatesUsageService $templatesUsageService,
+		private readonly TemplatesService    $templatesService,
 	) {}
 
 
 	public function checkEditRights(int $templateId): bool
 	{
-		$template =  $this->templateService->loadWithUserById($templateId);
+		$template =  $this->templatesService->loadWithUserById($templateId);
 		if ($template == [])
 			return false;
 
@@ -74,10 +76,26 @@ class Orchestrator
 	{
 		// Todo Later: Validate content with opis/json-schema if canvas
 		$saveData = ['content' => $content];
-		if ($this->templateService->update($templateId, $saveData) === 0)
+		if ($this->templatesService->update($templateId, $saveData) === 0)
 			return ['success' => false, 'errors' => ['No save possible']];
 
 		return ['success' => true];
+	}
+
+	public function delete(int $templateId): string
+	{
+		if ($this->templatesUsageService->determineTemplatesInUse([$templateId]) !== [])
+			return 'Template is in use.';
+
+		if ($this->templatesService->delete($templateId) === 0)
+			return 'Template not deleted.';
+
+		return '';
+	}
+
+	public function getContent()
+	{
+		return $this->template['content'];
 	}
 
 }

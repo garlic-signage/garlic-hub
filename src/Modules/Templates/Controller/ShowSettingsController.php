@@ -66,7 +66,7 @@ class ShowSettingsController
 			return $response->withHeader('Location', '/templates')->withStatus(302);
 		}
 
-		$formData = $this->orchestrator->buildForm();
+		$formData = $this->orchestrator->buildEditForm();
 		$prepared = $this->templatePreparer->prepareEditSettings($formData);
 
 		$response->getBody()->write(serialize($prepared));
