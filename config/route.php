@@ -42,6 +42,7 @@ use App\Modules\Playlists\Controller\TriggerController;
 use App\Modules\Playlists\Controller\WidgetsController;
 use App\Modules\Profile\Controller\EditLocalesController;
 use App\Modules\Profile\Controller\ShowPasswordController;
+use App\Modules\Templates\Controller\ShowComposerController;
 use App\Modules\Templates\Controller\TemplatesController;
 use App\Modules\Users\Controller\ShowAdminController;
 use App\Modules\Users\Controller\ShowInitialAdminController;
@@ -121,7 +122,7 @@ $app->group('', function (RouteCollectorProxy $group) use ($container)
 	$group->get('/templates/settings/{template_id:\d+}', resolve([\App\Modules\Templates\Controller\ShowSettingsController::class, 'edit'], $container));
 	$group->post('/templates/settings', resolve([\App\Modules\Templates\Controller\ShowSettingsController::class, 'store'], $container));
 
-	$group->get('/templates/composer/{template_id:\d+}', resolve([\App\Modules\Templates\Controller\ShowSettingsController::class, 'compose'], $container));
+	$group->get('/templates/composer/{template_id:\d+}', resolve([ShowComposerController::class, 'show'], $container));
 
 
 })->add($container->get(FinalRenderMiddleware::class));

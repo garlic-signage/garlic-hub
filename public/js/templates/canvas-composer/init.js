@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function (event) {
-
+/*
 	let MyCanvasView     = new CanvasView(new fabric.Canvas('canvas',
 		{
 			stopContextMenu: true,
@@ -48,6 +48,6 @@ document.addEventListener("DOMContentLoaded", function (event) {
 		if (MyCanvasEvents.isAutoResize())
 			MySvgItemsParser.zoomToViewPort();
 	}
-
+*/
 });
 

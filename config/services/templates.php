@@ -31,6 +31,7 @@ use App\Framework\Utils\Datatable\PrepareService;
 use App\Framework\Utils\Forms\FormTemplatePreparer;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Repositories\ItemsRepository;
+use App\Modules\Templates\Controller\ShowComposerController;
 use App\Modules\Templates\Controller\ShowDatatableController;
 use App\Modules\Templates\Controller\ShowSettingsController;
 use App\Modules\Templates\Helper\Datatable\DatatableBuilder;
@@ -72,6 +73,28 @@ $dependencies[TemplatesService::class] = DI\factory(function (ContainerInterface
 		$container->get('ModuleLogger')
 	);
 });
+
+$dependencies[\App\Modules\Templates\Helper\Composer\TemplatePreparer::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new  \App\Modules\Templates\Helper\Composer\TemplatePreparer(
+		$container->get(Translator::class),
+	);
+});
+$dependencies[\App\Modules\Templates\Helper\Composer\Orchestrator::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new  \App\Modules\Templates\Helper\Composer\Orchestrator(
+		$container->get(\App\Modules\Templates\Helper\Composer\TemplatePreparer::class),
+		$container->get(TemplatesService::class)
+	);
+});
+
+$dependencies[ShowComposerController::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new  ShowComposerController(
+		$container->get(\App\Modules\Templates\Helper\Composer\Orchestrator::class)
+	);
+});
+
 $dependencies[\App\Modules\Templates\Helper\Settings\Parameters::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new \App\Modules\Templates\Helper\Settings\Parameters(

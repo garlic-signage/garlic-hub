@@ -66,7 +66,7 @@ class ShowSettingsController
 			return $response->withHeader('Location', '/templates')->withStatus(302);
 		}
 
-		$formData = $this->orchestrator->buildEditForm();
+		$formData = $this->orchestrator->buildForm();
 		$prepared = $this->templatePreparer->prepareEditSettings($formData);
 
 		$response->getBody()->write(serialize($prepared));
@@ -84,13 +84,6 @@ class ShowSettingsController
 			return $this->insert($response, $post);
 		else
 			return $this->update($response, $templateId, $post);
-
-	}
-
-	public function compose(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
-	{
-		$templateId = (int) ($args['template_id'] ?? 0);
-		return $response->withHeader('Location', '/templates')->withStatus(302);
 
 	}
 
