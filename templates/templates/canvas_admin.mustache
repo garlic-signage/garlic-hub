@@ -3,24 +3,22 @@
 <input type="hidden" id="is_template_editor_dev" value="{{{LANG_IS_TEMPLATEEDITOR_DEV}}}">
 
 <template id="context-menu" xmlns="http://www.w3.org/1999/html">
-    <div class="context-menu">
-        <ul>
-            <li id="change_image"><a href="#">{{{LANG_CHANGE_IMAGE}}}</a></li>
-            <li id="duplicate_item"><a href="#">{{{LANG_DUBLICATE}}}</a></li>
-            <li id="delete_item"><a href="#">{{{LANG_DELETE}}}</a></li>
+        <ul class="context-menu">
+            <li id="change_image" class="bi-image">>{{{LANG_CHANGE_IMAGE}}}</li>
+            <li id="duplicate_item" class="bi-copy">{{{LANG_DUBLICATE}}}</li>
+            <li id="delete_item" class="bi-trash">{{{LANG_DELETE}}}</li>
             <li>
                 <hr />
             </li>
-            <li id="lock_unlock"><a href="#"><span id="lock">Lock</span><span id="unlock">Unlock</span></a></li>
+            <li id="lock_unlock"><span id="lock" class="bi-lock">Lock</span><span id="unlock" class="bi-unlock">Unlock</span></li>
             <li>
                 <hr />
             </li>
-            <li id="move_background"><a href="#">{{{LANG_MOVE_BACKGROUND}}}</a></li>
-            <li id="move_back"><a href="#">{{{LANG_MOVE_BACK}}}</a></li>
-            <li id="move_front"><a href="#">{{{LANG_MOVE_FRONT}}}</a></li>
-            <li id="move_foreground"><a href="#">{{{LANG_MOVE_FOREGROUND}}}</a></li>
+            <li id="move_background" class="bi-back">{{{LANG_MOVE_BACKGROUND}}}</li>
+            <li id="move_back" class="bi-arrow-down">{{{LANG_MOVE_BACK}}}</li>
+            <li id="move_front" class="bi-arrow-up">{{{LANG_MOVE_FRONT}}}</li>
+            <li id="move_foreground" class="bi-front">{{{LANG_MOVE_FOREGROUND}}}</li>
         </ul>
-    </div>
 </template>
 <template id="edit_dialog">
         <ul class="mediaselector">

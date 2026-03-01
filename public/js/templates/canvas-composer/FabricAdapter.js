@@ -45,8 +45,6 @@ export class FabricAdapter
 		this.#waitOverlay.stop();
 	}
 
-
-
 	async loadJsonFromString(json_canvas)
 	{
 		// text is not editable, so we needed i-text

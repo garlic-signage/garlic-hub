@@ -69,7 +69,7 @@ class TemplatePreparer
 			'LANG_ALIGN_BOTTOM' => $this->translator->translate('align_bottom', 'templates'),
 			'LANG_RESOLUTION' => $this->translator->translate('resolution', 'templates'),
 			'LANG_ZOOM' => $this->translator->translate('zoom', 'main'),
-			'LANG_DUBLICATE' => $this->translator->translate('dublicate', 'templates'),
+			'LANG_DUBLICATE' => $this->translator->translate('duplicate', 'templates'),
 			'LANG_DELETE' => $this->translator->translate('delete', 'main'),
 			'LANG_CHANGE_IMAGE' => $this->translator->translate('change_image', 'templates'),
 			'LANG_LOCK' => $this->translator->translate('lock', 'templates'),
