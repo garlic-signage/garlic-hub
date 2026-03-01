@@ -118,146 +118,142 @@
         </ul>
     </li>
     <li id="properties">
-        <ul>
-            <li>
-                <ul id="global_properties" class="action_group" style="display:none;">
-                    <li class="template_edit_dropdown">
-                        <button id="object_opacity_btn" class="svg_button" title="{{{LANG_OPACITY}}}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
-                                <g fill="currentColor" fill-rule="evenodd">
-                                    <path d="M3 2h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z" />
-                                    <path d="M11 2h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z" opacity=".45" />
-                                    <path d="M19 2h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z" opacity=".15" />
-                                    <path d="M7 6h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z" opacity=".7" />
-                                    <path d="M15 6h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z" opacity=".3" />
-                                </g>
-                            </svg>
-                        </button>
-                        <div class="template_edit_dropdown_content" style="width:240px;">
-                            <div style=" display: flex; justify-content:space-between; align-items: center; padding:20px;">
-                                <input id="object_opacity" style="width:150px;" type="range" min="0" max="100" value="100">
-                                <span id="object_opacity_display">100%</span>
-                            </div>
-                        </div>
-                    </li>
-                    <li class="template_edit_dropdown" style="display: none;">
-                        <button id="object_shadow" class="svg_button">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="15px" height="15px" viewBox="0 0 512 512">
-                                <path d="M8 256c0 136.966 111.033 248 248 248s248-111.034 248-248S392.966 8 256 8 8 119.033 8 256zm248 184V72c101.705 0 184 82.311 184 184 0 101.705-82.311 184-184 184z" />
-                            </svg>
-                        </button>
-                        <div class="template_edit_dropdown_content">
-                            <div style=" display: flex; justify-content:space-between; align-items: center;">
-                                <div style="display:flex; flex-direction:column; padding:20px;"> <label
-                                            for="object_shadow_offset_x">Offset X</label>
-                                    <input id="object_shadow_offset_x" style="width:50px; text-align:center;" type="number"
-                                           value="0">
-                                </div>
-                                <div style="display:flex; flex-direction:column; padding:20px;"> <label
-                                            for="object_shadow_offset_y">Offset Y</label>
-                                    <input id="object_shadow_offset_y" style="width:50px; text-align:center;" type="number"
-                                           value="0">
-                                </div>
-                                <div style="display:flex; flex-direction:column; padding:20px;">
-                                    <label for="object_shadow_blur">Blur</label>
-                                    <input id="object_shadow_blur" style="width:50px; text-align:center;" type="number" value="0">
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                    <li>
-                        <input type="color" id="stroke_color" class="color_button" title="{{{LANG_OUTLINE_COLOR}}}" />
-                    </li>
-                    <li class="template_edit_dropdown">
-                        <button id="object_outline" class="svg_button" title="{{{LANG_OUTLINE_STRENGTH}}}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 500 500" xml:space="preserve">
-                            <g>
-                                <g transform="translate(-250.000000,262.000000) scale(0.100000,-0.100000)">
-                                    <path
-                                            d="M2446.9,1109V716.2h2155.5H6758V323.4V-69.4h392.8h392.8v785.6v785.6H4995.2H2446.9V1109z" />
-                                    <path
-                                            d="M2446.9,122.2V-69.4h1762.7h1762.8V-376v-306.6h201.2h201.2v498.2v498.2H4410.8H2446.9V122.2z" />
-                                    <path
-                                            d="M6710.1-893.3l-132.2-134.1l99.6-101.5c55.6-55.6,99.6-107.3,99.6-115s-90.1-13.4-201.2-13.4h-201.2V-1449v-191.6h214.6H6804l-113-115l-115-115l139.9-139.9l138-138l348.7,350.6l350.6,348.7l-344.9,344.9c-189.7,189.7-348.7,344.9-354.5,344.9C6848-759.2,6782.9-818.6,6710.1-893.3z" />
-                                    <path d="M2446.9-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
-                                    <path d="M3232.5-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
-                                    <path d="M4018-1449v-191.6h191.6h191.6v191.6v191.6h-191.6H4018V-1449z" />
-                                    <path d="M4803.6-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
-                                    <path d="M5589.2-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
-                                </g>
-                            </g>
-                        </svg>
-                        </button>
-                        <div class="template_edit_dropdown_content" style="width:190px;">
-                            <div style=" display: flex; justify-content:space-between; align-items: center; padding:20px;">
-                                <input id="stroke_width" style="width:150px;" type="range" min="0" max="15" value="0">
-                            </div>
-                        </div>
-                    </li>
-                    <li class="template_edit_dropdown">
-                        <button id="object_align" class="svg_button" title="{{{LANG_ALIGN_OBJECT}}}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24">
-                                <path d="M8,11 L8,4 C8,2.92670537 8.79431889,2 9.85714286,2 L14.1428571,2 C15.2056811,2 16,2.92670537 16,4 L16,11 L22,11 L22,13 L16,13 L16,20 C16,21.0732946 15.2056811,22 14.1428571,22 L9.85714286,22 C8.79431889,22 8,21.0732946 8,20 L8,13 L2,13 L2,11 L8,11 Z M14,4 L10,4 L10,20 L14,20 L14,4 Z" fill-rule="evenodd"/>
-                            </svg>
-                        </button>
-                        <div class="template_edit_dropdown_content" style="width:180px; padding:20px;">
-                            <div style=" display: flex; justify-content:space-between; align-items: center; gap:20px;">
-                                <button id="object_align_left" style="display: flex; justify-content: center; align-items:center;"
-                                        title="{{{LANG_ALIGN_LEFT}}}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
-                                        <path
-                                                d="M4 3c.41 0 .75.34.75.75v16.5a.75.75 0 1 1-1.5 0V3.75c0-.41.34-.75.75-.75zm5 3h9a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V8c0-1.1.9-2 2-2zm0 7h4a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-1c0-1.1.9-2 2-2zm0-5.5a.5.5 0 0 0-.5.5v1c0 .28.22.5.5.5h9a.5.5 0 0 0 .5-.5V8a.5.5 0 0 0-.5-.5H9zm0 7a.5.5 0 0 0-.5.5v1c0 .28.22.5.5.5h4a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5H9z">
-                                        </path>
-                                    </svg>
-                                </button>
-                                <button id="object_align_center" style="display: flex; justify-content: center; align-items:center;"
-                                        title="{{{LANG_ALIGN_CENTER}}}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
-                                        <path
-                                                d="M11.25 13v-2H7a2 2 0 0 1-2-2V8c0-1.1.9-2 2-2h4.25V3.75a.75.75 0 1 1 1.5 0V6H17a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-4.25v2H14a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-1.25v2.25a.75.75 0 1 1-1.5 0V18H10a2 2 0 0 1-2-2v-1c0-1.1.9-2 2-2h1.25zM7 7.5a.5.5 0 0 0-.5.5v1c0 .28.22.5.5.5h10a.5.5 0 0 0 .5-.5V8a.5.5 0 0 0-.5-.5H7zm3 7a.5.5 0 0 0-.5.5v1c0 .28.22.5.5.5h4a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-4z">
-                                        </path>
-                                    </svg>
-                                </button>
-                                <button id="object_align_right" style="display: flex; justify-content: center; align-items:center;"
-                                        title="{{{LANG_ALIGN_RIGHT}}}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
-                                        <path
-                                                d="M20 3a.75.75 0 0 0-.75.75v16.5a.75.75 0 1 0 1.5 0V3.75A.75.75 0 0 0 20 3zm-5 3H6a2 2 0 0 0-2 2v1c0 1.1.9 2 2 2h9a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2zm0 7h-4a2 2 0 0 0-2 2v1c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2zm0-5.5c.28 0 .5.22.5.5v1a.5.5 0 0 1-.5.5H6a.5.5 0 0 1-.5-.5V8c0-.28.22-.5.5-.5h9zm0 7c.28 0 .5.22.5.5v1a.5.5 0 0 1-.5.5h-4a.5.5 0 0 1-.5-.5v-1c0-.28.22-.5.5-.5h4z">
-                                        </path>
-                                    </svg>
-                                </button>
-                            </div>
-                            <div
-                                    style=" display: flex; justify-content:space-between; align-items: center; gap:20px; margin-top:20px;">
-                                <button id="object_align_top" style="display: flex; justify-content: center; align-items:center;"
-                                        title="{{{LANG_ALIGN_TOP}}}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
-                                        <path
-                                                d="M21 4c0 .41-.34.75-.75.75H3.75a.75.75 0 0 1 0-1.5h16.5c.41 0 .75.34.75.75zM11 9v9a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9c0-1.1.9-2 2-2h1a2 2 0 0 1 2 2zm7 0v4a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2V9c0-1.1.9-2 2-2h1a2 2 0 0 1 2 2zM9.5 9a.5.5 0 0 0-.5-.5H8a.5.5 0 0 0-.5.5v9c0 .28.22.5.5.5h1a.5.5 0 0 0 .5-.5V9zm7 0a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v4c0 .28.22.5.5.5h1a.5.5 0 0 0 .5-.5V9z">
-                                        </path>
-                                    </svg>
-                                </button>
-                                <button id="object_align_middle" style="display: flex; justify-content: center; align-items:center;"
-                                        title="{{{LANG_ALIGN_MIDDLE}}}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
-                                        <path
-                                                d="M11 11.25h2V7c0-1.1.9-2 2-2h1a2 2 0 0 1 2 2v4.25h2.25a.75.75 0 1 1 0 1.5H18V17a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-4.25h-2V14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-1.25H3.75a.75.75 0 1 1 0-1.5H6V10c0-1.1.9-2 2-2h1a2 2 0 0 1 2 2v1.25zM16.5 7a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v10c0 .28.22.5.5.5h1a.5.5 0 0 0 .5-.5V7zm-7 3a.5.5 0 0 0-.5-.5H8a.5.5 0 0 0-.5.5v4c0 .28.22.5.5.5h1a.5.5 0 0 0 .5-.5v-4z">
-                                        </path>
-                                    </svg>
-                                </button>
-                                <button id="object_align_bottom" style="display: flex; justify-content: center; align-items:center;"
-                                        title="{{{LANG_ALIGN_BOTTOM}}}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
-                                        <path
-                                                d="M21 20c0 .41-.34.75-.75.75H3.75a.75.75 0 1 1 0-1.5h16.5c.41 0 .75.34.75.75zM11 6v9a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6c0-1.1.9-2 2-2h1a2 2 0 0 1 2 2zm7 5v4a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-4c0-1.1.9-2 2-2h1a2 2 0 0 1 2 2zM9.5 6a.5.5 0 0 0-.5-.5H8a.5.5 0 0 0-.5.5v9c0 .28.22.5.5.5h1a.5.5 0 0 0 .5-.5V6zm7 5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v4c0 .28.22.5.5.5h1a.5.5 0 0 0 .5-.5v-4z">
-                                        </path>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
-            </li>
+		<ul id="global_properties" class="action_group" style="display:none;">
+			<li class="template_edit_dropdown">
+				<button id="object_opacity_btn" class="svg_button" title="{{{LANG_OPACITY}}}">
+					<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
+						<g fill="currentColor" fill-rule="evenodd">
+							<path d="M3 2h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z" />
+							<path d="M11 2h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z" opacity=".45" />
+							<path d="M19 2h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z" opacity=".15" />
+							<path d="M7 6h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z" opacity=".7" />
+							<path d="M15 6h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z" opacity=".3" />
+						</g>
+					</svg>
+				</button>
+				<div class="template_edit_dropdown_content" style="width:240px;">
+					<div style=" display: flex; justify-content:space-between; align-items: center; padding:20px;">
+						<input id="object_opacity" style="width:150px;" type="range" min="0" max="100" value="100">
+						<span id="object_opacity_display">100%</span>
+					</div>
+				</div>
+			</li>
+			<li class="template_edit_dropdown" style="display: none;">
+				<button id="object_shadow" class="svg_button">
+					<svg xmlns="http://www.w3.org/2000/svg" width="15px" height="15px" viewBox="0 0 512 512">
+						<path d="M8 256c0 136.966 111.033 248 248 248s248-111.034 248-248S392.966 8 256 8 8 119.033 8 256zm248 184V72c101.705 0 184 82.311 184 184 0 101.705-82.311 184-184 184z" />
+					</svg>
+				</button>
+				<div class="template_edit_dropdown_content">
+					<div style=" display: flex; justify-content:space-between; align-items: center;">
+						<div style="display:flex; flex-direction:column; padding:20px;"> <label
+									for="object_shadow_offset_x">Offset X</label>
+							<input id="object_shadow_offset_x" style="width:50px; text-align:center;" type="number"
+								   value="0">
+						</div>
+						<div style="display:flex; flex-direction:column; padding:20px;"> <label
+									for="object_shadow_offset_y">Offset Y</label>
+							<input id="object_shadow_offset_y" style="width:50px; text-align:center;" type="number"
+								   value="0">
+						</div>
+						<div style="display:flex; flex-direction:column; padding:20px;">
+							<label for="object_shadow_blur">Blur</label>
+							<input id="object_shadow_blur" style="width:50px; text-align:center;" type="number" value="0">
+						</div>
+					</div>
+				</div>
+			</li>
+			<li>
+				<input type="color" id="stroke_color" class="color_button" title="{{{LANG_OUTLINE_COLOR}}}" />
+			</li>
+			<li class="template_edit_dropdown">
+				<button id="object_outline" class="svg_button" title="{{{LANG_OUTLINE_STRENGTH}}}">
+					<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 500 500" xml:space="preserve">
+					<g>
+						<g transform="translate(-250.000000,262.000000) scale(0.100000,-0.100000)">
+							<path
+									d="M2446.9,1109V716.2h2155.5H6758V323.4V-69.4h392.8h392.8v785.6v785.6H4995.2H2446.9V1109z" />
+							<path
+									d="M2446.9,122.2V-69.4h1762.7h1762.8V-376v-306.6h201.2h201.2v498.2v498.2H4410.8H2446.9V122.2z" />
+							<path
+									d="M6710.1-893.3l-132.2-134.1l99.6-101.5c55.6-55.6,99.6-107.3,99.6-115s-90.1-13.4-201.2-13.4h-201.2V-1449v-191.6h214.6H6804l-113-115l-115-115l139.9-139.9l138-138l348.7,350.6l350.6,348.7l-344.9,344.9c-189.7,189.7-348.7,344.9-354.5,344.9C6848-759.2,6782.9-818.6,6710.1-893.3z" />
+							<path d="M2446.9-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
+							<path d="M3232.5-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
+							<path d="M4018-1449v-191.6h191.6h191.6v191.6v191.6h-191.6H4018V-1449z" />
+							<path d="M4803.6-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
+							<path d="M5589.2-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
+						</g>
+					</g>
+				</svg>
+				</button>
+				<div class="template_edit_dropdown_content" style="width:190px;">
+					<div style=" display: flex; justify-content:space-between; align-items: center; padding:20px;">
+						<input id="stroke_width" style="width:150px;" type="range" min="0" max="15" value="0">
+					</div>
+				</div>
+			</li>
+			<li class="template_edit_dropdown">
+				<button id="object_align" class="svg_button" title="{{{LANG_ALIGN_OBJECT}}}">
+					<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24">
+						<path d="M8,11 L8,4 C8,2.92670537 8.79431889,2 9.85714286,2 L14.1428571,2 C15.2056811,2 16,2.92670537 16,4 L16,11 L22,11 L22,13 L16,13 L16,20 C16,21.0732946 15.2056811,22 14.1428571,22 L9.85714286,22 C8.79431889,22 8,21.0732946 8,20 L8,13 L2,13 L2,11 L8,11 Z M14,4 L10,4 L10,20 L14,20 L14,4 Z" fill-rule="evenodd"/>
+					</svg>
+				</button>
+				<div class="template_edit_dropdown_content" style="width:180px; padding:20px;">
+					<div style=" display: flex; justify-content:space-between; align-items: center; gap:20px;">
+						<button id="object_align_left" style="display: flex; justify-content: center; align-items:center;"
+								title="{{{LANG_ALIGN_LEFT}}}">
+							<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
+								<path
+										d="M4 3c.41 0 .75.34.75.75v16.5a.75.75 0 1 1-1.5 0V3.75c0-.41.34-.75.75-.75zm5 3h9a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V8c0-1.1.9-2 2-2zm0 7h4a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-1c0-1.1.9-2 2-2zm0-5.5a.5.5 0 0 0-.5.5v1c0 .28.22.5.5.5h9a.5.5 0 0 0 .5-.5V8a.5.5 0 0 0-.5-.5H9zm0 7a.5.5 0 0 0-.5.5v1c0 .28.22.5.5.5h4a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5H9z">
+								</path>
+							</svg>
+						</button>
+						<button id="object_align_center" style="display: flex; justify-content: center; align-items:center;"
+								title="{{{LANG_ALIGN_CENTER}}}">
+							<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
+								<path
+										d="M11.25 13v-2H7a2 2 0 0 1-2-2V8c0-1.1.9-2 2-2h4.25V3.75a.75.75 0 1 1 1.5 0V6H17a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-4.25v2H14a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-1.25v2.25a.75.75 0 1 1-1.5 0V18H10a2 2 0 0 1-2-2v-1c0-1.1.9-2 2-2h1.25zM7 7.5a.5.5 0 0 0-.5.5v1c0 .28.22.5.5.5h10a.5.5 0 0 0 .5-.5V8a.5.5 0 0 0-.5-.5H7zm3 7a.5.5 0 0 0-.5.5v1c0 .28.22.5.5.5h4a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-4z">
+								</path>
+							</svg>
+						</button>
+						<button id="object_align_right" style="display: flex; justify-content: center; align-items:center;"
+								title="{{{LANG_ALIGN_RIGHT}}}">
+							<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
+								<path
+										d="M20 3a.75.75 0 0 0-.75.75v16.5a.75.75 0 1 0 1.5 0V3.75A.75.75 0 0 0 20 3zm-5 3H6a2 2 0 0 0-2 2v1c0 1.1.9 2 2 2h9a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2zm0 7h-4a2 2 0 0 0-2 2v1c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2zm0-5.5c.28 0 .5.22.5.5v1a.5.5 0 0 1-.5.5H6a.5.5 0 0 1-.5-.5V8c0-.28.22-.5.5-.5h9zm0 7c.28 0 .5.22.5.5v1a.5.5 0 0 1-.5.5h-4a.5.5 0 0 1-.5-.5v-1c0-.28.22-.5.5-.5h4z">
+								</path>
+							</svg>
+						</button>
+					</div>
+					<div
+							style=" display: flex; justify-content:space-between; align-items: center; gap:20px; margin-top:20px;">
+						<button id="object_align_top" style="display: flex; justify-content: center; align-items:center;"
+								title="{{{LANG_ALIGN_TOP}}}">
+							<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
+								<path
+										d="M21 4c0 .41-.34.75-.75.75H3.75a.75.75 0 0 1 0-1.5h16.5c.41 0 .75.34.75.75zM11 9v9a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9c0-1.1.9-2 2-2h1a2 2 0 0 1 2 2zm7 0v4a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2V9c0-1.1.9-2 2-2h1a2 2 0 0 1 2 2zM9.5 9a.5.5 0 0 0-.5-.5H8a.5.5 0 0 0-.5.5v9c0 .28.22.5.5.5h1a.5.5 0 0 0 .5-.5V9zm7 0a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v4c0 .28.22.5.5.5h1a.5.5 0 0 0 .5-.5V9z">
+								</path>
+							</svg>
+						</button>
+						<button id="object_align_middle" style="display: flex; justify-content: center; align-items:center;"
+								title="{{{LANG_ALIGN_MIDDLE}}}">
+							<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
+								<path
+										d="M11 11.25h2V7c0-1.1.9-2 2-2h1a2 2 0 0 1 2 2v4.25h2.25a.75.75 0 1 1 0 1.5H18V17a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-4.25h-2V14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-1.25H3.75a.75.75 0 1 1 0-1.5H6V10c0-1.1.9-2 2-2h1a2 2 0 0 1 2 2v1.25zM16.5 7a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v10c0 .28.22.5.5.5h1a.5.5 0 0 0 .5-.5V7zm-7 3a.5.5 0 0 0-.5-.5H8a.5.5 0 0 0-.5.5v4c0 .28.22.5.5.5h1a.5.5 0 0 0 .5-.5v-4z">
+								</path>
+							</svg>
+						</button>
+						<button id="object_align_bottom" style="display: flex; justify-content: center; align-items:center;"
+								title="{{{LANG_ALIGN_BOTTOM}}}">
+							<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
+								<path
+										d="M21 20c0 .41-.34.75-.75.75H3.75a.75.75 0 1 1 0-1.5h16.5c.41 0 .75.34.75.75zM11 6v9a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6c0-1.1.9-2 2-2h1a2 2 0 0 1 2 2zm7 5v4a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-4c0-1.1.9-2 2-2h1a2 2 0 0 1 2 2zM9.5 6a.5.5 0 0 0-.5-.5H8a.5.5 0 0 0-.5.5v9c0 .28.22.5.5.5h1a.5.5 0 0 0 .5-.5V6zm7 5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v4c0 .28.22.5.5.5h1a.5.5 0 0 0 .5-.5v-4z">
+								</path>
+							</svg>
+						</button>
+					</div>
+				</div>
+			</li>
             <li>
                 <ul id="group_properties" class="action_group">
                     <li>
@@ -278,7 +274,7 @@
             <li>
                 <ul id="text_properties" class="action_group" style="display:none;">
                     <li class="template_edit_dropdown">
-                        <button id="font_family" style="font-size:1.2em; width:150px; height: 30px;">
+                        <button id="font_family" style="font-size:0.8rem; width:150px; overflow: hidden; height: 30px;">
                             {{{LANG_FONT_FAMILY}}}
                         </button>
                         <div id="select_fonts_dropdown" class="template_edit_dropdown_content" style="width:200px; height: 350px; overflow-y:auto;">
