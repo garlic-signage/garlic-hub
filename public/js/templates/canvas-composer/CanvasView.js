@@ -45,13 +45,14 @@ export class CanvasView
 	{
 		this.canvas = canvas;
 		this.lang = lang;
-		this.setCanvasDimensions(this.#image_width.value, this.#image_height.value);
 
 		this.#image_width.addEventListener('change', () => {
 			this.setCanvasDimensions(this.#image_width.value, this.#image_height.value);
+			this.scaleCanvas();
 		});
 		this.#image_height.addEventListener('change', () => {
 			this.setCanvasDimensions(this.#image_width.value, this.#image_height.value);
+			this.scaleCanvas();
 		});
 	}
 
