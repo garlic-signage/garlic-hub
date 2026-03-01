@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", function (event) {
 	), {});
 	const toggleButtonFactory = new ToggleButtonFactory();
 	let MySvgItemsParser = new SvgItemsParser(canvasView);
-	// needed for load media
+
 	let MyMediaSelector = {} // = new MediaSelector();
 
 	let MyCanvasDialog   = new CanvasDialog(MyMediaSelector, MySvgItemsParser);

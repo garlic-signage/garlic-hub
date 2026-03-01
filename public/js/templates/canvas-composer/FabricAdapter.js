@@ -36,13 +36,15 @@ export class FabricAdapter
 	{
 		this.#waitOverlay.start();
 		const jsonResponse = await this.#templatesService.loadTemplateContent(templateId);
-		const content = jsonResponse.content;
-		if (jsonResponse.content > 0)
-		{
-			await this.loadJsonFromString(jsonResponse.content);
-		}
+		let content = jsonResponse.content;
+		if (content.length === 0)
+			content = "{\"objects\": [],\"viewport\":{\"width\":1920,\"height\":1080,\"scale\":100}}";
+
+		await this.loadJsonFromString(content);
+
 		this.#waitOverlay.stop();
 	}
+
 
 
 	async loadJsonFromString(json_canvas)

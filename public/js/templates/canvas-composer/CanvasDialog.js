@@ -73,7 +73,7 @@ export class CanvasDialog
 	{
 		let edit_insert = document.getElementById("element_edit_insert");
 		edit_insert.style.display = "inline";
-/*		edit_insert.onclick = () =>
+		edit_insert.onclick = () =>
 		{
 			let link = this.MyMediaSelector.getSelectedMediaLink().replace("preview", "original");
 			fabric.Image.fromURL(link, (img) =>
@@ -88,7 +88,6 @@ export class CanvasDialog
 			},{crossOrigin: 'anonymous'});
 		}
 
- */
 	}
 
 	initTransferEvent(target, MyCanvasView)
