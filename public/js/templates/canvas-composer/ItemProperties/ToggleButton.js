@@ -30,12 +30,12 @@ export class ToggleButton
 		if (type === 'display') {
 			for (let i = 0; i < children.length; i++)
 			{
-				children[i].style.display = children[i].getAttribute("name") === value ? "block" : "none";
+				children[i].style.display = children[i].getAttribute("id") === value ? "block" : "none";
 			}
 		}
 		if (type === "active")
 		{
-			this.el.style.fill = this.el.getAttribute("name") === value ? "#269CC0" : "#000";
+			this.el.style.fill = this.el.getAttribute("id") === value ? "#269CC0" : "#000";
 		}
 	}
 

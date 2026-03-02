@@ -166,7 +166,8 @@ export class TextProperties {
 
 	//============== private methods ===========================================================
 
-	setTextAlign(object) {
+	setTextAlign(object)
+	{
 		if (!object) return
 		const positions = ["left", "center", "right", "left"]
 		const currentIndex = positions.findIndex((v) => v === object.textAlign)
@@ -175,7 +176,8 @@ export class TextProperties {
 		object.set("textAlign", nextAlign)
 	}
 
-	buildFontDropdown() {
+	buildFontDropdown()
+	{
 		let fontsDropdown = document.getElementById("select_fonts_dropdown")
 		while (fontsDropdown.children.length > 1)
 		{

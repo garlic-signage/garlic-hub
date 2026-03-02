@@ -10,7 +10,7 @@
             <li>
                 <hr />
             </li>
-            <li id="lock_unlock"><span id="lock" class="bi-lock">Lock</span><span id="unlock" class="bi-unlock">Unlock</span></li>
+            <li id="lock_unlock"><span id="lock" class="bi-lock"> Lock</span><span id="unlock" class="bi-unlock"> Unlock</span></li>
             <li>
                 <hr />
             </li>
@@ -28,8 +28,8 @@
             </li>
             <li>
                 <input type="hidden" id="content_type" value="" />
-                <button type="button" id="element_edit_insert" style="display:none">{{{LANG_INSERT}}}</button>
-                <button type="button" id="element_edit_transfer" style="display:none">{{{LANG_TRANSFER}}}</button>
+                <button type="button" id="element_edit_insert" style="display:none;">{{{LANG_INSERT}}}</button>
+                <button type="button" id="element_edit_transfer" style="display:none;">{{{LANG_TRANSFER}}}</button>
                 <button type="button" id="element_edit_cancel">{{{LANG_CANCEL}}}</button>
             </li>
         </ul>
@@ -55,8 +55,8 @@
             <li class="template_edit_dropdown">
                 <button class="svg_button" title="{{{LANG_INSERT_SHAPE}}}" >
                     <svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 512 512">
-                        <path style="fill:none;stroke:#000;stroke-linejoin:round;stroke-width:32px" d="M336 320L32 320L184 48L336 320z" />
-                        <path d="M265.32,194.51A144,144,0,1,1,192,320" style="fill:none;stroke:#000;stroke-linejoin:round;stroke-width:32px" />
+                        <path style="fill:none;stroke:#000;stroke-linejoin:round;stroke-width:32px;" d="M336 320L32 320L184 48L336 320z" />
+                        <path d="M265.32,194.51A144,144,0,1,1,192,320" style="fill:none;stroke:#000;stroke-linejoin:round;stroke-width:32px;" />
                     </svg>
                 </button>
                 <div class="template_edit_dropdown_content" style="padding:20px;">
@@ -78,7 +78,7 @@
                         </button>
                     </div>
                     <div style=" display: flex; justify-content:space-between; align-items: center; gap:20px; margin-top:20px;">
-                        <button id="object_add_polygon"  class="svg_button"title="{{{LANG_INSERT_PENTAGONE}}}">
+                        <button id="object_add_polygon"  class="svg_button" title="{{{LANG_INSERT_PENTAGONE}}}">
                             <svg fill="none" height="24" stroke-width="1.5" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M11.6473 2.25623C11.8576 2.10344 12.1424 2.10344 12.3527 2.25623L22.1089 9.34458C22.3192 9.49737 22.4072 9.76819 22.3269 10.0154L18.6003 21.4846C18.52 21.7318 18.2896 21.8992 18.0297 21.8992H5.97029C5.71035 21.8992 5.47998 21.7318 5.39965 21.4846L1.67309 10.0154C1.59276 9.76819 1.68076 9.49737 1.89105 9.34458L11.6473 2.25623Z" fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
@@ -258,10 +258,10 @@
                 <ul id="group_properties" class="action_group">
                     <li>
                         <button id="object_group" style="display: none; justify-content: center; align-items:center;" title="{{{LANG_GROUP_UNGROUP}}}">
-                            <svg name="group" xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 512 512">
+                            <svg id="group" xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 512 512">
                                 <path fill="currentColor" d="M480 128V96h20c6.627 0 12-5.373 12-12V44c0-6.627-5.373-12-12-12h-40c-6.627 0-12 5.373-12 12v20H64V44c0-6.627-5.373-12-12-12H12C5.373 32 0 37.373 0 44v40c0 6.627 5.373 12 12 12h20v320H12c-6.627 0-12 5.373-12 12v40c0 6.627 5.373 12 12 12h40c6.627 0 12-5.373 12-12v-20h384v20c0 6.627 5.373 12 12 12h40c6.627 0 12-5.373 12-12v-40c0-6.627-5.373-12-12-12h-20V128zM96 276V140c0-6.627 5.373-12 12-12h168c6.627 0 12 5.373 12 12v136c0 6.627-5.373 12-12 12H108c-6.627 0-12-5.373-12-12zm320 96c0 6.627-5.373 12-12 12H236c-6.627 0-12-5.373-12-12v-52h72c13.255 0 24-10.745 24-24v-72h84c6.627 0 12 5.373 12 12v136z" />
                             </svg>
-                            <svg name="ungroup" xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 576 512">
+                            <svg id="ungroup" xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 576 512">
                                 <path fill="currentColor" d="M64 320v26a6 6 0 0 1-6 6H6a6 6 0 0 1-6-6v-52a6 6 0 0 1 6-6h26V96H6a6 6 0 0 1-6-6V38a6 6 0 0 1 6-6h52a6 6 0 0 1 6 6v26h288V38a6 6 0 0 1 6-6h52a6 6 0 0 1 6 6v52a6 6 0 0 1-6 6h-26v192h26a6 6 0 0 1 6 6v52a6 6 0 0 1-6 6h-52a6 6 0 0 1-6-6v-26H64zm480-64v-32h26a6 6 0 0 0 6-6v-52a6 6 0 0 0-6-6h-52a6 6 0 0 0-6 6v26H408v72h8c13.255 0 24 10.745 24 24v64c0 13.255-10.745 24-24 24h-64c-13.255 0-24-10.745-24-24v-8H192v72h-26a6 6 0 0 0-6 6v52a6 6 0 0 0 6 6h52a6 6 0 0 0 6-6v-26h288v26a6 6 0 0 0 6 6h52a6 6 0 0 0 6-6v-52a6 6 0 0 0-6-6h-26V256z" />
                             </svg>
                         </button>
@@ -293,13 +293,13 @@
                     </li>
                     <li>
                         <button id="text_align" class="svg_button" title="{{{LANG_ALIGN_TEXT}}}">
-                            <svg name="left" xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 448 512">
+                            <svg id="left" xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 448 512">
                                 <path fill="currentColor" d="M12.83 352h262.34A12.82 12.82 0 0 0 288 339.17v-38.34A12.82 12.82 0 0 0 275.17 288H12.83A12.82 12.82 0 0 0 0 300.83v38.34A12.82 12.82 0 0 0 12.83 352zm0-256h262.34A12.82 12.82 0 0 0 288 83.17V44.83A12.82 12.82 0 0 0 275.17 32H12.83A12.82 12.82 0 0 0 0 44.83v38.34A12.82 12.82 0 0 0 12.83 96zM432 160H16a16 16 0 0 0-16 16v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16v-32a16 16 0 0 0-16-16zm0 256H16a16 16 0 0 0-16 16v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16v-32a16 16 0 0 0-16-16z" />
                             </svg>
-                            <svg name="center" xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 448 512">
+                            <svg id="center" xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 448 512">
                                 <path fill="currentColor" d="M432 160H16a16 16 0 0 0-16 16v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16v-32a16 16 0 0 0-16-16zm0 256H16a16 16 0 0 0-16 16v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16v-32a16 16 0 0 0-16-16zM108.1 96h231.81A12.09 12.09 0 0 0 352 83.9V44.09A12.09 12.09 0 0 0 339.91 32H108.1A12.09 12.09 0 0 0 96 44.09V83.9A12.1 12.1 0 0 0 108.1 96zm231.81 256A12.09 12.09 0 0 0 352 339.9v-39.81A12.09 12.09 0 0 0 339.91 288H108.1A12.09 12.09 0 0 0 96 300.09v39.81a12.1 12.1 0 0 0 12.1 12.1z" />
                             </svg>
-                            <svg name="right" xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 448 512">
+                            <svg id="right" xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 448 512">
                                 <path fill="currentColor"
                                       d="M16 224h416a16 16 0 0 0 16-16v-32a16 16 0 0 0-16-16H16a16 16 0 0 0-16 16v32a16 16 0 0 0 16 16zm416 192H16a16 16 0 0 0-16 16v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16v-32a16 16 0 0 0-16-16zm3.17-384H172.83A12.82 12.82 0 0 0 160 44.83v38.34A12.82 12.82 0 0 0 172.83 96h262.34A12.82 12.82 0 0 0 448 83.17V44.83A12.82 12.82 0 0 0 435.17 32zm0 256H172.83A12.82 12.82 0 0 0 160 300.83v38.34A12.82 12.82 0 0 0 172.83 352h262.34A12.82 12.82 0 0 0 448 339.17v-38.34A12.82 12.82 0 0 0 435.17 288z" />
                             </svg>
