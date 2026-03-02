@@ -94,3 +94,12 @@ div.wunderbaum
     background-color: transparent;
     border:0;
 }
+#mediaSelectorDialog[open]
+{
+    width:70%;
+    min-height:60%;
+    display:flex;
+    flex-direction: column;
+}
+
+#mediaSelectorDialog footer { margin-top: auto;}

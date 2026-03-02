@@ -134,7 +134,7 @@ export class CanvasEvents
 	initInsertObjects()
 	{
 		this.MyCanvasView.getInsertImage().addEventListener("click", () => {
-			if (this.MyCanvasDialog.isOpen())
+			if (this.MyCanvasDialog.isOpen)
 				return;
 
 			this.MyCanvasDialog.displayMediaSelector();

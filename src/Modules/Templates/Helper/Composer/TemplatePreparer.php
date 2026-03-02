@@ -78,6 +78,7 @@ class TemplatePreparer
 			'LANG_SAVE' => $this->translator->translate('save', 'main'),
 			'LANG_CLOSE' => $this->translator->translate('close', 'main'),
 			'LANG_CONFIRM_CLOSE_EDITOR' => $this->translator->translate('confirm_close_composer', 'templates'),
+			'LANG_ADD_MEDIA' => $this->translator->translate('add', 'main'),
 			'LANG_CANCEL' => $this->translator->translate('cancel', 'main'),
 			'LANG_TRANSFER' => $this->translator->translate('transfer', 'main'),
 		];
@@ -89,7 +90,11 @@ class TemplatePreparer
 		return [
 			'main_layout' => [
 				'LANG_PAGE_TITLE' => $title,
-				'additional_css'  => ['/css/templates/canvas.css'],
+				'additional_css'  => [
+					'/css/templates/canvas.css',
+					'/css/external/wunderbaum.css',
+					'/css/mediapool/selector.css'
+				],
 				'footer_scripts' => [
 					'/js/external/fabric.min.js',
 					'/js/templates/canvas-composer/fonts_preview.js',

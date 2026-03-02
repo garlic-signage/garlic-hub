@@ -19,51 +19,57 @@
 
 export class CanvasDialog
 {
-	MyMediaSelector = {};
+	#mediaSelector = {};
 	MySvgItemsParser = {};
-	edit_dialog;
-	is_open = false;
+
+	#mediaSelectorElement;
+	#closeEditMediaDialog;
+	#closeDialogButton;
+	#mediaSelectorDialog;
+	#isOpen = false;
 
 	constructor(MyMediaSelector, MySvgItemsParser)
 	{
-		this.MyMediaSelector = MyMediaSelector;
+		this.#mediaSelector = MyMediaSelector;
 		this.MySvgItemsParser = MySvgItemsParser;
+		this.#mediaSelectorElement = document.getElementById("mediaSelectorInstance");
+		this.#closeEditMediaDialog = document.getElementById("closeEditMediaDialog");
+		this.#closeDialogButton = document.getElementById("closeDialogButton");
+		this.#mediaSelectorDialog = document.getElementById("mediaSelectorDialog");
 	}
 
 	remove()
 	{
-		if (this.edit_dialog !== undefined)
-			this.edit_dialog.remove();
+		this.#mediaSelectorDialog.close();
 
-		this.is_open = false;
+		this.#isOpen = false;
 	}
 
-	isOpen()
+	get isOpen()
 	{
-		return this.is_open;
+		return this.#isOpen;
 	}
 
-	displayMediaSelector()
+	async displayMediaSelector()
 	{
-		let template_editor = document.getElementById("edit_dialog").innerHTML;
-//		this.MyMediaSelector.setDomContainer("mediaselector_tree", "mediaselector_content");
-//		this.MyMediaSelector.setMediaFilter("image");
-//		this.MyMediaSelector.initTreeView();
-
+		await this.#mediaSelector.showSelector(this.#mediaSelectorElement);
+		this.#mediaSelectorDialog.showModal();
+/*
 		this.edit_dialog = document.createElement("div");
 		this.edit_dialog.className = 'dialog_overlay_wrapper';
 
 		this.edit_dialog.innerHTML = template_editor;
-
-		document.body.append(this.edit_dialog);
-//		this.MyMediaSelector.initTreeView();
-		this.is_open = true;
+*/
+		this.#isOpen = true;
 	}
 
 	initCancelEvent()
 	{
-		let edit_cancel = document.getElementById("element_edit_cancel");
-		edit_cancel.onclick = () =>
+		this.#closeEditMediaDialog.onclick = () =>
+		{
+			this.remove();
+		}
+		this.#closeDialogButton.onclick = () =>
 		{
 			this.remove();
 		}
@@ -71,7 +77,7 @@ export class CanvasDialog
 
 	initInsertEvent(MyCanvasView)
 	{
-		let edit_insert = document.getElementById("element_edit_insert");
+/*		let edit_insert = document.getElementById("element_edit_insert");
 		edit_insert.style.display = "inline";
 		edit_insert.onclick = () =>
 		{
@@ -87,7 +93,7 @@ export class CanvasDialog
 				this.remove();
 			},{crossOrigin: 'anonymous'});
 		}
-
+*/
 	}
 
 	initTransferEvent(target, MyCanvasView)
@@ -100,7 +106,7 @@ export class CanvasDialog
 			let w = target.width  * target.scaleX;
 			let h = target.height * target.scaleY;
 
-			let link = this.MyMediaSelector.getSelectedMediaLink().replace("preview", "original");
+			let link = this.#mediaSelector.getSelectedMediaLink().replace("preview", "original");
 			target.setSrc(link, () =>
 			{
 				target.scaleX = 1;
@@ -109,7 +115,7 @@ export class CanvasDialog
 				target.scaleToWidth(w, true);
 				target.scaleToHeight(h, true);
 				MyCanvasView.getCanvas().renderAll();
-				this.MyMediaSelector.destroyTreeView();
+				this.#mediaSelector.destroyTreeView();
 				edit_transfer.style.display = "none";
 				this.edit_dialog.remove();
 			},{crossOrigin: 'anonymous'});

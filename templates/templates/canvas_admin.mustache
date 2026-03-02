@@ -20,20 +20,19 @@
             <li id="move_foreground" class="bi-front">{{{LANG_MOVE_FOREGROUND}}}</li>
         </ul>
 </template>
-<template id="edit_dialog">
-        <ul class="mediaselector">
-            <li class="content">
-                <div id="mediaselector_tree"></div>
-                <div id="mediaselector_content"></div>
-            </li>
-            <li>
-                <input type="hidden" id="content_type" value="" />
-                <button type="button" id="element_edit_insert" style="display:none;">{{{LANG_INSERT}}}</button>
-                <button type="button" id="element_edit_transfer" style="display:none;">{{{LANG_TRANSFER}}}</button>
-                <button type="button" id="element_edit_cancel">{{{LANG_CANCEL}}}</button>
-            </li>
-        </ul>
-</template>
+
+{{> media_selector}}
+<dialog id="mediaSelectorDialog">
+	<header>
+		<span class="dialog-name">{{{LANG_INSERT_IMAGE}}}</span>
+		<button id="closeEditMediaDialog" class="close-button bi bi-x" aria-label="Close"></button>
+	</header>
+	<section id="mediaSelectorInstance"></section>
+	<footer>
+		<button id="addMedia" type="button">{{{LANG_ADD_MEDIA}}}</button>
+		<button id="closeDialogButton" type="button">{{{LANG_CANCEL}}}</button>
+	</footer>
+</dialog>
 
 <ul id="canvas_toolbar">
     <li id="inserts">

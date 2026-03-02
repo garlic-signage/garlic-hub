@@ -34,6 +34,11 @@ import {CanvasEvents} from "./CanvasEvents.js";
 import {FontHandler} from "./FontHandler.js";
 import {ToggleButtonFactory} from "./ItemProperties/ToggleButtonFactory.js";
 import {FabricAdapter} from "./FabricAdapter.js";
+import {WunderbaumWrapper} from "../../mediapool/treeview/WunderbaumWrapper.js";
+import {TreeViewElements} from "../../mediapool/treeview/TreeViewElements.js";
+import {MediaService} from "../../mediapool/media/MediaService.js";
+import {MediaSelectorView} from "../../mediapool/selector/MediaSelectorView.js";
+import {MediaFactory} from "../../mediapool/media/MediaFactory.js";
 
 document.addEventListener("DOMContentLoaded", function (event) {
 
@@ -48,7 +53,11 @@ document.addEventListener("DOMContentLoaded", function (event) {
 	const toggleButtonFactory = new ToggleButtonFactory();
 	let MySvgItemsParser = new SvgItemsParser(canvasView);
 
-	let MyMediaSelector = {} // = new MediaSelector();
+	let MyMediaSelector = new MediaSelector(
+		new WunderbaumWrapper(new TreeViewElements()),
+		new MediaService(new FetchClient()),
+		new MediaSelectorView(new MediaFactory(document.getElementById('mediaTemplate')))
+	);
 
 	let MyCanvasDialog   = new CanvasDialog(MyMediaSelector, MySvgItemsParser);
 	let MyContextMenu    = new ContextMenu(canvasView, MyCanvasDialog);
