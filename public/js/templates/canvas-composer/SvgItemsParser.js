@@ -74,7 +74,7 @@ export class SvgItemsParser
 	calculateZoomByBrowserViewPort()
 	{
 		let w = document.documentElement.clientWidth - 180;
-		let h = document.documentElement.clientHeight - 300;
+		let h = document.documentElement.clientHeight - 180;
 		let p1 = Math.floor((100/this.width)  * w);
 		let p2 = Math.floor((100/this.height) * h);
 		if (p1 > p2)

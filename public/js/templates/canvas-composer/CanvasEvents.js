@@ -39,7 +39,8 @@ export class CanvasEvents
 		return this.is_autoresize;
 	}
 
-	initChangeDetectors() {
+	initChangeDetectors()
+	{
 		// check if canvas was changed
 		this.MyCanvasView.getCanvas().on('object:modified', (event) => {
 			this.MyCanvasView.setChanged(true);
@@ -61,7 +62,8 @@ export class CanvasEvents
 		this.initKeyboardEvents();
 	}
 
-	initMouseEvents() {
+	initMouseEvents()
+	{
 		this.MyCanvasView.getCanvas().on('mouse:up', (options) => {
 			this.MyContextMenu.remove();
 			this.MyCanvasDialog.remove();
@@ -129,7 +131,8 @@ export class CanvasEvents
 		}, false);
 	}
 
-	initInsertObjects() {
+	initInsertObjects()
+	{
 		this.MyCanvasView.getInsertImage().addEventListener("click", () => {
 			if (this.MyCanvasDialog.isOpen())
 				return;
@@ -241,7 +244,8 @@ export class CanvasEvents
 
 	}
 
-	initRangeSliderEvents() {
+	initRangeSliderEvents()
+	{
 		this.MyCanvasView.getSlider().oninput = () => {
 			this.is_autoresize = false;
 			this.MyCanvasView.scalePercent();
@@ -249,14 +253,16 @@ export class CanvasEvents
 		}
 	}
 
-	initSaveEvent(MyTemplateModel) {
+	initSaveEvent(MyTemplateModel)
+	{
 		document.getElementById("save_template").addEventListener("click", () => {
 			MyTemplateModel.saveAsJpg(this.MyCanvasView.getCanvas());
 			this.MyCanvasView.setChanged(false);
 		});
 	}
 
-	initCloseEvent() {
+	initCloseEvent()
+	{
 		document.getElementById("close_template_editor").addEventListener("click", () => {
 			if (this.MyCanvasView.hasChanged() === false || confirm_delete(this.MyCanvasView.getLangByKey('confirm_close')) === true)
 				window.location.href = ThymianConfig.main_site + "?site=smil_playlists_show" + url_separator + "smil_playlist_id=" + document.getElementById("playlist_id").value;
