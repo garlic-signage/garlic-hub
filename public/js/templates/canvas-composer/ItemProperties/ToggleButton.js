@@ -27,7 +27,8 @@ export class ToggleButton
 	update(type, value)
 	{
 		const children = this.el.children;
-		if (type === 'display') {
+		if (type === 'display')
+		{
 			for (let i = 0; i < children.length; i++)
 			{
 				children[i].style.display = children[i].getAttribute("id") === value ? "block" : "none";
@@ -46,6 +47,6 @@ export class ToggleButton
 
 	show(value)
 	{
-		this.el.style.display = value ? "flex" : "none";
+		this.el.style.display = value ? "block" : "none";
 	}
 }

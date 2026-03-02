@@ -26,7 +26,6 @@ export class GroupProperties
 	constructor(MyCanvasView, toggleButtonFactory)
 	{
 		this.MyCanvasView = MyCanvasView;
-		this.toggleButtonFactory = toggleButtonFactory;
 		this.group         = toggleButtonFactory.create(document.getElementById("object_group"))
 	}
 

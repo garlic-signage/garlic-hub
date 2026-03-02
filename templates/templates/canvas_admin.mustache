@@ -132,10 +132,10 @@
 					</svg>
 				</button>
 				<div class="template_edit_dropdown_content" style="width:240px;">
-					<div style=" display: flex; justify-content:space-between; align-items: center; padding:20px;">
+					<label style=" display: flex; justify-content:space-between; align-items: center; padding:20px;">
 						<input id="object_opacity" style="width:150px;" type="range" min="0" max="100" value="100">
 						<span id="object_opacity_display">100%</span>
-					</div>
+					</label>
 				</div>
 			</li>
 			<li class="template_edit_dropdown" style="display: none;">
@@ -187,9 +187,9 @@
 				</svg>
 				</button>
 				<div class="template_edit_dropdown_content" style="width:190px;">
-					<div style=" display: flex; justify-content:space-between; align-items: center; padding:20px;">
+					<label style=" display: flex; justify-content:space-between; align-items: center; padding:20px;">
 						<input id="stroke_width" style="width:150px;" type="range" min="0" max="15" value="0">
-					</div>
+					</label>
 				</div>
 			</li>
 			<li class="template_edit_dropdown">
@@ -225,8 +225,7 @@
 							</svg>
 						</button>
 					</div>
-					<div
-							style=" display: flex; justify-content:space-between; align-items: center; gap:20px; margin-top:20px;">
+					<div style=" display: flex; justify-content:space-between; align-items: center; gap:20px; margin-top:20px;">
 						<button id="object_align_top" style="display: flex; justify-content: center; align-items:center;"
 								title="{{{LANG_ALIGN_TOP}}}">
 							<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
@@ -254,20 +253,6 @@
 					</div>
 				</div>
 			</li>
-            <li>
-                <ul id="group_properties" class="action_group">
-                    <li>
-                        <button id="object_group" style="display: none; justify-content: center; align-items:center;" title="{{{LANG_GROUP_UNGROUP}}}">
-                            <svg id="group" xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 512 512">
-                                <path fill="currentColor" d="M480 128V96h20c6.627 0 12-5.373 12-12V44c0-6.627-5.373-12-12-12h-40c-6.627 0-12 5.373-12 12v20H64V44c0-6.627-5.373-12-12-12H12C5.373 32 0 37.373 0 44v40c0 6.627 5.373 12 12 12h20v320H12c-6.627 0-12 5.373-12 12v40c0 6.627 5.373 12 12 12h40c6.627 0 12-5.373 12-12v-20h384v20c0 6.627 5.373 12 12 12h40c6.627 0 12-5.373 12-12v-40c0-6.627-5.373-12-12-12h-20V128zM96 276V140c0-6.627 5.373-12 12-12h168c6.627 0 12 5.373 12 12v136c0 6.627-5.373 12-12 12H108c-6.627 0-12-5.373-12-12zm320 96c0 6.627-5.373 12-12 12H236c-6.627 0-12-5.373-12-12v-52h72c13.255 0 24-10.745 24-24v-72h84c6.627 0 12 5.373 12 12v136z" />
-                            </svg>
-                            <svg id="ungroup" xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 576 512">
-                                <path fill="currentColor" d="M64 320v26a6 6 0 0 1-6 6H6a6 6 0 0 1-6-6v-52a6 6 0 0 1 6-6h26V96H6a6 6 0 0 1-6-6V38a6 6 0 0 1 6-6h52a6 6 0 0 1 6 6v26h288V38a6 6 0 0 1 6-6h52a6 6 0 0 1 6 6v52a6 6 0 0 1-6 6h-26v192h26a6 6 0 0 1 6 6v52a6 6 0 0 1-6 6h-52a6 6 0 0 1-6-6v-26H64zm480-64v-32h26a6 6 0 0 0 6-6v-52a6 6 0 0 0-6-6h-52a6 6 0 0 0-6 6v26H408v72h8c13.255 0 24 10.745 24 24v64c0 13.255-10.745 24-24 24h-64c-13.255 0-24-10.745-24-24v-8H192v72h-26a6 6 0 0 0-6 6v52a6 6 0 0 0 6 6h52a6 6 0 0 0 6-6v-26h288v26a6 6 0 0 0 6 6h52a6 6 0 0 0 6-6v-52a6 6 0 0 0-6-6h-26V256z" />
-                            </svg>
-                        </button>
-                    </li>
-                </ul>
-            </li>
             <li>
                 <input type="color" id="fill_color" class="color_button" style="display: none;" title="{{{LANG_SELECT_COLOR}}}" />
             </li>
@@ -329,6 +314,20 @@
                 </ul>
             </li>
         </ul>
+	</li>
+	<li>
+		<ul id="group_properties" class="action_group">
+			<li>
+				<button id="object_group" style="display: none;" title="{{{LANG_GROUP_UNGROUP}}}">
+					<svg id="group" xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 512 512">
+						<path fill="currentColor" d="M480 128V96h20c6.627 0 12-5.373 12-12V44c0-6.627-5.373-12-12-12h-40c-6.627 0-12 5.373-12 12v20H64V44c0-6.627-5.373-12-12-12H12C5.373 32 0 37.373 0 44v40c0 6.627 5.373 12 12 12h20v320H12c-6.627 0-12 5.373-12 12v40c0 6.627 5.373 12 12 12h40c6.627 0 12-5.373 12-12v-20h384v20c0 6.627 5.373 12 12 12h40c6.627 0 12-5.373 12-12v-40c0-6.627-5.373-12-12-12h-20V128zM96 276V140c0-6.627 5.373-12 12-12h168c6.627 0 12 5.373 12 12v136c0 6.627-5.373 12-12 12H108c-6.627 0-12-5.373-12-12zm320 96c0 6.627-5.373 12-12 12H236c-6.627 0-12-5.373-12-12v-52h72c13.255 0 24-10.745 24-24v-72h84c6.627 0 12 5.373 12 12v136z" />
+					</svg>
+					<svg id="ungroup" xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 576 512">
+						<path fill="currentColor" d="M64 320v26a6 6 0 0 1-6 6H6a6 6 0 0 1-6-6v-52a6 6 0 0 1 6-6h26V96H6a6 6 0 0 1-6-6V38a6 6 0 0 1 6-6h52a6 6 0 0 1 6 6v26h288V38a6 6 0 0 1 6-6h52a6 6 0 0 1 6 6v52a6 6 0 0 1-6 6h-26v192h26a6 6 0 0 1 6 6v52a6 6 0 0 1-6 6h-52a6 6 0 0 1-6-6v-26H64zm480-64v-32h26a6 6 0 0 0 6-6v-52a6 6 0 0 0-6-6h-52a6 6 0 0 0-6 6v26H408v72h8c13.255 0 24 10.745 24 24v64c0 13.255-10.745 24-24 24h-64c-13.255 0-24-10.745-24-24v-8H192v72h-26a6 6 0 0 0-6 6v52a6 6 0 0 0 6 6h52a6 6 0 0 0 6-6v-26h288v26a6 6 0 0 0 6 6h52a6 6 0 0 0 6-6v-52a6 6 0 0 0-6-6h-26V256z" />
+					</svg>
+				</button>
+			</li>
+		</ul>
     </li>
     <li style="margin-left: auto;">
         <ul class="action_group">

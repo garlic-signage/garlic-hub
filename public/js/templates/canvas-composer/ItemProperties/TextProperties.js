@@ -27,13 +27,11 @@ export class TextProperties {
 	textItalic;
 	textUnderline;
 	used_fonts = [];
-	#toggleButtonFactory
 
 	constructor(MyCanvasView, MyFontHandler, toggleButtonFactory)
 	{
 		this.MyCanvasView = MyCanvasView;
 		this.MyFontHandler = MyFontHandler;
-		this.#toggleButtonFactory = toggleButtonFactory;
 
 		this.textAlign     = toggleButtonFactory.create(document.getElementById("text_align"))
 		this.textBold      = toggleButtonFactory.create(document.getElementById("text_bold"))
