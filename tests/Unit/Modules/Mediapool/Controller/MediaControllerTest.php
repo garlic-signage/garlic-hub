@@ -84,7 +84,7 @@ class MediaControllerTest extends TestCase
 
 		$this->mediaServiceMock->expects($this->once())
 			->method('listMedia')
-			->with(2)
+			->with(2, '')
 			->willReturn(['media1', 'media2']);
 
 		$this->mockResponse(['success' => true, 'media_list' => ['media1', 'media2']]);

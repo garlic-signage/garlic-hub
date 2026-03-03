@@ -54,6 +54,7 @@ class MediaController extends AbstractAsyncController
 		if ($node_id === 0)
 			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'node is missing']);
 		$queryParams = $request->getQueryParams();
+		$filter = '';
 		if (array_key_exists('filter', $queryParams))
 		{
 			switch ($queryParams['filter'])
@@ -70,8 +71,6 @@ class MediaController extends AbstractAsyncController
 				case 'documents':
 					$filter = 'application/pdf';
 					break;
-				default:
-					$filter = '';
 			}
 		}
 
