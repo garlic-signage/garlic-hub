@@ -115,7 +115,7 @@ export class MediaSelector
 
 			if (!this.#isMultiselect)
 				document.querySelectorAll('.media-item.selected').forEach(el => el.classList.remove('selected'));
-			item.classList.add('selected');
+			item.classList.toggle('selected');
 		});
 	}
 
