@@ -94,13 +94,14 @@ export class CanvasDialog
 					img.scale(scale/150);
 					img.set({
 						mediaId: id,
-						left: i * 20,
-						top:  i * 20
+						left: i * 50,
+						top:  i * 50
 					});
 					MyCanvasView.getCanvas().add(img);
+					img.bringToFront();
+					MyCanvasView.getCanvas().renderAll();
 				},{crossOrigin: 'anonymous'});
 			});
-			MyCanvasView.getCanvas().renderAll();
 			this.remove();
 		}, { once: true });
 	}
