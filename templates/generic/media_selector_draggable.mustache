@@ -1,0 +1,28 @@
+<template id="mediaSelectorTemplate">
+	<div class="mediaSelectContainer">
+		<aside>
+				<label id="wrap_tree_filter">
+					<input id="treeViewFilter" type="search" placeholder="Filter">
+				</label>
+
+				<nav aria-label="Directory Structure">
+					<div id="mediapoolTree" class="wb-skeleton wb-initializing wb-fade-expander"></div>
+				</nav>
+			</aside>
+
+			<section id="mediaList" class="media-list-grid-view" aria-labelledby="media-list-title">
+
+			</section>
+	</div>
+</template>
+
+<template id="mediaTemplate">
+	<article class="media-item" draggable="true">
+		<figure draggable="false">
+			<img src="" alt="Media Thumbnail" draggable="false">
+			<i class="media-type-icon bi" draggable="false"></i>
+			<figcaption class="media-filename" draggable="false">
+			</figcaption>
+		</figure>
+	</article>
+</template>
