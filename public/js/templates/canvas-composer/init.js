@@ -53,13 +53,14 @@ document.addEventListener("DOMContentLoaded", function (event) {
 	const toggleButtonFactory = new ToggleButtonFactory();
 	let MySvgItemsParser = new SvgItemsParser(canvasView);
 
-	let MyMediaSelector = new MediaSelector(
+	let mediaSelector = new MediaSelector(
 		new WunderbaumWrapper(new TreeViewElements()),
 		new MediaService(new FetchClient()),
 		new MediaSelectorView(new MediaFactory(document.getElementById('mediaTemplate')))
 	);
+	mediaSelector.filter = "images";
 
-	let MyCanvasDialog   = new CanvasDialog(MyMediaSelector, MySvgItemsParser);
+	let MyCanvasDialog   = new CanvasDialog(mediaSelector, MySvgItemsParser);
 	let MyContextMenu    = new ContextMenu(canvasView, MyCanvasDialog);
 
 	let MyGlobalProperties    = new GlobalProperties(canvasView);
@@ -68,7 +69,7 @@ document.addEventListener("DOMContentLoaded", function (event) {
 	let MyTextProperties      = new TextProperties(canvasView, new FontHandler(FontsList), toggleButtonFactory);
 	let MyItemProperties      = new ItemProperties(MyGlobalProperties, MyGroupProperties, MySelectiveProperties, MyTextProperties);
 
-	let MyCanvasEvents   = new CanvasEvents(MyContextMenu, canvasView, MyCanvasDialog, MyMediaSelector, MyItemProperties);
+	let MyCanvasEvents   = new CanvasEvents(MyContextMenu, canvasView, MyCanvasDialog, mediaSelector, MyItemProperties);
 
 	const fabricAdapter  = new FabricAdapter(
 		MySvgItemsParser,

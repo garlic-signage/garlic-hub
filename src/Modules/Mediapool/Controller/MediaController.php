@@ -53,9 +53,30 @@ class MediaController extends AbstractAsyncController
 		$node_id = (int) ($args['node_id'] ?? 0);
 		if ($node_id === 0)
 			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'node is missing']);
+		$queryParams = $request->getQueryParams();
+		if (array_key_exists('filter', $queryParams))
+		{
+			switch ($queryParams['filter'])
+			{
+				case 'images':
+					$filter = 'image';
+					break;
+				case 'videos':
+					$filter = 'video';
+					break;
+				case 'audios':
+					$filter = 'audio';
+					break;
+				case 'documents':
+					$filter = 'application/pdf';
+					break;
+				default:
+					$filter = '';
+			}
+		}
 
 		$this->mediaService->setUID($request->getAttribute('session')->get('user')['UID']);
-		$media_list = $this->mediaService->listMedia($node_id);
+		$media_list = $this->mediaService->listMedia($node_id, $filter);
 		return $this->jsonResponse($response, ['success' => true, 'media_list' => $media_list]);
 	}
 

@@ -86,7 +86,7 @@ class MediaService
 	/**
 	 * @return list<array<string,mixed>>
 	 */
-	public function listMedia(int $nodeId): array
+	public function listMedia(int $nodeId, string $filter = ''): array
 	{
 		try
 		{
@@ -96,7 +96,7 @@ class MediaService
 			if (!$permissions['read'])
 				throw new ModuleException('mediapool', 'No read permissions on directory:'. $node['name']);
 
-			$result = $this->mediaRepository->findAllByNodeId($nodeId);
+			$result = $this->mediaRepository->findAllByNodeId($nodeId, $filter);
 
 			foreach ($result as &$media)
 			{

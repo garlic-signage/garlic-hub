@@ -89,7 +89,7 @@ class FilesRepository extends SqlBase
 	 * @return list<array<string,mixed>>
 	 * @throws Exception
 	 */
-	public function findAllByNodeId(int $nodeId): array
+	public function findAllByNodeId(int $nodeId, string $filter = ''): array
 	{
 		$select     = ['user_main.username', 'company_id', 'media_id', 'node_id', $this->table.'.UID', 'upload_time', 'checksum', 'mimetype', 'metadata', 'tags', 'filename', 'extension', 'thumb_extension', 'media_description'];
 		$join       = ['user_main' => 'user_main.UID=' . $this->table . '.UID'];
@@ -97,6 +97,9 @@ class FilesRepository extends SqlBase
 			'node_id' => $this->generateWhereClause($nodeId),
 			'deleted' => $this->generateWhereClause(0)
 		];
+
+		if ($filter !== '')
+			$where['mimetype'] = $this->generateWhereClause($filter.'%', 'LIKE');
 
 		$order_by   = [['sort' => 'upload_time', 'order' => 'DESC']];
 
