@@ -82,20 +82,26 @@ export class CanvasDialog
 		this.#addMedia.style.display = "inline";
 		this.#applyMedia.style.display = "none";
 		this.#dialogName.innerText = lang.add_image;
+		this.#mediaSelector.enableMultiSelect();
+
 		this.#addMedia.addEventListener("click", (event) =>
 		{
 			let selectedMediaList = this.#mediaSelector.getSelectedMedia();
-			selectedMediaList.forEach(({ id, src }) => {
+			selectedMediaList.forEach(({ id, src }, i) => {
 				fabric.Image.fromURL(src.replace("thumbs", "originals"), (img) =>
 				{
 					let scale = this.MySvgItemsParser.calculateImageScaleByCanvasInPerCent(img.width, img.height);
 					img.scale(scale/150);
-					img.set({ mediaId: id });
+					img.set({
+						mediaId: id,
+						left: i * 20,
+						top:  i * 20
+					});
 					MyCanvasView.getCanvas().add(img);
-					MyCanvasView.getCanvas().renderAll();
-					this.remove();
 				},{crossOrigin: 'anonymous'});
 			});
+			MyCanvasView.getCanvas().renderAll();
+			this.remove();
 		}, { once: true });
 	}
 
