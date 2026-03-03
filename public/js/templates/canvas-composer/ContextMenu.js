@@ -95,7 +95,7 @@ export class ContextMenu
 			this.remove();
 			this.MyCanvasDialog.displayMediaSelector();
 			this.MyCanvasDialog.initCancelEvent();
-			this.MyCanvasDialog.initTransferEvent(this.options.target, this.MyCanvasView);
+			this.MyCanvasDialog.initReplaceEvent(this.options.target, this.MyCanvasView);
 		}
 	}
 

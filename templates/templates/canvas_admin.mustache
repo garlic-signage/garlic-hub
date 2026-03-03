@@ -4,7 +4,7 @@
 
 <template id="context-menu" xmlns="http://www.w3.org/1999/html">
         <ul class="context-menu">
-            <li id="change_image" class="bi-image">>{{{LANG_CHANGE_IMAGE}}}</li>
+            <li id="change_image" class="bi-image"> {{{LANG_REPLACE_IMAGE}}}</li>
             <li id="duplicate_item" class="bi-copy">{{{LANG_DUBLICATE}}}</li>
             <li id="delete_item" class="bi-trash">{{{LANG_DELETE}}}</li>
             <li>
@@ -24,12 +24,13 @@
 {{> media_selector}}
 <dialog id="mediaSelectorDialog">
 	<header>
-		<span class="dialog-name">{{{LANG_INSERT_IMAGE}}}</span>
+		<span class="dialog-name"></span>
 		<button id="closeEditMediaDialog" class="close-button bi bi-x" aria-label="Close"></button>
 	</header>
 	<section id="mediaSelectorInstance"></section>
 	<footer>
 		<button id="addMedia" type="button">{{{LANG_ADD_MEDIA}}}</button>
+		<button id="applyMedia" type="button">{{{LANG_APPLY_MEDIA}}}</button>
 		<button id="closeDialogButton" type="button">{{{LANG_CANCEL}}}</button>
 	</footer>
 </dialog>
@@ -357,6 +358,10 @@
 "></canvas>
 </div>
 <script>
-    let lang = { "confirm_close": "{{{LANG_CONFIRM_CLOSE_EDITOR}}}" };
+    let lang = {
+		"confirm_close": "{{{LANG_CONFIRM_CLOSE_EDITOR}}}",
+		"add_image": "{{{LANG_INSERT_IMAGE}}}",
+		"replace_image": "{{{LANG_REPLACE_IMAGE}}}"
+	};
 </script>
 

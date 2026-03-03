@@ -27,6 +27,9 @@ export class CanvasDialog
 	#closeDialogButton;
 	#mediaSelectorDialog;
 	#isOpen = false;
+	#addMedia;
+	#applyMedia;
+	#dialogName;
 
 	constructor(mediaSelector, MySvgItemsParser)
 	{
@@ -36,6 +39,9 @@ export class CanvasDialog
 		this.#closeEditMediaDialog = document.getElementById("closeEditMediaDialog");
 		this.#closeDialogButton = document.getElementById("closeDialogButton");
 		this.#mediaSelectorDialog = document.getElementById("mediaSelectorDialog");
+		this.#addMedia = document.getElementById("addMedia");
+		this.#applyMedia = document.getElementById("applyMedia");
+		this.#dialogName = document.getElementsByClassName("dialog-name")[0];
 	}
 
 	remove()
@@ -73,49 +79,52 @@ export class CanvasDialog
 
 	initInsertEvent(MyCanvasView)
 	{
-		let addMedia = document.getElementById("addMedia");
-		addMedia.style.display = "inline";
-		addMedia.addEventListener("click", (event) =>
+		this.#addMedia.style.display = "inline";
+		this.#applyMedia.style.display = "none";
+		this.#dialogName.innerText = lang.add_image;
+		this.#addMedia.addEventListener("click", (event) =>
 		{
 			let selectedMediaList = this.#mediaSelector.getSelectedMedia();
 			selectedMediaList.forEach(({ id, src }) => {
 				fabric.Image.fromURL(src.replace("thumbs", "originals"), (img) =>
 				{
 					let scale = this.MySvgItemsParser.calculateImageScaleByCanvasInPerCent(img.width, img.height);
-					img.scale(scale/100); // 1 is 100%
+					img.scale(scale/150);
 					img.set({ mediaId: id });
 					MyCanvasView.getCanvas().add(img);
 					MyCanvasView.getCanvas().renderAll();
 					this.remove();
 				},{crossOrigin: 'anonymous'});
 			});
-
-		});
+		}, { once: true });
 	}
 
-	initTransferEvent(target, MyCanvasView)
+	initReplaceEvent(target, MyCanvasView)
 	{
-		let edit_transfer = document.getElementById("element_edit_transfer");
-		edit_transfer.style.display = "inline";
-		edit_transfer.onclick = () =>
+		this.#applyMedia.style.display = "inline";
+		this.#addMedia.style.display = "none";
+		this.#mediaSelector.disableMultiSelect();
+		this.#dialogName.innerText = lang.replace_image;
+
+		this.#applyMedia.addEventListener("click", (event) =>
 		{
 			// must before set src cause then we have a new target
 			let w = target.width  * target.scaleX;
 			let h = target.height * target.scaleY;
 
-			let link = this.#mediaSelector.getSelectedMediaLink().replace("preview", "original");
-			target.setSrc(link, () =>
+			let selectedMedia = this.#mediaSelector.getSelectedMedia()[0];
+			let link = this.#mediaSelector.getSelectedMedia();
+			target.setSrc(selectedMedia.src.replace("thumbs", "originals"), () =>
 			{
 				target.scaleX = 1;
 				target.scaleY = 1;
+				target.set({ mediaId: selectedMedia.id });
 				// do not know why both must be set
 				target.scaleToWidth(w, true);
 				target.scaleToHeight(h, true);
 				MyCanvasView.getCanvas().renderAll();
-				this.#mediaSelector.destroyTreeView();
-				edit_transfer.style.display = "none";
-				this.edit_dialog.remove();
+				this.remove();
 			},{crossOrigin: 'anonymous'});
-		}
+		}, { once: true });
 	}
 }

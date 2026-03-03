@@ -71,7 +71,7 @@ class TemplatePreparer
 			'LANG_ZOOM' => $this->translator->translate('zoom', 'main'),
 			'LANG_DUBLICATE' => $this->translator->translate('duplicate', 'templates'),
 			'LANG_DELETE' => $this->translator->translate('delete', 'main'),
-			'LANG_CHANGE_IMAGE' => $this->translator->translate('change_image', 'templates'),
+			'LANG_REPLACE_IMAGE' => $this->translator->translate('replace_image', 'templates'),
 			'LANG_LOCK' => $this->translator->translate('lock', 'templates'),
 			'LANG_UNLOCK' => $this->translator->translate('unlock', 'templates'),
 			'LANG_INSERT' => $this->translator->translate('insert', 'main'),
@@ -79,6 +79,7 @@ class TemplatePreparer
 			'LANG_CLOSE' => $this->translator->translate('close', 'main'),
 			'LANG_CONFIRM_CLOSE_EDITOR' => $this->translator->translate('confirm_close_composer', 'templates'),
 			'LANG_ADD_MEDIA' => $this->translator->translate('add', 'main'),
+			'LANG_APPLY_MEDIA' => $this->translator->translate('apply', 'main'),
 			'LANG_CANCEL' => $this->translator->translate('cancel', 'main'),
 			'LANG_TRANSFER' => $this->translator->translate('transfer', 'main'),
 		];

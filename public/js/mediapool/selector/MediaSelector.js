@@ -39,6 +39,16 @@ export class MediaSelector
 		this.#initEvents();
 	}
 
+	enableMultiSelect()
+	{
+		this.#isMultiselect = true;
+	}
+
+	disableMultiSelect()
+	{
+		this.#isMultiselect = false;
+	}
+
 	set filter(value)
 	{
 		this.#filter = value;
