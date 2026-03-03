@@ -28,6 +28,7 @@ export class MediaSelector
 	#treeViewWrapper  = {};
 	#mediaService = {};
 	#selectorView = {};
+	#isMultiselect = false;
 
 	constructor(treeViewWrapper, mediaService, selectorView)
 	{
@@ -73,10 +74,39 @@ export class MediaSelector
 		return this.#emitter.off(eventName, listener);
 	}
 
+	getSelectedMedia()
+	{
+		return [...document.querySelectorAll('.media-item.selected')].map(article => ({
+			id: article.dataset.mediaId,
+			src: article.querySelector('img').src
+		}));
+	}
+
+	enableMultiselect()
+	{
+		this.#isMultiselect = true;
+	}
+
+	disableMultiselect()
+	{
+		this.#isMultiselect = false;
+	}
+
+
 	async showSelector(element)
 	{
 		element.replaceChildren(this.#selectorView.loadSelectorTemplate());
 		this.#treeViewWrapper.initTree();
+
+		document.getElementById('mediaList').addEventListener('click', (e) => {
+			const item = e.target.closest('.media-item');
+			if (!item)
+				return;
+
+			if (!this.#isMultiselect)
+				document.querySelectorAll('.media-item.selected').forEach(el => el.classList.remove('selected'));
+			item.classList.add('selected');
+		});
 	}
 
 	async loadMedia(nodeId)

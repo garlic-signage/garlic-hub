@@ -33,6 +33,14 @@
                 transition: transform 0.2s, box-shadow 0.2s;
             }
 
+            #mediaList .selected
+            {
+                background-color: var(--gh-primary-color);
+                border: 12px solid #000;
+                border-radius: var(--gh-border-radius);
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            }
+
             .media-list-grid-view .media-item
             {
                 background-color: #f9f9f9;

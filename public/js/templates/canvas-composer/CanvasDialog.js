@@ -28,9 +28,9 @@ export class CanvasDialog
 	#mediaSelectorDialog;
 	#isOpen = false;
 
-	constructor(MyMediaSelector, MySvgItemsParser)
+	constructor(mediaSelector, MySvgItemsParser)
 	{
-		this.#mediaSelector = MyMediaSelector;
+		this.#mediaSelector = mediaSelector;
 		this.MySvgItemsParser = MySvgItemsParser;
 		this.#mediaSelectorElement = document.getElementById("mediaSelectorInstance");
 		this.#closeEditMediaDialog = document.getElementById("closeEditMediaDialog");
@@ -45,6 +45,7 @@ export class CanvasDialog
 		this.#isOpen = false;
 	}
 
+
 	get isOpen()
 	{
 		return this.#isOpen;
@@ -54,12 +55,7 @@ export class CanvasDialog
 	{
 		await this.#mediaSelector.showSelector(this.#mediaSelectorElement);
 		this.#mediaSelectorDialog.showModal();
-/*
-		this.edit_dialog = document.createElement("div");
-		this.edit_dialog.className = 'dialog_overlay_wrapper';
 
-		this.edit_dialog.innerHTML = template_editor;
-*/
 		this.#isOpen = true;
 	}
 
@@ -77,23 +73,24 @@ export class CanvasDialog
 
 	initInsertEvent(MyCanvasView)
 	{
-/*		let edit_insert = document.getElementById("element_edit_insert");
-		edit_insert.style.display = "inline";
-		edit_insert.onclick = () =>
+		let addMedia = document.getElementById("addMedia");
+		addMedia.style.display = "inline";
+		addMedia.addEventListener("click", (event) =>
 		{
-			let link = this.MyMediaSelector.getSelectedMediaLink().replace("preview", "original");
-			fabric.Image.fromURL(link, (img) =>
-			{
-				let scale = this.MySvgItemsParser.calculateImageScaleByCanvasInPerCent(img.width, img.height);
-				img.scale(scale/100); // 1 is 100%
-				MyCanvasView.getCanvas().add(img);
-				MyCanvasView.getCanvas().renderAll();
-				this.MyMediaSelector.destroyTreeView();
-				edit_insert.style.display = "none";
-				this.remove();
-			},{crossOrigin: 'anonymous'});
-		}
-*/
+			let selectedMediaList = this.#mediaSelector.getSelectedMedia();
+			selectedMediaList.forEach(({ id, src }) => {
+				fabric.Image.fromURL(src.replace("thumbs", "originals"), (img) =>
+				{
+					let scale = this.MySvgItemsParser.calculateImageScaleByCanvasInPerCent(img.width, img.height);
+					img.scale(scale/100); // 1 is 100%
+					img.set({ mediaId: id });
+					MyCanvasView.getCanvas().add(img);
+					MyCanvasView.getCanvas().renderAll();
+					this.remove();
+				},{crossOrigin: 'anonymous'});
+			});
+
+		});
 	}
 
 	initTransferEvent(target, MyCanvasView)
