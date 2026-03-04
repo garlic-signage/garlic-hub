@@ -11,3 +11,12 @@ CREATE TABLE templates (
 );
 
 CREATE INDEX idx_types ON templates (type);
+
+INSERT INTO user_acl (UID, acl, module)
+SELECT 1, 8, 'template'
+WHERE NOT EXISTS (
+    SELECT 1 FROM user_acl WHERE UID = 1 AND module = 'template'
+)
+  AND EXISTS (
+    SELECT 1 FROM user_main WHERE UID = 1
+);
