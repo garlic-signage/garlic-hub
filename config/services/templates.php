@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 
 use App\Framework\Core\Acl\AclHelper;
+use App\Framework\Core\Config\Config;
 use App\Framework\Core\CsrfToken;
 use App\Framework\Core\Sanitizer;
 use App\Framework\Core\Session;
@@ -85,7 +86,8 @@ $dependencies[\App\Modules\Templates\Helper\Composer\Orchestrator::class] = DI\f
 	return new  \App\Modules\Templates\Helper\Composer\Orchestrator(
 		$container->get(\App\Modules\Templates\Helper\Composer\TemplatePreparer::class),
 		$container->get(TemplatesUsageService::class),
-		$container->get(TemplatesService::class)
+		$container->get(TemplatesService::class),
+		$container->get(Config::class)
 	);
 });
 
