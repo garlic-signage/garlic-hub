@@ -50,7 +50,13 @@ class Orchestrator
 	{
 		$url = $this->config->getConfigValue('url', 'mediapool', 'content_server');
 		if ($url === '')
-			$url = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'];
+		{
+			$isHttps = isset($_SERVER['HTTPS'])
+				|| ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https'
+				|| ($_SERVER['HTTP_X_FORWARDED_SSL'] ?? '') === 'on';
+
+			$url = ($isHttps ? 'https' : 'http') . '://' . ($_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST']);
+		}
 
 		$path = str_replace('public', '', $this->config->getConfigValue('originals', 'mediapool', 'directories'));
 		$this->mediaUrl = $url.$path;
