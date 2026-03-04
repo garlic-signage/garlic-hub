@@ -38,15 +38,6 @@ fi
 
 php bin/console.php db:migrate
 
-
-# Installation when db missing
-#if [ ! -f /var/www/var/garlic-hub.sqlite ]; then
- #   sqlite3 /var/www/var/garlic-hub.sqlite < migrations/edge/001_init.up.sql
-#	php bin/console.php db:migrate 2>&1
-#else
-#    echo "Install already done."
-#fi
-
 chown -R www-data:www-data /var/www/public/var /var/www/var
 chmod -R 775 /var/www/public/var /var/www/var
 umask 002
