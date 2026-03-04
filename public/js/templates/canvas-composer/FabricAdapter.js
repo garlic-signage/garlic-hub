@@ -22,7 +22,10 @@ export class FabricAdapter
 	MySvgItemsParser;
 	MyCanvasEvents;
 	#templatesService;
-	#waitOverlay;
+	#waitOverlay
+	#templateId = 0;
+	#contentId = 0;
+	#baseUrl = window.location.origin + '/var/mediapool/originals/';
 
 	constructor(MySvgItemsParser, MyCanvasEvents, templatesService, waitOverlay)
 	{
@@ -35,6 +38,7 @@ export class FabricAdapter
 	async loadTemplateFromDataBase(templateId)
 	{
 		this.#waitOverlay.start();
+		this.#templateId = templateId;
 		const jsonResponse = await this.#templatesService.loadTemplateContent(templateId);
 		let content = jsonResponse.content;
 		if (content.length === 0)
@@ -77,12 +81,13 @@ export class FabricAdapter
 				this.MySvgItemsParser.MyCanvasView.getCanvas().renderAll();
 			},
 			(item, object) => {
-
-				this.MySvgItemsParser.createItem(item, object);
+				(item, object) => {
+					this.MySvgItemsParser.createItem(item, object);
+				}
 			});
 	}
 
-	async saveAsJpg(templateId, canvas)
+	async saveAsJpg(canvas)
 	{
 		this.#waitOverlay.start();
 
@@ -92,79 +97,23 @@ export class FabricAdapter
 		canvas.setWidth(this.MySvgItemsParser.width)
 		canvas.setHeight(this.MySvgItemsParser.height);
 
-		let save = canvas.toJSON(["id"]);
+		let save = canvas.toJSON(["mediaId", "fileName"]);
 		save['viewport'] = { 'width': this.MySvgItemsParser.width, 'height': this.MySvgItemsParser.height, 'scale': 100 };
 
-		let body = "json_canvas=" + encodeURIComponent(JSON.stringify(save)) +	"&image=" + canvas.toDataURL({ format: 'jpeg', quality: 0.8 });
+		const content = JSON.stringify(save);
+		const image = canvas.toDataURL({ format: 'jpeg', quality: 0.8 });
 
 		// set zoom back to original values as JavaScript changes original object
 		this.MySvgItemsParser.MyCanvasView.scaleCanvas();
 
-		await this.#templatesService.saveTemplateContent(templateId, body);
+		try
+		{
+			await this.#templatesService.saveTemplateContent(this.#templateId, content, image);
+		}
+		catch(e)
+		{
+			console.error(e);
+		}
 		this.#waitOverlay.stop();
 	}
-
-
-
-	/*
-		legacy stuff from old composer
-		loadFromLocalFile(file_path) {
-			try {
-				let url = file_path
-				let MyRequest = new XMLHttpRequest();
-				MyRequest.open("GET", url, true);
-				MyRequest.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-				MyRequest.onload = () => {
-					if (MyRequest.status !== 200) {
-						jThymian.printError(MyRequest.statusText);
-					}
-					else {
-						if (file_path.split('.').pop() === 'json') {
-							this.loadJsonFromString(MyRequest.responseText);
-						}
-						else {
-							this.loadSvgFromString(MyRequest.responseText);
-						}
-					}
-				};
-				MyRequest.onerror = () => {
-					jThymian.printError(MyRequest.statusText);
-					ThymianLog.log(MyRequest.statusText, 0, window.location.pathname)
-				};
-				MyRequest.send();
-			}
-			catch (err) {
-				ThymianLog.logException(err);
-				jThymian.printError(err);
-			}
-		}
-
-		loadSvgFromString(svg) {
-			fabric.loadSVGFromString(svg,
-				(objects, options) => {
-					// we cannot parse here directly cause we need item for class
-					// but item via object._element is only for img available
-					this.MySvgItemsParser.outputTemplate(objects, options);
-					this.MyCanvasEvents.initChangeDetectors();
-					this.MyCanvasEvents.initEditEvents();
-					fabric.Canvas.prototype.historyUndo = []
-					fabric.Canvas.prototype.historyRedo = []
-					this.MySvgItemsParser.MyCanvasView.getCanvas()._historySaveAction()
-					this.MySvgItemsParser.MyCanvasView.getCanvas().renderAll();
-				},
-				(item, object) => {
-					// cannot use second function direct cause parsing order is messed up
-					// text is parsed before image etc...
-					// so we must store an object array with id and object
-					// the first function iterates correct
-					// maybe there is an option for that hidden deeply in the shitty documentation
-					if (object.type === "text") {
-						this.MySvgItemsParser.createTextFromSVG(item, object);
-					}
-					else {
-						this.MySvgItemsParser.createImageFromSVG(item, object);
-					}
-				}, { crossOrigin: 'anonymous' });
-		}
-	*/
 }

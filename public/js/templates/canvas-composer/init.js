@@ -52,10 +52,11 @@ document.addEventListener("DOMContentLoaded", function (event) {
 	), {});
 	const toggleButtonFactory = new ToggleButtonFactory();
 	let MySvgItemsParser = new SvgItemsParser(canvasView);
+	const mediaService = new MediaService(new FetchClient());
 
 	let mediaSelector = new MediaSelector(
 		new WunderbaumWrapper(new TreeViewElements()),
-		new MediaService(new FetchClient()),
+		mediaService,
 		new MediaSelectorView(new MediaFactory(document.getElementById('mediaTemplate')))
 	);
 	mediaSelector.filter = "images";

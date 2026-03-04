@@ -94,6 +94,7 @@ export class CanvasDialog
 					img.scale(scale/150);
 					img.set({
 						mediaId: id,
+						fileName: src.split('/').pop(),
 						left: i * 50,
 						top:  i * 50
 					});

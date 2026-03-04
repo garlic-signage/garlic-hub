@@ -253,10 +253,10 @@ export class CanvasEvents
 		}
 	}
 
-	initSaveEvent(MyTemplateModel)
+	initSaveEvent(fabricAdapter)
 	{
 		document.getElementById("save_template").addEventListener("click", () => {
-			MyTemplateModel.saveAsJpg(this.MyCanvasView.getCanvas());
+			fabricAdapter.saveAsJpg(this.MyCanvasView.getCanvas());
 			this.MyCanvasView.setChanged(false);
 		});
 	}
