@@ -24,19 +24,22 @@ namespace App\Modules\Templates\Controller;
 
 use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Core\CsrfToken;
-use App\Modules\Auth\UserSession;
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\ModuleException;
 use App\Modules\Templates\Helper\Composer\Orchestrator;
-use App\Modules\Templates\Services\TemplatesService;
-use App\Modules\Templates\Services\TemplatesUsageService;
+use Doctrine\DBAL\Exception;
+use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\SimpleCache\InvalidArgumentException;
 
-class TemplatesController
+readonly class TemplatesController
 {
 	public function __construct(
-		private readonly Orchestrator $orchestrator,
-		private readonly JsonResponseHandler $responseHandler,
-		private readonly CsrfToken           $csrfToken
+		private Orchestrator        $orchestrator,
+		private JsonResponseHandler $responseHandler,
+		private CsrfToken           $csrfToken
 	) {}
 
 	public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -58,7 +61,7 @@ class TemplatesController
 		return $this->responseHandler->jsonSuccess($response);
 	}
 
-	public function loadContent(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+	public function load(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
 		$templateId = (int) ($args['template_id'] ?? 0);
 
@@ -69,10 +72,36 @@ class TemplatesController
 		return $this->responseHandler->jsonSuccess($response, ['content' => $this->orchestrator->getContent()]);
 	}
 
-	public function storeContent(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	/**
+	 * @throws ModuleException
+	 * @throws CoreException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws InvalidArgumentException
+	 * @throws FrameworkException
+	 * @throws Exception
+	 */
+	public function save(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
+		/** @var array{template_id?: int, item_id?: int, csrf_token?: string} $requestData */
+		$requestData = $request->getParsedBody();
+
+		$templateId = (int) ($requestData['template_id'] ?? 0);
+		$itemId     = (int) ($requestData['item_id'] ?? 0);
+
 		if (!$this->csrfToken->validateToken($requestData['csrf_token'] ?? ''))
 			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.', 200);
+
+		if ($templateId > 0)
+		{
+			if (!$this->orchestrator->checkEditRights($templateId))
+				return $this->responseHandler->jsonError($response, 'No rights', 200);
+
+			if ($this->orchestrator->saveTemplate($templateId, $requestData['content']) === 0)
+				return $this->responseHandler->jsonError($response, 'Save failed', 200);
+
+			return $this->responseHandler->jsonSuccess($response);
+		}
+
 
 		return $this->responseHandler->jsonSuccess($response);
 	}

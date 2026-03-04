@@ -129,7 +129,12 @@ class TemplatesService extends AbstractBaseService
 	 */
 	private function collectDataForSettingsUpdate(array $postData): array
 	{
-		$saveData[BaseParameters::PARAMETER_UID] = $postData[BaseParameters::PARAMETER_UID];
+		if (array_key_exists(BaseParameters::PARAMETER_UID, $postData))
+			$saveData[BaseParameters::PARAMETER_UID] = $postData[BaseParameters::PARAMETER_UID];
+
+		if (array_key_exists('content', $postData))
+			$saveData['content'] = $postData['content'];
+
 		return $this->collectCommonSettings($postData, $saveData);
 	}
 

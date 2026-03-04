@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Helper\Composer;
 
+use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -38,12 +39,22 @@ class Orchestrator
 {
 	/** @var array<string,string>  */
 	private array $template;
+	private $mediaUrl;
 
 	public function __construct(
 		private readonly TemplatePreparer    $templatePreparer,
 		private readonly TemplatesUsageService $templatesUsageService,
 		private readonly TemplatesService    $templatesService,
-	) {}
+		private readonly Config $config
+	)
+	{
+		$url = $this->config->getConfigValue('url', 'mediapool', 'content_server');
+		if ($url === '')
+			$url = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'];
+
+		$path = str_replace('public', '', $this->config->getConfigValue('originals', 'mediapool', 'directories'));
+		$this->mediaUrl = $url.$path;
+	}
 
 
 	public function checkEditRights(int $templateId): bool
@@ -64,7 +75,6 @@ class Orchestrator
 	}
 
 	/**
-	 * @return array{success: bool, errors?: string[]}
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
@@ -72,14 +82,22 @@ class Orchestrator
 	 * @throws ModuleException
 	 * @throws PhpfastcacheSimpleCacheException
 	 */
-	public function store(int $templateId, string $content): array
+	public function saveTemplate(int $templateId, string $content): int
 	{
-		// Todo Later: Validate content with opis/json-schema if canvas
-		$saveData = ['content' => $content];
-		if ($this->templatesService->update($templateId, $saveData) === 0)
-			return ['success' => false, 'errors' => ['No save possible']];
+		// Scheme validation is not necessary
 
-		return ['success' => true];
+		$JSON = json_decode($content, true);
+		if (!is_array($JSON) || !isset($JSON['objects']) || !is_array($JSON['objects']))
+		    return 0;
+
+		if (count($JSON['objects']) > 1000)
+			return 0;
+
+		// reove Src for security reasons XSS etc
+		$this->removeSrc($JSON['objects']);
+
+		$saveData = ['content' => json_encode($JSON)];
+		return $this->templatesService->update($templateId, $saveData);
 	}
 
 	public function delete(int $templateId): string
@@ -93,12 +111,37 @@ class Orchestrator
 		return '';
 	}
 
-	public function getContent()
+	public function getContent(): string
 	{
 		if ( $this->template['content'] === null)
-			return [];
+			return '';
 
-		return $this->template['content'];
+		$json = json_decode($this->template['content'], true);
+		$this->restoreSrc($json['objects']);
+
+		return json_encode($json);
+	}
+
+	private function restoreSrc(array &$objects): void
+	{
+		foreach ($objects as &$obj)
+		{
+			if (isset($obj['fileName']))
+				$obj['src'] = $this->mediaUrl .'/'. $obj['fileName'];
+
+			if (isset($obj['objects']) && is_array($obj['objects']))
+				$this->restoreSrc($obj['objects']);
+		}
+	}
+
+	private function removeSrc(array &$objects): void
+	{
+		foreach ($objects as &$obj)
+		{
+			unset($obj['src']);
+			if (isset($obj['objects']) && is_array($obj['objects']))
+				$this->removeSrc($obj['objects']);
+		}
 	}
 
 }
