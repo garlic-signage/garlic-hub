@@ -227,6 +227,10 @@ class FinalRenderMiddleware implements MiddlewareInterface
 				'LINK_USER_ACCESS' => '/users',
 				'LANG_USER_ACCESS' => $this->translator->translate('management', 'users')
 			];
+			$adminMenuPoints[] = [
+				'LINK_USER_ACCESS' => '/templates',
+				'LANG_USER_ACCESS' => $this->translator->translate('overview', 'templates')
+			];
 		}
 		return $adminMenuPoints;
 	}
