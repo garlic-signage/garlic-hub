@@ -8,6 +8,9 @@
 Garlic-Hub manages your digital signage network — devices, content, and playlists — 
 from a single self-hosted interface. No SaaS, no per-device fees, no vendor lock-in.
 
+
+![Garlic-Hub Mediapool Screenshot](docs/media/showcase.gif)
+
 ## Part of the GarlicSignage Ecosystem
 
 | Project | Role |
@@ -18,7 +21,6 @@ from a single self-hosted interface. No SaaS, no per-device fees, no vendor lock
 | [garlic-daemon](https://github.com/garlic-signage/garlic-daemon) | systemd-based player maintenance |
 | [garlic-proxy](https://github.com/garlic-signage/garlic-proxy) | Proxy for restricted networks |
 
-![Garlic-Hub Mediapool Screenshot](docs/media/showcase.gif)
 
 ## Live Demo
 To see garlic-hub in action, use the live demo at:
@@ -28,7 +30,6 @@ login: admin
 password: Demo1234!  
 
 The environment is regularly deleted and rebuilt.
-
 
 ## Quick Start
 
@@ -51,13 +52,6 @@ The environment is regularly deleted and rebuilt.
 | **Trigger**                  | ✅      | Trigger to play media or nested playlists by priority based on Accesskeys, Touch/Click, Datetime, and Network                          |
 | **Local Player Support**     | ✅      | Integration with one local media player                                                                                                |
 | **Internationalization**     | ✅      | Locale-specific configurations and adaptable UI (English, Spanish, French, Russian, Greek, German)                                     |
-
-## Coming In Future Releases 
-- Online documentation
-- Device management for remote configuration and monitoring
-- Real-time reporting and system health monitoring
-- Raspberry Pi Player / CMS Bundle
-- Scalable deployment options
 
 ## Tech-Stack
 - PHP 8.4 with strict types enabled 
@@ -83,3 +77,6 @@ PRs and issues are welcome. The project is in active development. Code and APIs 
 
 # License
 [Affero GPL v3.0 License](https://www.gnu.org/licenses/agpl-3.0.en.html).
+
+Note: AGPL requires that modifications — including server-side deployments —
+be released under the same license.
