@@ -56,18 +56,10 @@ export class FabricAdapter
 		json_canvas = json_canvas.replaceAll('"type":"i-text"', '"type":"textbox"');
 
 		let j = JSON.parse(json_canvas);
-		// traverse objects to load fonts
-		for (let i = 0; i < j.objects.length; i++)
-		{
-			if (j.objects[i].type === "textbox")
-			{
-				this.MyCanvasEvents.MyItemProperties.MyTextProperties.collectUsedFontsFromSelection(j.objects[i]);
-			}
-		}
+		this.#traverseObjects.call(this, j.objects);
 		console.log("Collected all fonts");
 
 		await this.MyCanvasEvents.MyItemProperties.MyTextProperties.preloadUsedFonts();
-		console.log("Required fonts preloaded");
 
 		this.MySvgItemsParser.MyCanvasView.getCanvas().loadFromJSON(json_canvas, () => {
 				fabric.util.clearFabricFontCache();
@@ -115,5 +107,21 @@ export class FabricAdapter
 			console.error(e);
 		}
 		this.#waitOverlay.stop();
+	}
+
+	#traverseObjects(objects)
+	{
+		for (let i = 0; i < objects.length; i++)
+		{
+			const obj = objects[i];
+			if (obj.type === "textbox")
+			{
+				this.MyCanvasEvents.MyItemProperties.MyTextProperties.collectUsedFontsFromSelection(obj);
+			}
+			else if (obj.type === "group" && obj.objects)
+			{
+				this.#traverseObjects.call(this, obj.objects);
+			}
+		}
 	}
 }
