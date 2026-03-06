@@ -121,12 +121,16 @@ export class CanvasDialog
 			let h = target.height * target.scaleY;
 
 			let selectedMedia = this.#mediaSelector.getSelectedMedia()[0];
-			let link = this.#mediaSelector.getSelectedMedia();
+
 			target.setSrc(selectedMedia.src.replace("thumbs", "originals"), () =>
 			{
 				target.scaleX = 1;
 				target.scaleY = 1;
-				target.set({ mediaId: selectedMedia.id });
+				target.set(
+					{
+						mediaId: selectedMedia.id,
+						fileName: selectedMedia.src.split('/').pop(),
+					});
 				// do not know why both must be set
 				target.scaleToWidth(w, true);
 				target.scaleToHeight(h, true);
