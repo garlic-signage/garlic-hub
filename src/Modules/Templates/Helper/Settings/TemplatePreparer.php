@@ -49,7 +49,7 @@ class TemplatePreparer
 	private function prepareSettings(array $dataSections): array
 	{
 		$dataSections['additional_css']    = ['/css/templates/settings.css'];
-		$dataSections['footer_modules']    = [];
+		$dataSections['footer_modules']    = ['/js/templates/settings/init.js'];
 		$dataSections['template_name']     = 'templates/edit';
 		$dataSections['form_action']       = '/templates/settings';
 		$dataSections['save_button_label'] = $this->translator->translate('save', 'main');
