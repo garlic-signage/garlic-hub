@@ -18,7 +18,7 @@
 */
 
 fabric.Canvas.prototype._historyNext = function () {
-	return JSON.stringify(this.toJSON(['evented', 'role', 'selectable', 'originalSize']))
+	return JSON.stringify(this.toJSON(['evented', 'role', 'selectable', 'originalSize', 'mediaId', 'fileName']))
 }
 fabric.Canvas.prototype._historyEvents = function () {
 	return {
