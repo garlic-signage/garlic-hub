@@ -53,6 +53,10 @@ The environment is regularly deleted and rebuilt.
 | **Local Player Support**     | ✅      | Integration with one local media player                                                                                                |
 | **Internationalization**     | ✅      | Locale-specific configurations and adaptable UI (English, Spanish, French, Russian, Greek, German)                                     |
 
+
+## Milestones
+[Milestones](https://github.com/garlic-signage/garlic-hub/milestones)
+
 ## Tech-Stack
 - PHP 8.4 with strict types enabled 
 - SLIM 4 Framework
