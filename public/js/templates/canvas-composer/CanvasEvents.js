@@ -265,7 +265,7 @@ export class CanvasEvents
 	{
 		document.getElementById("close_template_editor").addEventListener("click", () => {
 			if (this.MyCanvasView.hasChanged() === false || confirm_delete(this.MyCanvasView.getLangByKey('confirm_close')) === true)
-				window.location.href = ThymianConfig.main_site + "?site=smil_playlists_show" + url_separator + "smil_playlist_id=" + document.getElementById("playlist_id").value;
+				window.location.href = '/templates/';
 		});
 	}
 }
