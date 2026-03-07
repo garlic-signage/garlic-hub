@@ -21,15 +21,15 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Mediapool\Services;
 
+use App\Framework\Media\MimeTypeDetector;
 use App\Modules\Mediapool\Repositories\FilesRepository;
 use App\Modules\Mediapool\Services\NodesService;
 use App\Modules\Mediapool\Services\UploadService;
 use App\Modules\Mediapool\Utils\AbstractMediaHandler;
 use App\Modules\Mediapool\Utils\MediaHandlerFactory;
-use App\Modules\Mediapool\Utils\MimeTypeDetector;
+use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Stream;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;

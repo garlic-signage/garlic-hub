@@ -23,10 +23,10 @@ namespace App\Modules\Mediapool\Services;
 
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Media\MimeTypeDetector;
 use App\Modules\Mediapool\Repositories\FilesRepository;
 use App\Modules\Mediapool\Utils\AbstractMediaHandler;
 use App\Modules\Mediapool\Utils\MediaHandlerFactory;
-use App\Modules\Mediapool\Utils\MimeTypeDetector;
 use Doctrine\DBAL\Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;

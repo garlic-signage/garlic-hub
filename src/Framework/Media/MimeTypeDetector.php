@@ -19,9 +19,10 @@
 */
 declare(strict_types=1);
 
-namespace App\Modules\Mediapool\Utils;
+namespace App\Framework\Media;
 
 use App\Framework\Exceptions\ModuleException;
+use App\Modules\Mediapool\Utils\FileInfoWrapper;
 use InvalidArgumentException;
 
 /**
