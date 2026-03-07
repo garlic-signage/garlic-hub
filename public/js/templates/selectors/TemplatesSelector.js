@@ -42,8 +42,8 @@ export class TemplatesSelector
 	async showSelector(element)
 	{
 		element.replaceChildren(this.#templatesSelectorView.loadSelectorTemplate());
-
-		this.#items = await this.#templatesService.find();
+		const result = await this.#templatesService.find();
+		this.#items = result.templates;
 		this.#templatesSelectorView.displayList(this.#items);
 	}
 }

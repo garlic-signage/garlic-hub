@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace App\Modules\Templates\Controller;
 
 use App\Framework\Controller\JsonResponseHandler;
+use App\Framework\Core\Config\Config;
 use App\Framework\Core\CsrfToken;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -41,6 +42,7 @@ readonly class TemplatesController
 	public function __construct(
 		private Orchestrator        $orchestrator,
 		private TemplatesDatatableService $templatesDatatableService,
+		private Config             $config,
 		private Parameters $parameters,
 		private JsonResponseHandler $responseHandler,
 		private CsrfToken           $csrfToken
@@ -84,10 +86,15 @@ readonly class TemplatesController
 
 		$this->templatesDatatableService->loadDatatable();
 		$templates = [];
+		$path = str_replace('public', '', $this->config->getConfigValue('thumbnails', 'templates', 'directories'));
 		foreach ($this->templatesDatatableService->getCurrentFilterResults() as $template)
 		{
 			if ($template['visibility'] !== '')
-				$templates[$template['template_id']] = $template;
+				$templates[] = [
+					'id' => $template['template_id'],
+					'src' => $path.'/'.$template['template_id'].'.jpg',
+					'name' => $template['name']
+				];
 		}
 
 		return $this->responseHandler->jsonSuccess($response, ['templates' => $templates]);

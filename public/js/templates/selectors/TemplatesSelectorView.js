@@ -19,7 +19,7 @@
 
 export class TemplatesSelectorView
 {
-	#itemTemplate         = document.getElementById("templatesTemplate")
+	#itemTemplate         = document.getElementById("itemTemplate");
 	#selectorTemplate     = document.getElementById("templatesSelectorTemplate");
 	#templatesListElement = null;
 
@@ -30,7 +30,7 @@ export class TemplatesSelectorView
 
 	displayList(items)
 	{
-		this.#templatesListElement = document.getElementById("templatessList");
+		this.#templatesListElement = document.getElementById("templatesList");
 		this.#templatesListElement.innerHTML = "";
 
 		for (const item of items)
@@ -50,8 +50,10 @@ export class TemplatesSelectorView
 		const el = element.querySelector(".template-select-item");
 		el.setAttribute("data-select-id", item.id);
 		const span = element.querySelector(".template-select-name");
-
 		span.textContent = item.name;
+		const image = element.querySelector(".template-thumbnail");
+		image.src = "" + item.src;
+		image.alt = item.name;
 
 		return el;
 	}
