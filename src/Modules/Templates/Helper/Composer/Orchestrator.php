@@ -104,7 +104,9 @@ class Orchestrator
 		$this->removeSrc($JSON['objects']);
 
 		$saveData = ['content' => json_encode($JSON)];
-		$this->exportImage->exportBase64($templateId, $imageBase64);
+		if ($this->exportImage->exportBase64($templateId, $imageBase64) === false)
+			return 0;
+
 		return $this->templatesService->update($templateId, $saveData);
 	}
 

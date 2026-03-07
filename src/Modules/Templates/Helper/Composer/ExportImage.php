@@ -45,7 +45,6 @@ class ExportImage
 			$mediaHandler->validateStoredFile($filePath);
 			$mediaHandler->createThumbnail($absoluteFilePath);
 			return true;
-
 		}
 		catch (\Throwable $exception)
 		{
