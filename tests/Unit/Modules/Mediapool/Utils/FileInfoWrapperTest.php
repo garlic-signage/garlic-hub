@@ -50,7 +50,7 @@ class FileInfoWrapperTest extends TestCase
 	#[RunInSeparateProcess] #[Group('units')]
 	public function testConstructor(): void
 	{
-		$finfo_open = $this->getFunctionMock('App\Modules\Mediapool\Utils', 'finfo_open');
+		$finfo_open = $this->getFunctionMock('App\Framework\Media', 'finfo_open');
 		$finfo_open->expects($this->once())->willReturn(false);
 
 		$this->expectException(RuntimeException::class);
