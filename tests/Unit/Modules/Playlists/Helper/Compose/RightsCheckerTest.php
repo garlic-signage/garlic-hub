@@ -183,7 +183,9 @@ class RightsCheckerTest extends TestCase
 
 		$result = $this->checker->checkInsertTemplates();
 
-		static::assertSame([], $result);
+		$expected = ['LANG_INSERT_TEMPLATES' => ''];
+
+		static::assertSame($expected, $result);
 	}
 
 	/**

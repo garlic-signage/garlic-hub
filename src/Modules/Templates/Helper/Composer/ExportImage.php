@@ -39,11 +39,10 @@ class ExportImage
 			$decoded = $this->dataUrlDecoder->decode($base64Encoded);
 
 			$mediaHandler     = $this->mediaHandlerFactory->createTemplatesHandler($decoded->mimeType);
-			$filePath         = $mediaHandler->getOriginalPath().'/'.$id.'.'.$decoded->extension;
-			$mediaHandler->validateStoredFile($filePath);
+			$filePath         = '/'.$mediaHandler->getOriginalPath().'/'.$id.'.'.$decoded->extension;
 			$absoluteFilePath = $mediaHandler->getAbsolutePath($filePath);
-
-			$mediaHandler->writeBinaryString($absoluteFilePath, $decoded->binaryContent);
+			$mediaHandler->writeBinaryString($filePath, $decoded->binaryContent);
+			$mediaHandler->validateStoredFile($filePath);
 			$mediaHandler->createThumbnail($absoluteFilePath);
 			return true;
 

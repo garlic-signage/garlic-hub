@@ -41,7 +41,7 @@ use TypeError;
 class ConcreteMediaHandler extends AbstractMediaHandler
 {
 	public function checkFileBeforeUpload(int $size): void {}
-	public function checkFileAfterUpload(string $filePath): void {}
+	public function validateStoredFile(string $filePath): void {}
 	public function createThumbnail(string $filePath): void {}
 }
 class AbstractMediaHandlerTest extends TestCase

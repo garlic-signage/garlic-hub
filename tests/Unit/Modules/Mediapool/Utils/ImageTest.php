@@ -103,7 +103,7 @@ class ImageTest extends TestCase
 		$this->expectException(ModuleException::class);
 		$this->expectExceptionMessage('After Upload Check: /path/to/file not exists.');
 
-		$this->image->checkFileAfterUpload('/path/to/file');
+		$this->image->validateStoredFile('/path/to/file');
 	}
 
 	/**
@@ -119,7 +119,7 @@ class ImageTest extends TestCase
 		$this->expectException(ModuleException::class);
 		$this->expectExceptionMessage('After Upload Check: 20 MB exceeds max image size.');
 
-		$this->image->checkFileAfterUpload('/path/to/file');
+		$this->image->validateStoredFile('/path/to/file');
 	}
 
 	/**
@@ -136,7 +136,7 @@ class ImageTest extends TestCase
 		$this->expectException(ModuleException::class);
 		$this->expectExceptionMessage('After Upload Check:  Image width 5001 exceeds maximum.');
 
-		$this->image->checkFileAfterUpload('/path/to/file');
+		$this->image->validateStoredFile('/path/to/file');
 	}
 
 	/**
@@ -153,7 +153,7 @@ class ImageTest extends TestCase
 		$this->expectException(ModuleException::class);
 		$this->expectExceptionMessage('After Upload Check:  Image height 5001 exceeds maximum.');
 
-		$this->image->checkFileAfterUpload('/path/to/file');
+		$this->image->validateStoredFile('/path/to/file');
 	}
 
 	/**
@@ -169,7 +169,7 @@ class ImageTest extends TestCase
 		$this->imagickMock->method('getImageWidth')->willReturn(3840);
 		$this->imagickMock->method('getImageHeight')->willReturn(3840);
 
-		$this->image->checkFileAfterUpload('/path/to/file');
+		$this->image->validateStoredFile('/path/to/file');
 		// @phpstan-ignore-next-line
 		static::assertTrue(true); // If no exception is thrown, the test passes
 	}

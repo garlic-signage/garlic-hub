@@ -41,12 +41,14 @@ class DataUrlDecoder
             throw new FrameworkException('Data-URL not valid.');
 
         $base64   = $matches[2];
+		if ($base64 === '')
+			throw new FrameworkException('Base64-Data are empty.');
 
-        $binary = base64_decode($base64, true);
+		$binary = base64_decode($base64, true);
         if ($binary === false)
             throw new FrameworkException('Base64-Data are not valid.');
 
-		$mimeType = $this->mimeTypeDetector->detectFromStringContent($binary);
+		$mimeType  = $this->mimeTypeDetector->detectFromStringContent($binary);
 		$extension = $this->mimeTypeDetector->determineExtensionByType($mimeType);
 
         return new DecodedDataUrlFile(

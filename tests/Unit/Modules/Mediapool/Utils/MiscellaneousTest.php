@@ -94,7 +94,7 @@ class MiscellaneousTest extends TestCase
 		$this->filesystemMock->method('fileSize')->willReturn(1073741824);
 
 		$this->expectNotToPerformAssertions();
-		$this->misc->checkFileAfterUpload('/path/to/file');
+		$this->misc->validateStoredFile('/path/to/file');
 	}
 
 	/**
@@ -106,7 +106,7 @@ class MiscellaneousTest extends TestCase
 		$this->expectException(ModuleException::class);
 
 		$this->filesystemMock->method('fileExists')->willReturn(false);
-		$this->misc->checkFileAfterUpload('/path/to/file');
+		$this->misc->validateStoredFile('/path/to/file');
 	}
 
 	/**
@@ -119,7 +119,7 @@ class MiscellaneousTest extends TestCase
 
 		$this->filesystemMock->method('fileExists')->willReturn(true);
 		$this->filesystemMock->method('fileSize')->willReturn(1073741824 + 1);
-		$this->misc->checkFileAfterUpload('/path/to/file');
+		$this->misc->validateStoredFile('/path/to/file');
 	}
 
 	/**

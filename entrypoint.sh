@@ -14,7 +14,10 @@ mkdir -p \
   /var/www/var/sessions \
   /var/www/public/var/mediapool \
   /var/www/public/var/mediapool/thumbs \
-  /var/www/public/var/mediapool/originals
+  /var/www/public/var/mediapool/originals \
+  /var/www/public/var/templates \
+  /var/www/public/var/templates/thumbs \
+  /var/www/public/var/templates/originals
 
 if ! grep -q '^APP_SECRET=' /var/www/.env; then
     echo "Appending random APP_SECRET..."

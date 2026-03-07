@@ -109,7 +109,7 @@ class VideoTest extends TestCase
 		$properties = ['width' => 3840, 'height' => 3840];
 		$this->ffmpegMock->method('getMediaProperties')->willReturn($properties);
 
-		$this->video->checkFileAfterUpload('/path/to/file');
+		$this->video->validateStoredFile('/path/to/file');
 	}
 
 	/**
@@ -123,7 +123,7 @@ class VideoTest extends TestCase
 	{
 		$this->expectException(ModuleException::class);
 		$this->filesystemMock->method('fileExists')->willReturn(false);
-		$this->video->checkFileAfterUpload('/path/to/file');
+		$this->video->validateStoredFile('/path/to/file');
 	}
 
 	/**
@@ -138,7 +138,7 @@ class VideoTest extends TestCase
 		$this->expectException(ModuleException::class);
 		$this->filesystemMock->method('fileExists')->willReturn(true);
 		$this->filesystemMock->method('fileSize')->willReturn(1073741824 + 1);
-		$this->video->checkFileAfterUpload('/path/to/file');
+		$this->video->validateStoredFile('/path/to/file');
 	}
 
 	/**
@@ -157,7 +157,7 @@ class VideoTest extends TestCase
 		$properties = ['width' => 3840 + 1, 'height' => 3840];
 		$this->ffmpegMock->method('getMediaProperties')->willReturn($properties);
 
-		$this->video->checkFileAfterUpload('/path/to/file');
+		$this->video->validateStoredFile('/path/to/file');
 	}
 
 	/**
@@ -176,7 +176,7 @@ class VideoTest extends TestCase
 		$properties = ['width' => 3840, 'height' => 3840 + 1];
 		$this->ffmpegMock->method('getMediaProperties')->willReturn($properties);
 
-		$this->video->checkFileAfterUpload('/path/to/file');
+		$this->video->validateStoredFile('/path/to/file');
 	}
 
 	/**

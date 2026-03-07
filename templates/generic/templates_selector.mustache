@@ -1,0 +1,63 @@
+		<template id="templatesSelectorTemplate">
+			<label>
+				<input id="templatesFilter" type="search" placeholder="Filter">
+			</label>
+			<section id="templatesList" class="templates-grid-view">
+			</section>
+		</template>
+		<template id="templateTemplate">
+			<article class="template-select-item">
+				<img src="/images/icons/template.svg" alt="template icon">
+				<span class="template-select-name"></span>
+			</article>
+		</template>
+
+		<template id="mediaUrlSelectorTemplate">
+			<article class="external-select-item">
+				<label>
+					{{LANG_MEDIA_URL}}
+					<input type="url" id="mediaUrl">
+				</label>
+				<div>
+					{{LANG_DATASOURCE}}
+					<label>
+						<input type="radio" id="datasourceFile"> {{LANG_DATASOURCE_FILE}}
+					</label>
+					<label>
+						<input type="radio" id="datasourceStream"> {{LANG_DATASOURCE_STREAM}}
+					</label>
+					<label>
+						<input type="radio" id="datasourceVideoIn"> {{LANG_DATASOURCE_VIDEO_IN}}
+					</label>
+				</div>
+				<div id="mediatype">
+					{{LANG_MEDIATYPE}}
+					<label>
+						<input type="radio" id="mediatypeImage"> {{LANG_MEDIATYPE_IMAGE}}
+					</label>
+					<label>
+						<input type="radio" id="mediatypeVideo"> {{LANG_MEDIATYPE_VIDEO}}
+					</label>
+					<label>
+						<input type="radio" id="mediatypeAudio"> {{LANG_MEDIATYPE_AUDIO}}
+					</label>
+					<label>
+						<input type="radio" id="mediatypeText"> {{LANG_MEDIATYPE_TEXT}}
+					</label>
+				</div>
+				<div id="videotype">
+					{{LANG_VIDEOYPE}}
+					<label>
+						<input type="radio" id="composite"> {{LANG_VIDEOTYPE_COMPOSITE}}
+					</label>
+					<label>
+						<input type="radio" id="hdmi"> {{LANG_VIDEOTYPE_HTML}}
+					</label>
+					<label>
+						<input type="radio" id="camera"> {{LANG_VIDEOTYPE_CAMERY}}
+					</label>
+				</div>
+			</article>
+		</template>
+
+

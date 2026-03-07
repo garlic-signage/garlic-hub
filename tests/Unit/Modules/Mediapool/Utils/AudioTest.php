@@ -104,7 +104,7 @@ class AudioTest extends TestCase
 		$properties = [];
 		$this->ffmpegMock->method('getMediaProperties')->willReturn($properties);
 
-		$this->audio->checkFileAfterUpload('/path/to/file');
+		$this->audio->validateStoredFile('/path/to/file');
 	}
 
 	/**
@@ -118,7 +118,7 @@ class AudioTest extends TestCase
 	{
 		$this->expectException(ModuleException::class);
 		$this->filesystemMock->method('fileExists')->willReturn(false);
-		$this->audio->checkFileAfterUpload('/path/to/file');
+		$this->audio->validateStoredFile('/path/to/file');
 	}
 
 	/**
@@ -133,7 +133,7 @@ class AudioTest extends TestCase
 		$this->expectException(ModuleException::class);
 		$this->filesystemMock->method('fileExists')->willReturn(true);
 		$this->filesystemMock->method('fileSize')->willReturn(1073741824 + 1);
-		$this->audio->checkFileAfterUpload('/path/to/file');
+		$this->audio->validateStoredFile('/path/to/file');
 	}
 
 

@@ -113,7 +113,7 @@ class WidgetTest extends TestCase
 		$this->expectException(ModuleException::class);
 		$this->expectExceptionMessage('After Upload Check: /path/to/file not exists.');
 
-		$this->widget->checkFileAfterUpload('/path/to/file');
+		$this->widget->validateStoredFile('/path/to/file');
 	}
 
 	/**
@@ -128,7 +128,7 @@ class WidgetTest extends TestCase
 		$this->expectException(ModuleException::class);
 		$this->expectExceptionMessage('After Upload Check: 1024 MB exceeds max widget size.');
 
-		$this->widget->checkFileAfterUpload('/path/to/file');
+		$this->widget->validateStoredFile('/path/to/file');
 	}
 
 	/**
@@ -141,7 +141,7 @@ class WidgetTest extends TestCase
 		$this->filesystemMock->method('fileExists')->willReturn(true);
 		$this->filesystemMock->method('fileSize')->willReturn(1073741824);
 
-		$this->widget->checkFileAfterUpload('/path/to/file');
+		$this->widget->validateStoredFile('/path/to/file');
 		// @phpstan-ignore-next-line
 		static::assertTrue(true); // If no exception is thrown, the test passes
 	}

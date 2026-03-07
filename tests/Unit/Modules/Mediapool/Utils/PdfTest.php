@@ -99,7 +99,7 @@ class PdfTest extends TestCase
 		$this->filesystemMock->method('fileSize')->willReturn(1073741824);
 
 		$this->expectNotToPerformAssertions();
-		$this->pdf->checkFileAfterUpload('/path/to/file');
+		$this->pdf->validateStoredFile('/path/to/file');
 	}
 
 	/**
@@ -110,7 +110,7 @@ class PdfTest extends TestCase
 	{
 		$this->expectException(ModuleException::class);
 		$this->filesystemMock->method('fileExists')->willReturn(false);
-		$this->pdf->checkFileAfterUpload('/path/to/file');
+		$this->pdf->validateStoredFile('/path/to/file');
 	}
 
 	/**
@@ -122,7 +122,7 @@ class PdfTest extends TestCase
 		$this->expectException(ModuleException::class);
 		$this->filesystemMock->method('fileExists')->willReturn(true);
 		$this->filesystemMock->method('fileSize')->willReturn(1073741824 + 1);
-		$this->pdf->checkFileAfterUpload('/path/to/file');
+		$this->pdf->validateStoredFile('/path/to/file');
 	}
 
 	/**

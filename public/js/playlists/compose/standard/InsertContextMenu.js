@@ -76,7 +76,7 @@ export class InsertContextMenu
 
 	async #insertTemplates()
 	{
-		alert("insert Templates");
+		const selector = this.#selectorFactory.create("templates");
 	}
 	async #insertChannels()
 	{

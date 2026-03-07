@@ -26,6 +26,7 @@ use App\Framework\Core\CsrfToken;
 use App\Framework\Core\Sanitizer;
 use App\Framework\Core\Session;
 use App\Framework\Core\Translate\Translator;
+use App\Framework\Media\DataUrlDecoder;
 use App\Framework\Utils\Datatable\BuildService;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
 use App\Framework\Utils\Datatable\PrepareService;
@@ -35,6 +36,7 @@ use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Templates\Controller\ShowComposerController;
 use App\Modules\Templates\Controller\ShowDatatableController;
 use App\Modules\Templates\Controller\ShowSettingsController;
+use App\Modules\Templates\Helper\Composer\ExportImage;
 use App\Modules\Templates\Helper\Datatable\DatatableBuilder;
 use App\Modules\Templates\Helper\Datatable\DatatableFacade;
 use App\Modules\Templates\Helper\Datatable\DatatablePreparer;
@@ -86,6 +88,9 @@ $dependencies[\App\Modules\Templates\Helper\Composer\Orchestrator::class] = DI\f
 	return new  \App\Modules\Templates\Helper\Composer\Orchestrator(
 		$container->get(\App\Modules\Templates\Helper\Composer\TemplatePreparer::class),
 		$container->get(TemplatesUsageService::class),
+		new ExportImage(
+			$container->get(DataUrlDecoder::class),
+			$container->get(\App\Modules\Mediapool\Utils\MediaHandlerFactory::class)),
 		$container->get(TemplatesService::class),
 		$container->get(Config::class)
 	);

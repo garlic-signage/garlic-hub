@@ -206,7 +206,6 @@ abstract class AbstractMediaHandler
 		if ($binaryContent === '')
 			throw new ModuleException('mediapool', 'Decoded file is empty.');
 
-		$filePath = $this->getAbsolutePath($filePath);
 		if ($this->filesystem->fileExists($filePath))
 			$this->filesystem->delete($filePath);
 
