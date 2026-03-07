@@ -76,6 +76,8 @@ class AbstractMediaHandlerTest extends TestCase
 			]);
 
 		$this->concreteMediaHandler = new ConcreteMediaHandler($this->configMock, $this->filesystemMock);
+		$this->concreteMediaHandler->setStoragePaths('mediapool');
+
 	}
 
 	#[Group('units')]

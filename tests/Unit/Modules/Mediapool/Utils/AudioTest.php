@@ -66,6 +66,7 @@ class AudioTest extends TestCase
 			]);
 
 		$this->audio = new Audio($configMock, $this->filesystemMock, $this->ffmpegMock);
+		$this->audio->setStoragePaths('mediapool');
 	}
 
 	/**

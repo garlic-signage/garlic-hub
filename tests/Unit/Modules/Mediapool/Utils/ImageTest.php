@@ -66,6 +66,8 @@ class ImageTest extends TestCase
 			]);
 
 		$this->image = new Image($configMock, $this->filesystemMock, $this->imagickMock);
+		$this->image->setStoragePaths('mediapool');
+
 
 	}
 

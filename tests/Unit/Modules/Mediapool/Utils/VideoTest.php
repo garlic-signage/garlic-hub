@@ -71,6 +71,7 @@ class VideoTest extends TestCase
 			]);
 
 		$this->video = new Video($configMock, $this->filesystemMock, $this->ffmpegMock, $this->imagickMock);
+		$this->video->setStoragePaths('mediapool');
 	}
 
 	/**

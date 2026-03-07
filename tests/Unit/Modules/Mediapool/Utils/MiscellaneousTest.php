@@ -62,6 +62,7 @@ class MiscellaneousTest extends TestCase
 			]);
 
 		$this->misc = new Miscellaneous($configMock, $this->filesystemMock);
+		$this->misc->setStoragePaths('mediapool');
 	}
 
 	/**

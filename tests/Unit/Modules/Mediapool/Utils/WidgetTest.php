@@ -79,6 +79,7 @@ class WidgetTest extends TestCase
 			$this->imagickMock,
 			$this->configXmlMock
 		);
+		$this->widget->setStoragePaths('mediapool');
 	}
 
 	#[Group('units')]
@@ -188,6 +189,7 @@ class WidgetTest extends TestCase
 	public function testCreateThumbnailWhenIconNotFound(): void
 	{
 		$zipFilesystemMock = $this->createMock(Filesystem::class);
+
 		$zipFilesystemMock->method('fileExists')->willReturnMap([
 			['config.xml', true],
 			['icon.png', false]

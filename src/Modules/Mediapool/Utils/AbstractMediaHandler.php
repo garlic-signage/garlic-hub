@@ -80,12 +80,11 @@ abstract class AbstractMediaHandler
 		$this->iconsPath    = $this->config->getConfigValue('icons', 'mediapool', 'directories');
 	}
 
-	public function setStoragePaths(string $moduleName): Config
+	public function setStoragePaths(string $moduleName): void
 	{
 		$this->thumbPath    = $this->config->getConfigValue('thumbnails', $moduleName, 'directories');
 		$this->originalPath = $this->config->getConfigValue('originals', $moduleName, 'directories');
 		$this->previewPath  = $this->config->getConfigValue('previews', $moduleName, 'directories');
-
 	}
 
 	/**

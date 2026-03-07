@@ -65,6 +65,7 @@ class PdfTest extends TestCase
 			]);
 
 		$this->pdf = new Pdf($configMock, $this->filesystemMock, $this->imagickMock);
+		$this->pdf->setStoragePaths('mediapool');
 	}
 
 	/**
