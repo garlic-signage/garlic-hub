@@ -264,7 +264,7 @@ export class CanvasEvents
 	initCloseEvent()
 	{
 		document.getElementById("close_template_editor").addEventListener("click", () => {
-			if (this.MyCanvasView.hasChanged() === false || confirm_delete(this.MyCanvasView.getLangByKey('confirm_close')) === true)
+			if (this.MyCanvasView.hasChanged() === false || confirm(this.MyCanvasView.getLangByKey('confirm_close')) === true)
 				window.location.href = '/templates/';
 		});
 	}

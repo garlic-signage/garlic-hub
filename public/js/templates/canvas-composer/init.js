@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", function (event) {
 			fireRightClick: true,
 			preserveObjectStacking: true
 		}
-	), {});
+	), lang);
 	const toggleButtonFactory = new ToggleButtonFactory();
 	let MySvgItemsParser = new SvgItemsParser(canvasView);
 	const mediaService = new MediaService(new FetchClient());

@@ -300,7 +300,7 @@ export class CanvasEvents
 		document.getElementById("close_zones_editor").addEventListener("click", () => {
 			const changed = this.MyCanvasView.hasChanged();
 			if (!changed || (changed && confirm(lang["confirm_close"])))
-				window.location.href = "/playlists";
+				window.location.href = "/playlists";1
 		});
 
 	}
