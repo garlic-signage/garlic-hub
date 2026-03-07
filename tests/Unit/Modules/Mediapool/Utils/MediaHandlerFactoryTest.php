@@ -87,7 +87,7 @@ class MediaHandlerFactoryTest extends TestCase
 			]);
 
 		$this->imagickFactoryMock->method('createImagick')->willReturn(new Imagick());
-		$handler = $this->mediaHandlerFactory->createHandler('image/jpeg');
+		$handler = $this->mediaHandlerFactory->createMediaHandler('image/jpeg');
 		static::assertInstanceOf(Image::class, $handler);
 	}
 
@@ -112,7 +112,7 @@ class MediaHandlerFactoryTest extends TestCase
 			]);
 
 		$this->imagickFactoryMock->method('createImagick')->willReturn(new Imagick());
-		$handler = $this->mediaHandlerFactory->createHandler('video/mp4');
+		$handler = $this->mediaHandlerFactory->createMediaHandler('video/mp4');
 		static::assertInstanceOf(Video::class, $handler);
 	}
 
@@ -137,7 +137,7 @@ class MediaHandlerFactoryTest extends TestCase
 			]);
 
 		$this->imagickFactoryMock->method('createImagick')->willReturn(new Imagick());
-		$handler = $this->mediaHandlerFactory->createHandler('application/pdf');
+		$handler = $this->mediaHandlerFactory->createMediaHandler('application/pdf');
 		static::assertInstanceOf(Pdf::class, $handler);
 	}
 
@@ -162,7 +162,7 @@ class MediaHandlerFactoryTest extends TestCase
 			]);
 
 		$this->imagickFactoryMock->method('createImagick')->willReturn(new Imagick());
-		$handler = $this->mediaHandlerFactory->createHandler('application/widget');
+		$handler = $this->mediaHandlerFactory->createMediaHandler('application/widget');
 		static::assertInstanceOf(Widget::class, $handler);
 	}
 
@@ -186,7 +186,7 @@ class MediaHandlerFactoryTest extends TestCase
 				['downloads', 'mediapool', 'max_file_sizes', '1073741824']
 			]);
 
-		$handler = $this->mediaHandlerFactory->createHandler('application/zip');
+		$handler = $this->mediaHandlerFactory->createMediaHandler('application/zip');
 		static::assertInstanceOf(Miscellaneous::class, $handler);
 	}
 
@@ -194,6 +194,6 @@ class MediaHandlerFactoryTest extends TestCase
 	public function testCreateHandlerThrowsExceptionForUnsupportedMimeType(): void
 	{
 		$this->expectException(CoreException::class);
-		$this->mediaHandlerFactory->createHandler('unsupported/mime');
+		$this->mediaHandlerFactory->createMediaHandler('unsupported/mime');
 	}
 }

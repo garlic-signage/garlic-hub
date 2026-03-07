@@ -159,7 +159,7 @@ class UploadServiceTest extends TestCase
 			->willReturn(1024);
 
 		// Mock media handler
-		$this->mediaHandlerFactoryMock->expects($this->once())->method('createHandler')
+		$this->mediaHandlerFactoryMock->expects($this->once())->method('createMediaHandler')
 			->with('image/jpeg')
 			->willReturn($mediaHandler);
 
@@ -203,7 +203,7 @@ class UploadServiceTest extends TestCase
 		$uploadedFileMock->method('getSize')->willReturn(1024);
 
 		// Mock media handler
-		$this->mediaHandlerFactoryMock->expects($this->once())->method('createHandler')
+		$this->mediaHandlerFactoryMock->expects($this->once())->method('createMediaHandler')
 			->with('video/mp4')
 			->willReturn($mediaHandlerMock);
 
@@ -357,7 +357,7 @@ class UploadServiceTest extends TestCase
 		$uploadedFileMock->method('getError')->willReturn(UPLOAD_ERR_OK);
 
 		$mediaHandlerMock = $this->createMock(AbstractMediaHandler::class);
-		$this->mediaHandlerFactoryMock->expects($this->once())->method('createHandler')
+		$this->mediaHandlerFactoryMock->expects($this->once())->method('createMediaHandler')
 			->with('video/mp4')
 			->willReturn($mediaHandlerMock);
 
@@ -391,7 +391,7 @@ class UploadServiceTest extends TestCase
 			->willReturnOnConsecutiveCalls('image/jpeg', '1234');
 
 		$this->clientMock->method('head')->willReturn($responseMock);
-		$this->mediaHandlerFactoryMock->method('createHandler')->willReturn($mediaHandler);
+		$this->mediaHandlerFactoryMock->method('createMediaHandler')->willReturn($mediaHandler);
 		$mediaHandler->method('uploadFromExternal')->willReturn('/tmp/test.jpg');
 		$mediaHandler->method('determineNewFilename')->willReturn('abc123');
 
@@ -421,7 +421,7 @@ class UploadServiceTest extends TestCase
 			->willReturnOnConsecutiveCalls('image/jpeg', '1234');
 
 		$this->clientMock->method('head')->willReturn($responseMock);
-		$this->mediaHandlerFactoryMock->method('createHandler')->willReturn($mediaHandler);
+		$this->mediaHandlerFactoryMock->method('createMediaHandler')->willReturn($mediaHandler);
 		$mediaHandler->method('uploadFromExternal')->willReturn('/tmp/test.jpg');
 		$mediaHandler->method('determineNewFilename')->willReturn('abc123');
 
@@ -452,7 +452,7 @@ class UploadServiceTest extends TestCase
 			->willReturnOnConsecutiveCalls('', '1234');
 
 		$this->clientMock->method('head')->willReturn($responseMock);
-		$this->mediaHandlerFactoryMock->method('createHandler')->willReturn($mediaHandler);
+		$this->mediaHandlerFactoryMock->method('createMediaHandler')->willReturn($mediaHandler);
 		$mediaHandler->method('uploadFromExternal')->willReturn('/tmp/video.webm');
 		$mediaHandler->method('determineNewFilename')->willReturn('abc123');
 
@@ -482,7 +482,7 @@ class UploadServiceTest extends TestCase
 			->willReturnOnConsecutiveCalls('video/webm', '1234');
 
 		$this->clientMock->method('head')->willReturn($responseMock);
-		$this->mediaHandlerFactoryMock->method('createHandler')->willReturn($mediaHandler);
+		$this->mediaHandlerFactoryMock->method('createMediaHandler')->willReturn($mediaHandler);
 		$mediaHandler->method('uploadFromExternal')->willReturn('/tmp/video.webm');
 		$mediaHandler->method('determineNewFilename')->willReturn('abc123');
 		$mediaHandler->method('removeUploadedFile')->with('/tmp/video.webm');

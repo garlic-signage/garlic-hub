@@ -50,7 +50,24 @@ class MediaHandlerFactory
 	/**
 	 * @throws CoreException
 	 */
-	public function createHandler(string $mimeType): AbstractMediaHandler
+	public function createMediaHandler(string $mimeType): AbstractMediaHandler
+	{
+		$handler = $this->createHandler($mimeType);
+		$handler->setStoragePaths('mediapool');
+
+		return $handler;
+	}
+
+	public function createTemplatesHandler(string $mimeType): AbstractMediaHandler
+	{
+		$handler = $this->createHandler($mimeType);
+		$handler->setStoragePaths('templates');
+
+		return $handler;
+	}
+
+
+	private function createHandler(string $mimeType): AbstractMediaHandler
 	{
 		return match (true)
 		{

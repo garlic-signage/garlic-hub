@@ -94,7 +94,7 @@ readonly class UploadService
 			if ($uploadedFile->getError() !== UPLOAD_ERR_OK)
 				throw new ModuleException('mediapool', $this->codeToMessage($uploadedFile->getError()));
 
-			$mediaHandler = $this->mediaHandlerFactory->createHandler($preMimeType);
+			$mediaHandler = $this->mediaHandlerFactory->createMediaHandler($preMimeType);
 			$mediaHandler->setMetadata($metadata);
 			$size = $uploadedFile->getSize();
 			if ($size === null)
@@ -130,7 +130,7 @@ readonly class UploadService
 				$preMimeType = 'video/mp4';
 
 			$contentLength = $response->getHeaderLine('Content-Length');
-			$mediaHandler  = $this->mediaHandlerFactory->createHandler($preMimeType);
+			$mediaHandler  = $this->mediaHandlerFactory->createMediaHandler($preMimeType);
 			$mediaHandler->checkFileBeforeUpload((int) $contentLength);
 			$uploadPath    = $mediaHandler->uploadFromExternal($this->client, $externalLink);
 

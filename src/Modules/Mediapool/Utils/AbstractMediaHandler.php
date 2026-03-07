@@ -75,11 +75,17 @@ abstract class AbstractMediaHandler
 
 		$this->thumbWidth   = (int) $this->config->getConfigValue('thumb_width', 'mediapool', 'dimensions');
 		$this->thumbHeight  = (int) $this->config->getConfigValue('thumb_height', 'mediapool', 'dimensions');
+
 		$this->uploadPath   = $this->config->getConfigValue('uploads', 'mediapool', 'directories');
-		$this->thumbPath    = $this->config->getConfigValue('thumbnails', 'mediapool', 'directories');
-		$this->originalPath = $this->config->getConfigValue('originals', 'mediapool', 'directories');
-		$this->previewPath  = $this->config->getConfigValue('previews', 'mediapool', 'directories');
 		$this->iconsPath    = $this->config->getConfigValue('icons', 'mediapool', 'directories');
+	}
+
+	public function setStoragePaths(string $moduleName): Config
+	{
+		$this->thumbPath    = $this->config->getConfigValue('thumbnails', $moduleName, 'directories');
+		$this->originalPath = $this->config->getConfigValue('originals', $moduleName, 'directories');
+		$this->previewPath  = $this->config->getConfigValue('previews', $moduleName, 'directories');
+
 	}
 
 	/**

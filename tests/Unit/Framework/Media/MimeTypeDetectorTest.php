@@ -22,8 +22,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Framework\Media;
 
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Media\FileInfoWrapper;
 use App\Framework\Media\MimeTypeDetector;
-use App\Modules\Mediapool\Utils\FileInfoWrapper;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
