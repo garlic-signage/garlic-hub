@@ -44,6 +44,7 @@ class Orchestrator
 	public function __construct(
 		private readonly TemplatePreparer    $templatePreparer,
 		private readonly TemplatesUsageService $templatesUsageService,
+		private readonly ExportImage         $exportImage,
 		private readonly TemplatesService    $templatesService,
 		private readonly Config $config
 	)
@@ -88,7 +89,7 @@ class Orchestrator
 	 * @throws ModuleException
 	 * @throws PhpfastcacheSimpleCacheException
 	 */
-	public function saveTemplate(int $templateId, string $content): int
+	public function saveTemplate(int $templateId, string $content, string $imageBase64): int
 	{
 		// Scheme validation is not necessary
 
@@ -103,6 +104,7 @@ class Orchestrator
 		$this->removeSrc($JSON['objects']);
 
 		$saveData = ['content' => json_encode($JSON)];
+		$this->exportImage->exportBase64($templateId, $imageBase64);
 		return $this->templatesService->update($templateId, $saveData);
 	}
 

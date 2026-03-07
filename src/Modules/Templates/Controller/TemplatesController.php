@@ -86,7 +86,7 @@ readonly class TemplatesController
 		$requestData = $request->getParsedBody();
 
 		$templateId = (int) ($requestData['template_id'] ?? 0);
-		$itemId     = (int) ($requestData['item_id'] ?? 0);
+		$image      = $requestData['image'] ?? '';
 
 		if (!$this->csrfToken->validateToken($requestData['csrf_token'] ?? ''))
 			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.', 200);
@@ -96,7 +96,7 @@ readonly class TemplatesController
 			if (!$this->orchestrator->checkEditRights($templateId))
 				return $this->responseHandler->jsonError($response, 'No rights', 200);
 
-			if ($this->orchestrator->saveTemplate($templateId, $requestData['content']) === 0)
+			if ($this->orchestrator->saveTemplate($templateId, $requestData['content'], $image) === 0)
 				return $this->responseHandler->jsonError($response, 'Save failed', 200);
 
 			return $this->responseHandler->jsonSuccess($response);

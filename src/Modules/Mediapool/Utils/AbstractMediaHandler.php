@@ -87,6 +87,11 @@ abstract class AbstractMediaHandler
 		$this->previewPath  = $this->config->getConfigValue('previews', $moduleName, 'directories');
 	}
 
+	public function getOriginalPath(): string
+	{
+		return $this->originalPath;
+	}
+
 	/**
 	 * @param array<string,mixed> $metadata
 	 */
@@ -140,7 +145,7 @@ abstract class AbstractMediaHandler
 	}
 
 	abstract public function checkFileBeforeUpload(int $size): void;
-	abstract public function checkFileAfterUpload(string $filePath): void;
+	abstract public function validateStoredFile(string $filePath): void;
 	abstract public function createThumbnail(string $filePath): void;
 
 	public function uploadFromLocal(UploadedFileInterface $uploadedFile): string
@@ -194,6 +199,18 @@ abstract class AbstractMediaHandler
 		/** @var array{dirname:string} $fileInfo */
 		$fileInfo    = pathinfo($oldFilePath);
 		return $fileInfo['dirname']. '/'.$filehash.'.'.$ext;
+	}
+
+	public function writeBinaryString(string $filePath, string $binaryContent): void
+	{
+		if ($binaryContent === '')
+			throw new ModuleException('mediapool', 'Decoded file is empty.');
+
+		$filePath = $this->getAbsolutePath($filePath);
+		if ($this->filesystem->fileExists($filePath))
+			$this->filesystem->delete($filePath);
+
+		$this->filesystem->write($filePath, $binaryContent);
 	}
 
 	/**

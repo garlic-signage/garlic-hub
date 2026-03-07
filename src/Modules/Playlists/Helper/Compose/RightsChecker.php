@@ -120,13 +120,9 @@ class RightsChecker
 	 */
 	public function checkInsertTemplates(): array
 	{
-		if ($this->getEdition() === Config::PLATFORM_EDITION_EDGE)
-			return [];
-
 		return [
 			'LANG_INSERT_TEMPLATES' => $this->translator->translate('insert_templates', self::MODULE_NAME),
 		];
-
 	}
 
 	/**

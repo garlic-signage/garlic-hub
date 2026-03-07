@@ -166,7 +166,7 @@ readonly class UploadService
 			$ext         = $this->mimeTypeDetector->determineExtensionByType($mimetype);
 			$newFilePath = $mediaHandler->determineNewFilePath($uploadedPath, $fileHash, $ext);
 			$mediaHandler->rename($uploadedPath, $newFilePath);
-			$mediaHandler->checkFileAfterUpload($newFilePath);
+			$mediaHandler->validateStoredFile($newFilePath);
 			$mediaHandler->createThumbnail($newFilePath);
 			$configData  = $mediaHandler->getConfigData();
 			$metadata    =  $this->combineMetaData($mediaHandler, $extMetadata);

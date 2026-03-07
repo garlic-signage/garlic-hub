@@ -66,7 +66,7 @@ class Audio extends AbstractMediaHandler
 	 * @throws FilesystemException
 	 * @throws FrameworkException
 	 */
-	public function checkFileAfterUpload(string $filePath): void
+	public function validateStoredFile(string $filePath): void
 	{
 		if (!$this->filesystem->fileExists($filePath))
 			throw new ModuleException('mediapool', 'After Upload Check: '.$filePath.' not exists.');
