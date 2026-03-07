@@ -20,7 +20,7 @@
 export class TemplatesSelectorView
 {
 	#itemTemplate         = document.getElementById("templatesTemplate")
-	#selectorTemplate     = document.getElementById("templatessSelectorTemplate");
+	#selectorTemplate     = document.getElementById("templatesSelectorTemplate");
 	#templatesListElement = null;
 
 	constructor()
@@ -30,7 +30,7 @@ export class TemplatesSelectorView
 
 	displayList(items)
 	{
-		this.#templatesListElement = document.getElementById("playlistsList");
+		this.#templatesListElement = document.getElementById("templatessList");
 		this.#templatesListElement.innerHTML = "";
 
 		for (const item of items)
@@ -47,9 +47,9 @@ export class TemplatesSelectorView
 	#createArticleElement(item)
 	{
 		const element = this.#itemTemplate.content.cloneNode(true);
-		const el = element.querySelector(".playlist-select-item");
+		const el = element.querySelector(".template-select-item");
 		el.setAttribute("data-select-id", item.id);
-		const span = element.querySelector(".playlist-select-name");
+		const span = element.querySelector(".template-select-name");
 
 		span.textContent = item.name;
 

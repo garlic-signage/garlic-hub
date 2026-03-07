@@ -23,10 +23,10 @@ export class TemplatesSelector
 	#templatesService = null;
 	#items = null;
 
-	constructor(templatessService, templatesSelectorView)
+	constructor(templatesService, templatesSelectorView)
 	{
 		this.#templatesSelectorView = templatesSelectorView;
-		this.#templatessService     = templatessService;
+		this.#templatesService     = templatesService;
 	}
 
 	getItemsContainer()
@@ -43,7 +43,7 @@ export class TemplatesSelector
 	{
 		element.replaceChildren(this.#templatesSelectorView.loadSelectorTemplate());
 
-		this.#items = await this.#templatessService.findPlaylists('internal', '');
+		this.#items = await this.#templatesService.find();
 		this.#templatesSelectorView.displayList(this.#items);
 	}
 }

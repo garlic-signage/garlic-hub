@@ -30,6 +30,7 @@ import {PlaylistsService} from "./playlists/PlaylistsService.js";
 import {WidgetFactory} from "./editors/WidgetFactory.js";
 import {ConditionalPlayFactory} from "./editors/ConditionalPlayFactory.js";
 import {TriggerFactory} from "./editors/TriggerFactory.js";
+import {TemplatesService} from "../../../templates/TemplatesService.js";
 
 document.addEventListener("DOMContentLoaded", async function ()
 {
@@ -44,7 +45,8 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const dragDropHandler     = new DragDropHandler(dropTarget, itemsService, itemsList);
 	dragDropHandler.playlistId = playlistId;
 
-	const insertContextMenu = new InsertContextMenu(new SelectorFactory(playlistsService), dragDropHandler);
+	const templatesService = new TemplatesService(new FetchClient());
+	const insertContextMenu = new InsertContextMenu(new SelectorFactory(playlistsService, templatesService), dragDropHandler);
 
 	insertContextMenu.init();
 	await itemsList.buildPlaylist(playlistId);

@@ -28,6 +28,8 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Modules\Templates\Helper\Composer\Orchestrator;
+use App\Modules\Templates\Helper\Datatable\Parameters;
+use App\Modules\Templates\Services\TemplatesDatatableService;
 use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ServerRequestInterface;
@@ -38,6 +40,8 @@ readonly class TemplatesController
 {
 	public function __construct(
 		private Orchestrator        $orchestrator,
+		private TemplatesDatatableService $templatesDatatableService,
+		private Parameters $parameters,
 		private JsonResponseHandler $responseHandler,
 		private CsrfToken           $csrfToken
 	) {}
@@ -71,6 +75,24 @@ readonly class TemplatesController
 
 		return $this->responseHandler->jsonSuccess($response, ['content' => $this->orchestrator->getContent()]);
 	}
+
+	public function find(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+	{
+		// find all templates for the User has access to
+		$this->parameters->setUserInputs($args);
+		$this->parameters->parseInputAllParameters();
+
+		$this->templatesDatatableService->loadDatatable();
+		$templates = [];
+		foreach ($this->templatesDatatableService->getCurrentFilterResults() as $template)
+		{
+			if ($template['visibility'] !== '')
+				$templates[$template['template_id']] = $template;
+		}
+
+		return $this->responseHandler->jsonSuccess($response, ['templates' => $templates]);
+	}
+
 
 	/**
 	 * @throws ModuleException

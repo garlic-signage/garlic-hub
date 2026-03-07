@@ -38,6 +38,13 @@ export class TemplatesService extends BaseService
 		return await this._sendRequest(url, "GET");
 	}
 
+	async find()
+	{
+		const url =TemplatesApiConfig.FIND_URI;
+		return await this._sendRequest(url, "GET");
+	}
+
+
 	async saveTemplateContent(templateId, content, image)
 	{
 		const url =TemplatesApiConfig.BASE_URI

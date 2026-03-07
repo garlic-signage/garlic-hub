@@ -19,4 +19,5 @@
 
 export const TemplatesApiConfig = {
     BASE_URI: "/async/templates",
+	FIND_URI: "/async/templates/find"
 };

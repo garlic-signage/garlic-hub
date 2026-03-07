@@ -174,6 +174,7 @@ $dependencies[TemplatesDatatableService::class] = DI\factory(function (Container
 	return new TemplatesDatatableService(
 		$container->get(TemplatesRepository::class),
 		$container->get(Parameters::class),
+		$container->get(UserSession::class),
 		$container->get(TemplatesUsageService::class),
 		$container->get(AclValidator::class),
 		$container->get('ModuleLogger')

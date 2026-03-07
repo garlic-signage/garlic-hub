@@ -59,7 +59,6 @@ class DatatableFacade implements DatatableFacadeInterface
 		/** @var array{UID: string} $user */
 		$user = $session->get('user');
 		$this->UID = (int) $user['UID'];
-		$this->templatesService->setUID($this->UID);
 		$this->datatableBuilder->configureParameters($this->UID);
 		$this->datatablePreparer->setTranslator($translator);
 		$this->datatableBuilder->setTranslator($translator);

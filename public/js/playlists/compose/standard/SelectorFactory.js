@@ -8,16 +8,20 @@ import {MediaFactory}          from "../../../mediapool/media/MediaFactory.js";
 import {PlaylistsService}      from "./playlists/PlaylistsService.js";
 import {PlaylistsSelector}     from "./selectors/PlaylistsSelector.js";
 import {PlaylistsSelectorView} from "./selectors/PlaylistsSelectorView.js";
+import {TemplatesSelector}     from "../../../templates/selectors/TemplatesSelector.js";
+import {TemplatesSelectorView} from "../../../templates/selectors/TemplatesSelectorView.js";
 
 export class SelectorFactory
 {
 	#mediaSelector = null;
 	#playlistsSelector = null;
 	#playlistsService = null;
-
-	constructor(playlistsService)
+	#templatesSelector = null;
+	#templatesService = null;
+	constructor(playlistsService, templatesService)
 	{
 		this.#playlistsService = playlistsService;
+		this.#templatesService = templatesService;
 	}
 
 	create(type)
@@ -43,6 +47,15 @@ export class SelectorFactory
 					);
 				}
 				return this.#playlistsSelector;
+			case "templates":
+				if (this.#templatesSelector === null)
+				{
+					this.#templatesSelector = new TemplatesSelector(
+						this.#templatesService,
+						new TemplatesSelectorView()
+					);
+				}
+				return this.#templatesSelector;
 		}
 	}
 }

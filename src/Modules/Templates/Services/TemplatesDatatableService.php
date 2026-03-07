@@ -24,6 +24,7 @@ namespace App\Modules\Templates\Services;
 
 use App\Framework\Services\AbstractDatatableService;
 use App\Framework\Utils\FormParameters\BaseParameters;
+use App\Modules\Auth\UserSession;
 use App\Modules\Templates\Repositories\TemplatesRepository;
 use Psr\Log\LoggerInterface;
 
@@ -31,10 +32,12 @@ class TemplatesDatatableService extends AbstractDatatableService
 {
 	public function __construct(private readonly TemplatesRepository $templatesRepository,
 								private readonly BaseParameters $parameters,
+								private readonly UserSession $userSession,
 								private readonly TemplatesUsageService $templatesUsageService,
 								private readonly AclValidator $aclValidator,
 								LoggerInterface $logger)
 	{
+		$this->setUID($this->userSession->getUID());
 		parent::__construct($logger);
 	}
 

@@ -77,6 +77,11 @@ export class InsertContextMenu
 	async #insertTemplates()
 	{
 		const selector = this.#selectorFactory.create("templates");
+		await selector.showSelector(this.#itemSelectContainer);
+		this.#dragDropHandler.source = "templates";
+		this.#dragDropHandler.items = selector.items;
+		const container = selector.getItemsContainer();
+		this.#dragDropHandler.addDropSource(container);
 	}
 	async #insertChannels()
 	{
