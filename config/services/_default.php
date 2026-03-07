@@ -43,6 +43,8 @@ use App\Framework\Database\Migration\Runner;
 use App\Framework\Database\NestedSets\Calculator;
 use App\Framework\Database\NestedSets\Service;
 use App\Framework\Exceptions\CoreException;
+use App\Framework\Media\DataUrlDecoder;
+use App\Framework\Media\MimeTypeDetector;
 use App\Framework\Middleware\FinalRenderMiddleware;
 use App\Framework\TemplateEngine\AdapterInterface;
 use App\Framework\TemplateEngine\MustacheAdapter;
@@ -61,6 +63,8 @@ use App\Framework\Utils\Html\FieldsFactory;
 use App\Framework\Utils\Html\FieldsRenderFactory;
 use App\Framework\Utils\Html\FormBuilder;
 use App\Modules\Auth\UserSession;
+use App\Modules\Mediapool\Utils\FileInfoWrapper;
+use App\Modules\Mediapool\Utils\MediaHandlerFactory;
 use App\Modules\Users\Services\AclValidator;
 use App\Modules\Users\Services\UsersService;
 use Defuse\Crypto\Key;
@@ -326,6 +330,14 @@ $dependencies[UserSession::class] = DI\factory(function (ContainerInterface $con
 $dependencies[BaseValidator::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new BaseValidator($container->get(Translator::class), $container->get(CsrfToken::class));
+});
+$dependencies[MimeTypeDetector::class] = DI\factory(function (ContainerInterface $container)
+{
+	new MimeTypeDetector(new FileInfoWrapper());
+});
+$dependencies[\App\Framework\Media\DataUrlDecoder::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new DataUrlDecoder($container->get(MimeTypeDetector::class));
 });
 
 

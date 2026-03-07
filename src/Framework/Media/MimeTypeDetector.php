@@ -125,6 +125,21 @@ class MimeTypeDetector
 		return $mimeType;
 	}
 
+	/**
+	 * @throws ModuleException
+	 */
+	public function detectFromStringContent(string $content): string
+	{
+		if ($content === '')
+			throw new InvalidArgumentException('Content is empty.');
+
+		$mimeType = $this->fileInfoWrapper->detectMimeTypeFromStreamContent($content);
+		if (!is_string($mimeType))
+			throw new ModuleException('mediapool', 'MIME-Type could not be detected from string content.');
+
+		return $mimeType;
+	}
+
 	public function determineExtensionByType(string $mimeType): string
 	{
 		return $this->preferredMimeTypes[$mimeType] ?? 'bin';
