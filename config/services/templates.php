@@ -159,8 +159,6 @@ $dependencies[ShowSettingsController::class] = DI\factory(function (ContainerInt
 		)
 	);
 });
-
-
 // Datatable
 $dependencies[TemplatesUsageService::class] = DI\factory(function (ContainerInterface $container)
 {
