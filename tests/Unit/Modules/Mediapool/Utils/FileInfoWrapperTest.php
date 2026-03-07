@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Mediapool\Utils;
 
-use App\Modules\Mediapool\Utils\FileInfoWrapper;
+use App\Framework\Media\FileInfoWrapper;
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;

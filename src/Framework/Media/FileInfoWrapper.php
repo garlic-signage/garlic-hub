@@ -19,7 +19,7 @@
 */
 declare(strict_types=1);
 
-namespace App\Modules\Mediapool\Utils;
+namespace App\Framework\Media;
 
 use finfo;
 use RuntimeException;
