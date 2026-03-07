@@ -129,6 +129,9 @@ export class DragDropHandler
 					case "playlists":
 						result = await this.#itemService.insertPlaylist(selectDataId, this.#playlistId, droppedIndex);
 						break;
+					case "templates":
+						result = await this.#itemService.insertTemplate(selectDataId, this.#playlistId, droppedIndex);
+						break;
 					default:
 						throw new Error("Unknown source");
 				}

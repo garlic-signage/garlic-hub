@@ -82,6 +82,7 @@ use App\Modules\Playlists\Services\PlaylistsService;
 use App\Modules\Playlists\Services\PlaylistUsageService;
 use App\Modules\Playlists\Services\TriggerService;
 use App\Modules\Playlists\Services\WidgetsService;
+use App\Modules\Templates\Services\TemplatesService;
 use GuzzleHttp\Client;
 use Psr\Container\ContainerInterface;
 
@@ -228,6 +229,9 @@ $dependencies[InsertItemFactory::class] = DI\factory(function (ContainerInterfac
 		$container->get(MediaService::class),
 		$container->get(ItemsRepository::class),
 		$container->get(PlaylistsService::class),
+		$container->get(TemplatesService::class),
+		$container->get(Config::class),
+		$container->get('LocalFileSystem'),
 		$container->get(PlaylistMetricsCalculator::class),
 		$container->get(WidgetsService::class),
 		$container->get('ModuleLogger')

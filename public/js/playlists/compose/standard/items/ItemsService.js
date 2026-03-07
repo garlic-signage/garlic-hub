@@ -54,6 +54,18 @@ export class ItemsService extends BaseService
 		return this._sendRequest(ItemsApiConfig.INSERT_URI, "POST",  data);
 	}
 
+	insertTemplate(id, playlistId, position)
+	{
+		const data = {
+			playlist_id: playlistId,
+			"id": id,
+			"position": position,
+			"source": "template"
+		};
+		return this._sendRequest(ItemsApiConfig.INSERT_URI, "POST",  data);
+	}
+
+
 	async updateItemsOrders(playlistId, itemsPositions)
 	{
 		const url = ItemsApiConfig.BASE_URI;

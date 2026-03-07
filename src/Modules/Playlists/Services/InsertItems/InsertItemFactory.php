@@ -21,36 +21,30 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Services\InsertItems;
 
+use App\Framework\Core\Config\Config;
 use App\Modules\Mediapool\Services\MediaService;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
 use App\Modules\Playlists\Services\PlaylistsService;
 use App\Modules\Playlists\Services\WidgetsService;
+use App\Modules\Templates\Services\TemplatesService;
+use League\Flysystem\Filesystem;
 use Psr\Log\LoggerInterface;
 
 readonly class InsertItemFactory
 {
-	private MediaService $mediaService;
-	protected ItemsRepository $itemsRepository;
-	protected PlaylistsService $playlistsService;
-	protected PlaylistMetricsCalculator $playlistMetricsCalculator;
-	protected WidgetsService $widgetsService;
-	protected LoggerInterface $logger;
 
 
-	public function __construct(MediaService $mediaService,
-		ItemsRepository $itemsRepository,
-		PlaylistsService $playlistsService,
-		PlaylistMetricsCalculator $playlistMetricsCalculator,
-		WidgetsService $widgetsService,
-		LoggerInterface $logger)
+	public function __construct(private MediaService $mediaService,
+								private ItemsRepository $itemsRepository,
+								private PlaylistsService $playlistsService,
+								private TemplatesService $templateService,
+								private Config $config,
+								private Filesystem $fileSystem,
+								private PlaylistMetricsCalculator $playlistMetricsCalculator,
+								private WidgetsService $widgetsService,
+								private  LoggerInterface $logger)
 	{
-		$this->mediaService = $mediaService;
-		$this->itemsRepository = $itemsRepository;
-		$this->playlistsService = $playlistsService;
-		$this->playlistMetricsCalculator = $playlistMetricsCalculator;
-		$this->widgetsService = $widgetsService;
-		$this->logger = $logger;
 	}
 
 	public function create(string $source): ?AbstractInsertItem
@@ -59,6 +53,14 @@ readonly class InsertItemFactory
 		{
 			'mediapool' => new Media($this->itemsRepository, $this->mediaService, $this->playlistsService, $this->playlistMetricsCalculator, $this->widgetsService, $this->logger),
 			'playlist' => new Playlist($this->itemsRepository, $this->playlistsService, $this->playlistMetricsCalculator, $this->logger),
+			'template' => new Template(
+				$this->itemsRepository,
+				$this->templateService,
+				$this->config,
+				$this->fileSystem,
+				$this->playlistsService,
+				$this->playlistMetricsCalculator,
+				$this->logger),
 			default => null,
 		};
 	}

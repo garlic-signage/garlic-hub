@@ -204,6 +204,11 @@ class ItemsService extends AbstractBaseService
 					$tmp['paths']['thumbnail'] = 'public/images/icons/playlist.svg';
 					$items[] = $tmp;
 					break;
+				case ItemType::TEMPLATE->value:
+					$tmp = $value;
+					$tmp['paths']['thumbnail'] = 'public/var/playlists/items/thumbs/' . $value['item_id'].'.jpg';
+					$items[] = $tmp;
+					break;
 
 			}
 		}
