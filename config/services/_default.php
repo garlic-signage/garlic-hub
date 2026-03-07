@@ -332,9 +332,9 @@ $dependencies[BaseValidator::class] = DI\factory(function (ContainerInterface $c
 });
 $dependencies[MimeTypeDetector::class] = DI\factory(function (ContainerInterface $container)
 {
-	new MimeTypeDetector(new FileInfoWrapper());
+	return new MimeTypeDetector(new FileInfoWrapper());
 });
-$dependencies[\App\Framework\Media\DataUrlDecoder::class] = DI\factory(function (ContainerInterface $container)
+$dependencies[DataUrlDecoder::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new DataUrlDecoder($container->get(MimeTypeDetector::class));
 });
