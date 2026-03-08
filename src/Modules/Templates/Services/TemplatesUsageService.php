@@ -31,7 +31,7 @@ readonly class TemplatesUsageService
         
         foreach($this->itemsRepository->countFileResourcesByTemplateId($templateIds) as $value)
 		{
-            $results[$value['templates_id']] = $value['count'];
+            $results[$value['template_id']] = $value['count'];
         }
 
         /* no channels currently
