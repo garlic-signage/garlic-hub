@@ -24,8 +24,7 @@ export class FabricAdapter
 	#templatesService;
 	#waitOverlay
 	#templateId = 0;
-	#contentId = 0;
-	#baseUrl = window.location.origin + '/var/mediapool/originals/';
+	#itemId = 0;
 
 	constructor(MySvgItemsParser, MyCanvasEvents, templatesService, waitOverlay)
 	{
@@ -35,7 +34,7 @@ export class FabricAdapter
 		this.#waitOverlay = waitOverlay;
 	}
 
-	async loadTemplateFromDataBase(templateId)
+	async loadFromTemplateDataBase(templateId)
 	{
 		this.#waitOverlay.start();
 		this.#templateId = templateId;
@@ -48,6 +47,21 @@ export class FabricAdapter
 
 		this.#waitOverlay.stop();
 	}
+
+	async loadFromPlaylistItemDataBase(itemId)
+	{
+		this.#waitOverlay.start();
+		this.#itemId = itemId;
+		const jsonResponse = await this.#templatesService.loadPlaylistItemContent(itemId);
+		let content = jsonResponse.content;
+		if (content.length === 0)
+			content = "{\"objects\": [],\"viewport\":{\"width\":1920,\"height\":1080,\"scale\":100}}";
+
+		await this.loadJsonFromString(content);
+
+		this.#waitOverlay.stop();
+	}
+
 
 	async loadJsonFromString(json_canvas)
 	{

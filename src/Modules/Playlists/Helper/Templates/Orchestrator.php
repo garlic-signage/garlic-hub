@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\Templates;
 
+use App\Framework\Core\Config\Config;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Services\ItemsService;
 use App\Modules\Templates\Helper\Composer\BaseTemplateOrchestrator;
@@ -35,13 +36,15 @@ class Orchestrator extends BaseTemplateOrchestrator
 		private readonly ItemsService    $itemsService,
 		private readonly UserSession     $userSession,
 		private readonly ExportImage         $exportImage,
-		private readonly TemplatePreparer    $templatePreparer
+		private readonly TemplatePreparer    $templatePreparer,
+		Config $config
 	)
 	{
+		parent::__construct($config);
 		$this->itemsService->setUID($this->userSession->getUID());
 	}
 
-	public function checkRight(int $itemId): bool
+	public function checkRights(int $itemId): bool
 	{
 		try
 		{
@@ -56,7 +59,7 @@ class Orchestrator extends BaseTemplateOrchestrator
 
 	public function build(int $itemId): array
 	{
-		$replaced = $this->templatePreparer->replace($itemId, true);
+		$replaced = $this->templatePreparer->replace($itemId, $this->item['playlist_id']);
 		return $this->templatePreparer->prepare($this->item['playlist_name'].' / '.$this->item['item_name'], $replaced);
 	}
 
@@ -71,5 +74,17 @@ class Orchestrator extends BaseTemplateOrchestrator
 
 		return $this->itemsService->updateField($itemId, 'content_data', $content);
 	}
+
+	public function getContent(): string
+	{
+		if ( $this->item['content_data'] === null)
+			return '';
+
+		$json = json_decode($this->item['content_data'], true);
+		$this->restoreSrc($json['objects']);
+
+		return json_encode($json);
+	}
+
 
 }

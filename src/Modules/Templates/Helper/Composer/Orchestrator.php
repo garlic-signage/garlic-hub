@@ -45,21 +45,11 @@ class Orchestrator extends BaseTemplateOrchestrator
 		private readonly TemplatesUsageService $templatesUsageService,
 		private readonly ExportImage         $exportImage,
 		private readonly TemplatesService    $templatesService,
-		private readonly Config $config
+		Config $config
 	)
 	{
-		$url = $this->config->getConfigValue('url', 'mediapool', 'content_server');
-		if ($url === '')
-		{
-			$isHttps = isset($_SERVER['HTTPS'])
-				|| ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https'
-				|| ($_SERVER['HTTP_X_FORWARDED_SSL'] ?? '') === 'on';
 
-			$url = ($isHttps ? 'https' : 'http') . '://' . ($_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST']);
-		}
-
-		$path = str_replace('public', '', $this->config->getConfigValue('originals', 'mediapool', 'directories'));
-		$this->mediaUrl = $url.$path;
+		parent::__construct($config);
 	}
 
 

@@ -40,9 +40,9 @@ import {MediaService} from "../../mediapool/media/MediaService.js";
 import {MediaSelectorView} from "../../mediapool/selector/MediaSelectorView.js";
 import {MediaFactory} from "../../mediapool/media/MediaFactory.js";
 
-document.addEventListener("DOMContentLoaded", function (event) {
+document.addEventListener("DOMContentLoaded", function (event)
+{
 
-	const templateId = document.getElementById("template_id").value;
 	const canvasView     = new CanvasView(new fabric.Canvas('canvas',
 		{
 			stopContextMenu: true,
@@ -78,7 +78,15 @@ document.addEventListener("DOMContentLoaded", function (event) {
 		new TemplatesService(new FetchClient()),
 		new WaitOverlay()
 	);
-	fabricAdapter.loadTemplateFromDataBase(templateId);
+
+	const templateId = document.getElementById("template_id");
+	const itemId = document.getElementById("item_id");
+	if (templateId === null || templateId === undefined)
+	{
+		fabricAdapter.loadFromPlaylistItemDataBase(itemId.value);
+	}
+	else
+		fabricAdapter.loadFromTemplateDataBase(templateId.value);
 
 	MyCanvasEvents.initInsertObjects();
 	MyItemProperties.initEventListener(canvasView);

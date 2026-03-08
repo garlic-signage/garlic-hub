@@ -22,13 +22,19 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Controller;
 
+use App\Framework\Controller\JsonResponseHandler;
+use App\Framework\Core\CsrfToken;
 use App\Modules\Playlists\Helper\Templates\Orchestrator;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 class ShowTemplateComposer
 {
-	public function __construct(private readonly Orchestrator $orchestrator){}
+	public function __construct(
+		private readonly Orchestrator $orchestrator,
+		private JsonResponseHandler $responseHandler,
+		private CsrfToken           $csrfToken
+	){}
 
 	public function show(ServerRequestInterface $request, ResponseInterface $response, array $args): ?ResponseInterface
 	{
@@ -39,7 +45,7 @@ class ShowTemplateComposer
 			$flash->addMessage('error', 'No rights');
 			return $response->withHeader('Location', '/playlists')->withStatus(302);
 		}
-		if (!$this->orchestrator->checkRight($itemId))
+		if (!$this->orchestrator->checkRights($itemId))
 		{
 			$flash->addMessage('error', 'No rights');
 			return $response->withHeader('Location', '/playlists')->withStatus(302);
@@ -49,5 +55,17 @@ class ShowTemplateComposer
 		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
 	}
 
+	public function load(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+	{
+		$itemId = (int) ($args['item_id'] ?? 0);
+		if ($itemId === 0)
+			return $this->responseHandler->jsonError($response, 'No rights', 200);
+
+		if (!$this->orchestrator->checkRights($itemId))
+			return $this->responseHandler->jsonError($response, 'No rights', 200);
+
+
+		return $this->responseHandler->jsonSuccess($response, ['content' => $this->orchestrator->getContent()]);
+	}
 
 }

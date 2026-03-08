@@ -113,7 +113,7 @@ $app->group('', function (RouteCollectorProxy $group) use ($container)
 	$group->delete('/playlists/settings/{playlist_id:\d+}', resolve([ShowSettingsController::class, 'delete'], $container));
 	$group->post('/playlists/settings', resolve([ShowSettingsController::class, 'store'], $container));
 	$group->get('/playlists/compose/{playlist_id}', resolve([ShowComposeController::class, 'show'], $container));
-	$group->get('/playlist-item/compose/{item_id}', resolve([ShowTemplateComposer::class, 'show'], $container));
+	$group->get('/playlist-item/composer/{item_id}', resolve([ShowTemplateComposer::class, 'show'], $container));
 
 	$group->get('/player', resolve([\App\Modules\Player\Controller\ShowDatatableController::class, 'show'], $container));
 	$group->get('/player/connectivity/{player_id}', resolve([ShowConnectivityController::class, 'show'], $container));
@@ -178,6 +178,7 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 	$group->get('/playlists/item/touch-media/{item_id:\d+}', resolve([TriggerController::class, 'fetchMedia'], $container));
 	$group->get('/playlists/item/begin-trigger/{item_id:\d+}', resolve([TriggerController::class, 'fetchTrigger'], $container));
 	$group->patch('/playlists/item/begin-trigger', resolve([TriggerController::class, 'save'], $container));
+	$group->get('/playlist-item/composer/load/{item_id}', resolve([ShowTemplateComposer::class, 'load'], $container));
 
 	$group->patch('/player/playlist', resolve([PlayerPlaylistController::class, 'replacePlaylist'], $container));
 	$group->patch('/player/push', resolve([PlayerPlaylistController::class, 'pushPlaylist'], $container));

@@ -83,7 +83,7 @@ class TemplatePreparer
 			'LANG_TRANSFER' => $this->translator->translate('transfer', 'main'),
 		];
 
-		if ($playlistId === 0)
+		if ($playlistId > 0)
 		{
 			$templateComposer['reset'] = [
 				'LANG_RESET' => $this->translator->translate('reset', 'templates')

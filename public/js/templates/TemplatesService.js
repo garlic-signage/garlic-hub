@@ -38,6 +38,13 @@ export class TemplatesService extends BaseService
 		return await this._sendRequest(url, "GET");
 	}
 
+	async loadPlaylistItemContent(itemId)
+	{
+		const url =TemplatesApiConfig.PLAYLIST_ITEM_URI + '/' + itemId;
+		return await this._sendRequest(url, "GET");
+	}
+
+
 	async find()
 	{
 		const url =TemplatesApiConfig.FIND_URI;

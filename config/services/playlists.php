@@ -360,6 +360,7 @@ $dependencies[\App\Modules\Playlists\Helper\Templates\Orchestrator::class] = DI\
 		$container->get(UserSession::class),
 		$container->get(ExportImage::class),
 		$container->get(\App\Modules\Templates\Helper\Composer\TemplatePreparer::class),
+		$container->get(Config::class),
 
 	);
 });
