@@ -93,7 +93,12 @@ export class FabricAdapter
 		save['viewport'] = { 'width': this.MySvgItemsParser.width, 'height': this.MySvgItemsParser.height, 'scale': 100 };
 
 		const content = JSON.stringify(save);
-		const image = canvas.toDataURL({ format: 'jpeg', quality: 0.8 });
+
+		const image = canvas.toDataURL({
+			format: 'jpeg',
+			quality: 0.8,
+			backgroundColor: '#ffffff'
+		});
 
 		// set zoom back to original values as JavaScript changes original object
 		this.MySvgItemsParser.MyCanvasView.scaleCanvas();
