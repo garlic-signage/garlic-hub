@@ -121,7 +121,7 @@ class ItemsService extends AbstractBaseService
 	{
 		$item = $this->itemsRepository->findFirstById($itemId);
 		$this->playlistsService->setUID($this->UID);
-		$DestinationPlaylist = $this->playlistsService->loadPureById($item['playlist_id']); // check rights
+		$destinationPlaylist = $this->playlistsService->loadPureById($item['playlist_id']); // check rights
 
 		switch ($item['item_type'])
 		{
@@ -147,7 +147,7 @@ class ItemsService extends AbstractBaseService
 					$item['default_duration'] = $defaultDuration;
 				break;
 			case ItemType::TEMPLATE->value:
-				$item['playlist_name'] = $DestinationPlaylist['playlist_name'];
+				$item['playlist_name'] = $destinationPlaylist['playlist_name'];
 			default:
 				$item['default_duration'] = $this->playlistMetricsCalculator->getDefaultDuration();
 		}

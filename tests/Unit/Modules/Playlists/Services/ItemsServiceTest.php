@@ -422,9 +422,12 @@ class ItemsServiceTest extends TestCase
 		$this->playlistsServiceMock->expects($this->once())->method('setUID')
 			->with(1);
 
+		$destinationPlaylist = ['playlist_name' => 'Test Playlist'];
 		$this->playlistsServiceMock->expects($this->once())
 			->method('loadPureById')
-			->with($itemData['playlist_id']);
+			->with($itemData['playlist_id'])
+			->willReturn($destinationPlaylist);
+		;
 
 		$this->playlistMetricsCalculatorMock->expects($this->once())->method('getDefaultDuration')
 			->willReturn(100);
