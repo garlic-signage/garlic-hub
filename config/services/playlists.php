@@ -82,6 +82,7 @@ use App\Modules\Playlists\Services\PlaylistsService;
 use App\Modules\Playlists\Services\PlaylistUsageService;
 use App\Modules\Playlists\Services\TriggerService;
 use App\Modules\Playlists\Services\WidgetsService;
+use App\Modules\Templates\Helper\Composer\ExportImage;
 use App\Modules\Templates\Services\TemplatesService;
 use GuzzleHttp\Client;
 use Psr\Container\ContainerInterface;
@@ -340,8 +341,6 @@ $dependencies[ConditionalPlayController::class] = DI\factory(function (Container
 		)
 	);
 });
-
-
 $dependencies[TriggerController::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new TriggerController(
@@ -354,6 +353,15 @@ $dependencies[TriggerController::class] = DI\factory(function (ContainerInterfac
 		)
 	);
 });
+$dependencies[\App\Modules\Playlists\Helper\Templates\Orchestrator::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new \App\Modules\Playlists\Helper\Templates\Orchestrator(
+		$container->get(ItemsService::class),
+		$container->get(UserSession::class),
+		$container->get(ExportImage::class),
+		$container->get(\App\Modules\Templates\Helper\Composer\TemplatePreparer::class),
 
+	);
+});
 
 return $dependencies;

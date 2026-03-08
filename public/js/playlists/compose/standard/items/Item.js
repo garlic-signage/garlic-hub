@@ -239,7 +239,10 @@ export class Item
 			this.#playlistItem.querySelector('.link-playlist').remove();
 
 		if (this.#itemData.item_type === "template")
+		{
 			this.#editTemplateAction = this.#playlistItem.querySelector('.edit-template');
+			this.#editTemplateAction.href = "/playlist-item/compose/" + this.#itemData.item_id;
+		}
 		else
 			this.#playlistItem.querySelector('.edit-template').remove();
 
@@ -280,7 +283,6 @@ export class Item
 				conditionalPlay.initDialog(this.#conditionalPlayAction);
 			});
 		}
-
 		if (this.#editTriggerAction !== null)
 		{
 			this.#editTriggerAction.addEventListener("click", async () =>
@@ -290,7 +292,6 @@ export class Item
 				trigger.initDialog(this.#editTriggerAction);
 			});
 		}
-
 		if (this.#itemData.mimetype === "application/widget" && this.#itemData.content_data !== "")
 		{
 			this.#editWidgetAction  = this.#playlistItem.querySelector('.edit-widget');
@@ -303,6 +304,14 @@ export class Item
 		}
 		else
 			this.#playlistItem.querySelector('.edit-widget').remove();
+
+		if (this.#editTemplateAction !== null)
+		{
+			this.#editTemplateAction.addEventListener("click", async () =>
+			{
+
+			});
+		}
 
 		if (this.#cmsEdition !== "edge" && (this.#itemData.item_type === "template" || this.#itemData.item_type === "playlist"))
 			this.#copyItemAction = this.#playlistItem.querySelector('.copy-item');

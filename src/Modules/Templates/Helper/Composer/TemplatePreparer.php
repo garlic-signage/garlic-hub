@@ -30,10 +30,9 @@ class TemplatePreparer
 
 	public function __construct(private readonly Translator $translator) {}
 
-	public function replace(int $templateId): array
+	public function replace(int $id, $playlistId = 0): array
 	{
-		return [
-			'TEMPLATE_ID' => $templateId,
+		$templateComposer = [
 			'LANG_MOVE_BACKGROUND' => $this->translator->translate('move_background', 'templates'),
 			'LANG_MOVE_BACK' => $this->translator->translate('move_back', 'templates'),
 			'LANG_MOVE_FRONT' => $this->translator->translate('move_front', 'templates'),
@@ -83,11 +82,27 @@ class TemplatePreparer
 			'LANG_CANCEL' => $this->translator->translate('cancel', 'main'),
 			'LANG_TRANSFER' => $this->translator->translate('transfer', 'main'),
 		];
+
+		if ($playlistId === 0)
+		{
+			$templateComposer['reset'] = [
+				'LANG_RESET' => $this->translator->translate('reset', 'templates')
+			];
+			$templateComposer['is_playlist_item'] = ['ITEM_ID' => $id, 'PLAYLIST_ID' => $playlistId];
+		}
+		else
+		{
+			$templateComposer['is_admin'] = ['TEMPLATE_ID' => $id];
+		}
+
+		return $templateComposer;
 	}
 
 	public function prepare(String $name, array $dataSections): array
 	{
 		$title = $this->translator->translate('composer', 'templates').': '.$name;
+		$dataSections['LANG_PAGE_HEADER'] = $title;
+
 		return [
 			'main_layout' => [
 				'LANG_PAGE_TITLE' => $title,
@@ -105,7 +120,7 @@ class TemplatePreparer
 				'footer_modules'   => ['/js/templates/canvas-composer/init.js']
 			],
 			'this_layout' => [
-				'template' => 'templates/canvas_admin',
+				'template' => 'templates/canvas',
 				'data' => $dataSections
 			]
 		];

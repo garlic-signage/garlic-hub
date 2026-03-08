@@ -1,7 +1,5 @@
 <h1>{{{LANG_PAGE_HEADER}}}</h1>
 
-<input type="hidden" id="is_template_editor_dev" value="{{{LANG_IS_TEMPLATEEDITOR_DEV}}}">
-
 <template id="context-menu" xmlns="http://www.w3.org/1999/html">
         <ul class="context-menu">
             <li id="change_image" class="bi-image"> {{{LANG_REPLACE_IMAGE}}}</li>
@@ -343,19 +341,29 @@
                 <span id="percent"></span>
             </li>
             <li>
-                <button id="save_template">{{{LANG_SAVE}}}</button>
+                <button id="save_template" title="{{{LANG_SAVE}}}"><i class="bi bi-floppy"></i></button>
             </li>
+			{{#reset}}
+				<li>
+					<button id="reset_template" title="{{{LANG_RESET}}}"><i class="bi bi-arrow-repeat"></i></button>
+            </li>
+			{{/reset}}
             <li>
-                <button id="close_template_editor">{{{LANG_CLOSE}}}</button>
+                <button id="close_template_editor" title="{{{LANG_CLOSE}}}"><i class="bi bi-box-arrow-in-right"></i></button>
             </li>
         </ul>
     </li>
 </ul>
 
 <div id="canvas_wrap" tabIndex="1000" style="width:100%;height:93%;padding:0.5%;overflow:hidden;">
-    <input type="hidden" id="template_id" value="{{{TEMPLATE_ID}}}">
-    <canvas id="canvas" style="box-shadow: 0 2px 6px 0 #666, 0 2px 6px 0 #666;
-"></canvas>
+	{{#is_admin}}
+	<input type="hidden" id="template_id" value="{{{TEMPLATE_ID}}}">
+	{{/is_admin}}
+	{{#is_playlist_item}}
+	<input type="hidden" id="item_id" value="{{{ITEM_ID}}}">
+	<input type="hidden" id="playlist_id" value="{{{PLAYLIST_ID}}}">
+	{{/is_playlist_item}}
+    <canvas id="canvas" style="box-shadow: 0 2px 6px 0 #666, 0 2px 6px 0 #666;"></canvas>
 </div>
 <script>
     let lang = {

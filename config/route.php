@@ -38,6 +38,7 @@ use App\Modules\Playlists\Controller\PlaylistsController;
 use App\Modules\Playlists\Controller\ShowComposeController;
 use App\Modules\Playlists\Controller\ShowDatatableController;
 use App\Modules\Playlists\Controller\ShowSettingsController;
+use App\Modules\Playlists\Controller\ShowTemplateComposer;
 use App\Modules\Playlists\Controller\TriggerController;
 use App\Modules\Playlists\Controller\WidgetsController;
 use App\Modules\Profile\Controller\EditLocalesController;
@@ -112,6 +113,7 @@ $app->group('', function (RouteCollectorProxy $group) use ($container)
 	$group->delete('/playlists/settings/{playlist_id:\d+}', resolve([ShowSettingsController::class, 'delete'], $container));
 	$group->post('/playlists/settings', resolve([ShowSettingsController::class, 'store'], $container));
 	$group->get('/playlists/compose/{playlist_id}', resolve([ShowComposeController::class, 'show'], $container));
+	$group->get('/playlist-item/compose/{item_id}', resolve([ShowTemplateComposer::class, 'show'], $container));
 
 	$group->get('/player', resolve([\App\Modules\Player\Controller\ShowDatatableController::class, 'show'], $container));
 	$group->get('/player/connectivity/{player_id}', resolve([ShowConnectivityController::class, 'show'], $container));

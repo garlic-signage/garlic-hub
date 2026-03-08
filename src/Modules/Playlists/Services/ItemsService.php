@@ -25,6 +25,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Services\AbstractBaseService;
+use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\MediaService;
 use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Repositories\ItemsRepository;
@@ -55,7 +56,6 @@ class ItemsService extends AbstractBaseService
 		$this->playlistsService = $playlistsService;
 		$this->mediaService     = $mediaService;
 		$this->playlistMetricsCalculator = $playlistMetricsCalculator;
-
 		parent::__construct($logger);
 	}
 
@@ -121,7 +121,7 @@ class ItemsService extends AbstractBaseService
 	{
 		$item = $this->itemsRepository->findFirstById($itemId);
 		$this->playlistsService->setUID($this->UID);
-		$this->playlistsService->loadPureById($item['playlist_id']); // check rights
+		$DestinationPlaylist = $this->playlistsService->loadPureById($item['playlist_id']); // check rights
 
 		switch ($item['item_type'])
 		{
@@ -130,6 +130,7 @@ class ItemsService extends AbstractBaseService
 				$media = $this->mediaService->fetchMediaByChecksum($item['file_resource']);
 				if (empty($media))
 					throw new ModuleException('items', 'Item not found');
+
 				$item['config_data'] = $media['config_data'];
 				if (str_starts_with($item['mimetype'], 'video/'))
 					$item['default_duration'] = $media['metadata']['duration'];
@@ -145,6 +146,8 @@ class ItemsService extends AbstractBaseService
 				else
 					$item['default_duration'] = $defaultDuration;
 				break;
+			case ItemType::TEMPLATE->value:
+				$item['playlist_name'] = $DestinationPlaylist['playlist_name'];
 			default:
 				$item['default_duration'] = $this->playlistMetricsCalculator->getDefaultDuration();
 		}
