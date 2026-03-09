@@ -51,7 +51,7 @@ class ShowTemplateComposer
 			return $response->withHeader('Location', '/playlists')->withStatus(302);
 		}
 
-		$response->getBody()->write(serialize($this->orchestrator->build($itemId)));
+		$response->getBody()->write(serialize($this->orchestrator->build()));
 		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
 	}
 

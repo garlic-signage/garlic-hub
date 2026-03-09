@@ -144,8 +144,7 @@ export class CanvasView
 		else
 			this.#saveButton.classList.remove('notify-save');
 
-
-		this.changed = val;
+		this.changed = hasChanged;
 	}
 
 	hasChanged()

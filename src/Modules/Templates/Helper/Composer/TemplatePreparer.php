@@ -30,7 +30,7 @@ class TemplatePreparer
 
 	public function __construct(private readonly Translator $translator) {}
 
-	public function replace(int $id, $playlistId = 0): array
+	public function replace(int $templateId, int $itemId = 0, $playlistId = 0): array
 	{
 		$templateComposer = [
 			'LANG_MOVE_BACKGROUND' => $this->translator->translate('move_background', 'templates'),
@@ -77,22 +77,18 @@ class TemplatePreparer
 			'LANG_SAVE' => $this->translator->translate('save', 'main'),
 			'LANG_CLOSE' => $this->translator->translate('close', 'main'),
 			'LANG_CONFIRM_CLOSE_EDITOR' => $this->translator->translate('confirm_close_composer', 'templates'),
+			'LANG_CONFIRM_RESET' => $this->translator->translate('confirm_reset', 'templates'),
 			'LANG_ADD_MEDIA' => $this->translator->translate('add', 'main'),
 			'LANG_APPLY_MEDIA' => $this->translator->translate('apply', 'main'),
 			'LANG_CANCEL' => $this->translator->translate('cancel', 'main'),
 			'LANG_TRANSFER' => $this->translator->translate('transfer', 'main'),
+			'TEMPLATE_ID' => $templateId
 		];
 
-		if ($playlistId > 0)
+		if ($itemId > 0 && $playlistId > 0)
 		{
-			$templateComposer['reset'] = [
-				'LANG_RESET' => $this->translator->translate('reset', 'templates')
-			];
-			$templateComposer['is_playlist_item'] = ['ITEM_ID' => $id, 'PLAYLIST_ID' => $playlistId];
-		}
-		else
-		{
-			$templateComposer['is_admin'] = ['TEMPLATE_ID' => $id];
+			$templateComposer['reset'] = ['LANG_RESET' => $this->translator->translate('reset', 'templates')];
+			$templateComposer['is_playlist_item'] = ['ITEM_ID' => $itemId, 'PLAYLIST_ID' => $playlistId];
 		}
 
 		return $templateComposer;

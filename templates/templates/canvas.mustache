@@ -344,8 +344,8 @@
                 <button id="save_template" title="{{{LANG_SAVE}}}"><i class="bi bi-floppy"></i></button>
             </li>
 			{{#reset}}
-				<li>
-					<button id="reset_template" title="{{{LANG_RESET}}}"><i class="bi bi-arrow-repeat"></i></button>
+			<li>
+				<button id="reset_template" title="{{{LANG_RESET}}}"><i class="bi bi-arrow-repeat"></i></button>
             </li>
 			{{/reset}}
             <li>
@@ -356,9 +356,7 @@
 </ul>
 
 <div id="canvas_wrap" tabIndex="1000" style="width:100%;height:93%;padding:0.5%;overflow:hidden;">
-	{{#is_admin}}
 	<input type="hidden" id="template_id" value="{{{TEMPLATE_ID}}}">
-	{{/is_admin}}
 	{{#is_playlist_item}}
 	<input type="hidden" id="item_id" value="{{{ITEM_ID}}}">
 	<input type="hidden" id="playlist_id" value="{{{PLAYLIST_ID}}}">
@@ -368,6 +366,7 @@
 <script>
     let lang = {
 		"confirm_close": "{{{LANG_CONFIRM_CLOSE_EDITOR}}}",
+		"confirm_reset": "{{{LANG_CONFIRM_RESET}}}",
 		"add_image": "{{{LANG_INSERT_IMAGE}}}",
 		"replace_image": "{{{LANG_REPLACE_IMAGE}}}"
 	};

@@ -260,6 +260,16 @@ export class CanvasEvents
 			this.MyCanvasView.setChanged(false);
 		});
 	}
+	initResetEvent(fabricAdapter)
+	{
+		document.getElementById("reset_template").addEventListener("click", () => {
+			if (this.MyCanvasView.hasChanged() === false || confirm(this.MyCanvasView.getLangByKey('confirm_close')) === true)
+			{
+				fabricAdapter.loadFromTemplateDataBase();
+				this.MyCanvasView.setChanged(false);
+			}
+		});
+	}
 
 	initCloseEvent()
 	{
