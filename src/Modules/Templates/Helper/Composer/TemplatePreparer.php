@@ -97,7 +97,10 @@ class TemplatePreparer
 					'LANG_FORMAT' => $value
 				];
 			}
-			$templateComposer['save_formats'] = ['LANG_FORMATS' => $this->translator->translate('image_format', 'templates')];
+			$templateComposer['save_formats'] = [
+				'LANG_FORMATS' => $this->translator->translate('image_format', 'templates'),
+				'LANG_IMAGE_QUALITY' => $this->translator->translate('image_quality', 'templates')
+			];
 
 			$templateComposer['save_formats']['formats'] = $formats;
 			$templateComposer['is_playlist_item'] = ['ITEM_ID' => $itemId, 'PLAYLIST_ID' => $playlistId];

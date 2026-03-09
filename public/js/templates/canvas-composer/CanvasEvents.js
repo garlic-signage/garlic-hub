@@ -256,7 +256,14 @@ export class CanvasEvents
 	initSaveEvent(fabricAdapter)
 	{
 		document.getElementById("save_template").addEventListener("click", () => {
-			fabricAdapter.saveAsJpg(this.MyCanvasView.getCanvas());
+
+			const format = document.getElementById("formatSelector")?.value;
+			if (format !== null)
+			{
+				fabricAdapter.imageFormat = format
+				fabricAdapter.imageQuality = document.getElementById("imageQuality").value;
+			}
+			fabricAdapter.save(this.MyCanvasView.getCanvas());
 			this.MyCanvasView.setChanged(false);
 		});
 	}

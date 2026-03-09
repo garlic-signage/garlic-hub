@@ -330,9 +330,9 @@
     <li style="margin-left: auto;">
         <ul class="action_group">
            <li>
-                <label>{{{LANG_RESOLUTION}}}:
-                    <input type="number" id="image_width" value="1920" step="1" min="0" style="width:80px;"> x
-                    <input type="number" id="image_height" value="1080" step="1" min="0" style="width:80px;">
+                <label>
+                    <input type="number" id="image_width" value="1920" step="1" min="0" style="width:80px;" title="{{{LANG_RESOLUTION}}}"> x
+                    <input type="number" id="image_height" value="1080" step="1" min="0" style="width:80px;" title="{{{LANG_RESOLUTION}}}">
                 </label>
             </li>
 
@@ -340,7 +340,7 @@
                 <input style="width:120px;" type="range" min="20" max="500" value="100" step="5" id="slider" title="{{{LANG_ZOOM}}}">
                 <span id="percent"></span>
             </li>
-	<!--		{{#save_formats}}
+			{{#save_formats}}
 			<li>
 				<select id="formatSelector" title="{{{LANG_FORMATS}}}">
 					{{#formats}}
@@ -348,8 +348,11 @@
 					{{/formats}}
 				</select>
             </li>
+			<li>
+				<input type="number" id="imageQuality" min="10" max="100" step="1" value="80" title="{{{LANG_IMAGE_QUALITY}}}"> %
+            </li>
 			{{/save_formats}}
-       -->     <li>
+			<li>
                 <button id="save_template" title="{{{LANG_SAVE}}}"><i class="bi bi-floppy"></i></button>
             </li>
 			{{#reset}}

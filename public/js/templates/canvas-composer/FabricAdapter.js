@@ -25,6 +25,9 @@ export class FabricAdapter
 	#waitOverlay
 	#templateId = 0;
 	#itemId = 0;
+	#imageFormat = "jpg";
+	#imageQuality = 80;
+	#allowed = ['jpg', 'png', 'webp', 'bmp'];
 
 	constructor(MySvgItemsParser, MyCanvasEvents, templatesService, waitOverlay)
 	{
@@ -32,6 +35,17 @@ export class FabricAdapter
 		this.MyCanvasEvents = MyCanvasEvents;
 		this.#templatesService = templatesService;
 		this.#waitOverlay = waitOverlay;
+	}
+
+
+	set imageFormat(value)
+	{
+		this.#imageFormat = value;
+	}
+
+	set imageQuality(value)
+	{
+		this.#imageQuality = value;
 	}
 
 	async loadFromTemplateDataBase(templateId)
@@ -106,70 +120,42 @@ export class FabricAdapter
 				}
 			});
 	}
-
-	async saveAsJpg(canvas)
+	async save(canvas)
 	{
 		this.#waitOverlay.start();
 
-		const save = this.prepareCanvasForSave(canvas);
-		const image = save.canvas.toDataURL({
-			format: 'jpeg',
-			quality: 0.8,
-			backgroundColor: '#ffffff'
-		});
+		if (!allowed.includes(format))
+			this.#imageFormat = "jpg";
+		if (this.#imageQuality < 1 || this.#imageQuality > 100)
+			this.#imageQuality = 80;
 
-		await this.#save(save.content, image, 'jpg')
+		const save = this.#prepareCanvasForSave(canvas);
+
+		const image = this.#createImage(save.canvas);
+
+		await this.#saving(save.content, image, 'webp')
 		this.#waitOverlay.stop();
 	}
 
-	async saveAsPng(canvas)
+	#createImage(canvas)
 	{
-		this.#waitOverlay.start();
+		let format = this.#imageFormat;
+		if (format === 'jpg')
+			format = 'jpeg';
+		if (format === 'bmp')
+			format = 'png';
 
-		const save = this.prepareCanvasForSave(canvas);
-		const image = save.canvas.toDataURL({
-			format: 'png',
-			quality: 0.8,
-			backgroundColor: '#ffffff'
+		const backgroundColor = ['png', 'webp'].includes(format) ? null : '#ffffff';
+		const quality = this.#imageQuality / 100;
+
+		return canvas.toDataURL({
+			format: format,
+			quality: quality,
+			backgroundColor: backgroundColor
 		});
-
-		await this.#save(save.content, image, 'png')
-		this.#waitOverlay.stop();
 	}
 
-	async saveAsBmp(canvas)
-	{
-		this.#waitOverlay.start();
-
-		const save = this.prepareCanvasForSave(canvas);
-		const image = save.canvas.toDataURL({
-			format: 'png',
-			quality: 0.8,
-			backgroundColor: '#ffffff'
-		});
-
-		await this.#save(save.content, image, 'bmp')
-		this.#waitOverlay.stop();
-	}
-
-
-	async saveAsWebp(canvas)
-	{
-		this.#waitOverlay.start();
-
-		const save = this.prepareCanvasForSave(canvas);
-		const image = save.canvas.toDataURL({
-			format: 'webp',
-			quality: 0.8,
-			backgroundColor: '#ffffff'
-		});
-
-		await this.#save(save.content, image, 'webp')
-		this.#waitOverlay.stop();
-	}
-
-
-	prepareCanvasForSave(canvas)
+	#prepareCanvasForSave(canvas)
 	{
 		// as coping an object in JS is ridiculous complicated we need to set Zoom to 100 and then revert it to original values
 		// change Zoom to 100% otherwise current zoom factor will used
@@ -184,7 +170,7 @@ export class FabricAdapter
 	}
 
 
-	async #save(content, image, format)
+	async #saving(content, image, format)
 	{
 		// set zoom back to original values as JavaScript changes original object
 		this.MySvgItemsParser.MyCanvasView.scaleCanvas();
