@@ -20,5 +20,6 @@
 export const TemplatesApiConfig = {
     BASE_URI: "/async/templates",
 	FIND_URI: "/async/templates/find",
-	PLAYLIST_ITEM_URI: "/async/playlist-item/composer/load"
+	LOAD_PLAYLIST_ITEM_URI: "/async/playlist-item/composer/load",
+	SAVE_PLAYLIST_ITEM_URI: "/async/playlist-item/composer/save"
 };

@@ -177,10 +177,10 @@ export class FabricAdapter
 
 		try
 		{
-			if (this.#templateId > 0)
-				await this.#templatesService.saveTemplateContent(this.#templateId, content, image);
-			if (this.#itemId > 0)
+			if (this.#itemId > 0) // only when in playlist
 				await this.#templatesService.savePlaylistItemContent(this.#itemId, content, image, format);
+			else
+				await this.#templatesService.saveTemplateContent(this.#templateId, content, image);
 		}
 		catch(e)
 		{

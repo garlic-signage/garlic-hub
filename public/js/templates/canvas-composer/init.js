@@ -81,10 +81,8 @@ document.addEventListener("DOMContentLoaded", function (event)
 
 	const templateId = document.getElementById("template_id");
 	const itemId = document.getElementById("item_id");
-	if (templateId === null || templateId === undefined)
-	{
+	if (itemId !== null)
 		fabricAdapter.loadFromPlaylistItemDataBase(itemId.value);
-	}
 	else
 		fabricAdapter.loadFromTemplateDataBase(templateId.value);
 

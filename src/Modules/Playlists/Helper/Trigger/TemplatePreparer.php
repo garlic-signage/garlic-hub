@@ -54,6 +54,4 @@ readonly class TemplatePreparer
 		return $this->template->render('playlists/trigger', $this->triggerPreparer->getTemplateData());
 	}
 
-
-
 }

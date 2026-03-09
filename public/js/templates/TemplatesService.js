@@ -40,7 +40,7 @@ export class TemplatesService extends BaseService
 
 	async loadPlaylistItemContent(itemId)
 	{
-		const url =TemplatesApiConfig.PLAYLIST_ITEM_URI + '/' + itemId;
+		const url =TemplatesApiConfig.LOAD_PLAYLIST_ITEM_URI + '/' + itemId;
 		return await this._sendRequest(url, "GET");
 	}
 
@@ -59,6 +59,18 @@ export class TemplatesService extends BaseService
 			template_id: templateId,
 			content: content,
 			image: image
+		};
+		return await this._sendRequest(url, "PATCH", data);
+	}
+
+	async savePlaylistItemContent(itemId, content, image, format)
+	{
+		const url =TemplatesApiConfig.SAVE_PLAYLIST_ITEM_URI
+		const data = {
+			item_id: itemId,
+			content: content,
+			image: image,
+			format: format
 		};
 		return await this._sendRequest(url, "PATCH", data);
 	}
