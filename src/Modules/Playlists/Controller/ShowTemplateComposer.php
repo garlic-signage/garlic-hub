@@ -55,6 +55,32 @@ class ShowTemplateComposer
 		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
 	}
 
+	public function save(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	{
+		/** @var array{template_id?: int, item_id?: int, csrf_token?: string} $requestData */
+		$requestData = $request->getParsedBody();
+
+		$itemId = (int) ($requestData['item_id'] ?? 0);
+		$image      = $requestData['image'] ?? '';
+
+		if (!$this->csrfToken->validateToken($requestData['csrf_token'] ?? ''))
+			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.', 200);
+
+		if ($itemId === 0)
+			return $this->responseHandler->jsonError($response, 'No item ID', 200);
+
+		if (!$this->orchestrator->checkRights($itemId))
+		{
+			return $this->responseHandler->jsonError($response, 'No rights', 200);
+		}
+
+		if ($this->orchestrator->save($itemId, $requestData['content'], $image) === 0)
+			return $this->responseHandler->jsonError($response, 'Save failed', 200);
+
+		return $this->responseHandler->jsonSuccess($response);
+	}
+
+
 	public function load(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
 		$itemId = (int) ($args['item_id'] ?? 0);
