@@ -89,6 +89,7 @@ document.addEventListener("DOMContentLoaded", function (event)
 	MyCanvasEvents.initInsertObjects();
 	MyItemProperties.initEventListener(canvasView);
 	MyCanvasEvents.initSaveEvent(fabricAdapter);
+	MyCanvasEvents.initResetEvent(fabricAdapter);
 	MyCanvasEvents.initRangeSliderEvents();
 	MyCanvasEvents.initCloseEvent();
 

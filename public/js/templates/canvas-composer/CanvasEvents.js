@@ -262,10 +262,15 @@ export class CanvasEvents
 	}
 	initResetEvent(fabricAdapter)
 	{
-		document.getElementById("reset_template").addEventListener("click", () => {
+		const reset = document.getElementById("reset_template");
+		if (reset === null)
+			return;
+		reset .addEventListener("click", () => {
 			if (this.MyCanvasView.hasChanged() === false || confirm(this.MyCanvasView.getLangByKey('confirm_close')) === true)
 			{
-				fabricAdapter.loadFromTemplateDataBase();
+				const templateId = document.getElementById('template_id').value;
+				this.MyCanvasView.getCanvas().clear();
+				fabricAdapter.resetFromTemplateDataBase(templateId);
 				this.MyCanvasView.setChanged(false);
 			}
 		});

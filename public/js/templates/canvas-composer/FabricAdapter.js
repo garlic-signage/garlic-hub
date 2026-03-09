@@ -48,6 +48,20 @@ export class FabricAdapter
 		this.#waitOverlay.stop();
 	}
 
+	async resetFromTemplateDataBase(templateId)
+	{
+		this.#waitOverlay.start();
+		const jsonResponse = await this.#templatesService.loadTemplateContent(templateId);
+		let content = jsonResponse.content;
+		if (content.length === 0)
+			content = "{\"objects\": [],\"viewport\":{\"width\":1920,\"height\":1080,\"scale\":100}}";
+
+		await this.loadJsonFromString(content);
+
+		this.#waitOverlay.stop();
+	}
+
+
 	async loadFromPlaylistItemDataBase(itemId)
 	{
 		this.#waitOverlay.start();
