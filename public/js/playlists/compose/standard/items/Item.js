@@ -233,7 +233,7 @@ export class Item
 		if (this.#itemData.item_type === "playlist")
 		{
 			this.#linkPlaylistAction = this.#playlistItem.querySelector('.link-playlist');
-			this.#linkPlaylistAction.href = "/playlists/composer/" + this.#itemData.file_resource;
+			this.#linkPlaylistAction.href = "/playlists/compose/" + this.#itemData.file_resource;
 		}
 		else
 			this.#playlistItem.querySelector('.link-playlist').remove();
@@ -241,7 +241,7 @@ export class Item
 		if (this.#itemData.item_type === "template")
 		{
 			this.#editTemplateAction = this.#playlistItem.querySelector('.edit-template');
-			this.#editTemplateAction.href = "/playlist-item/compose/" + this.#itemData.item_id;
+			this.#editTemplateAction.href = "/playlist-item/composer/" + this.#itemData.item_id;
 		}
 		else
 			this.#playlistItem.querySelector('.edit-template').remove();
