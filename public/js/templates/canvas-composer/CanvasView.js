@@ -22,6 +22,7 @@ export class CanvasView
 	canvas = {};
 	percent = document.getElementById("percent");
 	slider = document.getElementById("slider");
+	#saveButton = document.getElementById("save_template");
 	insert_text = document.getElementById("insert_text");
 	insert_image = document.getElementById("insert_image");
 	canvas_wrap = document.getElementById("canvas_wrap");
@@ -136,8 +137,14 @@ export class CanvasView
 		return lang[key];
 	}
 
-	setChanged(val)
+	setChanged(hasChanged)
 	{
+		if (hasChanged)
+			this.#saveButton.classList.add('notify-save');
+		else
+			this.#saveButton.classList.remove('notify-save');
+
+
 		this.changed = val;
 	}
 

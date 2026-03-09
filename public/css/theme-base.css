@@ -309,6 +309,10 @@ footer nav ul #compile_time {margin-left: auto;}
     background-color: var(--gh-alert-color);
     color: white;
 }
+    .notify-save *
+    {
+        color: white;
+    }
 
 .dashboards{display: flex; gap: 1rem; padding: 0; margin: 0;}
     .dashboard {width: 30rem;}
