@@ -265,8 +265,9 @@ export class CanvasEvents
 		const reset = document.getElementById("reset_template");
 		if (reset === null)
 			return;
-		reset .addEventListener("click", () => {
-			if (this.MyCanvasView.hasChanged() === false || confirm(this.MyCanvasView.getLangByKey('confirm_close')) === true)
+
+		reset.addEventListener("click", () => {
+			if (confirm(this.MyCanvasView.getLangByKey('confirm_reset')) === true)
 			{
 				const templateId = document.getElementById('template_id').value;
 				this.MyCanvasView.getCanvas().clear();
