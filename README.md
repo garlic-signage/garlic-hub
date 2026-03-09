@@ -60,8 +60,8 @@ The environment is regularly deleted and rebuilt.
 ## Tech-Stack
 - PHP 8.4 with strict types enabled 
 - SLIM 4 Framework
-- Phpstan Level 8 with 0 errors
-- PHPUnit 12 with 99 % test coverage
+- Phpstan Level 8
+- PHPUnit 12
 - Vanilla JavaScript and external libraries
 - Composer libraries
 
