@@ -70,9 +70,7 @@ class ShowTemplateComposer
 			return $this->responseHandler->jsonError($response, 'No item ID', 200);
 
 		if (!$this->orchestrator->checkRights($itemId))
-		{
 			return $this->responseHandler->jsonError($response, 'No rights', 200);
-		}
 
 		if ($this->orchestrator->save($itemId, $requestData['content'], $image) === 0)
 			return $this->responseHandler->jsonError($response, 'Save failed', 200);

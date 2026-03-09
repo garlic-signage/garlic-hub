@@ -39,6 +39,7 @@ import {TreeViewElements} from "../../mediapool/treeview/TreeViewElements.js";
 import {MediaService} from "../../mediapool/media/MediaService.js";
 import {MediaSelectorView} from "../../mediapool/selector/MediaSelectorView.js";
 import {MediaFactory} from "../../mediapool/media/MediaFactory.js";
+import {BmpDitherFactory} from "./BmpDitherFactory.js";
 
 document.addEventListener("DOMContentLoaded", function (event)
 {
@@ -76,7 +77,8 @@ document.addEventListener("DOMContentLoaded", function (event)
 		MySvgItemsParser,
 		MyCanvasEvents,
 		new TemplatesService(new FetchClient()),
-		new WaitOverlay()
+		new WaitOverlay(),
+		new BmpDitherFactory()
 	);
 
 	const templateId = document.getElementById("template_id");

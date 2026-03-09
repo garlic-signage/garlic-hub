@@ -22,6 +22,7 @@ export class FabricAdapter
 	MySvgItemsParser;
 	MyCanvasEvents;
 	#templatesService;
+	#bmpDitherFactory;
 	#waitOverlay
 	#templateId = 0;
 	#itemId = 0;
@@ -29,12 +30,13 @@ export class FabricAdapter
 	#imageQuality = 80;
 	#allowed = ['jpg', 'png', 'webp', 'bmp'];
 
-	constructor(MySvgItemsParser, MyCanvasEvents, templatesService, waitOverlay)
+	constructor(MySvgItemsParser, MyCanvasEvents, templatesService, waitOverlay, bmpDitherFactory)
 	{
 		this.MySvgItemsParser = MySvgItemsParser;
 		this.MyCanvasEvents = MyCanvasEvents;
 		this.#templatesService = templatesService;
 		this.#waitOverlay = waitOverlay;
+		this.#bmpDitherFactory = bmpDitherFactory;
 	}
 
 
@@ -124,26 +126,47 @@ export class FabricAdapter
 	{
 		this.#waitOverlay.start();
 
-		if (!allowed.includes(format))
+		if (!this.#allowed.includes(this.#imageFormat))
 			this.#imageFormat = "jpg";
 		if (this.#imageQuality < 1 || this.#imageQuality > 100)
 			this.#imageQuality = 80;
 
 		const save = this.#prepareCanvasForSave(canvas);
 
-		const image = this.#createImage(save.canvas);
+		const image = await this.#createImage(save.canvas);
 
-		await this.#saving(save.content, image, 'webp')
+		this.MySvgItemsParser.MyCanvasView.scaleCanvas();
+
+		try
+		{
+			if (this.#itemId > 0) // only when in playlist
+				await this.#templatesService.savePlaylistItemContent(this.#itemId, save.content, image);
+			else
+				await this.#templatesService.saveTemplateContent(this.#templateId, save.content, image);
+		}
+		catch(e)
+		{
+			console.error(e);
+		}
 		this.#waitOverlay.stop();
 	}
 
-	#createImage(canvas)
+	async #createImage(canvas)
 	{
 		let format = this.#imageFormat;
 		if (format === 'jpg')
 			format = 'jpeg';
 		if (format === 'bmp')
-			format = 'png';
+		{
+			const base64DataUrl = canvas.toDataURL({
+				format: 'jpeg',
+				quality: 100,
+				backgroundColor: "#ffffff"
+			});
+			const bmp = this.#bmpDitherFactory.create();
+			const ret =  await bmp.convert(base64DataUrl);
+			return ret;
+		}
 
 		const backgroundColor = ['png', 'webp'].includes(format) ? null : '#ffffff';
 		const quality = this.#imageQuality / 100;
@@ -169,24 +192,6 @@ export class FabricAdapter
 		return {"canvas": canvas, "content": JSON.stringify(save)};
 	}
 
-
-	async #saving(content, image, format)
-	{
-		// set zoom back to original values as JavaScript changes original object
-		this.MySvgItemsParser.MyCanvasView.scaleCanvas();
-
-		try
-		{
-			if (this.#itemId > 0) // only when in playlist
-				await this.#templatesService.savePlaylistItemContent(this.#itemId, content, image, format);
-			else
-				await this.#templatesService.saveTemplateContent(this.#templateId, content, image);
-		}
-		catch(e)
-		{
-			console.error(e);
-		}
-	}
 
 	#traverseObjects(objects)
 	{

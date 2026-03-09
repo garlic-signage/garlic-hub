@@ -258,10 +258,12 @@ export class CanvasEvents
 		document.getElementById("save_template").addEventListener("click", () => {
 
 			const format = document.getElementById("formatSelector")?.value;
+			const quality = document.getElementById("imageQuality")?.value;
+
 			if (format !== null)
 			{
 				fabricAdapter.imageFormat = format
-				fabricAdapter.imageQuality = document.getElementById("imageQuality").value;
+				fabricAdapter.imageQuality = quality;
 			}
 			fabricAdapter.save(this.MyCanvasView.getCanvas());
 			this.MyCanvasView.setChanged(false);

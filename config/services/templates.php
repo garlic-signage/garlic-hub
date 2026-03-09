@@ -32,6 +32,8 @@ use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
 use App\Framework\Utils\Datatable\PrepareService;
 use App\Framework\Utils\Forms\FormTemplatePreparer;
 use App\Modules\Auth\UserSession;
+use App\Modules\Mediapool\Utils\ImagickFactory;
+use App\Modules\Mediapool\Utils\MediaHandlerFactory;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Templates\Controller\ShowComposerController;
 use App\Modules\Templates\Controller\ShowDatatableController;
@@ -83,14 +85,19 @@ $dependencies[\App\Modules\Templates\Helper\Composer\TemplatePreparer::class] = 
 		$container->get(Translator::class),
 	);
 });
+$dependencies[ExportImage::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new ExportImage(
+		$container->get(DataUrlDecoder::class),
+		$container->get(MediaHandlerFactory::class)
+	);
+});
 $dependencies[\App\Modules\Templates\Helper\Composer\Orchestrator::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new  \App\Modules\Templates\Helper\Composer\Orchestrator(
 		$container->get(\App\Modules\Templates\Helper\Composer\TemplatePreparer::class),
 		$container->get(TemplatesUsageService::class),
-		new ExportImage(
-			$container->get(DataUrlDecoder::class),
-			$container->get(\App\Modules\Mediapool\Utils\MediaHandlerFactory::class)),
+		$container->get(ExportImage::class),
 		$container->get(TemplatesService::class),
 		$container->get(Config::class)
 	);

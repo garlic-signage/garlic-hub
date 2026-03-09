@@ -84,7 +84,8 @@ class Orchestrator extends BaseTemplateOrchestrator
 		if ($content === '' )
 			return 0;
 
-		if ($this->exportImage->exportBase64($templateId, $imageBase64) === false)
+		$this->exportImage->decode($imageBase64);
+		if ($this->exportImage->exportBase64($templateId) === false)
 			return 0;
 
 		return $this->templatesService->update($templateId, ['content' => $content]);

@@ -23,25 +23,33 @@ declare(strict_types=1);
 namespace App\Modules\Templates\Helper\Composer;
 
 use App\Framework\Media\DataUrlDecoder;
+use App\Framework\Media\DecodedDataUrlFile;
 use App\Modules\Mediapool\Utils\MediaHandlerFactory;
+use Imagick;
 
 class ExportImage
 {
 	private string $errorText = '';
+	private DecodedDataUrlFile $decodedDataUrlFile;
 
 	public function __construct(private readonly DataUrlDecoder $dataUrlDecoder, private MediaHandlerFactory $mediaHandlerFactory)
 	{}
 
-	public function exportBase64(int $id, string $base64Encoded): bool
+	public function decode(string $base64Encoded): static
+	{
+		$this->decodedDataUrlFile = $this->dataUrlDecoder->decode($base64Encoded);
+		return $this;
+	}
+
+	public function exportBase64(int $id): bool
 	{
 		try
 		{
-			$decoded = $this->dataUrlDecoder->decode($base64Encoded);
 
-			$mediaHandler     = $this->mediaHandlerFactory->createTemplatesHandler($decoded->mimeType);
-			$filePath         = '/'.$mediaHandler->getOriginalPath().'/'.$id.'.'.$decoded->extension;
+			$mediaHandler     = $this->mediaHandlerFactory->createTemplatesHandler($this->decodedDataUrlFile->mimeType);
+			$filePath         = '/'.$mediaHandler->getOriginalPath().'/'.$id.'.'.$this->decodedDataUrlFile->extension;
 			$absoluteFilePath = $mediaHandler->getAbsolutePath($filePath);
-			$mediaHandler->writeBinaryString($filePath, $decoded->binaryContent);
+			$mediaHandler->writeBinaryString($filePath, $this->decodedDataUrlFile->binaryContent);
 			$mediaHandler->validateStoredFile($filePath);
 			$mediaHandler->createThumbnail($absoluteFilePath);
 			return true;
@@ -51,6 +59,31 @@ class ExportImage
 			$this->errorText = $exception->getMessage();
 			return false;
 		}
+	}
+
+	public function exportPlaylistItem(int $id): bool
+	{
+		try
+		{
+
+			$mediaHandler     = $this->mediaHandlerFactory->createPlaylistsHandler($this->decodedDataUrlFile->mimeType);
+			$filePath         = '/'.$mediaHandler->getOriginalPath().'/'.$id.'.'.$this->decodedDataUrlFile->extension;
+			$absoluteFilePath = $mediaHandler->getAbsolutePath($filePath);
+			$mediaHandler->writeBinaryString($filePath, $this->decodedDataUrlFile->binaryContent);
+			$mediaHandler->validateStoredFile($filePath);
+			$mediaHandler->createThumbnail($absoluteFilePath);
+			return true;
+		}
+		catch (\Throwable $exception)
+		{
+			$this->errorText = $exception->getMessage();
+			return false;
+		}
+	}
+
+	public function getDecodedDataUrlFile(): DecodedDataUrlFile
+	{
+		return $this->decodedDataUrlFile;
 	}
 
 	public function getErrorText(): string

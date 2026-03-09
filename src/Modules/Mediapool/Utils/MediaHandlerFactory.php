@@ -66,6 +66,14 @@ class MediaHandlerFactory
 		return $handler;
 	}
 
+	public function createPlaylistsHandler(string $mimeType): AbstractMediaHandler
+	{
+		$handler = $this->createHandler($mimeType);
+		$handler->setStoragePaths('playlists');
+
+		return $handler;
+	}
+
 
 	private function createHandler(string $mimeType): AbstractMediaHandler
 	{

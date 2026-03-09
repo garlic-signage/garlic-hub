@@ -69,7 +69,8 @@ class Orchestrator extends BaseTemplateOrchestrator
 		if ($content === '')
 			return 0;
 
-		if ($this->exportImage->exportBase64($itemId, $imageBase64) === false)
+		$this->exportImage->decode($imageBase64);
+		if ($this->exportImage->exportPlaylistItem($itemId) === false)
 			return 0;
 
 		return $this->itemsService->updateField($itemId, 'content_data', $content);
@@ -84,6 +85,11 @@ class Orchestrator extends BaseTemplateOrchestrator
 		$this->restoreSrc($json['objects']);
 
 		return json_encode($json);
+	}
+
+	public function decodeJpg2Bmp(string $imageBase64): string
+	{
+		return $this->exportImage->convert2Bmp($imageBase64);
 	}
 
 

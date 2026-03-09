@@ -63,14 +63,13 @@ export class TemplatesService extends BaseService
 		return await this._sendRequest(url, "PATCH", data);
 	}
 
-	async savePlaylistItemContent(itemId, content, image, format)
+	async savePlaylistItemContent(itemId, content, image)
 	{
 		const url =TemplatesApiConfig.SAVE_PLAYLIST_ITEM_URI
 		const data = {
 			item_id: itemId,
 			content: content,
-			image: image,
-			format: format
+			image: image
 		};
 		return await this._sendRequest(url, "PATCH", data);
 	}
