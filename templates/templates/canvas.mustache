@@ -340,7 +340,16 @@
                 <input style="width:120px;" type="range" min="20" max="500" value="100" step="5" id="slider" title="{{{LANG_ZOOM}}}">
                 <span id="percent"></span>
             </li>
-            <li>
+	<!--		{{#save_formats}}
+			<li>
+				<select id="formatSelector" title="{{{LANG_FORMATS}}}">
+					{{#formats}}
+						<option value="{{{FORMAT}}}">{{{LANG_FORMAT}}}</option>
+					{{/formats}}
+				</select>
+            </li>
+			{{/save_formats}}
+       -->     <li>
                 <button id="save_template" title="{{{LANG_SAVE}}}"><i class="bi bi-floppy"></i></button>
             </li>
 			{{#reset}}

@@ -87,8 +87,21 @@ class TemplatePreparer
 
 		if ($itemId > 0 && $playlistId > 0)
 		{
-			$templateComposer['reset'] = ['LANG_RESET' => $this->translator->translate('reset', 'templates')];
+			$templateComposer['add_playlist_item'] = ['LANG_RESET' => $this->translator->translate('reset', 'templates')];
+
+			$formats = [];
+			foreach ($this->translator->translateArrayForOptions('image_format_selects', 'templates') as $key => $value)
+			{
+				$formats[] = [
+					'FORMAT' => $key,
+					'LANG_FORMAT' => $value
+				];
+			}
+			$templateComposer['save_formats'] = ['LANG_FORMATS' => $this->translator->translate('image_format', 'templates')];
+
+			$templateComposer['save_formats']['formats'] = $formats;
 			$templateComposer['is_playlist_item'] = ['ITEM_ID' => $itemId, 'PLAYLIST_ID' => $playlistId];
+
 		}
 
 		return $templateComposer;
