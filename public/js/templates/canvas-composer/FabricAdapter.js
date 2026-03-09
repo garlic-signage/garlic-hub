@@ -97,6 +97,66 @@ export class FabricAdapter
 	{
 		this.#waitOverlay.start();
 
+		const save = this.prepareCanvasForSave(canvas);
+		const image = save.canvas.toDataURL({
+			format: 'jpeg',
+			quality: 0.8,
+			backgroundColor: '#ffffff'
+		});
+
+		await this.#save(save.content, image, 'jpg')
+		this.#waitOverlay.stop();
+	}
+
+	async saveAsPng(canvas)
+	{
+		this.#waitOverlay.start();
+
+		const save = this.prepareCanvasForSave(canvas);
+		const image = save.canvas.toDataURL({
+			format: 'png',
+			quality: 0.8,
+			backgroundColor: '#ffffff'
+		});
+
+		await this.#save(save.content, image, 'png')
+		this.#waitOverlay.stop();
+	}
+
+	async saveAsBmp(canvas)
+	{
+		this.#waitOverlay.start();
+
+		const save = this.prepareCanvasForSave(canvas);
+		const image = save.canvas.toDataURL({
+			format: 'png',
+			quality: 0.8,
+			backgroundColor: '#ffffff'
+		});
+
+		await this.#save(save.content, image, 'bmp')
+		this.#waitOverlay.stop();
+	}
+
+
+	async saveAsWebp(canvas)
+	{
+		this.#waitOverlay.start();
+
+		const save = this.prepareCanvasForSave(canvas);
+		const image = save.canvas.toDataURL({
+			format: 'webp',
+			quality: 0.8,
+			backgroundColor: '#ffffff'
+		});
+
+		await this.#save(save.content, image, 'webp')
+		this.#waitOverlay.stop();
+	}
+
+
+	prepareCanvasForSave(canvas)
+	{
 		// as coping an object in JS is ridiculous complicated we need to set Zoom to 100 and then revert it to original values
 		// change Zoom to 100% otherwise current zoom factor will used
 		canvas.setZoom(1);
@@ -106,26 +166,26 @@ export class FabricAdapter
 		let save = canvas.toJSON(["mediaId", "fileName"]);
 		save['viewport'] = { 'width': this.MySvgItemsParser.width, 'height': this.MySvgItemsParser.height, 'scale': 100 };
 
-		const content = JSON.stringify(save);
+		return {"canvas": canvas, "content": JSON.stringify(save)};
+	}
 
-		const image = canvas.toDataURL({
-			format: 'jpeg',
-			quality: 0.8,
-			backgroundColor: '#ffffff'
-		});
 
+	async #save(content, image, format)
+	{
 		// set zoom back to original values as JavaScript changes original object
 		this.MySvgItemsParser.MyCanvasView.scaleCanvas();
 
 		try
 		{
-			await this.#templatesService.saveTemplateContent(this.#templateId, content, image);
+			if (this.#templateId > 0)
+				await this.#templatesService.saveTemplateContent(this.#templateId, content, image);
+			if (this.#itemId > 0)
+				await this.#templatesService.savePlaylistItemContent(this.#itemId, content, image, format);
 		}
 		catch(e)
 		{
 			console.error(e);
 		}
-		this.#waitOverlay.stop();
 	}
 
 	#traverseObjects(objects)
