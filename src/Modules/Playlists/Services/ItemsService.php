@@ -45,6 +45,7 @@ class ItemsService extends AbstractBaseService
 	private readonly MediaService $mediaService;
 	private readonly PlaylistMetricsCalculator $playlistMetricsCalculator;
 	private int $itemDuration = 0;
+	private array $extMap = ['svg'  => 'svg', 'svg+xml' => 'svg',	'gif'  => 'jpg', 'jpeg' => 'jpg'];
 
 	public function __construct(ItemsRepository $itemsRepository,
 								MediaService $mediaService,
@@ -177,18 +178,10 @@ class ItemsService extends AbstractBaseService
 			{
 				case ItemType::MEDIAPOOL->value:
 					$thumbnailPath = $this->mediaService->getPathThumbnails();
-					$ext = 'jpg';
-					$extMap = ['svg'  => 'svg', 'svg+xml' => 'svg',	'gif'  => 'jpg', 'jpeg' => 'jpg'];
-					if (str_starts_with($value['mimetype'], 'image/'))
-					{
-						$s = (string) strrchr($value['mimetype'], '/');
-						$mimeTypePart = substr($s, 1);
 
-						if (isset($extMap[$mimeTypePart]))
-							$ext = $extMap[$mimeTypePart];
-						 else
-							$ext = $mimeTypePart;
-					}
+					$ext = 'jpg';
+					if (str_starts_with($value['mimetype'], 'image/'))
+						$ext = $this->extractExtensionFromMimeType($value['mimetype']);
 
 					$filename = $value['file_resource'];
 					$isSvgWidget = ($value['mimetype'] === 'application/widget' && $value['content_data'] == '');
@@ -209,7 +202,8 @@ class ItemsService extends AbstractBaseService
 					break;
 				case ItemType::TEMPLATE->value:
 					$tmp = $value;
-					$tmp['paths']['thumbnail'] = 'public/var/playlists/items/thumbs/' . $value['item_id'].'.jpg';
+					$ext = $this->extractExtensionFromMimeType($value['mimetype']);
+					$tmp['paths']['thumbnail'] = 'public/var/playlists/items/thumbs/' . $value['item_id'].'.'.$ext;
 					$items[] = $tmp;
 					break;
 
@@ -423,5 +417,18 @@ class ItemsService extends AbstractBaseService
 			return [];
 
 		return unserialize($value);
+	}
+
+	private function extractExtensionFromMimeType(string $mimeType): string
+	{
+		$s = (string) strrchr($mimeType, '/');
+		$mimeTypePart = substr($s, 1);
+
+		if (array_key_exists($mimeTypePart, $this->extMap))
+			$ext = $this->extMap[$mimeTypePart];
+		else
+			$ext = $mimeTypePart;
+
+		return $ext;
 	}
 }
