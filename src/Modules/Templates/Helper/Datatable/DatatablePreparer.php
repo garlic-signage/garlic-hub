@@ -93,7 +93,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 						break;
 					case 'used':
 						$count = 0;
-						if (in_array($template['template_id'], $this->usedTemplates))
+						if (array_key_exists($template['template_id'], $this->usedTemplates))
 							$count  = $this->usedTemplates[$template['template_id']];
 
 						$resultElements['is_text'] = $this->prepareService->getBodyPreparer()->formatText((string) $count);
