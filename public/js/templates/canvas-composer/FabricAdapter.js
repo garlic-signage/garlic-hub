@@ -170,11 +170,11 @@ export class FabricAdapter
 		// as coping an object in JS is ridiculous complicated we need to set Zoom to 100 and then revert it to original values
 		// change Zoom to 100% otherwise current zoom factor will used
 		canvas.setZoom(1);
-		canvas.setWidth(this.MySvgItemsParser.width)
-		canvas.setHeight(this.MySvgItemsParser.height);
+		canvas.setWidth(this.#itemsParser.width)
+		canvas.setHeight(this.#itemsParser.height);
 
 		let save = canvas.toJSON(["mediaId", "fileName"]);
-		save['viewport'] = { 'width': canvas.getWidth(), 'height': canvas.getHeight(), 'scale': 100 };
+		save['viewport'] = { 'width': this.#itemsParser.width, 'height': this.#itemsParser.height, 'scale': 100 };
 
 		return {"canvas": canvas, "content": JSON.stringify(save)};
 	}
