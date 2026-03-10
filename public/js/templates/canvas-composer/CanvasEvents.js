@@ -35,7 +35,8 @@ export class CanvasEvents
 		this.MyItemProperties = MyItemProperties;
 	}
 
-	isAutoResize() {
+	isAutoResize()
+	{
 		return this.is_autoresize;
 	}
 
@@ -276,21 +277,25 @@ export class CanvasEvents
 			return;
 
 		reset.addEventListener("click", () => {
-			if (confirm(this.MyCanvasView.getLangByKey('confirm_reset')) === true)
-			{
-				const templateId = document.getElementById('template_id').value;
-				this.MyCanvasView.getCanvas().clear();
-				fabricAdapter.resetFromTemplateDataBase(templateId);
-				this.MyCanvasView.setChanged(false);
-			}
+			if (confirm(this.MyCanvasView.getLangByKey('confirm_reset')) === false)
+				return;
+
+			const templateId = document.getElementById('template_id').value;
+			this.MyCanvasView.getCanvas().clear();
+			fabricAdapter.resetFromTemplateDataBase(templateId);
+			this.MyCanvasView.setChanged(false);
 		});
 	}
 
-	initCloseEvent()
+	initCloseEvent(redirectUrl)
 	{
 		document.getElementById("close_template_editor").addEventListener("click", () => {
-			if (this.MyCanvasView.hasChanged() === false || confirm(this.MyCanvasView.getLangByKey('confirm_close')) === true)
-				window.location.href = '/templates/';
+			if (this.MyCanvasView.hasChanged() === true && confirm(this.MyCanvasView.getLangByKey('confirm_close')) === false)
+				return;
+
+			window.location.href = redirectUrl;
 		});
 	}
+
+	get
 }

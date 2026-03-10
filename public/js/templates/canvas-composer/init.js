@@ -83,8 +83,12 @@ document.addEventListener("DOMContentLoaded", function (event)
 
 	const templateId = document.getElementById("template_id");
 	const itemId = document.getElementById("item_id");
+	let redirectUrl  = "/templates";
 	if (itemId !== null)
+	{
 		fabricAdapter.loadFromPlaylistItemDataBase(itemId.value);
+		redirectUrl = "/playlists/compose/" + document.getElementById("playlist_id").value;
+	}
 	else
 		fabricAdapter.loadFromTemplateDataBase(templateId.value);
 
@@ -93,7 +97,7 @@ document.addEventListener("DOMContentLoaded", function (event)
 	MyCanvasEvents.initSaveEvent(fabricAdapter);
 	MyCanvasEvents.initResetEvent(fabricAdapter);
 	MyCanvasEvents.initRangeSliderEvents();
-	MyCanvasEvents.initCloseEvent();
+	MyCanvasEvents.initCloseEvent(redirectUrl);
 
 	window.onresize = () => {
 		if (MyCanvasEvents.isAutoResize())
