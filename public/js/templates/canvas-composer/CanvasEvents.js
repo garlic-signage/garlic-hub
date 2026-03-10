@@ -125,6 +125,9 @@ export class CanvasEvents
 						this.MyCanvasView.moveActiveObject(event.key, 1);
 						this.MyCanvasView.getCanvas()._historySaveAction()
 						break;
+					case "z":
+						this.MyCanvasView.getCanvas().undo();
+						break;
 					default:
 						break;
 				}
