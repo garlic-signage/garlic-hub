@@ -21,7 +21,6 @@ import {TemplatesService} from "../TemplatesService.js";
 import {FetchClient}      from "../../core/FetchClient.js";
 import {WaitOverlay}      from "../../core/WaitOverlay.js";
 import {CanvasView}   from "./CanvasView.js";
-import {ItemsParser}   from "./ItemsParser.js";
 import {MediaDialog}   from "./MediaDialog.js";
 import {MediaSelector} from "../../mediapool/selector/MediaSelector.js";
 import {ContextMenu}      from "./ContextMenu.js";
@@ -33,26 +32,28 @@ import {ItemProperties} from "./ItemProperties.js";
 import {CanvasEvents} from "./CanvasEvents.js";
 import {FontHandler} from "./FontHandler.js";
 import {ToggleButtonFactory} from "./ItemProperties/ToggleButtonFactory.js";
-import {FabricAdapter} from "./FabricAdapter.js";
-import {WunderbaumWrapper} from "../../mediapool/treeview/WunderbaumWrapper.js";
+import {FabricService}       from "./FabricService.js";
+import {WunderbaumWrapper}   from "../../mediapool/treeview/WunderbaumWrapper.js";
 import {TreeViewElements} from "../../mediapool/treeview/TreeViewElements.js";
 import {MediaService} from "../../mediapool/media/MediaService.js";
 import {MediaSelectorView} from "../../mediapool/selector/MediaSelectorView.js";
 import {MediaFactory} from "../../mediapool/media/MediaFactory.js";
 import {BmpDitherFactory} from "./BmpDitherFactory.js";
+import {FabricWrapper} from "./FabricWrapper.js";
 
 document.addEventListener("DOMContentLoaded", function (event)
 {
 
-	const canvasView     = new CanvasView(new fabric.Canvas('canvas',
+	const fabricCanvas = new fabric.Canvas('canvas',
 		{
 			stopContextMenu: true,
 			fireRightClick: true,
 			preserveObjectStacking: true
-		}
-	), lang);
+		});
+	const fabricWrapper = new FabricWrapper(fabricCanvas);
+
+	const canvasView     = new CanvasView(fabricCanvas, lang);
 	const toggleButtonFactory = new ToggleButtonFactory();
-	let itemsParser = new ItemsParser(canvasView);
 	const mediaService = new MediaService(new FetchClient());
 
 	let mediaSelector = new MediaSelector(
@@ -62,7 +63,7 @@ document.addEventListener("DOMContentLoaded", function (event)
 	);
 	mediaSelector.filter = "images";
 
-	let mediaDialog   = new MediaDialog(mediaSelector, itemsParser);
+	let mediaDialog   = new MediaDialog(mediaSelector, canvasView);
 	let MyContextMenu    = new ContextMenu(canvasView, mediaDialog);
 
 	let MyGlobalProperties    = new GlobalProperties(canvasView);
@@ -73,12 +74,13 @@ document.addEventListener("DOMContentLoaded", function (event)
 
 	let MyCanvasEvents   = new CanvasEvents(MyContextMenu, canvasView, mediaDialog, mediaSelector, MyItemProperties);
 
-	const fabricAdapter  = new FabricAdapter(
-		itemsParser,
+	const fabricService  = new FabricService(
+		canvasView,
 		MyCanvasEvents,
 		new TemplatesService(new FetchClient()),
 		new WaitOverlay(),
-		new BmpDitherFactory()
+		new BmpDitherFactory(),
+		MyTextProperties
 	);
 
 	const templateId = document.getElementById("template_id");
@@ -86,22 +88,22 @@ document.addEventListener("DOMContentLoaded", function (event)
 	let redirectUrl  = "/templates";
 	if (itemId !== null)
 	{
-		fabricAdapter.loadFromPlaylistItemDataBase(itemId.value);
+		fabricService.loadFromPlaylistItemDataBase(itemId.value);
 		redirectUrl = "/playlists/compose/" + document.getElementById("playlist_id").value;
 	}
 	else
-		fabricAdapter.loadFromTemplateDataBase(templateId.value);
+		fabricService.loadFromTemplateDataBase(templateId.value);
 
 	MyCanvasEvents.initInsertObjects();
 	MyItemProperties.initEventListener(canvasView);
-	MyCanvasEvents.initSaveEvent(fabricAdapter);
-	MyCanvasEvents.initResetEvent(fabricAdapter);
+	MyCanvasEvents.initSaveEvent(fabricService);
+	MyCanvasEvents.initResetEvent(fabricService);
 	MyCanvasEvents.initRangeSliderEvents();
 	MyCanvasEvents.initCloseEvent(redirectUrl);
 
 	window.onresize = () => {
 		if (MyCanvasEvents.isAutoResize())
-			itemsParser.zoomToViewPort();
+			canvasView.zoomToViewPort();
 	}
 
 });

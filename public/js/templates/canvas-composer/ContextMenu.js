@@ -19,14 +19,14 @@
 
 export class ContextMenu
 {
-	MyCanvasView = {};
+	#canvasView = {};
 	#mediaDialog = {};
 	options;
 	context_menu;
 
-	constructor(MyCanvasView, mediaDialog)
+	constructor(canvasView, mediaDialog)
 	{
-		this.MyCanvasView = MyCanvasView;
+		this.#canvasView = canvasView;
 		this.#mediaDialog = mediaDialog;
 	}
 
@@ -68,22 +68,22 @@ export class ContextMenu
 	initZIndexEvent() {
 		let move_background = document.getElementById("move_background");
 		move_background.onclick = () => {
-			this.MyCanvasView.getCanvas().getActiveObject().sendToBack();
+			this.#canvasView.getCanvas().getActiveObject().sendToBack();
 			this.remove();
 		}
 		let move_back = document.getElementById("move_back");
 		move_back.onclick = () => {
-			this.MyCanvasView.getCanvas().getActiveObject().sendBackwards();
+			this.#canvasView.getCanvas().getActiveObject().sendBackwards();
 			this.remove();
 		}
 		let move_front = document.getElementById("move_front");
 		move_front.onclick = () => {
-			this.MyCanvasView.getCanvas().getActiveObject().bringForward();
+			this.#canvasView.getCanvas().getActiveObject().bringForward();
 			this.remove();
 		}
 		let move_foreground = document.getElementById("move_foreground");
 		move_foreground.onclick = () => {
-			this.MyCanvasView.getCanvas().getActiveObject().bringToFront();
+			this.#canvasView.getCanvas().getActiveObject().bringToFront();
 			this.remove();
 		}
 	}
@@ -95,15 +95,15 @@ export class ContextMenu
 			this.remove();
 			this.#mediaDialog.displayMediaSelector();
 			this.#mediaDialog.initCancelEvent();
-			this.#mediaDialog.initReplaceEvent(this.options.target, this.MyCanvasView);
+			this.#mediaDialog.initReplaceEvent(this.options.target);
 		}
 	}
 
 	initDublicateEvent() {
 		let duplicate_item = document.getElementById("duplicate_item");
 		duplicate_item.onclick = () => {
-			this.MyCanvasView.dublicateActiveObject();
-			this.MyCanvasView.getCanvas()._historySaveAction()
+			this.#canvasView.dublicateActiveObject();
+			this.#canvasView.getCanvas()._historySaveAction()
 			this.remove();
 		}
 	}
@@ -111,8 +111,8 @@ export class ContextMenu
 	initRemoveEvent() {
 		let delete_item = document.getElementById("delete_item");
 		delete_item.onclick = () => {
-			this.MyCanvasView.removeActiveObject();
-			this.MyCanvasView.getCanvas()._historySaveAction();
+			this.#canvasView.removeActiveObject();
+			this.#canvasView.getCanvas()._historySaveAction();
 			this.remove();
 		}
 	}
@@ -121,7 +121,7 @@ export class ContextMenu
 		let lock_unlock = document.getElementById("lock_unlock");
 		let lock = document.getElementById("lock");
 		let unlock = document.getElementById("unlock");
-		if (this.MyCanvasView.isCurrentLocked())
+		if (this.#canvasView.isCurrentLocked())
 		{
 			lock.style.display = "none";
 			unlock.style.display = "inline";
@@ -132,12 +132,12 @@ export class ContextMenu
 			unlock.style.display = "none";
 		}
 		lock_unlock.onclick = () => {
-			if (this.MyCanvasView.isCurrentLocked())
-				this.MyCanvasView.setCurrentLockedStatus(false);
+			if (this.#canvasView.isCurrentLocked())
+				this.#canvasView.setCurrentLockedStatus(false);
 			else
-				this.MyCanvasView.setCurrentLockedStatus(true);
+				this.#canvasView.setCurrentLockedStatus(true);
 
-			this.MyCanvasView.getCanvas()._historySaveAction()
+			this.#canvasView.getCanvas()._historySaveAction()
 			this.remove();
 		}
 	}

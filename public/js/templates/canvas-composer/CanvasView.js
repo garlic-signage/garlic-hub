@@ -296,6 +296,44 @@ export class CanvasView
 		return this.canvas_wrap;
 	}
 
+	outputJsonTemplate(width, height)
+	{
+		this.width  = width;
+		this.height = height;
+		this.setCanvasDimensions(width, height);
+		this.zoomToViewPort();
+	}
+
+	zoomToViewPort()
+	{
+		this.slider.value = this.calculateZoomByBrowserViewPort();
+		this.scalePercent();
+		this.scaleCanvas()
+	}
+
+	calculateZoomByBrowserViewPort()
+	{
+		let w = document.documentElement.clientWidth - 180;
+		let h = document.documentElement.clientHeight - 180;
+		let p1 = Math.floor((100/this.width)  * w);
+		let p2 = Math.floor((100/this.height) * h);
+		if (p1 > p2)
+			return  p2;
+		else
+			return  p1;
+	}
+
+	calculateImageScaleByCanvasInPerCent(w, h)
+	{
+		let p1 = Math.floor((100/w)  * this.width);
+		let p2 = Math.floor((100/h) * this.height);
+		if (p1 > p2)
+			return  p2;
+		else
+			return  p1;
+	}
+
+
 	setCanvasDimensions(width, height)
 	{
 		this.width = width;

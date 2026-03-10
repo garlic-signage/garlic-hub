@@ -19,42 +19,42 @@
 
 export class CanvasEvents
 {
-	MyContextMenu = {};
-	MyCanvasView = {};
+	#contextMenu = {};
+	#canvasView = {};
 	#mediaDialog = {};
-	MyMediaSelector = {};
-	MyItemProperties = {};
-	is_autoresize = true;
+	#mediaSelector = {};
+	#itemProperties = {};
+	#isAutoresize = true;
 
-	constructor(MyContextMenu, MyCanvasView, mediaDialog, MyMediaSelector, MyItemProperties)
+	constructor(contextMenu, canvasView, mediaDialog, mediaSelector, itemProperties)
 	{
-		this.MyContextMenu = MyContextMenu;
-		this.MyCanvasView = MyCanvasView;
-		this.#mediaDialog = mediaDialog;
-		this.MyMediaSelector = MyMediaSelector;
-		this.MyItemProperties = MyItemProperties;
+		this.#contextMenu    = contextMenu;
+		this.#canvasView     = canvasView;
+		this.#mediaDialog    = mediaDialog;
+		this.#mediaSelector  = mediaSelector;
+		this.#itemProperties = itemProperties;
 	}
 
 	isAutoResize()
 	{
-		return this.is_autoresize;
+		return this.#isAutoresize;
 	}
 
 	initChangeDetectors()
 	{
 		// check if canvas was changed
-		this.MyCanvasView.getCanvas().on('object:modified', (event) => {
-			this.MyCanvasView.setChanged(true);
+		this.#canvasView.getCanvas().on('object:modified', (event) => {
+			this.#canvasView.setChanged(true);
 		})
-		this.MyCanvasView.getCanvas().on('text:changed', (event) => {
-			this.MyCanvasView.setChanged(true);
+		this.#canvasView.getCanvas().on('text:changed', (event) => {
+			this.#canvasView.setChanged(true);
 		})
 		// activate this only when canvas is builded.
-		this.MyCanvasView.getCanvas().on('object:added', (event) => {
-			this.MyCanvasView.setChanged(true);
+		this.#canvasView.getCanvas().on('object:added', (event) => {
+			this.#canvasView.setChanged(true);
 		})
-		this.MyCanvasView.getCanvas().on('object:removed', (event) => {
-			this.MyCanvasView.setChanged(true);
+		this.#canvasView.getCanvas().on('object:removed', (event) => {
+			this.#canvasView.setChanged(true);
 		})
 	}
 
@@ -65,68 +65,72 @@ export class CanvasEvents
 
 	initMouseEvents()
 	{
-		this.MyCanvasView.getCanvas().on('mouse:up', (options) => {
-			this.MyContextMenu.remove();
+		this.#canvasView.getCanvas().on('mouse:up', (options) => {
+			this.#contextMenu.remove();
 			this.#mediaDialog.remove();
-			if (options.button === 1) {
+			if (options.button === 1)
+			{
 				// todo implement changing of canvas properties
-				if (options.target == null) {
-					this.MyItemProperties.deactivateAllProperties();
+				if (options.target == null)
+				{
+					this.#itemProperties.deactivateAllProperties();
 					return;
 				}
 
-				this.MyItemProperties.deactivatePrevious(this.MyCanvasView.getCanvas().getActiveObject().type);
-				this.MyItemProperties.activateCurrent(this.MyCanvasView.getCanvas().getActiveObject());
+				this.#itemProperties.deactivatePrevious(this.#canvasView.getCanvas().getActiveObject().type);
+				this.#itemProperties.activateCurrent(this.#canvasView.getCanvas().getActiveObject());
 
 			}
-			else if (options.button === 3) {
+			else if (options.button === 3)
+			{
 				if (options.target == null)
 					return;
 
-				this.MyCanvasView.getCanvas().setActiveObject(options.target);
-				this.MyContextMenu.show(options);
+				this.#canvasView.getCanvas().setActiveObject(options.target);
+				this.#contextMenu.show(options);
 			}
 		});
 	}
 
 	initKeyboardEvents()
 	{
-		this.MyCanvasView.getCanvasWrap().addEventListener("keydown", (event) => {
+		this.#canvasView.getCanvasWrap().addEventListener("keydown", (event) => {
 			if (event.shiftKey &&
-				(event.key === "ArrowLeft" || event.key === "ArrowRight" || event.key === "ArrowUp" || event.key === "ArrowDown")) {
-				this.MyCanvasView.moveActiveObject(event.key, 50);
+				(event.key === "ArrowLeft" || event.key === "ArrowRight" || event.key === "ArrowUp" || event.key === "ArrowDown"))
+			{
+				this.#canvasView.moveActiveObject(event.key, 50);
 			}
 			else if (event.ctrlKey && event.key.toUpperCase() === "Z")
 			{
-				this.MyCanvasView.getCanvas().undo()
-				this.MyItemProperties.deactivateAllProperties();
+				this.#canvasView.getCanvas().undo()
+				this.#itemProperties.deactivateAllProperties();
 			}
 			else if (event.ctrlKey && event.key.toUpperCase() === "Y")
 			{
-				this.MyCanvasView.getCanvas().redo()
-				this.MyItemProperties.deactivateAllProperties();
+				this.#canvasView.getCanvas().redo()
+				this.#itemProperties.deactivateAllProperties();
 			}
 			else if (event.ctrlKey && event.key.toUpperCase() === "D")
 			{
-				this.MyCanvasView.dublicateActiveObject()
-				this.MyItemProperties.deactivateAllProperties();
+				this.#canvasView.dublicateActiveObject()
+				this.#itemProperties.deactivateAllProperties();
 			}
 			else
 			{
 				switch (event.key) {
 					case "Delete":
-						this.MyCanvasView.removeActiveObject();
-						this.MyCanvasView.getCanvas()._historySaveAction()
+						this.#canvasView.removeActiveObject();
+						this.#canvasView.getCanvas()._historySaveAction()
 						break;
 					case "ArrowLeft":
 					case "ArrowRight":
 					case "ArrowUp":
 					case "ArrowDown":
-						this.MyCanvasView.moveActiveObject(event.key, 1);
-						this.MyCanvasView.getCanvas()._historySaveAction()
+						this.#canvasView.moveActiveObject(event.key, 1);
+						this.#canvasView.getCanvas()._historySaveAction()
 						break;
 					case "z":
-						this.MyCanvasView.getCanvas().undo();
+						this.#canvasView.getCanvas().undo();
 						break;
 					default:
 						break;
@@ -137,52 +141,52 @@ export class CanvasEvents
 
 	initInsertObjects()
 	{
-		this.MyCanvasView.getInsertImage().addEventListener("click", () => {
+		this.#canvasView.getInsertImage().addEventListener("click", () => {
 			if (this.#mediaDialog.isOpen)
 				return;
 
 			this.#mediaDialog.displayMediaSelector();
 			this.#mediaDialog.initCancelEvent();
-			this.#mediaDialog.initInsertEvent(this.MyCanvasView);
+			this.#mediaDialog.initInsertEvent();
 		});
 
-		this.MyCanvasView.getInsertText().addEventListener("click", () => {
+		this.#canvasView.getInsertText().addEventListener("click", () => {
 			let text = new fabric.Textbox('Lorem ipsum', {
 				left: 50, top: 10, width: 400, fontFamily: 'Arial',
 				fill: '#000000', fontSize: 64
 			});
-			this.MyCanvasView.getCanvas().add(text);
-			this.MyCanvasView.getCanvas()._historySaveAction()
-			this.MyCanvasView.getCanvas().renderAll();
+			this.#canvasView.getCanvas().add(text);
+			this.#canvasView.getCanvas()._historySaveAction()
+			this.#canvasView.getCanvas().renderAll();
 		});
-		this.MyCanvasView.getInsertCircle().addEventListener("click", () => {
+		this.#canvasView.getInsertCircle().addEventListener("click", () => {
 			var circle = new fabric.Circle({
 				left: 50, top: 10, radius: 200,
 				fill: '#000000'
 			});
-			this.MyCanvasView.getCanvas().add(circle);
-			this.MyCanvasView.getCanvas()._historySaveAction()
-			this.MyCanvasView.getCanvas().renderAll();
+			this.#canvasView.getCanvas().add(circle);
+			this.#canvasView.getCanvas()._historySaveAction()
+			this.#canvasView.getCanvas().renderAll();
 		});
-		this.MyCanvasView.getInsertTriangle().addEventListener("click", () => {
+		this.#canvasView.getInsertTriangle().addEventListener("click", () => {
 			var triangle = new fabric.Triangle({
 				left: 50, top: 10, width: 400, height: 400,
 				fill: '#000000'
 			});
-			this.MyCanvasView.getCanvas().add(triangle);
-			this.MyCanvasView.getCanvas()._historySaveAction()
-			this.MyCanvasView.getCanvas().renderAll();
+			this.#canvasView.getCanvas().add(triangle);
+			this.#canvasView.getCanvas()._historySaveAction()
+			this.#canvasView.getCanvas().renderAll();
 		});
-		this.MyCanvasView.getInsertRectangle().addEventListener("click", () => {
+		this.#canvasView.getInsertRectangle().addEventListener("click", () => {
 			var rect = new fabric.Rect({
 				left: 50, top: 10, width: 400, height: 300,
 				fill: '#000000'
 			});
-			this.MyCanvasView.getCanvas().add(rect);
-			this.MyCanvasView.getCanvas()._historySaveAction()
-			this.MyCanvasView.getCanvas().renderAll();
+			this.#canvasView.getCanvas().add(rect);
+			this.#canvasView.getCanvas()._historySaveAction()
+			this.#canvasView.getCanvas().renderAll();
 		});
-		this.MyCanvasView.getInsertPolygon().addEventListener("click", () => {
+		this.#canvasView.getInsertPolygon().addEventListener("click", () => {
 			var sweep = Math.PI * 2 / 5;
 			var cx = 200;
 			var cy = 200;
@@ -196,11 +200,11 @@ export class CanvasEvents
 				fill: '#000',
 				left: 50, top: 10
 			}, false);
-			this.MyCanvasView.getCanvas().add(polygon);
-			this.MyCanvasView.getCanvas()._historySaveAction()
-			this.MyCanvasView.getCanvas().renderAll();
+			this.#canvasView.getCanvas().add(polygon);
+			this.#canvasView.getCanvas()._historySaveAction()
+			this.#canvasView.getCanvas().renderAll();
 		});
-		this.MyCanvasView.getInsertHexagon().addEventListener("click", () => {
+		this.#canvasView.getInsertHexagon().addEventListener("click", () => {
 			var sweep = Math.PI * 2 / 6;
 			var cx = 200;
 			var cy = 200;
@@ -214,11 +218,11 @@ export class CanvasEvents
 				fill: '#000',
 				left: 50, top: 10
 			}, false);
-			this.MyCanvasView.getCanvas().add(hexagon);
-			this.MyCanvasView.getCanvas()._historySaveAction()
-			this.MyCanvasView.getCanvas().renderAll();
+			this.#canvasView.getCanvas().add(hexagon);
+			this.#canvasView.getCanvas()._historySaveAction()
+			this.#canvasView.getCanvas().renderAll();
 		});
-		this.MyCanvasView.getInsertOctagon().addEventListener("click", () => {
+		this.#canvasView.getInsertOctagon().addEventListener("click", () => {
 			var sweep = Math.PI * 2 / 8;
 			var cx = 200;
 			var cy = 200;
@@ -232,32 +236,32 @@ export class CanvasEvents
 				fill: '#000',
 				left: 50, top: 10
 			}, false);
-			this.MyCanvasView.getCanvas().add(octagon);
-			this.MyCanvasView.getCanvas()._historySaveAction()
-			this.MyCanvasView.getCanvas().renderAll();
+			this.#canvasView.getCanvas().add(octagon);
+			this.#canvasView.getCanvas()._historySaveAction()
+			this.#canvasView.getCanvas().renderAll();
 		});
 
-		this.MyCanvasView.getUndo().addEventListener("click", () => {
-			this.MyCanvasView.getCanvas().undo()
-			this.MyItemProperties.deactivateAllProperties();
+		this.#canvasView.getUndo().addEventListener("click", () => {
+			this.#canvasView.getCanvas().undo()
+			this.#itemProperties.deactivateAllProperties();
 		});
-		this.MyCanvasView.getRedo().addEventListener("click", () => {
-			this.MyCanvasView.getCanvas().redo()
-			this.MyItemProperties.deactivateAllProperties();
+		this.#canvasView.getRedo().addEventListener("click", () => {
+			this.#canvasView.getCanvas().redo()
+			this.#itemProperties.deactivateAllProperties();
 		});
 
 	}
 
 	initRangeSliderEvents()
 	{
-		this.MyCanvasView.getSlider().oninput = () => {
-			this.is_autoresize = false;
-			this.MyCanvasView.scalePercent();
-			this.MyCanvasView.scaleCanvas()
+		this.#canvasView.getSlider().oninput = () => {
+			this.#isAutoresize = false;
+			this.#canvasView.scalePercent();
+			this.#canvasView.scaleCanvas()
 		}
 	}
 
-	initSaveEvent(fabricAdapter)
+	initSaveEvent(fabricService)
 	{
 		document.getElementById("save_template").addEventListener("click", () => {
 
@@ -266,39 +270,38 @@ export class CanvasEvents
 
 			if (format !== null)
 			{
-				fabricAdapter.imageFormat = format
-				fabricAdapter.imageQuality = quality;
+				fabricService.imageFormat = format
+				fabricService.imageQuality = quality;
 			}
-			fabricAdapter.save(this.MyCanvasView.getCanvas());
-			this.MyCanvasView.setChanged(false);
+			fabricService.save(this.#canvasView.getCanvas());
+			this.#canvasView.setChanged(false);
 		});
 	}
-	initResetEvent(fabricAdapter)
+	initResetEvent(fabricService)
 	{
 		const reset = document.getElementById("reset_template");
 		if (reset === null)
 			return;
 
 		reset.addEventListener("click", () => {
-			if (confirm(this.MyCanvasView.getLangByKey('confirm_reset')) === false)
+			if (confirm(this.#canvasView.getLangByKey('confirm_reset')) === false)
 				return;
 
 			const templateId = document.getElementById('template_id').value;
-			this.MyCanvasView.getCanvas().clear();
-			fabricAdapter.resetFromTemplateDataBase(templateId);
-			this.MyCanvasView.setChanged(false);
+			this.#canvasView.getCanvas().clear();
+			fabricService.resetFromTemplateDataBase(templateId);
+			this.#canvasView.setChanged(false);
 		});
 	}
 
 	initCloseEvent(redirectUrl)
 	{
 		document.getElementById("close_template_editor").addEventListener("click", () => {
-			if (this.MyCanvasView.hasChanged() === true && confirm(this.MyCanvasView.getLangByKey('confirm_close')) === false)
+			if (this.#canvasView.hasChanged() === true && confirm(this.#canvasView.getLangByKey('confirm_close')) === false)
 				return;
 
 			window.location.href = redirectUrl;
 		});
 	}
 
-	get
 }

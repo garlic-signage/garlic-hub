@@ -17,9 +17,10 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-export class FabricAdapter
+export class FabricService
 {
-	#itemsParser;
+	#canvasView;
+	#textProperties;
 	MyCanvasEvents;
 	#templatesService;
 	#bmpDitherFactory;
@@ -28,15 +29,16 @@ export class FabricAdapter
 	#itemId = 0;
 	#imageFormat = "jpg";
 	#imageQuality = 80;
-	#allowed = ['jpg', 'png', 'webp', 'bmp'];
+	#allowed = ["jpg", "png", "webp", "bmp"];
 
-	constructor(itemsParser, MyCanvasEvents, templatesService, waitOverlay, bmpDitherFactory)
+	constructor(canvasView, MyCanvasEvents, templatesService, waitOverlay, bmpDitherFactory, textProperties)
 	{
-		this.#itemsParser = itemsParser;
-		this.MyCanvasEvents = MyCanvasEvents;
+		this.#canvasView       = canvasView;
+		this.MyCanvasEvents    = MyCanvasEvents;
 		this.#templatesService = templatesService;
-		this.#waitOverlay = waitOverlay;
+		this.#waitOverlay      = waitOverlay;
 		this.#bmpDitherFactory = bmpDitherFactory;
+		this.#textProperties   = textProperties;
 	}
 
 
@@ -78,36 +80,28 @@ export class FabricAdapter
 	}
 
 
-	async loadJsonFromString(json_canvas)
+	async loadJsonFromString(jsonContent)
 	{
-		if (json_canvas.length === 0)
-			json_canvas = "{\"objects\": [],\"viewport\":{\"width\":1920,\"height\":1080,\"scale\":100}}";
+		if (jsonContent.length === 0)
+			jsonContent = "{\"objects\": [],\"viewport\":{\"width\":1920,\"height\":1080,\"scale\":100}}";
 
-		// text is not editable, so we needed i-text
-		json_canvas = json_canvas.replaceAll('"type":"text"', '"type":"textbox"');
-		json_canvas = json_canvas.replaceAll('"type":"i-text"', '"type":"textbox"');
-
-		let j = JSON.parse(json_canvas);
+		let j = JSON.parse(jsonContent);
 		this.#traverseObjects.call(this, j.objects);
 		console.log("Collected all fonts");
 
-		await this.MyCanvasEvents.MyItemProperties.MyTextProperties.preloadUsedFonts();
+		await this.#textProperties.preloadUsedFonts();
 
-		this.#itemsParser.MyCanvasView.getCanvas().loadFromJSON(json_canvas, () => {
+		this.#canvasView.getCanvas().loadFromJSON(jsonContent, () => {
 				fabric.util.clearFabricFontCache();
 				fabric.charWidthsCache = {};
-				this.#itemsParser.outputJsonTemplate(j.viewport.width, j.viewport.height);
-				this.MyCanvasEvents.initChangeDetectors();
-				this.MyCanvasEvents.initEditEvents();
 				fabric.Canvas.prototype.historyUndo = []
 				fabric.Canvas.prototype.historyRedo = []
-				this.#itemsParser.MyCanvasView.getCanvas()._historySaveAction();
-				this.#itemsParser.MyCanvasView.getCanvas().renderAll();
-			},
-			(item, object) => {
-				(item, object) => {
-					this.#itemsParser.createItem(item, object);
-				}
+
+				this.#canvasView.outputJsonTemplate(j.viewport.width, j.viewport.height);
+				this.MyCanvasEvents.initChangeDetectors();
+				this.MyCanvasEvents.initEditEvents();
+				this.#canvasView.getCanvas()._historySaveAction();
+				this.#canvasView.getCanvas().renderAll();
 			});
 	}
 	async save(canvas)
@@ -123,7 +117,7 @@ export class FabricAdapter
 
 		const image = await this.#createImage(save.canvas);
 
-		this.#itemsParser.MyCanvasView.scaleCanvas();
+		this.#canvasView.scaleCanvas();
 
 		try
 		{
@@ -170,15 +164,14 @@ export class FabricAdapter
 		// as coping an object in JS is ridiculous complicated we need to set Zoom to 100 and then revert it to original values
 		// change Zoom to 100% otherwise current zoom factor will used
 		canvas.setZoom(1);
-		canvas.setWidth(this.#itemsParser.width)
-		canvas.setHeight(this.#itemsParser.height);
+		canvas.setWidth(this.#canvasView.width)
+		canvas.setHeight(this.#canvasView.height);
 
 		let save = canvas.toJSON(["mediaId", "fileName"]);
-		save['viewport'] = { 'width': this.#itemsParser.width, 'height': this.#itemsParser.height, 'scale': 100 };
+		save["viewport"] = { "width": this.#canvasView.width, "height": this.#canvasView.height, "scale": 100 };
 
 		return {"canvas": canvas, "content": JSON.stringify(save)};
 	}
-
 
 	#traverseObjects(objects)
 	{
@@ -186,13 +179,9 @@ export class FabricAdapter
 		{
 			const obj = objects[i];
 			if (obj.type === "textbox")
-			{
-				this.MyCanvasEvents.MyItemProperties.MyTextProperties.collectUsedFontsFromSelection(obj);
-			}
+				this.#textProperties.collectUsedFontsFromSelection(obj);
 			else if (obj.type === "group" && obj.objects)
-			{
 				this.#traverseObjects.call(this, obj.objects);
-			}
 		}
 	}
 }

@@ -20,7 +20,7 @@
 export class MediaDialog
 {
 	#mediaSelector = {};
-	#itemsParser = {};
+	#canvasView = {};
 
 	#mediaSelectorElement;
 	#closeEditMediaDialog;
@@ -31,10 +31,10 @@ export class MediaDialog
 	#applyMedia;
 	#dialogName;
 
-	constructor(mediaSelector, itemsParser)
+	constructor(mediaSelector, canvasView)
 	{
 		this.#mediaSelector = mediaSelector;
-		this.#itemsParser = itemsParser;
+		this.#canvasView = canvasView;
 		this.#mediaSelectorElement = document.getElementById("mediaSelectorInstance");
 		this.#closeEditMediaDialog = document.getElementById("closeEditMediaDialog");
 		this.#closeDialogButton = document.getElementById("closeDialogButton");
@@ -77,7 +77,7 @@ export class MediaDialog
 		}
 	}
 
-	initInsertEvent(MyCanvasView)
+	initInsertEvent()
 	{
 		this.#addMedia.style.display = "inline";
 		this.#applyMedia.style.display = "none";
@@ -90,7 +90,7 @@ export class MediaDialog
 			selectedMediaList.forEach(({ id, src }, i) => {
 				fabric.Image.fromURL(src.replace("thumbs", "originals"), (img) =>
 				{
-					let scale = this.#itemsParser.calculateImageScaleByCanvasInPerCent(img.width, img.height);
+					let scale = this.#canvasView.calculateImageScaleByCanvasInPerCent(img.width, img.height);
 					img.scale(scale/150);
 					img.set({
 						mediaId: id,
@@ -98,16 +98,16 @@ export class MediaDialog
 						left: i * 50,
 						top:  i * 50
 					});
-					MyCanvasView.getCanvas().add(img);
+					this.#canvasView.getCanvas().add(img);
 					img.bringToFront();
-					MyCanvasView.getCanvas().renderAll();
+					this.#canvasView.getCanvas().renderAll();
 				},{crossOrigin: 'anonymous'});
 			});
 			this.remove();
 		}, { once: true });
 	}
 
-	initReplaceEvent(target, MyCanvasView)
+	initReplaceEvent(target)
 	{
 		this.#applyMedia.style.display = "inline";
 		this.#addMedia.style.display = "none";
@@ -134,7 +134,7 @@ export class MediaDialog
 				// do not know why both must be set
 				target.scaleToWidth(w, true);
 				target.scaleToHeight(h, true);
-				MyCanvasView.getCanvas().renderAll();
+				this.#canvasView.getCanvas().renderAll();
 				this.remove();
 			},{crossOrigin: 'anonymous'});
 		}, { once: true });
