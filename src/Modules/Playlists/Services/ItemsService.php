@@ -233,7 +233,7 @@ class ItemsService extends AbstractBaseService
 	{
 		$saveData = [strip_tags($fieldName) => strip_tags((string)$fieldValue)];
 
-		return $this->itemsRepository->update($itemId, $saveData);
+		return $this->update($itemId, $saveData);
 	}
 
 	public function update(int $itemId, array $saveData): int
