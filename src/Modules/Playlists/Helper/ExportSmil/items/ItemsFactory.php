@@ -57,7 +57,7 @@ class ItemsFactory
 	{
 		return match ($item['item_type'])
 		{
-			ItemType::MEDIAPOOL->value, ItemType::MEDIA_EXTERN->value => $this->createMedia($item),
+			ItemType::MEDIAPOOL->value, ItemType::TEMPLATE->value, ItemType::MEDIA_EXTERN->value => $this->createMedia($item),
 			ItemType::PLAYLIST->value => new SeqContainer(
 				$this->config,
 				$item,

@@ -27,6 +27,7 @@ use App\Framework\Core\CsrfToken;
 use App\Framework\Core\Sanitizer;
 use App\Framework\Core\Session;
 use App\Framework\Core\Translate\Translator;
+use App\Framework\Media\MimeTypeExtensionMapper;
 use App\Framework\TemplateEngine\AdapterInterface;
 use App\Framework\Utils\Datatable\BuildService;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
@@ -261,6 +262,7 @@ $dependencies[ItemsService::class] = DI\factory(function (ContainerInterface $co
 		$container->get(MediaService::class),
 		$container->get(PlaylistsService::class),
 		$container->get(PlaylistMetricsCalculator::class),
+		$container->get(MimeTypeExtensionMapper::class),
 		$container->get('ModuleLogger')
 	);
 });
@@ -271,7 +273,11 @@ $dependencies[ExportService::class] = DI\factory(function (ContainerInterface $c
 		$container->get(PlaylistsService::class),
 		$container->get(ItemsService::class),
 		new LocalWriter($container->get(Config::class), $container->get('LocalFileSystem')),
-		new PlaylistContent(new ItemsFactory($container->get(Config::class)), $container->get(Config::class)),
+		new PlaylistContent(
+			new ItemsFactory($container->get(Config::class)),
+			$container->get(Config::class),
+			$container->get(MimeTypeExtensionMapper::class),
+		),
 		$container->get('ModuleLogger')
 	);
 });

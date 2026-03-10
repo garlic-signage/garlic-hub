@@ -46,6 +46,8 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Media\DataUrlDecoder;
 use App\Framework\Media\FileInfoWrapper;
 use App\Framework\Media\MimeTypeDetector;
+use App\Framework\Media\MimeTypeExtensionMapper;
+use App\Framework\Media\MimeTypeService;
 use App\Framework\Middleware\FinalRenderMiddleware;
 use App\Framework\TemplateEngine\AdapterInterface;
 use App\Framework\TemplateEngine\MustacheAdapter;
@@ -334,9 +336,21 @@ $dependencies[MimeTypeDetector::class] = DI\factory(function (ContainerInterface
 {
 	return new MimeTypeDetector(new FileInfoWrapper());
 });
+$dependencies[MimeTypeExtensionMapper::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new MimeTypeExtensionMapper();
+});
+$dependencies[MimeTypeService::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new MimeTypeService(
+		$container->get(MimeTypeDetector::class),
+		$container->get(MimeTypeExtensionMapper::class),
+	);
+});
+
 $dependencies[DataUrlDecoder::class] = DI\factory(function (ContainerInterface $container)
 {
-	return new DataUrlDecoder($container->get(MimeTypeDetector::class));
+	return new DataUrlDecoder($container->get(MimeTypeService::class));
 });
 
 

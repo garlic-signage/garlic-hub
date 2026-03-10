@@ -25,6 +25,7 @@ namespace App\Modules\Playlists\Helper\ExportSmil;
 use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Media\MimeTypeExtensionMapper;
 use App\Modules\Playlists\Helper\ExportSmil\items\Base;
 use App\Modules\Playlists\Helper\ExportSmil\items\ItemsFactory;
 use App\Modules\Playlists\Helper\ExportSmil\items\Media;
@@ -41,8 +42,6 @@ use App\Modules\Playlists\Helper\PlaylistMode;
  */
 class PlaylistContent
 {
-	private readonly ItemsFactory $itemsFactory;
-	private readonly Config $config;
 	private string $contentElements;
 	private string $contentPrefetch;
 	private string $contentExclusive;
@@ -54,11 +53,11 @@ class PlaylistContent
 	/** @var array<int,int>|array<empty,empty>  */
 	private array $touchTrigger = [];
 
-	public function __construct(ItemsFactory $itemsFactory, Config $config)
-	{
-		$this->itemsFactory     = $itemsFactory;
-		$this->config           = $config;
-	}
+	public function __construct(private readonly ItemsFactory $itemsFactory,
+								private readonly Config $config,
+								private readonly MimeTypeExtensionMapper $mimeTypeExtensionMapper,
+	)
+	{}
 
 	/**
 	 * @param array<string,mixed> $playlist
@@ -126,14 +125,14 @@ class PlaylistContent
 				case ItemType::PLAYLIST->value:
 					$this->buildPlaylist($item);
 					break;
+				case ItemType::TEMPLATE->value:
+					$this->buildTemplate($item);
+					break;
 /*
 				case ItemType::PLAYLIST_EXTERN->value:
 					$this->buildPlaylistExternal($item);
 					break;
 
-				case ItemType::TEMPLATE->value:
-					$this->buildTemplate($item);
-					break;
 
 				case ItemType::CHANNEL->value:
 					$this->buildChannel($item);
@@ -160,7 +159,7 @@ class PlaylistContent
 		$item = $this->itemsFactory->createItem($itemData);
 		$item->setBelongsToMasterPlaylist($this->playlist['playlist_mode'] === PlaylistMode::MASTER);
 		$item->setTouches($this->touchTrigger);
-		$serverUrl = $this->config->getConfigValue('content_server_url', 'mediapool');
+		$serverUrl = $this->config->getConfigValue('url', 'mediapool', 'content_server');
 
 		$originalPath = $this->config->getConfigValue('originals', 'mediapool', 'directories');
 		$link = $serverUrl.'/'.str_replace('public/', '', $originalPath).'/'.
@@ -200,6 +199,22 @@ class PlaylistContent
 		$this->addContentParts($itemData, $item->getSmilElementTag(), $item->getPrefetchTag(), $item->getExclusive());
 	}
 
+	private function buildTemplate(array $itemData): void
+	{
+		$item = $this->itemsFactory->createItem($itemData);
+		$item->setBelongsToMasterPlaylist($this->playlist['playlist_mode'] === PlaylistMode::MASTER);
+		$item->setTouches($this->touchTrigger);
+		$serverUrl = $this->config->getConfigValue('url', 'mediapool', 'content_server');
+
+		$originalPath = $this->config->getConfigValue('originals', 'playlists', 'directories');
+		$link = $serverUrl.'/'.str_replace('public/', '', $originalPath).'/'.
+			$itemData['item_id'].'.'. $this->mimeTypeExtensionMapper->determineExtension($itemData['mimetype']);
+
+		$item->setLink($link);
+
+		$this->addContentParts($itemData, $item->getSmilElementTag(), $item->getPrefetchTag(), $item->getExclusive());
+	}
+
 /*
 	private function buildPlaylistExternal(array $itemData): void
 	{
@@ -209,14 +224,6 @@ class PlaylistContent
 		$this->addContentParts($itemData, $item->getElementLink(), '', '');
 	}
 
-	private function buildTemplate(array $itemData): void
-	{
-		$item = $this->itemsFactory->createItem($itemData);
-		$item->setBelongsToMasterPlaylist($this->playlist['playlist_mode'] === PlaylistMode::MASTER);
-		$item->setPlaylistPath($this->export_base_path.$this->playlist['playlist_id'].'/'); // do the link to media inside class
-
-		$this->addContentParts($itemData, $item->getSmilElementTag(), $item->getPrefetchTag(), $item->getExclusive());
-	}
 
 	private function buildChannel(array $itemData): void
 	{
@@ -263,6 +270,7 @@ class PlaylistContent
 			case ItemType::MEDIAPOOL->value:
 //			case ItemType::CHANNEL->value:
 			case ItemType::PLAYLIST->value:
+			case ItemType::TEMPLATE->value:
 //			case ItemType::PLAYLIST_EXTERN->value:
 				$this->contentPrefetch .= $prefetch;
 				break;
@@ -273,12 +281,7 @@ class PlaylistContent
 					$this->contentPrefetch .= $prefetch;
 
 				break;
-	/*		case ItemType::TEMPLATE->value:
-				// don't export prefetch on templates, if template is HTML and save_format is HTML (not WGT)
-				if ($item['template_mimetype'] != 'text/html' && $item['website_save_format'] !== 'html')
-					$this->contentPrefetch .= $prefetch;
-				break;
-*/
+
 			// default isn't required as we check in build method for valid ItemTypes and throw an exception
 		}
 

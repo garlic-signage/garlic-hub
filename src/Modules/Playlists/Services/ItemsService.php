@@ -24,6 +24,8 @@ namespace App\Modules\Playlists\Services;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Media\MimeTypeExtensionMapper;
+use App\Framework\Media\MimeTypeService;
 use App\Framework\Services\AbstractBaseService;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\MediaService;
@@ -40,23 +42,16 @@ use Psr\Log\LoggerInterface;
  */
 class ItemsService extends AbstractBaseService
 {
-	private readonly ItemsRepository $itemsRepository;
-	private readonly PlaylistsService $playlistsService;
-	private readonly MediaService $mediaService;
-	private readonly PlaylistMetricsCalculator $playlistMetricsCalculator;
-	private int $itemDuration = 0;
-	private array $extMap = ['svg'  => 'svg', 'svg+xml' => 'svg',	'gif'  => 'jpg', 'jpeg' => 'jpg'];
 
-	public function __construct(ItemsRepository $itemsRepository,
-								MediaService $mediaService,
-								PlaylistsService $playlistsService,
-								PlaylistMetricsCalculator $playlistMetricsCalculator,
-								LoggerInterface $logger)
+	private int $itemDuration = 0;
+
+	public function __construct(private readonly ItemsRepository           $itemsRepository,
+								private readonly MediaService              $mediaService,
+								private readonly PlaylistsService          $playlistsService,
+								private readonly PlaylistMetricsCalculator $playlistMetricsCalculator,
+								private readonly MimeTypeExtensionMapper   $mimeTypeExtensionMapper,
+								LoggerInterface                            $logger)
 	{
-		$this->itemsRepository  = $itemsRepository;
-		$this->playlistsService = $playlistsService;
-		$this->mediaService     = $mediaService;
-		$this->playlistMetricsCalculator = $playlistMetricsCalculator;
 		parent::__construct($logger);
 	}
 
@@ -82,7 +77,10 @@ class ItemsService extends AbstractBaseService
 			$item['conditional']   = $this->sanitize($item['conditional']);
 			$item['properties']    = $this->sanitize($item['properties']);
 			$item['categories']    = $this->sanitize($item['categories']);
-			$item['content_data']  = $this->sanitize($item['content_data']);
+			// Todo: I do mot like this. MAybe widgets should also saved as JSON.
+			if ($item['item_type'] !== ItemType::TEMPLATE->value)
+				$item['content_data']  = $this->sanitize($item['content_data']);
+
 			$item['begin_trigger'] = $this->sanitize($item['begin_trigger']);
 			$item['end_trigger']   = $this->sanitize($item['end_trigger']);
 			$items[] = $item;
@@ -181,7 +179,7 @@ class ItemsService extends AbstractBaseService
 
 					$ext = 'jpg';
 					if (str_starts_with($value['mimetype'], 'image/'))
-						$ext = $this->extractExtensionFromMimeType($value['mimetype']);
+						$ext = $this->mimeTypeExtensionMapper->determineExtension($value['mimetype']);
 
 					$filename = $value['file_resource'];
 					$isSvgWidget = ($value['mimetype'] === 'application/widget' && $value['content_data'] == '');
@@ -202,7 +200,7 @@ class ItemsService extends AbstractBaseService
 					break;
 				case ItemType::TEMPLATE->value:
 					$tmp = $value;
-					$ext = $this->extractExtensionFromMimeType($value['mimetype']);
+					$ext = $this->mimeTypeExtensionMapper->determineExtension($value['mimetype']);
 					$tmp['paths']['thumbnail'] = 'public/var/playlists/items/thumbs/' . $value['item_id'].'.'.$ext;
 					$items[] = $tmp;
 					break;
@@ -417,18 +415,5 @@ class ItemsService extends AbstractBaseService
 			return [];
 
 		return unserialize($value);
-	}
-
-	private function extractExtensionFromMimeType(string $mimeType): string
-	{
-		$s = (string) strrchr($mimeType, '/');
-		$mimeTypePart = substr($s, 1);
-
-		if (array_key_exists($mimeTypePart, $this->extMap))
-			$ext = $this->extMap[$mimeTypePart];
-		else
-			$ext = $mimeTypePart;
-
-		return $ext;
 	}
 }

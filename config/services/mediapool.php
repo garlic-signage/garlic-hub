@@ -26,7 +26,7 @@ use App\Framework\Core\ShellExecutor;
 use App\Framework\Database\NestedSets\Service;
 use App\Framework\Media\Ffmpeg;
 use App\Framework\Media\MediaProperties;
-use App\Framework\Media\MimeTypeDetector;
+use App\Framework\Media\MimeTypeService;
 use App\Modules\Mediapool\Controller\MediaController;
 use App\Modules\Mediapool\Controller\NodesController;
 use App\Modules\Mediapool\Controller\ShowController;
@@ -92,7 +92,7 @@ $dependencies[UploadService::class] = DI\factory(function (ContainerInterface $c
 		$container->get(NodesService::class),
 		new Client(),
 		new FilesRepository($container->get('SqlConnection')),
-		$container->get(MimeTypeDetector::class),
+		$container->get(MimeTypeService::class),
 		$container->get('ModuleLogger')
 	);
 });

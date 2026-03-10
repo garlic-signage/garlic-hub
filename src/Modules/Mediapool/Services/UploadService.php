@@ -23,7 +23,7 @@ namespace App\Modules\Mediapool\Services;
 
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Media\MimeTypeDetector;
+use App\Framework\Media\MimeTypeService;
 use App\Modules\Mediapool\Repositories\FilesRepository;
 use App\Modules\Mediapool\Utils\AbstractMediaHandler;
 use App\Modules\Mediapool\Utils\MediaHandlerFactory;
@@ -49,7 +49,7 @@ readonly class UploadService
 		private NodesService        $nodeService,
 		private Client              $client,
 		private FilesRepository     $mediaRepository,
-		private MimeTypeDetector    $mimeTypeDetector,
+		private MimeTypeService     $mimeTypeDetector,
 		private LoggerInterface     $logger)
 	{
 	}
@@ -163,7 +163,7 @@ readonly class UploadService
 		{
 			$mimetype    = $this->mimeTypeDetector->detectFromFile($mediaHandler->getAbsolutePath($uploadedPath));
 			// extensions can be wrong we get from mimetype
-			$ext         = $this->mimeTypeDetector->determineExtensionByType($mimetype);
+			$ext         = $this->mimeTypeDetector->determineExtensionByMimeType($mimetype);
 			$newFilePath = $mediaHandler->determineNewFilePath($uploadedPath, $fileHash, $ext);
 			$mediaHandler->rename($uploadedPath, $newFilePath);
 			$mediaHandler->validateStoredFile($newFilePath);

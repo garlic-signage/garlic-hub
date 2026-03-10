@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Mediapool\Services;
 
-use App\Framework\Media\MimeTypeDetector;
+use App\Framework\Media\MimeTypeService;
 use App\Modules\Mediapool\Repositories\FilesRepository;
 use App\Modules\Mediapool\Services\NodesService;
 use App\Modules\Mediapool\Services\UploadService;
@@ -47,7 +47,7 @@ class UploadServiceTest extends TestCase
 	private NodesService&MockObject $nodeServiceMock;
 	private Client&MockObject $clientMock;
 	private FilesRepository&MockObject $mediaRepositoryMock;
-	private MimeTypeDetector&MockObject $mimeTypeDetectorMock;
+	private MimeTypeService&MockObject $mimeTypeDetectorMock;
 	private LoggerInterface&MockObject $loggerMock;
 
 	/**
@@ -60,7 +60,7 @@ class UploadServiceTest extends TestCase
 		$this->nodeServiceMock = $this->createMock(NodesService::class);
 		$this->clientMock = $this->createMock(Client::class);
 		$this->mediaRepositoryMock = $this->createMock(FilesRepository::class);
-		$this->mimeTypeDetectorMock = $this->createMock(MimeTypeDetector::class);
+		$this->mimeTypeDetectorMock = $this->createMock(MimeTypeService::class);
 		$this->loggerMock = $this->createMock(LoggerInterface::class);
 
 		$this->uploadService = new UploadService(
