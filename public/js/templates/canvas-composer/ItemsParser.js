@@ -17,9 +17,9 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-export class SvgItemsParser
+export class ItemsParser
 {
-	svg_items = {};
+	#items = {};
 	width     = 0;
 	height    = 0;
 	MyCanvasView  = {};
@@ -27,33 +27,6 @@ export class SvgItemsParser
 	constructor(MyCanvasView)
 	{
 		this.MyCanvasView = MyCanvasView;
-	}
-
-	getParsedSvgItems()
-	{
-		return this.svg_items;
-	}
-
-	getSvgItemsbyId(id)
-	{
-		return this.svg_items[id].item;
-	}
-
-	getSvgItems()
-	{
-		return this.svg_items;
-	}
-
-	outputTemplate(objects, options)
-	{
-		this.width  = options.width;
-		this.height = options.height;
-		this.MyCanvasView.setCanvasDimensions(options.width, options.height)
-		for (let i = 0; i < objects.length; i++)
-		{
-			this.MyCanvasView.addCanvas(this.svg_items[objects[i].id].object);
-		}
-		this.zoomToViewPort();
 	}
 
 	outputJsonTemplate(width, height)
@@ -93,23 +66,9 @@ export class SvgItemsParser
 			return  p1;
 	}
 
-	createImageFromSVG(item, object)
-	{
-		this.createItem(item, object);
-	}
-
-	createTextFromSVG(item, object)
-	{
-		var textobj = object.toObject();
-		textobj.id = object.id;
-
-		let new_text = new fabric.Textbox(object.text, textobj);
-		this.createItem(item, new_text);
-	}
-
 	createItem(item, object)
 	{
-		this.svg_items[object.id] = {"item": item, "object": object};
+		this.#items[object.id] = {"item": item, "object": object};
 	}
 
 }

@@ -17,10 +17,10 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-export class CanvasDialog
+export class MediaDialog
 {
 	#mediaSelector = {};
-	MySvgItemsParser = {};
+	#itemsParser = {};
 
 	#mediaSelectorElement;
 	#closeEditMediaDialog;
@@ -31,10 +31,10 @@ export class CanvasDialog
 	#applyMedia;
 	#dialogName;
 
-	constructor(mediaSelector, MySvgItemsParser)
+	constructor(mediaSelector, itemsParser)
 	{
 		this.#mediaSelector = mediaSelector;
-		this.MySvgItemsParser = MySvgItemsParser;
+		this.#itemsParser = itemsParser;
 		this.#mediaSelectorElement = document.getElementById("mediaSelectorInstance");
 		this.#closeEditMediaDialog = document.getElementById("closeEditMediaDialog");
 		this.#closeDialogButton = document.getElementById("closeDialogButton");
@@ -90,7 +90,7 @@ export class CanvasDialog
 			selectedMediaList.forEach(({ id, src }, i) => {
 				fabric.Image.fromURL(src.replace("thumbs", "originals"), (img) =>
 				{
-					let scale = this.MySvgItemsParser.calculateImageScaleByCanvasInPerCent(img.width, img.height);
+					let scale = this.#itemsParser.calculateImageScaleByCanvasInPerCent(img.width, img.height);
 					img.scale(scale/150);
 					img.set({
 						mediaId: id,

@@ -21,16 +21,16 @@ export class CanvasEvents
 {
 	MyContextMenu = {};
 	MyCanvasView = {};
-	MyCanvasDialog = {};
+	#mediaDialog = {};
 	MyMediaSelector = {};
 	MyItemProperties = {};
 	is_autoresize = true;
 
-	constructor(MyContextMenu, MyCanvasView, MyCanvasDialog, MyMediaSelector, MyItemProperties)
+	constructor(MyContextMenu, MyCanvasView, mediaDialog, MyMediaSelector, MyItemProperties)
 	{
 		this.MyContextMenu = MyContextMenu;
 		this.MyCanvasView = MyCanvasView;
-		this.MyCanvasDialog = MyCanvasDialog;
+		this.#mediaDialog = mediaDialog;
 		this.MyMediaSelector = MyMediaSelector;
 		this.MyItemProperties = MyItemProperties;
 	}
@@ -67,7 +67,7 @@ export class CanvasEvents
 	{
 		this.MyCanvasView.getCanvas().on('mouse:up', (options) => {
 			this.MyContextMenu.remove();
-			this.MyCanvasDialog.remove();
+			this.#mediaDialog.remove();
 			if (options.button === 1) {
 				// todo implement changing of canvas properties
 				if (options.target == null) {
@@ -138,12 +138,12 @@ export class CanvasEvents
 	initInsertObjects()
 	{
 		this.MyCanvasView.getInsertImage().addEventListener("click", () => {
-			if (this.MyCanvasDialog.isOpen)
+			if (this.#mediaDialog.isOpen)
 				return;
 
-			this.MyCanvasDialog.displayMediaSelector();
-			this.MyCanvasDialog.initCancelEvent();
-			this.MyCanvasDialog.initInsertEvent(this.MyCanvasView);
+			this.#mediaDialog.displayMediaSelector();
+			this.#mediaDialog.initCancelEvent();
+			this.#mediaDialog.initInsertEvent(this.MyCanvasView);
 		});
 
 		this.MyCanvasView.getInsertText().addEventListener("click", () => {

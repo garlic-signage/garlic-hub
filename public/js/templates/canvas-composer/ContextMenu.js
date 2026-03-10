@@ -20,14 +20,14 @@
 export class ContextMenu
 {
 	MyCanvasView = {};
-	MyCanvasDialog = {};
+	#mediaDialog = {};
 	options;
 	context_menu;
 
-	constructor(MyCanvasView, MyCanvasDialog)
+	constructor(MyCanvasView, mediaDialog)
 	{
 		this.MyCanvasView = MyCanvasView;
-		this.MyCanvasDialog = MyCanvasDialog;
+		this.#mediaDialog = mediaDialog;
 	}
 
 	show(options)
@@ -93,9 +93,9 @@ export class ContextMenu
 		change_image.style.display = 'block';
 		change_image.onclick = () => {
 			this.remove();
-			this.MyCanvasDialog.displayMediaSelector();
-			this.MyCanvasDialog.initCancelEvent();
-			this.MyCanvasDialog.initReplaceEvent(this.options.target, this.MyCanvasView);
+			this.#mediaDialog.displayMediaSelector();
+			this.#mediaDialog.initCancelEvent();
+			this.#mediaDialog.initReplaceEvent(this.options.target, this.MyCanvasView);
 		}
 	}
 

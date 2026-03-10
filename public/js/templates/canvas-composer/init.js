@@ -20,10 +20,10 @@
 import {TemplatesService} from "../TemplatesService.js";
 import {FetchClient}      from "../../core/FetchClient.js";
 import {WaitOverlay}      from "../../core/WaitOverlay.js";
-import {CanvasView}       from "./CanvasView.js";
-import {SvgItemsParser}   from "./SvgItemsParser.js";
-import {CanvasDialog}     from "./CanvasDialog.js";
-import {MediaSelector}    from "../../mediapool/selector/MediaSelector.js";
+import {CanvasView}   from "./CanvasView.js";
+import {ItemsParser}   from "./ItemsParser.js";
+import {MediaDialog}   from "./MediaDialog.js";
+import {MediaSelector} from "../../mediapool/selector/MediaSelector.js";
 import {ContextMenu}      from "./ContextMenu.js";
 import {GlobalProperties} from "./ItemProperties/GlobalProperties.js";
 import {GroupProperties}  from "./ItemProperties/GroupProperties.js";
@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", function (event)
 		}
 	), lang);
 	const toggleButtonFactory = new ToggleButtonFactory();
-	let MySvgItemsParser = new SvgItemsParser(canvasView);
+	let itemsParser = new ItemsParser(canvasView);
 	const mediaService = new MediaService(new FetchClient());
 
 	let mediaSelector = new MediaSelector(
@@ -62,8 +62,8 @@ document.addEventListener("DOMContentLoaded", function (event)
 	);
 	mediaSelector.filter = "images";
 
-	let MyCanvasDialog   = new CanvasDialog(mediaSelector, MySvgItemsParser);
-	let MyContextMenu    = new ContextMenu(canvasView, MyCanvasDialog);
+	let mediaDialog   = new MediaDialog(mediaSelector, itemsParser);
+	let MyContextMenu    = new ContextMenu(canvasView, mediaDialog);
 
 	let MyGlobalProperties    = new GlobalProperties(canvasView);
 	let MyGroupProperties     = new GroupProperties(canvasView, toggleButtonFactory);
@@ -71,10 +71,10 @@ document.addEventListener("DOMContentLoaded", function (event)
 	let MyTextProperties      = new TextProperties(canvasView, new FontHandler(FontsList), toggleButtonFactory);
 	let MyItemProperties      = new ItemProperties(MyGlobalProperties, MyGroupProperties, MySelectiveProperties, MyTextProperties);
 
-	let MyCanvasEvents   = new CanvasEvents(MyContextMenu, canvasView, MyCanvasDialog, mediaSelector, MyItemProperties);
+	let MyCanvasEvents   = new CanvasEvents(MyContextMenu, canvasView, mediaDialog, mediaSelector, MyItemProperties);
 
 	const fabricAdapter  = new FabricAdapter(
-		MySvgItemsParser,
+		itemsParser,
 		MyCanvasEvents,
 		new TemplatesService(new FetchClient()),
 		new WaitOverlay(),
@@ -101,7 +101,7 @@ document.addEventListener("DOMContentLoaded", function (event)
 
 	window.onresize = () => {
 		if (MyCanvasEvents.isAutoResize())
-			MySvgItemsParser.zoomToViewPort();
+			itemsParser.zoomToViewPort();
 	}
 
 });

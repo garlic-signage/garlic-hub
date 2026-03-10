@@ -23,8 +23,6 @@ export class CanvasView
 	percent = document.getElementById("percent");
 	slider = document.getElementById("slider");
 	#saveButton = document.getElementById("save_template");
-	insert_text = document.getElementById("insert_text");
-	insert_image = document.getElementById("insert_image");
 	canvas_wrap = document.getElementById("canvas_wrap");
 	insert_circle = document.getElementById("object_add_circle");
 	insert_triangle = document.getElementById("object_add_triangle");
@@ -55,11 +53,6 @@ export class CanvasView
 			this.setCanvasDimensions(this.#image_width.value, this.#image_height.value);
 			this.scaleCanvas();
 		});
-	}
-
-	addCanvas(object)
-	{
-		this.canvas.add(object);
 	}
 
 	getWidth()

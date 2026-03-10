@@ -19,7 +19,7 @@
 
 export class FabricAdapter
 {
-	MySvgItemsParser;
+	#itemsParser;
 	MyCanvasEvents;
 	#templatesService;
 	#bmpDitherFactory;
@@ -30,9 +30,9 @@ export class FabricAdapter
 	#imageQuality = 80;
 	#allowed = ['jpg', 'png', 'webp', 'bmp'];
 
-	constructor(MySvgItemsParser, MyCanvasEvents, templatesService, waitOverlay, bmpDitherFactory)
+	constructor(itemsParser, MyCanvasEvents, templatesService, waitOverlay, bmpDitherFactory)
 	{
-		this.MySvgItemsParser = MySvgItemsParser;
+		this.#itemsParser = itemsParser;
 		this.MyCanvasEvents = MyCanvasEvents;
 		this.#templatesService = templatesService;
 		this.#waitOverlay = waitOverlay;
@@ -52,42 +52,27 @@ export class FabricAdapter
 
 	async loadFromTemplateDataBase(templateId)
 	{
-		this.#waitOverlay.start();
 		this.#templateId = templateId;
-		const jsonResponse = await this.#templatesService.loadTemplateContent(templateId);
-		let content = jsonResponse.content;
-		if (content.length === 0)
-			content = "{\"objects\": [],\"viewport\":{\"width\":1920,\"height\":1080,\"scale\":100}}";
-
-		await this.loadJsonFromString(content);
-
-		this.#waitOverlay.stop();
+		await this.resetFromTemplateDataBase(templateId)
 	}
 
 	async resetFromTemplateDataBase(templateId)
 	{
 		this.#waitOverlay.start();
-		const jsonResponse = await this.#templatesService.loadTemplateContent(templateId);
-		let content = jsonResponse.content;
-		if (content.length === 0)
-			content = "{\"objects\": [],\"viewport\":{\"width\":1920,\"height\":1080,\"scale\":100}}";
 
-		await this.loadJsonFromString(content);
+		const jsonResponse = await this.#templatesService.loadTemplateContent(templateId);
+		await this.loadJsonFromString(jsonResponse.content);
 
 		this.#waitOverlay.stop();
 	}
-
 
 	async loadFromPlaylistItemDataBase(itemId)
 	{
 		this.#waitOverlay.start();
 		this.#itemId = itemId;
-		const jsonResponse = await this.#templatesService.loadPlaylistItemContent(itemId);
-		let content = jsonResponse.content;
-		if (content.length === 0)
-			content = "{\"objects\": [],\"viewport\":{\"width\":1920,\"height\":1080,\"scale\":100}}";
 
-		await this.loadJsonFromString(content);
+		const jsonResponse = await this.#templatesService.loadPlaylistItemContent(itemId);
+		await this.loadJsonFromString(jsonResponse.content);
 
 		this.#waitOverlay.stop();
 	}
@@ -95,6 +80,9 @@ export class FabricAdapter
 
 	async loadJsonFromString(json_canvas)
 	{
+		if (json_canvas.length === 0)
+			json_canvas = "{\"objects\": [],\"viewport\":{\"width\":1920,\"height\":1080,\"scale\":100}}";
+
 		// text is not editable, so we needed i-text
 		json_canvas = json_canvas.replaceAll('"type":"text"', '"type":"textbox"');
 		json_canvas = json_canvas.replaceAll('"type":"i-text"', '"type":"textbox"');
@@ -105,20 +93,20 @@ export class FabricAdapter
 
 		await this.MyCanvasEvents.MyItemProperties.MyTextProperties.preloadUsedFonts();
 
-		this.MySvgItemsParser.MyCanvasView.getCanvas().loadFromJSON(json_canvas, () => {
+		this.#itemsParser.MyCanvasView.getCanvas().loadFromJSON(json_canvas, () => {
 				fabric.util.clearFabricFontCache();
 				fabric.charWidthsCache = {};
-				this.MySvgItemsParser.outputJsonTemplate(j.viewport.width, j.viewport.height);
+				this.#itemsParser.outputJsonTemplate(j.viewport.width, j.viewport.height);
 				this.MyCanvasEvents.initChangeDetectors();
 				this.MyCanvasEvents.initEditEvents();
 				fabric.Canvas.prototype.historyUndo = []
 				fabric.Canvas.prototype.historyRedo = []
-				this.MySvgItemsParser.MyCanvasView.getCanvas()._historySaveAction();
-				this.MySvgItemsParser.MyCanvasView.getCanvas().renderAll();
+				this.#itemsParser.MyCanvasView.getCanvas()._historySaveAction();
+				this.#itemsParser.MyCanvasView.getCanvas().renderAll();
 			},
 			(item, object) => {
 				(item, object) => {
-					this.MySvgItemsParser.createItem(item, object);
+					this.#itemsParser.createItem(item, object);
 				}
 			});
 	}
@@ -135,7 +123,7 @@ export class FabricAdapter
 
 		const image = await this.#createImage(save.canvas);
 
-		this.MySvgItemsParser.MyCanvasView.scaleCanvas();
+		this.#itemsParser.MyCanvasView.scaleCanvas();
 
 		try
 		{
@@ -164,8 +152,7 @@ export class FabricAdapter
 				backgroundColor: "#ffffff"
 			});
 			const bmp = this.#bmpDitherFactory.create();
-			const ret =  await bmp.convert(base64DataUrl);
-			return ret;
+			return await bmp.convert(base64DataUrl);
 		}
 
 		const backgroundColor = ['png', 'webp'].includes(format) ? null : '#ffffff';
@@ -187,7 +174,7 @@ export class FabricAdapter
 		canvas.setHeight(this.MySvgItemsParser.height);
 
 		let save = canvas.toJSON(["mediaId", "fileName"]);
-		save['viewport'] = { 'width': this.MySvgItemsParser.width, 'height': this.MySvgItemsParser.height, 'scale': 100 };
+		save['viewport'] = { 'width': canvas.getWidth(), 'height': canvas.getHeight(), 'scale': 100 };
 
 		return {"canvas": canvas, "content": JSON.stringify(save)};
 	}

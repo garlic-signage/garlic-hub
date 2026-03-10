@@ -18,8 +18,8 @@
 */
 'use strict';
 
-export class Spectra6Dither {
-
+export class Spectra6Dither
+{
 	// Official Spectra 6 palette
 	static PALETTE = [
 		[0,   0,   0  ], // black
