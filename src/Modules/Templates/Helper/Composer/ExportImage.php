@@ -81,9 +81,9 @@ class ExportImage
 		}
 	}
 
-	public function getDecodedDataUrlFile(): DecodedDataUrlFile
+	public function getMimeType(): string
 	{
-		return $this->decodedDataUrlFile;
+		return $this->decodedDataUrlFile->mimeType;
 	}
 
 	public function getErrorText(): string

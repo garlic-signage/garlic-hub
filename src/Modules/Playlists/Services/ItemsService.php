@@ -231,6 +231,13 @@ class ItemsService extends AbstractBaseService
 	 */
 	public function updateField(mixed $itemId, string $fieldName, string|int $fieldValue): int
 	{
+		$saveData = [strip_tags($fieldName) => strip_tags((string)$fieldValue)];
+
+		return $this->itemsRepository->update($itemId, $saveData);
+	}
+
+	public function update(int $itemId, array $saveData): int
+	{
 		$this->playlistsService->setUID($this->UID);
 		$item = $this->itemsRepository->findFirstById($itemId);
 		if ($item === [])
@@ -238,10 +245,9 @@ class ItemsService extends AbstractBaseService
 
 		$this->playlistsService->loadPureById($item['playlist_id']); // will check for rights
 
-		$saveData = [strip_tags($fieldName) => strip_tags((string)$fieldValue)];
-
 		return $this->itemsRepository->update($itemId, $saveData);
 	}
+
 
 	/**
 	 * @throws ModuleException
