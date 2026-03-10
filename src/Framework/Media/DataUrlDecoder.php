@@ -28,7 +28,7 @@ use App\Framework\Exceptions\ModuleException;
 class DataUrlDecoder
 {
 	public function __construct(
-		private readonly MimeTypeDetector $mimeTypeDetector
+		private readonly MimeTypeService $mimeTypeService,
 	) {}
 
 	/**
@@ -48,8 +48,8 @@ class DataUrlDecoder
         if ($binary === false)
             throw new FrameworkException('Base64-Data are not valid.');
 
-		$mimeType  = $this->mimeTypeDetector->detectFromStringContent($binary);
-		$extension = $this->mimeTypeDetector->determineExtensionByType($mimeType);
+		$mimeType  = $this->mimeTypeService->detectFromStringContent($binary);
+		$extension = $this->mimeTypeService->determineExtensionByMimeType($mimeType);
 
         return new DecodedDataUrlFile(
             mimeType: $mimeType,
