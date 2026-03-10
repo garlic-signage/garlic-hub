@@ -88,7 +88,7 @@ class Template extends AbstractInsertItem
 				'item_type'     => ItemType::TEMPLATE->value,
 				'file_resource' => $insertId,
 				'content_data'  => $template['content'],
-				'mimetype'      => ''
+				'mimetype'      => 'image/jpeg'
 			];
 			$id = $this->itemsRepository->insert($saveItem);
 			if ($id === 0)
@@ -98,8 +98,8 @@ class Template extends AbstractInsertItem
 			$fileNameItem         = $id.'.jpg';
 			$thumbPathTemplate    = $this->config->getConfigValue('thumbnails', 'templates', 'directories').'/'.$fileNameTemplate;
 			$orginalPathTemplate  = $this->config->getConfigValue('originals', 'templates', 'directories').'/'.$fileNameTemplate;
-			$thumbPathItem        = $this->config->getConfigValue('thumbnails', 'playlists', 'ItemsDirectories').'/'.$fileNameItem;
-			$orginalPathItem      = $this->config->getConfigValue('originals', 'playlists', 'ItemsDirectories').'/'.$fileNameItem;;
+			$thumbPathItem        = $this->config->getConfigValue('thumbnails', 'playlists', 'directories').'/'.$fileNameItem;
+			$orginalPathItem      = $this->config->getConfigValue('originals', 'playlists', 'directories').'/'.$fileNameItem;;
 
 			$this->fileSystem->copy($orginalPathTemplate, $orginalPathItem);
 			$this->fileSystem->copy($thumbPathTemplate, $thumbPathItem);
