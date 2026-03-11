@@ -21,6 +21,8 @@
 export class FontCollector
 {
 	#fontLoader;
+	used_fonts = [];
+
 
 	constructor(fontLoader)
 	{
@@ -83,7 +85,7 @@ export class FontCollector
 			if (obj.type === "textbox")
 				this.collectUsedFontsFromSelection(obj);
 			else if (obj.type === "group" && obj.objects)
-				this.traverseObjects.call(this, obj.objects);
+				this.traverseObjects(obj.objects);
 		}
 	}
 

@@ -54,10 +54,24 @@ document.addEventListener("DOMContentLoaded", function (event)
 		});
 
 	const templateService = new TemplatesService(new FetchClient());
-	const fontLoader = new FontLoader();
-	const fontCollector = new FontCollector();
-	const fabricWrapper = new FabricWrapper(fabricCanvas);
-	const loadService = new LoadService(fabricCanvas);
+	const fontLoader      = new FontLoader(FontsList);
+	const fontCollector   = new FontCollector(fontLoader);
+	const fabricWrapper   = new FabricWrapper(fabricCanvas);
+	const waitOverlay     = new WaitOverlay();
+	const loadService     = new LoadService(fabricWrapper, templateService, fontCollector, waitOverlay);
+
+	const templateId = document.getElementById("template_id");
+	const itemId     = document.getElementById("item_id");
+	let redirectUrl  = "/templates";
+	if (itemId !== null)
+	{
+		loadService.loadFromPlaylistItemDataBase(itemId.value);
+		redirectUrl = "/playlists/compose/" + document.getElementById("playlist_id").value;
+	}
+	else
+		loadService.loadFromTemplateDataBase(templateId.value);
+
+
 
 	const composerView     = new ComposerView(lang);
 

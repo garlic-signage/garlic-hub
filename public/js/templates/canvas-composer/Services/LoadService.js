@@ -59,7 +59,7 @@ export class LoadService
 			jsonContent = "{\"objects\": [],\"viewport\":{\"width\":1920,\"height\":1080,\"scale\":100}}";
 
 		let j = JSON.parse(jsonContent);
-		this.#fontCollector.traverseObjects.call(this, j.objects);
+		this.#fontCollector.traverseObjects(j.objects);
 		console.log("Collected all fonts");
 
 		await this.#fontCollector.preloadUsedFonts();
