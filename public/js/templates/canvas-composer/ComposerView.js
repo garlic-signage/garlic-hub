@@ -38,8 +38,6 @@ export class ComposerView  extends EventTarget
 	#insertOctagon = document.getElementById("object_add_octagon");
 	#undo = document.getElementById("undo");
 	#redo = document.getElementById("redo");
-	#resolutionWidth = document.getElementById("image_width");
-	#resolutionHeight = document.getElementById("image_height");
 	#exportFormat = document.getElementById("export_format");
 	#exportQuality = document.getElementById("export_quality");
 	#textProperties = document.getElementById("text_properties");
@@ -75,17 +73,6 @@ export class ComposerView  extends EventTarget
 
 	#initEventListeners()
 	{
-		// Slider and percent
-		this.#slider?.addEventListener('input', () =>
-		{
-			this.dispatchEvent(new CustomEvent('sliderChanged', {detail: {value: this.#slider.value}}));
-		});
-
-		this.#percent?.addEventListener('input', () =>
-		{
-			this.dispatchEvent(new CustomEvent('percentChanged', {detail: {value: this.#percent.value}}));
-		});
-
 		// Buttons
 		this.#saveButton?.addEventListener('click', () =>
 		{
@@ -144,16 +131,6 @@ export class ComposerView  extends EventTarget
 			this.dispatchEvent(new CustomEvent('redoChanged', {detail: {}}));
 		});
 
-		// Resolution
-		this.#resolutionWidth?.addEventListener('input', () =>
-		{
-			this.dispatchEvent(new CustomEvent('resolutionWidthChanged', {detail: {value: this.#resolutionWidth.value}}));
-		});
-
-		this.#resolutionHeight?.addEventListener('input', () =>
-		{
-			this.dispatchEvent(new CustomEvent('resolutionHeightChanged', {detail: {value: this.#resolutionHeight.value}}));
-		});
 
 		// Export
 		this.#exportFormat?.addEventListener('change', () =>

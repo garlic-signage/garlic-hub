@@ -43,6 +43,16 @@ export class FabricWrapper extends EventTarget
 		this.#hasChanged = true;
 	}
 
+	getWidth()
+	{
+		return this.#fabricCanvas.getWidth();
+	}
+
+	getHeight()
+	{
+		return this.#fabricCanvas.getHeight();
+	}
+
 	get hasChanged()
 	{
 		return this.#hasChanged;
@@ -105,7 +115,7 @@ export class FabricWrapper extends EventTarget
 		return this.#fabricCanvas.getActiveObject();
 	}
 
-	zoom(factor)
+	setZoom(factor)
 	{
 		this.#fabricCanvas.setZoom(factor);
 	}

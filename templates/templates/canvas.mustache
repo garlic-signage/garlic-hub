@@ -331,14 +331,13 @@
         <ul class="action_group">
            <li>
                 <label>
-                    <input type="number" id="image_width" value="1920" step="1" min="0" style="width:80px;" title="{{{LANG_RESOLUTION}}}"> x
-                    <input type="number" id="image_height" value="1080" step="1" min="0" style="width:80px;" title="{{{LANG_RESOLUTION}}}">
+                    <input type="number" id="imageWidth" value="1920" step="1" min="0" style="width:80px;" title="{{{LANG_RESOLUTION}}}"> x
+                    <input type="number" id="imageHeight" value="1080" step="1" min="0" style="width:80px;" title="{{{LANG_RESOLUTION}}}">
                 </label>
             </li>
-
             <li style="display: flex; justify-content: center; gap:5px; align-items:center;">
-                <input style="width:120px;" type="range" min="20" max="500" value="100" step="5" id="slider" title="{{{LANG_ZOOM}}}">
-                <span id="percent"></span>
+                <input style="width:120px;" type="range" min="20" max="500" value="100" step="5" id="zoomSlider" title="{{{LANG_ZOOM}}}">
+                <span id="zoomPercent"></span>
             </li>
 			{{#save_formats}}
 			<li>

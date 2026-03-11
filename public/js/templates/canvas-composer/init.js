@@ -42,10 +42,12 @@ import {FabricWrapper}    from "./Services/FabricWrapper.js";
 import {ComposerView}     from "./ComposerView.js";
 import {LoadService}         from "./Services/LoadService.js";
 import {FontCollector}       from "./Fonts/FontCollector.js";
+import {ViewportView}        from "./View/ViewportView.js";
+import {ViewportService}     from "./Services/ViewportService.js";
+import {ViewportController} from "./Controller/ViewportController.js";
 
-document.addEventListener("DOMContentLoaded", function (event)
+document.addEventListener("DOMContentLoaded", async function ()
 {
-
 	const fabricCanvas = new fabric.Canvas('canvas',
 		{
 			stopContextMenu: true,
@@ -65,13 +67,17 @@ document.addEventListener("DOMContentLoaded", function (event)
 	let redirectUrl  = "/templates";
 	if (itemId !== null)
 	{
-		loadService.loadFromPlaylistItemDataBase(itemId.value);
+		await loadService.loadFromPlaylistItemDataBase(itemId.value);
 		redirectUrl = "/playlists/compose/" + document.getElementById("playlist_id").value;
 	}
 	else
-		loadService.loadFromTemplateDataBase(templateId.value);
+		await loadService.loadFromTemplateDataBase(templateId.value);
 
-	const composerView     = new ComposerView(lang);
+	// control viewport
+	const viewportView       = new ViewportView();
+	const viewportService    = new ViewportService(fabricWrapper);
+	const viewPortController = new ViewportController(viewportView, viewportService);
+	viewPortController.initializeCanvas();
 
 	/*	const canvasView     = new CanvasView(fabricCanvas, lang);
 		const toggleButtonFactory = new ToggleButtonFactory();
