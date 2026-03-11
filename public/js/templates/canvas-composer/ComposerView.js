@@ -18,13 +18,17 @@
 */
 'use strict';
 
+/**
+ * Collect all UI Elements, create listener which emit custom signals
+ * for use in Controller
+ */
 export class ComposerView  extends EventTarget
 {
 	#percent = document.getElementById("percent");
 	#slider = document.getElementById("slider");
 	#saveButton = document.getElementById("save_template");
-	#resetButton = document.getElementById("save_template");
-	#closeButton = document.getElementById("save_template");
+	#resetButton = document.getElementById("reset_template");
+	#closeButton = document.getElementById("close_template");
 	#canvasWrap = document.getElementById("canvas_wrap");
 	#insertCircle = document.getElementById("object_add_circle");
 	#insertTriangle = document.getElementById("object_add_triangle");
@@ -36,14 +40,216 @@ export class ComposerView  extends EventTarget
 	#redo = document.getElementById("redo");
 	#resolutionWidth = document.getElementById("image_width");
 	#resolutionHeight = document.getElementById("image_height");
-	#exportFormat = document.getElementById("image_width");
-	#exportQuality = document.getElementById("image_height");
+	#exportFormat = document.getElementById("export_format");
+	#exportQuality = document.getElementById("export_quality");
+	#textProperties = document.getElementById("text_properties");
+	#fontFamily = document.getElementById("font_family")
+	#positionLeft   = document.getElementById("object_align_left")
+	#positionCenter = document.getElementById("object_align_center")
+	#positionRight  = document.getElementById("object_align_right")
+	#positionTop    = document.getElementById("object_align_top")
+	#positionMiddle = document.getElementById("object_align_middle")
+	#positionBottom = document.getElementById("object_align_bottom")
+	#objectOpacity  = document.getElementById("object_opacity")
+	#strokeColor    = document.getElementById("stroke_color")
+	#strokeWidth    = document.getElementById("stroke_width")
+	#fillColor    = document.getElementById("fill_color");
+	#textAlign = document.getElementById("text_align");
+	#textBold = document.getElementById("text_bold");
+	#textItalic = document.getElementById("text_italic");
+	#textUnderline = document.getElementById("text_underline");
+	#group = document.getElementById("object_group");
 	#lang;
 
 	constructor(lang)
 	{
 		super();
 		this.#lang = lang;
+		this.#initEventListeners();
+	}
+
+	getLangByKey(key)
+	{
+		return this.#lang[key];
+	}
+
+	#initEventListeners()
+	{
+		// Slider and percent
+		this.#slider?.addEventListener('input', () =>
+		{
+			this.dispatchEvent(new CustomEvent('sliderChanged', {detail: {value: this.#slider.value}}));
+		});
+
+		this.#percent?.addEventListener('input', () =>
+		{
+			this.dispatchEvent(new CustomEvent('percentChanged', {detail: {value: this.#percent.value}}));
+		});
+
+		// Buttons
+		this.#saveButton?.addEventListener('click', () =>
+		{
+			this.dispatchEvent(new CustomEvent('saveButtonClicked', {detail: {}}));
+		});
+
+		this.#resetButton?.addEventListener('click', () =>
+		{
+			this.dispatchEvent(new CustomEvent('resetButtonClicked', {detail: {}}));
+		});
+
+		this.#closeButton?.addEventListener('click', () =>
+		{
+			this.dispatchEvent(new CustomEvent('closeButtonClicked', {detail: {}}));
+		});
+
+		// Insert shapes
+		this.#insertCircle?.addEventListener('click', () =>
+		{
+			this.dispatchEvent(new CustomEvent('insertCircleChanged', {detail: {}}));
+		});
+
+		this.#insertTriangle?.addEventListener('click', () =>
+		{
+			this.dispatchEvent(new CustomEvent('insertTriangleChanged', {detail: {}}));
+		});
+
+		this.#insertRectangle?.addEventListener('click', () =>
+		{
+			this.dispatchEvent(new CustomEvent('insertRectangleChanged', {detail: {}}));
+		});
+
+		this.#insertPolygon?.addEventListener('click', () =>
+		{
+			this.dispatchEvent(new CustomEvent('insertPolygonChanged', {detail: {}}));
+		});
+
+		this.#insertHexagon?.addEventListener('click', () =>
+		{
+			this.dispatchEvent(new CustomEvent('insertHexagonChanged', {detail: {}}));
+		});
+
+		this.#insertOctagon?.addEventListener('click', () =>
+		{
+			this.dispatchEvent(new CustomEvent('insertOctagonChanged', {detail: {}}));
+		});
+
+		// Undo/Redo
+		this.#undo?.addEventListener('click', () =>
+		{
+			this.dispatchEvent(new CustomEvent('undoChanged', {detail: {}}));
+		});
+
+		this.#redo?.addEventListener('click', () =>
+		{
+			this.dispatchEvent(new CustomEvent('redoChanged', {detail: {}}));
+		});
+
+		// Resolution
+		this.#resolutionWidth?.addEventListener('input', () =>
+		{
+			this.dispatchEvent(new CustomEvent('resolutionWidthChanged', {detail: {value: this.#resolutionWidth.value}}));
+		});
+
+		this.#resolutionHeight?.addEventListener('input', () =>
+		{
+			this.dispatchEvent(new CustomEvent('resolutionHeightChanged', {detail: {value: this.#resolutionHeight.value}}));
+		});
+
+		// Export
+		this.#exportFormat?.addEventListener('change', () =>
+		{
+			this.dispatchEvent(new CustomEvent('exportFormatChanged', {detail: {value: this.#exportFormat.value}}));
+		});
+
+		this.#exportQuality?.addEventListener('input', () =>
+		{
+			this.dispatchEvent(new CustomEvent('exportQualityChanged', {detail: {value: this.#exportQuality.value}}));
+		});
+
+		// Font
+		this.#fontFamily?.addEventListener('change', () =>
+		{
+			this.dispatchEvent(new CustomEvent('fontFamilyChanged', {detail: {value: this.#fontFamily.value}}));
+		});
+
+		// Position alignment
+		this.#positionLeft?.addEventListener('click', () =>
+		{
+			this.dispatchEvent(new CustomEvent('positionLeftChanged', {detail: {}}));
+		});
+
+		this.#positionCenter?.addEventListener('click', () =>
+		{
+			this.dispatchEvent(new CustomEvent('positionCenterChanged', {detail: {}}));
+		});
+
+		this.#positionRight?.addEventListener('click', () =>
+		{
+			this.dispatchEvent(new CustomEvent('positionRightChanged', {detail: {}}));
+		});
+
+		this.#positionTop?.addEventListener('click', () =>
+		{
+			this.dispatchEvent(new CustomEvent('positionTopChanged', {detail: {}}));
+		});
+
+		this.#positionMiddle?.addEventListener('click', () =>
+		{
+			this.dispatchEvent(new CustomEvent('positionMiddleChanged', {detail: {}}));
+		});
+
+		this.#positionBottom?.addEventListener('click', () =>
+		{
+			this.dispatchEvent(new CustomEvent('positionBottomChanged', {detail: {}}));
+		});
+
+		// Object properties
+		this.#objectOpacity?.addEventListener('input', () =>
+		{
+			this.dispatchEvent(new CustomEvent('objectOpacityChanged', {detail: {value: this.#objectOpacity.value}}));
+		});
+
+		this.#strokeColor?.addEventListener('input', () =>
+		{
+			this.dispatchEvent(new CustomEvent('strokeColorChanged', {detail: {value: this.#strokeColor.value}}));
+		});
+
+		this.#strokeWidth?.addEventListener('input', () =>
+		{
+			this.dispatchEvent(new CustomEvent('strokeWidthChanged', {detail: {value: this.#strokeWidth.value}}));
+		});
+
+		this.#fillColor?.addEventListener('input', () =>
+		{
+			this.dispatchEvent(new CustomEvent('fillColorChanged', {detail: {value: this.#fillColor.value}}));
+		});
+
+		// Text properties
+		this.#textAlign?.addEventListener('change', () =>
+		{
+			this.dispatchEvent(new CustomEvent('textAlignChanged', {detail: {value: this.#textAlign.value}}));
+		});
+
+		this.#textBold?.addEventListener('click', () =>
+		{
+			this.dispatchEvent(new CustomEvent('textBoldChanged', {detail: {}}));
+		});
+
+		this.#textItalic?.addEventListener('click', () =>
+		{
+			this.dispatchEvent(new CustomEvent('textItalicChanged', {detail: {}}));
+		});
+
+		this.#textUnderline?.addEventListener('click', () =>
+		{
+			this.dispatchEvent(new CustomEvent('textUnderlineChanged', {detail: {}}));
+		});
+
+		// Group
+		this.#group?.addEventListener('click', () =>
+		{
+			this.dispatchEvent(new CustomEvent('groupChanged', {detail: {}}));
+		});
 	}
 
 }

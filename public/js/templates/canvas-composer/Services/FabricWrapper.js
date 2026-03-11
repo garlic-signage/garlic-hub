@@ -27,6 +27,8 @@ export class FabricWrapper extends EventTarget
 	{
 		super();
 		this.#fabricCanvas = fabricCanvas;
+		this.#initChangeDetectors();
+		this.#initMouseEvents();
 	}
 
 	setWidth(width)
@@ -56,9 +58,26 @@ export class FabricWrapper extends EventTarget
 		this.#hasChanged = false;
 	}
 
+	undo()
+	{
+		this.#fabricCanvas.undo();
+	}
+
+	redo()
+	{
+		this.#fabricCanvas.redo();
+	}
+
+	historySaveAction()
+	{
+		this.#fabricCanvas._historySaveAction();
+	}
+
 	add(object)
 	{
 		this.#fabricCanvas.add(object);
+		this.#fabricCanvas._historySaveAction()
+		this.#fabricCanvas.getCanvas().renderAll();
 	}
 
 	remove(object)
@@ -108,12 +127,14 @@ export class FabricWrapper extends EventTarget
 
 	load(jsonContent)
 	{
-		this.#fabricCanvas.loadFromJSON(jsonContent, () => {
-			fabric.clearFabricFontCache();
-			fabric.charWidthsCache = {};
-			fabric.Canvas.prototype.historyUndo = []
-			fabric.Canvas.prototype.historyRedo = []
-			this.dispatchEvent(new CustomEvent("loadCompleted"));
+		return new Promise((resolve) => {
+			this.#fabricCanvas.loadFromJSON(jsonContent, () => {
+				fabric.util.clearFabricFontCache();
+				fabric.charWidthsCache = {};
+				fabric.Canvas.prototype.historyUndo = [];
+				fabric.Canvas.prototype.historyRedo = [];
+				resolve();
+			});
 		});
 	}
 

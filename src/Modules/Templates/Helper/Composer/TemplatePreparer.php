@@ -125,8 +125,8 @@ class TemplatePreparer
 				],
 				'footer_scripts' => [
 					'/js/external/fabric.min.js',
-					'/js/templates/canvas-composer/fonts_preview.js',
-					'/js/templates/canvas-composer/fontfaceobserver.js',
+					'/js/templates/canvas-composer/Fonts/fonts_preview.js',
+					'/js/templates/canvas-composer/Fonts/fontfaceobserver.js',
 					'/js/templates/canvas-composer/UndoRedo.js'
 				],
 				'footer_modules'   => ['/js/templates/canvas-composer/init.js']
