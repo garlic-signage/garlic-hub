@@ -33,6 +33,13 @@ export class LoadService
 		this.#waitOverlay      = waitOverlay;
 	}
 
+
+	async resetFromTemplateDataBase(templateId)
+	{
+		this.#fabricWrapper.clear();
+		await this.loadFromTemplateDataBase(templateId);
+	}
+
 	async loadFromTemplateDataBase(templateId)
 	{
 		this.#waitOverlay.start();

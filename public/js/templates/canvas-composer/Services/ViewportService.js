@@ -24,6 +24,17 @@ export class ViewportService
 	#width;
 	#height;
 
+
+	get width()
+	{
+		return this.#width;
+	}
+
+	get height()
+	{
+		return this.#height;
+	}
+
 	constructor(fabricWrapper)
 	{
 		this.#fabricWrapper = fabricWrapper;

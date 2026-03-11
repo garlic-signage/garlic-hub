@@ -26,9 +26,6 @@ export class ComposerView  extends EventTarget
 {
 	#percent = document.getElementById("percent");
 	#slider = document.getElementById("slider");
-	#saveButton = document.getElementById("save_template");
-	#resetButton = document.getElementById("reset_template");
-	#closeButton = document.getElementById("close_template");
 	#canvasWrap = document.getElementById("canvas_wrap");
 	#insertCircle = document.getElementById("object_add_circle");
 	#insertTriangle = document.getElementById("object_add_triangle");
@@ -38,8 +35,6 @@ export class ComposerView  extends EventTarget
 	#insertOctagon = document.getElementById("object_add_octagon");
 	#undo = document.getElementById("undo");
 	#redo = document.getElementById("redo");
-	#exportFormat = document.getElementById("export_format");
-	#exportQuality = document.getElementById("export_quality");
 	#textProperties = document.getElementById("text_properties");
 	#fontFamily = document.getElementById("font_family")
 	#positionLeft   = document.getElementById("object_align_left")
@@ -74,20 +69,6 @@ export class ComposerView  extends EventTarget
 	#initEventListeners()
 	{
 		// Buttons
-		this.#saveButton?.addEventListener('click', () =>
-		{
-			this.dispatchEvent(new CustomEvent('saveButtonClicked', {detail: {}}));
-		});
-
-		this.#resetButton?.addEventListener('click', () =>
-		{
-			this.dispatchEvent(new CustomEvent('resetButtonClicked', {detail: {}}));
-		});
-
-		this.#closeButton?.addEventListener('click', () =>
-		{
-			this.dispatchEvent(new CustomEvent('closeButtonClicked', {detail: {}}));
-		});
 
 		// Insert shapes
 		this.#insertCircle?.addEventListener('click', () =>
@@ -132,16 +113,6 @@ export class ComposerView  extends EventTarget
 		});
 
 
-		// Export
-		this.#exportFormat?.addEventListener('change', () =>
-		{
-			this.dispatchEvent(new CustomEvent('exportFormatChanged', {detail: {value: this.#exportFormat.value}}));
-		});
-
-		this.#exportQuality?.addEventListener('input', () =>
-		{
-			this.dispatchEvent(new CustomEvent('exportQualityChanged', {detail: {value: this.#exportQuality.value}}));
-		});
 
 		// Font
 		this.#fontFamily?.addEventListener('change', () =>

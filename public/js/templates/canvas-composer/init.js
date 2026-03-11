@@ -45,6 +45,9 @@ import {FontCollector}       from "./Fonts/FontCollector.js";
 import {ViewportView}        from "./View/ViewportView.js";
 import {ViewportService}     from "./Services/ViewportService.js";
 import {ViewportController} from "./Controller/ViewportController.js";
+import {SaveView} from "./View/SaveView.js";
+import {SaveController} from "./Controller/SaveController.js";
+import {SaveService} from "./Services/SaveService.js";
 
 document.addEventListener("DOMContentLoaded", async function ()
 {
@@ -55,6 +58,7 @@ document.addEventListener("DOMContentLoaded", async function ()
 			preserveObjectStacking: true
 		});
 
+	const composerContext = new ComposerContext();
 	const templateService = new TemplatesService(new FetchClient());
 	const fontLoader      = new FontLoader(FontsList);
 	const fontCollector   = new FontCollector(fontLoader);
@@ -62,10 +66,8 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const waitOverlay     = new WaitOverlay();
 	const loadService     = new LoadService(fabricWrapper, templateService, fontCollector, waitOverlay);
 
-	const templateId = document.getElementById("template_id");
-	const itemId     = document.getElementById("item_id");
 	let redirectUrl  = "/templates";
-	if (itemId !== null)
+	if (composerContext.itemId !== null)
 	{
 		await loadService.loadFromPlaylistItemDataBase(itemId.value);
 		redirectUrl = "/playlists/compose/" + document.getElementById("playlist_id").value;
@@ -78,6 +80,12 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const viewportService    = new ViewportService(fabricWrapper);
 	const viewPortController = new ViewportController(viewportView, viewportService);
 	viewPortController.initializeCanvas();
+
+	// control save, reset, close and export images
+	const saveView         = new SaveView();
+	const bmpDitherFactory = new BmpDitherFactory();
+	const saveService      = new SaveService(fabricWrapper, templateService, bmpDitherFactory, waitOverlay);
+	const saveController   = new SaveController(saveView, saveService)
 
 	/*	const canvasView     = new CanvasView(fabricCanvas, lang);
 		const toggleButtonFactory = new ToggleButtonFactory();

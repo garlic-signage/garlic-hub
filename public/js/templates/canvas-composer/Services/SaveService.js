@@ -24,6 +24,8 @@ export class SaveService
 	#templatesService;
 	#bmpDitherFactory;
 	#waitOverlay;
+	#allowed = ["jpg", "png", "webp", "bmp"];
+	#imageData = {"format": "jpeg", "quality": 80 };
 
 	constructor(fabricWrapper, templatesService, bmpDitherFactory, waitOverlay)
 	{
@@ -33,27 +35,37 @@ export class SaveService
 		this.#waitOverlay      = waitOverlay;
 	}
 
-	async save(canvas)
+	hasChanged()
+	{
+		return this.#fabricWrapper.hasChanged;
+	}
+
+	validateImageData(format, quality)
+	{
+		if (quality < 1 || quality > 100)
+			quality = 80;
+
+		if (!this.#allowed.includes(format))
+			format = "jpg";
+
+		if (format === 'jpg')
+			format = 'jpeg';
+
+		this.#imageData = {"format": format, "quality": quality };
+	}
+
+	async save(originalWidth, originalHeight, isPlaylist, id)
 	{
 		this.#waitOverlay.start();
-
-		if (!this.#allowed.includes(this.#imageFormat))
-			this.#imageFormat = "jpg";
-		if (this.#imageQuality < 1 || this.#imageQuality > 100)
-			this.#imageQuality = 80;
-
-		const save = this.#prepareCanvasForSave(canvas);
-
-		const image = await this.#createImage(save.canvas);
-
-		this.#canvasView.scaleCanvas();
+		const save = this.#prepareCanvasForSave(originalWidth, originalHeight);
+		const image = await this.#createImage();
 
 		try
 		{
-			if (this.#itemId > 0) // only when in playlist
-				await this.#templatesService.savePlaylistItemContent(this.#itemId, save.content, image);
+			if (isPlaylist) // only when in playlist
+				await this.#templatesService.savePlaylistItemContent(id, save.content, image);
 			else
-				await this.#templatesService.saveTemplateContent(this.#templateId, save.content, image);
+				await this.#templatesService.saveTemplateContent(id, save.content, image);
 		}
 		catch(e)
 		{
@@ -62,44 +74,36 @@ export class SaveService
 		this.#waitOverlay.stop();
 	}
 
-	async #createImage(canvas)
+	async #createImage()
 	{
-		let format = this.#imageFormat;
-		if (format === 'jpg')
-			format = 'jpeg';
-		if (format === 'bmp')
+		if (this.#imageData.format === 'bmp')
 		{
-			const base64DataUrl = canvas.toDataURL({
-				format: 'jpeg',
-				quality: 100,
-				backgroundColor: "#ffffff"
-			});
+			const base64DataUrl = this.#fabricWrapper.toBase64Image('jpeg', 100, "#ffffff");
 			const bmp = this.#bmpDitherFactory.create();
 			return await bmp.convert(base64DataUrl);
 		}
 
-		const backgroundColor = ['png', 'webp'].includes(format) ? null : '#ffffff';
-		const quality = this.#imageQuality / 100;
+		const backgroundColor = ['png', 'webp'].includes(this.#imageData.format) ? null : '#ffffff';
 
-		return canvas.toDataURL({
-			format: format,
-			quality: quality,
-			backgroundColor: backgroundColor
-		});
+		return this.#fabricWrapper.toBase64Image(
+			this.#imageData.format,
+			this.#imageData.quality / 100,
+			backgroundColor
+		);
 	}
 
-	#prepareCanvasForSave(canvas)
+	#prepareCanvasForSave(originalWidth, originalHeight)
 	{
 		// as coping an object in JS is ridiculous complicated we need to set Zoom to 100 and then revert it to original values
 		// change Zoom to 100% otherwise current zoom factor will used
-		canvas.setZoom(1);
-		canvas.setWidth(this.#canvasView.width)
-		canvas.setHeight(this.#canvasView.height);
+		this.#fabricWrapper.setZoom(1);
+		this.#fabricWrapper.setWidth(originalWidth)
+		this.#fabricWrapper.setHeight(originalHeight);
 
-		let save = canvas.toJSON(["mediaId", "fileName"]);
-		save["viewport"] = { "width": this.#canvasView.width, "height": this.#canvasView.height, "scale": 100 };
+		let save = this.#fabricWrapper.toJSON(["mediaId", "fileName"]);
+		save["viewport"] = { "width": originalWidth, "height": originalHeight, "scale": 100 };
 
-		return {"canvas": canvas, "content": JSON.stringify(save)};
+		return {"canvas": this.#fabricWrapper, "content": JSON.stringify(save)};
 	}
 
 }

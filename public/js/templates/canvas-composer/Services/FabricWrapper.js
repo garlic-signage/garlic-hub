@@ -148,10 +148,10 @@ export class FabricWrapper extends EventTarget
 		});
 	}
 
-	toBase64Image(mimeType, quality, backgroundColor)
+	toBase64Image(format, quality, backgroundColor)
 	{
 		return this.#fabricCanvas.toDataURL({
-			format: mimeType.split('/')[1],
+			format: format,
 			quality: quality,
 			backgroundColor: backgroundColor
 		});
