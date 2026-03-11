@@ -40,24 +40,22 @@ export class ViewportService
 		this.#width = width;
 		this.#height = height;
 
-		this.setWidth(width);
-		this.setHeight(height);
+		this.#fabricWrapper.setWidth(width);
+		this.#fabricWrapper.setHeight(height);
 	}
 
 	scaleCanvas(zoom)
 	{
-		this.setZoom(zoom / 100);
-		this.setWidth(Math.floor(this.#width / 100 * zoom))
-		this.setHeight(Math.floor(this.#height / 100 * zoom));
+		this.#fabricWrapper.setZoom(zoom / 100);
+		this.#fabricWrapper.setWidth(Math.floor(this.#width / 100 * zoom))
+		this.#fabricWrapper.setHeight(Math.floor(this.#height / 100 * zoom));
 	}
 
 
 	calculateZoomByBrowserViewPort(browserWidth, browserHeight)
 	{
-		let w = document.documentElement.clientWidth - 180;
-		let h = document.documentElement.clientHeight - 180;
-		let p1 = Math.floor((100/this.#width)  * w);
-		let p2 = Math.floor((100/this.#height) * h);
+		let p1 = Math.floor((100/this.#width)  * browserWidth);
+		let p2 = Math.floor((100/this.#height) * browserHeight);
 		if (p1 > p2)
 			return  p2;
 		else
@@ -72,22 +70,6 @@ export class ViewportService
 			return  p2;
 		else
 			return  p1;
-	}
-
-
-	setWidth(width)
-	{
-		this.#fabricWrapper.setWidth(width);
-	}
-
-	setHeight(height)
-	{
-		this.#fabricWrapper.setHeight(height);
-	}
-
-	setZoom(zoom)
-	{
-		this.#fabricWrapper.setZoom(zoom);
 	}
 
 

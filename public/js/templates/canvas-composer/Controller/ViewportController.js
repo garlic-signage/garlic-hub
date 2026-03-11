@@ -35,7 +35,7 @@ export class ViewportController
 				this.#viewportView.getResolutionWidthValue(),
 				this.#viewportView.getResolutionHeightValue()
 			);
-			this.#viewportService.scaleCanvas();
+			this.#viewportService.scaleCanvas(this.#viewportView.getZoomSliderValue());
 
 		});
 
@@ -45,7 +45,7 @@ export class ViewportController
 				this.#viewportView.getResolutionWidthValue(),
 				this.#viewportView.getResolutionHeightValue()
 			);
-			this.#viewportService.scaleCanvas();
+			this.#viewportService.scaleCanvas(this.#viewportView.getZoomSliderValue());
 		});
 
 		this.#viewportView.zoomSlider.addEventListener('input', () =>
