@@ -65,5 +65,9 @@ export class LoadService
 		await this.#fontCollector.preloadUsedFonts();
 
 		await this.#fabricWrapper.load(jsonContent);
+		this.#fabricWrapper.setWidth(j.viewport.width);
+		this.#fabricWrapper.setHeight(j.viewport.height);
+		this.#fabricWrapper.historySaveAction();
+
 	}
 }

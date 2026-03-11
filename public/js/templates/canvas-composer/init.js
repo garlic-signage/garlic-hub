@@ -71,8 +71,6 @@ document.addEventListener("DOMContentLoaded", function (event)
 	else
 		loadService.loadFromTemplateDataBase(templateId.value);
 
-
-
 	const composerView     = new ComposerView(lang);
 
 	/*	const canvasView     = new CanvasView(fabricCanvas, lang);
