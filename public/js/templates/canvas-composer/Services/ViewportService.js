@@ -24,6 +24,11 @@ export class ViewportService
 	#width;
 	#height;
 
+	constructor(fabricWrapper)
+	{
+		this.#fabricWrapper = fabricWrapper;
+
+	}
 
 	get width()
 	{
@@ -35,9 +40,9 @@ export class ViewportService
 		return this.#height;
 	}
 
-	constructor(fabricWrapper)
+	resetChange()
 	{
-		this.#fabricWrapper = fabricWrapper;
+		this.#fabricWrapper.resetChange();
 	}
 
 	initializeFromCanvas()

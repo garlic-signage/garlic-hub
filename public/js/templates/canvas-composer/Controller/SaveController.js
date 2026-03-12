@@ -35,10 +35,10 @@ export class SaveController
 		this.#loadService = loadService;
 		this.#viewportService = viewportService;
 
-		const isPlaylist = this.#composerContext.itemId !== null;
+		const isPlaylist = this.#composerContext.itemId !== 0;
 
 		if (isPlaylist)
-			this.#redirectUrl = "/playlists/compose/" + this.#composerContext.itemId;
+			this.#redirectUrl = "/playlists/compose/" + this.#composerContext.playlistId;
 		else
 			this.#redirectUrl = "/templates/";
 
@@ -66,7 +66,7 @@ export class SaveController
 		});
 		this.#saveView.closeButton.addEventListener('click', () =>
 		{
-			if (this.#saveService.hasChanged() === true && confirm(this.#composerContext.getLangByKey('confirm_close')) === false)
+			if (this.#saveService.hasChanged() && confirm(this.#composerContext.getLangByKey('confirm_close')) === false)
 				return;
 
 			window.location.href = this.#redirectUrl;

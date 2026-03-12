@@ -76,6 +76,8 @@ export class LoadService
 		this.#fabricWrapper.setWidth(j.viewport.width);
 		this.#fabricWrapper.setHeight(j.viewport.height);
 		this.#fabricWrapper.historySaveAction();
+		this.#fabricWrapper.resetChange();
+
 		ComposerEventBus.dispatchEvent(new CustomEvent("canvasUpdated"));
 	}
 }

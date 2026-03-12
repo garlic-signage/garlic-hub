@@ -161,16 +161,16 @@ export class FabricWrapper extends EventTarget
 	{
 		// check if canvas was changed
 		this.#fabricCanvas.on('object:modified', (event) => {
-			this.#hasChanged = true;
+			this.changed();
 		})
 		this.#fabricCanvas.on('text:changed', (event) => {
-			this.#hasChanged = true;
+			this.changed();
 		})
 		this.#fabricCanvas.on('object:added', (event) => {
-			this.#hasChanged = true;
+			this.changed();
 		})
 		this.#fabricCanvas.on('object:removed', (event) => {
-			this.#hasChanged = true;
+			this.changed();
 		})
 	}
 

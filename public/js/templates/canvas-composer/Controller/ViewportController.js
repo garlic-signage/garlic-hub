@@ -58,6 +58,7 @@ export class ViewportController
 		});
 		ComposerEventBus.addEventListener("canvasUpdated", (e) => {
 			this.initializeCanvas();
+			this.#viewportService.resetChange();
 		});
 
 		// we should stop autoresize zoom when user uses zoom manually.
