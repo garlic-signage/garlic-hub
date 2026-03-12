@@ -51,6 +51,10 @@ import {SaveService}     from "./Services/SaveService.js";
 import {ComposerContext} from "./Utils/ComposerContext.js";
 import {HistoryView}     from "./View/HistoryView.js";
 import {HistoryController} from "./Controller/HistoryController.js";
+import {InsertView}          from "./View/InsertView.js";
+import {InsertService}       from "./Services/InsertService.js";
+import {FabricShapeFactory}  from "./Services/FabricShapeFactory.js";
+import {InsertController}    from "./Controller/InsertController.js";
 
 document.addEventListener("DOMContentLoaded", async function ()
 {
@@ -83,6 +87,21 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const historyView = new HistoryView();
 	const historyController = new HistoryController(historyView, fabricWrapper);
 
+	const mediaService = new MediaService(new FetchClient());
+
+	let mediaSelector = new MediaSelector(
+		new WunderbaumWrapper(new TreeViewElements()),
+		mediaService,
+		new MediaSelectorView(new MediaFactory(document.getElementById('mediaTemplate')))
+	);
+	mediaSelector.filter = "images";
+	const mediaDialog = new MediaDialog();
+
+	const insertView         = new InsertView();
+	const fabricShapefactory = new FabricShapeFactory();
+	const insertService      = new InsertService(fabricWrapper, fabricShapefactory);
+	const insertController   = new InsertController(insertView, mediaDialog, insertService);
+
 	if (composerContext.itemId !== 0)
 		await loadService.loadFromPlaylistItemDataBase(composerContext.itemId);
 	else
@@ -91,16 +110,6 @@ document.addEventListener("DOMContentLoaded", async function ()
 
 	/*	const canvasView     = new CanvasView(fabricCanvas, lang);
 		const toggleButtonFactory = new ToggleButtonFactory();
-		const mediaService = new MediaService(new FetchClient());
-
-		let mediaSelector = new MediaSelector(
-			new WunderbaumWrapper(new TreeViewElements()),
-			mediaService,
-			new MediaSelectorView(new MediaFactory(document.getElementById('mediaTemplate')))
-		);
-		mediaSelector.filter = "images";
-
-		let mediaDialog   = new MediaDialog(mediaSelector, canvasView);
 		let MyContextMenu    = new ContextMenu(canvasView, mediaDialog);
 
 		let MyGlobalProperties    = new GlobalProperties(canvasView);

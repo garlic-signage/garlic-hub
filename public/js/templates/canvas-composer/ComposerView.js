@@ -59,38 +59,7 @@ export class ComposerView  extends EventTarget
 
 	#initEventListeners()
 	{
-		// Buttons
 
-		// Insert shapes
-		this.#insertCircle?.addEventListener('click', () =>
-		{
-			this.dispatchEvent(new CustomEvent('insertCircleChanged', {detail: {}}));
-		});
-
-		this.#insertTriangle?.addEventListener('click', () =>
-		{
-			this.dispatchEvent(new CustomEvent('insertTriangleChanged', {detail: {}}));
-		});
-
-		this.#insertRectangle?.addEventListener('click', () =>
-		{
-			this.dispatchEvent(new CustomEvent('insertRectangleChanged', {detail: {}}));
-		});
-
-		this.#insertPolygon?.addEventListener('click', () =>
-		{
-			this.dispatchEvent(new CustomEvent('insertPolygonChanged', {detail: {}}));
-		});
-
-		this.#insertHexagon?.addEventListener('click', () =>
-		{
-			this.dispatchEvent(new CustomEvent('insertHexagonChanged', {detail: {}}));
-		});
-
-		this.#insertOctagon?.addEventListener('click', () =>
-		{
-			this.dispatchEvent(new CustomEvent('insertOctagonChanged', {detail: {}}));
-		});
 
 
 		// Font

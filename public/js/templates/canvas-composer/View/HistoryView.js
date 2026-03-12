@@ -27,11 +27,13 @@ export class HistoryView
 
 	get undo()
 	{
+		// deactivate all properties
 		return this.#undo;
 	}
 
 	get redo()
 	{
+		// deactivate all properties
 		return this.#redo;
 	}
 }
