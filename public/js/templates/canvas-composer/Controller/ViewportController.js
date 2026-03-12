@@ -18,6 +18,8 @@
 */
 'use strict';
 
+import {ComposerEventBus} from "../ComposerEventBus.js";
+
 export class ViewportController
 {
 	#viewportView;
@@ -53,6 +55,9 @@ export class ViewportController
 			this.#isAutoresize = false;
 			this.scalePercent();
 			this.#viewportService.scaleCanvas(this.#viewportView.getZoomSliderValue());
+		});
+		ComposerEventBus.addEventListener("loaded", (e) => {
+			this.initializeCanvas();
 		});
 
 		// we should stop autoresize zoom when user uses zoom manually.

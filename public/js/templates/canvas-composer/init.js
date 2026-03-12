@@ -67,22 +67,23 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const waitOverlay     = new WaitOverlay();
 	const loadService     = new LoadService(fabricWrapper, templateService, fontCollector, waitOverlay);
 
-	if (composerContext.itemId !== 0)
-		await loadService.loadFromPlaylistItemDataBase(composerContext.itemId);
-	else
-		await loadService.loadFromTemplateDataBase(composerContext.templateId);
-
 	// control viewport
 	const viewportView       = new ViewportView();
 	const viewportService    = new ViewportService(fabricWrapper);
 	const viewPortController = new ViewportController(viewportView, viewportService);
-	viewPortController.initializeCanvas();
 
 	// control save, reset, close and export images
 	const saveView         = new SaveView();
 	const bmpDitherFactory = new BmpDitherFactory();
 	const saveService      = new SaveService(fabricWrapper, templateService, bmpDitherFactory, waitOverlay);
-	const saveController   = new SaveController(saveView, saveService)
+	const saveController   = new SaveController(saveView, composerContext, saveService, loadService, viewportService);
+
+
+	if (composerContext.itemId !== 0)
+		await loadService.loadFromPlaylistItemDataBase(composerContext.itemId);
+	else
+		await loadService.loadFromTemplateDataBase(composerContext.templateId);
+
 
 	/*	const canvasView     = new CanvasView(fabricCanvas, lang);
 		const toggleButtonFactory = new ToggleButtonFactory();

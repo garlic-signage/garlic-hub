@@ -57,7 +57,7 @@ export class SaveController
 		{
 			this.#loadService.resetFromTemplateDataBase(this.#composerContext.templateId);
 		});
-		this.#saveView.exportFormat.addEventListener('change', () =>
+		this.#saveView.exportFormat?.addEventListener('change', () =>
 		{
 			if (this.#saveView.getExportFormatValue() === 'bmp')
 				this.#saveView.hideExportQuality();

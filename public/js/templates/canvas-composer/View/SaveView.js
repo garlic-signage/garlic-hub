@@ -20,11 +20,11 @@
 
 export class SaveView
 {
-	#saveButton = document.getElementById("save_template");
-	#exportFormat = document.getElementById("export_format");
-	#exportQuality = document.getElementById("export_quality");
-	#resetButton = document.getElementById("reset_template");
-	#closeButton = document.getElementById("close_template");
+	#saveButton    = document.getElementById("save");
+	#exportFormat  = document.getElementById("exportFormat");
+	#exportQuality = document.getElementById("exportQuality");
+	#resetButton   = document.getElementById("reset");
+	#closeButton   = document.getElementById("close");
 
 	constructor() {}
 

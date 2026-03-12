@@ -18,6 +18,8 @@
 */
 'use strict';
 
+import {ComposerEventBus} from "../ComposerEventBus.js";
+
 export class LoadService
 {
 	#fabricWrapper;
@@ -46,7 +48,6 @@ export class LoadService
 
 		const jsonResponse = await this.#templatesService.loadTemplateContent(templateId);
 		await this.#loadJsonFromString(jsonResponse.content);
-
 		this.#waitOverlay.stop();
 	}
 
@@ -75,6 +76,6 @@ export class LoadService
 		this.#fabricWrapper.setWidth(j.viewport.width);
 		this.#fabricWrapper.setHeight(j.viewport.height);
 		this.#fabricWrapper.historySaveAction();
-
+		ComposerEventBus.dispatchEvent(new CustomEvent("loaded"));
 	}
 }

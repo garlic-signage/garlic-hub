@@ -341,26 +341,26 @@
             </li>
 			{{#save_formats}}
 			<li>
-				<select id="formatSelector" title="{{{LANG_FORMATS}}}">
+				<select id="exportFormat" title="{{{LANG_FORMATS}}}">
 					{{#formats}}
 						<option value="{{{FORMAT}}}">{{{LANG_FORMAT}}}</option>
 					{{/formats}}
 				</select>
             </li>
 			<li>
-				<input type="number" id="imageQuality" min="10" max="100" step="1" value="80" title="{{{LANG_IMAGE_QUALITY}}}"> %
+				<input type="number" id="exportQuality" min="10" max="100" step="1" value="80" title="{{{LANG_IMAGE_QUALITY}}}"> %
             </li>
 			{{/save_formats}}
 			<li>
-                <button id="save_template" title="{{{LANG_SAVE}}}"><i class="bi bi-floppy"></i></button>
+                <button id="save" title="{{{LANG_SAVE}}}"><i class="bi bi-floppy"></i></button>
             </li>
 			{{#reset}}
 			<li>
-				<button id="reset_template" title="{{{LANG_RESET}}}"><i class="bi bi-arrow-repeat"></i></button>
+				<button id="reset" title="{{{LANG_RESET}}}"><i class="bi bi-arrow-repeat"></i></button>
             </li>
 			{{/reset}}
             <li>
-                <button id="close_template_editor" title="{{{LANG_CLOSE}}}"><i class="bi bi-box-arrow-in-right"></i></button>
+                <button id="close" title="{{{LANG_CLOSE}}}"><i class="bi bi-box-arrow-in-right"></i></button>
             </li>
         </ul>
     </li>
