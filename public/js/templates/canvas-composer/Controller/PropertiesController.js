@@ -27,14 +27,14 @@ export class PropertiesController
 	#textPropertiesController;
 	#currentType = ""
 
-	constructor(globalPropertiesController, /*groupPropertiesController, selectivePropertiesController, textPropertiesController*/)
+	constructor(globalPropertiesController, groupPropertiesController /*, selectivePropertiesController, textPropertiesController*/)
 	{
 		this.#globalPropertiesController = globalPropertiesController;
-	/*	this.#groupPropertiesController  = groupPropertiesController;
-		this.#selectivePropertiesController = selectivePropertiesController;
-		this.#textPropertiesController = textPropertiesController;
+		this.#groupPropertiesController  = groupPropertiesController;
+		/*	this.#selectivePropertiesController = selectivePropertiesController;
+			this.#textPropertiesController = textPropertiesController;
 
-	 */
+		 */
 		ComposerEventBus.addEventListener('mouseLeftUp', (e) =>
 		{
 			const object = e.detail.target;
@@ -53,7 +53,7 @@ export class PropertiesController
 		{
 			case "group":
 			case "activeSelection":
-				// this.#groupPropertiesController.activate();
+				 this.#groupPropertiesController.activate(object);
 				break;
 			case "text":
 			case "i-text":
@@ -87,7 +87,7 @@ export class PropertiesController
 	deactivateAllProperties()
 	{
 		this.#globalPropertiesController.deactivate();
-	//	this.#groupPropertiesController.deactivate();
+		this.#groupPropertiesController.deactivate();
 	//	this.#selectivePropertiesController.deactivateAll();
 	//	this.#textPropertiesController.deactivate();
 	}

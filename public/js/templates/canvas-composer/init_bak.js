@@ -31,7 +31,7 @@ import {TextProperties} from "./ItemProperties/TextProperties.js";
 import {ItemProperties} from "./ItemProperties.js";
 import {CanvasEvents}        from "./CanvasEvents.js";
 import {FontLoader}          from "./Fonts/FontLoader.js";
-import {ToggleButtonFactory} from "./ItemProperties/ToggleButtonFactory.js";
+import {ToggleButtonFactory} from "./Utils/ToggleButtonFactory.js";
 import {FabricService}       from "./FabricService.js";
 import {WunderbaumWrapper}   from "../../mediapool/treeview/WunderbaumWrapper.js";
 import {TreeViewElements} from "../../mediapool/treeview/TreeViewElements.js";

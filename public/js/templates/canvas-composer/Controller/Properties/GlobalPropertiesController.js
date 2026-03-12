@@ -40,7 +40,7 @@ export class GlobalPropertiesController
 
 	deactivate()
 	{
-		this.#globalPropertiesView.showGlobalProperties();
+		this.#globalPropertiesView.hideGlobalProperties();
 	}
 
 	#initEventListener()

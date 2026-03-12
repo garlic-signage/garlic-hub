@@ -141,8 +141,14 @@ export class FabricWrapper
 
 	fireObjectModified(object)
 	{
-		this.#fabricCanvas.fire('object:modified', { target: object });
+		this.#fabricCanvas.fire("object:modified", { target: object });
 	}
+
+	fireUpdateSelection(object)
+	{
+		this.#fabricCanvas.fire("selection:updated", { target: object });
+	}
+
 
 	load(jsonContent)
 	{

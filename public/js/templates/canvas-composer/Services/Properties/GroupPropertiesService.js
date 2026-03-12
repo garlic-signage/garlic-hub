@@ -16,37 +16,35 @@
  You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+'use strict';
 
-export class ToggleButton
+export class GroupPropertiesService
 {
-	constructor(domElement)
+	#fabricWrapper;
+
+	constructor(fabricWrapper)
 	{
-		this.el = domElement
+		this.#fabricWrapper = fabricWrapper;
 	}
 
-	update(type, value)
+	toGroup(object)
 	{
-		const children = this.el.children;
-		if (type === 'display')
-		{
-			for (let i = 0; i < children.length; i++)
-			{
-				children[i].style.display = children[i].getAttribute("id") === value ? "block" : "none";
-			}
-		}
-		if (type === "active")
-		{
-			this.el.style.fill = this.el.getAttribute("id") === value ? "#269CC0" : "#000";
-		}
+		object.toGroup()
+		this.#fabricWrapper.fireUpdateSelection(object);
 	}
 
-	getElement()
+	toActiveSelection(object)
 	{
-		return this.el
+		object.toActiveSelection()
+		this.#fabricWrapper.fireUpdateSelection(object);
 	}
 
-	show(value)
+	getActiveObject()
 	{
-		this.el.style.display = value ? "block" : "none";
+		const object = this.#fabricWrapper.getActiveObject();
+		if (!object) throw new Error("No active object");
+		return object;
 	}
+
+
 }

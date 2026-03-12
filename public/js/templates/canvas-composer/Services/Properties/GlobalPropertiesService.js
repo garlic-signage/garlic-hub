@@ -20,7 +20,6 @@
 
 export class GlobalPropertiesService
 {
-
 	#fabricWrapper;
 
 	constructor(fabricWrapper)

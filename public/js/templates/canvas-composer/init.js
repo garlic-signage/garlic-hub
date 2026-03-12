@@ -30,7 +30,7 @@ import {TextProperties} from "./ItemProperties/TextProperties.js";
 import {ItemProperties} from "./ItemProperties.js";
 import {CanvasEvents}        from "./CanvasEvents.js";
 import {FontLoader}          from "./Fonts/FontLoader.js";
-import {ToggleButtonFactory} from "./ItemProperties/ToggleButtonFactory.js";
+import {ToggleButtonFactory} from "./Utils/ToggleButtonFactory.js";
 import {FabricService}       from "./FabricService.js";
 import {WunderbaumWrapper}   from "../../mediapool/treeview/WunderbaumWrapper.js";
 import {TreeViewElements} from "../../mediapool/treeview/TreeViewElements.js";
@@ -61,6 +61,9 @@ import {GlobalPropertiesController} from "./Controller/Properties/GlobalProperti
 import {GlobalPropertiesView} from "./View/Properties/GlobalPropertiesView.js";
 import {PropertiesController} from "./Controller/PropertiesController.js";
 import {GlobalPropertiesService} from "./Services/Properties/GlobalPropertiesService.js";
+import {GroupPropertiesController} from "./Controller/Properties/GroupPropertiesController.js";
+import {GroupPropertiesService} from "./Services/Properties/GroupPropertiesService.js";
+import {GroupPropertiesView} from "./View/Properties/GroupPropertiesView.js";
 
 document.addEventListener("DOMContentLoaded", async function ()
 {
@@ -114,7 +117,13 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const globalPropertiesService = new GlobalPropertiesService(fabricWrapper);
 	const globalPropertiesController  = new GlobalPropertiesController(globalPropertiesView, globalPropertiesService);
 
-	const propertiesController = new PropertiesController(globalPropertiesController);
+	const toggleButtonFactory = new ToggleButtonFactory();
+	const groupProperiesView     = new GroupPropertiesView(toggleButtonFactory);
+	const groupPropertiesService = new GroupPropertiesService(fabricWrapper);
+	const groupPropertiesController = new GroupPropertiesController(groupProperiesView, groupPropertiesService);
+
+
+	const propertiesController = new PropertiesController(globalPropertiesController, groupPropertiesController);
 
 	if (composerContext.itemId !== 0)
 		await loadService.loadFromPlaylistItemDataBase(composerContext.itemId);
