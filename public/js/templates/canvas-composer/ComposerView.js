@@ -24,15 +24,8 @@
  */
 export class ComposerView  extends EventTarget
 {
-	#percent = document.getElementById("percent");
-	#slider = document.getElementById("slider");
 	#canvasWrap = document.getElementById("canvas_wrap");
-	#insertCircle = document.getElementById("object_add_circle");
-	#insertTriangle = document.getElementById("object_add_triangle");
-	#insertRectangle = document.getElementById("object_add_rectangle");
-	#insertPolygon = document.getElementById("object_add_polygon");
-	#insertHexagon = document.getElementById("object_add_hexagon");
-	#insertOctagon = document.getElementById("object_add_octagon");
+
 	#textProperties = document.getElementById("text_properties");
 	#fontFamily = document.getElementById("font_family")
 	#positionLeft   = document.getElementById("object_align_left")

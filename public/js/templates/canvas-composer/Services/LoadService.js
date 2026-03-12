@@ -18,7 +18,7 @@
 */
 'use strict';
 
-import {ComposerEventBus} from "../ComposerEventBus.js";
+import {ComposerEventBus} from "../Utils/ComposerEventBus.js";
 
 export class LoadService
 {
