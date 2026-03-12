@@ -116,7 +116,7 @@
         </ul>
     </li>
     <li id="properties">
-		<ul id="global_properties" class="action_group" style="display:none;">
+		<ul id="globalProperties" class="action_group" style="display:none;">
 			<li class="template_edit_dropdown">
 				<button id="object_opacity_btn" class="svg_button" title="{{{LANG_OPACITY}}}">
 					<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
@@ -131,7 +131,7 @@
 				</button>
 				<div class="template_edit_dropdown_content" style="width:240px;">
 					<label style=" display: flex; justify-content:space-between; align-items: center; padding:20px;">
-						<input id="object_opacity" style="width:150px;" type="range" min="0" max="100" value="100">
+						<input id="opacity" style="width:150px;" type="range" min="0" max="100" value="100">
 						<span id="object_opacity_display">100%</span>
 					</label>
 				</div>
@@ -162,7 +162,7 @@
 				</div>
 			</li>
 			<li>
-				<input type="color" id="stroke_color" class="color_button" title="{{{LANG_OUTLINE_COLOR}}}" />
+				<input type="color" id="strokeColor" class="color_button" title="{{{LANG_OUTLINE_COLOR}}}" />
 			</li>
 			<li class="template_edit_dropdown">
 				<button id="object_outline" class="svg_button" title="{{{LANG_OUTLINE_STRENGTH}}}">
@@ -186,7 +186,7 @@
 				</button>
 				<div class="template_edit_dropdown_content" style="width:190px;">
 					<label style=" display: flex; justify-content:space-between; align-items: center; padding:20px;">
-						<input id="stroke_width" style="width:150px;" type="range" min="0" max="15" value="0">
+						<input id="strokeWidth" style="width:150px;" type="range" min="0" max="15" value="0">
 					</label>
 				</div>
 			</li>
@@ -198,7 +198,7 @@
 				</button>
 				<div class="template_edit_dropdown_content" style="width:180px; padding:20px;">
 					<div style=" display: flex; justify-content:space-between; align-items: center; gap:20px;">
-						<button id="object_align_left" style="display: flex; justify-content: center; align-items:center;"
+						<button id="alignLeft" style="display: flex; justify-content: center; align-items:center;"
 								title="{{{LANG_ALIGN_LEFT}}}">
 							<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
 								<path
@@ -206,7 +206,7 @@
 								</path>
 							</svg>
 						</button>
-						<button id="object_align_center" style="display: flex; justify-content: center; align-items:center;"
+						<button id="alignCenter" style="display: flex; justify-content: center; align-items:center;"
 								title="{{{LANG_ALIGN_CENTER}}}">
 							<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
 								<path
@@ -214,7 +214,7 @@
 								</path>
 							</svg>
 						</button>
-						<button id="object_align_right" style="display: flex; justify-content: center; align-items:center;"
+						<button id="alignRight" style="display: flex; justify-content: center; align-items:center;"
 								title="{{{LANG_ALIGN_RIGHT}}}">
 							<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
 								<path
@@ -224,7 +224,7 @@
 						</button>
 					</div>
 					<div style=" display: flex; justify-content:space-between; align-items: center; gap:20px; margin-top:20px;">
-						<button id="object_align_top" style="display: flex; justify-content: center; align-items:center;"
+						<button id="alignTop" style="display: flex; justify-content: center; align-items:center;"
 								title="{{{LANG_ALIGN_TOP}}}">
 							<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
 								<path
@@ -232,7 +232,7 @@
 								</path>
 							</svg>
 						</button>
-						<button id="object_align_middle" style="display: flex; justify-content: center; align-items:center;"
+						<button id="alignMiddle" style="display: flex; justify-content: center; align-items:center;"
 								title="{{{LANG_ALIGN_MIDDLE}}}">
 							<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
 								<path
@@ -240,7 +240,7 @@
 								</path>
 							</svg>
 						</button>
-						<button id="object_align_bottom" style="display: flex; justify-content: center; align-items:center;"
+						<button id="alignBottom" style="display: flex; justify-content: center; align-items:center;"
 								title="{{{LANG_ALIGN_BOTTOM}}}">
 							<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
 								<path

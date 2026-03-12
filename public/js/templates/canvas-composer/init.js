@@ -57,6 +57,10 @@ import {FabricShapeFactory} from "./Utils/FabricShapeFactory.js";
 import {InsertController}   from "./Controller/InsertController.js";
 import {MediaDialogView} from "./View/MediaDialogView.js";
 import {MediaDialogController} from "./Controller/MediaDialogController.js";
+import {GlobalPropertiesController} from "./Controller/Properties/GlobalPropertiesController.js";
+import {GlobalPropertiesView} from "./View/Properties/GlobalPropertiesView.js";
+import {PropertiesController} from "./Controller/PropertiesController.js";
+import {GlobalPropertiesService} from "./Services/Properties/GlobalPropertiesService.js";
 
 document.addEventListener("DOMContentLoaded", async function ()
 {
@@ -106,7 +110,11 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const mediaDialogView = new MediaDialogView();
 	const mediaController = new MediaDialogController(mediaDialogView, mediaSelector, insertService);
 
+	const globalPropertiesView = new GlobalPropertiesView();
+	const globalPropertiesService = new GlobalPropertiesService(fabricWrapper);
+	const globalPropertiesController  = new GlobalPropertiesController(globalPropertiesView, globalPropertiesService);
 
+	const propertiesController = new PropertiesController(globalPropertiesController);
 
 	if (composerContext.itemId !== 0)
 		await loadService.loadFromPlaylistItemDataBase(composerContext.itemId);

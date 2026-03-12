@@ -18,14 +18,15 @@
 */
 'use strict';
 
-export class FabricWrapper extends EventTarget
+import {ComposerEventBus} from "./ComposerEventBus.js";
+
+export class FabricWrapper
 {
 	#fabricCanvas
 	#hasChanged = false;
 
 	constructor(fabricCanvas)
 	{
-		super();
 		this.#fabricCanvas = fabricCanvas;
 		this.#initChangeDetectors();
 		this.#initMouseEvents();
@@ -66,6 +67,11 @@ export class FabricWrapper extends EventTarget
 	resetChange()
 	{
 		this.#hasChanged = false;
+	}
+
+	getViewportTransform()
+	{
+		return this.#fabricCanvas.viewportTransform;
 	}
 
 	undo()
@@ -133,6 +139,11 @@ export class FabricWrapper extends EventTarget
 		this.#fabricCanvas.clear();
 	}
 
+	fireObjectModified(object)
+	{
+		this.#fabricCanvas.fire('object:modified', { target: object });
+	}
+
 	load(jsonContent)
 	{
 		return new Promise((resolve) => {
@@ -177,11 +188,11 @@ export class FabricWrapper extends EventTarget
 		this.#fabricCanvas.on('mouse:up', (options) => {
 			if (options.button === 1)
 			{
-				this.dispatchEvent(new CustomEvent('mouseLeftUp', { detail: options }));
+				ComposerEventBus.dispatchEvent(new CustomEvent('mouseLeftUp', { detail: options }));
 			}
 			else if (options.button === 3)
 			{
-				this.dispatchEvent(new CustomEvent('mouseRightUp', { detail: options }));
+				ComposerEventBus.dispatchEvent(new CustomEvent('mouseRightUp', { detail: options }));
 			}
 		});
 	}
