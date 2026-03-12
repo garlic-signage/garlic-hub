@@ -39,7 +39,7 @@ import {MediaService} from "../../mediapool/media/MediaService.js";
 import {MediaSelectorView} from "../../mediapool/selector/MediaSelectorView.js";
 import {MediaFactory}     from "../../mediapool/media/MediaFactory.js";
 import {BmpDitherFactory} from "./Formats/BmpDitherFactory.js";
-import {FabricWrapper}    from "./Services/FabricWrapper.js";
+import {FabricWrapper}    from "./Utils/FabricWrapper.js";
 
 document.addEventListener("DOMContentLoaded", function (event)
 {

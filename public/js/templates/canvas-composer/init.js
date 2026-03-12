@@ -37,9 +37,9 @@ import {TreeViewElements} from "../../mediapool/treeview/TreeViewElements.js";
 import {MediaService} from "../../mediapool/media/MediaService.js";
 import {MediaSelectorView} from "../../mediapool/selector/MediaSelectorView.js";
 import {MediaFactory}     from "../../mediapool/media/MediaFactory.js";
-import {BmpDitherFactory} from "./Formats/BmpDitherFactory.js";
-import {FabricWrapper}    from "./Services/FabricWrapper.js";
-import {ComposerView}     from "./ComposerView.js";
+import {BmpDitherFactory}   from "./Formats/BmpDitherFactory.js";
+import {FabricWrapper}      from "./Utils/FabricWrapper.js";
+import {ComposerView}       from "./ComposerView.js";
 import {LoadService}         from "./Services/LoadService.js";
 import {FontCollector}       from "./Fonts/FontCollector.js";
 import {ViewportView}        from "./View/ViewportView.js";
@@ -52,9 +52,9 @@ import {ComposerContext} from "./Utils/ComposerContext.js";
 import {HistoryView}     from "./View/HistoryView.js";
 import {HistoryController} from "./Controller/HistoryController.js";
 import {InsertView}          from "./View/InsertView.js";
-import {InsertService}       from "./Services/InsertService.js";
-import {FabricShapeFactory}  from "./Services/FabricShapeFactory.js";
-import {InsertController}    from "./Controller/InsertController.js";
+import {InsertService}      from "./Services/InsertService.js";
+import {FabricShapeFactory} from "./Utils/FabricShapeFactory.js";
+import {InsertController}   from "./Controller/InsertController.js";
 
 document.addEventListener("DOMContentLoaded", async function ()
 {
