@@ -33,8 +33,6 @@ export class ComposerView  extends EventTarget
 	#insertPolygon = document.getElementById("object_add_polygon");
 	#insertHexagon = document.getElementById("object_add_hexagon");
 	#insertOctagon = document.getElementById("object_add_octagon");
-	#undo = document.getElementById("undo");
-	#redo = document.getElementById("redo");
 	#textProperties = document.getElementById("text_properties");
 	#fontFamily = document.getElementById("font_family")
 	#positionLeft   = document.getElementById("object_align_left")
@@ -100,18 +98,6 @@ export class ComposerView  extends EventTarget
 		{
 			this.dispatchEvent(new CustomEvent('insertOctagonChanged', {detail: {}}));
 		});
-
-		// Undo/Redo
-		this.#undo?.addEventListener('click', () =>
-		{
-			this.dispatchEvent(new CustomEvent('undoChanged', {detail: {}}));
-		});
-
-		this.#redo?.addEventListener('click', () =>
-		{
-			this.dispatchEvent(new CustomEvent('redoChanged', {detail: {}}));
-		});
-
 
 
 		// Font

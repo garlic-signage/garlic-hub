@@ -47,8 +47,10 @@ import {ViewportService}     from "./Services/ViewportService.js";
 import {ViewportController} from "./Controller/ViewportController.js";
 import {SaveView} from "./View/SaveView.js";
 import {SaveController} from "./Controller/SaveController.js";
-import {SaveService} from "./Services/SaveService.js";
-import {ComposerContext} from "./ComposerContext.js";
+import {SaveService}     from "./Services/SaveService.js";
+import {ComposerContext} from "./Utils/ComposerContext.js";
+import {HistoryView}     from "./View/HistoryView.js";
+import {HistoryController} from "./Controller/HistoryController.js";
 
 document.addEventListener("DOMContentLoaded", async function ()
 {
@@ -78,6 +80,8 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const saveService      = new SaveService(fabricWrapper, templateService, bmpDitherFactory, waitOverlay);
 	const saveController   = new SaveController(saveView, composerContext, saveService, loadService, viewportService);
 
+	const historyView = new HistoryView();
+	const historyController = new HistoryController(historyView, fabricWrapper);
 
 	if (composerContext.itemId !== 0)
 		await loadService.loadFromPlaylistItemDataBase(composerContext.itemId);
