@@ -20,7 +20,6 @@
 import {TemplatesService} from "../TemplatesService.js";
 import {FetchClient}      from "../../core/FetchClient.js";
 import {WaitOverlay}      from "../../core/WaitOverlay.js";
-import {MediaDialog}   from "./MediaDialog.js";
 import {MediaSelector} from "../../mediapool/selector/MediaSelector.js";
 import {FontLoader}          from "./Fonts/FontLoader.js";
 import {ToggleButtonFactory} from "./Utils/ToggleButtonFactory.js";
@@ -97,7 +96,6 @@ document.addEventListener("DOMContentLoaded", async function ()
 		new MediaSelectorView(new MediaFactory(document.getElementById('mediaTemplate')))
 	);
 	mediaSelector.filter = "images";
-	const mediaDialog = new MediaDialog(mediaSelector);
 
 	const insertView         = new InsertView();
 	const fabricShapefactory = new FabricShapeFactory();
