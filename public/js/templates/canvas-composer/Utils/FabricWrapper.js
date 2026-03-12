@@ -86,8 +86,6 @@ export class FabricWrapper extends EventTarget
 	add(object)
 	{
 		this.#fabricCanvas.add(object);
-		this.#fabricCanvas._historySaveAction()
-		this.#fabricCanvas.getCanvas().renderAll();
 	}
 
 	remove(object)

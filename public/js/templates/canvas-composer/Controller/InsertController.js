@@ -18,59 +18,54 @@
 */
 'use strict';
 
+import {ComposerEventBus} from "../Utils/ComposerEventBus.js";
+
 export class InsertController
 {
 	#insertView;
-	#mediaDialog;
 	#insertService;
 
-	constructor(insertView, mediaDialog, insertService)
+	constructor(insertView, insertService)
 	{
 		this.#insertView = insertView;
-		this.#mediaDialog = mediaDialog;
 		this.#insertService = insertService;
 
-		this.#insertView.insertImage.addEventListener('click', () =>
+		this.#insertView.insertImage.addEventListener("click", () =>
 		{
-			if (this.#mediaDialog.isOpen)
-				return;
-
-			this.#mediaDialog.displayMediaSelector();
-			this.#mediaDialog.initCancelEvent();
-			this.#mediaDialog.initInsertEvent();
+			ComposerEventBus.dispatchEvent(new CustomEvent("openMediaDialog"));
 		});
 
-		this.#insertView.insertText.addEventListener('click', () =>
+		this.#insertView.insertText.addEventListener("click", () =>
 		{
 			this.#insertService.insertText();
 		});
 
-		this.#insertView.insertCircle.addEventListener('click', () =>
+		this.#insertView.insertCircle.addEventListener("click", () =>
 		{
 			this.#insertService.insertCircle();
 		});
 
-		this.#insertView.insertTriangle.addEventListener('click', () =>
+		this.#insertView.insertTriangle.addEventListener("click", () =>
 		{
 			this.#insertService.insertTriangle();
 		});
 
-		this.#insertView.insertRectangle.addEventListener('click', () =>
+		this.#insertView.insertRectangle.addEventListener("click", () =>
 		{
 			this.#insertService.insertRectangle();
 		});
 
-		this.#insertView.insertPolygon.addEventListener('click', () =>
+		this.#insertView.insertPolygon.addEventListener("click", () =>
 		{
 			this.#insertService.insertRegularPolygon(5);
 		});
 
-		this.#insertView.insertHexagon.addEventListener('click', () =>
+		this.#insertView.insertHexagon.addEventListener("click", () =>
 		{
 			this.#insertService.insertRegularPolygon(6);
 		});
 
-		this.#insertView.insertOctagon.addEventListener('click', () =>
+		this.#insertView.insertOctagon.addEventListener("click", () =>
 		{
 			this.#insertService.insertRegularPolygon(8);
 		});

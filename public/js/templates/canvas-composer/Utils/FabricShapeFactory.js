@@ -21,8 +21,27 @@
 export class FabricShapeFactory
 {
 	static #DEFAULT_LEFT = 50;
-	static #DEFAULT_TOP = 10;
+	static #DEFAULT_TOP = 50;
 	static #DEFAULT_FILL = "#000000";
+
+
+	createImage(mediaId, url, count)
+	{
+		return new Promise((resolve) =>
+		{
+			fabric.Image.fromURL(url.replace("thumbs", "originals"), (img) =>
+			{
+				img.set({
+					mediaId: mediaId,
+					fileName: url.split('/').pop(),
+					left: count * FabricShapeFactory.#DEFAULT_LEFT,
+					top: count * FabricShapeFactory.#DEFAULT_TOP,
+				});
+				img.bringToFront();
+				resolve(img);
+			}, { crossOrigin: 'anonymous' });
+		});
+	}
 
 	createText()
 	{

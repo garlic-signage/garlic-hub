@@ -55,6 +55,8 @@ import {InsertView}          from "./View/InsertView.js";
 import {InsertService}      from "./Services/InsertService.js";
 import {FabricShapeFactory} from "./Utils/FabricShapeFactory.js";
 import {InsertController}   from "./Controller/InsertController.js";
+import {MediaDialogView} from "./View/MediaDialogView.js";
+import {MediaDialogController} from "./Controller/MediaDialogController.js";
 
 document.addEventListener("DOMContentLoaded", async function ()
 {
@@ -84,23 +86,27 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const saveService      = new SaveService(fabricWrapper, templateService, bmpDitherFactory, waitOverlay);
 	const saveController   = new SaveController(saveView, composerContext, saveService, loadService, viewportService);
 
-	const historyView = new HistoryView();
+	const historyView       = new HistoryView();
 	const historyController = new HistoryController(historyView, fabricWrapper);
 
 	const mediaService = new MediaService(new FetchClient());
-
-	let mediaSelector = new MediaSelector(
+	let mediaSelector  = new MediaSelector(
 		new WunderbaumWrapper(new TreeViewElements()),
 		mediaService,
 		new MediaSelectorView(new MediaFactory(document.getElementById('mediaTemplate')))
 	);
 	mediaSelector.filter = "images";
-	const mediaDialog = new MediaDialog();
+	const mediaDialog = new MediaDialog(mediaSelector);
 
 	const insertView         = new InsertView();
 	const fabricShapefactory = new FabricShapeFactory();
-	const insertService      = new InsertService(fabricWrapper, fabricShapefactory);
-	const insertController   = new InsertController(insertView, mediaDialog, insertService);
+	const insertService      = new InsertService(fabricWrapper, fabricShapefactory, viewportService);
+	const insertController   = new InsertController(insertView, insertService);
+
+	const mediaDialogView = new MediaDialogView();
+	const mediaController = new MediaDialogController(mediaDialogView, mediaSelector, insertService);
+
+
 
 	if (composerContext.itemId !== 0)
 		await loadService.loadFromPlaylistItemDataBase(composerContext.itemId);

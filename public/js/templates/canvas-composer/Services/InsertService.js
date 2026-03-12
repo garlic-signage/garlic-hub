@@ -22,12 +22,25 @@ export class InsertService
 {
 	#fabricWrapper;
 	#fabricShapeFactory;
+	#viewportService;
 
-	constructor(fabricWrapper, fabricShapeFactory)
+	constructor(fabricWrapper, fabricShapeFactory, viewportService)
 	{
-		this.#fabricWrapper = fabricWrapper;
+		this.#fabricWrapper      = fabricWrapper;
 		this.#fabricShapeFactory = fabricShapeFactory;
+		this.#viewportService    = viewportService;
 	}
+
+	async insertImage(mediaId, url, count)
+	{
+		const img = await this.#fabricShapeFactory.createImage(mediaId, url, count);
+
+		let scale = this.#viewportService.calculateImageScaleByCanvasInPerCent(img.width, img.height);
+		img.scale(scale/150);
+
+		this.#addObject(img);
+	}
+
 
 	insertText()
 	{
