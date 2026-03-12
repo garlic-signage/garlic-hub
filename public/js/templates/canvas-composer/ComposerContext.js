@@ -20,13 +20,18 @@
 
 export class ComposerContext
 {
-	#templateId = document.getElementById('template_id')?.value;
-	#playlistId = document.getElementById('playlist_id')?.value;
-	#itemId     = document.getElementById('item_id')?.value;
+	#templateId = 0;
+	#playlistId = 0;
+	#itemId     = 0;
 	#lang;
 
 	constructor(lang)
 	{
+		this.#templateId = document.getElementById('template_id').value;
+		if (document.getElementById('playlist_id') !== null)
+			this.#playlistId = document.getElementById('playlist_id').value;
+		if(document.getElementById('item_id') !== null)
+			this.#itemId     = document.getElementById('item_id').value;
 		this.#lang = lang;
 	}
 

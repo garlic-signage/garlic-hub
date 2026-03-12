@@ -48,6 +48,7 @@ import {ViewportController} from "./Controller/ViewportController.js";
 import {SaveView} from "./View/SaveView.js";
 import {SaveController} from "./Controller/SaveController.js";
 import {SaveService} from "./Services/SaveService.js";
+import {ComposerContext} from "./ComposerContext.js";
 
 document.addEventListener("DOMContentLoaded", async function ()
 {
@@ -58,7 +59,7 @@ document.addEventListener("DOMContentLoaded", async function ()
 			preserveObjectStacking: true
 		});
 
-	const composerContext = new ComposerContext();
+	const composerContext = new ComposerContext(lang);
 	const templateService = new TemplatesService(new FetchClient());
 	const fontLoader      = new FontLoader(FontsList);
 	const fontCollector   = new FontCollector(fontLoader);
@@ -66,14 +67,10 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const waitOverlay     = new WaitOverlay();
 	const loadService     = new LoadService(fabricWrapper, templateService, fontCollector, waitOverlay);
 
-	let redirectUrl  = "/templates";
-	if (composerContext.itemId !== null)
-	{
-		await loadService.loadFromPlaylistItemDataBase(itemId.value);
-		redirectUrl = "/playlists/compose/" + document.getElementById("playlist_id").value;
-	}
+	if (composerContext.itemId !== 0)
+		await loadService.loadFromPlaylistItemDataBase(composerContext.itemId);
 	else
-		await loadService.loadFromTemplateDataBase(templateId.value);
+		await loadService.loadFromTemplateDataBase(composerContext.templateId);
 
 	// control viewport
 	const viewportView       = new ViewportView();
