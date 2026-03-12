@@ -125,9 +125,9 @@ export class FabricWrapper extends EventTarget
 		this.#fabricCanvas.zoomToPoint(new fabric.Point(x, y), factor);
 	}
 
-	toJSON()
+	toTemplateJSON()
 	{
-		return this.#fabricCanvas.toJSON();
+		return this.#fabricCanvas.toJSON(["mediaId", "fileName"]);
 	}
 
 	clear()

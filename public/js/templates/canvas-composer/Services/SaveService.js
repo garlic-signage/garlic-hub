@@ -18,6 +18,8 @@
 */
 'use strict';
 
+import {ComposerEventBus} from "../ComposerEventBus.js";
+
 export class SaveService
 {
 	#fabricWrapper;
@@ -63,9 +65,11 @@ export class SaveService
 		try
 		{
 			if (isPlaylist) // only when in playlist
-				await this.#templatesService.savePlaylistItemContent(id, save.content, image);
+				await this.#templatesService.savePlaylistItemContent(id, save, image);
 			else
-				await this.#templatesService.saveTemplateContent(id, save.content, image);
+				await this.#templatesService.saveTemplateContent(id, save, image);
+
+			ComposerEventBus.dispatchEvent(new CustomEvent("canvasUpdated"));
 		}
 		catch(e)
 		{
@@ -100,10 +104,10 @@ export class SaveService
 		this.#fabricWrapper.setWidth(originalWidth)
 		this.#fabricWrapper.setHeight(originalHeight);
 
-		let save = this.#fabricWrapper.toJSON(["mediaId", "fileName"]);
+		let save = this.#fabricWrapper.toTemplateJSON();
 		save["viewport"] = { "width": originalWidth, "height": originalHeight, "scale": 100 };
 
-		return {"canvas": this.#fabricWrapper, "content": JSON.stringify(save)};
+		return JSON.stringify(save);
 	}
 
 }

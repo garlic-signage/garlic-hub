@@ -56,7 +56,7 @@ export class ViewportController
 			this.scalePercent();
 			this.#viewportService.scaleCanvas(this.#viewportView.getZoomSliderValue());
 		});
-		ComposerEventBus.addEventListener("loaded", (e) => {
+		ComposerEventBus.addEventListener("canvasUpdated", (e) => {
 			this.initializeCanvas();
 		});
 
