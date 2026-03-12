@@ -31,10 +31,9 @@ export class PropertiesController
 	{
 		this.#globalPropertiesController = globalPropertiesController;
 		this.#groupPropertiesController  = groupPropertiesController;
-		/*	this.#selectivePropertiesController = selectivePropertiesController;
-			this.#textPropertiesController = textPropertiesController;
+		this.#selectivePropertiesController = selectivePropertiesController;
+		//	this.#textPropertiesController = textPropertiesController;
 
-		 */
 		ComposerEventBus.addEventListener('mouseLeftUp', (e) =>
 		{
 			const object = e.detail.target;
@@ -58,7 +57,7 @@ export class PropertiesController
 			case "text":
 			case "i-text":
 			case "textbox":
-			//	this.#selectivePropertiesController.activateFillColor();
+				this.#selectivePropertiesController.activateFillColor();
 				this.#globalPropertiesController.activate();
 			//	this.#textPropertiesController.activate();
 				break;
@@ -66,7 +65,7 @@ export class PropertiesController
 			case "rect":
 			case "triangle":
 			case "polygon":
-			//	this.#selectivePropertiesController.activateFillColor();
+				this.#selectivePropertiesController.activateFillColor();
 				this.#globalPropertiesController.activate();
 				break;
 			case "image":
@@ -77,7 +76,7 @@ export class PropertiesController
 		}
 	}
 
-	deactivatePrevious(new_current)
+	deactivatePrevious()
 	{
 		if (this.#currentType === "")
 			return;
@@ -88,7 +87,7 @@ export class PropertiesController
 	{
 		this.#globalPropertiesController.deactivate();
 		this.#groupPropertiesController.deactivate();
-	//	this.#selectivePropertiesController.deactivateAll();
+		this.#selectivePropertiesController.deactivateAll();
 	//	this.#textPropertiesController.deactivate();
 	}
 }
