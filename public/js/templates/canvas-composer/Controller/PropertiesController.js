@@ -27,7 +27,7 @@ export class PropertiesController
 	#textPropertiesController;
 	#currentType = ""
 
-	constructor(globalPropertiesController, groupPropertiesController /*, selectivePropertiesController, textPropertiesController*/)
+	constructor(globalPropertiesController, groupPropertiesController, selectivePropertiesController/*, textPropertiesController*/)
 	{
 		this.#globalPropertiesController = globalPropertiesController;
 		this.#groupPropertiesController  = groupPropertiesController;
@@ -57,7 +57,7 @@ export class PropertiesController
 			case "text":
 			case "i-text":
 			case "textbox":
-				this.#selectivePropertiesController.activateFillColor();
+				this.#selectivePropertiesController.activate();
 				this.#globalPropertiesController.activate();
 			//	this.#textPropertiesController.activate();
 				break;
@@ -65,7 +65,7 @@ export class PropertiesController
 			case "rect":
 			case "triangle":
 			case "polygon":
-				this.#selectivePropertiesController.activateFillColor();
+				this.#selectivePropertiesController.activate();
 				this.#globalPropertiesController.activate();
 				break;
 			case "image":

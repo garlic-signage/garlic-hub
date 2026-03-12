@@ -31,12 +31,14 @@ export class GroupPropertiesService
 	{
 		object.toGroup()
 		this.#fabricWrapper.fireUpdateSelection(object);
+		this.#fabricWrapper.renderAll();
 	}
 
 	toActiveSelection(object)
 	{
 		object.toActiveSelection()
 		this.#fabricWrapper.fireUpdateSelection(object);
+		this.#fabricWrapper.renderAll();
 	}
 
 	getActiveObject()

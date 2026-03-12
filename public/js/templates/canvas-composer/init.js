@@ -22,16 +22,8 @@ import {FetchClient}      from "../../core/FetchClient.js";
 import {WaitOverlay}      from "../../core/WaitOverlay.js";
 import {MediaDialog}   from "./MediaDialog.js";
 import {MediaSelector} from "../../mediapool/selector/MediaSelector.js";
-import {ContextMenu}      from "./ContextMenu.js";
-import {GlobalProperties} from "./ItemProperties/GlobalProperties.js";
-import {GroupProperties}  from "./ItemProperties/GroupProperties.js";
-import {SelectiveProperties} from "./ItemProperties/SelectiveProperties.js";
-import {TextProperties} from "./ItemProperties/TextProperties.js";
-import {ItemProperties} from "./ItemProperties.js";
-import {CanvasEvents}        from "./CanvasEvents.js";
 import {FontLoader}          from "./Fonts/FontLoader.js";
 import {ToggleButtonFactory} from "./Utils/ToggleButtonFactory.js";
-import {FabricService}       from "./FabricService.js";
 import {WunderbaumWrapper}   from "../../mediapool/treeview/WunderbaumWrapper.js";
 import {TreeViewElements} from "../../mediapool/treeview/TreeViewElements.js";
 import {MediaService} from "../../mediapool/media/MediaService.js";
@@ -39,7 +31,6 @@ import {MediaSelectorView} from "../../mediapool/selector/MediaSelectorView.js";
 import {MediaFactory}     from "../../mediapool/media/MediaFactory.js";
 import {BmpDitherFactory}   from "./Formats/BmpDitherFactory.js";
 import {FabricWrapper}      from "./Utils/FabricWrapper.js";
-import {ComposerView}       from "./ComposerView.js";
 import {LoadService}         from "./Services/LoadService.js";
 import {FontCollector}              from "./Fonts/FontCollector.js";
 import {ViewportView}               from "./Views/ViewportView.js";
@@ -64,6 +55,9 @@ import {GlobalPropertiesService} from "./Services/Properties/GlobalPropertiesSer
 import {GroupPropertiesController} from "./Controller/Properties/GroupPropertiesController.js";
 import {GroupPropertiesService}     from "./Services/Properties/GroupPropertiesService.js";
 import {GroupPropertiesView}        from "./Views/Properties/GroupPropertiesView.js";
+import {SelectivePropertiesView} from "./Views/Properties/SelectivePropertiesView.js";
+import {SelectivePropertiesService} from "./Services/Properties/SelectivePropertiesService.js";
+import {SelectivePropertiesController} from "./Controller/Properties/SelectivePropertiesController.js";
 
 document.addEventListener("DOMContentLoaded", async function ()
 {
@@ -122,8 +116,15 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const groupPropertiesService = new GroupPropertiesService(fabricWrapper);
 	const groupPropertiesController = new GroupPropertiesController(groupProperiesView, groupPropertiesService);
 
+	const selectivePropertiesView     = new SelectivePropertiesView(toggleButtonFactory);
+	const selectivePropertiesService = new SelectivePropertiesService(fabricWrapper);
+	const selectivePropertiesController = new SelectivePropertiesController(selectivePropertiesView, selectivePropertiesService);
 
-	const propertiesController = new PropertiesController(globalPropertiesController, groupPropertiesController);
+	const propertiesController = new PropertiesController(
+		globalPropertiesController,
+		groupPropertiesController,
+		selectivePropertiesController
+	);
 
 	if (composerContext.itemId !== 0)
 		await loadService.loadFromPlaylistItemDataBase(composerContext.itemId);
@@ -131,49 +132,5 @@ document.addEventListener("DOMContentLoaded", async function ()
 		await loadService.loadFromTemplateDataBase(composerContext.templateId);
 
 
-	/*	const canvasView     = new CanvasView(fabricCanvas, lang);
-		const toggleButtonFactory = new ToggleButtonFactory();
-		let MyContextMenu    = new ContextMenu(canvasView, mediaDialog);
-
-		let MyGlobalProperties    = new GlobalProperties(canvasView);
-		let MyGroupProperties     = new GroupProperties(canvasView, toggleButtonFactory);
-		let MySelectiveProperties = new SelectiveProperties(canvasView);
-		let MyTextProperties      = new TextProperties(canvasView, new FontHandler(FontsList), toggleButtonFactory);
-		let MyItemProperties      = new ItemProperties(MyGlobalProperties, MyGroupProperties, MySelectiveProperties, MyTextProperties);
-
-		let MyCanvasEvents   = new CanvasEvents(MyContextMenu, canvasView, mediaDialog, mediaSelector, MyItemProperties);
-
-		const fabricService  = new FabricService(
-			canvasView,
-			MyCanvasEvents,
-			new TemplatesService(new FetchClient()),
-			new WaitOverlay(),
-			new BmpDitherFactory(),
-			MyTextProperties
-		);
-
-		const templateId = document.getElementById("template_id");
-		const itemId = document.getElementById("item_id");
-		let redirectUrl  = "/templates";
-		if (itemId !== null)
-		{
-			fabricService.loadFromPlaylistItemDataBase(itemId.value);
-			redirectUrl = "/playlists/compose/" + document.getElementById("playlist_id").value;
-		}
-		else
-			fabricService.loadFromTemplateDataBase(templateId.value);
-
-		MyCanvasEvents.initInsertObjects();
-		MyItemProperties.initEventListener(canvasView);
-		MyCanvasEvents.initSaveEvent(fabricService);
-		MyCanvasEvents.initResetEvent(fabricService);
-		MyCanvasEvents.initRangeSliderEvents();
-		MyCanvasEvents.initCloseEvent(redirectUrl);
-
-		window.onresize = () => {
-			if (MyCanvasEvents.isAutoResize())
-				canvasView.zoomToViewPort();
-		}
-	*/
 });
 

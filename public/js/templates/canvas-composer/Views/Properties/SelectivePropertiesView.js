@@ -20,5 +20,34 @@
 
 export class SelectivePropertiesView
 {
+	#fillColor    = document.getElementById("fillColor");
 
+	constructor() {}
+
+
+	get fillColor()
+	{
+		return this.#fillColor;
+	}
+
+	getfillColorValue()
+	{
+		return this.#fillColor.value;
+	}
+
+	setFillColorValue(value)
+	{
+		this.#fillColor.value = value;
+	}
+
+	show()
+	{
+		this.#fillColor.style.display = "block";
+	}
+
+
+	hide()
+	{
+		this.#fillColor.style.display = "none";
+	}
 }

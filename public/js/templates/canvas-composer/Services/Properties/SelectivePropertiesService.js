@@ -20,5 +20,44 @@
 
 export class SelectivePropertiesService
 {
+	#fabricWrapper;
 
+
+	constructor(fabricWrapper)
+	{
+		this.#fabricWrapper = fabricWrapper;
+	}
+
+	getFillColor()
+	{
+		const object = this.#getActiveObject();
+
+		if (object.type !== "i-text" && object.type !== "text" && object.type !== "textbox")
+			return object.fill
+
+		const styles = object.getSelectionStyles(object.isEditing ? object.selectionStart : 0, object.isEditing ? object.selectionEnd : 1, true)
+		return styles && styles[0] ? styles[0].fill : object.fill
+	}
+
+	setFillColor(color)
+	{
+		const object = this.#getActiveObject();
+		if (object.type === "i-text" || object.type === "text" || object.type === "textbox")
+		{
+			object.setSelectionStyles({ fill: color }, object.selectionStart === object.selectionEnd ? 0 : object.selectionStart, object.selectionStart === object.selectionEnd ? object.text.length : object.selectionEnd)
+		}
+		else
+		{
+			object.set("fill", color)
+		}
+		this.#fabricWrapper.fireObjectModified(object);
+		this.#fabricWrapper.renderAll();
+	}
+
+	#getActiveObject()
+	{
+		const object = this.#fabricWrapper.getActiveObject();
+		if (!object) throw new Error("No active object");
+		return object;
+	}
 }

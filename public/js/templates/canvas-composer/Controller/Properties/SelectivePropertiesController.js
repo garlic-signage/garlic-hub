@@ -20,5 +20,43 @@
 
 export class SelectivePropertiesController
 {
+	#selectivePropertiesView;
+	#selectivePropertiesService;
+
+	constructor(selectivePropertiesView, selectivePropertiesService)
+	{
+		this.#selectivePropertiesView = selectivePropertiesView;
+		this.#selectivePropertiesService = selectivePropertiesService;
+
+		this.#selectivePropertiesView.fillColor.addEventListener("input", () =>
+		{
+			this.#selectivePropertiesService.setFillColor(this.#selectivePropertiesView.getfillColorValue())
+		});
+		this.#selectivePropertiesView.fillColor.addEventListener("change", () =>
+		{
+			this.#selectivePropertiesService.setFillColor(object, this.fillColor.value)
+		});
+
+	}
+
+	activate(object)
+	{
+		this.#selectivePropertiesView.setFillColorValue(this.#selectivePropertiesService.getFillColor(object));
+		this.#selectivePropertiesView.show();
+	}
+
+	deactivateAll()
+	{
+		this.deactivate();
+	}
+
+	deactivate()
+	{
+		this.#selectivePropertiesView.hide();
+	}
+
+
+
+
 
 }
