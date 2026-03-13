@@ -17,29 +17,37 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+import font_face from "./fontfaceobserver.js";
+
 export class FontLoader
 {
-	fonts_list = {};
+	#fontsList = {};
 
 	constructor(fontsList)
 	{
-		this.fonts_list = fontsList
+		this.#fontsList = fontsList;
+	}
+
+
+	get fontsList()
+	{
+		return this.#fontsList;
 	}
 
 	findFontListKey(font_name)
 	{
-		return this.fonts_list.findIndex(font => font.name === font_name);
+		return this.#fontsList.findIndex(font => font.name === font_name);
 	}
 
 	isFontLoaded(font_id)
 	{
-		return this.fonts_list[font_id].loaded
+		return this.#fontsList[font_id].loaded
 	}
 
 	async loadFontFace(fonts_list_key, MyCallBack)
 	{
 		// do not reload font when it is already reloaded
-		if (this.fonts_list[fonts_list_key].loaded === true)
+		if (this.#fontsList[fonts_list_key].loaded === true)
 		{
 			MyCallBack();
 			return;
@@ -51,7 +59,6 @@ export class FontLoader
 	async loadFontFaceAsync(font_id)
 	{
 		return new Promise(async (resolve) => {
-
 			const font_face = this.createFontFace(font_id);
 			await font_face.load();
 			document.fonts.add(font_face);
@@ -64,14 +71,14 @@ export class FontLoader
 
 	setLoaded(font_id)
 	{
-		this.fonts_list[font_id].loaded = true
-		console.log("loaded: " + this.fonts_list[font_id].name);
+		this.#fontsList[font_id].loaded = true
+		console.log("loaded: " + this.#fontsList[font_id].name);
 	}
 
 	createFontFace(font_id)
 	{
 		// Todo: Create a factory for FontFace
-		return new FontFace(this.fonts_list[font_id].name, 'url(' + this.fonts_list[font_id].url + ')', {
+		return new FontFace(this.#fontsList[font_id].name, 'url(' + this.#fontsList[font_id].url + ')', {
 			style: 'normal',
 			weight: 'normal'
 		});

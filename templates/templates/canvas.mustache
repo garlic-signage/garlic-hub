@@ -255,12 +255,12 @@
                 <input type="color" id="fillColor" class="color_button" style="display: none;" title="{{{LANG_SELECT_COLOR}}}" />
             </li>
             <li>
-                <ul id="text_properties" class="action_group" style="display:none;">
+                <ul id="textProperties" class="action_group" style="display:none;">
                     <li class="template_edit_dropdown">
-                        <button id="font_family" style="font-size:0.8rem; width:150px; overflow: hidden; height: 30px;">
+                        <button id="fontFamily" style="font-size:0.8rem; width:150px; overflow: hidden; height: 30px;">
                             {{{LANG_FONT_FAMILY}}}
                         </button>
-                        <div id="select_fonts_dropdown" class="template_edit_dropdown_content" style="width:200px; height: 350px; overflow-y:auto;">
+                        <div id="fontsDropdown" class="template_edit_dropdown_content" style="width:200px; height: 350px; overflow-y:auto;">
                             <!--                <div style="display:flex; justify-content:center; align-items:center; gap:10px;">
                         {{{LANG_UPLOAD_FONT}}}
                         <label class="template_edit_dropdown_file_input">
@@ -275,7 +275,7 @@
                         </div>
                     </li>
                     <li>
-                        <button id="text_align" class="svg_button" title="{{{LANG_ALIGN_TEXT}}}">
+                        <button id="textAlign" class="svg_button" title="{{{LANG_ALIGN_TEXT}}}">
                             <svg id="left" xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 448 512">
                                 <path fill="currentColor" d="M12.83 352h262.34A12.82 12.82 0 0 0 288 339.17v-38.34A12.82 12.82 0 0 0 275.17 288H12.83A12.82 12.82 0 0 0 0 300.83v38.34A12.82 12.82 0 0 0 12.83 352zm0-256h262.34A12.82 12.82 0 0 0 288 83.17V44.83A12.82 12.82 0 0 0 275.17 32H12.83A12.82 12.82 0 0 0 0 44.83v38.34A12.82 12.82 0 0 0 12.83 96zM432 160H16a16 16 0 0 0-16 16v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16v-32a16 16 0 0 0-16-16zm0 256H16a16 16 0 0 0-16 16v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16v-32a16 16 0 0 0-16-16z" />
                             </svg>
@@ -289,21 +289,21 @@
                         </button>
                     </li>
                     <li>
-                        <button id="text_bold" name="bold" class="svg_button" title="{{{LANG_BOLD}}}">
+                        <button id="textBold" name="bold" class="svg_button" title="{{{LANG_BOLD}}}">
                             <svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 384 512">
                                 <path d="M333.49 238a122 122 0 0 0 27-65.21C367.87 96.49 308 32 233.42 32H34a16 16 0 0 0-16 16v48a16 16 0 0 0 16 16h31.87v288H34a16 16 0 0 0-16 16v48a16 16 0 0 0 16 16h209.32c70.8 0 134.14-51.75 141-122.4 4.74-48.45-16.39-92.06-50.83-119.6zM145.66 112h87.76a48 48 0 0 1 0 96h-87.76zm87.76 288h-87.76V288h87.76a56 56 0 0 1 0 112z" />
                             </svg>
                         </button>
                     </li>
                     <li>
-                        <button id="text_italic" name="italic" class="svg_button" title="{{{LANG_ITALIC}}}">
+                        <button id="textItalic" name="italic" class="svg_button" title="{{{LANG_ITALIC}}}">
                             <svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 320 512">
                                 <path d="M320 48v32a16 16 0 0 1-16 16h-62.76l-80 320H208a16 16 0 0 1 16 16v32a16 16 0 0 1-16 16H16a16 16 0 0 1-16-16v-32a16 16 0 0 1 16-16h62.76l80-320H112a16 16 0 0 1-16-16V48a16 16 0 0 1 16-16h192a16 16 0 0 1 16 16z" />
                             </svg>
                         </button>
                     </li>
                     <li>
-                        <button id="text_underline" name="underline" class="svg_button" title="{{{LANG_UNDERLINE}}}">
+                        <button id="textUnderline" name="underline" class="svg_button" title="{{{LANG_UNDERLINE}}}">
                             <svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 448 512">
                                 <path d="M32 64h32v160c0 88.22 71.78 160 160 160s160-71.78 160-160V64h32a16 16 0 0 0 16-16V16a16 16 0 0 0-16-16H272a16 16 0 0 0-16 16v32a16 16 0 0 0 16 16h32v160a80 80 0 0 1-160 0V64h32a16 16 0 0 0 16-16V16a16 16 0 0 0-16-16H32a16 16 0 0 0-16 16v32a16 16 0 0 0 16 16zm400 384H16a16 16 0 0 0-16 16v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16v-32a16 16 0 0 0-16-16z" />
                             </svg>
