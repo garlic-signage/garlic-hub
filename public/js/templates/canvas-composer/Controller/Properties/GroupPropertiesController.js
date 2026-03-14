@@ -30,7 +30,7 @@ export class GroupPropertiesController
 
 		this.#groupPropertiesView.group.getElement().addEventListener("click", () =>
 		{
-			let object = this.#groupPropertiesService.getActiveObject();
+			let object = this.#groupPropertiesService._getActiveObject();
 			if (object.type === 'activeSelection')
 			{
 				this.#groupPropertiesService.toGroup(object);
