@@ -38,7 +38,7 @@ export class GlobalPropertiesService extends BasePropertyService
 	{
 		const object = this._getActiveObject();
 		object.set("opacity", Number(value) / 100)
-		this._updateCanvas();
+		this._updateCanvas(object);
 	}
 
 	getStrokeColor()
@@ -51,7 +51,7 @@ export class GlobalPropertiesService extends BasePropertyService
 	{
 		const object = this._getActiveObject();
 		object.set("stroke", value);
-		this._updateCanvas();
+		this._updateCanvas(object);
 	}
 
 	getStrokeWidth()
@@ -64,7 +64,7 @@ export class GlobalPropertiesService extends BasePropertyService
 	{
 		const object = this._getActiveObject();
 		object.set("strokeWidth", Number(value));
-		this._updateCanvas();
+		this._updateCanvas(object);
 	}
 
 	setPosition(position)
@@ -109,7 +109,7 @@ export class GlobalPropertiesService extends BasePropertyService
 			case "right":
 				object.setPositionByOrigin(new fabric.Point(canvasBound.center.x + canvasBound.width / 2 - a / 2, object.getCenterPoint().y), "center", "center")
 		}
-		this._updateCanvas();
+		this._updateCanvas(object);
 	}
 
 }

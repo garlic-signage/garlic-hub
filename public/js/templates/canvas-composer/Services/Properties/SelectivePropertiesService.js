@@ -18,19 +18,18 @@
 */
 'use strict';
 
-export class SelectivePropertiesService
+import {BasePropertyService} from "./BasePropertyService.js";
+
+export class SelectivePropertiesService extends BasePropertyService
 {
-	#fabricWrapper;
-
-
 	constructor(fabricWrapper)
 	{
-		this.#fabricWrapper = fabricWrapper;
+		super(fabricWrapper);
 	}
 
 	getFillColor()
 	{
-		const object = this.#getActiveObject();
+		const object = this._getActiveObject();
 
 		if (object.type !== "i-text" && object.type !== "text" && object.type !== "textbox")
 			return object.fill
@@ -50,13 +49,12 @@ export class SelectivePropertiesService
 		{
 			object.set("fill", color)
 		}
-		this.#fabricWrapper.fireObjectModified(object);
-		this.#fabricWrapper.renderAll();
+		this._updateCanvas(object);
 	}
 
 	#getActiveObject()
 	{
-		const object = this.#fabricWrapper.getActiveObject();
+		const object = this._fabricWrapper.getActiveObject();
 		if (!object) throw new Error("No active object");
 		return object;
 	}

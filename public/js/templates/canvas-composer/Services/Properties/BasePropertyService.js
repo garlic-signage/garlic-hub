@@ -39,4 +39,10 @@ export class BasePropertyService
 		return object;
 	}
 
+	_updateCanvas(object)
+	{
+		this.#fabricWrapper.fireObjectModified(object);
+		this.#fabricWrapper.renderAll();
+	}
+
 }

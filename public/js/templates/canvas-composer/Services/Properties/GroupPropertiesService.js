@@ -18,34 +18,25 @@
 */
 'use strict';
 
-export class GroupPropertiesService
-{
-	#fabricWrapper;
+import {BasePropertyService} from "./BasePropertyService.js";
 
+export class GroupPropertiesService extends BasePropertyService
+{
 	constructor(fabricWrapper)
 	{
-		this.#fabricWrapper = fabricWrapper;
+		super(fabricWrapper);
 	}
 
 	toGroup(object)
 	{
 		object.toGroup()
-		this.#fabricWrapper.fireUpdateSelection(object);
-		this.#fabricWrapper.renderAll();
+		this._updateCanvas(object);
 	}
 
 	toActiveSelection(object)
 	{
 		object.toActiveSelection()
-		this.#fabricWrapper.fireUpdateSelection(object);
-		this.#fabricWrapper.renderAll();
-	}
-
-	getActiveObject()
-	{
-		const object = this.#fabricWrapper.getActiveObject();
-		if (!object) throw new Error("No active object");
-		return object;
+		this._updateCanvas(object);
 	}
 
 

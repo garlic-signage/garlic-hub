@@ -22,6 +22,7 @@ import {FetchClient}      from "../../core/FetchClient.js";
 import {WaitOverlay}      from "../../core/WaitOverlay.js";
 import {MediaSelector} from "../../mediapool/selector/MediaSelector.js";
 import {FontLoader}          from "./Fonts/FontLoader.js";
+import {FontCollector}       from "./Fonts/FontCollector.js";
 import {ToggleButtonFactory} from "./Utils/ToggleButtonFactory.js";
 import {WunderbaumWrapper}   from "../../mediapool/treeview/WunderbaumWrapper.js";
 import {TreeViewElements} from "../../mediapool/treeview/TreeViewElements.js";
@@ -31,7 +32,6 @@ import {MediaFactory}     from "../../mediapool/media/MediaFactory.js";
 import {BmpDitherFactory}   from "./Formats/BmpDitherFactory.js";
 import {FabricWrapper}      from "./Utils/FabricWrapper.js";
 import {LoadService}         from "./Services/LoadService.js";
-import {FontCollector}              from "./Fonts/FontCollector.js";
 import {ViewportView}               from "./Views/ViewportView.js";
 import {ViewportService}            from "./Services/ViewportService.js";
 import {ViewportController}         from "./Controller/ViewportController.js";
@@ -57,6 +57,9 @@ import {GroupPropertiesView}        from "./Views/Properties/GroupPropertiesView
 import {SelectivePropertiesView} from "./Views/Properties/SelectivePropertiesView.js";
 import {SelectivePropertiesService} from "./Services/Properties/SelectivePropertiesService.js";
 import {SelectivePropertiesController} from "./Controller/Properties/SelectivePropertiesController.js";
+import {TextPropertiesView} from "./Views/Properties/TextPropertiesView.js";
+import {TextPropertiesService} from "./Services/Properties/TextPropertiesService.js";
+import {TextPropertiesController} from "./Controller/Properties/TextPropertiesController.js";
 
 document.addEventListener("DOMContentLoaded", async function ()
 {
@@ -118,10 +121,15 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const selectivePropertiesService = new SelectivePropertiesService(fabricWrapper);
 	const selectivePropertiesController = new SelectivePropertiesController(selectivePropertiesView, selectivePropertiesService);
 
+	const textPropertiesView     = new TextPropertiesView(toggleButtonFactory);
+	const textPropertiesService  = new TextPropertiesService(fabricWrapper)
+	const textPropertiesController = new TextPropertiesController(textPropertiesView, textPropertiesService);
+
 	const propertiesController = new PropertiesController(
 		globalPropertiesController,
 		groupPropertiesController,
-		selectivePropertiesController
+		selectivePropertiesController,
+		textPropertiesController
 	);
 
 	if (composerContext.itemId !== 0)
