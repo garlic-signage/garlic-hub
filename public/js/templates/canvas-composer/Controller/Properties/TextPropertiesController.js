@@ -33,19 +33,27 @@ export class TextPropertiesController
 		this.#textPropertiesView.textAlign.addEventListener("click", () =>
 		{
 			this.#textPropertiesService.setTextAlign();
+			this.#textPropertiesView.setTextAlignValue(this.#textPropertiesService.getTextAlign())
+
 		});
 		this.#textPropertiesView.textBold.addEventListener("click", () =>
 		{
 			this.#textPropertiesService.setTextBold();
+			this.#textPropertiesView.setTextBoldValue(this.#textPropertiesService.getTextBold());
 		});
 		this.#textPropertiesView.textItalic.addEventListener("click", () =>
 		{
-			this.#textPropertiesService.setTextItalic(object);
+			this.#textPropertiesService.setTextItalic();
+			this.#textPropertiesView.setTextItalicValue(this.#textPropertiesService.getTextItalic());
 		});
 		this.#textPropertiesView.textUnderline.addEventListener("click", () =>
 		{
 			this.#textPropertiesService.setTextUnderline();
+			this.#textPropertiesView.setTextUnderlineValue(this.#textPropertiesService.getTextUnderline());
 		});
+
+		this.buildFontDropdown();
+
 	}
 
 
@@ -55,7 +63,7 @@ export class TextPropertiesController
 		this.#textPropertiesView.setTextAlignValue(this.#textPropertiesService.getTextAlign());
 		this.#textPropertiesView.setTextBoldValue(this.#textPropertiesService.getTextBold());
 		this.#textPropertiesView.setTextItalicValue(this.#textPropertiesService.getTextItalic());
-		this.#textPropertiesView.setTextUnderline(this.#textPropertiesService.getTextUnderline());
+		this.#textPropertiesView.setTextUnderlineValue(this.#textPropertiesService.getTextUnderline());
 		this.#textPropertiesView.show();
 	}
 

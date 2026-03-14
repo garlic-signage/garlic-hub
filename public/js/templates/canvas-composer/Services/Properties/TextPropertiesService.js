@@ -18,117 +18,97 @@
 */
 'use strict';
 
-export class TextPropertiesService
-{
-	#fabricWrapper;
+import {BasePropertyService} from "./BasePropertyService.js";
 
+export class TextPropertiesService extends BasePropertyService
+{
 	constructor(fabricWrapper)
 	{
-		this.#fabricWrapper = fabricWrapper;
+		super(fabricWrapper);
 	}
 
 	getTextFontFamily()
 	{
-		const object = this.#getActiveObject();
+		const object = this._getActiveObject();
 		const styles = object.getSelectionStyles(object.isEditing ? object.selectionStart : 0, object.isEditing ? object.selectionEnd : 9, false)
 		return styles && styles[0] ? styles[0].fontFamily : object.fontFamily
 	}
 
 	setTextFontFamily(fontFamily)
 	{
-		const object = this.#getActiveObject();
+		const object = this._getActiveObject();
 		object.setSelectionStyles({ fontFamily: fontFamily }, object.selectionStart === object.selectionEnd ? 0 : object.selectionStart, object.selectionStart === object.selectionEnd ? object.text.length : object.selectionEnd)
-		this.#fabricWrapper.fireObjectModified(object);
-		this.#fabricWrapper.renderAll();
+		this._updateCanvas(object);
 	}
 
 	setTextAlign()
 	{
-		const object = this.#getActiveObject();
+		const object = this._getActiveObject();
 		const positions = ["left", "center", "right", "left"]
 		const currentIndex = positions.findIndex((v) => v === object.textAlign)
 		const nextAlign = positions[currentIndex + 1]
-
-		this.textAlign.update("display", nextAlign)
-
 		object.set("textAlign", nextAlign)
+		this._updateCanvas(object);
+
 	}
 
 	getTextAlign()
 	{
-		const object = this.#getActiveObject();
+		const object = this._getActiveObject();
 		return object.textAlign
 	}
 
 	getTextBold()
 	{
-		const object = this.#getActiveObject();
+		const object = this._getActiveObject();
 		const styles = object.getSelectionStyles(object.isEditing ? object.selectionStart : 0, object.isEditing ? object.selectionEnd : 1, true)
 		return styles && styles[0] ? styles[0].fontWeight : object.fontWeight
 	}
 
 	setTextBold()
 	{
-		const object = this.#getActiveObject();
+		const object = this._getActiveObject();
 		const nextBold = this.getTextBold(object) === 'bold' ? 'normal' : 'bold'
-
-		this.textBold.update("active", nextBold)
-
 		object.setSelectionStyles({ fontWeight: nextBold }, object.selectionStart === object.selectionEnd ? 0 : object.selectionStart, object.selectionStart === object.selectionEnd ? object.text.length : object.selectionEnd)
-		this.#fabricWrapper.fireObjectModified(object);
-		this.#fabricWrapper.renderAll();
+		this._updateCanvas(object);
 	}
 
 	getTextItalic()
 	{
-		const object = this.#getActiveObject();
+		const object = this._getActiveObject();
 		const styles = object.getSelectionStyles(object.isEditing ? object.selectionStart : 0, object.isEditing ? object.selectionEnd : 1, true)
 		return styles && styles[0] ? styles[0].fontStyle : object.fontStyle
 	}
 
 	setTextItalic()
 	{
-		const object = this.#getActiveObject();
+		const object = this._getActiveObject();
 		let nextItalic = this.getTextItalic(object) === 'italic' ? 'normal' : 'italic'
-
-		this.textItalic.update("active", nextItalic)
-
 		object.setSelectionStyles({ fontStyle: nextItalic }, object.selectionStart === object.selectionEnd ? 0 : object.selectionStart, object.selectionStart === object.selectionEnd ? object.text.length : object.selectionEnd)
-		this.#fabricWrapper.fireObjectModified(object);
-		this.#fabricWrapper.renderAll();
+		this._updateCanvas(object);
 	}
 
 	justUpdateCanvas()
 	{
-		const object = this.#getActiveObject();
-		this.#fabricWrapper.fireObjectModified(object);
-		this.#fabricWrapper.renderAll();
+		const object = this._getActiveObject();
+		this._updateCanvas(object);
 	}
 
 
 	setTextUnderline()
 	{
-		const object = this.#getActiveObject();
+		const object = this._getActiveObject();
 		const nextUnderline = !object.underline
-
-		this.textUnderline.update("active", nextUnderline ? 'underline' : 'normal')
 
 		// object.setSelectionStyles({ underline: nextUnderline }, object.selectionStart === object.selectionEnd ? 0 : object.selectionStart, object.selectionStart === object.selectionEnd ? object.text.length : object.selectionEnd)
 		object.set("underline", nextUnderline)
+		this._updateCanvas(object);
 	}
 
 	getTextUnderline()
 	{
-		const object = this.#getActiveObject();
+		const object = this._getActiveObject();
 		const styles = object.getSelectionStyles(object.isEditing ? object.selectionStart : 0, object.isEditing ? object.selectionEnd : 1, true)
 		return styles && styles[0] ? styles[0].fontStyle : object.fontStyle
 	}
-
-	#getActiveObject()
-	{
-		const object = this.#fabricWrapper.getActiveObject();
-		if (!object) throw new Error("No active object");
-		return object;
-	}
-
 }

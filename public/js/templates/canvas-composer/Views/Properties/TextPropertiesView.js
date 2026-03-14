@@ -20,7 +20,7 @@
 
 export class TextPropertiesView
 {
-	#fontsDropdown  = document.getElementById("fonts_Dropdown")
+	#fontsDropdown  = document.getElementById("fontsDropdown")
 	#textProperties = document.getElementById("textProperties");
 	#fontFamily     = document.getElementById("fontFamily")
 	#textAlign ;
@@ -31,7 +31,7 @@ export class TextPropertiesView
 	constructor(toggleButtonFactory)
 	{
 		this.#textAlign     = toggleButtonFactory.create(document.getElementById("textAlign"))
-		this.#textBold      = toggleButtonFactory.create(document.getElementById("tex^tBold"))
+		this.#textBold      = toggleButtonFactory.create(document.getElementById("textBold"))
 		this.#textItalic    = toggleButtonFactory.create(document.getElementById("textItalic"))
 		this.#textUnderline = toggleButtonFactory.create(document.getElementById("textUnderline"))
 	}
@@ -55,33 +55,20 @@ export class TextPropertiesView
 	{
 		while (this.#fontsDropdown.children.length > 1)
 		{
-			this.#fontsDropdown.removeChild(this.#tfontsDropdown.lastChild);
+			this.#fontsDropdown.removeChild(this.#fontsDropdown.lastChild);
 		}
 	}
 
-	get textAlign()
-	{
-		return this.#textAlign.getElement();
-	}
-
-	get textBold()
-	{
-		return this.#textBold.getElement();
-	}
-
-	get textItalic()
-	{
-		return this.#textItalic.getElement();
-	}
-
-	get textUnderline()
-	{
-		return this.#textUnderline.getElement();
-	}
 
 	setfontFamilyValue(value)
 	{
 		this.#fontFamily.innerHTML = value;
+	}
+
+
+	get textAlign()
+	{
+		return this.#textAlign.getElement();
 	}
 
 	setTextAlignValue(value)
@@ -89,15 +76,30 @@ export class TextPropertiesView
 		this.#textAlign.update('display', value);
 	}
 
+	get textBold()
+	{
+		return this.#textBold.getElement();
+	}
+
 	setTextBoldValue(value)
 	{
 		this.#textBold.update('active', value)
+	}
+
+	get textItalic()
+	{
+		return this.#textItalic.getElement();
 	}
 
 	setTextItalicValue(value)
 	{
 		this.#textItalic.update('active', value)
 
+	}
+
+	get textUnderline()
+	{
+		return this.#textUnderline.getElement();
 	}
 
 	setTextUnderlineValue(value)
