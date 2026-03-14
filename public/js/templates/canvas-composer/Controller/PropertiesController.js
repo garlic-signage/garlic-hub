@@ -19,6 +19,12 @@
 
 import {ComposerEventBus} from "../Utils/ComposerEventBus.js";
 
+
+/**
+ * A controller class responsible for managing and coordinating the activation
+ * and deactivation of different property controllers based on the type of object
+ * interacted dynamicly with objects in canvas.
+ */
 export class PropertiesController
 {
 	#globalPropertiesController;
@@ -27,12 +33,12 @@ export class PropertiesController
 	#textPropertiesController;
 	#currentType = ""
 
-	constructor(globalPropertiesController, groupPropertiesController, selectivePropertiesController/*, textPropertiesController*/)
+	constructor(globalPropertiesController, groupPropertiesController, selectivePropertiesController, textPropertiesController)
 	{
-		this.#globalPropertiesController = globalPropertiesController;
-		this.#groupPropertiesController  = groupPropertiesController;
+		this.#globalPropertiesController    = globalPropertiesController;
+		this.#groupPropertiesController     = groupPropertiesController;
 		this.#selectivePropertiesController = selectivePropertiesController;
-		//	this.#textPropertiesController = textPropertiesController;
+		this.#textPropertiesController      = textPropertiesController;
 
 		ComposerEventBus.addEventListener('mouseLeftUp', (e) =>
 		{
@@ -59,7 +65,7 @@ export class PropertiesController
 			case "textbox":
 				this.#selectivePropertiesController.activate();
 				this.#globalPropertiesController.activate();
-			//	this.#textPropertiesController.activate();
+				this.#textPropertiesController.activate();
 				break;
 			case "circle":
 			case "rect":
@@ -88,6 +94,6 @@ export class PropertiesController
 		this.#globalPropertiesController.deactivate();
 		this.#groupPropertiesController.deactivate();
 		this.#selectivePropertiesController.deactivateAll();
-	//	this.#textPropertiesController.deactivate();
+		this.#textPropertiesController.deactivate();
 	}
 }
