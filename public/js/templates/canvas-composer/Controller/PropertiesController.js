@@ -43,10 +43,9 @@ export class PropertiesController
 		ComposerEventBus.addEventListener('mouseLeftUp', (e) =>
 		{
 			const object = e.detail.target;
+			this.deactivateAllProperties();
 			if (object)
 				this.activateCurrent(object);
-			else
-				this.deactivateAllProperties();
 		});
 
 	}

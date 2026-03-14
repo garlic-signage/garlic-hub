@@ -113,17 +113,17 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const globalPropertiesController  = new GlobalPropertiesController(globalPropertiesView, globalPropertiesService);
 
 	const toggleButtonFactory = new ToggleButtonFactory();
-	const groupProperiesView     = new GroupPropertiesView(toggleButtonFactory);
-	const groupPropertiesService = new GroupPropertiesService(fabricWrapper);
+	const groupProperiesView        = new GroupPropertiesView(toggleButtonFactory);
+	const groupPropertiesService    = new GroupPropertiesService(fabricWrapper);
 	const groupPropertiesController = new GroupPropertiesController(groupProperiesView, groupPropertiesService);
 
-	const selectivePropertiesView     = new SelectivePropertiesView(toggleButtonFactory);
-	const selectivePropertiesService = new SelectivePropertiesService(fabricWrapper);
+	const selectivePropertiesView       = new SelectivePropertiesView(toggleButtonFactory);
+	const selectivePropertiesService    = new SelectivePropertiesService(fabricWrapper);
 	const selectivePropertiesController = new SelectivePropertiesController(selectivePropertiesView, selectivePropertiesService);
 
 	const textPropertiesView     = new TextPropertiesView(toggleButtonFactory);
 	const textPropertiesService  = new TextPropertiesService(fabricWrapper)
-	const textPropertiesController = new TextPropertiesController(textPropertiesView, textPropertiesService);
+	const textPropertiesController = new TextPropertiesController(textPropertiesView, textPropertiesService, fontLoader);
 
 	const propertiesController = new PropertiesController(
 		globalPropertiesController,
