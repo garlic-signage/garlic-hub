@@ -1,23 +1,21 @@
 <h1>{{{LANG_PAGE_HEADER}}}</h1>
 
-<template id="context-menu" xmlns="http://www.w3.org/1999/html">
-        <ul class="context-menu">
-            <li id="change_image" class="bi-image"> {{{LANG_REPLACE_IMAGE}}}</li>
-            <li id="duplicate_item" class="bi-copy">{{{LANG_DUBLICATE}}}</li>
-            <li id="delete_item" class="bi-trash">{{{LANG_DELETE}}}</li>
-            <li>
-                <hr />
-            </li>
-            <li id="lock_unlock"><span id="lock" class="bi-lock"> Lock</span><span id="unlock" class="bi-unlock"> Unlock</span></li>
-            <li>
-                <hr />
-            </li>
-            <li id="move_background" class="bi-back">{{{LANG_MOVE_BACKGROUND}}}</li>
-            <li id="move_back" class="bi-arrow-down">{{{LANG_MOVE_BACK}}}</li>
-            <li id="move_front" class="bi-arrow-up">{{{LANG_MOVE_FRONT}}}</li>
-            <li id="move_foreground" class="bi-front">{{{LANG_MOVE_FOREGROUND}}}</li>
-        </ul>
-</template>
+	<ul id="composerContextMenu"  class="context-menu">
+		<li id="replaceImage" class="bi-image"> {{{LANG_REPLACE_IMAGE}}}</li>
+		<li id="duplicate" class="bi-copy">{{{LANG_DUBLICATE}}}</li>
+		<li id="delete" class="bi-trash">{{{LANG_DELETE}}}</li>
+		<li>
+			<hr />
+		</li>
+		<li id="toggleLock"><span id="lock" class="bi-lock"> {{{LANG_LOCK}}}</span><span id="unlock" class="bi-unlock"> {{{LANG_UNLOCK}}}</span></li>
+		<li>
+			<hr />
+		</li>
+		<li id="moveBackground" class="bi-back">{{{LANG_MOVE_BACKGROUND}}}</li>
+		<li id="moveBack" class="bi-arrow-down">{{{LANG_MOVE_BACK}}}</li>
+		<li id="moveFront" class="bi-arrow-up">{{{LANG_MOVE_FRONT}}}</li>
+		<li id="moveForeground" class="bi-front">{{{LANG_MOVE_FOREGROUND}}}</li>
+	</ul>
 
 {{> media_selector}}
 <dialog id="mediaSelectorDialog">
