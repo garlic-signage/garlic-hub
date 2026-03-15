@@ -103,7 +103,6 @@ export class FabricWrapper
 	{
 		this.#fabricCanvas.renderAll();
 	}
-
 	getObjects()
 	{
 		return this.#fabricCanvas.getObjects();
@@ -114,10 +113,22 @@ export class FabricWrapper
 		this.#fabricCanvas.setActiveObject(object);
 	}
 
+	setActiveObject(object)
+	{
+		return this.#fabricCanvas.setActiveObject(object);
+	}
+
+
 	getActiveObject()
 	{
 		return this.#fabricCanvas.getActiveObject();
 	}
+
+	discardActiveObject()
+	{
+		return this.#fabricCanvas.discardActiveObject();
+	}
+
 
 	setZoom(factor)
 	{

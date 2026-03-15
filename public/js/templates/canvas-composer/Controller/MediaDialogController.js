@@ -33,12 +33,24 @@ export class MediaDialogController
 		this.#mediaSelector   = mediaSelector;
 		this.#insertService   = insertService;
 
-		ComposerEventBus.addEventListener("openMediaDialog", async () =>
+		ComposerEventBus.addEventListener("openMediaDialogForInsert", async () =>
 		{
 			this.#mediaDialogView.addMedia.style.display = "inline";
 			this.#mediaDialogView.applyMedia.style.display = "none";
 			this.#mediaDialogView.dialogName.innerText = lang.add_image;
 			this.#mediaSelector.enableMultiSelect();
+
+			await this.#mediaSelector.showSelector(this.#mediaDialogView.mediaSelectorElement);
+			this.#mediaDialogView.mediaSelectorDialog.showModal();
+
+			this.#isOpen = true;
+		})
+		ComposerEventBus.addEventListener("openMediaDialogForReplace", async () =>
+		{
+			this.#mediaDialogView.addMedia.style.display = "inline";
+			this.#mediaDialogView.applyMedia.style.display = "none";
+			this.#mediaDialogView.dialogName.innerText = lang.replace_image;
+			this.#mediaSelector.disableMultiSelect();
 
 			await this.#mediaSelector.showSelector(this.#mediaDialogView.mediaSelectorElement);
 			this.#mediaDialogView.mediaSelectorDialog.showModal();
@@ -52,6 +64,12 @@ export class MediaDialogController
 			{
 				await this.#insertService.insertImage(id, src, i);
 			}
+			this.remove();
+		}, { once: true });
+		this.#mediaDialogView.applyMedia.addEventListener("click", async (event) =>
+		{
+			let selectedMedia = this.#mediaSelector.getSelectedMedia()[0];
+			await this.#insertService.replaceImage(selectedMedia.id, selectedMedia.src);
 			this.remove();
 		}, { once: true });
 

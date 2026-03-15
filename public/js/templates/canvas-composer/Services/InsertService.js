@@ -41,6 +41,29 @@ export class InsertService
 		this.#addObject(img);
 	}
 
+	async replaceImage(mediaId, url)
+	{
+		return new Promise((resolve, reject) =>
+		{
+			const object = this.#fabricWrapper.getActiveObject();
+			const w = object.width  * object.scaleX;
+			const h = object.height * object.scaleY;
+
+			object.setSrc(url, () =>
+				{
+					object.scaleX = 1;
+					object.scaleY = 1;
+					object.mediaId = mediaId;
+					object.fileName = url.split('/').pop();
+					object.scaleToWidth(w, true);
+					object.scaleToHeight(h, true);
+					this.#fabricWrapper.renderAll();
+					resolve();
+				},
+				(err) => reject(err),
+				{ crossOrigin: 'anonymous' });
+		});
+	}
 
 	insertText()
 	{

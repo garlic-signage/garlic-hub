@@ -53,7 +53,8 @@ export class ContextMenu
 		this.initLockEvent();
 	}
 
-	build(options) {
+	build(options)
+	{
 		this.options = options;
 
 		this.context_menu = document.createElement("div");

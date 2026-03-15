@@ -32,7 +32,7 @@ export class InsertController
 
 		this.#insertView.insertImage.addEventListener("click", () =>
 		{
-			ComposerEventBus.dispatchEvent(new CustomEvent("openMediaDialog"));
+			ComposerEventBus.dispatchEvent(new CustomEvent("openMediaDialogForInsert"));
 		});
 
 		this.#insertView.insertText.addEventListener("click", () =>

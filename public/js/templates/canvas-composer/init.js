@@ -60,6 +60,9 @@ import {SelectivePropertiesController} from "./Controller/Properties/SelectivePr
 import {TextPropertiesView} from "./Views/Properties/TextPropertiesView.js";
 import {TextPropertiesService} from "./Services/Properties/TextPropertiesService.js";
 import {TextPropertiesController} from "./Controller/Properties/TextPropertiesController.js";
+import {ContextMenuView} from "./Views/ContextMenuView.js";
+import {ContextMenuService} from "./Services/ContextMenuService.js";
+import {ContextMenuController} from "./Controller/ContextMenuController.js";
 
 document.addEventListener("DOMContentLoaded", async function ()
 {
@@ -105,8 +108,8 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const insertService      = new InsertService(fabricWrapper, fabricShapefactory, viewportService);
 	const insertController   = new InsertController(insertView, insertService);
 
-	const mediaDialogView = new MediaDialogView();
-	const mediaController = new MediaDialogController(mediaDialogView, mediaSelector, insertService);
+	const mediaDialogView       = new MediaDialogView();
+	const mediaDialogController = new MediaDialogController(mediaDialogView, mediaSelector, insertService);
 
 	const globalPropertiesView = new GlobalPropertiesView();
 	const globalPropertiesService = new GlobalPropertiesService(fabricWrapper);
@@ -124,6 +127,10 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const textPropertiesView     = new TextPropertiesView(toggleButtonFactory);
 	const textPropertiesService  = new TextPropertiesService(fabricWrapper)
 	const textPropertiesController = new TextPropertiesController(textPropertiesView, textPropertiesService, fontLoader);
+
+	const contextMenuView = new ContextMenuView();
+	const contextMenuService  = new ContextMenuService(fabricWrapper);
+	const contextMenuController = new ContextMenuController(contextMenuView, contextMenuService, mediaDialogController);
 
 	const propertiesController = new PropertiesController(
 		globalPropertiesController,
