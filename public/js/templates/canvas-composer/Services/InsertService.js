@@ -48,6 +48,7 @@ export class InsertService
 			const object = this.#fabricWrapper.getActiveObject();
 			const w = object.width  * object.scaleX;
 			const h = object.height * object.scaleY;
+			url = url.replace("thumbs", "originals");
 
 			object.setSrc(url, () =>
 				{

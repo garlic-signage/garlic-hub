@@ -47,8 +47,8 @@ export class MediaDialogController
 		})
 		ComposerEventBus.addEventListener("openMediaDialogForReplace", async () =>
 		{
-			this.#mediaDialogView.addMedia.style.display = "inline";
-			this.#mediaDialogView.applyMedia.style.display = "none";
+			this.#mediaDialogView.addMedia.style.display = "none";
+			this.#mediaDialogView.applyMedia.style.display = "inline";
 			this.#mediaDialogView.dialogName.innerText = lang.replace_image;
 			this.#mediaSelector.disableMultiSelect();
 
