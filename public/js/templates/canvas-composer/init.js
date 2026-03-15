@@ -63,6 +63,9 @@ import {TextPropertiesController} from "./Controller/Properties/TextPropertiesCo
 import {ContextMenuView} from "./Views/ContextMenuView.js";
 import {ContextMenuService} from "./Services/ContextMenuService.js";
 import {ContextMenuController} from "./Controller/ContextMenuController.js";
+import {TransformService} from "./Services/TransformService.js";
+import {ComposerKeyboardController} from "./Controller/ComposerKeyboardController.js";
+import {ComposerKeyboardView} from "./Views/ComposerKeyboardView.js";
 
 document.addEventListener("DOMContentLoaded", async function ()
 {
@@ -138,6 +141,10 @@ document.addEventListener("DOMContentLoaded", async function ()
 		selectivePropertiesController,
 		textPropertiesController
 	);
+
+	const composerKeyboardView = new ComposerKeyboardView();
+	const transformService = new TransformService(fabricWrapper);
+	const composerKeyboardController = new ComposerKeyboardController(composerKeyboardView, transformService, contextMenuService, propertiesController, fabricWrapper);
 
 	if (composerContext.itemId !== 0)
 		await loadService.loadFromPlaylistItemDataBase(composerContext.itemId);
