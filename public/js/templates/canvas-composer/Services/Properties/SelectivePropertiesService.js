@@ -40,7 +40,7 @@ export class SelectivePropertiesService extends BasePropertyService
 
 	setFillColor(color)
 	{
-		const object = this.#getActiveObject();
+		const object = this._getActiveObject();
 		if (object.type === "i-text" || object.type === "text" || object.type === "textbox")
 		{
 			object.setSelectionStyles({ fill: color }, object.selectionStart === object.selectionEnd ? 0 : object.selectionStart, object.selectionStart === object.selectionEnd ? object.text.length : object.selectionEnd)
@@ -52,10 +52,4 @@ export class SelectivePropertiesService extends BasePropertyService
 		this._updateCanvas(object);
 	}
 
-	#getActiveObject()
-	{
-		const object = this._fabricWrapper.getActiveObject();
-		if (!object) throw new Error("No active object");
-		return object;
-	}
 }

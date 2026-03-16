@@ -50,6 +50,9 @@ export class InsertService
 			const h = object.height * object.scaleY;
 			url = url.replace("thumbs", "originals");
 
+			this.#fabricWrapper.historySaveAction();
+			this.#fabricWrapper.fireObjectModified(object);
+			this.#fabricWrapper.renderAll();
 			object.setSrc(url, () =>
 				{
 					object.scaleX = 1;

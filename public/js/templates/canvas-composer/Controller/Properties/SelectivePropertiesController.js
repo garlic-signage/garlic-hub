@@ -34,7 +34,7 @@ export class SelectivePropertiesController
 		});
 		this.#selectivePropertiesView.fillColor.addEventListener("change", () =>
 		{
-			this.#selectivePropertiesService.setFillColor(object, this.fillColor.value)
+			this.#selectivePropertiesService.setFillColor(this.#selectivePropertiesView.getfillColorValue())
 		});
 
 	}
