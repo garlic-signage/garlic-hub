@@ -35,7 +35,13 @@ export class FabricShapeFactory
 					mediaId: mediaId,
 					fileName: url.split('/').pop(),
 					left: count * FabricShapeFactory.#DEFAULT_LEFT,
-					top: count * FabricShapeFactory.#DEFAULT_TOP,
+					top: count * FabricShapeFactory.#DEFAULT_TOP
+				});
+				img.setControlsVisibility({
+					mt: false,
+					mb: false,
+					ml: false,
+					mr: false
 				});
 				img.bringToFront();
 				resolve(img);
@@ -46,7 +52,15 @@ export class FabricShapeFactory
 	createText()
 	{
 		const text = "Lorem ipsum";
-		return new fabric.Textbox(text, { ...this.#defaultProperties(), width: 400, fontFamily: 'Arial', fontSize: 64});
+		const textbox =  new fabric.Textbox(text, { ...this.#defaultProperties(), lockUniScaling: true, width: 400, fontFamily: 'Arial', fontSize: 64});
+		textbox.setControlsVisibility({
+			mt: false,
+			mb: false,
+			ml: false,
+			mr: false
+		});
+
+		return textbox;
 	}
 
 	createCircle()
