@@ -54,9 +54,22 @@ export class ContextMenuService
 		return object.lockMovementX && object.lockMovementY;
 	}
 
+	isSelectable()
+	{
+		const object = this.#fabricWrapper.getActiveObject();
+		if (object === null)
+			return false;
+
+		return object.selectable;
+	}
+
+
 	toggleLockedStatus()
 	{
 		const object = this.#fabricWrapper.getActiveObject();
+		if (object === null)
+			return;
+
 		const isLock = !this.isLocked();
 
 		["lockMovementX", "lockMovementY", "lockSkewingX", "lockSkewingY",
@@ -65,6 +78,22 @@ export class ContextMenuService
 
 		this.#handleFabric();
 	}
+
+	toggleSelectableStatus()
+	{
+		const object = this.#fabricWrapper.getActiveObject();
+		if (object === null)
+			return;
+
+		const isSelectable = !object.selectable;
+
+		object.selectable = isSelectable;
+		object.evented = isSelectable;
+
+		this.#handleFabric();
+	}
+
+
 	#pasteFromClipboardToPos()
 	{
 		this.#clipboard.clone(cloned =>

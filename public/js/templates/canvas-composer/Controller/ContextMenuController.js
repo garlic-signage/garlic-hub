@@ -56,11 +56,21 @@ export class ContextMenuController
 
 			const isShape = ["text", "i-text", "textbox", "circle", "rect", "triangle", "polygon"]
 				.includes(object.type);
+			if (this.#contextMenuView.toggleLock !== null)
+			{
+				if (this.#contextMenuService.isLocked())
+					this.#contextMenuView.showUnLocked();
+				else
+					this.#contextMenuView.showLocked();
+			}
 
-			if (this.#contextMenuService.isLocked())
-				this.#contextMenuView.showUnlocked();
-			else
-				this.#contextMenuView.showLocked();
+			if (this.#contextMenuView.toggleSelectable !== null)
+			{
+				if (this.#contextMenuService.isSelectable())
+					this.#contextMenuView.showUnSelectable();
+				else
+					this.#contextMenuView.showSelectable();
+			}
 
 			if (isShape)
 				this.#contextMenuView.hideReplaceImage();
@@ -87,12 +97,22 @@ export class ContextMenuController
 			this.#contextMenuView.hide();
 		});
 
-		this.#contextMenuView.toggleLock.addEventListener("click", () =>
+		if (this.#contextMenuView.toggleLock !== null)
 		{
-			this.#contextMenuService.toggleLockedStatus()
-			this.#contextMenuView.hide();
-		});
-
+			this.#contextMenuView.toggleLock.addEventListener("click", () =>
+			{
+				this.#contextMenuService.toggleLockedStatus()
+				this.#contextMenuView.hide();
+			});
+		}
+		if (this.#contextMenuView.toggleSelectable !== null)
+		{
+			this.#contextMenuView.toggleSelectable.addEventListener("click", () =>
+			{
+				this.#contextMenuService.toggleSelectableStatus()
+				this.#contextMenuView.hide();
+			});
+		}
 		this.#contextMenuView.moveBackground.addEventListener("click", () =>
 		{
 			this.#contextMenuService.sendToBack();

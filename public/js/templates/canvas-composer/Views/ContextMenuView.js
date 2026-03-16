@@ -29,6 +29,9 @@ export class ContextMenuView
 	#toggleLock = document.getElementById("toggleLock");
 	#lock = document.getElementById("lock");
 	#unlock = document.getElementById("unlock");
+	#toggleSelectable = document.getElementById("toggleSelectable");
+	#selectable = document.getElementById("selectable");
+	#unselectable = document.getElementById("unselectable");
 	#moveBackground = document.getElementById("moveBackground");
 	#moveBack = document.getElementById("moveBack");
 	#moveFront = document.getElementById("moveFront");
@@ -74,11 +77,24 @@ export class ContextMenuView
 		this.#unlock.style.display = "none";
 	}
 
-	showUnlocked()
+	showUnLocked()
 	{
 		this.#lock.style.display = "none";
 		this.#unlock.style.display = "inline";
 	}
+
+	showSelectable()
+	{
+		this.#selectable.style.display = "inline";
+		this.#unselectable.style.display = "none";
+	}
+
+	showUnSelectable()
+	{
+		this.#selectable.style.display = "none";
+		this.#unselectable.style.display = "inline";
+	}
+
 
 	get replaceImage()
 	{
@@ -105,21 +121,16 @@ export class ContextMenuView
 		return this.#delete;
 	}
 
-
 	get toggleLock()
 	{
 		return this.#toggleLock;
 	}
 
-	get lock()
+	get toggleSelectable()
 	{
-		return this.#lock;
+		return this.#toggleSelectable;
 	}
 
-	get unlock()
-	{
-		return this.#unlock;
-	}
 
 	get moveBackground()
 	{
