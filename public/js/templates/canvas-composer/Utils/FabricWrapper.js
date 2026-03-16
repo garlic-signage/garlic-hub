@@ -146,7 +146,15 @@ export class FabricWrapper
 
 	toTemplateJSON()
 	{
-		return this.#fabricCanvas.toJSON(["mediaId", "fileName"]);
+		return this.#fabricCanvas.toJSON([
+			"mediaId",
+			"fileName",
+			"lockMovementX",
+			"lockMovementY",
+			"lockRotation",
+			"lockScalingX",
+			"lockScalingY",
+		]);
 	}
 
 	clear()
