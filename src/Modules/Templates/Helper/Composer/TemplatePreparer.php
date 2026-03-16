@@ -73,8 +73,6 @@ class TemplatePreparer
 			'LANG_DUBLICATE' => $this->translator->translate('duplicate', 'templates'),
 			'LANG_DELETE' => $this->translator->translate('delete', 'main'),
 			'LANG_REPLACE_IMAGE' => $this->translator->translate('replace_image', 'templates'),
-			'LANG_LOCK' => $this->translator->translate('lock', 'templates'),
-			'LANG_UNLOCK' => $this->translator->translate('unlock', 'templates'),
 			'LANG_INSERT' => $this->translator->translate('insert', 'main'),
 			'LANG_SAVE' => $this->translator->translate('save', 'main'),
 			'LANG_CLOSE' => $this->translator->translate('close', 'main'),
@@ -106,7 +104,15 @@ class TemplatePreparer
 
 			$templateComposer['save_formats']['formats'] = $formats;
 			$templateComposer['is_playlist_item'] = ['ITEM_ID' => $itemId, 'PLAYLIST_ID' => $playlistId];
-
+		}
+		else
+		{
+			$templateComposer['is_selectable'] = [
+				'LANG_LOCK' => $this->translator->translate('lock', 'templates'),
+				'LANG_UNLOCK' => $this->translator->translate('unlock', 'templates'),
+				'LANG_SELECTABLE' => $this->translator->translate('selectable', 'templates'),
+				'LANG_UNSELECTABLE' => $this->translator->translate('unselectable', 'templates'),
+			];
 		}
 
 		return $templateComposer;
