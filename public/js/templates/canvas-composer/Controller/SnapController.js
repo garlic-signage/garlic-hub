@@ -43,9 +43,7 @@ export class SnapController
 				return;
 
 			this.#snapView.drawGrid(
-				this.#snapService.getCanvasWidth(),
-				this.#snapService.getCanvasHeight(),
-				this.#snapService.getCanvasZoom()
+				this.#snapService.getCanvasvaluesForGrid()
 			);
 		});
 		this.#snapView.snapToGrid.addEventListener("change", () =>

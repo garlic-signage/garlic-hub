@@ -39,25 +39,27 @@ export class SnapView
 		return this.#snapToGrid.value;
 	}
 
-	drawGrid(width, height, zoom)
+
+
+	drawGrid(gridData)
 	{
-		const gridSize = parseInt(this.#snapToGrid.value) * zoom;
+		const gridSize = parseInt(this.#snapToGrid.value) * gridData.zoom;
 
 		this.#canvasContext.strokeStyle = '#e0e0e0';
 		this.#canvasContext.lineWidth = 0.5;
 
-		for (let x = 0; x < width; x += gridSize)
+		for (let x = 0; x < gridData.width; x += gridSize)
 		{
 			this.#canvasContext.beginPath();
 			this.#canvasContext.moveTo(x, 0);
-			this.#canvasContext.lineTo(x, height);
+			this.#canvasContext.lineTo(x, gridData.height);
 			this.#canvasContext.stroke();
 		}
-		for (let y = 0; y < height; y += gridSize)
+		for (let y = 0; y < gridData.height; y += gridSize)
 		{
 			this.#canvasContext.beginPath();
 			this.#canvasContext.moveTo(0, y);
-			this.#canvasContext.lineTo(width, y);
+			this.#canvasContext.lineTo(gridData.width, y);
 			this.#canvasContext.stroke();
 		}
 	}

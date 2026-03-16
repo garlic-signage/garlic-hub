@@ -45,20 +45,15 @@ export class SnapService
 		this.#isGridEnabled = false;
 	}
 
-	getCanvasWidth()
+	getCanvasvaluesForGrid()
 	{
-		return this.#fabricWrapper.getWidth();
+		return {
+			width: this.#fabricWrapper.getWidth(),
+			height: this.#fabricWrapper.getHeight(),
+			zoom: this.#fabricWrapper.getZoom()
+		};
 	}
 
-	getCanvasHeight()
-	{
-		return this.#fabricWrapper.getHeight();
-	}
-
-	getCanvasZoom()
-	{
-		return this.#fabricWrapper.getZoom();
-	}
 
 	renderAll()
 	{
