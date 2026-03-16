@@ -52,17 +52,12 @@ export class SaveView
 
 	getExportFormatValue()
 	{
-		return this.#exportFormat.value;
-	}
+		return this.#exportFormat?.value ?? 'jpg';	}
 
-	get exportQuality()
-	{
-		return this.#exportQuality.value;
-	}
 
 	getExportQualityValue()
 	{
-		return this.#exportQuality.value;
+		return this.#exportQuality?.value ?? 80;
 	}
 
 	hideExportQuality()

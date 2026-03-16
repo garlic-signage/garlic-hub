@@ -47,7 +47,7 @@ export class SaveController
 
 		this.#saveView.saveButton.addEventListener('click', () =>
 		{
-			this.#saveService.validateImageData(this.#saveView.getExportFormatValue(),  this.#saveView.getExportFormatValue());
+			this.#saveService.validateImageData(this.#saveView.getExportFormatValue(),  this.#saveView.getExportQualityValue());
 
 			if (isPlaylist)
 				this.#saveService.save(this.#viewportService.width, this.#viewportService.height, true, this.#composerContext.itemId);
