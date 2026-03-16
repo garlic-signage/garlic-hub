@@ -24,12 +24,14 @@ export class FabricWrapper
 {
 	#fabricCanvas
 	#hasChanged = false;
+	#isObjectMoving = false;
 
 	constructor(fabricCanvas)
 	{
 		this.#fabricCanvas = fabricCanvas;
 		this.#initChangeDetectors();
 		this.#initMouseEvents();
+		this.#initGridEvents()
 	}
 
 	setWidth(width)
@@ -113,11 +115,6 @@ export class FabricWrapper
 		this.#fabricCanvas.setActiveObject(object);
 	}
 
-	setActiveObject(object)
-	{
-		return this.#fabricCanvas.setActiveObject(object);
-	}
-
 
 	getActiveObject()
 	{
@@ -133,6 +130,11 @@ export class FabricWrapper
 	setZoom(factor)
 	{
 		this.#fabricCanvas.setZoom(factor);
+	}
+
+	getZoom()
+	{
+		return this.#fabricCanvas.getZoom();
 	}
 
 	zoomToPoint(x, y, factor)
@@ -160,6 +162,10 @@ export class FabricWrapper
 		this.#fabricCanvas.fire("selection:updated", { target: object });
 	}
 
+	getContext()
+	{
+		return this.#fabricCanvas.getContext("2d");
+	}
 
 	load(jsonContent)
 	{
@@ -186,18 +192,36 @@ export class FabricWrapper
 	#initChangeDetectors()
 	{
 		// check if canvas was changed
-		this.#fabricCanvas.on('object:modified', (event) => {
+		this.#fabricCanvas.on('object:modified', (event) =>
+		{
 			this.changed();
 		})
-		this.#fabricCanvas.on('text:changed', (event) => {
+		this.#fabricCanvas.on('text:changed', (event) =>
+		{
 			this.changed();
 		})
-		this.#fabricCanvas.on('object:added', (event) => {
+		this.#fabricCanvas.on('object:added', (event) =>
+		{
 			this.changed();
 		})
-		this.#fabricCanvas.on('object:removed', (event) => {
+		this.#fabricCanvas.on('object:removed', (event) =>
+		{
 			this.changed();
 		})
+	}
+
+	#initGridEvents()
+	{
+		this.#fabricCanvas.on('object:moving', (options) =>
+		{
+			ComposerEventBus.dispatchEvent(new CustomEvent('snapToGrid', {detail: options}));
+			this.#isObjectMoving = true;
+		});
+		this.#fabricCanvas.on('after:render', () =>
+		{
+			if (this.#isObjectMoving === true)
+				ComposerEventBus.dispatchEvent(new CustomEvent('drawGrid'));
+		});
 	}
 
 	#initMouseEvents()
@@ -206,6 +230,7 @@ export class FabricWrapper
 			if (options.button === 1)
 			{
 				ComposerEventBus.dispatchEvent(new CustomEvent('mouseLeftUp', { detail: options }));
+				this.#isObjectMoving = false;
 			}
 			else if (options.button === 3)
 			{

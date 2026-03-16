@@ -66,6 +66,9 @@ import {ContextMenuController} from "./Controller/ContextMenuController.js";
 import {TransformService} from "./Services/TransformService.js";
 import {ComposerKeyboardController} from "./Controller/ComposerKeyboardController.js";
 import {ComposerKeyboardView} from "./Views/ComposerKeyboardView.js";
+import {SnapView} from "./Views/SnapView.js";
+import {SnapService}                   from "./Services/SnapService.js";
+import {SnapController} from "./Controller/SnapController.js";
 
 document.addEventListener("DOMContentLoaded", async function ()
 {
@@ -145,6 +148,11 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const composerKeyboardView = new ComposerKeyboardView();
 	const transformService = new TransformService(fabricWrapper);
 	const composerKeyboardController = new ComposerKeyboardController(composerKeyboardView, transformService, contextMenuService, propertiesController, fabricWrapper);
+
+	const snapView = new SnapView(fabricWrapper.getContext());
+	const snapService = new SnapService(fabricWrapper);
+	const snapController = new SnapController(snapView, snapService);
+
 
 	if (composerContext.itemId !== 0)
 		await loadService.loadFromPlaylistItemDataBase(composerContext.itemId);
