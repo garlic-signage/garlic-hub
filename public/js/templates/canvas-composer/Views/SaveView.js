@@ -34,6 +34,17 @@ export class SaveView
 		return this.#saveButton;
 	}
 
+	setSaveNotify()
+	{
+		return this.#saveButton.classList.add("notify-save");
+	}
+
+	unsetSaveNotify()
+	{
+		return this.#saveButton.classList.remove("notify-save");
+	}
+
+
 	get exportFormat()
 	{
 		return this.#exportFormat;

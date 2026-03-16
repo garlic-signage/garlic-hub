@@ -18,6 +18,8 @@
 */
 'use strict';
 
+import {ComposerEventBus} from "../Utils/ComposerEventBus.js";
+
 export class SaveController
 {
 	#saveView;
@@ -52,7 +54,14 @@ export class SaveController
 			else
 				this.#saveService.save(this.#viewportService.width, this.#viewportService.height, false, this.#composerContext.templateId);
 		});
-
+		ComposerEventBus.addEventListener("setChanged", (e) =>
+		{
+			this.#saveView.setSaveNotify();
+		})
+		ComposerEventBus.addEventListener("resetChanged", (e) =>
+		{
+			this.#saveView.unsetSaveNotify();
+		})
 		this.#saveView.resetButton?.addEventListener('click', () =>
 		{
 			this.#loadService.resetFromTemplateDataBase(this.#composerContext.templateId);

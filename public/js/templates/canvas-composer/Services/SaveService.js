@@ -70,6 +70,7 @@ export class SaveService
 				await this.#templatesService.saveTemplateContent(id, save, image);
 
 			ComposerEventBus.dispatchEvent(new CustomEvent("canvasUpdated"));
+			this.#fabricWrapper.resetChange();
 		}
 		catch(e)
 		{

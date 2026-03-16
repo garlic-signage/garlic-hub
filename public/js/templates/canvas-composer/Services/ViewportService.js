@@ -39,11 +39,6 @@ export class ViewportService
 		return this.#height;
 	}
 
-	resetChange()
-	{
-		this.#fabricWrapper.resetChange();
-	}
-
 	initializeFromCanvas()
 	{
 		this.#width = this.#fabricWrapper.getWidth();

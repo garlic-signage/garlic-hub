@@ -64,11 +64,13 @@ export class FabricWrapper
 	changed()
 	{
 		this.#hasChanged = true;
+		ComposerEventBus.dispatchEvent(new CustomEvent('setChanged'));
 	}
 
 	resetChange()
 	{
 		this.#hasChanged = false;
+		ComposerEventBus.dispatchEvent(new CustomEvent('resetChanged'));
 	}
 
 	getViewportTransform()
