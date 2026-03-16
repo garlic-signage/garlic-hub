@@ -33,7 +33,7 @@ export class GlobalPropertiesController
 	{
 		this.#globalPropertiesView.setStrokeColorValue(this.#globalPropertiesService.getStrokeColor())
 		this.#globalPropertiesView.setStrokeWidthValue(this.#globalPropertiesService.getStrokeWidth());
-		this.#globalPropertiesView.setOpacityValue(this.#globalPropertiesService.getOpacity());
+		this.#globalPropertiesView.setOpacityValue(this.#globalPropertiesService.getOpacity() * 100);
 
 		this.#globalPropertiesView.showGlobalProperties();
 	}
@@ -47,7 +47,9 @@ export class GlobalPropertiesController
 	{
 		this.#globalPropertiesView.opacity.addEventListener("change", (event) =>
 		{
-			this.#globalPropertiesService.setOpacity(event.target.value)
+			const value = parseInt(this.#globalPropertiesView.getOpacityValue());
+			this.#globalPropertiesService.setOpacity(value);
+			this.#globalPropertiesView.setOpacityValue(value);
 		})
 		this.#globalPropertiesView.strokeColor.addEventListener("input", (event) =>
 		{

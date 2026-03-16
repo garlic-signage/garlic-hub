@@ -22,6 +22,7 @@ export class GlobalPropertiesView
 	#globalProperties = document.getElementById("globalProperties");
 
 	#opacity        = document.getElementById("opacity")
+	#opacityDisplay = document.getElementById("opacityDisplay")
 	#strokeColor    = document.getElementById("strokeColor")
 	#strokeWidth    = document.getElementById("strokeWidth")
 
@@ -58,6 +59,7 @@ export class GlobalPropertiesView
 	setOpacityValue(value)
 	{
 		this.#opacity.value = value;
+		this.#opacityDisplay.innerHTML = value;
 	}
 
 	get strokeColor()
