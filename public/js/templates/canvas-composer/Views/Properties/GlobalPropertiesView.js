@@ -25,6 +25,7 @@ export class GlobalPropertiesView
 	#opacityDisplay = document.getElementById("opacityDisplay")
 	#strokeColor    = document.getElementById("strokeColor")
 	#strokeWidth    = document.getElementById("strokeWidth")
+	#strokeWidthDisplay  = document.getElementById("strokeWidthDisplay")
 
 	#alignLeft   = document.getElementById("alignLeft")
 	#alignCenter = document.getElementById("alignCenter")
@@ -85,6 +86,7 @@ export class GlobalPropertiesView
 	setStrokeWidthValue(value)
 	{
 		this.#strokeWidth.value = value;
+		this.#strokeWidthDisplay.innerHTML = value;
 	}
 
 	getStrokeWidthValue()
