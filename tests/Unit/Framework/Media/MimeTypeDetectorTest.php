@@ -23,7 +23,7 @@ namespace Tests\Unit\Framework\Media;
 
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Media\FileInfoWrapper;
-use App\Framework\Media\MimeTypeService;
+use App\Framework\Media\MimeTypeDetector;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
@@ -34,7 +34,7 @@ class MimeTypeDetectorTest extends TestCase
 {
 	private FileInfoWrapper&MockObject $fileInfoWrapperMock;
 
-	private MimeTypeService $mimeTypeDetector;
+	private MimeTypeDetector $mimeTypeDetector;
 
 	/**
 	 * @throws Exception
@@ -44,7 +44,7 @@ class MimeTypeDetectorTest extends TestCase
 		parent::setUp();
 		$this->fileInfoWrapperMock = $this->createMock(FileInfoWrapper::class);
 
-		$this->mimeTypeDetector = new MimeTypeService($this->fileInfoWrapperMock);
+		$this->mimeTypeDetector = new MimeTypeDetector($this->fileInfoWrapperMock);
 	}
 
 	/**
@@ -198,28 +198,5 @@ class MimeTypeDetectorTest extends TestCase
 		$this->expectExceptionMessage('MIME-Type could not be detected from stream.');
 
 		$this->mimeTypeDetector->detectFromStream($stream);
-	}
-
-	#[Group('units')]
-	public function testDetermineExtensionByTypeReturnsCorrectExtension(): void
-	{
-		$mimeTypeMap = [
-			'image/jpeg' => 'jpg',
-			'audio/mpeg' => 'mp3',
-			'video/mp4' => 'mp4',
-			'application/pdf' => 'pdf',
-			'text/plain' => 'txt',
-		];
-
-		foreach ($mimeTypeMap as $mimeType => $expectedExtension)
-		{
-			static::assertEquals($expectedExtension, $this->mimeTypeDetector->determineExtensionByMimeType($mimeType));
-		}
-	}
-
-	#[Group('units')]
-	public function testDetermineExtensionByTypeReturnsBinForUnknownMimeType(): void
-	{
-		static::assertEquals('bin', $this->mimeTypeDetector->determineExtensionByMimeType('unknown/mime-type'));
 	}
 }
