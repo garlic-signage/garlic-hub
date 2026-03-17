@@ -36,9 +36,9 @@ use Psr\SimpleCache\InvalidArgumentException;
 
 class RightsCheckerTest extends TestCase
 {
-	private Translator&MockObject $translatorMock;
-	private AclValidator&MockObject $aclValidatorMock;
-	private Config&MockObject $configMock;
+	private Translator $translatorMock;
+	private AclValidator $aclValidatorMock;
+	private Config $configMock;
 	private RightsChecker $checker;
 
 
@@ -48,9 +48,9 @@ class RightsCheckerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->translatorMock   = $this->createMock(Translator::class);
-		$this->aclValidatorMock = $this->createMock(AclValidator::class);
-		$this->configMock       = $this->createMock(Config::class);
+		$this->translatorMock   = static::createStub(Translator::class);
+		$this->aclValidatorMock = static::createStub(AclValidator::class);
+		$this->configMock       = static::createStub(Config::class);
 		$this->aclValidatorMock->method('getConfig')->willReturn($this->configMock);
 
 	}
@@ -119,7 +119,7 @@ class RightsCheckerTest extends TestCase
 	{
 		$this->checker = new RightsChecker($this->translatorMock, $this->aclValidatorMock);
 
-		$this->translatorMock->method('translate')->with('insert_playlists', RightsChecker::MODULE_NAME)
+		$this->translatorMock->expects($this->once())->method('translate')->with('insert_playlists', RightsChecker::MODULE_NAME)
 			->willReturn('Translated Playlist Message');
 
 		$result = $this->checker->checkInsertPlaylist(0);
