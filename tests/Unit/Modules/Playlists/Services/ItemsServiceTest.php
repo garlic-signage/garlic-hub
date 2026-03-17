@@ -93,8 +93,8 @@ class ItemsServiceTest extends TestCase
 
 		$conditional = serialize(['conditions' => '']);
 		$results = [
-			['conditional' => $conditional, 'properties' => '', 'categories' => '', 'content_data' => '', 'begin_trigger' => '', 'end_trigger' => ''],
-			['conditional' => '', 'properties' => '', 'categories' => '', 'content_data' => '', 'begin_trigger' => '', 'end_trigger' => ''],
+			['conditional' => $conditional, 'properties' => '', 'item_type' => ItemType::MEDIAPOOL->value, 'categories' => '', 'content_data' => '', 'begin_trigger' => '', 'end_trigger' => ''],
+			['conditional' => '', 'properties' => '', 'item_type' => ItemType::MEDIAPOOL->value, 'categories' => '', 'content_data' => '', 'begin_trigger' => '', 'end_trigger' => ''],
 		];
 
 		$this->itemsRepositoryMock->expects($this->once())->method('findAllByPlaylistIdWithJoins')
