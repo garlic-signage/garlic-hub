@@ -84,8 +84,7 @@ class RightsCheckerTest extends TestCase
 		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_CORE);
 		$this->checker = new RightsChecker($this->translatorMock, $this->aclValidatorMock);
 
-		$this->translatorMock->method('translate')->with('insert_external_media', RightsChecker::MODULE_NAME)
-			->willReturn('Translated Message');
+		$this->translatorMock->method('translate')->willReturn('Translated Message');
 
 		$result = $this->checker->checkInsertExternalMedia();
 
@@ -119,8 +118,7 @@ class RightsCheckerTest extends TestCase
 	{
 		$this->checker = new RightsChecker($this->translatorMock, $this->aclValidatorMock);
 
-		$this->translatorMock->method('translate')->with('insert_playlists', RightsChecker::MODULE_NAME)
-			->willReturn('Translated Playlist Message');
+		$this->translatorMock->method('translate')->willReturn('Translated Playlist Message');
 
 		$result = $this->checker->checkInsertPlaylist(0);
 
@@ -174,8 +172,7 @@ class RightsCheckerTest extends TestCase
 		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_CORE);
 		$this->checker = new RightsChecker($this->translatorMock, $this->aclValidatorMock);
 
-		$this->translatorMock->method('translate')->with('insert_external_playlists', RightsChecker::MODULE_NAME)
-			->willReturn('Translated External Playlist Message');
+		$this->translatorMock->method('translate')->willReturn('Translated External Playlist Message');
 
 		$result = $this->checker->checkInsertExternalPlaylist(0);
 
@@ -213,8 +210,7 @@ class RightsCheckerTest extends TestCase
 		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_CORE);
 		$this->checker = new RightsChecker($this->translatorMock, $this->aclValidatorMock);
 
-		$this->translatorMock->method('translate')->with('insert_templates', RightsChecker::MODULE_NAME)
-			->willReturn('Translated Template Message');
+		$this->translatorMock->method('translate')->willReturn('Translated Template Message');
 
 		$result = $this->checker->checkInsertTemplates();
 
@@ -250,8 +246,7 @@ class RightsCheckerTest extends TestCase
 		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_CORE);
 		$this->checker = new RightsChecker($this->translatorMock, $this->aclValidatorMock);
 
-		$this->translatorMock->method('translate')->with('insert_channels', RightsChecker::MODULE_NAME)
-			->willReturn('Translated Channels Message');
+		$this->translatorMock->method('translate')->willReturn('Translated Channels Message');
 
 		$result = $this->checker->checkInsertChannels();
 
@@ -285,8 +280,7 @@ class RightsCheckerTest extends TestCase
 	{
 		$this->checker = new RightsChecker($this->translatorMock, $this->aclValidatorMock);
 
-		$this->translatorMock->method('translate')->with('remain_duration', RightsChecker::MODULE_NAME)
-			->willReturn('Translated Remain Duration Message');
+		$this->translatorMock->method('translate')->willReturn('Translated Remain Duration Message');
 
 		$result = $this->checker->checkTimeLimit(10);
 
