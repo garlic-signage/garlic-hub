@@ -24,6 +24,7 @@ namespace Tests\Unit\Modules\Playlists\Helper\ExportSmil;
 use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Media\MimeTypeExtensionMapper;
 use App\Modules\Playlists\Helper\ExportSmil\items\Base;
 use App\Modules\Playlists\Helper\ExportSmil\items\ItemsFactory;
 use App\Modules\Playlists\Helper\ExportSmil\items\SeqContainer;
@@ -41,6 +42,7 @@ class PlaylistContentTest extends TestCase
 {
 	private ItemsFactory&MockObject $itemsFactoryMock;
 	private Config&MockObject $configMock;
+	private MimeTypeExtensionMapper&MockObject $mimeTypeExtensionMapperMock;
 	private PlaylistContent $playlistContent;
 
 	/**
@@ -51,8 +53,13 @@ class PlaylistContentTest extends TestCase
 		parent::setUp();
 		$this->itemsFactoryMock = $this->createMock(ItemsFactory::class);
 		$this->configMock = $this->createMock(Config::class);
+		$this->mimeTypeExtensionMapperMock = $this->createMock(MimeTypeExtensionMapper::class);
 
-		$this->playlistContent = new PlaylistContent($this->itemsFactoryMock, $this->configMock);
+		$this->playlistContent = new PlaylistContent(
+			$this->itemsFactoryMock,
+			$this->configMock,
+			$this->mimeTypeExtensionMapperMock
+		);
 	}
 
 	/**
@@ -82,7 +89,7 @@ class PlaylistContentTest extends TestCase
 
 		$this->configMock->method('getConfigValue')
 			->willReturnMap([
-				['content_server_url', 'mediapool', null, 'https://content.server.com'],
+				['url', 'mediapool', 'content_server', 'https://content.server.com'],
 				['originals', 'mediapool', 'directories', 'path/to/originals'],
 			]);
 		$link = 'https://content.server.com/path/to/originals/file.mp4';
@@ -122,7 +129,7 @@ class PlaylistContentTest extends TestCase
 
 		$this->configMock->method('getConfigValue')
 			->willReturnMap([
-				['content_server_url', 'mediapool', null, 'https://content.server.com'],
+				['url', 'mediapool', 'content_server', 'https://content.server.com'],
 				['originals', 'mediapool', 'directories', 'path/to/originals'],
 			]);
 		$link = 'https://content.server.com/path/to/originals/file.mp4';
@@ -163,7 +170,7 @@ class PlaylistContentTest extends TestCase
 
 		$this->configMock->method('getConfigValue')
 			->willReturnMap([
-				['content_server_url', 'mediapool', null, 'https://content.server.com'],
+				['url', 'mediapool', 'content_server', 'https://content.server.com'],
 				['originals', 'mediapool', 'directories', 'path/to/originals'],
 			]);
 		$link = 'https://content.server.com/path/to/originals/file.mp4';
