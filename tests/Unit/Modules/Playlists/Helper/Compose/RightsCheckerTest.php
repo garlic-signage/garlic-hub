@@ -30,15 +30,15 @@ use App\Modules\Playlists\Services\AclValidator;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\SimpleCache\InvalidArgumentException;
 
 class RightsCheckerTest extends TestCase
 {
-	private Translator $translatorMock;
-	private AclValidator $aclValidatorMock;
-	private Config $configMock;
+	private Translator&Stub $translatorMock;
+	private AclValidator&Stub $aclValidatorMock;
+	private Config&Stub $configMock;
 	private RightsChecker $checker;
 
 
@@ -119,7 +119,7 @@ class RightsCheckerTest extends TestCase
 	{
 		$this->checker = new RightsChecker($this->translatorMock, $this->aclValidatorMock);
 
-		$this->translatorMock->expects($this->once())->method('translate')->with('insert_playlists', RightsChecker::MODULE_NAME)
+		$this->translatorMock->method('translate')->with('insert_playlists', RightsChecker::MODULE_NAME)
 			->willReturn('Translated Playlist Message');
 
 		$result = $this->checker->checkInsertPlaylist(0);
@@ -128,6 +128,11 @@ class RightsCheckerTest extends TestCase
 	}
 
 	/**
+	 * @return void
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testCheckInsertExternalPlaylistEdgeWithTimeLimit(): void
@@ -141,6 +146,10 @@ class RightsCheckerTest extends TestCase
 	}
 
 	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testCheckInsertExternalPlaylistCoreWithTimeLimit(): void
@@ -154,6 +163,10 @@ class RightsCheckerTest extends TestCase
 	}
 
 	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testCheckInsertExternalPlaylistCoreWithoutTimeLimit(): void
@@ -208,6 +221,12 @@ class RightsCheckerTest extends TestCase
 		static::assertSame(['LANG_INSERT_TEMPLATES' => 'Translated Template Message'], $result);
 	}
 
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 */
 	#[Group('units')]
 	public function testCheckInsertChannelsEdgeEdition(): void
 	{
@@ -219,6 +238,12 @@ class RightsCheckerTest extends TestCase
 		static::assertSame([], $result);
 	}
 
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 */
 	#[Group('units')]
 	public function testCheckInsertChannelsCoreEdition(): void
 	{
