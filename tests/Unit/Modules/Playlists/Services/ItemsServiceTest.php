@@ -25,6 +25,7 @@ use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Media\MimeTypeExtensionMapper;
 use App\Modules\Mediapool\Services\MediaService;
 use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Repositories\ItemsRepository;
@@ -41,9 +42,10 @@ use Psr\Log\LoggerInterface;
 class ItemsServiceTest extends TestCase
 {
 	private ItemsRepository&MockObject $itemsRepositoryMock;
-	private PlaylistsService&MockObject $playlistsServiceMock;
 	private MediaService&MockObject $mediaServiceMock;
+	private PlaylistsService&MockObject $playlistsServiceMock;
 	private PlaylistMetricsCalculator&MockObject $playlistMetricsCalculatorMock;
+	private MimeTypeExtensionMapper&MockObject $mimeTypeExtensionMapperMock;
 	private LoggerInterface&MockObject $loggerMock;
 	private ItemsService $itemsService;
 
@@ -54,9 +56,10 @@ class ItemsServiceTest extends TestCase
 	{
 		parent::setUp();
 		$this->itemsRepositoryMock = $this->createMock(ItemsRepository::class);
-		$this->playlistsServiceMock = $this->createMock(PlaylistsService::class);
 		$this->mediaServiceMock = $this->createMock(MediaService::class);
+		$this->playlistsServiceMock = $this->createMock(PlaylistsService::class);
 		$this->playlistMetricsCalculatorMock = $this->createMock(PlaylistMetricsCalculator::class);
+		$this->mimeTypeExtensionMapperMock = $this->createMock(MimeTypeExtensionMapper::class);
 		$this->loggerMock = $this->createMock(LoggerInterface::class);
 
 		$this->itemsService = new ItemsService(
@@ -64,6 +67,7 @@ class ItemsServiceTest extends TestCase
 			$this->mediaServiceMock,
 			$this->playlistsServiceMock,
 			$this->playlistMetricsCalculatorMock,
+			$this->mimeTypeExtensionMapperMock,
 			$this->loggerMock
 		);
 	}
@@ -500,6 +504,9 @@ class ItemsServiceTest extends TestCase
 			]
 		];
 
+		$this->mimeTypeExtensionMapperMock->expects($this->once())->method('determineExtension')
+			->with($itemsData[0]['mimetype'])
+			->willReturn('jpg');
 		$this->itemsService->setUID(1);
 		$this->playlistsServiceMock->expects($this->once())->method('setUID')
 			->with(1);

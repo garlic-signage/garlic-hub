@@ -47,7 +47,7 @@ class UploadServiceTest extends TestCase
 	private NodesService&MockObject $nodeServiceMock;
 	private Client&MockObject $clientMock;
 	private FilesRepository&MockObject $mediaRepositoryMock;
-	private MimeTypeService&MockObject $mimeTypeDetectorMock;
+	private MimeTypeService&MockObject $mimeTypeService;
 	private LoggerInterface&MockObject $loggerMock;
 
 	/**
@@ -60,7 +60,7 @@ class UploadServiceTest extends TestCase
 		$this->nodeServiceMock = $this->createMock(NodesService::class);
 		$this->clientMock = $this->createMock(Client::class);
 		$this->mediaRepositoryMock = $this->createMock(FilesRepository::class);
-		$this->mimeTypeDetectorMock = $this->createMock(MimeTypeService::class);
+		$this->mimeTypeService = $this->createMock(MimeTypeService::class);
 		$this->loggerMock = $this->createMock(LoggerInterface::class);
 
 		$this->uploadService = new UploadService(
@@ -68,7 +68,7 @@ class UploadServiceTest extends TestCase
 			$this->nodeServiceMock,
 			$this->clientMock,
 			$this->mediaRepositoryMock,
-			$this->mimeTypeDetectorMock,
+			$this->mimeTypeService,
 			$this->loggerMock
 		);
 	}
@@ -175,7 +175,7 @@ class UploadServiceTest extends TestCase
 		$this->mediaRepositoryMock->method('findFirstBy')
 			->willReturn([]);
 
-		$this->mimeTypeDetectorMock
+		$this->mimeTypeService
 			->method('detectFromFile')
 			->willReturn('image/jpeg');
 
@@ -216,7 +216,7 @@ class UploadServiceTest extends TestCase
 
 		$this->mediaRepositoryMock->method('findFirstBy')->willReturn([]);
 
-		$this->mimeTypeDetectorMock->method('detectFromFile')->willReturn('video/mp4');
+		$this->mimeTypeService->method('detectFromFile')->willReturn('video/mp4');
 
 		$extMetadata = ['duration' => 4050, 'description' => 'Test file'];
 		$result = $this->uploadService->uploadMediaFiles($nodeId, $uid, $uploadedFileMock, $extMetadata);
