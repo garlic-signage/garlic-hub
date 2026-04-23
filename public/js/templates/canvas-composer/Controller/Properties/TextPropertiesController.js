@@ -54,12 +54,19 @@ export class TextPropertiesController
 
 		this.buildFontDropdown();
 
+		let fontSizeInput = document.getElementById("fontSize")
+		fontSizeInput.addEventListener("input", (event) =>
+		{
+			event.stopPropagation()
+			this.#textPropertiesService.setTextFontSize(fontSizeInput.value)
+		})
 	}
 
 
 	activate()
 	{
 		this.#textPropertiesView.setfontFamilyValue(this.#textPropertiesService.getTextFontFamily());
+		this.#textPropertiesView.setFontSizeValue(this.#textPropertiesService.getTextFontSize());
 		this.#textPropertiesView.setTextAlignValue(this.#textPropertiesService.getTextAlign());
 		this.#textPropertiesView.setTextBoldValue(this.#textPropertiesService.getTextBold());
 		this.#textPropertiesView.setTextItalicValue(this.#textPropertiesService.getTextItalic());

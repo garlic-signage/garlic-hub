@@ -56,8 +56,10 @@ export class FabricShapeFactory
 		textbox.setControlsVisibility({
 			mt: false,
 			mb: false,
-			ml: false,
-			mr: false
+			tl: false,
+			tr: false,
+			br: false,
+			bl: false
 		});
 
 		return textbox;

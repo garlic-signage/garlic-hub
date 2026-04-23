@@ -23,6 +23,7 @@ export class TextPropertiesView
 	#fontsDropdown  = document.getElementById("fontsDropdown")
 	#textProperties = document.getElementById("textProperties");
 	#fontFamily     = document.getElementById("fontFamily")
+	#fontSize       = document.getElementById("fontSize")
 	#textAlign ;
 	#textBold;
 	#textItalic;
@@ -63,6 +64,11 @@ export class TextPropertiesView
 	setfontFamilyValue(value)
 	{
 		this.#fontFamily.innerHTML = value;
+	}
+
+	setFontSizeValue(value)
+	{
+		this.#fontSize.value = value
 	}
 
 
