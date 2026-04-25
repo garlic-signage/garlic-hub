@@ -31,7 +31,7 @@ export class TextPropertiesService extends BasePropertyService
 	{
 		const object = this._getActiveObject();
 		const styles = object.getSelectionStyles(object.isEditing ? object.selectionStart : 0, object.isEditing ? object.selectionEnd : 9, false)
-		return styles && styles[0] ? styles[0].fontFamily : object.fontFamily
+		return styles[0] && styles[0].fontFamily ? styles[0].fontFamily : object.fontFamily
 	}
 
 	setTextFontFamily(fontFamily)
