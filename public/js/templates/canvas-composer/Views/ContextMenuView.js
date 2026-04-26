@@ -42,6 +42,7 @@ export class ContextMenuView
 		this.#composerContextMenu.style.position = "fixed";
 		this.#composerContextMenu.style.zIndex = 1000;
 		this.#composerContextMenu.style.display = "none";
+		this.#composerContextMenu.addEventListener('contextmenu', e => e.preventDefault());
 	};
 
 

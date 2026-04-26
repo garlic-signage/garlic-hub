@@ -46,6 +46,7 @@ export class ContextMenu
 		this.context_menu.style.left = this.options.e.pageX + "px";
 		this.context_menu.style.top = this.options.e.pageY + "px";
 		this.context_menu.innerHTML = document.getElementById("context-menu").innerHTML;
+		this.context_menu.addEventListener('contextmenu', e => e.preventDefault());
 		document.body.append(this.context_menu);
 	}
 
