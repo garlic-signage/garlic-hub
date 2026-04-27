@@ -81,30 +81,31 @@
 		<ul id="globalProperties" class="action-group" style="display:none;">
 			<li class="template_edit_dropdown">
 				<button id="object_opacity_btn" class="bi bi-transparency" title="{{{LANG_OPACITY}}}"></button>
-				<div class="template_edit_dropdown_content" style="width:240px;">
-					<label style=" display: flex; justify-content:space-between; align-items: center; padding:20px;">
+				<div class="template_edit_dropdown_content" style="width:240px;padding:20px;">
+					<label for="opacity">
+						{{{LANG_OPACITY}}}
+					</label>
+					<div style="display: flex; justify-content:space-between; align-items: center;">
 						<input id="opacity" style="width:150px;" type="range" min="0" max="100" value="100">
 						<span id="opacityDisplay">100</span>%
-					</label>
+					</div>
 				</div>
 			</li>
 			<li class="template_edit_dropdown" style="display: none;">
-				<button id="object_shadow" class="svg_button">
-					<svg xmlns="http://www.w3.org/2000/svg" width="15px" height="15px" viewBox="0 0 512 512">
-						<path d="M8 256c0 136.966 111.033 248 248 248s248-111.034 248-248S392.966 8 256 8 8 119.033 8 256zm248 184V72c101.705 0 184 82.311 184 184 0 101.705-82.311 184-184 184z" />
-					</svg>
-				</button>
+				<button id="object_shadow" class="bi bi-shadows"></button>
 				<div class="template_edit_dropdown_content">
 					<div style=" display: flex; justify-content:space-between; align-items: center;">
-						<div style="display:flex; flex-direction:column; padding:20px;"> <label
-									for="object_shadow_offset_x">Offset X</label>
-							<input id="object_shadow_offset_x" style="width:50px; text-align:center;" type="number"
-								   value="0">
+						<div style="display:flex; flex-direction:column; padding:20px;">
+							<label for="object_shadow_color">Color</label>
+							<input id="object_shadow_color" style="width:50px; text-align:center;" type="color" value="#ccccc">
 						</div>
-						<div style="display:flex; flex-direction:column; padding:20px;"> <label
-									for="object_shadow_offset_y">Offset Y</label>
-							<input id="object_shadow_offset_y" style="width:50px; text-align:center;" type="number"
-								   value="0">
+						<div style="display:flex; flex-direction:column; padding:20px;">
+							<label for="object_shadow_offset_x">Offset X</label>
+							<input id="object_shadow_offset_x" style="width:50px; text-align:center;" type="number" value="0">
+						</div>
+						<div style="display:flex; flex-direction:column; padding:20px;">
+							<label for="object_shadow_offset_y">Offset Y</label>
+							<input id="object_shadow_offset_y" style="width:50px; text-align:center;" type="number" value="0">
 						</div>
 						<div style="display:flex; flex-direction:column; padding:20px;">
 							<label for="object_shadow_blur">Blur</label>
@@ -115,7 +116,8 @@
 			</li>
 			<li class="template_edit_dropdown">
 				<button id="object_align" class="bi bi-align-middle" title="{{{LANG_ALIGN_OBJECT}}}"></button>
-				<div class="template_edit_dropdown_content" style="width:180px; padding:20px;">
+				<div class="template_edit_dropdown_content" style="width:180px; padding:0 20px 20px 20px;">
+					<p>{{{LANG_ALIGN_OBJECT}}}</p>
 					<div style=" display: flex; justify-content:space-between; align-items: center; gap:20px;">
 						<button id="alignLeft" class="bi bi-align-start" title="{{{LANG_ALIGN_LEFT}}}"></button>
 						<button id="alignCenter" class="bi bi-align-center" title="{{{LANG_ALIGN_CENTER}}}"></button>
@@ -131,30 +133,33 @@
 			<li class="action-group" data-label="{{{LANG_OUTLINE}}}">
 				<input type="color" id="strokeColor" class="color_button" title="{{{LANG_OUTLINE_COLOR}}}" />
 				<div class="template_edit_dropdown">
-				<button id="object_outline" class="svg_button" title="{{{LANG_OUTLINE_STRENGTH}}}">
-					<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 500 500" xml:space="preserve">
-					<g>
-						<g transform="translate(-250.000000,262.000000) scale(0.100000,-0.100000)">
-							<path
-									d="M2446.9,1109V716.2h2155.5H6758V323.4V-69.4h392.8h392.8v785.6v785.6H4995.2H2446.9V1109z" />
-							<path
-									d="M2446.9,122.2V-69.4h1762.7h1762.8V-376v-306.6h201.2h201.2v498.2v498.2H4410.8H2446.9V122.2z" />
-							<path
-									d="M6710.1-893.3l-132.2-134.1l99.6-101.5c55.6-55.6,99.6-107.3,99.6-115s-90.1-13.4-201.2-13.4h-201.2V-1449v-191.6h214.6H6804l-113-115l-115-115l139.9-139.9l138-138l348.7,350.6l350.6,348.7l-344.9,344.9c-189.7,189.7-348.7,344.9-354.5,344.9C6848-759.2,6782.9-818.6,6710.1-893.3z" />
-							<path d="M2446.9-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
-							<path d="M3232.5-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
-							<path d="M4018-1449v-191.6h191.6h191.6v191.6v191.6h-191.6H4018V-1449z" />
-							<path d="M4803.6-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
-							<path d="M5589.2-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
+					<button id="object_outline" class="svg_button" title="{{{LANG_OUTLINE_STRENGTH}}}">
+						<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 500 500" xml:space="preserve">
+						<g>
+							<g transform="translate(-250.000000,262.000000) scale(0.100000,-0.100000)">
+								<path
+										d="M2446.9,1109V716.2h2155.5H6758V323.4V-69.4h392.8h392.8v785.6v785.6H4995.2H2446.9V1109z" />
+								<path
+										d="M2446.9,122.2V-69.4h1762.7h1762.8V-376v-306.6h201.2h201.2v498.2v498.2H4410.8H2446.9V122.2z" />
+								<path
+										d="M6710.1-893.3l-132.2-134.1l99.6-101.5c55.6-55.6,99.6-107.3,99.6-115s-90.1-13.4-201.2-13.4h-201.2V-1449v-191.6h214.6H6804l-113-115l-115-115l139.9-139.9l138-138l348.7,350.6l350.6,348.7l-344.9,344.9c-189.7,189.7-348.7,344.9-354.5,344.9C6848-759.2,6782.9-818.6,6710.1-893.3z" />
+								<path d="M2446.9-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
+								<path d="M3232.5-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
+								<path d="M4018-1449v-191.6h191.6h191.6v191.6v191.6h-191.6H4018V-1449z" />
+								<path d="M4803.6-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
+								<path d="M5589.2-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
+							</g>
 						</g>
-					</g>
-				</svg>
+					</svg>
 				</button>
-				<div class="template_edit_dropdown_content" style="width:240px;">
-					<label style=" display: flex; justify-content:space-between; align-items: center; padding:20px;">
+				<div class="template_edit_dropdown_content" style="width:240px; padding:20px">
+					<label for="strokeWidth">
+						{{{LANG_OUTLINE_STRENGTH}}}
+					</label>
+					<div style="display: flex; justify-content:space-between; align-items: center;">
 						<input id="strokeWidth" style="width:150px;" type="range" min="0" max="50" value="0">
 						<span id="strokeWidthDisplay">0</span> px
-					</label>
+					</div>
 				</div>
 			</div>
 			</li>
