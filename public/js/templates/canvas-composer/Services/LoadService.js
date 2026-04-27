@@ -67,12 +67,12 @@ export class LoadService
 			jsonContent = "{\"objects\": [],\"viewport\":{\"width\":1920,\"height\":1080,\"scale\":100}}";
 
 		let j = JSON.parse(jsonContent);
-		this.#fontCollector.traverseObjects(j.objects);
+		this.#traverseObjects(j.objects);
 		console.log("Collected all fonts");
 
 		await this.#fontCollector.preloadUsedFonts();
 
-		await this.#fabricWrapper.load(jsonContent);
+		await this.#fabricWrapper.load(JSON.stringify(j));
 		this.#fabricWrapper.setWidth(j.viewport.width);
 		this.#fabricWrapper.setHeight(j.viewport.height);
 		this.#fabricWrapper.historySaveAction();
@@ -80,4 +80,32 @@ export class LoadService
 
 		ComposerEventBus.dispatchEvent(new CustomEvent("canvasUpdated"));
 	}
+
+	#traverseObjects(objects)
+	{
+		for (let i = 0; i < objects.length; i++)
+		{
+			const obj = objects[i];
+			if (obj.type === "textbox")
+			{
+				this.#fontCollector.collectUsedFontsFromSelection(obj);
+				this.#migrateScaleToPixel(objects[i]);
+			}
+			else if (obj.type === "group" && obj.objects)
+				this.traverseObjects(obj.objects);
+		}
+	}
+
+
+	#migrateScaleToPixel(obj)
+	{
+		if (obj.scaleY !== 1  && obj.scaleY === obj.scaleX)
+		{
+			obj.fontSize = Math.round(obj.fontSize * obj.scaleY);
+			obj.width = obj.width * obj.scaleX;
+			obj.scaleX = 1;
+			obj.scaleY = 1;
+		}
+	}
+
 }

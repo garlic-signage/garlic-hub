@@ -156,6 +156,7 @@ class ItemsRepository extends SqlBase
 	public function sumAndCountMetricsByPlaylistIdAndOwner(int $playlistId, int $owner): array
 	{
 		$qb = $this->connection->createQueryBuilder();
+
 		$qb->select(
 			'COUNT(*) AS count_items',
 			'COUNT(CASE WHEN UID = '.$owner.' THEN 1 ELSE NULL END) AS count_owner_items',

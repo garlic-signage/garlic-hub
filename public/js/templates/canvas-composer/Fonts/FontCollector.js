@@ -76,17 +76,4 @@ export class FontCollector
 			resolve();
 		});
 	}
-
-	traverseObjects(objects)
-	{
-		for (let i = 0; i < objects.length; i++)
-		{
-			const obj = objects[i];
-			if (obj.type === "textbox")
-				this.collectUsedFontsFromSelection(obj);
-			else if (obj.type === "group" && obj.objects)
-				this.traverseObjects(obj.objects);
-		}
-	}
-
 }
