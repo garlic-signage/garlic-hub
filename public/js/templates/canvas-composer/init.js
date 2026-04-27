@@ -87,10 +87,14 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const waitOverlay     = new WaitOverlay();
 	const loadService     = new LoadService(fabricWrapper, templateService, fontCollector, waitOverlay);
 
-	// control viewport
+
+	const globalPropertiesView = new GlobalPropertiesView();
+	const globalPropertiesService = new GlobalPropertiesService(fabricWrapper);
+	const globalPropertiesController  = new GlobalPropertiesController(globalPropertiesView, globalPropertiesService);
+
 	const viewportView       = new ViewportView();
 	const viewportService    = new ViewportService(fabricWrapper);
-	const viewPortController = new ViewportController(viewportView, viewportService);
+	const viewPortController = new ViewportController(viewportView, viewportService, globalPropertiesService);
 
 	// control save, reset, close and export images
 	const saveView         = new SaveView();
@@ -116,10 +120,6 @@ document.addEventListener("DOMContentLoaded", async function ()
 
 	const mediaDialogView       = new MediaDialogView();
 	const mediaDialogController = new MediaDialogController(mediaDialogView, mediaSelector, insertService);
-
-	const globalPropertiesView = new GlobalPropertiesView();
-	const globalPropertiesService = new GlobalPropertiesService(fabricWrapper);
-	const globalPropertiesController  = new GlobalPropertiesController(globalPropertiesView, globalPropertiesService);
 
 	const toggleButtonFactory = new ToggleButtonFactory();
 	const groupProperiesView        = new GroupPropertiesView(toggleButtonFactory);

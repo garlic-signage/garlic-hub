@@ -22,10 +22,18 @@ import {BasePropertyService} from "./BasePropertyService.js";
 
 export class GlobalPropertiesService extends BasePropertyService
 {
+	#canvasWidth;
+	#canvasHeight;
 
 	constructor(fabricWrapper)
 	{
 		super(fabricWrapper);
+	}
+
+	setCanvasDimension(width, height)
+	{
+		this.#canvasWidth = width;
+		this.#canvasHeight = height;
 	}
 
 	getOpacity()
@@ -95,19 +103,20 @@ export class GlobalPropertiesService extends BasePropertyService
 
 	setPosition(position)
 	{
-		const object = this._getActiveObject();
+		const object       = this._getActiveObject();
 
 		let canvasBound = {
-			width: this.fabricWrapper.getWidth(),
-			height: this.fabricWrapper.getHeight(),
+			width: this.#canvasWidth,
+			height: this.#canvasHeight,
 			center: {
-				x: this.fabricWrapper.getWidth() / 2,
-				y: this.fabricWrapper.getHeight() / 2
+				x: this.#canvasWidth / 2,
+				y: this.#canvasHeight / 2
 			}
 		}
 
-		let s = object.getBoundingRect().height / this.fabricWrapper.getViewportTransform()[3],
-			a = object.getBoundingRect().width / this.fabricWrapper.getViewportTransform()[0];
+		const bound = object.getBoundingRect(true);
+		const s = bound.height;
+		const a = bound.width;
 
 		switch (position)
 		{
