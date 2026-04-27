@@ -31,7 +31,7 @@ export class GlobalPropertiesService extends BasePropertyService
 	getOpacity()
 	{
 		const object = this._getActiveObject();
-		return object.opacity * 100;
+		return parseInt(object.opacity * 100);
 	}
 
 	setOpacity(value)
