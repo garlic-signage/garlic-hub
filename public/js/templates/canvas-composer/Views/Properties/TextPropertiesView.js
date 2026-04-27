@@ -66,11 +66,16 @@ export class TextPropertiesView
 		this.#fontFamily.innerHTML = value;
 	}
 
+	getFontSizeValue()
+	{
+		return this.#fontSize.value
+	}
+
+
 	setFontSizeValue(value)
 	{
 		this.#fontSize.value = value
 	}
-
 
 	get textAlign()
 	{
@@ -113,4 +118,8 @@ export class TextPropertiesView
 		this.#textUnderline.update('active', value)
 	}
 
+	get fontSize()
+	{
+		return this.#fontSize;
+	}
 }

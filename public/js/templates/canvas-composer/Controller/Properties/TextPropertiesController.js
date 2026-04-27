@@ -54,14 +54,12 @@ export class TextPropertiesController
 
 		this.buildFontDropdown();
 
-		let fontSizeInput = document.getElementById("fontSize")
-		fontSizeInput.addEventListener("input", (event) =>
+		this.#textPropertiesView.fontSize.addEventListener("input", () =>
 		{
-			event.stopPropagation()
-			this.#textPropertiesService.setTextFontSize(fontSizeInput.value)
+			const value = parseInt(this.#textPropertiesView.getFontSizeValue());
+			this.#textPropertiesService.setTextFontSize(value);
 		})
 	}
-
 
 	activate()
 	{
