@@ -67,6 +67,32 @@ export class GlobalPropertiesService extends BasePropertyService
 		this._updateCanvas(object);
 	}
 
+	getScaleX()
+	{
+		const object = this._getActiveObject();
+		return object.scaleX;
+	}
+
+	setScaleX(value)
+	{
+		const object = this._getActiveObject();
+		object.set("scaleX", Number(value));
+		this._updateCanvas(object);
+	}
+
+	getScaleY()
+	{
+		const object = this._getActiveObject();
+		return object.scaleY;
+	}
+
+	setScaleY(value)
+	{
+		const object = this._getActiveObject();
+		object.set("scaleY", Number(value));
+		this._updateCanvas(object);
+	}
+
 	setPosition(position)
 	{
 		const object = this._getActiveObject();

@@ -21,18 +21,20 @@ export class GlobalPropertiesView
 {
 	#globalProperties = document.getElementById("globalProperties");
 
-	#opacity        = document.getElementById("opacity")
-	#opacityDisplay = document.getElementById("opacityDisplay")
-	#strokeColor    = document.getElementById("strokeColor")
-	#strokeWidth    = document.getElementById("strokeWidth")
-	#strokeWidthDisplay  = document.getElementById("strokeWidthDisplay")
+	#opacity        = document.getElementById("opacity");
+	#opacityDisplay = document.getElementById("opacityDisplay");
+	#strokeColor    = document.getElementById("strokeColor");
+	#strokeWidth    = document.getElementById("strokeWidth");
+	#strokeWidthDisplay  = document.getElementById("strokeWidthDisplay");
 
-	#alignLeft   = document.getElementById("alignLeft")
-	#alignCenter = document.getElementById("alignCenter")
-	#alignRight  = document.getElementById("alignRight")
-	#alignTop    = document.getElementById("alignTop")
-	#alignMiddle = document.getElementById("alignMiddle")
-	#alignBottom = document.getElementById("alignBottom")
+	#alignLeft   = document.getElementById("alignLeft");
+	#alignCenter = document.getElementById("alignCenter");
+	#alignRight  = document.getElementById("alignRight");
+	#alignTop    = document.getElementById("alignTop");
+	#alignMiddle = document.getElementById("alignMiddle");
+	#alignBottom = document.getElementById("alignBottom");
+	#scaleX = document.getElementById("scaleX");
+	#scaleY = document.getElementById("scaleY");
 
 
 	constructor(){}
@@ -76,6 +78,26 @@ export class GlobalPropertiesView
 	getStrokeColorValue()
 	{
 		return this.#strokeColor.value;
+	}
+
+	setScaleXValue(value)
+	{
+		this.#scaleX.value = value;
+	}
+
+	getScaleXValue()
+	{
+		return this.#scaleX.value;
+	}
+
+	setScaleYValue(value)
+	{
+		this.#scaleY.value = value;
+	}
+
+	getScaleYValue()
+	{
+		return this.#scaleY.value;
 	}
 
 	get strokeWidth()
@@ -122,5 +144,15 @@ export class GlobalPropertiesView
 	get alignBottom()
 	{
 		return this.#alignBottom;
+	}
+
+	get scaleX()
+	{
+		return this.#scaleX;
+	}
+
+	get scaleY()
+	{
+		return this.#scaleY;
 	}
 }
