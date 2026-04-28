@@ -32,7 +32,7 @@ export class ShadowPropertiesController
 		this.#shadowPropertiesView.shadowColor.addEventListener("click", () =>
 		{
 			this.#shadowPropertiesService.setColor();
-			this.#shadowPropertiesView.setTextAlignValue(this.#textPropertiesService.getTextAlign())
+			this.#shadowPropertiesView.setTextAlignValue(this.#shadowPropertiesService.getColor())
 
 		});
 
