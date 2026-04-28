@@ -50,6 +50,16 @@ export class ShadowPropertiesView
 		return this.#shadowBlur;
 	}
 
+	get deleteShadow()
+	{
+		return this.#deleteShadow;
+	}
+
+	get createShadow()
+	{
+		return this.#createShadow;
+	}
+
 	toggleShadowVisibility(isVisible)
 	{
 		this.#deleteShadow.style.display = isVisible ? "block" : "none";

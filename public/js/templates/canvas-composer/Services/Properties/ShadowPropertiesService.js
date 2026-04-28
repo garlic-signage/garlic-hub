@@ -27,6 +27,20 @@ export class ShadowPropertiesService extends BasePropertyService
 		super(fabricWrapper);
 	}
 
+	create()
+	{
+		const object = this._getActiveObject();
+		object.set('shadow', new fabric.Shadow({ color: "#aaaaaa", blur: 10, offsetX: 20, offsetY: 20 }));
+		this._updateCanvas(object);
+	}
+
+	delete()
+	{
+		const object = this._getActiveObject();
+		object.set('shadow', null);
+		this._updateCanvas(object);
+	}
+
 	hasShadow()
 	{
 		const object = this._getActiveObject();
@@ -42,7 +56,8 @@ export class ShadowPropertiesService extends BasePropertyService
 	setColor(value)
 	{
 		const object = this._getActiveObject();
-		object.set('shadow', new fabric.Shadow({ ...object.shadow, color: value }));
+		object.shadow.color = value;
+		this._updateCanvas(object);
 	}
 
 	getOffsetX()
@@ -54,7 +69,8 @@ export class ShadowPropertiesService extends BasePropertyService
 	setOffsetX(value)
 	{
 		const object = this._getActiveObject();
-		object.set('shadow', new fabric.Shadow({ ...object.offsetX, offsetX: value }));
+		object.shadow.offsetX = value;
+		this._updateCanvas(object);
 	}
 
 	getOffsetY()
@@ -66,7 +82,8 @@ export class ShadowPropertiesService extends BasePropertyService
 	setOffsetY(value)
 	{
 		const object = this._getActiveObject();
-		object.set('shadow', new fabric.Shadow({ ...object.offsetY, offsetY: value }));
+		object.shadow.offsetY = value;
+		this._updateCanvas(object);
 	}
 
 	getBlur()
@@ -78,12 +95,7 @@ export class ShadowPropertiesService extends BasePropertyService
 	setBlur(value)
 	{
 		const object = this._getActiveObject();
-		object.set('shadow', new fabric.Shadow({ ...object.blur, blur: value }));
+		object.shadow.blur = value;
+		this._updateCanvas(object);
 	}
-
-	delete(value)
-	{
-		const object = this._getActiveObject();
-		object.set('shadow', null);	}
-
 }

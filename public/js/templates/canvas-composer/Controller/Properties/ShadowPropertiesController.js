@@ -29,6 +29,16 @@ export class ShadowPropertiesController
 		this.#shadowPropertiesView = shadowPropertiesView;
 		this.#shadowPropertiesService = shadowPropertiesService;
 
+		this.#shadowPropertiesView.createShadow.addEventListener("click", () =>
+		{
+			this.#shadowPropertiesService.create();
+			this.activate();
+		});
+		this.#shadowPropertiesView.deleteShadow.addEventListener("click", () =>
+		{
+			this.#shadowPropertiesService.delete();
+			this.activate();
+		});
 		this.#shadowPropertiesView.shadowColor.addEventListener("click", () =>
 		{
 			this.#shadowPropertiesService.setColor(this.#shadowPropertiesView.getShadowColorValue());
