@@ -37,20 +37,12 @@
 
 <ul id="canvas_toolbar">
     <li id="inserts">
-        <ul class="action_group">
+        <ul class="action-group" data-label="{{{LANG_INSERT}}}">
             <li>
-                <button id="insertImage" class="svg_button" title="{{{LANG_INSERT_IMAGE}}}">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 48 48" >
-                        <path clip-rule="evenodd" d="M43,41H5c-2.209,0-4-1.791-4-4V11c0-2.209,1.791-4,4-4h38c2.209,0,4,1.791,4,4v26  C47,39.209,45.209,41,43,41z M45,11c0-1.104-0.896-2-2-2H5c-1.104,0-2,0.896-2,2v26c0,1.104,0.896,2,2,2h38c1.104,0,2-0.896,2-2V11z   M41.334,34.715L35,28.381L31.381,32l3.334,3.334c0.381,0.381,0.381,0.999,0,1.381c-0.382,0.381-1,0.381-1.381,0L19,22.381  L6.666,34.715c-0.381,0.381-0.999,0.381-1.381,0c-0.381-0.382-0.381-1,0-1.381L18.19,20.429c0.032-0.048,0.053-0.101,0.095-0.144  c0.197-0.197,0.457-0.287,0.715-0.281c0.258-0.006,0.518,0.084,0.715,0.281c0.042,0.043,0.062,0.096,0.095,0.144L30,30.619  l4.19-4.19c0.033-0.047,0.053-0.101,0.095-0.144c0.197-0.196,0.457-0.287,0.715-0.281c0.258-0.006,0.518,0.085,0.715,0.281  c0.042,0.043,0.062,0.097,0.095,0.144l6.905,6.905c0.381,0.381,0.381,0.999,0,1.381C42.333,35.096,41.715,35.096,41.334,34.715z   M29,19c-2.209,0-4-1.791-4-4c0-1.623,0.971-3.013,2.359-3.64C27.133,11.861,27,12.414,27,13c0,2.209,1.791,4,4,4  c0.586,0,1.139-0.133,1.641-0.359C32.014,18.029,30.623,19,29,19z" fill-rule="evenodd"/>
-                    </svg>
-                </button>
+                <button id="insertImage" class="bi bi-image" title="{{{LANG_INSERT_IMAGE}}}"></button>
             </li>
             <li>
-                <button id="insertText" class="svg_button" title="{{{LANG_INSERT_TEXT}}}">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 512 512">
-                        <path d="M292.6,407.78l-120-320a22,22,0,0,0-41.2,0l-120,320a22,22,0,0,0,41.2,15.44L88.76,326.8a2,2,0,0,1,1.87-1.3H213.37a2,2,0,0,1,1.87,1.3l36.16,96.42a22,22,0,0,0,41.2-15.44Zm-185.84-129,43.37-115.65a2,2,0,0,1,3.74,0L197.24,278.8a2,2,0,0,1-1.87,2.7H108.63A2,2,0,0,1,106.76,278.8Z"/><path d="M400.77,169.5c-41.72-.3-79.08,23.87-95,61.4a22,22,0,0,0,40.5,17.2c8.88-20.89,29.77-34.44,53.32-34.6C431.91,213.28,458,240,458,272.35h0a1.5,1.5,0,0,1-1.45,1.5c-21.92.61-47.92,2.07-71.12,4.8C330.68,285.09,298,314.94,298,358.5c0,23.19,8.76,44,24.67,58.68C337.6,430.93,358,438.5,380,438.5c31,0,57.69-8,77.94-23.22,0,0,.06,0,.06,0h0a22,22,0,1,0,44,.19v-143C502,216.29,457,169.91,400.77,169.5ZM380,394.5c-17.53,0-38-9.43-38-36,0-10.67,3.83-18.14,12.43-24.23,8.37-5.93,21.2-10.16,36.14-11.92,21.12-2.49,44.82-3.86,65.14-4.47a2,2,0,0,1,2,2.1C455,370.1,429.46,394.5,380,394.5Z"/>
-                    </svg>
-                </button>
+                <button id="insertText" title="{{{LANG_INSERT_TEXT}}}">Aa</button>
             </li>
             <li class="template_edit_dropdown">
                 <button class="svg_button" title="{{{LANG_INSERT_SHAPE}}}" >
@@ -61,200 +53,120 @@
                 </button>
                 <div class="template_edit_dropdown_content" style="padding:20px;">
                     <div style=" display: flex; justify-content:space-between; align-items: center; gap:20px;">
-                        <button id="insertCircle" class="svg_button" title="{{{LANG_INSERT_CIRCLE}}}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 0 16 16">
-                                <circle cx="8" cy="8" r="8"/>
-                            </svg>
-                        </button>
-                        <button id="insertTriangle" class="svg_button" title="{{{LANG_INSERT_TRIANGLE}}}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 512 512">
-                                <path d="M464,464H48a16,16,0,0,1-14.07-23.62l208-384a16,16,0,0,1,28.14,0l208,384A16,16,0,0,1,464,464Z"/>
-                            </svg>
-                        </button>
-                        <button id="insertRectangle" class="svg_button" title="{{{LANG_INSERT_RECTANGLE}}}">
-                            <svg width="24px" height="24px" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
-                                <rect height="176" rx="16" width="208" x="24" y="40"/>
-                            </svg>
-                        </button>
+                        <button id="insertCircle" class="bi bi-circle-fill" title="{{{LANG_INSERT_CIRCLE}}}"></button>
+                        <button id="insertTriangle" class="bi bi-triangle-fill" title="{{{LANG_INSERT_TRIANGLE}}}"></button>
+                        <button id="insertRectangle" class="bi bi-square-fill" title="{{{LANG_INSERT_RECTANGLE}}}"></button>
                     </div>
                     <div style=" display: flex; justify-content:space-between; align-items: center; gap:20px; margin-top:20px;">
-                        <button id="insertPolygon"  class="svg_button" title="{{{LANG_INSERT_PENTAGONE}}}">
-                            <svg fill="none" height="24" stroke-width="1.5" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M11.6473 2.25623C11.8576 2.10344 12.1424 2.10344 12.3527 2.25623L22.1089 9.34458C22.3192 9.49737 22.4072 9.76819 22.3269 10.0154L18.6003 21.4846C18.52 21.7318 18.2896 21.8992 18.0297 21.8992H5.97029C5.71035 21.8992 5.47998 21.7318 5.39965 21.4846L1.67309 10.0154C1.59276 9.76819 1.68076 9.49737 1.89105 9.34458L11.6473 2.25623Z" fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
+                        <button id="insertPolygon"  class="bi bi-pentagon-fill" title="{{{LANG_INSERT_PENTAGONE}}}"></button>
+                        <button id="insertHexagon" class="bi bi-hexagon-fill" title="{{{LANG_INSERT_HEXAGON}}}">
                         </button>
-                        <button id="insertHexagon" class="svg_button" title="{{{LANG_INSERT_HEXAGON}}}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 0 16 16">
-                                <polygon points="0,4 0,12 8,16 16,12 16,4 8,0 "/>
-                            </svg>
-                        </button>
-                        <button id="insertOctagon" class="svg_button" title="{{{LANG_INSERT_OCTAGON}}}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 0 256 256">
-                                <rect fill="none" height="256" width="256"/>
-                                <path d="M227.3,80.2,175.8,28.7A16.1,16.1,0,0,0,164.5,24h-73a16.1,16.1,0,0,0-11.3,4.7L28.7,80.2A16.1,16.1,0,0,0,24,91.5v73a16.1,16.1,0,0,0,4.7,11.3l51.5,51.5A16.1,16.1,0,0,0,91.5,232h73a16.1,16.1,0,0,0,11.3-4.7l51.5-51.5a16.1,16.1,0,0,0,4.7-11.3v-73A16.1,16.1,0,0,0,227.3,80.2Z"/>
-                            </svg>
-                        </button>
+                        <button id="insertOctagon" class="bi bi-octagon-fill" title="{{{LANG_INSERT_OCTAGON}}}"></button>
                     </div>
                 </div>
             </li>
         </ul>
     </li>
     <li id="undo_redo">
-        <ul class="action_group">
+        <ul class="action-group" data-label="{{{LANG_HISTORY}}}">
             <li>
-                <button id="undo" class="svg_button" title="{{{LANG_UNDO}}}">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="15px" height="15px" viewBox="0 0 512 512">
-                        <path d="M255.545 8c-66.269.119-126.438 26.233-170.86 68.685L48.971 40.971C33.851 25.851 8 36.559 8 57.941V192c0 13.255 10.745 24 24 24h134.059c21.382 0 32.09-25.851 16.971-40.971l-41.75-41.75c30.864-28.899 70.801-44.907 113.23-45.273 92.398-.798 170.283 73.977 169.484 169.442C423.236 348.009 349.816 424 256 424c-41.127 0-79.997-14.678-110.63-41.556-4.743-4.161-11.906-3.908-16.368.553L89.34 422.659c-4.872 4.872-4.631 12.815.482 17.433C133.798 479.813 192.074 504 256 504c136.966 0 247.999-111.033 248-247.998C504.001 119.193 392.354 7.755 255.545 8z" />
-                    </svg>
-                </button>
+                <button id="undo" class="bi bi-arrow-counterclockwise" title="{{{LANG_UNDO}}}"></button>
             </li>
             <li>
-                <button id="redo" class="svg_button" title="{{{LANG_REDO}}}">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="15px" height="15px" viewBox="0 0 512 512">
-                        <path d="M256.455 8c66.269.119 126.437 26.233 170.859 68.685l35.715-35.715C478.149 25.851 504 36.559 504 57.941V192c0 13.255-10.745 24-24 24H345.941c-21.382 0-32.09-25.851-16.971-40.971l41.75-41.75c-30.864-28.899-70.801-44.907-113.23-45.273-92.398-.798-170.283 73.977-169.484 169.442C88.764 348.009 162.184 424 256 424c41.127 0 79.997-14.678 110.629-41.556 4.743-4.161 11.906-3.908 16.368.553l39.662 39.662c4.872 4.872 4.631 12.815-.482 17.433C378.202 479.813 319.926 504 256 504 119.034 504 8.001 392.967 8 256.002 7.999 119.193 119.646 7.755 256.455 8z" />
-                    </svg>
-                </button>
+                <button id="redo" class="bi bi-arrow-clockwise"  title="{{{LANG_REDO}}}"></button>
             </li>
         </ul>
     </li>
     <li id="properties">
-		<ul id="globalProperties" class="action_group" style="display:none;">
+		<ul id="globalProperties" class="action-group" style="display:none;">
 			<li class="template_edit_dropdown">
-				<button id="object_opacity_btn" class="svg_button" title="{{{LANG_OPACITY}}}">
-					<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
-						<g fill="currentColor" fill-rule="evenodd">
-							<path d="M3 2h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z" />
-							<path d="M11 2h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z" opacity=".45" />
-							<path d="M19 2h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z" opacity=".15" />
-							<path d="M7 6h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z" opacity=".7" />
-							<path d="M15 6h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1z" opacity=".3" />
-						</g>
-					</svg>
-				</button>
-				<div class="template_edit_dropdown_content" style="width:240px;">
-					<label style=" display: flex; justify-content:space-between; align-items: center; padding:20px;">
+				<button id="object_opacity_btn" class="bi bi-transparency" title="{{{LANG_OPACITY}}}"></button>
+				<div class="template_edit_dropdown_content" style="width:240px;padding:20px;">
+					<label for="opacity">
+						{{{LANG_OPACITY}}}
+					</label>
+					<div style="display: flex; justify-content:space-between; align-items: center;">
 						<input id="opacity" style="width:150px;" type="range" min="0" max="100" value="100">
 						<span id="opacityDisplay">100</span>%
-					</label>
+					</div>
 				</div>
 			</li>
-			<li class="template_edit_dropdown" style="display: none;">
-				<button id="object_shadow" class="svg_button">
-					<svg xmlns="http://www.w3.org/2000/svg" width="15px" height="15px" viewBox="0 0 512 512">
-						<path d="M8 256c0 136.966 111.033 248 248 248s248-111.034 248-248S392.966 8 256 8 8 119.033 8 256zm248 184V72c101.705 0 184 82.311 184 184 0 101.705-82.311 184-184 184z" />
-					</svg>
-				</button>
-				<div class="template_edit_dropdown_content">
+			<li class="template_edit_dropdown">
+				<button id="object_shadow" class="bi bi-shadows" title="{{{LANG_SHADOW}}}"></button>
+				<div class="template_edit_dropdown_content" style="padding:20px;">
 					<div style=" display: flex; justify-content:space-between; align-items: center;">
-						<div style="display:flex; flex-direction:column; padding:20px;"> <label
-									for="object_shadow_offset_x">Offset X</label>
-							<input id="object_shadow_offset_x" style="width:50px; text-align:center;" type="number"
-								   value="0">
-						</div>
-						<div style="display:flex; flex-direction:column; padding:20px;"> <label
-									for="object_shadow_offset_y">Offset Y</label>
-							<input id="object_shadow_offset_y" style="width:50px; text-align:center;" type="number"
-								   value="0">
+						<div style="display:flex; flex-direction:column;">
+							<label for="shadowColor">{{{LANG_SHADOW_COLOR}}}</label>
+							<input id="shadowColor" style="width:50px; text-align:center;" type="color" value="#ccccc">
 						</div>
 						<div style="display:flex; flex-direction:column; padding:20px;">
-							<label for="object_shadow_blur">Blur</label>
-							<input id="object_shadow_blur" style="width:50px; text-align:center;" type="number" value="0">
+							<label for="shadowOffsetX">{{{LANG_SHADOW_OFFSET_X}}}</label>
+							<input id="shadowOffsetX" style="width:70px; text-align:center;" type="number" value="0">
+						</div>
+						<div style="display:flex; flex-direction:column; padding:20px;">
+							<label for="shadowOffsetY">{{{LANG_SHADOW_OFFSET_Y}}}</label>
+							<input id="shadowOffsetY" style="width:70px; text-align:center;" type="number" value="0">
+						</div>
+						<div style="display:flex; flex-direction:column; padding:20px;">
+							<label for="shadowBlur">{{{LANG_SHADOW_BLUR}}}</label>
+							<input id="shadowBlur" style="width:70px; text-align:center;" type="number" value="0">
+						</div>
+						<div style="display:flex; flex-direction:column; align-items: flex-end; padding:20px;">
+							<button id="deleteShadow" class="bi bi-trash" style="height:35px;width:35px;margin-top:20px;" title="{{{LANG_SHADOW_DELETE}}}"></button>
 						</div>
 					</div>
 				</div>
 			</li>
-			<li>
-				<input type="color" id="strokeColor" class="color_button" title="{{{LANG_OUTLINE_COLOR}}}" />
-			</li>
 			<li class="template_edit_dropdown">
-				<button id="object_outline" class="svg_button" title="{{{LANG_OUTLINE_STRENGTH}}}">
-					<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 500 500" xml:space="preserve">
-					<g>
-						<g transform="translate(-250.000000,262.000000) scale(0.100000,-0.100000)">
-							<path
-									d="M2446.9,1109V716.2h2155.5H6758V323.4V-69.4h392.8h392.8v785.6v785.6H4995.2H2446.9V1109z" />
-							<path
-									d="M2446.9,122.2V-69.4h1762.7h1762.8V-376v-306.6h201.2h201.2v498.2v498.2H4410.8H2446.9V122.2z" />
-							<path
-									d="M6710.1-893.3l-132.2-134.1l99.6-101.5c55.6-55.6,99.6-107.3,99.6-115s-90.1-13.4-201.2-13.4h-201.2V-1449v-191.6h214.6H6804l-113-115l-115-115l139.9-139.9l138-138l348.7,350.6l350.6,348.7l-344.9,344.9c-189.7,189.7-348.7,344.9-354.5,344.9C6848-759.2,6782.9-818.6,6710.1-893.3z" />
-							<path d="M2446.9-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
-							<path d="M3232.5-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
-							<path d="M4018-1449v-191.6h191.6h191.6v191.6v191.6h-191.6H4018V-1449z" />
-							<path d="M4803.6-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
-							<path d="M5589.2-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
-						</g>
-					</g>
-				</svg>
-				</button>
-				<div class="template_edit_dropdown_content" style="width:240px;">
-					<label style=" display: flex; justify-content:space-between; align-items: center; padding:20px;">
-						<input id="strokeWidth" style="width:150px;" type="range" min="0" max="50" value="0">
-						<span id="strokeWidthDisplay">0</span> px
-					</label>
-				</div>
-			</li>
-			<li class="template_edit_dropdown">
-				<button id="object_align" class="svg_button" title="{{{LANG_ALIGN_OBJECT}}}">
-					<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24">
-						<path d="M8,11 L8,4 C8,2.92670537 8.79431889,2 9.85714286,2 L14.1428571,2 C15.2056811,2 16,2.92670537 16,4 L16,11 L22,11 L22,13 L16,13 L16,20 C16,21.0732946 15.2056811,22 14.1428571,22 L9.85714286,22 C8.79431889,22 8,21.0732946 8,20 L8,13 L2,13 L2,11 L8,11 Z M14,4 L10,4 L10,20 L14,20 L14,4 Z" fill-rule="evenodd"/>
-					</svg>
-				</button>
-				<div class="template_edit_dropdown_content" style="width:180px; padding:20px;">
+				<button id="object_align" class="bi bi-align-middle" title="{{{LANG_ALIGN_OBJECT}}}"></button>
+				<div class="template_edit_dropdown_content" style="width:180px; padding:0 20px 20px 20px;">
+					<p>{{{LANG_ALIGN_OBJECT}}}</p>
 					<div style=" display: flex; justify-content:space-between; align-items: center; gap:20px;">
-						<button id="alignLeft" style="display: flex; justify-content: center; align-items:center;"
-								title="{{{LANG_ALIGN_LEFT}}}">
-							<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
-								<path
-										d="M4 3c.41 0 .75.34.75.75v16.5a.75.75 0 1 1-1.5 0V3.75c0-.41.34-.75.75-.75zm5 3h9a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V8c0-1.1.9-2 2-2zm0 7h4a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-1c0-1.1.9-2 2-2zm0-5.5a.5.5 0 0 0-.5.5v1c0 .28.22.5.5.5h9a.5.5 0 0 0 .5-.5V8a.5.5 0 0 0-.5-.5H9zm0 7a.5.5 0 0 0-.5.5v1c0 .28.22.5.5.5h4a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5H9z">
-								</path>
-							</svg>
-						</button>
-						<button id="alignCenter" style="display: flex; justify-content: center; align-items:center;"
-								title="{{{LANG_ALIGN_CENTER}}}">
-							<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
-								<path
-										d="M11.25 13v-2H7a2 2 0 0 1-2-2V8c0-1.1.9-2 2-2h4.25V3.75a.75.75 0 1 1 1.5 0V6H17a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-4.25v2H14a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-1.25v2.25a.75.75 0 1 1-1.5 0V18H10a2 2 0 0 1-2-2v-1c0-1.1.9-2 2-2h1.25zM7 7.5a.5.5 0 0 0-.5.5v1c0 .28.22.5.5.5h10a.5.5 0 0 0 .5-.5V8a.5.5 0 0 0-.5-.5H7zm3 7a.5.5 0 0 0-.5.5v1c0 .28.22.5.5.5h4a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-4z">
-								</path>
-							</svg>
-						</button>
-						<button id="alignRight" style="display: flex; justify-content: center; align-items:center;"
-								title="{{{LANG_ALIGN_RIGHT}}}">
-							<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
-								<path
-										d="M20 3a.75.75 0 0 0-.75.75v16.5a.75.75 0 1 0 1.5 0V3.75A.75.75 0 0 0 20 3zm-5 3H6a2 2 0 0 0-2 2v1c0 1.1.9 2 2 2h9a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2zm0 7h-4a2 2 0 0 0-2 2v1c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2zm0-5.5c.28 0 .5.22.5.5v1a.5.5 0 0 1-.5.5H6a.5.5 0 0 1-.5-.5V8c0-.28.22-.5.5-.5h9zm0 7c.28 0 .5.22.5.5v1a.5.5 0 0 1-.5.5h-4a.5.5 0 0 1-.5-.5v-1c0-.28.22-.5.5-.5h4z">
-								</path>
-							</svg>
-						</button>
+						<button id="alignLeft" class="bi bi-align-start" title="{{{LANG_ALIGN_LEFT}}}"></button>
+						<button id="alignCenter" class="bi bi-align-center" title="{{{LANG_ALIGN_CENTER}}}"></button>
+						<button id="alignRight" class="bi bi-align-end"	title="{{{LANG_ALIGN_RIGHT}}}"></button>
 					</div>
 					<div style=" display: flex; justify-content:space-between; align-items: center; gap:20px; margin-top:20px;">
-						<button id="alignTop" style="display: flex; justify-content: center; align-items:center;"
-								title="{{{LANG_ALIGN_TOP}}}">
-							<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
-								<path
-										d="M21 4c0 .41-.34.75-.75.75H3.75a.75.75 0 0 1 0-1.5h16.5c.41 0 .75.34.75.75zM11 9v9a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9c0-1.1.9-2 2-2h1a2 2 0 0 1 2 2zm7 0v4a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2V9c0-1.1.9-2 2-2h1a2 2 0 0 1 2 2zM9.5 9a.5.5 0 0 0-.5-.5H8a.5.5 0 0 0-.5.5v9c0 .28.22.5.5.5h1a.5.5 0 0 0 .5-.5V9zm7 0a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v4c0 .28.22.5.5.5h1a.5.5 0 0 0 .5-.5V9z">
-								</path>
-							</svg>
-						</button>
-						<button id="alignMiddle" style="display: flex; justify-content: center; align-items:center;"
-								title="{{{LANG_ALIGN_MIDDLE}}}">
-							<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
-								<path
-										d="M11 11.25h2V7c0-1.1.9-2 2-2h1a2 2 0 0 1 2 2v4.25h2.25a.75.75 0 1 1 0 1.5H18V17a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-4.25h-2V14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-1.25H3.75a.75.75 0 1 1 0-1.5H6V10c0-1.1.9-2 2-2h1a2 2 0 0 1 2 2v1.25zM16.5 7a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v10c0 .28.22.5.5.5h1a.5.5 0 0 0 .5-.5V7zm-7 3a.5.5 0 0 0-.5-.5H8a.5.5 0 0 0-.5.5v4c0 .28.22.5.5.5h1a.5.5 0 0 0 .5-.5v-4z">
-								</path>
-							</svg>
-						</button>
-						<button id="alignBottom" style="display: flex; justify-content: center; align-items:center;"
-								title="{{{LANG_ALIGN_BOTTOM}}}">
-							<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 24 24">
-								<path
-										d="M21 20c0 .41-.34.75-.75.75H3.75a.75.75 0 1 1 0-1.5h16.5c.41 0 .75.34.75.75zM11 6v9a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6c0-1.1.9-2 2-2h1a2 2 0 0 1 2 2zm7 5v4a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-4c0-1.1.9-2 2-2h1a2 2 0 0 1 2 2zM9.5 6a.5.5 0 0 0-.5-.5H8a.5.5 0 0 0-.5.5v9c0 .28.22.5.5.5h1a.5.5 0 0 0 .5-.5V6zm7 5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v4c0 .28.22.5.5.5h1a.5.5 0 0 0 .5-.5v-4z">
-								</path>
-							</svg>
-						</button>
+						<button id="alignTop" class="bi bi-align-top" title="{{{LANG_ALIGN_TOP}}}"></button>
+						<button id="alignMiddle" class="bi bi-align-middle" title="{{{LANG_ALIGN_MIDDLE}}}"></button>
+						<button id="alignBottom" class="bi bi-align-bottom"  title="{{{LANG_ALIGN_BOTTOM}}}"></button>
 					</div>
 				</div>
 			</li>
-            <li>
+			<li class="action-group" data-label="{{{LANG_OUTLINE}}}">
+				<input type="color" id="strokeColor" class="color_button" title="{{{LANG_OUTLINE_COLOR}}}" />
+				<div class="template_edit_dropdown">
+					<button id="object_outline" class="svg_button" title="{{{LANG_OUTLINE_STRENGTH}}}">
+						<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 500 500" xml:space="preserve">
+						<g>
+							<g transform="translate(-250.000000,262.000000) scale(0.100000,-0.100000)">
+								<path
+										d="M2446.9,1109V716.2h2155.5H6758V323.4V-69.4h392.8h392.8v785.6v785.6H4995.2H2446.9V1109z" />
+								<path
+										d="M2446.9,122.2V-69.4h1762.7h1762.8V-376v-306.6h201.2h201.2v498.2v498.2H4410.8H2446.9V122.2z" />
+								<path
+										d="M6710.1-893.3l-132.2-134.1l99.6-101.5c55.6-55.6,99.6-107.3,99.6-115s-90.1-13.4-201.2-13.4h-201.2V-1449v-191.6h214.6H6804l-113-115l-115-115l139.9-139.9l138-138l348.7,350.6l350.6,348.7l-344.9,344.9c-189.7,189.7-348.7,344.9-354.5,344.9C6848-759.2,6782.9-818.6,6710.1-893.3z" />
+								<path d="M2446.9-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
+								<path d="M3232.5-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
+								<path d="M4018-1449v-191.6h191.6h191.6v191.6v191.6h-191.6H4018V-1449z" />
+								<path d="M4803.6-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
+								<path d="M5589.2-1449v-191.6h191.6h191.6v191.6v191.6h-191.6h-191.6V-1449z" />
+							</g>
+						</g>
+					</svg>
+				</button>
+				<div class="template_edit_dropdown_content" style="width:240px; padding:20px">
+					<label for="strokeWidth">
+						{{{LANG_OUTLINE_STRENGTH}}}
+					</label>
+					<div style="display: flex; justify-content:space-between; align-items: center;">
+						<input id="strokeWidth" style="width:150px;" type="range" min="0" max="50" value="0">
+						<span id="strokeWidthDisplay">0</span> px
+					</div>
+				</div>
+			</div>
+			</li>
+            <li class="action-group" data-label="{{{LANG_SCALING}}}">
                 <input type="number" id="scaleX" class="scaler" style="width:70px" min="0.1" max="10" step="0.1" title="{{{LANG_SCALE_X}}}" />
                 <input type="number" id="scaleY" class="scaler" style="width:70px" min="0.1" max="10" step="0.1" title="{{{LANG_SCALE_Y}}}" />
             </li>
@@ -262,9 +174,9 @@
                 <input type="color" id="fillColor" class="color_button" style="display: none;" title="{{{LANG_SELECT_COLOR}}}" />
             </li>
             <li>
-                <ul id="textProperties" class="action_group" style="display:none;">
+                <ul id="textProperties" class="action-group" style="display:none;" data-label="{{{LANG_TYPOGRAPHY}}}">
                     <li class="template_edit_dropdown">
-                        <button id="fontFamily" style="font-size:0.8rem; width:150px; overflow: hidden; height: 30px;">
+                        <button id="fontFamily" style="font-size:0.7rem; width:150px; overflow: hidden;">
                             {{{LANG_FONT_FAMILY}}}
                         </button>
                         <div id="fontsDropdown" class="template_edit_dropdown_content" style="width:200px; height: 350px; overflow-y:auto;">
@@ -283,38 +195,19 @@
                     </li>
                     <li>
                         <button id="textAlign" class="svg_button" title="{{{LANG_ALIGN_TEXT}}}">
-                            <svg id="left" xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 448 512">
-                                <path fill="currentColor" d="M12.83 352h262.34A12.82 12.82 0 0 0 288 339.17v-38.34A12.82 12.82 0 0 0 275.17 288H12.83A12.82 12.82 0 0 0 0 300.83v38.34A12.82 12.82 0 0 0 12.83 352zm0-256h262.34A12.82 12.82 0 0 0 288 83.17V44.83A12.82 12.82 0 0 0 275.17 32H12.83A12.82 12.82 0 0 0 0 44.83v38.34A12.82 12.82 0 0 0 12.83 96zM432 160H16a16 16 0 0 0-16 16v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16v-32a16 16 0 0 0-16-16zm0 256H16a16 16 0 0 0-16 16v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16v-32a16 16 0 0 0-16-16z" />
-                            </svg>
-                            <svg id="center" xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 448 512">
-                                <path fill="currentColor" d="M432 160H16a16 16 0 0 0-16 16v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16v-32a16 16 0 0 0-16-16zm0 256H16a16 16 0 0 0-16 16v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16v-32a16 16 0 0 0-16-16zM108.1 96h231.81A12.09 12.09 0 0 0 352 83.9V44.09A12.09 12.09 0 0 0 339.91 32H108.1A12.09 12.09 0 0 0 96 44.09V83.9A12.1 12.1 0 0 0 108.1 96zm231.81 256A12.09 12.09 0 0 0 352 339.9v-39.81A12.09 12.09 0 0 0 339.91 288H108.1A12.09 12.09 0 0 0 96 300.09v39.81a12.1 12.1 0 0 0 12.1 12.1z" />
-                            </svg>
-                            <svg id="right" xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 448 512">
-                                <path fill="currentColor"
-                                      d="M16 224h416a16 16 0 0 0 16-16v-32a16 16 0 0 0-16-16H16a16 16 0 0 0-16 16v32a16 16 0 0 0 16 16zm416 192H16a16 16 0 0 0-16 16v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16v-32a16 16 0 0 0-16-16zm3.17-384H172.83A12.82 12.82 0 0 0 160 44.83v38.34A12.82 12.82 0 0 0 172.83 96h262.34A12.82 12.82 0 0 0 448 83.17V44.83A12.82 12.82 0 0 0 435.17 32zm0 256H172.83A12.82 12.82 0 0 0 160 300.83v38.34A12.82 12.82 0 0 0 172.83 352h262.34A12.82 12.82 0 0 0 448 339.17v-38.34A12.82 12.82 0 0 0 435.17 288z" />
-                            </svg>
+                            <i id="left" class="bi bi-justify-left"></i>
+                            <i id="center" class="bi bi-justify"></i>
+                            <i id="right" class="bi bi-justify-right"></i>
                         </button>
                     </li>
                     <li>
-                        <button id="textBold" name="bold" class="svg_button" title="{{{LANG_BOLD}}}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 384 512">
-                                <path d="M333.49 238a122 122 0 0 0 27-65.21C367.87 96.49 308 32 233.42 32H34a16 16 0 0 0-16 16v48a16 16 0 0 0 16 16h31.87v288H34a16 16 0 0 0-16 16v48a16 16 0 0 0 16 16h209.32c70.8 0 134.14-51.75 141-122.4 4.74-48.45-16.39-92.06-50.83-119.6zM145.66 112h87.76a48 48 0 0 1 0 96h-87.76zm87.76 288h-87.76V288h87.76a56 56 0 0 1 0 112z" />
-                            </svg>
-                        </button>
+                        <button id="textBold" name="bold" class="bi bi-type-bold" title="{{{LANG_BOLD}}}"></button>
                     </li>
                     <li>
-                        <button id="textItalic" name="italic" class="svg_button" title="{{{LANG_ITALIC}}}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 320 512">
-                                <path d="M320 48v32a16 16 0 0 1-16 16h-62.76l-80 320H208a16 16 0 0 1 16 16v32a16 16 0 0 1-16 16H16a16 16 0 0 1-16-16v-32a16 16 0 0 1 16-16h62.76l80-320H112a16 16 0 0 1-16-16V48a16 16 0 0 1 16-16h192a16 16 0 0 1 16 16z" />
-                            </svg>
-                        </button>
+                        <button id="textItalic" name="italic" class="bi bi-type-italic" title="{{{LANG_ITALIC}}}"></button>
                     </li>
                     <li>
-                        <button id="textUnderline" name="underline" class="svg_button" title="{{{LANG_UNDERLINE}}}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 448 512">
-                                <path d="M32 64h32v160c0 88.22 71.78 160 160 160s160-71.78 160-160V64h32a16 16 0 0 0 16-16V16a16 16 0 0 0-16-16H272a16 16 0 0 0-16 16v32a16 16 0 0 0 16 16h32v160a80 80 0 0 1-160 0V64h32a16 16 0 0 0 16-16V16a16 16 0 0 0-16-16H32a16 16 0 0 0-16 16v32a16 16 0 0 0 16 16zm400 384H16a16 16 0 0 0-16 16v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16v-32a16 16 0 0 0-16-16z" />
-                            </svg>
-                        </button>
+                        <button id="textUnderline" name="underline" class="bi bi-type-underline" title="{{{LANG_UNDERLINE}}}"></button>
                     </li>
                     <li>
                         <input style="width: 64px" type="number" id="fontSize" min="1" title="{{{LANG_FONT_SIZE}}}"/>
@@ -324,7 +217,7 @@
         </ul>
 	</li>
 	<li>
-		<ul id="group_properties" class="action_group">
+		<ul id="group_properties" class="action-group">
 			<li>
 				<button id="object_group" style="display: none;" title="{{{LANG_GROUP_UNGROUP}}}">
 					<svg id="group" xmlns="http://www.w3.org/2000/svg" width="17px" height="17px" viewBox="0 0 512 512">
@@ -338,7 +231,7 @@
 		</ul>
     </li>
     <li style="margin-left: auto;">
-        <ul class="action_group">
+        <ul class="action-group">
 			<li>
 				<select id="snapToGrid" title="{{{LANG_SNAP_TO_GRID}}}">
 					<option value="0">{{{LANG_NO_GRID}}}</option>

@@ -24,16 +24,23 @@ export class ViewportController
 {
 	#viewportView;
 	#viewportService
+	#globalPropertiesService;
 	#isAutoresize = true;
 
-	constructor(viewportView, viewportService)
+	constructor(viewportView, viewportService, globalPropertyService)
 	{
 		this.#viewportView = viewportView;
 		this.#viewportService = viewportService;
+		this.#globalPropertiesService = globalPropertyService;
 
 		this.#viewportView.resolutionWidth.addEventListener('change', () =>
 		{
 			this.#viewportService.setCanvasDimensions(
+				this.#viewportView.getResolutionWidthValue(),
+				this.#viewportView.getResolutionHeightValue()
+			);
+
+			this.#globalPropertiesService.setCanvasDimension(
 				this.#viewportView.getResolutionWidthValue(),
 				this.#viewportView.getResolutionHeightValue()
 			);
@@ -47,6 +54,12 @@ export class ViewportController
 				this.#viewportView.getResolutionWidthValue(),
 				this.#viewportView.getResolutionHeightValue()
 			);
+
+			this.#globalPropertiesService.setCanvasDimension(
+				this.#viewportView.getResolutionWidthValue(),
+				this.#viewportView.getResolutionHeightValue()
+			);
+
 			this.#viewportService.scaleCanvas(this.#viewportView.getZoomSliderValue());
 		});
 
@@ -69,6 +82,11 @@ export class ViewportController
 
 	initializeCanvas()
 	{
+		this.#globalPropertiesService.setCanvasDimension(
+			this.#viewportView.getResolutionWidthValue(),
+			this.#viewportView.getResolutionHeightValue()
+		);
+
 		this.#viewportService.initializeFromCanvas()
 		this.zoomToViewPort();
 	}

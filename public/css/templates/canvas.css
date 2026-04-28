@@ -7,9 +7,10 @@
 	gap:1em;
 	justify-content:flex-start;
 	align-items:center;
-	height:50px;
+	height:40px;
     white-space: nowrap;
 }
+
 hr{height: 2px; width:100%; background: #000;padding:0; margin:0;}
 	#inserts {padding:0 1em 0 0; border-right:2px solid black;}
 	#properties {margin-left:1em;}
@@ -22,19 +23,50 @@ hr{height: 2px; width:100%; background: #000;padding:0; margin:0;}
         align-items:center;
 		gap:0.5em;
 	}
-	.action_group
+	.action-group
 	{
+        position: relative;
 		list-style: none;
 		margin:0;
 		padding:0;
 		display:flex;
 		gap:0.25em;
 	}
-    .action_group select, .action_group input {font-size:0.8rem}
-	.svg_button {display: flex; justify-content: center; align-items:center;width:36px;}
+
+    .action-group[data-label] {position: relative;}
+    .action-group[data-label]::before {
+        content: attr(data-label);
+        position: absolute;
+        top: -16px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #666;
+        white-space: nowrap;
+        background: #F7FAFC;
+        padding: 0 4px;
+        z-index: 1;
+    }
+
+    .action-group[data-label]::after {
+        content: "";
+        position: absolute;
+        top: -10px;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: #ccc;
+        z-index: 0;
+    }
+
+    .action-group select, .action-group input {font-size:0.8rem}
+    .action-group button {font-size:1.1rem; padding:0 4px;width: 30px;height: 26px;}
+	.svg_button {display: flex; justify-content: center; align-items:center;width:30px;height: 26px}
 	input.color_button
 	{
-		width: 36px;
+		width: 30px;
 		height: 26px;
 		background-color: #cccccc;
 		box-shadow: 0 1px 5px hsla(300,15%,25%,0.3) inset;
