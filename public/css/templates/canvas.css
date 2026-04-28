@@ -125,3 +125,4 @@ hr{height: 2px; width:100%; background: #000;padding:0; margin:0;}
 	border: 1px solid #000;
 }
 .canvas-container{background-color:#fff;}
+label:has(+ input:disabled), input:disabled{opacity: 0.5; pointer-events: none;}
