@@ -24,7 +24,8 @@ export class ShadowPropertiesView
 	#shadowOffsetX = document.getElementById("shadowOffsetX");
 	#shadowOffsetY = document.getElementById("shadowOffsetY");
 	#shadowBlur    = document.getElementById("shadowBlur");
-	#shadowDelete  = document.getElementById("shadowDelete");
+	#deleteShadow  = document.getElementById("deleteShadow");
+	#createShadow  = document.getElementById("createShadow");
 
 	constructor() {}
 
@@ -49,14 +50,15 @@ export class ShadowPropertiesView
 		return this.#shadowBlur;
 	}
 
-	get shadowDelete()
+	toggleShadowVisibility(isVisible)
 	{
-		return this.#shadowDelete;
-	}
+		this.#deleteShadow.style.display = isVisible ? "block" : "none";
+		this.#createShadow.style.display = isVisible ? "none" : "block";
 
-	toggleShadowDeleteVisibility(isVisible)
-	{
-		this.#shadowDelete.style.display = isVisible ? "block" : "none";
+		this.#shadowColor.disabled = !isVisible;
+		this.#shadowOffsetX.disabled = !isVisible;
+		this.#shadowOffsetY.disabled = !isVisible;
+		this.#shadowBlur.disabled = !isVisible;
 	}
 
 	getShadowColorValue()

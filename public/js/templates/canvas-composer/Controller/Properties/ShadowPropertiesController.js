@@ -31,11 +31,20 @@ export class ShadowPropertiesController
 
 		this.#shadowPropertiesView.shadowColor.addEventListener("click", () =>
 		{
-			this.#shadowPropertiesService.setColor();
-			this.#shadowPropertiesView.setTextAlignValue(this.#shadowPropertiesService.getColor())
-
+			this.#shadowPropertiesService.setColor(this.#shadowPropertiesView.getShadowColorValue());
 		});
-
+		this.#shadowPropertiesView.shadowOffsetX.addEventListener("input", () =>
+		{
+			this.#shadowPropertiesService.setOffsetX(this.#shadowPropertiesView.getShadowOffsetXValue());
+		});
+		this.#shadowPropertiesView.shadowOffsetY.addEventListener("input", () =>
+		{
+			this.#shadowPropertiesService.setOffsetY(this.#shadowPropertiesView.getShadowOffsetYValue());
+		});
+		this.#shadowPropertiesView.shadowBlur.addEventListener("input", () =>
+		{
+			this.#shadowPropertiesService.setBlur(this.#shadowPropertiesView.getShadowBlurValue());
+		});
 
 	}
 
@@ -46,6 +55,6 @@ export class ShadowPropertiesController
 		this.#shadowPropertiesView.setShadowOffsetYValue(this.#shadowPropertiesService.getOffsetX());
 		this.#shadowPropertiesView.setShadowBlurValue(this.#shadowPropertiesService.getBlur());
 
-		this.#shadowPropertiesView.toggleShadowDeleteVisibility(this.#shadowPropertiesService.hasShadow());
+		this.#shadowPropertiesView.toggleShadowVisibility(this.#shadowPropertiesService.hasShadow());
 	}
 }

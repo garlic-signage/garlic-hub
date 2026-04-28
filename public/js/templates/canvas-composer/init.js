@@ -148,7 +148,8 @@ document.addEventListener("DOMContentLoaded", async function ()
 		globalPropertiesController,
 		groupPropertiesController,
 		selectivePropertiesController,
-		textPropertiesController
+		textPropertiesController,
+		shadowPropertiesController
 	);
 
 	const composerKeyboardView = new ComposerKeyboardView();

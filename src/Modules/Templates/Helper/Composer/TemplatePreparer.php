@@ -54,6 +54,7 @@ class TemplatePreparer
 			'LANG_SHADOW_OFFSET_X' => $this->translator->translate('shadow_offset_x', 'templates'),
 			'LANG_SHADOW_OFFSET_Y' => $this->translator->translate('shadow_offset_y', 'templates'),
 			'LANG_SHADOW_BLUR' => $this->translator->translate('shadow_blur', 'templates'),
+			'LANG_SHADOW_CREATE' => $this->translator->translate('create', 'main'),
 			'LANG_SHADOW_DELETE' => $this->translator->translate('delete', 'main'),
 			'LANG_FONT_FAMILY' => $this->translator->translate('font_family', 'templates'),
 			'LANG_UPLOAD_FONT' => $this->translator->translate('upload_font', 'templates'),
