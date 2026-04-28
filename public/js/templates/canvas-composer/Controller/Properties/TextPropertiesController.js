@@ -54,12 +54,17 @@ export class TextPropertiesController
 
 		this.buildFontDropdown();
 
+		this.#textPropertiesView.fontSize.addEventListener("input", () =>
+		{
+			const value = parseInt(this.#textPropertiesView.getFontSizeValue());
+			this.#textPropertiesService.setTextFontSize(value);
+		})
 	}
-
 
 	activate()
 	{
 		this.#textPropertiesView.setfontFamilyValue(this.#textPropertiesService.getTextFontFamily());
+		this.#textPropertiesView.setFontSizeValue(this.#textPropertiesService.getTextFontSize());
 		this.#textPropertiesView.setTextAlignValue(this.#textPropertiesService.getTextAlign());
 		this.#textPropertiesView.setTextBoldValue(this.#textPropertiesService.getTextBold());
 		this.#textPropertiesView.setTextItalicValue(this.#textPropertiesService.getTextItalic());

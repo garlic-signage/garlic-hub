@@ -23,6 +23,7 @@ export class TextPropertiesView
 	#fontsDropdown  = document.getElementById("fontsDropdown")
 	#textProperties = document.getElementById("textProperties");
 	#fontFamily     = document.getElementById("fontFamily")
+	#fontSize       = document.getElementById("fontSize")
 	#textAlign ;
 	#textBold;
 	#textItalic;
@@ -65,6 +66,16 @@ export class TextPropertiesView
 		this.#fontFamily.innerHTML = value;
 	}
 
+	getFontSizeValue()
+	{
+		return this.#fontSize.value
+	}
+
+
+	setFontSizeValue(value)
+	{
+		this.#fontSize.value = value
+	}
 
 	get textAlign()
 	{
@@ -107,4 +118,8 @@ export class TextPropertiesView
 		this.#textUnderline.update('active', value)
 	}
 
+	get fontSize()
+	{
+		return this.#fontSize;
+	}
 }

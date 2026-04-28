@@ -255,6 +255,10 @@
 				</div>
 			</li>
             <li>
+                <input type="number" id="scaleX" class="scaler" style="width:70px" min="0.1" max="10" step="0.1" title="{{{LANG_SCALE_X}}}" />
+                <input type="number" id="scaleY" class="scaler" style="width:70px" min="0.1" max="10" step="0.1" title="{{{LANG_SCALE_Y}}}" />
+            </li>
+            <li>
                 <input type="color" id="fillColor" class="color_button" style="display: none;" title="{{{LANG_SELECT_COLOR}}}" />
             </li>
             <li>
@@ -311,6 +315,9 @@
                                 <path d="M32 64h32v160c0 88.22 71.78 160 160 160s160-71.78 160-160V64h32a16 16 0 0 0 16-16V16a16 16 0 0 0-16-16H272a16 16 0 0 0-16 16v32a16 16 0 0 0 16 16h32v160a80 80 0 0 1-160 0V64h32a16 16 0 0 0 16-16V16a16 16 0 0 0-16-16H32a16 16 0 0 0-16 16v32a16 16 0 0 0 16 16zm400 384H16a16 16 0 0 0-16 16v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16v-32a16 16 0 0 0-16-16z" />
                             </svg>
                         </button>
+                    </li>
+                    <li>
+                        <input style="width: 64px" type="number" id="fontSize" min="1" title="{{{LANG_FONT_SIZE}}}"/>
                     </li>
                 </ul>
             </li>
