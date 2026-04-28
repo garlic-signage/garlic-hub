@@ -69,6 +69,9 @@ import {ComposerKeyboardView} from "./Views/ComposerKeyboardView.js";
 import {SnapView} from "./Views/SnapView.js";
 import {SnapService}                   from "./Services/SnapService.js";
 import {SnapController} from "./Controller/SnapController.js";
+import {ShadowPropertiesView} from "./Views/Properties/ShadowPropertiesView.js";
+import {ShadowPropertiesService} from "./Services/Properties/ShadowPropertiesService.js";
+import {ShadowPropertiesController} from "./Controller/Properties/ShadowPropertiesController.js";
 
 document.addEventListener("DOMContentLoaded", async function ()
 {
@@ -87,10 +90,14 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const waitOverlay     = new WaitOverlay();
 	const loadService     = new LoadService(fabricWrapper, templateService, fontCollector, waitOverlay);
 
-	// control viewport
+
+	const globalPropertiesView = new GlobalPropertiesView();
+	const globalPropertiesService = new GlobalPropertiesService(fabricWrapper);
+	const globalPropertiesController  = new GlobalPropertiesController(globalPropertiesView, globalPropertiesService);
+
 	const viewportView       = new ViewportView();
 	const viewportService    = new ViewportService(fabricWrapper);
-	const viewPortController = new ViewportController(viewportView, viewportService);
+	const viewPortController = new ViewportController(viewportView, viewportService, globalPropertiesService);
 
 	// control save, reset, close and export images
 	const saveView         = new SaveView();
@@ -117,14 +124,13 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const mediaDialogView       = new MediaDialogView();
 	const mediaDialogController = new MediaDialogController(mediaDialogView, mediaSelector, insertService);
 
-	const globalPropertiesView = new GlobalPropertiesView();
-	const globalPropertiesService = new GlobalPropertiesService(fabricWrapper);
-	const globalPropertiesController  = new GlobalPropertiesController(globalPropertiesView, globalPropertiesService);
-
 	const toggleButtonFactory = new ToggleButtonFactory();
 	const groupProperiesView        = new GroupPropertiesView(toggleButtonFactory);
 	const groupPropertiesService    = new GroupPropertiesService(fabricWrapper);
 	const groupPropertiesController = new GroupPropertiesController(groupProperiesView, groupPropertiesService);
+	const shadowPropertiesView       = new ShadowPropertiesView();
+	const shadowPropertiesService    = new ShadowPropertiesService(fabricWrapper);
+	const shadowPropertiesController = new ShadowPropertiesController(shadowPropertiesView, shadowPropertiesService);
 
 	const selectivePropertiesView       = new SelectivePropertiesView(toggleButtonFactory);
 	const selectivePropertiesService    = new SelectivePropertiesService(fabricWrapper);
