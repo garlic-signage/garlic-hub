@@ -91,25 +91,28 @@
 					</div>
 				</div>
 			</li>
-			<li class="template_edit_dropdown" style="display: none;">
-				<button id="object_shadow" class="bi bi-shadows"></button>
-				<div class="template_edit_dropdown_content">
+			<li class="template_edit_dropdown">
+				<button id="object_shadow" class="bi bi-shadows" title="{{{LANG_SHADOW}}}"></button>
+				<div class="template_edit_dropdown_content" style="padding:20px;">
 					<div style=" display: flex; justify-content:space-between; align-items: center;">
-						<div style="display:flex; flex-direction:column; padding:20px;">
-							<label for="object_shadow_color">Color</label>
-							<input id="object_shadow_color" style="width:50px; text-align:center;" type="color" value="#ccccc">
+						<div style="display:flex; flex-direction:column;">
+							<label for="shadowColor">{{{LANG_SHADOW_COLOR}}}</label>
+							<input id="shadowColor" style="width:50px; text-align:center;" type="color" value="#ccccc">
 						</div>
 						<div style="display:flex; flex-direction:column; padding:20px;">
-							<label for="object_shadow_offset_x">Offset X</label>
-							<input id="object_shadow_offset_x" style="width:50px; text-align:center;" type="number" value="0">
+							<label for="shadowOffsetX">{{{LANG_SHADOW_OFFSET_X}}}</label>
+							<input id="shadowOffsetX" style="width:70px; text-align:center;" type="number" value="0">
 						</div>
 						<div style="display:flex; flex-direction:column; padding:20px;">
-							<label for="object_shadow_offset_y">Offset Y</label>
-							<input id="object_shadow_offset_y" style="width:50px; text-align:center;" type="number" value="0">
+							<label for="shadowOffsetY">{{{LANG_SHADOW_OFFSET_Y}}}</label>
+							<input id="shadowOffsetY" style="width:70px; text-align:center;" type="number" value="0">
 						</div>
 						<div style="display:flex; flex-direction:column; padding:20px;">
-							<label for="object_shadow_blur">Blur</label>
-							<input id="object_shadow_blur" style="width:50px; text-align:center;" type="number" value="0">
+							<label for="shadowBlur">{{{LANG_SHADOW_BLUR}}}</label>
+							<input id="shadowBlur" style="width:70px; text-align:center;" type="number" value="0">
+						</div>
+						<div style="display:flex; flex-direction:column; align-items: flex-end; padding:20px;">
+							<button id="deleteShadow" class="bi bi-trash" style="height:35px;width:35px;margin-top:20px;" title="{{{LANG_SHADOW_DELETE}}}"></button>
 						</div>
 					</div>
 				</div>

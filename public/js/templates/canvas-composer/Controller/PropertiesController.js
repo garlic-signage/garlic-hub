@@ -28,14 +28,16 @@ import {ComposerEventBus} from "../Utils/ComposerEventBus.js";
 export class PropertiesController
 {
 	#globalPropertiesController;
+	#shadowPropertiesController;
 	#groupPropertiesController;
 	#selectivePropertiesController;
 	#textPropertiesController;
 	#currentType = ""
 
-	constructor(globalPropertiesController, groupPropertiesController, selectivePropertiesController, textPropertiesController)
+	constructor(globalPropertiesController, groupPropertiesController, selectivePropertiesController, textPropertiesController, shadowPropertiesController)
 	{
 		this.#globalPropertiesController    = globalPropertiesController;
+		this.#shadowPropertiesController    = shadowPropertiesController;
 		this.#groupPropertiesController     = groupPropertiesController;
 		this.#selectivePropertiesController = selectivePropertiesController;
 		this.#textPropertiesController      = textPropertiesController;
@@ -65,6 +67,7 @@ export class PropertiesController
 				this.#selectivePropertiesController.activate();
 				this.#globalPropertiesController.activate();
 				this.#textPropertiesController.activate();
+				this.#shadowPropertiesController.activate();
 				break;
 			case "circle":
 			case "rect":
@@ -72,9 +75,11 @@ export class PropertiesController
 			case "polygon":
 				this.#selectivePropertiesController.activate();
 				this.#globalPropertiesController.activate();
+				this.#shadowPropertiesController.activate();
 				break;
 			case "image":
 				this.#globalPropertiesController.activate();
+				this.#shadowPropertiesController.activate();
 				break;
 			default:
 				break;

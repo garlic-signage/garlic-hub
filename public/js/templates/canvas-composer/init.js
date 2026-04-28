@@ -69,6 +69,9 @@ import {ComposerKeyboardView} from "./Views/ComposerKeyboardView.js";
 import {SnapView} from "./Views/SnapView.js";
 import {SnapService}                   from "./Services/SnapService.js";
 import {SnapController} from "./Controller/SnapController.js";
+import {ShadowPropertiesView} from "./Views/Properties/ShadowPropertiesView.js";
+import {ShadowPropertiesService} from "./Services/Properties/ShadowPropertiesService.js";
+import {ShadowPropertiesController} from "./Controller/Properties/ShadowPropertiesController.js";
 
 document.addEventListener("DOMContentLoaded", async function ()
 {
@@ -125,6 +128,9 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const groupProperiesView        = new GroupPropertiesView(toggleButtonFactory);
 	const groupPropertiesService    = new GroupPropertiesService(fabricWrapper);
 	const groupPropertiesController = new GroupPropertiesController(groupProperiesView, groupPropertiesService);
+	const shadowPropertiesView       = new ShadowPropertiesView();
+	const shadowPropertiesService    = new ShadowPropertiesService(fabricWrapper);
+	const shadowPropertiesController = new ShadowPropertiesController(shadowPropertiesView, shadowPropertiesService);
 
 	const selectivePropertiesView       = new SelectivePropertiesView(toggleButtonFactory);
 	const selectivePropertiesService    = new SelectivePropertiesService(fabricWrapper);
