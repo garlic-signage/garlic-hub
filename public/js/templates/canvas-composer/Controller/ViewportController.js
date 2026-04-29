@@ -88,6 +88,8 @@ export class ViewportController
 		);
 
 		this.#viewportService.initializeFromCanvas()
+		this.#viewportView.setResolutionWidth(this.#viewportService.width)
+		this.#viewportView.setResolutionHeight(this.#viewportService.height)
 		this.zoomToViewPort();
 	}
 
