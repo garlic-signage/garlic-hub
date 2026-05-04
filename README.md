@@ -33,8 +33,8 @@ The environment is regularly deleted and rebuilt.
 
 ## Quick Start
 
-- [User Installation Guide](docs/how-tos/install-user.md)
-- [Connecting Media Players](docs/how-tos/connect-mediaplayer-user.md)
+- [User Installation Guide](https://garlic-signage.com/garlic-hub/installation/)
+- [Connecting Media Players](https://garlic-signage.com/garlic-hub/docs/tutorials/connect-mediaplayer/)
 
 ## Current Features
 | Section                      | Status | description                                                                                                                            |
