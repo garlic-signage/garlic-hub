@@ -39,7 +39,13 @@ export class WidgetForm
 		this.html_form = '<ul class="form_edit"';
 		for (const [key, props] of Object.entries(this.preferences))
 		{
-			this.html_form += "<li><label>" + key + "<br />";
+			let label = key;
+			if (props.hasOwnProperty("label"))
+				label = props["label"];
+			else if (props.hasOwnProperty("tooltip"))
+				label = props["tooltip"];
+
+			this.html_form += "<li><label>" + label + "<br />";
 			if (this.values[key] !== undefined)
 				value = this.values[key]
 			else
