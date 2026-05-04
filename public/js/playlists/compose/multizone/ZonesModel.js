@@ -319,10 +319,10 @@ export class ZonesModel
 
 	#convertZoneDimensionsByFactor(w, h, zone)
 	{
-		zone.zone_left   = Math.round(w * zone.zone_left);
-		zone.zone_top    = Math.round(h * zone.zone_top);
-		zone.zone_width  = Math.round(w * zone.zone_width);
-		zone.zone_height = Math.round(h * zone.zone_height);
+		zone.zone_left   = w * zone.zone_left;
+		zone.zone_top    = h * zone.zone_top;
+		zone.zone_width  = w * zone.zone_width;
+		zone.zone_height = h * zone.zone_height;
 
 		return zone;
 	}
