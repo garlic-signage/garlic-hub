@@ -27,7 +27,7 @@ export class SaveService
 	#bmpDitherFactory;
 	#waitOverlay;
 	#allowed = ["jpg", "png", "webp", "bmp"];
-	#imageData = {"format": "jpeg", "quality": 80 };
+	#imageData = {"format": "jpeg", "quality": 90 };
 
 	constructor(fabricWrapper, templatesService, bmpDitherFactory, waitOverlay)
 	{
@@ -45,7 +45,7 @@ export class SaveService
 	validateImageData(format, quality)
 	{
 		if (quality < 1 || quality > 100)
-			quality = 80;
+			quality = 90;
 
 		if (!this.#allowed.includes(format))
 			format = "jpg";

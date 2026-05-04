@@ -89,6 +89,7 @@ class TemplatePreparer
 			'LANG_OUTLINE' => $this->translator->translate('outline', 'templates'),
 			'LANG_SCALING' => $this->translator->translate('scaling', 'main'),
 			'LANG_TYPOGRAPHY' => $this->translator->translate('typography', 'templates'),
+			'LANG_EXPORT_FORMAT_AND_QUALITY' => $this->translator->translate('export_format_and_quality', 'templates'),
 			'LANG_SAVE' => $this->translator->translate('save', 'main'),
 			'LANG_CLOSE' => $this->translator->translate('close', 'main'),
 			'LANG_CONFIRM_CLOSE_EDITOR' => $this->translator->translate('confirm_close_composer', 'templates'),

@@ -253,15 +253,13 @@
                 <span id="zoomPercent"></span>
             </li>
 			{{#save_formats}}
-			<li>
+			<li class="action-group" data-label="{{{LANG_EXPORT_FORMAT_AND_QUALITY}}}">
 				<select id="exportFormat" title="{{{LANG_FORMATS}}}">
 					{{#formats}}
 						<option value="{{{FORMAT}}}">{{{LANG_FORMAT}}}</option>
 					{{/formats}}
 				</select>
-            </li>
-			<li>
-				<input type="number" id="exportQuality" min="10" max="100" step="1" value="80" title="{{{LANG_IMAGE_QUALITY}}}"> %
+				<input type="number" id="exportQuality" min="10" max="100" step="1" value="90" title="{{{LANG_IMAGE_QUALITY}}}">
             </li>
 			{{/save_formats}}
 			<li>
