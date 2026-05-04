@@ -34,7 +34,7 @@ The environment is regularly deleted and rebuilt.
 ## Quick Start
 
 - [User Installation Guide](https://garlic-signage.com/garlic-hub/installation/)
-- [Connecting Media Players](https://garlic-signage.com/garlic-hub/docs/tutorials/connect-mediaplayer/)
+- [Connecting Media Players](https://garlic-signage.com/garlic-hub/docs/tutorials/connect-media-player/)
 
 ## Current Features
 | Section                      | Status | description                                                                                                                            |
