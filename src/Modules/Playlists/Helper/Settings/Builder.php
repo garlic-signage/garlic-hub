@@ -137,7 +137,7 @@ class Builder
 				$this->UID
 			);
 		}
-		if ($playlist['playlist_mode'] === PlaylistMode::MASTER->value || $playlist['playlist_mode'] === PlaylistMode::MULTIZONE->value)
+		if (array_key_exists('playlist_mode', $playlist) && ($playlist['playlist_mode'] === PlaylistMode::MASTER->value || $playlist['playlist_mode'] === PlaylistMode::MULTIZONE->value))
 		{
 			$form['screen_width'] = $this->formElementsCreator->createScreenWidthField( $playlist['screen_width'] ?? 1920);
 			$form['screen_height'] = $this->formElementsCreator->createScreenHeightField($playlist['screen_height'] ?? 1080);

@@ -24,6 +24,7 @@ namespace Tests\Unit\Modules\Playlists\Services;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Modules\Playlists\Helper\PlaylistMode;
 use App\Modules\Playlists\Repositories\PlaylistsRepository;
 use App\Modules\Playlists\Services\AclValidator;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
@@ -539,7 +540,7 @@ class PlaylistsServiceTest extends TestCase
 	{
 		$this->service->setUID(1);
 		$playlistId = 123;
-		$playlist = ['playlist_id' => $playlistId, 'multizone' => []];
+		$playlist = ['playlist_id' => $playlistId, 'playlist_mode' => PlaylistMode::MULTIZONE->value, 'multizone' => []];
 
 		$this->playlistsRepositoryMock->expects($this->once())->method('findFirstWithUserName')
 			->with($playlistId)
