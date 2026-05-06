@@ -84,8 +84,8 @@ class PlaylistsServiceTest extends TestCase
 	public function testCreateNewSuccessfullyInsertsDataWithoutUID(): void
 	{
 		$this->service->setUID(567);
-		$postData = ['playlist_mode' => 'private', 'playlist_name' => 'Test Playlist', 'multizone' => []];
-		$saveData = ['UID' => 567, 'playlist_mode' => 'private', 'playlist_name' => 'Test Playlist', 'multizone' => []];
+		$postData = ['playlist_mode' => 'private', 'playlist_name' => 'Test Playlist', 'layout' => []];
+		$saveData = ['UID' => 567, 'playlist_mode' => 'private', 'playlist_name' => 'Test Playlist', 'layout' => []];
 
 		$this->playlistsRepositoryMock->expects($this->once())->method('insert')
 			->with($saveData)
@@ -437,7 +437,7 @@ class PlaylistsServiceTest extends TestCase
 	{
 		$this->service->setUID(1);
 		$playlistId = 123;
-		$playlist = ['playlist_id' => $playlistId, 'multizone' => serialize(['zone1', 'zone2'])];
+		$playlist = ['playlist_id' => $playlistId, 'layout' => serialize(['zone1', 'zone2'])];
 
 		$this->playlistsRepositoryMock->expects($this->once())->method('findFirstWithUserName')
 			->with($playlistId)
@@ -631,7 +631,7 @@ class PlaylistsServiceTest extends TestCase
 			->willReturn(true);
 
 		$this->playlistsRepositoryMock->expects($this->once())->method('update')
-			->with($playlistId, ['multizone' => serialize($zones)])
+			->with($playlistId, ['layout' => serialize($zones)])
 			->willReturn(1);
 
 		$result = $this->service->saveZones($playlistId, $zones);
@@ -711,7 +711,7 @@ class PlaylistsServiceTest extends TestCase
 			->willReturn(true);
 
 		$this->playlistsRepositoryMock->expects($this->once())->method('update')
-			->with($playlistId, ['multizone' => serialize($zones)])
+			->with($playlistId, ['layout' => serialize($zones)])
 			->willThrowException(new \Exception('Repository error'));
 
 		$this->loggerMock->expects($this->once())->method('error')
@@ -727,21 +727,22 @@ class PlaylistsServiceTest extends TestCase
 	{
 		$this->service->setUID(1);
 		$playlistId = 999;
-		$playlist = ['playlist_id' => $playlistId, 'playlist_name' => 'Sample Playlist'];
+		$playlist_first = ['playlist_id' => $playlistId, 'playlist_name' => 'Sample Playlist', 'layout' => null];
+		$playlist_final = ['playlist_id' => $playlistId, 'playlist_name' => 'Sample Playlist', 'layout' => []];
 
 		$this->playlistsRepositoryMock->expects($this->once())
 			->method('findFirstWithUserName')
 			->with($playlistId)
-			->willReturn($playlist);
+			->willReturn($playlist_first);
 
 		$this->aclValidatorMock->expects($this->once())
 			->method('isPlaylistEditable')
-			->with(1, $playlist)
+			->with(1, $playlist_first)
 			->willReturn(true);
 
 		$result = $this->service->loadPlaylistForEdit($playlistId);
 
-		static::assertEquals($playlist, $result);
+		static::assertEquals($playlist_final, $result);
 	}
 
 	#[Group('units')]
