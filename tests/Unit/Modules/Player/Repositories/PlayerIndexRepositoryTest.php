@@ -129,7 +129,7 @@ class PlayerIndexRepositoryTest extends TestCase
 			'remote_administration' => 'a:0:{}',
 			'categories' => 'a:0:{}',
 			'screen_times' => 'a:0:{}',
-			'multizone'  => ''
+			'layout'  => ''
 		];
 
 		$expandedData = [
@@ -141,7 +141,7 @@ class PlayerIndexRepositoryTest extends TestCase
 			'remote_administration' => [],
 			'categories' => [],
 			'screen_times' => [],
-			'multizone'  => []
+			'layout'  => []
 		];
 
 		$this->mockQueryBuilder();
@@ -197,7 +197,7 @@ class PlayerIndexRepositoryTest extends TestCase
 			'remote_administration' => 'a:0:{}',
 			'categories' => 'a:0:{}',
 			'screen_times' => 'a:0:{}',
-			'multizone'  => ''
+			'layout'  => ''
 		];
 
 		$expectedData = [
@@ -209,7 +209,7 @@ class PlayerIndexRepositoryTest extends TestCase
 			'remote_administration' => [],
 			'categories' => [],
 			'screen_times' => [],
-			'multizone'  => []
+			'layout'  => []
 		];
 
 		$this->mockQueryBuilder();
@@ -223,7 +223,7 @@ class PlayerIndexRepositoryTest extends TestCase
 	private function mockQueryBuilder(): void
 	{
 		$this->queryBuilderMock->method('select')->with(
-			'player_id, status, licence_id, player.UID, uuid, player.player_name,  commands, reports, location_data, location_longitude, location_latitude, player.playlist_id, player.last_update as updated_player, properties, playlist_mode, playlist_name, multizone,playlists.last_update as last_update_playlist, categories, remote_administration, screen_times'
+			'player_id, status, licence_id, player.UID, uuid, player.player_name,  commands, reports, location_data, location_longitude, location_latitude, player.playlist_id, player.last_update as updated_player, properties, playlist_mode, playlist_name, layout, playlists.last_update as last_update_playlist, categories, remote_administration, screen_times'
 		);
 		$this->queryBuilderMock->method('from')
 			->with('player');
