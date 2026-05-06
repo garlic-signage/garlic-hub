@@ -35,16 +35,27 @@ class LayoutPreparer extends AbstractPreparer implements PreparerInterface
 	 */
 	public function prepare(): array
 	{
-		$properties = $this->playerEntity->getProperties();
+		$layout = $this->playerEntity->getLayout();
+		if (array_key_exists('resolution', $layout))
+		{
+			$expanded = explode('x', $layout['resolution']);
+			$width  = $expanded[0];
+			$height = $expanded[1];
+		}
+		else
+		{
+			$width  = '1920';
+			$height = '1080';
+		}
 
-		$layout = $this->replaceRootLayout($properties['width'], $properties['height']);
+		$layout = $this->replaceRootLayout($width, $height);
 		if ($this->playerEntity->getPlaylistMode() == PlaylistMode::MULTIZONE->value)
 		{
 			$layout['regions'] = $this->replaceMultizoneRegions();
 		}
 		else
 		{
-			$layout['regions'][] = $this->replaceRegion('', '0', '0', $properties['width'], $properties['height'], '0');
+			$layout['regions'][] = $this->replaceRegion('', '0', '0', $width, $height, '0');
 		}
 		return [$layout];
 	}
@@ -52,7 +63,7 @@ class LayoutPreparer extends AbstractPreparer implements PreparerInterface
 	/**
 	 * @return array<string,mixed>
 	 */
-	private function replaceRootLayout(string|int $width, string|int $height): array
+	private function replaceRootLayout(string $width, string $height): array
 	{
 		return [
 			'ROOT_LAYOUT_WIDTH' => $width,
@@ -65,7 +76,7 @@ class LayoutPreparer extends AbstractPreparer implements PreparerInterface
 	 */
 	private function replaceMultizoneRegions(): array
 	{
-		$zones = $this->playerEntity->getZones();
+		$zones = $this->playerEntity->getLayout();
 
 		$regions = [];
 

@@ -55,7 +55,7 @@ class LayoutPreparerTest extends TestCase
 			->method('getPlaylistMode')
 			->willReturn(PlaylistMode::MULTIZONE->value);
 		$this->playerEntityMock
-			->method('getZones')
+			->method('getLayout')
 			->willReturn([
 				'export_unit' => 'percent',
 				'zones' => [
@@ -89,7 +89,7 @@ class LayoutPreparerTest extends TestCase
 			->willReturn(['width' => '1920', 'height' => '1080']);
 		$this->playerEntityMock->method('getPlaylistMode')
 			->willReturn(PlaylistMode::MULTIZONE->value);
-		$this->playerEntityMock->method('getZones')
+		$this->playerEntityMock->method('getLayout')
 			->willReturn([
 				'export_unit' => 'pixel',
 				'zones' => [

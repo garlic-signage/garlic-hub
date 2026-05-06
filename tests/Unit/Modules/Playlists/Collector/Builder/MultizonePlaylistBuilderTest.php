@@ -65,7 +65,7 @@ class MultizonePlaylistBuilderTest extends TestCase
 	{
 		$zones = ['zones' => [1 => ['zone_playlist_id' => 101]]];
 
-		$this->playerEntityMock->method('getZones')->willReturn($zones);
+		$this->playerEntityMock->method('getLayout')->willReturn($zones);
 
 		$this->buildHelperMock->method('collectItems')
 			->with(101)

@@ -71,7 +71,7 @@ class PlayerEntityTest extends TestCase
 			'licence_id' => 56789,
 			'playlist_name' => 'Example Playlist',
 			'playlist_mode' => 'loop',
-			'multizone' => ['zone1' => [], 'zone2' => []],
+			'layout' => ['zone1' => [], 'zone2' => []],
 			'location_data' => ['city' => 'New York'],
 			'location_longitude' => '-74.0060',
 			'location_latitude' => '40.7128',
@@ -108,7 +108,7 @@ class PlayerEntityTest extends TestCase
 		static::assertEmpty($this->playerEntity->getReports());
 		static::assertSame('1.0.0', $this->playerEntity->getFirmwareVersion());
 		static::assertSame('Player One', $this->playerEntity->getPlayerName());
-		static::assertSame(['zone1' => [], 'zone2' => []], $this->playerEntity->getZones());
+		static::assertSame(['zone1' => [], 'zone2' => []], $this->playerEntity->getLayout());
 		static::assertSame(['city' => 'New York'], $this->playerEntity->getLocationData());
 		static::assertSame('-74.0060', $this->playerEntity->getLocationLongitude());
 		static::assertSame('40.7128', $this->playerEntity->getLocationLatitude());
@@ -147,12 +147,12 @@ class PlayerEntityTest extends TestCase
 		static::assertSame(0, $this->playerEntity->getLicenceId());
 		static::assertSame('', $this->playerEntity->getPlaylistName());
 		static::assertSame('', $this->playerEntity->getPlaylistMode());
-		static::assertSame([], $this->playerEntity->getZones());
+		static::assertSame([], $this->playerEntity->getLayout());
 		static::assertSame([], $this->playerEntity->getLocationData());
 		static::assertSame('', $this->playerEntity->getLocationLongitude());
 		static::assertSame('', $this->playerEntity->getLocationLatitude());
 		static::assertSame([], $this->playerEntity->getCategories());
-		static::assertSame(['width' => 1920, 'height' => 1080], $this->playerEntity->getProperties());
+		static::assertSame([], $this->playerEntity->getProperties());
 		static::assertSame([], $this->playerEntity->getRemoteAdministration());
 		static::assertSame([], $this->playerEntity->getScreenTimes());
 	}

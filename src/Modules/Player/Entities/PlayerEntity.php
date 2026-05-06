@@ -85,7 +85,7 @@ class PlayerEntity
 	/**
 	 * @var array<string,mixed>
 	 */
-	private array $zones;
+	private array $layout;
 	/**
 	 * @var array<string,mixed>
 	 */
@@ -139,7 +139,7 @@ class PlayerEntity
 		$this->playerName           = $userAgentHandler->getName();
 		$this->playlistName         = $data['playlist_name'] ?? '';
 		$this->playlistMode         = $data['playlist_mode'] ?? '';
-		$this->zones                = $data['multizone'] ?? [];
+		$this->layout                = $data['layout'] ?? [];
 		$this->locationData         = $data['location_data'] ?? [];
 		$this->locationLongitude    = $data['location_longitude'] ?? '';
 		$this->locationLatitude     = $data['location_latitude'] ?? '';
@@ -147,10 +147,6 @@ class PlayerEntity
 		$this->properties           = $data['properties'] ?? [];
 		$this->remoteAdministration = $data['remote_administration'] ?? [];
 		$this->screenTimes          = $data['screen_times'] ?? [];
-
-		if (empty($this->properties))
-			$this->properties = ['width' => 1920, 'height' => 1080];
-
 	}
 
 	public function getPlayerId(): int
@@ -236,9 +232,9 @@ class PlayerEntity
 	/**
 	 * @return array<string,mixed>
 	 */
-	public function getZones(): array
+	public function getLayout(): array
 	{
-		return $this->zones;
+		return $this->layout;
 	}
 
 	/**
