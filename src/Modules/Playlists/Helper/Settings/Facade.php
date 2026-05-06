@@ -87,7 +87,7 @@ class Facade
 		{
 			$this->oldPlaylist = $this->playlistsService->loadPlaylistForEdit((int) $post['playlist_id']);
 			if ($this->oldPlaylist === [])
-				throw new ModuleException('palylists', 'No playlist found for editing.');
+				throw new ModuleException('playlists', 'No playlist found for editing.');
 
 			// @phpstan-ignore-next-line // stop phpstan bullshitting about a not empty array
 			$this->settingsFormBuilder->configEditParameter($this->oldPlaylist);
@@ -114,6 +114,14 @@ class Facade
 			$this->settingsParameters->getInputParametersKeys(),
 			$this->settingsParameters->getInputValuesArray()
 		);
+
+		$layout = $this->oldPlaylist['layout'];
+		if (array_key_exists('screen_width', $post) && array_key_exists('screen_height', $post))
+		{
+			$layout['resolution'] =   $post['screen_width'].'x'.$post['screen_height'];
+			$saveData['layout'] = serialize($layout);
+		}
+
 
 		$playlistId = (int) ($post['playlist_id'] ?? 0);
 		if ($playlistId > 0)

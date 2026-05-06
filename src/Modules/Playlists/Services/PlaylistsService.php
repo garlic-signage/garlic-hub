@@ -159,11 +159,11 @@ class PlaylistsService extends AbstractBaseService
 	{
 		try
 		{
-			/** @var array{UID: int, company_id: int, playlist_id: int, multizone:string, ...} $playlist */
+			/** @var array{UID: int, company_id: int, playlist_id: int, layout:string, ...} $playlist */
 			$playlist = $this->loadWithUserById($playlistId);
 
-			if ($playlist['multizone'] !== null)
-				return unserialize($playlist['multizone']);
+			if ($playlist['layout'] !== null)
+				return unserialize($playlist['layout']);
 
 			return [];
 		}
@@ -261,7 +261,7 @@ class PlaylistsService extends AbstractBaseService
 			$playlist = $this->loadWithUserById($playlistId);
 
 			if ($zones !== [])
-				$count = $this->playlistsRepository->update($playlist['playlist_id'], ['multizone' => serialize($zones)]);
+				$count = $this->playlistsRepository->update($playlist['playlist_id'], ['layout' => serialize($zones)]);
 
 			return $count;
 		}
@@ -280,7 +280,20 @@ class PlaylistsService extends AbstractBaseService
 	{
 		try
 		{
-			return $this->loadWithUserById($playlistId);
+			$playlist = $this->loadWithUserById($playlistId);
+			if ($playlist['layout'] !== null)
+			{
+				$layout = unserialize($playlist['layout']);
+				$exploded = explode('x', $layout['resolution']);
+				$playlist['screen_width'] = (int) $exploded[0];
+				$playlist['screen_height'] = (int) $exploded[1];
+				$playlist['layout'] = $layout;
+			}
+			else
+				$playlist['layout'] = [];
+
+			return $playlist;
+
 		}
 		catch(Throwable $e)
 		{
@@ -333,8 +346,8 @@ class PlaylistsService extends AbstractBaseService
 		if (isset($postData['time_limit']))
 			$saveData['time_limit'] = $postData['time_limit'];
 
-		if (isset($postData['multizone']))
-			$saveData['multizone'] = $postData['multizone'];
+		if (isset($postData['layout']))
+			$saveData['layout'] = $postData['layout'];
 
 		return $saveData;
 	}
