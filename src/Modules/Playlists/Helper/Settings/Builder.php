@@ -77,6 +77,10 @@ class Builder
 	public function configNewParameter(string $playlistMode): void
 	{
 		$this->parameters->addPlaylistMode();
+
+		if ($playlistMode === PlaylistMode::MASTER->value || $playlistMode === PlaylistMode::MULTIZONE->value)
+			$this->parameters->addResolution();
+
 		if (!$this->aclValidator->isSimpleAdmin($this->UID))
 			return;
 
@@ -96,6 +100,10 @@ class Builder
 	public function configEditParameter(array $playlist): void
 	{
 		$this->parameters->addPlaylistId();
+
+		if ($playlist['playlist_mode'] === PlaylistMode::MASTER->value || $playlist['playlist_mode'] === PlaylistMode::MULTIZONE->value)
+			$this->parameters->addResolution();
+
 		if (!$this->aclValidator->isAdmin($this->UID, $playlist))
 			return;
 
@@ -128,6 +136,11 @@ class Builder
 				$playlist['username'] ?? $this->username,
 				$this->UID
 			);
+		}
+		if ($playlist['playlist_mode'] === PlaylistMode::MASTER->value || $playlist['playlist_mode'] === PlaylistMode::MULTIZONE->value)
+		{
+			$form['screen_width'] = $this->formElementsCreator->createScreenWidthField( $playlist['screen_width'] ?? 1920);
+			$form['screen_height'] = $this->formElementsCreator->createScreenHeightField($playlist['screen_height'] ?? 1080);
 		}
 
 		if ($this->parameters->hasParameter(Parameters::PARAMETER_TIME_LIMIT))

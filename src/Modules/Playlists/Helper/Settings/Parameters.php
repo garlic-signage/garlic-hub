@@ -41,6 +41,8 @@ class Parameters extends BaseEditParameters
 	public const string PARAMETER_PLAYLIST_ID = 'playlist_id';
 	public const string PARAMETER_PLAYLIST_NAME = 'playlist_name';
 	public const string PARAMETER_PLAYLIST_MODE = 'playlist_mode';
+	public const string PARAMETER_SCREEN_WIDTH = 'screen_width';
+	public const string PARAMETER_SCREEN_HEIGHT = 'screen_height';
 	public const string PARAMETER_TIME_LIMIT = 'time_limit';
 
 	/**
@@ -55,6 +57,13 @@ class Parameters extends BaseEditParameters
 		parent::__construct('playlists', $sanitizer, $session);
 		$this->currentParameters = array_merge($this->defaultParameters, $this->moduleParameters);
 	}
+
+	public function addResolution(): void
+	{
+		$this->addParameter(self::PARAMETER_SCREEN_WIDTH, ScalarType::INT, 1920);
+		$this->addParameter(self::PARAMETER_SCREEN_HEIGHT, ScalarType::INT, 1080);
+	}
+
 
 	public function addPlaylistMode(): void
 	{

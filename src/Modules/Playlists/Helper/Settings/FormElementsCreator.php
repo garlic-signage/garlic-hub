@@ -80,6 +80,33 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 		]);
 	}
 
+	public function createScreenWidthField(int $value): FieldInterface
+	{
+		return $this->formBuilder->createField([
+			'type' => FieldType::NUMBER,
+			'id' => 'screen_width',
+			'name' => 'screen_width',
+			'title' => $this->translator->translate('screen_width', 'playlists'),
+			'label' => $this->translator->translate('screen_width', 'playlists'),
+			'value' => $value,
+			'min'   => 0
+		]);
+	}
+
+	public function createScreenHeightField(int $value): FieldInterface
+	{
+		return $this->formBuilder->createField([
+			'type' => FieldType::NUMBER,
+			'id' => 'screen_height',
+			'name' => 'screen_height',
+			'title' => $this->translator->translate('screen_height', 'playlists'),
+			'label' => $this->translator->translate('screen_height', 'playlists'),
+			'value' => $value,
+			'min'   => 0,
+		]);
+	}
+
+
 	/**
 	 * @throws CoreException
 	 * @throws PhpfastcacheSimpleCacheException
