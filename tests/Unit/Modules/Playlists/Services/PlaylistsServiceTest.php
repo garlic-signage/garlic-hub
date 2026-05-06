@@ -520,7 +520,7 @@ class PlaylistsServiceTest extends TestCase
 	{
 		$this->service->setUID(1);
 		$playlistId = 123;
-		$playlist = ['playlist_id' => $playlistId, 'multizone' => ''];
+		$playlist = ['playlist_id' => $playlistId, 'layout' => ''];
 
 		$this->playlistsRepositoryMock->expects($this->once())->method('findFirstWithUserName')
 			->with($playlistId)
@@ -540,7 +540,7 @@ class PlaylistsServiceTest extends TestCase
 	{
 		$this->service->setUID(1);
 		$playlistId = 123;
-		$playlist = ['playlist_id' => $playlistId, 'playlist_mode' => PlaylistMode::MULTIZONE->value, 'multizone' => []];
+		$playlist = ['playlist_id' => $playlistId, 'playlist_mode' => PlaylistMode::MULTIZONE->value, 'layout' => []];
 
 		$this->playlistsRepositoryMock->expects($this->once())->method('findFirstWithUserName')
 			->with($playlistId)
