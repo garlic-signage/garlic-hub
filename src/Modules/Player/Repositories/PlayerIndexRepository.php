@@ -104,7 +104,7 @@ class PlayerIndexRepository extends SqlBase
 
 	private function buildQueryForIndex(QueryBuilder $queryBuilder): void
 	{
-		$queryBuilder->select('player_id, status, licence_id, '.$this->table.'.UID, uuid, '.$this->table.'.player_name,  commands, reports, location_data, location_longitude, location_latitude, '.$this->table.'.playlist_id, '.$this->table.'.last_update as updated_player, properties, playlist_mode, playlist_name, multizone,playlists.last_update as last_update_playlist, categories, remote_administration, screen_times');
+		$queryBuilder->select('player_id, status, licence_id, '.$this->table.'.UID, uuid, '.$this->table.'.player_name,  commands, reports, location_data, location_longitude, location_latitude, '.$this->table.'.playlist_id, '.$this->table.'.last_update as updated_player, properties, playlist_mode, playlist_name, layout, playlists.last_update as last_update_playlist, categories, remote_administration, screen_times');
 		$queryBuilder->from($this->table);
 		$queryBuilder->leftJoin($this->table, 'playlists', '', 'playlists.playlist_id = ' . $this->table . '.playlist_id');
 	}
@@ -121,7 +121,7 @@ class PlayerIndexRepository extends SqlBase
 		$result['properties']            = $this->secureUnserialize($result['properties']);
 		$result['remote_administration'] = $this->secureUnserialize($result['remote_administration']);
 		$result['categories']            = $this->secureUnserialize($result['categories']);
-		$result['multizone']             = $this->secureUnserialize($result['multizone']);
+		$result['layout']             	 = $this->secureUnserialize($result['layout']);
 		$result['screen_times']          = $this->secureUnserialize($result['screen_times']);
 
 		return $result;
