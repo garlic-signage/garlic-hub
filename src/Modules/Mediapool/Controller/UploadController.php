@@ -48,10 +48,12 @@ class UploadController extends AbstractAsyncController
 	public function searchStockImages(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
 		/** @var array<string,mixed> $bodyParams */
-		$bodyParams = $request->getParsedBody();
+		$bodyParams   = $request->getParsedBody();
+		$allowedHosts = ['api.unsplash.com', 'api.pexels.com', 'pixabay.com'];
+		$host         = parse_url($bodyParams['api_url'], PHP_URL_HOST);
 
-		if (!isset($bodyParams['api_url']))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'api_url missing']);
+		if (!in_array($host, $allowedHosts))
+			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Host not allowed']);
 
 		$headers = $bodyParams['headers'] ?? [];
 		$body    = $this->uploadService->requestApi($bodyParams['api_url'], $headers);
