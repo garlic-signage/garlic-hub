@@ -39,6 +39,7 @@ use App\Modules\Mediapool\Services\NodesService;
 use App\Modules\Mediapool\Services\UploadService;
 use App\Modules\Mediapool\Utils\ImagickFactory;
 use App\Modules\Mediapool\Utils\MediaHandlerFactory;
+use App\Modules\Mediapool\Utils\SsrfValidator;
 use App\Modules\Mediapool\Utils\ZipFilesystemFactory;
 use GuzzleHttp\Client;
 use Psr\Container\ContainerInterface;
@@ -85,6 +86,10 @@ $dependencies[MediaHandlerFactory::class] = DI\factory(function (ContainerInterf
 		)
 	);
 });
+$dependencies[SsrfValidator::class] = DI\factory(function (ContainerInterface $container) {
+	return new SsrfValidator();
+});
+
 $dependencies[UploadService::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new UploadService(
@@ -93,6 +98,7 @@ $dependencies[UploadService::class] = DI\factory(function (ContainerInterface $c
 		new Client(),
 		new FilesRepository($container->get('SqlConnection')),
 		$container->get(MimeTypeService::class),
+		$container->get(SsrfValidator::class),
 		$container->get('ModuleLogger')
 	);
 });

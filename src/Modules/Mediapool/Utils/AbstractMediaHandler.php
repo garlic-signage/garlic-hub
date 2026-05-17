@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace App\Modules\Mediapool\Utils;
 
 use App\Framework\Core\Config\Config;
-use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -63,7 +62,6 @@ abstract class AbstractMediaHandler
 	/**
 	 * @param Config $config
 	 * @param Filesystem $filesystem
-	 * @throws CoreException
 	 */
 	public function __construct(Config $config, Filesystem $filesystem)
 	{
@@ -157,9 +155,10 @@ abstract class AbstractMediaHandler
 	}
 
 	/**
+	 * @param array{curl: array<int, mixed>} $curlOpts
 	 * @throws GuzzleException
 	 */
-	public function uploadFromExternal(Client $client, string $fileURI): string
+	public function uploadFromExternal(Client $client, string $fileURI, array $curlOpts): string
 	{
 		/** @var array{path: string} $parsedUrl */
 		$parsedUrl  = parse_url($fileURI);
@@ -168,7 +167,7 @@ abstract class AbstractMediaHandler
 		$pathInfo   = pathinfo($parsedUrl['path']);
 		$targetPath = strtolower('/'. $this->originalPath .'/'. $pathInfo['basename']);
 
-		$client->request('GET', $fileURI, ['sink' => $this->getAbsolutePath($targetPath)]);
+		$client->request('GET', $fileURI, array_merge(['sink' => $this->getAbsolutePath($targetPath)], $curlOpts));
 		return $targetPath;
 	}
 
@@ -201,6 +200,10 @@ abstract class AbstractMediaHandler
 		return $fileInfo['dirname']. '/'.$filehash.'.'.$ext;
 	}
 
+	/**
+	 * @throws ModuleException
+	 * @throws FilesystemException
+	 */
 	public function writeBinaryString(string $filePath, string $binaryContent): void
 	{
 		if ($binaryContent === '')

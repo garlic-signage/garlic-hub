@@ -27,6 +27,7 @@ use App\Framework\Media\MimeTypeService;
 use App\Modules\Mediapool\Repositories\FilesRepository;
 use App\Modules\Mediapool\Utils\AbstractMediaHandler;
 use App\Modules\Mediapool\Utils\MediaHandlerFactory;
+use App\Modules\Mediapool\Utils\SsrfValidator;
 use Doctrine\DBAL\Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -50,6 +51,7 @@ readonly class UploadService
 		private Client              $client,
 		private FilesRepository     $mediaRepository,
 		private MimeTypeService     $mimeTypeDetector,
+		private SsrfValidator       $ssrfValidator,
 		private LoggerInterface     $logger)
 	{
 	}
@@ -121,8 +123,11 @@ readonly class UploadService
 	{
 		try
 		{
+
 			$this->checkNodeUploadable($nodeId, $UID);
-			$response      = $this->client->head($externalLink);
+			$resolved      = $this->ssrfValidator->validateAndResolveUrl($externalLink);
+			$curlOpts      = ['curl' => [CURLOPT_RESOLVE => ["{$resolved['host']}:{$resolved['port']}:{$resolved['ip']}"]]];
+			$response      = $this->client->head($externalLink, $curlOpts);
 			$preMimeType   = $response->getHeaderLine('Content-Type');
 			// workaround if no content-type sent
 			if ($preMimeType === '' && (str_contains($externalLink, 'mp4') ||
@@ -132,7 +137,7 @@ readonly class UploadService
 			$contentLength = $response->getHeaderLine('Content-Length');
 			$mediaHandler  = $this->mediaHandlerFactory->createMediaHandler($preMimeType);
 			$mediaHandler->checkFileBeforeUpload((int) $contentLength);
-			$uploadPath    = $mediaHandler->uploadFromExternal($this->client, $externalLink);
+			$uploadPath    = $mediaHandler->uploadFromExternal($this->client, $externalLink, $curlOpts);
 
 			$ret = $this->insertDataset($mediaHandler, $uploadPath, $nodeId, $UID, $extMetadata);
 		}
