@@ -39,7 +39,7 @@ set_error_handler(/** @throws ErrorException */ function ($errNumber, $errorStri
  */
 $app                 = $container->get(App::class);
 $logger              = $container->get('AppLogger');
-$errorMiddleware     = $app->addErrorMiddleware((bool) $_ENV['APP_DEBUG'], true, true, $container->get('AppLogger'));
+$errorMiddleware     = $app->addErrorMiddleware($_ENV['APP_DEBUG']===true, true, true, $container->get('AppLogger'));
 $defaultErrorHandler = $errorMiddleware->getDefaultErrorHandler();
 
 $myErrorHandler = function (
