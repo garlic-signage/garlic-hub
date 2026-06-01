@@ -19,6 +19,7 @@
         padding: 1em;
         box-sizing: border-box;
         overflow-y: auto;
+        max-height: 73.8vh;
     }
             .media-item
             {
