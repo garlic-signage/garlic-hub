@@ -78,10 +78,19 @@ readonly class TemplatesController
 		return $this->responseHandler->jsonSuccess($response, ['content' => $this->orchestrator->getContent()]);
 	}
 
-	public function find(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+	// find all templates for the User has access to
+	public function find(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		// find all templates for the User has access to
-		$this->parameters->setUserInputs($args);
+		$params = $request->getQueryParams();
+		$elements = (int) filter_var(
+			// use 0 as default if elements_per_page is missing
+			$params['elements_per_page'] ?? 0,
+			FILTER_SANITIZE_NUMBER_INT,
+			array("options" => array("min_range" => 0))
+		);
+
+		// Passing 0 to elements_per_page means return all elements (no pagination)
+		$this->parameters->setUserInputs(['elements_per_page' => $elements]);
 		$this->parameters->parseInputAllParameters();
 
 		$this->templatesDatatableService->loadDatatable();
