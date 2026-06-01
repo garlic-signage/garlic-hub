@@ -189,7 +189,17 @@ class PlaylistsController extends AbstractAsyncController
 	 */
 	public function findByName(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
-		$this->parameters->setUserInputs($args);
+		$params = $request->getQueryParams();
+		$elements = (int) filter_var(
+			// use 0 as default if elements_per_page is missing
+			$params['elements_per_page'] ?? 0,
+			FILTER_SANITIZE_NUMBER_INT,
+			array("options" => array("min_range" => 0))
+		);
+
+		$this->parameters->setUserInputs(
+			array_merge($args, ['elements_per_page' => $elements])
+		);
 		$this->parameters->parseInputAllParameters();
 
 		$this->session = $request->getAttribute('session');
