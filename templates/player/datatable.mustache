@@ -1,7 +1,6 @@
 {{> datatable}}
 
 <template id="playerSettingsContextMenuTemplate">
-
 	{{#player_settings_contextmenu}}
 	<ul class="context-menu">
 		{{#create_player_settings_contextmenu}}
@@ -15,3 +14,14 @@
 	</ul>
 	{{/player_settings_contextmenu}}
 </template>
+
+{{#player_addtional_translations}}
+<script>
+    let lang = {
+		"assign_playlist": "{{{LANG_ASSIGN_PLAYLIST}}}",
+	    "unassign_playlist": "{{{LANG_UNASSIGN_PLAYLIST}}}",
+	    "goto_playlist": "{{{LANG_GOTO_PLAYLIST}}}",
+	    "push_playlist": "{{{LANG_PUSH_PLAYLIST}}}"
+	};
+</script>
+{{/player_addtional_translations}}

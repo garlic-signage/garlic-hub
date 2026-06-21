@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", function()
 	const removeHandler = new RemoveHandler(playerService);
 	removeHandler.init(document.getElementsByClassName("remove-playlist"));
     const playlistAssignActions =  new PlaylistAssignActions(autocompleteFactory, pushHandler, removeHandler, playerService);
-	playlistAssignActions.init();
+	playlistAssignActions.init(lang);
 
 
 });

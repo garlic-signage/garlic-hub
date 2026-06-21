@@ -34,7 +34,7 @@ export class PlaylistAssignActions
         this.#playerService       = PlayerService;
     }
 
-   init()
+   init(lang)
    {
         for (let i = 0; i < this.#selectPlaylist.length; i++)
 		{
@@ -50,7 +50,7 @@ export class PlaylistAssignActions
 				let editPlaylist = parentWithDataId.querySelector(".playlist_id");
 
 				this.#playerNameAutocomplete = this.#autocompleteFactory.create("playlist_name", "/async/playlists/find/for-player/");
-				this.#playerNameAutocomplete.initWithCreateFields(editPlaylist);
+				this.#playerNameAutocomplete.initWithCreateFields(editPlaylist, 'playlist_id');
 				this.#playerNameAutocomplete.getHiddenIdElement().addEventListener("change", async (event) => {
 					const playlist_id = event.target.value;
 					const result = await this.#playerService.replacePlaylist(playerId, event.target.value);
@@ -62,8 +62,9 @@ export class PlaylistAssignActions
 						if (removePlaylist === null) // new playlist
 						{
 							const li1 = document.createElement("li");
-							removePlaylist = document.createElement("a");
+							removePlaylist = document.createElement("button");
 							removePlaylist.href = "#";
+							removePlaylist.title = lang.unassign_playlist;
 							removePlaylist.dataset.action = "playlist";
 							removePlaylist.className = "bi bi-x-circle remove-playlist";
 							li1.appendChild(removePlaylist);
@@ -78,8 +79,9 @@ export class PlaylistAssignActions
 							if (pushPlaylist === null)
 							{
 								const li2 = document.createElement("li");
-								pushPlaylist = document.createElement("a");
+								pushPlaylist = document.createElement("button");
 								pushPlaylist.href = "#";
+								pushPlaylist.title = lang.push_playlist;
 								pushPlaylist.dataset.action   = "push";
 								pushPlaylist.className = "bi bi-arrow-left-circle-fill push-playlist";
 								li2.appendChild(pushPlaylist);
@@ -93,8 +95,9 @@ export class PlaylistAssignActions
 						if (linkPlaylist === null)
 						{
 							const li3 = document.createElement("li");
-							linkPlaylist = document.createElement("a");
+							linkPlaylist = document.createElement("button");
 							linkPlaylist.dataset.action   = "playlist";
+							linkPlaylist.title = lang.goto_playlist;
 							linkPlaylist.className = "bi bi-music-note-list playlist-link";
 							li3.appendChild(linkPlaylist);
 							actions.appendChild(li3);
