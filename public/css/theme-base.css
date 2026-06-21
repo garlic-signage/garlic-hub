@@ -89,7 +89,7 @@ form {margin: 0 auto;}
 fieldset{border-radius:var(--gh-border-radius); background-color: var(--gh-primary-bgcolor); padding: 0.5rem 1rem 1rem 1rem;}
 fieldset legend {padding: 0 0.5em; font-family: OpenSans-Bold, sans-serif;}
 form label {display: flex; flex-direction:column; gap:0.25em;margin: 0 0 0.25rem 0;}
-input:not([type='checkbox'], [type='radio']), textarea, select, button, a.button
+input:not([type='checkbox'], [type='radio']), textarea, select, button, a.button, .add-unit
 {
     border-radius: var(--gh-border-radius);
     border: 1px solid #aaa;
@@ -106,8 +106,8 @@ button:hover, a.button:hover, .unit-action:hover{color:#000;border: 1px solid #0
 .naked-button:hover{border:none;}
 .trumbowyg-button-pane button{min-width:0;}
 
-button.add-unit{background-color: var(--gh-link-text-color); color: #fff;}
-button.add-unit i{color: #fff; margin-right: .5rem;}
+.add-unit{background-color: var(--gh-link-text-color); color: #fff;display: block;}
+.add-unit i{color: #fff; margin-right: .5rem;}
 
 .unit-action {
     background: none;
