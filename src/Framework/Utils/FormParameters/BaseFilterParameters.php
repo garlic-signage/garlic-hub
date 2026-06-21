@@ -93,9 +93,16 @@ abstract class BaseFilterParameters extends BaseParameters implements BaseFilter
 	public function parseInputFilterAllUsers(): static
 	{
 		if ($this->storedParametersInSessionExists())
-			$this->currentParameters = $this->getStoredSearchParamsFromSession();
+		{
+			$storedParameters        = $this->getStoredSearchParamsFromSession();
+			$this->currentParameters = $storedParameters;
+		}
 
 		$this->parseInputAllParameters();
+		if ($this->hasFilterParametersChanged($storedParameters))
+		{
+			$this->setValueOfParameter(self::PARAMETER_ELEMENTS_PAGE, 1);
+		}
 
 		$this->storeSearchParamsToSession($this->currentParameters);
 
@@ -142,6 +149,43 @@ abstract class BaseFilterParameters extends BaseParameters implements BaseFilter
 			return [];
 
 		return $ret;
+	}
+
+	/**
+	 * @param array<string, array{scalar_type: ScalarType, default_value: mixed, parsed: bool, value?:mixed}> $storedParameters
+	 */
+	protected function hasFilterParametersChanged(array $storedParameters): bool
+	{
+		if (empty($storedParameters))
+		{
+			return false;
+		}
+
+		// compare except of pagination and sort
+		foreach ($this->currentParameters as $key => $param)
+		{
+			// Ignore pagination and sort
+			if (in_array($key, [
+				self::PARAMETER_ELEMENTS_PAGE,
+				self::PARAMETER_ELEMENTS_PER_PAGE,
+				self::PARAMETER_SORT_COLUMN,
+				self::PARAMETER_SORT_ORDER
+			], true))
+			{
+				continue;
+			}
+
+			// if something changed
+			if (!isset($storedParameters[$key]) ||
+				!isset($param['value']) ||
+				!isset($storedParameters[$key]['value']) ||
+				$storedParameters[$key]['value'] !== $param['value'])
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 }
