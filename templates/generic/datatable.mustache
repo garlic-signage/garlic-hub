@@ -20,11 +20,6 @@
 			<div>
 				<button type="submit" id="submit_search" value="{{{LANG_ELEMENTS_FILTER}}}">{{{LANG_ELEMENTS_FILTER}}}</button>
 			</div>
-			{{#has_add}}
-				<div>
-				<a href="{{{ELEMENTS_ADD_LINK}}}" title="{{{LANG_ELEMENTS_ADD_LINK}}}" class="bi bi-{{ADD_BI_ICON}}" id="createUnitAction"></a>
-			</div>
-			{{/has_add}}
 			<div>
 				{{{LANG_COUNT_SEARCH_RESULTS}}}
 			</div>
@@ -47,10 +42,15 @@
 			</div>
 			<div class="export_csv"></div>
 			{{#elements_export_results}}
-				<div>
+			<div>
 				<a href="{{{ELEMENTS_EXPORT_RESULTS_LINK}}}" class="button" target="blank">{{{LANG_ELEMENTS_EXPORT_RESULTS}}}</a>
 			</div>
 			{{/elements_export_results}}
+			{{#has_add}}
+			<div>
+				<button href="{{{ELEMENTS_ADD_LINK}}}" title="{{{LANG_ELEMENTS_ADD_LINK}}}" class="add-unit" id="createUnitAction"><i class="bi bi-{{ADD_BI_ICON}}"></i> {{{LANG_ELEMENTS_ADD_LINK}}}</button>
+			</div>
+			{{/has_add}}
 		</div>
 	</form>
 	<ul class="results-listing main-element-group">
