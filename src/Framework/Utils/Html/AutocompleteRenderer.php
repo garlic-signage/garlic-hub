@@ -50,8 +50,8 @@ class AutocompleteRenderer extends AbstractInputFieldRenderer implements FieldRe
 		if (!($this->field instanceof AutocompleteField))
 			return '';
 
-		return '<input id="'.$inputId.'" list="'.$datalistId.'" value="'.$this->field->getDataLabel().'" data-id="'.$this->field->getValue().'" aria-describedby="error_'.$this->field->getId().'">
-		<input type="hidden" id="'.$this->field->getId().'" name="'.$this->field->getId().'" value="'.$this->field->getValue().'" autocomplete="off">
+		return '<input id="'.$inputId.'" list="'.$datalistId.'" value="'.$this->field->getDataLabel().'" data-id="'.$this->field->getValue().'" aria-describedby="error_'.$this->field->getId().'" class="autocomplete" autocomplete="off">
+		<input type="hidden" id="'.$this->field->getId().'" name="'.$this->field->getId().'" value="'.$this->field->getValue().'">
 		<datalist id = "'.$datalistId.'" ></datalist>';
 	}
 }

@@ -63,9 +63,9 @@ export class Autocomplete
 			this.#addListener();
 	}
 
-	initWithCreateFields(parent)
+	initWithCreateFields(parent, wrapClassName)
 	{
-		this.#autocompleteView.initCreate(parent, this.#fieldName);
+		this.#autocompleteView.initCreate(parent, this.#fieldName, wrapClassName);
 		this.#addListener();
 	}
 

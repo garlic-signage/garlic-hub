@@ -56,12 +56,14 @@ export class AutocompleteView
 			this.#exists = true;
     }
 
-    initCreate(parent, fieldName)
+    initCreate(parent, fieldName, wrapClassName)
     {
         this.#oldParent = parent;
         this.#li = document.createElement("li");
-        this.#li.className            = "playlist_id";
+        this.#li.className      = wrapClassName;
         this.#inputElement      = document.createElement("input");
+		this.#inputElement.className = "autocomplete";
+		this.#inputElement.setAttribute("autocomplete", "off");
         this.#inputElement.id   = fieldName  + "_search";
         this.#inputElement.type = "text";
         this.#inputElement.setAttribute('list', fieldName + "_suggestions");
