@@ -115,11 +115,11 @@ class DatatablePreparer extends AbstractDatatablePreparer
 				if ($template['UID'] == $currentUID || $this->aclValidator->isTemplateEditable($currentUID, $template))
 				{
 					$list['has_action'] = [
-						$this->prepareService->getBodyPreparer()->formatAction(
+						$this->prepareService->getBodyPreparer()->formatActionLink(
 							$this->translator->translate('composer', 'templates'),
 							'templates/composer/'.$template['template_id'],
 							'composer', (string) $template['template_id'], 'columns'),
-						$this->prepareService->getBodyPreparer()->formatAction(
+						$this->prepareService->getBodyPreparer()->formatActionLink(
 							$this->translator->translate('settings', 'main'),
 							'templates/settings/'.$template['template_id'],
 							'edit', (string) $template['template_id'], 'gear')

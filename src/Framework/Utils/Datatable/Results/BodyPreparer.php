@@ -113,16 +113,30 @@ class BodyPreparer
 	/**
 	 * @return array{LANG_ACTION: string, LINK_ACTION: string, ACTION_ID: string|int, ACTION_NAME: string}
 	 */
-	public function formatAction(string $lang, string $link, string $name, string|int $id, string $cssClass): array
+	public function formatAction(string $lang, string $name, string|int $id, string $cssClass): array
 	{
 		return 	[
 				'LANG_ACTION'       => $lang,
-				'LINK_ACTION'       => $link,
 				'ACTION_ID'         => $id,
 				'ACTION_NAME'       => $name,
 				'ACTION_ICON_CLASS' => $cssClass
 			];
 	}
+
+	/**
+	 * @return array{LANG_ACTION: string, LINK_ACTION: string, ACTION_ID: string|int, ACTION_NAME: string}
+	 */
+	public function formatActionLink(string $lang, string $link, string $name, string|int $id, string $cssClass): array
+	{
+		return 	[
+			'LANG_LINK_ACTION'       => $lang,
+			'LINK_ACTION'       => $link,
+			'LINK_ACTION_ID'         => $id,
+			'LINK_ACTION_NAME'       => $name,
+			'LINK_ACTION_ICON_CLASS' => $cssClass
+		];
+	}
+
 
 	/**
 	 * @return array{LANG_DELETE_ACTION: string, DELETE_ID: string, LANG_CONFIRM_DELETE: string, ELEMENT_DELETE_CLASS: string}

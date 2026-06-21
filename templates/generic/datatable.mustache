@@ -121,15 +121,26 @@
                     <ul>
                         {{#has_action}}
                         <li>
-                            <a href="{{{LINK_ACTION}}}" title="{{{LANG_ACTION}}}"
+                            <button title="{{{LANG_ACTION}}}"
 							   data-action="{{{ACTION_NAME}}}" data-action-id="{{{ACTION_ID}}}"
 							   style="{{{ACTION_INLINE_CSS}}}"
-							   class="bi bi-{{{ACTION_ICON_CLASS}}} {{{ACTION_CLASS}}}"></a>
+							   class="unit-action bi bi-{{{ACTION_ICON_CLASS}}} {{{ACTION_CLASS}}}"></button>
                         </li>
-						{{/has_action}}
+                        {{/has_action}}
+                        {{#has_action_link}}
+                        <li>
+                            <a href="{{{LINK_ACTION}}}" title="{{{LANG_LINK_ACTION}}}"
+                               data-action="{{{LINK_ACTION_NAME}}}" data-action-id="{{{ACTION_ID}}}"
+                               style="{{{LINK_ACTION_INLINE_CSS}}}"
+                               class="unit-action bi bi-{{{LINK_ACTION_ICON_CLASS}}} {{{LINK_ACTION_CLASS}}}"></a>
+                        </li>
+						{{/has_action_link}}
 						{{#has_delete}}
                         <li>
-                            <a data-delete-id="{{{DELETE_ID}}}" data-confirm="{{{LANG_CONFIRM_DELETE}}}" title="{{{LANG_DELETE}}}" class="bi bi-trash {{{ELEMENT_DELETE_CLASS}}}">&nbsp;</a>
+                            <button data-delete-id="{{{DELETE_ID}}}"
+                                    data-confirm="{{{LANG_CONFIRM_DELETE}}}"
+                                    title="{{{LANG_DELETE}}}"
+                                    class="unit-action bi bi-trash {{{ELEMENT_DELETE_CLASS}}}">&nbsp;</button>
                         </li>
 						{{/has_delete}}
                     </ul>

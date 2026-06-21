@@ -103,13 +103,13 @@ class DatatablePreparer extends AbstractDatatablePreparer
 				if (
 					$user['UID'] == $currentUID ||	$this->aclValidator->isSimpleAdmin($currentUID))
 				{
-					$list['has_action'] = [
+					$list['has_action_link'] = [
 
 						[
-							'LANG_ACTION' => $this->translator->translate('edit_settings', 'users'),
+							'LANG_LINK_ACTION' => $this->translator->translate('edit_settings', 'users'),
 							'LINK_ACTION' => 'users/edit/' .  $user['UID'],
-							'ACTION_NAME' => 'edit',
-							'ACTION_ICON_CLASS' => 'pencil'
+							'LINK_ACTION_NAME' => 'edit',
+							'LINK_ACTION_ICON_CLASS' => 'pencil'
 						]
 					];
 					if ($this->aclValidator->isModuleAdmin($currentUID) && $user['status'] == 0)
