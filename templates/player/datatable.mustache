@@ -3,11 +3,18 @@
 <template id="playerSettingsContextMenuTemplate">
 	{{#player_settings_contextmenu}}
 	<ul class="context-menu">
-		{{#create_player_settings_contextmenu}}
-		<li class="{{{PLAYER_SETTING}}}">
-			<a href="/player/{{{PLAYER_SETTING}}}/">{{{LANG_PLAYER_SETTING}}}</a>
+		<li class="assign-playlist">
+			{{{LANG_ASSIGN_PLAYLIST}}}
 		</li>
-		{{/create_player_settings_contextmenu}}
+		<li class="unassign-playlist">
+			{{{LANG_UNASSIGN_PLAYLIST}}}
+		</li>
+		<li class="push-playlist">
+			{{{LANG_PUSH_PLAYLIST}}}
+		</li>
+		<li class="goto-playlist">
+			{{{LANG_GOTO_PLAYLIST}}}
+		</li>
 		<li class="delete" data-confirm="{{{LANG_PLAYER_DELETE_CONFIRM}}}">
 			{{{LANG_PLAYER_DELETE}}}
 		</li>

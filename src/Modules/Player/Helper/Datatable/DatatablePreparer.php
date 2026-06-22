@@ -124,7 +124,12 @@ class DatatablePreparer extends AbstractDatatablePreparer
 							$resultElements['is_text'] = '';
 						break;
 					case 'player_name':
-						$resultElements['is_text'] = $this->prepareService->getBodyPreparer()->formatText('<span>'.$player[$innerKey].'</span>');
+						$resultElements['is_link'] = $this->prepareService->getBodyPreparer()->formatLink(
+							$player[$innerKey],
+							$this->translator->translate('api_connectivity', 'player'),
+							'/player/connectivity/'.$player['player_id'],
+							'player_name_'.$player['player_id'],
+						);
 						break;
 					default:
 						$resultElements['is_text'] = $this->prepareService->getBodyPreparer()->formatText($player[$innerKey]);
@@ -134,42 +139,38 @@ class DatatablePreparer extends AbstractDatatablePreparer
 			}
 			if ($player['status'] == PlayerStatus::RELEASED->value)
 			{
-				$translation = $this->translator->translate('select_playlist', 'player');
-				$list['has_action'][] = $this->prepareService->getBodyPreparer()->formatAction(
-					$translation,'edit', $player['playlist_id'], 'pencil select-playlist'
-				);
+				/*				$translation = $this->translator->translate('select_playlist', 'player');
+								$list['has_action'][] = $this->prepareService->getBodyPreparer()->formatAction(
+									$translation,'edit', $player['playlist_id'], 'pencil select-playlist'
+								);
 
-				if ($player['playlist_id'] > 0)
-				{
-					$translation = $this->translator->translate('remove_playlist', 'player');
+								if ($player['playlist_id'] > 0)
+								{
+									$translation = $this->translator->translate('remove_playlist', 'player');
 
-					$list['has_action'][] = $this->prepareService->getBodyPreparer()->formatAction(
-						$translation, 'playlist', $player['playlist_id'], 'x-lg remove-playlist'
-					);
-					if ($player['is_intranet'] > 0)
-					{
-						$translation = $this->translator->translate('push_playlist', 'player');
-						$list['has_action'][] = $this->prepareService->getBodyPreparer()->formatAction(
-							$translation, 'push', $player['player_id'], 'arrow-left-circle-fill push-playlist'
-						);
-					}
+									$list['has_action'][] = $this->prepareService->getBodyPreparer()->formatAction(
+										$translation, 'playlist', $player['playlist_id'], 'x-lg remove-playlist'
+									);
+									if ($player['is_intranet'] > 0)
+									{
+										$translation = $this->translator->translate('push_playlist', 'player');
+										$list['has_action'][] = $this->prepareService->getBodyPreparer()->formatAction(
+											$translation, 'push', $player['player_id'], 'arrow-left-circle-fill push-playlist'
+										);
+									}
 
-					$translation = $this->translator->translate('goto_playlist', 'player');
-					$link = '/playlists/compose/' . $player['playlist_id'];
+									$translation = $this->translator->translate('goto_playlist', 'player');
+									$link = '/playlists/compose/' . $player['playlist_id'];
 
-					$list['has_action_link'][] = $this->prepareService->getBodyPreparer()->formatActionLink(
-						$translation, $link, 'playlist', $player['playlist_id'], 'link playlist-link'
-					);
-				}
+									$list['has_action_link'][] = $this->prepareService->getBodyPreparer()->formatActionLink(
+										$translation, $link, 'playlist', $player['playlist_id'], 'link playlist-link'
+									);
+								}
+				*/
 			}
-			$resultElements['is_button'] = $this->prepareService->getBodyPreparer()->formatButton(
-				'',
-				$this->translator->translate('player_settings_menu', 'player'),
-				(string) $player['player_id'],
-				'player-contextmenu bi bi-three-dots',
-			);
+
 			$list['has_action'][] = $this->prepareService->getBodyPreparer()->formatAction(
-				$this->translator->translate('player_settings_menu', 'player'),
+				$this->translator->translate('player_actions', 'player'),
 				'player-contextmenu',
 				(string) $player['player_id'],
 				'three-dots player-contextmenu',
@@ -202,22 +203,14 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	 */
 	public function formatPlayerContextMenu(): array
 	{
-		$list = $this->translator->translateArrayForOptions('player_settings_selects', 'player');
-		$create = [];
-
-		foreach ($list as $key => $value)
-		{
-			$create[] = [
-				'PLAYER_SETTING' => $key,
-				'LANG_PLAYER_SETTING' => $value
-			];
-		}
-
-		$ret = ['create_player_settings_contextmenu' => $create];
-		$ret['LANG_PLAYER_DELETE'] = $this->translator->translate('delete', 'main');
-		$ret['LANG_PLAYER_DELETE_CONFIRM'] = $this->translator->translate('delete_confirm', 'player');
-
-		return $ret;
+		return [
+			'LANG_ASSIGN_PLAYLIST' => $this->translator->translate('select_playlist', 'player'),
+			'LANG_UNASSIGN_PLAYLIST' => $this->translator->translate('remove_playlist', 'player'),
+			'LANG_GOTO_PLAYLIST' => $this->translator->translate('goto_playlist', 'player'),
+			'LANG_PUSH_PLAYLIST' => $this->translator->translate('push_playlist', 'player'),
+			'LANG_PLAYER_DELETE' => $this->translator->translate('delete', 'main'),
+			'LANG_PLAYER_DELETE_CONFIRM' => $this->translator->translate('delete_confirm', 'player')
+		];
 	}
 
 	/**
