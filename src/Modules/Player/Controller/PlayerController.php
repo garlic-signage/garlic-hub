@@ -71,10 +71,11 @@ class PlayerController
 
 		if ((int) $this->playerData['status'] >= PlayerStatus::RELEASED->value && (int) $this->playerData['licence_id'] > 0)
 		{
-			$responseData['can_edit']    = true;
-			$responseData['can_delete']  = true;
+			$responseData['can_edit']      = true;
+			$responseData['can_delete']    = true;
 			$responseData['has_playlist']  = (int) $this->playerData['is_intranet'] > 0;
-			$responseData['is_intranet'] = (int) $this->playerData['is_intranet'] === 1;
+			$responseData['playlist_id']   = $this->playerData['playlist_id'];
+			$responseData['is_intranet']   = (int) $this->playerData['is_intranet'] === 1;
 		}
 
 		return $this->responseHandler->jsonSuccess($response, $responseData);
