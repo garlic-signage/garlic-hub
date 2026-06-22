@@ -27,6 +27,7 @@ use App\Framework\Core\Session;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Utils\FormParameters\BaseFilterParameters;
 use App\Modules\Playlists\Helper\Datatable\Parameters;
 use App\Modules\Playlists\Services\PlaylistsDatatableService;
 use App\Modules\Playlists\Services\PlaylistsService;
@@ -189,16 +190,12 @@ class PlaylistsController extends AbstractAsyncController
 	 */
 	public function findByName(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
-		$params = $request->getQueryParams();
-		$elements = (int) filter_var(
-			// use 0 as default if elements_per_page is missing
-			$params['elements_per_page'] ?? 0,
-			FILTER_SANITIZE_NUMBER_INT,
-			array("options" => array("min_range" => 0))
-		);
-
 		$this->parameters->setUserInputs(
-			array_merge($args, ['elements_per_page' => $elements])
+			array_merge($args, [
+				BaseFilterParameters::PARAMETER_ELEMENTS_PER_PAGE => 10,
+				BaseFilterParameters::PARAMETER_SORT_COLUMN => 'playlist_id',
+				BaseFilterParameters::PARAMETER_SORT_ORDER => 'DESC',
+			])
 		);
 		$this->parameters->parseInputAllParameters();
 
