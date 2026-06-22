@@ -35,7 +35,7 @@ export class PlayerSettingsContextMenu
 		for (let i = 0; i < openActions.length; i++) {
 			openActions[i].addEventListener('click', async (event) => {
 				event.preventDefault();
-				const currentId = Number(event.target.dataset.id);
+				const currentId = Number(event.target.dataset.actionId);
 				const responseData = await this.#playerService.determineRights(currentId);
 
 				if (!responseData.can_edit) return;
@@ -62,9 +62,11 @@ export class PlayerSettingsContextMenu
 					}
 				}, { signal: controller.signal });
 
-				this.#menu.style.left = `${event.pageX}px`;
-				this.#menu.style.top = `${event.pageY}px`;
 				document.body.appendChild(this.#menu);
+
+				const menuWidth = this.#menu.offsetWidth;
+				this.#menu.style.left = `${event.clientX - menuWidth}px`;
+				this.#menu.style.top = `${event.clientY}px`;
 
 				this.#menu.querySelectorAll('a').forEach(link => {
 					link.href = link.href + currentId;
