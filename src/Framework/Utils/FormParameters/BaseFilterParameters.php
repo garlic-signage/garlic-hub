@@ -92,6 +92,7 @@ abstract class BaseFilterParameters extends BaseParameters implements BaseFilter
 	 */
 	public function parseInputFilterAllUsers(): static
 	{
+		$storedParameters = [];
 		if ($this->storedParametersInSessionExists())
 		{
 			$storedParameters        = $this->getStoredSearchParamsFromSession();
