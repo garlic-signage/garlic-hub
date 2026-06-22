@@ -50,9 +50,9 @@ main .composer-header
 /*#insertMenu:focus .context-menu {display: block;}
 #addItems:focus .context-menu {display: block;}*/
 
-.playlist-item {width:100%;margin: 0.5rem 0; padding:0.5rem;display:flex; gap:0.5rem; background-color:#eee; }
-.playlist-item:hover, .playlist-item:nth-child(2n+1):hover {background-color:#9eeaf9;}
-.playlist-item:nth-child(2n+1) {background-color: #f9f9f9;}
+.playlist-item {width:100%;margin: 0.5rem 0; padding:0.5rem;display:flex; gap:0.5rem; background-color:var(--gh-button-bg); }
+.playlist-item:hover, .playlist-item:nth-child(2n+1):hover {background-color:var(--gh-border-color-hover);}
+.playlist-item:nth-child(2n+1) {background-color: var(--gh-border-color);}
     .playlist-item img{width:100px; height:100px;object-fit: cover;}
     .playlist-item .properties {flex: 1;}
     .playlist-item .actions
@@ -108,7 +108,7 @@ main .composer-header
         text-align: center;
     }
 
-.icon-values-setted{background-color: #c0e8bb;}
+.icon-values-setted{background-color: var(--gh-secondary-color);}
 
 .item-name[contenteditable="true"]{cursor: text;}
 .item-name[contenteditable="true"]::before
