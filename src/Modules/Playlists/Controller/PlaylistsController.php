@@ -192,7 +192,7 @@ class PlaylistsController extends AbstractAsyncController
 	{
 		$this->parameters->setUserInputs(
 			array_merge($args, [
-				BaseFilterParameters::PARAMETER_ELEMENTS_PER_PAGE => 10,
+				BaseFilterParameters::PARAMETER_ELEMENTS_PER_PAGE => 0,
 				BaseFilterParameters::PARAMETER_SORT_COLUMN => 'playlist_id',
 				BaseFilterParameters::PARAMETER_SORT_ORDER => 'DESC',
 			])
