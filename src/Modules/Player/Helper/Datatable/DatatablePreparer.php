@@ -150,7 +150,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 					$translation = $this->translator->translate('remove_playlist', 'player');
 
 					$list['has_action'][] = $this->prepareService->getBodyPreparer()->formatAction(
-						$translation, 'playlist', $player['playlist_id'], 'x-circle remove-playlist'
+						$translation, 'playlist', $player['playlist_id'], 'x-lg remove-playlist'
 					);
 					if ($player['is_intranet'] > 0)
 					{
@@ -163,8 +163,8 @@ class DatatablePreparer extends AbstractDatatablePreparer
 					$translation = $this->translator->translate('goto_playlist', 'player');
 					$link = '/playlists/compose/' . $player['playlist_id'];
 
-					$list['has_action'][] = $this->prepareService->getBodyPreparer()->formatActionLink(
-						$translation, $link, 'playlist', $player['playlist_id'], 'music-note-list playlist-link'
+					$list['has_action_link'][] = $this->prepareService->getBodyPreparer()->formatActionLink(
+						$translation, $link, 'playlist', $player['playlist_id'], 'link playlist-link'
 					);
 				}
 			}

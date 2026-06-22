@@ -13,7 +13,7 @@
 .results-listing .model {width:10%;}
 .results-listing .playlist_id {width:30%;}
 .results-listing .results-body .playlist_id {text-align: right;}
-.results-listing .actions {width:5%;min-width:9rem;}
+.results-listing .actions {width:5%;min-width:9.5rem;display: flex;}
 
 .player-active{background: url("/images/bullets/green.png") no-repeat 0 center;padding-left:20px;}
 .player-pending{background: url("/images/bullets/yellow.png") no-repeat 0 center;padding-left:20px;}
