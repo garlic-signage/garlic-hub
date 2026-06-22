@@ -40,14 +40,28 @@ export class PlayerActionsContextMenu
 				const currentId = Number(event.target.dataset.actionId);
 				const responseData = await this.#playerService.determineRights(currentId);
 
-				if (!responseData.can_edit) return;
+				if (!responseData.can_edit)
+					return;
 
 				const deleteMenuItem = this.#menu.querySelector(".delete");
+				const assignMenuItem = this.#menu.querySelector(".assign");
+				const unassignMenuItem = this.#menu.querySelector(".unassign");
+				const pushMenuItem = this.#menu.querySelector(".push");
+				const gotoMenuItem = this.#menu.querySelector(".goto");
 
-				if (!responseData.can_delete) {
+				if (!responseData.can_delete)
+				{
 					deleteMenuItem.remove();
 					return;
 				}
+				if (!responseData.has_playlist)
+				{
+					unassignMenuItem.remove();
+					gotoMenuItem.remove();
+				}
+
+				if (!responseData.has_playlist && !responseData.is_intranet)
+					pushMenuItem.remove();
 
 				const controller = new AbortController();
 

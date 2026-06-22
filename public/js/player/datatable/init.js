@@ -31,12 +31,6 @@ document.addEventListener("DOMContentLoaded", function()
 {
 	const playerService       = new PlayerService(new FetchClient())
 	const flashMessageHandler = new FlashMessageHandler("body");
-	const contextMenu         = new PlayerActionsContextMenu(
-		document.getElementById("playerSettingsContextMenuTemplate"),
-		flashMessageHandler,
-		playerService
-	);
-	contextMenu.init(document.getElementsByClassName("player-contextmenu"));
 
     const autocompleteFactory = new AutocompleteFactory();
 	const pushHandler         = new PushHandler(flashMessageHandler, playerService, new WaitOverlay());
@@ -45,6 +39,13 @@ document.addEventListener("DOMContentLoaded", function()
 	removeHandler.init(document.getElementsByClassName("remove-playlist"));
     const playlistAssignActions =  new PlaylistAssignActions(autocompleteFactory, pushHandler, removeHandler, playerService);
 	playlistAssignActions.init(lang);
+
+	const contextMenu         = new PlayerActionsContextMenu(
+		document.getElementById("playerActionsContextMenuTemplate"),
+		flashMessageHandler,
+		playerService
+	);
+	contextMenu.init(document.getElementsByClassName("player-contextmenu"));
 
 
 });
