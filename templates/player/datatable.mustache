@@ -1,25 +1,25 @@
 {{> datatable}}
 
-<template id="playerSettingsContextMenuTemplate">
-	{{#player_settings_contextmenu}}
+<template id="playerActionsContextMenuTemplate">
+	{{#player_actions_contextmenu}}
 	<ul class="context-menu">
-		<li class="assign-playlist">
+		<li class="assign">
 			{{{LANG_ASSIGN_PLAYLIST}}}
 		</li>
-		<li class="unassign-playlist">
+		<li class="unassign">
 			{{{LANG_UNASSIGN_PLAYLIST}}}
 		</li>
-		<li class="push-playlist">
+		<li class="push">
 			{{{LANG_PUSH_PLAYLIST}}}
 		</li>
-		<li class="goto-playlist">
-			{{{LANG_GOTO_PLAYLIST}}}
+		<li class="goto">
+			<a href="">{{{LANG_GOTO_PLAYLIST}}}</a>
 		</li>
 		<li class="delete" data-confirm="{{{LANG_PLAYER_DELETE_CONFIRM}}}">
 			{{{LANG_PLAYER_DELETE}}}
 		</li>
 	</ul>
-	{{/player_settings_contextmenu}}
+	{{/player_actions_contextmenu}}
 </template>
 
 {{#player_addtional_translations}}
