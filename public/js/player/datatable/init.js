@@ -20,9 +20,9 @@
 import {PlaylistAssignActions} from "./PlaylistAssignActions.js";
 import {PlayerService}         from "../PlayerService.js";
 import {FetchClient} from "../../core/FetchClient.js";
-import {AutocompleteFactory} from "../../core/AutocompleteFactory.js";
-import {PlayerSettingsContextMenu} from "./PlayerSettingsContextMenu.js";
-import {PushHandler}               from "./ActionHandler/PushHandler.js";
+import {AutocompleteFactory}      from "../../core/AutocompleteFactory.js";
+import {PlayerActionsContextMenu} from "./PlayerActionsContextMenu.js";
+import {PushHandler}              from "./ActionHandler/PushHandler.js";
 import {FlashMessageHandler} from "../../core/FlashMessageHandler.js";
 import {RemoveHandler}       from "./ActionHandler/RemoveHandler.js";
 import {WaitOverlay} from "../../core/WaitOverlay.js";
@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", function()
 {
 	const playerService       = new PlayerService(new FetchClient())
 	const flashMessageHandler = new FlashMessageHandler("body");
-	const contextMenu         = new PlayerSettingsContextMenu(
+	const contextMenu         = new PlayerActionsContextMenu(
 		document.getElementById("playerSettingsContextMenuTemplate"),
 		flashMessageHandler,
 		playerService

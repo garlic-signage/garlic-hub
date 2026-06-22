@@ -18,7 +18,7 @@
 */
 import {Utils} from "../../core/Utils.js";
 
-export class PlayerSettingsContextMenu
+export class PlayerActionsContextMenu
 {
 	#menu = {};
 	#playerService;
@@ -31,8 +31,10 @@ export class PlayerSettingsContextMenu
 		this.#playerService = playerService;
 	}
 
-	init(openActions) {
-		for (let i = 0; i < openActions.length; i++) {
+	init(openActions)
+	{
+		for (let i = 0; i < openActions.length; i++)
+		{
 			openActions[i].addEventListener('click', async (event) => {
 				event.preventDefault();
 				const currentId = Number(event.target.dataset.actionId);
