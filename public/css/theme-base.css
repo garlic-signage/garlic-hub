@@ -394,4 +394,41 @@ footer nav ul #compile_time {margin-left: auto;}
         --gh-info-fg:    #4ba8d6;
         --gh-danger-fg:  #e06a5e;
     }
+    .wunderbaum
+    {
+        --wb-node-text-color: var(--gh-primary-text-color);
+        --wb-background-color: var(--gh-surface-color);
+        --wb-border-color: var(--gh-border-color);
+        --wb-focus-border-color: var(--gh-border-color-hover);
+        --wb-header-color: var(--gh-table-header-bg);
+        --wb-grid-color: var(--gh-border-color);
+        --wb-grid-color-grayscale: var(--gh-border-color);
+
+        --wb-alternate-row-color: var(--gh-hover-bg);
+        --wb-alternate-row-color-hover: var(--gh-button-bg);
+
+        --wb-hover-color: var(--gh-hover-bg);
+        --wb-hover-border-color: var(--gh-border-color);
+
+        --wb-active-color: var(--gh-primary-bgcolor);
+        --wb-active-border-color: var(--gh-secondary-color);
+        --wb-active-hover-color: var(--gh-button-bg);
+        --wb-active-hover-border-color: var(--gh-secondary-color);
+        --wb-active-cell-color: var(--gh-primary-bgcolor);
+        --wb-active-column-color: var(--gh-hover-bg);
+
+        --wb-active-color-grayscale: var(--gh-button-bg);
+        --wb-active-border-color-grayscale: var(--gh-border-color);
+        --wb-active-hover-color-grayscale: var(--gh-hover-bg);
+        --wb-active-cell-color-grayscale: var(--gh-button-bg);
+
+        --wb-dim-color: var(--gh-input-placeholder);
+        --wb-filter-dim-color: var(--gh-input-placeholder);
+        --wb-filter-submatch-color: var(--gh-border-color-hover);
+
+        --wb-error-color: var(--gh-danger-fg);
+        --wb-error-background-color: var(--gh-danger-bg);
+        --wb-bg-highlight-color: var(--gh-link-text-color);
+    }
 }
+
