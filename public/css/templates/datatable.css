@@ -12,3 +12,5 @@
 .results-listing .used {width:15%;}
 .results-listing .results-body .playlist_id {text-align: right;}
 .results-listing .actions {width:5%;min-width:7rem;}
+
+#playlist_name_search {width:200rem;}
