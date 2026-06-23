@@ -17,35 +17,33 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import {PlaylistAssignActions} from "./PlaylistAssignActions.js";
 import {PlayerService}         from "../PlayerService.js";
 import {FetchClient} from "../../core/FetchClient.js";
 import {AutocompleteFactory}      from "../../core/AutocompleteFactory.js";
-import {PlayerActionsContextMenu} from "./PlayerActionsContextMenu.js";
-import {PushHandler}              from "./ActionHandler/PushHandler.js";
 import {FlashMessageHandler} from "../../core/FlashMessageHandler.js";
-import {RemoveHandler}       from "./ActionHandler/RemoveHandler.js";
-import {WaitOverlay} from "../../core/WaitOverlay.js";
+import {PlayerActionsContextMenuFactory} from "./PlayerActionsContextMenuFactory.js";
 
 document.addEventListener("DOMContentLoaded", function()
 {
 	const playerService       = new PlayerService(new FetchClient())
 	const flashMessageHandler = new FlashMessageHandler("body");
+	const autocompleteFactory = new AutocompleteFactory();
 
-    const autocompleteFactory = new AutocompleteFactory();
-	const pushHandler         = new PushHandler(flashMessageHandler, playerService, new WaitOverlay());
-	pushHandler.init(document.getElementsByClassName("push-playlist"));
-	const removeHandler = new RemoveHandler(playerService);
-	removeHandler.init(document.getElementsByClassName("remove-playlist"));
-    const playlistAssignActions =  new PlaylistAssignActions(autocompleteFactory, pushHandler, removeHandler, playerService);
-	playlistAssignActions.init(lang);
-
-	const contextMenu         = new PlayerActionsContextMenu(
-		document.getElementById("playerActionsContextMenuTemplate"),
+	const playerActionsContextMenuFactory = new PlayerActionsContextMenuFactory(
 		flashMessageHandler,
+		autocompleteFactory,
 		playerService
 	);
-	contextMenu.init(document.getElementsByClassName("player-contextmenu"));
 
+	const contextMenus = document.getElementsByClassName("player-contextmenu");
 
+	for (let i = 0; i < contextMenus.length; i++)
+	{
+		contextMenus[i].addEventListener('click', async (event) =>
+		{
+			event.preventDefault();
+			const contextMenu = playerActionsContextMenuFactory.create();
+			await contextMenu.init(event);
+		});
+	}
 });

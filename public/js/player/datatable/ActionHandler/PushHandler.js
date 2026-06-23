@@ -31,14 +31,6 @@ export class PushHandler
 		this.#waitOverlay = waitOverlay;
 	}
 
-	init(pushPlaylists)
-	{
-		for (let i = 0; i < pushPlaylists.length; i++)
-		{
-			this.addPushPlaylistListener(pushPlaylists[i]);
-		}
-	}
-
 	addPushPlaylistListener(pushPlaylist)
 	{
 		pushPlaylist.addEventListener('click', async (event) =>

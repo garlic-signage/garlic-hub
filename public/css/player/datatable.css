@@ -6,14 +6,11 @@
 }
 .results-listing .last_access {width:15%;}
 .results-listing .player_name {width:35%;}
-.results-listing .results-body .player_name {display:flex;justify-content:flex-end;gap:0.25rem;flex-direction: row-reverse;}
-.results-listing .player_name .player-contextmenu{border:0; background-color:transparent;line-height:0; cursor: pointer;}
 .results-listing .UID {width:15%;}
 .results-listing .status {width:5%;}
 .results-listing .model {width:10%;}
-.results-listing .playlist_id {width:30%;}
-.results-listing .results-body .playlist_id {text-align: right;}
-.results-listing .actions {width:5%;min-width:1rem;}
+.results-listing .playlist_id {width:35%;}
+.results-listing .actions {min-width:1rem;}
 
 .player-active{background: url("/images/bullets/green.png") no-repeat 0 center;padding-left:20px;}
 .player-pending{background: url("/images/bullets/yellow.png") no-repeat 0 center;padding-left:20px;}

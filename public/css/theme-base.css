@@ -314,7 +314,7 @@ footer nav ul #compile_time {margin-left: auto;}
     font-family: OpenSans-Regular, sans-serif; font-weight: bold;
 }
 .results-header > li, .results-body > li {flex-wrap: nowrap;min-width:20px;padding:0 0.5rem;}
-.results-listing .actions {width:140px;margin-left: auto;}
+.results-listing .actions {margin-left: auto;}
 
 .results-header {background-color: var(--gh-table-header-bg);}
 .results-header a:hover{color: darkorange;transition: color .25s ease, margin .25s ease;}

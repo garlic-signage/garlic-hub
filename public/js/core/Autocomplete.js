@@ -67,6 +67,7 @@ export class Autocomplete
 	{
 		this.#autocompleteView.initCreate(parent, this.#fieldName, wrapClassName);
 		this.#addListener();
+		this.#fetchSuggestions();
 	}
 
 	getHiddenIdElement()
@@ -104,6 +105,7 @@ export class Autocomplete
 		this.#clearSelection();
 	}
 
+
 	/**
 	 * Gets results from the database through the API.
 	 * This method is triggered after a debounced delay to reduce the amount of API requests.
@@ -113,18 +115,19 @@ export class Autocomplete
 	 */
 	async #fetchSuggestions()
 	{
-		if (this.#autocompleteView.inputElement.value.length < 1) // Only fetch if input is not empty
+/*		if (this.#autocompleteView.inputElement.value.length < 1) // Only fetch if input is not empty
 		{
 			this.#clearSelection();  // Clear the hidden field when input is cleared
 			return;
 		}
-
+*/
 		try
 		{
 			const url = this.#apiEndpoint + this.#autocompleteView.inputElement.value;
 			const response    = await fetch(url);
 			const suggestions = await response.json();
 			this.#updateDataList(suggestions);
+			this.#autocompleteView.inputElement.dispatchEvent(new Event('focus'));
 		}
 		catch (error)
 		{
@@ -170,7 +173,7 @@ export class Autocomplete
 	{
 		this.#ignoreBlur = true;
 		this.#doSelectionChange();
-		this.#autocompleteView.inputElement.blur();
+//		this.#autocompleteView.inputElement.blur();
 	}
 
 
@@ -200,20 +203,18 @@ export class Autocomplete
 	#doSelectionChange()
 	{
 		const value = this.#autocompleteView.inputElement.value;
-		const options = this.#autocompleteView.datalistElement.querySelectorAll('option');
 		this.#ignoreBlur = true;
-		// Loop through the options to find a match
-		for (let i = 0; i < options.length; i++)
-		{
-			const option = options[i];
-			if (option.value === value)
-			{
-				this.#autocompleteView.hiddenElement.value = option.getAttribute('data-value');
-				this.#autocompleteView.hiddenElement.dispatchEvent(new Event('change'));
-				this.#autocompleteView.inputElement.dataset.id = option.getAttribute('data-value');
-				break; // important
-			}
-		}
+
+		const option = this.#autocompleteView.datalistElement
+			.querySelector(`option[value="${CSS.escape(value)}"]`);
+
+		if (!option)
+			return;
+
+		const dataValue = option.getAttribute('data-value');
+		this.#autocompleteView.hiddenElement.value = dataValue;
+		this.#autocompleteView.hiddenElement.dispatchEvent(new Event('selectedFromDataList'));
+		this.#autocompleteView.inputElement.dataset.id = dataValue;
 	}
 
 	/**

@@ -63,6 +63,8 @@ export class AutocompleteView
         this.#li.className      = wrapClassName;
         this.#inputElement      = document.createElement("input");
 		this.#inputElement.className = "autocomplete";
+		this.#inputElement.value = parent.innerText;
+
 		this.#inputElement.setAttribute("autocomplete", "off");
         this.#inputElement.id   = fieldName  + "_search";
         this.#inputElement.type = "text";
@@ -76,11 +78,11 @@ export class AutocompleteView
         this.#hiddenElement      = document.createElement("input");
         this.#hiddenElement.id   = fieldName;
         this.#hiddenElement.type = "hidden";
-        this.#li.appendChild(this.#inputElement);
+        this.#li.appendChild(this.#hiddenElement);
 
         parent.replaceWith(this.#li);
         this.#inputElement.focus();
-    }
+	}
 
     restore(newName)
     {

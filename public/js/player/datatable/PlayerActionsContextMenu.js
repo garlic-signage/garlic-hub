@@ -20,81 +20,120 @@ import {Utils} from "../../core/Utils.js";
 
 export class PlayerActionsContextMenu
 {
-	#menu = {};
-	#playerService;
-	#flashMessagehandler
+	#playerService = null;
+	#flashMessageHandler = null;
+	#autoCompleteFactory = null;
+	#pushHandler = null;
+	#playerNameAutocomplete = null;
+	#contextMenuView = null;
+	#controller = null;
+	#currentPlayerId = 0;
 
-	constructor(contextMenuTemplate, flashMessagehandler, playerService)
+	constructor(contextMenuView, flashMessageHandler, autoCompleteFactory, pushhandler, playerService)
 	{
-		this.#menu = contextMenuTemplate.content.cloneNode(true).firstElementChild;
-		this.#flashMessagehandler = flashMessagehandler;
-		this.#playerService = playerService;
+		this.#contextMenuView       = contextMenuView;
+		this.#flashMessageHandler   = flashMessageHandler;
+		this.#autoCompleteFactory   = autoCompleteFactory;
+		this.#pushHandler           = pushhandler;
+		this.#playerService         = playerService;
+		this.#controller            = new AbortController();
 	}
 
-	init(openActions)
+	async init(event)
 	{
-		for (let i = 0; i < openActions.length; i++)
+		this.#currentPlayerId = Number(event.target.dataset.actionId);
+		const responseData = await this.#playerService.determineRights(this.#currentPlayerId );
+
+		if (!responseData.can_edit)
+			return;
+
+		this.#contextMenuView.initMenuItems();
+
+		if (!responseData.can_delete)
+			this.#contextMenuView.deleteMenuItem.remove();
+		else
+			this.#deletePlayerEventListener();
+
+		if (!responseData.has_playlist)
 		{
-			openActions[i].addEventListener('click', async (event) => {
-				event.preventDefault();
-				const currentId = Number(event.target.dataset.actionId);
-				const responseData = await this.#playerService.determineRights(currentId);
-
-				if (!responseData.can_edit)
-					return;
-
-				const deleteMenuItem = this.#menu.querySelector(".delete");
-				const assignMenuItem = this.#menu.querySelector(".assign");
-				const unassignMenuItem = this.#menu.querySelector(".unassign");
-				const pushMenuItem = this.#menu.querySelector(".push");
-				const gotoMenuItem = this.#menu.querySelector(".goto");
-
-				if (!responseData.can_delete)
-				{
-					deleteMenuItem.remove();
-					return;
-				}
-				if (!responseData.has_playlist)
-				{
-					unassignMenuItem.remove();
-					gotoMenuItem.remove();
-				}
-
-				if (!responseData.has_playlist && !responseData.is_intranet)
-					pushMenuItem.remove();
-
-				const controller = new AbortController();
-
-				deleteMenuItem.addEventListener('click', async (e) => {
-					e.preventDefault();
-					const ok = await Utils.confirmAction(deleteMenuItem.dataset.confirm);
-					if (ok)
-					{
-						const result = await this.#playerService.delete(currentId);
-						if (result.success)
-							document.querySelector(`ul[data-id="${currentId}"]`)?.closest('li')?.remove();
-						 else
-							this.#flashMessagehandler.showError(result.error_message);
-					}
-				}, { signal: controller.signal });
-
-				document.body.appendChild(this.#menu);
-
-				const menuWidth = this.#menu.offsetWidth;
-				this.#menu.style.left = `${event.clientX - menuWidth}px`;
-				this.#menu.style.top = `${event.clientY}px`;
-
-				this.#menu.querySelectorAll('a').forEach(link => {
-					link.href = link.href + currentId;
-				});
-
-				document.addEventListener('click', () => {
-					controller.abort(); // Killt delete-Listener
-					this.#menu.remove();
-				}, { once: true });
-
-				event.stopPropagation();
-			});
+			this.#contextMenuView.unassignMenuItem.remove();
+			this.#contextMenuView.gotoMenuItem.remove();
 		}
+		else
+		{
+			this.#addUnAssignEventListener();
+			this.#contextMenuView.setGotoLink(responseData.playlist_id);
+		}
+
+		this.#addAssignEventListener(); // always active
+
+		if (!responseData.has_playlist || !responseData.is_intranet)
+			this.#contextMenuView.pushMenuItem.remove();
+		else
+			this.#pushHandler.addPushPlaylistListener(this.#contextMenuView.pushMenuItem);
+
+		document.body.appendChild(this.#contextMenuView.menu);
+
+		this.#contextMenuView.placeMenu(event.clientX, event.clientY)
+
+		document.addEventListener('click', () => {
+			this.#controller.abort(); // Killt delete-Listener
+			this.#contextMenuView.menu.remove();
+		}, { once: true });
+
+	}
+
+	#addAssignEventListener()
+	{
+		this.#contextMenuView.assignMenuItem.addEventListener("click", async (event) => {
+
+			let editPlaylistField = this.#findPlaylistNameInResultsBody();
+
+			this.#playerNameAutocomplete = this.#autoCompleteFactory.create("playlist_name", "/async/playlists/find/for-player/");
+			this.#playerNameAutocomplete.initWithCreateFields(editPlaylistField, 'playlist_id');
+			this.#playerNameAutocomplete.getHiddenIdElement().addEventListener("selectedFromDataList", async (event) => {
+				const playlistId = event.target.value;
+				const result = await this.#playerService.replacePlaylist(this.#currentPlayerId, playlistId);
+				if (result.success)
+				{
+					this.#playerNameAutocomplete.restore(result.playlist_name);
+				}
+			});
+
+		});
+
+	}
+
+	#addUnAssignEventListener()
+	{
+		this.#contextMenuView.unassignMenuItem.addEventListener("click", async (event) => {
+
+			const result = await this.#playerService.replacePlaylist(this.#currentPlayerId, 0);
+			if (!result.success)
+				return;
+
+			this.#findPlaylistNameInResultsBody().textContent = "";
+		});
+	}
+
+	#deletePlayerEventListener()
+	{
+		this.#contextMenuView.deleteMenuItem.addEventListener('click', async (e) => {
+			e.preventDefault();
+			const ok = await Utils.confirmAction(deleteMenuItem.dataset.confirm);
+			if (ok)
+			{
+				const result = await this.#playerService.delete(currentId);
+				if (result.success)
+					document.querySelector(`ul[data-id="${currentId}"]`)?.closest('li')?.remove();
+				else
+					this.#flashMessageHandler.showError(result.error_message);
+			}
+		}, { signal: this.#controller.signal });
+	}
+
+	#findPlaylistNameInResultsBody(element)
+	{
+		return document.querySelector('ul.results-body[data-id="' + this.#currentPlayerId + '"] li.playlist_id');
 	}
 }
