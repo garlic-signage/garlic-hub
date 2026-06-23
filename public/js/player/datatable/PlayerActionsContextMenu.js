@@ -120,12 +120,12 @@ export class PlayerActionsContextMenu
 	{
 		this.#contextMenuView.deleteMenuItem.addEventListener('click', async (e) => {
 			e.preventDefault();
-			const ok = await Utils.confirmAction(deleteMenuItem.dataset.confirm);
+			const ok = await Utils.confirmAction(this.#contextMenuView.deleteMenuItem.dataset.confirm);
 			if (ok)
 			{
-				const result = await this.#playerService.delete(currentId);
+				const result = await this.#playerService.delete(this.#currentPlayerId);
 				if (result.success)
-					document.querySelector(`ul[data-id="${currentId}"]`)?.closest('li')?.remove();
+					document.querySelector(`ul[data-id="${this.#currentPlayerId}"]`)?.closest('li')?.remove();
 				else
 					this.#flashMessageHandler.showError(result.error_message);
 			}
