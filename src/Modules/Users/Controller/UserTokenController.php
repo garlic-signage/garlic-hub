@@ -115,7 +115,7 @@ class UserTokenController extends AbstractAsyncController
 			return $this->jsonResponse($response, ['success' => true, 'token' => bin2hex($token)]);
 		}
 
-		$result = $this->userService->deleteToken((int) $UID, $purpose);
+		$result = $this->userService->deleteByUserPurpose((int) $UID, $purpose);
 		if ($result === 0)
 			return $this->jsonResponse($response, ['success' => false, 'error_message' => $errorMessage]);
 

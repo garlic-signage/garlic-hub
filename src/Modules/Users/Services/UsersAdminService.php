@@ -151,7 +151,7 @@ class UsersAdminService extends AbstractBaseService
 			if ($this->userMainRepository->delete($UID) === 0)
 				throw new ModuleException('users', 'Remove the user from db-table failed.');
 
-			$this->userTokenService->deleteTokenByUID($UID);
+			$this->userTokenService->deleteAllUserTokens($UID);
 
 			$this->nodesService->UID = $this->UID;
 			$this->nodesService->deleteUserDirectory($UID);

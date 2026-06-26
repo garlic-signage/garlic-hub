@@ -354,7 +354,7 @@ class UserTokenServiceTest extends TestCase
 			->with($decodedToken)
 			->willReturn(1);
 
-		$result = $this->userTokenService->deleteToken($token);
+		$result = $this->userTokenService->deleteByUserPurpose($token);
 
 		self::assertSame(1, $result);
 	}
@@ -370,7 +370,7 @@ class UserTokenServiceTest extends TestCase
 		$this->userTokensRepositoryMock->expects($this->never())
 			->method('delete');
 
-		$result = $this->userTokenService->deleteToken($token);
+		$result = $this->userTokenService->deleteByUserPurpose($token);
 
 		self::assertSame(0, $result);
 	}
@@ -386,7 +386,7 @@ class UserTokenServiceTest extends TestCase
 		$this->userTokensRepositoryMock->expects($this->never())
 			->method('delete');
 
-		$result = $this->userTokenService->deleteToken($token);
+		$result = $this->userTokenService->deleteByUserPurpose($token);
 
 		self::assertSame(0, $result);
 	}

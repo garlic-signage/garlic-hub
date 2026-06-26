@@ -199,7 +199,7 @@ class UserTokenControllerTest extends TestCase
 		$this->userServiceMock->method('findByTokenForAction')->with('valid_token')->willReturn(['purpose' => 'sample']);
 		$this->userSessionMock->method('getUID')->willReturn(1);
 		$this->aclValidatorMock->method('isAdmin')->with(1, ['purpose' => 'sample'])->willReturn(true);
-		$this->userServiceMock->expects($this->once())->method('deleteToken')
+		$this->userServiceMock->expects($this->once())->method('deleteByUserPurpose')
 			->with('valid_token')
 			->willReturn(1);
 
@@ -226,7 +226,7 @@ class UserTokenControllerTest extends TestCase
 		$this->userServiceMock->method('findByTokenForAction')->with('valid_token')->willReturn(['purpose' => 'sample']);
 		$this->userSessionMock->method('getUID')->willReturn(1);
 		$this->aclValidatorMock->method('isAdmin')->with(1, ['purpose' => 'sample'])->willReturn(true);
-		$this->userServiceMock->expects($this->once())->method('deleteToken')
+		$this->userServiceMock->expects($this->once())->method('deleteByUserPurpose')
 			->with('valid_token')
 			->willReturn(0);
 

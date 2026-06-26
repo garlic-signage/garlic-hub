@@ -67,7 +67,13 @@ class UserTokenService extends AbstractBaseService
 	}
 
 	/**
-	 * @return array{"UID":int, "company_id":int, "username":string, "status":int, "purpose":string}|null
+	 * @return array{"UID":int,
+	 *      "company_id":int,
+	 *     "username":string,
+	 *     "status":int,
+	 *     "expires_at":string,
+	 *     "used_at":null|string,
+	 *     "purpose":string}|null
 	 * @throws DateMalformedStringException|Exception
 	 * @throws \Exception
 	 */
@@ -85,6 +91,8 @@ class UserTokenService extends AbstractBaseService
 			'company_id' => (int) $result['company_id'],
 			'username'   => $result['username'],
 			'status'     => (int)$result['status'],
+			'expires_at' => $result['expires_at'],
+			'used_at'    => $result['used_at'],
 			'purpose'    => $result['purpose']
 		];
 	}
@@ -125,7 +133,7 @@ class UserTokenService extends AbstractBaseService
 	 * @throws Exception
 	 * @throws \Exception
 	 */
-	public function deleteToken(int $UID,  string $purposeAsString): int
+	public function deleteByUserPurpose(int $UID, string $purposeAsString): int
 	{
 		$purpose = TokenPurposes::tryFrom($purposeAsString);
 		if ($purpose === null)
@@ -137,7 +145,27 @@ class UserTokenService extends AbstractBaseService
 	/**
 	 * @throws Exception
 	 */
-	public function deleteTokenByUID(int $UID): int
+	public function deleteByToken(string $token): int
+	{
+		$token = $this->crypt->createHmacSha256($token);
+
+		return $this->userTokensRepository->delete($token);
+	}
+
+
+	/**
+	 * @throws Exception
+	 */
+	public function deleteExpiredToken(): int
+	{
+		return $this->userTokensRepository->deleteExpired();
+	}
+
+
+	/**
+	 * @throws Exception
+	 */
+	public function deleteAllUserTokens(int $UID): int
 	{
 		return $this->userTokensRepository->deleteBy(['UID' => $UID]);
 	}

@@ -165,6 +165,6 @@ class CookieTest extends TestCase
 		$this->expectException(FrameworkException::class);
 		$this->expectExceptionMessage('Possible cookie manipulation detected.');
 
-		$this->cookie->getHashedCookie('test_cookie');
+		$this->cookie->getCookie('test_cookie');
 	}
 }

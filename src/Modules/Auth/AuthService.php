@@ -27,6 +27,7 @@ use App\Modules\Profile\Entities\TokenPurposes;
 use App\Modules\Profile\Entities\UserEntity;
 use App\Modules\Profile\Services\UserTokenService;
 use App\Modules\Users\Services\UsersService;
+use DateMalformedStringException;
 use DateTime;
 use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
@@ -90,6 +91,8 @@ class AuthService
 	}
 
 	/**
+	 * @return UserEntity|null
+	 * @throws DateMalformedStringException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws PhpfastcacheSimpleCacheException
@@ -104,41 +107,72 @@ class AuthService
 			return null;
 		}
 
-		/** @var array{UID: int, sid: string } $cookie_payload */
-		$cookie_payload = $this->cookie->getHashedCookie(self::COOKIE_NAME_AUTO_LOGIN);
-		$UID =  (int) $cookie_payload['UID'];
-		if ($UID < 1)
+		$cookiePayload = $this->cookie->getCookie(self::COOKIE_NAME_AUTO_LOGIN);
+		if ($cookiePayload === null)
 		{
-			$this->logger->error('No valid UID found after cookie login.');
-			$this->errorMessage = 'No valid UID found after cookie login.';
+			$this->logger->error('No token in cookie cookie found.');
+			$this->errorMessage = 'No token in cookie cookie found.';
 			return null;
 		}
 
-		return $this->loginSilent($UID, $cookie_payload['sid']);
+		return $this->loginSilent($cookiePayload);
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
+	 * @param string $cookieToken
+	 * @return UserEntity|null
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws DateMalformedStringException
 	 */
-	public function loginSilent(int $UID, string $sessionId): ?UserEntity
+	public function loginSilent(string $cookieToken): ?UserEntity
 	{
-		$this->logger->error('Attempt silent login.');
-		$userEntity = $this->getCurrentUser($UID);
+		$this->logger->info('Attempt silent login.');
+		$dbToken = $this->userTokenService->findByToken($cookieToken);
+		if ($dbToken === null)
+		{
+			$this->logger->error('Autologin token not found.');
+			$this->errorMessage = 'Autologin token not found.';
+			return null;
+		}
+		if ($dbToken['expires_at'] < new DateTime()->format('Y-m-d H:i:s'))
+		{
+			$this->logger->error('Autologin expired.');
+			$this->errorMessage = 'Autologin expired.';
+			$this->userTokenService->deleteExpiredToken();
+			return null;
+		}
+		if ($dbToken['used_at']  !== null)
+		{
+			$this->logger->error('Cookie manipulation. Contact administrator');
+			$this->errorMessage = 'Cookie manipulation. Contact administrator.';
+			$this->userTokenService->deleteAllUserTokens($dbToken['UID']);
+			return null;
+		}
+		$this->userTokenService->useToken($cookieToken);
+
+
+		// rotate Autologin
+		$this->createAutologinCookie($dbToken['UID']);
+
+		$userEntity = $this->getCurrentUser($dbToken['UID']);
 		$this->validateUserStatus($userEntity->getMain()['status']);
 		if (!empty($this->errorMessage))
 			return null;
 
-		$this->userService->updateUserStats($UID, $sessionId);
+		$this->userService->updateUserStats($dbToken['UID']);
 		return $userEntity;
 	}
 
 	/**
 	 * @throws FrameworkException
 	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public function createAutologinCookie(int $UID): void
 	{
+		// check if there is another
 		$token = $this->userTokenService->generateToken();
 
 		$this->userTokenService->insertToken($UID, $token, TokenPurposes::AUTOLOGIN);
@@ -146,19 +180,25 @@ class AuthService
 		$this->cookie->createCookie(
 			self::COOKIE_NAME_AUTO_LOGIN,
 			$token,
-			new DateTime(self::AUTOLOGIN_EXPIRE)
+			new DateTime(UserTokenService::AUTOLOGIN_EXPIRE)
 		);
 	}
 
 	/**
 	 * @param array<string,mixed> $user
-	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws Exception
 	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function logout(array $user): void
 	{
 		$this->logger->info('logout for user: '.$user['UID'].': '.$user['username']);
 		$this->userService->invalidateCache($user['UID']);
+		$token = $this->cookie->getCookie(AuthService::COOKIE_NAME_AUTO_LOGIN);
+		if ($token !== null)
+			$this->userTokenService->deleteByToken($token);
+
+		$this->cookie->deleteCookie(AuthService::COOKIE_NAME_AUTO_LOGIN);
 	}
 
 	/**

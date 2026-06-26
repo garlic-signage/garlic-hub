@@ -36,20 +36,6 @@ class Cookie
 		$this->crypt = $crypt;
 	}
 
-	/**
-	 * @return array<string,string>|null
-	 * @throws  FrameworkException
-	 */
-	public function getHashedCookie(string $cookieName): ?array
-	{
-		$payload = $this->getCookie($cookieName);
-
-		if (is_null($payload))
-			return null;
-
-		return $this->validateAndUnpackContent($payload);
-	}
-
 	public function getCookie(string $cookieName): ?string
 	{
 		if (!array_key_exists($cookieName, $_COOKIE))
@@ -57,7 +43,7 @@ class Cookie
 
 		return $_COOKIE[$cookieName];
 	}
-	
+
 	/**
 	 * @throws FrameworkException
 	 */
@@ -79,27 +65,5 @@ class Cookie
 	public function hasCookie(string $name): bool
 	{
 		return array_key_exists($name, $_COOKIE);
-	}
-
-	/**
-	 * @return array<string,string>
-	 * @throws  FrameworkException
-	 */
-	private function validateAndUnpackContent(string $raw_content): array
-	{
-		$data = @unserialize($raw_content);
-		if (!is_array($data) || count($data) !== 2)
-			throw new FrameworkException('Failed to unserialize content.');
-
-		[$content, $checksum] = $data;
-
-		if (!$this->crypt->verifyHmacSha256($content, $checksum))
-			throw new FrameworkException('Possible cookie manipulation detected.');
-
-		$ret =  @unserialize($content);
-		if ($ret === false)
-			return [];
-
-		return $ret;
 	}
 }

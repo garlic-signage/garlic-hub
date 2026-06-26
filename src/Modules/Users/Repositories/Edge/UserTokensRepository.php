@@ -56,7 +56,7 @@ class UserTokensRepository extends SqlBase
 	public function findFirstByToken(string $token): array
 	{
 		$queryBuilder = $this->connection->createQueryBuilder();
-		$queryBuilder->select('user_tokens.*, username, status, company_id')
+		$queryBuilder->select('user_tokens.*, username, status, expires_at, used_at, company_id')
 			->from($this->table)
 			->leftJoin('user_tokens', 'user_main', '', 'user_main.UID = user_tokens.UID')
 			->where('token = :token')
@@ -80,6 +80,20 @@ class UserTokensRepository extends SqlBase
 
 		return $queryBuilder->executeQuery()->fetchAllAssociative();
 	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function deleteExpired(): int
+	{
+		$queryBuilder = $this->connection->createQueryBuilder();
+		$queryBuilder->delete($this->table)
+			->where('expires_at < :expires')
+			->setParameter('expires', date('Y-m-d H:i:s'));
+
+		return (int) $queryBuilder->executeStatement();
+	}
+
 
 	/**
 	 * @param array{token:string, expires_at: string, used_at:null} $fields

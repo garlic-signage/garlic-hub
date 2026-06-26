@@ -83,7 +83,7 @@ class UserServiceTest extends TestCase
 			->with($UID, static::equalTo($expectedData))
 			->willReturn(1);
 
-		$result = $this->usersService->updateUserStats($UID, $sessionId);
+		$result = $this->usersService->updateUserStats($UID);
 
 		static::assertEquals(1, $result);
 	}
@@ -107,7 +107,7 @@ class UserServiceTest extends TestCase
 			->with($UID, static::arrayHasKey('login_time'))
 			->willReturn(0);
 
-		$result = $this->usersService->updateUserStats($UID, $sessionId);
+		$result = $this->usersService->updateUserStats($UID);
 
 		static::assertEquals(0, $result);
 	}

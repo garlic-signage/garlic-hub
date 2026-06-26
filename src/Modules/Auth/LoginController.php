@@ -21,7 +21,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Auth;
 
-use App\Framework\Core\Cookie;
 use App\Framework\Core\CsrfToken;
 use App\Framework\Core\Session;
 use App\Framework\Exceptions\FrameworkException;
@@ -163,10 +162,6 @@ readonly class LoginController
 		$session->clear();
 		$session->regenerateID();
 		$this->csrfToken->generateToken();
-
-		/** @var Cookie $cookie */
-		$cookie = $request->getAttribute('cookie');
-		$cookie->deleteCookie(AuthService::COOKIE_NAME_AUTO_LOGIN);
 
 		return $this->redirect($response, '/login');
 	}

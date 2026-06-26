@@ -167,7 +167,7 @@ class AuthServiceTest extends TestCase
 		$userEntityMock = $this->createMock(UserEntity::class);
 
 		$this->cookieMock->method('hasCookie')->with(AuthService::COOKIE_NAME_AUTO_LOGIN)->willReturn(true);
-		$this->cookieMock->method('getHashedCookie')->with(AuthService::COOKIE_NAME_AUTO_LOGIN)->willReturn($cookiePayload);
+		$this->cookieMock->method('getCookie')->with(AuthService::COOKIE_NAME_AUTO_LOGIN)->willReturn($cookiePayload);
 
 		$userEntityMock->method('getMain')->willReturn(['status' => UsersService::USER_STATUS_REGULAR]);
 		$this->userServiceMock->method('getUserById')->with(1)->willReturn($userEntityMock);
@@ -206,7 +206,7 @@ class AuthServiceTest extends TestCase
 		$userEntityMock = $this->createMock(UserEntity::class);
 
 		$this->cookieMock->method('hasCookie')->with(AuthService::COOKIE_NAME_AUTO_LOGIN)->willReturn(true);
-		$this->cookieMock->method('getHashedCookie')->with(AuthService::COOKIE_NAME_AUTO_LOGIN)->willReturn($cookiePayload);
+		$this->cookieMock->method('getCookie')->with(AuthService::COOKIE_NAME_AUTO_LOGIN)->willReturn($cookiePayload);
 
 		$userEntityMock->method('getMain')->willReturn(['status' => UsersService::USER_STATUS_REGULAR]);
 		$this->userServiceMock->method('getUserById')->with(1)->willReturn($userEntityMock);
