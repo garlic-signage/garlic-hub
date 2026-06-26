@@ -269,7 +269,7 @@ class AuthServiceTest extends TestCase
 	public function testCreateAutologinCookie(): void
 	{
 		$payload = ['UID' => 45, 'sid' => 'the_session_id'];
-		$this->cookieMock->expects($this->once())->method('createHashedCookie')
+		$this->cookieMock->expects($this->once())->method('issueTokenCookie')
 			->with(
 				AuthService::COOKIE_NAME_AUTO_LOGIN,
 				$payload,

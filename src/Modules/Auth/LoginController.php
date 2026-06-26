@@ -128,7 +128,7 @@ readonly class LoginController
 				$flash->addMessage('error', 'No session id found');
 				return $this->redirect($response, '/login');
 			}
-			$this->authService->createAutologinCookie($main_data['UID'], $sessionId);
+			$this->authService->createAutologinCookie($main_data['UID']);
 		}
 
 		if (!$session->exists('oauth_redirect_params'))

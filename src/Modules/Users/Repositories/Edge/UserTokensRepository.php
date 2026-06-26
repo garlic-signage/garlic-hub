@@ -24,6 +24,7 @@ namespace App\Modules\Users\Repositories\Edge;
 use App\Framework\Database\BaseRepositories\SqlBase;
 use App\Framework\Database\BaseRepositories\Traits\CrudTraits;
 use App\Framework\Database\BaseRepositories\Traits\FindOperationsTrait;
+use App\Modules\Profile\Entities\TokenPurposes;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
@@ -71,7 +72,7 @@ class UserTokensRepository extends SqlBase
 	public function findValidByUID(int $UID): array
 	{
 		$queryBuilder = $this->connection->createQueryBuilder();
-		$queryBuilder->select('token, UID, purpose, expires_at, used_at')
+		$queryBuilder->select('UID, purpose, expires_at, used_at')
 			->from($this->table)
 			->where('UID = :uid')
 			->andWhere('used_at IS NULL')
@@ -81,13 +82,12 @@ class UserTokensRepository extends SqlBase
 	}
 
 	/**
+	 * @param array{token:string, expires_at: string, used_at:null} $fields
 	 * @throws Exception
 	 */
-	public function refresh(string $token, string $expiresAt): int
+	public function refresh(array $fields, int $UID, TokenPurposes $purpose): int
 	{
-		$fields = ['expires_at' => $expiresAt];
-
-		return $this->updateWithWhere($fields, ['token' => $token]);
+		return $this->updateWithWhere($fields, ['UID' => $UID, 'purpose' => $purpose->value]);
 	}
 
 }

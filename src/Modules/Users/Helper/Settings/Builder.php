@@ -100,7 +100,7 @@ class Builder
 	 * @throws InvalidArgumentException
 	 * @throws PhpfastcacheSimpleCacheException
 	 */
-	public function buildForm(array $user): array
+	public function buildForm(array $user, Session $session): array
 	{
 		$form       = [];
 		if ($this->parameters->hasParameter(Parameters::PARAMETER_USER_NAME))
@@ -127,13 +127,22 @@ class Builder
 		$tokens = $user['tokens'] ?? [];
 		foreach ($tokens as $token)
 		{
+			$value = '';
+			if ($session->exists($token['purpose'].'_token'))
+			{
+				// Todo: This is just a workaround for now, we should another token process via JS
+				$value = $session->get($token['purpose'].'_token');
+				$value = is_string($value) ? $value : '';
+				$session->delete($token['purpose'].'_token');
+			}
+
 			$tokenObj = $this->formElementsCreator->createClipboardTextField(
-				bin2hex($token['token']),
+				$value,
 				$token['purpose'],
 				$token['expires_at']
 			);
 
-			$form['token_' . $token['token']] = $tokenObj;
+			$form['token_' . $token['purpose']] = $tokenObj;
 		}
 
 		if (isset($user[Parameters::PARAMETER_USER_ID]))

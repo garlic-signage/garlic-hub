@@ -92,6 +92,19 @@ readonly class Crypt
 		return password_verify($clearText, $hash);
 	}
 
+	/**
+	 * @throws Exception
+	 */
+	public function createHmacSha256(string $clearText): string
+	{
+		return hash_hmac('sha256', $clearText, $this->encryptionKey->saveToAsciiSafeString());
+	}
+
+	public function verifyHmacSha256(string $clearText, string $hmac): bool
+	{
+		return hash_equals($this->createHmacSha256($clearText), $hmac);
+	}
+
 	public function createPasswordHash(string $clearText):string
 	{
 		return password_hash($clearText, PASSWORD_DEFAULT);

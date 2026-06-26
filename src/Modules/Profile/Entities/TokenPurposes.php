@@ -26,5 +26,5 @@ enum TokenPurposes: string
 	case INITIAL_PASSWORD   = 'initial_password';
 	case PASSWORD_RESET     = 'password_reset';
 	case EMAIL_VERIFICATION = 'email_verification';
-
+	case AUTOLOGIN          = 'autologin';
 }

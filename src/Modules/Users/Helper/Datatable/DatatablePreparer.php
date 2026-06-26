@@ -117,6 +117,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 						$list['has_delete'] = [
 							'LINK_DELETE_ACTION' => 'users/?delete_id=' . $user['UID'],
 							'LANG_CONFIRM_DELETE' => $this->translator->translate('confirm_delete', 'users'),
+							'ELEMENT_DELETE_CLASS' => 'delete-user',
 							'DELETE_ID' => $user['UID']
 						];
 					}

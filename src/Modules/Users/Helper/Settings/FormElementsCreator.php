@@ -119,7 +119,7 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 		/** @var ClipboardTextField $object */
 		$object = $this->formBuilder->createField([
 			'type' => FieldType::CLIPBOARD_TEXT,
-			'id' => $value,
+			'id' => $purpose,
 			'label' => $label,
 			'title' => $this->translator->translate('copy_to_clipboard', 'main'),
 			'value' => $http.$host.'/force-password?token='.$value

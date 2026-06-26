@@ -23,7 +23,9 @@ namespace App\Modules\Auth;
 
 use App\Framework\Core\Cookie;
 use App\Framework\Exceptions\FrameworkException;
+use App\Modules\Profile\Entities\TokenPurposes;
 use App\Modules\Profile\Entities\UserEntity;
+use App\Modules\Profile\Services\UserTokenService;
 use App\Modules\Users\Services\UsersService;
 use DateTime;
 use Doctrine\DBAL\Exception;
@@ -39,17 +41,13 @@ use Psr\Log\LoggerInterface;
 class AuthService
 {
 	public const string COOKIE_NAME_AUTO_LOGIN = 'UserLogin';
-	public const string AUTOLOGIN_EXPIRE = '+28 days';
-	private UsersService $userService;
-	private Cookie $cookie;
 	private string $errorMessage = '';
-	private LoggerInterface $logger;
 
-	public function __construct(UsersService $userService, Cookie $cookie, LoggerInterface $logger)
+	public function __construct(private readonly UsersService 		$userService,
+								private readonly UserTokenService   $userTokenService,
+								private readonly Cookie             $cookie,
+								private readonly LoggerInterface    $logger)
 	{
-		$this->userService = $userService;
-		$this->cookie      = $cookie;
-		$this->logger      = $logger;
 	}
 
 	public function getErrorMessage(): string
@@ -137,11 +135,19 @@ class AuthService
 
 	/**
 	 * @throws FrameworkException
+	 * @throws Exception
 	 */
-	public function createAutologinCookie(int $UID, string $sessionId): void
+	public function createAutologinCookie(int $UID): void
 	{
-		$payload = ['UID' => (string) $UID, 'sid' => $sessionId];
-		$this->cookie->createHashedCookie(self::COOKIE_NAME_AUTO_LOGIN, $payload, new DateTime(self::AUTOLOGIN_EXPIRE));
+		$token = $this->userTokenService->generateToken();
+
+		$this->userTokenService->insertToken($UID, $token, TokenPurposes::AUTOLOGIN);
+
+		$this->cookie->createCookie(
+			self::COOKIE_NAME_AUTO_LOGIN,
+			$token,
+			new DateTime(self::AUTOLOGIN_EXPIRE)
+		);
 	}
 
 	/**

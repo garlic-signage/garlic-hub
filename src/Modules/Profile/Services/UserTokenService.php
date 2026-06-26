@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace App\Modules\Profile\Services;
 
 use App\Framework\Core\Crypt;
+use App\Framework\Exceptions\ModuleException;
 use App\Framework\Services\AbstractBaseService;
 use App\Modules\Profile\Entities\TokenPurposes;
 use App\Modules\Users\Repositories\Edge\UserTokensRepository;
@@ -35,8 +36,9 @@ use Psr\Log\LoggerInterface;
  */
 class UserTokenService extends AbstractBaseService
 {
-	private const string TOKEN_EXP_HOURS_PWD_INIT = '24';
-	private const string TOKEN_EXPIRATION_HOURS = '2';
+	public const string AUTOLOGIN_EXPIRE = '+28 days';
+	public const string TOKEN_EXP_HOURS_PWD_INIT = '+24 hours';
+	public const string TOKEN_EXPIRATION_HOURS = '+2 hours';
 	private readonly UserTokensRepository $userTokensRepository;
 	private readonly Crypt $crypt;
 
@@ -50,12 +52,11 @@ class UserTokenService extends AbstractBaseService
 	/**
 	 * @return array{"UID":int, "company_id":int, "username":string, "status":int, "purpose":string}|null
 	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public function findByTokenForAction(string $token): ?array
 	{
-		$token = @hex2bin($token);
-		if ($token === false)
-			return null;
+		$token = $this->crypt->createHmacSha256($token);
 
 		$token =  $this->userTokensRepository->findFirstByToken($token);
 		if ($token === [])
@@ -65,16 +66,14 @@ class UserTokenService extends AbstractBaseService
 		return $token;
 	}
 
-
 	/**
 	 * @return array{"UID":int, "company_id":int, "username":string, "status":int, "purpose":string}|null
 	 * @throws DateMalformedStringException|Exception
+	 * @throws \Exception
 	 */
 	public function findByToken(string $token): ?array
 	{
-		$token = @hex2bin($token);
-		if ($token === false)
-			return null;
+		$token = $this->crypt->createHmacSha256($token);
 
 		$result = $this->userTokensRepository->findFirstByToken($token);
 		$now = new DateTime();
@@ -94,71 +93,99 @@ class UserTokenService extends AbstractBaseService
 	 * @return list<array{token:string, UID: int, purpose: string, expires_at: string, used_at:string|null}>|array<empty,empty>
 	 * @throws Exception
 	 */
-	public function findTokenByUID(int $UID): array
+	public function findTokensByUID(int $UID): array
 	{
 		return $this->userTokensRepository->findValidByUID($UID);
 	}
 
 	/**
+	 * @throws \Exception
+	 */
+	public function generateToken(): string
+	{
+		return $this->crypt->generateRandomBytes();
+	}
+
+		/**
 	 * @throws Exception
 	 * @throws \Exception
 	 */
-	public function insertToken(int $UID, TokenPurposes $purpose): string
+	public function insertToken(int $UID, string $token, TokenPurposes $purpose): string
 	{
-		if ($purpose === TokenPurposes::INITIAL_PASSWORD)
-			$expiresAt = date('Y-m-d H:i:s', strtotime('+'.self::TOKEN_EXP_HOURS_PWD_INIT.' hour'));
-		else
-			$expiresAt = date('Y-m-d H:i:s', strtotime('+'.self::TOKEN_EXPIRATION_HOURS.' hour'));
-
-
 		$token = [
-			'UID' => $UID,
-			'purpose' => $purpose->value,
-			'token' => $this->crypt->generateRandomBytes(),
-			'expires_at' => $expiresAt
+			'UID'        => $UID,
+			'purpose'    => $purpose->value,
+			'token'      => $this->crypt->createHmacSha256($token),
+			'expires_at' => $this->determineExpireAtByPurpose($purpose)
 		];
 		return (string) $this->userTokensRepository->insert($token);
 	}
 
 	/**
 	 * @throws Exception
+	 * @throws \Exception
 	 */
-	public function deleteToken(string $token): int
+	public function deleteToken(int $UID,  string $purposeAsString): int
 	{
-		$token = @hex2bin($token);
-		if ($token === false)
+		$purpose = TokenPurposes::tryFrom($purposeAsString);
+		if ($purpose === null)
 			return 0;
 
-		return $this->userTokensRepository->delete($token);
+		return $this->userTokensRepository->deleteBy(['UID' => $UID, 'purpose' => $purpose->value]);
 	}
 
 	/**
 	 * @throws Exception
 	 */
-	public function refreshToken(string $token, string $purpose): int
+	public function deleteTokenByUID(int $UID): int
 	{
-		$token = @hex2bin($token);
-		if ($token === false || $purpose === '')
-			return 0;
+		return $this->userTokensRepository->deleteBy(['UID' => $UID]);
+	}
 
-		if ($purpose === TokenPurposes::INITIAL_PASSWORD->value)
-			$expiresAt = date('Y-m-d H:i:s', strtotime('+'.self::TOKEN_EXP_HOURS_PWD_INIT.' hour'));
-		else
-			$expiresAt = date('Y-m-d H:i:s', strtotime('+'.self::TOKEN_EXPIRATION_HOURS.' hour'));
 
-		return $this->userTokensRepository->refresh($token, $expiresAt);
+	/**
+	 * @throws Exception
+	 * @throws \Exception
+	 */
+	public function refreshToken(int $UID, string $purposeAsString): string
+	{
+		$purpose = TokenPurposes::tryFrom($purposeAsString);
+		if ($purpose === null)
+			return '';
+
+		$token = $this->crypt->generateRandomBytes();
+
+		$fields = [
+			'token'      => $this->crypt->createHmacSha256($token),
+			'expires_at' => $this->determineExpireAtByPurpose($purpose),
+			'used_at'    => null
+		];
+
+		if ($this->userTokensRepository->refresh($fields, $UID, $purpose) === 0)
+			return '';
+
+		return $token;
 	}
 
 	/**
 	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public function useToken(string $token): int
 	{
-		$token = @hex2bin($token);
-		if ($token === false)
-			return 0;
+		$token = $this->crypt->createHmacSha256($token);
 
 		return $this->userTokensRepository->update($token, ['used_at' => date('Y-m-d H:i:s')]);
+	}
+
+	private function determineExpireAtByPurpose(TokenPurposes $purpose): string
+	{
+		return match ($purpose)
+		{
+			TokenPurposes::INITIAL_PASSWORD => date('Y-m-d H:i:s', strtotime(self::TOKEN_EXP_HOURS_PWD_INIT)),
+			TokenPurposes::AUTOLOGIN        => date('Y-m-d H:i:s', strtotime(self::AUTOLOGIN_EXPIRE)),
+			default                         => date('Y-m-d H:i:s', strtotime(self::TOKEN_EXPIRATION_HOURS)),
+		};
 	}
 
 }

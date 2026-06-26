@@ -110,7 +110,7 @@ class UsersAdminServiceTest extends TestCase
 			->with($UID)
 			->willReturn($userData);
 
-		$this->userTokenServiceMock->expects($this->once())->method('findTokenByUID')
+		$this->userTokenServiceMock->expects($this->once())->method('findTokensByUID')
 			->with($UID)
 			->willReturn($tokens);
 
@@ -352,7 +352,7 @@ class UsersAdminServiceTest extends TestCase
 		$UID = 123;
 		$existingTokens = [['token' => 'existing_token', 'purpose' => 'password_reset']];
 
-		$this->userTokenServiceMock->expects($this->once())->method('findTokenByUID')
+		$this->userTokenServiceMock->expects($this->once())->method('findTokensByUID')
 			->with($UID)
 			->willReturn($existingTokens);
 
@@ -369,7 +369,7 @@ class UsersAdminServiceTest extends TestCase
 	{
 		$UID = 123;
 
-		$this->userTokenServiceMock->expects($this->once())->method('findTokenByUID')
+		$this->userTokenServiceMock->expects($this->once())->method('findTokensByUID')
 			->with($UID)
 			->willReturn([]);
 
@@ -394,7 +394,7 @@ class UsersAdminServiceTest extends TestCase
 	{
 		$UID = 123;
 
-		$this->userTokenServiceMock->expects($this->once())->method('findTokenByUID')
+		$this->userTokenServiceMock->expects($this->once())->method('findTokensByUID')
 			->with($UID)
 			->willReturn([]);
 
@@ -426,7 +426,7 @@ class UsersAdminServiceTest extends TestCase
 		$UID = 123;
 		$tokenId = 'new_token_id';
 
-		$this->userTokenServiceMock->expects($this->once())->method('findTokenByUID')
+		$this->userTokenServiceMock->expects($this->once())->method('findTokensByUID')
 			->with($UID)
 			->willReturn([]);
 
@@ -455,7 +455,7 @@ class UsersAdminServiceTest extends TestCase
 	{
 		$UID = 123;
 
-		$this->userTokenServiceMock->expects($this->once())->method('findTokenByUID')
+		$this->userTokenServiceMock->expects($this->once())->method('findTokensByUID')
 			->with($UID)
 			->willReturn([]);
 

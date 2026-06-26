@@ -21,11 +21,13 @@ import {TokensActions} from "./tokens/TokensActions.js";
 import {TokensView}    from "./tokens/TokensView.js";
 import {TokensService} from "./tokens/TokensService.js";
 import {FetchClient}   from "../../core/FetchClient.js";
+import {FlashMessageHandler} from "../../core/FlashMessageHandler.js";
 
 document.addEventListener("DOMContentLoaded", function()
 {
 	const tokens = new TokensActions(
 		new TokensView(),
+		new FlashMessageHandler(),
 		new TokensService(new FetchClient())
 	);
 	tokens.initActions();

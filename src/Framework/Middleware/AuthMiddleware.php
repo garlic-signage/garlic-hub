@@ -96,8 +96,8 @@ class AuthMiddleware implements MiddlewareInterface
 				return $this->respondNonAuth($matches[1], $request, $handler);
 
 			$userEntity = null;
-		//	if ($cookie->hasCookie(AuthService::COOKIE_NAME_AUTO_LOGIN))
-		//		$userEntity = $this->authService->loginByCookie();
+			if ($cookie->hasCookie(AuthService::COOKIE_NAME_AUTO_LOGIN))
+				$userEntity = $this->authService->loginByCookie();
 
 			if ($userEntity === null)
 				return $this->respondNonAuth($matches[1], $request, $handler);

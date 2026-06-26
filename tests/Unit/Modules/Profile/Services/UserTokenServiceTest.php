@@ -70,7 +70,7 @@ class UserTokenServiceTest extends TestCase
 			->with($UID)
 			->willReturn($resultData);
 
-		$result = $this->userTokenService->findTokenByUID($UID);
+		$result = $this->userTokenService->findTokensByUID($UID);
 		self::assertSame($resultData, $result);
 	}
 
@@ -270,7 +270,7 @@ class UserTokenServiceTest extends TestCase
 			->with($UID)
 			->willReturn([]);
 
-		$result = $this->userTokenService->findTokenByUID($UID);
+		$result = $this->userTokenService->findTokensByUID($UID);
 		self::assertSame([], $result);
 	}
 
@@ -285,10 +285,11 @@ class UserTokenServiceTest extends TestCase
 		$purpose = TokenPurposes::INITIAL_PASSWORD;
 		$expectedExpiration = date('Y-m-d H:i:s', strtotime('+24 hour'));
 		$generatedToken = 'randomTokenData';
+		$token          = 'someToken';
 		$insertedId = '123';
 
 		$this->cryptMock->expects($this->once())
-			->method('generateRandomBytes')
+			->method('createHmacSha256')
 			->willReturn($generatedToken);
 
 		$this->userTokensRepositoryMock->expects($this->once())
@@ -301,7 +302,7 @@ class UserTokenServiceTest extends TestCase
 			])
 			->willReturn($insertedId);
 
-		$result = $this->userTokenService->insertToken($UID, $purpose);
+		$result = $this->userTokenService->insertToken($UID, $token, $purpose);
 
 		self::assertSame($insertedId, $result);
 	}
@@ -316,10 +317,11 @@ class UserTokenServiceTest extends TestCase
 		$purpose = TokenPurposes::EMAIL_VERIFICATION;
 		$expectedExpiration = date('Y-m-d H:i:s', strtotime('+2 hour'));
 		$generatedToken = 'randomVerificationToken';
+		$token          = 'someToken';
 		$insertedId = '456';
 
 		$this->cryptMock->expects($this->once())
-			->method('generateRandomBytes')
+			->method('createHmacSha256')
 			->willReturn($generatedToken);
 
 		$this->userTokensRepositoryMock->expects($this->once())
@@ -332,7 +334,7 @@ class UserTokenServiceTest extends TestCase
 			])
 			->willReturn($insertedId);
 
-		$result = $this->userTokenService->insertToken($UID, $purpose);
+		$result = $this->userTokenService->insertToken($UID, $token, $purpose);
 
 		self::assertSame($insertedId, $result);
 	}

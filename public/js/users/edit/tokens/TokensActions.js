@@ -19,11 +19,13 @@
 export class TokensActions
 {
 	#tokenService;
+	#flashMessageHandler;
 	#tokenView;
 
-	constructor(tokenView, tokenService)
+	constructor(tokenView, flashMessageHandler, tokenService)
 	{
 		this.#tokenService = tokenService;
+		this.#flashMessageHandler = flashMessageHandler;
 		this.#tokenView = tokenView;
 	}
 
@@ -63,10 +65,15 @@ export class TokensActions
 		{
 			this.#tokenView.deleteToken[i].addEventListener('click', async () =>
 			{
-				const id = this.#tokenView.deleteToken[i].dataset.id;
-				const result = await this.#tokenService.delete(id);
+				const result = await this.#tokenService.delete(
+					this.#tokenView.getUIDValue(),
+					this.#tokenView.deleteToken[i].dataset.id
+				);
 				if (result.success)
 					location.reload();
+				else
+					this.#flashMessageHandler.showError(result.error_message);
+
 			});
 		}
 	}
@@ -77,10 +84,12 @@ export class TokensActions
 		{
 			this.#tokenView.refreshToken[i].addEventListener('click', async () =>
 			{
-				const id = this.#tokenView.refreshToken[i].dataset.id;
-				const result = await this.#tokenService.refresh(id);
+				const purpose = this.#tokenView.refreshToken[i].dataset.id;
+				const result = await this.#tokenService.refresh(this.#tokenView.getUIDValue(), purpose);
 				if (result.success)
-					location.reload();
+					this.#tokenView.buildVerificationLink(purpose, result.token)
+				else
+					this.#flashMessageHandler.showError(result.error_message);
 			});
 		}
 	}

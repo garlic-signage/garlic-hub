@@ -204,7 +204,7 @@ class FormElementsCreatorTest extends TestCase
 
 		$this->translatorMock->expects($this->exactly(4))->method('translate')
 			->willReturnMap([
-				['verification_link', 'profile', [], 'Verification link for %s, expiring at %s.'],
+				['verification_link', 'profile', [], 'Verifications link for %s expires at %s. Please copy it now, as it will only be displayed once.'],
 				['copy_to_clipboard', 'main', [], 'Copy to clipboard'],
 				['remove', 'main', [], 'Remove'],
 				['refresh', 'main', [], 'Refresh']

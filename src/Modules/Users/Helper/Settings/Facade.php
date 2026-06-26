@@ -26,6 +26,7 @@ use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Modules\Profile\Entities\TokenPurposes;
 use App\Modules\Users\Services\UsersAdminService;
 use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
@@ -41,6 +42,7 @@ class Facade
 	private readonly Builder $settingsFormBuilder;
 	private readonly UsersAdminService $usersAdminService;
 	private readonly Parameters $settingsParameters;
+	private Session $session;
 	/** @var array{UID: int,
 	 * company_id: int,
 	 * status: int,
@@ -66,6 +68,7 @@ class Facade
 		$this->settingsFormBuilder->init($session);
 		/** @var array{UID: int, username: string} $user */
 		$user = $session->get('user');
+		$this->session = $session;
 		$this->usersAdminService->setUID($user['UID']);
 	}
 
@@ -137,7 +140,11 @@ class Facade
 		if ($UID > 0)
 			$id = $this->usersAdminService->updateUser($UID, $saveData);
 		else
+		{
 			$id = $this->usersAdminService->insertNewUser($saveData);
+			$purpose = TokenPurposes::INITIAL_PASSWORD->value.'_token';
+			$this->session->set($purpose, bin2hex($this->usersAdminService->getToken())); // Todo: Eliminate this workaround with a better process
+		}
 
 		return $id;
 	}
@@ -147,7 +154,9 @@ class Facade
 	 */
 	public function createPasswordResetToken(int $UID): string
 	{
-		return $this->usersAdminService->createPasswordResetToken($UID);
+		$token = $this->usersAdminService->createPasswordResetToken($UID);
+		$this->session->set(TokenPurposes::PASSWORD_RESET->value.'_token', bin2hex($token)); // Todo: Eliminate this workaround with a better process
+		return $token;
 	}
 
 	/**
@@ -203,7 +212,7 @@ class Facade
 		$name = $this->oldUser['username'] ?? $this->translator->translate('add', 'users');
 
 		$title = $this->translator->translate('core_data', 'users'). ': ' .$name;
-		$dataSections                      = $this->settingsFormBuilder->buildForm($post);
+		$dataSections                      = $this->settingsFormBuilder->buildForm($post, $this->session);
 		$dataSections['title']             = $title;
 		$dataSections['additional_css']    = ['/css/users/edit.css'];
 		$dataSections['footer_modules']    = ['/js/users/edit/init.js'];

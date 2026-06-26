@@ -24,7 +24,6 @@ namespace App\Modules\Users\Controller;
 use App\Framework\Controller\AbstractAsyncController;
 use App\Framework\Core\CsrfToken;
 use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Profile\Services\UserTokenService;
@@ -54,7 +53,6 @@ class UserTokenController extends AbstractAsyncController
 	 * @return ResponseInterface
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws FrameworkException
 	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
@@ -69,7 +67,6 @@ class UserTokenController extends AbstractAsyncController
 	 * @return ResponseInterface
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws FrameworkException
 	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
@@ -85,7 +82,6 @@ class UserTokenController extends AbstractAsyncController
 	 * @return ResponseInterface
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws FrameworkException
 	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
@@ -97,26 +93,33 @@ class UserTokenController extends AbstractAsyncController
 		if (!$this->csrfToken->validateToken($post['csrf_token'] ?? ''))
 			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Csrf token mismatch.']);
 
-		$token = $post['token'] ?? '';
-		if ($token === '')
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Token not transmitted.']);
-
-		$userToken = $this->userService->findByTokenForAction($token);
-		if ($userToken === null)
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Token not exists.']);
-
-		if (!$this->aclValidator->isAdmin($this->userSession->getUID(), $userToken))
+		if (!$this->aclValidator->isModuleAdmin($this->userSession->getUID()))
 			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'No rights to handle tokens.']);
 
-		$errorMessage = 'Token not editable.';
-		if ($action === 'refreshToken')
-			$result = $this->userService->refreshToken($token, $userToken['purpose']);
-		 else
-			$result = $this->userService->deleteToken($token);
+		$UID = $post['UID'] ?? '';
+		if ($UID === '')
+			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'UID not transmitted.']);
 
+		$purpose = htmlspecialchars($post['purpose'] ?? '', ENT_QUOTES);
+		if ($purpose === '')
+			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Purpose not transmitted.']);
+
+		$errorMessage = 'Token not editable.';
+
+		if ($action === 'refreshToken')
+		{
+			$token = $this->userService->refreshToken((int) $UID, $purpose);
+			if ($token === '')
+				return $this->jsonResponse($response, ['success' => false, 'error_message' => $errorMessage]);
+
+			return $this->jsonResponse($response, ['success' => true, 'token' => bin2hex($token)]);
+		}
+
+		$result = $this->userService->deleteToken((int) $UID, $purpose);
 		if ($result === 0)
 			return $this->jsonResponse($response, ['success' => false, 'error_message' => $errorMessage]);
 
 		return $this->jsonResponse($response, ['success' => true]);
+
 	}
 }

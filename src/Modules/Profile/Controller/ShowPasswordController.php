@@ -81,7 +81,7 @@ class ShowPasswordController
 	public function showForcedPasswordForm(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
 		$queryParams = $request->getQueryParams();
-		$passwordToken = $queryParams['token'] ?? '';
+		$passwordToken = hex2bin($queryParams['token']) ?? '';
 		$this->flash      = $request->getAttribute('flash');
 		$this->translator = $request->getAttribute('translator');
 		if ($passwordToken === '')

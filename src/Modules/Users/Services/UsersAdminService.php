@@ -44,7 +44,7 @@ class UsersAdminService extends AbstractBaseService
 	private readonly NodesService $nodesService;
 	private readonly UserTokenService $userTokenService;
 	private readonly AclValidator $aclValidator;
-
+	private string $token = '';
 
 	public function __construct(UserMainRepository $userMainRepository, NodesService $nodesService, UserTokenService $userTokenService,AclValidator $aclValidator, Transactions $transactions, LoggerInterface $logger)
 	{
@@ -56,6 +56,12 @@ class UsersAdminService extends AbstractBaseService
 
 		parent::__construct($logger);
 	}
+
+	public function getToken(): string
+	{
+		return $this->token;
+	}
+
 
 	/**
 	 * @return array{UID: int,
@@ -85,7 +91,7 @@ class UsersAdminService extends AbstractBaseService
 	 */
 	public function loadUserTokensForAdminEdit(int $UID): array
 	{
-		return $this->userTokenService->findTokenByUID($UID);
+		return $this->userTokenService->findTokensByUID($UID);
 	}
 
 	/**
@@ -107,7 +113,8 @@ class UsersAdminService extends AbstractBaseService
 			if ($UID === 0)
 				throw new ModuleException('users', 'Insert failed.');
 
-			$this->userTokenService->insertToken($UID, TokenPurposes::INITIAL_PASSWORD);
+			$this->token = $this->userTokenService->generateToken();
+			$this->userTokenService->insertToken($UID, $this->token, TokenPurposes::INITIAL_PASSWORD);
 
 			$this->nodesService->UID = $this->UID;
 			$nodeId = $this->nodesService->addUserDirectory($UID, $saveData['username']);
@@ -144,6 +151,8 @@ class UsersAdminService extends AbstractBaseService
 			if ($this->userMainRepository->delete($UID) === 0)
 				throw new ModuleException('users', 'Remove the user from db-table failed.');
 
+			$this->userTokenService->deleteTokenByUID($UID);
+
 			$this->nodesService->UID = $this->UID;
 			$this->nodesService->deleteUserDirectory($UID);
 
@@ -165,7 +174,7 @@ class UsersAdminService extends AbstractBaseService
 	public function createPasswordResetToken(int $UID): string
 	{
 		// check first if there is another valid token
-		$tokens = $this->userTokenService->findTokenByUID($UID);
+		$tokens = $this->userTokenService->findTokensByUID($UID);
 		if ($tokens !== [])
 		{
 			$this->addErrorMessage('tokens_exists');
@@ -177,7 +186,8 @@ class UsersAdminService extends AbstractBaseService
 			if($this->userMainRepository->update($UID, ['password' => '']) === 0)
 				throw new ModuleException('users', 'Password reset failed.');
 
-			$id = $this->userTokenService->insertToken($UID, TokenPurposes::PASSWORD_RESET);
+			$token = $this->userTokenService->generateToken();
+			$id = $this->userTokenService->insertToken($UID,  $token,TokenPurposes::PASSWORD_RESET);
 			if($id === '')
 				throw new ModuleException('users', 'Password reset failed.');
 
@@ -190,7 +200,7 @@ class UsersAdminService extends AbstractBaseService
 			$this->addErrorMessage('password_reset_failed');
 			return '';
 		}
-		return $id;
+		return $token;
 	}
 
 	/**

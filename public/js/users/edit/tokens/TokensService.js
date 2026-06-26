@@ -22,20 +22,22 @@ import {UsersApiConfig} from "../../UsersApiConfig.js";
 export class TokensService extends BaseService
 {
 
-	async delete(token)
+	async delete(UID, purpose)
 	{
 		const url = UsersApiConfig.USER_TOKENS_BASE_URI;
 		const data = {
-			token: token
+			"UID": UID,
+			"purpose": purpose
 		};
 		return await this._sendRequest(url, "DELETE", data);
 	}
 
-	async refresh(token)
+	async refresh(UID, purpose)
 	{
 		const url = UsersApiConfig.USER_TOKENS_BASE_URI;
 		const data = {
-			token: token
+			"UID": UID,
+			"purpose": purpose
 		};
 		return await this._sendRequest(url, "POST", data);
 	}

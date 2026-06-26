@@ -57,17 +57,7 @@ class Cookie
 
 		return $_COOKIE[$cookieName];
 	}
-
-	/**
-	 * @param array<string,string> $contents
-	 * @throws FrameworkException
-	 */
-	public function createHashedCookie(string $name, array $contents, DateTime $expire): void
-	{
-		$content = $this->hashContent($contents);
-		$this->createCookie($name, $content, $expire);
-	}
-
+	
 	/**
 	 * @throws FrameworkException
 	 */
@@ -91,17 +81,6 @@ class Cookie
 		return array_key_exists($name, $_COOKIE);
 	}
 
-
-	/**
-	 * @param array<string,string> $payload
-	 */
-	private function hashContent(array $payload): string
-	{
-		$content  = serialize($payload);
-		$checksum = $this->crypt->createSha256Hash($content);
-		return serialize([$content, $checksum]);
-	}
-
 	/**
 	 * @return array<string,string>
 	 * @throws  FrameworkException
@@ -114,8 +93,8 @@ class Cookie
 
 		[$content, $checksum] = $data;
 
-		if (!hash_equals($checksum, $this->crypt->createSha256Hash($content)))
-			throw new FrameworkException('Possible cookie manipulation detected. Checksum does of ' . $checksum . ' does not match');
+		if (!$this->crypt->verifyHmacSha256($content, $checksum))
+			throw new FrameworkException('Possible cookie manipulation detected.');
 
 		$ret =  @unserialize($content);
 		if ($ret === false)

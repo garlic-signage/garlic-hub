@@ -21,10 +21,17 @@ export class TokensView
 	#copyVerificationLink = document.getElementsByClassName("copy-verification-link");
 	#deleteToken          = document.getElementsByClassName("delete-verification-link");
 	#refreshToken         = document.getElementsByClassName("refresh-verification-link");
+	#UID                  = document.getElementById("UID");
 
 	get copyVerificationLink()
 	{
 		return this.#copyVerificationLink;
+	}
+
+	buildVerificationLink(id, token)
+	{
+		const el = document.getElementById(id);
+		el.value = el.value.replace(/token=[^&]*/, 'token=' + token);
 	}
 
 	get deleteToken()
@@ -35,5 +42,10 @@ export class TokensView
 	get refreshToken()
 	{
 		return this.#refreshToken;
+	}
+
+	getUIDValue()
+	{
+		return this.#UID.value;
 	}
 }

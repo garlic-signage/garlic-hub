@@ -64,7 +64,7 @@ class CookieTest extends TestCase
 
 		$this->expectOutputRegex('/.*/'); // Prevent PHP warnings from setcookie()
 
-		$this->cookie->createHashedCookie('test_cookie', $contents, $expire);
+		$this->cookie->issueTokenCookie('test_cookie', $contents, $expire);
 	}
 
 	#[Group('units')]
