@@ -100,16 +100,14 @@ class BodyPreparerTest extends TestCase
 	public function testFormatActionWithValidParameters(): void
 	{
 		$lang = 'en';
-		$link = 'https://example.com/action';
 		$id   = 'action_id';
 		$name = 'Example Action';
 		$cssClass = 'icon-class';
 
-		$result = $this->bodyPreparer->formatAction($lang, $link, $name, $id, $cssClass);
+		$result = $this->bodyPreparer->formatAction($lang, $name, $id, $cssClass);
 
 		static::assertEquals([
 			'LANG_ACTION' => 'en',
-			'LINK_ACTION' => 'https://example.com/action',
 			'ACTION_ID'   => 'action_id',
 			'ACTION_NAME' => 'Example Action',
 			'ACTION_ICON_CLASS' => 'icon-class',
@@ -120,16 +118,14 @@ class BodyPreparerTest extends TestCase
 	public function testFormatActionWithEmptyParameters(): void
 	{
 		$lang = '';
-		$link = '';
 		$id   = '';
 		$name = '';
 		$cssClass = '';
 
-		$result = $this->bodyPreparer->formatAction($lang, $link, $name, $id, $cssClass);
+		$result = $this->bodyPreparer->formatAction($lang,  $name, $id, $cssClass);
 
 		static::assertEquals([
 			'LANG_ACTION' => '',
-			'LINK_ACTION' => '',
 			'ACTION_ID'   => '',
 			'ACTION_NAME' => '',
 			'ACTION_ICON_CLASS' => '',
@@ -140,21 +136,80 @@ class BodyPreparerTest extends TestCase
 	public function testFormatActionWithSpecialCharacters(): void
 	{
 		$lang = '!lang123';
-		$link = 'https://example.com?action=1&data=special';
 		$id   = 'action_id';
 		$name = 'Name@Action!';
 		$cssClass = '.icon#special';
 
-		$result = $this->bodyPreparer->formatAction($lang, $link, $name, $id, $cssClass);
+		$result = $this->bodyPreparer->formatAction($lang, $name, $id, $cssClass);
 
 		static::assertEquals([
 			'LANG_ACTION' => '!lang123',
-			'LINK_ACTION' => 'https://example.com?action=1&data=special',
 			'ACTION_ID'   => 'action_id',
 			'ACTION_NAME' => 'Name@Action!',
 			'ACTION_ICON_CLASS' => '.icon#special',
 		], $result);
 	}
+
+	#[Group('units')]
+	public function testFormatActionLinkWithValidParameters(): void
+	{
+		$lang = 'en';
+		$link = 'https://example.com/action';
+		$id   = 'action_id';
+		$name = 'Example Action';
+		$cssClass = 'icon-class';
+
+		$result = $this->bodyPreparer->formatActionLink($lang, $link, $name, $id, $cssClass);
+
+		static::assertEquals([
+			'LANG_LINK_ACTION' => 'en',
+			'LINK_ACTION' => 'https://example.com/action',
+			'LINK_ACTION_ID'   => 'action_id',
+			'LINK_ACTION_NAME' => 'Example Action',
+			'LINK_ACTION_ICON_CLASS' => 'icon-class',
+		], $result);
+	}
+
+	#[Group('units')]
+	public function testFormatActionLinkWithEmptyParameters(): void
+	{
+		$lang = '';
+		$link = '';
+		$id   = '';
+		$name = '';
+		$cssClass = '';
+
+		$result = $this->bodyPreparer->formatActionLink($lang, $link, $name, $id, $cssClass);
+
+		static::assertEquals([
+			'LANG_LINK_ACTION' => '',
+			'LINK_ACTION' => '',
+			'LINK_ACTION_ID'   => '',
+			'LINK_ACTION_NAME' => '',
+			'LINK_ACTION_ICON_CLASS' => '',
+		], $result);
+	}
+
+	#[Group('units')]
+	public function testFormatActionLinkWithSpecialCharacters(): void
+	{
+		$lang = '!lang123';
+		$link = 'https://example.com?action=1&data=special';
+		$id   = 'action_id';
+		$name = 'Name@Action!';
+		$cssClass = '.icon#special';
+
+		$result = $this->bodyPreparer->formatActionLink($lang, $link, $name, $id, $cssClass);
+
+		static::assertEquals([
+			'LANG_LINK_ACTION' => '!lang123',
+			'LINK_ACTION' => 'https://example.com?action=1&data=special',
+			'LINK_ACTION_ID'   => 'action_id',
+			'LINK_ACTION_NAME' => 'Name@Action!',
+			'LINK_ACTION_ICON_CLASS' => '.icon#special',
+		], $result);
+	}
+
 
 	public function testFormatTextWithEmptyString(): void
 	{
@@ -313,6 +368,73 @@ class BodyPreparerTest extends TestCase
 	}
 
 	#[Group('units')]
+	public function testFormatButtonWithValidParameters(): void
+	{
+		$value = 'Submit';
+		$title = 'Submit Form';
+		$valueId = 'btn123';
+		$cssClass = 'btn-class';
+
+		$result = $this->bodyPreparer->formatButton($value, $title, $valueId, $cssClass);
+
+		static::assertEquals([
+			'CONTROL_BUTTON_VALUE' => 'Submit',
+			'CONTROL_BUTTON_TITLE' => 'Submit Form',
+			'CONTROL_BUTTON_ID' => 'btn123',
+			'CONTROL_BUTTON_CLASS' => 'btn-class',
+		], $result);
+	}
+
+	#[Group('units')]
+	public function testFormatButtonWithoutCssClass(): void
+	{
+		$value = 'Submit';
+		$title = 'Submit Form';
+		$valueId = 'btn123';
+
+		$result = $this->bodyPreparer->formatButton($value, $title, $valueId);
+
+		static::assertEquals([
+			'CONTROL_BUTTON_VALUE' => 'Submit',
+			'CONTROL_BUTTON_TITLE' => 'Submit Form',
+			'CONTROL_BUTTON_ID' => 'btn123',
+			'CONTROL_BUTTON_CLASS' => '',
+		], $result);
+	}
+
+	#[Group('units')]
+	public function testFormatButtonWithEmptyParameters(): void
+	{
+		$result = $this->bodyPreparer->formatButton('', '', '');
+
+		static::assertEquals([
+			'CONTROL_BUTTON_VALUE' => '',
+			'CONTROL_BUTTON_TITLE' => '',
+			'CONTROL_BUTTON_ID' => '',
+			'CONTROL_BUTTON_CLASS' => '',
+		], $result);
+	}
+
+	#[Group('units')]
+	public function testFormatButtonWithSpecialCharacters(): void
+	{
+		$value = '!@#$%^';
+		$title = 'Special & Title';
+		$valueId = 'btn-456@id';
+		$cssClass = '.btn-class#special';
+
+		$result = $this->bodyPreparer->formatButton($value, $title, $valueId, $cssClass);
+
+		static::assertEquals([
+			'CONTROL_BUTTON_VALUE' => '!@#$%^',
+			'CONTROL_BUTTON_TITLE' => 'Special & Title',
+			'CONTROL_BUTTON_ID' => 'btn-456@id',
+			'CONTROL_BUTTON_CLASS' => '.btn-class#special',
+		], $result);
+	}
+
+
+	#[Group('units')]
 	public function testFormatActionDeleteWithValidParameters(): void
 	{
 		$lang = 'delete';
@@ -407,4 +529,5 @@ class BodyPreparerTest extends TestCase
 			'ICON_TITLE' => 'Special@Icon!',
 		], $result);
 	}
+
 }

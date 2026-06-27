@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection ALL */
 /*
  garlic-hub: Digital Signage Management Platform
 
@@ -111,7 +111,7 @@ class BodyPreparer
 	}
 
 	/**
-	 * @return array{LANG_ACTION: string, LINK_ACTION: string, ACTION_ID: string|int, ACTION_NAME: string}
+	 * @return array{LANG_ACTION: string, ACTION_ID: string|int, ACTION_NAME: string}
 	 */
 	public function formatAction(string $lang, string $name, string|int $id, string $cssClass): array
 	{
@@ -124,13 +124,17 @@ class BodyPreparer
 	}
 
 	/**
-	 * @return array{LANG_ACTION: string, LINK_ACTION: string, ACTION_ID: string|int, ACTION_NAME: string}
+	 * @return array{LANG_LINK_ACTION: string,
+	 *      LINK_ACTION: string,
+	 *     LINK_ACTION_ID: string|int,
+	 *     LINK_ACTION_NAME: string,
+	 *     LINK_ACTION_ICON_CLASS: string}
 	 */
 	public function formatActionLink(string $lang, string $link, string $name, string|int $id, string $cssClass): array
 	{
 		return 	[
 			'LANG_LINK_ACTION'       => $lang,
-			'LINK_ACTION'       => $link,
+			'LINK_ACTION'            => $link,
 			'LINK_ACTION_ID'         => $id,
 			'LINK_ACTION_NAME'       => $name,
 			'LINK_ACTION_ICON_CLASS' => $cssClass
