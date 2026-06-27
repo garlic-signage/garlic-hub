@@ -26,6 +26,7 @@ use App\Framework\Core\Session;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Middleware\AuthMiddleware;
 use App\Modules\Auth\AuthService;
+use App\Modules\Auth\AutoLoginService;
 use App\Modules\Profile\Entities\UserEntity;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
@@ -245,7 +246,7 @@ class AuthMiddlewareTest extends TestCase
 
 		$userEntityMock = $this->createMock(UserEntity::class);
 		$this->authServiceMock->method('loginByCookie')->willReturn($userEntityMock);
-		$this->cookieMock->method('hasCookie')->with(AuthService::COOKIE_NAME_AUTO_LOGIN)->willReturn(true);
+		$this->cookieMock->method('hasCookie')->with(AutoLoginService::COOKIE_NAME_AUTO_LOGIN)->willReturn(true);
 		$userEntityMock->method('getMain')->willReturn(['UID' => 1, 'locale' => 'en']);
 
 		$this->sessionMock->expects($this->exactly(2))->method('set');
@@ -284,7 +285,7 @@ class AuthMiddlewareTest extends TestCase
 
 		$userEntityMock = $this->createMock(UserEntity::class);
 		$this->authServiceMock->method('loginByCookie')->willReturn($userEntityMock);
-		$this->cookieMock->method('hasCookie')->with(AuthService::COOKIE_NAME_AUTO_LOGIN)->willReturn(true);
+		$this->cookieMock->method('hasCookie')->with(AutoLoginService::COOKIE_NAME_AUTO_LOGIN)->willReturn(true);
 		$userEntityMock->method('getMain')->willReturn(['UID' => 1, 'locale' => 'en']);
 
 		$this->sessionMock->expects($this->exactly(2))->method('set');

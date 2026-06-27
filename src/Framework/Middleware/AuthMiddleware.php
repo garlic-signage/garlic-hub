@@ -76,6 +76,7 @@ class AuthMiddleware implements MiddlewareInterface
 	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws FrameworkException
 	 * @throws Exception
+	 * @throws \DateMalformedStringException
 	 */
 	public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
 	{
