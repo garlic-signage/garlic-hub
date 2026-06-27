@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace App\Modules\Profile\Services;
 
 use App\Framework\Core\Crypt;
-use App\Framework\Exceptions\ModuleException;
 use App\Framework\Services\AbstractBaseService;
 use App\Modules\Profile\Entities\TokenPurposes;
 use App\Modules\Users\Repositories\Edge\UserTokensRepository;
@@ -144,6 +143,7 @@ class UserTokenService extends AbstractBaseService
 
 	/**
 	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public function deleteByToken(string $token): int
 	{

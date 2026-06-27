@@ -26,6 +26,7 @@ use App\Framework\OAuth2\ClientsRepository;
 use App\Framework\OAuth2\ScopeRepository;
 use App\Framework\OAuth2\TokensRepository;
 use App\Modules\Auth\AuthService;
+use App\Modules\Auth\AutoLoginService;
 use App\Modules\Auth\LoginController;
 use App\Modules\Auth\OAuth2Controller;
 use App\Modules\Profile\Services\UserTokenService;
@@ -38,12 +39,19 @@ use Psr\Container\ContainerInterface;
 
 $dependencies = [];
 
+$dependencies[AutoLoginService::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new AutoLoginService(
+		$container->get(UserTokenService::class),
+		$container->get(Cookie::class),
+		$container->get('ModuleLogger')
+	);
+});
 $dependencies[AuthService::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new AuthService(
 		$container->get(UsersService::class),
-		$container->get(UserTokenService::class),
-		$container->get(Cookie::class),
+		$container->get(AutoLoginService::class),
 		$container->get('ModuleLogger')
 	);
 });

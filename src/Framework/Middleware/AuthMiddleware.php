@@ -25,6 +25,7 @@ use App\Framework\Core\Cookie;
 use App\Framework\Core\Session;
 use App\Framework\Exceptions\FrameworkException;
 use App\Modules\Auth\AuthService;
+use App\Modules\Auth\AutoLoginService;
 use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
@@ -96,7 +97,7 @@ class AuthMiddleware implements MiddlewareInterface
 				return $this->respondNonAuth($matches[1], $request, $handler);
 
 			$userEntity = null;
-			if ($cookie->hasCookie(AuthService::COOKIE_NAME_AUTO_LOGIN))
+			if ($cookie->hasCookie(AutoLoginService::COOKIE_NAME_AUTO_LOGIN))
 				$userEntity = $this->authService->loginByCookie();
 
 			if ($userEntity === null)

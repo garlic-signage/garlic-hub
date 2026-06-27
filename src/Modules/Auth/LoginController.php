@@ -121,13 +121,7 @@ readonly class LoginController
 
 		if (array_key_exists('autologin', $params))
 		{
-			$sessionId = $session->id();
-			if ($sessionId === false)
-			{
-				$flash->addMessage('error', 'No session id found');
-				return $this->redirect($response, '/login');
-			}
-			$this->authService->createAutologinCookie($main_data['UID']);
+			$this->authService->createAutologin($main_data['UID']);
 		}
 
 		if (!$session->exists('oauth_redirect_params'))
