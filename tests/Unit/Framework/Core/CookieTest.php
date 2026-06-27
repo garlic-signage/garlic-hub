@@ -22,14 +22,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Framework\Core;
 
 use App\Framework\Core\Cookie;
-use App\Framework\Core\Crypt;
 use App\Framework\Exceptions\FrameworkException;
 use DateTime;
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 #[Group('units')]
@@ -37,134 +34,100 @@ class CookieTest extends TestCase
 {
 	use PHPMock;
 	private Cookie $cookie;
-	private Crypt&MockObject $cryptMock;
 
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->cryptMock = $this->createMock(Crypt::class);
-		$this->cookie    = new Cookie($this->cryptMock);
+		$this->cookie    = new Cookie();
 	}
+
+	#[Group('units')]
+	public function testGetCookieExists(): void
+	{
+		$_COOKIE = ['test_cookie' => 'test_value'];
+		$result = $this->cookie->getCookie('test_cookie');
+		self::assertSame('test_value', $result);
+		$_COOKIE = [];
+	}
+
+	#[Group('units')]
+	public function testGetCookieDoesNotExist(): void
+	{
+		$_COOKIE = [];
+		$result = $this->cookie->getCookie('nonexistent_cookie');
+
+		self::assertNull($result);
+	}
+
 
 	/**
 	 * @throws FrameworkException
 	 */
-	#[Group('units')]
-	public function testCreateCookie(): void
+	#[RunInSeparateProcess] #[Group('units')]
+	public function testCreateCookieSuccess(): void
 	{
-		$this->cryptMock->expects($this->once())->method('createSha256Hash')->willReturn('mocked_hash');
-		$setcookie = $this->getFunctionMock('App\Framework\Core', 'setcookie');
-		$setcookie->expects($this->once())->willReturn(['content', 'checksum']);
+		$setcookieMock = $this->getFunctionMock('App\Framework\Core', 'setcookie');
+		$setcookieMock->expects($this->once())
+			->with('test_cookie', 'test_value', 2062965600, '/', '', false, true)
+			->willReturn(true);
 
-		$contents = ['UID' => '123', 'LSID' => 'test_session'];
-		$expire = new DateTime('+1 day');
-
-		$this->expectOutputRegex('/.*/'); // Prevent PHP warnings from setcookie()
-
-		$this->cookie->issueTokenCookie('test_cookie', $contents, $expire);
-	}
-
-	#[Group('units')]
-	public function testgetHashedCookieException(): void
-	{
-		$_COOKIE['test_cookie'] = false;
-		$this->expectException(FrameworkException::class);
-
-		$this->cookie->getHashedCookie('test_cookie');
-	}
-
-	/**
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testgetHashedCookieContentFalse(): void
-	{
-		$this->cryptMock->expects($this->once())->method('createSha256Hash')->willReturn(hash('sha256','mocked_hash'));
-
-		$_COOKIE['test_cookie'] = serialize(['content', hash('sha256','mocked_hash')]);
-
-		static::assertEmpty($this->cookie->getHashedCookie('test_cookie'));
+		$this->cookie->createCookie('test_cookie', 'test_value', new DateTime('2035-05-17'));
 	}
 
 	#[RunInSeparateProcess] #[Group('units')]
-	public function testCreateCookieFalse(): void
+	public function testCreateCookieFailure(): void
 	{
-		$setcookie = $this->getFunctionMock('App\Framework\Core', 'setcookie');
-		$setcookie->expects($this->once())->willReturn(false);
+		$setcookieMock = $this->getFunctionMock('App\Framework\Core', 'setcookie');
+		$setcookieMock->expects($this->once())
+			->with('test_cookie', 'test_value', 2062965600, '/', '', false, true)
+			->willReturn(false);
 
 		$this->expectException(FrameworkException::class);
 		$this->expectExceptionMessage('Cookie failed to set.');
 
-		$this->cookie->createCookie('no_cookie', 'content', new DateTime('+1 day'));
+		$this->cookie->createCookie('test_cookie', 'test_value', new DateTime('2035-05-17'));
 	}
 
-
-	/**
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testGetCookie(): void
+	#[RunInSeparateProcess] #[Group('units')]
+	public function testDeleteCookieSuccess(): void
 	{
-		$this->cryptMock->expects($this->once())->method('createSha256Hash')->willReturn('mocked_hash');
-
-		$contents = ['UID' => 123, 'LSID' => 'test_session'];
-		$serializedContent = serialize([serialize($contents), 'mocked_hash']);
-
-		$_COOKIE['test_cookie'] = $serializedContent;
-
-		$result = $this->cookie->getHashedCookie('test_cookie');
-
-		static::assertIsArray($result);
-		static::assertEquals($contents, $result);
-	}
-
-	/**
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testGetCookieNotExists(): void
-	{
-		$result = $this->cookie->getHashedCookie('nonexistent_cookie');
-
-		static::assertNull($result);
-	}
-
-	#[Group('units')]
-	public function testDeleteCookie(): void
-	{
-		$this->expectOutputRegex('/.*/'); // Prevent PHP warnings from setcookie()
+		$setcookieMock = $this->getFunctionMock('App\Framework\Core', 'setcookie');
+		$setcookieMock->expects($this->once())
+			->with('test_cookie', '', static::lessThan(time()), '/')
+			->willReturn(true);
 
 		$this->cookie->deleteCookie('test_cookie');
+	}
 
-		// @phpstan-ignore-next-line
-		static::assertTrue(true); // If no exception is thrown, the test passes.
+	#[RunInSeparateProcess] #[Group('units')]
+	public function testDeleteCookieWhenCookieNotExists(): void
+	{
+		$_COOKIE = [];
+
+		$setcookieMock = $this->getFunctionMock('App\Framework\Core', 'setcookie');
+		$setcookieMock->expects($this->once())
+			->with('nonexistent_cookie', '', static::lessThan(time()), '/')
+			->willReturn(true);
+
+		$this->cookie->deleteCookie('nonexistent_cookie');
 	}
 
 	#[Group('units')]
-	public function testHasCookie(): void
+	public function testHasCookieExists(): void
 	{
-		$_COOKIE['test_cookie'] = 'some_value';
+		$_COOKIE = ['existing_cookie' => 'value'];
+		$result = $this->cookie->hasCookie('existing_cookie');
 
-		static::assertTrue($this->cookie->hasCookie('test_cookie'));
-		static::assertFalse($this->cookie->hasCookie('nonexistent_cookie'));
+		self::assertTrue($result);
+		$_COOKIE = [];
 	}
 
 	#[Group('units')]
-	public function testGetCookieWithManipulatedContent(): void
+	public function testHasCookieDoesNotExist(): void
 	{
-		$this->cryptMock->expects($this->once())->method('createSha256Hash')->willReturn('mocked_hash');
+		$_COOKIE = [];
+		$result = $this->cookie->hasCookie('missing_cookie');
 
-		$contents = ['UID' => 123, 'LSID' => 'test_session'];
-		$manipulatedContent = serialize([serialize($contents), 'wrong_hash']);
-
-		$_COOKIE['test_cookie'] = $manipulatedContent;
-
-		$this->expectException(FrameworkException::class);
-		$this->expectExceptionMessage('Possible cookie manipulation detected.');
-
-		$this->cookie->getCookie('test_cookie');
+		self::assertFalse($result);
 	}
 }

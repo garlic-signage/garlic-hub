@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2024 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -17,24 +17,20 @@
  You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+declare(strict_types=1);
 
 namespace App\Framework\Core;
 
 use App\Framework\Exceptions\FrameworkException;
 use DateTime;
 
+
 /**
- * Manages the creation, retrieval, validation, and deletion of browser cookies,
- * with additional support for hashing and integrity verification of cookie data.
+ * The Cookie class is a simple wrapper around PHP's global cookie management
  */
 class Cookie
 {
-	private Crypt $crypt;
-
-	public function __construct(Crypt $crypt)
-	{
-		$this->crypt = $crypt;
-	}
+	public function __construct() {}
 
 	public function getCookie(string $cookieName): ?string
 	{
