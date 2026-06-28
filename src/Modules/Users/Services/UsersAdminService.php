@@ -39,21 +39,17 @@ use Throwable;
  */
 class UsersAdminService extends AbstractBaseService
 {
-	private readonly UserMainRepository $userMainRepository;
-	private readonly Transactions $transactions;
-	private readonly NodesService $nodesService;
-	private readonly UserTokenService $userTokenService;
-	private readonly AclValidator $aclValidator;
+
 	private string $token = '';
 
-	public function __construct(UserMainRepository $userMainRepository, NodesService $nodesService, UserTokenService $userTokenService,AclValidator $aclValidator, Transactions $transactions, LoggerInterface $logger)
+	public function __construct(
+		private readonly UserMainRepository $userMainRepository,
+		private readonly NodesService $nodesService,
+		private readonly UserTokenService $userTokenService,
+		private readonly AclValidator $aclValidator,
+		private readonly Transactions $transactions,
+		LoggerInterface $logger)
 	{
-		$this->userMainRepository = $userMainRepository;
-		$this->userTokenService   = $userTokenService;
-		$this->nodesService       = $nodesService;
-		$this->aclValidator       = $aclValidator;
-		$this->transactions       = $transactions;
-
 		parent::__construct($logger);
 	}
 

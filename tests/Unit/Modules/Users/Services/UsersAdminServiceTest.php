@@ -143,8 +143,9 @@ class UsersAdminServiceTest extends TestCase
 		$this->userMainRepositoryMock->expects($this->once())->method('insert')
 			->with($postData)
 			->willReturn($UID);
+		$this->userTokenServiceMock->expects($this->once())->method('generateToken')->willReturn('token');
 		$this->userTokenServiceMock->expects($this->once())->method('insertToken')
-			->with($UID, TokenPurposes::INITIAL_PASSWORD);
+			->with($UID, 'token', TokenPurposes::INITIAL_PASSWORD);
 		$this->nodesServiceMock->expects($this->once())->method('addUserDirectory')
 			->with($UID, $postData['username'])
 			->willReturn(456);
@@ -231,8 +232,9 @@ class UsersAdminServiceTest extends TestCase
 		$this->userMainRepositoryMock->expects($this->once())->method('insert')
 			->with($postData)
 			->willReturn($UID);
+		$this->userTokenServiceMock->expects($this->once())->method('generateToken')->willReturn('token');
 		$this->userTokenServiceMock->expects($this->once())->method('insertToken')
-			->with($UID, TokenPurposes::INITIAL_PASSWORD);
+			->with($UID, 'token', TokenPurposes::INITIAL_PASSWORD);
 		$this->nodesServiceMock->expects($this->once())->method('addUserDirectory')
 			->with($UID, $postData['username'])
 			->willReturn(0);
@@ -403,9 +405,8 @@ class UsersAdminServiceTest extends TestCase
 		$this->userMainRepositoryMock->expects($this->once())->method('update')
 			->with($UID, ['password' => ''])
 			->willReturn(1);
-
+		$this->userTokenServiceMock->expects($this->once())->method('generateToken')->willReturn('token');
 		$this->userTokenServiceMock->expects($this->once())->method('insertToken')
-			->with($UID, TokenPurposes::PASSWORD_RESET)
 			->willReturn('');
 
 		$this->transactionsMock->expects($this->once())->method('rollBack');
@@ -436,8 +437,8 @@ class UsersAdminServiceTest extends TestCase
 			->with($UID, ['password' => ''])
 			->willReturn(1);
 
+		$this->userTokenServiceMock->expects($this->once())->method('generateToken')->willReturn($tokenId);
 		$this->userTokenServiceMock->expects($this->once())->method('insertToken')
-			->with($UID, TokenPurposes::PASSWORD_RESET)
 			->willReturn($tokenId);
 
 		$this->transactionsMock->expects($this->once())->method('commit');
