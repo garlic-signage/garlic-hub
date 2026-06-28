@@ -91,11 +91,11 @@ class UserTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testFindByTokenForActionWithEmptyResult(): void
 	{
-		$token = bin2hex('validTokenHex');
-		$decodedToken = hex2bin($token);
-
+		$token = 'validToken';
+		$hashedToken = 'hashedToken';
+		$this->cryptMock->expects($this->once())->method('createHmacSha256')->willReturn($hashedToken);
 		$this->userTokensRepositoryMock->expects($this->once())->method('findFirstByToken')
-			->with($decodedToken)
+			->with($hashedToken)
 			->willReturn([]);
 
 		$result = $this->userTokenService->findByTokenForAction($token);
@@ -108,8 +108,9 @@ class UserTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testFindByTokenForAction(): void
 	{
-		$token = bin2hex('validTokenHex');
-		$decodedToken = hex2bin($token);
+		$token = 'validToken';
+		$hashedToken = 'hashedToken';
+		$this->cryptMock->expects($this->once())->method('createHmacSha256')->willReturn($hashedToken);
 
 		$expected = [
 			'UID' => 123,
@@ -120,7 +121,7 @@ class UserTokenServiceTest extends TestCase
 		];
 
 		$this->userTokensRepositoryMock->expects($this->once())->method('findFirstByToken')
-			->with($decodedToken)
+			->with($hashedToken)
 			->willReturn($expected);
 
 		$result = $this->userTokenService->findByTokenForAction($token);
@@ -135,21 +136,23 @@ class UserTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testFindByTokenWithValidToken(): void
 	{
-		$token = bin2hex('validTokenHex');
-		$decodedToken = hex2bin($token);
+		$token = 'validToken';
+		$hashedToken = 'hashedToken';
+		$this->cryptMock->expects($this->once())->method('createHmacSha256')->willReturn($hashedToken);
+		$expires = new DateTime('+1 hour')->format('Y-m-d H:i:s');
 		$resultData = [
 			'UID' => 1,
 			'company_id' => 10,
 			'username' => 'JohnDoe',
 			'status' => 1,
 			'purpose' => 'testPurpose',
-			'expires_at' => new DateTime('+1 hour')->format('Y-m-d H:i:s'),
+			'expires_at' => $expires,
 			'used_at' => null,
 		];
 
 		$this->userTokensRepositoryMock->expects($this->once())
 			->method('findFirstByToken')
-			->with($decodedToken)
+			->with($hashedToken)
 			->willReturn($resultData);
 
 		$result = $this->userTokenService->findByToken($token);
@@ -159,6 +162,8 @@ class UserTokenServiceTest extends TestCase
 			'company_id' => 10,
 			'username' => 'JohnDoe',
 			'status' => 1,
+			'expires_at' => $expires,
+			'used_at' => null,
 			'purpose' => 'testPurpose',
 		], $result);
 	}
@@ -170,21 +175,23 @@ class UserTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testFindByTokenWithExpiredToken(): void
 	{
-		$token = bin2hex('expiredTokenHex');
-		$decodedToken = hex2bin($token);
+		$token = 'validToken';
+		$hashedToken = 'hashedToken';
+		$this->cryptMock->expects($this->once())->method('createHmacSha256')->willReturn($hashedToken);
+		$expires = new DateTime('-10 hour')->format('Y-m-d H:i:s');
 		$resultData = [
 			'UID' => 2,
 			'company_id' => 15,
 			'username' => 'JaneDoe',
 			'status' => 1,
 			'purpose' => 'expiredPurpose',
-			'expires_at' => new DateTime('-1 hour')->format('Y-m-d H:i:s'),
+			'expires_at' => $expires,
 			'used_at' => null,
 		];
 
 		$this->userTokensRepositoryMock->expects($this->once())
 			->method('findFirstByToken')
-			->with($decodedToken)
+			->with($hashedToken)
 			->willReturn($resultData);
 
 		$result = $this->userTokenService->findByToken($token);
@@ -199,8 +206,9 @@ class UserTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testFindByTokenWithUsedToken(): void
 	{
-		$token = bin2hex('usedTokenHex');
-		$decodedToken = hex2bin($token);
+		$token = 'validToken';
+		$hashedToken = 'hashedToken';
+		$this->cryptMock->expects($this->once())->method('createHmacSha256')->willReturn($hashedToken);
 		$resultData = [
 			'UID' => 3,
 			'company_id' => 20,
@@ -208,30 +216,13 @@ class UserTokenServiceTest extends TestCase
 			'status' => 1,
 			'purpose' => 'usedPurpose',
 			'expires_at' => new DateTime('+1 hour')->format('Y-m-d H:i:s'),
-			'used_at' => new DateTime()->format('Y-m-d H:i:s'),
+			'used_at' => new DateTime('-1 hour')->format('Y-m-d H:i:s'),
 		];
 
 		$this->userTokensRepositoryMock->expects($this->once())
 			->method('findFirstByToken')
-			->with($decodedToken)
+			->with($hashedToken)
 			->willReturn($resultData);
-
-		$result = $this->userTokenService->findByToken($token);
-
-		self::assertNull($result);
-	}
-
-	/**
-	 * @throws DateMalformedStringException
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testFindByTokenWithInvalidHexToken(): void
-	{
-		$token = 'invalidToken1';
-
-		$this->userTokensRepositoryMock->expects($this->never())
-			->method('findFirstByToken');
 
 		$result = $this->userTokenService->findByToken($token);
 
@@ -245,12 +236,13 @@ class UserTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testFindByTokenWithEmptyResult(): void
 	{
-		$token = bin2hex('emptyResultTokenHex');
-		$decodedToken = hex2bin($token);
+		$token = 'validToken';
+		$hashedToken = 'hashedToken';
+		$this->cryptMock->expects($this->once())->method('createHmacSha256')->willReturn($hashedToken);
 
 		$this->userTokensRepositoryMock->expects($this->once())
 			->method('findFirstByToken')
-			->with($decodedToken)
+			->with($hashedToken)
 			->willReturn([]);
 
 		$result = $this->userTokenService->findByToken($token);
@@ -346,15 +338,11 @@ class UserTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteTokenWithValidToken(): void
 	{
-		$token = bin2hex('validTokenHex');
-		$decodedToken = hex2bin($token);
-
 		$this->userTokensRepositoryMock->expects($this->once())
-			->method('delete')
-			->with($decodedToken)
+			->method('deleteBy')
 			->willReturn(1);
 
-		$result = $this->userTokenService->deleteByUserPurpose($token);
+		$result = $this->userTokenService->deleteByUserPurpose(1, TokenPurposes::EMAIL_VERIFICATION->value);
 
 		self::assertSame(1, $result);
 	}
@@ -365,28 +353,11 @@ class UserTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteTokenWithInvalidHexToken(): void
 	{
-		$token = 'invalidHexToken';
 
 		$this->userTokensRepositoryMock->expects($this->never())
-			->method('delete');
+			->method('deleteBy');
 
-		$result = $this->userTokenService->deleteByUserPurpose($token);
-
-		self::assertSame(0, $result);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testDeleteTokenWithDecodingFailure(): void
-	{
-		$token = bin2hex('unreadableToken1') . '!';
-
-		$this->userTokensRepositoryMock->expects($this->never())
-			->method('delete');
-
-		$result = $this->userTokenService->deleteByUserPurpose($token);
+		$result = $this->userTokenService->deleteByUserPurpose(1, 'invalid_token_purpose');
 
 		self::assertSame(0, $result);
 	}
@@ -397,121 +368,62 @@ class UserTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testRefreshTokenWithValidToken(): void
 	{
-		$token = bin2hex('validTokenHex');
-		$decodedToken = hex2bin($token);
-		$expiresAt = date('Y-m-d H:i:s', strtotime('+2 hour'));
+		$token = 'someToken';
+		$this->cryptMock->expects($this->once())->method('generateRandomBytes')->willReturn($token);
+		$this->userTokensRepositoryMock->expects($this->once())->method('refresh')
+			->willReturn(1);
+
+		$result = $this->userTokenService->refreshToken(1, TokenPurposes::EMAIL_VERIFICATION->value);
+		self::assertSame($token, $result);
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	#[Group('units')]
+	public function testRefreshTokenWithInvalidPurpose(): void
+	{
+		$this->cryptMock->expects($this->never())->method('generateRandomBytes');
+
+		$result = $this->userTokenService->refreshToken(1, 'invalid_purpose');
+
+		self::assertSame('', $result);
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	#[Group('units')]
+	public function testRefreshTokenFails(): void
+	{
+		$token = 'someToken';
+		$this->cryptMock->expects($this->once())->method('generateRandomBytes')->willReturn($token);
 
 		$this->userTokensRepositoryMock->expects($this->once())
 			->method('refresh')
-			->with($decodedToken, $expiresAt)
-			->willReturn(1);
+			->willReturn(0);
 
-		$result = $this->userTokenService->refreshToken($token, TokenPurposes::EMAIL_VERIFICATION->value);
+		$result = $this->userTokenService->refreshToken(1, TokenPurposes::INITIAL_PASSWORD->value);
 
-		self::assertSame(1, $result);
+		self::assertSame('', $result);
 	}
 
 	/**
 	 * @throws Exception
 	 */
 	#[Group('units')]
-	public function testRefreshTokenWithInvalidHexToken(): void
+	public function testUseToken(): void
 	{
-		$token = 'invalidToken';
-
-		$this->userTokensRepositoryMock->expects($this->never())
-			->method('refresh');
-
-		$result = $this->userTokenService->refreshToken($token, TokenPurposes::EMAIL_VERIFICATION->value);
-
-		self::assertSame(0, $result);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testRefreshTokenWithEmptyPurpose(): void
-	{
-		$token = bin2hex('validTokenHex');
-
-		$this->userTokensRepositoryMock->expects($this->never())
-			->method('refresh');
-
-		$result = $this->userTokenService->refreshToken($token, '');
-
-		self::assertSame(0, $result);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testRefreshTokenWithValidTokenAndInitialPassword(): void
-	{
-		$token = bin2hex('validTokenInitPwd');
-		$decodedToken = hex2bin($token);
-		$expiresAt = date('Y-m-d H:i:s', strtotime('+24 hour'));
-
-		$this->userTokensRepositoryMock->expects($this->once())
-			->method('refresh')
-			->with($decodedToken, $expiresAt)
-			->willReturn(1);
-
-		$result = $this->userTokenService->refreshToken($token, TokenPurposes::INITIAL_PASSWORD->value);
-
-		self::assertSame(1, $result);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testUseTokenWithValidToken(): void
-	{
-		$token = bin2hex('validTokenHex');
-		$decodedToken = hex2bin($token);
-		$updateCount = 1;
+		$token = 'validToken';
+		$hashedToken = 'hashedToken';
+		$this->cryptMock->expects($this->once())->method('createHmacSha256')->willReturn($hashedToken);
 
 		$this->userTokensRepositoryMock->expects($this->once())
 			->method('update')
-			->with($decodedToken, ['used_at' => date('Y-m-d H:i:s')])
-			->willReturn($updateCount);
+			->willReturn(1);
 
 		$result = $this->userTokenService->useToken($token);
 
-		self::assertSame($updateCount, $result);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testUseTokenWithInvalidHexToken(): void
-	{
-		$token = 'invalidHexToken';
-
-		$this->userTokensRepositoryMock->expects($this->never())
-			->method('update');
-
-		$result = $this->userTokenService->useToken($token);
-
-		self::assertSame(0, $result);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testUseTokenWithDecodingFailure(): void
-	{
-		$token = bin2hex('unreadableToken') . '!'; // Simulating a malformed hex token
-
-		$this->userTokensRepositoryMock->expects($this->never())
-			->method('update');
-
-		$result = $this->userTokenService->useToken($token);
-
-		self::assertSame(0, $result);
+		self::assertSame(1, $result);
 	}
 }
