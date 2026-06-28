@@ -192,7 +192,7 @@ class FormElementsCreatorTest extends TestCase
 	#[Group('units')]
 	public function testCreateClipboardTextField(): void
 	{
-		$value = 'testToken123';
+		$token = 'testToken123';
 		$purpose = 'email_verification';
 		$expiresAt = '2025-12-31';
 		$expectedField = $this->createMock(ClipboardTextField::class);
@@ -204,7 +204,7 @@ class FormElementsCreatorTest extends TestCase
 
 		$this->translatorMock->expects($this->exactly(4))->method('translate')
 			->willReturnMap([
-				['verification_link', 'profile', [], 'Verifications link for %s expires at %s. Please copy it now, as it will only be displayed once.'],
+				['verification_link', 'profile', [], 'Verification link for %s expires at %s. Please copy it now, as it will only be displayed once.'],
 				['copy_to_clipboard', 'main', [], 'Copy to clipboard'],
 				['remove', 'main', [], 'Remove'],
 				['refresh', 'main', [], 'Refresh']
@@ -214,10 +214,10 @@ class FormElementsCreatorTest extends TestCase
 			->expects($this->once())->method('createField')
 			->with([
 				'type' => FieldType::CLIPBOARD_TEXT,
-				'id' => $value,
-				'label' => 'Verification link for Email Verification, expiring at 2025-12-31.',
+				'id' => $purpose,
+				'label' => 'Verification link for Email Verification expires at 2025-12-31. Please copy it now, as it will only be displayed once.',
 				'title' => 'Copy to clipboard',
-				'value' => 'http://' . $_SERVER['HTTP_HOST'] . '/force-password?token=' . $value
+				'value' => 'http://' . $_SERVER['HTTP_HOST'] . '/force-password?token=' . $token
 			])
 			->willReturn($expectedField);
 
@@ -227,7 +227,7 @@ class FormElementsCreatorTest extends TestCase
 		$expectedField->expects($this->once())->method('setRefreshTitle')
 			->with('Refresh');
 
-		$result = $this->collector->createClipboardTextField($value, $purpose, $expiresAt);
+		$result = $this->collector->createClipboardTextField($token, $purpose, $expiresAt);
 
 		static::assertSame($expectedField, $result);
 	}
