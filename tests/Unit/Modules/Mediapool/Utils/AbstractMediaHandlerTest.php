@@ -265,7 +265,7 @@ class AbstractMediaHandlerTest extends TestCase
 		$clientMock->expects($this->once())->method('request')
 			->with('GET', 'https://example.com/file', ['sink' => '/absolute/path/to//originals/file']);
 
-		$result = $this->concreteMediaHandler->uploadFromExternal($clientMock, 'https://example.com/file');
+		$result = $this->concreteMediaHandler->uploadFromExternal($clientMock, 'https://example.com/file', []);
 		static::assertEquals('//originals/file', $result);
 	}
 }
