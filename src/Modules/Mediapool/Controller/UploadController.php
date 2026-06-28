@@ -53,7 +53,7 @@ class UploadController extends AbstractAsyncController
 		$host         = parse_url($bodyParams['api_url'], PHP_URL_HOST);
 
 		if (!in_array($host, $allowedHosts))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Host not allowed']);
+			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Host not allowed.']);
 
 		$headers = $bodyParams['headers'] ?? [];
 		$body    = $this->uploadService->requestApi($bodyParams['api_url'], $headers);

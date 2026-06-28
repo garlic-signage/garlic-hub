@@ -63,9 +63,8 @@ class UploadControllerTest extends TestCase
 	#[Group('units')]
 	public function testSearchStockImages(): void
 	{
-		$bodyParams = ['api_url' => 'https://example.com', 'headers' => []];
+		$bodyParams = ['api_url' => 'https://api.unsplash.com', 'headers' => []];
 		$this->requestMock->method('getParsedBody')->willReturn($bodyParams);
-	//	$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
 		$this->uploadServiceMock->method('requestApi')->with($bodyParams['api_url'])->willReturn(['response_body']);
 
 		$this->mockResponse(['success' => true, 'data' => ['response_body']]);
@@ -80,11 +79,11 @@ class UploadControllerTest extends TestCase
 	#[Group('units')]
 	public function testSearchStockImagesFails(): void
 	{
-		$this->requestMock->method('getParsedBody')->willReturn([]);
-	//	$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
+		$bodyParams = ['api_url' => 'https://api.notallowed.com', 'headers' => []];
+		$this->requestMock->method('getParsedBody')->willReturn($bodyParams);
 		$this->uploadServiceMock->expects($this->never())->method('requestApi');
 
-		$this->mockResponse(['success' => false, 'error_message' => 'api_url missing']);
+		$this->mockResponse(['success' => false, 'error_message' => 'Host not allowed.']);
 
 		$this->controller->searchStockImages($this->requestMock, $this->responseMock);
 	}
