@@ -128,7 +128,7 @@ class LoginControllerTest extends TestCase
 
 		$main_data = ['locale' => 'kl_KL'];
 		$userEntity->method('getMain')->willReturn($main_data);
-		$this->authServiceMock->expects($this->never())->method('createAutologinCookie');
+		$this->authServiceMock->expects($this->never())->method('createAutologin');
 
 
 		$this->responseMock->expects($this->once())->method('withHeader')->with('Location', '/')->willReturnSelf();
@@ -173,7 +173,7 @@ class LoginControllerTest extends TestCase
 		$this->sessionMock->expects($this->exactly(2))->method('set');
 		$this->sessionMock->expects($this->once())->method('id')->willReturn('1234567890');
 
-		$this->authServiceMock->expects($this->once())->method('createAutologinCookie');
+		$this->authServiceMock->expects($this->once())->method('createAutologin');
 		$main_data = ['locale' => 'kl_KL', 'UID' => 1];
 		$userEntity->method('getMain')->willReturn($main_data);
 
@@ -224,7 +224,7 @@ class LoginControllerTest extends TestCase
 		$this->sessionMock->expects($this->exactly(2))->method('set');
 		$this->sessionMock->expects($this->once())->method('id')->willReturn(false);
 
-		$this->authServiceMock->expects($this->never())->method('createAutologinCookie');
+		$this->authServiceMock->expects($this->never())->method('createAutologin');
 
 		$flashMock->expects($this->once())->method('addMessage')->with('error', 'No session id found');
 		$this->responseMock->expects($this->once())->method('withHeader')->with('Location', '/login')->willReturnSelf();

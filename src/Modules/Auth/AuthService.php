@@ -109,7 +109,6 @@ class AuthService
 			$this->errorMessage = $e->getMessage();
 			return null;
 		}
-
 	}
 
 
