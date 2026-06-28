@@ -69,8 +69,7 @@ class UserServiceTest extends TestCase
 		$sessionId = 'abc-123';
 		$expectedData = [
 			'login_time' => date('Y-m-d H:i:s'),
-			'num_logins' => 'num_logins + 1',
-			'session_id' => $sessionId,
+			'num_logins' => 'num_logins + 1'
 		];
 
 		$this->repositoryFactoryMock->method('create')

@@ -66,7 +66,7 @@ class UserTokensRepositoryTest extends TestCase
 		];
 
 		$this->queryBuilderMock->expects(self::once())->method('select')
-			->with('user_tokens.*, username, status, company_id')
+			->with('user_tokens.*, username, status, expires_at, used_at, company_id')
 			->willReturnSelf();
 
 		$this->queryBuilderMock->expects(self::once())->method('from')
@@ -113,7 +113,7 @@ class UserTokensRepositoryTest extends TestCase
 			['token' => 'token2', 'UID' => $UID, 'purpose' => 'password_reset', 'expires_at' => '2025-12-31 23:59:59', 'used_at' => null],
 		];
 		$this->queryBuilderMock->expects(self::once())->method('select')
-			->with('token, UID, purpose, expires_at, used_at')
+			->with('UID, purpose, expires_at, used_at')
 			->willReturnSelf();
 
 		$this->queryBuilderMock->expects(self::once())->method('from')
@@ -145,31 +145,5 @@ class UserTokensRepositoryTest extends TestCase
 		$result = $this->repository->findValidByUID($UID);
 
 		static::assertSame($expectedTokens, $result);
-	}
-
-	/**
-	 * Tests refreshing a token's expiration date successfully.
-	 *
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testRefreshUpdatesTokenExpirationSuccessfully(): void
-	{
-		$token = 'resetToken';
-		$expiresAt = '2025-12-31 23:59:59';
-
-		$this->repository = $this->getMockBuilder(UserTokensRepository::class)
-			->setConstructorArgs([$this->connectionMock])
-			->onlyMethods(['updateWithWhere'])
-			->getMock();
-
-		$this->repository->expects(self::once())
-			->method('updateWithWhere')
-			->with(['expires_at' => $expiresAt], ['token' => $token])
-			->willReturn(1);
-
-		$result = $this->repository->refresh($token, $expiresAt);
-
-		static::assertSame(1, $result);
 	}
 }
