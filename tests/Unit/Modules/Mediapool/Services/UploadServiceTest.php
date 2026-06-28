@@ -27,6 +27,7 @@ use App\Modules\Mediapool\Services\NodesService;
 use App\Modules\Mediapool\Services\UploadService;
 use App\Modules\Mediapool\Utils\AbstractMediaHandler;
 use App\Modules\Mediapool\Utils\MediaHandlerFactory;
+use App\Modules\Mediapool\Utils\SsrfValidator;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
@@ -34,6 +35,7 @@ use GuzzleHttp\Psr7\Stream;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -48,6 +50,7 @@ class UploadServiceTest extends TestCase
 	private Client&MockObject $clientMock;
 	private FilesRepository&MockObject $mediaRepositoryMock;
 	private MimeTypeService&MockObject $mimeTypeService;
+	private SsrfValidator&Stub $ssrfValidatorStub;
 	private LoggerInterface&MockObject $loggerMock;
 
 	/**
@@ -61,6 +64,7 @@ class UploadServiceTest extends TestCase
 		$this->clientMock = $this->createMock(Client::class);
 		$this->mediaRepositoryMock = $this->createMock(FilesRepository::class);
 		$this->mimeTypeService = $this->createMock(MimeTypeService::class);
+		$this->ssrfValidatorStub = $this->createStub(SsrfValidator::class);
 		$this->loggerMock = $this->createMock(LoggerInterface::class);
 
 		$this->uploadService = new UploadService(
@@ -69,6 +73,7 @@ class UploadServiceTest extends TestCase
 			$this->clientMock,
 			$this->mediaRepositoryMock,
 			$this->mimeTypeService,
+			$this->ssrfValidatorStub,
 			$this->loggerMock
 		);
 	}
@@ -386,6 +391,8 @@ class UploadServiceTest extends TestCase
 		$responseMock = $this->createMock(ResponseInterface::class);
 		$mediaHandler = $this->createMock(AbstractMediaHandler::class);
 		$this->nodeServiceMock->method('isNodeUploadable')->willReturn(true);
+		$resolved = ['host' => 'example.com', 'port' => 80, 'ip' => '127.0.0.1',];
+		$this->ssrfValidatorStub->method('validateAndResolveUrl')->willReturn($resolved);
 
 		$responseMock->method('getHeaderLine')
 			->willReturnOnConsecutiveCalls('image/jpeg', '1234');
