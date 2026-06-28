@@ -50,7 +50,7 @@ class AuthServiceTest extends TestCase
 		parent::setUp();
 		$this->userServiceStub       = static::createStub(UsersService::class);
 		$this->autoLoginServiceStub  = static::createStub(AutoLoginService::class);
-		$loggerStub = static::createStub(LoggerInterface::class);
+		$loggerStub                  = static::createStub(LoggerInterface::class);
 
 		$this->authService = new AuthService(
 			$this->userServiceStub,
