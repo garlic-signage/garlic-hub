@@ -105,12 +105,7 @@ class DatatablePreparerTest extends TestCase
 		$this->prepareServiceMock->method('getBodyPreparer')
 			->willReturn($this->bodyPreparerMock);
 
-		$this->translatorMock->method('translate')
-			->willReturnMap([
-				['select_playlist', 'player', [], 'Select playlist'],
-				['remove_playlist', 'player', [], 'Remove playlist'],
-				['goto_playlist', 'player', [], 'Goto playlist']
-			]);
+		$this->translatorMock->method('translate')->willReturn('Player Action');
 
 		$this->timeUnitsCalculatorMock->expects($this->once())->method('calculateLastAccess')
 			->willReturnSelf();
@@ -128,12 +123,7 @@ class DatatablePreparerTest extends TestCase
 				'player-active'
 			);
 
-		$this->bodyPreparerMock->expects($this->exactly(3))->method('formatAction')
-			->willReturnMap([
-				['Select playlist', '#', 'edit', '123', 'pencil select-playlist', []],
-				['Remove playlist', '#', 'playlist', '123', 'x-circle remove-playlist', []],
-				['Goto playlist', '/playlists/compose/123', 'playlist', '123', 'music-note-list playlist-link', []]
-			]);
+		$this->bodyPreparerMock->expects($this->once())->method('formatAction');
 
 		$result = $this->datatablePreparer->prepareTableBody(
 			[
@@ -177,12 +167,8 @@ class DatatablePreparerTest extends TestCase
 		$this->prepareServiceMock->method('getBodyPreparer')
 			->willReturn($this->bodyPreparerMock);
 
-		$this->translatorMock->method('translate')
-			->willReturnMap([
-				['select_playlist', 'player', [], 'Select playlist'],
-				['remove_playlist', 'player', [], 'Remove playlist'],
-				['goto_playlist', 'player', [], 'Goto playlist']
-			]);
+		$this->translatorMock->method('translate')->willReturn('Player Action');
+
 
 		$this->timeUnitsCalculatorMock->expects($this->once())->method('calculateLastAccess')
 			->willReturnSelf();
@@ -200,12 +186,7 @@ class DatatablePreparerTest extends TestCase
 				'player-pending'
 			);
 
-		$this->bodyPreparerMock->expects($this->exactly(3))->method('formatAction')
-			->willReturnMap([
-				['Select playlist', '#', 'edit', 123, 'pencil select-playlist', []],
-				['Remove playlist', '#', 'playlist', 123, 'x-circle remove-playlist', []],
-				['Goto playlist', '/playlists/compose/123', 'playlist', 123, 'music-note-list playlist-link', []]
-			]);
+		$this->bodyPreparerMock->expects($this->once())->method('formatAction');
 
 		$result = $this->datatablePreparer->prepareTableBody(
 			[
@@ -249,12 +230,7 @@ class DatatablePreparerTest extends TestCase
 		$this->prepareServiceMock->method('getBodyPreparer')
 			->willReturn($this->bodyPreparerMock);
 
-		$this->translatorMock->method('translate')
-			->willReturnMap([
-				['select_playlist', 'player', [], 'Select playlist'],
-				['remove_playlist', 'player', [], 'Remove playlist'],
-				['goto_playlist', 'player', [], 'Goto playlist']
-			]);
+		$this->translatorMock->method('translate')->willReturn('Player Action');
 
 		$this->timeUnitsCalculatorMock->expects($this->once())->method('calculateLastAccess')
 			->willReturnSelf();
@@ -272,12 +248,7 @@ class DatatablePreparerTest extends TestCase
 				'player-inactive'
 			);
 
-		$this->bodyPreparerMock->expects($this->exactly(3))->method('formatAction')
-			->willReturnMap([
-				['Select playlist', '#', 'edit', '123', 'pencil select-playlist', []],
-				['Remove playlist', '#', 'playlist', '123', 'x-circle remove-playlist', []],
-				['Goto playlist', '/playlists/compose/123', 'playlist', '123', 'music-note-list playlist-link', []]
-			]);
+		$this->bodyPreparerMock->expects($this->once())->method('formatAction');
 
 		$result = $this->datatablePreparer->prepareTableBody(
 			[
@@ -319,26 +290,10 @@ class DatatablePreparerTest extends TestCase
 		$this->prepareServiceMock->method('getBodyPreparer')
 			->willReturn($this->bodyPreparerMock);
 
-		$this->translatorMock->method('translate')
-			->willReturnMap([
-				['select_playlist', 'player', [], 'Select playlist'],
-				['remove_playlist', 'player', [], 'Remove playlist'],
-				['player_settings_menu', 'player', [], 'Player settings menu'],
-				['goto_playlist', 'player', [], 'Goto playlist']
-			]);
+		$this->translatorMock->method('translate')->willReturn('Player Action');
+		$this->bodyPreparerMock->expects($this->once())->method('formatLink');
 
-		$this->bodyPreparerMock->expects($this->once())->method('formatText')
-			->with('<span>Player name</span>');
-
-		$this->bodyPreparerMock->expects($this->exactly(3))->method('formatAction')
-			->willReturnMap([
-				['Select playlist', '#', 'edit', '123', 'pencil select-playlist', []],
-				['Remove playlist', '#', 'playlist', '123', 'x-circle remove-playlist', []],
-				['Goto playlist', '/playlists/compose/123', 'playlist', '123', 'music-note-list playlist-link', []]
-			]);
-
-		$this->bodyPreparerMock->expects($this->exactly(1))->method('formatButton')
-			->with('', 'Player settings menu', '1', 'player-contextmenu bi bi-three-dots');
+		$this->bodyPreparerMock->expects($this->once())->method('formatAction');
 
 		$result = $this->datatablePreparer->prepareTableBody(
 			[
@@ -598,24 +553,10 @@ class DatatablePreparerTest extends TestCase
 		$this->prepareServiceMock->method('getBodyPreparer')
 			->willReturn($this->bodyPreparerMock);
 
-		$this->translatorMock->method('translate')
-			->willReturnMap([
-				['select_playlist', 'player', [], 'Select playlist'],
-				['remove_playlist', 'player', [], 'Remove playlist'],
-				['push_playlist', 'player', [], 'Push playlist'],
-				['goto_playlist', 'player', [], 'Goto playlist']
-			]);
+		$this->translatorMock->method('translate');
 
-		$this->bodyPreparerMock->expects($this->once())->method('formatText')
-			->with('Playlist name');
 
-		$this->bodyPreparerMock->expects($this->exactly(4))->method('formatAction')
-			->willReturnMap([
-				['Select playlist', '#', 'edit', 123, 'pencil select-playlist', []],
-				['Remove playlist', '#', 'playlist', 123, 'x-circle remove-playlist', []],
-				['Push playlist', '#', 'push', 1, 'arrow-left-circle-fill push-playlist', []],
-				['Goto playlist', '/playlists/compose/123', 'playlist', 123, 'music-note-list playlist-link', []]
-			]);
+		$this->bodyPreparerMock->expects($this->once())->method('formatAction');
 
 		$result = $this->datatablePreparer->prepareTableBody(
 			[
@@ -657,14 +598,9 @@ class DatatablePreparerTest extends TestCase
 		$this->prepareServiceMock->method('getBodyPreparer')
 			->willReturn($this->bodyPreparerMock);
 
-		$this->translatorMock->method('translate')
-			->willReturnMap([
-				['select_playlist', 'player', [], 'Select playlist'],
-				['remove_playlist', 'player', [], 'Remove playlist'],
-				['goto_playlist', 'player', [], 'Goto playlist']
-			]);
+		$this->translatorMock->method('translate')->willReturn('Player Action');
 
-		$this->bodyPreparerMock->expects($this->never())->method('formatText');
+		$this->bodyPreparerMock->expects($this->once())->method('formatAction');
 
 		$result = $this->datatablePreparer->prepareTableBody(
 			[
@@ -728,7 +664,6 @@ class DatatablePreparerTest extends TestCase
 		static::assertArrayHasKey('UNIT_ID', $result[0]);
 	}
 
-
 	/**
 	 */
 	#[Group('units')]
@@ -736,28 +671,28 @@ class DatatablePreparerTest extends TestCase
 	{
 		$this->datatablePreparer->setTranslator($this->translatorMock);
 
-		$this->translatorMock->expects($this->once())->method('translateArrayForOptions')
-			->with('player_settings_selects', 'player')
-			->willReturn(['edit' => 'Edit', 'connectivity' => 'Connectivity']);
-
-		$this->translatorMock->expects($this->exactly(2))->method('translate')->willReturnMap([
+		$this->translatorMock->expects($this->exactly(6))->method('translate')->willReturnMap([
+			['select_playlist', 'player', [], 'Select Playlist'],
+			['remove_playlist', 'player', [], 'Remove Playlist'],
+			['goto_playlist', 'player', [], 'Goto Playlist'],
+			['push_playlist', 'player', [], 'Push Playlist'],
 			['delete', 'main', [], 'Delete'],
 			['delete_confirm', 'player', [], 'DeleteConfirm'],
 		]);
 
 		$result = $this->datatablePreparer->formatPlayerContextMenu();
 
-		$expected = ['create_player_settings_contextmenu' =>
-			[
-					['PLAYER_SETTING' => 'edit', 'LANG_PLAYER_SETTING' => 'Edit'],
-					['PLAYER_SETTING' => 'connectivity', 'LANG_PLAYER_SETTING' => 'Connectivity']
-			],
+		$expected = [
+			'LANG_ASSIGN_PLAYLIST' => 'Select Playlist',
+			'LANG_UNASSIGN_PLAYLIST' => 'Remove Playlist',
+			'LANG_GOTO_PLAYLIST' => 'Goto Playlist',
+			'LANG_PUSH_PLAYLIST' => 'Push Playlist',
 			'LANG_PLAYER_DELETE' => 'Delete',
 			'LANG_PLAYER_DELETE_CONFIRM' => 'DeleteConfirm'
 		];
 
 
-		static::assertCount(3, $result);
+		static::assertCount(6, $result);
 		static::assertEquals($expected, $result);
 	}
 

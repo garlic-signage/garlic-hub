@@ -137,37 +137,6 @@ class DatatablePreparer extends AbstractDatatablePreparer
 				}
 				$list['elements_result_element'][] = $resultElements;
 			}
-			if ($player['status'] == PlayerStatus::RELEASED->value)
-			{
-				/*				$translation = $this->translator->translate('select_playlist', 'player');
-								$list['has_action'][] = $this->prepareService->getBodyPreparer()->formatAction(
-									$translation,'edit', $player['playlist_id'], 'pencil select-playlist'
-								);
-
-								if ($player['playlist_id'] > 0)
-								{
-									$translation = $this->translator->translate('remove_playlist', 'player');
-
-									$list['has_action'][] = $this->prepareService->getBodyPreparer()->formatAction(
-										$translation, 'playlist', $player['playlist_id'], 'x-lg remove-playlist'
-									);
-									if ($player['is_intranet'] > 0)
-									{
-										$translation = $this->translator->translate('push_playlist', 'player');
-										$list['has_action'][] = $this->prepareService->getBodyPreparer()->formatAction(
-											$translation, 'push', $player['player_id'], 'arrow-left-circle-fill push-playlist'
-										);
-									}
-
-									$translation = $this->translator->translate('goto_playlist', 'player');
-									$link = '/playlists/compose/' . $player['playlist_id'];
-
-									$list['has_action_link'][] = $this->prepareService->getBodyPreparer()->formatActionLink(
-										$translation, $link, 'playlist', $player['playlist_id'], 'link playlist-link'
-									);
-								}
-				*/
-			}
 
 			$list['has_action'][] = $this->prepareService->getBodyPreparer()->formatAction(
 				$this->translator->translate('player_actions', 'player'),
@@ -195,7 +164,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	}
 
 	/**
-	 * @return list<array<string,mixed>>
+	 * @return array<string,string>
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 * @throws InvalidArgumentException
