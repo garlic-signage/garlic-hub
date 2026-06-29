@@ -34,6 +34,7 @@ use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\SimpleCache\InvalidArgumentException;
 
@@ -43,6 +44,7 @@ class FacadeTest extends TestCase
 	private UsersAdminService&MockObject $usersAdminService;
 	private Parameters&MockObject $settingsParameters;
 	private Translator&MockObject $translatorMock;
+	private Session&Stub $sessionStub;
 	private Facade $facade;
 
 	/**
@@ -55,6 +57,7 @@ class FacadeTest extends TestCase
 		$this->usersAdminService = $this->createMock(UsersAdminService::class);
 		$this->settingsParameters  = $this->createMock(Parameters::class);
 		$this->translatorMock      = $this->createMock(Translator::class);
+		$this->sessionStub         = $this->createMock(Session::class);
 
 		$this->facade = new Facade(
 			$this->settingsFormBuilderMock,
@@ -270,6 +273,8 @@ class FacadeTest extends TestCase
 				'username' => 'new user',
 				'email' => 'new@example.com',
 			]);
+		$this->sessionStub->method('get')->willReturn(['UID' => 1]);
+		$this->facade->init($this->translatorMock, $this->sessionStub);
 
 		$this->facade->storeUser($UID);
 	}
@@ -324,6 +329,8 @@ class FacadeTest extends TestCase
 				'email' => 'new@example.com',
 			])
 			->willReturn(456);
+		$this->sessionStub->method('get')->willReturn(['UID' => 1]);
+		$this->facade->init($this->translatorMock, $this->sessionStub);
 
 		$result = $this->facade->storeUser($UID);
 
@@ -343,6 +350,9 @@ class FacadeTest extends TestCase
 		$this->usersAdminService->expects($this->once())->method('createPasswordResetToken')
 			->with($UID)
 			->willReturn($expectedToken);
+
+		$this->sessionStub->method('get')->willReturn(['UID' => 1]);
+		$this->facade->init($this->translatorMock, $this->sessionStub);
 
 		$result = $this->facade->createPasswordResetToken($UID);
 
