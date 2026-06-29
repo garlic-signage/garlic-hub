@@ -115,5 +115,4 @@ class AutoLoginService
 
 		$this->cookie->deleteCookie(self::COOKIE_NAME_AUTO_LOGIN);
 	}
-
 }
