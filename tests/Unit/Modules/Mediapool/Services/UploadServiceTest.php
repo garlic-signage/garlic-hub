@@ -420,6 +420,8 @@ class UploadServiceTest extends TestCase
 		$externalLink = 'https://example.com/image.jpg';
 		$extMetadata = ['title' => 'a title', 'description' => 'Test file'];
 		$this->nodeServiceMock->method('isNodeUploadable')->willReturn(true);
+		$resolved = ['host' => 'example.com', 'port' => 80, 'ip' => '127.0.0.1',];
+		$this->ssrfValidatorStub->method('validateAndResolveUrl')->willReturn($resolved);
 
 		$responseMock = $this->createMock(ResponseInterface::class);
 		$mediaHandler = $this->createMock(AbstractMediaHandler::class);
@@ -451,6 +453,8 @@ class UploadServiceTest extends TestCase
 		$externalLink = 'https://example.com/video.webm';
 		$extMetadata = [];
 		$this->nodeServiceMock->method('isNodeUploadable')->willReturn(true);
+		$resolved = ['host' => $externalLink, 'port' => 80, 'ip' => '127.0.0.1',];
+		$this->ssrfValidatorStub->method('validateAndResolveUrl')->willReturn($resolved);
 
 		$responseMock = $this->createMock(ResponseInterface::class);
 		$mediaHandler = $this->createMock(AbstractMediaHandler::class);
@@ -481,6 +485,8 @@ class UploadServiceTest extends TestCase
 		$externalLink = 'https://example.com/video.webm';
 		$extMetadata = [];
 		$this->nodeServiceMock->method('isNodeUploadable')->willReturn(true);
+		$resolved = ['host' => $externalLink, 'port' => 80, 'ip' => '127.0.0.1',];
+		$this->ssrfValidatorStub->method('validateAndResolveUrl')->willReturn($resolved);
 
 		$responseMock = $this->createMock(ResponseInterface::class);
 		$mediaHandler = $this->createMock(AbstractMediaHandler::class);

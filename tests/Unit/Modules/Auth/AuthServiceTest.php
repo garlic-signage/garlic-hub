@@ -120,7 +120,7 @@ class AuthServiceTest extends TestCase
 		$identifier = 'deleted@example.com';
 		$password = 'irrelevant_password';
 
-		$this->userServiceStub->method('findUser')->with($identifier)->willReturn([
+		$this->userServiceStub->method('findUser')->willReturn([
 			'UID' => 1,
 			'password' => password_hash($password, PASSWORD_BCRYPT),
 			'status' => UsersService::USER_STATUS_DELETED,
@@ -143,7 +143,7 @@ class AuthServiceTest extends TestCase
 		$identifier = 'deleted@example.com';
 		$password = 'irrelevant_password';
 
-		$this->userServiceStub->method('findUser')->with($identifier)->willReturn([
+		$this->userServiceStub->method('findUser')->willReturn([
 			'UID' => 1,
 			'password' => password_hash($password, PASSWORD_BCRYPT),
 			'status' => UsersService::USER_STATUS_REGISTERED,
