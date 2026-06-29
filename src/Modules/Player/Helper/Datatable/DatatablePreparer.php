@@ -182,23 +182,6 @@ class DatatablePreparer extends AbstractDatatablePreparer
 		];
 	}
 
-	/**
-	 * @return array<string,string>
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
-	 */
-	public function formatAdditionalTranslations(): array
-	{
-		return [
-			'LANG_ASSIGN_PLAYLIST' => $this->translator->translate('select_playlist', 'player'),
-			'LANG_UNASSIGN_PLAYLIST' => $this->translator->translate('remove_playlist', 'player'),
-			'LANG_GOTO_PLAYLIST' => $this->translator->translate('goto_playlist', 'player'),
-			'LANG_PUSH_PLAYLIST' => $this->translator->translate('push_playlist', 'player')
-		];
-	}
-
 /*
 	private function convertSeconds(string $seconds): string
 	{

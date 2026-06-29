@@ -112,19 +112,6 @@ class ControllerFacade implements DatatableFacadeInterface
 	}
 
 	/**
-	 * @return array<string,mixed>
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
-	 */
-	public function prepareAdditionalTranslations(): array
-	{
-		return $this->datatablePreparer->formatAdditionalTranslations();
-	}
-
-
-	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 * @throws InvalidArgumentException

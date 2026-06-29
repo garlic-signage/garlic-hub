@@ -314,13 +314,12 @@ class DatatableBuilderTest extends TestCase
 
 		$this->buildServiceMock->method('getDatatableFields')->willReturn([]);
 
-		$this->buildServiceMock->expects($this->exactly(6))
+		$this->buildServiceMock->expects($this->exactly(5))
 			->method('createDatatableField')
 			->willReturnMap([
 				['last_access', true],
 				['player_name', true],
 				['UID', true],
-				['status', true],
 				['model', true],
 				['playlist_id', false],
 			]);

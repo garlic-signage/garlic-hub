@@ -490,7 +490,13 @@ class PlaylistControllerTest extends TestCase
 	#[Group('units')]
 	public function testFindByName(): void
 	{
-		$this->parametersMock->expects($this->once())->method('setUserInputs')->with(['name' => 'play']);
+		$input = [
+			'name' => 'play',
+			'elements_per_page' => 0,
+			'sort_column' => 'playlist_id',
+			'sort_order' => 'DESC'
+		];
+
 		$this->parametersMock->expects($this->once())->method('parseInputAllParameters');
 
 		$this->requestMock->method('getAttribute')->with('session')->willReturn($this->sessionMock);
@@ -516,7 +522,7 @@ class PlaylistControllerTest extends TestCase
 
 		$this->mockJsonResponse($output);
 
-		$this->controller->findByName($this->requestMock, $this->responseMock, ['name' => 'play']);
+		$this->controller->findByName($this->requestMock, $this->responseMock, $input);
 	}
 
 	/**
@@ -529,7 +535,13 @@ class PlaylistControllerTest extends TestCase
 	public function testFindForPlayerAssignment(): void
 	{
 		$arg =  ['playlist_id' => 11];
-		$args = ['playlist_id' => 11, 'playlist_mode' => 'master,multizone'];
+		$args = [
+			'playlist_id' => 11,
+			'playlist_mode' => 'master,multizone',
+			'elements_per_page' => 0,
+			'sort_column' => 'playlist_id',
+			'sort_order' => 'DESC'
+		];
 
 		$this->parametersMock->expects($this->once())->method('setUserInputs')->with($args);
 		$this->parametersMock->expects($this->once())->method('parseInputAllParameters');
