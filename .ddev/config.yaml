@@ -21,7 +21,9 @@ web_environment:
     - XDEBUG_CONFIG=client_host=host.docker.internal
     - XDEBUG_CLIENT_PORT=9003
 corepack_enable: false
-
+upload_dirs:
+  - public/var
+  - var
 # Key features of DDEV's config.yaml:
 
 # name: <projectname> # Name of the project, automatically provides
