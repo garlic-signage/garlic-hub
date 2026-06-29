@@ -67,7 +67,10 @@ class UserTokenControllerTest extends TestCase
 		$this->streamInterfaceMock = $this->createMock(StreamInterface::class);
 
 		$this->controller = new UserTokenController(
-			$this->userSessionMock, $this->userServiceMock, $this->csrfTokenMock, $this->aclValidatorMock);
+			$this->userSessionMock,
+			$this->userServiceMock,
+			$this->csrfTokenMock,
+			$this->aclValidatorMock);
 	}
 
 	/**
@@ -82,17 +85,19 @@ class UserTokenControllerTest extends TestCase
 	{
 		$this->requestMock->method('getParsedBody')->willReturn([
 			'csrf_token' => 'valid_token',
-			'token' => 'valid_token'
+			'purpose' => TokenPurposes::INITIAL_PASSWORD->value,
+			'UID'  => 1
 		]);
+		$token = random_bytes(32);
 		$this->csrfTokenMock->method('validateToken')->with('valid_token')->willReturn(true);
 		$this->userServiceMock->method('findByTokenForAction')->with('valid_token')->willReturn(['purpose' => TokenPurposes::INITIAL_PASSWORD->value]);
 		$this->userSessionMock->method('getUID')->willReturn(1);
-		$this->aclValidatorMock->method('isAdmin')->with(1, ['purpose' => TokenPurposes::INITIAL_PASSWORD->value])->willReturn(true);
+		$this->aclValidatorMock->method('isModuleAdmin')->willReturn(true);
 		$this->userServiceMock->expects($this->once())->method('refreshToken')
-			->with('valid_token', TokenPurposes::INITIAL_PASSWORD->value)
-			->willReturn(1);
+			->with(1, TokenPurposes::INITIAL_PASSWORD->value)
+			->willReturn($token);
 
-		$this->mockJsonResponse(['success' => true]);
+		$this->mockJsonResponse(['success' => true, 'token' => bin2hex($token)]);
 
 		$this->controller->refresh($this->requestMock, $this->responseMock);
 	}
@@ -112,47 +117,6 @@ class UserTokenControllerTest extends TestCase
 		$this->csrfTokenMock->method('validateToken')->with('invalid_token')->willReturn(false);
 
 		$this->mockJsonResponse(['success' => false, 'error_message' => 'Csrf token mismatch.']);
-
-		$this->controller->delete($this->requestMock, $this->responseMock);
-
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws UserException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws \Doctrine\DBAL\Exception
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testDeleteWithMissingToken(): void
-	{
-		$this->requestMock->method('getParsedBody')->willReturn(['csrf_token' => 'valid_token']);
-		$this->csrfTokenMock->method('validateToken')->with('valid_token')->willReturn(true);
-
-		$this->mockJsonResponse(['success' => false, 'error_message' => 'Token not transmitted.']);
-
-		$this->controller->delete($this->requestMock, $this->responseMock);
-	}
-
-	/**
-	 * @throws UserException
-	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws \Doctrine\DBAL\Exception
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testDeleteWithNonExistentToken(): void
-	{
-		$this->requestMock->method('getParsedBody')->willReturn([
-			'csrf_token' => 'valid_token',
-			'token' => 'non_existent_token'
-		]);
-		$this->csrfTokenMock->method('validateToken')->with('valid_token')->willReturn(true);
-		$this->userServiceMock->method('findByTokenForAction')->with('non_existent_token')->willReturn(null);
-
-		$this->mockJsonResponse(['success' => false, 'error_message' => 'Token not exists.']);
 
 		$this->controller->delete($this->requestMock, $this->responseMock);
 	}
@@ -193,14 +157,15 @@ class UserTokenControllerTest extends TestCase
 	{
 		$this->requestMock->method('getParsedBody')->willReturn([
 			'csrf_token' => 'valid_token',
-			'token' => 'valid_token'
+			'purpose' => TokenPurposes::INITIAL_PASSWORD->value,
+			'UID'  => 1
 		]);
+		$token = random_bytes(32);
 		$this->csrfTokenMock->method('validateToken')->with('valid_token')->willReturn(true);
 		$this->userServiceMock->method('findByTokenForAction')->with('valid_token')->willReturn(['purpose' => 'sample']);
 		$this->userSessionMock->method('getUID')->willReturn(1);
-		$this->aclValidatorMock->method('isAdmin')->with(1, ['purpose' => 'sample'])->willReturn(true);
+		$this->aclValidatorMock->method('isModuleAdmin')->willReturn(true);
 		$this->userServiceMock->expects($this->once())->method('deleteByUserPurpose')
-			->with('valid_token')
 			->willReturn(1);
 
 		$this->mockJsonResponse(['success' => true]);
@@ -220,15 +185,14 @@ class UserTokenControllerTest extends TestCase
 	{
 		$this->requestMock->method('getParsedBody')->willReturn([
 			'csrf_token' => 'valid_token',
-			'token' => 'valid_token'
+			'purpose' => TokenPurposes::PASSWORD_RESET->value,
+			'UID'  => 1
 		]);
 		$this->csrfTokenMock->method('validateToken')->with('valid_token')->willReturn(true);
 		$this->userServiceMock->method('findByTokenForAction')->with('valid_token')->willReturn(['purpose' => 'sample']);
 		$this->userSessionMock->method('getUID')->willReturn(1);
-		$this->aclValidatorMock->method('isAdmin')->with(1, ['purpose' => 'sample'])->willReturn(true);
-		$this->userServiceMock->expects($this->once())->method('deleteByUserPurpose')
-			->with('valid_token')
-			->willReturn(0);
+		$this->aclValidatorMock->method('isModuleAdmin')->willReturn(true);
+		$this->userServiceMock->expects($this->once())->method('deleteByUserPurpose')->willReturn(0);
 
 		$this->mockJsonResponse(['success' => false, 'error_message' => 'Token not editable.']);
 

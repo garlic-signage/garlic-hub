@@ -44,8 +44,7 @@ class UserTokenController extends AbstractAsyncController
 		private readonly UserTokenService $userService,
 		private readonly CsrfToken $csrfToken,
 		private readonly AclValidator $aclValidator
-	) {
-	}
+	) {}
 
 	/**
 	 * @param ServerRequestInterface $request
