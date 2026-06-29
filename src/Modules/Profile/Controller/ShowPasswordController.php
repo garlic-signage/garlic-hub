@@ -80,8 +80,8 @@ class ShowPasswordController
 	 */
 	public function showForcedPasswordForm(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		$queryParams = $request->getQueryParams();
-		$passwordToken = hex2bin($queryParams['token']) ?? '';
+		$queryParams      = $request->getQueryParams();
+		$passwordToken    = $queryParams['token'] ?? '';
 		$this->flash      = $request->getAttribute('flash');
 		$this->translator = $request->getAttribute('translator');
 		if ($passwordToken === '')
@@ -89,7 +89,9 @@ class ShowPasswordController
 			$this->flash->addMessageNow('error', $this->translator->translate('no_token', 'profile'));
 			return $response->withHeader('Location', '/login')->withStatus(302);
 		}
-		$UID = $this->facade->determineUIDByToken($passwordToken);
+
+		$binToken = hex2bin($passwordToken);
+		$UID = $this->facade->determineUIDByToken($binToken);
 		if ($UID === 0)
 		{
 			$this->flash->addMessage('error', $this->translator->translate('token_error', 'profile'));

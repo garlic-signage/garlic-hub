@@ -41,6 +41,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\SimpleCache\InvalidArgumentException;
+use Random\RandomException;
 use Slim\Flash\Messages;
 
 class ShowPasswordControllerTest extends TestCase
@@ -133,11 +134,12 @@ class ShowPasswordControllerTest extends TestCase
 	 * @throws InvalidArgumentException
 	 * @throws \Doctrine\DBAL\Exception
 	 * @throws FrameworkException
+	 * @throws RandomException
 	 */
 	#[Group('units')]
 	public function testShowForcedPasswordFormRedirectsWhenUIDIsInvalid(): void
 	{
-		$passwordToken = 'invalidToken';
+		$passwordToken = bin2hex(random_bytes(32));
 
 		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
 			->willReturnMap([
@@ -149,7 +151,6 @@ class ShowPasswordControllerTest extends TestCase
 			->willReturn(['token' => $passwordToken]);
 
 		$this->facadeMock->expects($this->once())->method('determineUIDByToken')
-			->with($passwordToken)
 			->willReturn(0);
 
 		$this->translatorMock->expects($this->once())->method('translate')
@@ -175,11 +176,12 @@ class ShowPasswordControllerTest extends TestCase
 	 * @throws InvalidArgumentException
 	 * @throws \Doctrine\DBAL\Exception
 	 * @throws FrameworkException
+	 * @throws RandomException
 	 */
 	#[Group('units')]
 	public function testShowForcedPasswordFormRendersFormSuccessfully(): void
 	{
-		$passwordToken = 'validToken';
+		$passwordToken = bin2hex(random_bytes(32));
 
 		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
 			->willReturnMap([
@@ -191,7 +193,7 @@ class ShowPasswordControllerTest extends TestCase
 			->willReturn(['token' => $passwordToken]);
 
 		$this->facadeMock->expects($this->once())->method('determineUIDByToken')
-			->with($passwordToken)
+			->with(hex2bin($passwordToken))
 			->willReturn(123);
 
 		$dataSections = ['key' => 'value'];
