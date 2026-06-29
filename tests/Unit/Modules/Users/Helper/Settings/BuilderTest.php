@@ -229,12 +229,12 @@ class BuilderTest extends TestCase
 				'status' => $fieldInterfaceMock,
 				'locale' => $fieldInterfaceMock,
 				'UID' => $fieldInterfaceMock,
-				'token_abcd1234' => $clipboardTextFieldMock,
 				'csrf_token' => $fieldInterfaceMock,
+				'token_test' => $clipboardTextFieldMock
 			])
 			->willReturn(['prepared' => true]);
 
-		$result = $this->builder->buildForm($user);
+		$result = $this->builder->buildForm($user, $this->sessionMock);
 
 		static::assertSame(['prepared' => true], $result);
 	}

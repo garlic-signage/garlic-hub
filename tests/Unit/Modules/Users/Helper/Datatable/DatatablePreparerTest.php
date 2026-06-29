@@ -140,7 +140,7 @@ class DatatablePreparerTest extends TestCase
 			123
 		);
 
-		static::assertNotEmpty($result[0]['has_action']);
+		static::assertNotEmpty($result[0]['has_action_link']);
 		static::assertNotEmpty($result[0]['has_delete']);
 	}
 
