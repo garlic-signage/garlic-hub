@@ -131,7 +131,7 @@ export class ZoneProperties
 				this.MyCanvasView.renderCanvas();
 			}
 		});
-		this.zone_playlist_id.addEventListener('change', (e) =>
+		this.zone_playlist_id.addEventListener('selectedFromDataList', (e) =>
 		{
 			if (this.ActiveGroup != null)
 			{
