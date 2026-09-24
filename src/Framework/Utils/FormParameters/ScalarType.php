@@ -39,4 +39,5 @@ enum ScalarType: int
 	case JSON_HTML = 8;
 	case STRING_ARRAY = 9;
 	case MEDIAPOOL_FILE = 10;
+    case RAW = 11;
 }

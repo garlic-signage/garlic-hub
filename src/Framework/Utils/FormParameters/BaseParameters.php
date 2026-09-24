@@ -249,6 +249,7 @@ abstract class BaseParameters
 		$value = match ($parameter['scalar_type'])
 		{
 			ScalarType::INT            => $this->sanitizer->int($parameterValue),
+            ScalarType::RAW            => (string) $parameterValue,
 			ScalarType::FLOAT          => $this->sanitizer->float($parameterValue),
 			ScalarType::STRING         => $this->sanitizer->string($parameterValue),
 			ScalarType::NUMERIC_ARRAY  => $this->sanitizer->intArray($parameterValue),
