@@ -40,8 +40,8 @@ class Parameters extends BaseEditParameters
 	 * @var array<string, array{scalar_type: ScalarType, default_value: string|int, parsed: bool}>
 	 */
 	protected array $moduleParameters = [
-		self::PARAMETER_PASSWORD  => ['scalar_type' => ScalarType::STRING, 'default_value' => '', 'parsed' => false],
-		self::PARAMETER_PASSWORD_CONFIRM  => ['scalar_type' => ScalarType::STRING, 'default_value' => '', 'parsed' => false],
+		self::PARAMETER_PASSWORD  => ['scalar_type' => ScalarType::RAW, 'default_value' => '', 'parsed' => false],
+		self::PARAMETER_PASSWORD_CONFIRM  => ['scalar_type' => ScalarType::RAW, 'default_value' => '', 'parsed' => false],
 	];
 
 	public function __construct(Sanitizer $sanitizer, Session $session)
