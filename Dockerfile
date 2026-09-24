@@ -17,6 +17,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install required PHP extensions
 RUN docker-php-ext-install zip intl
 
+# Install webdav for player logs
+RUN a2enmod rewrite dav dav_fs
+
 # Install Imagick
 RUN pecl install imagick \
     && docker-php-ext-enable imagick

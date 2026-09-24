@@ -2,6 +2,7 @@
 
 # create .env secret only when not exists
 
+umask 002
 chown -R www-data:www-data /var/www/public/var /var/www/var
 chmod -R 775 /var/www/public/var /var/www/var
 
@@ -10,6 +11,7 @@ mkdir -p \
   /var/www/var/cache \
   /var/www/var/logs \
   /var/www/var/weblogs \
+  /var/www/var/devicelogs \
   /var/www/var/keys \
   /var/www/var/sessions \
   /var/www/public/var/mediapool \
@@ -28,7 +30,7 @@ if ! grep -q '^APP_SECRET=' /var/www/.env; then
     echo "APP_SECRET=$(openssl rand -hex 16)" >> /var/www/.env
 fi
 
-if ! grep -q '^CONTAINER=' /var/www/.env; then
+if ! grep -q '^APP_CONTAINER=' /var/www/.env; then
     echo "Setting CONTAINER environment variable..."
     echo "APP_CONTAINER=docker" >> /var/www/.env
 fi
@@ -47,7 +49,6 @@ php bin/console.php db:migrate
 
 chown -R www-data:www-data /var/www/public/var /var/www/var
 chmod -R 775 /var/www/public/var /var/www/var
-umask 002
 
 
 # Apache starten
