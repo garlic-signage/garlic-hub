@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 namespace App\Framework\Core\Config;
 
+use App\Framework\Exceptions\CoreException;
+
 /**
  * ConfigLoaderInterface provides a contract for loading configuration data.
  *
@@ -32,6 +34,7 @@ interface ConfigLoaderInterface
 {
 	/**
 	 * @return array<string,string|array<string,string>>
-	 */
+     * @throws CoreException
+     */
 	public function load(string $module): array;
 }
