@@ -85,9 +85,8 @@ readonly class Crypt
             throw new InvalidArgumentException('Places must be between 1 and 18.');
 
         $min = 10 ** ($places - 1);
-        $max = (10 ** $places) - 1;
 
-        return random_int($min, $max);
+        return $min + random_int(0, 9 * $min - 1);
 	}
 
 	public function checkPassword(string $clearText, string $hash): bool
