@@ -1,9 +1,9 @@
 <?php
 /*
- garlic-hub: Digital Signage Management Platform
+ GarlicSignage: Open Source Digital Signage Stack
 
- Copyright (C) 2024 Nikolaos Sagiadinos <garlic@saghiadinos.de>
- This file is part of the garlic-hub source code
+ Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ This file is part of the GarlicSignage source code
 
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License, version 3,
@@ -56,12 +56,16 @@ class IniConfigLoader implements ConfigLoaderInterface
 	{
 		$fileName = $this->buildConfigFileName($module);
 
-		if (!file_exists($fileName) || !is_readable($fileName))
+		if (!is_file($fileName) || !is_readable($fileName))
 			throw new CoreException("Unable to access configuration file: $fileName");
 
-		$config = @parse_ini_file($fileName, true, INI_SCANNER_RAW);
-		if ($config === false)
-			throw new CoreException("Error parsing configuration file: $fileName");
+        /** @var array<string,string|array<string,string>>|false $config */
+        $config = @parse_ini_file($fileName, true, INI_SCANNER_RAW);
+        if ($config === false)
+        {
+            $error = error_get_last();
+            throw new CoreException("Error parsing configuration file: $fileName. " . ($error['message'] ?? ''));
+        }
 
 		return $config;
 	}
