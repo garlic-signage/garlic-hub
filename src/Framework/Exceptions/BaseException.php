@@ -36,7 +36,7 @@ class BaseException extends Exception
 	/**
 	 * @var string The name of the module where the exception occurred.
 	 */
-	protected string $moduleName;
+	protected string $moduleName = '';
 
 	/**
 	 * Sets the module name where the exception occurred.
