@@ -23,6 +23,7 @@ namespace App\Framework\Core;
 
 use Defuse\Crypto\Key;
 use Exception;
+use InvalidArgumentException;
 
 /**
  * This class provides cryptographic functionality including generating
@@ -80,10 +81,13 @@ readonly class Crypt
 	 */
 	public function generateRandomNumber(int $places = 9): int
 	{
-		$min = 10 ** ($places - 1);
-		$max = (10 ** $places) - 1;
-		return random_int($min, $max);
+        if ($places < 1 || $places > 18)
+            throw new InvalidArgumentException('Places must be between 1 and 18.');
 
+        $min = 10 ** ($places - 1);
+        $max = (10 ** $places) - 1;
+
+        return random_int($min, $max);
 	}
 
 	public function checkPassword(string $clearText, string $hash): bool
