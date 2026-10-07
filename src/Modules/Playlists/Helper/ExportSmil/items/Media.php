@@ -29,7 +29,7 @@ use App\Modules\Playlists\Helper\ItemFlags;
  * Provides methods for setting media links, generating prefetch tags,
  * and collecting media-related attributes and parameters.
  */
-abstract class Media extends Base
+abstract class Media extends Base implements ItemInterface
 {
 	protected string $link = '';
 	public function setLink(string $link):static

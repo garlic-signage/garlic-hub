@@ -28,6 +28,9 @@ namespace App\Modules\Playlists\Helper\ExportSmil\items;
  */
 interface ItemInterface
 {
+
+    public function setBelongsToMasterPlaylist(bool $belongsToMasterPlaylist): void;
+    public function setLink(string $link):static;
 	/**
 	 * @param array<int,int>|array<empty,empty> $touches
 	 */
