@@ -157,7 +157,7 @@ class PlaylistContent
 	{
 		/** @var Media $item */
 		$item = $this->itemsFactory->createItem($itemData);
-		$item->setBelongsToMasterPlaylist($this->playlist['playlist_mode'] === PlaylistMode::MASTER);
+		$item->setBelongsToMasterPlaylist($this->playlist['playlist_mode'] === PlaylistMode::MASTER->value);
 		$item->setTouches($this->touchTrigger);
 		$serverUrl = $this->config->getConfigValue('url', 'mediapool', 'content_server');
 
@@ -178,7 +178,7 @@ class PlaylistContent
 	{
 		/** @var Media $item */
 		$item = $this->itemsFactory->createItem($itemData);
-		$item->setBelongsToMasterPlaylist($this->playlist['playlist_mode'] === PlaylistMode::MASTER);
+		$item->setBelongsToMasterPlaylist($this->playlist['playlist_mode'] === PlaylistMode::MASTER->value);
 		$item->setTouches($this->touchTrigger);
 		$contentData = @unserialize($itemData['content_data']);
 		$item->setLink(str_replace('&', '&amp;', $contentData['url']));
@@ -194,15 +194,20 @@ class PlaylistContent
 	{
 		/** @var SeqContainer $item */
 		$item = $this->itemsFactory->createItem($itemData);
-		$item->setBelongsToMasterPlaylist($this->playlist['playlist_mode'] === PlaylistMode::MASTER);
+		$item->setBelongsToMasterPlaylist($this->playlist['playlist_mode'] === PlaylistMode::MASTER->value);
 
 		$this->addContentParts($itemData, $item->getSmilElementTag(), $item->getPrefetchTag(), $item->getExclusive());
 	}
 
-	private function buildTemplate(array $itemData): void
+    /**
+     * @param array<string,mixed> $itemData
+     * @throws ModuleException
+     * @throws CoreException
+     */
+    private function buildTemplate(array $itemData): void
 	{
 		$item = $this->itemsFactory->createItem($itemData);
-		$item->setBelongsToMasterPlaylist($this->playlist['playlist_mode'] === PlaylistMode::MASTER);
+		$item->setBelongsToMasterPlaylist($this->playlist['playlist_mode'] === PlaylistMode::MASTER->value);
 		$item->setTouches($this->touchTrigger);
 		$serverUrl = $this->config->getConfigValue('url', 'mediapool', 'content_server');
 
