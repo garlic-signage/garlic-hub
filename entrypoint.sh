@@ -6,6 +6,9 @@ umask 002
 chown -R www-data:www-data /var/www/public/var /var/www/var
 chmod -R 775 /var/www/public/var /var/www/var
 
+# move mediapool/templates from public/var to var/storage (must run before mkdir below)
+/var/www/bin/migrate-storage.sh /var/www || exit 1
+
 mkdir -p \
   /var/www/var \
   /var/www/var/cache \
@@ -14,14 +17,10 @@ mkdir -p \
   /var/www/var/devicelogs \
   /var/www/var/keys \
   /var/www/var/sessions \
-  /var/www/public/var/mediapool \
-  /var/www/public/var/mediapool/thumbs \
-  /var/www/public/var/mediapool/originals \
-  /var/www/public/var/templates \
-  /var/www/public/var/templates/thumbs \
-  /var/www/public/var/templates/originals \
-  /var/www/public/var/playlists \
-  /var/www/public/var/playlists/items \
+  /var/www/var/storage/mediapool/thumbs \
+  /var/www/var/storage/mediapool/originals \
+  /var/www/var/storage/templates/thumbs \
+  /var/www/var/storage/templates/originals \
   /var/www/public/var/playlists/items/thumbs \
   /var/www/public/var/playlists/items/originals
 

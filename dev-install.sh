@@ -5,8 +5,10 @@ mkdir -p var/logs
 mkdir -p var/weblogs
 mkdir -p var/sessions
 mkdir -p var/keys
-mkdir -p public/var/mediapool/thumbs
-mkdir -p public/var/mediapool/originals
+mkdir -p var/storage/mediapool/thumbs
+mkdir -p var/storage/mediapool/originals
+mkdir -p var/storage/templates/thumbs
+mkdir -p var/storage/templates/originals
 
 if [[ -f var/keys/private.key && -f var/keys/public.key && -f var/keys/encryption.key ]]; then
     echo "Keys already exist. Skipping generation."
