@@ -23,8 +23,12 @@
  * Deliberately independent of the CMS bootstrap (no container, session or DB).
  *
  * GET parameters: c (checksum), ext, v (thumb|orig), exp (unix timestamp), sig (hmac)
- * sig = hmac_sha256("mediapool|c|ext|v|exp", key) with key derived from APP_SECRET
+ * Signature handling: see MediaUrlSigner
  */
+
+use App\Framework\Media\MediaUrlSigner;
+
+require dirname(__DIR__) . '/src/Framework/Media/MediaUrlSigner.php';
 
 const MEDIA_MIME = [
 	'jpg'  => 'image/jpeg',
@@ -68,7 +72,7 @@ function mediaSecret(string $systemDir): string
 	if (!is_string($secret) || $secret === '')
 		mediaFail(500);
 
-	return hash_hmac('sha256', 'storage-media', $secret);
+	return $secret;
 }
 
 $systemDir = dirname(__DIR__);
@@ -76,20 +80,12 @@ $systemDir = dirname(__DIR__);
 $checksum = $_GET['c']   ?? '';
 $ext      = $_GET['ext'] ?? '';
 $variant  = $_GET['v']   ?? '';
-$exp      = $_GET['exp'] ?? '';
-$sig      = $_GET['sig'] ?? '';
 
-if (!is_string($checksum) || !is_string($ext) || !is_string($variant) || !is_string($exp) || !is_string($sig))
-	mediaFail(400);
-if (!preg_match('/^[a-f0-9]{32,64}$/', $checksum) || !isset(MEDIA_MIME[$ext]) || !isset(MEDIA_VARIANT_DIR[$variant])
-	|| !ctype_digit($exp) || !preg_match('/^[a-f0-9]{64}$/', $sig))
+if (!is_string($checksum) || !is_string($ext) || !is_string($variant)
+	|| !preg_match('/^[a-f0-9]{32,64}$/', $checksum) || !isset(MEDIA_MIME[$ext]) || !isset(MEDIA_VARIANT_DIR[$variant]))
 	mediaFail(400);
 
-if ((int) $exp < time())
-	mediaFail(403);
-
-$expected = hash_hmac('sha256', "mediapool|$checksum|$ext|$variant|$exp", mediaSecret($systemDir));
-if (!hash_equals($expected, $sig))
+if (!MediaUrlSigner::verify($_GET, mediaSecret($systemDir)))
 	mediaFail(403);
 
 $baseDir = $systemDir . '/var/storage/mediapool/' . MEDIA_VARIANT_DIR[$variant];
@@ -108,7 +104,7 @@ header('Content-Security-Policy: sandbox');
 header('Accept-Ranges: bytes');
 header('ETag: ' . $etag);
 header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $mtime) . ' GMT');
-header('Cache-Control: private, max-age=' . min(max((int) $exp - time(), 0), 86400));
+header('Cache-Control: private, max-age=' . min(max((int) $_GET['exp'] - time(), 0), 86400));
 
 if (($_SERVER['HTTP_IF_NONE_MATCH'] ?? '') === $etag)
 {
