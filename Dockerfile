@@ -34,9 +34,11 @@ WORKDIR /var/www
 COPY composer.json composer.lock ./
 
 # Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --no-dev --no-scripts --no-autoloader
 # see dockerignore
 COPY . /var/www/
+# build the classmap after the sources are copied, otherwise App\ classes are missing
+RUN composer dump-autoload --no-dev --optimize --classmap-authoritative
 COPY dockerapp-configs/http.conf /etc/apache2/sites-available/000-default.conf
 COPY ./dockerapp-configs/php.ini-custom /usr/local/etc/php/conf.d/docker-php-ext-custom.ini
 COPY ./dockerapp-configs/policy.xml /etc/ImageMagick-6/policy.xml

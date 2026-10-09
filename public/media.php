@@ -49,7 +49,6 @@ const MEDIA_MIME = [
 	'ogg'  => 'audio/ogg',
 	'opus' => 'audio/opus',
 	'wav'  => 'audio/wav',
-	// Videos
 	'mp4'  => 'video/mp4',
 	'avi'  => 'video/x-msvideo',
 	'mkv'  => 'video/x-matroska',
