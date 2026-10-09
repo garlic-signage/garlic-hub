@@ -28,24 +28,50 @@
 
 use App\Framework\Media\MediaUrlSigner;
 
-require dirname(__DIR__) . '/src/Framework/Media/MediaUrlSigner.php';
+$systemDir = dirname(__DIR__);
+
+require $systemDir . '/vendor/autoload.php';
+Dotenv\Dotenv::createImmutable($systemDir)->safeLoad();
 
 const MEDIA_MIME = [
+	// Images
 	'jpg'  => 'image/jpeg',
 	'jpeg' => 'image/jpeg',
+	'avif' => 'image/avif',
 	'png'  => 'image/png',
 	'gif'  => 'image/gif',
 	'webp' => 'image/webp',
 	'svg'  => 'image/svg+xml',
-	'mp4'  => 'video/mp4',
-	'webm' => 'video/webm',
-	'ogv'  => 'video/ogg',
+	'bmp'  => 'image/bmp',
+	'tif'  => 'image/tiff',
+	// Audios
 	'mp3'  => 'audio/mpeg',
-	'wav'  => 'audio/wav',
 	'ogg'  => 'audio/ogg',
+	'opus' => 'audio/opus',
+	'wav'  => 'audio/wav',
+	// Videos
+	'mp4'  => 'video/mp4',
+	'avi'  => 'video/x-msvideo',
+	'mkv'  => 'video/x-matroska',
+	'webm' => 'video/webm',
+	'mov'  => 'video/quicktime',
+	'mpg'  => 'video/mpeg',
+	// PDF
 	'pdf'  => 'application/pdf',
-	'wgt'  => 'application/octet-stream',
+	// Widgets and miscellaneous: delivered as download
+	'wgt'   => 'application/octet-stream',
+	'zip'   => 'application/zip',
+	'json'  => 'application/json',
+	'xml'   => 'application/xml',
+	'rss'   => 'application/rss+xml',
+	'atom'  => 'application/atom+xml',
+	'apk'   => 'application/vnd.android.package-archive',
+	'smil'  => 'application/smil',
+	'txt'   => 'text/plain',
+	'csv'   => 'text/csv',
+	'bin'   => 'application/octet-stream',
 ];
+const MEDIA_DOWNLOAD = ['wgt', 'zip', 'json', 'xml', 'rss', 'atom', 'apk', 'smil', 'txt', 'csv', 'bin'];
 const MEDIA_VARIANT_DIR = ['thumb' => 'thumbs', 'orig' => 'originals'];
 
 function mediaFail(int $status): never
@@ -55,28 +81,6 @@ function mediaFail(int $status): never
 	exit;
 }
 
-function mediaSecret(string $systemDir): string
-{
-	$secret = getenv('APP_SECRET');
-	if (($secret === false || $secret === '') && is_readable($systemDir . '/.env'))
-	{
-		foreach (file($systemDir . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line)
-		{
-			if (str_starts_with($line, 'APP_SECRET='))
-			{
-				$secret = trim(substr($line, 11), " \t\"'");
-				break;
-			}
-		}
-	}
-	if (!is_string($secret) || $secret === '')
-		mediaFail(500);
-
-	return $secret;
-}
-
-$systemDir = dirname(__DIR__);
-
 $checksum = $_GET['c']   ?? '';
 $ext      = $_GET['ext'] ?? '';
 $variant  = $_GET['v']   ?? '';
@@ -85,7 +89,11 @@ if (!is_string($checksum) || !is_string($ext) || !is_string($variant)
 	|| !preg_match('/^[a-f0-9]{32,64}$/', $checksum) || !isset(MEDIA_MIME[$ext]) || !isset(MEDIA_VARIANT_DIR[$variant]))
 	mediaFail(400);
 
-if (!MediaUrlSigner::verify($_GET, mediaSecret($systemDir)))
+$secret = $_ENV['APP_SECRET'] ?? (getenv('APP_SECRET') ?: '');
+if (!is_string($secret) || $secret === '')
+	mediaFail(500);
+
+if (!MediaUrlSigner::verify($_GET, $secret))
 	mediaFail(403);
 
 $baseDir = $systemDir . '/var/storage/mediapool/' . MEDIA_VARIANT_DIR[$variant];
@@ -99,6 +107,8 @@ $mtime = filemtime($real);
 $etag  = '"' . md5($checksum . $size . $mtime) . '"';
 
 header('Content-Type: ' . MEDIA_MIME[$ext]);
+if (in_array($ext, MEDIA_DOWNLOAD, true))
+	header('Content-Disposition: attachment; filename="' . $checksum . '.' . $ext . '"');
 header('X-Content-Type-Options: nosniff');
 header('Content-Security-Policy: sandbox');
 header('Accept-Ranges: bytes');
