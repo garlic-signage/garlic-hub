@@ -35,6 +35,7 @@ The environment is regularly deleted and rebuilt.
 
 - [User Installation Guide](https://garlic-signage.com/garlic-hub/installation/)
 - [Connecting Media Players](https://garlic-signage.com/garlic-hub/docs/tutorials/connect-media-player/)
+- [Proxmox LXC Helper Script](https://forge.canaryblue.org/CanaryBlue-Public/garlic-hub-lxc) (community contribution, maintained by @SB-CanaryBlue)
 
 ## Current Features
 | Section                      | Status | description                                                                                                                            |
