@@ -65,12 +65,12 @@ class ParametersTest extends TestCase
 				'parsed' => false,
 			],
 			Parameters::PARAMETER_ADMIN_PASSWORD => [
-				'scalar_type' => ScalarType::STRING,
+				'scalar_type' => ScalarType::RAW,
 				'default_value' => '',
 				'parsed' => false,
 			],
 			Parameters::PARAMETER_ADMIN_PASSWORD_CONFIRM => [
-				'scalar_type' => ScalarType::STRING,
+				'scalar_type' => ScalarType::RAW,
 				'default_value' => '',
 				'parsed' => false,
 			],
@@ -86,5 +86,30 @@ class ParametersTest extends TestCase
 	public function testConstructorSetsModuleNameToUser(): void
 	{
 		static::assertSame('user', $this->parameters->getModuleName());
+	}
+
+	/**
+	 * Passwords must not be HTML-escaped before hashing, otherwise the
+	 * initial admin can never log in with characters like & < > " '
+	 *
+	 * @throws Exception
+	 */
+	#[Group('units')]
+	public function testPasswordWithSpecialCharsIsNotEscapedAndCanBeVerified(): void
+	{
+		$password   = 'Adm1n&<>"\'pass';
+		$parameters = new Parameters(new Sanitizer(), $this->createStub(Session::class));
+		$parameters->setUserInputs([
+			Parameters::PARAMETER_ADMIN_PASSWORD         => $password,
+			Parameters::PARAMETER_ADMIN_PASSWORD_CONFIRM => $password,
+		]);
+		$parameters->parseInputAllParameters();
+
+		$storedPassword = $parameters->getValueOfParameter(Parameters::PARAMETER_ADMIN_PASSWORD);
+
+		static::assertSame($password, $storedPassword);
+		static::assertSame($password, $parameters->getValueOfParameter(Parameters::PARAMETER_ADMIN_PASSWORD_CONFIRM));
+		// same hashing as UsersAdminCreateService and same verify as AuthService::login
+		static::assertTrue(password_verify($password, password_hash($storedPassword, PASSWORD_DEFAULT)));
 	}
 }
