@@ -45,6 +45,7 @@ use App\Framework\Database\NestedSets\Service;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Media\DataUrlDecoder;
 use App\Framework\Media\FileInfoWrapper;
+use App\Framework\Media\MediaUrlSigner;
 use App\Framework\Media\MimeTypeDetector;
 use App\Framework\Media\MimeTypeExtensionMapper;
 use App\Framework\Media\MimeTypeService;
@@ -351,6 +352,16 @@ $dependencies[MimeTypeService::class] = DI\factory(function (ContainerInterface 
 $dependencies[DataUrlDecoder::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new DataUrlDecoder($container->get(MimeTypeService::class));
+});
+$dependencies[MediaUrlSigner::class] = DI\factory(function (ContainerInterface $container)
+{
+	/** @var Config $config */
+	$config = $container->get(Config::class);
+
+	return new MediaUrlSigner(
+		$config->getEnv('APP_SECRET'),
+		(int) $config->getConfigValue('media_url_ttl', 'mediapool')
+	);
 });
 
 
