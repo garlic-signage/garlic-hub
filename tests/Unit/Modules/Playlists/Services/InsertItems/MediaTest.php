@@ -78,7 +78,7 @@ class MediaTest extends TestCase
 
 		$this->mediaServiceMock->expects($this->once())->method('fetchMedia')
 			->with('mediaId')
-			->willReturn(['metadata' => ['size' => 1024], 'filename' => 'test_file.mp4', 'checksum' => 'abc123', 'mimetype' => 'video/mp4', 'paths' => ['/path']]);
+			->willReturn(['metadata' => ['size' => 1024], 'filename' => 'test_file.mp4', 'checksum' => 'abc123', 'mimetype' => 'video/mp4', 'paths' => ['/path'], 'urls' => ['thumbnail' => '/media.php?c=abc123']]);
 
 		$this->playlistMetricsCalculatorMock->expects($this->once())->method('calculateRemainingMediaDuration')
 			->willReturn(5000);
@@ -115,7 +115,7 @@ class MediaTest extends TestCase
 
 		$this->mediaServiceMock->expects($this->once())->method('fetchMedia')
 			->with('mediaId')
-			->willReturn(['metadata' => ['size' => 1024], 'filename' => 'test_file.mp4', 'checksum' => 'abc123', 'mimetype' => 'application/widget', 'config_data' => 'some config xml', 'paths' => ['/path']]);
+			->willReturn(['metadata' => ['size' => 1024], 'filename' => 'test_file.mp4', 'checksum' => 'abc123', 'mimetype' => 'application/widget', 'config_data' => 'some config xml', 'paths' => ['/path'], 'urls' => ['thumbnail' => '/media.php?c=abc123']]);
 
 		$this->playlistMetricsCalculatorMock->expects($this->once())->method('calculateRemainingMediaDuration')
 			->willReturn(5000);
@@ -200,7 +200,7 @@ class MediaTest extends TestCase
 
 		$this->mediaServiceMock->expects($this->once())->method('fetchMedia')
 			->with('mediaId')
-			->willReturn(['metadata' => ['size' => 1024], 'filename' => 'test_file.mp4', 'checksum' => 'abc123', 'mimetype' => 'video/mp4', 'paths' => ['/path']]);
+			->willReturn(['metadata' => ['size' => 1024], 'filename' => 'test_file.mp4', 'checksum' => 'abc123', 'mimetype' => 'video/mp4', 'paths' => ['/path'], 'urls' => ['thumbnail' => '/media.php?c=abc123']]);
 
 		$this->playlistMetricsCalculatorMock->expects($this->once())->method('calculateRemainingMediaDuration')
 			->willReturn(5000);

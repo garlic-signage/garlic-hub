@@ -81,6 +81,7 @@ class Playlist extends AbstractInsertItem
 
 			$saveItem['item_id'] = $id;
 			$saveItem['paths']['thumbnail'] = 'public/images/icons/playlist.svg';
+			$saveItem['urls']['thumbnail']  = '/images/icons/playlist.svg';
 
 			$playlistMetrics = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlistTargetData)->getMetricsForFrontend();
 

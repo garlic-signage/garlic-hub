@@ -26,6 +26,7 @@ use App\Framework\Core\ShellExecutor;
 use App\Framework\Database\NestedSets\Service;
 use App\Framework\Media\Ffmpeg;
 use App\Framework\Media\MediaProperties;
+use App\Framework\Media\MediaUrlSigner;
 use App\Framework\Media\MimeTypeService;
 use App\Modules\Mediapool\Controller\MediaController;
 use App\Modules\Mediapool\Controller\NodesController;
@@ -114,6 +115,7 @@ $dependencies[MediaService::class] = DI\factory(function (ContainerInterface $co
 		new FilesRepository($container->get('SqlConnection')),
 		$container->get(NodesRepository::class),
 		$container->get(AclValidator::class),
+		$container->get(MediaUrlSigner::class),
 		$container->get('ModuleLogger')
 	);
 });

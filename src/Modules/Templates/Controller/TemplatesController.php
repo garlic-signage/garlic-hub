@@ -124,6 +124,7 @@ readonly class TemplatesController
 
 		$this->templatesDatatableService->loadDatatable();
 		$templates = [];
+		// Todo: template files moved out of the document root, they need their own signed delivery (see public/media.php)
 		$path = str_replace('public', '', $this->config->getConfigValue('thumbnails', 'templates', 'directories'));
 		foreach ($this->templatesDatatableService->getCurrentFilterResults() as $template)
 		{

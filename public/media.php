@@ -95,9 +95,12 @@ if (!is_string($secret) || $secret === '')
 if (!MediaUrlSigner::verify($_GET, $secret))
 	mediaFail(403);
 
-$baseDir = $systemDir . '/var/storage/mediapool/' . MEDIA_VARIANT_DIR[$variant];
-$path    = $baseDir . '/' . $checksum . '.' . $ext;
-$real    = realpath($path);
+// Must stay in sync with [directories] in config/settings/config_mediapool.ini.
+$baseDir = realpath($systemDir . '/var/storage/mediapool/' . MEDIA_VARIANT_DIR[$variant]);
+if ($baseDir === false)
+	mediaFail(404);
+
+$real = realpath($baseDir . '/' . $checksum . '.' . $ext);
 if ($real === false || !str_starts_with($real, $baseDir . '/') || !is_file($real))
 	mediaFail(404);
 

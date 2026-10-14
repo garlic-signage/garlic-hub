@@ -23,6 +23,7 @@ namespace Tests\Unit\Modules\Mediapool\Services;
 
 use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
+use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Mediapool\Repositories\FilesRepository;
 use App\Modules\Mediapool\Repositories\NodesRepository;
 use App\Modules\Mediapool\Services\AclValidator;
@@ -66,6 +67,7 @@ class MediaServiceTest extends TestCase
 			$this->mediaRepositoryMock,
 			$this->nodesRepositoryMock,
 			$this->aclValidatorMock,
+			new MediaUrlSigner('unit-test-secret'),
 			$this->loggerMock
 		);
 		$this->mediaService->setUID(1);
@@ -90,6 +92,10 @@ class MediaServiceTest extends TestCase
 
 		static::assertCount(2, $result);
 		static::assertEquals(['key' => 'value'], $result[0]['metadata']);
+		static::assertSame('original_directory/checksum.extension', $result[0]['paths']['original']);
+		static::assertSame('thumbnail_directory/checksum.thumb_extension', $result[0]['paths']['thumbnail']);
+		static::assertStringStartsWith('/media.php?c=checksum&ext=extension&v=orig&exp=', $result[0]['urls']['original']);
+		static::assertStringStartsWith('/media.php?c=checksum&ext=thumb_extension&v=thumb&exp=', $result[0]['urls']['thumbnail']);
 	}
 
 	#[Group('units')]
@@ -126,6 +132,7 @@ class MediaServiceTest extends TestCase
 		$result = $this->mediaService->fetchMedia($mediaId);
 
 		static::assertEquals(['key' => 'value'], $result['metadata']);
+		static::assertStringStartsWith('/media.php?c=checksum&ext=thumb_extension&v=thumb&exp=', $result['urls']['thumbnail']);
 	}
 
 	#[Group('units')]
@@ -310,7 +317,10 @@ class MediaServiceTest extends TestCase
 	{
 		$mediaId = 'media-1';
 		$media = ['id' => $mediaId, 'node_id' => 1];
-		$dataSet = ['id' => $mediaId, 'node_id' => 1, 'media_id' => 'new-media-id', 'UID' => 1];
+		$dataSet = [
+			'id' => $mediaId, 'node_id' => 1, 'media_id' => 'new-media-id', 'UID' => 1,
+			'checksum' => 'checksum', 'extension' => 'jpg', 'thumb_extension' => 'jpg'
+		];
 
 		$this->mediaRepositoryMock->method('findAllWithOwnerById')->willReturn($media);
 		$this->aclValidatorMock->method('checkDirectoryPermissions')->willReturn(['read' => true, 'edit' => true]);

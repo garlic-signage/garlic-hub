@@ -25,12 +25,14 @@ namespace App\Modules\Playlists\Helper\ExportSmil\items;
  * Interface ItemInterface
  *
  * Represents a contract for an item containing methods to handle various attributes and behaviors related to SMIL tags and other item-specific properties.
+ *
+ * setLink() is not part of it on purpose: a seq container has no media link, only Media has one.
  */
 interface ItemInterface
 {
 
     public function setBelongsToMasterPlaylist(bool $belongsToMasterPlaylist): void;
-    public function setLink(string $link):static;
+
 	/**
 	 * @param array<int,int>|array<empty,empty> $touches
 	 */

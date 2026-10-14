@@ -31,7 +31,7 @@ use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-cLass ConcreteBase extends Base
+class ConcreteBase extends Base
 {
 	public function getPrefetchTag(): string
 	{

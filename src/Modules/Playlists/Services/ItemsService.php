@@ -24,6 +24,7 @@ namespace App\Modules\Playlists\Services;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Media\MediaUrlSigner;
 use App\Framework\Media\MimeTypeExtensionMapper;
 use App\Framework\Media\MimeTypeService;
 use App\Framework\Services\AbstractBaseService;
@@ -50,6 +51,7 @@ class ItemsService extends AbstractBaseService
 								private readonly PlaylistsService          $playlistsService,
 								private readonly PlaylistMetricsCalculator $playlistMetricsCalculator,
 								private readonly MimeTypeExtensionMapper   $mimeTypeExtensionMapper,
+								private readonly MediaUrlSigner            $mediaUrlSigner,
 								LoggerInterface                            $logger)
 	{
 		parent::__construct($logger);
@@ -185,23 +187,30 @@ class ItemsService extends AbstractBaseService
 					$isSvgWidget = ($value['mimetype'] === 'application/widget' && $value['content_data'] == '');
 					$finalExt = $isSvgWidget ? 'svg' : $ext;
 
+					// ugly workaround fix this later.
+					if ($value['mimetype'] === 'application/widget'
+						&& !file_exists($thumbnailPath . '/' . $filename . '.' . $finalExt))
+						$finalExt = 'png';
+
 					$tmp = $value;
 					$tmp['paths']['thumbnail'] = $thumbnailPath . '/' . $filename . '.' . $finalExt;
-					// ugly workaround fix this later.
-					if ($value['mimetype'] === 'application/widget' && !file_exists($tmp['paths']['thumbnail']))
-						$tmp['paths']['thumbnail'] = $thumbnailPath . '/' . $filename . '.png';
+					// mediapool files are stored outside the document root
+					$tmp['urls']['thumbnail'] = $this->mediaUrlSigner->thumbUrl($filename, $finalExt);
 
 					$items[] = $tmp;
 					break;
 				case ItemType::PLAYLIST->value:
 					$tmp = $value;
 					$tmp['paths']['thumbnail'] = 'public/images/icons/playlist.svg';
+					$tmp['urls']['thumbnail']  = '/images/icons/playlist.svg';
 					$items[] = $tmp;
 					break;
 				case ItemType::TEMPLATE->value:
 					$tmp = $value;
 					$ext = $this->mimeTypeExtensionMapper->determineExtension($value['mimetype']);
+					// Todo: still inside the document root, moves to var/storage later
 					$tmp['paths']['thumbnail'] = 'public/var/playlists/items/thumbs/' . $value['item_id'].'.'.$ext;
+					$tmp['urls']['thumbnail']  = '/var/playlists/items/thumbs/' . $value['item_id'].'.'.$ext;
 					$items[] = $tmp;
 					break;
 

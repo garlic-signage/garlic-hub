@@ -115,6 +115,7 @@ class PlaylistTest extends TestCase
 
 		$saveItem['item_id'] = 1;
 		$saveItem['paths']['thumbnail'] = 'public/images/icons/playlist.svg';
+		$saveItem['urls']['thumbnail']  = '/images/icons/playlist.svg';
 
 		static::assertSame($playlistMetrics, $result['playlist_metrics']);
 		static::assertSame($saveItem, $result['item']);

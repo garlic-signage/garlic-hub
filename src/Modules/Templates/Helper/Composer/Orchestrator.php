@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace App\Modules\Templates\Helper\Composer;
 
 use App\Framework\Core\Config\Config;
+use App\Framework\Media\MediaUrlSigner;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -45,11 +46,12 @@ class Orchestrator extends BaseTemplateOrchestrator
 		private readonly TemplatesUsageService $templatesUsageService,
 		private readonly ExportImage         $exportImage,
 		private readonly TemplatesService    $templatesService,
-		Config $config
+		Config $config,
+		MediaUrlSigner $mediaUrlSigner
 	)
 	{
 
-		parent::__construct($config);
+		parent::__construct($config, $mediaUrlSigner);
 	}
 
 

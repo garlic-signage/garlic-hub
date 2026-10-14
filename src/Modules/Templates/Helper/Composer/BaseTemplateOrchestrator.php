@@ -23,12 +23,13 @@ declare(strict_types=1);
 namespace App\Modules\Templates\Helper\Composer;
 
 use App\Framework\Core\Config\Config;
+use App\Framework\Media\MediaUrlSigner;
 
 class BaseTemplateOrchestrator
 {
-	protected string $mediaUrl;
+	protected string $baseUrl;
 
-	public function __construct(protected readonly Config $config)
+	public function __construct(protected readonly Config $config, protected readonly MediaUrlSigner $mediaUrlSigner)
 	{
 		$url = $this->config->getConfigValue('url', 'mediapool', 'content_server');
 		if ($url === '')
@@ -40,20 +41,33 @@ class BaseTemplateOrchestrator
 			$url = ($isHttps ? 'https' : 'http') . '://' . ($_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST']);
 		}
 
-		$path = str_replace('public', '', $this->config->getConfigValue('originals', 'mediapool', 'directories'));
-		$this->mediaUrl = $url.$path;
+		$this->baseUrl = rtrim($url, '/');
 	}
 
 	protected function restoreSrc(array &$objects): void
 	{
 		foreach ($objects as &$obj)
 		{
-			if (isset($obj['fileName']))
-				$obj['src'] = $this->mediaUrl .'/'. $obj['fileName'];
+			if (isset($obj['fileName']) && is_string($obj['fileName']))
+				$obj['src'] = $this->buildMediaUrl($obj['fileName']);
 
 			if (isset($obj['objects']) && is_array($obj['objects']))
 				$this->restoreSrc($obj['objects']);
 		}
+	}
+
+	/**
+	 * Only the file name of the mediapool original is stored inside a template,
+	 * the signed delivery url is rebuilt on every load as it expires.
+	 */
+	protected function buildMediaUrl(string $fileName): string
+	{
+		$checksum  = pathinfo($fileName, PATHINFO_FILENAME);
+		$extension = pathinfo($fileName, PATHINFO_EXTENSION);
+		if ($checksum === '' || $extension === '')
+			return '';
+
+		return $this->baseUrl . $this->mediaUrlSigner->originalUrl($checksum, $extension);
 	}
 
 	protected function removeSrc(array &$objects): void

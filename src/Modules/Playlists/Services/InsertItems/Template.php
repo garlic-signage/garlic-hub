@@ -105,6 +105,8 @@ class Template extends AbstractInsertItem
 			$this->fileSystem->copy($thumbPathTemplate, $thumbPathItem);
 			$saveItem['item_id'] = $id;
 			$saveItem['paths']['thumbnail'] = $thumbPathItem;
+			// Todo: still inside the document root, moves to var/storage later
+			$saveItem['urls']['thumbnail']  = '/'.str_replace('public/', '', $thumbPathItem);
 
 			$playlistMetrics = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlistData)->getMetricsForFrontend();
 

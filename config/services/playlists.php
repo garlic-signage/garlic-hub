@@ -27,6 +27,7 @@ use App\Framework\Core\CsrfToken;
 use App\Framework\Core\Sanitizer;
 use App\Framework\Core\Session;
 use App\Framework\Core\Translate\Translator;
+use App\Framework\Media\MediaUrlSigner;
 use App\Framework\Media\MimeTypeExtensionMapper;
 use App\Framework\TemplateEngine\AdapterInterface;
 use App\Framework\Utils\Datatable\BuildService;
@@ -263,6 +264,7 @@ $dependencies[ItemsService::class] = DI\factory(function (ContainerInterface $co
 		$container->get(PlaylistsService::class),
 		$container->get(PlaylistMetricsCalculator::class),
 		$container->get(MimeTypeExtensionMapper::class),
+		$container->get(MediaUrlSigner::class),
 		$container->get('ModuleLogger')
 	);
 });
@@ -367,7 +369,7 @@ $dependencies[\App\Modules\Playlists\Helper\Templates\Orchestrator::class] = DI\
 		$container->get(ExportImage::class),
 		$container->get(\App\Modules\Templates\Helper\Composer\TemplatePreparer::class),
 		$container->get(Config::class),
-
+		$container->get(MediaUrlSigner::class)
 	);
 });
 

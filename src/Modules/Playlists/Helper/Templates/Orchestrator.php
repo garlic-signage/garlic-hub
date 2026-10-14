@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace App\Modules\Playlists\Helper\Templates;
 
 use App\Framework\Core\Config\Config;
+use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Services\ItemsService;
 use App\Modules\Templates\Helper\Composer\BaseTemplateOrchestrator;
@@ -37,10 +38,11 @@ class Orchestrator extends BaseTemplateOrchestrator
 		private readonly UserSession     $userSession,
 		private readonly ExportImage         $exportImage,
 		private readonly TemplatePreparer    $templatePreparer,
-		Config $config
+		Config $config,
+		MediaUrlSigner $mediaUrlSigner
 	)
 	{
-		parent::__construct($config);
+		parent::__construct($config, $mediaUrlSigner);
 		$this->itemsService->setUID($this->userSession->getUID());
 	}
 

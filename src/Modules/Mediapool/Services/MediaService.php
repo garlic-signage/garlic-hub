@@ -24,6 +24,7 @@ namespace App\Modules\Mediapool\Services;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\DatabaseException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Mediapool\Repositories\FilesRepository;
 use App\Modules\Mediapool\Repositories\NodesRepository;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
@@ -44,6 +45,7 @@ class MediaService
 	private readonly FilesRepository $mediaRepository;
 	private readonly NodesRepository $nodesRepository;
 	private readonly AclValidator $aclValidator;
+	private readonly MediaUrlSigner $mediaUrlSigner;
 	private readonly LoggerInterface $logger;
 	private int $UID;
 	private string $pathOriginals;
@@ -54,13 +56,15 @@ class MediaService
 	 * @param FilesRepository $mediaRepository
 	 * @param NodesRepository $nodesRepository
 	 * @param AclValidator $aclValidator
+	 * @param MediaUrlSigner $mediaUrlSigner
 	 * @param LoggerInterface $logger
 	 */
-	public function __construct(FilesRepository $mediaRepository, NodesRepository $nodesRepository, AclValidator $aclValidator, LoggerInterface $logger)
+	public function __construct(FilesRepository $mediaRepository, NodesRepository $nodesRepository, AclValidator $aclValidator, MediaUrlSigner $mediaUrlSigner, LoggerInterface $logger)
 	{
 		$this->mediaRepository = $mediaRepository;
 		$this->nodesRepository = $nodesRepository;
 		$this->aclValidator    = $aclValidator;
+		$this->mediaUrlSigner  = $mediaUrlSigner;
 		$this->logger          = $logger;
 
 		$this->pathOriginals = $aclValidator->getConfig()->getConfigValue('originals', 'mediapool', 'directories');
@@ -101,10 +105,7 @@ class MediaService
 			foreach ($result as &$media)
 			{
 				$media['metadata'] = json_decode($media['metadata'], true);
-
-				$media['paths']['original']  = $this->getPathOriginals().'/'.$media['checksum'].'.'.$media['extension'];
-				$media['paths']['preview']   = $this->pathPreviews.'/'.$media['checksum'].'.'.$media['extension'];
-				$media['paths']['thumbnail'] = $this->getPathThumbnails().'/'.$media['checksum'].'.'.$media['thumb_extension'];
+				$media = $this->addFileLocations($media);
 			}
 
 			return $result;
@@ -133,10 +134,7 @@ class MediaService
 
 			$media['metadata'] = json_decode($media['metadata'], true);
 
-			$media['paths']['original']  = $this->pathOriginals.'/'.$media['checksum'].'.'.$media['extension'];
-			$media['paths']['preview']   = $this->pathPreviews.'/'.$media['checksum'].'.'.$media['extension'];
-			$media['paths']['thumbnail'] = $this->pathThumbnails.'/'.$media['checksum'].'.'.$media['thumb_extension'];
-			return $media;
+			return $this->addFileLocations($media);
 		}
 		catch (Exception | CoreException | ModuleException | PhpfastcacheSimpleCacheException $e)
 		{
@@ -258,6 +256,7 @@ class MediaService
 				throw new ModuleException('mediapool', 'No permissions on this directory: '. $media['node_id']);
 
 			// no need to check this as it is only the complete dataset which we checked with fetchMediaById
+			/** @var array<string,mixed> $dataSet */
 			$dataSet = $this->mediaRepository->getFirstDataSet($this->mediaRepository->findById($mediaId));
 
 			$dataSet['media_id'] = Uuid::uuid4()->toString();
@@ -265,13 +264,37 @@ class MediaService
 
 			$dataSet['uuid']     = $this->mediaRepository->insert($dataSet);
 
-			return $dataSet;
+			return $this->addFileLocations($dataSet);
 		}
 		catch (Throwable $e)
 		{
 			$this->logger->error('Error cloning media: ' . $e->getMessage());
 			return [];
 		}
+	}
+
+	/**
+	 * Adds the file system paths (server side use) and the signed media.php urls
+	 * (frontend use) of a media data set. The files are stored outside the document
+	 * root, so they are never reachable by their path.
+	 *
+	 * @param array<string,mixed> $media
+	 * @return array<string,mixed>
+	 */
+	private function addFileLocations(array $media): array
+	{
+		$checksum       = (string) $media['checksum'];
+		$extension      = (string) $media['extension'];
+		$thumbExtension = (string) $media['thumb_extension'];
+
+		$media['paths']['original']  = $this->pathOriginals.'/'.$checksum.'.'.$extension;
+		$media['paths']['preview']   = $this->pathPreviews.'/'.$checksum.'.'.$extension;
+		$media['paths']['thumbnail'] = $this->pathThumbnails.'/'.$checksum.'.'.$thumbExtension;
+
+		$media['urls']['original']  = $this->mediaUrlSigner->originalUrl($checksum, $extension);
+		$media['urls']['thumbnail'] = $this->mediaUrlSigner->thumbUrl($checksum, $thumbExtension);
+
+		return $media;
 	}
 
 	/**

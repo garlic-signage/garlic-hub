@@ -25,6 +25,7 @@ use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Media\MediaUrlSigner;
 use App\Framework\Media\MimeTypeExtensionMapper;
 use App\Modules\Mediapool\Services\MediaService;
 use App\Modules\Playlists\Helper\ItemType;
@@ -68,6 +69,7 @@ class ItemsServiceTest extends TestCase
 			$this->playlistsServiceMock,
 			$this->playlistMetricsCalculatorMock,
 			$this->mimeTypeExtensionMapperMock,
+			new MediaUrlSigner('unit-test-secret'),
 			$this->loggerMock
 		);
 	}
@@ -482,6 +484,10 @@ class ItemsServiceTest extends TestCase
 		static::assertArrayHasKey('items', $result);
 		static::assertCount(1, $result['items']);
 		static::assertEquals('/path/to/thumbnails/video_checksum.jpg', $result['items'][0]['paths']['thumbnail']);
+		static::assertStringStartsWith(
+			'/media.php?c=video_checksum&ext=jpg&v=thumb&exp=',
+			$result['items'][0]['urls']['thumbnail']
+		);
 	}
 
 	/**
@@ -612,6 +618,7 @@ class ItemsServiceTest extends TestCase
 		static::assertArrayHasKey('items', $result);
 		static::assertCount(1, $result['items']);
 		static::assertEquals('public/images/icons/playlist.svg', $result['items'][0]['paths']['thumbnail']);
+		static::assertEquals('/images/icons/playlist.svg', $result['items'][0]['urls']['thumbnail']);
 	}
 
 	/**

@@ -27,6 +27,7 @@ use App\Framework\Core\Sanitizer;
 use App\Framework\Core\Session;
 use App\Framework\Core\Translate\Translator;
 use App\Framework\Media\DataUrlDecoder;
+use App\Framework\Media\MediaUrlSigner;
 use App\Framework\Utils\Datatable\BuildService;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
 use App\Framework\Utils\Datatable\PrepareService;
@@ -99,7 +100,8 @@ $dependencies[\App\Modules\Templates\Helper\Composer\Orchestrator::class] = DI\f
 		$container->get(TemplatesUsageService::class),
 		$container->get(ExportImage::class),
 		$container->get(TemplatesService::class),
-		$container->get(Config::class)
+		$container->get(Config::class),
+		$container->get(MediaUrlSigner::class)
 	);
 });
 
