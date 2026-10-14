@@ -24,8 +24,10 @@ mkdir -p \
   /var/www/public/var/playlists/items/thumbs \
   /var/www/public/var/playlists/items/originals
 
-if ! grep -q '^APP_SECRET=' /var/www/.env; then
+# media.php signs its delivery urls with it, so an empty value (as in .env.dist) counts as missing
+if ! grep -qE '^APP_SECRET=[[:space:]]*[^[:space:]#]' /var/www/.env; then
     echo "Appending random APP_SECRET..."
+    sed -i '/^APP_SECRET=/d' /var/www/.env
     echo "APP_SECRET=$(openssl rand -hex 16)" >> /var/www/.env
 fi
 
