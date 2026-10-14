@@ -86,6 +86,8 @@ class FilterBaseTest extends TestCase
 		$this->FilterBase = new ConcreteFilterBase($connectionMock, 'table', 'id');
 
 		$connectionMock->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
+		$connectionMock->method('quoteSingleIdentifier')
+			->willReturnCallback(fn(string $identifier): string => '"'.$identifier.'"');
 	}
 
 	/**
@@ -340,7 +342,7 @@ class FilterBaseTest extends TestCase
 		$this->queryBuilderMock->expects($this->once())->method('setParameter')
 			->with('tableUID', $UID)->willReturn($this->queryBuilderMock);
 
-		$this->queryBuilderMock->expects($this->once())->method('addOrderBy')->with('table.column_name', 'ASC');
+		$this->queryBuilderMock->expects($this->once())->method('addOrderBy')->with('"table"."column_name"', 'ASC');
 
 		$expectedResults = [['id' => 1, 'name' => 'John Doe']];
 
@@ -348,6 +350,56 @@ class FilterBaseTest extends TestCase
 
 		$result = $this->FilterBase->findAllFilteredByUID($fields, $UID);
 		static::assertSame($expectedResults, $result);
+	}
+
+	/**
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	#[Group('units')]
+	public function testFindAllFilteredInjectedSortColumnFallsBackToDefault(): void
+	{
+		$fields = [
+			BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE => ['value' => 0],
+			BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE => ['value' => 10],
+			BaseFilterParametersInterface::PARAMETER_SORT_COLUMN => [
+				'value' => 'id,(select sleep(5))',
+				'default_value' => 'playlist_id'
+			],
+			BaseFilterParametersInterface::PARAMETER_SORT_ORDER  => ['value' => 'DESC']
+		];
+
+		$this->queryBuilderMock->method('select')->willReturnSelf();
+		$this->setStandardMocks();
+
+		$this->queryBuilderMock->expects($this->once())->method('addOrderBy')
+			->with('"table"."playlist_id"', 'DESC');
+
+		$this->resultMock->method('fetchAllAssociative')->willReturn([]);
+
+		$this->FilterBase->findAllFiltered($fields);
+	}
+
+	/**
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	#[Group('units')]
+	public function testFindAllFilteredInjectedSortColumnWithoutDefaultSkipsOrderBy(): void
+	{
+		$fields = [
+			BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE => ['value' => 0],
+			BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE => ['value' => 10],
+			BaseFilterParametersInterface::PARAMETER_SORT_COLUMN => ['value' => 'name` DESC, (select 1)'],
+			BaseFilterParametersInterface::PARAMETER_SORT_ORDER  => ['value' => 'ASC']
+		];
+
+		$this->queryBuilderMock->method('select')->willReturnSelf();
+		$this->setStandardMocks();
+
+		$this->queryBuilderMock->expects($this->never())->method('addOrderBy');
+
+		$this->resultMock->method('fetchAllAssociative')->willReturn([]);
+
+		$this->FilterBase->findAllFiltered($fields);
 	}
 
 	private function setStandardMocksForCount(): void
