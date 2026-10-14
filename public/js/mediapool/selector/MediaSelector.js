@@ -88,7 +88,8 @@ export class MediaSelector
 	{
 		return [...document.querySelectorAll('.media-item.selected')].map(article => ({
 			id: article.dataset.mediaId,
-			src: article.querySelector('img').src
+			src: article.dataset.originalUrl,
+			fileName: article.dataset.fileName
 		}));
 	}
 

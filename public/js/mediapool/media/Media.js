@@ -25,8 +25,9 @@ export class Media
     #mediaElement = null;
 	#mediaData     = null;
 	#mediaId       = ""
-	#thumbnailPath = "";
-	#originalPath  = "";
+	#thumbnailUrl  = "";
+	#originalUrl   = "";
+	#fileName      = "";
 	#filename      = "";
 	#mimetype      = "";
 	#description   = ""
@@ -41,8 +42,10 @@ export class Media
     {
         this.#mediaElement = mediaElement;
 		this.#mediaId       = mediaData.media_id;
-		this.#thumbnailPath = "/var/mediapool/thumbs/"+mediaData.checksum+"." + mediaData.thumb_extension;
-		this.#originalPath  = "/var/mediapool/originals/"+mediaData.checksum+"." + mediaData.extension;
+		// the files are stored outside the document root, the backend delivers signed media.php urls
+		this.#thumbnailUrl  = mediaData.urls.thumbnail;
+		this.#originalUrl   = mediaData.urls.original;
+		this.#fileName      = mediaData.checksum + "." + mediaData.extension;
 		this.#filename      = mediaData.filename;
 		this.#mimetype		= mediaData.mimetype;
 		this.#description   = mediaData.media_description
@@ -60,14 +63,19 @@ export class Media
 		return this.#mediaId;
 	}
 
-	get thumbnailPath()
+	get thumbnailUrl()
 	{
-		return this.#thumbnailPath;
+		return this.#thumbnailUrl;
 	}
 
-	get originalPath()
+	get originalUrl()
 	{
-		return this.#originalPath;
+		return this.#originalUrl;
+	}
+
+	get fileName()
+	{
+		return this.#fileName;
 	}
 
 	get filename()
@@ -101,7 +109,7 @@ export class Media
 
 		const a = this.#mediaElement.querySelector("a");
 		if (this.#hasDetailedView(this.#mimetype))
-			a.href  = this.#originalPath;
+			a.href  = this.#originalUrl;
 		else
 		{
 			a.classList.remove("glightbox");
@@ -146,9 +154,13 @@ export class Media
 	#createThumbnail()
 	{
 		this.#mediaElement.querySelector(".media-type-icon").classList.add(this.#detectMediaType(this.#mimetype));
-		this.#mediaElement.querySelector(".media-item").setAttribute("data-media-id", this.#mediaId);
+		const mediaItem = this.#mediaElement.querySelector(".media-item");
+		mediaItem.setAttribute("data-media-id", this.#mediaId);
+		// consumers like the template composer need the original, not the displayed thumbnail
+		mediaItem.setAttribute("data-original-url", this.#originalUrl);
+		mediaItem.setAttribute("data-file-name", this.#fileName);
 		const img = this.#mediaElement.querySelector("img");
-		img.src = this.#thumbnailPath;
+		img.src = this.#thumbnailUrl;
 		img.alt = "Thumbnail: " + this.#filename;
 		img.setAttribute("data-title", this.#filename);
 	}

@@ -109,7 +109,7 @@ export class Item
 		listItem.id = "itemId-" + this.#itemData.item_id;
 
 		const thumbnail = playlistItem.querySelector('img');
-		thumbnail.src = "/" + this.#itemData.paths.thumbnail.replace('public/', '');
+		thumbnail.src = this.#itemData.urls.thumbnail;
 		thumbnail.alt = this.#itemData.item_name;
 
 		this.#itemName = playlistItem.querySelector('.item-name');
