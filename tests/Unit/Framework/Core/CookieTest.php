@@ -66,26 +66,31 @@ class CookieTest extends TestCase
 	#[RunInSeparateProcess] #[Group('units')]
 	public function testCreateCookieSuccess(): void
 	{
+		// the timestamp is taken from the object, a hard coded one would depend on the local timezone
+		$expire = new DateTime('2035-05-17');
+
 		$setcookieMock = $this->getFunctionMock('App\Framework\Core', 'setcookie');
 		$setcookieMock->expects($this->once())
-			->with('test_cookie', 'test_value', 2062965600, '/', '', false, true)
+			->with('test_cookie', 'test_value', $expire->getTimestamp(), '/', '', false, true)
 			->willReturn(true);
 
-		$this->cookie->createCookie('test_cookie', 'test_value', new DateTime('2035-05-17'));
+		$this->cookie->createCookie('test_cookie', 'test_value', $expire);
 	}
 
 	#[RunInSeparateProcess] #[Group('units')]
 	public function testCreateCookieFailure(): void
 	{
+		$expire = new DateTime('2035-05-17');
+
 		$setcookieMock = $this->getFunctionMock('App\Framework\Core', 'setcookie');
 		$setcookieMock->expects($this->once())
-			->with('test_cookie', 'test_value', 2062965600, '/', '', false, true)
+			->with('test_cookie', 'test_value', $expire->getTimestamp(), '/', '', false, true)
 			->willReturn(false);
 
 		$this->expectException(FrameworkException::class);
 		$this->expectExceptionMessage('Cookie failed to set.');
 
-		$this->cookie->createCookie('test_cookie', 'test_value', new DateTime('2035-05-17'));
+		$this->cookie->createCookie('test_cookie', 'test_value', $expire);
 	}
 
 	#[RunInSeparateProcess] #[Group('units')]
