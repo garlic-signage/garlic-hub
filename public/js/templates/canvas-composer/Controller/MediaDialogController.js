@@ -60,16 +60,16 @@ export class MediaDialogController
 		this.#mediaDialogView.addMedia.addEventListener("click", async (event) =>
 		{
 			let selectedMediaList = this.#mediaSelector.getSelectedMedia();
-			for (const [i, { id, src }] of selectedMediaList.entries())
+			for (const [i, { id, src, fileName }] of selectedMediaList.entries())
 			{
-				await this.#insertService.insertImage(id, src, i);
+				await this.#insertService.insertImage(id, src, fileName, i);
 			}
 			this.remove();
 		}, { once: true });
 		this.#mediaDialogView.applyMedia.addEventListener("click", async (event) =>
 		{
 			let selectedMedia = this.#mediaSelector.getSelectedMedia()[0];
-			await this.#insertService.replaceImage(selectedMedia.id, selectedMedia.src);
+			await this.#insertService.replaceImage(selectedMedia.id, selectedMedia.src, selectedMedia.fileName);
 			this.remove();
 		}, { once: true });
 

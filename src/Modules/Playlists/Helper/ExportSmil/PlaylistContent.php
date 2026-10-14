@@ -161,11 +161,10 @@ class PlaylistContent
 		$item->setTouches($this->touchTrigger);
 		$serverUrl = $this->config->getConfigValue('url', 'mediapool', 'content_server');
 
-		// Todo: mediapool originals moved out of the document root. The players need their own
-		// delivery script with a permanent, licence bound token instead of an expiring signature.
-		$originalPath = $this->config->getConfigValue('originals', 'mediapool', 'directories');
-		$link = $serverUrl.'/'.str_replace('public/', '', $originalPath).'/'.
-				$itemData['file_resource'].'.'. $itemData['extension'];
+		$link = $serverUrl.'/delivery.php?'.http_build_query([
+			'c'   => $itemData['file_resource'],
+			'ext' => $itemData['extension'],
+		]);
 
 		$item->setLink($link);
 

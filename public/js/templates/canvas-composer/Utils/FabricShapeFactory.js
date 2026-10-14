@@ -25,15 +25,16 @@ export class FabricShapeFactory
 	static #DEFAULT_FILL = "#000000";
 
 
-	createImage(mediaId, url, count)
+	createImage(mediaId, url, fileName, count)
 	{
 		return new Promise((resolve) =>
 		{
-			fabric.Image.fromURL(url.replace("thumbs", "originals"), (img) =>
+			fabric.Image.fromURL(url, (img) =>
 			{
 				img.set({
 					mediaId: mediaId,
-					fileName: url.split('/').pop(),
+					// only the plain file name is stored, the signed url is rebuilt on every load
+					fileName: fileName,
 					left: count * FabricShapeFactory.#DEFAULT_LEFT,
 					top: count * FabricShapeFactory.#DEFAULT_TOP
 				});

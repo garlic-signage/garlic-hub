@@ -31,9 +31,9 @@ export class InsertService
 		this.#viewportService    = viewportService;
 	}
 
-	async insertImage(mediaId, url, count)
+	async insertImage(mediaId, url, fileName, count)
 	{
-		const img = await this.#fabricShapeFactory.createImage(mediaId, url, count);
+		const img = await this.#fabricShapeFactory.createImage(mediaId, url, fileName, count);
 
 		let scale = this.#viewportService.calculateImageScaleByCanvasInPerCent(img.width, img.height);
 		img.scale(scale/150);
@@ -41,14 +41,13 @@ export class InsertService
 		this.#addObject(img);
 	}
 
-	async replaceImage(mediaId, url)
+	async replaceImage(mediaId, url, fileName)
 	{
 		return new Promise((resolve, reject) =>
 		{
 			const object = this.#fabricWrapper.getActiveObject();
 			const w = object.width  * object.scaleX;
 			const h = object.height * object.scaleY;
-			url = url.replace("thumbs", "originals");
 
 			this.#fabricWrapper.historySaveAction();
 			this.#fabricWrapper.fireObjectModified(object);
@@ -58,7 +57,8 @@ export class InsertService
 					object.scaleX = 1;
 					object.scaleY = 1;
 					object.mediaId = mediaId;
-					object.fileName = url.split('/').pop();
+					// only the plain file name is stored, the signed url is rebuilt on every load
+					object.fileName = fileName;
 					object.scaleToWidth(w, true);
 					object.scaleToHeight(h, true);
 					this.#fabricWrapper.renderAll();
