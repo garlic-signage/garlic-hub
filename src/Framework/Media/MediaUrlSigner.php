@@ -22,34 +22,63 @@ declare(strict_types=1);
 
 namespace App\Framework\Media;
 
+/**
+ * Builds and verifies the signed URLs that public/media.php delivers mediapool
+ * files with. Everything the delivery script evaluates is part of the signature,
+ * so a thumb URL cannot be edited into an original one.
+ *
+ * The expiry is rounded up to the next but one TTL slot, so the URL of a file
+ * stays identical for at least one TTL and remains cacheable in the browser.
+ */
 class MediaUrlSigner
 {
+    public const string VARIANT_THUMB    = 'thumb';
+    public const string VARIANT_ORIGINAL = 'orig';
+
+    private const string ENDPOINT = '/media.php';
+
     private string $secret;
     private int $ttl;
 
     public function __construct(string $secret, int $ttl = 3600)
     {
         $this->secret = $secret;
-        $this->ttl    = $ttl;
+        $this->ttl    = $ttl > 0 ? $ttl : 3600;
     }
 
-    public function signForAddUrl(string $checksum, ?int $now = null): string
+    public function thumbUrl(string $checksum, string $extension, ?int $now = null): string
     {
-        $param = $this->sign($checksum, $now);
+        return $this->buildUrl($checksum, $extension, self::VARIANT_THUMB, $now);
+    }
 
-        return '&exp=' . $param['exp'] . '&sig=' . $param['sig'];
+    public function originalUrl(string $checksum, string $extension, ?int $now = null): string
+    {
+        return $this->buildUrl($checksum, $extension, self::VARIANT_ORIGINAL, $now);
+    }
+
+    public function buildUrl(string $checksum, string $extension, string $variant, ?int $now = null): string
+    {
+        $signature = $this->sign($checksum, $extension, $variant, $now);
+
+        return self::ENDPOINT . '?' . http_build_query([
+            'c'   => $checksum,
+            'ext' => $extension,
+            'v'   => $variant,
+            'exp' => $signature['exp'],
+            'sig' => $signature['sig'],
+        ]);
     }
 
     /**
      * @return array{exp: int, sig: string}
      */
-    public function sign(string $checksum, ?int $now = null): array
+    public function sign(string $checksum, string $extension, string $variant, ?int $now = null): array
     {
         $exp = (intdiv($now ?? time(), $this->ttl) + 2) * $this->ttl;
 
         return array(
             'exp' => $exp,
-            'sig' => hash_hmac('sha256', $checksum . '|' . $exp, $this->secret),
+            'sig' => self::hash($checksum, $extension, $variant, $exp, $this->secret),
         );
     }
 
@@ -58,15 +87,21 @@ class MediaUrlSigner
      */
     public static function verify(array $get, string $secret, ?int $now = null): bool
     {
-        if (!isset($get['c'], $get['exp'], $get['sig'])
-            || !is_string($get['c']) || !is_string($get['exp']) || !is_string($get['sig']))
+        if (!isset($get['c'], $get['ext'], $get['v'], $get['exp'], $get['sig'])
+            || !is_string($get['c']) || !is_string($get['ext']) || !is_string($get['v'])
+            || !is_string($get['exp']) || !is_string($get['sig']))
             return false;
 
         if ((int) $get['exp'] < ($now ?? time()))
             return false;
 
-        $expected = hash_hmac('sha256', $get['c'] . '|' . (int) $get['exp'], $secret);
+        $expected = self::hash($get['c'], $get['ext'], $get['v'], (int) $get['exp'], $secret);
 
         return hash_equals($expected, $get['sig']);
+    }
+
+    private static function hash(string $checksum, string $extension, string $variant, int $exp, string $secret): string
+    {
+        return hash_hmac('sha256', implode('|', [$checksum, $extension, $variant, $exp]), $secret);
     }
 }
