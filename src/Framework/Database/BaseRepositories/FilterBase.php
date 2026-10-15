@@ -197,7 +197,30 @@ abstract class FilterBase extends SqlBase
 			return ['sort' => $table . 'username', 'order' => $sort_order];
 		}
 
-		return ['sort' => $this->table.'.'.$fields[BaseFilterParametersInterface::PARAMETER_SORT_COLUMN]['value'], 'order' => $sort_order];
+		$column = $this->determineSortColumn($fields[BaseFilterParametersInterface::PARAMETER_SORT_COLUMN]);
+		if ($column === '')
+			return [];
+
+		// ORDER BY cannot use bound parameters, so the identifier is validated and quoted instead.
+		$sort = $this->connection->quoteSingleIdentifier($this->table).'.'.$this->connection->quoteSingleIdentifier($column);
+
+		return ['sort' => $sort, 'order' => $sort_order];
+	}
+
+	/**
+	 * Falls back to the default column when the requested one is not a plain identifier.
+	 *
+	 * @param array<string, mixed> $sortField
+	 */
+	private function determineSortColumn(array $sortField): string
+	{
+		foreach ([$sortField['value'] ?? '', $sortField['default_value'] ?? ''] as $candidate)
+		{
+			if (is_string($candidate) && preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $candidate))
+				return $candidate;
+		}
+
+		return '';
 	}
 
 	/**
