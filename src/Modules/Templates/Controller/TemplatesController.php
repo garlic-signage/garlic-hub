@@ -23,11 +23,11 @@ declare(strict_types=1);
 namespace App\Modules\Templates\Controller;
 
 use App\Framework\Controller\JsonResponseHandler;
-use App\Framework\Core\Config\Config;
 use App\Framework\Core\CsrfToken;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Player\Enums\PlayerStatus;
 use App\Modules\Templates\Helper\Composer\Orchestrator;
 use App\Modules\Templates\Helper\Datatable\Parameters;
@@ -43,10 +43,10 @@ readonly class TemplatesController
 	public function __construct(
 		private Orchestrator        $orchestrator,
 		private TemplatesDatatableService $templatesDatatableService,
-		private Config             $config,
 		private Parameters $parameters,
 		private JsonResponseHandler $responseHandler,
-		private CsrfToken           $csrfToken
+		private CsrfToken           $csrfToken,
+		private MediaUrlSigner      $mediaUrlSigner
 	) {}
 
 	public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -124,14 +124,12 @@ readonly class TemplatesController
 
 		$this->templatesDatatableService->loadDatatable();
 		$templates = [];
-		// Todo: template files moved out of the document root, they need their own signed delivery (see public/media.php)
-		$path = str_replace('public', '', $this->config->getConfigValue('thumbnails', 'templates', 'directories'));
 		foreach ($this->templatesDatatableService->getCurrentFilterResults() as $template)
 		{
 			if ($template['visibility'] !== '')
 				$templates[] = [
 					'id' => $template['template_id'],
-					'src' => $path.'/'.$template['template_id'].'.jpg',
+					'src' => $this->mediaUrlSigner->templateThumbUrl((int) $template['template_id'], 'jpg'),
 					'name' => $template['name']
 				];
 		}

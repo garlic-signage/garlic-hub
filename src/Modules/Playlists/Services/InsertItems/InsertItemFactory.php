@@ -27,6 +27,7 @@ use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
 use App\Modules\Playlists\Services\PlaylistsService;
 use App\Modules\Playlists\Services\WidgetsService;
+use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Templates\Services\TemplatesService;
 use League\Flysystem\Filesystem;
 use Psr\Log\LoggerInterface;
@@ -41,6 +42,7 @@ readonly class InsertItemFactory
 								private TemplatesService $templateService,
 								private Config $config,
 								private Filesystem $fileSystem,
+								private MediaUrlSigner $mediaUrlSigner,
 								private PlaylistMetricsCalculator $playlistMetricsCalculator,
 								private WidgetsService $widgetsService,
 								private  LoggerInterface $logger)
@@ -58,6 +60,7 @@ readonly class InsertItemFactory
 				$this->templateService,
 				$this->config,
 				$this->fileSystem,
+				$this->mediaUrlSigner,
 				$this->playlistsService,
 				$this->playlistMetricsCalculator,
 				$this->logger),

@@ -235,6 +235,7 @@ $dependencies[InsertItemFactory::class] = DI\factory(function (ContainerInterfac
 		$container->get(TemplatesService::class),
 		$container->get(Config::class),
 		$container->get('LocalFileSystem'),
+		$container->get(MediaUrlSigner::class),
 		$container->get(PlaylistMetricsCalculator::class),
 		$container->get(WidgetsService::class),
 		$container->get('ModuleLogger')
@@ -265,6 +266,7 @@ $dependencies[ItemsService::class] = DI\factory(function (ContainerInterface $co
 		$container->get(PlaylistMetricsCalculator::class),
 		$container->get(MimeTypeExtensionMapper::class),
 		$container->get(MediaUrlSigner::class),
+		$container->get(Config::class),
 		$container->get('ModuleLogger')
 	);
 });

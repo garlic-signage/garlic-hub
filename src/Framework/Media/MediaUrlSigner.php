@@ -34,6 +34,8 @@ class MediaUrlSigner
 {
     public const string VARIANT_THUMB    = 'thumb';
     public const string VARIANT_ORIGINAL = 'orig';
+    public const string VARIANT_TEMPLATE_THUMB = 'tpl-thumb';  // templates/thumbs, named by template id
+    public const string VARIANT_ITEM_THUMB     = 'item-thumb'; // playlists/items/thumbs, named by item id
 
     private const string ENDPOINT = '/media.php';
 
@@ -54,6 +56,16 @@ class MediaUrlSigner
     public function originalUrl(string $checksum, string $extension, ?int $now = null): string
     {
         return $this->buildUrl($checksum, $extension, self::VARIANT_ORIGINAL, $now);
+    }
+
+    public function templateThumbUrl(int $templateId, string $extension, ?int $now = null): string
+    {
+        return $this->buildUrl((string) $templateId, $extension, self::VARIANT_TEMPLATE_THUMB, $now);
+    }
+
+    public function itemThumbUrl(int $itemId, string $extension, ?int $now = null): string
+    {
+        return $this->buildUrl((string) $itemId, $extension, self::VARIANT_ITEM_THUMB, $now);
     }
 
     public function buildUrl(string $checksum, string $extension, string $variant, ?int $now = null): string

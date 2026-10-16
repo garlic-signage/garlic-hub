@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Playlists\Services\InsertItems;
 
 use App\Framework\Core\Config\Config;
+use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Mediapool\Services\MediaService;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\InsertItems\InsertItemFactory;
@@ -65,6 +66,7 @@ class InsertItemFactoryTest extends TestCase
 			$templatesServiceMock,
 			$configMock,
 			$fileSystemMock,
+			new MediaUrlSigner('unit-test-secret'),
 			$playlistMetricsCalculatorMock,
 			$widgetsServiceMock,
 			$loggerMock

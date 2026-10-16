@@ -64,6 +64,19 @@ class MediaUrlSignerTest extends TestCase
 	}
 
 	#[Group('units')]
+	public function testTemplateAndItemThumbUrlsUseTheirOwnVariantAndVerify(): void
+	{
+		$template = $this->queryOf($this->mediaUrlSigner->templateThumbUrl(12, 'jpg', self::NOW));
+		$item     = $this->queryOf($this->mediaUrlSigner->itemThumbUrl(34, 'jpg', self::NOW));
+
+		static::assertSame(['12', 'tpl-thumb'], [$template['c'], $template['v']]);
+		static::assertSame(['34', 'item-thumb'], [$item['c'], $item['v']]);
+		static::assertTrue(MediaUrlSigner::verify($template, self::SECRET, self::NOW));
+		// the variant is part of the signature, a template url cannot be turned into an item url
+		static::assertFalse(MediaUrlSigner::verify(['v' => 'item-thumb'] + $template, self::SECRET, self::NOW));
+	}
+
+	#[Group('units')]
 	public function testOriginalUrlUsesTheOriginalVariant(): void
 	{
 		$url = $this->mediaUrlSigner->originalUrl(self::CHECKSUM, 'mp4', self::NOW);

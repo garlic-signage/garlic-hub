@@ -71,7 +71,21 @@ const MEDIA_MIME = [
 	'bin'   => 'application/octet-stream',
 ];
 const MEDIA_DOWNLOAD = ['wgt', 'zip', 'json', 'xml', 'rss', 'atom', 'apk', 'smil', 'txt', 'csv', 'bin'];
-const MEDIA_VARIANT_DIR = ['thumb' => 'thumbs', 'orig' => 'originals'];
+// Directories below var/storage, must stay in sync with the [directories] sections of
+// config_mediapool.ini, config_templates.ini and config_playlists.ini.
+// Mediapool files are named by their content hash, templates and playlist items by numeric id.
+const MEDIA_VARIANT_DIR = [
+	'thumb'      => 'mediapool/thumbs',
+	'orig'       => 'mediapool/originals',
+	'tpl-thumb'  => 'templates/thumbs',
+	'item-thumb' => 'playlists/items/thumbs',
+];
+const MEDIA_NAME_PATTERN = [
+	'thumb'      => '/^[a-f0-9]{32,64}$/',
+	'orig'       => '/^[a-f0-9]{32,64}$/',
+	'tpl-thumb'  => '/^\d{1,10}$/',
+	'item-thumb' => '/^\d{1,10}$/',
+];
 
 function mediaFail(int $status): never
 {
@@ -85,7 +99,7 @@ $ext      = $_GET['ext'] ?? '';
 $variant  = $_GET['v']   ?? '';
 
 if (!is_string($checksum) || !is_string($ext) || !is_string($variant)
-	|| !preg_match('/^[a-f0-9]{32,64}$/', $checksum) || !isset(MEDIA_MIME[$ext]) || !isset(MEDIA_VARIANT_DIR[$variant]))
+	|| !isset(MEDIA_VARIANT_DIR[$variant]) || !preg_match(MEDIA_NAME_PATTERN[$variant], $checksum) || !isset(MEDIA_MIME[$ext]))
 	mediaFail(400);
 
 $secret = $_ENV['APP_SECRET'] ?? (getenv('APP_SECRET') ?: '');
@@ -95,8 +109,7 @@ if (!is_string($secret) || $secret === '')
 if (!MediaUrlSigner::verify($_GET, $secret))
 	mediaFail(403);
 
-// Must stay in sync with [directories] in config/settings/config_mediapool.ini.
-$baseDir = realpath($systemDir . '/var/storage/mediapool/' . MEDIA_VARIANT_DIR[$variant]);
+$baseDir = realpath($systemDir . '/var/storage/' . MEDIA_VARIANT_DIR[$variant]);
 if ($baseDir === false)
 	mediaFail(404);
 

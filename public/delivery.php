@@ -26,7 +26,10 @@
  * not just for one browser session, and checksum already is the file's content hash,
  * so the link is correct to cache forever (same checksum = same bytes, always).
  *
- * GET parameters: c (checksum), ext
+ * Called as delivery.php/<checksum>.<ext> for mediapool files and delivery.php/tpl/<item_id>.<ext>
+ * (or delivery.php/tpl/<item_id>-<version>.<ext>) for rendered template items (PATH_INFO). The file name has to be part of the
+ * URL path: garlic-player derives the extension of its cache file from the path, a query
+ * string like delivery.php?c=..&ext=png would be stored as *.php.
  *
  * The only check right now is isAuthorizedPlayer() below: the request must carry a
  * player-shaped UUID in its User-Agent/X-Signage-Agent header (same formats as
@@ -104,25 +107,40 @@ function isAuthorizedPlayer(array $server): bool
 if (!isAuthorizedPlayer($_SERVER))
 	deliveryFail(403);
 
-$checksum = $_GET['c']   ?? '';
-$ext      = $_GET['ext'] ?? '';
+// Source = first path segment, none means mediapool. Directories must stay in sync with
+// [originals] in config_mediapool.ini and config_playlists.ini. Mediapool files are named
+// by their content hash, rendered template items by item id - the id stays the same when
+// the item is rendered again, so these files must not be cached as immutable.
+const DELIVERY_SOURCES = [
+	'mediapool' => ['dir' => 'mediapool/originals',       'name' => '/^[a-f0-9]{32,64}$/',        'immutable' => true],
+	// <item_id>-<version>: the version only makes the url (= the player's cache key) change when
+	// the item is rendered again, it is not part of the file name on disk
+	'tpl'       => ['dir' => 'playlists/items/originals', 'name' => '/^\d{1,10}-[a-f0-9]{8}$/', 'immutable' => false],
+];
 
-if (!is_string($checksum) || !is_string($ext)
-	|| !preg_match('/^[a-f0-9]{32,64}$/', $checksum) || !isset(MEDIA_MIME[$ext]))
+if (!preg_match('#^/(?:(tpl)/)?([a-z0-9-]+)\.([a-z0-9]{2,5})$#', $_SERVER['PATH_INFO'] ?? '', $m)
+	|| !isset(MEDIA_MIME[$m[3]]))
 	deliveryFail(400);
 
-// Must stay in sync with [originals] in config/settings/config_mediapool.ini.
-$baseDir = realpath($systemDir . '/var/storage/mediapool/originals');
+[, $sourceKey, $checksum, $ext] = $m;
+$source = DELIVERY_SOURCES[$sourceKey === '' ? 'mediapool' : $sourceKey];
+if (!preg_match($source['name'], $checksum))
+	deliveryFail(400);
+$fileName = explode('-', $checksum)[0]; // drops the version of a tpl name, mediapool names have no '-'
+
+$baseDir = realpath($systemDir . '/var/storage/' . $source['dir']);
 if ($baseDir === false)
 	deliveryFail(404);
 
-$real = realpath($baseDir . '/' . $checksum . '.' . $ext);
+$real = realpath($baseDir . '/' . $fileName . '.' . $ext);
 if ($real === false || !str_starts_with($real, $baseDir . '/') || !is_file($real))
 	deliveryFail(404);
 
-$size = filesize($real);
+$size  = filesize($real);
+$mtime = filemtime($real);
 // checksum already is the content hash, so it alone is a correct, stable ETag.
-$etag = '"' . $checksum . '"';
+// Template items change under the same name: size and mtime tell when they did.
+$etag = $source['immutable'] ? '"' . $checksum . '"' : '"' . md5($checksum . $size . $mtime) . '"';
 
 header('Content-Type: ' . MEDIA_MIME[$ext]);
 if (in_array($ext, MEDIA_DOWNLOAD, true))
@@ -131,8 +149,16 @@ header('X-Content-Type-Options: nosniff');
 header('Content-Security-Policy: sandbox');
 header('Accept-Ranges: bytes');
 header('ETag: ' . $etag);
-// Safe to cache forever: same checksum will never resolve to different bytes.
-header('Cache-Control: public, max-age=31536000, immutable');
+if ($source['immutable'])
+{
+	// Safe to cache forever: same checksum will never resolve to different bytes.
+	header('Cache-Control: public, max-age=31536000, immutable');
+}
+else
+{
+	header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $mtime) . ' GMT');
+	header('Cache-Control: public, no-cache'); // may be stored, but has to be revalidated by ETag
+}
 
 if (($_SERVER['HTTP_IF_NONE_MATCH'] ?? '') === $etag)
 {

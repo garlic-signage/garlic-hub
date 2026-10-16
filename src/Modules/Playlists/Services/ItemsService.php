@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Services;
 
+use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -52,6 +53,7 @@ class ItemsService extends AbstractBaseService
 								private readonly PlaylistMetricsCalculator $playlistMetricsCalculator,
 								private readonly MimeTypeExtensionMapper   $mimeTypeExtensionMapper,
 								private readonly MediaUrlSigner            $mediaUrlSigner,
+								private readonly Config                    $config,
 								LoggerInterface                            $logger)
 	{
 		parent::__construct($logger);
@@ -207,10 +209,10 @@ class ItemsService extends AbstractBaseService
 					break;
 				case ItemType::TEMPLATE->value:
 					$tmp = $value;
-					$ext = $this->mimeTypeExtensionMapper->determineExtension($value['mimetype']);
-					// Todo: still inside the document root, moves to var/storage later
-					$tmp['paths']['thumbnail'] = 'public/var/playlists/items/thumbs/' . $value['item_id'].'.'.$ext;
-					$tmp['urls']['thumbnail']  = '/var/playlists/items/thumbs/' . $value['item_id'].'.'.$ext;
+					// thumbnails are always created as jpg, whatever mimetype the rendered original has
+					$thumbDir = $this->config->getConfigValue('thumbnails', 'playlists', 'directories');
+					$tmp['paths']['thumbnail'] = $thumbDir . '/' . $value['item_id'].'.jpg';
+					$tmp['urls']['thumbnail']  = $this->mediaUrlSigner->itemThumbUrl((int) $value['item_id'], 'jpg');
 					$items[] = $tmp;
 					break;
 

@@ -47,6 +47,7 @@ class ItemsServiceTest extends TestCase
 	private PlaylistsService&MockObject $playlistsServiceMock;
 	private PlaylistMetricsCalculator&MockObject $playlistMetricsCalculatorMock;
 	private MimeTypeExtensionMapper&MockObject $mimeTypeExtensionMapperMock;
+	private Config&MockObject $configMock;
 	private LoggerInterface&MockObject $loggerMock;
 	private ItemsService $itemsService;
 
@@ -61,6 +62,7 @@ class ItemsServiceTest extends TestCase
 		$this->playlistsServiceMock = $this->createMock(PlaylistsService::class);
 		$this->playlistMetricsCalculatorMock = $this->createMock(PlaylistMetricsCalculator::class);
 		$this->mimeTypeExtensionMapperMock = $this->createMock(MimeTypeExtensionMapper::class);
+		$this->configMock = $this->createMock(Config::class);
 		$this->loggerMock = $this->createMock(LoggerInterface::class);
 
 		$this->itemsService = new ItemsService(
@@ -70,6 +72,7 @@ class ItemsServiceTest extends TestCase
 			$this->playlistMetricsCalculatorMock,
 			$this->mimeTypeExtensionMapperMock,
 			new MediaUrlSigner('unit-test-secret'),
+			$this->configMock,
 			$this->loggerMock
 		);
 	}

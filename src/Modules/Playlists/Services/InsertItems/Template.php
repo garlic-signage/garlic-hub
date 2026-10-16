@@ -24,6 +24,7 @@ namespace App\Modules\Playlists\Services\InsertItems;
 use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
@@ -40,6 +41,7 @@ class Template extends AbstractInsertItem
 								private readonly TemplatesService $templatesService,
 								private readonly Config $config,
 								private readonly Filesystem $fileSystem,
+								private readonly MediaUrlSigner $mediaUrlSigner,
 								PlaylistsService $playlistsService,
 								PlaylistMetricsCalculator $playlistMetricsCalculator,
 								LoggerInterface $logger)
@@ -105,8 +107,7 @@ class Template extends AbstractInsertItem
 			$this->fileSystem->copy($thumbPathTemplate, $thumbPathItem);
 			$saveItem['item_id'] = $id;
 			$saveItem['paths']['thumbnail'] = $thumbPathItem;
-			// Todo: still inside the document root, moves to var/storage later
-			$saveItem['urls']['thumbnail']  = '/'.str_replace('public/', '', $thumbPathItem);
+			$saveItem['urls']['thumbnail']  = $this->mediaUrlSigner->itemThumbUrl($id, 'jpg');
 
 			$playlistMetrics = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlistData)->getMetricsForFrontend();
 

@@ -161,10 +161,8 @@ class PlaylistContent
 		$item->setTouches($this->touchTrigger);
 		$serverUrl = $this->config->getConfigValue('url', 'mediapool', 'content_server');
 
-		$link = $serverUrl.'/delivery.php?'.http_build_query([
-			'c'   => $itemData['file_resource'],
-			'ext' => $itemData['extension'],
-		], '', '&amp;'); // SMIL is XML: a bare & breaks the parser
+		// file name in the path, not in the query: the player takes the extension of its cache file from the path
+		$link = $serverUrl.'/delivery.php/'.$itemData['file_resource'].'.'.$itemData['extension'];
 
 		$item->setLink($link);
 
@@ -213,9 +211,12 @@ class PlaylistContent
 		$item->setTouches($this->touchTrigger);
 		$serverUrl = $this->config->getConfigValue('url', 'mediapool', 'content_server');
 
-		$originalPath = $this->config->getConfigValue('originals', 'playlists', 'directories');
-		$link = $serverUrl.'/'.str_replace('public/', '', $originalPath).'/'.
-			$itemData['item_id'].'.'. $this->mimeTypeExtensionMapper->determineExtension($itemData['mimetype']);
+		// Rendered template items live outside the docroot and are named by item id, see public/delivery.php.
+		// The rendering is fully determined by content_data, so a hash of it as version changes the url
+		// (and with it the player's cache key) exactly when the item was edited.
+		$version = substr(md5((string) ($itemData['content_data'] ?? '')), 0, 8);
+		$link = $serverUrl.'/delivery.php/tpl/'.$itemData['item_id'].'-'.$version.'.'.
+			$this->mimeTypeExtensionMapper->determineExtension($itemData['mimetype']);
 
 		$item->setLink($link);
 
