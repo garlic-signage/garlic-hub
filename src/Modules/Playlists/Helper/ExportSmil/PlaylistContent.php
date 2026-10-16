@@ -164,7 +164,7 @@ class PlaylistContent
 		$link = $serverUrl.'/delivery.php?'.http_build_query([
 			'c'   => $itemData['file_resource'],
 			'ext' => $itemData['extension'],
-		]);
+		], '', '&amp;'); // SMIL is XML: a bare & breaks the parser
 
 		$item->setLink($link);
 

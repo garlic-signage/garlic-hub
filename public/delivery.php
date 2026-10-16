@@ -35,10 +35,9 @@
  * plug a real licence/revocation check into later without touching callers.
  */
 
+// No autoloader and no .env: nothing here needs them, and skipping both keeps every
+// player request (mostly 304 revalidations) cheap, e.g. on a Raspberry Pi next to the player.
 $systemDir = dirname(__DIR__);
-
-require $systemDir . '/vendor/autoload.php';
-Dotenv\Dotenv::createImmutable($systemDir)->safeLoad();
 
 const MEDIA_MIME = [
 	// Images
@@ -141,6 +140,16 @@ if (($_SERVER['HTTP_IF_NONE_MATCH'] ?? '') === $etag)
 	exit;
 }
 
+// Apache with mod_xsendfile (flagged by SetEnv GARLIC_XSENDFILE in the Apache config):
+// hand the file over, Apache streams it via sendfile() and handles Range and HEAD itself,
+// so the PHP worker is free at once instead of being held for the whole download.
+// Without the module the PHP streaming below stays as fallback (e.g. ddev without the package).
+if (($_SERVER['GARLIC_XSENDFILE'] ?? '') === '1')
+{
+	header('X-Sendfile: ' . $real);
+	exit;
+}
+
 $start = 0;
 $end   = $size - 1;
 $range = $_SERVER['HTTP_RANGE'] ?? '';
@@ -180,15 +189,12 @@ $fp = fopen($real, 'rb');
 if ($fp === false)
 	deliveryFail(500);
 
+$out = fopen('php://output', 'wb');
+if ($out === false)
+	deliveryFail(500);
+
 set_time_limit(0);
-fseek($fp, $start);
-while ($length > 0 && !feof($fp) && !connection_aborted())
-{
-	$chunk = fread($fp, min(8192 * 8, $length));
-	if ($chunk === false)
-		break;
-	echo $chunk;
-	$length -= strlen($chunk);
-	flush();
-}
+// Copies in C instead of a PHP read/echo loop - less CPU per byte.
+stream_copy_to_stream($fp, $out, $length, $start);
 fclose($fp);
+fclose($out);

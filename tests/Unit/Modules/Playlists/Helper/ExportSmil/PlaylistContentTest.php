@@ -91,7 +91,7 @@ class PlaylistContentTest extends TestCase
 			->willReturnMap([
 				['url', 'mediapool', 'content_server', 'https://content.server.com'],
 			]);
-		$link = 'https://content.server.com/delivery.php?c=file&ext=mp4';
+		$link = 'https://content.server.com/delivery.php?c=file&amp;ext=mp4';
 		$videoMock->method('setLink')->with($link);
 
 		$videoMock->method('getSmilElementTag')->willReturn('smilTag');
@@ -130,7 +130,7 @@ class PlaylistContentTest extends TestCase
 			->willReturnMap([
 				['url', 'mediapool', 'content_server', 'https://content.server.com'],
 			]);
-		$link = 'https://content.server.com/delivery.php?c=file&ext=mp4';
+		$link = 'https://content.server.com/delivery.php?c=file&amp;ext=mp4';
 		$videoMock->method('setLink')->with($link);
 
 		$videoMock->method('getSmilElementTag')->willReturn('smilTag');
@@ -170,7 +170,7 @@ class PlaylistContentTest extends TestCase
 			->willReturnMap([
 				['url', 'mediapool', 'content_server', 'https://content.server.com'],
 			]);
-		$link = 'https://content.server.com/delivery.php?c=file&ext=mp4';
+		$link = 'https://content.server.com/delivery.php?c=file&amp;ext=mp4';
 		$videoMock->method('setLink')->with($link);
 
 		$videoMock->method('getSmilElementTag')->willReturn('smilTag');
