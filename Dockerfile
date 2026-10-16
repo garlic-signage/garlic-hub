@@ -12,10 +12,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libicu-dev \
     libonig-dev \
     ghostscript \
-    ffmpeg
+    ffmpeg \
+    libapache2-mod-xsendfile
 
 # Install required PHP extensions
-RUN docker-php-ext-install zip intl
+RUN docker-php-ext-install zip intl opcache
 
 # Install webdav for player logs
 #RUN a2enmod dav dav_fs
@@ -46,7 +47,7 @@ COPY ./dockerapp-configs/env.edge /var/www/.env
 
 RUN chown -R www-data:www-data /var/www/
 
-RUN a2enmod rewrite # Enable mod_rewrite
+RUN a2enmod rewrite xsendfile # mod_rewrite, mod_xsendfile for delivery.php
 
 EXPOSE 80
 
