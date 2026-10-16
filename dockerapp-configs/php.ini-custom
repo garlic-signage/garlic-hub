@@ -2,3 +2,9 @@ upload_max_filesize = 1024M
 post_max_size = 1050M
 memory_limit = 1500M
 max_execution_time = 1200 ; 20min
+
+; OPcache: without it every request recompiles its scripts - noticeable on a Raspberry Pi
+opcache.enable = 1
+opcache.memory_consumption = 64
+opcache.interned_strings_buffer = 8
+opcache.max_accelerated_files = 10000
