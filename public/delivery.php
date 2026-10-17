@@ -27,7 +27,7 @@
  * so the link is correct to cache forever (same checksum = same bytes, always).
  *
  * Called as delivery.php/<checksum>.<ext> for mediapool files and delivery.php/tpl/<item_id>.<ext>
- * (or delivery.php/tpl/<item_id>-<version>.<ext>) for rendered template items (PATH_INFO). The file name has to be part of the
+ * for rendered template items (PATH_INFO). The file name has to be part of the
  * URL path: garlic-player derives the extension of its cache file from the path, a query
  * string like delivery.php?c=..&ext=png would be stored as *.php.
  *
@@ -56,8 +56,9 @@ const MEDIA_MIME = [
 	// Audios
 	'mp3'  => 'audio/mpeg',
 	'ogg'  => 'audio/ogg',
-	'opus' => 'audio/opus',
+	'opus' => 'audio/ogg',
 	'wav'  => 'audio/wav',
+    // Video
 	'mp4'  => 'video/mp4',
 	'avi'  => 'video/x-msvideo',
 	'mkv'  => 'video/x-matroska',
@@ -71,19 +72,19 @@ const MEDIA_MIME = [
 	'zip'   => 'application/zip',
 	'json'  => 'application/json',
 	'xml'   => 'application/xml',
-	'rss'   => 'application/rss+xml',
-	'atom'  => 'application/atom+xml',
 	'apk'   => 'application/vnd.android.package-archive',
 	'txt'   => 'text/plain',
 	'csv'   => 'text/csv',
 	'bin'   => 'application/octet-stream',
 ];
-const MEDIA_DOWNLOAD = ['wgt', 'zip', 'json', 'xml', 'rss', 'atom', 'apk', 'txt', 'csv', 'bin'];
+const MEDIA_DOWNLOAD = ['wgt', 'zip', 'json', 'xml', 'apk', 'txt', 'csv', 'bin'];
 
 function deliveryFail(int $status): never
 {
 	http_response_code($status);
 	header('Content-Type: text/plain; charset=utf-8');
+    header('Cache-Control: no-store');
+    header_remove('ETag');
 	exit;
 }
 
@@ -113,26 +114,32 @@ if (!isAuthorizedPlayer($_SERVER))
 // the item is rendered again, so these files must not be cached as immutable.
 const DELIVERY_SOURCES = [
 	'mediapool' => ['dir' => 'mediapool/originals',       'name' => '/^[a-f0-9]{32,64}$/',        'immutable' => true],
-	// <item_id>-<version>: the version only makes the url (= the player's cache key) change when
-	// the item is rendered again, it is not part of the file name on disk
-	'tpl'       => ['dir' => 'playlists/items/originals', 'name' => '/^\d{1,10}-[a-f0-9]{8}$/', 'immutable' => false],
+    'tpl'       => ['dir' => 'playlists/items/originals', 'name' => '/^\d{1,10}$/',        'immutable' => false],
 ];
 
-if (!preg_match('#^/(?:(tpl)/)?([a-z0-9-]+)\.([a-z0-9]{2,5})$#', $_SERVER['PATH_INFO'] ?? '', $m)
-	|| !isset(MEDIA_MIME[$m[3]]))
-	deliveryFail(400);
+if (!preg_match('#^/(?:(tpl)/)?([a-z0-9]+)\.([a-z0-9]{2,5})$#', $_SERVER['PATH_INFO'] ?? '', $m)
+    || !isset(MEDIA_MIME[$m[3]]))
+    deliveryFail(400);
 
 [, $sourceKey, $checksum, $ext] = $m;
 $source = DELIVERY_SOURCES[$sourceKey === '' ? 'mediapool' : $sourceKey];
 if (!preg_match($source['name'], $checksum))
-	deliveryFail(400);
-$fileName = explode('-', $checksum)[0]; // drops the version of a tpl name, mediapool names have no '-'
+    deliveryFail(400);
+
+// mediapool: ETag is the checksum itself, answer 304 without touching the filesystem
+if ($source['immutable'] && ($_SERVER['HTTP_IF_NONE_MATCH'] ?? '') === '"' . $checksum . '"')
+{
+    header('ETag: "' . $checksum . '"');
+    header('Cache-Control: public, max-age=31536000, immutable');
+    http_response_code(304);
+    exit;
+}
 
 $baseDir = realpath($systemDir . '/var/storage/' . $source['dir']);
 if ($baseDir === false)
-	deliveryFail(404);
+    deliveryFail(404);
 
-$real = realpath($baseDir . '/' . $fileName . '.' . $ext);
+$real = realpath($baseDir . '/' . $checksum . '.' . $ext);
 if ($real === false || !str_starts_with($real, $baseDir . '/') || !is_file($real))
 	deliveryFail(404);
 
@@ -140,14 +147,8 @@ $size  = filesize($real);
 $mtime = filemtime($real);
 // checksum already is the content hash, so it alone is a correct, stable ETag.
 // Template items change under the same name: size and mtime tell when they did.
-$etag = $source['immutable'] ? '"' . $checksum . '"' : '"' . md5($checksum . $size . $mtime) . '"';
+$etag = $source['immutable'] ? '"' . $checksum . '"' : '"' . dechex($mtime) . '-' . dechex($size) . '"';
 
-header('Content-Type: ' . MEDIA_MIME[$ext]);
-if (in_array($ext, MEDIA_DOWNLOAD, true))
-	header('Content-Disposition: attachment; filename="' . $checksum . '.' . $ext . '"');
-header('X-Content-Type-Options: nosniff');
-header('Content-Security-Policy: sandbox');
-header('Accept-Ranges: bytes');
 header('ETag: ' . $etag);
 if ($source['immutable'])
 {
@@ -166,6 +167,15 @@ if (($_SERVER['HTTP_IF_NONE_MATCH'] ?? '') === $etag)
 	exit;
 }
 
+// after it is clear it is not 304 to save some bytes in content-disposition
+header('Content-Type: ' . MEDIA_MIME[$ext]);
+if (in_array($ext, MEDIA_DOWNLOAD, true))
+    header('Content-Disposition: attachment; filename="' . $checksum . '.' . $ext . '"');
+header('X-Content-Type-Options: nosniff');
+header('Content-Security-Policy: sandbox');
+header('Accept-Ranges: bytes');
+
+
 // Apache with mod_xsendfile (flagged by SetEnv GARLIC_XSENDFILE in the Apache config):
 // hand the file over, Apache streams it via sendfile() and handles Range and HEAD itself,
 // so the PHP worker is free at once instead of being held for the whole download.
@@ -176,16 +186,27 @@ if (($_SERVER['GARLIC_XSENDFILE'] ?? '') === '1')
 	exit;
 }
 
+// Raw bytes only: closes all output buffers incl. zlib compression, which would
+// break Content-Length/Range or load the whole file into RAM.
+// ini_set('zlib.output_compression', '0'); could be forbidden
+while (ob_get_level() > 0)
+    ob_end_clean();
+
+
 $start = 0;
 $end   = $size - 1;
 $range = $_SERVER['HTTP_RANGE'] ?? '';
-if ($range !== '')
+
+// A template may have been rendered again since the interrupted download:
+// If-Range with an old ETag/date means send the complete new file.
+$ifRange = $_SERVER['HTTP_IF_RANGE'] ?? '';
+if ($range !== '' && $ifRange !== '' && $ifRange !== $etag
+    && ($source['immutable'] || $ifRange !== gmdate('D, d M Y H:i:s', $mtime) . ' GMT'))
+    $range = '';
+
+// Unsupported or malformed Range (e.g. multi-range) is ignored: full file with 200.
+if ($range !== '' && preg_match('/^bytes=(\d*)-(\d*)$/', $range, $m) && ($m[1] !== '' || $m[2] !== ''))
 {
-	if (!preg_match('/^bytes=(\d*)-(\d*)$/', $range, $m) || ($m[1] === '' && $m[2] === ''))
-	{
-		header('Content-Range: bytes */' . $size);
-		deliveryFail(416);
-	}
 	if ($m[1] === '')                       // suffix range: last N bytes
 	{
 		$start = max($size - (int) $m[2], 0);

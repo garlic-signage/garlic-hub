@@ -47,8 +47,9 @@ const MEDIA_MIME = [
 	// Audios
 	'mp3'  => 'audio/mpeg',
 	'ogg'  => 'audio/ogg',
-	'opus' => 'audio/opus',
+	'opus' => 'audio/ogg',
 	'wav'  => 'audio/wav',
+    // Videos
 	'mp4'  => 'video/mp4',
 	'avi'  => 'video/x-msvideo',
 	'mkv'  => 'video/x-matroska',
@@ -62,15 +63,13 @@ const MEDIA_MIME = [
 	'zip'   => 'application/zip',
 	'json'  => 'application/json',
 	'xml'   => 'application/xml',
-	'rss'   => 'application/rss+xml',
-	'atom'  => 'application/atom+xml',
 	'apk'   => 'application/vnd.android.package-archive',
 	'smil'  => 'application/smil',
 	'txt'   => 'text/plain',
 	'csv'   => 'text/csv',
 	'bin'   => 'application/octet-stream',
 ];
-const MEDIA_DOWNLOAD = ['wgt', 'zip', 'json', 'xml', 'rss', 'atom', 'apk', 'smil', 'txt', 'csv', 'bin'];
+const MEDIA_DOWNLOAD = ['wgt', 'zip', 'json', 'xml', 'wgt', 'apk', 'smil', 'txt', 'csv', 'bin'];
 // Directories below var/storage, must stay in sync with the [directories] sections of
 // config_mediapool.ini, config_templates.ini and config_playlists.ini.
 // Mediapool files are named by their content hash, templates and playlist items by numeric id.
@@ -78,13 +77,17 @@ const MEDIA_VARIANT_DIR = [
 	'thumb'      => 'mediapool/thumbs',
 	'orig'       => 'mediapool/originals',
 	'tpl-thumb'  => 'templates/thumbs',
+    'tpl-orig'   => 'templates/originals',
 	'item-thumb' => 'playlists/items/thumbs',
+    'item-orig'  => 'playlists/items/originals',
 ];
 const MEDIA_NAME_PATTERN = [
 	'thumb'      => '/^[a-f0-9]{32,64}$/',
 	'orig'       => '/^[a-f0-9]{32,64}$/',
 	'tpl-thumb'  => '/^\d{1,10}$/',
+    'tpl-orig'   => '/^\d{1,10}$/',
 	'item-thumb' => '/^\d{1,10}$/',
+    'item-orig'  => '/^\d{1,10}$/',
 ];
 
 function mediaFail(int $status): never
@@ -140,14 +143,11 @@ if (($_SERVER['HTTP_IF_NONE_MATCH'] ?? '') === $etag)
 $start = 0;
 $end   = $size - 1;
 $range = $_SERVER['HTTP_RANGE'] ?? '';
-if ($range !== '')
+
+// Unsupported or malformed Range (e.g. multi-range) is ignored: full file with 200.
+if ($range !== '' && preg_match('/^bytes=(\d*)-(\d*)$/', $range, $m) && ($m[1] !== '' || $m[2] !== ''))
 {
-	if (!preg_match('/^bytes=(\d*)-(\d*)$/', $range, $m) || ($m[1] === '' && $m[2] === ''))
-	{
-		header('Content-Range: bytes */' . $size);
-		mediaFail(416);
-	}
-	if ($m[1] === '')                       // suffix range: last N bytes
+    if ($m[1] === '')                       // suffix range: last N bytes
 	{
 		$start = max($size - (int) $m[2], 0);
 	}
