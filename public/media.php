@@ -90,6 +90,8 @@ const MEDIA_NAME_PATTERN = [
     'item-orig'  => '/^\d{1,10}$/',
 ];
 
+const MEDIA_IMMUTABLE = ['thumb' => true, 'orig' => true];
+
 function mediaFail(int $status): never
 {
 	http_response_code($status);
@@ -122,17 +124,21 @@ if ($real === false || !str_starts_with($real, $baseDir . '/') || !is_file($real
 
 $size  = filesize($real);
 $mtime = filemtime($real);
-$etag  = '"' . md5($checksum . $size . $mtime) . '"';
+$immutable = isset(MEDIA_IMMUTABLE[$variant]);
+$etag = $immutable ? '"' . $checksum . '"' : '"' . dechex($mtime) . '-' . dechex($size) . '"';
 
 header('Content-Type: ' . MEDIA_MIME[$ext]);
 if (in_array($ext, MEDIA_DOWNLOAD, true))
-	header('Content-Disposition: attachment; filename="' . $checksum . '.' . $ext . '"');
+    header('Content-Disposition: attachment; filename="' . $checksum . '.' . $ext . '"');
 header('X-Content-Type-Options: nosniff');
 header('Content-Security-Policy: sandbox');
 header('Accept-Ranges: bytes');
 header('ETag: ' . $etag);
 header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $mtime) . ' GMT');
-header('Cache-Control: private, max-age=' . min(max((int) $_GET['exp'] - time(), 0), 86400));
+if ($immutable)
+    header('Cache-Control: private, max-age=' . min(max((int) $_GET['exp'] - time(), 0), 86400));
+else
+    header('Cache-Control: private, no-cache');
 
 if (($_SERVER['HTTP_IF_NONE_MATCH'] ?? '') === $etag)
 {
