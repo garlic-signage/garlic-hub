@@ -43,6 +43,10 @@ most of the accepted risks below follow from it.
 | Player inventory | The set of devices registered to an account |
 | SMIL index | The generated playlist served to a player |
 
+Uploaded media, rendered template items and generated SMIL indexes are stored
+below `var/`, outside the web server's document root. They are never reachable
+by a direct URL, only through the delivery scripts described in section 3.
+
 ---
 
 ## 3. Trust Boundaries
@@ -52,7 +56,14 @@ most of the accepted risks below follow from it.
 2. **Player endpoint (`GET /smil-index`)** — reachable without a session.
    Authentication is by possession of a randomly generated player UUID. See
    section 5.
-3. **Media delivery** — media URLs referenced from a served playlist.
+3. **Browser media delivery (`media.php`)** — serves thumbnails and originals
+   to the administrative interface. URLs are HMAC-signed with `APP_SECRET` and
+   expire. The signature covers checksum, extension, variant and expiry, so a
+   thumbnail URL cannot be edited into an original one.
+4. **Player media delivery (`delivery.php`)** — serves the files referenced from
+   a playlist to players. It deliberately runs without the application
+   bootstrap (no container, session or database). Its current access check is
+   limited, see section 8.
 
 ---
 
@@ -63,6 +74,10 @@ most of the accepted risks below follow from it.
 - Retrieval of an account's SMIL playlist by a party that does not possess the
   corresponding player UUID.
 - Cross-account access through the administrative interface.
+- Direct retrieval of stored files by URL: uploads and SMIL indexes are not in
+  the document root.
+- Use of administrative media URLs without a valid, unexpired signature, and
+  tampering with the parameters of a signed URL.
 - Common web application attack classes on authenticated routes: session
   fixation, CSRF, SQL injection, stored and reflected XSS, path traversal on
   upload and download handlers.
@@ -142,13 +157,54 @@ described in section 5.
 
 ---
 
-## 8. Out of Scope
+## 8. Player Media Delivery: Current State and Known Limitation
+
+**Behaviour.** Players fetch files from `delivery.php/<checksum>.<ext>` for
+mediapool files and `delivery.php/tpl/<item_id>.<ext>` for rendered template
+items. The script checks that the request carries a UUID-shaped value in the
+`User-Agent` or `X-Signage-Agent` header, that the file name matches the
+expected pattern for its source, that the extension is on a fixed list, and that
+the resolved path stays inside the source directory.
+
+**Known limitation.** The header check is a sanity filter, not access control.
+It tests the shape of the value and does not verify the UUID against any
+player. In addition, the checksum is the content hash of the file. It is used for
+deduplication, is part of every exported playlist and appears in every URL log,
+so it must not be treated as a secret. A party that knows a checksum, or the
+numeric id of a template item, and sends any UUID-shaped header can retrieve that
+file. Template item ids are small integers and therefore enumerable.
+
+**Rationale.** The constraints of section 1 apply here as well: player firmware
+cannot present a separately issued credential, and the script is kept free of
+the application bootstrap so that the frequent revalidation requests of a large
+player fleet stay cheap.
+
+**Planned.** Links are to be signed per player and file with a non-expiring HMAC
+over licence, checksum, extension and player UUID. The check stays free of
+database access, so revoking a licence changes which links are placed in newly
+generated playlists, but cannot invalidate a link that was already issued. This
+is a deliberate trade-off against having to re-push playlists to the installed
+base. Until then the limitation above is in effect.
+
+**Accepted risk.** Media that is referenced by a playlist can be retrieved by
+anyone who knows its checksum or item id. Operators should not upload content to
+the mediapool that must stay confidential from third parties with knowledge of
+the installation.
+
+**Operator requirement.** Deploy over HTTPS, as for section 5.
+
+---
+
+## 9. Out of Scope
 
 The following are outside the threat model. Reports in these categories will be
 closed with a reference to this section.
 
 - Behaviour described in sections 5, 6 and 7 as a design decision, absent a
   demonstrated attack that the stated security property does not already cover.
+- Retrieval of a file from `delivery.php` with an arbitrary UUID-shaped header
+  when its checksum or item id is known. This is the documented limitation in
+  section 8 until signed player links are in place.
 - Attacks that presuppose disclosure of a player UUID without demonstrating how
   that disclosure occurs.
 - Attacks requiring plaintext HTTP deployment, contrary to section 5.
@@ -161,13 +217,18 @@ closed with a reference to this section.
 
 ---
 
-## 9. In Scope
+## 10. In Scope
 
 Reports demonstrating any of the following are in scope and will be treated as
 security issues:
 
-- Retrieval of an account's playlist, media or schedule data without possession
-  of a corresponding player UUID.
+- Retrieval of an account's playlist or schedule data without possession of a
+  corresponding player UUID.
+- Retrieval of a file through `media.php` without a valid signature, or by
+  altering a signed URL.
+- Retrieval of a file through either delivery script that is not referenced by
+  the documented checksum or item id schemes, and path traversal in either
+  script.
 - A practical method of obtaining or enumerating player UUIDs.
 - Any cross-account access through the administrative interface.
 - Authentication or session handling defects on administrative routes.
@@ -179,7 +240,7 @@ security issues:
 
 ---
 
-## 10. Reporting
+## 11. Reporting
 
 See [SECURITY.md](https://github.com/garlic-signage/.github/blob/main/SECURITY.md) for the reporting process and GPG key.
 

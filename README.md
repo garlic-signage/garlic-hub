@@ -8,7 +8,6 @@
 Garlic-Hub manages your digital signage network — devices, content, and playlists — 
 from a single self-hosted interface. No SaaS, no per-device fees, no vendor lock-in.
 
-
 ![Garlic-Hub Mediapool Screenshot](docs/media/showcase.gif)
 
 ## Part of the GarlicSignage Ecosystem
