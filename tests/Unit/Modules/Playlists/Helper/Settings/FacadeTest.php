@@ -259,6 +259,35 @@ class FacadeTest extends TestCase
 
 	/**
 	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	#[Group('units')]
+	public function testStorePlaylistWithoutIdCreatesCompleteLayout(): void
+	{
+		$post = ['name' => 'New Multizone', 'screen_width' => 1920, 'screen_height' => 1080];
+
+		$this->settingsParametersMock->expects($this->once())
+			->method('getInputParametersKeys')
+			->willReturn(['name']);
+
+		$this->settingsParametersMock->expects($this->once())
+			->method('getInputValuesArray')
+			->willReturn(['New Multizone']);
+
+		$expectedLayout = ['resolution' => '1920x1080', 'zoom' => 70, 'export_unit' => 'pixel', 'zones' => []];
+		$this->playlistsServiceMock->expects($this->once())
+			->method('createNew')
+			->with(['name' => 'New Multizone', 'layout' => serialize($expectedLayout)])
+			->willReturn(99);
+
+		static::assertSame(99, $this->facade->storePlaylist($post));
+	}
+
+	/**
+	 * @throws CoreException
 	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */

@@ -131,19 +131,22 @@ export class ZonesModel
 
 	#createZonesObject(response)
 	{
+
 		if (response.zones === null || response.zones.length === 0) // new playlist
 			return;
+
 
 		// we need to be read compatible to the old save format
 		let zones = response.zones;
 
 		if (zones.hasOwnProperty("resolution"))
 		{
-			this.#export_unit = zones.export_unit;
+			// new playlists may only have a resolution
+			this.#export_unit = zones.export_unit ?? this.#export_unit;
 			this.#screen_width = zones.resolution.split("x")[0];
 			this.#screen_height = zones.resolution.split("x")[1];
-			this.#Zones       = this.#prepareZones(zones.zones)
-			this.#zoom        = zones.zoom;
+			this.#Zones       = this.#prepareZones(zones.zones ?? [])
+			this.#zoom        = zones.zoom ?? this.#zoom;
 		}
 		else // the old format
 		{

@@ -123,6 +123,8 @@ class Facade
 		if (array_key_exists('screen_width', $post) && array_key_exists('screen_height', $post))
 		{
 			$layout['resolution'] =   $post['screen_width'].'x'.$post['screen_height'];
+			// complete the layout, so the multizone editor gets a valid structure for new playlists
+			$layout += ['zoom' => 70, 'export_unit' => 'pixel', 'zones' => []];
 			$saveData['layout'] = serialize($layout);
 		}
 
