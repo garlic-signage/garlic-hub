@@ -23,6 +23,7 @@ namespace App\Modules\Playlists\Services\InsertItems;
 
 use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Playlists\Helper\ItemType;
@@ -32,6 +33,7 @@ use App\Modules\Playlists\Services\PlaylistsService;
 use App\Modules\Templates\Services\TemplatesService;
 use Doctrine\DBAL\Exception;
 use League\Flysystem\Filesystem;
+use League\Flysystem\FilesystemException;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Log\LoggerInterface;
 
@@ -53,10 +55,15 @@ class Template extends AbstractInsertItem
 		parent::__construct($logger);
 	}
 
-	/**
-	 * @return array<string,mixed>
-	 * @throws Exception
-	 */
+    /**
+     * @param int $playlistId
+     * @param string|int $insertId
+     * @param int $position
+     * @return array<string,mixed>
+     * @throws Exception
+     * @throws FrameworkException
+     * @throws FilesystemException
+     */
 	public function insert(int $playlistId, string|int $insertId, int $position): array
 	{
 		try
@@ -92,7 +99,7 @@ class Template extends AbstractInsertItem
 				'content_data'  => $template['content'],
 				'mimetype'      => 'image/jpeg'
 			];
-			$id = $this->itemsRepository->insert($saveItem);
+			$id = (int) $this->itemsRepository->insert($saveItem);
 			if ($id === 0)
 				throw new ModuleException('items', 'Template item could not inserted.');
 
