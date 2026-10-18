@@ -211,12 +211,7 @@ class PlaylistContent
 		$item->setTouches($this->touchTrigger);
 		$serverUrl = $this->config->getConfigValue('url', 'mediapool', 'content_server');
 
-		// Rendered template items live outside the docroot and are named by item id, see public/delivery.php.
-		// The rendering is fully determined by content_data, so a hash of it as version changes the url
-		// (and with it the player's cache key) exactly when the item was edited.
-		$version = substr(md5((string) ($itemData['content_data'] ?? '')), 0, 8);
-		$link = $serverUrl.'/delivery.php/tpl/'.$itemData['item_id'].'-'.$version.'.'.
-			$this->mimeTypeExtensionMapper->determineExtension($itemData['mimetype']);
+		$link = $serverUrl.'/delivery.php/tpl/'.$itemData['item_id'].'.'.$this->mimeTypeExtensionMapper->determineExtension($itemData['mimetype']);
 
 		$item->setLink($link);
 
