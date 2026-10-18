@@ -61,6 +61,7 @@ use App\Modules\Playlists\Helper\ConditionalPlay\TemplatePreparer;
 use App\Modules\Playlists\Helper\Datatable\ControllerFacade;
 use App\Modules\Playlists\Helper\Datatable\DatatableBuilder;
 use App\Modules\Playlists\Helper\Datatable\DatatablePreparer;
+use App\Framework\Media\DeliveryUrlBuilder;
 use App\Modules\Playlists\Helper\ExportSmil\items\ItemsFactory;
 use App\Modules\Playlists\Helper\ExportSmil\LocalWriter;
 use App\Modules\Playlists\Helper\ExportSmil\PlaylistContent;
@@ -279,7 +280,7 @@ $dependencies[ExportService::class] = DI\factory(function (ContainerInterface $c
 		new LocalWriter($container->get(Config::class), $container->get('LocalFileSystem')),
 		new PlaylistContent(
 			new ItemsFactory($container->get(Config::class)),
-			$container->get(Config::class),
+			new DeliveryUrlBuilder($container->get(Config::class)->getConfigValue('url', 'mediapool', 'content_server')),
 			$container->get(MimeTypeExtensionMapper::class),
 		),
 		$container->get('ModuleLogger')

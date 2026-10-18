@@ -21,9 +21,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Helper\ExportSmil;
 
-use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Media\DeliveryUrlBuilder;
 use App\Framework\Media\MimeTypeExtensionMapper;
 use App\Modules\Playlists\Helper\ExportSmil\items\Base;
 use App\Modules\Playlists\Helper\ExportSmil\items\ItemsFactory;
@@ -41,7 +41,6 @@ use PHPUnit\Framework\TestCase;
 class PlaylistContentTest extends TestCase
 {
 	private ItemsFactory&MockObject $itemsFactoryMock;
-	private Config&MockObject $configMock;
 	private MimeTypeExtensionMapper&MockObject $mimeTypeExtensionMapperMock;
 	private PlaylistContent $playlistContent;
 
@@ -52,12 +51,11 @@ class PlaylistContentTest extends TestCase
 	{
 		parent::setUp();
 		$this->itemsFactoryMock = $this->createMock(ItemsFactory::class);
-		$this->configMock = $this->createMock(Config::class);
 		$this->mimeTypeExtensionMapperMock = $this->createMock(MimeTypeExtensionMapper::class);
 
 		$this->playlistContent = new PlaylistContent(
 			$this->itemsFactoryMock,
-			$this->configMock,
+			new DeliveryUrlBuilder('https://content.server.com'),
 			$this->mimeTypeExtensionMapperMock
 		);
 	}
@@ -87,10 +85,6 @@ class PlaylistContentTest extends TestCase
 			->with($itemData[0])
 			->willReturn($videoMock);
 
-		$this->configMock->method('getConfigValue')
-			->willReturnMap([
-				['url', 'mediapool', 'content_server', 'https://content.server.com'],
-			]);
 		$link = 'https://content.server.com/delivery.php/file.mp4';
 		$videoMock->method('setLink')->with($link);
 
@@ -122,8 +116,6 @@ class PlaylistContentTest extends TestCase
 		];
 		$itemMock = $this->createMock(Video::class);
 		$this->itemsFactoryMock->method('createItem')->willReturn($itemMock);
-		$this->configMock->method('getConfigValue')
-			->willReturnMap([['url', 'mediapool', 'content_server', 'https://content.server.com']]);
 		$this->mimeTypeExtensionMapperMock->method('determineExtension')->with('image/jpeg')->willReturn('jpg');
 
 		$itemMock->expects($this->once())->method('setLink')->with('https://content.server.com/delivery.php/tpl/13-'.substr(md5('{"objects":[]}'), 0, 8).'.jpg');
@@ -156,10 +148,6 @@ class PlaylistContentTest extends TestCase
 			->with($itemData[0])
 			->willReturn($videoMock);
 
-		$this->configMock->method('getConfigValue')
-			->willReturnMap([
-				['url', 'mediapool', 'content_server', 'https://content.server.com'],
-			]);
 		$link = 'https://content.server.com/delivery.php/file.mp4';
 		$videoMock->method('setLink')->with($link);
 
@@ -196,10 +184,6 @@ class PlaylistContentTest extends TestCase
 			->with($itemData[0])
 			->willReturn($videoMock);
 
-		$this->configMock->method('getConfigValue')
-			->willReturnMap([
-				['url', 'mediapool', 'content_server', 'https://content.server.com'],
-			]);
 		$link = 'https://content.server.com/delivery.php/file.mp4';
 		$videoMock->method('setLink')->with($link);
 

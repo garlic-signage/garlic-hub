@@ -22,9 +22,9 @@ declare(strict_types=1);
 namespace App\Modules\Playlists\Helper\ExportSmil;
 
 
-use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Media\DeliveryUrlBuilder;
 use App\Framework\Media\MimeTypeExtensionMapper;
 use App\Modules\Playlists\Helper\ExportSmil\items\Base;
 use App\Modules\Playlists\Helper\ExportSmil\items\ItemsFactory;
@@ -54,7 +54,7 @@ class PlaylistContent
 	private array $touchTrigger = [];
 
 	public function __construct(private readonly ItemsFactory $itemsFactory,
-								private readonly Config $config,
+								private readonly DeliveryUrlBuilder $deliveryUrlBuilder,
 								private readonly MimeTypeExtensionMapper $mimeTypeExtensionMapper,
 	)
 	{}
@@ -159,12 +159,8 @@ class PlaylistContent
 		$item = $this->itemsFactory->createItem($itemData);
 		$item->setBelongsToMasterPlaylist($this->playlist['playlist_mode'] === PlaylistMode::MASTER->value);
 		$item->setTouches($this->touchTrigger);
-		$serverUrl = $this->config->getConfigValue('url', 'mediapool', 'content_server');
 
-		// file name in the path, not in the query: the player takes the extension of its cache file from the path
-		$link = $serverUrl.'/delivery.php/'.$itemData['file_resource'].'.'.$itemData['extension'];
-
-		$item->setLink($link);
+		$item->setLink($this->deliveryUrlBuilder->mediapoolUrl($itemData['file_resource'], $itemData['extension']));
 
 		$this->addContentParts($itemData, $item->getSmilElementTag(), $item->getPrefetchTag(), $item->getExclusive());
 	}
@@ -209,11 +205,11 @@ class PlaylistContent
 		$item = $this->itemsFactory->createItem($itemData);
 		$item->setBelongsToMasterPlaylist($this->playlist['playlist_mode'] === PlaylistMode::MASTER->value);
 		$item->setTouches($this->touchTrigger);
-		$serverUrl = $this->config->getConfigValue('url', 'mediapool', 'content_server');
 
-		$link = $serverUrl.'/delivery.php/tpl/'.$itemData['item_id'].'.'.$this->mimeTypeExtensionMapper->determineExtension($itemData['mimetype']);
-
-		$item->setLink($link);
+		$item->setLink($this->deliveryUrlBuilder->templateUrl(
+			$itemData['item_id'],
+			$this->mimeTypeExtensionMapper->determineExtension($itemData['mimetype'])
+		));
 
 		$this->addContentParts($itemData, $item->getSmilElementTag(), $item->getPrefetchTag(), $item->getExclusive());
 	}
