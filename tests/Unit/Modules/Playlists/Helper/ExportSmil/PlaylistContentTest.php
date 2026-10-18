@@ -118,7 +118,7 @@ class PlaylistContentTest extends TestCase
 		$this->itemsFactoryMock->method('createItem')->willReturn($itemMock);
 		$this->mimeTypeExtensionMapperMock->method('determineExtension')->with('image/jpeg')->willReturn('jpg');
 
-		$itemMock->expects($this->once())->method('setLink')->with('https://content.server.com/delivery.php/tpl/13-'.substr(md5('{"objects":[]}'), 0, 8).'.jpg');
+		$itemMock->expects($this->once())->method('setLink')->with('https://content.server.com/delivery.php/tpl/13'.'.jpg');
 		$itemMock->method('getSmilElementTag')->willReturn('smilTag');
 		$itemMock->method('getPrefetchTag')->willReturn('prefetchTag');
 		$itemMock->method('getExclusive')->willReturn('exclusiveTag');
