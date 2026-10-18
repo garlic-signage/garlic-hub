@@ -22,6 +22,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Helper\Composer;
 
+use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\ModuleException;
 use App\Framework\Media\DataUrlDecoder;
 use App\Framework\Media\DecodedDataUrlFile;
 use App\Modules\Mediapool\Utils\MediaHandlerFactory;
@@ -35,7 +37,11 @@ class ExportImage
 	public function __construct(private readonly DataUrlDecoder $dataUrlDecoder, private MediaHandlerFactory $mediaHandlerFactory)
 	{}
 
-	public function decode(string $base64Encoded): static
+    /**
+     * @throws ModuleException
+     * @throws FrameworkException
+     */
+    public function decode(string $base64Encoded): static
 	{
 		$this->decodedDataUrlFile = $this->dataUrlDecoder->decode($base64Encoded);
 		return $this;
