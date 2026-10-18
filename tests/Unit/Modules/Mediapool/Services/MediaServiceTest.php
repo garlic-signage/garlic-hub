@@ -94,8 +94,8 @@ class MediaServiceTest extends TestCase
 		static::assertEquals(['key' => 'value'], $result[0]['metadata']);
 		static::assertSame('original_directory/checksum.extension', $result[0]['paths']['original']);
 		static::assertSame('thumbnail_directory/checksum.thumb_extension', $result[0]['paths']['thumbnail']);
-		static::assertStringStartsWith('/media.php?c=checksum&ext=extension&v=orig&exp=', $result[0]['urls']['original']);
-		static::assertStringStartsWith('/media.php?c=checksum&ext=thumb_extension&v=thumb&exp=', $result[0]['urls']['thumbnail']);
+		static::assertStringStartsWith('/media.php/orig/checksum.extension?exp=', $result[0]['urls']['original']);
+		static::assertStringStartsWith('/media.php/thumb/checksum.thumb_extension?exp=', $result[0]['urls']['thumbnail']);
 	}
 
 	#[Group('units')]
@@ -132,7 +132,7 @@ class MediaServiceTest extends TestCase
 		$result = $this->mediaService->fetchMedia($mediaId);
 
 		static::assertEquals(['key' => 'value'], $result['metadata']);
-		static::assertStringStartsWith('/media.php?c=checksum&ext=thumb_extension&v=thumb&exp=', $result['urls']['thumbnail']);
+		static::assertStringStartsWith('/media.php/thumb/checksum.thumb_extension?exp=', $result['urls']['thumbnail']);
 	}
 
 	#[Group('units')]

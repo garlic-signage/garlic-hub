@@ -27,6 +27,9 @@ namespace App\Framework\Media;
  * files with. Everything the delivery script evaluates is part of the signature,
  * so a thumb URL cannot be edited into an original one.
  *
+ * Url form: /media.php/<variant>/<name>.<ext>?exp=..&sig=.. - the file name has to be part of
+ * the path, a query like ?ext=mp4 would not be recognised as media type by clients.
+ *
  * The expiry is rounded up to the next but one TTL slot, so the URL of a file
  * stays identical for at least one TTL and remains cacheable in the browser.
  */
@@ -72,10 +75,9 @@ class MediaUrlSigner
     {
         $signature = $this->sign($checksum, $extension, $variant, $now);
 
-        return self::ENDPOINT . '?' . http_build_query([
-            'c'   => $checksum,
-            'ext' => $extension,
-            'v'   => $variant,
+        // variant, name and extension are the path: players, browsers and lightboxes take the
+        // media type from the file extension there. Only expiry and signature are query.
+        return self::ENDPOINT . '/' . $variant . '/' . $checksum . '.' . $extension . '?' . http_build_query([
             'exp' => $signature['exp'],
             'sig' => $signature['sig'],
         ]);

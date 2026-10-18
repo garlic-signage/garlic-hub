@@ -488,7 +488,7 @@ class ItemsServiceTest extends TestCase
 		static::assertCount(1, $result['items']);
 		static::assertEquals('/path/to/thumbnails/video_checksum.jpg', $result['items'][0]['paths']['thumbnail']);
 		static::assertStringStartsWith(
-			'/media.php?c=video_checksum&ext=jpg&v=thumb&exp=',
+			'/media.php/thumb/video_checksum.jpg?exp=',
 			$result['items'][0]['urls']['thumbnail']
 		);
 	}

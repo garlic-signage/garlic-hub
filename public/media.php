@@ -22,7 +22,8 @@
  * Standalone delivery of mediapool files from var/storage/mediapool.
  * Deliberately independent of the CMS bootstrap (no container, session or DB).
  *
- * GET parameters: c (checksum), ext, v (thumb|orig), exp (unix timestamp), sig (hmac)
+ * Called as media.php/<variant>/<name>.<ext>?exp=<unix timestamp>&sig=<hmac> (PATH_INFO).
+ * The file name has to be part of the path: clients take the media type from the extension.
  * Signature handling: see MediaUrlSigner
  */
 
@@ -99,19 +100,19 @@ function mediaFail(int $status): never
 	exit;
 }
 
-$checksum = $_GET['c']   ?? '';
-$ext      = $_GET['ext'] ?? '';
-$variant  = $_GET['v']   ?? '';
+if (!preg_match('#^/([a-z-]+)/([a-z0-9]+)\.([a-z0-9]{2,5})$#', $_SERVER['PATH_INFO'] ?? '', $m))
+	mediaFail(400);
 
-if (!is_string($checksum) || !is_string($ext) || !is_string($variant)
-	|| !isset(MEDIA_VARIANT_DIR[$variant]) || !preg_match(MEDIA_NAME_PATTERN[$variant], $checksum) || !isset(MEDIA_MIME[$ext]))
+[, $variant, $checksum, $ext] = $m;
+
+if (!isset(MEDIA_VARIANT_DIR[$variant]) || !preg_match(MEDIA_NAME_PATTERN[$variant], $checksum) || !isset(MEDIA_MIME[$ext]))
 	mediaFail(400);
 
 $secret = $_ENV['APP_SECRET'] ?? (getenv('APP_SECRET') ?: '');
 if (!is_string($secret) || $secret === '')
 	mediaFail(500);
 
-if (!MediaUrlSigner::verify($_GET, $secret))
+if (!MediaUrlSigner::verify(['c' => $checksum, 'ext' => $ext, 'v' => $variant] + $_GET, $secret))
 	mediaFail(403);
 
 $baseDir = realpath($systemDir . '/var/storage/' . MEDIA_VARIANT_DIR[$variant]);

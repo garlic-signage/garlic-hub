@@ -41,14 +41,16 @@ class MediaUrlSignerTest extends TestCase
 	}
 
 	/**
-	 * @return array<array-key, mixed> the parsed query of an url
+	 * @return array<array-key, mixed> the parameters of an url as media.php hands them to verify():
+	 *                                 variant, name and extension from the path, expiry and signature from the query
 	 */
 	private function queryOf(string $url): array
 	{
 		$query = [];
 		parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
+		preg_match('#^/media\.php/([a-z-]+)/([a-z0-9]+)\.([a-z0-9]+)$#', (string) parse_url($url, PHP_URL_PATH), $m);
 
-		return $query;
+		return ['c' => $m[2], 'ext' => $m[3], 'v' => $m[1]] + $query;
 	}
 
 	#[Group('units')]
@@ -56,7 +58,7 @@ class MediaUrlSignerTest extends TestCase
 	{
 		$url = $this->mediaUrlSigner->thumbUrl(self::CHECKSUM, 'jpg', self::NOW);
 
-		static::assertStringStartsWith('/media.php?', $url);
+		static::assertStringStartsWith('/media.php/thumb/' . self::CHECKSUM . '.jpg?exp=', $url);
 		static::assertSame(
 			['c' => self::CHECKSUM, 'ext' => 'jpg', 'v' => 'thumb', 'exp' => '1760004000', 'sig' => $this->queryOf($url)['sig']],
 			$this->queryOf($url)
