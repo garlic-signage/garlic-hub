@@ -9,6 +9,14 @@ chmod -R 775 /var/www/public/var /var/www/var
 # move mediapool/templates from public/var to var/storage (must run before mkdir below)
 /var/www/bin/migrate-storage.sh /var/www || exit 1
 
+# Anything still in public/var after the migration was not moved (target already existed, or
+# the data is of a kind this version does not know). It is no longer served or read, so say so loudly.
+if [ -d /var/www/public/var ] && [ -n "$(find /var/www/public/var -mindepth 1 -print -quit 2>/dev/null)" ]; then
+    echo "WARNING: /var/www/public/var still contains data that was NOT migrated to /var/www/var:" >&2
+    find /var/www/public/var -mindepth 1 -maxdepth 2 >&2
+    echo "WARNING: garlic-hub no longer reads from public/var. Move the files by hand or they stay unreachable." >&2
+fi
+
 mkdir -p \
   /var/www/var \
   /var/www/var/cache \
