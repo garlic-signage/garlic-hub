@@ -22,6 +22,7 @@ import {InsertContextMenu} from "./InsertContextMenu.js";
 import {SelectorFactory}   from "./SelectorFactory.js";
 import {ItemsService}      from "./items/ItemsService.js";
 import {FetchClient}       from "../../../core/FetchClient.js";
+import {FlashMessageHandler} from "../../../core/FlashMessageHandler.js";
 import {ItemList}          from "./items/ItemList.js";
 import {ItemFactory}       from "./items/ItemFactory.js";
 import {DragDropHandler}   from "./DragDropHandler.js";
@@ -39,7 +40,7 @@ document.addEventListener("DOMContentLoaded", async function ()
 
 	const playlistsService    = new PlaylistsService(new FetchClient());
 	const itemsService        = new ItemsService(new FetchClient());
-	const playlistsProperties = new PlaylistsProperties(playlistsService, lang);
+	const playlistsProperties = new PlaylistsProperties(playlistsService, new FlashMessageHandler(), lang);
 	const itemFactory         = new ItemFactory(new WidgetFactory(), new ConditionalPlayFactory(), new TriggerFactory());
 	const itemsList           = new ItemList(itemFactory, itemsService, dropTarget, playlistsProperties);
 	const dragDropHandler     = new DragDropHandler(dropTarget, itemsService, itemsList);

@@ -21,51 +21,40 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Controller;
 
-use App\Framework\Controller\AbstractAsyncController;
-use App\Framework\Core\CsrfToken;
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
-use App\Modules\Playlists\Services\ExportService;
+use App\Modules\Playlists\Helper\Export\Orchestrator;
 use Doctrine\DBAL\Exception;
+use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Handles export-related functionality within the application.
+ * Validation and execution are delegated to the Orchestrator.
  */
-class ExportController extends AbstractAsyncController
+readonly class ExportController
 {
-	private readonly ExportService $exportService;
-	private readonly UserSession $userSession;
-	private readonly CsrfToken $csrfToken;
-
-	public function __construct(ExportService $exportService, UserSession $userSession, CsrfToken $csrfToken)
-	{
-		$this->exportService = $exportService;
-		$this->userSession = $userSession;
-		$this->csrfToken = $csrfToken;
-	}
+	public function __construct(private Orchestrator $orchestrator) {}
 
 	/**
+	 * @throws CoreException
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	public function export(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array<string,mixed> $post */
-		$post = $request->getParsedBody();
+		/** @var array<string,mixed> $input */
+		$input = $request->getParsedBody();
+		$answer = $this->orchestrator->setInput($input)->validate($response);
+		if ($answer !== null)
+			return $answer;
 
-		if (!$this->csrfToken->validateToken($post['csrf_token'] ?? ''))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'CSRF token mismatch.']);
-
-		if (!isset($post['playlist_id']))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Playlist ID not valid.']);
-
-		$this->exportService->setUID($this->userSession->getUID());
-
-		if ($this->exportService->exportToSmil((int) $post['playlist_id']) === 0)
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Playlist not found.']);
-
-		return $this->jsonResponse($response, ['success' => true]);
+		return $this->orchestrator->export($response);
 	}
 }

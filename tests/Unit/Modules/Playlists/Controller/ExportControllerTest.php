@@ -21,28 +21,29 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Controller;
 
-use App\Framework\Core\CsrfToken;
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Controller\ExportController;
-use App\Modules\Playlists\Services\ExportService;
+use App\Modules\Playlists\Helper\Export\Orchestrator;
+use Doctrine\DBAL\Exception as DBALException;
+use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamInterface;
+use Psr\SimpleCache\InvalidArgumentException;
 
 class ExportControllerTest extends TestCase
 {
+	private Orchestrator&MockObject $orchestratorMock;
+	private ServerRequestInterface&Stub $requestStub;
+	private ResponseInterface&Stub $responseStub;
+	private ResponseInterface&Stub $expectedResponseStub;
 	private ExportController $exportController;
-	private ExportService&MockObject $exportServiceMock;
-	private ResponseInterface&MockObject $responseMock;
-	private ServerRequestInterface&MockObject $requestMock;
-	private UserSession&MockObject $userSessionMock;
-	private CsrfToken&MockObject $csrfTokenMock;
-	private StreamInterface&MockObject $streamInterfaceMock;
 
 	/**
 	 * @throws Exception
@@ -50,101 +51,63 @@ class ExportControllerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->exportServiceMock = $this->createMock(ExportService::class);
-		$this->requestMock = $this->createMock(ServerRequestInterface::class);
-		$this->responseMock = $this->createMock(ResponseInterface::class);
-		$this->userSessionMock = $this->createMock(UserSession::class);
-		$this->streamInterfaceMock = $this->createMock(StreamInterface::class);
-		$this->csrfTokenMock    = $this->createMock(CsrfToken::class);
+		$this->orchestratorMock     = $this->createMock(Orchestrator::class);
+		$this->requestStub          = $this->createStub(ServerRequestInterface::class);
+		$this->responseStub         = $this->createStub(ResponseInterface::class);
+		$this->expectedResponseStub = $this->createStub(ResponseInterface::class);
 
-		$this->exportController = new ExportController($this->exportServiceMock, $this->userSessionMock, $this->csrfTokenMock);
+		$this->requestStub->method('getParsedBody')->willReturn(['playlist_id' => 12]);
+
+		$this->exportController = new ExportController($this->orchestratorMock);
 	}
 
 	/**
+	 * @throws CoreException
+	 * @throws DBALException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
-	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testExport(): void
+	public function testExportReturnsValidationError(): void
 	{
-		$post = ['playlist_id' => 69];
-		$this->requestMock->method('getParsedBody')->willReturn($post);
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
-
-		$this->userSessionMock->method('getUID')->willReturn(456);
-		$this->exportServiceMock->method('setUID')->with(456);
-
-		$this->exportServiceMock->method('exportToSmil')->with(69)->willReturn(1);
-		$this->mockJsonResponse(['success' => true]);
-
-		$this->exportController->export($this->requestMock, $this->responseMock);
-	}
-
-	/**
-	 * @throws UserException
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testExportWithInvalidCsrfToken(): void
-	{
-		$post = [];
-		$this->requestMock->method('getParsedBody')->willReturn($post);
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(false);
-
-		$this->exportServiceMock->expects($this->never())->method('exportToSmil');
-		$this->mockJsonResponse(['success' => false, 'error_message' =>  'CSRF token mismatch.']);
-
-		$this->exportController->export($this->requestMock, $this->responseMock);
-	}
-
-
-	/**
-	 * @throws UserException
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testExportWithInvalidPlaylistId(): void
-	{
-		$post = [];
-		$this->requestMock->method('getParsedBody')->willReturn($post);
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
-
-		$this->exportServiceMock->expects($this->never())->method('exportToSmil');
-		$this->mockJsonResponse(['success' => false, 'error_message' =>  'Playlist ID not valid.']);
-
-		$this->exportController->export($this->requestMock, $this->responseMock);
-	}
-
-	/**
-	 * @throws UserException
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testExportWhenPlaylistNotFound(): void
-	{
-		$post = ['playlist_id' => 69];
-		$this->requestMock->method('getParsedBody')->willReturn($post);
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
-
-		$this->userSessionMock->method('getUID')->willReturn(456);
-		$this->exportServiceMock->method('setUID')->with(456);
-
-		$this->exportServiceMock->method('exportToSmil')->with(69)->willReturn(0);
-		$this->mockJsonResponse(['success' => false, 'error_message' => 'Playlist not found.']);
-
-		$this->exportController->export($this->requestMock, $this->responseMock);
-	}
-
-	/**
-	 * @param array<string,mixed> $data
-	 */
-	private function mockJsonResponse(array $data): void
-	{
-		$this->responseMock->method('getBody')->willReturn($this->streamInterfaceMock);
-		$this->streamInterfaceMock->method('write')->with(json_encode($data));
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Content-Type', 'application/json')
+		$this->orchestratorMock->expects($this->once())->method('setInput')
+			->with(['playlist_id' => 12])
 			->willReturnSelf();
-		$this->responseMock->method('withStatus')->with('200');
+		$this->orchestratorMock->expects($this->once())->method('validate')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
+		$this->orchestratorMock->expects($this->never())->method('export');
+
+		$result = $this->exportController->export($this->requestStub, $this->responseStub);
+
+		static::assertSame($this->expectedResponseStub, $result);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws DBALException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
+	 */
+	#[Group('units')]
+	public function testExportSucceeds(): void
+	{
+		$this->orchestratorMock->expects($this->once())->method('setInput')
+			->with(['playlist_id' => 12])
+			->willReturnSelf();
+		$this->orchestratorMock->expects($this->once())->method('validate')
+			->with($this->responseStub)
+			->willReturn(null);
+		$this->orchestratorMock->expects($this->once())->method('export')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
+
+		$result = $this->exportController->export($this->requestStub, $this->responseStub);
+
+		static::assertSame($this->expectedResponseStub, $result);
 	}
 }

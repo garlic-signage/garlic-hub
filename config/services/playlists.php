@@ -293,9 +293,12 @@ $dependencies[ExportService::class] = DI\factory(function (ContainerInterface $c
 $dependencies[ExportController::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new ExportController(
-		$container->get(ExportService::class),
-		$container->get(UserSession::class),
-		$container->get(CsrfToken::class)
+		new \App\Modules\Playlists\Helper\Export\Orchestrator(
+			new \App\Modules\Playlists\Helper\Export\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
+			$container->get(UserSession::class),
+			$container->get(BaseValidator::class),
+			$container->get(ExportService::class)
+		)
 	);
 });
 

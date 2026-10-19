@@ -1,0 +1,93 @@
+<?php
+/*
+ garlic-hub: Digital Signage Management Platform
+
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ This file is part of the garlic-hub source code
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License, version 3,
+ as published by the Free Software Foundation.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+declare(strict_types=1);
+
+namespace App\Modules\Playlists\Helper\Export;
+
+use App\Framework\Core\BaseValidator;
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\UserException;
+use App\Modules\Auth\UserSession;
+use App\Modules\Playlists\Services\ExportService;
+use Doctrine\DBAL\Exception;
+use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
+use Psr\Http\Message\ResponseInterface;
+use Psr\SimpleCache\InvalidArgumentException;
+
+/**
+ * Validates the input for the playlist export and executes it.
+ * validate() returns a response on error and null when the input is valid.
+ */
+class Orchestrator
+{
+	/** @var array<string,mixed> */
+	private array $input = [];
+	private int $playlistId = 0;
+
+	public function __construct(
+		private readonly ResponseBuilder $responseBuilder,
+		private readonly UserSession $userSession,
+		private readonly BaseValidator $validator,
+		private readonly ExportService $exportService
+	) {}
+
+	/**
+	 * @param array<string,mixed> $input
+	 */
+	public function setInput(array $input): static
+	{
+		$this->input = $input;
+		return $this;
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 */
+	public function validate(ResponseInterface $response): ?ResponseInterface
+	{
+		if (!$this->validator->validateCsrfToken($this->input['csrf_token'] ?? ''))
+			return $this->responseBuilder->csrfTokenMismatch($response);
+
+		$this->playlistId = (int) ($this->input['playlist_id'] ?? 0);
+		if ($this->playlistId === 0)
+			return $this->responseBuilder->invalidPlaylistId($response);
+
+		return null;
+	}
+
+	/**
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws UserException
+	 */
+	public function export(ResponseInterface $response): ResponseInterface
+	{
+		$this->exportService->setUID($this->userSession->getUID());
+
+		if ($this->exportService->exportToSmil($this->playlistId) === 0)
+			return $this->responseBuilder->playlistNotFound($response);
+
+		return $this->responseBuilder->generalSuccess($response, []);
+	}
+}

@@ -28,11 +28,13 @@ export class PlaylistsProperties
 	#playerExport     = document.getElementById("playerExport");
 	#pickingValue     = 0;
 	#playlistsService = null;
+	#flashMessageHandler = null;
 	#lang             = null;
 
-	constructor(playlistsService, lang)
+	constructor(playlistsService, flashMessageHandler, lang)
 	{
 		this.#playlistsService = playlistsService;
+		this.#flashMessageHandler = flashMessageHandler;
 		this.#lang = lang;
 	}
 
@@ -62,8 +64,21 @@ export class PlaylistsProperties
 		});
 		this.#playerExport.addEventListener('click', async () =>
 		{
-			await this.#playlistsService.export(playlistId);
-			PlaylistsProperties.removeSave();
+			try
+			{
+				const result = await this.#playlistsService.export(playlistId);
+				if (result.success !== true)
+				{
+					this.#flashMessageHandler.showError(result.error_message);
+					return;
+				}
+
+				PlaylistsProperties.removeSave();
+			}
+			catch (e)
+			{
+				this.#flashMessageHandler.showError(e.message);
+			}
 		});
 	}
 
