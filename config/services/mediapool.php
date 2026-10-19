@@ -19,15 +19,19 @@
 */
 declare(strict_types=1);
 
+use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Core\Acl\AclHelper;
+use App\Framework\Core\BaseValidator;
 use App\Framework\Core\Config\Config;
 use App\Framework\Core\CsrfToken;
 use App\Framework\Core\ShellExecutor;
+use App\Framework\Core\Translate\Translator;
 use App\Framework\Database\NestedSets\Service;
 use App\Framework\Media\Ffmpeg;
 use App\Framework\Media\MediaProperties;
 use App\Framework\Media\MediaUrlSigner;
 use App\Framework\Media\MimeTypeService;
+use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Controller\MediaController;
 use App\Modules\Mediapool\Controller\NodesController;
 use App\Modules\Mediapool\Controller\ShowController;
@@ -66,7 +70,14 @@ $dependencies[NodesService::class] = DI\factory(function (ContainerInterface $co
 });
 $dependencies[NodesController::class] = DI\factory(function (ContainerInterface $container)
 {
-	return new NodesController($container->get(NodesService::class), $container->get(CsrfToken::class));
+	return new NodesController(
+		new \App\Modules\Mediapool\Helper\Nodes\Orchestrator(
+			new \App\Modules\Mediapool\Helper\Nodes\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
+			$container->get(UserSession::class),
+			$container->get(BaseValidator::class),
+			$container->get(NodesService::class)
+		)
+	);
 });
 $dependencies[ShowController::class] = DI\factory(function (ContainerInterface $container)
 {

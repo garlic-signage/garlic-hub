@@ -23,13 +23,15 @@ export class ContextMenuTreeViewFactory
 	#treeViewElement = null;
 	#treeViewService = null;
 	#treeViewDialog  = null;
+	#flashMessageHandler = null;
 	#lang            = null;
 
-	constructor(treeViewElement, treeViewDialog, treeViewService, lang)
+	constructor(treeViewElement, treeViewDialog, treeViewService, flashMessageHandler, lang)
 	{
 		this.#treeViewElement = treeViewElement;
 		this.#treeViewDialog  = treeViewDialog;
 		this.#treeViewService = treeViewService;
+		this.#flashMessageHandler = flashMessageHandler;
 		this.#lang            = lang;
 	}
 
@@ -39,6 +41,7 @@ export class ContextMenuTreeViewFactory
 			this.#treeViewElement,
 			this.#treeViewDialog,
 			this.#treeViewService,
+			this.#flashMessageHandler,
 			this.#lang
 		);
 	}

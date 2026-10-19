@@ -24,13 +24,15 @@ export class ContextMenuTreeView
     #menu = null;
     #treeDialog = null;
 	#treeViewService = null;
+	#flashMessageHandler = null;
 	#lang  = null;
 
-    constructor(treeViewElements, treeDialog, treeViewService, lang)
+    constructor(treeViewElements, treeDialog, treeViewService, flashMessageHandler, lang)
     {
         this.#menu            = treeViewElements.menuTemplate.content.cloneNode(true).firstElementChild;
         this.#treeDialog      = treeDialog;
 		this.#treeViewService = treeViewService;
+		this.#flashMessageHandler = flashMessageHandler;
 		this.#lang            = lang;
     }
 
@@ -65,13 +67,19 @@ export class ContextMenuTreeView
     {
         removeNodeElement.addEventListener("click", () => {
             (async () => {
+				try
+				{
+					if (!currentTreeNode.data.rights.delete)
+						throw new Error('Missing delete right for this node.');
 
-				if (!currentTreeNode.data.rights.delete)
-					throw new Error('Missing delete right for this node.');
+					await this.#treeViewService.deleteNode(currentTreeNode.key);
 
-				await this.#treeViewService.deleteNode(currentTreeNode.key);
-
-                currentTreeNode.remove();
+					currentTreeNode.remove();
+				}
+				catch (err)
+				{
+					this.#flashMessageHandler.showError(err.message);
+				}
             })();
         });
     }

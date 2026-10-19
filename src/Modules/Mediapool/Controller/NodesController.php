@@ -21,176 +21,106 @@ declare(strict_types=1);
 
 namespace App\Modules\Mediapool\Controller;
 
-use App\Framework\Controller\AbstractAsyncController;
-use App\Framework\Core\CsrfToken;
 use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\DatabaseException;
+use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Modules\Mediapool\Services\NodesService;
+use App\Framework\Exceptions\UserException;
+use App\Modules\Mediapool\Helper\Nodes\Orchestrator;
 use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Throwable;
+use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Controller for managing operations related to nodes within the system.
- * Handles listing, adding, editing, moving, and deleting nodes with appropriate
- * validation and security checks such as CSRF token validation.
+ * Handles listing, adding, editing, moving, and deleting nodes.
+ * Validation and execution are delegated to the Orchestrator.
  */
-class NodesController extends AbstractAsyncController
+readonly class NodesController
 {
-	private readonly NodesService $nodesService;
-	private readonly CsrfToken $csrfToken;
-
-	public function __construct(NodesService $nodesService, CsrfToken $csrfToken)
-	{
-		$this->nodesService = $nodesService;
-		$this->csrfToken    = $csrfToken;
-	}
+	public function __construct(private Orchestrator $orchestrator) {}
 
 	/**
 	 * @param array<string,mixed> $args
-	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
+	 * @throws ModuleException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
 	 */
 	public function list(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
-		$parent_id = (int) ($args['parent_id'] ?? 0);
-		$this->nodesService->UID = $request->getAttribute('session')->get('user')['UID'];
-		$result = $this->nodesService->getNodes($parent_id);
-
-		// because of Wunderbau needed to return a direct response
-		$json = json_encode($result);
-		if ($json !== false)
-			$response->getBody()->write($json);
-
-		return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+		return $this->orchestrator->setInput($args)->list($response);
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws DatabaseException
 	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function add(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		try
-		{
-			/** @var array<string,mixed> $bodyParams */
-			$bodyParams = $request->getParsedBody();
+		$answer = $this->orchestrator->setInput($this->parsedBody($request))->validateAdd($response);
+		if ($answer !== null)
+			return $answer;
 
-			if (!$this->csrfToken->validateToken($bodyParams['csrf_token'] ?? ''))
-				return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Csrf token mismatch.']);
-
-			if (!isset($bodyParams['name']))
-				throw new ModuleException('mediapool','node name is missing');
-
-			$node_id = (int) ($bodyParams['node_id'] ?? 0);
-			$this->nodesService->UID = $request->getAttribute('session')->get('user')['UID'];
-			$new_node_id = $this->nodesService->addNode($node_id, $bodyParams['name']);
-
-			return $this->jsonResponse($response, [
-				'success' => true,
-				'data' => ['id' => $new_node_id, 'new_name' => $bodyParams['name']]
-			]);
-		}
-		catch (Throwable $e)
-		{
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => $e->getMessage()]);
-		}
-	}
-
-	public function edit(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-	{
-		try
-		{
-			/** @var array<string,mixed> $bodyParams */
-			$bodyParams = $request->getParsedBody();
-
-			if (!$this->csrfToken->validateToken($bodyParams['csrf_token'] ?? ''))
-				return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Csrf token mismatch.']);
-
-			if (!isset($bodyParams['name']) || !isset($bodyParams['node_id']))
-				throw new ModuleException('mediapool', 'node name or id is missing');
-
-			$visibility = $bodyParams['visibility'] ?? null;
-
-			$this->nodesService->UID = $request->getAttribute('session')->get('user')['UID'];
-			$count = $this->nodesService->editNode((int) $bodyParams['node_id'], $bodyParams['name'], $visibility);
-			if ($count === 0)
-				throw new ModuleException('mediapool', 'Edit node failed');
-
-			return $this->jsonResponse($response, [
-				'success' => true,
-				'data' => [
-					'id' => $bodyParams['node_id'],
-					'new_name' => $bodyParams['name'],
-					'visibility' => $visibility
-				]
-			]);
-		}
-		catch (Throwable $e)
-		{
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => $e->getMessage()]);
-		}
-	}
-
-	/**
-	 * @throws DatabaseException
-	 */
-	public function move(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-	{
-		try
-		{
-			/** @var array<string,mixed> $bodyParams */
-			$bodyParams = $request->getParsedBody();
-
-			if (!$this->csrfToken->validateToken($bodyParams['csrf_token'] ?? ''))
-				return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Csrf token mismatch.']);
-
-			if (!isset($bodyParams['src_node_id']) || !isset($bodyParams['target_node_id']) || !isset($bodyParams['target_region']))
-				throw new ModuleException('mediapool','Source node, target node, or target region is missing');
-
-			$this->nodesService->UID = $request->getAttribute('session')->get('user')['UID'];
-			$count = $this->nodesService->moveNode((int) $bodyParams['src_node_id'], (int) $bodyParams['target_node_id'], $bodyParams['target_region']);
-			return $this->jsonResponse($response, ['success' => true, 'data' => ['count_deleted_nodes' => $count]]);
-		}
-		catch (Throwable $e)
-		{
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => $e->getMessage()]);
-		}
+		return $this->orchestrator->add($response);
 	}
 
 	/**
 	 * @throws CoreException
-	 * @throws DatabaseException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 */
+	public function edit(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	{
+		$answer = $this->orchestrator->setInput($this->parsedBody($request))->validateEdit($response);
+		if ($answer !== null)
+			return $answer;
+
+		return $this->orchestrator->edit($response);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 */
+	public function move(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	{
+		$answer = $this->orchestrator->setInput($this->parsedBody($request))->validateMove($response);
+		if ($answer !== null)
+			return $answer;
+
+		return $this->orchestrator->move($response);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
 	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		try
-		{
-			/** @var array<string,mixed> $bodyParams */
-			$bodyParams = $request->getParsedBody();
+		$answer = $this->orchestrator->setInput($this->parsedBody($request))->validateDelete($response);
+		if ($answer !== null)
+			return $answer;
 
-			if (!$this->csrfToken->validateToken($bodyParams['csrf_token'] ?? ''))
-				return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Csrf token mismatch.']);
+		return $this->orchestrator->delete($response);
+	}
 
-			if (!isset($bodyParams['node_id']))
-				throw new ModuleException('mediapool', 'NodeId is missing');
-
-			/** @var array{UID: int} $user */
-			$user = $request->getAttribute('session')->get('user');
-			$this->nodesService->UID = (int)$user['UID'];
-			$count = $this->nodesService->deleteNode((int) $bodyParams['node_id']);
-			return $this->jsonResponse($response, ['success' => true, 'data' => ['count_deleted_nodes' => $count]]);
-		}
-		catch (Throwable $e)
-		{
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => $e->getMessage()]);
-		}
+	/**
+	 * @return array<string,mixed>
+	 */
+	private function parsedBody(ServerRequestInterface $request): array
+	{
+		/** @var array<string,mixed> $input */
+		$input = $request->getParsedBody();
+		return $input;
 	}
 }

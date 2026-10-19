@@ -28,6 +28,7 @@ import { LocalFilesPreviews } from "./uploads/Local/LocalFilesPreviews.js";
 import { DragDropManager } from "./uploads/Local/DragDropManager.js";
 import { PreviewFactory } from "./uploads/Preview/PreviewFactory.js";
 import { FetchClient } from "../core/FetchClient.js";
+import { FlashMessageHandler } from "../core/FlashMessageHandler.js";
 import { MediaList } from "./media/MediaList.js";
 import { MediaService } from "./media/MediaService.js";
 import { ContextMenuMediaFactory } from "./media/ContextMenuMediaFactory.js";
@@ -60,6 +61,7 @@ import {ContextMenuTreeViewFactory} from "./treeview/ContextMenuTreeViewFactory.
 document.addEventListener("DOMContentLoaded", function()
 {
 	const fetchClient     = new FetchClient();
+	const flashMessageHandler = new FlashMessageHandler();
 	const mediaService    = new MediaService(fetchClient);
 
 	const mediaList     = new MediaList(
@@ -79,18 +81,21 @@ document.addEventListener("DOMContentLoaded", function()
 	const directoryView    = new DirectoryView(
 		treeViewElements,
 		mediaList,
-		treeViewService
+		treeViewService,
+		flashMessageHandler
 	);
 
 	const treeDialog = new TreeViewDialog(
 		treeViewElements,
-		treeViewService
+		treeViewService,
+		flashMessageHandler
 	);
 
 	const contextMenuTreeViewFactory = new ContextMenuTreeViewFactory(
 		treeViewElements,
 		treeDialog,
 		treeViewService,
+		flashMessageHandler,
 		lang
 	);
 	directoryView.addContextMenu(contextMenuTreeViewFactory);

@@ -23,23 +23,35 @@ export class TreeViewService extends BaseService
 {
 	async addNode(nodeId, name)
 	{
-		return this._sendRequest(TreeViewApiConfig.BASE_NODE_URI, "POST", { node_id: nodeId, name });
+		return this.#ensureSuccess(await this._sendRequest(TreeViewApiConfig.BASE_NODE_URI, "POST", { node_id: nodeId, name }));
 	}
 
 	async editNode(nodeId, name)
 	{
-		return this._sendRequest(TreeViewApiConfig.BASE_NODE_URI, "PATCH", { node_id: nodeId, name });
+		return this.#ensureSuccess(await this._sendRequest(TreeViewApiConfig.BASE_NODE_URI, "PATCH", { node_id: nodeId, name }));
 	}
 
 	async deleteNode(nodeId)
 	{
-		return this._sendRequest(TreeViewApiConfig.BASE_NODE_URI, "DELETE", { node_id: nodeId });
+		return this.#ensureSuccess(await this._sendRequest(TreeViewApiConfig.BASE_NODE_URI, "DELETE", { node_id: nodeId }));
 	}
 
 	async moveNodeTo(sourceKey, targetKey, targetRegion)
 	{
 		const data = { src_node_id: sourceKey, target_node_id: targetKey, target_region: targetRegion };
-		return this._sendRequest(TreeViewApiConfig.MOVE_NODE_URI, "POST", data);
+		return this.#ensureSuccess(await this._sendRequest(TreeViewApiConfig.MOVE_NODE_URI, "POST", data));
+	}
+
+	/**
+	 * Throws the error_message of a failed request, so the callers
+	 * change the tree only after a successful request.
+	 */
+	#ensureSuccess(result)
+	{
+		if (result.success !== true)
+			throw new Error(result.error_message);
+
+		return result;
 	}
 
 }

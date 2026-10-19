@@ -42,12 +42,14 @@ export class DirectoryView
     #activeNode         = null;
     #mediaList          = null;
 	#treeViewService	= null;
+	#flashMessageHandler = null;
 
-    constructor(treeViewElements, mediaList, treeViewService)
+    constructor(treeViewElements, mediaList, treeViewService, flashMessageHandler)
     {
         this.#treeViewElements = treeViewElements;
         this.#mediaList        = mediaList;
 		this.#treeViewService  = treeViewService;
+		this.#flashMessageHandler = flashMessageHandler;
 
 		this.#tree             = new Wunderbaum({
             debugLevel: TreeViewApiConfig.DEBUG_LEVEL,
@@ -278,7 +280,7 @@ export class DirectoryView
 		}
 		catch (err)
 		{
-			console.error("Error loading media:", err.message);
+			this.#flashMessageHandler.showError(err.message);
 		}
     }
 }

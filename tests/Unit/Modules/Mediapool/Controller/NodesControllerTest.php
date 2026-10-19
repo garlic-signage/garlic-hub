@@ -21,29 +21,31 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Mediapool\Controller;
 
-use App\Framework\Core\CsrfToken;
-use App\Framework\Core\Session;
 use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\DatabaseException;
+use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\UserException;
 use App\Modules\Mediapool\Controller\NodesController;
-use App\Modules\Mediapool\Services\NodesService;
+use App\Modules\Mediapool\Helper\Nodes\Orchestrator;
+use Doctrine\DBAL\Exception as DBALException;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\MockObject\Runtime\PropertyHook;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamInterface;
+use Psr\SimpleCache\InvalidArgumentException;
 
 class NodesControllerTest extends TestCase
 {
-	private ServerRequestInterface&MockObject $requestMock;
-	private ResponseInterface&MockObject $responseMock;
-	private NodesService&MockObject $nodesServiceMock;
-	private CsrfToken&MockObject $csrfTokenMock;
+	/** @var array<string,mixed> */
+	private array $input = ['node_id' => 1, 'name' => 'folder', 'csrf_token' => 'token'];
+	private Orchestrator&MockObject $orchestratorMock;
+	private ServerRequestInterface&Stub $requestStub;
+	private ResponseInterface&Stub $responseStub;
+	private ResponseInterface&Stub $expectedResponseStub;
 	private NodesController $controller;
 
 	/**
@@ -52,300 +54,236 @@ class NodesControllerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->requestMock      = $this->createMock(ServerRequestInterface::class);
-		$this->responseMock     = $this->createMock(ResponseInterface::class);
-		$this->nodesServiceMock = $this->createMock(NodesService::class);
-		$this->csrfTokenMock    = $this->createMock(CsrfToken::class);
-		$this->controller       = new NodesController($this->nodesServiceMock, $this->csrfTokenMock);
+		$this->orchestratorMock     = $this->createMock(Orchestrator::class);
+		$this->requestStub          = $this->createStub(ServerRequestInterface::class);
+		$this->responseStub         = $this->createStub(ResponseInterface::class);
+		$this->expectedResponseStub = $this->createStub(ResponseInterface::class);
+
+		$this->requestStub->method('getParsedBody')->willReturn($this->input);
+
+		$this->controller = new NodesController($this->orchestratorMock);
 	}
 
 	/**
-	 * @throws ModuleException
-	 * @throws Exception
 	 * @throws CoreException
+	 * @throws DBALException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws ModuleException
 	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws \Doctrine\DBAL\Exception
+	 * @throws UserException
 	 */
 	#[Group('units')]
 	public function testList(): void
 	{
-		$this->mockSession();
-		$this->nodesServiceMock->expects($this->once())
-			->method(PropertyHook::set('UID'))
-			->with(1);
-
-		$this->nodesServiceMock->expects($this->once())
-			->method('getNodes')
-			->with(0)
-			->willReturn(['node1' => [], 'node2' => []]);
-
-		$this->mockResponse(['node1' => [], 'node2' => []]);
-		$this->controller->list($this->requestMock, $this->responseMock, []);
-	}
-
-
-	/**
-	 * @throws CoreException
-	 * @throws DatabaseException
-	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
-	 */
-	#[Group('units')]
-	public function testAdd(): void
-	{
-		$this->mockSession();
-		$this->requestMock->method('getParsedBody')
-			->willReturn(['name' => 'New Node']);
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
-
-		$this->nodesServiceMock->expects($this->once())
-			->method(PropertyHook::set('UID'))
-			->with(1);
-
-		$this->nodesServiceMock->expects($this->once())
-			->method('addNode')
-			->with(0, 'New Node')
-			->willReturn(123);
-
-		$this->mockResponse(['success' => true, 'data' => ['id' => 123, 'new_name' => 'New Node']]);
-
-		$this->controller->add($this->requestMock, $this->responseMock);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws DatabaseException
-	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
-	 */
-	#[Group('units')]
-	public function testAddFailToken(): void
-	{
-		$this->requestMock->method('getParsedBody')->willReturn([]);
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(false);
-
-		$this->nodesServiceMock->expects($this->never())->method(PropertyHook::set('UID'));
-		$this->nodesServiceMock->expects($this->never())->method('addNode');
-
-		$this->mockResponse(['success' => false, 'error_message' => 'Csrf token mismatch.']);
-		$this->controller->add($this->requestMock, $this->responseMock);
-	}
-
-
-	/**
-	 * @throws CoreException
-	 * @throws DatabaseException
-	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
-	 */
-	#[Group('units')]
-	public function testAddFailNoName(): void
-	{
-		$this->requestMock->method('getParsedBody')->willReturn([]);
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
-
-		$this->nodesServiceMock->expects($this->never())->method(PropertyHook::set('UID'));
-		$this->nodesServiceMock->expects($this->never())->method('addNode');
-
-		$this->mockResponse(['success' => false, 'error_message' => 'node name is missing']);
-		$this->controller->add($this->requestMock, $this->responseMock);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testEdit(): void
-	{
-		$this->mockSession();
-		$this->requestMock->method('getParsedBody')
-			->willReturn(['name' => 'Updated Node', 'node_id' => 1]);
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
-
-		$this->nodesServiceMock->expects($this->once())
-			->method(PropertyHook::set('UID'))
-			->with(1);
-
-		$this->nodesServiceMock->expects($this->once())
-			->method('editNode')
-			->with(1, 'Updated Node', null)
-			->willReturn(1);
-
-		$this->mockResponse(['success' => true, 'data' => ['id' => 1, 'new_name' => 'Updated Node', 'visibility' => null]]);
-
-		$this->controller->edit($this->requestMock, $this->responseMock);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testEditFailsNoParams(): void
-	{
-		$this->requestMock->method('getParsedBody')->willReturn([]);
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
-
-		$this->nodesServiceMock->expects($this->never())->method(PropertyHook::set('UID'));
-		$this->nodesServiceMock->expects($this->never())->method('editNode');
-
-		$this->mockResponse(['success' => false, 'error_message' => 'node name or id is missing']);
-		$this->controller->edit($this->requestMock, $this->responseMock);
-	}
-
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testEditFailsCount(): void
-	{
-		$this->mockSession();
-		$this->requestMock->method('getParsedBody')
-			->willReturn(['name' => 'Updated Node', 'node_id' => 1]);
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
-
-		$this->nodesServiceMock->expects($this->once())
-			->method(PropertyHook::set('UID'))
-			->with(1);
-
-		$this->nodesServiceMock->expects($this->once())
-			->method('editNode')
-			->willReturn(0);
-
-		$this->mockResponse(['success' => false, 'error_message' => 'Edit node failed']);
-
-		$this->controller->edit($this->requestMock, $this->responseMock);
-	}
-
-	/**
-	 * @throws Exception
-	 * @throws DatabaseException
-	 */
-	#[Group('units')]
-	public function testMove(): void
-	{
-		$this->mockSession();
-		$this->requestMock->method('getParsedBody')
-			->willReturn(['src_node_id' => 1, 'target_node_id' => 2, 'target_region' => 'region']);
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
-
-		$this->nodesServiceMock->expects($this->once())
-			->method(PropertyHook::set('UID'))
-			->with(1);
-
-		$this->nodesServiceMock->expects($this->once())
-			->method('moveNode')
-			->with(1, 2, 'region')
-			->willReturn(1);
-
-		$this->mockResponse(['success' => true, 'data' => ['count_deleted_nodes' => 1]]);
-
-		$this->controller->move($this->requestMock, $this->responseMock);
-	}
-
-	/**
-	 * @throws DatabaseException
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testMoveFailParams(): void
-	{
-		$this->requestMock->method('getParsedBody')->willReturn([]);
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
-
-		$this->nodesServiceMock->expects($this->never())->method(PropertyHook::set('UID'));
-		$this->nodesServiceMock->expects($this->never())->method('moveNode');
-
-		$this->mockResponse(['success' => false, 'error_message' => 'Source node, target node, or target region is missing']);
-
-		$this->controller->move($this->requestMock, $this->responseMock);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws DatabaseException
-	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
-	 */
-	#[Group('units')]
-	public function testDelete(): void
-	{
-		$this->mockSession();
-		$this->requestMock->method('getParsedBody')
-			->willReturn(['node_id' => 1]);
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
-
-		$this->nodesServiceMock->expects($this->once())
-			->method(PropertyHook::set('UID'))
-			->with(1);
-
-		$this->nodesServiceMock->expects($this->once())
-			->method('deleteNode')
-			->with(1)
-			->willReturn(1);
-
-		$this->mockResponse(['success' => true, 'data' => ['count_deleted_nodes' => 1]]);
-
-		$this->controller->delete($this->requestMock, $this->responseMock);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws DatabaseException
-	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
-	 */
-	#[Group('units')]
-	public function testDeleteFailsNodeId(): void
-	{
-		$this->requestMock->method('getParsedBody')->willReturn([]);
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
-
-		$this->nodesServiceMock->expects($this->never())->method(PropertyHook::set('UID'));
-		$this->nodesServiceMock->expects($this->never())->method('deleteNode');
-
-		$this->mockResponse(['success' => false, 'error_message' => 'NodeId is missing']);
-
-		$this->controller->delete($this->requestMock, $this->responseMock);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	private function mockSession(): void
-	{
-		$sessionMock = $this->createMock(Session::class);
-		$this->requestMock ->expects($this->once())
-			->method('getAttribute')
-			->with('session')
-			->willReturn($sessionMock);
-
-		$sessionMock->method('get')->with('user')->willReturn(['UID' => 1]);
-	}
-
-	/**
-	 * @param array<string,mixed> $data
-	 * @throws Exception
-	 */
-	private function mockResponse(array $data): void
-	{
-		$streamInterfaceMock = $this->createMock(StreamInterface::class);
-		$this->responseMock->expects($this->once())
-			->method('getBody')
-			->willReturn($streamInterfaceMock);
-
-		$streamInterfaceMock->expects($this->once())
-			->method('write')
-			->with(json_encode($data));
-
-		$this->responseMock ->expects($this->once())
-			->method('withHeader')
-			->with('Content-Type', 'application/json')
+		$this->orchestratorMock->expects($this->once())->method('setInput')
+			->with(['parent_id' => 5])
 			->willReturnSelf();
+		$this->orchestratorMock->expects($this->once())->method('list')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
 
-		$this->responseMock ->expects($this->once())
-			->method('withStatus')
-			->with(200)
+		$result = $this->controller->list($this->requestStub, $this->responseStub, ['parent_id' => 5]);
+
+		static::assertSame($this->expectedResponseStub, $result);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws DBALException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws ModuleException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
+	 */
+	#[Group('units')]
+	public function testAddReturnsValidationError(): void
+	{
+		$this->expectInput();
+		$this->orchestratorMock->expects($this->once())->method('validateAdd')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
+		$this->orchestratorMock->expects($this->never())->method('add');
+
+		$result = $this->controller->add($this->requestStub, $this->responseStub);
+
+		static::assertSame($this->expectedResponseStub, $result);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws DBALException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws ModuleException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
+	 */
+	#[Group('units')]
+	public function testAddSucceeds(): void
+	{
+		$this->expectInput();
+		$this->orchestratorMock->expects($this->once())->method('validateAdd')
+			->with($this->responseStub)
+			->willReturn(null);
+		$this->orchestratorMock->expects($this->once())->method('add')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
+
+		$result = $this->controller->add($this->requestStub, $this->responseStub);
+
+		static::assertSame($this->expectedResponseStub, $result);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws DBALException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws ModuleException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
+	 */
+	#[Group('units')]
+	public function testEditReturnsValidationError(): void
+	{
+		$this->expectInput();
+		$this->orchestratorMock->expects($this->once())->method('validateEdit')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
+		$this->orchestratorMock->expects($this->never())->method('edit');
+
+		$result = $this->controller->edit($this->requestStub, $this->responseStub);
+
+		static::assertSame($this->expectedResponseStub, $result);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws DBALException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws ModuleException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
+	 */
+	#[Group('units')]
+	public function testEditSucceeds(): void
+	{
+		$this->expectInput();
+		$this->orchestratorMock->expects($this->once())->method('validateEdit')
+			->with($this->responseStub)
+			->willReturn(null);
+		$this->orchestratorMock->expects($this->once())->method('edit')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
+
+		$result = $this->controller->edit($this->requestStub, $this->responseStub);
+
+		static::assertSame($this->expectedResponseStub, $result);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws DBALException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws ModuleException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
+	 */
+	#[Group('units')]
+	public function testMoveReturnsValidationError(): void
+	{
+		$this->expectInput();
+		$this->orchestratorMock->expects($this->once())->method('validateMove')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
+		$this->orchestratorMock->expects($this->never())->method('move');
+
+		$result = $this->controller->move($this->requestStub, $this->responseStub);
+
+		static::assertSame($this->expectedResponseStub, $result);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws DBALException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws ModuleException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
+	 */
+	#[Group('units')]
+	public function testMoveSucceeds(): void
+	{
+		$this->expectInput();
+		$this->orchestratorMock->expects($this->once())->method('validateMove')
+			->with($this->responseStub)
+			->willReturn(null);
+		$this->orchestratorMock->expects($this->once())->method('move')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
+
+		$result = $this->controller->move($this->requestStub, $this->responseStub);
+
+		static::assertSame($this->expectedResponseStub, $result);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws DBALException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws ModuleException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
+	 */
+	#[Group('units')]
+	public function testDeleteReturnsValidationError(): void
+	{
+		$this->expectInput();
+		$this->orchestratorMock->expects($this->once())->method('validateDelete')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
+		$this->orchestratorMock->expects($this->never())->method('delete');
+
+		$result = $this->controller->delete($this->requestStub, $this->responseStub);
+
+		static::assertSame($this->expectedResponseStub, $result);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws DBALException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws ModuleException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
+	 */
+	#[Group('units')]
+	public function testDeleteSucceeds(): void
+	{
+		$this->expectInput();
+		$this->orchestratorMock->expects($this->once())->method('validateDelete')
+			->with($this->responseStub)
+			->willReturn(null);
+		$this->orchestratorMock->expects($this->once())->method('delete')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
+
+		$result = $this->controller->delete($this->requestStub, $this->responseStub);
+
+		static::assertSame($this->expectedResponseStub, $result);
+	}
+
+	private function expectInput(): void
+	{
+		$this->orchestratorMock->expects($this->once())->method('setInput')
+			->with($this->input)
 			->willReturnSelf();
 	}
 }
