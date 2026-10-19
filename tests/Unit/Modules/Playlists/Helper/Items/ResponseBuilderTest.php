@@ -52,14 +52,10 @@ class ResponseBuilderTest extends TestCase
 		);
 	}
 
-	/**
-	 * Every error is sent with status 200, so the frontend can show the message.
-	 */
 	#[Group('units')]
 	public function testErrorResponses(): void
 	{
 		$expected = [
-			'csrfTokenMismatch'     => 'CSRF token mismatch.',
 			'invalidPlaylistId'     => 'Playlist ID not valid.',
 			'invalidItemId'         => 'Item ID not valid.',
 			'invalidContentId'      => 'Content ID not valid.',
@@ -76,9 +72,9 @@ class ResponseBuilderTest extends TestCase
 
 		$calls = [];
 		$this->jsonResponseHandlerMock->expects($this->exactly(count($expected)))->method('jsonError')
-			->willReturnCallback(function (ResponseInterface $response, string $message, int $status) use (&$calls)
+			->willReturnCallback(function (ResponseInterface $response, string $message) use (&$calls)
 			{
-				$calls[] = [$message, $status];
+				$calls[] = $message;
 				return $response;
 			});
 
@@ -87,15 +83,14 @@ class ResponseBuilderTest extends TestCase
 			static::assertSame($this->responseStub, $this->responseBuilder->$method($this->responseStub));
 		}
 
-		$expectedCalls = array_map(fn(string $message) => [$message, 200], array_values($expected));
-		static::assertSame($expectedCalls, $calls);
+		static::assertSame(array_values($expected), $calls);
 	}
 
 	#[Group('units')]
 	public function testUpdateFieldFailed(): void
 	{
 		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonError')
-			->with($this->responseStub, 'Error updating item field: item_duration.', 200)
+			->with($this->responseStub, 'Error updating item field: item_duration.')
 			->willReturn($this->responseStub);
 
 		$result = $this->responseBuilder->updateFieldFailed($this->responseStub, 'item_duration');

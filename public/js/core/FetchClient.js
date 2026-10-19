@@ -37,6 +37,13 @@ export class FetchClient
 		try
 		{
 			const response = await fetch(url, config);
+
+			// structured errors like {success: false, error_message: "..."} are
+			// returned to the caller, so it can show the message
+			const errorBody = await this.#detectErrorBody(response);
+			if (errorBody !== null)
+				return errorBody;
+
 			this.#checkResponse(response);
 
 			// do not use const response.headers.get('Content-Type'); as
@@ -145,6 +152,26 @@ export class FetchClient
         {
             return false;
         }
+    }
+
+    async #detectErrorBody(response)
+    {
+        // 401 keeps its own handling, 5xx are no structured errors
+        if (response.status < 400 || response.status >= 500 || response.status === 401)
+            return null;
+
+        try
+        {
+            const body = await response.json();
+            if (body !== null && typeof body === 'object' && body.success === false)
+                return body;
+        }
+        catch
+        {
+            // no JSON body, #checkResponse() throws the HTTP error
+        }
+
+        return null;
     }
 
     #checkResponse(response)

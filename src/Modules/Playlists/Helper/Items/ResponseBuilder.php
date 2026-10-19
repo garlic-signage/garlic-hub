@@ -26,17 +26,9 @@ use Psr\Http\Message\ResponseInterface;
 
 /**
  * Builds the JSON responses for the playlist items endpoints.
- *
- * Errors are sent with status 200, because the frontend FetchClient throws
- * on every non 2xx status and the error_message would be lost.
  */
 class ResponseBuilder extends BaseResponseBuilder
 {
-	public function csrfTokenMismatch(ResponseInterface $response): ResponseInterface
-	{
-		return $this->error($response, 'CSRF token mismatch.');
-	}
-
 	public function invalidPlaylistId(ResponseInterface $response): ResponseInterface
 	{
 		return $this->error($response, 'Playlist ID not valid.');
@@ -112,6 +104,6 @@ class ResponseBuilder extends BaseResponseBuilder
 
 	private function error(ResponseInterface $response, string $message): ResponseInterface
 	{
-		return $this->jsonResponseHandler->jsonError($response, $message, 200);
+		return $this->jsonResponseHandler->jsonError($response, $message);
 	}
 }

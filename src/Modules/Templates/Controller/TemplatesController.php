@@ -55,15 +55,15 @@ readonly class TemplatesController
 		$requestData = $request->getParsedBody();
 
 		if (!$this->csrfToken->validateToken($requestData['csrf_token'] ?? ''))
-			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.', 200);
+			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.');
 
 		$templateId = (int) ($requestData['template_id'] ?? 0);
 		if ($templateId === 0)
-			return $this->responseHandler->jsonError($response, 'No template Id', 200);
+			return $this->responseHandler->jsonError($response, 'No template Id');
 
 		$error = $this->orchestrator->delete($templateId);
 		if ($error !== '')
-			return $this->responseHandler->jsonError($response, $error, 200);
+			return $this->responseHandler->jsonError($response, $error);
 
 		return $this->responseHandler->jsonSuccess($response);
 	}
@@ -94,7 +94,7 @@ readonly class TemplatesController
 		$templateId = (int) ($args['template_id'] ?? 0);
 
 		if (!$this->orchestrator->checkEditRights($templateId))
-			return $this->responseHandler->jsonError($response, 'No rights', 200);
+			return $this->responseHandler->jsonError($response, 'No rights');
 
 
 		return $this->responseHandler->jsonSuccess($response, ['content' => $this->orchestrator->getContent()]);
@@ -155,15 +155,15 @@ readonly class TemplatesController
 		$image      = $requestData['image'] ?? '';
 
 		if (!$this->csrfToken->validateToken($requestData['csrf_token'] ?? ''))
-			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.', 200);
+			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.');
 
 		if ($templateId > 0)
 		{
 			if (!$this->orchestrator->checkEditRights($templateId))
-				return $this->responseHandler->jsonError($response, 'No rights', 200);
+				return $this->responseHandler->jsonError($response, 'No rights');
 
 			if ($this->orchestrator->saveTemplate($templateId, $requestData['content'], $image) === 0)
-				return $this->responseHandler->jsonError($response, 'Save failed', 200);
+				return $this->responseHandler->jsonError($response, 'Save failed');
 
 			return $this->responseHandler->jsonSuccess($response);
 		}

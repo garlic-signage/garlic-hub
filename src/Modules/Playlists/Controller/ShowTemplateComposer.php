@@ -64,16 +64,16 @@ class ShowTemplateComposer
 		$image      = $requestData['image'] ?? '';
 
 		if (!$this->csrfToken->validateToken($requestData['csrf_token'] ?? ''))
-			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.', 200);
+			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.');
 
 		if ($itemId === 0)
-			return $this->responseHandler->jsonError($response, 'No item ID', 200);
+			return $this->responseHandler->jsonError($response, 'No item ID');
 
 		if (!$this->orchestrator->checkRights($itemId))
-			return $this->responseHandler->jsonError($response, 'No rights', 200);
+			return $this->responseHandler->jsonError($response, 'No rights');
 
 		if ($this->orchestrator->save($itemId, $requestData['content'], $image) === 0)
-			return $this->responseHandler->jsonError($response, 'Save failed', 200);
+			return $this->responseHandler->jsonError($response, 'Save failed');
 
 		return $this->responseHandler->jsonSuccess($response);
 	}
@@ -83,10 +83,10 @@ class ShowTemplateComposer
 	{
 		$itemId = (int) ($args['item_id'] ?? 0);
 		if ($itemId === 0)
-			return $this->responseHandler->jsonError($response, 'No rights', 200);
+			return $this->responseHandler->jsonError($response, 'No rights');
 
 		if (!$this->orchestrator->checkRights($itemId))
-			return $this->responseHandler->jsonError($response, 'No rights', 200);
+			return $this->responseHandler->jsonError($response, 'No rights');
 
 
 		return $this->responseHandler->jsonSuccess($response, ['content' => $this->orchestrator->getContent()]);

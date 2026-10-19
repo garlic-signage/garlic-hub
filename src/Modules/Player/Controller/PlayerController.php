@@ -114,16 +114,16 @@ class PlayerController
 		$requestData = $request->getParsedBody();
 
 		if (!$this->csrfToken->validateToken($requestData['csrf_token'] ?? ''))
-			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.', 200);
+			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.');
 
 		$playerId = (int) ($requestData['player_id'] ?? 0);
 		if ($playerId === 0)
-			return $this->responseHandler->jsonError($response, 'No playerId', 200);
+			return $this->responseHandler->jsonError($response, 'No playerId');
 
 		$UID = $this->userSession->getUID();
 		$this->playerService->setUID($UID);
 		if ($this->playerService->delete($playerId) === 0)
-			return $this->responseHandler->jsonError($response, 'Player not deleted.', 200);
+			return $this->responseHandler->jsonError($response, 'Player not deleted.');
 
 		return $this->responseHandler->jsonSuccess($response, $this->playerData);
 	}
