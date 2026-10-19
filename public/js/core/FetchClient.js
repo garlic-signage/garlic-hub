@@ -129,6 +129,8 @@ export class FetchClient
                      else
                         reject(new Error(responseText));
                 }
+                else if (this.#isStructuredError(this.#xhr.status, responseText))
+                    resolve(response.json()); // same as fetchData(): the caller shows the error_message
                 else
                     reject(new Error("HTTP-Error: " + this.#xhr.status));
             };
@@ -152,6 +154,15 @@ export class FetchClient
         {
             return false;
         }
+    }
+
+    #isStructuredError(status, responseText)
+    {
+        if (status < 400 || status >= 500 || status === 401 || !this.#isJSON(responseText))
+            return false;
+
+        const body = JSON.parse(responseText);
+        return body !== null && typeof body === 'object' && body.success === false;
     }
 
     async #detectErrorBody(response)

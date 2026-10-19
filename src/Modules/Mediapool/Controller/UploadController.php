@@ -21,98 +21,81 @@ declare(strict_types=1);
 
 namespace App\Modules\Mediapool\Controller;
 
-use App\Framework\Controller\AbstractAsyncController;
-use App\Framework\Core\CsrfToken;
-use App\Modules\Mediapool\Services\UploadService;
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\UserException;
+use App\Modules\Mediapool\Helper\Uploads\Orchestrator;
 use Doctrine\DBAL\Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Class responsible for handling upload-related operations, including uploading files
  * from local storage, external links, and integrating with third-party stock image providers.
+ * Validation and execution are delegated to the Orchestrator.
  */
-class UploadController extends AbstractAsyncController
+readonly class UploadController
 {
-	private readonly UploadService $uploadService;
-
-	public function __construct(UploadService $uploadService, private readonly CsrfToken $csrfToken)
-	{
-		$this->uploadService = $uploadService;
-	}
+	public function __construct(private Orchestrator $orchestrator) {}
 
 	/**
 	 * @throws GuzzleException
 	 */
 	public function searchStockImages(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array<string,mixed> $bodyParams */
-		$bodyParams   = $request->getParsedBody();
-		$allowedHosts = ['api.unsplash.com', 'api.pexels.com', 'pixabay.com'];
-		$host         = parse_url($bodyParams['api_url'], PHP_URL_HOST);
+		$answer = $this->orchestrator->setInput($this->parsedBody($request))->validateSearchStockImages($response);
+		if ($answer !== null)
+			return $answer;
 
-		if (!in_array($host, $allowedHosts))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Host not allowed.']);
-
-		$headers = $bodyParams['headers'] ?? [];
-		$body    = $this->uploadService->requestApi($bodyParams['api_url'], $headers);
-		return $this->jsonResponse($response, ['success' => true, 'data' => $body]);
+		return $this->orchestrator->searchStockImages($response);
 	}
 
 	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
 	 * @throws Exception
 	 */
 	public function uploadLocalFile(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		$uploadedFile = $request->getUploadedFiles();
-		if (empty($uploadedFile))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'No files to upload.']);
+		$answer = $this->orchestrator
+			->setInput($this->parsedBody($request))
+			->setUploadedFiles($request->getUploadedFiles())
+			->validateUploadLocalFile($response);
+		if ($answer !== null)
+			return $answer;
 
-		/** @var array<string,mixed> $bodyParams */
-		$bodyParams = $request->getParsedBody();
-
-		if (!$this->csrfToken->validateToken($bodyParams['csrf_token'] ?? ''))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Csrf token mismatch.']);
-
-		$node_id    = (int)($bodyParams['node_id'] ?? 0);
-		if ($node_id === 0)
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'node is missing']);
-
-		if (empty($uploadedFile['file']))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'no files']);
-
-		$metadata = json_decode($bodyParams['metadata'] ?? '[]', true) ?? [];
-
-		$UID      = $request->getAttribute('session')->get('user')['UID'];
-		$succeed  = $this->uploadService->uploadMediaFiles($node_id, $UID, $uploadedFile['file'], $metadata);
-
-		return $this->jsonResponse($response, $succeed[0]);
+		return $this->orchestrator->uploadLocalFile($response);
 	}
 
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
+	 */
 	public function uploadFromUrl(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array<string,mixed> $bodyParams */
-		$bodyParams = $request->getParsedBody();
+		$answer = $this->orchestrator->setInput($this->parsedBody($request))->validateUploadFromUrl($response);
+		if ($answer !== null)
+			return $answer;
 
-		if (!$this->csrfToken->validateToken($bodyParams['csrf_token'] ?? ''))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Csrf token mismatch.']);
-
-		$node_id  = (int) ($bodyParams['node_id'] ?? 0);
-		if ($node_id === 0)
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'node is missing']);
-
-		if (!isset($bodyParams['external_link']))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'No external link submitted.']);
-
-		$metadata = [];
-		if (isset($bodyParams['metadata']))
-			$metadata = json_decode($bodyParams['metadata'], true);
-
-		$UID     = $request->getAttribute('session')->get('user')['UID'];
-		$succeed = $this->uploadService->uploadExternalMedia($node_id, $UID, $bodyParams['external_link'], $metadata);
-
-		return $this->jsonResponse($response, $succeed);
+		return $this->orchestrator->uploadFromUrl($response);
 	}
 
+	/**
+	 * @return array<string,mixed>
+	 */
+	private function parsedBody(ServerRequestInterface $request): array
+	{
+		/** @var array<string,mixed> $input */
+		$input = $request->getParsedBody();
+		return $input;
+	}
 }

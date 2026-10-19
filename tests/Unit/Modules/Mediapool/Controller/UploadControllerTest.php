@@ -21,26 +21,33 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Mediapool\Controller;
 
-use App\Framework\Core\CsrfToken;
-use App\Framework\Core\Session;
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\UserException;
 use App\Modules\Mediapool\Controller\UploadController;
-use App\Modules\Mediapool\Services\UploadService;
+use App\Modules\Mediapool\Helper\Uploads\Orchestrator;
+use Doctrine\DBAL\Exception as DBALException;
 use GuzzleHttp\Exception\GuzzleException;
+use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamInterface;
-use Slim\Psr7\UploadedFile;
+use Psr\SimpleCache\InvalidArgumentException;
 
 class UploadControllerTest extends TestCase
 {
-	private ServerRequestInterface&MockObject $requestMock;
-	private ResponseInterface&MockObject $responseMock;
-	private UploadService&MockObject $uploadServiceMock;
-	private CsrfToken&MockObject $csrfTokenMock;
+	/** @var array<string,mixed> */
+	private array $body = ['node_id' => 1, 'csrf_token' => 'token'];
+	/** @var array<string,mixed> */
+	private array $files = ['file' => 'uploaded'];
+	private Orchestrator&MockObject $orchestratorMock;
+	private ServerRequestInterface&Stub $requestStub;
+	private ResponseInterface&Stub $responseStub;
+	private ResponseInterface&Stub $expectedResponseStub;
 	private UploadController $controller;
 
 	/**
@@ -49,212 +56,160 @@ class UploadControllerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->requestMock      = $this->createMock(ServerRequestInterface::class);
-		$this->responseMock     = $this->createMock(ResponseInterface::class);
-		$this->uploadServiceMock = $this->createMock(UploadService::class);
-		$this->csrfTokenMock    = $this->createMock(CsrfToken::class);
-		$this->controller       = new UploadController($this->uploadServiceMock, $this->csrfTokenMock);
+		$this->orchestratorMock     = $this->createMock(Orchestrator::class);
+		$this->requestStub          = $this->createStub(ServerRequestInterface::class);
+		$this->responseStub         = $this->createStub(ResponseInterface::class);
+		$this->expectedResponseStub = $this->createStub(ResponseInterface::class);
+
+		$this->requestStub->method('getParsedBody')->willReturn($this->body);
+		$this->requestStub->method('getUploadedFiles')->willReturn($this->files);
+
+		$this->controller = new UploadController($this->orchestratorMock);
 	}
 
 	/**
+	 * @throws CoreException
+	 * @throws DBALException
+	 * @throws FrameworkException
 	 * @throws GuzzleException
-	 * @throws Exception
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testSearchStockImages(): void
+	public function testSearchStockImagesReturnsValidationError(): void
 	{
-		$bodyParams = ['api_url' => 'https://api.unsplash.com', 'headers' => []];
-		$this->requestMock->method('getParsedBody')->willReturn($bodyParams);
-		$this->uploadServiceMock->method('requestApi')->with($bodyParams['api_url'])->willReturn(['response_body']);
+		$this->orchestratorMock->expects($this->once())->method('setInput')->with($this->body)->willReturnSelf();
+		$this->orchestratorMock->expects($this->once())->method('validateSearchStockImages')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
+		$this->orchestratorMock->expects($this->never())->method('searchStockImages');
 
-		$this->mockResponse(['success' => true, 'data' => ['response_body']]);
+		$result = $this->controller->searchStockImages($this->requestStub, $this->responseStub);
 
-		$this->controller->searchStockImages($this->requestMock, $this->responseMock);
+		static::assertSame($this->expectedResponseStub, $result);
 	}
 
 	/**
+	 * @throws CoreException
+	 * @throws DBALException
+	 * @throws FrameworkException
 	 * @throws GuzzleException
-	 * @throws Exception
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testSearchStockImagesFails(): void
+	public function testSearchStockImagesSucceeds(): void
 	{
-		$bodyParams = ['api_url' => 'https://api.notallowed.com', 'headers' => []];
-		$this->requestMock->method('getParsedBody')->willReturn($bodyParams);
-		$this->uploadServiceMock->expects($this->never())->method('requestApi');
+		$this->orchestratorMock->expects($this->once())->method('setInput')->with($this->body)->willReturnSelf();
+		$this->orchestratorMock->expects($this->once())->method('validateSearchStockImages')
+			->with($this->responseStub)
+			->willReturn(null);
+		$this->orchestratorMock->expects($this->once())->method('searchStockImages')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
 
-		$this->mockResponse(['success' => false, 'error_message' => 'Host not allowed.']);
+		$result = $this->controller->searchStockImages($this->requestStub, $this->responseStub);
 
-		$this->controller->searchStockImages($this->requestMock, $this->responseMock);
+		static::assertSame($this->expectedResponseStub, $result);
 	}
 
 	/**
-	 * @throws Exception
-	 * @throws \Doctrine\DBAL\Exception
+	 * @throws CoreException
+	 * @throws DBALException
+	 * @throws FrameworkException
+	 * @throws GuzzleException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testUploadLocalFile(): void
+	public function testUploadLocalFileReturnsValidationError(): void
 	{
-		$uploadedFile = ['file' => $this->createMock(UploadedFile::class)];
-		$bodyParams   = ['node_id' => 1, 'metadata' => json_encode([])];
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
-		$this->requestMock->method('getUploadedFiles')->willReturn($uploadedFile);
+		$this->orchestratorMock->expects($this->once())->method('setInput')->with($this->body)->willReturnSelf();
+		$this->orchestratorMock->expects($this->once())->method('setUploadedFiles')->with($this->files)->willReturnSelf();
+		$this->orchestratorMock->expects($this->once())->method('validateUploadLocalFile')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
+		$this->orchestratorMock->expects($this->never())->method('uploadLocalFile');
 
-		$this->requestMock->method('getParsedBody')->willReturn($bodyParams);
-		$this->mockSession();
-		$this->uploadServiceMock->method('uploadMediaFiles')->willReturn([['success' => true]]);
+		$result = $this->controller->uploadLocalFile($this->requestStub, $this->responseStub);
 
-		$this->mockResponse(['success' => true]);
-		$this->controller->uploadLocalFile($this->requestMock, $this->responseMock);
+		static::assertSame($this->expectedResponseStub, $result);
 	}
 
 	/**
-	 * @throws Exception
-	 * @throws \Doctrine\DBAL\Exception
+	 * @throws CoreException
+	 * @throws DBALException
+	 * @throws FrameworkException
+	 * @throws GuzzleException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testUploadNoUploadFile(): void
+	public function testUploadLocalFileSucceeds(): void
 	{
-		$this->requestMock->method('getUploadedFiles')->willReturn([]);
+		$this->orchestratorMock->expects($this->once())->method('setInput')->with($this->body)->willReturnSelf();
+		$this->orchestratorMock->expects($this->once())->method('setUploadedFiles')->with($this->files)->willReturnSelf();
+		$this->orchestratorMock->expects($this->once())->method('validateUploadLocalFile')
+			->with($this->responseStub)
+			->willReturn(null);
+		$this->orchestratorMock->expects($this->once())->method('uploadLocalFile')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
 
-		$this->requestMock->expects($this->never())->method('getParsedBody');
+		$result = $this->controller->uploadLocalFile($this->requestStub, $this->responseStub);
 
-		$this->uploadServiceMock->expects($this->never())->method('uploadMediaFiles');
-
-		$this->mockResponse(['success' => false, 'error_message' => 'No files to upload.']);
-
-		$this->controller->uploadLocalFile($this->requestMock, $this->responseMock);
+		static::assertSame($this->expectedResponseStub, $result);
 	}
 
 	/**
-	 * @throws Exception
-	 * @throws \Doctrine\DBAL\Exception
+	 * @throws CoreException
+	 * @throws DBALException
+	 * @throws FrameworkException
+	 * @throws GuzzleException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testUploadNoNodeId(): void
+	public function testUploadFromUrlReturnsValidationError(): void
 	{
-		$uploadedFile = ['file' => $this->createMock(UploadedFile::class)];
-		$this->requestMock->method('getUploadedFiles')->willReturn($uploadedFile);
+		$this->orchestratorMock->expects($this->once())->method('setInput')->with($this->body)->willReturnSelf();
+		$this->orchestratorMock->expects($this->once())->method('validateUploadFromUrl')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
+		$this->orchestratorMock->expects($this->never())->method('uploadFromUrl');
 
-		$this->requestMock->method('getParsedBody')->willReturn([]);
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
+		$result = $this->controller->uploadFromUrl($this->requestStub, $this->responseStub);
 
-		$this->uploadServiceMock->expects($this->never())->method('uploadMediaFiles');
-
-		$this->mockResponse(['success' => false, 'error_message' => 'node is missing']);
-
-		$this->controller->uploadLocalFile($this->requestMock, $this->responseMock);
+		static::assertSame($this->expectedResponseStub, $result);
 	}
 
 	/**
-	 * @throws Exception
-	 * @throws \Doctrine\DBAL\Exception
+	 * @throws CoreException
+	 * @throws DBALException
+	 * @throws FrameworkException
+	 * @throws GuzzleException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testUploadNoFile(): void
+	public function testUploadFromUrlSucceeds(): void
 	{
-		$uploadedFile = ['file' => null];
-		$bodyParams   = ['node_id' => 1, 'metadata' => json_encode([])];
-		$this->requestMock->method('getUploadedFiles')->willReturn($uploadedFile);
+		$this->orchestratorMock->expects($this->once())->method('setInput')->with($this->body)->willReturnSelf();
+		$this->orchestratorMock->expects($this->once())->method('validateUploadFromUrl')
+			->with($this->responseStub)
+			->willReturn(null);
+		$this->orchestratorMock->expects($this->once())->method('uploadFromUrl')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
 
-		$this->requestMock->method('getParsedBody')->willReturn($bodyParams);
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
+		$result = $this->controller->uploadFromUrl($this->requestStub, $this->responseStub);
 
-		$this->uploadServiceMock->expects($this->never())->method('uploadMediaFiles');
-
-		$this->mockResponse(['success' => false, 'error_message' => 'no files']);
-
-		$this->controller->uploadLocalFile($this->requestMock, $this->responseMock);
+		static::assertSame($this->expectedResponseStub, $result);
 	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testUploadFromUrl(): void
-	{
-		$bodyParams = ['node_id' => 1, 'external_link' => 'https://example.com/file', 'metadata' => json_encode(['duration' => 16])];
-		$this->requestMock->method('getParsedBody')->willReturn($bodyParams);
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
-		$this->mockSession();
-		$this->uploadServiceMock->method('uploadExternalMedia')->willReturn(['success' => true]);
-
-		$this->mockResponse(['success' => true]);
-
-		$this->controller->uploadFromUrl($this->requestMock, $this->responseMock);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testUploadFromUrlFailsNoNodeId(): void
-	{
-		$bodyParams = ['external_link' => 'https://example.com/file'];
-		$this->requestMock->method('getParsedBody')->willReturn($bodyParams);
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
-		$this->uploadServiceMock->expects($this->never())->method('uploadExternalMedia');
-
-		$this->mockResponse(['success' => false, 'error_message' => 'node is missing']);
-
-		$this->controller->uploadFromUrl($this->requestMock, $this->responseMock);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testUploadFromUrlFailsNoExternalLink(): void
-	{
-		$bodyParams = ['node_id' => 1];
-		$this->requestMock->method('getParsedBody')->willReturn($bodyParams);
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
-		$this->uploadServiceMock->expects($this->never())->method('uploadExternalMedia');
-
-		$this->mockResponse(['success' => false, 'error_message' => 'No external link submitted.']);
-
-		$this->controller->uploadFromUrl($this->requestMock, $this->responseMock);
-	}
-
-
-	/**
-	 * @throws Exception
-	 */
-	private function mockSession(): void
-	{
-		$sessionMock = $this->createMock(Session::class);
-		$this->requestMock ->expects($this->once())
-			->method('getAttribute')
-			->with('session')
-			->willReturn($sessionMock);
-
-		$sessionMock->method('get')->with('user')->willReturn(['UID' => 1]);
-	}
-
-	/**
-	 * @param array<string,mixed> $data
-	 * @throws Exception
-	 */
-	private function mockResponse(array $data): void
-	{
-		$streamInterfaceMock = $this->createMock(StreamInterface::class);
-		$this->responseMock->expects($this->once())
-			->method('getBody')
-			->willReturn($streamInterfaceMock);
-
-		$streamInterfaceMock->expects($this->once())
-			->method('write')
-			->with(json_encode($data));
-
-		$this->responseMock ->expects($this->once())
-			->method('withHeader')
-			->with('Content-Type', 'application/json')
-			->willReturnSelf();
-
-		$this->responseMock ->expects($this->once())
-			->method('withStatus')
-			->with(200)
-			->willReturnSelf();
-	}
-
 }

@@ -23,7 +23,6 @@ use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Core\Acl\AclHelper;
 use App\Framework\Core\BaseValidator;
 use App\Framework\Core\Config\Config;
-use App\Framework\Core\CsrfToken;
 use App\Framework\Core\ShellExecutor;
 use App\Framework\Core\Translate\Translator;
 use App\Framework\Database\NestedSets\Service;
@@ -117,7 +116,14 @@ $dependencies[UploadService::class] = DI\factory(function (ContainerInterface $c
 
 $dependencies[UploadController::class] = DI\factory(function (ContainerInterface $container)
 {
-	return new UploadController($container->get(UploadService::class), $container->get(CsrfToken::class));
+	return new UploadController(
+		new \App\Modules\Mediapool\Helper\Uploads\Orchestrator(
+			new \App\Modules\Mediapool\Helper\Uploads\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
+			$container->get(UserSession::class),
+			$container->get(BaseValidator::class),
+			$container->get(UploadService::class)
+		)
+	);
 });
 
 $dependencies[MediaService::class] = DI\factory(function (ContainerInterface $container)

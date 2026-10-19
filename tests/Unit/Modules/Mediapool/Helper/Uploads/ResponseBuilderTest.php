@@ -1,0 +1,116 @@
+<?php
+/*
+ garlic-hub: Digital Signage Management Platform
+
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ This file is part of the garlic-hub source code
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License, version 3,
+ as published by the Free Software Foundation.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+declare(strict_types=1);
+
+namespace Tests\Unit\Modules\Mediapool\Helper\Uploads;
+
+use App\Framework\Controller\JsonResponseHandler;
+use App\Framework\Core\Translate\Translator;
+use App\Modules\Mediapool\Helper\Uploads\ResponseBuilder;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\MockObject\Exception;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
+use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+
+class ResponseBuilderTest extends TestCase
+{
+	private JsonResponseHandler&MockObject $jsonResponseHandlerMock;
+	private ResponseInterface&Stub $responseStub;
+	private ResponseBuilder $responseBuilder;
+
+	/**
+	 * @throws Exception
+	 */
+	protected function setUp(): void
+	{
+		parent::setUp();
+		$this->jsonResponseHandlerMock = $this->createMock(JsonResponseHandler::class);
+		$this->responseStub            = $this->createStub(ResponseInterface::class);
+
+		$this->responseBuilder = new ResponseBuilder(
+			$this->jsonResponseHandlerMock,
+			$this->createStub(Translator::class)
+		);
+	}
+
+	#[Group('units')]
+	public function testErrorResponses(): void
+	{
+		$expected = [
+			'hostNotAllowed'      => 'Host not allowed.',
+			'noFilesToUpload'     => 'No files to upload.',
+			'missingNode'         => 'node is missing',
+			'noFiles'             => 'no files',
+			'missingExternalLink' => 'No external link submitted.',
+		];
+
+		$calls = [];
+		$this->jsonResponseHandlerMock->expects($this->exactly(count($expected)))->method('jsonError')
+			->willReturnCallback(function (ResponseInterface $response, string $message) use (&$calls)
+			{
+				$calls[] = $message;
+				return $response;
+			});
+
+		foreach (array_keys($expected) as $method)
+		{
+			static::assertSame($this->responseStub, $this->responseBuilder->$method($this->responseStub));
+		}
+
+		static::assertSame(array_values($expected), $calls);
+	}
+
+	#[Group('units')]
+	public function testUploadResultSuccessKeepsServiceResult(): void
+	{
+		$result = ['success' => true, 'message' => 'x.jpg successful uploaded'];
+		$this->jsonResponseHandlerMock->expects($this->never())->method('jsonError');
+		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonResponse')
+			->with($this->responseStub, $result)
+			->willReturn($this->responseStub);
+
+		static::assertSame($this->responseStub, $this->responseBuilder->uploadResult($this->responseStub, $result));
+	}
+
+	#[Group('units')]
+	public function testUploadResultFailureIsError(): void
+	{
+		$this->jsonResponseHandlerMock->expects($this->never())->method('jsonResponse');
+		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonError')
+			->with($this->responseStub, 'File type not allowed')
+			->willReturn($this->responseStub);
+
+		$result = $this->responseBuilder->uploadResult($this->responseStub, ['success' => false, 'error_message' => 'File type not allowed']);
+
+		static::assertSame($this->responseStub, $result);
+	}
+
+	#[Group('units')]
+	public function testUploadResultFailureWithoutMessage(): void
+	{
+		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonError')
+			->with($this->responseStub, 'Upload failed.')
+			->willReturn($this->responseStub);
+
+		$this->responseBuilder->uploadResult($this->responseStub, ['success' => false]);
+	}
+}
