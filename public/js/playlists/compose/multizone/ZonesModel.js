@@ -84,12 +84,18 @@ export class ZonesModel
 			method: 'GET',
 			headers: {'Content-Type': 'application/json;charset=UTF-8'}
 		}).
-		then(response => {
-			if (!response.ok)
+		then(async response => {
+			// structured errors come with status 4xx and an error_message
+			const jsonResponse = await response.json().catch(() => null);
+			if (jsonResponse !== null && jsonResponse.success === false)
+			{
+				throw new Error(jsonResponse.error_message);
+			}
+			if (!response.ok || jsonResponse === null)
 			{
 				throw new Error(`HTTP-Fehler! Status: ${response.status}`);
 			}
-			return response.json(); // JSON-Antwort parsen
+			return jsonResponse;
 		})
 		.then(jsonResponse => {
 			if (jsonResponse.error !== undefined)

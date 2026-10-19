@@ -21,164 +21,108 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Controller;
 
-use App\Framework\Controller\AbstractAsyncController;
-use App\Framework\Core\CsrfToken;
-use App\Framework\Core\Session;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Utils\FormParameters\BaseFilterParameters;
-use App\Modules\Playlists\Helper\Datatable\Parameters;
-use App\Modules\Playlists\Services\PlaylistsDatatableService;
-use App\Modules\Playlists\Services\PlaylistsService;
+use App\Framework\Exceptions\UserException;
+use App\Modules\Playlists\Helper\Playlists\Orchestrator;
 use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Controller responsible for handling various playlist-related operations such as deletion, shuffle toggling, zone management, and data retrieval.
+ * Validation and execution are delegated to the Orchestrator.
  */
-class PlaylistsController extends AbstractAsyncController
+readonly class PlaylistsController
 {
-	private readonly PlaylistsService $playlistsService;
-	private readonly PlaylistsDatatableService $playlistsDatatableService;
-	private readonly Parameters $parameters;
-	private readonly CsrfToken $csrfToken;
-	private Session $session;
-
-
-	public function __construct(PlaylistsService $playlistsService, PlaylistsDatatableService $playlistsDatatableService, Parameters $parameters, CsrfToken $csrfToken)
-	{
-		$this->playlistsService          = $playlistsService;
-		$this->playlistsDatatableService = $playlistsDatatableService;
-		$this->parameters                = $parameters;
-		$this->csrfToken                 = $csrfToken;
-	}
+	public function __construct(private Orchestrator $orchestrator) {}
 
 	/**
-	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws Exception
 	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
 	 */
 	public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array<string,mixed> $post */
-		$post = $request->getParsedBody();
+		$answer = $this->orchestrator->setInput($this->parsedBody($request))->validateWithToken($response);
+		if ($answer !== null)
+			return $answer;
 
-		if (!$this->csrfToken->validateToken($post['csrf_token'] ?? ''))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'CSRF token mismatch.']);
-
-		$playlistId = (int) ($post['playlist_id'] ?? 0);
-		if ($playlistId === 0)
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Playlist ID not valid.']);
-
-		$this->setServiceUID($request);
-		if ($this->playlistsService->delete($playlistId) === 0)
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Playlist not found.']);
-
-		return $this->jsonResponse($response, ['success' => true]);
+		return $this->orchestrator->delete($response);
 	}
 
 	/**
-	 * @param ServerRequestInterface $request
-	 * @param ResponseInterface $response
-	 * @return ResponseInterface
 	 * @throws CoreException
-	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws ModuleException
+	 * @throws InvalidArgumentException
 	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
+	 * @throws Exception
+	 * @throws ModuleException
 	 */
 	public function toggleShuffle(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array<string,mixed> $post */
-		$post = $request->getParsedBody();
-		if (!$this->csrfToken->validateToken($post['csrf_token'] ?? ''))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'CSRF token mismatch.']);
+		$answer = $this->orchestrator->setInput($this->parsedBody($request))->validateWithToken($response);
+		if ($answer !== null)
+			return $answer;
 
-		$playlistId = (int) ($post['playlist_id'] ?? 0);
-		if ($playlistId === 0)
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Playlist ID not valid.']);
-
-		$this->setServiceUID($request);
-		$data = $this->playlistsService->toggleShuffle($playlistId);
-		if ($data['affected'] === 0)
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Playlist not found.']);
-
-		return $this->jsonResponse($response, ['success' => true, 'playlist_metrics' => $data['playlist_metrics']]);
+		return $this->orchestrator->toggleShuffle($response);
 	}
 
 	/**
-	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws Exception
 	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
+	 * @throws Exception
+	 * @throws ModuleException
 	 */
 	public function shufflePicking(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array<string,mixed> $post */
-		$post = $request->getParsedBody();
+		$answer = $this->orchestrator->setInput($this->parsedBody($request))->validateShufflePicking($response);
+		if ($answer !== null)
+			return $answer;
 
-		if (!$this->csrfToken->validateToken($post['csrf_token'] ?? ''))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'CSRF token mismatch.']);
-
-		if (empty($post['playlist_id']))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Playlist ID not valid.']);
-
-		if (empty($post['shuffle_picking']))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'No picking value found.']);
-
-		$this->setServiceUID($request);
-		$data = $this->playlistsService->shufflePicking((int) $post['playlist_id'], (int) $post['shuffle_picking']);
-
-		if ($data['affected'] === 0)
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Playlist not found.']);
-
-		return $this->jsonResponse($response, ['success' => true, 'playlist_metrics' => $data['playlist_metrics']]);
+		return $this->orchestrator->shufflePicking($response);
 	}
 
 	/**
 	 * @param array<string,mixed> $args
+	 * @throws UserException
 	 */
 	public function loadZone(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
-		$playlistId = (int) ($args['playlist_id'] ?? 0);
-		if ($playlistId === 0)
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Playlist ID not valid.']);
+		$answer = $this->orchestrator->setInput($args)->validate($response);
+		if ($answer !== null)
+			return $answer;
 
-		$this->setServiceUID($request);
-		$multizone = $this->playlistsService->loadPlaylistForMultizone($playlistId);
-		if ($this->playlistsService->hasErrorMessages())
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => $this->playlistsService->getErrorMessages()]);
-
-		return $this->jsonResponse($response, ['success' => true, 'zones' => $multizone]);
+		return $this->orchestrator->loadZone($response);
 	}
 
 	/**
 	 * @param array<string,mixed> $args
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
 	 */
 	public function saveZone(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
-		$playlistId = (int) ($args['playlist_id'] ?? 0);
-		if ($playlistId === 0)
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Playlist ID not valid.']);
+		$input = $this->parsedBody($request);
+		$input['playlist_id'] = $args['playlist_id'] ?? 0;
 
-		$this->setServiceUID($request);
-		/** @var array<string,mixed> $parsedBody */
-		$parsedBody = $request->getParsedBody();
-		if (!$this->csrfToken->validateToken($parsedBody['csrf_token'] ?? ''))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'CSRF token mismatch.']);
+		$answer = $this->orchestrator->setInput($input)->validateWithToken($response);
+		if ($answer !== null)
+			return $answer;
 
-		$count = $this->playlistsService->saveZones($playlistId, $parsedBody);
-		if ($count === 0)
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Multizone could not be saved']);
-
-
-		return $this->jsonResponse($response, ['success' => true]);
+		return $this->orchestrator->saveZone($response);
 	}
 
 	/**
@@ -187,64 +131,46 @@ class PlaylistsController extends AbstractAsyncController
 	 * @throws Exception
 	 * @throws ModuleException
 	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
 	 */
 	public function findByName(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
-		$this->parameters->setUserInputs(
-			array_merge($args, [
-				BaseFilterParameters::PARAMETER_ELEMENTS_PER_PAGE => 0,
-				BaseFilterParameters::PARAMETER_SORT_COLUMN => 'playlist_id',
-				BaseFilterParameters::PARAMETER_SORT_ORDER => 'DESC',
-			])
-		);
-		$this->parameters->parseInputAllParameters();
-
-		$this->session = $request->getAttribute('session');
-		/** @var array<string,mixed> $user */
-		$user = $this->session->get('user');
-		$this->playlistsDatatableService->setUID($user['UID']);
-		$this->playlistsDatatableService->loadDatatable();
-		$results = [];
-		foreach ($this->playlistsDatatableService->getCurrentFilterResults() as $value)
-		{
-			$results[] = ['id' => $value['playlist_id'], 'name' => $value['playlist_name']];
-		}
-
-		return $this->jsonResponse($response, $results);
+		return $this->orchestrator->setInput($args)->findByName($response);
 	}
 
 	/**
 	 * @param array<string,mixed> $args
-	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
+	 * @throws ModuleException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
 	 */
 	public function findForPlayerAssignment(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
-		$args['playlist_mode'] = 'master,multizone'; // important! no space after comma
-		return $this->findByName($request, $response, $args);
+		return $this->orchestrator->setInput($args)->findForPlayerAssignment($response);
 	}
 
 	/**
 	 * @param array<string,mixed> $args
+	 * @throws UserException
 	 */
 	public function findById(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
-		$playlistId = (int) ($args['playlist_id'] ?? 0);
-		if ($playlistId === 0)
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Playlist ID not valid.']);
+		$answer = $this->orchestrator->setInput($args)->validate($response);
+		if ($answer !== null)
+			return $answer;
 
-		$this->setServiceUID($request);
-		$result = $this->playlistsService->loadNameById($playlistId);
-		return $this->jsonResponse($response, $result);
+		return $this->orchestrator->findById($response);
 	}
 
-	private function setServiceUID(ServerRequestInterface $request): void
+	/**
+	 * @return array<string,mixed>
+	 */
+	private function parsedBody(ServerRequestInterface $request): array
 	{
-		$this->session = $request->getAttribute('session');
-		/** @var array<string,mixed> $user */
-		$user = $this->session->get('user');
-		$this->playlistsService->setUID($user['UID']);
+		/** @var array<string,mixed> $input */
+		$input = $request->getParsedBody();
+		return $input;
 	}
 }

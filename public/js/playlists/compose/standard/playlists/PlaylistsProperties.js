@@ -41,8 +41,12 @@ export class PlaylistsProperties
 	init(playlistId)
 	{
 		this.#toggleShuffle.addEventListener('click', async () => {
-			const result = await this.#playlistsService.toggleShuffle(playlistId);
-		//	if (!result.success)
+			const result = await this.#sendSafe(() => this.#playlistsService.toggleShuffle(playlistId));
+			if (result === null)
+			{
+				this.#toggleShuffle.checked = !this.#toggleShuffle.checked; // undo the click
+				return;
+			}
 
 			if (this.#toggleShuffle.checked)
 				this.#shufflePicking.parentElement.style.display = "block";
@@ -54,9 +58,14 @@ export class PlaylistsProperties
 		});
 		this.#shufflePicking.addEventListener('change', async () => {
 
-			this.#pickingValue = this.#shufflePicking.value;
+			const result = await this.#sendSafe(() => this.#playlistsService.shufflePicking(playlistId, this.#shufflePicking.value));
+			if (result === null)
+			{
+				this.#shufflePicking.value = this.#pickingValue; // undo the change
+				return;
+			}
 
-			const result = await this.#playlistsService.shufflePicking(playlistId, this.#pickingValue);
+			this.#pickingValue = this.#shufflePicking.value;
 			this.display(result.playlist_metrics);
 
 			PlaylistsProperties.notifySave();
@@ -64,21 +73,9 @@ export class PlaylistsProperties
 		});
 		this.#playerExport.addEventListener('click', async () =>
 		{
-			try
-			{
-				const result = await this.#playlistsService.export(playlistId);
-				if (result.success !== true)
-				{
-					this.#flashMessageHandler.showError(result.error_message);
-					return;
-				}
-
+			const result = await this.#sendSafe(() => this.#playlistsService.export(playlistId));
+			if (result !== null)
 				PlaylistsProperties.removeSave();
-			}
-			catch (e)
-			{
-				this.#flashMessageHandler.showError(e.message);
-			}
 		});
 	}
 
@@ -143,4 +140,25 @@ export class PlaylistsProperties
 		}
 	}
 
+	/**
+	 * Sends the request and shows errors as flash message.
+	 * Returns the result on success, otherwise null.
+	 */
+	async #sendSafe(request)
+	{
+		try
+		{
+			const result = await request();
+			if (result.success === true)
+				return result;
+
+			this.#flashMessageHandler.showError(result.error_message);
+		}
+		catch (e)
+		{
+			this.#flashMessageHandler.showError(e.message);
+		}
+
+		return null;
+	}
 }

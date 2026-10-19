@@ -219,10 +219,14 @@ $dependencies[ShowComposeController::class] = DI\factory(function (ContainerInte
 $dependencies[PlaylistsController::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new PlaylistsController(
-		$container->get(PlaylistsService::class),
-		$container->get(PlaylistsDatatableService::class),
-		$container->get(\App\Modules\Playlists\Helper\Datatable\Parameters::class),
-		$container->get(CsrfToken::class)
+		new \App\Modules\Playlists\Helper\Playlists\Orchestrator(
+			new \App\Modules\Playlists\Helper\Playlists\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
+			$container->get(UserSession::class),
+			$container->get(BaseValidator::class),
+			$container->get(PlaylistsService::class),
+			$container->get(PlaylistsDatatableService::class),
+			$container->get(\App\Modules\Playlists\Helper\Datatable\Parameters::class)
+		)
 	);
 });
 
