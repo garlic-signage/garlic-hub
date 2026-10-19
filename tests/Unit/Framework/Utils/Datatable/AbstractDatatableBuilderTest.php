@@ -22,6 +22,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Framework\Utils\Datatable;
 
+use App\Framework\Core\Acl\AbstractAclValidator;
+use App\Framework\Core\Config\Config;
 use App\Framework\Utils\Datatable\AbstractDatatableBuilder;
 use App\Framework\Utils\Datatable\BuildService;
 use App\Framework\Utils\FormParameters\BaseFilterParameters;
@@ -34,22 +36,27 @@ use PHPUnit\Framework\TestCase;
 class ConcreteDatatableBuilder extends AbstractDatatableBuilder
 {
 
+	public bool $moduleParametersAdded = false;
+
 	public function buildTitle(): void{}
-
-	public function configureParameters(int $UID): void{}
-
-	public function determineParameters(): void	{}
 
 	public function collectFormElements(): void{}
 
 	public function createTableFields(): static {return $this;}
+
+	protected function addModuleParameters(): void
+	{
+		$this->moduleParametersAdded = true;
+	}
 }
 
 class AbstractDatatableBuilderTest extends TestCase
 {
-	private AbstractDatatableBuilder $datatableBuilder;
+	private ConcreteDatatableBuilder $datatableBuilder;
 	private BuildService&MockObject $buildServiceMock;
 	private BaseFilterParameters&MockObject $parametersMock;
+	private AbstractAclValidator&MockObject $aclValidatorMock;
+	private Config&MockObject $configMock;
 
 	/**
 	 * @throws Exception
@@ -59,8 +66,76 @@ class AbstractDatatableBuilderTest extends TestCase
 		parent::setUp();
 		$this->buildServiceMock = $this->createMock(BuildService::class);
 		$this->parametersMock = $this->createMock(BaseFilterParameters::class);
+		$this->aclValidatorMock = $this->createMock(AbstractAclValidator::class);
+		$this->configMock = $this->createMock(Config::class);
+		$this->aclValidatorMock->method('getConfig')->willReturn($this->configMock);
 
-		$this->datatableBuilder = new ConcreteDatatableBuilder($this->buildServiceMock, $this->parametersMock);
+		$this->datatableBuilder = new ConcreteDatatableBuilder($this->buildServiceMock, $this->parametersMock, $this->aclValidatorMock);
+	}
+
+	#[Group('units')]
+	public function testConfigureParametersInEdgeEdition(): void
+	{
+		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
+		$this->aclValidatorMock->expects($this->never())->method('isModuleAdmin');
+		$this->parametersMock->expects($this->never())->method('addOwner');
+		$this->parametersMock->expects($this->never())->method('addCompany');
+
+		$this->datatableBuilder->configureParameters(1);
+
+		static::assertFalse($this->datatableBuilder->moduleParametersAdded);
+	}
+
+	#[Group('units')]
+	public function testConfigureParametersForModuleAdmin(): void
+	{
+		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
+		$this->aclValidatorMock->expects($this->once())->method('isModuleAdmin')->with(1)->willReturn(true);
+		$this->parametersMock->expects($this->once())->method('addOwner');
+		$this->parametersMock->expects($this->once())->method('addCompany');
+
+		$this->datatableBuilder->configureParameters(1);
+
+		static::assertTrue($this->datatableBuilder->moduleParametersAdded);
+	}
+
+	#[Group('units')]
+	public function testConfigureParametersForSubAdmin(): void
+	{
+		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
+		$this->aclValidatorMock->method('isModuleAdmin')->willReturn(false);
+		$this->aclValidatorMock->expects($this->once())->method('isSubAdmin')->with(1)->willReturn(true);
+		$this->parametersMock->expects($this->once())->method('addOwner');
+		$this->parametersMock->expects($this->once())->method('addCompany');
+
+		$this->datatableBuilder->configureParameters(1);
+
+		static::assertTrue($this->datatableBuilder->moduleParametersAdded);
+	}
+
+	#[Group('units')]
+	public function testConfigureParametersForUser(): void
+	{
+		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_CORE);
+		$this->aclValidatorMock->method('isModuleAdmin')->willReturn(false);
+		$this->aclValidatorMock->method('isSubAdmin')->willReturn(false);
+		$this->parametersMock->expects($this->never())->method('addOwner');
+		$this->parametersMock->expects($this->never())->method('addCompany');
+
+		$this->datatableBuilder->configureParameters(1);
+
+		static::assertTrue($this->datatableBuilder->moduleParametersAdded);
+	}
+
+	#[Group('units')]
+	public function testDetermineParameters(): void
+	{
+		$_GET = ['some' => 'input'];
+		$this->parametersMock->expects($this->once())->method('setUserInputs')->with(['some' => 'input']);
+		$this->parametersMock->expects($this->once())->method('parseInputFilterAllUsers');
+
+		$this->datatableBuilder->determineParameters();
+		$_GET = [];
 	}
 
 	#[Group('units')]

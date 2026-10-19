@@ -21,10 +21,15 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Datatable;
 
+use App\Framework\Core\Acl\AbstractAclValidator;
+use App\Framework\Core\Config\Config;
 use App\Framework\Core\Translate\Translator;
+use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\FormParameters\BaseFilterParameters;
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
+use Doctrine\DBAL\Exception;
+use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 
 /**
  * Abstract class for building datatable structures.
@@ -36,13 +41,15 @@ abstract class AbstractDatatableBuilder
 	protected Translator $translator;
 	protected BuildService $buildService;
 	protected BaseFilterParameters $parameters;
+	protected AbstractAclValidator $aclValidator;
 	/** @var array<string,mixed> */
 	protected array $datatableStructure = [];
 
-	public function __construct(BuildService $buildService, BaseFilterParameters $parameters)
+	public function __construct(BuildService $buildService, BaseFilterParameters $parameters, AbstractAclValidator $aclValidator)
 	{
 		$this->buildService  = $buildService;
 		$this->parameters    = $parameters;
+		$this->aclValidator  = $aclValidator;
 	}
 
 	public function setTranslator(Translator $translator): AbstractDatatableBuilder
@@ -61,9 +68,36 @@ abstract class AbstractDatatableBuilder
 
 	abstract public function buildTitle(): void;
 
-	abstract public function configureParameters(int $UID): void;
+	/**
+	 * Adds the filter parameters which are not available in the edge edition.
+	 * Owner and company filters are only added for module and sub admins.
+	 *
+	 * @throws CoreException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws Exception
+	 */
+	public function configureParameters(int $UID): void
+	{
+		if ($this->aclValidator->getConfig()->getEdition() === Config::PLATFORM_EDITION_EDGE)
+			return;
 
-	abstract public function determineParameters(): void;
+		$this->addModuleParameters();
+
+		if ($this->aclValidator->isModuleAdmin($UID) || $this->aclValidator->isSubAdmin($UID))
+		{
+			$this->parameters->addOwner();
+			$this->parameters->addCompany();
+		}
+	}
+
+	/**
+	 * @throws ModuleException
+	 */
+	public function determineParameters(): void
+	{
+		$this->parameters->setUserInputs($_GET);
+		$this->parameters->parseInputFilterAllUsers();
+	}
 
 	abstract public function collectFormElements(): void;
 
@@ -87,5 +121,12 @@ abstract class AbstractDatatableBuilder
 	public function createDropDown(int $min = 10, int $max = 100, int $steps = 10): void
 	{
 		$this->datatableStructure['dropdown'] = $this->buildService->buildPaginationDropDown($min, $max, $steps);
+	}
+
+	/**
+	 * Hook for module specific filter parameters, called by configureParameters() outside the edge edition.
+	 */
+	protected function addModuleParameters(): void
+	{
 	}
 }

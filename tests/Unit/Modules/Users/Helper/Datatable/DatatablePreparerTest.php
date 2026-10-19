@@ -134,14 +134,28 @@ class DatatablePreparerTest extends TestCase
 
 		$this->aclValidatorMock->method('isSimpleAdmin')->willReturn(true);
 
+		$this->translatorMock->method('translate')
+			->willReturnCallback(fn(string $key, string $module) => $module . '.' . $key);
+
+		$actionLink = ['LINK_ACTION' => 'users/edit/1'];
+		$actionDelete = ['DELETE_ID' => '1'];
+		$bodyPreparerMock = $this->createMock(BodyPreparer::class);
+		$bodyPreparerMock->expects($this->once())->method('formatActionLink')
+			->with('users.edit_settings', 'users/edit/1', 'edit', '1', 'pencil')
+			->willReturn($actionLink);
+		$bodyPreparerMock->expects($this->once())->method('formatActionDelete')
+			->with('main.delete', 'users.confirm_delete', '1', 'delete-user')
+			->willReturn($actionDelete);
+		$this->prepareServiceMock->method('getBodyPreparer')->willReturn($bodyPreparerMock);
+
 		$result = $this->datatablePreparer->prepareTableBody(
 			[['UID' => 1, 'username' => 'adminUser', 'status' => 0]],
 			$fields,
 			123
 		);
 
-		static::assertNotEmpty($result[0]['has_action_link']);
-		static::assertNotEmpty($result[0]['has_delete']);
+		static::assertSame([$actionLink], $result[0]['has_action_link']);
+		static::assertSame($actionDelete, $result[0]['has_delete']);
 	}
 
 	/**

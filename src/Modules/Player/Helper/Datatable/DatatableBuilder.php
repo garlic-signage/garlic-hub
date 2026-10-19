@@ -21,7 +21,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Helper\Datatable;
 
-use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -30,7 +29,6 @@ use App\Framework\Utils\Datatable\BuildService;
 use App\Framework\Utils\FormParameters\BaseParameters;
 use App\Framework\Utils\Html\FieldType;
 use App\Modules\Player\Services\AclValidator;
-use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
@@ -40,41 +38,15 @@ use Psr\SimpleCache\InvalidArgumentException;
  */
 class DatatableBuilder extends AbstractDatatableBuilder
 {
-	private AclValidator $aclValidator;
-
 	public function __construct(BuildService $buildService, Parameters $parameters, AclValidator $aclValidator)
 	{
-		$this->aclValidator = $aclValidator;
-		parent::__construct($buildService, $parameters);
+		parent::__construct($buildService, $parameters, $aclValidator);
 	}
 
-	/**
-	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws Exception
-	 */
-	public function configureParameters(int $UID): void
+	protected function addModuleParameters(): void
 	{
-		if ($this->aclValidator->getConfig()->getEdition() === Config::PLATFORM_EDITION_EDGE)
-			return;
-
 		if ($this->parameters instanceof Parameters)
 			$this->parameters->addActivity();
-
-		if ($this->aclValidator->isModuleAdmin($UID) || $this->aclValidator->isSubAdmin($UID))
-		{
-			$this->parameters->addOwner();
-			$this->parameters->addCompany();
-		}
-	}
-
-	/**
-	 * @throws ModuleException
-	 */
-	public function determineParameters(): void
-	{
-		$this->parameters->setUserInputs($_GET);
-		$this->parameters->parseInputFilterAllUsers();
 	}
 
 	/**
