@@ -32,7 +32,7 @@ export class MediaService extends BaseService
         const url    = MediaApiConfig.LIST_URI + "/" + nodeId;
 		const result = await this._sendRequest(url, "GET", null);
 
-		return result.media_list;
+		return this.#ensureSuccess(result).media_list;
     }
 
 	async loadFilteredMediaByNodeId(nodeId, filter)
@@ -40,14 +40,14 @@ export class MediaService extends BaseService
 		const url    = MediaApiConfig.LIST_URI + "/" + nodeId + '?filter=' + filter;
 		const result = await this._sendRequest(url, "GET", null);
 
-		return result.media_list;
+		return this.#ensureSuccess(result).media_list;
 	}
 
 	async getMediaById(mediaId)
 	{
 		const url = MediaApiConfig.BASE_URI + "/" + mediaId;
 		const result = await this._sendRequest(url, "GET", null);
-		return result.media;
+		return this.#ensureSuccess(result).media;
 	}
 
 
@@ -58,23 +58,35 @@ export class MediaService extends BaseService
 			"filename": filename,
 			"description": description
 		};
-		return this._sendRequest(MediaApiConfig.EDIT_URI, "POST",  data);
+		return this.#ensureSuccess(await this._sendRequest(MediaApiConfig.EDIT_URI, "POST",  data));
 	}
 
     async moveMedia(mediaId, nodeId)
     {
-		return this._sendRequest(MediaApiConfig.MOVE_URI, "POST",  {"media_id": mediaId, "node_id": nodeId});
+		return this.#ensureSuccess(await this._sendRequest(MediaApiConfig.MOVE_URI, "POST",  {"media_id": mediaId, "node_id": nodeId}));
     }
 
     async cloneMedia(mediaId)
     {
         const result = await this._sendRequest(MediaApiConfig.CLONE_URI, "POST", {"media_id": mediaId});
-		return result.new_media;
+		return this.#ensureSuccess(result).new_media;
     }
 
 	async removeMedia(mediaId)
 	{
-		return this._sendRequest(MediaApiConfig.BASE_URI,"DELETE", {"media_id": mediaId});
+		return this.#ensureSuccess(await this._sendRequest(MediaApiConfig.BASE_URI,"DELETE", {"media_id": mediaId}));
+	}
+
+	/**
+	 * Throws the error_message of a failed request, so the callers
+	 * change the media list only after a successful request.
+	 */
+	#ensureSuccess(result)
+	{
+		if (result.success !== true)
+			throw new Error(result.error_message);
+
+		return result;
 	}
 
 }

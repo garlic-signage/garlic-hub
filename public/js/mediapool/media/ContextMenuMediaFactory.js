@@ -24,13 +24,15 @@ export class ContextMenuMediaFactory
     #mediaService = null;
     #mediaEditDialog = null;
 	#mediaInfoDialog = null;
+	#flashMessageHandler = null;
 
-    constructor(templateElement, mediaEditDialog, mediaInfoDialog, mediaService)
+    constructor(templateElement, mediaEditDialog, mediaInfoDialog, mediaService, flashMessageHandler)
     {
         this.#templateElement = templateElement;
         this.#mediaEditDialog = mediaEditDialog;
 		this.#mediaInfoDialog = mediaInfoDialog;
         this.#mediaService    = mediaService;
+		this.#flashMessageHandler = flashMessageHandler;
     }
 
     create(currentMedia)
@@ -40,7 +42,8 @@ export class ContextMenuMediaFactory
             this.#mediaService,
             this.#mediaEditDialog,
 			this.#mediaInfoDialog,
-			currentMedia
+			currentMedia,
+			this.#flashMessageHandler
         );
     }
 }

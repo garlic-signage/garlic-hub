@@ -26,10 +26,12 @@ export class MediaEditDialog
 	#editDescription  = document.getElementById("editDescription");
 	#currentMedia     = null;
 	#submitEditMedia = document.getElementById("submitEditMedia");
+	#flashMessageHandler = null;
 
-    constructor(mediaService)
+    constructor(mediaService, flashMessageHandler)
     {
         this.#mediaService   = mediaService;
+		this.#flashMessageHandler = flashMessageHandler;
         this.#addCancelEvent();
         this.#addSaveEvent();
     }
@@ -46,11 +48,19 @@ export class MediaEditDialog
     #addSaveEvent()
     {
         this.#submitEditMedia.addEventListener('click', async () => {
-			await this.#mediaService.editMedia(
-				this.#currentMedia.getAttribute("data-media-id"),
-				this.#editFilename.value,
-				this.#editDescription.value
-			)
+			try
+			{
+				await this.#mediaService.editMedia(
+					this.#currentMedia.getAttribute("data-media-id"),
+					this.#editFilename.value,
+					this.#editDescription.value
+				)
+			}
+			catch (err)
+			{
+				this.#flashMessageHandler.showError(err.message);
+				return;
+			}
 			this.#currentMedia.querySelector(".media-filename").textContent = this.#editFilename.value;
 			this.#currentMedia.querySelector("img").setAttribute("data-title", this.#editFilename.value);
 			this.#currentMedia.querySelector("img").setAttribute("data-description", this.#editDescription.value);

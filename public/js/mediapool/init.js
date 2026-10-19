@@ -69,9 +69,10 @@ document.addEventListener("DOMContentLoaded", function()
 		new MediaFactory(document.getElementById('mediaTemplate')),
         new ContextMenuMediaFactory(
 			document.getElementById('media-contextmenu-template'),
-			new MediaEditDialog(mediaService),
-			new MediaInfoDialog(mediaService),
-			mediaService
+			new MediaEditDialog(mediaService, flashMessageHandler),
+			new MediaInfoDialog(mediaService, flashMessageHandler),
+			mediaService,
+			flashMessageHandler
 		),
 		mediaService
 	);

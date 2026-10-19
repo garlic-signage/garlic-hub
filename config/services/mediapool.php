@@ -132,7 +132,14 @@ $dependencies[MediaService::class] = DI\factory(function (ContainerInterface $co
 });
 $dependencies[MediaController::class] = DI\factory(function (ContainerInterface $container)
 {
-	return new MediaController($container->get(MediaService::class), $container->get(CsrfToken::class));
+	return new MediaController(
+		new \App\Modules\Mediapool\Helper\Media\Orchestrator(
+			new \App\Modules\Mediapool\Helper\Media\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
+			$container->get(UserSession::class),
+			$container->get(BaseValidator::class),
+			$container->get(MediaService::class)
+		)
+	);
 });
 
 return $dependencies;

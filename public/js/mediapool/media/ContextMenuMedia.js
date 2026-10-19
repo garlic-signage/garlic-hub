@@ -24,15 +24,17 @@ export class ContextMenuMedia
     #mediaEditDialog  = null;
 	#mediaInfoDialog = null;
 	#currentMedia = null;
+	#flashMessageHandler = null;
 
 
-    constructor(menuElement, mediaService, mediaEditDialog, mediaInfoDialog, currentMedia)
+    constructor(menuElement, mediaService, mediaEditDialog, mediaInfoDialog, currentMedia, flashMessageHandler)
     {
         this.#menuElement  = menuElement;
         this.#mediaService = mediaService;
         this.#mediaEditDialog  = mediaEditDialog;
 		this.#mediaInfoDialog  = mediaInfoDialog;
 		this.#currentMedia = currentMedia;
+		this.#flashMessageHandler = flashMessageHandler;
     }
 
     show(event)
@@ -63,8 +65,15 @@ export class ContextMenuMedia
     {
         cloneMediaMenuElement.addEventListener("click", () => {
             (async () => {
-                const newMedia = await this.#mediaService.cloneMedia(this.#currentMedia.getAttribute('data-media-id'));
-                callback(newMedia);
+				try
+				{
+					const newMedia = await this.#mediaService.cloneMedia(this.#currentMedia.getAttribute('data-media-id'));
+					callback(newMedia);
+				}
+				catch (err)
+				{
+					this.#flashMessageHandler.showError(err.message);
+				}
             })();
         });
     }
@@ -73,8 +82,15 @@ export class ContextMenuMedia
     {
         removeMediaMenuElement.addEventListener("click", () => {
             (async () => {
-                await this.#mediaService.removeMedia(this.#currentMedia.getAttribute('data-media-id'));
-                this.#currentMedia.remove();
+				try
+				{
+					await this.#mediaService.removeMedia(this.#currentMedia.getAttribute('data-media-id'));
+					this.#currentMedia.remove();
+				}
+				catch (err)
+				{
+					this.#flashMessageHandler.showError(err.message);
+				}
             })();
         });
     }

@@ -71,9 +71,9 @@ export class MediaList
         });
     }
 
-	moveMediaTo(mediaId, nodeId)
+	async moveMediaTo(mediaId, nodeId)
 	{
-		this.#mediaService.moveMedia(mediaId, nodeId);
+		await this.#mediaService.moveMedia(mediaId, nodeId);
 		this.#deleteMediaDomBy(mediaId);
 	}
 

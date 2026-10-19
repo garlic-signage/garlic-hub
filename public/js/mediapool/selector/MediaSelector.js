@@ -134,7 +134,15 @@ export class MediaSelector
 	{
 		this.#treeViewWrapper.on("treeview:loadMediaInDirectory", async (args) =>
 		{
-			const results = await this.loadMedia(args.node_id);
+			let results = [];
+			try
+			{
+				results = await this.loadMedia(args.node_id);
+			}
+			catch (err)
+			{
+				console.error('Error loading media:', err.message);
+			}
 			this.displayMediaList(results);
 			this.#emitter.emit('mediapool:selector:loaded', {nodeId: args.node_id });
 		});

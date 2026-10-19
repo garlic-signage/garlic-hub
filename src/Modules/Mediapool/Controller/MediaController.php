@@ -21,156 +21,133 @@ declare(strict_types=1);
 
 namespace App\Modules\Mediapool\Controller;
 
-use App\Framework\Controller\AbstractAsyncController;
-use App\Framework\Core\CsrfToken;
-use App\Modules\Mediapool\Services\MediaService;
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\DatabaseException;
+use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\UserException;
+use App\Modules\Mediapool\Helper\Media\Orchestrator;
 use Doctrine\DBAL\Exception;
+use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * MediaController is responsible for handling media-related operations.
  * It provides endpoints for listing, fetching details, editing, deleting,
  * moving, and cloning media items.
+ * Validation and execution are delegated to the Orchestrator.
  */
-class MediaController extends AbstractAsyncController
+readonly class MediaController
 {
-	private readonly MediaService $mediaService;
-	private readonly CsrfToken $csrfToken;
-
-	public function __construct(MediaService $mediaService, CsrfToken $csrfToken)
-	{
-		$this->mediaService = $mediaService;
-		$this->csrfToken    = $csrfToken;
-	}
+	public function __construct(private Orchestrator $orchestrator) {}
 
 	/**
 	 * @param array<string,mixed> $args
 	 * @throws Exception
+	 * @throws UserException
 	 */
 	public function list(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
-		$node_id = (int) ($args['node_id'] ?? 0);
-		if ($node_id === 0)
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'node is missing']);
-		$queryParams = $request->getQueryParams();
-		$filter = '';
-		if (array_key_exists('filter', $queryParams))
-		{
-			switch ($queryParams['filter'])
-			{
-				case 'images':
-					$filter = 'image';
-					break;
-				case 'videos':
-					$filter = 'video';
-					break;
-				case 'audios':
-					$filter = 'audio';
-					break;
-				case 'documents':
-					$filter = 'application/pdf';
-					break;
-			}
-		}
+		$input = $args;
+		$input['filter'] = $request->getQueryParams()['filter'] ?? '';
 
-		$this->mediaService->setUID($request->getAttribute('session')->get('user')['UID']);
-		$media_list = $this->mediaService->listMedia($node_id, $filter);
-		return $this->jsonResponse($response, ['success' => true, 'media_list' => $media_list]);
+		$answer = $this->orchestrator->setInput($input)->validateList($response);
+		if ($answer !== null)
+			return $answer;
+
+		return $this->orchestrator->list($response);
 	}
 
 	/**
 	 * @param array<string,mixed> $args
+	 * @throws DatabaseException
+	 * @throws UserException
 	 */
-	public function getInfo(ServerRequestInterface $request, ResponseInterface $response, array $args):
-	ResponseInterface
+	public function getInfo(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
-		$media_id = $args['media_id'] ?? '';
-		if ($media_id === '')
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'media_id is missing']);
+		$answer = $this->orchestrator->setInput($args)->validateGetInfo($response);
+		if ($answer !== null)
+			return $answer;
 
-		$this->mediaService->setUID($request->getAttribute('session')->get('user')['UID']);
-		$media = $this->mediaService->fetchMedia($media_id);
-		return $this->jsonResponse($response, ['success' => true, 'media' => $media]);
-	}
-
-	public function edit(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-	{
-		/** @var array<string,mixed> $bodyParams */
-		$bodyParams = $request->getParsedBody();
-
-		if (!$this->csrfToken->validateToken($bodyParams['csrf_token'] ?? ''))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Csrf token mismatch.']);
-
-		if (!array_key_exists('media_id', $bodyParams))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Media id is missing']);
-
-		if (!array_key_exists('filename', $bodyParams))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Filename is missing']);
-
-		if (!array_key_exists('description', $bodyParams))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Description is missing']);
-
-		$this->mediaService->setUID($request->getAttribute('session')->get('user')['UID']);
-
-		$this->mediaService->updateMedia($bodyParams['media_id'], $bodyParams['filename'], $bodyParams['description']);
-		return $this->jsonResponse($response, ['success' => true]);
+		return $this->orchestrator->getInfo($response);
 	}
 
 	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
+	 * @throws DatabaseException
+	 */
+	public function edit(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	{
+		$answer = $this->orchestrator->setInput($this->parsedBody($request))->validateEdit($response);
+		if ($answer !== null)
+			return $answer;
+
+		return $this->orchestrator->edit($response);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
 	 * @throws Exception
 	 */
 	public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array<string,mixed> $bodyParams */
-		$bodyParams = $request->getParsedBody();
+		$answer = $this->orchestrator->setInput($this->parsedBody($request))->validateWithMediaId($response);
+		if ($answer !== null)
+			return $answer;
 
-		if (!$this->csrfToken->validateToken($bodyParams['csrf_token'] ?? ''))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Csrf token mismatch.']);
-
-		if (!isset($bodyParams['media_id']))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'media id is missing']);
-
-		$this->mediaService->setUID($request->getAttribute('session')->get('user')['UID']);
-		$count = $this->mediaService->deleteMedia($bodyParams['media_id']);
-		return $this->jsonResponse($response, ['success' => true, 'data' => ['deleted_media' => $count]]);
+		return $this->orchestrator->delete($response);
 	}
 
 	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
 	 * @throws Exception
 	 */
 	public function move(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array<string,mixed> $bodyParams */
-		$bodyParams = $request->getParsedBody();
+		$answer = $this->orchestrator->setInput($this->parsedBody($request))->validateMove($response);
+		if ($answer !== null)
+			return $answer;
 
-		if (!$this->csrfToken->validateToken($bodyParams['csrf_token'] ?? ''))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Csrf token mismatch.']);
-
-		if (!isset($bodyParams['media_id']) || !isset($bodyParams['node_id']))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'media id or node is missing']);
-
-		$this->mediaService->setUID($request->getAttribute('session')->get('user')['UID']);
-		$count = $this->mediaService->moveMedia($bodyParams['media_id'], (int)$bodyParams['node_id']);
-		return $this->jsonResponse($response, ['success' => true, 'data' => ['deleted_media' => $count]]);
+		return $this->orchestrator->move($response);
 	}
 
 	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
 	 * @throws Exception
 	 */
 	public function clone(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array<string,mixed> $bodyParams */
-		$bodyParams = $request->getParsedBody();
+		$answer = $this->orchestrator->setInput($this->parsedBody($request))->validateWithMediaId($response);
+		if ($answer !== null)
+			return $answer;
 
-		if (!$this->csrfToken->validateToken($bodyParams['csrf_token'] ?? ''))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Csrf token mismatch.']);
+		return $this->orchestrator->clone($response);
+	}
 
-		if (!isset($bodyParams['media_id']))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'media id is missing']);
-
-		$this->mediaService->setUID($request->getAttribute('session')->get('user')['UID']);
-		$new_media = $this->mediaService->cloneMedia($bodyParams['media_id']);
-		return $this->jsonResponse($response, ['success' => true, 'new_media' => $new_media]);
+	/**
+	 * @return array<string,mixed>
+	 */
+	private function parsedBody(ServerRequestInterface $request): array
+	{
+		/** @var array<string,mixed> $input */
+		$input = $request->getParsedBody();
+		return $input;
 	}
 }

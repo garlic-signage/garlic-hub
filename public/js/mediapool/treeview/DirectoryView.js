@@ -115,7 +115,8 @@ export class DirectoryView
                         if (mediaId === null || mediaId === undefined)
                             throw Error("mediaId is not defined")
 
-                        this.#mediaList.moveMediaTo(mediaId, e.node.key);
+                        this.#mediaList.moveMediaTo(mediaId, e.node.key)
+							.catch(err => this.#flashMessageHandler.showError(err.message));
 						DirectoryView.workaroundShitForMediaIdBecauseOfChrome = ""; // reset for security
 					}
                     else
@@ -267,7 +268,7 @@ export class DirectoryView
         }
         catch (err)
         {
-            console.error("Error loading media:", err.message);
+            this.#flashMessageHandler.showError(err.message);
         }
     }
 

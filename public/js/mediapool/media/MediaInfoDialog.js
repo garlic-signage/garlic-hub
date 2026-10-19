@@ -23,10 +23,12 @@ export class MediaInfoDialog
     #closeElement    = document.getElementById("closeInfoMediaDialog");
 	#closeInfoDialog = document.getElementById("closeInfoDialog");
     #mediaService    = null;
+	#flashMessageHandler = null;
 
-    constructor(mediaService)
+    constructor(mediaService, flashMessageHandler)
     {
         this.#mediaService   = mediaService;
+		this.#flashMessageHandler = flashMessageHandler;
         this.#addCancelEvent();
     }
 
@@ -85,7 +87,8 @@ export class MediaInfoDialog
 					this.#dialogElement.querySelector(".stock-user-url").parentElement.style.display = "none";
 
 				this.#dialogElement.showModal();
-			});
+			})
+			.catch(err => this.#flashMessageHandler.showError(err.message));
 	}
 
 	#addCancelEvent()
