@@ -35,7 +35,7 @@ use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Facade class responsible for managing the datatable's configuration, preparation, processing, and rendering.
- * It interacts with datatable components such as the builder, preparer, and specific player service
+ * It interacts with datatable components such as the builder, preparer, and specific templates service
  * to streamline complex operations and present a cohesive interface.
  */
 class DatatableFacade implements DatatableFacadeInterface

@@ -35,7 +35,7 @@ use Psr\SimpleCache\InvalidArgumentException;
  * Class DatatablePreparer
  *
  * Extends the AbstractDatatablePreparer to process and organize data for use in datatables. This class
- * handles the preparation of table body and player context menus with necessary translations, formatting,
+ * handles the preparation of table body and template context menus with necessary translations, formatting,
  * and element mapping.
  */
 class DatatablePreparer extends AbstractDatatablePreparer

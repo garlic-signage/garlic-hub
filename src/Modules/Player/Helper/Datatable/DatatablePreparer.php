@@ -149,17 +149,6 @@ class DatatablePreparer extends AbstractDatatablePreparer
 		}
 
 		return $body;
-
-/*		$data['LANG_SELECT_ALL', $this->translator->translate('select_all', 'main'));
-		$data['LANG_DESELECT_ALL',	$this->translator->translate('deselect_all', 'main'));
-		foreach ($this->translator->getTranslationsArrayForOptions('action_selects', 'playlists') as $key => $action)
-		{
-			$data['select_action' ] = [
-				'OPTION_SELECTED_ACTION_ID' => $key,
-				'OPTION_SELECTED_ACTION_NAME' => $action
-			];
-		}
-*/
 	}
 
 	/**
@@ -180,12 +169,4 @@ class DatatablePreparer extends AbstractDatatablePreparer
 			'LANG_PLAYER_DELETE_CONFIRM' => $this->translator->translate('delete_confirm', 'player')
 		];
 	}
-
-/*
-	private function convertSeconds(string $seconds): string
-	{
-		$dtT = new DateTime("@$seconds");
-		return (new DateTime("@0"))->diff($dtT)->format('%H:%I:%S');
-	}
-*/
 }

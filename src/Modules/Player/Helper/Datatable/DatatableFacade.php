@@ -150,7 +150,7 @@ class DatatableFacade implements DatatableFacadeInterface
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException ´
+	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws DateMalformedStringException
 	 */
 	private function prepareList(array $fields): array

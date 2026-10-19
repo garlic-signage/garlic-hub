@@ -28,13 +28,14 @@ use App\Framework\Utils\FormParameters\BaseFilterParameters;
 use App\Framework\Utils\FormParameters\ScalarType;
 
 /**
- * Extends the BaseFilterParameters class and manages specific parameters related to players.
- * Defines module-specific parameters and provides functionality to add additional parameters.
+ * Extends the BaseFilterParameters class and manages specific parameters related to templates.
+ * Defines module-specific parameters and the default sort column.
  */
 class Parameters extends BaseFilterParameters
 {
 	const string PARAMETER_TEMPLATE_NAME = 'name';
 	const string PARAMETER_TYPE = 'type';
+	const string PARAMETER_TEMPLATE_ID = 'template_id';
 
 	/**
 	 * @var array<string, array{scalar_type: ScalarType, default_value: mixed, parsed: bool}>
@@ -44,10 +45,15 @@ class Parameters extends BaseFilterParameters
 		self::PARAMETER_TYPE => ['scalar_type' => ScalarType::STRING, 'default_value' => '', 'parsed' => false]
 	];
 
+	/**
+	 * @throws ModuleException
+	 */
 	public function __construct(Sanitizer $sanitizer, Session $session)
 	{
 		parent::__construct('templates', $sanitizer, $session, 'templates_filter');
 		$this->currentParameters = array_merge($this->defaultParameters, $this->moduleParameters);
+
+		$this->setDefaultForParameter(self::PARAMETER_SORT_COLUMN, self::PARAMETER_TEMPLATE_ID);
 	}
 
 }
