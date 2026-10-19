@@ -91,11 +91,12 @@ abstract class AbstractDatatableBuilder
 	}
 
 	/**
+	 * @param array<string,mixed> $queryParams
 	 * @throws ModuleException
 	 */
-	public function determineParameters(): void
+	public function determineParameters(array $queryParams): void
 	{
-		$this->parameters->setUserInputs($_GET);
+		$this->parameters->setUserInputs($queryParams);
 		$this->parameters->parseInputFilterAllUsers();
 	}
 

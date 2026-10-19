@@ -68,14 +68,15 @@ class DatatableFacade implements DatatableFacadeInterface
 	}
 
 	/**
+	 * @param array<string,mixed> $queryParams
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws ModuleException
 	 */
-	public function processSubmittedUserInput(): void
+	public function processSubmittedUserInput(array $queryParams): void
 	{
-		$this->datatableBuilder->determineParameters();
+		$this->datatableBuilder->determineParameters($queryParams);
 		$this->playlistsService->loadDatatable();
 	}
 

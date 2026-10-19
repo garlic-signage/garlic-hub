@@ -63,7 +63,7 @@ readonly class ShowDatatableController
 		if (!$this->facade->checkRights())
 			return $response->withHeader('Location', '/player')->withStatus(302);
 
-		$this->facade->processSubmittedUserInput();
+		$this->facade->processSubmittedUserInput($request->getQueryParams());
 
 		$this->facade->prepareDataGrid();
 		$dataGrid = $this->facade->prepareUITemplate();

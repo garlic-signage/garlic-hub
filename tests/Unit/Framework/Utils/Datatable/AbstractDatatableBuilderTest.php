@@ -130,12 +130,10 @@ class AbstractDatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testDetermineParameters(): void
 	{
-		$_GET = ['some' => 'input'];
 		$this->parametersMock->expects($this->once())->method('setUserInputs')->with(['some' => 'input']);
 		$this->parametersMock->expects($this->once())->method('parseInputFilterAllUsers');
 
-		$this->datatableBuilder->determineParameters();
-		$_GET = [];
+		$this->datatableBuilder->determineParameters(['some' => 'input']);
 	}
 
 	#[Group('units')]

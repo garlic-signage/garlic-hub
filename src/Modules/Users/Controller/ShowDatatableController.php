@@ -89,7 +89,7 @@ readonly class ShowDatatableController
 	public function show(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
 		$this->facade->configure($request->getAttribute('translator'), $request->getAttribute('session'));
-		$this->facade->processSubmittedUserInput();
+		$this->facade->processSubmittedUserInput($request->getQueryParams());
 
 		$this->facade->prepareDataGrid();
 		$dataGrid = $this->facade->prepareUITemplate();

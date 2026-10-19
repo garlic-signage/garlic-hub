@@ -69,11 +69,12 @@ class DatatableFacade implements DatatableFacadeInterface
 	}
 
 	/**
+	 * @param array<string,mixed> $queryParams
 	 * @throws ModuleException
 	 */
-	public function processSubmittedUserInput(): void
+	public function processSubmittedUserInput(array $queryParams): void
 	{
-		$this->datatableBuilder->determineParameters();
+		$this->datatableBuilder->determineParameters($queryParams);
 		$this->templatesService->loadDatatable();
 	}
 

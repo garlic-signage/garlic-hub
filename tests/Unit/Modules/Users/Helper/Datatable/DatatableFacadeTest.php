@@ -130,11 +130,11 @@ class DatatableFacadeTest extends TestCase
 	#[Group('units')]
 	public function testProcessSubmittedUserInput(): void
 	{
-		$this->datatableBuilderMock->expects($this->once())->method('determineParameters');
+		$this->datatableBuilderMock->expects($this->once())->method('determineParameters')->with(['page' => 2]);
 
 		$this->usersServiceMock->expects($this->once())->method('loadDatatable');
 
-		$this->datatableFacade->processSubmittedUserInput();
+		$this->datatableFacade->processSubmittedUserInput(['page' => 2]);
 	}
 
 	/**

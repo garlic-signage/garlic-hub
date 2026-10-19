@@ -87,7 +87,8 @@ class ShowDatatableControllerTest extends TestCase
 		$this->facadeMock->expects($this->once())->method('configure')
 			->with($this->translatorMock, $this->sessionMock);
 
-		$this->facadeMock->expects($this->once())->method('processSubmittedUserInput');
+		$this->requestMock->method('getQueryParams')->willReturn(['page' => 2]);
+		$this->facadeMock->expects($this->once())->method('processSubmittedUserInput')->with(['page' => 2]);
 		$this->facadeMock->expects($this->once())->method('prepareDataGrid');
 		$this->facadeMock->expects($this->once())->method('prepareUITemplate')
 			->willReturn(['dataGrid' => 'value']);

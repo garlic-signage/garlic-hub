@@ -143,16 +143,16 @@ class DatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testDetermineParametersSetsUserInputsAndParsesFilterAllUsers(): void
 	{
-		$_GET = ['test_key' => 'test_value'];
+		$queryParams = ['test_key' => 'test_value'];
 
 		$this->parametersMock->expects($this->once())
 			->method('setUserInputs')
-			->with($_GET);
+			->with($queryParams);
 
 		$this->parametersMock->expects($this->once())
 			->method('parseInputFilterAllUsers');
 
-		$this->builder->determineParameters();
+		$this->builder->determineParameters($queryParams);
 	}
 
 	/**
