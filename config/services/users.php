@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Core\Acl\AclHelper;
+use App\Framework\Core\BaseValidator;
 use App\Framework\Core\Config\Config;
 use App\Framework\Core\CsrfToken;
 use App\Framework\Core\Sanitizer;
@@ -39,6 +40,7 @@ use App\Modules\Profile\Services\UserTokenService;
 use App\Modules\Users\Controller\ShowAdminController;
 use App\Modules\Users\Controller\ShowDatatableController;
 use App\Modules\Users\Controller\UsersController;
+use App\Modules\Users\Controller\UserTokenController;
 use App\Modules\Users\Helper\Datatable\ControllerFacade;
 use App\Modules\Users\Helper\Datatable\DatatableBuilder;
 use App\Modules\Users\Helper\Datatable\DatatablePreparer;
@@ -107,6 +109,18 @@ $dependencies[UsersController::class] = DI\factory(function (ContainerInterface 
 		$container->get(Parameters::class),
 		$container->get(UserSession::class),
 		$container->get(JsonResponseHandler::class)
+	);
+});
+$dependencies[UserTokenController::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new UserTokenController(
+		new \App\Modules\Users\Helper\Tokens\Orchestrator(
+			new \App\Modules\Users\Helper\Tokens\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
+			$container->get(UserSession::class),
+			$container->get(BaseValidator::class),
+			$container->get(AclValidator::class),
+			$container->get(UserTokenService::class)
+		)
 	);
 });
 $dependencies[ShowDatatableController::class] = DI\factory(function (ContainerInterface $container)

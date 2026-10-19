@@ -21,104 +21,61 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Controller;
 
-use App\Framework\Controller\AbstractAsyncController;
-use App\Framework\Core\CsrfToken;
 use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
-use App\Modules\Profile\Services\UserTokenService;
-use App\Modules\Users\Services\AclValidator;
+use App\Modules\Users\Helper\Tokens\Orchestrator;
 use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Handles user-token-related actions such as deletion and refresh.
+ * Validation and execution are delegated to the Orchestrator.
  */
-class UserTokenController extends AbstractAsyncController
+readonly class UserTokenController
 {
-
-	public function __construct(
-		private readonly UserSession $userSession,
-		private readonly UserTokenService $userService,
-		private readonly CsrfToken $csrfToken,
-		private readonly AclValidator $aclValidator
-	) {}
+	public function __construct(private Orchestrator $orchestrator) {}
 
 	/**
-	 * @param ServerRequestInterface $request
-	 * @param ResponseInterface $response
-	 * @return ResponseInterface
 	 * @throws CoreException
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
 	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
+	 * @throws \Exception
 	 */
 	public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		return $this->processTokenAction($request, $response, 'deleteToken');
+		/** @var array<string,mixed> $input */
+		$input = $request->getParsedBody();
+		$answer = $this->orchestrator->setInput($input)->validate($response);
+		if ($answer !== null)
+			return $answer;
+
+		return $this->orchestrator->delete($response);
 	}
 
 	/**
-	 * @param ServerRequestInterface $request
-	 * @param ResponseInterface $response
-	 * @return ResponseInterface
 	 * @throws CoreException
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
 	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
+	 * @throws \Exception
 	 */
 	public function refresh(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		return $this->processTokenAction($request, $response, 'refreshToken');
-	}
+		/** @var array<string,mixed> $input */
+		$input = $request->getParsedBody();
+		$answer = $this->orchestrator->setInput($input)->validate($response);
+		if ($answer !== null)
+			return $answer;
 
-	/**
-	 * @param ServerRequestInterface $request
-	 * @param ResponseInterface $response
-	 * @param string $action
-	 * @return ResponseInterface
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws UserException
-	 */
-	private function processTokenAction(ServerRequestInterface $request, ResponseInterface $response, string $action): ResponseInterface
-	{
-		/** @var array<string,mixed> $post */
-		$post = $request->getParsedBody();
-
-		if (!$this->csrfToken->validateToken($post['csrf_token'] ?? ''))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Csrf token mismatch.']);
-
-		if (!$this->aclValidator->isModuleAdmin($this->userSession->getUID()))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'No rights to handle tokens.']);
-
-		$UID = $post['UID'] ?? '';
-		if ($UID === '')
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'UID not transmitted.']);
-
-		$purpose = htmlspecialchars($post['purpose'] ?? '', ENT_QUOTES);
-		if ($purpose === '')
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Purpose not transmitted.']);
-
-		$errorMessage = 'Token not editable.';
-
-		if ($action === 'refreshToken')
-		{
-			$token = $this->userService->refreshToken((int) $UID, $purpose);
-			if ($token === '')
-				return $this->jsonResponse($response, ['success' => false, 'error_message' => $errorMessage]);
-
-			return $this->jsonResponse($response, ['success' => true, 'token' => bin2hex($token)]);
-		}
-
-		$result = $this->userService->deleteByUserPurpose((int) $UID, $purpose);
-		if ($result === 0)
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => $errorMessage]);
-
-		return $this->jsonResponse($response, ['success' => true]);
-
+		return $this->orchestrator->refresh($response);
 	}
 }

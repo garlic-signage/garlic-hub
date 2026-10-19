@@ -19,36 +19,32 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Modules\Users\Controller;
 
-use App\Framework\Core\CsrfToken;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
-use App\Modules\Profile\Entities\TokenPurposes;
-use App\Modules\Profile\Services\UserTokenService;
 use App\Modules\Users\Controller\UserTokenController;
-use App\Modules\Users\Services\AclValidator;
+use App\Modules\Users\Helper\Tokens\Orchestrator;
+use Doctrine\DBAL\Exception as DBALException;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamInterface;
+use Psr\SimpleCache\InvalidArgumentException;
 
 class UserTokenControllerTest extends TestCase
 {
-	private UserSession&MockObject $userSessionMock;
-	private UserTokenService&MockObject $userServiceMock;
-	private CsrfToken&MockObject $csrfTokenMock;
-	private AclValidator&MockObject $aclValidatorMock;
-	private ServerRequestInterface&MockObject $requestMock;
-	private ResponseInterface&MockObject $responseMock;
-	private StreamInterface&MockObject $streamInterfaceMock;
+	/** @var array<string,mixed> */
+	private array $input = ['UID' => 1, 'purpose' => 'password_reset'];
+	private Orchestrator&MockObject $orchestratorMock;
+	private ServerRequestInterface&Stub $requestStub;
+	private ResponseInterface&Stub $responseStub;
+	private ResponseInterface&Stub $expectedResponseStub;
 	private UserTokenController $controller;
 
 	/**
@@ -57,160 +53,109 @@ class UserTokenControllerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->userSessionMock  = $this->createMock(UserSession::class);
-		$this->userServiceMock  = $this->createMock(UserTokenService::class);
-		$this->csrfTokenMock    = $this->createMock(CsrfToken::class);
-		$this->aclValidatorMock = $this->createMock(AclValidator::class);
+		$this->orchestratorMock     = $this->createMock(Orchestrator::class);
+		$this->requestStub          = $this->createStub(ServerRequestInterface::class);
+		$this->responseStub         = $this->createStub(ResponseInterface::class);
+		$this->expectedResponseStub = $this->createStub(ResponseInterface::class);
 
-		$this->requestMock         = $this->createMock(ServerRequestInterface::class);
-		$this->responseMock        = $this->createMock(ResponseInterface::class);
-		$this->streamInterfaceMock = $this->createMock(StreamInterface::class);
+		$this->requestStub->method('getParsedBody')->willReturn($this->input);
 
-		$this->controller = new UserTokenController(
-			$this->userSessionMock,
-			$this->userServiceMock,
-			$this->csrfTokenMock,
-			$this->aclValidatorMock);
+		$this->controller = new UserTokenController($this->orchestratorMock);
 	}
 
 	/**
 	 * @throws CoreException
-	 * @throws UserException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws \Doctrine\DBAL\Exception
+	 * @throws DBALException
 	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
+	 * @throws \Exception
 	 */
 	#[Group('units')]
-	public function testRefreshSuccess(): void
+	public function testDeleteReturnsValidationError(): void
 	{
-		$this->requestMock->method('getParsedBody')->willReturn([
-			'csrf_token' => 'valid_token',
-			'purpose' => TokenPurposes::INITIAL_PASSWORD->value,
-			'UID'  => 1
-		]);
-		$token = random_bytes(32);
-		$this->csrfTokenMock->method('validateToken')->with('valid_token')->willReturn(true);
-		$this->userServiceMock->method('findByTokenForAction')->with('valid_token')->willReturn(['purpose' => TokenPurposes::INITIAL_PASSWORD->value]);
-		$this->userSessionMock->method('getUID')->willReturn(1);
-		$this->aclValidatorMock->method('isModuleAdmin')->willReturn(true);
-		$this->userServiceMock->expects($this->once())->method('refreshToken')
-			->with(1, TokenPurposes::INITIAL_PASSWORD->value)
-			->willReturn($token);
+		$this->orchestratorMock->expects($this->once())->method('setInput')->with($this->input)->willReturnSelf();
+		$this->orchestratorMock->expects($this->once())->method('validate')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
+		$this->orchestratorMock->expects($this->never())->method('delete');
 
-		$this->mockJsonResponse(['success' => true, 'token' => bin2hex($token)]);
+		$result = $this->controller->delete($this->requestStub, $this->responseStub);
 
-		$this->controller->refresh($this->requestMock, $this->responseMock);
-	}
-
-
-	/**
-	 * @throws CoreException
-	 * @throws UserException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws \Doctrine\DBAL\Exception
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testDeleteWithInvalidCsrfToken(): void
-	{
-		$this->requestMock->method('getParsedBody')->willReturn(['csrf_token' => 'invalid_token']);
-		$this->csrfTokenMock->method('validateToken')->with('invalid_token')->willReturn(false);
-
-		$this->mockJsonResponse(['success' => false, 'error_message' => 'Csrf token mismatch.']);
-
-		$this->controller->delete($this->requestMock, $this->responseMock);
+		static::assertSame($this->expectedResponseStub, $result);
 	}
 
 	/**
 	 * @throws CoreException
-	 * @throws UserException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws \Doctrine\DBAL\Exception
+	 * @throws DBALException
 	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
+	 * @throws \Exception
 	 */
 	#[Group('units')]
-	public function testDeleteWithInsufficientPermissions(): void
+	public function testDeleteSucceeds(): void
 	{
-		$this->requestMock->method('getParsedBody')->willReturn([
-			'csrf_token' => 'valid_token',
-			'token' => 'valid_token'
-		]);
-		$this->csrfTokenMock->method('validateToken')->with('valid_token')->willReturn(true);
-		$this->userServiceMock->method('findByTokenForAction')->with('valid_token')->willReturn(['purpose' => 'sample']);
-		$this->userSessionMock->method('getUID')->willReturn(1);
-		$this->aclValidatorMock->method('isAdmin')->with(1, ['purpose' => 'sample'])->willReturn(false);
+		$this->orchestratorMock->expects($this->once())->method('setInput')->with($this->input)->willReturnSelf();
+		$this->orchestratorMock->expects($this->once())->method('validate')
+			->with($this->responseStub)
+			->willReturn(null);
+		$this->orchestratorMock->expects($this->once())->method('delete')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
 
-		$this->mockJsonResponse(['success' => false, 'error_message' => 'No rights to handle tokens.']);
+		$result = $this->controller->delete($this->requestStub, $this->responseStub);
 
-		$this->controller->delete($this->requestMock, $this->responseMock);
+		static::assertSame($this->expectedResponseStub, $result);
 	}
 
 	/**
-	 * @throws UserException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws \Doctrine\DBAL\Exception
+	 * @throws DBALException
 	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testDeleteSuccess(): void
-	{
-		$this->requestMock->method('getParsedBody')->willReturn([
-			'csrf_token' => 'valid_token',
-			'purpose' => TokenPurposes::INITIAL_PASSWORD->value,
-			'UID'  => 1
-		]);
-		$token = random_bytes(32);
-		$this->csrfTokenMock->method('validateToken')->with('valid_token')->willReturn(true);
-		$this->userServiceMock->method('findByTokenForAction')->with('valid_token')->willReturn(['purpose' => 'sample']);
-		$this->userSessionMock->method('getUID')->willReturn(1);
-		$this->aclValidatorMock->method('isModuleAdmin')->willReturn(true);
-		$this->userServiceMock->expects($this->once())->method('deleteByUserPurpose')
-			->willReturn(1);
-
-		$this->mockJsonResponse(['success' => true]);
-
-		$this->controller->delete($this->requestMock, $this->responseMock);
-	}
-
-	/**
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
-	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws \Doctrine\DBAL\Exception
-	 * @throws FrameworkException
+	 * @throws \Exception
 	 */
 	#[Group('units')]
-	public function testDeleteFails(): void
+	public function testRefreshReturnsValidationError(): void
 	{
-		$this->requestMock->method('getParsedBody')->willReturn([
-			'csrf_token' => 'valid_token',
-			'purpose' => TokenPurposes::PASSWORD_RESET->value,
-			'UID'  => 1
-		]);
-		$this->csrfTokenMock->method('validateToken')->with('valid_token')->willReturn(true);
-		$this->userServiceMock->method('findByTokenForAction')->with('valid_token')->willReturn(['purpose' => 'sample']);
-		$this->userSessionMock->method('getUID')->willReturn(1);
-		$this->aclValidatorMock->method('isModuleAdmin')->willReturn(true);
-		$this->userServiceMock->expects($this->once())->method('deleteByUserPurpose')->willReturn(0);
+		$this->orchestratorMock->expects($this->once())->method('setInput')->with($this->input)->willReturnSelf();
+		$this->orchestratorMock->expects($this->once())->method('validate')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
+		$this->orchestratorMock->expects($this->never())->method('refresh');
 
-		$this->mockJsonResponse(['success' => false, 'error_message' => 'Token not editable.']);
+		$result = $this->controller->refresh($this->requestStub, $this->responseStub);
 
-		$this->controller->delete($this->requestMock, $this->responseMock);
+		static::assertSame($this->expectedResponseStub, $result);
 	}
-
 
 	/**
-	 * @param array<string,mixed> $data
+	 * @throws CoreException
+	 * @throws DBALException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
+	 * @throws \Exception
 	 */
-	private function mockJsonResponse(array $data): void
+	#[Group('units')]
+	public function testRefreshSucceeds(): void
 	{
-		$this->responseMock->method('getBody')->willReturn($this->streamInterfaceMock);
-		$this->streamInterfaceMock->method('write')->with(json_encode($data));
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Content-Type', 'application/json')
-			->willReturnSelf();
-		$this->responseMock->method('withStatus')->with('200');
-	}
+		$this->orchestratorMock->expects($this->once())->method('setInput')->with($this->input)->willReturnSelf();
+		$this->orchestratorMock->expects($this->once())->method('validate')
+			->with($this->responseStub)
+			->willReturn(null);
+		$this->orchestratorMock->expects($this->once())->method('refresh')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
 
+		$result = $this->controller->refresh($this->requestStub, $this->responseStub);
+
+		static::assertSame($this->expectedResponseStub, $result);
+	}
 }
