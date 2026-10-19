@@ -112,36 +112,36 @@ class DatatablePreparer extends AbstractDatatablePreparer
 						break;
 				}
 				$list['elements_result_element'][] = $resultElements;
+			}
 
-				if ($playlist['UID'] == $currentUID || $this->aclValidator->isSimpleAdmin($currentUID))
+			if ($playlist['UID'] == $currentUID || $this->aclValidator->isSimpleAdmin($currentUID))
+			{
+				$list['has_action_link'] = [
+			/*		$this->prepareService->getBodyPreparer()->formatAction(
+						$this->translator->translate('copy_playlist', 'playlists'),
+						'playlists/?playlist_copy_id='.$playlist['playlist_id'],
+						'copy', 'copy'), */
+					$this->prepareService->getBodyPreparer()->formatActionLink(
+						$this->translator->translate('composer', 'playlists'),
+						'playlists/compose/'.$playlist['playlist_id'],
+						'composer', (string) $playlist['playlist_id'], 'pencil'),
+					$this->prepareService->getBodyPreparer()->formatActionLink(
+						$this->translator->translate('edit_settings', 'playlists'),
+						'playlists/settings/'.$playlist['playlist_id'],
+						'edit', (string) $playlist['playlist_id'], 'gear')
+				];
+				if (!array_key_exists($playlist['playlist_id'], $this->usedPlaylists) &&
+					$this->aclValidator->isAllowedToDeletePlaylist($currentUID, $playlist))
 				{
-					$list['has_action_link'] = [
-				/*		$this->prepareService->getBodyPreparer()->formatAction(
-							$this->translator->translate('copy_playlist', 'playlists'),
-							'playlists/?playlist_copy_id='.$playlist['playlist_id'],
-							'copy', 'copy'), */
-						$this->prepareService->getBodyPreparer()->formatActionLink(
-							$this->translator->translate('composer', 'playlists'),
-							'playlists/compose/'.$playlist['playlist_id'],
-							'composer', (string) $playlist['playlist_id'], 'pencil'),
-						$this->prepareService->getBodyPreparer()->formatActionLink(
-							$this->translator->translate('edit_settings', 'playlists'),
-							'playlists/settings/'.$playlist['playlist_id'],
-							'edit', (string) $playlist['playlist_id'], 'gear')
-					];
-					if (!array_key_exists($playlist['playlist_id'], $this->usedPlaylists) &&
-						$this->aclValidator->isAllowedToDeletePlaylist($currentUID, $playlist))
-					{
-						$deleteText = $this->translator->translate('confirm_delete', 'playlists');
-						$list['has_delete'] = $this->prepareService->getBodyPreparer()->formatActionDelete(
-							$this->translator->translate('delete', 'main'),
-							sprintf($deleteText, $playlist['playlist_name']),
-							(string) $playlist['playlist_id'],
-							'delete-playlist'
-						);
-					}
-
+					$deleteText = $this->translator->translate('confirm_delete', 'playlists');
+					$list['has_delete'] = $this->prepareService->getBodyPreparer()->formatActionDelete(
+						$this->translator->translate('delete', 'main'),
+						sprintf($deleteText, $playlist['playlist_name']),
+						(string) $playlist['playlist_id'],
+						'delete-playlist'
+					);
 				}
+
 			}
 			$body[] = $list;
 		}
