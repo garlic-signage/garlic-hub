@@ -61,7 +61,7 @@ readonly class ShowDatatableController
 
 		$this->facade->configure($request->getAttribute('translator'), $request->getAttribute('session'));
 		if (!$this->facade->checkRights())
-			return $response->withHeader('Location', '/player')->withStatus(302);
+			return $response->withHeader('Location', '/templates')->withStatus(302);
 
 		$this->facade->processSubmittedUserInput($request->getQueryParams());
 
