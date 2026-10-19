@@ -88,12 +88,12 @@ export class SaveService
 			return await bmp.convert(base64DataUrl);
 		}
 
-		const backgroundColor = ['png', 'webp'].includes(this.#imageData.format) ? null : '#ffffff';
+		//const backgroundColor = ['png', 'webp'].includes(this.#imageData.format) ? null : '#ffffff';
 
 		return this.#fabricWrapper.toBase64Image(
 			this.#imageData.format,
 			this.#imageData.quality / 100,
-			backgroundColor
+			'#ffffff'
 		);
 	}
 

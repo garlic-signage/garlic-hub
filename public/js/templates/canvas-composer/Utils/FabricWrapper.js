@@ -192,10 +192,10 @@ export class FabricWrapper
 
 	toBase64Image(format, quality, backgroundColor)
 	{
+		this.#fabricCanvas.backgroundColor = backgroundColor;
 		return this.#fabricCanvas.toDataURL({
 			format: format,
-			quality: quality,
-			backgroundColor: backgroundColor
+			quality: quality
 		});
 	}
 
