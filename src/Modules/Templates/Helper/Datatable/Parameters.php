@@ -46,7 +46,7 @@ class Parameters extends BaseFilterParameters
 
 	public function __construct(Sanitizer $sanitizer, Session $session)
 	{
-		parent::__construct('player', $sanitizer, $session, 'templates_filter');
+		parent::__construct('templates', $sanitizer, $session, 'templates_filter');
 		$this->currentParameters = array_merge($this->defaultParameters, $this->moduleParameters);
 	}
 

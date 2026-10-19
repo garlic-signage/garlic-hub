@@ -87,7 +87,7 @@ export class SaveService
 			const bmp = this.#bmpDitherFactory.create();
 			return await bmp.convert(base64DataUrl);
 		}
-
+		// keep it as it is required for transparency later
 		//const backgroundColor = ['png', 'webp'].includes(this.#imageData.format) ? null : '#ffffff';
 
 		return this.#fabricWrapper.toBase64Image(
