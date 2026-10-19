@@ -127,7 +127,9 @@ $dependencies[ShowDatatableController::class] = DI\factory(function (ContainerIn
 {
 	return new ShowDatatableController(
 		$container->get(ControllerFacade::class),
-		$container->get(DatatableTemplatePreparer::class)
+		$container->get(DatatableTemplatePreparer::class),
+		$container->get(BaseValidator::class),
+		$container->get(JsonResponseHandler::class)
 	);
 });
 
@@ -154,13 +156,6 @@ $dependencies[ControllerFacade::class] = DI\factory(function (ContainerInterface
 		$container->get(DatatablePreparer::class),
 		$container->get(UsersDatatableService::class),
 		$container->get(UsersAdminService::class),
-	);
-});
-$dependencies[ShowDatatableController::class] = DI\factory(function (ContainerInterface $container)
-{
-	return new ShowDatatableController(
-		$container->get(ControllerFacade::class),
-		$container->get(DatatableTemplatePreparer::class)
 	);
 });
 

@@ -21,7 +21,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Controller;
 
-use App\Framework\Controller\AbstractAsyncController;
+use App\Framework\Controller\JsonResponseHandler;
+use App\Framework\Core\BaseValidator;
+use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -32,48 +34,49 @@ use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\SimpleCache\InvalidArgumentException;
+use Slim\Flash\Messages;
 
-class ShowDatatableController extends AbstractAsyncController
+readonly class ShowDatatableController
 {
-	private ControllerFacade $facade;
-	private DatatableTemplatePreparer $templateFormatter;
-
-	public function __construct(ControllerFacade $facade, DatatableTemplatePreparer $templateFormatter)
-	{
-		$this->facade            = $facade;
-		$this->templateFormatter = $templateFormatter;
-	}
+	public function __construct(
+		private ControllerFacade $facade,
+		private DatatableTemplatePreparer $templateFormatter,
+		private BaseValidator $validator,
+		private JsonResponseHandler $responseHandler
+	) {}
 
 	/**
+	 * The frontend reloads the page after the request, so the result is also
+	 * stored as flash message, which is shown after the reload.
+	 *
 	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
 	 */
 	public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
 		/** @var array<string,mixed> $post */
 		$post       = $request->getParsedBody();
+		/** @var Messages $flash */
 		$flash      = $request->getAttribute('flash');
+		/** @var Translator $translator */
 		$translator = $request->getAttribute('translator');
+
+		if (!$this->validator->validateCsrfToken($post['csrf_token'] ?? ''))
+			return $this->error($response, $flash, $translator->translate('csrf_token_mismatch', 'security'));
+
 		$UID = (int) ($post['UID'] ?? 0);
 		if ($UID === 0)
-		{
-			$flash->addMessage('error', $translator->translate('user_not_found', 'users'));
-			return $this->jsonResponse($response, ['success' => false]);
-		}
+			return $this->error($response, $flash, $translator->translate('user_not_found', 'users'));
 
 		$this->facade->configure($translator, $request->getAttribute('session'));
-		if ($this->facade->deleteUser($UID))
-		{
-			$flash->addMessage('success', $translator->translate('user_deleted', 'users'));
-			return $this->jsonResponse($response, ['success' => true]);
-		}
-		else
-		{
-			$flash->addMessage('error', $translator->translate('user_delete_failed', 'users'));
-			return $this->jsonResponse($response, ['success' => false]);
-		}
+		if (!$this->facade->deleteUser($UID))
+			return $this->error($response, $flash, $translator->translate('user_delete_failed', 'users'));
 
+		$flash->addMessage('success', $translator->translate('user_deleted', 'users'));
+		return $this->responseHandler->jsonSuccess($response);
 	}
 
 	/**
@@ -96,5 +99,11 @@ class ShowDatatableController extends AbstractAsyncController
 		$response->getBody()->write(serialize($templateData));
 
 		return $response->withHeader('Content-Type', 'text/html');
+	}
+
+	private function error(ResponseInterface $response, Messages $flash, string $message): ResponseInterface
+	{
+		$flash->addMessage('error', $message);
+		return $this->responseHandler->jsonError($response, $message);
 	}
 }
