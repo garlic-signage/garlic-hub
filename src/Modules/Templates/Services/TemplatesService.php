@@ -29,7 +29,6 @@ use App\Framework\Services\AbstractBaseService;
 use App\Framework\Utils\FormParameters\BaseParameters;
 use App\Modules\Auth\UserSession;
 use App\Modules\Templates\Helper\Settings\Parameters;
-use App\Modules\Templates\Services\AclValidator;
 use App\Modules\Templates\Repositories\TemplatesRepository;
 use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
@@ -91,10 +90,10 @@ class TemplatesService extends AbstractBaseService
 	 */
 	public function loadWithUserById(int $templateId): array
 	{
-		/** @var array{UID: int, company_id: int, template_id: int, ...} $playlist */
+		/** @var array{UID: int, company_id: int, template_id: int, ...}|array{} $template */
 		$template = $this->templatesRepository->findFirstWithUserName($templateId);
 		if ($template === [])
-			throw new ModuleException('playlists', 'No template with Id: '.$templateId.' found.');
+			throw new ModuleException('templates', 'No template with Id: '.$templateId.' found.');
 
 		if (!$this->aclValidator->isTemplateEditable($this->userSession->getUID(), $template))
 			throw new ModuleException('templates', 'Template is not editable.');
@@ -102,6 +101,10 @@ class TemplatesService extends AbstractBaseService
 		return $template;
 	}
 
+	/**
+	 * @param array<string,mixed> $saveData
+	 * @throws Exception
+	 */
 	public function insert(array $saveData): int
 	{
 		return (int) $this->templatesRepository->insert($this->collectDataForSettingsInsert($saveData));
@@ -113,10 +116,11 @@ class TemplatesService extends AbstractBaseService
 	 */
 	private function collectDataForSettingsInsert(array $postData): array
 	{
+		$saveData = [];
 		if (array_key_exists(BaseParameters::PARAMETER_UID, $postData))
 			$saveData[BaseParameters::PARAMETER_UID] = $postData[BaseParameters::PARAMETER_UID];
 		else
-			$saveData[BaseParameters::PARAMETER_UID] = $this->UID;
+			$saveData[BaseParameters::PARAMETER_UID] = $this->userSession->getUID();
 
 		$saveData[Parameters::PARAMETER_TYPE] = $postData[Parameters::PARAMETER_TYPE];
 
@@ -129,6 +133,7 @@ class TemplatesService extends AbstractBaseService
 	 */
 	private function collectDataForSettingsUpdate(array $postData): array
 	{
+		$saveData = [];
 		if (array_key_exists(BaseParameters::PARAMETER_UID, $postData))
 			$saveData[BaseParameters::PARAMETER_UID] = $postData[BaseParameters::PARAMETER_UID];
 

@@ -25,13 +25,12 @@ use App\Framework\Core\Acl\AbstractAclValidator;
 use App\Framework\Core\Acl\AclHelper;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
-use App\Modules\Auth\UserSession;
 use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 
 /**
  * AclValidator class is responsible for handling access control validation
- * for player-related operations.
+ * for template-related operations.
  */
 class AclValidator extends AbstractAclValidator
 {

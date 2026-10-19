@@ -1,45 +1,51 @@
 <?php
+/*
+ garlic-hub: Digital Signage Management Platform
+
+ Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ This file is part of the garlic-hub source code
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License, version 3,
+ as published by the Free Software Foundation.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 declare(strict_types=1);
 
 namespace App\Modules\Templates\Services;
 
-use App\Modules\Player\Repositories\PlayerRepository;
 use App\Modules\Playlists\Repositories\ItemsRepository;
-use App\Modules\Templates\Repositories\TemplatesRepository;
 use Doctrine\DBAL\Exception;
-
-// use App\Modules\Playlists\Repositories\ChannelRepository;
 
 readonly class TemplatesUsageService
 {
-    private TemplatesRepository $templatesRepository;
-    // private readonly ChannelRepository $channelRepository;
-
-    public function __construct(private readonly ItemsRepository $itemsRepository /*ChannelRepository $channelRepository*/)
+	public function __construct(private ItemsRepository $itemsRepository)
 	{
-        // $this->channelRepository = $channelRepository;
-    }
+	}
 
 	/**
+	 * Counts how often each template is used as a playlist item.
+	 * Templates which are not used are not part of the result.
+	 *
 	 * @param int[] $templateIds
-	 * @return array<int,bool>
+	 * @return array<int,int> template_id => count
 	 * @throws Exception
 	 */
 	public function determineTemplatesInUse(array $templateIds): array
-    {
-        $results = [];
-        
-        foreach($this->itemsRepository->countFileResourcesByTemplateId($templateIds) as $value)
+	{
+		$results = [];
+		foreach ($this->itemsRepository->countFileResourcesByTemplateId($templateIds) as $value)
 		{
-            $results[$value['template_id']] = $value['count'];
-        }
+			$results[(int) $value['template_id']] = (int) $value['count'];
+		}
 
-        /* no channels currently
-        foreach($this->channelRepository->findTableIdsByPlaylistIds($playlistIds) as $value) {
-            $results[$value['table_id']] = true;
-        }
-        */
-
-        return $results;
-    }
+		return $results;
+	}
 }

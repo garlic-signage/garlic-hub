@@ -23,14 +23,26 @@ declare(strict_types=1);
 namespace App\Modules\Templates\Helper\Composer;
 
 use App\Framework\Core\Translate\Translator;
-use App\Framework\Utils\Forms\FormTemplatePreparer;
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
+use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
+use Psr\SimpleCache\InvalidArgumentException;
 
 class TemplatePreparer
 {
-
 	public function __construct(private readonly Translator $translator) {}
 
-	public function replace(int $templateId, int $itemId = 0, $playlistId = 0): array
+	/**
+	 * Language and template data for the composer. Playlist items get export formats and a reset,
+	 * templates themselves get the lock/selectable options.
+	 *
+	 * @return array<string,mixed>
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 */
+	public function replace(int $templateId, int $itemId = 0, int $playlistId = 0): array
 	{
 		$templateComposer = [
 			'LANG_MOVE_BACKGROUND' => $this->translator->translate('move_background', 'templates'),
@@ -64,7 +76,6 @@ class TemplatePreparer
 			'LANG_ITALIC' => $this->translator->translate('italic', 'templates'),
 			'LANG_UNDERLINE' => $this->translator->translate('underline', 'templates'),
 			'LANG_GROUP_UNGROUP' => $this->translator->translate('group_ungroup', 'templates'),
-			'LANG_OPAC	ITY' => $this->translator->translate('opacity', 'templates'),
 			'LANG_OUTLINE_COLOR' => $this->translator->translate('outline_color', 'templates'),
 			'LANG_OUTLINE_STRENGTH' => $this->translator->translate('outline_strength', 'templates'),
 			'LANG_ALIGN_OBJECT' => $this->translator->translate('align_object', 'templates'),
@@ -134,7 +145,15 @@ class TemplatePreparer
 		return $templateComposer;
 	}
 
-	public function prepare(String $name, array $dataSections): array
+	/**
+	 * @param array<string,mixed> $dataSections
+	 * @return array{main_layout: array<string,mixed>, this_layout: array{template: string, data: array<string,mixed>}}
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 */
+	public function prepare(string $name, array $dataSections): array
 	{
 		$title = $this->translator->translate('composer', 'templates').': '.$name;
 		$dataSections['LANG_PAGE_HEADER'] = $title;

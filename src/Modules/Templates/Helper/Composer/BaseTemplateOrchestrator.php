@@ -44,6 +44,9 @@ class BaseTemplateOrchestrator
 		$this->baseUrl = rtrim($url, '/');
 	}
 
+	/**
+	 * @param array<mixed> $objects
+	 */
 	protected function restoreSrc(array &$objects): void
 	{
 		foreach ($objects as &$obj)
@@ -70,6 +73,9 @@ class BaseTemplateOrchestrator
 		return $this->baseUrl . $this->mediaUrlSigner->originalUrl($checksum, $extension);
 	}
 
+	/**
+	 * @param array<mixed> $objects
+	 */
 	protected function removeSrc(array &$objects): void
 	{
 		foreach ($objects as &$obj)
@@ -90,10 +96,10 @@ class BaseTemplateOrchestrator
 		if (count($JSON['objects']) > 1000)
 			return '';
 
-		// reove Src for security reasons XSS etc
+		// remove src for security reasons XSS etc
 		$this->removeSrc($JSON['objects']);
 
-		return json_encode($JSON);
+		return json_encode($JSON) ?: '';
 	}
 
 }

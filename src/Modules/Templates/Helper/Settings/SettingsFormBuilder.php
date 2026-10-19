@@ -22,23 +22,34 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Helper\Settings;
 
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Framework\Utils\FormParameters\BaseParameters;
 use App\Modules\Auth\UserSession;
+use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
+use Psr\SimpleCache\InvalidArgumentException;
 
 class SettingsFormBuilder
 {
 	public function __construct(private readonly Parameters $parameters,
 								private readonly UserSession $userSession,
 								private readonly FormElementsCreator $formElementsCreator)
-	{
+	{}
 
-	}
-
+	/**
+	 * Builds the edit form when settings data of a template is given, otherwise the create form.
+	 *
+	 * @param array<string,mixed> $settingsData
+	 * @return array{hidden:list<array<string,string>>, visible: list<array<string,string>>}
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 */
 	public function buildForm(array $settingsData): array
 	{
-
-		$form       = [];
+		$form = [];
 		$form[Parameters::PARAMETER_NAME] = $this->formElementsCreator->createNameField(
 			($settingsData[Parameters::PARAMETER_NAME] ?? ''),
 		);
@@ -67,5 +78,4 @@ class SettingsFormBuilder
 
 		return $this->formElementsCreator->prepareForm($form);
 	}
-
 }

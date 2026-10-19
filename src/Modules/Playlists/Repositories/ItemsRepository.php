@@ -257,6 +257,11 @@ class ItemsRepository extends SqlBase
 		return $this->connection->executeQuery($sql)->fetchAllAssociative();
 	}
 
+	/**
+	 * @param int[] $templateIds
+	 * @return list<array<string,mixed>> template_id and count per used template
+	 * @throws Exception
+	 */
 	public function countFileResourcesByTemplateId(array $templateIds): array
 	{
 		if (empty($templateIds))

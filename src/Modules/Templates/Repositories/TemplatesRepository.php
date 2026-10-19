@@ -39,9 +39,8 @@ class TemplatesRepository extends FilterBase
 	public function findFirstWithUserName(int $templateId): array
 	{
 		$select = $this->prepareSelectFilteredForUser();
-		$join   = ['user_main' => 'user_main.UID=' . $this->table . '.UID'];
-		$where  = ['template_id' => ['value' => $templateId, 'operator' => '=']];
-		return $this->getFirstDataSet($this->findAllByWithFields($select, $where, $join));
+		$where  = ['template_id' => $this->generateWhereClause($templateId)];
+		return $this->getFirstDataSet($this->findAllByWithFields($select, $where, $this->prepareJoin()));
 	}
 
 	protected function prepareJoin(): array

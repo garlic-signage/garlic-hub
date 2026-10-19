@@ -22,10 +22,14 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Controller;
 
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
 use App\Modules\Templates\Helper\Composer\Orchestrator;
-use App\Modules\Templates\Helper\Composer\TemplatePreparer;
+use Doctrine\DBAL\Exception;
+use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\SimpleCache\InvalidArgumentException;
 use Slim\Flash\Messages;
 
 /**
@@ -39,10 +43,17 @@ class ShowComposerController
 	{}
 
 
+	/**
+	 * @param array<string,string> $args
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 */
 	public function show(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
 		$templateId = (int)($args['template_id'] ?? 0);
-		$this->flash = $request->getAttribute('flash');
 
 		if (!$this->orchestrator->checkEditRights($templateId))
 		{

@@ -22,30 +22,20 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Helper\Settings;
 
-use App\Modules\Auth\UserSession;
-use App\Modules\Templates\Services\AclValidator;
-use App\Modules\Templates\Services\TemplatesService;
-
 class SettingsParametersPolicy
 {
-	public function __construct(private readonly Parameters $parameters
-	)
+	public function __construct(private readonly Parameters $parameters)
 	{}
 
-
-	public function addEditFormElements()
+	public function addEditFormElements(): void
 	{
 		$this->parameters->addOwner();
 		$this->parameters->addVisibility();
 	}
 
-
-	public function addCreateFormElements()
+	public function addCreateFormElements(): void
 	{
 		$this->addEditFormElements();
 		$this->parameters->addType();
 	}
-
-
-
 }

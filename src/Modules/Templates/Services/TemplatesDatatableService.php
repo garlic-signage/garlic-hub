@@ -93,7 +93,7 @@ class TemplatesDatatableService extends AbstractDatatableService
 
 	/**
 	 * @param int[] $templateIds
-	 * @return array<int,bool>
+	 * @return array<int,int>
 	 * @throws Exception
 	 */
 	public function getTemplatesInUse(array $templateIds): array
@@ -102,6 +102,5 @@ class TemplatesDatatableService extends AbstractDatatableService
 			return [];
 
 		return $this->templatesUsageService->determineTemplatesInUse($templateIds);
-
 	}
 }

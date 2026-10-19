@@ -140,7 +140,7 @@ class DatatableFacade implements DatatableFacadeInterface
 	 */
 	private function prepareList(array $fields): array
 	{
-		/** @var list<array{"UID": int, "company_id": int, template_id:int, name:string, username:string, ...}> $currentResults */
+		/** @var list<array{"UID": int, "company_id": int, template_id:int, type:string, name:string, username:string, ...}> $currentResults */
 		$currentResults = $this->templatesService->getCurrentFilterResults();
 		$showedIds = array_column($currentResults, 'template_id');
 

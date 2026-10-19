@@ -38,8 +38,8 @@ use Psr\SimpleCache\InvalidArgumentException;
  */
 class Orchestrator extends BaseTemplateOrchestrator
 {
-	/** @var array<string,string>  */
-	private array $template;
+	/** @var array<string,mixed> */
+	private array $template = [];
 
 	public function __construct(
 		private readonly TemplatePreparer    $templatePreparer,
@@ -50,26 +50,41 @@ class Orchestrator extends BaseTemplateOrchestrator
 		MediaUrlSigner $mediaUrlSigner
 	)
 	{
-
 		parent::__construct($config, $mediaUrlSigner);
 	}
 
-
+	/**
+	 * Returns false when the template does not exist or is not editable for the current user.
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws PhpfastcacheSimpleCacheException
+	 */
 	public function checkEditRights(int $templateId): bool
 	{
-		$template =  $this->templatesService->loadWithUserById($templateId);
-		if ($template == [])
+		try
+		{
+			$this->template = $this->templatesService->loadWithUserById($templateId);
+			return true;
+		}
+		catch (ModuleException)
+		{
 			return false;
-
-		$this->template = $template;
-		return true;
+		}
 	}
 
+	/**
+	 * @return array{main_layout: array<string,mixed>, this_layout: array{template: string, data: array<string,mixed>}}
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 */
 	public function build(int $templateId): array
 	{
 		$replaced = $this->templatePreparer->replace($templateId);
-		return $this->templatePreparer->prepare($this->template['name'], $replaced);
-
+		return $this->templatePreparer->prepare((string) $this->template['name'], $replaced);
 	}
 
 	/**
@@ -93,6 +108,10 @@ class Orchestrator extends BaseTemplateOrchestrator
 		return $this->templatesService->update($templateId, ['content' => $content]);
 	}
 
+	/**
+	 * @return string error text, empty on success
+	 * @throws Exception
+	 */
 	public function delete(int $templateId): string
 	{
 		if ($this->templatesUsageService->determineTemplatesInUse([$templateId]) !== [])
@@ -104,14 +123,21 @@ class Orchestrator extends BaseTemplateOrchestrator
 		return '';
 	}
 
+	/**
+	 * Content of the template loaded by checkEditRights() with fresh signed media urls.
+	 */
 	public function getContent(): string
 	{
-		if ( $this->template['content'] === null)
+		$content = $this->template['content'] ?? null;
+		if (!is_string($content) || $content === '')
 			return '';
 
-		$json = json_decode($this->template['content'], true);
+		$json = json_decode($content, true);
+		if (!is_array($json) || !isset($json['objects']) || !is_array($json['objects']))
+			return '';
+
 		$this->restoreSrc($json['objects']);
 
-		return json_encode($json);
+		return json_encode($json) ?: '';
 	}
 }

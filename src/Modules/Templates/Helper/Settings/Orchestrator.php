@@ -25,7 +25,6 @@ namespace App\Modules\Templates\Helper\Settings;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Exceptions\UserException;
 use App\Modules\Templates\Services\TemplatesService;
 use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
@@ -36,8 +35,8 @@ use Psr\SimpleCache\InvalidArgumentException;
  */
 class Orchestrator
 {
-	/** @var array<string,string>  */
-	private array $template;
+	/** @var array<string,mixed> */
+	private array $template = [];
 
 	public function __construct(
 		private readonly SettingsFormBuilder      $settingsFormBuilder,
@@ -46,23 +45,40 @@ class Orchestrator
 		private readonly FormInputHandler         $formInputHandler
 	) {}
 
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws PhpfastcacheSimpleCacheException
+	 */
 	public function checkCreateRights(): bool
 	{
 		return $this->templateService->checkCreateRights();
 	}
 
+	/**
+	 * Returns false when the template does not exist or is not editable for the current user.
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws PhpfastcacheSimpleCacheException
+	 */
 	public function checkEditRights(int $templateId): bool
 	{
-		$template =  $this->templateService->loadWithUserById($templateId);
-		if ($template == [])
+		try
+		{
+			$this->template = $this->templateService->loadWithUserById($templateId);
+			return true;
+		}
+		catch (ModuleException)
+		{
 			return false;
-
-		$this->template = $template;
-		return true;
+		}
 	}
 
-
 	/**
+	 * @param array<string,mixed> $post
+	 * @return array{hidden:list<array<string,string>>, visible: list<array<string,string>>}
 	 * @throws CoreException
 	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws InvalidArgumentException
@@ -74,6 +90,13 @@ class Orchestrator
 		return $this->settingsFormBuilder->buildForm($post);
 	}
 
+	/**
+	 * @return array{hidden:list<array<string,string>>, visible: list<array<string,string>>}
+	 * @throws CoreException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws InvalidArgumentException
+	 * @throws FrameworkException
+	 */
 	public function buildEditForm(): array
 	{
 		$this->settingsParametersPolicy->addEditFormElements();
@@ -82,8 +105,14 @@ class Orchestrator
 
 
 	/**
-	 * @param array<string, string> $post
+	 * @param array<string,mixed> $post
 	 * @return array{success: bool, errors?: string[]}
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws ModuleException
+	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function storeCreateSettings(array $post): array
 	{
@@ -102,7 +131,7 @@ class Orchestrator
 	}
 
 	/**
-	 * @param array $post
+	 * @param array<string,mixed> $post
 	 * @return array{success: bool, errors?: string[]}
 	 * @throws CoreException
 	 * @throws Exception
@@ -124,8 +153,4 @@ class Orchestrator
 
 		return ['success' => true];
 	}
-
-
-
-
 }

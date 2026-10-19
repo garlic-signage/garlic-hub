@@ -22,10 +22,16 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Controller;
 
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\ModuleException;
 use App\Modules\Templates\Helper\Settings\Orchestrator;
 use App\Modules\Templates\Helper\Settings\TemplatePreparer;
 use Psr\Http\Message\ResponseInterface;
+use Doctrine\DBAL\Exception;
+use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\SimpleCache\InvalidArgumentException;
 use Slim\Flash\Messages;
 
 class ShowSettingsController
@@ -37,15 +43,21 @@ class ShowSettingsController
 								private readonly TemplatePreparer $templatePreparer)
 	{}
 
+	/**
+	 * @param array<string,string> $args
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 */
 	public function create(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
-		$type = $args['type'] ?? 'canvas';
-
 		if (!$this->orchestrator->checkCreateRights())
 		{
 			$this->flash = $request->getAttribute('flash');
 			$this->flash->addMessage('error', 'No rights');
-			return $response->withHeader('Location', '/player')->withStatus(302);
+			return $response->withHeader('Location', '/templates')->withStatus(302);
 		}
 
 		$formData = $this->orchestrator->buildCreateForm();
@@ -55,6 +67,14 @@ class ShowSettingsController
 		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
 	}
 
+	/**
+	 * @param array<string,string> $args
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 */
 	public function edit(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
 		$templateId = (int) ($args['template_id'] ?? 0);
@@ -73,33 +93,48 @@ class ShowSettingsController
 		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
 	}
 
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws ModuleException
+	 * @throws PhpfastcacheSimpleCacheException
+	 */
 	public function store(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array{template_id?: int, type: string, name:string, ...}  $post */
+		/** @var array<string,mixed> $post */
 		$post        = $request->getParsedBody();
 		$templateId  = (int) ($post['template_id'] ?? 0);
 		$this->flash = $request->getAttribute('flash');
 
 		if ($templateId === 0)
 			return $this->insert($response, $post);
-		else
-			return $this->update($response, $templateId, $post);
 
+		return $this->update($response, $templateId, $post);
 	}
 
+	/**
+	 * @param array<string,mixed> $post
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws ModuleException
+	 * @throws PhpfastcacheSimpleCacheException
+	 */
 	private function insert(ResponseInterface $response, array $post): ResponseInterface
 	{
 		if (!$this->orchestrator->checkCreateRights())
 		{
 			$this->flash->addMessage('error', 'No rights');
-			return $response->withHeader('Location', '/player')->withStatus(302);
+			return $response->withHeader('Location', '/templates')->withStatus(302);
 		}
-		/** @var array{success: string, errors?: string[]} $viewData */
 		$viewData = $this->orchestrator->storeCreateSettings($post);
 
 		if (!$viewData['success'])
 		{
-			foreach ($viewData['errors'] as $errorText)
+			foreach ($viewData['errors'] ?? [] as $errorText)
 			{
 				$this->flash->addMessageNow('error', $errorText);
 			}
@@ -118,18 +153,27 @@ class ShowSettingsController
 		}
 	}
 
+	/**
+	 * @param array<string,mixed> $post
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws ModuleException
+	 * @throws PhpfastcacheSimpleCacheException
+	 */
 	private function update(ResponseInterface $response, int $templateId, array $post): ResponseInterface
 	{
 		if (!$this->orchestrator->checkEditRights($templateId))
 		{
 			$this->flash->addMessage('error', 'No rights');
-			return $response->withHeader('Location', '/player')->withStatus(302);
+			return $response->withHeader('Location', '/templates')->withStatus(302);
 		}
 
 		$viewData = $this->orchestrator->storeEditSettings($templateId, $post);
 		if (!$viewData['success'])
 		{
-			foreach ($viewData['errors'] as $errorText)
+			foreach ($viewData['errors'] ?? [] as $errorText)
 			{
 				$this->flash->addMessageNow('error', $errorText);
 			}

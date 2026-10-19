@@ -36,7 +36,7 @@ class Parameters extends BaseEditParameters
 	 * @var array<string, array{scalar_type: ScalarType, default_value: mixed, parsed: bool}>
 	 */
 	protected array $moduleParameters = [
-		self::PARAMETER_NAME => ['scalar_type' => ScalarType::STRING, 'default_value' => false, 'parsed' => false]
+		self::PARAMETER_NAME => ['scalar_type' => ScalarType::STRING, 'default_value' => '', 'parsed' => false]
 	];
 
 	public function __construct(Sanitizer $sanitizer, Session $session)

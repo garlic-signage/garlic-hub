@@ -28,7 +28,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Media\MediaUrlSigner;
-use App\Modules\Player\Enums\PlayerStatus;
 use App\Modules\Templates\Helper\Composer\Orchestrator;
 use App\Modules\Templates\Helper\Datatable\Parameters;
 use App\Modules\Templates\Services\TemplatesDatatableService;
@@ -69,14 +68,19 @@ readonly class TemplatesController
 	}
 
 	/**
+	 * A template can be deleted by everyone who can edit it, as long as it is not used in a playlist.
+	 *
 	 * @param array<string,string> $args
+	 * @throws CoreException
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function determineRights(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
 		$templateId = (int) ($args['template_id'] ?? 0);
 		$responseData = ['can_edit' => false, 'can_delete' => false];
-		if ($templateId === 0)
+		if ($templateId === 0 || !$this->orchestrator->checkEditRights($templateId))
 			return $this->responseHandler->jsonSuccess($response, $responseData);
 
 		$inUse = $this->templatesDatatableService->getTemplatesInUse([$templateId]);
@@ -89,13 +93,19 @@ readonly class TemplatesController
 		return $this->responseHandler->jsonSuccess($response, $responseData);
 	}
 
+	/**
+	 * @param array<string,string> $args
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws PhpfastcacheSimpleCacheException
+	 */
 	public function load(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
 		$templateId = (int) ($args['template_id'] ?? 0);
 
 		if (!$this->orchestrator->checkEditRights($templateId))
 			return $this->responseHandler->jsonError($response, 'No rights');
-
 
 		return $this->responseHandler->jsonSuccess($response, ['content' => $this->orchestrator->getContent()]);
 	}
@@ -148,7 +158,7 @@ readonly class TemplatesController
 	 */
 	public function save(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array{template_id?: int, item_id?: int, csrf_token?: string} $requestData */
+		/** @var array{template_id?: int, content?: string, image?: string, csrf_token?: string} $requestData */
 		$requestData = $request->getParsedBody();
 
 		$templateId = (int) ($requestData['template_id'] ?? 0);
@@ -157,19 +167,15 @@ readonly class TemplatesController
 		if (!$this->csrfToken->validateToken($requestData['csrf_token'] ?? ''))
 			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.');
 
-		if ($templateId > 0)
-		{
-			if (!$this->orchestrator->checkEditRights($templateId))
-				return $this->responseHandler->jsonError($response, 'No rights');
+		if ($templateId === 0)
+			return $this->responseHandler->jsonError($response, 'No template Id');
 
-			if ($this->orchestrator->saveTemplate($templateId, $requestData['content'], $image) === 0)
-				return $this->responseHandler->jsonError($response, 'Save failed');
+		if (!$this->orchestrator->checkEditRights($templateId))
+			return $this->responseHandler->jsonError($response, 'No rights');
 
-			return $this->responseHandler->jsonSuccess($response);
-		}
-
+		if ($this->orchestrator->saveTemplate($templateId, $requestData['content'] ?? '', $image) === 0)
+			return $this->responseHandler->jsonError($response, 'Save failed');
 
 		return $this->responseHandler->jsonSuccess($response);
 	}
-
 }

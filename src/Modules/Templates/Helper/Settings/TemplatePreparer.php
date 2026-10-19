@@ -23,29 +23,53 @@ declare(strict_types=1);
 namespace App\Modules\Templates\Helper\Settings;
 
 use App\Framework\Core\Translate\Translator;
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Utils\Forms\FormTemplatePreparer;
+use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
+use Psr\SimpleCache\InvalidArgumentException;
 
 class TemplatePreparer
 {
-
 	public function __construct(private readonly Translator $translator, private readonly FormTemplatePreparer $formTemplatePreparer)
-	{
+	{}
 
-	}
-
+	/**
+	 * @param array<string,mixed> $dataSections
+	 * @return array{main_layout: array<string,mixed>, this_layout: array<string,mixed>}
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 */
 	public function prepareEditSettings(array $dataSections): array
 	{
-		$dataSections['title']             = $this->translator->translate('setting', 'templates');
+		$dataSections['title'] = $this->translator->translate('setting', 'templates');
 		return $this->prepareSettings($dataSections);
 	}
 
-
+	/**
+	 * @param array<string,mixed> $dataSections
+	 * @return array{main_layout: array<string,mixed>, this_layout: array<string,mixed>}
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 */
 	public function prepareCreateSettings(array $dataSections): array
 	{
-		$dataSections['title']             = $this->translator->translate('add', 'templates');
+		$dataSections['title'] = $this->translator->translate('add', 'templates');
 		return $this->prepareSettings($dataSections);
 	}
 
+	/**
+	 * @param array<string,mixed> $dataSections
+	 * @return array{main_layout: array<string,mixed>, this_layout: array<string,mixed>}
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 */
 	private function prepareSettings(array $dataSections): array
 	{
 		$dataSections['additional_css']    = ['/css/templates/settings.css'];
@@ -55,7 +79,5 @@ class TemplatePreparer
 		$dataSections['save_button_label'] = $this->translator->translate('save', 'main');
 
 		return $this->formTemplatePreparer->prepareUITemplate($dataSections);
-
 	}
-
 }

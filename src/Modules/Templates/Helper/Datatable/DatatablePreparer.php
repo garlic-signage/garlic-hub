@@ -41,7 +41,7 @@ use Psr\SimpleCache\InvalidArgumentException;
 class DatatablePreparer extends AbstractDatatablePreparer
 {
 	/**
-	 * @var array<int,bool>
+	 * @var array<int,int> template_id => count
 	 */
 	private array $usedTemplates = [];
 
@@ -51,7 +51,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	}
 
 	/**
-	 * @param array<int,bool> $usedTemplates
+	 * @param array<int,int> $usedTemplates
 	 */
 	public function setUsedTemplates(array $usedTemplates): static
 	{
@@ -65,7 +65,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	 * @param list<array{UID: int,
 	 *      company_id: int,
 	 *      template_id: int,
-	 *      type: string, used:int,
+	 *      type: string,
 	 *      name:string,
 	 *      username:string,
 	 *     ...}> $currentFilterResults

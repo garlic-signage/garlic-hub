@@ -22,6 +22,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Helper\Settings;
 
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\ModuleException;
+use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
+use Psr\SimpleCache\InvalidArgumentException;
+
 class FormInputHandler
 {
 	public function __construct(private readonly Parameters $parameters,
@@ -30,56 +36,53 @@ class FormInputHandler
 	}
 
 	/**
-	 * @param array $post
-	 * @return array|string[]
-	 * @throws \App\Framework\Exceptions\CoreException
-	 * @throws \App\Framework\Exceptions\FrameworkException
-	 * @throws \App\Framework\Exceptions\ModuleException
-	 * @throws \Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException
-	 * @throws \Psr\SimpleCache\InvalidArgumentException
+	 * @param array<string,mixed> $post
+	 * @return string[]
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws InvalidArgumentException
 	 */
-	public function validateCreate(array $post)
+	public function validateCreate(array $post): array
 	{
 		$this->parse($post);
-		$errors = $this->validator->validateCreateInput();
-		if ($errors !== [])
-			return $errors;
-
-		return [];
+		return $this->validator->validateCreateInput();
 	}
 
 	/**
-	 * @param array $post
+	 * @param array<string,mixed> $post
 	 * @return string[]
-	 * @throws \App\Framework\Exceptions\CoreException
-	 * @throws \App\Framework\Exceptions\FrameworkException
-	 * @throws \App\Framework\Exceptions\ModuleException
-	 * @throws \Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException
-	 * @throws \Psr\SimpleCache\InvalidArgumentException
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws InvalidArgumentException
 	 */
-	public function validateEdit(array $post)
+	public function validateEdit(array $post): array
 	{
 		$this->parse($post);
-
-		$errors = $this->validator->validateEditInput();
-		if ($errors !== [])
-			return $errors;
-
-		return [];
+		return $this->validator->validateEditInput();
 	}
 
-	private function parse(array $post)
-	{
-		$this->parameters->setUserInputs($post);
-		$this->parameters->parseInputAllParameters();
-	}
-
-
+	/**
+	 * @return array<string,mixed>
+	 */
 	public function getParsed(): array
 	{
 		return array_combine(
 			$this->parameters->getInputParametersKeys(),
 			$this->parameters->getInputValuesArray()
 		);
+	}
+
+	/**
+	 * @param array<string,mixed> $post
+	 * @throws ModuleException
+	 */
+	private function parse(array $post): void
+	{
+		$this->parameters->setUserInputs($post);
+		$this->parameters->parseInputAllParameters();
 	}
 }
