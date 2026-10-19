@@ -245,9 +245,13 @@ $dependencies[InsertItemFactory::class] = DI\factory(function (ContainerInterfac
 $dependencies[ItemsController::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new ItemsController(
-		$container->get(ItemsService::class),
-		$container->get(InsertItemFactory::class),
-		$container->get(CsrfToken::class)
+		new \App\Modules\Playlists\Helper\Items\Orchestrator(
+			new \App\Modules\Playlists\Helper\Items\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
+			$container->get(UserSession::class),
+			$container->get(BaseValidator::class),
+			$container->get(ItemsService::class),
+			$container->get(InsertItemFactory::class)
+		)
 	);
 });
 $dependencies[PlaylistMetricsCalculator::class] = DI\factory(function (ContainerInterface $container)
