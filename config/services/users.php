@@ -41,7 +41,7 @@ use App\Modules\Users\Controller\ShowAdminController;
 use App\Modules\Users\Controller\ShowDatatableController;
 use App\Modules\Users\Controller\UsersController;
 use App\Modules\Users\Controller\UserTokenController;
-use App\Modules\Users\Helper\Datatable\ControllerFacade;
+use App\Modules\Users\Helper\Datatable\DatatableFacade;
 use App\Modules\Users\Helper\Datatable\DatatableBuilder;
 use App\Modules\Users\Helper\Datatable\DatatablePreparer;
 use App\Modules\Users\Helper\Datatable\Parameters;
@@ -126,7 +126,7 @@ $dependencies[UserTokenController::class] = DI\factory(function (ContainerInterf
 $dependencies[ShowDatatableController::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new ShowDatatableController(
-		$container->get(ControllerFacade::class),
+		$container->get(DatatableFacade::class),
 		$container->get(DatatableTemplatePreparer::class),
 		$container->get(BaseValidator::class),
 		$container->get(JsonResponseHandler::class)
@@ -149,9 +149,9 @@ $dependencies[DatatablePreparer::class] = DI\factory(function (ContainerInterfac
 		$container->get(Parameters::class)
 	);
 });
-$dependencies[ControllerFacade::class] = DI\factory(function (ContainerInterface $container)
+$dependencies[DatatableFacade::class] = DI\factory(function (ContainerInterface $container)
 {
-	return new ControllerFacade(
+	return new DatatableFacade(
 		$container->get(DatatableBuilder::class),
 		$container->get(DatatablePreparer::class),
 		$container->get(UsersDatatableService::class),

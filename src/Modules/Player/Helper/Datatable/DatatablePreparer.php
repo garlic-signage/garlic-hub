@@ -169,7 +169,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	 * @throws InvalidArgumentException
 	 * @throws PhpfastcacheSimpleCacheException
 	 */
-	public function formatPlayerContextMenu(): array
+	public function formatContextMenu(): array
 	{
 		return [
 			'LANG_ASSIGN_PLAYLIST' => $this->translator->translate('select_playlist', 'player'),

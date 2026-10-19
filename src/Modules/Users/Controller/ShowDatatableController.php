@@ -28,7 +28,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
-use App\Modules\Users\Helper\Datatable\ControllerFacade;
+use App\Modules\Users\Helper\Datatable\DatatableFacade;
 use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
@@ -39,7 +39,7 @@ use Slim\Flash\Messages;
 readonly class ShowDatatableController
 {
 	public function __construct(
-		private ControllerFacade $facade,
+		private DatatableFacade $facade,
 		private DatatableTemplatePreparer $templateFormatter,
 		private BaseValidator $validator,
 		private JsonResponseHandler $responseHandler

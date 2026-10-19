@@ -26,7 +26,7 @@ use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Modules\Player\Helper\Datatable\ControllerFacade;
+use App\Modules\Player\Helper\Datatable\DatatableFacade;
 use App\Modules\Player\Helper\Datatable\DatatableBuilder;
 use App\Modules\Player\Helper\Datatable\DatatablePreparer;
 use App\Modules\Player\Services\PlayerDatatableService;
@@ -37,14 +37,14 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\SimpleCache\InvalidArgumentException;
 
-class ControllerFacadeTest extends TestCase
+class DatatableFacadeTest extends TestCase
 {
 	private DatatableBuilder&MockObject $datatableBuilderMock;
 	private DatatablePreparer&MockObject $datatablePreparerMock;
 	private PlayerDatatableService&MockObject $playerServiceMock;
 	private Translator&MockObject $translatorMock;
 	private Session&MockObject $sessionMock;
-	private ControllerFacade $controllerFacade;
+	private DatatableFacade $datatableFacade;
 
 	/**
 	 * @throws \PHPUnit\Framework\MockObject\Exception
@@ -58,7 +58,7 @@ class ControllerFacadeTest extends TestCase
 		$this->translatorMock = $this->createMock(Translator::class);
 		$this->sessionMock = $this->createMock(Session::class);
 
-		$this->controllerFacade = new ControllerFacade(
+		$this->datatableFacade = new DatatableFacade(
 			$this->datatableBuilderMock,
 			$this->datatablePreparerMock,
 			$this->playerServiceMock
@@ -89,7 +89,7 @@ class ControllerFacadeTest extends TestCase
 			->with($this->translatorMock);
 		$this->datatablePreparerMock->expects($this->once())->method('setTranslator')
 			->with($this->translatorMock);
-		$this->controllerFacade->configure($this->translatorMock, $this->sessionMock);
+		$this->datatableFacade->configure($this->translatorMock, $this->sessionMock);
 	}
 
 	/**
@@ -103,7 +103,7 @@ class ControllerFacadeTest extends TestCase
 	{
 		$this->datatableBuilderMock->expects($this->once())->method('determineParameters');
 		$this->playerServiceMock->expects($this->once())->method('loadDatatable');
-		$this->controllerFacade->processSubmittedUserInput();
+		$this->datatableFacade->processSubmittedUserInput();
 	}
 
 	/**
@@ -124,8 +124,8 @@ class ControllerFacadeTest extends TestCase
 			->with(42);
 		$this->datatableBuilderMock->expects($this->once())->method('createDropDown');
 		$this->datatableBuilderMock->expects($this->once())->method('createTableFields');
-		$result = $this->controllerFacade->prepareDataGrid();
-		static::assertSame($this->controllerFacade, $result);
+		$result = $this->datatableFacade->prepareDataGrid();
+		static::assertSame($this->datatableFacade, $result);
 	}
 
 	/**
@@ -134,7 +134,7 @@ class ControllerFacadeTest extends TestCase
 	 * @throws CoreException
 	 */
 	#[Group('units')]
-	public function testPreparePlayerSettingsContextMenu(): void
+	public function testPrepareContextMenu(): void
 	{
 		$mockedContextMenu = [
 			['label' => 'Edit', 'action' => 'edit'],
@@ -142,10 +142,10 @@ class ControllerFacadeTest extends TestCase
 		];
 
 		$this->datatablePreparerMock->expects($this->once())
-			->method('formatPlayerContextMenu')
+			->method('formatContextMenu')
 			->willReturn($mockedContextMenu);
 
-		$result = $this->controllerFacade->preparePlayerSettingsContextMenu();
+		$result = $this->datatableFacade->prepareContextMenu();
 		static::assertSame($mockedContextMenu, $result);
 	}
 
@@ -167,7 +167,7 @@ class ControllerFacadeTest extends TestCase
 			->with('user')
 			->willReturn($mockUserData);
 
-		$this->controllerFacade->configure($this->translatorMock, $this->sessionMock);
+		$this->datatableFacade->configure($this->translatorMock, $this->sessionMock);
 
 		$datatableStructure = [
 			'pager' => ['links' => ['prev' => '...', 'next' => '...']],
@@ -217,7 +217,7 @@ class ControllerFacadeTest extends TestCase
 			->with($this->playerServiceMock->getCurrentFilterResults(), $datatableStructure['header'], 1)
 			->willReturn(['body' => 'rows']);
 
-		$result = $this->controllerFacade->prepareUITemplate();
+		$result = $this->datatableFacade->prepareUITemplate();
 
 		$expectedResult = [
 			'filter_elements' => ['filter' => 'form'],

@@ -41,7 +41,7 @@ use App\Modules\Player\Controller\PlayerIndexController;
 use App\Modules\Player\Controller\ShowDatatableController;
 use App\Modules\Player\Dashboard\PlayerDashboard;
 use App\Modules\Player\Entities\PlayerEntityFactory;
-use App\Modules\Player\Helper\Datatable\ControllerFacade;
+use App\Modules\Player\Helper\Datatable\DatatableFacade;
 use App\Modules\Player\Helper\Datatable\DatatableBuilder;
 use App\Modules\Player\Helper\Datatable\Parameters;
 use App\Modules\Player\Helper\Index\FileUtils;
@@ -167,9 +167,9 @@ $dependencies[DatatablePreparer::class] = DI\factory(function (ContainerInterfac
 		$container->get(TimeUnitsCalculator::class)
 	);
 });
-$dependencies[ControllerFacade::class] = DI\factory(function (ContainerInterface $container)
+$dependencies[DatatableFacade::class] = DI\factory(function (ContainerInterface $container)
 {
-	return new ControllerFacade(
+	return new DatatableFacade(
 		$container->get(DatatableBuilder::class),
 		$container->get(DatatablePreparer::class),
 		$container->get(PlayerDatatableService::class)
@@ -178,7 +178,7 @@ $dependencies[ControllerFacade::class] = DI\factory(function (ContainerInterface
 $dependencies[ShowDatatableController::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new ShowDatatableController(
-		$container->get(ControllerFacade::class),
+		$container->get(DatatableFacade::class),
 		$container->get(DatatableTemplatePreparer::class)
 	);
 });

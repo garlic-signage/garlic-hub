@@ -667,7 +667,7 @@ class DatatablePreparerTest extends TestCase
 	/**
 	 */
 	#[Group('units')]
-	public function testFormatPlaylistContextMenu(): void
+	public function testFormatContextMenu(): void
 	{
 		$this->datatablePreparer->setTranslator($this->translatorMock);
 
@@ -680,7 +680,7 @@ class DatatablePreparerTest extends TestCase
 			['delete_confirm', 'player', [], 'DeleteConfirm'],
 		]);
 
-		$result = $this->datatablePreparer->formatPlayerContextMenu();
+		$result = $this->datatablePreparer->formatContextMenu();
 
 		$expected = [
 			'LANG_ASSIGN_PLAYLIST' => 'Select Playlist',

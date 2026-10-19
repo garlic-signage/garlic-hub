@@ -29,7 +29,7 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
 use App\Modules\Player\Controller\ShowDatatableController;
-use App\Modules\Player\Helper\Datatable\ControllerFacade;
+use App\Modules\Player\Helper\Datatable\DatatableFacade;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
@@ -42,7 +42,7 @@ use Psr\SimpleCache\InvalidArgumentException;
 
 class ShowDatatableControllerTest extends TestCase
 {
-	private ControllerFacade&MockObject $facadeMock;
+	private DatatableFacade&MockObject $facadeMock;
 	private DatatableTemplatePreparer&MockObject $templatePreparerMock;
 	private ServerRequestInterface&MockObject $requestMock;
 	private ResponseInterface&MockObject $responseMock;
@@ -57,7 +57,7 @@ class ShowDatatableControllerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->facadeMock           = $this->createMock(ControllerFacade::class);
+		$this->facadeMock           = $this->createMock(DatatableFacade::class);
 		$this->templatePreparerMock = $this->createMock(DatatableTemplatePreparer::class);
 		$this->requestMock          = $this->createMock(ServerRequestInterface::class);
 		$this->responseMock         = $this->createMock(ResponseInterface::class);
@@ -97,7 +97,7 @@ class ShowDatatableControllerTest extends TestCase
 			->with(['dataGrid' => 'value'])
 			->willReturn($templateData);
 
-		$this->facadeMock->expects($this->once())->method('preparePlayerSettingsContextMenu')->willReturn( ['a contextmenu stub']);
+		$this->facadeMock->expects($this->once())->method('prepareContextMenu')->willReturn( ['a contextmenu stub']);
 		$templateData['this_layout']['data']['player_actions_contextmenu'] = ['a contextmenu stub'];
 
 		$this->responseMock->method('getBody')->willReturn($this->streamInterfaceMock);

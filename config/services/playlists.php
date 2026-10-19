@@ -58,7 +58,7 @@ use App\Modules\Playlists\Helper\Compose\UiTemplatesPreparer;
 use App\Modules\Playlists\Helper\ConditionalPlay\Orchestrator;
 use App\Modules\Playlists\Helper\ConditionalPlay\ResponseBuilder;
 use App\Modules\Playlists\Helper\ConditionalPlay\TemplatePreparer;
-use App\Modules\Playlists\Helper\Datatable\ControllerFacade;
+use App\Modules\Playlists\Helper\Datatable\DatatableFacade;
 use App\Modules\Playlists\Helper\Datatable\DatatableBuilder;
 use App\Modules\Playlists\Helper\Datatable\DatatablePreparer;
 use App\Framework\Media\DeliveryUrlBuilder;
@@ -189,9 +189,9 @@ $dependencies[DatatablePreparer::class] = DI\factory(function (ContainerInterfac
 		$container->get(\App\Modules\Playlists\Helper\Datatable\Parameters::class)
 	);
 });
-$dependencies[ControllerFacade::class] = DI\factory(function (ContainerInterface $container)
+$dependencies[DatatableFacade::class] = DI\factory(function (ContainerInterface $container)
 {
-	return new ControllerFacade(
+	return new DatatableFacade(
 		$container->get(DatatableBuilder::class),
 		$container->get(DatatablePreparer::class),
 		$container->get(PlaylistsDatatableService::class)
@@ -201,7 +201,7 @@ $dependencies[ControllerFacade::class] = DI\factory(function (ContainerInterface
 $dependencies[ShowDatatableController::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new ShowDatatableController(
-		$container->get(ControllerFacade::class),
+		$container->get(DatatableFacade::class),
 		$container->get(DatatableTemplatePreparer::class)
 	);
 });

@@ -321,7 +321,7 @@ class DatatablePreparerTest extends TestCase
 	/**
 	 */
 	#[Group('units')]
-	public function testFormatPlaylistContextMenu(): void
+	public function testFormatContextMenu(): void
 	{
 		$this->datatablePreparer->setTranslator($this->translatorMock);
 
@@ -329,7 +329,7 @@ class DatatablePreparerTest extends TestCase
 			->with('playlist_mode_selects', 'playlists')
 			->willReturn([PlaylistMode::MASTER->value => 'Master', 'slave' => 'Slave']);
 
-		$result = $this->datatablePreparer->formatPlaylistContextMenu();
+		$result = $this->datatablePreparer->formatContextMenu();
 
 		static::assertCount(2, $result);
 		static::assertEquals(
@@ -345,7 +345,7 @@ class DatatablePreparerTest extends TestCase
 	 * @throws Exception
 	 */
 	#[Group('units')]
-	public function testFormatPlaylistContextMenuEdgeForbidden(): void
+	public function testFormatContextMenuEdgeForbidden(): void
 	{
 		$this->datatablePreparer->setTranslator($this->translatorMock);
 		$configMock = $this->createMock(Config::class);
@@ -356,7 +356,7 @@ class DatatablePreparerTest extends TestCase
 			->with('playlist_mode_selects', 'playlists')
 			->willReturn([PlaylistMode::MASTER->value => 'Master', PlaylistMode::CHANNEL->value => 'Channel', PlaylistMode::EXTERNAL->value => 'External']);
 
-		$result = $this->datatablePreparer->formatPlaylistContextMenu();
+		$result = $this->datatablePreparer->formatContextMenu();
 
 		static::assertCount(1, $result);
 		static::assertEquals(

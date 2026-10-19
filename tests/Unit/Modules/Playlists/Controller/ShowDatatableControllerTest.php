@@ -28,7 +28,7 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
 use App\Modules\Playlists\Controller\ShowDatatableController;
-use App\Modules\Playlists\Helper\Datatable\ControllerFacade as Facade;
+use App\Modules\Playlists\Helper\Datatable\DatatableFacade as Facade;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;

@@ -25,7 +25,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
-use App\Modules\Player\Helper\Datatable\ControllerFacade;
+use App\Modules\Player\Helper\Datatable\DatatableFacade;
 use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
@@ -40,9 +40,9 @@ use Psr\SimpleCache\InvalidArgumentException;
  */
 readonly class ShowDatatableController
 {
-	private ControllerFacade $facade;
+	private DatatableFacade $facade;
 	private DatatableTemplatePreparer $templateFormatter;
-	public function __construct(ControllerFacade $facade, DatatableTemplatePreparer $templateFormatter)
+	public function __construct(DatatableFacade $facade, DatatableTemplatePreparer $templateFormatter)
 	{
 		$this->facade            = $facade;
 		$this->templateFormatter = $templateFormatter;
@@ -69,7 +69,7 @@ readonly class ShowDatatableController
 		$dataGrid = $this->facade->prepareUITemplate();
 
 		$templateData = $this->templateFormatter->preparerUITemplate($dataGrid);
-		$templateData['this_layout']['data']['player_actions_contextmenu'] = $this->facade->preparePlayerSettingsContextMenu();
+		$templateData['this_layout']['data']['player_actions_contextmenu'] = $this->facade->prepareContextMenu();
 		$response->getBody()->write(serialize($templateData));
 
 		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);

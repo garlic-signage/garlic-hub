@@ -19,7 +19,7 @@
 */
 declare(strict_types=1);
 
-namespace App\Modules\Player\Helper\Datatable;
+namespace App\Modules\Users\Helper\Datatable;
 
 use App\Framework\Core\Session;
 use App\Framework\Core\Translate\Translator;
@@ -28,29 +28,31 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\Datatable\DatatableFacadeInterface;
 use App\Framework\Utils\Datatable\Results\HeaderField;
-use App\Modules\Player\Services\PlayerDatatableService;
-use DateMalformedStringException;
+use App\Modules\Users\Services\UsersAdminService;
+use App\Modules\Users\Services\UsersDatatableService;
 use Doctrine\DBAL\Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\SimpleCache\InvalidArgumentException;
 
 /**
- * Facade class responsible for managing the datatable's configuration, preparation, processing, and rendering.
- * It interacts with datatable components such as the builder, preparer, and specific player service in order
- * to streamline complex operations and present a cohesive interface.
+ * This class acts as a facade to handle operations related to a datatable framework.
+ * It integrates multiple services and components to streamline data management
+ * for users and administrators.
  */
-class ControllerFacade implements DatatableFacadeInterface
+class DatatableFacade implements DatatableFacadeInterface
 {
 	private readonly DatatableBuilder $datatableBuilder;
 	private readonly DatatablePreparer $datatablePreparer;
-	private readonly PlayerDatatableService $playerService;
+	private readonly UsersDatatableService $usersService;
+	private readonly UsersAdminService $usersAdminService;
 	private int $UID;
 
-	public function __construct(DatatableBuilder $datatableBuilder, DatatablePreparer $datatablePreparer, PlayerDatatableService $playerService)
+	public function __construct(DatatableBuilder $datatableBuilder, DatatablePreparer $datatablePreparer, UsersDatatableService $usersService, UsersAdminService $usersAdminService)
 	{
-		$this->datatableBuilder  = $datatableBuilder;
+		$this->datatableBuilder   = $datatableBuilder;
 		$this->datatablePreparer = $datatablePreparer;
-		$this->playerService  = $playerService;
+		$this->usersService       = $usersService;
+		$this->usersAdminService  = $usersAdminService;
 	}
 
 	/**
@@ -60,13 +62,22 @@ class ControllerFacade implements DatatableFacadeInterface
 	 */
 	public function configure(Translator $translator, Session $session): void
 	{
-		/** @var array{UID: string} $user */
+		/** @var array{UID: int} $user */
 		$user = $session->get('user');
 		$this->UID = (int) $user['UID'];
-		$this->playerService->setUID($this->UID);
+		$this->usersService->setUID($this->UID);
+		$this->usersAdminService->setUID($this->UID);
 		$this->datatableBuilder->configureParameters($this->UID);
 		$this->datatablePreparer->setTranslator($translator);
 		$this->datatableBuilder->setTranslator($translator);
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function deleteUser(int $UID): bool
+	{
+		return $this->usersAdminService->deleteUser($UID);
 	}
 
 	/**
@@ -78,21 +89,21 @@ class ControllerFacade implements DatatableFacadeInterface
 	public function processSubmittedUserInput(): void
 	{
 		$this->datatableBuilder->determineParameters();
-		$this->playerService->loadDatatable();
+		$this->usersService->loadDatatable();
 	}
 
 	/**
-	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws ModuleException
+	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function prepareDataGrid(): static
 	{
 		$this->datatableBuilder->buildTitle();
 		$this->datatableBuilder->collectFormElements();
-		$this->datatableBuilder->createPagination($this->playerService->getCurrentTotalResult());
+		$this->datatableBuilder->createPagination($this->usersService->getCurrentTotalResult());
 		$this->datatableBuilder->createDropDown();
 		$this->datatableBuilder->createTableFields();
 
@@ -100,24 +111,12 @@ class ControllerFacade implements DatatableFacadeInterface
 	}
 
 	/**
-	 * @return list<array<string,mixed>>
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
-	 */
-	public function preparePlayerSettingsContextMenu(): array
-	{
-		return $this->datatablePreparer->formatPlayerContextMenu();
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
+	 * @throws CoreException
 	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws DateMalformedStringException
+	 * @throws InvalidArgumentException
+	 * @throws FrameworkException
+	 * @throws Exception
 	 */
 	public function prepareUITemplate(): array
 	{
@@ -128,38 +127,35 @@ class ControllerFacade implements DatatableFacadeInterface
 			'filter_elements'     => $this->datatablePreparer->prepareFilterForm($datatableStructure['form']),
 			'pagination_dropdown' => $pagination['dropdown'],
 			'pagination_links'    => $pagination['links'],
-			'has_add'			  => [],
-			'results_header'      => $this->datatablePreparer->prepareTableHeader($datatableStructure['header'], ['player', 'main']),
+			'has_add'			  => $this->datatablePreparer->prepareAdd('person-add', 'users/new'),
+			'results_header'      => $this->datatablePreparer->prepareTableHeader($datatableStructure['header'],  ['users', 'main']),
 			'results_list'        => $this->prepareList($datatableStructure['header']),
-			'results_count'       => $this->playerService->getCurrentTotalResult(),
+			'results_count'       => $this->usersService->getCurrentTotalResult(),
 			'title'               => $datatableStructure['title'],
-			'template_name'       => 'player/datatable',
-			'module_name'		  => 'player',
-			'additional_css'      => ['/css/player/datatable.css'],
-			'footer_modules'      => ['/js/player/datatable/init.js'],
+			'template_name'       => 'users/datatable',
+			'module_name'		  => 'users',
+			'additional_css'      => ['/css/users/datatable.css'],
+			'footer_modules'      => ['/js/users/datatable/init.js'],
 			'sort'				  => $this->datatablePreparer->prepareSort(),
 			'page'      		  => $this->datatablePreparer->preparePage()
 		];
 	}
 
-
 	/**
-	 *
 	 * @param list<HeaderField> $fields
 	 * @return list<array<string,mixed>>
 	 * @throws CoreException
-	 * @throws FrameworkException
+	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException ´
-	 * @throws DateMalformedStringException
+	 * @throws Exception
+	 * @throws FrameworkException
 	 */
 	private function prepareList(array $fields): array
 	{
 		return $this->datatablePreparer->prepareTableBody(
-			$this->playerService->getCurrentFilterResults(),
+			$this->usersService->getCurrentFilterResults(),
 			$fields,
 			$this->UID
 		);
 	}
-
 }

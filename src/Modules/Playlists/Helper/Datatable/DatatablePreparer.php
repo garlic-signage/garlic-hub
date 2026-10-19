@@ -167,7 +167,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	 * @throws InvalidArgumentException
 	 * @throws PhpfastcacheSimpleCacheException
 	 */
-	public function formatPlaylistContextMenu(): array
+	public function formatContextMenu(): array
 	{
 		$list = $this->translator->translateArrayForOptions('playlist_mode_selects', 'playlists');
 		$data = [];

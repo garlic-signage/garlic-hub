@@ -25,7 +25,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
 use App\Framework\Utils\Datatable\DatatableFacadeInterface;
-use App\Modules\Playlists\Helper\Datatable\ControllerFacade;
+use App\Modules\Playlists\Helper\Datatable\DatatableFacade;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -61,7 +61,7 @@ readonly class ShowDatatableController
 
 		$templateData = $this->templateFormatter->preparerUITemplate($dataGrid);
 
-		if ($this->facade instanceof ControllerFacade)
+		if ($this->facade instanceof DatatableFacade)
 			$templateData['this_layout']['data']['create_playlist_contextmenu'] = $this->facade->prepareContextMenu();
 
 		$response->getBody()->write(serialize($templateData));
