@@ -21,10 +21,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Controller;
 
-use App\Framework\Controller\AbstractAsyncController;
+use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\FormParameters\ScalarType;
+use App\Modules\Auth\UserSession;
 use App\Modules\Users\Helper\Datatable\Parameters;
 use App\Modules\Users\Services\UsersDatatableService;
 use App\Modules\Users\UserStatus;
@@ -37,23 +39,24 @@ use Psr\Http\Message\ServerRequestInterface;
  * UsersController handles user-related operations and interacts with services
  * for processing datatables and parameters.
  */
-class UsersController extends AbstractAsyncController
+readonly class UsersController
 {
-	private UsersDatatableService $usersDatatableService;
-	private readonly Parameters $parameters;
-
-	public function __construct(UsersDatatableService $usersDatatableService, Parameters $parameters)
-	{
-		$this->usersDatatableService = $usersDatatableService;
-		$this->parameters = $parameters;
-	}
+	public function __construct(
+		private UsersDatatableService $usersDatatableService,
+		private Parameters $parameters,
+		private UserSession $userSession,
+		private JsonResponseHandler $responseHandler
+	) {}
 
 	/**
+	 * Returns the plain list without success envelope, because the autocomplete expects it.
+	 *
 	 * @param array<string,string> $args
 	 * @throws ModuleException
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
 	 */
 	public function findByName(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
@@ -63,8 +66,7 @@ class UsersController extends AbstractAsyncController
 		$this->parameters->setUserInputs($args);
 		$this->parameters->parseInputAllParameters();
 
-		$session = $request->getAttribute('session');
-		$this->usersDatatableService->setUID($session->get('user')['UID']);
+		$this->usersDatatableService->setUID($this->userSession->getUID());
 		$this->usersDatatableService->loadDatatable();
 		$results = [];
 		foreach ($this->usersDatatableService->getCurrentFilterResults() as $value)
@@ -72,7 +74,7 @@ class UsersController extends AbstractAsyncController
 			$results[] = ['id' => $value['UID'], 'name' => $value['username']];
 		}
 
-		return $this->jsonResponse($response, $results);
+		return $this->responseHandler->jsonResponse($response, $results);
 	}
 
 }

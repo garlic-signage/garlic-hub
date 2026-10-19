@@ -21,95 +21,92 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Users\Controller;
 
-use App\Framework\Core\Session;
+use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\FormParameters\ScalarType;
+use App\Modules\Auth\UserSession;
 use App\Modules\Users\Controller\UsersController;
 use App\Modules\Users\Helper\Datatable\Parameters;
 use App\Modules\Users\Services\UsersDatatableService;
 use App\Modules\Users\UserStatus;
-use Exception;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamInterface;
 
 class UsersControllerTest extends TestCase
 {
-	private ServerRequestInterface&MockObject  $requestMock;
-	private ResponseInterface&MockObject  $responseMock;
+	private ServerRequestInterface&Stub $requestStub;
+	private ResponseInterface&Stub $responseStub;
 	private UsersDatatableService&MockObject $usersServiceMock;
-	private Parameters&MockObject  $parametersMock;
-	private StreamInterface&MockObject  $streamInterfaceMock;
+	private Parameters&MockObject $parametersMock;
+	private JsonResponseHandler&MockObject $responseHandlerMock;
 	private UsersController $controller;
 
 	/**
 	 * @throws Exception
-	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->requestMock          = $this->createMock(ServerRequestInterface::class);
-		$this->responseMock         = $this->createMock(ResponseInterface::class);
-		$this->streamInterfaceMock  = $this->createMock(StreamInterface::class);
+		$this->requestStub         = $this->createStub(ServerRequestInterface::class);
+		$this->responseStub        = $this->createStub(ResponseInterface::class);
+		$this->parametersMock      = $this->createMock(Parameters::class);
+		$this->usersServiceMock    = $this->createMock(UsersDatatableService::class);
+		$this->responseHandlerMock = $this->createMock(JsonResponseHandler::class);
 
-		$this->responseMock->method('getBody')->willReturn($this->streamInterfaceMock);
-		$this->parametersMock = $this->createMock(Parameters::class);
-		$this->usersServiceMock = $this->createMock(UsersDatatableService::class);
+		$userSessionStub = $this->createStub(UserSession::class);
+		$userSessionStub->method('getUID')->willReturn(123);
 
-		$this->controller = new UsersController($this->usersServiceMock, $this->parametersMock);
+		$this->controller = new UsersController(
+			$this->usersServiceMock,
+			$this->parametersMock,
+			$userSessionStub,
+			$this->responseHandlerMock
+		);
 	}
 
 	/**
-	 * @throws Exception
 	 * @throws ModuleException
 	 * @throws CoreException
 	 * @throws \Doctrine\DBAL\Exception
 	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws \PHPUnit\Framework\MockObject\Exception
+	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testFindByNameReturnsCorrectResponse(): void
+	public function testFindByNameReturnsPlainList(): void
 	{
 		$args = ['username' => 'testUser'];
-
-		$sessionMock = $this->createMock(Session::class);
-		$sessionMock->method('get')->with('user')->willReturn(['UID' => 123]);
-		$this->requestMock->method('getAttribute')->with('session')->willReturn($sessionMock);
 
 		$this->parametersMock->expects($this->once())
 			->method('addParameter')
 			->with(Parameters::PARAMETER_FROM_STATUS, ScalarType::INT, UserStatus::REGISTERED->value);
-
 		$this->parametersMock->expects($this->once())->method('setUserInputs')->with($args);
 		$this->parametersMock->expects($this->once())->method('parseInputAllParameters');
 
 		$this->usersServiceMock->expects($this->once())->method('setUID')->with(123);
 		$this->usersServiceMock->expects($this->once())->method('loadDatatable');
-
-		$this->usersServiceMock->method('getCurrentFilterResults')->willReturn([
+		$this->usersServiceMock->expects($this->once())->method('getCurrentFilterResults')->willReturn([
 			['UID' => 1, 'username' => 'JohnDoe'],
 			['UID' => 2, 'username' => 'JaneDoe']
 		]);
 
-		$this->streamInterfaceMock->expects($this->once())->method('write')->with(json_encode([
-			['id' => 1, 'name' => 'JohnDoe'],
-			['id' => 2, 'name' => 'JaneDoe']
-		]));
+		// autocomplete expects the plain list, no success envelope
+		$this->responseHandlerMock->expects($this->once())->method('jsonResponse')
+			->with($this->responseStub, [
+				['id' => 1, 'name' => 'JohnDoe'],
+				['id' => 2, 'name' => 'JaneDoe']
+			])
+			->willReturn($this->responseStub);
 
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Content-Type', 'application/json')
-			->willReturnSelf();
+		$result = $this->controller->findByName($this->requestStub, $this->responseStub, $args);
 
-		$this->responseMock->expects($this->once())->method('withStatus')->with(200)->willReturnSelf();
-
-		$result = $this->controller->findByName($this->requestMock, $this->responseMock, $args);
-
-		static::assertSame($this->responseMock, $result);
+		static::assertSame($this->responseStub, $result);
 	}
 }
