@@ -333,8 +333,12 @@ $dependencies[WidgetsService::class] = DI\factory(function (ContainerInterface $
 $dependencies[WidgetsController::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new WidgetsController(
-		$container->get(WidgetsService::class),
-		$container->get(CsrfToken::class),
+		new \App\Modules\Playlists\Helper\Widgets\Orchestrator(
+			new \App\Modules\Playlists\Helper\Widgets\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
+			$container->get(UserSession::class),
+			$container->get(BaseValidator::class),
+			$container->get(WidgetsService::class)
+		)
 	);
 });
 $dependencies[ConditionalPlayService::class] = DI\factory(function (ContainerInterface $container)

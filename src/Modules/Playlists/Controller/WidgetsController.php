@@ -21,63 +21,51 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Controller;
 
-use App\Framework\Controller\AbstractAsyncController;
-use App\Framework\Core\CsrfToken;
-use App\Modules\Playlists\Services\WidgetsService;
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\UserException;
+use App\Modules\Playlists\Helper\Widgets\Orchestrator;
+use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Handles operations related to Widgets.
- *
- * This controller is responsible for fetching and saving widget data.
+ * Validation and execution are delegated to the Orchestrator.
  */
-class WidgetsController extends AbstractAsyncController
+readonly class WidgetsController
 {
-	private readonly WidgetsService $widgetsService;
-	private readonly CsrfToken $csrfToken;
-
-
-	public function __construct(WidgetsService $itemsService, CsrfToken $csrfToken)
-	{
-		$this->widgetsService = $itemsService;
-		$this->csrfToken = $csrfToken;
-	}
+	public function __construct(private Orchestrator $orchestrator) {}
 
 	/**
-	 * @param array<string, mixed> $args
+	 * @param array<string,mixed> $args
+	 * @throws UserException
 	 */
 	public function fetch(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
-		$itemId = (int) ($args['item_id'] ?? 0);
-		if ($itemId === 0)
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Item ID not valid.']);
+		$answer = $this->orchestrator->setInput($args)->validate($response);
+		if ($answer !== null)
+			return $answer;
 
-		$this->widgetsService->setUID($request->getAttribute('session')->get('user')['UID']);
-		$data = $this->widgetsService->fetchWidgetByItemId($itemId);
-		if (empty($data))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Widget load failed.']);
-
-		return $this->jsonResponse($response, ['success' => true, 'data' => $data]);
+		return $this->orchestrator->fetch($response);
 	}
 
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
+	 */
 	public function save(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array<string,mixed> $requestData */
-		$requestData = $request->getParsedBody();
+		/** @var array<string,mixed> $input */
+		$input = $request->getParsedBody();
+		$answer = $this->orchestrator->setInput($input)->validateSave($response);
+		if ($answer !== null)
+			return $answer;
 
-		if (!$this->csrfToken->validateToken($requestData['csrf_token'] ?? ''))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'CSRF token mismatch.']);
-
-		$itemId = (int) ($requestData['item_id'] ?? 0);
-		if ($itemId === 0)
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => 'Item ID not valid.']);
-
-		$this->widgetsService->setUID($request->getAttribute('session')->get('user')['UID']);
-
-		if (!$this->widgetsService->saveWidget($itemId, $requestData))
-			return $this->jsonResponse($response, ['success' => false, 'error_message' => $this->widgetsService->getErrorText()]);
-
-		return $this->jsonResponse($response, ['success' => true]);
+		return $this->orchestrator->save($response);
 	}
 }

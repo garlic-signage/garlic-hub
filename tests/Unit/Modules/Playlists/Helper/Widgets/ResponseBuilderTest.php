@@ -1,0 +1,85 @@
+<?php
+/*
+ garlic-hub: Digital Signage Management Platform
+
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ This file is part of the garlic-hub source code
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License, version 3,
+ as published by the Free Software Foundation.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+declare(strict_types=1);
+
+namespace Tests\Unit\Modules\Playlists\Helper\Widgets;
+
+use App\Framework\Controller\JsonResponseHandler;
+use App\Framework\Core\Translate\Translator;
+use App\Modules\Playlists\Helper\Widgets\ResponseBuilder;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\MockObject\Exception;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
+use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+
+class ResponseBuilderTest extends TestCase
+{
+	private JsonResponseHandler&MockObject $jsonResponseHandlerMock;
+	private ResponseInterface&Stub $responseStub;
+	private ResponseBuilder $responseBuilder;
+
+	/**
+	 * @throws Exception
+	 */
+	protected function setUp(): void
+	{
+		parent::setUp();
+		$this->jsonResponseHandlerMock = $this->createMock(JsonResponseHandler::class);
+		$this->responseStub            = $this->createStub(ResponseInterface::class);
+
+		$this->responseBuilder = new ResponseBuilder(
+			$this->jsonResponseHandlerMock,
+			$this->createStub(Translator::class)
+		);
+	}
+
+	#[Group('units')]
+	public function testInvalidItemId(): void
+	{
+		$this->expectJsonError('Item ID not valid.');
+
+		static::assertSame($this->responseStub, $this->responseBuilder->invalidItemId($this->responseStub));
+	}
+
+	#[Group('units')]
+	public function testWidgetLoadFailed(): void
+	{
+		$this->expectJsonError('Widget load failed.');
+
+		static::assertSame($this->responseStub, $this->responseBuilder->widgetLoadFailed($this->responseStub));
+	}
+
+	#[Group('units')]
+	public function testSaveFailed(): void
+	{
+		$this->expectJsonError('Save error');
+
+		static::assertSame($this->responseStub, $this->responseBuilder->saveFailed($this->responseStub, 'Save error'));
+	}
+
+	private function expectJsonError(string $message): void
+	{
+		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonError')
+			->with($this->responseStub, $message)
+			->willReturn($this->responseStub);
+	}
+}

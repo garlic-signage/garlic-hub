@@ -21,27 +21,28 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Controller;
 
-use App\Framework\Core\CsrfToken;
-use App\Framework\Core\Session;
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\UserException;
 use App\Modules\Playlists\Controller\WidgetsController;
-use App\Modules\Playlists\Services\WidgetsService;
+use App\Modules\Playlists\Helper\Widgets\Orchestrator;
+use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamInterface;
+use Psr\SimpleCache\InvalidArgumentException;
 
 class WidgetsControllerTest extends TestCase
 {
-	private WidgetsService&MockObject $widgetsServiceMock;
-	private ResponseInterface&MockObject $responseMock;
-	private ServerRequestInterface&MockObject $requestMock;
-	private Session&MockObject $sessionMock;
-	private StreamInterface&MockObject $streamInterfaceMock;
-	private CsrfToken&MockObject $csrfTokenMock;
-	private WidgetsController $controller;
+	private Orchestrator&MockObject $orchestratorMock;
+	private ServerRequestInterface&Stub $requestStub;
+	private ResponseInterface&Stub $responseStub;
+	private ResponseInterface&Stub $expectedResponseStub;
+	private WidgetsController $widgetsController;
 
 	/**
 	 * @throws Exception
@@ -49,142 +50,97 @@ class WidgetsControllerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->requestMock           = $this->createMock(ServerRequestInterface::class);
-		$this->responseMock          = $this->createMock(ResponseInterface::class);
-		$this->streamInterfaceMock   = $this->createMock(StreamInterface::class);
-		$this->widgetsServiceMock    = $this->createMock(WidgetsService::class);
-		$this->sessionMock           = $this->createMock(Session::class);
-		$this->csrfTokenMock         = $this->createMock(CsrfToken::class);
+		$this->orchestratorMock     = $this->createMock(Orchestrator::class);
+		$this->requestStub          = $this->createStub(ServerRequestInterface::class);
+		$this->responseStub         = $this->createStub(ResponseInterface::class);
+		$this->expectedResponseStub = $this->createStub(ResponseInterface::class);
 
-		$this->controller = new WidgetsController($this->widgetsServiceMock, $this->csrfTokenMock);
+		$this->widgetsController = new WidgetsController($this->orchestratorMock);
 	}
 
 	/**
-	 * @throws Exception
+	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testFetchWithInvalidItemId(): void
+	public function testFetchReturnsValidationError(): void
 	{
-		$this->widgetsServiceMock->expects($this->never())->method('setUID');
+		$args = ['item_id' => 12];
+		$this->orchestratorMock->expects($this->once())->method('setInput')->with($args)->willReturnSelf();
+		$this->orchestratorMock->expects($this->once())->method('validate')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
+		$this->orchestratorMock->expects($this->never())->method('fetch');
 
-		$this->mockJsonResponse(['success' => false, 'error_message' => 'Item ID not valid.']);
+		$result = $this->widgetsController->fetch($this->requestStub, $this->responseStub, $args);
 
-		$this->controller->fetch($this->requestMock, $this->responseMock, []);
-	}
-
-	#[Group('units')]
-	public function testFetchWithWidgetLoadFailure(): void
-	{
-		$args = ['item_id' => 123];
-
-		$this->setServiceUIDMocks();
-		$this->mockJsonResponse(['success' => false, 'error_message' => 'Widget load failed.']);
-		$this->widgetsServiceMock->expects($this->once())->method('fetchWidgetByItemId')
-			->willReturn([]);
-
-		$this->controller->fetch($this->requestMock, $this->responseMock, $args);
-	}
-
-	#[Group('units')]
-	public function testFetchWithSuccessfulData(): void
-	{
-		$args = ['item_id' => 123];
-		$data = ['some', 'data'];
-
-		$this->setServiceUIDMocks();
-
-		$this->widgetsServiceMock->expects($this->once())->method('fetchWidgetByItemId')
-			->willReturn($data);
-
-		$this->mockJsonResponse(['success' => true, 'data' => $data]);
-		$this->controller->fetch($this->requestMock, $this->responseMock, $args);
-	}
-
-	#[Group('units')]
-	public function testSaveWithInvalidCsrf(): void
-	{
-		$this->widgetsServiceMock->expects($this->never())->method('setUID');
-		$this->widgetsServiceMock->expects($this->never())->method('saveWidget');
-
-		$this->requestMock->method('getParsedBody')->willReturn([]);
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(false);
-
-		$this->mockJsonResponse(['success' => false, 'error_message' => 'CSRF token mismatch.']);
-
-		$this->controller->save($this->requestMock, $this->responseMock);
-	}
-
-
-	#[Group('units')]
-	public function testSaveWithInvalidItemId(): void
-	{
-		$this->widgetsServiceMock->expects($this->never())->method('setUID');
-		$this->widgetsServiceMock->expects($this->never())->method('saveWidget');
-
-		$this->requestMock->method('getParsedBody')->willReturn([]);
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
-
-		$this->mockJsonResponse(['success' => false, 'error_message' => 'Item ID not valid.']);
-
-		$this->controller->save($this->requestMock, $this->responseMock);
-	}
-
-	#[Group('units')]
-	public function testSaveWithWidgetSaveFailure(): void
-	{
-		$requestData = ['item_id' => 123];
-		$errorMessage = 'Save failed';
-
-		$this->setServiceUIDMocks();
-
-		$this->requestMock->method('getParsedBody')->willReturn($requestData);
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
-
-		$this->widgetsServiceMock->method('saveWidget')->with(123, $requestData)->willReturn(false);
-		$this->widgetsServiceMock->method('getErrorText')->willReturn($errorMessage);
-
-		$this->mockJsonResponse(['success' => false, 'error_message' => $errorMessage]);
-
-		$this->controller->save($this->requestMock, $this->responseMock);
-
-	}
-
-	#[Group('units')]
-	public function testSaveWithSuccessfulSave(): void
-	{
-		$requestData = ['item_id' => 123];
-
-		$this->setServiceUIDMocks();
-
-		$this->requestMock->method('getParsedBody')->willReturn($requestData);
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
-
-		$this->widgetsServiceMock->method('saveWidget')->with(123, $requestData)->willReturn(true);
-
-		$this->mockJsonResponse(['success' => true]);
-
-		$this->controller->save($this->requestMock, $this->responseMock);
-
-	}
-
-	private function setServiceUIDMocks(): void
-	{
-		$this->requestMock->method('getAttribute')->with('session')->willReturn($this->sessionMock);
-		$this->sessionMock->method('get')->with('user')->willReturn(['UID' => 456]);
-		$this->widgetsServiceMock->expects($this->once())->method('setUID')->with(456);
+		static::assertSame($this->expectedResponseStub, $result);
 	}
 
 	/**
-	 * @param array<string,mixed> $data
+	 * @throws UserException
 	 */
-	private function mockJsonResponse(array $data): void
+	#[Group('units')]
+	public function testFetchSucceeds(): void
 	{
-		$this->responseMock->method('getBody')->willReturn($this->streamInterfaceMock);
-		$this->streamInterfaceMock->method('write')->with(json_encode($data));
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Content-Type', 'application/json')
-			->willReturnSelf();
-		$this->responseMock->method('withStatus')->with('200');
+		$args = ['item_id' => 12];
+		$this->orchestratorMock->expects($this->once())->method('setInput')->with($args)->willReturnSelf();
+		$this->orchestratorMock->expects($this->once())->method('validate')
+			->with($this->responseStub)
+			->willReturn(null);
+		$this->orchestratorMock->expects($this->once())->method('fetch')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
+
+		$result = $this->widgetsController->fetch($this->requestStub, $this->responseStub, $args);
+
+		static::assertSame($this->expectedResponseStub, $result);
 	}
 
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
+	 */
+	#[Group('units')]
+	public function testSaveReturnsValidationError(): void
+	{
+		$input = ['item_id' => 12];
+		$this->requestStub->method('getParsedBody')->willReturn($input);
+		$this->orchestratorMock->expects($this->once())->method('setInput')->with($input)->willReturnSelf();
+		$this->orchestratorMock->expects($this->once())->method('validateSave')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
+		$this->orchestratorMock->expects($this->never())->method('save');
+
+		$result = $this->widgetsController->save($this->requestStub, $this->responseStub);
+
+		static::assertSame($this->expectedResponseStub, $result);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws UserException
+	 */
+	#[Group('units')]
+	public function testSaveSucceeds(): void
+	{
+		$input = ['item_id' => 12];
+		$this->requestStub->method('getParsedBody')->willReturn($input);
+		$this->orchestratorMock->expects($this->once())->method('setInput')->with($input)->willReturnSelf();
+		$this->orchestratorMock->expects($this->once())->method('validateSave')
+			->with($this->responseStub)
+			->willReturn(null);
+		$this->orchestratorMock->expects($this->once())->method('save')
+			->with($this->responseStub)
+			->willReturn($this->expectedResponseStub);
+
+		$result = $this->widgetsController->save($this->requestStub, $this->responseStub);
+
+		static::assertSame($this->expectedResponseStub, $result);
+	}
 }
