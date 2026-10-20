@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -19,120 +19,82 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Modules\Users\Controller;
 
-use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Utils\Forms\FormTemplatePreparer;
 use App\Modules\Users\Controller\ShowInitialAdminController;
-use App\Modules\Users\Helper\InitialAdmin\Facade;
+use App\Modules\Users\Helper\InitialAdmin\Orchestrator;
+use App\Modules\Users\Helper\InitialAdmin\TemplatePreparer;
+use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamInterface;
 use Slim\Flash\Messages;
+use Slim\Psr7\Response;
 
 class ShowInitialAdminControllerTest extends TestCase
 {
-	private Facade&MockObject $facadeMock;
-	private FormTemplatePreparer&MockObject $formElementPreparerMock;
+	private Orchestrator&MockObject $orchestratorMock;
+	private TemplatePreparer&MockObject $templatePreparerMock;
 	private Messages&MockObject $flashMock;
-	private ServerRequestInterface&MockObject $requestMock;
-	private ResponseInterface&MockObject $responseMock;
-	private StreamInterface&MockObject $streamInterfaceMock;
 	private ShowInitialAdminController $controller;
 
+	/** @var array{hidden: list<mixed>, visible: list<mixed>} */
+	private array $form = ['hidden' => [], 'visible' => []];
+
+	/** @var array<string,array<string,string>> */
+	private array $templateData = ['main_layout' => ['LANG_PAGE_TITLE' => 'x']];
+
 	/**
-	 * @throws Exception
+	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->facadeMock = $this->createMock(Facade::class);
-		$this->formElementPreparerMock = $this->createMock(FormTemplatePreparer::class);
-		$this->flashMock = $this->createMock(Messages::class);
+		$this->orchestratorMock     = $this->createMock(Orchestrator::class);
+		$this->templatePreparerMock = $this->createMock(TemplatePreparer::class);
+		$this->flashMock            = $this->createMock(Messages::class);
 
-		$this->requestMock         = $this->createMock(ServerRequestInterface::class);
-		$this->responseMock        = $this->createMock(ResponseInterface::class);
-		$this->streamInterfaceMock = $this->createMock(StreamInterface::class);
-
-		$this->controller = new ShowInitialAdminController($this->facadeMock, $this->formElementPreparerMock);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testShowFunctionIsNotAllowed(): void
-	{
-		$this->expectUntouched($this->formElementPreparerMock, $this->flashMock, $this->requestMock, $this->streamInterfaceMock);
-		$this->facadeMock->expects($this->once())->method('isFunctionAllowed')
-			->willReturn(false);
-
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Location', '/')
-			->willReturnSelf();
-
-		$this->responseMock->expects($this->once())->method('withStatus')
-			->with(302)
-			->willReturnSelf();
-
-		$response = $this->controller->show($this->requestMock, $this->responseMock);
-
-		static::assertSame($this->responseMock, $response);
+		$this->controller = new ShowInitialAdminController($this->orchestratorMock, $this->templatePreparerMock, $this->flashMock);
 	}
 
 	/**
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testShowReturnsRenderedFormOnAllowedFunction(): void
+	public function testShowNotAllowedRedirects(): void
 	{
+		$this->orchestratorMock->expects($this->once())->method('isFunctionAllowed')->willReturn(false);
+		$this->orchestratorMock->expects($this->never())->method('buildForm');
+		$this->templatePreparerMock->expects($this->never())->method('prepare');
 		$this->flashMock->expects($this->never())->method($this->anything());
-		$this->facadeMock->expects($this->once())->method('isFunctionAllowed')
-			->willReturn(true);
 
-		$this->setStandardMocks();
-		$this->outputStandard([]);
+		$response = $this->controller->show($this->createStub(ServerRequestInterface::class), new Response());
 
-		$this->controller->show($this->requestMock, $this->responseMock);
-
+		$this->assertRedirectedTo('/', $response);
 	}
 
 	/**
 	 * @throws CoreException
+	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws ModuleException
-	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testStoreFunctionIsNotAllowed(): void
+	public function testShowRendersForm(): void
 	{
-		$this->expectUntouched($this->formElementPreparerMock, $this->flashMock, $this->requestMock, $this->streamInterfaceMock);
-		$this->facadeMock->expects($this->once())->method('isFunctionAllowed')
-			->willReturn(false);
+		$this->orchestratorMock->expects($this->once())->method('isFunctionAllowed')->willReturn(true);
+		$this->expectRendering([]);
+		$this->flashMock->expects($this->never())->method($this->anything());
 
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Location', '/')
-			->willReturnSelf();
+		$response = $this->controller->show($this->createStub(ServerRequestInterface::class), new Response());
 
-		$this->responseMock->expects($this->once())->method('withStatus')
-			->with(302)
-			->willReturnSelf();
-
-		$response = $this->controller->store($this->requestMock, $this->responseMock);
-		static::assertSame($this->responseMock, $response);
+		$this->assertRendered($response);
 	}
 
 	/**
@@ -140,31 +102,18 @@ class ShowInitialAdminControllerTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testStoreAddsErrorMessagesAndReturnsRenderedFormOnValidationErrors(): void
+	public function testStoreNotAllowedRedirects(): void
 	{
-		$this->facadeMock->expects($this->once())->method('isFunctionAllowed')
-			->willReturn(true);
+		$this->orchestratorMock->expects($this->once())->method('isFunctionAllowed')->willReturn(false);
+		$this->orchestratorMock->expects($this->never())->method('store');
+		$this->templatePreparerMock->expects($this->never())->method('prepare');
+		$this->flashMock->expects($this->never())->method($this->anything());
 
-		$postData = ['username' => '', 'email' => '', 'locale' => '', 'password' => '', 'password_confirm' => ''];
+		$response = $this->controller->store($this->createRequest(['username' => 'admin']), new Response());
 
-		$this->requestMock->expects($this->once())->method('getParsedBody')
-			->willReturn($postData);
-
-		$this->setStandardMocks();
-
-		$this->facadeMock->expects($this->once())->method('configureUserFormParameter')
-			->with($postData)
-			->willReturn(['Validation error']);
-
-		$this->flashMock->expects($this->once())->method('addMessageNow')
-			->with('error', 'Validation error');
-
-		$this->outputStandard($postData);
-
-		$this->controller->store($this->requestMock, $this->responseMock);
+		$this->assertRedirectedTo('/', $response);
 	}
 
 	/**
@@ -172,136 +121,78 @@ class ShowInitialAdminControllerTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testStoreRedirectsToLoginOnSuccessfulUserStore(): void
+	public function testStoreWithErrorsShowsFormAgain(): void
 	{
-		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
-		$this->streamInterfaceMock->expects($this->never())->method($this->anything());
-		$this->facadeMock->expects($this->once())->method('isFunctionAllowed')
-			->willReturn(true);
+		$post = ['username' => 'admin', 'email' => ''];
+		$this->orchestratorMock->expects($this->once())->method('isFunctionAllowed')->willReturn(true);
+		$this->orchestratorMock->expects($this->once())->method('store')->with($post)
+			->willReturn(['success' => false, 'errors' => ['No email.', 'No password.']]);
+		$errors = [];
+		$this->flashMock->expects($this->exactly(2))->method('addMessageNow')
+			->willReturnCallback(function (string $key, string $message) use (&$errors): void { $errors[] = $key . ':' . $message; });
+		$this->flashMock->expects($this->never())->method('addMessage');
+		$this->expectRendering($post);
 
-		$postData = [
-			'username' => 'admin',
-			'email' => 'admin@example.com',
-			'locale' => 'en',
-			'password' => 'password123',
-			'password_confirm' => 'password123',
-		];
+		$response = $this->controller->store($this->createRequest($post), new Response());
 
-		$this->requestMock->expects($this->once())->method('getParsedBody')
-			->willReturn($postData);
+		$this->assertRendered($response);
+		static::assertSame(['error:No email.', 'error:No password.'], $errors);
+	}
 
-		$this->setStandardMocks();
-
-		$this->facadeMock->expects($this->once())->method('configureUserFormParameter')
-			->with($postData)
-			->willReturn([]);
-
-		$this->facadeMock->expects($this->once())->method('storeUser')
-			->willReturn(1);
-
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testStoreRedirectsToLogin(): void
+	{
+		$this->orchestratorMock->expects($this->once())->method('isFunctionAllowed')->willReturn(true);
+		$this->orchestratorMock->expects($this->once())->method('store')->willReturn(['success' => true]);
+		$this->orchestratorMock->expects($this->never())->method('buildForm');
+		$this->templatePreparerMock->expects($this->never())->method('prepare');
 		$this->flashMock->expects($this->once())->method('addMessage')
 			->with('success', 'Admin User “admin“ successfully stored. You can now login with your username and password.');
 
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Location', '/login')
-			->willReturnSelf();
+		$response = $this->controller->store($this->createRequest(['username' => 'admin']), new Response());
 
-		$this->responseMock->expects($this->once())->method('withStatus')
-			->with(302)
-			->willReturnSelf();
-
-		$response = $this->controller->store($this->requestMock, $this->responseMock);
-
-		static::assertSame($this->responseMock, $response);
+		$this->assertRedirectedTo('/login', $response);
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 * @throws ModuleException
-	 * @throws \Doctrine\DBAL\Exception
+	 * @param array<string,mixed> $post
 	 */
-	#[Group('units')]
-	public function testStoreAddsErrorMessagesAndReturnsRenderedFormOnUserServiceErrors(): void
+	private function expectRendering(array $post): void
 	{
-		$this->facadeMock->expects($this->once())->method('isFunctionAllowed')
-			->willReturn(true);
-
-		$postData = [
-			'username' => 'admin',
-			'email' => 'admin@example.com',
-			'locale' => 'en',
-			'password' => 'password123',
-			'password_confirm' => 'password123',
-		];
-
-		$this->requestMock->expects($this->once())->method('getParsedBody')
-			->willReturn($postData);
-
-		$this->setStandardMocks();
-
-		$this->facadeMock->expects($this->once())->method('configureUserFormParameter')
-			->with($postData)
-			->willReturn([]);
-
-		$this->facadeMock->expects($this->once())->method('storeUser')
-			->willReturn(0);
-
-		$this->facadeMock->expects($this->once())->method('getUserServiceErrors')
-			->willReturn(['User service error']);
-
-		$this->flashMock->expects($this->once())->method('addMessageNow')
-			->with('error', 'User service error');
-
-		$this->outputStandard($postData);
-
-		$this->controller->store($this->requestMock, $this->responseMock);
+		$this->orchestratorMock->expects($this->once())->method('buildForm')->with($post)->willReturn($this->form);
+		$this->templatePreparerMock->expects($this->once())->method('prepare')->with($this->form)
+			->willReturn($this->templateData);
 	}
 
 	/**
-	 * @throws Exception
+	 * @param array<string,mixed> $post
 	 */
-	private function setStandardMocks(): void
+	private function createRequest(array $post): ServerRequestInterface
 	{
-		$translatorStub = $this->createStub(Translator::class);
-		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
-			->willReturnMap([
-				['flash', null, $this->flashMock],
-				['translator', null, $translatorStub],
-			]);
+		$request = $this->createStub(ServerRequestInterface::class);
+		$request->method('getParsedBody')->willReturn($post);
 
-		$this->facadeMock->expects($this->once())->method('init')->with($translatorStub);
+		return $request;
 	}
 
-	/**
-	 * @param array<string,mixed> $data
-	 */
-	private function outputStandard(array $data): void
+	private function assertRendered(ResponseInterface $response): void
 	{
-		$dataSections = ['key' => 'value'];
-		$templateData = ['main_layout' => ['key' => 'value'], 'this_layout' => ['key2' => 'value2']];
-		$this->facadeMock->expects($this->once())->method('prepareUITemplate')
-			->with($data)
-			->willReturn($dataSections);
-
-		$this->formElementPreparerMock->expects($this->once())->method('prepareUITemplate')
-			->with($dataSections)
-			->willReturn($templateData);
-		$this->responseMock->method('getBody')->willReturn($this->streamInterfaceMock);
-		$this->streamInterfaceMock->method('write')->with(serialize($templateData));
-		$this->responseMock->method('withHeader')->with('Content-Type', 'text/html')->willReturnSelf();
-		$this->responseMock->method('withStatus')->with(200);
+		static::assertSame(200, $response->getStatusCode());
+		static::assertSame('text/html', $response->getHeaderLine('Content-Type'));
+		static::assertSame(serialize($this->templateData), (string) $response->getBody());
 	}
 
-	private function expectUntouched(MockObject ...$mocks): void
+	private function assertRedirectedTo(string $location, ResponseInterface $response): void
 	{
-		foreach ($mocks as $mock)
-		{
-			$mock->expects($this->never())->method($this->anything());
-		}
+		static::assertSame(302, $response->getStatusCode());
+		static::assertSame($location, $response->getHeaderLine('Location'));
 	}
 }

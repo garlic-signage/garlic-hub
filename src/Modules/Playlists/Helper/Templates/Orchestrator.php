@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace App\Modules\Playlists\Helper\Templates;
 
 use App\Framework\Core\Config\Config;
+use App\Framework\Exceptions\UserException;
 use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Services\ItemsService;
@@ -44,11 +45,14 @@ class Orchestrator extends BaseTemplateOrchestrator
 	)
 	{
 		parent::__construct($config, $mediaUrlSigner);
-		$this->itemsService->setUID($this->userSession->getUID());
 	}
 
+	/**
+	 * @throws UserException
+	 */
 	public function checkRights(int $itemId): bool
 	{
+		$this->itemsService->setUID($this->userSession->getUID());
 		try
 		{
 			$this->item = $this->itemsService->fetchItemById($itemId);

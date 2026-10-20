@@ -23,11 +23,11 @@ namespace App\Modules\Profile\Controller;
 
 use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\DatabaseException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Utils\Forms\FormTemplatePreparer;
-use App\Modules\Profile\Helper\Password\Facade;
+use App\Framework\Exceptions\UserException;
+use App\Modules\Profile\Helper\Password\Orchestrator;
+use App\Modules\Profile\Helper\Password\TemplatePreparer;
 use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
@@ -35,23 +35,16 @@ use Psr\Http\Message\ServerRequestInterface;
 use Slim\Flash\Messages;
 
 /**
- * The ShowPasswordController class is responsible for handling password-related
- * actions, such as displaying password forms, storing new passwords, and managing
- * forced password changes. It interacts with a facade to manage the business logic
- * and prepares templates for rendering the user interface.
+ * Handles the password change of the logged-in user and the forced
+ * password change via token (initial password or password reset).
  */
 class ShowPasswordController
 {
-	private readonly Facade $facade;
-	private readonly FormTemplatePreparer $formElementPreparer;
-	private Messages $flash;
-	private Translator $translator;
-
-	public function __construct(Facade $facade, FormTemplatePreparer $formElementPreparer)
-	{
-		$this->facade = $facade;
-		$this->formElementPreparer = $formElementPreparer;
-	}
+	public function __construct(private readonly Orchestrator $orchestrator,
+								private readonly TemplatePreparer $templatePreparer,
+								private readonly Translator $translator,
+								private readonly Messages $flash)
+	{}
 
 	/**
 	 * @throws CoreException
@@ -59,47 +52,30 @@ class ShowPasswordController
 	 */
 	public function showPasswordForm(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		$this->initFacade($request);
 		return $this->outputRenderedForm($response);
 	}
 
 	/**
-	 * @param ServerRequestInterface $request
-	 * @param ResponseInterface $response
-	 * @return ResponseInterface
 	 * @throws CoreException
+	 * @throws DateMalformedStringException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws DateMalformedStringException
 	 */
 	public function showForcedPasswordForm(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		$queryParams      = $request->getQueryParams();
-		$passwordToken    = $queryParams['token'] ?? '';
-		$this->flash      = $request->getAttribute('flash');
-		$this->translator = $request->getAttribute('translator');
+		$passwordToken = (string) ($request->getQueryParams()['token'] ?? '');
 		if ($passwordToken === '')
-		{
-			$this->flash->addMessageNow('error', $this->translator->translate('no_token', 'profile'));
-			return $response->withHeader('Location', '/login')->withStatus(302);
-		}
+			return $this->redirectToLoginWithError($response, 'no_token');
 
-		$UID = $this->facade->determineUIDByToken($passwordToken);
-		if ($UID === 0)
-		{
-			$this->flash->addMessage('error', $this->translator->translate('token_error', 'profile'));
-			return $response->withHeader('Location', '/login')->withStatus(302);
-		}
+		$tokenUser = $this->orchestrator->loadTokenUser($passwordToken);
+		if ($tokenUser === [])
+			return $this->redirectToLoginWithError($response, 'token_error');
 
-		return $this->outputRenderedForm($response, $passwordToken);
+		return $this->outputRenderedForcedForm($response, $passwordToken, $tokenUser);
 	}
 
 	/**
-	 * @param ServerRequestInterface $request
-	 * @param ResponseInterface $response
-	 * @return ResponseInterface
 	 * @throws CoreException
-	 * @throws DatabaseException
 	 * @throws DateMalformedStringException
 	 * @throws Exception
 	 * @throws FrameworkException
@@ -108,108 +84,100 @@ class ShowPasswordController
 	public function storeForcedPassword(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
 		/** @var array<string,mixed> $post */
-		$post = $request->getParsedBody();
-		$this->flash      = $request->getAttribute('flash');
-		$this->translator = $request->getAttribute('translator');
+		$post          = $request->getParsedBody();
 		$passwordToken = $post['token'] ?? '';
-		if ($passwordToken === '')
+		if (!is_string($passwordToken) || $passwordToken === '')
+			return $this->redirectToLoginWithError($response, 'no_token');
+
+		$tokenUser = $this->orchestrator->loadTokenUser($passwordToken);
+		if ($tokenUser === [])
+			return $this->redirectToLoginWithError($response, 'token_error');
+
+		$result = $this->orchestrator->storeForcedPassword($tokenUser['UID'], $passwordToken, $post);
+		if (!$result['success'])
 		{
-			$this->flash->addMessageNow('error', $this->translator->translate('no_token', 'profile'));
-			return $response->withHeader('Location', '/login')->withStatus(302);
+			$this->addErrorsNow($result['errors'] ?? []);
+			return $this->outputRenderedForcedForm($response, $passwordToken, $tokenUser);
 		}
 
-		$UID      = $this->facade->determineUIDByToken($passwordToken);
-		if ($UID === 0)
-		{
-			$this->flash->addMessageNow('error', $this->translator->translate('token_error', 'profile'));
-			return $response->withHeader('Location', '/login')->withStatus(302);
-		}
-
-		$errors = $this->facade->configureUserFormParameter($post);
-		foreach ($errors as $errorText)
-		{
-			$this->flash->addMessageNow('error', $errorText);
-		}
-
-		if (!empty($errors))
-			return $this->outputRenderedForm($response, $passwordToken);
-
-		$id = $this->facade->storeForcedPassword($UID, $passwordToken);
-		if ($id > 0)
-		{
-			$this->flash->addMessage('success', $this->translator->translate('forced_password_changed', 'profile'));
-			return $response->withHeader('Location', '/login')->withStatus(302);
-		}
-		else
-		{
-			$errors = $this->facade->getUserServiceErrors();
-			foreach ($errors as $errorText)
-			{
-				$this->flash->addMessageNow('error', $errorText);
-			}
-		}
-
-		return $this->outputRenderedForm($response, $passwordToken);
+		$this->flash->addMessage('success', $this->translator->translate('forced_password_changed', 'profile'));
+		return $response->withHeader('Location', '/login')->withStatus(302);
 	}
-
 
 	/**
 	 * @throws CoreException
-	 * @throws FrameworkException
 	 * @throws Exception
+	 * @throws FrameworkException
 	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	public function store(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
 		/** @var array<string,mixed> $post */
-		$post = $request->getParsedBody();
-
-		$this->initFacade($request);
-		$errors = $this->facade->configureUserFormParameter($post);
-		foreach ($errors as $errorText)
+		$post   = $request->getParsedBody();
+		$result = $this->orchestrator->storePassword($post);
+		if (!$result['success'])
 		{
-			$this->flash->addMessageNow('error', $errorText);
-		}
-
-		if (!empty($errors))
+			$this->addErrorsNow($result['errors'] ?? []);
 			return $this->outputRenderedForm($response);
-
-		$id = $this->facade->storePassword();
-		if ($id > 0)
-		{
-			$this->flash->addMessage('success', $this->translator->translate('password_changed', 'profile'));
-			return $response->withHeader('Location', '/')->withStatus(302);
-		}
-		else
-		{
-			$errors = $this->facade->getUserServiceErrors();
-			foreach ($errors as $errorText)
-			{
-				$this->flash->addMessageNow('error', $errorText);
-			}
 		}
 
-		return $this->outputRenderedForm($response);
+		$this->flash->addMessage('success', $this->translator->translate('password_changed', 'profile'));
+		return $response->withHeader('Location', '/')->withStatus(302);
 	}
 
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
-	private function outputRenderedForm(ResponseInterface $response, string $passwordToken = ''): ResponseInterface
+	private function outputRenderedForm(ResponseInterface $response): ResponseInterface
 	{
-		$dataSections = $this->facade->prepareUITemplate($passwordToken);
-		$templateData = $this->formElementPreparer->prepareUITemplate($dataSections);
+		$formData     = $this->orchestrator->buildForm();
+		$templateData = $this->templatePreparer->preparePasswordForm($formData);
 
+		return $this->writeHtml($response, $templateData);
+	}
+
+	/**
+	 * @param array{username:string, purpose:string, ...} $tokenUser
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	private function outputRenderedForcedForm(ResponseInterface $response, string $passwordToken, array $tokenUser): ResponseInterface
+	{
+		$formData     = $this->orchestrator->buildForm($passwordToken);
+		$templateData = $this->templatePreparer->prepareForcedPasswordForm($formData, $tokenUser);
+
+		return $this->writeHtml($response, $templateData);
+	}
+
+	/**
+	 * @param array<string,mixed> $templateData
+	 */
+	private function writeHtml(ResponseInterface $response, array $templateData): ResponseInterface
+	{
 		$response->getBody()->write(serialize($templateData));
 		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
 	}
 
-	private function initFacade(ServerRequestInterface $request): void
+	/**
+	 * @param string[] $errors
+	 */
+	private function addErrorsNow(array $errors): void
 	{
-		$this->flash      = $request->getAttribute('flash');
-		$this->translator = $request->getAttribute('translator');
-		$this->facade->init($request->getAttribute('session'));
+		foreach ($errors as $errorText)
+		{
+			$this->flash->addMessageNow('error', $errorText);
+		}
 	}
 
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	private function redirectToLoginWithError(ResponseInterface $response, string $translationKey): ResponseInterface
+	{
+		$this->flash->addMessage('error', $this->translator->translate($translationKey, 'profile'));
+		return $response->withHeader('Location', '/login')->withStatus(302);
+	}
 }

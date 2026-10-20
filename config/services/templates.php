@@ -57,6 +57,7 @@ use App\Modules\Templates\Services\TemplatesDatatableService;
 use App\Modules\Templates\Services\TemplatesService;
 use App\Modules\Templates\Services\TemplatesUsageService;
 use Psr\Container\ContainerInterface;
+use Slim\Flash\Messages;
 
 $dependencies = [];
 
@@ -107,8 +108,9 @@ $dependencies[\App\Modules\Templates\Helper\Composer\Orchestrator::class] = DI\f
 
 $dependencies[ShowComposerController::class] = DI\factory(function (ContainerInterface $container)
 {
-	return new  ShowComposerController(
-		$container->get(\App\Modules\Templates\Helper\Composer\Orchestrator::class)
+	return new ShowComposerController(
+		$container->get(\App\Modules\Templates\Helper\Composer\Orchestrator::class),
+		$container->get(Messages::class)
 	);
 });
 
@@ -165,7 +167,8 @@ $dependencies[ShowSettingsController::class] = DI\factory(function (ContainerInt
 		new TemplatePreparer(
 			$container->get(Translator::class),
 			$container->get(FormTemplatePreparer::class)
-		)
+		),
+		$container->get(Messages::class)
 	);
 });
 // Datatable

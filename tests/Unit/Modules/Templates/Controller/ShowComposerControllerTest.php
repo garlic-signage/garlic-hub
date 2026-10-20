@@ -51,11 +51,9 @@ class ShowComposerControllerTest extends TestCase
 		$this->orchestratorMock = $this->createMock(Orchestrator::class);
 		$this->responseMock     = $this->createMock(ResponseInterface::class);
 		$this->flashMock        = $this->createMock(Messages::class);
-		$request                = $this->createStub(ServerRequestInterface::class);
-		$request->method('getAttribute')->willReturnMap([['flash', null, $this->flashMock]]);
-		$this->request = $request;
+		$this->request          = $this->createStub(ServerRequestInterface::class);
 
-		$this->controller = new ShowComposerController($this->orchestratorMock);
+		$this->controller = new ShowComposerController($this->orchestratorMock, $this->flashMock);
 	}
 
     /**

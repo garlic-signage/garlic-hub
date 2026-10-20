@@ -24,7 +24,6 @@ namespace Tests\Unit\Modules\Profile\Helper\Password;
 
 use App\Framework\Core\Sanitizer;
 use App\Framework\Core\Session;
-use App\Framework\Utils\FormParameters\ScalarType;
 use App\Modules\Profile\Helper\Password\Parameters;
 use Exception;
 use PHPUnit\Framework\Attributes\Group;
@@ -51,16 +50,5 @@ class ParametersTest extends TestCase
 	{
 		static::assertCount(3, $this->parameters->getCurrentParameters());
 		static::assertSame('profile', $this->parameters->getModuleName());
-	}
-
-
-	#[Group('units')]
-	public function testAddToken(): void
-	{
-		static::assertCount(3, $this->parameters->getCurrentParameters());
-		$this->parameters->addToken();
-
-		static::assertTrue($this->parameters->hasParameter(Parameters::PARAMETER_PASSWORD_TOKEN));
-		static::assertCount(4, $this->parameters->getCurrentParameters());
 	}
 }

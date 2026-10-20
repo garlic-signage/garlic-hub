@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -21,443 +21,296 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Controller;
 
-use App\Framework\Core\Session;
-use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Utils\Forms\FormTemplatePreparer;
+use App\Framework\Exceptions\UserException;
 use App\Modules\Playlists\Controller\ShowSettingsController;
-use App\Modules\Playlists\Helper\Settings\Facade;
+use App\Modules\Playlists\Helper\Settings\Orchestrator;
+use App\Modules\Playlists\Helper\Settings\TemplatePreparer;
+use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamInterface;
 use Slim\Flash\Messages;
+use Slim\Psr7\Response;
 
 class ShowSettingsControllerTest extends TestCase
 {
-	private Facade&MockObject $facadeMock;
-	private ServerRequestInterface&MockObject $requestMock;
-	private ResponseInterface&MockObject $responseMock;
-	private StreamInterface&Stub $streamInterfaceStub;
-	private FormTemplatePreparer&MockObject $formElementPreparerMock;
+	private Orchestrator&MockObject $orchestratorMock;
+	private TemplatePreparer&MockObject $templatePreparerMock;
 	private Messages&MockObject $flashMock;
 	private ShowSettingsController $controller;
 
+	/** @var array{UID: int, company_id: int, playlist_id: int, playlist_mode: string, playlist_name: string} */
+	private array $playlist = ['UID' => 3, 'company_id' => 1, 'playlist_id' => 5, 'playlist_mode' => 'internal', 'playlist_name' => 'Lobby'];
+
+	/** @var array{hidden: list<mixed>, visible: list<mixed>} */
+	private array $form = ['hidden' => [], 'visible' => []];
+
+	/** @var array<string,array<string,string>> */
+	private array $templateData = ['main_layout' => ['LANG_PAGE_TITLE' => 'x']];
+
 	/**
-	 * @throws Exception
+	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->facadeMock              = $this->createMock(Facade::class);
-		$this->requestMock             = $this->createMock(ServerRequestInterface::class);
-		$this->responseMock            = $this->createMock(ResponseInterface::class);
-		$this->streamInterfaceStub     = $this->createStub(StreamInterface::class);
-		$this->flashMock               = $this->createMock(Messages::class);
-		$this->formElementPreparerMock = $this->createMock(FormTemplatePreparer::class);
+		$this->orchestratorMock     = $this->createMock(Orchestrator::class);
+		$this->templatePreparerMock = $this->createMock(TemplatePreparer::class);
+		$this->flashMock            = $this->createMock(Messages::class);
 
-		$this->controller = new ShowSettingsController($this->facadeMock, $this->formElementPreparerMock);
+		$this->controller = new ShowSettingsController($this->orchestratorMock, $this->templatePreparerMock, $this->flashMock);
 	}
 
 	/**
-	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws FrameworkException
 	 * @throws Exception
-	 * @throws \Doctrine\DBAL\Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	#[Group('units')]
 	public function testNewPlaylistFormWithDefaultMode(): void
 	{
+		$this->expectCreateRendering('master', []);
 		$this->flashMock->expects($this->never())->method($this->anything());
-		$args = []; // No playlist_mode provided means master
 
-		$this->setStandardMocks();
+		$response = $this->controller->newPlaylistForm($this->createStub(ServerRequestInterface::class), new Response(), []);
 
-		$this->facadeMock->expects($this->once())->method('buildCreateNewParameter')
-			->with('master');
-
-		$dataSections = ['data_sections'];
-		$this->facadeMock->expects($this->once())->method('prepareUITemplate')
-			->with(['playlist_mode' => 'master'])
-			->willReturn($dataSections);
-
-		$this->formElementPreparerMock->expects($this->once())->method('prepareUITemplate')
-			->with($dataSections)
-			->willReturn(['rendered_template' => 'example']);
-
-		$this->responseMock->expects($this->once())->method('getBody')
-			->willReturn($this->createStub(StreamInterface::class));
-
-		$this->responseMock	->expects($this->once())->method('withHeader')
-			->with('Content-Type', 'text/html')
-			->willReturnSelf();
-
-		$this->controller->newPlaylistForm($this->requestMock, $this->responseMock, $args);
-
+		$this->assertRendered($response);
 	}
 
 	/**
-	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws FrameworkException
 	 * @throws Exception
-	 * @throws \Doctrine\DBAL\Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	#[Group('units')]
 	public function testNewPlaylistForm(): void
 	{
+		$this->expectCreateRendering('multizone', []);
 		$this->flashMock->expects($this->never())->method($this->anything());
-		$args = ['playlist_mode' => 'channel'];
 
-		$this->setStandardMocks();
+		$response = $this->controller->newPlaylistForm($this->createStub(ServerRequestInterface::class), new Response(), ['playlist_mode' => 'multizone']);
 
-		$this->facadeMock->expects($this->once())->method('buildCreateNewParameter')
-			->with('channel');
-
-		$dataSections = ['data_sections'];
-		$this->facadeMock->expects($this->once())->method('prepareUITemplate')
-			->with(['playlist_mode' => 'channel'])
-			->willReturn($dataSections);
-
-		$this->formElementPreparerMock->expects($this->once())->method('prepareUITemplate')
-			->with($dataSections)
-			->willReturn(['rendered_template' => 'example']);
-
-		$this->responseMock->expects($this->once())->method('getBody')
-			->willReturn($this->createStub(StreamInterface::class));
-
-		$this->responseMock	->expects($this->once())->method('withHeader')
-			->with('Content-Type', 'text/html')
-			->willReturnSelf();
-
-		$this->controller->newPlaylistForm($this->requestMock, $this->responseMock, $args);
+		$this->assertRendered($response);
 	}
 
 	/**
-	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
-	 * @throws FrameworkException
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testEditPlaylistFormWithInvalidPlaylistId(): void
+	public function testEditPlaylistFormWithoutId(): void
 	{
-		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
+		$this->orchestratorMock->expects($this->never())->method($this->anything());
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->flashMock->expects($this->once())->method('addMessage')->with('error', 'Playlist ID not valid.');
 
-		$this->setStandardMocks();
+		$response = $this->controller->editPlaylistForm($this->createStub(ServerRequestInterface::class), new Response(), []);
 
-		$this->flashMock->expects($this->once())->method('addMessage')
-			->with('error', 'Playlist ID not valid.');
-
-
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Location', '/playlists')
-			->willReturnSelf();
-
-		$this->responseMock->expects($this->once())->method('withStatus')
-			->with(302)
-			->willReturnSelf();
-
-		$this->facadeMock->expects($this->never())->method('loadPlaylistForEdit')
-			->with(1)
-			->willReturn([]);
-
-		$this->controller->editPlaylistForm($this->requestMock, $this->responseMock, []);
-	}
-
-
-	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
-	 * @throws FrameworkException
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testEditPlaylistFormWithNonExistentPlaylist(): void
-	{
-		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
-		$args = ['playlist_id' => '1', 'playlist_mode' => 'master'];
-
-		$this->setStandardMocks();
-
-		$this->facadeMock->expects($this->once())->method('loadPlaylistForEdit')
-			->with(1)
-			->willReturn([]);
-
-		$this->flashMock->expects($this->once())->method('addMessage')
-			->with('error', 'Playlist not found.');
-
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Location', '/playlists')
-			->willReturnSelf();
-
-		$this->responseMock->expects($this->once())->method('withStatus')
-			->with(302)
-			->willReturnSelf();
-
-		$this->controller->editPlaylistForm($this->requestMock, $this->responseMock, $args);
+		$this->assertRedirectedToPlaylists($response);
 	}
 
 	/**
-	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws FrameworkException
 	 * @throws Exception
-	 * @throws \Doctrine\DBAL\Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testEditPlaylistFormWithValidPlaylistId(): void
+	public function testEditPlaylistFormNotFound(): void
 	{
-		// the form is rendered again
-		$this->formElementPreparerMock->expects($this->once())->method('prepareUITemplate')->willReturn(['main_layout' => [], 'this_layout' => []]);
+		$this->orchestratorMock->expects($this->once())->method('loadPlaylistForEdit')->with(5)->willReturn([]);
+		$this->orchestratorMock->expects($this->never())->method('buildEditForm');
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->flashMock->expects($this->once())->method('addMessage')->with('error', 'Playlist not found.');
+
+		$response = $this->controller->editPlaylistForm($this->createStub(ServerRequestInterface::class), new Response(), ['playlist_id' => '5']);
+
+		$this->assertRedirectedToPlaylists($response);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
+	 */
+	#[Group('units')]
+	public function testEditPlaylistForm(): void
+	{
+		$this->orchestratorMock->expects($this->once())->method('loadPlaylistForEdit')->with(5)->willReturn($this->playlist);
+		$this->expectEditRendering([]);
 		$this->flashMock->expects($this->never())->method($this->anything());
-		$args = ['playlist_id' => '1'];
-		$playlist = ['id' => 1, 'name' => 'Sample Playlist'];
 
-		$this->setStandardMocks();
+		$response = $this->controller->editPlaylistForm($this->createStub(ServerRequestInterface::class), new Response(), ['playlist_id' => '5']);
 
-		$this->facadeMock->expects($this->once())->method('loadPlaylistForEdit')
-			->with(1)
-			->willReturn($playlist);
-
-		$this->facadeMock->expects($this->once())->method('buildEditParameter')
-			->with($playlist);
-
-		$this->facadeMock->expects($this->once())->method('prepareUITemplate')
-			->with($playlist)
-			->willReturn(['rendered_template' => 'example']);
-
-		$this->responseMock->expects($this->once())->method('getBody')
-			->willReturn($this->createStub(StreamInterface::class));
-
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Content-Type', 'text/html')
-			->willReturnSelf();
-
-		$this->controller->editPlaylistForm($this->requestMock, $this->responseMock, $args);
+		$this->assertRendered($response);
 	}
 
 	/**
-	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
-	 * @throws FrameworkException|Exception
-	 */
-	#[Group('units')]
-	public function testStorePlaylistSuccessfully(): void
-	{
-		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
-		$post = ['playlist_name' => 'Test Playlist'];
-		$this->setStandardMocks();
-
-		$this->requestMock->expects($this->once())->method('getParsedBody')->willReturn($post);
-
-		$this->facadeMock->expects($this->once())->method('configurePlaylistFormParameter')
-			->with($post)
-			->willReturn([]);
-
-		$this->facadeMock->expects($this->once())->method('storePlaylist')
-			->with($post)
-			->willReturn(123);
-
-		$this->flashMock->expects($this->once())->method('addMessage')
-			->with('success', 'Playlist “Test Playlist“ successfully stored.');
-
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Location', '/playlists')
-			->willReturnSelf();
-
-		$this->responseMock->expects($this->once())->method('withStatus')
-			->with(302)
-			->willReturnSelf();
-
-		$this->controller->store($this->requestMock, $this->responseMock);
-	}
-
-	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws \Doctrine\DBAL\Exception
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testStorePlaylistWithErrorMessages(): void
+	public function testStoreInsertWithErrorsShowsFormAgain(): void
 	{
-		// the form is rendered again
-		$this->formElementPreparerMock->expects($this->once())->method('prepareUITemplate')->willReturn(['main_layout' => [], 'this_layout' => []]);
-		$post = ['playlist_name' => 'Test Playlist'];
-		$errors = ['Error 1', 'Error 2'];
-		$this->setStandardMocks();
-
-		$this->requestMock->expects($this->once())->method('getParsedBody')->willReturn($post);
-
-		$this->facadeMock->expects($this->once())->method('configurePlaylistFormParameter')
-			->with($post)
-			->willReturn($errors);
-
+		$post = ['playlist_name' => '', 'playlist_mode' => 'multizone'];
+		$this->orchestratorMock->expects($this->never())->method('loadPlaylistForEdit');
+		$this->orchestratorMock->expects($this->once())->method('storeCreateSettings')->with($post)
+			->willReturn(['success' => false, 'errors' => ['No playlist name.', 'CSRF token mismatch.']]);
+		$errors = [];
 		$this->flashMock->expects($this->exactly(2))->method('addMessageNow')
-			->willReturnMap([
-				['error', 'Error 1'],
-				['error', 'Error 2']
-			]
-			);
-
-		$this->facadeMock->expects($this->never())->method('storePlaylist');
-
-		$this->responseMock->expects($this->once())->method('getBody')->willReturn($this->streamInterfaceStub);
-
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Content-Type', 'text/html')
-			->willReturnSelf();
-
-		$this->controller->store($this->requestMock, $this->responseMock);
-	}
-
-	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
-	 * @throws FrameworkException
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testStorePlaylistWithInvalidPostData(): void
-	{
-		// the form is rendered again
-		$this->formElementPreparerMock->expects($this->once())->method('prepareUITemplate')->willReturn(['main_layout' => [], 'this_layout' => []]);
-		$post = [];
-		$this->requestMock->expects($this->once())->method('getParsedBody')
-			->willReturn($post);
-
-		$this->setStandardMocks();
-
-		$this->facadeMock->expects($this->once())->method('configurePlaylistFormParameter')
-			->with([])
-			->willReturn(['Invalid data']);
-
-		$this->flashMock->expects($this->once())->method('addMessageNow')
-			->with('error', 'Invalid data');
-
-		$this->facadeMock->expects($this->never())->method('storePlaylist');
-
-		$this->responseMock->expects($this->once())->method('getBody')->willReturn($this->streamInterfaceStub);
-
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Content-Type', 'text/html')
-			->willReturnSelf();
-
-		$this->controller->store($this->requestMock, $this->responseMock);
-
-	}
-
-	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
-	 * @throws FrameworkException
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testStorePlaylistFailsStore(): void
-	{
-		// the form is rendered again
-		$this->formElementPreparerMock->expects($this->once())->method('prepareUITemplate')->willReturn(['main_layout' => [], 'this_layout' => []]);
-		$this->flashMock->expects($this->once())->method('addMessageNow')
-			->with('error', 'Playlist “Test Playlist“ could not be stored.');
+			->willReturnCallback(function (string $key, string $message) use (&$errors): void { $errors[] = $key . ':' . $message; });
 		$this->flashMock->expects($this->never())->method('addMessage');
-		$post = ['playlist_name' => 'Test Playlist'];
-		$this->setStandardMocks();
+		$this->expectCreateRendering('multizone', $post);
 
-		$this->requestMock->expects($this->once())->method('getParsedBody')->willReturn($post);
+		$response = $this->controller->store($this->createRequest($post), new Response());
 
-		$this->facadeMock->expects($this->once())->method('configurePlaylistFormParameter')
-			->with($post)
-			->willReturn([]);
-
-		$this->facadeMock->expects($this->once())->method('storePlaylist')
-			->with($post)
-			->willReturn(0);
-
-		$this->facadeMock->expects($this->once())->method('prepareUITemplate')
-			->with($post)
-			->willReturn(['rendered_template' => 'example']);
-
-		$this->responseMock->expects($this->once())->method('getBody')->willReturn($this->streamInterfaceStub);
-
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Content-Type', 'text/html')
-			->willReturnSelf();
-
-		$this->controller->store($this->requestMock, $this->responseMock);
+		$this->assertRendered($response);
+		static::assertSame(['error:No playlist name.', 'error:CSRF token mismatch.'], $errors);
 	}
 
 	/**
-	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
-	 * @throws FrameworkException
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testStorePlaylistNotEditable(): void
+	public function testStoreInsert(): void
 	{
-		// the form is rendered again
-		$this->formElementPreparerMock->expects($this->once())->method('prepareUITemplate')->willReturn(['main_layout' => [], 'this_layout' => []]);
-		$this->flashMock->expects($this->once())->method('addMessageNow')
-			->with('error', 'Playlist is not editable.');
-		$this->flashMock->expects($this->never())->method('addMessage');
-		$post = ['playlist_id' => 12, 'playlist_name' => 'Test Playlist'];
-		$this->setStandardMocks();
+		$this->orchestratorMock->expects($this->once())->method('storeCreateSettings')->willReturn(['success' => true]);
+		$this->orchestratorMock->expects($this->never())->method('buildCreateForm');
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->flashMock->expects($this->once())->method('addMessage')->with('success', 'Playlist “Lobby“ successfully stored.');
 
-		$this->requestMock->expects($this->once())->method('getParsedBody')->willReturn($post);
+		$response = $this->controller->store($this->createRequest(['playlist_name' => 'Lobby', 'playlist_mode' => 'internal']), new Response());
 
-		$this->facadeMock->expects($this->once())->method('configurePlaylistFormParameter')
-			->with($post)
-			->willReturn([]);
-
-		$this->facadeMock->expects($this->once())->method('storePlaylist')
-			->with($post)
-			->willThrowException(new ModuleException('playlists', 'Playlist is not editable.'));
-
-		$this->facadeMock->expects($this->once())->method('prepareUITemplate')
-			->with($post)
-			->willReturn(['rendered_template' => 'example']);
-
-		$this->responseMock->expects($this->once())->method('getBody')->willReturn($this->streamInterfaceStub);
-
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Content-Type', 'text/html')
-			->willReturnSelf();
-
-		$this->controller->store($this->requestMock, $this->responseMock);
+		$this->assertRedirectedToPlaylists($response);
 	}
 
 	/**
+	 * @throws CoreException
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
 	 */
-	private function setStandardMocks(): void
+	#[Group('units')]
+	public function testStoreUpdateNotEditable(): void
 	{
-		$translatorStub = $this->createStub(Translator::class);
-		$sessionStub = $this->createStub(Session::class);
-		$this->requestMock->expects($this->exactly(3))->method('getAttribute')
-			->willReturnMap([
-				['flash', null, $this->flashMock],
-				['translator', null, $translatorStub],
-				['session', null, $sessionStub]
-			]);
+		$this->orchestratorMock->expects($this->once())->method('loadPlaylistForEdit')->with(5)->willReturn([]);
+		$this->orchestratorMock->expects($this->never())->method('storeEditSettings');
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->flashMock->expects($this->once())->method('addMessage')->with('error', 'Playlist not found.');
 
-		$this->facadeMock->expects($this->once())->method('init')
-			->with($translatorStub, $sessionStub);
+		$response = $this->controller->store($this->createRequest(['playlist_id' => '5', 'playlist_name' => 'Lobby']), new Response());
 
+		$this->assertRedirectedToPlaylists($response);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
+	 */
+	#[Group('units')]
+	public function testStoreUpdateWithErrorsShowsFormAgain(): void
+	{
+		$post = ['playlist_id' => '5', 'playlist_name' => ''];
+		$this->orchestratorMock->expects($this->once())->method('loadPlaylistForEdit')->with(5)->willReturn($this->playlist);
+		$this->orchestratorMock->expects($this->once())->method('storeEditSettings')->with($post)
+			->willReturn(['success' => false, 'errors' => ['No playlist name.']]);
+		$this->flashMock->expects($this->once())->method('addMessageNow')->with('error', 'No playlist name.');
+		$this->flashMock->expects($this->never())->method('addMessage');
+		$this->expectEditRendering($post);
+
+		$response = $this->controller->store($this->createRequest($post), new Response());
+
+		$this->assertRendered($response);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
+	 */
+	#[Group('units')]
+	public function testStoreUpdate(): void
+	{
+		$this->orchestratorMock->expects($this->once())->method('loadPlaylistForEdit')->willReturn($this->playlist);
+		$this->orchestratorMock->expects($this->once())->method('storeEditSettings')->willReturn(['success' => true]);
+		$this->orchestratorMock->expects($this->never())->method('buildEditForm');
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->flashMock->expects($this->once())->method('addMessage')->with('success', 'Playlist “Lobby“ successfully stored.');
+
+		$response = $this->controller->store($this->createRequest(['playlist_id' => '5', 'playlist_name' => 'Lobby']), new Response());
+
+		$this->assertRedirectedToPlaylists($response);
+	}
+
+	/**
+	 * @param array<string,mixed> $post
+	 */
+	private function expectCreateRendering(string $playlistMode, array $post): void
+	{
+		$this->orchestratorMock->expects($this->once())->method('buildCreateForm')->with($playlistMode, $post)->willReturn($this->form);
+		$this->templatePreparerMock->expects($this->once())->method('prepare')->with($this->form, $playlistMode)
+			->willReturn($this->templateData);
+	}
+
+	/**
+	 * @param array<string,mixed> $post
+	 */
+	private function expectEditRendering(array $post): void
+	{
+		$this->orchestratorMock->expects($this->once())->method('buildEditForm')->with($post)->willReturn($this->form);
+		$this->templatePreparerMock->expects($this->once())->method('prepare')->with($this->form, 'internal')
+			->willReturn($this->templateData);
+	}
+
+	/**
+	 * @param array<string,mixed> $post
+	 */
+	private function createRequest(array $post): ServerRequestInterface
+	{
+		$request = $this->createStub(ServerRequestInterface::class);
+		$request->method('getParsedBody')->willReturn($post);
+
+		return $request;
+	}
+
+	private function assertRendered(ResponseInterface $response): void
+	{
+		static::assertSame(200, $response->getStatusCode());
+		static::assertSame('text/html', $response->getHeaderLine('Content-Type'));
+		static::assertSame(serialize($this->templateData), (string) $response->getBody());
+	}
+
+	private function assertRedirectedToPlaylists(ResponseInterface $response): void
+	{
+		static::assertSame(302, $response->getStatusCode());
+		static::assertSame('/playlists', $response->getHeaderLine('Location'));
 	}
 }

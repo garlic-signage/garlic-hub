@@ -25,27 +25,22 @@ namespace App\Modules\Users\Controller;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Utils\Forms\FormTemplatePreparer;
-use App\Modules\Users\Helper\InitialAdmin\Facade;
+use App\Modules\Users\Helper\InitialAdmin\Orchestrator;
+use App\Modules\Users\Helper\InitialAdmin\TemplatePreparer;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Flash\Messages;
 
 /**
- * A controller responsible for managing the initialization and display of the initial admin screen.
+ * Creates the initial admin user on a fresh installation.
  */
 class ShowInitialAdminController
 {
-	private readonly Facade $facade;
-	private readonly FormTemplatePreparer $formElementPreparer;
-	private Messages $flash;
-
-	public function __construct(Facade $facade, FormTemplatePreparer $formElementPreparer)
-	{
-		$this->facade = $facade;
-		$this->formElementPreparer = $formElementPreparer;
-	}
+	public function __construct(private readonly Orchestrator $orchestrator,
+								private readonly TemplatePreparer $templatePreparer,
+								private readonly Messages $flash)
+	{}
 
 	/**
 	 * @throws CoreException
@@ -54,10 +49,8 @@ class ShowInitialAdminController
 	 */
 	public function show(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		if (!$this->facade->isFunctionAllowed())
+		if (!$this->orchestrator->isFunctionAllowed())
 			return $response->withHeader('Location', '/')->withStatus(302);
-
-		$this->initFacade($request);
 
 		return $this->outputRenderedForm($response, []);
 	}
@@ -70,37 +63,24 @@ class ShowInitialAdminController
 	 */
 	public function store(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		if (!$this->facade->isFunctionAllowed())
+		if (!$this->orchestrator->isFunctionAllowed())
 			return $response->withHeader('Location', '/')->withStatus(302);
 
 		/** @var array{username:string, email:string, locale: string, password:string, password_confirm: string} $post */
-		$post = $request->getParsedBody();
-
-		$this->initFacade($request);
-		$errors = $this->facade->configureUserFormParameter($post);
-		foreach ($errors as $errorText)
+		$post   = $request->getParsedBody();
+		$result = $this->orchestrator->store($post);
+		if (!$result['success'])
 		{
-			$this->flash->addMessageNow('error', $errorText);
-		}
-
-		if (!empty($errors))
-			return $this->outputRenderedForm($response, $post);
-
-		$id = $this->facade->storeUser();
-		if ($id > 0)
-		{
-			$this->flash->addMessage('success', 'Admin User “' . $post['username'] . '“ successfully stored. You can now login with your username and password.');
-			return $response->withHeader('Location', '/login')->withStatus(302);
-		}
-		else
-		{
-			$errors = $this->facade->getUserServiceErrors();
-			foreach ($errors as $errorText)
+			foreach ($result['errors'] ?? [] as $errorText)
 			{
 				$this->flash->addMessageNow('error', $errorText);
 			}
+
 			return $this->outputRenderedForm($response, $post);
 		}
+
+		$this->flash->addMessage('success', 'Admin User “' . $post['username'] . '“ successfully stored. You can now login with your username and password.');
+		return $response->withHeader('Location', '/login')->withStatus(302);
 	}
 
 	/**
@@ -110,21 +90,10 @@ class ShowInitialAdminController
 	 */
 	private function outputRenderedForm(ResponseInterface $response, array $post): ResponseInterface
 	{
-		$dataSections = $this->facade->prepareUITemplate($post);
-		$templateData = $this->formElementPreparer->prepareUITemplate($dataSections);
+		$formData     = $this->orchestrator->buildForm($post);
+		$templateData = $this->templatePreparer->prepare($formData);
 
 		$response->getBody()->write(serialize($templateData));
 		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
 	}
-
-	/**
-	 * @param ServerRequestInterface $request
-	 */
-	private function initFacade(ServerRequestInterface $request): void
-	{
-		$this->flash      = $request->getAttribute('flash');
-		$this->facade->init($request->getAttribute('translator'));
-	}
-
-
 }

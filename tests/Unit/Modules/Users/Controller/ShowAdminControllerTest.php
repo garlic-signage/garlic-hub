@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -19,35 +19,40 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Modules\Users\Controller;
 
-use App\Framework\Core\Session;
-use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Utils\Forms\FormTemplatePreparer;
+use App\Framework\Exceptions\UserException;
 use App\Modules\Users\Controller\ShowAdminController;
-use App\Modules\Users\Helper\Settings\Facade;
+use App\Modules\Users\Helper\Settings\Orchestrator;
+use App\Modules\Users\Helper\Settings\TemplatePreparer;
 use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamInterface;
 use Slim\Flash\Messages;
+use Slim\Psr7\Response;
 
 class ShowAdminControllerTest extends TestCase
 {
-	private Facade&MockObject $facadeMock;
-	private FormTemplatePreparer&MockObject $formElementPreparerMock;
+	private Orchestrator&MockObject $orchestratorMock;
+	private TemplatePreparer&MockObject $templatePreparerMock;
 	private Messages&MockObject $flashMock;
-	private ServerRequestInterface&MockObject $requestMock;
-	private ResponseInterface&MockObject $responseMock;
-	private StreamInterface&MockObject $streamInterfaceMock;
 	private ShowAdminController $controller;
+
+	/** @var array{UID: int, company_id: int, status: int, locale: string, email:string, username:string, tokens: array{}} */
+	private array $user = ['UID' => 12, 'company_id' => 1, 'status' => 1, 'locale' => 'de_DE',
+		'email' => 'heidi@example.com', 'username' => 'heidi', 'tokens' => []];
+
+	/** @var array{hidden: list<mixed>, visible: list<mixed>} */
+	private array $form = ['hidden' => [], 'visible' => []];
+
+	/** @var array<string,array<string,string>> */
+	private array $templateData = ['main_layout' => ['LANG_PAGE_TITLE' => 'x']];
 
 	/**
 	 * @throws \PHPUnit\Framework\MockObject\Exception
@@ -55,293 +60,284 @@ class ShowAdminControllerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->facadeMock = $this->createMock(Facade::class);
-		$this->formElementPreparerMock = $this->createMock(FormTemplatePreparer::class);
-		$this->flashMock = $this->createMock(Messages::class);
+		$this->orchestratorMock     = $this->createMock(Orchestrator::class);
+		$this->templatePreparerMock = $this->createMock(TemplatePreparer::class);
+		$this->flashMock            = $this->createMock(Messages::class);
 
-		$this->requestMock         = $this->createMock(ServerRequestInterface::class);
-		$this->responseMock        = $this->createMock(ResponseInterface::class);
-		$this->streamInterfaceMock = $this->createMock(StreamInterface::class);
-
-		$this->controller = new ShowAdminController($this->facadeMock, $this->formElementPreparerMock);
+		$this->controller = new ShowAdminController($this->orchestratorMock, $this->templatePreparerMock, $this->flashMock);
 	}
 
 	/**
-	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 * @throws CoreException
-	 * @throws FrameworkException
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testNewUserFormSuccessful(): void
+	public function testNewUserForm(): void
 	{
+		$this->expectCreateRendering([]);
 		$this->flashMock->expects($this->never())->method($this->anything());
-		$this->setStandardMocks();
 
-		$this->facadeMock->expects($this->once())->method('buildCreateNewParameter');
-		$this->outputStandard([]);
+		$response = $this->controller->newUserForm($this->createStub(ServerRequestInterface::class), new Response());
 
-		$this->controller->newUserForm($this->requestMock, $this->responseMock);
+		$this->assertRendered($response);
 	}
 
 	/**
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws \PHPUnit\Framework\MockObject\Exception
+	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testEditUserFormSuccessful(): void
+	public function testEditUserFormWithoutUID(): void
 	{
-		$this->flashMock->expects($this->never())->method($this->anything());
-		$this->setStandardMocks();
+		$this->orchestratorMock->expects($this->never())->method($this->anything());
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->flashMock->expects($this->once())->method('addMessage')->with('error', 'UID not valid.');
 
-		$userData = ['UID' => 1, 'username' => 'testuser'];
-		$args = ['UID' => 1];
+		$response = $this->controller->editUserForm($this->createStub(ServerRequestInterface::class), new Response(), []);
 
-		$this->facadeMock->expects($this->once())->method('loadUserForEdit')
-			->with(1)
-			->willReturn($userData);
-		$this->facadeMock->expects($this->once())->method('buildEditParameter');
-		$this->outputStandard($userData);
-
-		$this->controller->editUserForm($this->requestMock, $this->responseMock, $args);
+		$this->assertRedirectedTo('/users', $response);
 	}
 
 	/**
-	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testEditUserFormInvalidUIDRedirectsToUsers(): void
+	public function testEditUserFormUserNotFound(): void
 	{
-		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
-		$this->streamInterfaceMock->expects($this->never())->method($this->anything());
-		$this->setStandardMocks();
-
-		$args = ['UID' => 0];
-		$this->flashMock->expects($this->once())->method('addMessage')
-			->with('error', 'UID not valid.');
-
-		$this->responseMock->method('withHeader')->with('Location', '/users')->willReturnSelf();
-		$this->responseMock->method('withStatus')->with(302);
-
-		$this->controller->editUserForm($this->requestMock, $this->responseMock, $args);
-	}
-
-	/**
-	 * @throws \PHPUnit\Framework\MockObject\Exception
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testEditUserFormUserNotFoundRedirectsToUsers(): void
-	{
-		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
-		$this->streamInterfaceMock->expects($this->never())->method($this->anything());
-		$this->setStandardMocks();
-
-		$args = ['UID' => 999];
-		$this->facadeMock->expects($this->once())->method('loadUserForEdit')->with(999)->willReturn([]);
+		$this->orchestratorMock->expects($this->once())->method('loadUserForEdit')->with(12)->willReturn([]);
+		$this->orchestratorMock->expects($this->never())->method('buildEditForm');
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
 		$this->flashMock->expects($this->once())->method('addMessage')->with('error', 'User not found.');
-		$this->responseMock->method('withHeader')->with('Location', '/users')->willReturnSelf();
-		$this->responseMock->method('withStatus')->with(302);
 
-		$this->controller->editUserForm($this->requestMock, $this->responseMock, $args);
+		$response = $this->controller->editUserForm($this->createStub(ServerRequestInterface::class), new Response(), ['UID' => '12']);
 
+		$this->assertRedirectedTo('/users', $response);
 	}
 
 	/**
-	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testStoreWithValidationErrors(): void
+	public function testEditUserForm(): void
 	{
-		$this->setStandardMocks();
+		$this->orchestratorMock->expects($this->once())->method('loadUserForEdit')->with(12)->willReturn($this->user);
+		$this->expectEditRendering([]);
+		$this->flashMock->expects($this->never())->method($this->anything());
 
-		$postData = ['username' => '', 'password' => ''];
-		$errors = ['Username cannot be empty.', 'Password cannot be empty.'];
+		$response = $this->controller->editUserForm($this->createStub(ServerRequestInterface::class), new Response(), ['UID' => '12']);
 
-		$this->requestMock->method('getParsedBody')->willReturn($postData);
-		$this->facadeMock->expects($this->once())->method('configureUserFormParameter')
-			->with($postData)
-			->willReturn($errors);
+		$this->assertRendered($response);
+	}
 
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
+	 */
+	#[Group('units')]
+	public function testStoreInsertWithErrorsShowsFormAgain(): void
+	{
+		$post = ['username' => '', 'standardSubmit' => ''];
+		$this->orchestratorMock->expects($this->never())->method('loadUserForEdit');
+		$this->orchestratorMock->expects($this->once())->method('storeCreateSettings')->with($post)
+			->willReturn(['success' => false, 'errors' => ['No username.', 'No email.']]);
+		$errors = [];
 		$this->flashMock->expects($this->exactly(2))->method('addMessageNow')
-			->willReturnMap([
-				['error', 'Username cannot be empty.'],
-				['error', 'Password cannot be empty.']
-			]);
+			->willReturnCallback(function (string $key, string $message) use (&$errors): void { $errors[] = $key . ':' . $message; });
+		$this->flashMock->expects($this->never())->method('addMessage');
+		$this->expectCreateRendering($post);
 
-		$this->responseMock->method('getBody')->willReturn($this->streamInterfaceMock);
-		$this->streamInterfaceMock->expects($this->once())->method('write');
+		$response = $this->controller->store($this->createRequest($post), new Response());
 
-		$this->outputStandard($postData);
-
-		$this->controller->store($this->requestMock, $this->responseMock);
+		$this->assertRendered($response);
+		static::assertSame(['error:No username.', 'error:No email.'], $errors);
 	}
 
 	/**
-	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testStoreUserSuccessfully(): void
+	public function testStoreInsert(): void
 	{
-		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
-		$this->streamInterfaceMock->expects($this->never())->method($this->anything());
-		$this->setStandardMocks();
+		$this->orchestratorMock->expects($this->once())->method('storeCreateSettings')->willReturn(['success' => true]);
+		$this->orchestratorMock->expects($this->never())->method('buildCreateForm');
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->flashMock->expects($this->once())->method('addMessage')->with('success', 'User “heidi“ successfully stored.');
 
-		$postData = ['UID' => '1', 'username' => 'JohnDoe', 'standardSubmit' => true];
-		$this->requestMock->method('getParsedBody')->willReturn($postData);
+		$response = $this->controller->store($this->createRequest(['username' => 'heidi', 'standardSubmit' => '']), new Response());
 
-		$this->facadeMock->expects($this->once())->method('configureUserFormParameter')->with($postData)->willReturn([]);
-		$this->facadeMock->expects($this->once())->method('storeUser')->with(1)->willReturn(1);
-
-		$this->flashMock->expects($this->once())->method('addMessage')->with('success', 'User “JohnDoe“ successfully stored.');
-		$this->responseMock->method('withHeader')->with('Location', '/users')->willReturnSelf();
-		$this->responseMock->method('withStatus')->with(302);
-
-		$this->controller->store($this->requestMock, $this->responseMock);
+		$this->assertRedirectedTo('/users', $response);
 	}
 
 	/**
-	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testStorePasswordResetSuccessfully(): void
+	public function testStoreUpdateUserNotFound(): void
 	{
-		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
-		$this->streamInterfaceMock->expects($this->never())->method($this->anything());
-		$this->setStandardMocks();
+		$this->orchestratorMock->expects($this->once())->method('loadUserForEdit')->with(12)->willReturn([]);
+		$this->orchestratorMock->expects($this->never())->method('storeEditSettings');
+		$this->orchestratorMock->expects($this->never())->method('resetPassword');
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->flashMock->expects($this->once())->method('addMessage')->with('error', 'User not found.');
 
-		$postData = ['UID' => '1', 'username' => 'JohnDoe', 'resetPassword' => true];
-		$this->requestMock->method('getParsedBody')->willReturn($postData);
+		$response = $this->controller->store($this->createRequest(['UID' => '12', 'standardSubmit' => '']), new Response());
 
-		$this->facadeMock->expects($this->once())->method('configureUserFormParameter')->with($postData)->willReturn([]);
-		$this->facadeMock->expects($this->once())->method('createPasswordResetToken')->with(1)->willReturn('token123');
-
-		$this->flashMock->expects($this->once())->method('addMessage')->with('success', 'User “JohnDoe“ Password reset was successfully.');
-		$this->responseMock->method('withHeader')->with('Location', '/users/edit/1')->willReturnSelf();
-		$this->responseMock->method('withStatus')->with(302);
-
-		$this->controller->store($this->requestMock, $this->responseMock);
+		$this->assertRedirectedTo('/users', $response);
 	}
 
 	/**
-	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testStoreServiceErrorsWhenStoringUser(): void
+	public function testStoreUpdateWithErrorsShowsFormAgain(): void
 	{
-		$this->setStandardMocks();
+		$post = ['UID' => '12', 'username' => '', 'standardSubmit' => ''];
+		$this->orchestratorMock->expects($this->once())->method('loadUserForEdit')->with(12)->willReturn($this->user);
+		$this->orchestratorMock->expects($this->once())->method('storeEditSettings')->with(12, $post)
+			->willReturn(['success' => false, 'errors' => ['No username.']]);
+		$this->flashMock->expects($this->once())->method('addMessageNow')->with('error', 'No username.');
+		$this->flashMock->expects($this->never())->method('addMessage');
+		$this->expectEditRendering($post);
 
-		$postData = ['UID' => '1', 'username' => 'JohnDoe', 'standardSubmit' => true];
-		$serviceErrors = ['Unable to store user.'];
+		$response = $this->controller->store($this->createRequest($post), new Response());
 
-		$this->requestMock->method('getParsedBody')->willReturn($postData);
-		$this->facadeMock->expects($this->once())->method('configureUserFormParameter')->with($postData)->willReturn([]);
-		$this->facadeMock->expects($this->once())->method('storeUser')->with(1)->willReturn(0);
-		$this->facadeMock->expects($this->once())->method('getUserServiceErrors')->willReturn($serviceErrors);
-
-		foreach ($serviceErrors as $errorText)
-		{
-			$this->flashMock->expects($this->once())->method('addMessageNow')->with('error', $errorText);
-		}
-
-		$this->outputStandard($postData);
-
-		$this->controller->store($this->requestMock, $this->responseMock);
+		$this->assertRendered($response);
 	}
 
 	/**
-	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testStoreServiceErrorsWhenResettingPassword(): void
+	public function testStoreUpdate(): void
 	{
-		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
-		$this->streamInterfaceMock->expects($this->never())->method($this->anything());
-		$this->setStandardMocks();
+		$this->orchestratorMock->expects($this->once())->method('loadUserForEdit')->willReturn($this->user);
+		$this->orchestratorMock->expects($this->once())->method('storeEditSettings')->willReturn(['success' => true]);
+		$this->orchestratorMock->expects($this->never())->method('resetPassword');
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->flashMock->expects($this->once())->method('addMessage')->with('success', 'User “heidi“ successfully stored.');
 
-		$postData = ['UID' => '1', 'username' => 'JohnDoe', 'resetPassword' => true];
-		$serviceErrors = ['Failed to generate password reset token.'];
+		$response = $this->controller->store($this->createRequest(['UID' => '12', 'username' => 'heidi', 'standardSubmit' => '']), new Response());
 
-		$this->requestMock->method('getParsedBody')->willReturn($postData);
-		$this->facadeMock->expects($this->once())->method('configureUserFormParameter')->with($postData)->willReturn([]);
-		$this->facadeMock->expects($this->once())->method('createPasswordResetToken')->with(1)->willReturn('');
-		$this->facadeMock->expects($this->once())->method('getUserServiceErrors')->willReturn($serviceErrors);
-
-		foreach ($serviceErrors as $errorText)
-		{
-			$this->flashMock->expects($this->once())->method('addMessage')->with('error', $errorText);
-		}
-
-		$this->responseMock->method('withHeader')->with('Location', '/users/edit/1')->willReturnSelf();
-		$this->responseMock->method('withStatus')->with(302);
-
-		$this->controller->store($this->requestMock, $this->responseMock);
-	}
-
-
-	/**
-	 * @throws \PHPUnit\Framework\MockObject\Exception
-	 */
-	private function setStandardMocks(): void
-	{
-		$translatorStub = $this->createStub(Translator::class);
-		$sessionStub    = $this->createStub(Session::class);
-		$this->requestMock->expects($this->exactly(3))->method('getAttribute')
-			->willReturnMap([
-				['flash', null, $this->flashMock],
-				['translator', null, $translatorStub],
-				['session', null, $sessionStub],
-			]);
-
-		$this->facadeMock->expects($this->once())->method('init')
-			->with($translatorStub, $sessionStub);
+		$this->assertRedirectedTo('/users', $response);
 	}
 
 	/**
-	 * @param array<string,mixed> $data
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
 	 */
-	private function outputStandard(array $data): void
+	#[Group('units')]
+	public function testStoreResetPasswordWithErrors(): void
 	{
-		$dataSections = ['key' => 'value'];
-		$templateData = ['main_layout' => ['key' => 'value'], 'this_layout' => ['key2' => 'value2']];
-		$this->facadeMock->expects($this->once())->method('prepareUITemplate')
-			->with($data)
-			->willReturn($dataSections);
+		$post = ['UID' => '12', 'username' => 'heidi', 'resetPassword' => ''];
+		$this->orchestratorMock->expects($this->once())->method('loadUserForEdit')->willReturn($this->user);
+		$this->orchestratorMock->expects($this->once())->method('resetPassword')->with(12, $post)
+			->willReturn(['success' => false, 'errors' => ['Token exists.']]);
+		$this->orchestratorMock->expects($this->never())->method('storeEditSettings');
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->flashMock->expects($this->once())->method('addMessage')->with('error', 'Token exists.');
 
-		$this->formElementPreparerMock->expects($this->once())->method('prepareUITemplate')
-			->with($dataSections)
-			->willReturn($templateData);
-		$this->responseMock->method('getBody')->willReturn($this->streamInterfaceMock);
-		$this->streamInterfaceMock->method('write')->with(serialize($templateData));
-		$this->responseMock->method('withHeader')->with('Content-Type', 'text/html')->willReturnSelf();
-		$this->responseMock->method('withStatus')->with(200);
+		$response = $this->controller->store($this->createRequest($post), new Response());
+
+		$this->assertRedirectedTo('/users/edit/12', $response);
 	}
 
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
+	 */
+	#[Group('units')]
+	public function testStoreResetPassword(): void
+	{
+		$this->orchestratorMock->expects($this->once())->method('loadUserForEdit')->willReturn($this->user);
+		$this->orchestratorMock->expects($this->once())->method('resetPassword')->willReturn(['success' => true]);
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->flashMock->expects($this->once())->method('addMessage')
+			->with('success', 'User “heidi“ Password reset was successfully.');
+
+		$response = $this->controller->store($this->createRequest(['UID' => '12', 'username' => 'heidi', 'resetPassword' => '']), new Response());
+
+		$this->assertRedirectedTo('/users/edit/12', $response);
+	}
+
+	/**
+	 * @param array<string,mixed> $post
+	 */
+	private function expectCreateRendering(array $post): void
+	{
+		$this->orchestratorMock->expects($this->once())->method('buildCreateForm')->with($post)->willReturn($this->form);
+		$this->templatePreparerMock->expects($this->once())->method('prepareCreateSettings')->with($this->form)
+			->willReturn($this->templateData);
+	}
+
+	/**
+	 * @param array<string,mixed> $post
+	 */
+	private function expectEditRendering(array $post): void
+	{
+		$this->orchestratorMock->expects($this->once())->method('buildEditForm')->with($post)->willReturn($this->form);
+		$this->templatePreparerMock->expects($this->once())->method('prepareEditSettings')->with($this->form, 'heidi')
+			->willReturn($this->templateData);
+	}
+
+	/**
+	 * @param array<string,mixed> $post
+	 */
+	private function createRequest(array $post): ServerRequestInterface
+	{
+		$request = $this->createStub(ServerRequestInterface::class);
+		$request->method('getParsedBody')->willReturn($post);
+
+		return $request;
+	}
+
+	private function assertRendered(ResponseInterface $response): void
+	{
+		static::assertSame(200, $response->getStatusCode());
+		static::assertSame('text/html', $response->getHeaderLine('Content-Type'));
+		static::assertSame(serialize($this->templateData), (string) $response->getBody());
+	}
+
+	private function assertRedirectedTo(string $location, ResponseInterface $response): void
+	{
+		static::assertSame(302, $response->getStatusCode());
+		static::assertSame($location, $response->getHeaderLine('Location'));
+	}
 }

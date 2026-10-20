@@ -35,9 +35,8 @@ use Slim\Flash\Messages;
  */
 class ShowComposerController
 {
-	private Messages $flash;
-
-	public function __construct(private readonly Orchestrator $orchestrator)
+	public function __construct(private readonly Orchestrator $orchestrator,
+								private readonly Messages $flash)
 	{}
 
 
@@ -53,7 +52,6 @@ class ShowComposerController
 
 		if (!$this->orchestrator->checkEditRights($templateId))
 		{
-			$this->flash = $request->getAttribute('flash');
 			$this->flash->addMessage('error', 'No rights');
 			return $response->withHeader('Location', '/templates')->withStatus(302);
 		}

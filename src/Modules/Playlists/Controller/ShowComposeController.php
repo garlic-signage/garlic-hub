@@ -23,6 +23,8 @@ namespace App\Modules\Playlists\Controller;
 
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\UserException;
+use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\Compose\UiTemplatesPreparer;
 use App\Modules\Playlists\Helper\PlaylistMode;
 use App\Modules\Playlists\Services\PlaylistsService;
@@ -35,28 +37,25 @@ use Slim\Flash\Messages;
  */
 class ShowComposeController
 {
-	private readonly PlaylistsService $playlistsService;
-	private readonly UiTemplatesPreparer $uiTemplatesPreparer;
-	private Messages $flash;
-
-	public function __construct(PlaylistsService $playlistsService, UiTemplatesPreparer $uiTemplatesPreparer)
-	{
-		$this->playlistsService = $playlistsService;
-		$this->uiTemplatesPreparer = $uiTemplatesPreparer;
-	}
+	public function __construct(private readonly PlaylistsService $playlistsService,
+								private readonly UiTemplatesPreparer $uiTemplatesPreparer,
+								private readonly UserSession $userSession,
+								private readonly Messages $flash)
+	{}
 
 	/**
 	 * @param array<string,mixed> $args
 	 * @throws CoreException
 	 * @throws FrameworkException
+	 * @throws UserException
 	 */
 	public function show(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
-		$this->setImportantAttributes($request);
 		$playlistId = (int) ($args['playlist_id'] ?? 0);
 		if ($playlistId === 0)
 			return $this->redirectWithErrors($response, 'Playlist ID not valid.');
 
+		$this->playlistsService->setUID($this->userSession->getUID());
 		/** @var array<string,mixed> $playlist */
 		$playlist = $this->playlistsService->loadPlaylistForEdit($playlistId);
 		if ($playlist === [])
@@ -76,19 +75,12 @@ class ShowComposeController
 				$data = $this->uiTemplatesPreparer->buildCircularEditor($playlist);
 				break;
 			default:
-				return $this->redirectWithErrors($response, 'Unsupported playlist mode: .'.$playlist['playlist_mode']);
+				return $this->redirectWithErrors($response, 'Unsupported playlist mode: '.$playlist['playlist_mode']);
 
 		}
 
 		$response->getBody()->write(serialize($data));
 		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
-	}
-
-	private function setImportantAttributes(ServerRequestInterface $request): void
-	{
-		$session = $request->getAttribute('session');
-		$this->playlistsService->setUID($session->get('user')['UID']);
-		$this->flash      = $request->getAttribute('flash');
 	}
 
 	private function redirectWithErrors(ResponseInterface $response, string $defaultMessage = 'Unknown error.'): ResponseInterface

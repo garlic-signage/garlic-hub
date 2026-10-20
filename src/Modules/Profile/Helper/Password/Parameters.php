@@ -49,9 +49,4 @@ class Parameters extends BaseEditParameters
 		parent::__construct('profile', $sanitizer, $session);
 		$this->currentParameters = array_merge($this->defaultParameters, $this->moduleParameters);
 	}
-
-	public function addToken(): void
-	{
-		$this->addParameter(self::PARAMETER_PASSWORD_TOKEN, ScalarType::STRING, '');
-	}
 }

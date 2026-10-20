@@ -19,22 +19,12 @@
 */
 declare(strict_types=1);
 
-use App\Framework\Core\Config\Config;
 use App\Framework\Core\Crypt;
-use App\Framework\Core\CsrfToken;
 use App\Framework\Core\Sanitizer;
 use App\Framework\Core\Session;
-use App\Framework\Core\Translate\Translator;
 use App\Framework\Database\BaseRepositories\Transactions;
-use App\Framework\Utils\Forms\FormTemplatePreparer;
-use App\Framework\Utils\Html\FormBuilder;
 use App\Modules\Profile\Controller\EditLocalesController;
-use App\Modules\Profile\Controller\ShowPasswordController;
-use App\Modules\Profile\Helper\Password\Builder;
-use App\Modules\Profile\Helper\Password\Facade;
-use App\Modules\Profile\Helper\Password\FormElementsCreator;
 use App\Modules\Profile\Helper\Password\Parameters;
-use App\Modules\Profile\Helper\Password\Validator;
 use App\Modules\Profile\Services\ProfileService;
 use App\Modules\Profile\Services\UserTokenService;
 use App\Modules\Users\Repositories\UserRepositoryFactory;
@@ -76,29 +66,6 @@ $dependencies[Parameters::class] = DI\factory(function (ContainerInterface $cont
 	return new Parameters(
 		$container->get(Sanitizer::class),
 		$container->get(Session::class)
-	);
-});
-$dependencies[ShowPasswordController::class] = DI\factory(function (ContainerInterface $container)
-{
-	$validator = new Validator(
-		$container->get(Translator::class),
-		$container->get(Parameters::class),
-		$container->get(CsrfToken::class)
-	);
-	$creator   = new FormElementsCreator($container->get(FormBuilder::class), $container->get(Translator::class));
-	$builder   = new Builder($container->get(Parameters::class),$validator, $creator);
-	$facade    = new Facade(
-		$builder,
-		$container->get(ProfileService::class),
-		$container->get(UserTokenService::class),
-		$container->get(Translator::class),
-		$container->get(Parameters::class),
-		$container->get(Config::class)
-	);
-
-	return new ShowPasswordController(
-		$facade,
-		$container->get(FormTemplatePreparer::class)
 	);
 });
 

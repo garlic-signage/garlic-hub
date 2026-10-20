@@ -24,8 +24,9 @@ namespace App\Modules\Playlists\Controller;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Utils\Forms\FormTemplatePreparer;
-use App\Modules\Playlists\Helper\Settings\Facade;
+use App\Framework\Exceptions\UserException;
+use App\Modules\Playlists\Helper\Settings\Orchestrator;
+use App\Modules\Playlists\Helper\Settings\TemplatePreparer;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -36,125 +37,167 @@ use Slim\Flash\Messages;
  */
 class ShowSettingsController
 {
-	private readonly Facade $facade;
-	private readonly FormTemplatePreparer $formElementPreparer;
-	private Messages $flash;
-
-	public function __construct(Facade $facade, FormTemplatePreparer $formElementPreparer)
-	{
-		$this->facade              = $facade;
-		$this->formElementPreparer = $formElementPreparer;
-	}
+	public function __construct(private readonly Orchestrator $orchestrator,
+								private readonly TemplatePreparer $templatePreparer,
+								private readonly Messages $flash)
+	{}
 
 	/**
 	 * @param array<string,string> $args
 	 * @throws CoreException
-	 * @throws FrameworkException
 	 * @throws Exception
+	 * @throws FrameworkException
 	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	public function newPlaylistForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
-		$playlist = ['playlist_mode' => $args['playlist_mode'] ?? 'master'];
-
-		$this->initFacade($request);
-		$this->facade->buildCreateNewParameter($playlist['playlist_mode']);
-
-		return $this->outputRenderedForm($response, $playlist);
+		return $this->outputRenderedCreateForm($response, $args['playlist_mode'] ?? 'master', []);
 	}
 
 	/**
 	 * @param array<string,string> $args
 	 * @throws CoreException
+	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws Exception
+	 * @throws UserException
 	 */
 	public function editPlaylistForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
 		$playlistId = (int) ($args['playlist_id'] ?? 0);
-
-		$this->initFacade($request);
-
 		if ($playlistId === 0)
-		{
-			$this->flash->addMessage('error', 'Playlist ID not valid.');
-			return $response->withHeader('Location', '/playlists')->withStatus(302);
-		}
+			return $this->redirectWithError($response, 'Playlist ID not valid.');
 
-		/** @var array{"UID": int, "company_id": int, playlist_mode: string, playlist_name:string, ...}|array<empty,empty> $playlist */
-		$playlist = $this->facade->loadPlaylistForEdit($playlistId);
-		if (empty($playlist))
-		{
-			$this->flash->addMessage('error', 'Playlist not found.');
-			return $response->withHeader('Location', '/playlists')->withStatus(302);
-		}
-		/** @var array{"UID": int, "company_id": int, playlist_mode: string, playlist_name:string, ...} $playlist */
-		$this->facade->buildEditParameter($playlist);
+		$playlist = $this->orchestrator->loadPlaylistForEdit($playlistId);
+		if ($playlist === [])
+			return $this->redirectWithError($response, 'Playlist not found.');
 
-		/** @var array<string,mixed> $playlist */
-		return $this->outputRenderedForm($response, $playlist);
+		return $this->outputRenderedEditForm($response, $playlist['playlist_mode'], []);
 	}
 
 	/**
 	 * @throws CoreException
-	 * @throws FrameworkException
 	 * @throws Exception
+	 * @throws FrameworkException
 	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	public function store(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array{playlist_id?: int, playlist_mode: string, playlist_name:string, ...}  $post */
-		$post = $request->getParsedBody();
+		/** @var array<string,mixed> $post */
+		$post       = $request->getParsedBody();
+		$playlistId = (int) ($post['playlist_id'] ?? 0);
 
-		$this->initFacade($request);
-		$errors = $this->facade->configurePlaylistFormParameter($post);
-		foreach ($errors as $errorText)
-		{
-			$this->flash->addMessageNow('error', $errorText);
-		}
+		if ($playlistId === 0)
+			return $this->insert($response, $post);
 
-		if (!empty($errors))
-			return $this->outputRenderedForm($response, $post);
+		$playlist = $this->orchestrator->loadPlaylistForEdit($playlistId);
+		if ($playlist === [])
+			return $this->redirectWithError($response, 'Playlist not found.');
 
-		try
-		{
-			$id = $this->facade->storePlaylist($post);
-		}
-		catch (ModuleException $e)
-		{
-			$this->flash->addMessageNow('error', $e->getMessage());
-			return $this->outputRenderedForm($response, $post);
-		}
-
-		if ($id > 0)
-		{
-			$this->flash->addMessage('success', 'Playlist “'.$post['playlist_name'].'“ successfully stored.');
-			return $response->withHeader('Location', '/playlists')->withStatus(302);
-		}
-
-		$this->flash->addMessageNow('error', 'Playlist “'.$post['playlist_name'].'“ could not be stored.');
-		return $this->outputRenderedForm($response, $post);
+		return $this->update($response, $playlist['playlist_mode'], $post);
 	}
 
 	/**
 	 * @param array<string,mixed> $post
 	 * @throws CoreException
+	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
+	 * @throws UserException
 	 */
-	private function outputRenderedForm(ResponseInterface $response, array $post): ResponseInterface
+	private function insert(ResponseInterface $response, array $post): ResponseInterface
 	{
-		$dataSections = $this->facade->prepareUITemplate($post);
-		$templateData = $this->formElementPreparer->prepareUITemplate($dataSections);
+		$result = $this->orchestrator->storeCreateSettings($post);
+		if (!$result['success'])
+		{
+			$this->addErrorsNow($result['errors'] ?? []);
+			$playlistMode = $post['playlist_mode'] ?? '';
+			return $this->outputRenderedCreateForm($response, is_string($playlistMode) ? $playlistMode : '', $post);
+		}
+
+		return $this->redirectWithSuccess($response, $post);
+	}
+
+	/**
+	 * @param array<string,mixed> $post
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
+	 */
+	private function update(ResponseInterface $response, string $playlistMode, array $post): ResponseInterface
+	{
+		$result = $this->orchestrator->storeEditSettings($post);
+		if (!$result['success'])
+		{
+			$this->addErrorsNow($result['errors'] ?? []);
+			return $this->outputRenderedEditForm($response, $playlistMode, $post);
+		}
+
+		return $this->redirectWithSuccess($response, $post);
+	}
+
+	/**
+	 * @param array<string,mixed> $post
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
+	 */
+	private function outputRenderedCreateForm(ResponseInterface $response, string $playlistMode, array $post): ResponseInterface
+	{
+		$formData     = $this->orchestrator->buildCreateForm($playlistMode, $post);
+		$templateData = $this->templatePreparer->prepare($formData, $playlistMode);
 
 		$response->getBody()->write(serialize($templateData));
 		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
 	}
 
-	private function initFacade(ServerRequestInterface $request): void
+	/**
+	 * @param array<string,mixed> $post
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
+	 */
+	private function outputRenderedEditForm(ResponseInterface $response, string $playlistMode, array $post): ResponseInterface
 	{
-		$this->flash      = $request->getAttribute('flash');
-		$this->facade->init($request->getAttribute('translator'), $request->getAttribute('session'));
+		$formData     = $this->orchestrator->buildEditForm($post);
+		$templateData = $this->templatePreparer->prepare($formData, $playlistMode);
+
+		$response->getBody()->write(serialize($templateData));
+		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
+	}
+
+	/**
+	 * @param string[] $errors
+	 */
+	private function addErrorsNow(array $errors): void
+	{
+		foreach ($errors as $errorText)
+		{
+			$this->flash->addMessageNow('error', $errorText);
+		}
+	}
+
+	/**
+	 * @param array<string,mixed> $post
+	 */
+	private function redirectWithSuccess(ResponseInterface $response, array $post): ResponseInterface
+	{
+		$playlistName = $post['playlist_name'] ?? '';
+		$this->flash->addMessage('success', 'Playlist “' . (is_string($playlistName) ? $playlistName : '') . '“ successfully stored.');
+		return $response->withHeader('Location', '/playlists')->withStatus(302);
+	}
+
+	private function redirectWithError(ResponseInterface $response, string $message): ResponseInterface
+	{
+		$this->flash->addMessage('error', $message);
+		return $response->withHeader('Location', '/playlists')->withStatus(302);
 	}
 }

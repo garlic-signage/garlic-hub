@@ -23,7 +23,6 @@ use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Core\Acl\AclHelper;
 use App\Framework\Core\BaseValidator;
 use App\Framework\Core\Config\Config;
-use App\Framework\Core\CsrfToken;
 use App\Framework\Core\Sanitizer;
 use App\Framework\Core\Session;
 use App\Framework\Core\Translate\Translator;
@@ -31,13 +30,10 @@ use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Utils\Datatable\BuildService;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
 use App\Framework\Utils\Datatable\PrepareService;
-use App\Framework\Utils\Forms\FormTemplatePreparer;
-use App\Framework\Utils\Html\FormBuilder;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\NodesService;
 use App\Modules\Profile\Entities\UserEntityFactory;
 use App\Modules\Profile\Services\UserTokenService;
-use App\Modules\Users\Controller\ShowAdminController;
 use App\Modules\Users\Controller\ShowDatatableController;
 use App\Modules\Users\Controller\UsersController;
 use App\Modules\Users\Controller\UserTokenController;
@@ -45,10 +41,6 @@ use App\Modules\Users\Helper\Datatable\DatatableFacade;
 use App\Modules\Users\Helper\Datatable\DatatableBuilder;
 use App\Modules\Users\Helper\Datatable\DatatablePreparer;
 use App\Modules\Users\Helper\Datatable\Parameters;
-use App\Modules\Users\Helper\Settings\Builder;
-use App\Modules\Users\Helper\Settings\Facade;
-use App\Modules\Users\Helper\Settings\FormElementsCreator;
-use App\Modules\Users\Helper\Settings\Validator;
 use App\Modules\Users\Repositories\Edge\UserMainRepository;
 use App\Modules\Users\Repositories\UserRepositoryFactory;
 use App\Modules\Users\Services\AclValidator;
@@ -159,22 +151,6 @@ $dependencies[DatatableFacade::class] = DI\factory(function (ContainerInterface 
 	);
 });
 
-$dependencies[Builder::class] = DI\factory(function (ContainerInterface $container)
-{
-	return new Builder(
-		$container->get(AclValidator::class),
-		$container->get(\App\Modules\Users\Helper\Settings\Parameters::class),
-		new Validator(
-			$container->get(Translator::class),
-			$container->get(\App\Modules\Users\Helper\Settings\Parameters::class),
-			$container->get(CsrfToken::class)
-		),
-		new FormElementsCreator(
-			$container->get(FormBuilder::class),
-			$container->get(Translator::class)
-		)
-	);
-});
 $dependencies[UsersAdminService::class] = DI\factory(function (ContainerInterface $container)
 {
 	$factory      = $container->get(UserRepositoryFactory::class);
@@ -200,21 +176,6 @@ $dependencies[UsersAdminCreateService::class] = DI\factory(function (ContainerIn
 		$container->get(NodesService::class),
 		$container->get(Transactions::class),
 		$container->get('ModuleLogger')
-	);
-});
-$dependencies[Facade::class] = DI\factory(function (ContainerInterface $container)
-{
-	return new Facade(
-		$container->get(Builder::class),
-		$container->get(UsersAdminService::class),
-		$container->get(\App\Modules\Users\Helper\Settings\Parameters::class)
-	);
-});
-$dependencies[ShowAdminController::class] = DI\factory(function (ContainerInterface $container)
-{
-	return new ShowAdminController(
-		$container->get(Facade::class),
-		$container->get(FormTemplatePreparer::class)
 	);
 });
 

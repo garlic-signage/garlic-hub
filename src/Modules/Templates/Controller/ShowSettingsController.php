@@ -34,11 +34,9 @@ use Slim\Flash\Messages;
 
 class ShowSettingsController
 {
-
-	private Messages $flash;
-
 	public function __construct(private readonly Orchestrator $orchestrator,
-								private readonly TemplatePreparer $templatePreparer)
+								private readonly TemplatePreparer $templatePreparer,
+								private readonly Messages $flash)
 	{}
 
 	/**
@@ -51,7 +49,6 @@ class ShowSettingsController
 	{
 		if (!$this->orchestrator->checkCreateRights())
 		{
-			$this->flash = $request->getAttribute('flash');
 			$this->flash->addMessage('error', 'No rights');
 			return $response->withHeader('Location', '/templates')->withStatus(302);
 		}
@@ -75,7 +72,6 @@ class ShowSettingsController
 
 		if (!$this->orchestrator->checkEditRights($templateId))
 		{
-			$this->flash = $request->getAttribute('flash');
 			$this->flash->addMessage('error', 'No rights');
 			return $response->withHeader('Location', '/templates')->withStatus(302);
 		}
@@ -96,9 +92,8 @@ class ShowSettingsController
 	public function store(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
 		/** @var array<string,mixed> $post */
-		$post        = $request->getParsedBody();
-		$templateId  = (int) ($post['template_id'] ?? 0);
-		$this->flash = $request->getAttribute('flash');
+		$post       = $request->getParsedBody();
+		$templateId = (int) ($post['template_id'] ?? 0);
 
 		if ($templateId === 0)
 			return $this->insert($response, $post);

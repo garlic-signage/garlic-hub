@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -19,580 +19,307 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Modules\Profile\Controller;
 
-use App\Framework\Core\Session;
 use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\DatabaseException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Utils\Forms\FormTemplatePreparer;
+use App\Framework\Exceptions\UserException;
 use App\Modules\Profile\Controller\ShowPasswordController;
-use App\Modules\Profile\Helper\Password\Facade;
+use App\Modules\Profile\Helper\Password\Orchestrator;
+use App\Modules\Profile\Helper\Password\TemplatePreparer;
 use DateMalformedStringException;
+use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamInterface;
-use Random\RandomException;
 use Slim\Flash\Messages;
+use Slim\Psr7\Response;
 
 class ShowPasswordControllerTest extends TestCase
 {
-	private Facade&MockObject $facadeMock;
-	private FormTemplatePreparer&MockObject $formElementPreparerMock;
+	private Orchestrator&MockObject $orchestratorMock;
+	private TemplatePreparer&MockObject $templatePreparerMock;
 	private Messages&MockObject $flashMock;
-	private Translator&MockObject $translatorMock;
-	private ServerRequestInterface&MockObject $requestMock;
-	private ResponseInterface&MockObject $responseMock;
-	private StreamInterface&MockObject $streamInterfaceMock;
 	private ShowPasswordController $controller;
+
+	/** @var array{UID:int, company_id:int, username:string, status:int, purpose:string} */
+	private array $tokenUser = ['UID' => 9, 'company_id' => 1, 'username' => 'heidi', 'status' => 1, 'purpose' => 'password_reset'];
+
+	/** @var array{hidden: list<mixed>, visible: list<mixed>} */
+	private array $form = ['hidden' => [], 'visible' => []];
+
+	/** @var array<string,array<string,string>> */
+	private array $templateData = ['main_layout' => ['LANG_PAGE_TITLE' => 'x']];
+
 	/**
-	 * @throws Exception
+	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->facadeMock              = $this->createMock(Facade::class);
-		$this->formElementPreparerMock = $this->createMock(FormTemplatePreparer::class);
-		$this->flashMock               = $this->createMock(Messages::class);
-		$this->translatorMock          = $this->createMock(Translator::class);
+		$this->orchestratorMock     = $this->createMock(Orchestrator::class);
+		$this->templatePreparerMock = $this->createMock(TemplatePreparer::class);
+		$this->flashMock            = $this->createMock(Messages::class);
+		$translatorStub             = $this->createStub(Translator::class);
+		$translatorStub->method('translate')
+			->willReturnCallback(fn(string $key, string $module): string => $module . '.' . $key);
 
-		$this->requestMock         = $this->createMock(ServerRequestInterface::class);
-		$this->responseMock        = $this->createMock(ResponseInterface::class);
-		$this->streamInterfaceMock = $this->createMock(StreamInterface::class);
-
-		$this->controller = new ShowPasswordController($this->facadeMock, $this->formElementPreparerMock);
+		$this->controller = new ShowPasswordController(
+			$this->orchestratorMock,
+			$this->templatePreparerMock,
+			$translatorStub,
+			$this->flashMock
+		);
 	}
 
 	/**
-	 * @throws Exception
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testShowPasswordFormReturnsExpectedResponse(): void
+	public function testShowPasswordForm(): void
 	{
+		$this->expectPasswordFormRendering();
 		$this->flashMock->expects($this->never())->method($this->anything());
-		$this->translatorMock->expects($this->never())->method($this->anything());
-		$this->setStandardMocks();
 
-		$dataSections = ['key' => 'value'];
-		$this->outputStandard($dataSections, '');
+		$response = $this->controller->showPasswordForm($this->createStub(ServerRequestInterface::class), new Response());
 
-		$this->controller->showPasswordForm($this->requestMock, $this->responseMock);
+		$this->assertRendered($response);
 	}
 
 	/**
-	 * @throws DateMalformedStringException
 	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
+	 * @throws DateMalformedStringException
+	 * @throws Exception
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testShowForcedPasswordFormRedirectsWhenTokenIsMissing(): void
+	public function testShowForcedPasswordFormWithoutToken(): void
 	{
-		$this->facadeMock->expects($this->never())->method($this->anything());
-		$this->expectNoPageRendered();
-		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
-			->willReturnMap([
-				['flash', null, $this->flashMock],
-				['translator', null, $this->translatorMock],
-			]);
+		$this->orchestratorMock->expects($this->never())->method($this->anything());
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->flashMock->expects($this->once())->method('addMessage')->with('error', 'profile.no_token');
 
-		$this->requestMock->expects($this->once())->method('getQueryParams')
-			->willReturn([]);
+		$response = $this->controller->showForcedPasswordForm($this->createQueryRequest([]), new Response());
 
-		$this->translatorMock->expects($this->once())->method('translate')
-			->with('no_token', 'profile')
-			->willReturn('Translated no token message.');
-
-		$this->flashMock->expects($this->once())
-			->method('addMessageNow')
-			->with('error', 'Translated no token message.');
-
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Location', '/login')
-			->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')
-			->with(302);
-
-		$this->controller->showForcedPasswordForm($this->requestMock, $this->responseMock);
+		$this->assertRedirectedTo('/login', $response);
 	}
 
 	/**
-	 * @throws DateMalformedStringException
 	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
+	 * @throws DateMalformedStringException
+	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws RandomException
 	 */
 	#[Group('units')]
-	public function testShowForcedPasswordFormRedirectsWhenUIDIsInvalid(): void
+	public function testShowForcedPasswordFormWithInvalidToken(): void
 	{
-		$this->expectNoPageRendered();
-		$passwordToken = bin2hex(random_bytes(32));
+		$this->orchestratorMock->expects($this->once())->method('loadTokenUser')->with('abcd')->willReturn([]);
+		$this->orchestratorMock->expects($this->never())->method('buildForm');
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->flashMock->expects($this->once())->method('addMessage')->with('error', 'profile.token_error');
 
-		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
-			->willReturnMap([
-				['flash', null, $this->flashMock],
-				['translator', null, $this->translatorMock],
-			]);
+		$response = $this->controller->showForcedPasswordForm($this->createQueryRequest(['token' => 'abcd']), new Response());
 
-		$this->requestMock->expects($this->once())->method('getQueryParams')
-			->willReturn(['token' => $passwordToken]);
-
-		$this->facadeMock->expects($this->once())->method('determineUIDByToken')
-			->willReturn(0);
-
-		$this->translatorMock->expects($this->once())->method('translate')
-			->with('token_error', 'profile')
-			->willReturn('Translated token error.');
-
-		$this->flashMock->expects($this->once())->method('addMessage')
-			->with('error', 'Translated token error.');
-
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Location', '/login')
-			->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')
-			->with(302);
-
-		$this->controller->showForcedPasswordForm($this->requestMock, $this->responseMock);
+		$this->assertRedirectedTo('/login', $response);
 	}
 
 	/**
-	 * @throws DateMalformedStringException
 	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
+	 * @throws DateMalformedStringException
+	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws RandomException
 	 */
 	#[Group('units')]
-	public function testShowForcedPasswordFormRendersFormSuccessfully(): void
+	public function testShowForcedPasswordForm(): void
 	{
+		$this->orchestratorMock->expects($this->once())->method('loadTokenUser')->with('abcd')->willReturn($this->tokenUser);
+		$this->expectForcedFormRendering();
 		$this->flashMock->expects($this->never())->method($this->anything());
-		$this->translatorMock->expects($this->never())->method($this->anything());
-		$passwordToken = bin2hex(random_bytes(32));
 
-		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
-			->willReturnMap([
-				['flash', null, $this->flashMock],
-				['translator', null, $this->translatorMock],
-			]);
+		$response = $this->controller->showForcedPasswordForm($this->createQueryRequest(['token' => 'abcd']), new Response());
 
-		$this->requestMock->expects($this->once())->method('getQueryParams')
-			->willReturn(['token' => $passwordToken]);
-
-		$this->facadeMock->expects($this->once())->method('determineUIDByToken')
-			->with($passwordToken)
-			->willReturn(123);
-
-		$dataSections = ['key' => 'value'];
-		$templateData = ['main_layout' => ['key' => 'value'], 'this_layout' => ['key2' => 'value2']];
-
-		$this->facadeMock->expects($this->once())->method('prepareUITemplate')
-			->with($passwordToken)
-			->willReturn($dataSections);
-
-		$this->formElementPreparerMock->expects($this->once())->method('prepareUITemplate')
-			->with($dataSections)
-			->willReturn($templateData);
-
-		$this->responseMock->method('getBody')->willReturn($this->streamInterfaceMock);
-		$this->streamInterfaceMock->expects($this->once())->method('write')->with(serialize($templateData));
-
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Content-Type', 'text/html')
-			->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')->with(200);
-
-		$this->controller->showForcedPasswordForm($this->requestMock, $this->responseMock);
+		$this->assertRendered($response);
 	}
 
 	/**
-	 * @throws ModuleException
-	 * @throws DatabaseException
 	 * @throws CoreException
-	 * @throws FrameworkException
 	 * @throws DateMalformedStringException
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testStoreForcedPasswordRedirectsWhenTokenIsMissing(): void
-	{
-		$this->facadeMock->expects($this->never())->method($this->anything());
-		$this->expectNoPageRendered();
-		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
-			->willReturnMap([
-				['flash', null, $this->flashMock],
-				['translator', null, $this->translatorMock],
-			]);
-
-		$this->requestMock->expects($this->once())->method('getParsedBody')
-			->willReturn([]);
-
-		$this->translatorMock->expects($this->once())->method('translate')
-			->with('no_token', 'profile')
-			->willReturn('Translated no token message.');
-
-		$this->flashMock->expects($this->once())
-			->method('addMessageNow')
-			->with('error', 'Translated no token message.');
-
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Location', '/login')
-			->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')
-			->with(302);
-
-		$this->controller->storeForcedPassword($this->requestMock, $this->responseMock);
-	}
-
-	/**
-	 * @throws ModuleException
-	 * @throws DatabaseException
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws DateMalformedStringException
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testStoreForcedPasswordRedirectsWhenUIDIsInvalid(): void
-	{
-		$this->expectNoPageRendered();
-		$passwordToken = 'invalidToken';
-
-		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
-			->willReturnMap([
-				['flash', null, $this->flashMock],
-				['translator', null, $this->translatorMock],
-			]);
-
-		$this->requestMock->expects($this->once())->method('getParsedBody')
-			->willReturn(['token' => $passwordToken]);
-
-		$this->facadeMock->expects($this->once())->method('determineUIDByToken')
-			->with($passwordToken)
-			->willReturn(0);
-
-		$this->translatorMock->expects($this->once())->method('translate')
-			->with('token_error', 'profile')
-			->willReturn('Translated token error.');
-
-		$this->flashMock->expects($this->once())
-			->method('addMessageNow')
-			->with('error', 'Translated token error.');
-
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Location', '/login')
-			->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')
-			->with(302);
-
-		$this->controller->storeForcedPassword($this->requestMock, $this->responseMock);
-	}
-
-	/**
-	 * @throws ModuleException
-	 * @throws DatabaseException
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws DateMalformedStringException
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testStoreForcedPasswordHandlesValidationErrors(): void
-	{
-		$this->translatorMock->expects($this->never())->method($this->anything());
-		$postData = ['token' => 'validToken', 'password' => 'short'];
-		$passwordToken = 'validToken';
-		$errors = ['Password is too short.'];
-
-		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
-			->willReturnMap([
-				['flash', null, $this->flashMock],
-				['translator', null, $this->translatorMock],
-			]);
-
-		$this->requestMock->expects($this->once())->method('getParsedBody')
-			->willReturn($postData);
-
-		$this->facadeMock->expects($this->once())->method('determineUIDByToken')
-			->with($passwordToken)
-			->willReturn(123);
-
-		$this->facadeMock->expects($this->once())->method('configureUserFormParameter')
-			->with($postData)
-			->willReturn($errors);
-
-		$this->flashMock->expects($this->exactly(1))
-			->method('addMessageNow')
-			->with('error', $errors[0]);
-
-		$this->outputStandard($postData, $passwordToken);
-
-		$this->controller->storeForcedPassword($this->requestMock, $this->responseMock);
-	}
-
-	/**
-	 * @throws ModuleException
-	 * @throws DatabaseException
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws DateMalformedStringException
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testStoreForcedPasswordStoresSuccessfulPassword(): void
-	{
-		$this->expectNoPageRendered();
-		$postData = ['token' => 'validToken', 'password' => 'strongPassword123!'];
-		$passwordToken = 'validToken';
-
-		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
-			->willReturnMap([
-				['flash', null, $this->flashMock],
-				['translator', null, $this->translatorMock],
-			]);
-
-		$this->requestMock->expects($this->once())->method('getParsedBody')
-			->willReturn($postData);
-
-		$this->facadeMock->expects($this->once())->method('determineUIDByToken')
-			->with($passwordToken)
-			->willReturn(123);
-
-		$this->facadeMock->expects($this->once())->method('configureUserFormParameter')
-			->with($postData)
-			->willReturn([]);
-
-		$this->facadeMock->expects($this->once())->method('storeForcedPassword')
-			->with(123, $passwordToken)
-			->willReturn(123);
-
-		$this->translatorMock->expects($this->once())->method('translate')
-			->with('forced_password_changed', 'profile')
-			->willReturn('Password change success.');
-
-		$this->flashMock->expects($this->once())
-			->method('addMessage')
-			->with('success', 'Password change success.');
-
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Location', '/login')
-			->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')
-			->with(302);
-
-		$this->controller->storeForcedPassword($this->requestMock, $this->responseMock);
-	}
-
-	/**
-	 * @throws ModuleException
-	 * @throws DatabaseException
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws DateMalformedStringException
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testStoreForcedPasswordHandlesSavingErrors(): void
-	{
-		$this->translatorMock->expects($this->never())->method($this->anything());
-		$postData = ['token' => 'validToken', 'password' => 'strongPassword123!'];
-		$passwordToken = 'validToken';
-		$savingErrors = ['An unexpected error occurred.'];
-
-		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
-			->willReturnMap([
-				['flash', null, $this->flashMock],
-				['translator', null, $this->translatorMock],
-			]);
-
-		$this->requestMock->expects($this->once())->method('getParsedBody')
-			->willReturn($postData);
-
-		$this->facadeMock->expects($this->once())->method('determineUIDByToken')
-			->with($passwordToken)
-			->willReturn(123);
-
-		$this->facadeMock->expects($this->once())->method('configureUserFormParameter')
-			->with($postData)
-			->willReturn([]);
-
-		$this->facadeMock->expects($this->once())->method('storeForcedPassword')
-			->with(123, $passwordToken)
-			->willReturn(0);
-
-		$this->facadeMock->expects($this->once())->method('getUserServiceErrors')
-			->willReturn($savingErrors);
-
-		$this->flashMock->expects($this->once())
-			->method('addMessageNow')
-			->with('error', $savingErrors[0]);
-		$this->outputStandard($postData, $passwordToken);
-
-		$this->controller->storeForcedPassword($this->requestMock, $this->responseMock);
-	}
-
-
-	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws FrameworkException
 	 * @throws Exception
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testStoreSuccessful(): void
-	{
-		$this->expectNoPageRendered();
-		$postData = ['password' => 'strongPassword123!'];
-		$this->requestMock->expects($this->once())->method('getParsedBody')
-			->willReturn($postData);
-
-		$this->setStandardMocks();
-
-		$this->facadeMock->expects($this->once())->method('configureUserFormParameter')
-			->with($postData)
-			->willReturn([]);
-
-		$this->facadeMock->expects($this->once())->method('storePassword')
-			->willReturn(123);
-
-		$this->translatorMock->expects($this->once())->method('translate')
-			->with('password_changed', 'profile', [])
-			->willReturn('Password change successful.');
-
-		$this->flashMock->expects($this->once())->method('addMessage')
-			->with('success', 'Password change successful.');
-
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Location', '/')
-			->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')
-			->with(302);
-
-		$this->controller->store($this->requestMock, $this->responseMock);
-	}
-
-	/**
-	 * @throws ModuleException
-	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws Exception
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testStoreValidationErrors(): void
-	{
-		$postData = ['password' => 'weakPassword'];
-		$errors = ['Password is too weak.'];
-		$this->requestMock->expects($this->once())->method('getParsedBody')
-			->willReturn($postData);
-
-		$this->setStandardMocks();
-
-		$this->facadeMock->expects($this->once())->method('configureUserFormParameter')
-			->with($postData)
-			->willReturn($errors);
-
-		$this->flashMock->expects($this->once())->method('addMessageNow')->with('error', 'Password is too weak.');
-		$this->facadeMock->expects($this->never())->method('storePassword');
-		$this->translatorMock->expects($this->never())->method('translate');
-		$this->outputStandard($errors, '');
-
-		$this->responseMock->method('getBody')->willReturn($this->streamInterfaceMock);
-
-		$this->controller->store($this->requestMock, $this->responseMock);
-	}
-
-	/**
 	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws Exception
-	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testStoreSaveError(): void
+	public function testStoreForcedPasswordWithoutToken(): void
 	{
-		$this->translatorMock->expects($this->never())->method($this->anything());
-		$postData = ['password' => 'strongPassword123!'];
-		$savingErrors = ['An error occurred while saving the password.'];
+		$this->orchestratorMock->expects($this->never())->method($this->anything());
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->flashMock->expects($this->once())->method('addMessage')->with('error', 'profile.no_token');
 
-		$this->setStandardMocks();
+		$response = $this->controller->storeForcedPassword($this->createRequest(['password' => 'secret']), new Response());
 
-		$this->requestMock->expects($this->once())->method('getParsedBody')
-			->willReturn($postData);
-
-		$this->facadeMock->expects($this->once())->method('configureUserFormParameter')
-			->with($postData)
-			->willReturn([]);
-
-		$this->facadeMock->expects($this->once())->method('storePassword')
-			->willReturn(0);
-
-		$this->facadeMock->expects($this->once())->method('getUserServiceErrors')
-			->willReturn($savingErrors);
-
-		$this->flashMock->expects($this->once())
-			->method('addMessageNow')
-			->with('error', $savingErrors[0]);
-
-		$this->outputStandard($postData, '');
-
-		$this->controller->store($this->requestMock, $this->responseMock);
+		$this->assertRedirectedTo('/login', $response);
 	}
 
 	/**
+	 * @throws CoreException
+	 * @throws DateMalformedStringException
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
 	 */
-	private function setStandardMocks(): void
+	#[Group('units')]
+	public function testStoreForcedPasswordWithInvalidToken(): void
 	{
-		$sessionStub    = $this->createStub(Session::class);
-		$this->requestMock->expects($this->exactly(3))->method('getAttribute')
-			->willReturnMap([
-				['flash', null, $this->flashMock],
-				['translator', null, $this->translatorMock],
-				['session', null, $sessionStub],
-			]);
+		$this->orchestratorMock->expects($this->once())->method('loadTokenUser')->with('abcd')->willReturn([]);
+		$this->orchestratorMock->expects($this->never())->method('storeForcedPassword');
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->flashMock->expects($this->once())->method('addMessage')->with('error', 'profile.token_error');
 
-		$this->facadeMock->expects($this->once())->method('init')
-			->with($sessionStub);
+		$response = $this->controller->storeForcedPassword($this->createRequest(['token' => 'abcd']), new Response());
+
+		$this->assertRedirectedTo('/login', $response);
 	}
 
 	/**
-	 * @param array<string|int,string> $dataSections
+	 * @throws CoreException
+	 * @throws DateMalformedStringException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
 	 */
-	private function outputStandard(array $dataSections, string $passwordToken): void
+	#[Group('units')]
+	public function testStoreForcedPasswordWithErrorsShowsFormAgain(): void
 	{
-		$templateData = ['main_layout' => ['key' => 'value'], 'this_layout' => ['key2' => 'value2']];
-		$this->facadeMock->expects($this->once())->method('prepareUITemplate')
-			->with($passwordToken)
-			->willReturn($dataSections);
+		$post = ['token' => 'abcd', 'password' => ''];
+		$this->orchestratorMock->expects($this->once())->method('loadTokenUser')->willReturn($this->tokenUser);
+		$this->orchestratorMock->expects($this->once())->method('storeForcedPassword')->with(9, 'abcd', $post)
+			->willReturn(['success' => false, 'errors' => ['No password.']]);
+		$this->flashMock->expects($this->once())->method('addMessageNow')->with('error', 'No password.');
+		$this->flashMock->expects($this->never())->method('addMessage');
+		$this->expectForcedFormRendering();
 
-		$this->formElementPreparerMock->expects($this->once())->method('prepareUITemplate')
-			->with($dataSections)
-			->willReturn($templateData);
-		$this->responseMock->method('getBody')->willReturn($this->streamInterfaceMock);
-		$this->streamInterfaceMock->expects($this->once())->method('write')->with(serialize($templateData));
-		$this->responseMock->method('withHeader')->with('Content-Type', 'text/html')->willReturnSelf();
-		$this->responseMock->method('withStatus')->with(200);
+		$response = $this->controller->storeForcedPassword($this->createRequest($post), new Response());
+
+		$this->assertRendered($response);
 	}
 
 	/**
-	 * Redirects do not render the form.
+	 * @throws CoreException
+	 * @throws DateMalformedStringException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
 	 */
-	private function expectNoPageRendered(): void
+	#[Group('units')]
+	public function testStoreForcedPassword(): void
 	{
-		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
-		$this->streamInterfaceMock->expects($this->never())->method($this->anything());
+		$this->orchestratorMock->expects($this->once())->method('loadTokenUser')->willReturn($this->tokenUser);
+		$this->orchestratorMock->expects($this->once())->method('storeForcedPassword')->willReturn(['success' => true]);
+		$this->orchestratorMock->expects($this->never())->method('buildForm');
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->flashMock->expects($this->once())->method('addMessage')->with('success', 'profile.forced_password_changed');
+
+		$response = $this->controller->storeForcedPassword($this->createRequest(['token' => 'abcd']), new Response());
+
+		$this->assertRedirectedTo('/login', $response);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
+	 */
+	#[Group('units')]
+	public function testStoreWithErrorsShowsFormAgain(): void
+	{
+		$post = ['password' => ''];
+		$this->orchestratorMock->expects($this->once())->method('storePassword')->with($post)
+			->willReturn(['success' => false, 'errors' => ['No password.', 'No confirm.']]);
+		$errors = [];
+		$this->flashMock->expects($this->exactly(2))->method('addMessageNow')
+			->willReturnCallback(function (string $key, string $message) use (&$errors): void { $errors[] = $key . ':' . $message; });
+		$this->flashMock->expects($this->never())->method('addMessage');
+		$this->expectPasswordFormRendering();
+
+		$response = $this->controller->store($this->createRequest($post), new Response());
+
+		$this->assertRendered($response);
+		static::assertSame(['error:No password.', 'error:No confirm.'], $errors);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
+	 */
+	#[Group('units')]
+	public function testStore(): void
+	{
+		$this->orchestratorMock->expects($this->once())->method('storePassword')->willReturn(['success' => true]);
+		$this->orchestratorMock->expects($this->never())->method('buildForm');
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->flashMock->expects($this->once())->method('addMessage')->with('success', 'profile.password_changed');
+
+		$response = $this->controller->store($this->createRequest(['password' => 'secret']), new Response());
+
+		$this->assertRedirectedTo('/', $response);
+	}
+
+	private function expectPasswordFormRendering(): void
+	{
+		$this->orchestratorMock->expects($this->once())->method('buildForm')->with()->willReturn($this->form);
+		$this->templatePreparerMock->expects($this->once())->method('preparePasswordForm')->with($this->form)
+			->willReturn($this->templateData);
+	}
+
+	private function expectForcedFormRendering(): void
+	{
+		$this->orchestratorMock->expects($this->once())->method('buildForm')->with('abcd')->willReturn($this->form);
+		$this->templatePreparerMock->expects($this->once())->method('prepareForcedPasswordForm')
+			->with($this->form, $this->tokenUser)->willReturn($this->templateData);
+	}
+
+	/**
+	 * @param array<string,mixed> $post
+	 */
+	private function createRequest(array $post): ServerRequestInterface
+	{
+		$request = $this->createStub(ServerRequestInterface::class);
+		$request->method('getParsedBody')->willReturn($post);
+
+		return $request;
+	}
+
+	/**
+	 * @param array<string,string> $query
+	 */
+	private function createQueryRequest(array $query): ServerRequestInterface
+	{
+		$request = $this->createStub(ServerRequestInterface::class);
+		$request->method('getQueryParams')->willReturn($query);
+
+		return $request;
+	}
+
+	private function assertRendered(ResponseInterface $response): void
+	{
+		static::assertSame(200, $response->getStatusCode());
+		static::assertSame('text/html', $response->getHeaderLine('Content-Type'));
+		static::assertSame(serialize($this->templateData), (string) $response->getBody());
+	}
+
+	private function assertRedirectedTo(string $location, ResponseInterface $response): void
+	{
+		static::assertSame(302, $response->getStatusCode());
+		static::assertSame($location, $response->getHeaderLine('Location'));
 	}
 }

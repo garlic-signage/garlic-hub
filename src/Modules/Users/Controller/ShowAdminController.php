@@ -24,154 +24,210 @@ namespace App\Modules\Users\Controller;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Utils\Forms\FormTemplatePreparer;
-use App\Modules\Users\Helper\Settings\Facade;
+use App\Framework\Exceptions\UserException;
+use App\Modules\Users\Helper\Settings\Orchestrator;
+use App\Modules\Users\Helper\Settings\TemplatePreparer;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Flash\Messages;
 
 /**
- * Class ShowAdminController
- *
- * Handles the administrative user interface for managing users, including rendering user-related forms,
- * processing form submissions, and performing user actions such as storing and editing user data.
+ * Handles the administrative user interface for creating and editing users,
+ * including the password reset of a user.
  */
 class ShowAdminController
 {
-	private readonly Facade $facade;
-	private readonly FormTemplatePreparer $formElementPreparer;
-	private Messages $flash;
-
-	public function __construct(Facade $facade, FormTemplatePreparer $formElementPreparer)
-	{
-		$this->facade = $facade;
-		$this->formElementPreparer = $formElementPreparer;
-	}
+	public function __construct(private readonly Orchestrator $orchestrator,
+								private readonly TemplatePreparer $templatePreparer,
+								private readonly Messages $flash)
+	{}
 
 	/**
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
+	 * @throws UserException
 	 */
 	public function newUserForm(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		$this->initFacade($request);
-		$this->facade->buildCreateNewParameter();
-
-		return $this->outputRenderedForm($response, []);
+		return $this->outputRenderedCreateForm($response, []);
 	}
 
 	/**
-	 * @param ServerRequestInterface $request
-	 * @param ResponseInterface $response
-	 * @param array<string,mixed> $args
-	 * @return ResponseInterface
+	 * @param array<string,string> $args
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	public function editUserForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
 		$UID = (int) ($args['UID'] ?? 0);
-		$this->initFacade($request);
 		if ($UID === 0)
-		{
-			$this->flash->addMessage('error', 'UID not valid.');
-			return $response->withHeader('Location', '/users')->withStatus(302);
-		}
+			return $this->redirectWithError($response, 'UID not valid.');
 
-		$user = $this->facade->loadUserForEdit($UID);
-		if (empty($user))
-		{
-			$this->flash->addMessage('error', 'User not found.');
-			return $response->withHeader('Location', '/users')->withStatus(302);
-		}
-		$this->facade->buildEditParameter();
+		$user = $this->orchestrator->loadUserForEdit($UID);
+		if ($user === [])
+			return $this->redirectWithError($response, 'User not found.');
 
-		return $this->outputRenderedForm($response, $user);
+		return $this->outputRenderedEditForm($response, $user['username'], []);
 	}
 
 	/**
-	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws FrameworkException
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	public function store(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
 		/** @var array<string,mixed> $post */
 		$post = $request->getParsedBody();
+		$UID  = (int) ($post['UID'] ?? 0);
 
-		$this->initFacade($request);
-		$errors = $this->facade->configureUserFormParameter($post);
-		foreach ($errors as $errorText)
-		{
-			$this->flash->addMessageNow('error', $errorText);
-		}
+		if ($UID === 0)
+			return $this->insert($response, $post);
 
-		if (!empty($errors))
-			return $this->outputRenderedForm($response, $post);
+		$user = $this->orchestrator->loadUserForEdit($UID);
+		if ($user === [])
+			return $this->redirectWithError($response, 'User not found.');
 
-		if (isset($post['standardSubmit']))
-		{
-			$UID =  $post['UID'] ?? 0;
-			$id = $this->facade->storeUser((int) $UID);
-			if ($id > 0)
-			{
-				$this->flash->addMessage('success', 'User “' . $post['username'] . '“ successfully stored.');
-				return $response->withHeader('Location', '/users')->withStatus(302);
-			}
-			else
-			{
-				$errors = $this->facade->getUserServiceErrors();
-				foreach ($errors as $errorText)
-				{
-					$this->flash->addMessageNow('error', $errorText);
-				}
-				return $this->outputRenderedForm($response, $post);
-			}
-		}
-		elseif (isset($post['resetPassword']))
-		{
-			$token = $this->facade->createPasswordResetToken((int) $post['UID']);
-			if ($token !== '')
-			{
-				$this->flash->addMessage('success', 'User “' . $post['username'] . '“ Password reset was successfully.');
-			}
-			else
-			{
-				$errors = $this->facade->getUserServiceErrors();
-				foreach ($errors as $errorText)
-				{
-					$this->flash->addMessage('error', $errorText);
-				}
-			}
-		}
-		return $response->withHeader('Location', '/users/edit/'.$post['UID'])->withStatus(302);
+		if (isset($post['resetPassword']))
+			return $this->resetPassword($response, $UID, $post);
+
+		return $this->update($response, $UID, $user['username'], $post);
 	}
 
+	/**
+	 * @param array<string,mixed> $post
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
+	 */
+	private function insert(ResponseInterface $response, array $post): ResponseInterface
+	{
+		$result = $this->orchestrator->storeCreateSettings($post);
+		if (!$result['success'])
+		{
+			$this->addErrorsNow($result['errors'] ?? []);
+			return $this->outputRenderedCreateForm($response, $post);
+		}
+
+		return $this->redirectWithSuccess($response, $post);
+	}
 
 	/**
-	 * @param ResponseInterface $response
-	 * @param array<string,mixed> $userInput
-	 * @return ResponseInterface
+	 * @param array<string,mixed> $post
 	 * @throws CoreException
+	 * @throws Exception
 	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
 	 */
-	private function outputRenderedForm(ResponseInterface $response, array $userInput): ResponseInterface
+	private function update(ResponseInterface $response, int $UID, string $username, array $post): ResponseInterface
 	{
-		$dataSections = $this->facade->prepareUITemplate($userInput);
-		$templateData = $this->formElementPreparer->prepareUITemplate($dataSections);
+		$result = $this->orchestrator->storeEditSettings($UID, $post);
+		if (!$result['success'])
+		{
+			$this->addErrorsNow($result['errors'] ?? []);
+			return $this->outputRenderedEditForm($response, $username, $post);
+		}
+
+		return $this->redirectWithSuccess($response, $post);
+	}
+
+	/**
+	 * @param array<string,mixed> $post
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
+	 */
+	private function resetPassword(ResponseInterface $response, int $UID, array $post): ResponseInterface
+	{
+		$result = $this->orchestrator->resetPassword($UID, $post);
+		if ($result['success'])
+			$this->flash->addMessage('success', 'User “' . $this->getUsername($post) . '“ Password reset was successfully.');
+
+		foreach ($result['errors'] ?? [] as $errorText)
+		{
+			$this->flash->addMessage('error', $errorText);
+		}
+
+		return $response->withHeader('Location', '/users/edit/' . $UID)->withStatus(302);
+	}
+
+	/**
+	 * @param array<string,mixed> $post
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws UserException
+	 */
+	private function outputRenderedCreateForm(ResponseInterface $response, array $post): ResponseInterface
+	{
+		$formData     = $this->orchestrator->buildCreateForm($post);
+		$templateData = $this->templatePreparer->prepareCreateSettings($formData);
 
 		$response->getBody()->write(serialize($templateData));
 		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
 	}
 
-	private function initFacade(ServerRequestInterface $request): void
+	/**
+	 * @param array<string,mixed> $post
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
+	 */
+	private function outputRenderedEditForm(ResponseInterface $response, string $username, array $post): ResponseInterface
 	{
-		$this->flash      = $request->getAttribute('flash');
-		$this->facade->init($request->getAttribute('translator'), $request->getAttribute('session'));
+		$formData     = $this->orchestrator->buildEditForm($post);
+		$templateData = $this->templatePreparer->prepareEditSettings($formData, $username);
+
+		$response->getBody()->write(serialize($templateData));
+		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
 	}
 
+	/**
+	 * @param string[] $errors
+	 */
+	private function addErrorsNow(array $errors): void
+	{
+		foreach ($errors as $errorText)
+		{
+			$this->flash->addMessageNow('error', $errorText);
+		}
+	}
+
+	/**
+	 * @param array<string,mixed> $post
+	 */
+	private function redirectWithSuccess(ResponseInterface $response, array $post): ResponseInterface
+	{
+		$this->flash->addMessage('success', 'User “' . $this->getUsername($post) . '“ successfully stored.');
+		return $response->withHeader('Location', '/users')->withStatus(302);
+	}
+
+	private function redirectWithError(ResponseInterface $response, string $message): ResponseInterface
+	{
+		$this->flash->addMessage('error', $message);
+		return $response->withHeader('Location', '/users')->withStatus(302);
+	}
+
+	/**
+	 * @param array<string,mixed> $post
+	 */
+	private function getUsername(array $post): string
+	{
+		$username = $post['username'] ?? '';
+		return is_string($username) ? $username : '';
+	}
 }

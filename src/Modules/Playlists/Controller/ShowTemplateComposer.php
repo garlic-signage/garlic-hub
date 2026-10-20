@@ -27,13 +27,15 @@ use App\Framework\Core\CsrfToken;
 use App\Modules\Playlists\Helper\Templates\Orchestrator;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Slim\Flash\Messages;
 
 class ShowTemplateComposer
 {
 	public function __construct(
 		private readonly Orchestrator $orchestrator,
 		private JsonResponseHandler $responseHandler,
-		private CsrfToken           $csrfToken
+		private CsrfToken           $csrfToken,
+		private readonly Messages   $flash
 	){}
 
 	/**
@@ -42,17 +44,11 @@ class ShowTemplateComposer
 	public function show(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
 		$itemId = (int) ($args['item_id'] ?? 0);
-		$flash      = $request->getAttribute('flash');
 		if ($itemId === 0)
-		{
-			$flash->addMessage('error', 'No rights');
-			return $response->withHeader('Location', '/playlists')->withStatus(302);
-		}
+			return $this->redirectWithError($response, 'Item ID not valid.');
+
 		if (!$this->orchestrator->checkRights($itemId))
-		{
-			$flash->addMessage('error', 'No rights');
-			return $response->withHeader('Location', '/playlists')->withStatus(302);
-		}
+			return $this->redirectWithError($response, 'No rights');
 
 		$response->getBody()->write(serialize($this->orchestrator->build()));
 		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
@@ -94,5 +90,11 @@ class ShowTemplateComposer
 			return $this->responseHandler->jsonError($response, 'No rights');
 
 		return $this->responseHandler->jsonSuccess($response, ['content' => $this->orchestrator->getContent()]);
+	}
+
+	private function redirectWithError(ResponseInterface $response, string $message): ResponseInterface
+	{
+		$this->flash->addMessage('error', $message);
+		return $response->withHeader('Location', '/playlists')->withStatus(302);
 	}
 }

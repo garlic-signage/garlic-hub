@@ -60,7 +60,7 @@ class ShowSettingsControllerTest extends TestCase
 		$this->responseMock         = $this->createMock(ResponseInterface::class);
 		$this->flashMock            = $this->createMock(Messages::class);
 
-		$this->controller = new ShowSettingsController($this->orchestratorMock, $this->templatePreparerMock);
+		$this->controller = new ShowSettingsController($this->orchestratorMock, $this->templatePreparerMock, $this->flashMock);
 	}
 
     /**
@@ -245,7 +245,6 @@ class ShowSettingsControllerTest extends TestCase
 	private function request(array $post = []): ServerRequestInterface
 	{
 		$request = $this->createStub(ServerRequestInterface::class);
-		$request->method('getAttribute')->willReturnMap([['flash', null, $this->flashMock]]);
 		$request->method('getParsedBody')->willReturn($post);
 
 		return $request;
