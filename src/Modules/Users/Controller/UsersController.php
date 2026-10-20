@@ -48,7 +48,7 @@ readonly class UsersController
 	) {}
 
 	/**
-	 * Returns the plain list without success envelope, because the autocomplete expects it.
+	 * Returns the plain list without a success envelope, because the autocomplete expects it.
 	 *
 	 * @param array<string,string> $args
 	 * @throws ModuleException

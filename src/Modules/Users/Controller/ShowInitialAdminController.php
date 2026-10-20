@@ -35,11 +35,11 @@ use Slim\Flash\Messages;
 /**
  * Creates the initial admin user on a fresh installation.
  */
-class ShowInitialAdminController
+readonly class ShowInitialAdminController
 {
-	public function __construct(private readonly Orchestrator $orchestrator,
-								private readonly TemplatePreparer $templatePreparer,
-								private readonly Messages $flash)
+	public function __construct(private Orchestrator     $orchestrator,
+								private TemplatePreparer $templatePreparer,
+								private Messages         $flash)
 	{}
 
 	/**

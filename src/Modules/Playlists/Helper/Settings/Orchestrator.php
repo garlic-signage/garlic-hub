@@ -146,7 +146,7 @@ class Orchestrator
 		$saveData = $this->collectSaveData(is_array($layout) ? $layout : [], $post);
 		try
 		{
-			// a save without changes affects no rows, but is not a failure
+			// a save without changes affects no rows but is not a failure
 			$this->playlistsService->updateSecure($saveData);
 		}
 		catch (ModuleException $e)

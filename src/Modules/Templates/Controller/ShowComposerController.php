@@ -31,12 +31,12 @@ use Psr\Http\Message\ServerRequestInterface;
 use Slim\Flash\Messages;
 
 /**
- * Just load the correct type of template to the composer
+ * Load the correct type of template to the composer
  */
-class ShowComposerController
+readonly class ShowComposerController
 {
-	public function __construct(private readonly Orchestrator $orchestrator,
-								private readonly Messages $flash)
+	public function __construct(private Orchestrator $orchestrator,
+								private Messages     $flash)
 	{}
 
 

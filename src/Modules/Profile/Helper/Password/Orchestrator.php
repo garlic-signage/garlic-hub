@@ -38,16 +38,16 @@ use Doctrine\DBAL\Exception;
  * Handles the password change of the logged-in user and the forced password change via token.
  * The forced change works without a logged-in user, so UserSession is only touched by storePassword().
  */
-class Orchestrator
+readonly class Orchestrator
 {
 	public function __construct(
-		private readonly UserSession         $userSession,
-		private readonly ProfileService      $profileService,
-		private readonly UserTokenService    $userTokenService,
-		private readonly FormInputHandler    $formInputHandler,
-		private readonly SettingsFormBuilder $settingsFormBuilder,
-		private readonly Config              $config,
-		private readonly Translator          $translator
+		private UserSession         $userSession,
+		private ProfileService      $profileService,
+		private UserTokenService    $userTokenService,
+		private FormInputHandler    $formInputHandler,
+		private SettingsFormBuilder $settingsFormBuilder,
+		private Config              $config,
+		private Translator          $translator
 	) {}
 
 	/**

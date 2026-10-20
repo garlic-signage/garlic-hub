@@ -39,7 +39,11 @@ class AclValidator extends AbstractAclValidator
 		parent::__construct('templates', $aclHelper);
 	}
 
-	public function canCreate(int $UID): bool
+    /**
+     * @throws CoreException
+     * @throws Exception
+     */
+    public function canCreate(int $UID): bool
 	{
 		return $this->isSimpleAdmin($UID);
 	}

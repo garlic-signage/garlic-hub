@@ -22,9 +22,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Helper\Settings;
 
-class SettingsParametersPolicy
+readonly class SettingsParametersPolicy
 {
-	public function __construct(private readonly Parameters $parameters)
+	public function __construct(private Parameters $parameters)
 	{}
 
 	public function addEditFormElements(): void

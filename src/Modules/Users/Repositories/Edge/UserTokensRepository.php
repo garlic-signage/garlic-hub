@@ -33,7 +33,7 @@ use Doctrine\DBAL\Exception;
  * It provides methods to manage user token records, such as retrieving specific tokens,
  * finding valid tokens for a particular user, and refreshing token expiration.
  *
- * Extends the base functionality of the SqlBase class and utilizes:
+ * Extends the base functionality of the SqlBase class and uses:
  * - CrudTraits: for basic CRUD operations.
  * - FindOperationsTrait: for extending find-related operations.
  *

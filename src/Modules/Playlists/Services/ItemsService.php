@@ -27,9 +27,7 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Media\MediaUrlSigner;
 use App\Framework\Media\MimeTypeExtensionMapper;
-use App\Framework\Media\MimeTypeService;
 use App\Framework\Services\AbstractBaseService;
-use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\MediaService;
 use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Repositories\ItemsRepository;
@@ -227,11 +225,7 @@ class ItemsService extends AbstractBaseService
 	}
 
 	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
+     */
 	public function updateField(mixed $itemId, string $fieldName, string|int $fieldValue): int
 	{
 		$saveData = [strip_tags($fieldName) => strip_tags((string)$fieldValue)];
@@ -239,9 +233,15 @@ class ItemsService extends AbstractBaseService
 		return $this->update($itemId, $saveData);
 	}
 
-	/**
-	 * @param array<string,mixed> $saveData
-	 */
+    /**
+     * @param int $itemId
+     * @param array<string,mixed> $saveData
+     * @return int
+     * @throws CoreException
+     * @throws Exception
+     * @throws FrameworkException
+     * @throws ModuleException
+     */
 	public function update(int $itemId, array $saveData): int
 	{
 		$this->playlistsService->setUID($this->UID);
@@ -369,13 +369,13 @@ class ItemsService extends AbstractBaseService
 
 	/**
 	 *
-	 * 1. Save metrics in exported playlist (did in export-class)
+	 * 1. Save metrics in the exported playlist (did in export-class)
 	 * 2. Save metrics in all items that represent this playlist. (did in export-class)
-	 * 3. find all playlists that have the exported playlist nested (here we go)
-	 * 4. calculate metrics for the new playlists
-	 * 5. save metrics in new playlists
-	 * 6. save metrics in all items that represent the new playlist
-	 * 7. recurse to 3.
+	 * 3. Find all playlists that have the exported playlist nested (here we go)
+	 * 4. Calculate metrics for the new playlists
+	 * 5. Save metrics in new playlists
+	 * 6. Save metrics in all items that represent the new playlist
+	 * 7. Recurse to 3.
 	 *
 	 * @throws CoreException
 	 * @throws Exception

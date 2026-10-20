@@ -30,11 +30,11 @@ use App\Framework\Utils\FormParameters\BaseParameters;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\PlaylistMode;
 
-class SettingsFormBuilder
+readonly class SettingsFormBuilder
 {
-	public function __construct(private readonly Parameters $parameters,
-								private readonly UserSession $userSession,
-								private readonly FormElementsCreator $formElementsCreator)
+	public function __construct(private Parameters          $parameters,
+								private UserSession         $userSession,
+								private FormElementsCreator $formElementsCreator)
 	{}
 
 	/**

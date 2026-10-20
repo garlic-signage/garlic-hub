@@ -87,7 +87,7 @@ class ProfileServiceTest extends TestCase
 			->willReturn(1);
 		$this->userMainRepositoryMock->expects($this->once())->method('findByIdSecured')
 			->with($UID)
-			->willReturn(['status' => UserStatus::NOT_VERIFICATED->value]);
+			->willReturn(['status' => UserStatus::NOT_VERIFIED->value]);
 		$this->transactionsMock->expects($this->once())->method('commit');
 
 		$result = $this->profileService->storeNewForcedPassword($UID, $passwordToken, $password);
@@ -203,7 +203,7 @@ class ProfileServiceTest extends TestCase
 			->willReturn(1);
 		$this->userMainRepositoryMock->expects($this->once())->method('findByIdSecured')
 			->with($UID)
-			->willReturn(['status' => UserStatus::NOT_VERIFICATED->value]);
+			->willReturn(['status' => UserStatus::NOT_VERIFIED->value]);
 		$this->transactionsMock->expects($this->once())->method('rollBack');
 
 		$result = $this->profileService->storeNewForcedPassword($UID, $passwordToken, $password);

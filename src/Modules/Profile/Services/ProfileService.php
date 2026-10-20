@@ -80,7 +80,7 @@ class ProfileService extends AbstractBaseService
 				$this->addErrorMessage('users//user_not_found');
 				throw new ModuleException('profile', 'User not found');
 			}
-			if ($user['status'] === UserStatus::NOT_VERIFICATED->value &&
+			if ($user['status'] === UserStatus::NOT_VERIFIED->value &&
 				$this->userMainRepository->update($UID, ['status' => UserStatus::REGISTERED->value]) === 0)
 				{
 					$this->addErrorMessage('users//status_update_failed');

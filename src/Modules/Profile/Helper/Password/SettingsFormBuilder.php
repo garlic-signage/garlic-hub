@@ -25,9 +25,9 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
 
-class SettingsFormBuilder
+readonly class SettingsFormBuilder
 {
-	public function __construct(private readonly FormElementsCreator $formElementsCreator)
+	public function __construct(private FormElementsCreator $formElementsCreator)
 	{}
 
 	/**

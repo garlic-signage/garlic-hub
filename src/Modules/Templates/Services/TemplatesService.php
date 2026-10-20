@@ -25,6 +25,7 @@ namespace App\Modules\Templates\Services;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\UserException;
 use App\Framework\Services\AbstractBaseService;
 use App\Framework\Utils\FormParameters\BaseParameters;
 use App\Modules\Auth\UserSession;
@@ -45,7 +46,12 @@ class TemplatesService extends AbstractBaseService
 		parent::__construct($logger);
 	}
 
-	public function checkCreateRights(): bool
+    /**
+     * @throws CoreException
+     * @throws UserException
+     * @throws Exception
+     */
+    public function checkCreateRights(): bool
 	{
 		if ($this->aclValidator->canCreate($this->userSession->getUID()))
 			return true;
@@ -79,13 +85,15 @@ class TemplatesService extends AbstractBaseService
 
 	}
 
-	/**
-	 * @return array{UID: int, company_id: int, template_id: int, name: string, content: string|null, ...}
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
+    /**
+     * @param int $templateId
+     * @return array{UID: int, company_id: int, template_id: int, name: string, content: string|null, ...}
+     * @throws CoreException
+     * @throws Exception
+     * @throws FrameworkException
+     * @throws ModuleException
+     * @throws UserException
+     */
 	public function loadWithUserById(int $templateId): array
 	{
 		/** @var array{UID: int, company_id: int, template_id: int, name: string, content: string|null, ...}|array{} $template */
@@ -99,19 +107,22 @@ class TemplatesService extends AbstractBaseService
 		return $template;
 	}
 
-	/**
-	 * @param array<string,mixed> $saveData
-	 * @throws Exception
-	 */
+    /**
+     * @param array<string,mixed> $saveData
+     * @return int
+     * @throws Exception
+     * @throws UserException
+     */
 	public function insert(array $saveData): int
 	{
 		return (int) $this->templatesRepository->insert($this->collectDataForSettingsInsert($saveData));
 	}
 
-	/**
-	 * @param array<string,mixed> $postData
-	 * @return array<string,mixed>
-	 */
+    /**
+     * @param array<string,mixed> $postData
+     * @return array<string,mixed>
+     * @throws UserException
+     */
 	private function collectDataForSettingsInsert(array $postData): array
 	{
 		$saveData = [];

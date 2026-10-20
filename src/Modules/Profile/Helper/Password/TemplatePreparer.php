@@ -27,10 +27,10 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Utils\Forms\FormTemplatePreparer;
 use App\Modules\Profile\Entities\TokenPurposes;
 
-class TemplatePreparer
+readonly class TemplatePreparer
 {
-	public function __construct(private readonly Translator $translator,
-								private readonly FormTemplatePreparer $formTemplatePreparer)
+	public function __construct(private Translator           $translator,
+								private FormTemplatePreparer $formTemplatePreparer)
 	{}
 
 	/**

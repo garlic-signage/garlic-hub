@@ -116,12 +116,12 @@ class ExportService extends AbstractBaseService
 		$results = $this->itemsService->loadByPlaylistForExport($playlist, $this->config->getEdition());
 		$this->itemsService->updateItemsMetrics($playlist['playlist_id']);
 		/*
-			    1. Save metrics in exported playlist (did with results as last, but doesn't matter)
+			    1. Save metrics in the exported playlist (did with results as last, but doesn't matter)
 				2. Save metrics in all items wich represent this playlist.
-				3. find all playlists which have the exported playlist nested
+				3. find all playlists that have the exported playlist nested
 				4. calculate metrics for the new playlists
 				5. save metrics in new playlists
-				6. save metrics in all items which represent the new playlist
+				6. save metrics in all items that represent the new playlist
 				7. recurse to 3.
 		 */
 		$this->itemsService->updateMetricsRecursively($playlist['playlist_id']);

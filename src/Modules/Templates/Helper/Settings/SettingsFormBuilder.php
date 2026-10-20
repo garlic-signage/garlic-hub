@@ -24,25 +24,27 @@ namespace App\Modules\Templates\Helper\Settings;
 
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Framework\Utils\FormParameters\BaseParameters;
 use App\Modules\Auth\UserSession;
 
-class SettingsFormBuilder
+readonly class SettingsFormBuilder
 {
-	public function __construct(private readonly Parameters $parameters,
-								private readonly UserSession $userSession,
-								private readonly FormElementsCreator $formElementsCreator)
+	public function __construct(private Parameters          $parameters,
+								private UserSession         $userSession,
+								private FormElementsCreator $formElementsCreator)
 	{}
 
-	/**
-	 * Builds the edit form when settings data of a template is given, otherwise the create form.
-	 *
-	 * @param array<string,mixed> $settingsData
-	 * @return array{hidden:list<array<string,string>>, visible: list<array<string,string>>}
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
+    /**
+     * Builds the edit form when settings data of a template is given, otherwise build the creation form.
+     *
+     * @param array<string,mixed> $settingsData
+     * @return array{hidden:list<array<string,string>>, visible: list<array<string,string>>}
+     * @throws CoreException
+     * @throws FrameworkException
+     * @throws UserException
+     */
 	public function buildForm(array $settingsData): array
 	{
 		$form = [];

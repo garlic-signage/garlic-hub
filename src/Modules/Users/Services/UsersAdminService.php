@@ -245,8 +245,8 @@ class UsersAdminService extends AbstractBaseService
 		if ($result === [])
 			return true;
 
-		// if there is similar user we need to check ig the UID is identically
-		// it could be possible that user is try to edit the username and or email
+		// if there is similar user we need to check ig the UID is identic,
+		// it could be possible that the user is try to edit the username and or email
 		// of an existing user.
 		// In this case it should be possible
 

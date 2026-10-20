@@ -30,7 +30,7 @@ use Psr\Http\Message\ServerRequestInterface;
  * This controller is responsible for redirecting the user to the settings page where
  * specific preferences can be managed. In the current implementation, the user is
  * only allowed to edit their password. Future versions will include additional settings
- * such as company information, contact details, and multi-factor authentication options.
+ * such as company information, contact details, and multifactor authentication options.
  */
 class ShowSettingsController
 {
@@ -38,7 +38,7 @@ class ShowSettingsController
 	public function show(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
 		// In the edge Version user can only edit his password
-		// For later versions there will be more settings like company, contact data, MFA select, etc
+		// For later versions there will be more settings like company, contact data, MFA select, etc.
 		return $response->withHeader('Location', '/profile/password')->withStatus(302);
 	}
 }

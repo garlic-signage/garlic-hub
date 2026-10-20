@@ -32,13 +32,13 @@ use Doctrine\DBAL\Exception;
 
 /**
  * Decides which form parameters are available, depending on the playlist mode,
- * the rights of the current user and the edition.
+ * the rights of the current user, and the edition.
  */
-class SettingsParametersPolicy
+readonly class SettingsParametersPolicy
 {
-	public function __construct(private readonly Parameters $parameters,
-								private readonly AclValidator $aclValidator,
-								private readonly UserSession $userSession)
+	public function __construct(private Parameters   $parameters,
+								private AclValidator $aclValidator,
+								private UserSession  $userSession)
 	{}
 
 	/**

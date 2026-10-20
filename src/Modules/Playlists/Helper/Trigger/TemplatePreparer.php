@@ -27,7 +27,7 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\TemplateEngine\AdapterInterface;
 
 /**
- * This class is responsible for preparing and rendering templates by utilizing a provided AdapterInterface and TriggerPreparer.
+ * This class is responsible for preparing and rendering templates by using a provided AdapterInterface and TriggerPreparer.
  */
 readonly class TemplatePreparer
 {

@@ -230,7 +230,11 @@ class Orchestrator
 		return $this->responseBuilder->generalSuccess($response, ['data' => $item]);
 	}
 
-	private function validateToken(ResponseInterface $response): ?ResponseInterface
+    /**
+     * @throws CoreException
+     * @throws FrameworkException
+     */
+    private function validateToken(ResponseInterface $response): ?ResponseInterface
 	{
 		if (!$this->validator->validateCsrfToken($this->input['csrf_token'] ?? ''))
 			return $this->responseBuilder->csrfTokenMismatch($response);

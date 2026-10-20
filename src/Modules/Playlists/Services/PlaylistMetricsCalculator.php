@@ -50,9 +50,9 @@ class PlaylistMetricsCalculator
 		$this->config           = $config;
 	}
 
-	/**
-	 * @throws CoreException
-	 */
+    /**
+     * @return int
+     */
 	public function getDefaultDuration(): int
 	{
 		return (int) $this->config->getConfigValue('duration', 'playlists', 'Defaults');
@@ -189,7 +189,7 @@ class PlaylistMetricsCalculator
 	public function calculateRemainingMediaDuration(array $playlist, array $media = []): int
 	{
 		// only videos / audio have a duration > 0. Using the constant for other media.
-		// this is only used, when inserting new items
+		// this is only used when inserting new items
 		$duration = (array_key_exists('duration', $media['metadata']) && $media['metadata']['duration'] > 0) ? $media['metadata']['duration'] : $this->getDefaultDuration();
 
 		return $this->calculateRemainingDuration($playlist, (int) round($duration));
@@ -227,7 +227,7 @@ class PlaylistMetricsCalculator
 	{
 		if ($playlist['time_limit'] > 0 &&
 			$this->ownerDuration > $playlist['time_limit'] &&
-			!$this->aclValidator->isSimpleAdmin($this->UID)) // Check more intense for real Admin needs company_id
+			!$this->aclValidator->isSimpleAdmin($this->UID)) // Check more intensely for real admin needs company_id
 		{
 			return true;
 		}

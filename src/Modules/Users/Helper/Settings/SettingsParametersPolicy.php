@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace App\Modules\Users\Helper\Settings;
 
 use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Users\Services\AclValidator;
@@ -30,11 +31,11 @@ use Doctrine\DBAL\Exception;
 /**
  * Decides which form parameters the current user is allowed to edit.
  */
-class SettingsParametersPolicy
+readonly class SettingsParametersPolicy
 {
-	public function __construct(private readonly Parameters $parameters,
-								private readonly AclValidator $aclValidator,
-								private readonly UserSession $userSession)
+	public function __construct(private Parameters   $parameters,
+								private AclValidator $aclValidator,
+								private UserSession  $userSession)
 	{}
 
 	/**
@@ -50,12 +51,13 @@ class SettingsParametersPolicy
 		$this->addUserFormElements();
 	}
 
-	/**
-	 * @param array{UID: int, company_id: int, ...} $user
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws UserException
-	 */
+    /**
+     * @param array{UID: int, company_id: int, ...} $user
+     * @throws CoreException
+     * @throws Exception
+     * @throws UserException
+     * @throws FrameworkException
+     */
 	public function addEditFormElements(array $user): void
 	{
 		if (!$this->aclValidator->isAdmin($this->userSession->getUID(), $user))

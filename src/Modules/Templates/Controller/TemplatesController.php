@@ -46,7 +46,10 @@ readonly class TemplatesController
 		private MediaUrlSigner      $mediaUrlSigner
 	) {}
 
-	public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+    /**
+     * @throws Exception
+     */
+    public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
 		/** @var array{template_id?: int, csrf_token?: string} $requestData */
 		$requestData = $request->getParsedBody();

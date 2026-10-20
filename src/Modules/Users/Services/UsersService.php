@@ -31,7 +31,6 @@ use App\Modules\Users\Repositories\Edge\UserTokensRepository;
 use App\Modules\Users\Repositories\UserRepositoryFactory;
 use App\Framework\Exceptions\CoreException;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheExceptionInterface;
 use Phpfastcache\Helper\Psr16Adapter;
 use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
@@ -103,8 +102,8 @@ class UsersService extends AbstractBaseService
 	}
 
 	/**
-	 * Get the current user from cache or database.
-	 * A failing cache is logged and the user is loaded from the database.
+	 * Get the current user from a cache or database.
+	 * A failing cache is logged, and the user is loaded from the database.
 	 *
 	 * @throws Exception
 	 */
@@ -125,7 +124,7 @@ class UsersService extends AbstractBaseService
 		{
 			$this->cache->set($cacheKey, $userData, 3600 * 24); // Cache for 1 day
 		}
-		catch (CacheException|PhpfastcacheExceptionInterface $e)
+		catch (CacheException $e)
 		{
 			$this->logger->warning('User cache not writable: ' . $e->getMessage());
 		}
@@ -145,7 +144,7 @@ class UsersService extends AbstractBaseService
 		{
 			$this->cache->delete($this->getCacheKey($UID));
 		}
-		catch (CacheException|PhpfastcacheExceptionInterface|InvalidArgumentException $e)
+		catch (CacheException|InvalidArgumentException $e)
 		{
 			$previous = $e instanceof \Exception ? $e : null;
 			throw new CoreException('User cache for UID ' . $UID . ' could not be invalidated.', 0, $previous);
@@ -162,7 +161,7 @@ class UsersService extends AbstractBaseService
 			$data = $this->cache->get($cacheKey);
 			return is_array($data) ? $data : null;
 		}
-		catch (CacheException|PhpfastcacheExceptionInterface $e)
+		catch (CacheException $e)
 		{
 			$this->logger->warning('User cache not readable: ' . $e->getMessage());
 			return null;

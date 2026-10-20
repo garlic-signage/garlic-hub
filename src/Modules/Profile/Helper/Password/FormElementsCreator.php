@@ -21,14 +21,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Profile\Helper\Password;
 
-use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Framework\Utils\Forms\AbstractBaseFormElementsCreator;
 use App\Framework\Utils\Html\FieldInterface;
 use App\Framework\Utils\Html\FieldType;
-use App\Framework\Utils\Html\FormBuilder;
 use App\Framework\Utils\Html\PasswordField;
 
 /**

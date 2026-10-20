@@ -42,16 +42,15 @@ readonly class ShowDatatableController
 								private DatatableTemplatePreparer $templateFormatter)
 	{}
 
-	/**
-	 * @param ServerRequestInterface $request
-	 * @param ResponseInterface $response
-	 * @return ResponseInterface
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws ModuleException
-	 * @throws DateMalformedStringException
-	 * @throws Exception
-	 */
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @return ResponseInterface
+     * @throws CoreException
+     * @throws Exception
+     * @throws FrameworkException
+     * @throws ModuleException
+     */
 	public function show(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
 		$this->facade->configure($request->getAttribute('translator'), $request->getAttribute('session'));

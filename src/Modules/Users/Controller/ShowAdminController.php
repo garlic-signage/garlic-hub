@@ -36,11 +36,11 @@ use Slim\Flash\Messages;
  * Handles the administrative user interface for creating and editing users,
  * including the password reset of a user.
  */
-class ShowAdminController
+readonly class ShowAdminController
 {
-	public function __construct(private readonly Orchestrator $orchestrator,
-								private readonly TemplatePreparer $templatePreparer,
-								private readonly Messages $flash)
+	public function __construct(private Orchestrator     $orchestrator,
+								private TemplatePreparer $templatePreparer,
+								private Messages         $flash)
 	{}
 
 	/**

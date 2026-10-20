@@ -60,15 +60,21 @@ class DatatableFacade implements DatatableFacadeInterface
 		$this->datatableBuilder->setTranslator($translator);
 	}
 
-	public function checkRights(): bool
+    /**
+     * @throws CoreException
+     * @throws Exception
+     */
+    public function checkRights(): bool
 	{
 		return $this->templatesService->checkDisplayRights();
 	}
 
-	/**
-	 * @param array<string,mixed> $queryParams
-	 * @throws ModuleException
-	 */
+    /**
+     * @param array<string,mixed> $queryParams
+     * @throws CoreException
+     * @throws Exception
+     * @throws ModuleException
+     */
 	public function processSubmittedUserInput(array $queryParams): void
 	{
 		$this->datatableBuilder->determineParameters($queryParams);

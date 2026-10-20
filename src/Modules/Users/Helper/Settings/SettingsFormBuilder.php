@@ -27,11 +27,11 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Modules\Profile\Entities\TokenPurposes;
 
-class SettingsFormBuilder
+readonly class SettingsFormBuilder
 {
-	public function __construct(private readonly Parameters $parameters,
-								private readonly Session $session,
-								private readonly FormElementsCreator $formElementsCreator)
+	public function __construct(private Parameters          $parameters,
+								private Session             $session,
+								private FormElementsCreator $formElementsCreator)
 	{}
 
 	/**

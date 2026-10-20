@@ -137,7 +137,7 @@ class UsersAdminServiceTest extends TestCase
 			'username' => 'testuser',
 			'email' => 'testuser@example.com',
 			'locale' => 'en_US',
-			'status' => UserStatus::NOT_VERIFICATED->value,
+			'status' => UserStatus::NOT_VERIFIED->value,
 		];
 
 		$UID = 123;
@@ -198,7 +198,7 @@ class UsersAdminServiceTest extends TestCase
 			'username' => 'testuser',
 			'email' => 'testuser@example.com',
 			'locale' => 'en_US',
-			'status' => UserStatus::NOT_VERIFICATED->value,
+			'status' => UserStatus::NOT_VERIFIED->value,
 		];
 
 		$this->transactionsMock->expects($this->once())->method('begin');
@@ -230,7 +230,7 @@ class UsersAdminServiceTest extends TestCase
 			'username' => 'testuser',
 			'email' => 'testuser@example.com',
 			'locale' => 'en_US',
-			'status' => UserStatus::NOT_VERIFICATED->value,
+			'status' => UserStatus::NOT_VERIFIED->value,
 		];
 
 		$UID = 123;

@@ -31,7 +31,7 @@ use App\Framework\Utils\FormParameters\ScalarType;
  * Class Parameters
  *
  * Extends the BaseFilterParameters class to define and manage specific parameters
- * related to filtering user data. Utilizes constants to define known parameter names
+ * related to filtering user data. Uses constants to define known parameter names
  * for the system and configures default behaviors via the $moduleParameters array.
  *
  * Constants:
@@ -48,7 +48,7 @@ use App\Framework\Utils\FormParameters\ScalarType;
  *   as an associative array.
  *
  * Methods:
- * - __construct(Sanitizer $sanitizer, Session $session): Initializes the class with
+ * - __construct (Sanitizer $sanitizer, Session $session): Initializes the class with
  *   inherited properties and merges default parameters with module-specific parameters.
  *   Throws a ModuleException if initialization fails.
  */

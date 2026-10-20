@@ -43,10 +43,9 @@ class Orchestrator
 		private readonly FormInputHandler         $formInputHandler
 	) {}
 
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 */
+    /**
+     * @return bool
+     */
 	public function checkCreateRights(): bool
 	{
 		return $this->templateService->checkCreateRights();

@@ -23,6 +23,9 @@ declare(strict_types=1);
 namespace App\Modules\Playlists\Helper\Templates;
 
 use App\Framework\Core\Config\Config;
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Auth\UserSession;
@@ -30,6 +33,7 @@ use App\Modules\Playlists\Services\ItemsService;
 use App\Modules\Templates\Helper\Composer\BaseTemplateOrchestrator;
 use App\Modules\Templates\Helper\Composer\ExportImage;
 use App\Modules\Templates\Helper\Composer\TemplatePreparer;
+use Doctrine\DBAL\Exception;
 
 class Orchestrator extends BaseTemplateOrchestrator
 {
@@ -64,9 +68,11 @@ class Orchestrator extends BaseTemplateOrchestrator
 		}
 	}
 
-	/**
-	 * @return array{main_layout: array<string,mixed>, this_layout: array{template: string, data: array<string,mixed>}}
-	 */
+    /**
+     * @return array{main_layout: array<string,mixed>, this_layout: array{template: string, data: array<string,mixed>}}
+     * @throws CoreException
+     * @throws FrameworkException
+     */
 	public function build(): array
 	{
 		$replaced = $this->templatePreparer->replace(
@@ -77,7 +83,13 @@ class Orchestrator extends BaseTemplateOrchestrator
 		return $this->templatePreparer->prepare($this->item['playlist_name'].' / '.$this->item['item_name'], $replaced);
 	}
 
-	public function save(int $itemId, string $content, string $imageBase64): int
+    /**
+     * @throws ModuleException
+     * @throws CoreException
+     * @throws FrameworkException
+     * @throws Exception
+     */
+    public function save(int $itemId, string $content, string $imageBase64): int
 	{
 		$content = $this->validate($content);
 		if ($content === '')

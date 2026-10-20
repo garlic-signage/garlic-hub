@@ -22,7 +22,7 @@ declare(strict_types=1);
 namespace App\Modules\Playlists\Helper;
 
 /**
- * Enumeration of item types utilized within the application.
+ * Enumeration of item types used within the application.
  *
  * This enum defines various constants representing different types of items.
  * Each case corresponds to a distinct type, uniquely identified by a string value.

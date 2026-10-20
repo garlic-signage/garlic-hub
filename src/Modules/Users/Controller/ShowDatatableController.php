@@ -45,7 +45,7 @@ readonly class ShowDatatableController
 
 	/**
 	 * The frontend reloads the page after the request, so the result is also
-	 * stored as flash message, which is shown after the reload.
+	 * stored as a flash message, which is shown after the reload.
 	 *
 	 * @throws CoreException
 	 * @throws Exception

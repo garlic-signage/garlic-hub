@@ -28,7 +28,7 @@ namespace App\Modules\Users;
 enum UserStatus: int {
 	case DELETED         = 0;
 	case BLOCKED         = 1;
-	case NOT_VERIFICATED = 2;
+	case NOT_VERIFIED = 2;
 	case REGISTERED      = 3;
 	case PREMIUM_A       = 4;
 	case PREMIUM_B       = 5;

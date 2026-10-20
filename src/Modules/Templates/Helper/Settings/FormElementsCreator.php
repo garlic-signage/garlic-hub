@@ -40,7 +40,7 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 	public function createNameField(string $value): FieldInterface
 	{
 		$title = $this->translator->translate(Parameters::PARAMETER_NAME, 'templates');
-		$field = $this->formBuilder->createField([
+		return $this->formBuilder->createField([
 			'type'  => FieldType::TEXT,
 			'id'    => Parameters::PARAMETER_NAME,
 			'name'  => Parameters::PARAMETER_NAME,
@@ -48,8 +48,6 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 			'label' => $title,
 			'value' => $value
 		]);
-
-		return $field;
 	}
 
 	/**

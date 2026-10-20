@@ -32,20 +32,22 @@ use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Flash\Messages;
 
-class ShowSettingsController
+readonly class ShowSettingsController
 {
-	public function __construct(private readonly Orchestrator $orchestrator,
-								private readonly TemplatePreparer $templatePreparer,
-								private readonly Messages $flash)
+	public function __construct(private Orchestrator     $orchestrator,
+								private TemplatePreparer $templatePreparer,
+								private Messages         $flash)
 	{}
 
-	/**
-	 * @param array<string,string> $args
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
-	public function create(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+    /**
+     * @param ServerRequestInterface $request
+     * @param ResponseInterface $response
+     * @return ResponseInterface
+     * @throws CoreException
+     * @throws Exception
+     * @throws FrameworkException
+     */
+	public function create(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
 		if (!$this->orchestrator->checkCreateRights())
 		{

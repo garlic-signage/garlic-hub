@@ -26,9 +26,9 @@ use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 
-class TemplatePreparer
+readonly class TemplatePreparer
 {
-	public function __construct(private readonly Translator $translator) {}
+	public function __construct(private Translator $translator) {}
 
 	/**
 	 * Language and template data for the composer. Playlist items get export formats and a reset,
@@ -85,7 +85,7 @@ class TemplatePreparer
 			'LANG_SNAP_TO_GRID' => $this->translator->translate('snap_to_grid', 'templates'),
 			'LANG_NO_GRID' => $this->translator->translate('no_grid', 'templates'),
 			'LANG_ZOOM' => $this->translator->translate('zoom', 'main'),
-			'LANG_DUBLICATE' => $this->translator->translate('duplicate', 'templates'),
+			'LANG_DUPLICATE' => $this->translator->translate('duplicate', 'templates'),
 			'LANG_SCALE_X' => $this->translator->translate('scale_x', 'templates'),
 			'LANG_SCALE_Y' => $this->translator->translate('scale_y', 'templates'),
 			'LANG_FONT_SIZE' => $this->translator->translate('font_size', 'templates'),

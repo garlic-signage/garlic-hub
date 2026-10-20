@@ -38,12 +38,12 @@ use Slim\Flash\Messages;
  * Handles the password change of the logged-in user and the forced
  * password change via token (initial password or password reset).
  */
-class ShowPasswordController
+readonly class ShowPasswordController
 {
-	public function __construct(private readonly Orchestrator $orchestrator,
-								private readonly TemplatePreparer $templatePreparer,
-								private readonly Translator $translator,
-								private readonly Messages $flash)
+	public function __construct(private Orchestrator     $orchestrator,
+								private TemplatePreparer $templatePreparer,
+								private Translator       $translator,
+								private Messages         $flash)
 	{}
 
 	/**

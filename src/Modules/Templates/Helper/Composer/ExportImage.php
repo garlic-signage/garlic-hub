@@ -27,14 +27,13 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Media\DataUrlDecoder;
 use App\Framework\Media\DecodedDataUrlFile;
 use App\Modules\Mediapool\Utils\MediaHandlerFactory;
-use Imagick;
 
 class ExportImage
 {
 	private string $errorText = '';
 	private DecodedDataUrlFile $decodedDataUrlFile;
 
-	public function __construct(private readonly DataUrlDecoder $dataUrlDecoder, private MediaHandlerFactory $mediaHandlerFactory)
+	public function __construct(private readonly DataUrlDecoder $dataUrlDecoder, private readonly MediaHandlerFactory $mediaHandlerFactory)
 	{}
 
     /**

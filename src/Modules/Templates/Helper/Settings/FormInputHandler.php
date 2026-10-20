@@ -26,10 +26,10 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 
-class FormInputHandler
+readonly class FormInputHandler
 {
-	public function __construct(private readonly Parameters $parameters,
-								private readonly Validator $validator)
+	public function __construct(private Parameters $parameters,
+								private Validator  $validator)
 	{
 	}
 

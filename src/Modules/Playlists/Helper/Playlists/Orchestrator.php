@@ -26,7 +26,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Framework\Utils\FormParameters\BaseFilterParameters;
+use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\Datatable\Parameters;
 use App\Modules\Playlists\Services\PlaylistsDatatableService;
@@ -195,9 +195,9 @@ class Orchestrator
 	{
 		$this->parameters->setUserInputs(
 			array_merge($this->input, [
-				BaseFilterParameters::PARAMETER_ELEMENTS_PER_PAGE => 0,
-				BaseFilterParameters::PARAMETER_SORT_COLUMN => 'playlist_id',
-				BaseFilterParameters::PARAMETER_SORT_ORDER => 'DESC',
+				BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE => 0,
+				BaseFilterParametersInterface::PARAMETER_SORT_COLUMN => 'playlist_id',
+				BaseFilterParametersInterface::PARAMETER_SORT_ORDER => 'DESC',
 			])
 		);
 		$this->parameters->parseInputAllParameters();

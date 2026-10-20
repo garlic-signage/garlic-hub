@@ -33,14 +33,14 @@ use Doctrine\DBAL\Exception;
  * Creates the very first admin user. Works without a logged-in user,
  * so no UserSession must be touched here.
  */
-class Orchestrator
+readonly class Orchestrator
 {
 	public function __construct(
-		private readonly UsersAdminCreateService $usersAdminCreateService,
-		private readonly FormInputHandler        $formInputHandler,
-		private readonly SettingsFormBuilder     $settingsFormBuilder,
-		private readonly Config                  $config,
-		private readonly Translator              $translator
+		private UsersAdminCreateService $usersAdminCreateService,
+		private FormInputHandler        $formInputHandler,
+		private SettingsFormBuilder     $settingsFormBuilder,
+		private Config                  $config,
+		private Translator              $translator
 	) {}
 
 	/**

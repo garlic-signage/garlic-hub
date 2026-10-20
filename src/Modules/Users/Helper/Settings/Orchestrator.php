@@ -164,7 +164,7 @@ class Orchestrator
 
 		/** @var array{username:string, email:string, locale?: string, status?: int} $saveData */
 		$saveData = $this->formInputHandler->getParsed();
-		// a save without changes affects no rows, but is not a failure
+		// a save without changes affects no rows but is not a failure
 		if ($this->usersAdminService->updateUser($UID, $saveData) === 0 && $this->usersAdminService->hasErrorMessages())
 			return ['success' => false, 'errors' => $this->translateServiceErrors()];
 

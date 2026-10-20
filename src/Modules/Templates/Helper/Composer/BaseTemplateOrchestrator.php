@@ -45,7 +45,7 @@ class BaseTemplateOrchestrator
 	}
 
 	/**
-	 * @param array<mixed> $objects
+	 * @param array $objects
 	 */
 	protected function restoreSrc(array &$objects): void
 	{
@@ -74,7 +74,7 @@ class BaseTemplateOrchestrator
 	}
 
 	/**
-	 * @param array<mixed> $objects
+	 * @param array $objects
 	 */
 	protected function removeSrc(array &$objects): void
 	{
@@ -96,7 +96,7 @@ class BaseTemplateOrchestrator
 		if (count($JSON['objects']) > 1000)
 			return '';
 
-		// remove src for security reasons XSS etc
+		// remove src for security reasons XSS etc.
 		$this->removeSrc($JSON['objects']);
 
 		return json_encode($JSON) ?: '';

@@ -82,12 +82,15 @@ class Orchestrator extends BaseTemplateOrchestrator
 		return $this->templatePreparer->prepare((string) $this->template['name'], $replaced);
 	}
 
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 * @throws ModuleException
-	 */
+    /**
+     * @param int $templateId
+     * @param string $content
+     * @param string $imageBase64
+     * @return int
+     * @throws Exception
+     * @throws FrameworkException
+     * @throws ModuleException
+     */
 	public function saveTemplate(int $templateId, string $content, string $imageBase64): int
 	{
 		$content = $this->validate($content);

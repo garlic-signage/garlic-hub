@@ -21,14 +21,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\Settings;
 
-use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Framework\Utils\Forms\AbstractBaseFormElementsCreator;
 use App\Framework\Utils\Html\FieldInterface;
 use App\Framework\Utils\Html\FieldType;
-use App\Framework\Utils\Html\FormBuilder;
 
 /**
  * Class FormElementsCreator
@@ -74,7 +71,11 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 		]);
 	}
 
-	public function createScreenWidthField(int $value): FieldInterface
+    /**
+     * @throws CoreException
+     * @throws FrameworkException
+     */
+    public function createScreenWidthField(int $value): FieldInterface
 	{
 		return $this->formBuilder->createField([
 			'type' => FieldType::NUMBER,
@@ -87,7 +88,11 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 		]);
 	}
 
-	public function createScreenHeightField(int $value): FieldInterface
+    /**
+     * @throws CoreException
+     * @throws FrameworkException
+     */
+    public function createScreenHeightField(int $value): FieldInterface
 	{
 		return $this->formBuilder->createField([
 			'type' => FieldType::NUMBER,
