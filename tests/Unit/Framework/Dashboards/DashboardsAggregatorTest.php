@@ -35,13 +35,13 @@ class DashboardsAggregatorTest extends TestCase
 	#[Group('units')]
 	public function testRegisterAndRenderDashboardsContents(): void
 	{
-		$dashboardMock = $this->createMock(DashboardInterface::class);
-		$dashboardMock->method('getId')->willReturn('test');
-		$dashboardMock->method('getTitle')->willReturn('Test Title');
-		$dashboardMock->method('renderContent')->willReturn('Test Content');
+		$dashboardStub = $this->createStub(DashboardInterface::class);
+		$dashboardStub->method('getId')->willReturn('test');
+		$dashboardStub->method('getTitle')->willReturn('Test Title');
+		$dashboardStub->method('renderContent')->willReturn('Test Content');
 
 		$aggregator = new DashboardsAggregator();
-		$aggregator->registerDashboard($dashboardMock);
+		$aggregator->registerDashboard($dashboardStub);
 
 		$result = $aggregator->renderDashboardsContents();
 

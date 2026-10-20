@@ -30,12 +30,13 @@ use DateTime;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class PlayerEntityTest extends TestCase
 {
 	private Config&MockObject $configMock;
-	private UserAgentHandler&MockObject $userAgentHandlerMock;
+	private UserAgentHandler&Stub $userAgentHandlerStub;
 	private PlayerEntity $playerEntity;
 
 	/**
@@ -45,7 +46,7 @@ class PlayerEntityTest extends TestCase
 	{
 		parent::setUp();
 		$this->configMock = $this->createMock(Config::class);
-		$this->userAgentHandlerMock = $this->createMock(UserAgentHandler::class);
+		$this->userAgentHandlerStub = $this->createStub(UserAgentHandler::class);
 	}
 
 	/**
@@ -81,12 +82,12 @@ class PlayerEntityTest extends TestCase
 			'screen_times' => $screenTimes
 		];
 
-		$this->userAgentHandlerMock->method('getModel')->willReturn(PlayerModel::COMPATIBLE);
-		$this->userAgentHandlerMock->method('getUuid')->willReturn('123e4567-e89b-12d3-a456-426614174000');
-		$this->userAgentHandlerMock->method('getFirmware')->willReturn('1.0.0');
-		$this->userAgentHandlerMock->method('getName')->willReturn('Player One');
+		$this->userAgentHandlerStub->method('getModel')->willReturn(PlayerModel::COMPATIBLE);
+		$this->userAgentHandlerStub->method('getUuid')->willReturn('123e4567-e89b-12d3-a456-426614174000');
+		$this->userAgentHandlerStub->method('getFirmware')->willReturn('1.0.0');
+		$this->userAgentHandlerStub->method('getName')->willReturn('Player One');
 
-		$this->playerEntity = new PlayerEntity($this->configMock, $this->userAgentHandlerMock, $data);
+		$this->playerEntity = new PlayerEntity($this->configMock, $this->userAgentHandlerStub, $data);
 
 		static::assertFalse($this->playerEntity->isIntranet());
 		static::assertEmpty($this->playerEntity->getApiEndpoint());
@@ -128,12 +129,13 @@ class PlayerEntityTest extends TestCase
 	#[Group('units')]
 	public function testConstructorWithDefaultData(): void
 	{
-		$this->userAgentHandlerMock->method('getModel')->willReturn(PlayerModel::COMPATIBLE);
-		$this->userAgentHandlerMock->method('getUuid')->willReturn('123e4567-e89b-12d3-a456-426614174000');
-		$this->userAgentHandlerMock->method('getFirmware')->willReturn('1.0.0');
-		$this->userAgentHandlerMock->method('getName')->willReturn('Player One');
+		$this->configMock->expects($this->never())->method($this->anything());
+		$this->userAgentHandlerStub->method('getModel')->willReturn(PlayerModel::COMPATIBLE);
+		$this->userAgentHandlerStub->method('getUuid')->willReturn('123e4567-e89b-12d3-a456-426614174000');
+		$this->userAgentHandlerStub->method('getFirmware')->willReturn('1.0.0');
+		$this->userAgentHandlerStub->method('getName')->willReturn('Player One');
 
-		$this->playerEntity = new PlayerEntity($this->configMock, $this->userAgentHandlerMock, []);
+		$this->playerEntity = new PlayerEntity($this->configMock, $this->userAgentHandlerStub, []);
 
 		static::assertSame(1, $this->playerEntity->getPlayerId());
 		static::assertSame(0, $this->playerEntity->getPlaylistId());

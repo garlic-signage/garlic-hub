@@ -62,10 +62,12 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testBuildFormWithEmptyPasswordToken(): void
 	{
+		$this->parametersMock->expects($this->never())->method($this->anything());
+		$this->validatorMock->expects($this->never())->method($this->anything());
 		$pattern = '^.{8,}$';
-		$mockPasswordField = $this->createMock(FieldInterface::class);
-		$mockPasswordConfirmField = $this->createMock(FieldInterface::class);
-		$mockCsrfTokenField = $this->createMock(FieldInterface::class);
+		$mockPasswordField = $this->createStub(FieldInterface::class);
+		$mockPasswordConfirmField = $this->createStub(FieldInterface::class);
+		$mockCsrfTokenField = $this->createStub(FieldInterface::class);
 		$preparedForm = ['password' => $mockPasswordField, 'password_confirm' => $mockPasswordConfirmField, 'csrf_token' => $mockCsrfTokenField];
 
 		$this->formElementsCreatorMock->expects($this->once())
@@ -104,12 +106,14 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testBuildFormWithPasswordToken(): void
 	{
+		$this->parametersMock->expects($this->never())->method($this->anything());
+		$this->validatorMock->expects($this->never())->method($this->anything());
 		$pattern = '^.{8,}$';
 		$passwordToken = 'testToken';
-		$mockPasswordField = $this->createMock(FieldInterface::class);
-		$mockPasswordConfirmField = $this->createMock(FieldInterface::class);
-		$mockCsrfTokenField = $this->createMock(FieldInterface::class);
-		$mockPasswordTokenField = $this->createMock(FieldInterface::class);
+		$mockPasswordField = $this->createStub(FieldInterface::class);
+		$mockPasswordConfirmField = $this->createStub(FieldInterface::class);
+		$mockCsrfTokenField = $this->createStub(FieldInterface::class);
+		$mockPasswordTokenField = $this->createStub(FieldInterface::class);
 		$preparedForm = ['password' => $mockPasswordField, 'password_confirm' => $mockPasswordConfirmField, 'csrf_token' => $mockCsrfTokenField, 'password_token' => $mockPasswordTokenField];
 
 		$this->formElementsCreatorMock->expects($this->once())
@@ -154,6 +158,7 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testHandleUserInput(): void
 	{
+		$this->formElementsCreatorMock->expects($this->never())->method($this->anything());
 		$userInputs = ['key1' => 'value1', 'key2' => 'value2'];
 		$pattern = '/^[A-Za-z0-9]+$/';
 

@@ -46,9 +46,7 @@ class BaseParametersTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->sanitizerMock = $this->createMock(Sanitizer::class);
-
-		$this->baseParameters = new ConcreteBaseParameters('testModule', $this->sanitizerMock);
+		$this->baseParameters = new ConcreteBaseParameters('testModule', $this->createStub(Sanitizer::class));
 	}
 
 	/**
@@ -313,6 +311,7 @@ class BaseParametersTest extends TestCase
 	#[Group('units')]
 	public function testParseInputAllParametersParsesDefaultValuesWhenNoUserInputs(): void
 	{
+		$this->useSanitizerMock();
 		$this->baseParameters->addParameter('param1', ScalarType::STRING, 'default1');
 		$this->baseParameters->addParameter('param2', ScalarType::INT, 42);
 		$this->baseParameters->setUserInputs([]);
@@ -331,6 +330,7 @@ class BaseParametersTest extends TestCase
 	#[Group('units')]
 	public function testParseInputAllParametersParsesValuesFromUserInputs(): void
 	{
+		$this->useSanitizerMock();
 		$this->baseParameters->addParameter('param1', ScalarType::STRING, 'default1');
 		$this->baseParameters->addParameter('param2', ScalarType::INT, 42);
 		$this->baseParameters->setUserInputs(['param1' => 'userValue1', 'param2' => 84]);
@@ -378,6 +378,7 @@ class BaseParametersTest extends TestCase
 	#[Group('units')]
 	public function testParseInputFilterSetParsedFalse(): void
 	{
+		$this->useSanitizerMock();
 		$this->baseParameters->addParameter('testParam', ScalarType::STRING, 'defaultValue');
 
 		$this->baseParameters->setUserInputs([]);
@@ -404,6 +405,7 @@ class BaseParametersTest extends TestCase
 	#[Group('units')]
 	public function testParseInputFilterNotParseDouble(): void
 	{
+		$this->useSanitizerMock();
 		$this->baseParameters->addParameter('testParam', ScalarType::STRING, 'defaultValue');
 
 		$this->baseParameters->setUserInputs([]);
@@ -426,6 +428,7 @@ class BaseParametersTest extends TestCase
 	#[Group('units')]
 	public function testParseInputFilterByNameHandlesScalarTypeSanitization(): void
 	{
+		$this->useSanitizerMock();
 		$this->baseParameters->addParameter('intParam', ScalarType::INT, 10);
 		$this->baseParameters->addParameter('boolParam', ScalarType::BOOLEAN, false);
 		$this->baseParameters->setUserInputs(['intParam' => '42', 'boolParam' => 'true']);
@@ -442,5 +445,14 @@ class BaseParametersTest extends TestCase
 
 		static::assertSame(42, $this->baseParameters->getValueOfParameter('intParam'));
 		static::assertTrue($this->baseParameters->getValueOfParameter('boolParam'));
+	}
+
+	/**
+	 * Only the parse tests check the sanitizer, the other tests just manage parameters.
+	 */
+	private function useSanitizerMock(): void
+	{
+		$this->sanitizerMock  = $this->createMock(Sanitizer::class);
+		$this->baseParameters = new ConcreteBaseParameters('testModule', $this->sanitizerMock);
 	}
 }

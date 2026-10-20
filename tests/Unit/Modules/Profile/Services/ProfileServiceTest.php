@@ -51,14 +51,14 @@ class ProfileServiceTest extends TestCase
 		$this->userTokenServiceMock   = $this->createMock(UserTokenService::class);
 		$this->cryptMock              = $this->createMock(Crypt::class);
 		$this->transactionsMock       = $this->createMock(Transactions::class);
-		$loggerMock = $this->createMock(LoggerInterface::class);
+		$loggerStub = $this->createStub(LoggerInterface::class);
 
 		$this->profileService = new ProfileService(
 			$this->userMainRepositoryMock,
 			$this->userTokenServiceMock,
 			$this->cryptMock,
 			$this->transactionsMock,
-			$loggerMock
+			$loggerStub
 		);
 	}
 
@@ -106,8 +106,10 @@ class ProfileServiceTest extends TestCase
 		$password = 'new-password';
 
 		$this->transactionsMock->expects($this->once())->method('begin');
+		$this->cryptMock->expects($this->once())->method('createPasswordHash')->with($password)->willReturn('hashed');
 		$this->userMainRepositoryMock->expects($this->once())
 			->method('update')
+			->with($UID, ['password' => 'hashed'])
 			->willReturn(0);
 		$this->transactionsMock->expects($this->once())->method('rollBack');
 
@@ -215,6 +217,7 @@ class ProfileServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateLocaleSuccess(): void
 	{
+		$this->expectUntouched($this->userTokenServiceMock, $this->cryptMock, $this->transactionsMock);
 		$UID = 42;
 		$locale = 'en_US';
 
@@ -234,6 +237,7 @@ class ProfileServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateLocaleFails(): void
 	{
+		$this->expectUntouched($this->userTokenServiceMock, $this->cryptMock, $this->transactionsMock);
 		$UID = 42;
 		$locale = 'en_US';
 
@@ -245,5 +249,13 @@ class ProfileServiceTest extends TestCase
 		$result = $this->profileService->updateLocale($UID, $locale);
 
 		static::assertSame(0, $result);
+	}
+
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
 	}
 }

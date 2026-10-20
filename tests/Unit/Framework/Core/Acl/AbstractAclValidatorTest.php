@@ -57,7 +57,7 @@ class AbstractAclValidatorTest extends TestCase
 	#[Group('units')]
 	public function testGetConfig(): void
 	{
-		$configMock = $this->createMock(Config::class);
+		$configMock = $this->createStub(Config::class);
 		$this->aclHelperMock->expects($this->once())->method('getConfig')->willReturn($configMock);
 		static::assertSame($configMock, $this->aclValidator->getConfig());
 	}
@@ -175,6 +175,12 @@ class AbstractAclValidatorTest extends TestCase
 	{
 		$UID = 1;
 		$unit = ['UID' => 2, 'company_id' => 4];
+		$configStub = $this->createStub(Config::class);
+		$configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
+		$this->aclHelperMock->expects($this->once())->method('isModuleAdmin')->with($UID, 'testModule')->willReturn(false);
+		$this->aclHelperMock->expects($this->once())->method('getConfig')->willReturn($configStub);
+		$this->aclHelperMock->expects($this->once())->method('isSubAdmin')->with($UID, 'testModule')->willReturn(false);
+		$this->aclHelperMock->expects($this->never())->method('hasSubAdminAccessOnCompany');
 		$result = $this->aclValidator->isAdmin($UID, $unit);
 
 		static::assertFalse($result);

@@ -55,8 +55,8 @@ class AbstractBaseServiceTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$loggerMock = $this->createMock(LoggerInterface::class);
-		$this->service = new ConcreteService($loggerMock);
+		$loggerStub = $this->createStub(LoggerInterface::class);
+		$this->service = new ConcreteService($loggerStub);
 	}
 
 	#[Group('units')]

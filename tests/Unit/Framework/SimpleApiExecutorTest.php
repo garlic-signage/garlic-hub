@@ -58,6 +58,7 @@ class SimpleApiExecutorTest extends TestCase
 	#[Group('units')]
 	public function testExecuteApiRequestSuccess(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$endpoint = 'https://example.com/api';
 		$token = 'test_token';
 		$method = 'GET';
@@ -145,6 +146,7 @@ class SimpleApiExecutorTest extends TestCase
 	#[Group('units')]
 	public function testExecuteAuthSuccess(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$endpoint = 'https://example.com/auth';
 		$options = ['username' => 'test', 'password' => 'secret'];
 		$responseBody = '{"authenticated":true}';

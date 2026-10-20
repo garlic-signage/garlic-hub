@@ -90,6 +90,7 @@ class CsrfTokenTest extends TestCase
 	#[Group('units')]
 	public function testValidateTokenReturnsTrueForMatchingToken(): void
 	{
+		$this->cryptMock->expects($this->never())->method($this->anything());
 		$validToken = 'validToken';
 		$this->sessionMock->method('get')
 			->with(CsrfToken::CSRF_TOKEN_SESSION_KEY)
@@ -103,6 +104,7 @@ class CsrfTokenTest extends TestCase
 	#[Group('units')]
 	public function testValidateTokenReturnsFalseForNonMatchingToken(): void
 	{
+		$this->cryptMock->expects($this->never())->method($this->anything());
 		$sessionToken = 'validToken';
 		$receivedToken = 'invalidToken';
 
@@ -118,6 +120,7 @@ class CsrfTokenTest extends TestCase
 	#[Group('units')]
 	public function testValidateTokenReturnsFalseIfSessionTokenIsInvalid(): void
 	{
+		$this->cryptMock->expects($this->never())->method($this->anything());
 		$this->sessionMock->method('get')
 			->with(CsrfToken::CSRF_TOKEN_SESSION_KEY)
 			->willReturn(null);
@@ -171,6 +174,7 @@ class CsrfTokenTest extends TestCase
 	#[Group('units')]
 	public function testDestroyTokenRemovesTokenFromSession(): void
 	{
+		$this->cryptMock->expects($this->never())->method($this->anything());
 		$this->sessionMock->expects($this->once())->method('delete')
 			->with(CsrfToken::CSRF_TOKEN_SESSION_KEY);
 

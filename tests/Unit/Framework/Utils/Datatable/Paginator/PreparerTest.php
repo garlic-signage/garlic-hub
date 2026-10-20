@@ -113,7 +113,7 @@ class PreparerTest extends TestCase
 		$this->preparer->setBaseFilter($this->baseFilterParametersMock)->setSite($site);
 
 		$this->baseFilterParametersMock
-			->method('getValueOfParameter')
+			->expects($this->atLeastOnce())->method('getValueOfParameter')
 			->willReturnMap([
 				[BaseFilterParametersInterface::PARAMETER_SORT_COLUMN, 'name'],
 				[BaseFilterParametersInterface::PARAMETER_SORT_ORDER, 'asc'],

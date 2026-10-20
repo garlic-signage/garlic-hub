@@ -27,12 +27,12 @@ use App\Modules\Player\IndexCreation\Builder\Preparers\LayoutPreparer;
 use App\Modules\Playlists\Helper\PlaylistMode;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class LayoutPreparerTest extends TestCase
 {
-	private PlayerEntity&MockObject $playerEntityMock;
+	private PlayerEntity&Stub $playerEntityStub;
 	private LayoutPreparer $preparer;
 
 	/**
@@ -41,20 +41,20 @@ class LayoutPreparerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->playerEntityMock = $this->createMock(PlayerEntity::class);
-		$this->preparer   = new LayoutPreparer($this->playerEntityMock);
+		$this->playerEntityStub = $this->createStub(PlayerEntity::class);
+		$this->preparer   = new LayoutPreparer($this->playerEntityStub);
 	}
 
 	#[Group('units')]
 	public function testPrepareWithMultizone(): void
 	{
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getProperties')
 			->willReturn(['width' => '1920', 'height' => '1080']);
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getPlaylistMode')
 			->willReturn(PlaylistMode::MULTIZONE->value);
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getLayout')
 			->willReturn([
 				'export_unit' => 'percent',
@@ -85,11 +85,11 @@ class LayoutPreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareWithMultizoneAsPixel(): void
 	{
-		$this->playerEntityMock->method('getProperties')
+		$this->playerEntityStub->method('getProperties')
 			->willReturn(['width' => '1920', 'height' => '1080']);
-		$this->playerEntityMock->method('getPlaylistMode')
+		$this->playerEntityStub->method('getPlaylistMode')
 			->willReturn(PlaylistMode::MULTIZONE->value);
-		$this->playerEntityMock->method('getLayout')
+		$this->playerEntityStub->method('getLayout')
 			->willReturn([
 				'export_unit' => 'pixel',
 				'zones' => [
@@ -120,10 +120,10 @@ class LayoutPreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareWithoutMultizone(): void
 	{
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getProperties')
 			->willReturn(['width' => '1920', 'height' => '1080']);
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getPlaylistMode')
 			->willReturn(PlaylistMode::MASTER->value);
 

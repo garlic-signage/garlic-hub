@@ -70,6 +70,8 @@ class BaseFilterParametersTest extends TestCase
 	#[Group('units')]
 	public function testSetParameterDefaultValuesSuccessfullySetsDefault(): void
 	{
+		$this->sanitizerMock->expects($this->never())->method($this->anything());
+		$this->sessionMock->expects($this->never())->method($this->anything());
 		$this->baseFilterParameters->setParameterDefaultValues('column_name');
 		static::assertSame('column_name', $this->baseFilterParameters->getDefaultValueOfParameter(BaseFilterParametersInterface::PARAMETER_SORT_COLUMN));
 	}
@@ -81,6 +83,8 @@ class BaseFilterParametersTest extends TestCase
 	#[Group('units')]
 	public function testSetElementsParametersToNullSetsValuesToZero(): void
 	{
+		$this->sanitizerMock->expects($this->never())->method($this->anything());
+		$this->sessionMock->expects($this->never())->method($this->anything());
 		$this->baseFilterParameters->setValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE, 10);
 		$this->baseFilterParameters->setValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE, 10);
 
@@ -108,6 +112,8 @@ class BaseFilterParametersTest extends TestCase
 	#[Group('units')]
 	public function testAddCompany(): void
 	{
+		$this->sanitizerMock->expects($this->never())->method($this->anything());
+		$this->sessionMock->expects($this->never())->method($this->anything());
 		$this->baseFilterParameters->addCompany();
 
 		static::assertTrue($this->baseFilterParameters->hasParameter(BaseFilterParametersInterface::PARAMETER_COMPANY_ID));
@@ -119,6 +125,7 @@ class BaseFilterParametersTest extends TestCase
 	#[Group('units')]
 	public function testParseInputFilterAllUsersUsesStoredSessionParameters(): void
 	{
+		$this->sanitizerMock->expects($this->never())->method($this->anything());
 		$this->baseFilterParameters->setUserInputs([]);
 		$sessionStored = [
 			BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE  =>
@@ -147,6 +154,7 @@ class BaseFilterParametersTest extends TestCase
 	#[Group('units')]
 	public function testParseInputFilterAllUsersUsesStoredSessionParametersFails(): void
 	{
+		$this->sanitizerMock->expects($this->never())->method($this->anything());
 		$this->baseFilterParameters->setUserInputs([]);
 		$sessionStored = 'tralala';
 
@@ -166,6 +174,10 @@ class BaseFilterParametersTest extends TestCase
 	public function testParseInputFilterAllUsersParsesAllParameters(): void
 	{
 		$this->baseFilterParameters->setUserInputs([]);
+		// nothing stored yet, so the parsed parameters are stored for the next request
+		$this->sessionMock->expects($this->once())->method('exists')->with('testKeyStore')->willReturn(false);
+		$this->sessionMock->expects($this->never())->method('get');
+		$this->sessionMock->expects($this->once())->method('set')->with('testKeyStore', $this->isArray());
 
 		$this->sanitizerMock->expects($this->exactly(2))
 			->method('int')
@@ -183,6 +195,7 @@ class BaseFilterParametersTest extends TestCase
 	#[Group('units')]
 	public function testParseInputFilterAllUsersStoresParametersInSession(): void
 	{
+		$this->sessionMock->expects($this->never())->method($this->anything());
 		$baseFilterParameters1 = new ConcreteFilterBaseParameters($this->sanitizerMock, $this->sessionMock, '');
 
 		$baseFilterParameters1->addDefaultParameters();

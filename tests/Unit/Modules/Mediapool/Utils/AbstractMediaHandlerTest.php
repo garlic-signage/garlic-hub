@@ -83,6 +83,8 @@ class AbstractMediaHandlerTest extends TestCase
 	#[Group('units')]
 	public function testSomeGetters(): void
 	{
+		$this->configMock->expects($this->never())->method($this->anything());
+		$this->filesystemMock->expects($this->never())->method($this->anything());
 		static::assertEmpty($this->concreteMediaHandler->getDimensions());
 		static::assertEmpty($this->concreteMediaHandler->getFileSize());
 		static::assertEmpty($this->concreteMediaHandler->getConfigData());
@@ -94,7 +96,8 @@ class AbstractMediaHandlerTest extends TestCase
 	#[Group('units')]
 	public function testExistsSucceed(): void
 	{
-		$this->filesystemMock->method('fileExists')->willReturn(true);
+		$this->configMock->expects($this->never())->method($this->anything());
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileExists')->willReturn(true);
 		static::assertTrue($this->concreteMediaHandler->exists('/path/to/file'));
 	}
 
@@ -104,7 +107,8 @@ class AbstractMediaHandlerTest extends TestCase
 	#[Group('units')]
 	public function testExistsFailed(): void
 	{
-		$this->filesystemMock->method('fileExists')->willReturn(false);
+		$this->configMock->expects($this->never())->method($this->anything());
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileExists')->willReturn(false);
 		static::assertFalse($this->concreteMediaHandler->exists('/path/to/file'));
 	}
 
@@ -115,7 +119,8 @@ class AbstractMediaHandlerTest extends TestCase
 	#[Group('units')]
 	public function testDetermineNewFilenameThrowsException(): void
 	{
-		$this->filesystemMock->method('fileExists')->willReturn(false);
+		$this->configMock->expects($this->never())->method($this->anything());
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileExists')->willReturn(false);
 		$this->expectException(ModuleException::class);
 		$this->concreteMediaHandler->determineNewFilename('/path/to/file');
 	}
@@ -127,8 +132,9 @@ class AbstractMediaHandlerTest extends TestCase
 	#[Group('units')]
 	public function testDetermineNewFilenameThrowsException2(): void
 	{
-		$this->filesystemMock->method('fileExists')->willReturn(true);
-		$this->filesystemMock->method('readStream')->willReturn(null);
+		$this->configMock->expects($this->never())->method($this->anything());
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileExists')->willReturn(true);
+		$this->filesystemMock->expects($this->atLeastOnce())->method('readStream')->willReturn(null);
 		$this->expectException(TypeError::class);
 		$this->concreteMediaHandler->determineNewFilename('/path/to/file');
 	}
@@ -140,8 +146,9 @@ class AbstractMediaHandlerTest extends TestCase
 	#[RunInSeparateProcess] #[Group('units')]
 	public function testDetermineNewFilenameThrowsModuleException3(): void
 	{
-		$this->filesystemMock->method('fileExists')->willReturn(true);
-		$this->filesystemMock->method('readStream')->willReturn(fopen('php://memory', 'r+'));
+		$this->configMock->expects($this->never())->method($this->anything());
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileExists')->willReturn(true);
+		$this->filesystemMock->expects($this->atLeastOnce())->method('readStream')->willReturn(fopen('php://memory', 'r+'));
 
 		$stream_get_contents = $this->getFunctionMock('App\Modules\Mediapool\Utils', 'stream_get_contents');
 		$stream_get_contents->expects($this->once())->willReturn(false);
@@ -159,8 +166,9 @@ class AbstractMediaHandlerTest extends TestCase
 	#[Group('units')]
 	public function testDetermineNewFilenameSucceed(): void
 	{
-		$this->filesystemMock->method('fileExists')->willReturn(true);
-		$this->filesystemMock->method('readStream')->willReturn(fopen('php://memory', 'r+'));
+		$this->configMock->expects($this->never())->method($this->anything());
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileExists')->willReturn(true);
+		$this->filesystemMock->expects($this->atLeastOnce())->method('readStream')->willReturn(fopen('php://memory', 'r+'));
 		fwrite($this->filesystemMock->readStream('/path/to/file'), 'file content');
 		rewind($this->filesystemMock->readStream('/path/to/file'));
 
@@ -171,6 +179,8 @@ class AbstractMediaHandlerTest extends TestCase
 	#[Group('units')]
 	public function testDetermineNewFilePathReturnsCorrectPathWithExtension(): void
 	{
+		$this->configMock->expects($this->never())->method($this->anything());
+		$this->filesystemMock->expects($this->never())->method($this->anything());
 		$oldFilePath = '/path/to/file.txt';
 		$filehash = '1234567890abcdef';
 		$extension = 'txt';
@@ -183,6 +193,8 @@ class AbstractMediaHandlerTest extends TestCase
 	#[Group('units')]
 	public function testDetermineNewFilePathReturnsCorrectPathWithoutExtension(): void
 	{
+		$this->configMock->expects($this->never())->method($this->anything());
+		$this->filesystemMock->expects($this->never())->method($this->anything());
 		$oldFilePath = '/path/to/file';
 		$filehash = '1234567890abcdef';
 		$extension = 'txt';
@@ -195,6 +207,8 @@ class AbstractMediaHandlerTest extends TestCase
 	#[Group('units')]
 	public function testDetermineNewFilePathNormalizesJpegExtension(): void
 	{
+		$this->configMock->expects($this->never())->method($this->anything());
+		$this->filesystemMock->expects($this->never())->method($this->anything());
 		$oldFilePath = '/path/to/file.jpeg';
 		$filehash = '1234567890abcdef';
 		$extension = 'jpg';
@@ -207,6 +221,8 @@ class AbstractMediaHandlerTest extends TestCase
 	#[Group('units')]
 	public function testDetermineNewFilePath_UsesMimeTypeWhenNoExtension(): void
 	{
+		$this->configMock->expects($this->never())->method($this->anything());
+		$this->filesystemMock->expects($this->never())->method($this->anything());
 		$oldFilePath = '/path/to/file';
 		$filehash = '1234567890abcdef';
 		$extension = 'jpg';
@@ -222,6 +238,7 @@ class AbstractMediaHandlerTest extends TestCase
 	#[Group('units')]
 	public function testRemoveUploadedFileDeletesFile(): void
 	{
+		$this->configMock->expects($this->never())->method($this->anything());
 		$this->filesystemMock->expects($this->once())->method('delete')->with('/path/to/file');
 		$this->concreteMediaHandler->removeUploadedFile('/path/to/file');
 	}
@@ -232,6 +249,7 @@ class AbstractMediaHandlerTest extends TestCase
 	#[Group('units')]
 	public function testRenameMovesFile(): void
 	{
+		$this->configMock->expects($this->never())->method($this->anything());
 		$this->filesystemMock->expects($this->once())->method('move')->with('/old/path', '/new/path');
 		$this->concreteMediaHandler->rename('/old/path', '/new/path');
 	}
@@ -244,7 +262,9 @@ class AbstractMediaHandlerTest extends TestCase
 	{
 		$uploadedFileMock = $this->createMock(UploadedFileInterface::class);
 		$uploadedFileMock->method('getClientFilename')->willReturn('testfile.jpg');
-		$uploadedFileMock->expects($this->once())->method('moveTo');
+		$this->configMock->expects($this->once())->method('getPaths')->with('systemDir')->willReturn('/var/www');
+		$this->filesystemMock->expects($this->never())->method($this->anything());
+		$uploadedFileMock->expects($this->once())->method('moveTo')->with('/var/www//originals/testfile.jpg');
 
 		$result = $this->concreteMediaHandler->uploadFromLocal($uploadedFileMock);
 
@@ -257,6 +277,7 @@ class AbstractMediaHandlerTest extends TestCase
 	#[Group('units')]
 	public function testUploadFromExternalReturnsCorrectPath(): void
 	{
+		$this->filesystemMock->expects($this->never())->method($this->anything());
 		$clientMock = $this->createMock(Client::class);
 		$this->configMock->expects($this->once())->method('getPaths')
 			->with('systemDir')

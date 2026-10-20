@@ -64,31 +64,33 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testBuildFormWithProvidedInput(): void
 	{
+		$this->parametersMock->expects($this->never())->method($this->anything());
+		$this->validatorMock->expects($this->never())->method($this->anything());
 		$post = [
 			Parameters::PARAMETER_ADMIN_NAME => 'testUser',
 			Parameters::PARAMETER_ADMIN_EMAIL => 'test@example.com',
 			Parameters::PARAMETER_ADMIN_LOCALE => 'fr_FR',
 		];
 
-		$fieldInterfaceMock = $this->createMock(FieldInterface::class);
+		$fieldInterfaceStub = $this->createStub(FieldInterface::class);
 		$expectedForm = ['hidden' => [['some' => 'stuff']], 'visible' => [['some' => 'stuff']]];
 		$this->formElementsCreatorMock->method('createUserNameField')
 			->with('testUser')
-			->willReturn($fieldInterfaceMock);
+			->willReturn($fieldInterfaceStub);
 		$this->formElementsCreatorMock->method('createEmailField')
 			->with('test@example.com')
-			->willReturn($fieldInterfaceMock);
+			->willReturn($fieldInterfaceStub);
 		$this->formElementsCreatorMock->method('createPasswordField')
 			->with('', 'pattern')
-			->willReturn($fieldInterfaceMock);
+			->willReturn($fieldInterfaceStub);
 		$this->formElementsCreatorMock->method('createPasswordConfirmField')
 			->with('')
-			->willReturn($fieldInterfaceMock);
+			->willReturn($fieldInterfaceStub);
 		$this->formElementsCreatorMock->method('createUserLocaleField')
 			->with('fr_FR')
-			->willReturn($fieldInterfaceMock);
+			->willReturn($fieldInterfaceStub);
 		$this->formElementsCreatorMock->method('createCSRFTokenField')
-			->willReturn($fieldInterfaceMock);
+			->willReturn($fieldInterfaceStub);
 
 		$this->formElementsCreatorMock->method('prepareForm')
 			->willReturn($expectedForm);
@@ -106,6 +108,7 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testHandleUserInputParsesAndValidatesData(): void
 	{
+		$this->formElementsCreatorMock->expects($this->never())->method($this->anything());
 		$passwordPattern = '/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/';
 		$userInput = [
 			'username' => 'test_user',

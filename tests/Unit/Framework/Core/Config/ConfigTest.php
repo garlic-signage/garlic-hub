@@ -69,6 +69,7 @@ class ConfigTest extends TestCase
 	#[Group('units')]
 	public function testGetEnv(): void
 	{
+		$this->configLoaderMock->expects($this->never())->method($this->anything());
 		static::assertEquals('value_env', $this->config->getEnv('key_env'));
 		static::assertEmpty($this->config->getEnv('manamana'));
 	}
@@ -76,6 +77,7 @@ class ConfigTest extends TestCase
 	#[Group('units')]
 	public function testGetEdition(): void
 	{
+		$this->configLoaderMock->expects($this->never())->method($this->anything());
 		$config           = new Config($this->configLoaderMock, [], ['APP_PLATFORM_EDITION' => 'enterprise']);
 		static::assertEquals(Config::PLATFORM_EDITION_ENTERPRISE, $config->getEdition());
 	}
@@ -83,12 +85,14 @@ class ConfigTest extends TestCase
 	#[Group('units')]
 	public function testGetEditionDefault(): void
 	{
+		$this->configLoaderMock->expects($this->never())->method($this->anything());
 		static::assertEquals(Config::PLATFORM_EDITION_EDGE, $this->config->getEdition());
 	}
 
 	#[Group('units')]
 	public function testGetPaths(): void
 	{
+		$this->configLoaderMock->expects($this->never())->method($this->anything());
 		static::assertEquals('value_path', $this->config->getPaths('key_path'));
 		static::assertEmpty($this->config->getPaths('manamana'));
 
@@ -116,6 +120,7 @@ class ConfigTest extends TestCase
 	#[Group('units')]
 	public function testLogLevelIsDebugInDevEnvironment(): void
 	{
+		$this->configLoaderMock->expects($this->never())->method($this->anything());
 		$config = new Config($this->configLoaderMock, [], ['APP_ENV' => 'dev']);
 		static::assertEquals(Level::Debug, $config->getLogLevel());
 	}
@@ -123,6 +128,7 @@ class ConfigTest extends TestCase
 	#[Group('units')]
 	public function testLogLevelIsInfoInTestEnvironment(): void
 	{
+		$this->configLoaderMock->expects($this->never())->method($this->anything());
 		$config = new Config($this->configLoaderMock, [], ['APP_ENV' => 'test']);
 		static::assertEquals(Level::Info, $config->getLogLevel());
 	}
@@ -130,6 +136,7 @@ class ConfigTest extends TestCase
 	#[Group('units')]
 	public function testLogLevelIsErrorInProdEnvironment(): void
 	{
+		$this->configLoaderMock->expects($this->never())->method($this->anything());
 		$config = new Config($this->configLoaderMock, [], ['APP_ENV' => 'prod']);
 		static::assertEquals(Level::Error, $config->getLogLevel());
 	}
@@ -137,6 +144,7 @@ class ConfigTest extends TestCase
 	#[Group('units')]
 	public function testLogLevelIsWarningInUnknownEnvironment(): void
 	{
+		$this->configLoaderMock->expects($this->never())->method($this->anything());
 		$config = new Config($this->configLoaderMock, [], ['APP_ENV' => 'unknown']);
 		static::assertEquals(Level::Info, $config->getLogLevel());
 	}
@@ -180,7 +188,7 @@ class ConfigTest extends TestCase
         ];
 
         $this->configLoaderMock
-            ->method('load')
+            ->expects($this->atLeastOnce())->method('load')
             ->willReturnCallback(function ($module) use ($configData) {
                 return $configData[$module] ?? [];
             });

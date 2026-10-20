@@ -58,8 +58,8 @@ class SearchFilterParamsTraitTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$loggerMock = $this->createMock(LoggerInterface::class);
-		$this->searchFilterService = new ConcreteTraitService($loggerMock);
+		$loggerStub = $this->createStub(LoggerInterface::class);
+		$this->searchFilterService = new ConcreteTraitService($loggerStub);
 	}
 
 	#[Group('units')]

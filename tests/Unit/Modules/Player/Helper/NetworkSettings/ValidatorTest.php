@@ -80,6 +80,7 @@ class ValidatorTest extends TestCase
 	#[Group('units')]
 	public function testNoIntranet(): void
 	{
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$this->checkCsrfTokenTrue();
 		$this->parametersMock->method('getValueOfParameter')
 			->willReturnMap([
@@ -95,6 +96,7 @@ class ValidatorTest extends TestCase
 	#[Group('units')]
 	public function testIntranetWithApiEndpoint(): void
 	{
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$this->checkCsrfTokenTrue();
 		$this->parametersMock
 			->method('getValueOfParameter')

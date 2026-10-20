@@ -31,6 +31,7 @@ use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class ConcreteDatatableBuilder extends AbstractDatatableBuilder
@@ -56,7 +57,7 @@ class AbstractDatatableBuilderTest extends TestCase
 	private BuildService&MockObject $buildServiceMock;
 	private BaseFilterParameters&MockObject $parametersMock;
 	private AbstractAclValidator&MockObject $aclValidatorMock;
-	private Config&MockObject $configMock;
+	private Config&Stub $configStub;
 
 	/**
 	 * @throws Exception
@@ -67,8 +68,8 @@ class AbstractDatatableBuilderTest extends TestCase
 		$this->buildServiceMock = $this->createMock(BuildService::class);
 		$this->parametersMock = $this->createMock(BaseFilterParameters::class);
 		$this->aclValidatorMock = $this->createMock(AbstractAclValidator::class);
-		$this->configMock = $this->createMock(Config::class);
-		$this->aclValidatorMock->method('getConfig')->willReturn($this->configMock);
+		$this->configStub = $this->createStub(Config::class);
+		$this->aclValidatorMock->method('getConfig')->willReturn($this->configStub);
 
 		$this->datatableBuilder = new ConcreteDatatableBuilder($this->buildServiceMock, $this->parametersMock, $this->aclValidatorMock);
 	}
@@ -76,7 +77,8 @@ class AbstractDatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testConfigureParametersInEdgeEdition(): void
 	{
-		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
+		$this->buildServiceMock->expects($this->never())->method($this->anything());
+		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
 		$this->aclValidatorMock->expects($this->never())->method('isModuleAdmin');
 		$this->parametersMock->expects($this->never())->method('addOwner');
 		$this->parametersMock->expects($this->never())->method('addCompany');
@@ -89,7 +91,8 @@ class AbstractDatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testConfigureParametersForModuleAdmin(): void
 	{
-		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
+		$this->buildServiceMock->expects($this->never())->method($this->anything());
+		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
 		$this->aclValidatorMock->expects($this->once())->method('isModuleAdmin')->with(1)->willReturn(true);
 		$this->parametersMock->expects($this->once())->method('addOwner');
 		$this->parametersMock->expects($this->once())->method('addCompany');
@@ -102,7 +105,8 @@ class AbstractDatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testConfigureParametersForSubAdmin(): void
 	{
-		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
+		$this->buildServiceMock->expects($this->never())->method($this->anything());
+		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
 		$this->aclValidatorMock->method('isModuleAdmin')->willReturn(false);
 		$this->aclValidatorMock->expects($this->once())->method('isSubAdmin')->with(1)->willReturn(true);
 		$this->parametersMock->expects($this->once())->method('addOwner');
@@ -116,9 +120,10 @@ class AbstractDatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testConfigureParametersForUser(): void
 	{
-		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_CORE);
-		$this->aclValidatorMock->method('isModuleAdmin')->willReturn(false);
-		$this->aclValidatorMock->method('isSubAdmin')->willReturn(false);
+		$this->buildServiceMock->expects($this->never())->method($this->anything());
+		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_CORE);
+		$this->aclValidatorMock->expects($this->atLeastOnce())->method('isModuleAdmin')->willReturn(false);
+		$this->aclValidatorMock->expects($this->atLeastOnce())->method('isSubAdmin')->willReturn(false);
 		$this->parametersMock->expects($this->never())->method('addOwner');
 		$this->parametersMock->expects($this->never())->method('addCompany');
 
@@ -130,6 +135,8 @@ class AbstractDatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testDetermineParameters(): void
 	{
+		$this->buildServiceMock->expects($this->never())->method($this->anything());
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$this->parametersMock->expects($this->once())->method('setUserInputs')->with(['some' => 'input']);
 		$this->parametersMock->expects($this->once())->method('parseInputFilterAllUsers');
 
@@ -139,6 +146,7 @@ class AbstractDatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testCreatePaginationWithValidData(): void
 	{
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$resultCount = 100;
 
 		$currentPage = 1;
@@ -146,7 +154,7 @@ class AbstractDatatableBuilderTest extends TestCase
 		$paginationLinks = ['page1', 'page2', 'page3'];
 
 		$this->parametersMock
-			->method('getValueOfParameter')
+			->expects($this->atLeastOnce())->method('getValueOfParameter')
 			->willReturnMap([
 				[BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE, $currentPage],
 				[BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE, $itemsPerPage],
@@ -168,6 +176,7 @@ class AbstractDatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testCreatePaginationWithoutPager(): void
 	{
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$resultCount = 50;
 
 		$currentPage = 1;
@@ -175,7 +184,7 @@ class AbstractDatatableBuilderTest extends TestCase
 		$paginationLinks = ['page1'];
 
 		$this->parametersMock
-			->method('getValueOfParameter')
+			->expects($this->atLeastOnce())->method('getValueOfParameter')
 			->willReturnMap([
 				[BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE, $currentPage],
 				[BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE, $itemsPerPage]
@@ -197,6 +206,7 @@ class AbstractDatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testCreatePaginationWithZeroResults(): void
 	{
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$resultCount = 0;
 
 		$currentPage = 1;
@@ -204,7 +214,7 @@ class AbstractDatatableBuilderTest extends TestCase
 		$paginationLinks = [];
 
 		$this->parametersMock
-			->method('getValueOfParameter')
+			->expects($this->atLeastOnce())->method('getValueOfParameter')
 			->willReturnMap([
 				[BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE, $currentPage],
 				[BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE, $itemsPerPage],
@@ -226,6 +236,8 @@ class AbstractDatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testCreateDropDownWithValidData(): void
 	{
+		$this->parametersMock->expects($this->never())->method($this->anything());
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$min = 10;
 		$max = 50;
 		$steps = 10;
@@ -248,6 +260,8 @@ class AbstractDatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testCreateDropDownWithCustomSteps(): void
 	{
+		$this->parametersMock->expects($this->never())->method($this->anything());
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$min = 10;
 		$max = 100;
 		$steps = 20;
@@ -270,6 +284,8 @@ class AbstractDatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testCreateDropDownWithEmptyRange(): void
 	{
+		$this->parametersMock->expects($this->never())->method($this->anything());
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$min = 0;
 		$max = 0;
 		$steps = 1;

@@ -68,11 +68,13 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testBuildFormWithEmptyData(): void
 	{
+		$this->validatorMock->expects($this->never())->method($this->anything());
+		$this->parametersMock->expects($this->never())->method($this->anything());
 		$networkData = ['player_id' => 0];
-		$mockIsIntranetField = $this->createMock(FieldInterface::class);
-		$mockApiEndpointField = $this->createMock(UrlField::class);
-		$mockPlayerIdField = $this->createMock(FieldInterface::class);
-		$mockCsrfTokenField = $this->createMock(FieldInterface::class);
+		$mockIsIntranetField = $this->createStub(FieldInterface::class);
+		$mockApiEndpointField = $this->createStub(UrlField::class);
+		$mockPlayerIdField = $this->createStub(FieldInterface::class);
+		$mockCsrfTokenField = $this->createStub(FieldInterface::class);
 		$preparedForm = [
 			Parameters::PARAMETER_IS_INTRANET => $mockIsIntranetField,
 			Parameters::PARAMETER_API_ENDPOINT => $mockApiEndpointField,
@@ -113,6 +115,7 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testHandleUserInputWithValidData(): void
 	{
+		$this->formElementsCreatorMock->expects($this->never())->method($this->anything());
 		$postData = [
 			'player_id' => 1,
 			'player_name' => 'Test Player',

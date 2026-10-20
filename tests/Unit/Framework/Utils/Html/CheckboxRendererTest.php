@@ -44,8 +44,9 @@ class CheckboxRendererTest extends TestCase
 	#[Group('units')]
 	public function testRenderReturnsEmptyString(): void
 	{
-		$fieldMock = $this->createMock(FieldInterface::class);
-		$result = $this->renderer->render($fieldMock);
+		$this->checkboxFieldMock->expects($this->never())->method($this->anything());
+		$fieldStub = $this->createStub(FieldInterface::class);
+		$result = $this->renderer->render($fieldStub);
 		static::assertSame('', $result);
 	}
 

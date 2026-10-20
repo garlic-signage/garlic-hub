@@ -31,13 +31,14 @@ use League\Flysystem\FilesystemException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class IndexProviderTest extends TestCase
 {
-	private Config&MockObject $configMock;
+	private Config&Stub $configStub;
 	private IndexCreator&MockObject $indexCreatorMock;
-	private PlayerEntity&MockObject $playerEntityMock;
+	private PlayerEntity&Stub $playerEntityStub;
 
 	private IndexProvider $indexProvider;
 
@@ -47,13 +48,13 @@ class IndexProviderTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->configMock       = $this->createMock(Config::class);
+		$this->configStub       = $this->createStub(Config::class);
 		$this->indexCreatorMock = $this->createMock(IndexCreator::class);
 
-		$this->indexProvider = new IndexProvider($this->configMock, $this->indexCreatorMock);
+		$this->indexProvider = new IndexProvider($this->configStub, $this->indexCreatorMock);
 
-		$this->playerEntityMock = $this->createMock(PlayerEntity::class);
-		$this->configMock->method('getConfigValue')
+		$this->playerEntityStub = $this->createStub(PlayerEntity::class);
+		$this->configStub->method('getConfigValue')
 			->willReturnMap([
 				['defaults', 'player', 'SmilDirectories', 'var/www/defaults'],
 				['tests', 'player', 'SmilDirectories', 'var/www/tests'],
@@ -69,6 +70,7 @@ class IndexProviderTest extends TestCase
 	#[Group('units')]
 	public function testHandleForbidden(): void
 	{
+		$this->indexCreatorMock->expects($this->never())->method($this->anything());
 		$this->indexProvider->handleForbidden();
 
 		$expectedPath = '/var/www/defaults/forbidden.smil';
@@ -81,6 +83,7 @@ class IndexProviderTest extends TestCase
 	#[Group('units')]
 	public function testHandleNew(): void
 	{
+		$this->indexCreatorMock->expects($this->never())->method($this->anything());
 		$this->indexProvider->handleNew();
 
 		$expectedPath = '/var/www/defaults/unreleased.smil';
@@ -93,6 +96,7 @@ class IndexProviderTest extends TestCase
 	#[Group('units')]
 	public function testHandleUnreleased(): void
 	{
+		$this->indexCreatorMock->expects($this->never())->method($this->anything());
 		$this->indexProvider->handleUnreleased();
 
 		$expectedPath = '/var/www/defaults/unreleased.smil';
@@ -107,9 +111,10 @@ class IndexProviderTest extends TestCase
 	#[Group('units')]
 	public function testHandleReleasedWithoutPlaylist(): void
 	{
-		$this->playerEntityMock->method('getPlaylistId')->willReturn(0);
+		$this->indexCreatorMock->expects($this->never())->method($this->anything());
+		$this->playerEntityStub->method('getPlaylistId')->willReturn(0);
 
-		$this->indexProvider->handleReleased($this->playerEntityMock);
+		$this->indexProvider->handleReleased($this->playerEntityStub);
 
 		$expectedPath = '/var/www/defaults/released.smil';
 		static::assertSame($expectedPath, $this->indexProvider->getFilePath());
@@ -123,13 +128,13 @@ class IndexProviderTest extends TestCase
 	#[Group('units')]
 	public function testHandleReleasedWithPlaylist(): void
 	{
-		$this->playerEntityMock->method('getPlaylistId')->willReturn(1);
+		$this->playerEntityStub->method('getPlaylistId')->willReturn(1);
 		$this->indexCreatorMock->expects($this->once())->method('createForReleasedPlayer')
-			->with($this->playerEntityMock, $this->configMock);
+			->with($this->playerEntityStub, $this->configStub);
 
 		$this->indexCreatorMock->method('getIndexFilePath')->willReturn('var/www/tests/released.smil');
 
-		$this->indexProvider->handleReleased($this->playerEntityMock);
+		$this->indexProvider->handleReleased($this->playerEntityStub);
 
 		$expectedPath = '/var/www/tests/released.smil';
 		static::assertSame($expectedPath, $this->indexProvider->getFilePath());
@@ -141,6 +146,7 @@ class IndexProviderTest extends TestCase
 	#[Group('units')]
 	public function testHandleTestSMil(): void
 	{
+		$this->indexCreatorMock->expects($this->never())->method($this->anything());
 		$this->indexProvider->handleTestSMil();
 
 		$expectedPath = '/var/www/tests/index.smil';
@@ -153,6 +159,7 @@ class IndexProviderTest extends TestCase
 	#[Group('units')]
 	public function testHandleCorrectSMil(): void
 	{
+		$this->indexCreatorMock->expects($this->never())->method($this->anything());
 		$this->indexProvider->handleCorrectSMil();
 
 		$expectedPath = '/var/www/simulate/without_errors.smil';
@@ -165,6 +172,7 @@ class IndexProviderTest extends TestCase
 	#[Group('units')]
 	public function testHandleCorruptSMil(): void
 	{
+		$this->indexCreatorMock->expects($this->never())->method($this->anything());
 		$this->indexProvider->handleCorruptSMIL();
 
 		$expectedPath = '/var/www/simulate/broken_index.smil';
@@ -177,6 +185,7 @@ class IndexProviderTest extends TestCase
 	#[Group('units')]
 	public function testHandleCorruptContent(): void
 	{
+		$this->indexCreatorMock->expects($this->never())->method($this->anything());
 		$this->indexProvider->handleCorruptContent();
 
 		$expectedPath = '/var/www/simulate/unreachable_content.smil';
@@ -189,6 +198,7 @@ class IndexProviderTest extends TestCase
 	#[Group('units')]
 	public function testHandleCorruptPrefetch(): void
 	{
+		$this->indexCreatorMock->expects($this->never())->method($this->anything());
 		$this->indexProvider->handleCorruptPrefetchContent();
 
 		$expectedPath = '/var/www/simulate/unreachable_prefetch_content.smil';

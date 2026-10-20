@@ -28,13 +28,13 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class DatatableTemplatePreparerTest extends TestCase
 {
 	private DatatableTemplatePreparer $preparer;
-	private Translator&MockObject $translatorMock;
+	private Translator&Stub $translatorStub;
 
 	/**
 	 * @throws Exception
@@ -42,8 +42,8 @@ class DatatableTemplatePreparerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->translatorMock = $this->createMock(Translator::class);
-		$this->preparer = new DatatableTemplatePreparer($this->translatorMock);
+		$this->translatorStub = $this->createStub(Translator::class);
+		$this->preparer = new DatatableTemplatePreparer($this->translatorStub);
 	}
 
 
@@ -80,12 +80,12 @@ class DatatableTemplatePreparerTest extends TestCase
 			'results_list' => ['result1', 'result2']
 		];
 
-		$this->translatorMock->method('translate')->willReturnMap([
+		$this->translatorStub->method('translate')->willReturnMap([
 			['filter', 'main', [], 'Filter'],
 			['elements_per_page', 'main', [], 'Elements per page']
 		]);
 
-		$this->translatorMock
+		$this->translatorStub
 			->method('translateWithPlural')
 			->willReturn('100 results found.');
 
@@ -135,7 +135,7 @@ class DatatableTemplatePreparerTest extends TestCase
 			'results_list' => ['result1', 'result2']
 		];
 
-		$this->translatorMock
+		$this->translatorStub
 			->method('translate')
 			->willThrowException(new \Exception('Translation Error'));
 

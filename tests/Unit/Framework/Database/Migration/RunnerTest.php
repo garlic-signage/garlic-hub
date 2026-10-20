@@ -66,14 +66,14 @@ class RunnerTest extends TestCase
 		$this->repositoryMock->method('getAppliedMigrations')
 			->willReturn([['version' => 1]]);
 
-		$fileMock1 = $this->createMock(FileAttributes::class);
+		$fileMock1 = $this->createStub(FileAttributes::class);
 		$fileMock1->method('isFile')->willReturn(true);
 		$fileMock1->method('path')->willReturn('001_init.up.sql');
-		$fileMock2 = $this->createMock(FileAttributes::class);
+		$fileMock2 = $this->createStub(FileAttributes::class);
 		$fileMock2->method('isFile')->willReturn(true);
 		$fileMock2->method('path')->willReturn('002_name.up.sql');
 
-		$mockDirectoryListing = $this->createMock(DirectoryListing::class);
+		$mockDirectoryListing = $this->createStub(DirectoryListing::class);
 		$mockDirectoryListing->method('getIterator')
 			->willReturn(new ArrayIterator([$fileMock1, $fileMock2]));
 
@@ -101,9 +101,12 @@ class RunnerTest extends TestCase
 	#[Group('units')]
 	public function testExecuteWithOutMigrationsTable(): void
 	{
-		$this->repositoryMock->method('showTables')
-			->willReturn([]);
-		$this->repositoryMock->expects($this->once())->method('getAppliedMigrations');
+		$this->repositoryMock->expects($this->once())->method('showTables')->willReturn([]);
+		$this->repositoryMock->expects($this->once())->method('createMigrationTable');
+		$this->repositoryMock->expects($this->once())->method('getAppliedMigrations')->willReturn([]);
+		$this->filesystemMock->expects($this->once())->method('listContents')->with('', false)
+			->willReturn(new DirectoryListing([]));
+		$this->filesystemMock->expects($this->never())->method('read');
 
 		$this->runner->execute();
 
@@ -119,17 +122,17 @@ class RunnerTest extends TestCase
 	#[Group('units')]
 	public function testExecuteWithoutMigrations(): void
 	{
-		$this->repositoryMock->method('showTables')
+		$this->repositoryMock->expects($this->atLeastOnce())->method('showTables')
 			->willReturn(['_migration_version']);
-		$this->repositoryMock->method('getAppliedMigrations')
+		$this->repositoryMock->expects($this->atLeastOnce())->method('getAppliedMigrations')
 			->willReturn([]);
 
 		// Mock für DirectoryListing erstellen
-		$mockDirectoryListing = $this->createMock(DirectoryListing::class);
+		$mockDirectoryListing = $this->createStub(DirectoryListing::class);
 		$mockDirectoryListing->method('toArray')
 			->willReturn([]);
 
-		$this->filesystemMock->method('listContents')
+		$this->filesystemMock->expects($this->atLeastOnce())->method('listContents')
 			->willReturn($mockDirectoryListing);
 
 		$this->runner->execute();
@@ -151,21 +154,21 @@ class RunnerTest extends TestCase
 		$this->repositoryMock->method('getAppliedMigrations')
 			->willReturn([['version' => 2], ['version' => 3]]);
 
-		$fileMock1 = $this->createMock(FileAttributes::class);
+		$fileMock1 = $this->createStub(FileAttributes::class);
 		$fileMock1->method('isFile')->willReturn(true);
 		$fileMock1->method('path')->willReturn('001_init.down.sql');
-		$fileMock2 = $this->createMock(FileAttributes::class);
+		$fileMock2 = $this->createStub(FileAttributes::class);
 		$fileMock2->method('isFile')->willReturn(true);
 		$fileMock2->method('path')->willReturn('002_name.down.sql');
 
-		$mockDirectoryListing = $this->createMock(DirectoryListing::class);
+		$mockDirectoryListing = $this->createStub(DirectoryListing::class);
 		$mockDirectoryListing->method('getIterator')
 			->willReturn(new ArrayIterator([$fileMock1, $fileMock2]));
 
-		$this->filesystemMock->method('listContents')
+		$this->filesystemMock->expects($this->atLeastOnce())->method('listContents')
 			->willReturn($mockDirectoryListing);
 
-		$this->filesystemMock->method('read')
+		$this->filesystemMock->expects($this->atLeastOnce())->method('read')
 			->willReturn('SQL ROLLBACK QUERY');
 
 		$this->repositoryMock->expects($this->exactly(2))
@@ -184,7 +187,8 @@ class RunnerTest extends TestCase
 	#[Group('units')]
 	public function testRollbackWithOutMigrationsTable(): void
 	{
-		$this->repositoryMock->method('showTables')
+		$this->filesystemMock->expects($this->never())->method($this->anything());
+		$this->repositoryMock->expects($this->atLeastOnce())->method('showTables')
 			->willReturn([]);
 
 		$this->expectException(DatabaseException::class);

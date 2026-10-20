@@ -56,6 +56,7 @@ class IndexFileTest extends TestCase
 	#[Group('units')]
 	public function testHandleIndexFileNewContent(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->indexFile->setIndexFilePath('/some/path');
 
 		$this->fileSystemMock->expects($this->once())->method('fileExists')
@@ -101,6 +102,7 @@ class IndexFileTest extends TestCase
 	#[Group('units')]
 	public function testHandleIndexFileDoesNotWriteWhenNewContentMatchesOld(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->indexFile->setIndexFilePath('/some/path');
 
 		$this->fileSystemMock

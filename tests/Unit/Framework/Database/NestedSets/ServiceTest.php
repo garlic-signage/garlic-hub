@@ -58,6 +58,7 @@ class ServiceTest extends TestCase
 	#[Group('units')]
 	public function testInitRepository(): void
 	{
+		$this->expectReadOnlyDelegation();
 		$table = 'test_table';
 		$idField = 'test_id';
 
@@ -77,6 +78,7 @@ class ServiceTest extends TestCase
 	#[Group('units')]
 	public function testFindAllRootNodes(): void
 	{
+		$this->expectReadOnlyDelegation();
 		$expectedResult = [
 			['id' => 1, 'name' => 'RootNode1'],
 			['id' => 2, 'name' => 'RootNode2']
@@ -96,6 +98,7 @@ class ServiceTest extends TestCase
 	#[Group('units')]
 	public function testFindTreeByRootId(): void
 	{
+		$this->expectReadOnlyDelegation();
 		$rootId = 1;
 		$expectedResult = [
 			['id' => 1, 'name' => 'RootNode', 'children' => [
@@ -121,6 +124,7 @@ class ServiceTest extends TestCase
 	#[Group('units')]
 	public function testFindNodeOwner(): void
 	{
+		$this->expectReadOnlyDelegation();
 		$nodeId = 1;
 		$expectedResult = ['id' => 1, 'owner' => 'NodeOwner'];
 
@@ -139,6 +143,7 @@ class ServiceTest extends TestCase
 	#[Group('units')]
 	public function testFindAllChildNodesByParentNode(): void
 	{
+		$this->expectReadOnlyDelegation();
 		$parentNodeId = 1;
 		$expectedResult = [
 			['id' => 2, 'name' => 'ChildNode1'],
@@ -160,6 +165,7 @@ class ServiceTest extends TestCase
 	#[Group('units')]
 	public function testFindAllChildrenInTreeOfNodeId(): void
 	{
+		$this->expectReadOnlyDelegation();
 		$nodeId = 1;
 		$expectedResult = [
 			['id' => 2, 'name' => 'ChildNode1'],
@@ -182,6 +188,7 @@ class ServiceTest extends TestCase
 	#[Group('units')]
 	public function testFindRootIdRgtAndLevelByNodeIdReturnsValidData(): void
 	{
+		$this->expectReadOnlyDelegation();
 		$nodeId = 42;
 		$expectedResult = ['root_id' => 1, 'rgt' => 10,'level' => 2];
 
@@ -200,6 +207,7 @@ class ServiceTest extends TestCase
 	#[Group('units')]
 	public function testFindAllSubNodeIdsByRootIdsAndPosition(): void
 	{
+		$this->expectReadOnlyDelegation();
 		$rootId = 1;
 		$nodeRgt = 10;
 		$nodeLft = 2;
@@ -224,6 +232,8 @@ class ServiceTest extends TestCase
 	#[Group('units')]
 	public function testAddRootNode(): void
 	{
+		$this->calculatorMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$uid = 1;
 		$name = 'Test Root';
 		$expectedNewNodeId = 5; // Example ID - adjust as needed
@@ -262,6 +272,7 @@ class ServiceTest extends TestCase
 	#[Group('units')]
 	public function testAddRootNodeInsertFails(): void
 	{
+		$this->calculatorMock->expects($this->never())->method($this->anything());
 		$uid = 1;
 		$name = 'Test Root';
 
@@ -285,6 +296,7 @@ class ServiceTest extends TestCase
 	#[Group('units')]
 	public function testAddRootNodeUpdateFails(): void
 	{
+		$this->calculatorMock->expects($this->never())->method($this->anything());
 		$uid = 1;
 		$name = 'Test Root';
 
@@ -322,6 +334,8 @@ class ServiceTest extends TestCase
 	#[Group('units')]
 	public function testAddSubNode(): void
 	{
+		$this->calculatorMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$uid = 2;
 		$name = 'Test Sub Node';
 		$parentNode = ['rgt' => 5, 'node_id' => 1, 'root_id' => 1, 'level' => 1];
@@ -348,6 +362,7 @@ class ServiceTest extends TestCase
 	#[Group('units')]
 	public function testAddSubNodeInsertFails(): void
 	{
+		$this->calculatorMock->expects($this->never())->method($this->anything());
 		$uid = 2;
 		$name = 'Test Sub Node';
 		$parentNode = ['rgt' => 5, 'node_id' => 1, 'root_id' => 1, 'level' => 1];
@@ -373,6 +388,8 @@ class ServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteSingleNode(): void
 	{
+		$this->calculatorMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$node = ['node_id' => 2, 'root_id' => 1, 'rgt' => 5];
 
 		$this->transactionsMock->expects($this->once())->method('begin');
@@ -395,6 +412,7 @@ class ServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteSingleNodeDeleteFails(): void
 	{
+		$this->calculatorMock->expects($this->never())->method($this->anything());
 		$node = ['node_id' => 2, 'root_id' => 1, 'rgt' => 5];
 
 		$this->transactionsMock->expects($this->once())->method('begin');
@@ -415,6 +433,8 @@ class ServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteTree(): void
 	{
+		$this->calculatorMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$node = ['root_id' => 1, 'rgt' => 6, 'lft' => 3];
 		$move = 4.0;
 		$this->transactionsMock->expects($this->once())->method('begin');
@@ -444,6 +464,7 @@ class ServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteTreeFails(): void
 	{
+		$this->calculatorMock->expects($this->never())->method($this->anything());
 		$node = ['root_id' => 1, 'rgt' => 6, 'lft' => 3];
 		$this->transactionsMock->expects($this->once())->method('begin');
 
@@ -465,6 +486,7 @@ class ServiceTest extends TestCase
 	#[Group('units')]
 	public function testMoveNodeBefore(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$movedNode  = ['node_id' => 2, 'lft' => 3, 'rgt' => 6, 'root_id' => 1, 'parent_id' => 1, 'level' => 2];
 		$targetNode = ['node_id' => 3, 'lft' => 7, 'rgt' => 8, 'root_id' => 1, 'parent_id' => 1, 'level' => 2];
 		$region     = 'before';
@@ -571,4 +593,19 @@ class ServiceTest extends TestCase
 		$this->service->moveNode($movedNode, $targetNode, $region);
 	}
 
+	/**
+	 * Reading a tree is a pure repository call: no calculation, no transaction and nothing to log.
+	 */
+	private function expectReadOnlyDelegation(): void
+	{
+		$this->expectUntouched($this->calculatorMock, $this->transactionsMock, $this->loggerMock);
+	}
+
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
+	}
 }

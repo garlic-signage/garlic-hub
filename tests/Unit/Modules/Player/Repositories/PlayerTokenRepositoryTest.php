@@ -46,9 +46,9 @@ class PlayerTokenRepositoryTest extends TestCase
 
 		$this->resultMock = $this->createMock(Result::class);
 		$this->queryBuilderMock = $this->createMock(QueryBuilder::class);
-		$connectionMock = $this->createMock(Connection::class);
-		$connectionMock->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
-		$this->repository = new PlayerTokenRepository($connectionMock);
+		$connectionStub = $this->createStub(Connection::class);
+		$connectionStub->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
+		$this->repository = new PlayerTokenRepository($connectionStub);
 	}
 
 
@@ -173,6 +173,7 @@ class PlayerTokenRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testUpdateForPlayerSuccess(): void
 	{
+		$this->resultMock->expects($this->never())->method($this->anything());
 		$playerId = 123;
 		$updatedData = ['column_a' => 'new_value'];
 

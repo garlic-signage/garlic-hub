@@ -52,6 +52,8 @@ class SystemDashboardTest extends TestCase
 	#[Group('units')]
 	public function testGetIdReturnsCorrectValue(): void
 	{
+		$this->systemStatsMock->expects($this->never())->method($this->anything());
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$result = $this->systemDashboard->getId();
 
 		static::assertSame('system', $result);
@@ -64,6 +66,7 @@ class SystemDashboardTest extends TestCase
 	#[Group('units')]
 	public function testGetTitleReturnsCorrectTranslatedValue(): void
 	{
+		$this->systemStatsMock->expects($this->never())->method($this->anything());
 		$this->translatorMock
 			->method('translate')
 			->with('system_dashboard', 'main')
@@ -98,7 +101,7 @@ class SystemDashboardTest extends TestCase
 			->willReturn(['used' => '100GB', 'size' => '500GB', 'percent' => '20%']);
 
 		$this->translatorMock
-			->method('translate')
+			->expects($this->atLeastOnce())->method('translate')
 			->willReturnMap([
 				['memory_used', 'main', [], '2GB of 8GB'],
 				['disc_used', 'main', [], '%s of %s (%s)'],

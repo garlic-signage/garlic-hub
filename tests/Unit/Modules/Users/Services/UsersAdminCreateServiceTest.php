@@ -33,6 +33,7 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -44,7 +45,7 @@ class UsersAdminCreateServiceTest extends TestCase
 	private UserAclRepository&MockObject $userAclRepositoryMock;
 	private NodesService&MockObject $nodesServiceMock;
 	private Transactions&MockObject $transactionsMock;
-	private Config&MockObject $configMock;
+	private Config&Stub $configStub;
 	private LoggerInterface&MockObject $loggerMock;
 	private UsersAdminCreateService $service;
 
@@ -60,7 +61,7 @@ class UsersAdminCreateServiceTest extends TestCase
 		$this->transactionsMock = $this->createMock(Transactions::class);
 		$this->loggerMock = $this->createMock(LoggerInterface::class);
 
-		$this->configMock = $this->createMock(Config::class);
+		$this->configStub = $this->createStub(Config::class);
 
 		$this->service = new UsersAdminCreateService(
 			$this->userMainRepositoryMock, $this->userAclRepositoryMock, $this->nodesServiceMock, $this->transactionsMock, $this->loggerMock
@@ -73,6 +74,7 @@ class UsersAdminCreateServiceTest extends TestCase
 	#[Group('units')]
 	public function testHasAdminUserReturnsTrueWhenAdminExists(): void
 	{
+		$this->expectUntouched($this->userAclRepositoryMock, $this->nodesServiceMock, $this->transactionsMock, $this->loggerMock);
 		$this->userMainRepositoryMock->expects($this->once())->method('findByIdSecured')
 			->with(1)
 			->willReturn(['id' => 1, 'username' => 'admin']);
@@ -88,6 +90,7 @@ class UsersAdminCreateServiceTest extends TestCase
 	#[Group('units')]
 	public function testHasAdminUserReturnsFalseWhenAdminDoesNotExist(): void
 	{
+		$this->expectUntouched($this->userAclRepositoryMock, $this->nodesServiceMock, $this->transactionsMock, $this->loggerMock);
 		$this->userMainRepositoryMock->expects($this->once())->method('findByIdSecured')
 			->with(1)
 			->willReturn([]);
@@ -100,6 +103,7 @@ class UsersAdminCreateServiceTest extends TestCase
 	#[RunInSeparateProcess] #[Group('units')]
 	public function testCreatLockfileReturnsTrueWhenFileIsCreated(): void
 	{
+		$this->expectUntouched($this->userMainRepositoryMock, $this->userAclRepositoryMock, $this->nodesServiceMock, $this->transactionsMock, $this->loggerMock);
 		define('INSTALL_LOCK_FILE', '/mock/path/install.lock');
 		$filePutContentsMock = $this->getFunctionMock('App\Modules\Users\Services', 'file_put_contents');
 		$filePutContentsMock->expects($this->once())
@@ -114,6 +118,7 @@ class UsersAdminCreateServiceTest extends TestCase
 	#[RunInSeparateProcess] #[Group('units')]
 	public function testCreatLockfileReturnsFalseWhenFileCreationFails(): void
 	{
+		$this->expectUntouched($this->userMainRepositoryMock, $this->userAclRepositoryMock, $this->nodesServiceMock, $this->transactionsMock, $this->loggerMock);
 		define('INSTALL_LOCK_FILE', '/mock/path/install.lock');
 		$filePutContentsMock = $this->getFunctionMock('App\Modules\Users\Services', 'file_put_contents');
 		$filePutContentsMock->expects($this->once())
@@ -128,6 +133,7 @@ class UsersAdminCreateServiceTest extends TestCase
 	#[Group('units')]
 	public function testLogAlarmErrorLogMessage(): void
 	{
+		$this->expectUntouched($this->userMainRepositoryMock, $this->userAclRepositoryMock, $this->nodesServiceMock, $this->transactionsMock);
 		$this->loggerMock->expects($this->once())
 			->method('error')
 			->with('Logfile was removed. Create a new one.');
@@ -142,6 +148,7 @@ class UsersAdminCreateServiceTest extends TestCase
 	#[RunInSeparateProcess] #[Group('units')]
 	public function testInsertNewAdminSucceed(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$postData = ['username' => 'admin', 'email' => 'admin@example.com', 'locale' => 'en', 'password' => 'secure-password'];
 
 		$this->transactionsMock->expects($this->once())->method('begin');
@@ -159,11 +166,11 @@ class UsersAdminCreateServiceTest extends TestCase
 			->with(1, 'admin')
 			->willReturn(123);
 		$this->userAclRepositoryMock->expects($this->once())->method('addAdminRights')
-			->with($this->configMock, 1);
+			->with($this->configStub, 1);
 
 		$this->transactionsMock->expects($this->once())->method('commit');
 
-		$result = $this->service->insertNewAdminUser($postData, $this->configMock);
+		$result = $this->service->insertNewAdminUser($postData, $this->configStub);
 
 		static::assertSame(1, $result);
 	}
@@ -174,6 +181,7 @@ class UsersAdminCreateServiceTest extends TestCase
 	#[RunInSeparateProcess] #[Group('units')]
 	public function testInsertNewAdminWithLockfile(): void
 	{
+		$this->nodesServiceMock->expects($this->never())->method($this->anything());
 		$postData = ['username' => 'admin', 'email' => 'admin@example.com', 'locale' => 'en', 'password' => 'secure-password'];
 
 		$this->transactionsMock->expects($this->once())->method('begin');
@@ -190,7 +198,7 @@ class UsersAdminCreateServiceTest extends TestCase
 		$this->transactionsMock->expects($this->once())->method('rollBack');
 		$this->loggerMock->expects($this->once())->method('error')->with('There is an existing lockfile already.');
 
-		$result = $this->service->insertNewAdminUser($postData, $this->configMock);
+		$result = $this->service->insertNewAdminUser($postData, $this->configStub);
 
 		static::assertSame(0, $result);
 	}
@@ -201,6 +209,8 @@ class UsersAdminCreateServiceTest extends TestCase
 	#[RunInSeparateProcess] #[Group('units')]
 	public function testInsertNewAdminWhenExists(): void
 	{
+		$this->userAclRepositoryMock->expects($this->never())->method($this->anything());
+		$this->nodesServiceMock->expects($this->never())->method($this->anything());
 		$postData = ['username' => 'admin', 'email' => 'admin@example.com', 'locale' => 'en', 'password' => 'secure-password'];
 
 		$this->transactionsMock->expects($this->once())->method('begin');
@@ -215,7 +225,7 @@ class UsersAdminCreateServiceTest extends TestCase
 		$this->transactionsMock->expects($this->once())->method('rollBack');
 		$this->loggerMock->expects($this->once())->method('error')->with('There is an admin user already.');
 
-		$result = $this->service->insertNewAdminUser($postData, $this->configMock);
+		$result = $this->service->insertNewAdminUser($postData, $this->configStub);
 
 		static::assertSame(0, $result);
 	}
@@ -226,6 +236,8 @@ class UsersAdminCreateServiceTest extends TestCase
 	#[RunInSeparateProcess] #[Group('units')]
 	public function testInsertNewAdminUserInsertFails(): void
 	{
+		$this->userAclRepositoryMock->expects($this->never())->method($this->anything());
+		$this->nodesServiceMock->expects($this->never())->method($this->anything());
 		$postData = ['username' => 'admin', 'email' => 'admin@example.com', 'locale' => 'en', 'password' => 'secure-password'];
 
 		$this->transactionsMock->expects($this->once())->method('begin');
@@ -240,7 +252,7 @@ class UsersAdminCreateServiceTest extends TestCase
 		$this->transactionsMock->expects($this->once())->method('rollBack');
 		$this->loggerMock->expects($this->once())->method('error')->with('Insert admin user failed.');
 
-		$result = $this->service->insertNewAdminUser($postData, $this->configMock);
+		$result = $this->service->insertNewAdminUser($postData, $this->configStub);
 
 		static::assertSame(0, $result);
 	}
@@ -251,6 +263,7 @@ class UsersAdminCreateServiceTest extends TestCase
 	#[RunInSeparateProcess] #[Group('units')]
 	public function testInsertNewAdminNodeFails(): void
 	{
+		$this->userAclRepositoryMock->expects($this->never())->method($this->anything());
 		$postData = ['username' => 'admin', 'email' => 'admin@example.com', 'locale' => 'en', 'password' => 'secure-password'];
 
 		$this->transactionsMock->expects($this->once())->method('begin');
@@ -266,7 +279,7 @@ class UsersAdminCreateServiceTest extends TestCase
 		$this->transactionsMock->expects($this->once())->method('rollBack');
 		$this->loggerMock->expects($this->once())->method('error')->with('Create mediapool admin user directory failed.');
 
-		$result = $this->service->insertNewAdminUser($postData, $this->configMock);
+		$result = $this->service->insertNewAdminUser($postData, $this->configStub);
 
 		static::assertSame(0, $result);
 	}
@@ -288,6 +301,7 @@ class UsersAdminCreateServiceTest extends TestCase
 		$this->userMainRepositoryMock->expects($this->once())->method('findByIdSecured')->with(1)->willReturn([]);
 		$this->userMainRepositoryMock->expects($this->once())->method('insert')->willReturn(1);
 		$this->nodesServiceMock->expects($this->once())->method('addUserDirectory')->with(1, 'admin')->willReturn(123);
+		$this->userAclRepositoryMock->expects($this->once())->method('addAdminRights')->with($this->configStub);
 
 		$filePutContentsMock = $this->getFunctionMock('App\Modules\Users\Services', 'file_put_contents');
 		$filePutContentsMock->expects($this->once())
@@ -296,9 +310,16 @@ class UsersAdminCreateServiceTest extends TestCase
 		$this->transactionsMock->expects($this->once())->method('rollBack');
 		$this->loggerMock->expects($this->once())->method('error')->with('Lockfile could not created.');
 
-		$result = $this->service->insertNewAdminUser($postData, $this->configMock);
+		$result = $this->service->insertNewAdminUser($postData, $this->configStub);
 
 		static::assertSame(0, $result);
 	}
 
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
+	}
 }

@@ -33,6 +33,7 @@ use App\Modules\Player\Helper\Datatable\DatatableFacade;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -44,8 +45,8 @@ class ShowDatatableControllerTest extends TestCase
 	private DatatableTemplatePreparer&MockObject $templatePreparerMock;
 	private ServerRequestInterface&MockObject $requestMock;
 	private ResponseInterface&MockObject $responseMock;
-	private Translator&MockObject $translatorMock;
-	private Session&MockObject $sessionMock;
+	private Translator&Stub $translatorStub;
+	private Session&Stub $sessionStub;
 	private StreamInterface&MockObject $streamInterfaceMock;
 	private ShowDatatableController $controller;
 
@@ -59,8 +60,8 @@ class ShowDatatableControllerTest extends TestCase
 		$this->templatePreparerMock = $this->createMock(DatatableTemplatePreparer::class);
 		$this->requestMock          = $this->createMock(ServerRequestInterface::class);
 		$this->responseMock         = $this->createMock(ResponseInterface::class);
-		$this->translatorMock       = $this->createMock(Translator::class);
-		$this->sessionMock          = $this->createMock(Session::class);
+		$this->translatorStub       = $this->createStub(Translator::class);
+		$this->sessionStub          = $this->createStub(Session::class);
 		$this->streamInterfaceMock  = $this->createMock(StreamInterface::class);
 		$this->responseMock->method('getBody')->willReturn($this->streamInterfaceMock);
 
@@ -77,11 +78,11 @@ class ShowDatatableControllerTest extends TestCase
 	{
 		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
 			->willReturnMap([
-				['translator', null, $this->translatorMock],
-				['session', null, $this->sessionMock],
+				['translator', null, $this->translatorStub],
+				['session', null, $this->sessionStub],
 			]);
 		$this->facadeMock->expects($this->once())->method('configure')
-			->with($this->translatorMock, $this->sessionMock);
+			->with($this->translatorStub, $this->sessionStub);
 
 		$this->requestMock->method('getQueryParams')->willReturn(['page' => 2]);
 		$this->facadeMock->expects($this->once())->method('processSubmittedUserInput')->with(['page' => 2]);

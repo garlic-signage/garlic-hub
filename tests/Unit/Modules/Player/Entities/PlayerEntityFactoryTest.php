@@ -28,12 +28,12 @@ use App\Modules\Player\Enums\PlayerModel;
 use App\Modules\Player\IndexCreation\UserAgentHandler;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class PlayerEntityFactoryTest extends TestCase
 {
-	private UserAgentHandler&MockObject $userAgentHandlerMock;
+	private UserAgentHandler&Stub $userAgentHandlerStub;
 	private PlayerEntityFactory $factory;
 
 	/**
@@ -42,10 +42,10 @@ class PlayerEntityFactoryTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$configMock = $this->createMock(Config::class);
-		$this->userAgentHandlerMock = $this->createMock(UserAgentHandler::class);
+		$configStub = $this->createStub(Config::class);
+		$this->userAgentHandlerStub = $this->createStub(UserAgentHandler::class);
 
-		$this->factory = new PlayerEntityFactory($configMock);
+		$this->factory = new PlayerEntityFactory($configStub);
 	}
 
 	#[Group('units')]
@@ -53,12 +53,12 @@ class PlayerEntityFactoryTest extends TestCase
 	{
 		$data = ['key' => 'value'];
 
-		$this->userAgentHandlerMock->method('getModel')->willReturn(PlayerModel::GARLIC);
-		$this->userAgentHandlerMock->method('getUuid')->willReturn('uuid');
-		$this->userAgentHandlerMock->method('getFirmware')->willReturn('firmware');
-		$this->userAgentHandlerMock->method('getName')->willReturn('name');
+		$this->userAgentHandlerStub->method('getModel')->willReturn(PlayerModel::GARLIC);
+		$this->userAgentHandlerStub->method('getUuid')->willReturn('uuid');
+		$this->userAgentHandlerStub->method('getFirmware')->willReturn('firmware');
+		$this->userAgentHandlerStub->method('getName')->willReturn('name');
 
-		$playerEntity = $this->factory->create($data, $this->userAgentHandlerMock);
+		$playerEntity = $this->factory->create($data, $this->userAgentHandlerStub);
 		// @phpstan-ignore-next-line
 		static::assertInstanceOf(PlayerEntity::class, $playerEntity);
 

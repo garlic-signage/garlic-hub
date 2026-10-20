@@ -50,6 +50,7 @@ class SystemStatsTest extends TestCase
 	#[Group('units')]
 	public function testISLinux(): void
 	{
+		$this->shellExecutorMock->expects($this->never())->method($this->anything());
 		$this->systemStats->setIsLinux(true);
 		static::assertTrue($this->systemStats->isLinux());
 	}
@@ -57,6 +58,7 @@ class SystemStatsTest extends TestCase
 	#[RunInSeparateProcess] #[Group('units')]
 	public function testDetermineSystemLoadSetsLoadDataCorrectly(): void
 	{
+		$this->shellExecutorMock->expects($this->never())->method($this->anything());
 		$getLoadAvg = $this->getFunctionMock('App\Framework\Core', 'sys_getloadavg');
 		$getLoadAvg->expects($this->once())->willReturn([1.23, 0.56, 2.03]);
 
@@ -74,6 +76,7 @@ class SystemStatsTest extends TestCase
 	#[RunInSeparateProcess] #[Group('units')]
 	public function testDetermineSystemLoadReturnWrong(): void
 	{
+		$this->shellExecutorMock->expects($this->never())->method($this->anything());
 		$getLoadAvg = $this->getFunctionMock('App\Framework\Core', 'sys_getloadavg');
 		$getLoadAvg->expects($this->once())->willReturn([1.23, 0.56]);
 
@@ -91,6 +94,7 @@ class SystemStatsTest extends TestCase
 	#[RunInSeparateProcess] #[Group('units')]
 	public function testDetermineSystemLoadFalse(): void
 	{
+		$this->shellExecutorMock->expects($this->never())->method($this->anything());
 		$getLoadAvg = $this->getFunctionMock('App\Framework\Core', 'sys_getloadavg');
 		$getLoadAvg->expects($this->once())->willReturn(false);
 

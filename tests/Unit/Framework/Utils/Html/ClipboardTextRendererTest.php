@@ -27,12 +27,12 @@ use App\Framework\Utils\Html\ClipboardTextRenderer;
 use App\Framework\Utils\Html\FieldInterface;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class ClipboardTextRendererTest extends TestCase
 {
-	private ClipboardTextField&MockObject $clipboardTextFieldMock;
+	private ClipboardTextField&Stub $clipboardTextFieldStub;
 	private ClipboardTextRenderer $renderer;
 
 	/**
@@ -42,28 +42,28 @@ class ClipboardTextRendererTest extends TestCase
 	{
 		parent::setUp();
 		$this->renderer = new ClipboardTextRenderer();
-		$this->clipboardTextFieldMock = $this->createMock(ClipboardTextField::class);
+		$this->clipboardTextFieldStub = $this->createStub(ClipboardTextField::class);
 	}
 
 	#[Group('units')]
 	public function testRenderWithValidClipboardTextField(): void
 	{
-		$this->clipboardTextFieldMock->method('getId')
+		$this->clipboardTextFieldStub->method('getId')
 			->willReturn('test-id');
 
-		$this->clipboardTextFieldMock ->method('getTitle')
+		$this->clipboardTextFieldStub ->method('getTitle')
 			->willReturn('Test Title');
 
-		$this->clipboardTextFieldMock->method('getValue')
+		$this->clipboardTextFieldStub->method('getValue')
 			->willReturn('Test Value');
 
-		$this->clipboardTextFieldMock->method('getDeleteTitle')
+		$this->clipboardTextFieldStub->method('getDeleteTitle')
 			->willReturn('Delete Test');
 
-		$this->clipboardTextFieldMock->method('getRefreshTitle')
+		$this->clipboardTextFieldStub->method('getRefreshTitle')
 			->willReturn('Refresh Test');
 
-		$result = $this->renderer->render($this->clipboardTextFieldMock);
+		$result = $this->renderer->render($this->clipboardTextFieldStub);
 
 		static::assertStringContainsString('<input type="text"', $result);
 		static::assertStringContainsString('id="test-id"', $result);
@@ -78,12 +78,12 @@ class ClipboardTextRendererTest extends TestCase
 	#[Group('units')]
 	public function testRenderWithInvalidFieldType(): void
 	{
-		$invalidFieldMock = $this->createMock(FieldInterface::class);
-		$invalidFieldMock
+		$invalidFieldStub = $this->createStub(FieldInterface::class);
+		$invalidFieldStub
 			->method('getId')
 			->willReturn('invalid-id');
 
-		$result = $this->renderer->render($invalidFieldMock);
+		$result = $this->renderer->render($invalidFieldStub);
 
 		static::assertSame('', $result);
 	}

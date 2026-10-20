@@ -66,6 +66,7 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testInit(): void
 	{
+		$this->expectUntouched($this->formElementsCreatorMock, $this->aclValidatorMock, $this->validatorMock, $this->parametersMock);
 		$user = ['UID' => 123, 'username' => 'username'];
 		$this->sessionMock->expects($this->once())->method('get')->with('user')->willReturn($user);
 		static::assertSame($this->builder, $this->builder->init($this->sessionMock));
@@ -78,6 +79,8 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testConfigNewParameterWithSimpleAdmin(): void
 	{
+		$this->formElementsCreatorMock->expects($this->never())->method($this->anything());
+		$this->validatorMock->expects($this->never())->method($this->anything());
 		$this->setStandardMocks();
 
 		$this->aclValidatorMock->expects($this->once())->method('isSimpleAdmin')
@@ -99,6 +102,8 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testConfigNewParameterNoAdmin(): void
 	{
+		$this->formElementsCreatorMock->expects($this->never())->method($this->anything());
+		$this->validatorMock->expects($this->never())->method($this->anything());
 		$this->setStandardMocks();
 		$this->aclValidatorMock->expects($this->once())->method('isSimpleAdmin')
 			->willReturn(false);
@@ -119,6 +124,8 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testConfigEditParameterWithAdmin(): void
 	{
+		$this->formElementsCreatorMock->expects($this->never())->method($this->anything());
+		$this->validatorMock->expects($this->never())->method($this->anything());
 		$this->setStandardMocks();
 		$user = ['UID' => 987, 'company_id' => 1, 'username' => 'username'];
 		$this->aclValidatorMock->expects($this->once())->method('isAdmin')
@@ -141,6 +148,8 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testConfigEditParameterNoAdmin(): void
 	{
+		$this->formElementsCreatorMock->expects($this->never())->method($this->anything());
+		$this->validatorMock->expects($this->never())->method($this->anything());
 		$user = ['UID' => 987, 'company_id' => 1, 'username' => 'username'];
 		$this->setStandardMocks();
 		$this->aclValidatorMock->expects($this->once())->method('isAdmin')
@@ -175,7 +184,13 @@ class BuilderTest extends TestCase
 			]
 		];
 
-		$this->parametersMock->method('hasParameter')
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$this->validatorMock->expects($this->never())->method($this->anything());
+		// no token value in the session yet, so the clipboard field stays empty
+		$this->sessionMock->expects($this->once())->method('exists')->with('test_token')->willReturn(false);
+		$this->sessionMock->expects($this->never())->method('delete');
+
+		$this->parametersMock->expects($this->exactly(4))->method('hasParameter')
 			->willReturnMap([
 				[Parameters::PARAMETER_USER_NAME, true],
 				[Parameters::PARAMETER_USER_EMAIL, true],
@@ -183,46 +198,46 @@ class BuilderTest extends TestCase
 				[Parameters::PARAMETER_USER_LOCALE, true],
 			]);
 
-		$fieldInterfaceMock = $this->createMock(FieldInterface::class);
+		$fieldInterfaceStub = $this->createStub(FieldInterface::class);
 
 		$this->formElementsCreatorMock->expects($this->once())->method('createUserNameField')
 			->with($user[Parameters::PARAMETER_USER_NAME])
-			->willReturn($fieldInterfaceMock);
+			->willReturn($fieldInterfaceStub);
 
 		$this->formElementsCreatorMock->expects($this->once())->method('createEmailField')
 			->with($user[Parameters::PARAMETER_USER_EMAIL])
-			->willReturn($fieldInterfaceMock);
+			->willReturn($fieldInterfaceStub);
 
 		$this->formElementsCreatorMock->expects($this->once())->method('createUserStatusField')
 			->with((string)$user[Parameters::PARAMETER_USER_STATUS])
-			->willReturn($fieldInterfaceMock);
+			->willReturn($fieldInterfaceStub);
 
 		$this->formElementsCreatorMock->expects($this->once())->method('createUserLocaleField')
 			->with($user[Parameters::PARAMETER_USER_LOCALE])
-			->willReturn($fieldInterfaceMock);
+			->willReturn($fieldInterfaceStub);
 
 		$this->formElementsCreatorMock->expects($this->once())->method('createHiddenUIDField')
 			->with($user[Parameters::PARAMETER_USER_ID])
-			->willReturn($fieldInterfaceMock);
+			->willReturn($fieldInterfaceStub);
 
-		$clipboardTextFieldMock = $this->createMock(ClipboardTextField::class);
+		$clipboardTextFieldStub = $this->createStub(ClipboardTextField::class);
 		$this->formElementsCreatorMock->expects($this->once())->method('createClipboardTextField')
-			->with(static::isString(), 'test', '2030-01-01')
-			->willReturn($clipboardTextFieldMock);
+			->with('', 'test', '2030-01-01')
+			->willReturn($clipboardTextFieldStub);
 
 		$this->formElementsCreatorMock->method('createCSRFTokenField')
-			->willReturn($fieldInterfaceMock);
+			->willReturn($fieldInterfaceStub);
 
 		$this->formElementsCreatorMock->expects($this->once())
 			->method('prepareForm')
 			->with([
-				'username' => $fieldInterfaceMock,
-				'email' => $fieldInterfaceMock,
-				'status' => $fieldInterfaceMock,
-				'locale' => $fieldInterfaceMock,
-				'UID' => $fieldInterfaceMock,
-				'csrf_token' => $fieldInterfaceMock,
-				'token_test' => $clipboardTextFieldMock
+				'username' => $fieldInterfaceStub,
+				'email' => $fieldInterfaceStub,
+				'status' => $fieldInterfaceStub,
+				'locale' => $fieldInterfaceStub,
+				'UID' => $fieldInterfaceStub,
+				'csrf_token' => $fieldInterfaceStub,
+				'token_test' => $clipboardTextFieldStub
 			])
 			->willReturn(['prepared' => true]);
 
@@ -239,6 +254,7 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testAddButtonsReturnsResetPasswordButton(): void
 	{
+		$this->expectUntouched($this->aclValidatorMock, $this->validatorMock, $this->parametersMock, $this->sessionMock);
 		$resetButtonData = ['type' => 'button', 'label' => 'Reset Password'];
 
 		$this->formElementsCreatorMock->expects($this->once())->method('addResetPasswordButton')
@@ -258,6 +274,7 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testHandleUserInput(): void
 	{
+		$this->expectUntouched($this->formElementsCreatorMock, $this->aclValidatorMock, $this->sessionMock);
 		$userInput = ['key1' => 'value1', 'key2' => 123, 'key3' => true];
 		$this->parametersMock->expects($this->once())->method('setUserInputs')
 			->with($userInput)
@@ -276,4 +293,11 @@ class BuilderTest extends TestCase
 		$this->builder->init($this->sessionMock);
 	}
 
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
+	}
 }

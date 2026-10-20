@@ -34,6 +34,7 @@ use App\Modules\Users\Services\UsersDatatableService;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class DatatableFacadeTest extends TestCase
@@ -43,7 +44,7 @@ class DatatableFacadeTest extends TestCase
 	private DatatablePreparer&MockObject $datatablePreparerMock;
 	private UsersDatatableService&MockObject $usersServiceMock;
 	private UsersAdminService&MockObject $usersAdminServiceMock;
-	private Translator&MockObject $translatorMock;
+	private Translator&Stub $translatorStub;
 	private Session&MockObject $sessionMock;
 
 	/**
@@ -56,7 +57,7 @@ class DatatableFacadeTest extends TestCase
 		$this->datatablePreparerMock = $this->createMock(DatatablePreparer::class);
 		$this->usersServiceMock = $this->createMock(UsersDatatableService::class);
 		$this->usersAdminServiceMock = $this->createMock(UsersAdminService::class);
-		$this->translatorMock = $this->createMock(Translator::class);
+		$this->translatorStub = $this->createStub(Translator::class);
 		$this->sessionMock = $this->createMock(Session::class);
 
 		$this->datatableFacade = new DatatableFacade(
@@ -88,6 +89,7 @@ class DatatableFacadeTest extends TestCase
 		$this->usersServiceMock->expects($this->once())
 			->method('setUID')
 			->with($mockUID);
+		$this->usersAdminServiceMock->expects($this->once())->method('setUID')->with($mockUID);
 
 		$this->datatableBuilderMock->expects($this->once())
 			->method('configureParameters')
@@ -95,13 +97,13 @@ class DatatableFacadeTest extends TestCase
 
 		$this->datatableBuilderMock->expects($this->once())
 			->method('setTranslator')
-			->with($this->translatorMock);
+			->with($this->translatorStub);
 
 		$this->datatablePreparerMock->expects($this->once())
 			->method('setTranslator')
-			->with($this->translatorMock);
+			->with($this->translatorStub);
 
-		$this->datatableFacade->configure($this->translatorMock, $this->sessionMock);
+		$this->datatableFacade->configure($this->translatorStub, $this->sessionMock);
 
 	}
 
@@ -111,6 +113,7 @@ class DatatableFacadeTest extends TestCase
 	#[Group('units')]
 	public function testDeleteUser(): void
 	{
+		$this->expectUntouched($this->datatableBuilderMock, $this->datatablePreparerMock, $this->usersServiceMock, $this->sessionMock);
 		$this->usersAdminServiceMock->expects($this->once())->method('deleteUser')
 			->with(12345)
 			->willReturn(true);
@@ -126,6 +129,7 @@ class DatatableFacadeTest extends TestCase
 	#[Group('units')]
 	public function testProcessSubmittedUserInput(): void
 	{
+		$this->expectUntouched($this->datatablePreparerMock, $this->usersAdminServiceMock, $this->sessionMock);
 		$this->datatableBuilderMock->expects($this->once())->method('determineParameters')->with(['page' => 2]);
 
 		$this->usersServiceMock->expects($this->once())->method('loadDatatable');
@@ -141,6 +145,8 @@ class DatatableFacadeTest extends TestCase
 	#[Group('units')]
 	public function testPrepareDataGrid(): void
 	{
+		$this->usersServiceMock->expects($this->once())->method('getCurrentTotalResult')->willReturn(42);
+		$this->expectUntouched($this->datatablePreparerMock, $this->usersAdminServiceMock, $this->sessionMock);
 		// Arrange
 		$this->datatableBuilderMock->expects($this->once())->method('buildTitle');
 		$this->datatableBuilderMock->expects($this->once())->method('collectFormElements');
@@ -173,7 +179,8 @@ class DatatableFacadeTest extends TestCase
 		$this->sessionMock->expects($this->once())->method('get')
 			->with('user')
 			->willReturn($mockUserData);
-		$this->datatableFacade->configure($this->translatorMock, $this->sessionMock);
+		$this->usersAdminServiceMock->expects($this->once())->method('setUID')->with($mockUID);
+		$this->datatableFacade->configure($this->translatorStub, $this->sessionMock);
 
 		$mockDatatableStructure = [
 			'pager' => ['page_1', 'page_2'],
@@ -250,5 +257,13 @@ class DatatableFacadeTest extends TestCase
 			'sort' => ['prepared_sort'],
 			'page' => ['prepared_page']
 		], $result);
+	}
+
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
 	}
 }

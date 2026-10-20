@@ -60,7 +60,7 @@ class BaseResponseBuilderTest extends TestCase
 	#[Group('units')]
 	public function testCsrfTokenMismatch(): void
 	{
-		$mockResponse = $this->createMock(ResponseInterface::class);
+		$mockResponse = $this->createStub(ResponseInterface::class);
 		$translatedError = 'CSRF Token Mismatch';
 
 		$this->translatorMock->expects($this->once())->method('translate')
@@ -83,7 +83,8 @@ class BaseResponseBuilderTest extends TestCase
 	#[Group('units')]
 	public function testGeneralErrorReturnsJsonErrorWithMessage(): void
 	{
-		$mockResponse = $this->createMock(ResponseInterface::class);
+		$this->translatorMock->expects($this->never())->method($this->anything());
+		$mockResponse = $this->createStub(ResponseInterface::class);
 		$errorMessage = 'An unexpected error occurred';
 
 		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonError')
@@ -101,7 +102,8 @@ class BaseResponseBuilderTest extends TestCase
 	#[Group('units')]
 	public function testGeneralSuccessReturnsJsonSuccessWithMessage(): void
 	{
-		$mockResponse = $this->createMock(ResponseInterface::class);
+		$this->translatorMock->expects($this->never())->method($this->anything());
+		$mockResponse = $this->createStub(ResponseInterface::class);
 		$successMessage = ['message' => 'Operation was successful'];
 
 		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonSuccess')

@@ -73,6 +73,7 @@ class ShowInitialAdminControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowFunctionIsNotAllowed(): void
 	{
+		$this->expectUntouched($this->formElementPreparerMock, $this->flashMock, $this->requestMock, $this->streamInterfaceMock);
 		$this->facadeMock->expects($this->once())->method('isFunctionAllowed')
 			->willReturn(false);
 
@@ -98,6 +99,7 @@ class ShowInitialAdminControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowReturnsRenderedFormOnAllowedFunction(): void
 	{
+		$this->flashMock->expects($this->never())->method($this->anything());
 		$this->facadeMock->expects($this->once())->method('isFunctionAllowed')
 			->willReturn(true);
 
@@ -117,6 +119,7 @@ class ShowInitialAdminControllerTest extends TestCase
 	#[Group('units')]
 	public function testStoreFunctionIsNotAllowed(): void
 	{
+		$this->expectUntouched($this->formElementPreparerMock, $this->flashMock, $this->requestMock, $this->streamInterfaceMock);
 		$this->facadeMock->expects($this->once())->method('isFunctionAllowed')
 			->willReturn(false);
 
@@ -174,6 +177,8 @@ class ShowInitialAdminControllerTest extends TestCase
 	#[Group('units')]
 	public function testStoreRedirectsToLoginOnSuccessfulUserStore(): void
 	{
+		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
+		$this->streamInterfaceMock->expects($this->never())->method($this->anything());
 		$this->facadeMock->expects($this->once())->method('isFunctionAllowed')
 			->willReturn(true);
 
@@ -262,14 +267,14 @@ class ShowInitialAdminControllerTest extends TestCase
 	 */
 	private function setStandardMocks(): void
 	{
-		$translatorMock = $this->createMock(Translator::class);
+		$translatorStub = $this->createStub(Translator::class);
 		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
 			->willReturnMap([
 				['flash', null, $this->flashMock],
-				['translator', null, $translatorMock],
+				['translator', null, $translatorStub],
 			]);
 
-		$this->facadeMock->expects($this->once())->method('init')->with($translatorMock);
+		$this->facadeMock->expects($this->once())->method('init')->with($translatorStub);
 	}
 
 	/**
@@ -292,4 +297,11 @@ class ShowInitialAdminControllerTest extends TestCase
 		$this->responseMock->method('withStatus')->with(200);
 	}
 
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
+	}
 }

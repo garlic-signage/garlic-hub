@@ -32,12 +32,13 @@ use League\Flysystem\FilesystemException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class PdfTest extends TestCase
 {
 	private Pdf $pdf;
-	private Filesystem&MockObject $filesystemMock;
+	private Filesystem&Stub $filesystemStub;
 	private Imagick&MockObject $imagickMock;
 
 	/**
@@ -46,11 +47,11 @@ class PdfTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$configMock = $this->createMock(Config::class);
-		$this->filesystemMock = $this->createMock(Filesystem::class);
+		$configStub = $this->createStub(Config::class);
+		$this->filesystemStub = $this->createStub(Filesystem::class);
 		$this->imagickMock = $this->createMock(Imagick::class);
 
-		$configMock->method('getConfigValue')
+		$configStub->method('getConfigValue')
 			->willReturnMap([
 				['width', 'mediapool', 'max_resolution', '3840'],
 				['height', 'mediapool', 'max_resolution', '3840'],
@@ -64,7 +65,7 @@ class PdfTest extends TestCase
 				['documents', 'mediapool', 'max_file_sizes', '1073741824']
 			]);
 
-		$this->pdf = new Pdf($configMock, $this->filesystemMock, $this->imagickMock);
+		$this->pdf = new Pdf($configStub, $this->filesystemStub, $this->imagickMock);
 		$this->pdf->setStoragePaths('mediapool');
 	}
 
@@ -74,7 +75,7 @@ class PdfTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileBeforeUploadValidSizeDoesNotThrowException(): void
 	{
-		$this->expectNotToPerformAssertions();
+		$this->imagickMock->expects($this->never())->method($this->anything());
 		$this->pdf->checkFileBeforeUpload(1073741824);
 	}
 
@@ -84,6 +85,7 @@ class PdfTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileBeforeUploadExceedsMaxSizeThrowsModuleException(): void
 	{
+		$this->imagickMock->expects($this->never())->method($this->anything());
 		$this->expectException(ModuleException::class);
 		$this->pdf->checkFileBeforeUpload(1073741824 + 1);
 	}
@@ -95,10 +97,10 @@ class PdfTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileAfterUploadFileExistsDoesNotThrowException(): void
 	{
-		$this->filesystemMock->method('fileExists')->willReturn(true);
-		$this->filesystemMock->method('fileSize')->willReturn(1073741824);
+		$this->imagickMock->expects($this->never())->method($this->anything());
+		$this->filesystemStub->method('fileExists')->willReturn(true);
+		$this->filesystemStub->method('fileSize')->willReturn(1073741824);
 
-		$this->expectNotToPerformAssertions();
 		$this->pdf->validateStoredFile('/path/to/file');
 	}
 
@@ -108,8 +110,9 @@ class PdfTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileAfterUpload_FileNotExistsThrowsModuleException(): void
 	{
+		$this->imagickMock->expects($this->never())->method($this->anything());
 		$this->expectException(ModuleException::class);
-		$this->filesystemMock->method('fileExists')->willReturn(false);
+		$this->filesystemStub->method('fileExists')->willReturn(false);
 		$this->pdf->validateStoredFile('/path/to/file');
 	}
 
@@ -119,9 +122,10 @@ class PdfTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileAfterUpload_ExceedsMaxSizeThrowsModuleException(): void
 	{
+		$this->imagickMock->expects($this->never())->method($this->anything());
 		$this->expectException(ModuleException::class);
-		$this->filesystemMock->method('fileExists')->willReturn(true);
-		$this->filesystemMock->method('fileSize')->willReturn(1073741824 + 1);
+		$this->filesystemStub->method('fileExists')->willReturn(true);
+		$this->filesystemStub->method('fileSize')->willReturn(1073741824 + 1);
 		$this->pdf->validateStoredFile('/path/to/file');
 	}
 

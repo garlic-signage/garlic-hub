@@ -74,6 +74,7 @@ class FacadeTest extends TestCase
 	#[RunInSeparateProcess] #[Group('units')]
 	public function testIsFunctionAllowedWithExistingLockFile(): void
 	{
+		$this->expectUntouched($this->settingsFormBuilderMock, $this->usersAdminCreateServiceMock, $this->settingsParametersMock, $this->configMock, $this->translatorMock);
 		define('INSTALL_LOCK_FILE', 'INSTALL_LOCK_FILE');
 		$fileExistsMock = $this->getFunctionMock('App\Modules\Users\Helper\InitialAdmin', 'file_exists');
 		$fileExistsMock->expects($this->once())->with('INSTALL_LOCK_FILE')->willReturn(true);
@@ -87,6 +88,7 @@ class FacadeTest extends TestCase
 	#[RunInSeparateProcess] #[Group('units')]
 	public function testIsFunctionAllowedWithAdminUser(): void
 	{
+		$this->expectUntouched($this->settingsFormBuilderMock, $this->settingsParametersMock, $this->configMock, $this->translatorMock);
 		define('INSTALL_LOCK_FILE', 'INSTALL_LOCK_FILE');
 		$fileExistsMock = $this->getFunctionMock('App\Modules\Users\Helper\InitialAdmin', 'file_exists');
 		$fileExistsMock->expects($this->once())->with('INSTALL_LOCK_FILE')->willReturn(false);
@@ -104,6 +106,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testIsFunctionAllowedWithoutAdminUserAndLockFile(): void
 	{
+		$this->expectUntouched($this->settingsFormBuilderMock, $this->settingsParametersMock, $this->configMock, $this->translatorMock);
 		define('INSTALL_LOCK_FILE', 'INSTALL_LOCK_FILE');
 		$fileExistsMock = $this->getFunctionMock('App\Modules\Users\Helper\InitialAdmin', 'file_exists');
 		$fileExistsMock->expects($this->once())->with('INSTALL_LOCK_FILE')->willReturn(false);
@@ -121,6 +124,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testConfigureUserFormParameterValidInput(): void
 	{
+		$this->expectUntouched($this->usersAdminCreateServiceMock, $this->settingsParametersMock, $this->translatorMock);
 		$postData = ['username' => 'testuser', 'password' => 'Test@1234'];
 		$passwordPattern = '^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$.!%*#?&]{8,}$';
 
@@ -145,6 +149,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testStoreUserValidData(): void
 	{
+		$this->expectUntouched($this->settingsFormBuilderMock, $this->configMock, $this->translatorMock);
 		$expectedKeys = ['username', 'email', 'locale', 'password'];
 		$expectedValues = ['testuser', 'test@example.com', 'en', 'Test@1234'];
 		$saveData = array_combine($expectedKeys, $expectedValues);
@@ -174,6 +179,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testGetUserServiceErrorsReturnsTranslatedErrors(): void
 	{
+		$this->expectUntouched($this->settingsFormBuilderMock, $this->settingsParametersMock, $this->configMock);
 		$errorMessages = ['error.user.not_found', 'error.user.invalid_data'];
 		$translatedMessages = ['User not found', 'Invalid data'];
 		$this->usersAdminCreateServiceMock->expects(self::once())->method('getErrorMessages')
@@ -199,6 +205,8 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testPrepareUITemplateValidInput(): void
 	{
+		$this->usersAdminCreateServiceMock->expects($this->never())->method($this->anything());
+		$this->settingsParametersMock->expects($this->never())->method($this->anything());
 		$postData = [
 			'username' => 'admin',
 			'email' => 'admin@example.com',
@@ -241,5 +249,13 @@ class FacadeTest extends TestCase
 		]);
 
 		self::assertSame($expectedResult, $result);
+	}
+
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
 	}
 }

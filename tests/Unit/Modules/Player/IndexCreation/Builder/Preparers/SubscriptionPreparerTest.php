@@ -25,12 +25,12 @@ use App\Modules\Player\Entities\PlayerEntity;
 use App\Modules\Player\IndexCreation\Builder\Preparers\SubscriptionPreparer;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class SubscriptionPreparerTest extends TestCase
 {
-	private PlayerEntity&MockObject $playerEntityMock;
+	private PlayerEntity&Stub $playerEntityStub;
 	private SubscriptionPreparer $preparer;
 
 	/**
@@ -39,17 +39,17 @@ class SubscriptionPreparerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->playerEntityMock = $this->createMock(PlayerEntity::class);
-		$this->preparer         = new SubscriptionPreparer($this->playerEntityMock);
+		$this->playerEntityStub = $this->createStub(PlayerEntity::class);
+		$this->preparer         = new SubscriptionPreparer($this->playerEntityStub);
 	}
 
 	#[Group('units')]
 	public function testPrepareAddsTaskScheduleWhenCommandsExist(): void
 	{
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getCommands')
 			->willReturn(['command1']);
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getIndexPath')
 			->willReturn('/path/to/index');
 
@@ -62,10 +62,10 @@ class SubscriptionPreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareAddsReportSubscriptionsWhenReportsExist(): void
 	{
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getCommands')
 			->willReturn([]);
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getReports')
 			->willReturn([
 				'inventory' => true,
@@ -74,10 +74,10 @@ class SubscriptionPreparerTest extends TestCase
 				'configuration' => true,
 				'executions' => true
 			]);
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getReportServer')
 			->willReturn('http://report.server');
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getUuid')
 			->willReturn('uuid_value');
 
@@ -94,10 +94,10 @@ class SubscriptionPreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareReturnsEmptyArrayWhenNoCommandsOrReports(): void
 	{
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getCommands')
 			->willReturn([]);
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getReports')
 			->willReturn([]);
 

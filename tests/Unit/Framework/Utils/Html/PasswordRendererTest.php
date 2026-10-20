@@ -35,16 +35,16 @@ class PasswordRendererTest extends TestCase
 	#[Group('units')]
 	public function testRenderWithMinimumAttributes(): void
 	{
-		$fieldMock = $this->createMock(PasswordField::class);
-		$fieldMock->method('getName')->willReturn('password');
-		$fieldMock->method('getTitle')->willReturn('edit password');
-		$fieldMock->method('getId')->willReturn('password_1');
-		$fieldMock->method('getValue')->willReturn('janzjeheim');
-		$fieldMock->method('getValidationRules')->willReturn([]);
-		$fieldMock->method('getAttributes')->willReturn([]);
+		$fieldStub = $this->createStub(PasswordField::class);
+		$fieldStub->method('getName')->willReturn('password');
+		$fieldStub->method('getTitle')->willReturn('edit password');
+		$fieldStub->method('getId')->willReturn('password_1');
+		$fieldStub->method('getValue')->willReturn('janzjeheim');
+		$fieldStub->method('getValidationRules')->willReturn([]);
+		$fieldStub->method('getAttributes')->willReturn([]);
 
 		$renderer = new PasswordRenderer();
-		$result = $renderer->render($fieldMock);
+		$result = $renderer->render($fieldStub);
 
 		$expected = '<div class="password-container"><input type="password" name="password" id="password_1" value="janzjeheim" title="edit password" aria-describedby="error_password_1"><span class="toggle-password bi bi-eye-fill" id="toggle_password_1"></span></div>';
 		static::assertSame($expected, $result);

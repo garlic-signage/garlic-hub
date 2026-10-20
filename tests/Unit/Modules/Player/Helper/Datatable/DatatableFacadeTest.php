@@ -33,6 +33,7 @@ use App\Modules\Player\Services\PlayerDatatableService;
 use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class DatatableFacadeTest extends TestCase
@@ -40,7 +41,7 @@ class DatatableFacadeTest extends TestCase
 	private DatatableBuilder&MockObject $datatableBuilderMock;
 	private DatatablePreparer&MockObject $datatablePreparerMock;
 	private PlayerDatatableService&MockObject $playerServiceMock;
-	private Translator&MockObject $translatorMock;
+	private Translator&Stub $translatorStub;
 	private Session&MockObject $sessionMock;
 	private DatatableFacade $datatableFacade;
 
@@ -53,7 +54,7 @@ class DatatableFacadeTest extends TestCase
 		$this->datatableBuilderMock = $this->createMock(DatatableBuilder::class);
 		$this->datatablePreparerMock = $this->createMock(DatatablePreparer::class);
 		$this->playerServiceMock = $this->createMock(PlayerDatatableService::class);
-		$this->translatorMock = $this->createMock(Translator::class);
+		$this->translatorStub = $this->createStub(Translator::class);
 		$this->sessionMock = $this->createMock(Session::class);
 
 		$this->datatableFacade = new DatatableFacade(
@@ -83,10 +84,10 @@ class DatatableFacadeTest extends TestCase
 		$this->datatableBuilderMock->expects($this->once())->method('configureParameters')
 			->with($mockUID);
 		$this->datatableBuilderMock->expects($this->once())->method('setTranslator')
-			->with($this->translatorMock);
+			->with($this->translatorStub);
 		$this->datatablePreparerMock->expects($this->once())->method('setTranslator')
-			->with($this->translatorMock);
-		$this->datatableFacade->configure($this->translatorMock, $this->sessionMock);
+			->with($this->translatorStub);
+		$this->datatableFacade->configure($this->translatorStub, $this->sessionMock);
 	}
 
 	/**
@@ -97,6 +98,8 @@ class DatatableFacadeTest extends TestCase
 	#[Group('units')]
 	public function testProcessSubmittedUserInput(): void
 	{
+		$this->datatablePreparerMock->expects($this->never())->method($this->anything());
+		$this->sessionMock->expects($this->never())->method($this->anything());
 		$this->datatableBuilderMock->expects($this->once())->method('determineParameters')->with(['page' => 2]);
 		$this->playerServiceMock->expects($this->once())->method('loadDatatable');
 		$this->datatableFacade->processSubmittedUserInput(['page' => 2]);
@@ -111,6 +114,9 @@ class DatatableFacadeTest extends TestCase
 	#[Group('units')]
 	public function testPrepareDataGrid(): void
 	{
+		$this->playerServiceMock->expects($this->once())->method('getCurrentTotalResult')->willReturn(42);
+		$this->datatablePreparerMock->expects($this->never())->method($this->anything());
+		$this->sessionMock->expects($this->never())->method($this->anything());
 		$this->datatableBuilderMock->expects($this->once())->method('buildTitle');
 		$this->datatableBuilderMock->expects($this->once())->method('collectFormElements');
 		$this->datatableBuilderMock->expects($this->once())
@@ -128,6 +134,7 @@ class DatatableFacadeTest extends TestCase
 	#[Group('units')]
 	public function testPrepareContextMenu(): void
 	{
+		$this->expectUntouched($this->datatableBuilderMock, $this->playerServiceMock, $this->sessionMock);
 		$mockedContextMenu = [
 			['label' => 'Edit', 'action' => 'edit'],
 			['label' => 'Delete', 'action' => 'delete']
@@ -157,7 +164,7 @@ class DatatableFacadeTest extends TestCase
 			->with('user')
 			->willReturn($mockUserData);
 
-		$this->datatableFacade->configure($this->translatorMock, $this->sessionMock);
+		$this->datatableFacade->configure($this->translatorStub, $this->sessionMock);
 
 		$datatableStructure = [
 			'pager' => ['links' => ['prev' => '...', 'next' => '...']],
@@ -227,5 +234,13 @@ class DatatableFacadeTest extends TestCase
 		];
 
 		static::assertSame($expectedResult, $result);
+	}
+
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
 	}
 }

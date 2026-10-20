@@ -45,12 +45,12 @@ class UsersDatatableServiceTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$loggerMock = $this->createMock(LoggerInterface::class);
+		$loggerStub = $this->createStub(LoggerInterface::class);
 		$this->repositoryMock   = $this->createMock(UserMainRepository::class);
 		$this->parametersMock   = $this->createMock(Parameters::class);
 		$this->aclValidatorMock = $this->createMock(AclValidator::class);
 
-		$this->service = new UsersDatatableService($this->repositoryMock, $this->parametersMock, $this->aclValidatorMock, $loggerMock);
+		$this->service = new UsersDatatableService($this->repositoryMock, $this->parametersMock, $this->aclValidatorMock, $loggerStub);
 	}
 
 	/**

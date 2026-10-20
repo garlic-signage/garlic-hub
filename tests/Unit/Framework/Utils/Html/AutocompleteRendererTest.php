@@ -39,17 +39,17 @@ class AutocompleteRendererTest extends TestCase
 	#[Group('units')]
 	public function testRenderGeneratesCorrectHtml(): void
 	{
-		$fieldMock = $this->createMock(AutocompleteField::class);
+		$fieldStub = $this->createStub(AutocompleteField::class);
 		$this->renderer = new AutocompleteRenderer();
-		$fieldMock->method('getId')->willReturn('test-field');
-		$fieldMock->method('getValue')->willReturn('123');
-		$fieldMock->method('getDataLabel')->willReturn('Test Label');
+		$fieldStub->method('getId')->willReturn('test-field');
+		$fieldStub->method('getValue')->willReturn('123');
+		$fieldStub->method('getDataLabel')->willReturn('Test Label');
 
 		$expectedHtml = '<input id="test-field_search" list="test-field_suggestions" value="Test Label" data-id="123" aria-describedby="error_test-field" class="autocomplete" autocomplete="off">
 		<input type="hidden" id="test-field" name="test-field" value="123">
 		<datalist id = "test-field_suggestions" ></datalist>';
 
-		$result = $this->renderer->render($fieldMock);
+		$result = $this->renderer->render($fieldStub);
 
 		static::assertSame($expectedHtml, $result);
 	}
@@ -60,12 +60,12 @@ class AutocompleteRendererTest extends TestCase
 	#[Group('units')]
 	public function testRenderGeneratesNothing(): void
 	{
-		$fieldMock = $this->createMock(FieldInterface::class);
+		$fieldStub = $this->createStub(FieldInterface::class);
 		$this->renderer = new AutocompleteRenderer();
 
 		$expectedHtml = '';
 
-		$result = $this->renderer->render($fieldMock);
+		$result = $this->renderer->render($fieldStub);
 
 		static::assertSame($expectedHtml, $result);
 	}

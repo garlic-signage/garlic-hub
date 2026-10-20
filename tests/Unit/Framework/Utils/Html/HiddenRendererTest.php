@@ -25,14 +25,14 @@ use App\Framework\Utils\Html\HiddenField;
 use App\Framework\Utils\Html\HiddenRenderer;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class HiddenRendererTest extends TestCase
 {
 	private HiddenRenderer $hiddenRenderer;
 
-	private HiddenField&MockObject $fieldMock;
+	private HiddenField&Stub $fieldStub;
 
 	/**
 	 * @throws Exception
@@ -40,7 +40,7 @@ class HiddenRendererTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->fieldMock = $this->createMock(HiddenField::class);
+		$this->fieldStub = $this->createStub(HiddenField::class);
 		$this->hiddenRenderer = new HiddenRenderer();
 	}
 
@@ -48,14 +48,14 @@ class HiddenRendererTest extends TestCase
 	public function testRenderGeneratesCorrectHtml(): void
 	{
 
-		$this->fieldMock->method('getName')->willReturn('testField');
-		$this->fieldMock->method('getId')->willReturn('hiddenField');
-		$this->fieldMock->method('getValue')->willReturn('hiddenValue');
-		$this->fieldMock->method('getTitle')->willReturn('');
-		$this->fieldMock->method('getLabel')->willReturn('');
+		$this->fieldStub->method('getName')->willReturn('testField');
+		$this->fieldStub->method('getId')->willReturn('hiddenField');
+		$this->fieldStub->method('getValue')->willReturn('hiddenValue');
+		$this->fieldStub->method('getTitle')->willReturn('');
+		$this->fieldStub->method('getLabel')->willReturn('');
 
 		$expectedHtml = '<input type="hidden" name="testField" id="hiddenField" value="hiddenValue">';
-		static::assertSame($expectedHtml, $this->hiddenRenderer->render($this->fieldMock));
+		static::assertSame($expectedHtml, $this->hiddenRenderer->render($this->fieldStub));
 	}
 
 

@@ -55,7 +55,7 @@ class FacadeTest extends TestCase
 		$this->usersAdminService = $this->createMock(UsersAdminService::class);
 		$this->settingsParameters  = $this->createMock(Parameters::class);
 		$this->translatorMock      = $this->createMock(Translator::class);
-		$this->sessionStub         = $this->createMock(Session::class);
+		$this->sessionStub         = $this->createStub(Session::class);
 
 		$this->facade = new Facade(
 			$this->settingsFormBuilderMock,
@@ -70,6 +70,8 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testInit(): void
 	{
+		$this->settingsParameters->expects($this->never())->method($this->anything());
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$sessionMock = $this->createMock(Session::class);
 
 		$sessionMock->expects($this->once())->method('get')
@@ -91,6 +93,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testLoadUserForEditReturnsUserArrayWhenUserExists(): void
 	{
+		$this->expectUntouched($this->settingsFormBuilderMock, $this->settingsParameters, $this->translatorMock);
 		$userID = 123;
 		$userData = [
 			'UID' => $userID,
@@ -117,6 +120,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testLoadUserForEditReturnsEmptyArrayWhenUserDoesNotExist(): void
 	{
+		$this->expectUntouched($this->settingsFormBuilderMock, $this->settingsParameters, $this->translatorMock);
 		$userID = 456;
 
 		$this->usersAdminService->expects($this->once())->method('loadForAdminEdit')
@@ -138,6 +142,8 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testConfigureUserFormParameterCallsConfigEditParameterWhenUserExists(): void
 	{
+		$this->settingsParameters->expects($this->never())->method($this->anything());
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$post = ['UID' => 123, 'email' => 'user@example.com', 'username' => 'testuser'];
 		$userData = [
 			'UID' => 123,
@@ -191,6 +197,12 @@ class FacadeTest extends TestCase
 			->with('user')
 			->willReturn(['UID' => 123]);
 
+		$this->settingsFormBuilderMock->expects($this->once())->method('init')->with($sessionMock);
+		// an unknown user stops before any form handling
+		$this->settingsFormBuilderMock->expects($this->never())->method('configEditParameter');
+		$this->settingsFormBuilderMock->expects($this->never())->method('handleUserInput');
+		$this->settingsParameters->expects($this->never())->method($this->anything());
+
 		$this->facade->init($this->translatorMock, $sessionMock);
 		$result = $this->facade->configureUserFormParameter($post);
 
@@ -206,6 +218,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testConfigureUserFormParameterCallsConfigNewParameterWhenNoUIDProvided(): void
 	{
+		$this->expectUntouched($this->usersAdminService, $this->settingsParameters, $this->translatorMock);
 		$post = ['email' => 'user@example.com', 'username' => 'new user'];
 
 		$this->settingsFormBuilderMock->expects($this->once())->method('configNewParameter');
@@ -225,6 +238,8 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testStoreUserCallsUpdateForExistingUID(): void
 	{
+		$this->settingsFormBuilderMock->expects($this->never())->method($this->anything());
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$UID = 123;
 		$parametersKeys = ['username', 'email'];
 		$parametersValues = ['testuser', 'test@example.com'];
@@ -266,6 +281,8 @@ class FacadeTest extends TestCase
 				'email' => 'new@example.com',
 			]);
 		$this->sessionStub->method('get')->willReturn(['UID' => 1]);
+		$this->settingsFormBuilderMock->expects($this->once())->method('init')->with($this->sessionStub);
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$this->facade->init($this->translatorMock, $this->sessionStub);
 
 		$this->facade->storeUser($UID);
@@ -277,6 +294,8 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testStoreUserReturnsUpdateResultForExistingUID(): void
 	{
+		$this->settingsFormBuilderMock->expects($this->never())->method($this->anything());
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$UID = 123;
 		$parametersKeys = ['username', 'email'];
 		$parametersValues = ['testuser', 'test@example.com'];
@@ -322,6 +341,8 @@ class FacadeTest extends TestCase
 			])
 			->willReturn(456);
 		$this->sessionStub->method('get')->willReturn(['UID' => 1]);
+		$this->settingsFormBuilderMock->expects($this->once())->method('init')->with($this->sessionStub);
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$this->facade->init($this->translatorMock, $this->sessionStub);
 
 		$result = $this->facade->storeUser($UID);
@@ -344,6 +365,9 @@ class FacadeTest extends TestCase
 			->willReturn($expectedToken);
 
 		$this->sessionStub->method('get')->willReturn(['UID' => 1]);
+		$this->settingsFormBuilderMock->expects($this->once())->method('init')->with($this->sessionStub);
+		$this->settingsParameters->expects($this->never())->method($this->anything());
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$this->facade->init($this->translatorMock, $this->sessionStub);
 
 		$result = $this->facade->createPasswordResetToken($UID);
@@ -358,6 +382,8 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testGetUserServiceErrorsNoErrors(): void
 	{
+		$this->settingsFormBuilderMock->expects($this->never())->method($this->anything());
+		$this->settingsParameters->expects($this->never())->method($this->anything());
 		$this->usersAdminService->expects($this->once())->method('getErrorMessages')
 			->willReturn([]);
 
@@ -375,6 +401,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testGetUserServiceErrors(): void
 	{
+		$this->settingsParameters->expects($this->never())->method($this->anything());
 		$this->usersAdminService->expects($this->once())->method('getErrorMessages')
 			->willReturn(['an_error']);
 
@@ -405,6 +432,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testBuildCreateNewParameterCallsConfigNewParameter(): void
 	{
+		$this->expectUntouched($this->usersAdminService, $this->settingsParameters, $this->translatorMock);
 		$this->settingsFormBuilderMock->expects($this->once())->method('configNewParameter');
 
 		$this->facade->buildCreateNewParameter();
@@ -418,6 +446,8 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testBuildEditParameterCallsConfigEditParameter(): void
 	{
+		$this->settingsParameters->expects($this->never())->method($this->anything());
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$userID = 123;
 		$userData = [
 			'UID' => $userID,
@@ -449,6 +479,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testPrepareUITemplateWithOldUser(): void
 	{
+		$this->settingsParameters->expects($this->never())->method($this->anything());
 		$post = ['parameter' => 'value'];
 		$expectedAdditionalButtons = [0 => 'button1'];
 
@@ -530,6 +561,8 @@ class FacadeTest extends TestCase
 			->method('get')
 			->with('user')
 			->willReturn(['UID' => 123]);
+		$this->usersAdminService->expects($this->once())->method('setUID')->with(123);
+		$this->settingsParameters->expects($this->never())->method($this->anything());
 		$this->facade->init($this->translatorMock, $sessionMock);
 
 		$result = $this->facade->prepareUITemplate($post);
@@ -545,4 +578,11 @@ class FacadeTest extends TestCase
 		], $result);
 	}
 
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
+	}
 }

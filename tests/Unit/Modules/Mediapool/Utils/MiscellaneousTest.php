@@ -29,12 +29,12 @@ use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class MiscellaneousTest extends TestCase
 {
-	private Filesystem&MockObject $filesystemMock;
+	private Filesystem&Stub $filesystemStub;
 	private Miscellaneous $misc;
 
 	/**
@@ -44,10 +44,10 @@ class MiscellaneousTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$configMock = $this->createMock(Config::class);
-		$this->filesystemMock = $this->createMock(Filesystem::class);
+		$configStub = $this->createStub(Config::class);
+		$this->filesystemStub = $this->createStub(Filesystem::class);
 
-		$configMock->method('getConfigValue')
+		$configStub->method('getConfigValue')
 			->willReturnMap([
 				['width', 'mediapool', 'max_resolution', '3840'],
 				['height', 'mediapool', 'max_resolution', '3840'],
@@ -61,7 +61,7 @@ class MiscellaneousTest extends TestCase
 				['downloads', 'mediapool', 'max_file_sizes', '1073741824']
 			]);
 
-		$this->misc = new Miscellaneous($configMock, $this->filesystemMock);
+		$this->misc = new Miscellaneous($configStub, $this->filesystemStub);
 		$this->misc->setStoragePaths('mediapool');
 	}
 
@@ -90,8 +90,8 @@ class MiscellaneousTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileAfterUploadFileExistsDoesNotThrowException(): void
 	{
-		$this->filesystemMock->method('fileExists')->willReturn(true);
-		$this->filesystemMock->method('fileSize')->willReturn(1073741824);
+		$this->filesystemStub->method('fileExists')->willReturn(true);
+		$this->filesystemStub->method('fileSize')->willReturn(1073741824);
 
 		$this->expectNotToPerformAssertions();
 		$this->misc->validateStoredFile('/path/to/file');
@@ -105,7 +105,7 @@ class MiscellaneousTest extends TestCase
 	{
 		$this->expectException(ModuleException::class);
 
-		$this->filesystemMock->method('fileExists')->willReturn(false);
+		$this->filesystemStub->method('fileExists')->willReturn(false);
 		$this->misc->validateStoredFile('/path/to/file');
 	}
 
@@ -117,8 +117,8 @@ class MiscellaneousTest extends TestCase
 	{
 		$this->expectException(ModuleException::class);
 
-		$this->filesystemMock->method('fileExists')->willReturn(true);
-		$this->filesystemMock->method('fileSize')->willReturn(1073741824 + 1);
+		$this->filesystemStub->method('fileExists')->willReturn(true);
+		$this->filesystemStub->method('fileSize')->willReturn(1073741824 + 1);
 		$this->misc->validateStoredFile('/path/to/file');
 	}
 
@@ -128,7 +128,7 @@ class MiscellaneousTest extends TestCase
 	#[Group('units')]
 	public function testCreateThumbnailCsvFileCreatesDatabaseIcon(): void
 	{
-		$this->filesystemMock->method('copy');
+		$this->filesystemStub->method('copy');
 
 		$this->misc->createThumbnail('/path/to/file.csv');
 		static::assertEquals('svg', $this->misc->getThumbExtension());
@@ -140,7 +140,7 @@ class MiscellaneousTest extends TestCase
 	#[Group('units')]
 	public function testCreateThumbnail(): void
 	{
-		$this->filesystemMock->method('copy');
+		$this->filesystemStub->method('copy');
 
 		$this->misc->createThumbnail('/path/to/file.txt');
 		static::assertEquals('svg', $this->misc->getThumbExtension());

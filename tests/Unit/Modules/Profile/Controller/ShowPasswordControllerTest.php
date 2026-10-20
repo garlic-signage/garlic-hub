@@ -78,6 +78,8 @@ class ShowPasswordControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowPasswordFormReturnsExpectedResponse(): void
 	{
+		$this->flashMock->expects($this->never())->method($this->anything());
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$this->setStandardMocks();
 
 		$dataSections = ['key' => 'value'];
@@ -95,6 +97,8 @@ class ShowPasswordControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowForcedPasswordFormRedirectsWhenTokenIsMissing(): void
 	{
+		$this->facadeMock->expects($this->never())->method($this->anything());
+		$this->expectNoPageRendered();
 		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
 			->willReturnMap([
 				['flash', null, $this->flashMock],
@@ -131,6 +135,7 @@ class ShowPasswordControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowForcedPasswordFormRedirectsWhenUIDIsInvalid(): void
 	{
+		$this->expectNoPageRendered();
 		$passwordToken = bin2hex(random_bytes(32));
 
 		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
@@ -171,6 +176,8 @@ class ShowPasswordControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowForcedPasswordFormRendersFormSuccessfully(): void
 	{
+		$this->flashMock->expects($this->never())->method($this->anything());
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$passwordToken = bin2hex(random_bytes(32));
 
 		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
@@ -219,6 +226,8 @@ class ShowPasswordControllerTest extends TestCase
 	#[Group('units')]
 	public function testStoreForcedPasswordRedirectsWhenTokenIsMissing(): void
 	{
+		$this->facadeMock->expects($this->never())->method($this->anything());
+		$this->expectNoPageRendered();
 		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
 			->willReturnMap([
 				['flash', null, $this->flashMock],
@@ -256,6 +265,7 @@ class ShowPasswordControllerTest extends TestCase
 	#[Group('units')]
 	public function testStoreForcedPasswordRedirectsWhenUIDIsInvalid(): void
 	{
+		$this->expectNoPageRendered();
 		$passwordToken = 'invalidToken';
 
 		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
@@ -299,6 +309,7 @@ class ShowPasswordControllerTest extends TestCase
 	#[Group('units')]
 	public function testStoreForcedPasswordHandlesValidationErrors(): void
 	{
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$postData = ['token' => 'validToken', 'password' => 'short'];
 		$passwordToken = 'validToken';
 		$errors = ['Password is too short.'];
@@ -340,6 +351,7 @@ class ShowPasswordControllerTest extends TestCase
 	#[Group('units')]
 	public function testStoreForcedPasswordStoresSuccessfulPassword(): void
 	{
+		$this->expectNoPageRendered();
 		$postData = ['token' => 'validToken', 'password' => 'strongPassword123!'];
 		$passwordToken = 'validToken';
 
@@ -392,6 +404,7 @@ class ShowPasswordControllerTest extends TestCase
 	#[Group('units')]
 	public function testStoreForcedPasswordHandlesSavingErrors(): void
 	{
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$postData = ['token' => 'validToken', 'password' => 'strongPassword123!'];
 		$passwordToken = 'validToken';
 		$savingErrors = ['An unexpected error occurred.'];
@@ -439,6 +452,7 @@ class ShowPasswordControllerTest extends TestCase
 	#[Group('units')]
 	public function testStoreSuccessful(): void
 	{
+		$this->expectNoPageRendered();
 		$postData = ['password' => 'strongPassword123!'];
 		$this->requestMock->expects($this->once())->method('getParsedBody')
 			->willReturn($postData);
@@ -489,6 +503,9 @@ class ShowPasswordControllerTest extends TestCase
 			->with($postData)
 			->willReturn($errors);
 
+		$this->flashMock->expects($this->once())->method('addMessageNow')->with('error', 'Password is too weak.');
+		$this->facadeMock->expects($this->never())->method('storePassword');
+		$this->translatorMock->expects($this->never())->method('translate');
 		$this->outputStandard($errors, '');
 
 		$this->responseMock->method('getBody')->willReturn($this->streamInterfaceMock);
@@ -506,6 +523,7 @@ class ShowPasswordControllerTest extends TestCase
 	#[Group('units')]
 	public function testStoreSaveError(): void
 	{
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$postData = ['password' => 'strongPassword123!'];
 		$savingErrors = ['An error occurred while saving the password.'];
 
@@ -538,16 +556,16 @@ class ShowPasswordControllerTest extends TestCase
 	 */
 	private function setStandardMocks(): void
 	{
-		$sessionMock    = $this->createMock(Session::class);
+		$sessionStub    = $this->createStub(Session::class);
 		$this->requestMock->expects($this->exactly(3))->method('getAttribute')
 			->willReturnMap([
 				['flash', null, $this->flashMock],
 				['translator', null, $this->translatorMock],
-				['session', null, $sessionMock],
+				['session', null, $sessionStub],
 			]);
 
 		$this->facadeMock->expects($this->once())->method('init')
-			->with($sessionMock);
+			->with($sessionStub);
 	}
 
 	/**
@@ -564,9 +582,17 @@ class ShowPasswordControllerTest extends TestCase
 			->with($dataSections)
 			->willReturn($templateData);
 		$this->responseMock->method('getBody')->willReturn($this->streamInterfaceMock);
-		$this->streamInterfaceMock->method('write')->with(serialize($templateData));
+		$this->streamInterfaceMock->expects($this->once())->method('write')->with(serialize($templateData));
 		$this->responseMock->method('withHeader')->with('Content-Type', 'text/html')->willReturnSelf();
 		$this->responseMock->method('withStatus')->with(200);
 	}
 
+	/**
+	 * Redirects do not render the form.
+	 */
+	private function expectNoPageRendered(): void
+	{
+		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
+		$this->streamInterfaceMock->expects($this->never())->method($this->anything());
+	}
 }

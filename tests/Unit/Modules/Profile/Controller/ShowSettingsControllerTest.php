@@ -25,6 +25,7 @@ namespace Tests\Unit\Modules\Profile\Controller;
 use App\Modules\Profile\Controller\ShowSettingsController;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -32,14 +33,14 @@ use Psr\Http\Message\ServerRequestInterface;
 class ShowSettingsControllerTest extends TestCase
 {
 	private ShowSettingsController $showSettingsController;
-	private ServerRequestInterface&MockObject $requestMock;
+	private ServerRequestInterface&Stub $requestStub;
 	private ResponseInterface&MockObject $responseMock;
 
 	protected function setUp(): void
 	{
 		parent::setUp();
 
-		$this->requestMock = $this->createMock(ServerRequestInterface::class);
+		$this->requestStub = $this->createStub(ServerRequestInterface::class);
 		$this->responseMock = $this->createMock(ResponseInterface::class);
 		$this->showSettingsController = new ShowSettingsController();
 	}
@@ -55,7 +56,7 @@ class ShowSettingsControllerTest extends TestCase
 			->with(302)
 			->willReturnSelf();
 
-		$result = $this->showSettingsController->show($this->requestMock, $this->responseMock);
+		$result = $this->showSettingsController->show($this->requestStub, $this->responseMock);
 
 		self::assertSame($this->responseMock, $result);
 	}

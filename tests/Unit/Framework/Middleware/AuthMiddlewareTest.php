@@ -31,6 +31,7 @@ use App\Modules\Profile\Entities\UserEntity;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UriInterface;
@@ -41,7 +42,7 @@ class AuthMiddlewareTest extends TestCase
 {
 	private ServerRequestInterface&MockObject $requestMock;
 	private RequestHandlerInterface&MockObject $handlerMock;
-	private AuthService&MockObject $authServiceMock;
+	private AuthService&Stub $authServiceStub;
 	private Session&MockObject $sessionMock;
 	private Cookie&MockObject $cookieMock;
 
@@ -51,7 +52,7 @@ class AuthMiddlewareTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->authServiceMock = $this->createMock(AuthService::class);
+		$this->authServiceStub = $this->createStub(AuthService::class);
 		$this->sessionMock = $this->createMock(Session::class);
 		$this->cookieMock = $this->createMock(Cookie::class);
 		$this->handlerMock = $this->createMock(RequestHandlerInterface::class);
@@ -65,9 +66,11 @@ class AuthMiddlewareTest extends TestCase
 	#[Group('units')]
 	public function testProcessHandlesPublicRoutes(): void
 	{
-		$uriInterfaceMock = $this->createMock(UriInterface::class);
-		$this->requestMock->method('getUri')->willReturn($uriInterfaceMock);
-		$uriInterfaceMock->method('getPath')->willReturn('/register');
+		$this->sessionMock->expects($this->never())->method($this->anything());
+		$this->cookieMock->expects($this->never())->method($this->anything());
+		$uriInterfaceStub = $this->createStub(UriInterface::class);
+		$this->requestMock->method('getUri')->willReturn($uriInterfaceStub);
+		$uriInterfaceStub->method('getPath')->willReturn('/register');
 		$this->requestMock->expects($this->never())->method('getAttribute');
 
 		$this->handlerMock
@@ -76,7 +79,7 @@ class AuthMiddlewareTest extends TestCase
 			->with($this->requestMock)
 			->willReturn(new Response());
 
-		$middleware = new AuthMiddleware($this->authServiceMock);
+		$middleware = new AuthMiddleware($this->authServiceStub);
 		$middleware->process($this->requestMock, $this->handlerMock);
 	}
 
@@ -88,11 +91,12 @@ class AuthMiddlewareTest extends TestCase
 	#[Group('units')]
 	public function testProcessRedirectsToLoginIfSessionNull(): void
 	{
+		$this->expectUntouched($this->handlerMock, $this->sessionMock, $this->cookieMock);
 		$this->mockSecurePage();
 
 		$this->requestMock->method('getAttribute')->with('session')->willReturn(null);
 
-		$middleware = new AuthMiddleware($this->authServiceMock);
+		$middleware = new AuthMiddleware($this->authServiceStub);
 		$response = $middleware->process($this->requestMock, $this->handlerMock);
 
 		static::assertEquals(302, $response->getStatusCode());
@@ -108,7 +112,7 @@ class AuthMiddlewareTest extends TestCase
 	public function testProcessRedirectsToLoginIfNotAuth(): void
 	{
 		$this->mockSecurePage();
-		$this->requestMock->method('getAttribute')
+		$this->requestMock->expects($this->atLeastOnce())->method('getAttribute')
 			->willReturnCallback(function ($param)
 			{
 				if ($param === 'cookie')
@@ -119,9 +123,13 @@ class AuthMiddlewareTest extends TestCase
 			}
 		);
 
-		$this->sessionMock->method('exists')->with('user')->willReturn(false);
+		$this->sessionMock->expects($this->once())->method('exists')->with('user')->willReturn(false);
+		$this->sessionMock->expects($this->never())->method('set');
+		// without autologin cookie there is no login attempt
+		$this->cookieMock->expects($this->once())->method('hasCookie')->willReturn(false);
+		$this->handlerMock->expects($this->never())->method('handle');
 
-		$middleware = new AuthMiddleware($this->authServiceMock);
+		$middleware = new AuthMiddleware($this->authServiceStub);
 		$response = $middleware->process($this->requestMock, $this->handlerMock);
 
 		static::assertEquals(302, $response->getStatusCode());
@@ -136,8 +144,10 @@ class AuthMiddlewareTest extends TestCase
 	#[Group('units')]
 	public function testProcessRedirectsToLoginIfNotAuthBecauseOfCookie(): void
 	{
+		$this->handlerMock->expects($this->never())->method($this->anything());
+		$this->cookieMock->expects($this->never())->method($this->anything());
 		$this->mockSecurePage();
-		$this->requestMock->method('getAttribute')
+		$this->requestMock->expects($this->atLeastOnce())->method('getAttribute')
 			->willReturnCallback(function ($param)
 			{
 				if ($param === 'cookie')
@@ -150,7 +160,7 @@ class AuthMiddlewareTest extends TestCase
 
 		$this->sessionMock->method('exists')->with('user')->willReturn(false);
 
-		$middleware = new AuthMiddleware($this->authServiceMock);
+		$middleware = new AuthMiddleware($this->authServiceStub);
 		$response = $middleware->process($this->requestMock, $this->handlerMock);
 
 		static::assertEquals(302, $response->getStatusCode());
@@ -165,12 +175,16 @@ class AuthMiddlewareTest extends TestCase
 	#[Group('units')]
 	public function testProcessRedirectsToLoginIfNotWithLogin(): void
 	{
+		$this->sessionMock->expects($this->never())->method($this->anything());
+		$this->cookieMock->expects($this->never())->method($this->anything());
 		$this->mockPage('/login');
-		$this->requestMock->method('getAttribute')->with('session')->willReturn(null);
+		$this->requestMock->expects($this->once())->method('getAttribute')->with('session')->willReturn(null);
+		// the login page stays reachable without a session
+		$response = $this->createStub(\Psr\Http\Message\ResponseInterface::class);
+		$this->handlerMock->expects($this->once())->method('handle')->with($this->requestMock)->willReturn($response);
 
-
-		$middleware = new AuthMiddleware($this->authServiceMock);
-		$middleware->process($this->requestMock, $this->handlerMock);
+		$middleware = new AuthMiddleware($this->authServiceStub);
+		static::assertSame($response, $middleware->process($this->requestMock, $this->handlerMock));
 	}
 
 	/**
@@ -181,11 +195,12 @@ class AuthMiddlewareTest extends TestCase
 	#[Group('units')]
 	public function testProcessRedirectsToLoginIfNotWithApiAccess(): void
 	{
+		$this->expectUntouched($this->handlerMock, $this->sessionMock, $this->cookieMock);
 		$this->mockPage('/async/some-protected-api-call');
 		$this->requestMock->method('getAttribute')->with('session')->willReturn(null);
 
 
-		$middleware = new AuthMiddleware($this->authServiceMock);
+		$middleware = new AuthMiddleware($this->authServiceStub);
 		$response = $middleware->process($this->requestMock, $this->handlerMock);
 
 		static::assertEquals(401, $response->getStatusCode());
@@ -199,6 +214,7 @@ class AuthMiddlewareTest extends TestCase
 	#[Group('units')]
 	public function testProcessHandlesAuthenticatedUser(): void
 	{
+		$this->cookieMock->expects($this->never())->method($this->anything());
 		$this->mockSecurePage();
 		$this->requestMock->method('getAttribute')->with('session')->willReturn($this->sessionMock);
 		$this->sessionMock->method('exists')->with('user')->willReturn(true);
@@ -209,7 +225,7 @@ class AuthMiddlewareTest extends TestCase
 			->with($this->requestMock)
 			->willReturn(new Response());
 
-		$middleware = new AuthMiddleware($this->authServiceMock);
+		$middleware = new AuthMiddleware($this->authServiceStub);
 		$middleware->process($this->requestMock, $this->handlerMock);
 	}
 
@@ -222,7 +238,7 @@ class AuthMiddlewareTest extends TestCase
 	public function testProcessAutoLoginWithCookie(): void
 	{
 		$this->mockSecurePage();
-		$this->requestMock->method('getAttribute')
+		$this->requestMock->expects($this->atLeastOnce())->method('getAttribute')
 			->willReturnCallback(function ($param)
 			{
 				if ($param === 'cookie')
@@ -235,10 +251,10 @@ class AuthMiddlewareTest extends TestCase
 
 		$this->sessionMock->method('exists')->with('user')->willReturn(false);
 
-		$userEntityMock = $this->createMock(UserEntity::class);
-		$this->authServiceMock->method('loginByCookie')->willReturn($userEntityMock);
+		$userEntityStub = $this->createStub(UserEntity::class);
+		$this->authServiceStub->method('loginByCookie')->willReturn($userEntityStub);
 		$this->cookieMock->method('hasCookie')->with(AutoLoginService::COOKIE_NAME_AUTO_LOGIN)->willReturn(true);
-		$userEntityMock->method('getMain')->willReturn(['UID' => 1, 'locale' => 'en']);
+		$userEntityStub->method('getMain')->willReturn(['UID' => 1, 'locale' => 'en']);
 
 		$this->sessionMock->expects($this->exactly(2))->method('set');
 
@@ -246,7 +262,7 @@ class AuthMiddlewareTest extends TestCase
 			->with($this->requestMock)
 			->willReturn(new Response());
 
-		$middleware = new AuthMiddleware($this->authServiceMock);
+		$middleware = new AuthMiddleware($this->authServiceStub);
 		$middleware->process($this->requestMock, $this->handlerMock);
 	}
 
@@ -258,9 +274,10 @@ class AuthMiddlewareTest extends TestCase
 	#[Group('units')]
 	public function testProcessAutoLoginWithCookieAndLogin(): void
 	{
+		$this->handlerMock->expects($this->never())->method($this->anything());
 		$this->mockPage('/login');
 
-		$this->requestMock->method('getAttribute')
+		$this->requestMock->expects($this->atLeastOnce())->method('getAttribute')
 			->willReturnCallback(function ($param)
 			{
 				if ($param === 'cookie')
@@ -273,14 +290,14 @@ class AuthMiddlewareTest extends TestCase
 
 		$this->sessionMock->method('exists')->with('user')->willReturn(false);
 
-		$userEntityMock = $this->createMock(UserEntity::class);
-		$this->authServiceMock->method('loginByCookie')->willReturn($userEntityMock);
+		$userEntityStub = $this->createStub(UserEntity::class);
+		$this->authServiceStub->method('loginByCookie')->willReturn($userEntityStub);
 		$this->cookieMock->method('hasCookie')->with(AutoLoginService::COOKIE_NAME_AUTO_LOGIN)->willReturn(true);
-		$userEntityMock->method('getMain')->willReturn(['UID' => 1, 'locale' => 'en']);
+		$userEntityStub->method('getMain')->willReturn(['UID' => 1, 'locale' => 'en']);
 
 		$this->sessionMock->expects($this->exactly(2))->method('set');
 
-		$middleware = new AuthMiddleware($this->authServiceMock);
+		$middleware = new AuthMiddleware($this->authServiceStub);
 		$response = $middleware->process($this->requestMock, $this->handlerMock);
 
 		static::assertEquals(302, $response->getStatusCode());
@@ -300,9 +317,16 @@ class AuthMiddlewareTest extends TestCase
 	 */
 	private function mockPage(string $page): void
 	{
-		$uriInterfaceMock = $this->createMock(UriInterface::class);
-		$this->requestMock->method('getUri')->willReturn($uriInterfaceMock);
-		$uriInterfaceMock->method('getPath')->willReturn($page);
+		$uriInterfaceStub = $this->createStub(UriInterface::class);
+		$this->requestMock->method('getUri')->willReturn($uriInterfaceStub);
+		$uriInterfaceStub->method('getPath')->willReturn($page);
 	}
 
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
+	}
 }

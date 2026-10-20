@@ -35,16 +35,16 @@ class EmailRendererTest extends TestCase
 	#[Group('units')]
 	public function testRenderWithMinimumAttributes(): void
 	{
-		$fieldMock = $this->createMock(EmailField::class);
-		$fieldMock->method('getName')->willReturn('email_1');
-		$fieldMock->method('getTitle')->willReturn('edit email_1');
-		$fieldMock->method('getId')->willReturn('email_1');
-		$fieldMock->method('getValue')->willReturn('test@test.kl');
-		$fieldMock->method('getValidationRules')->willReturn([]);
-		$fieldMock->method('getAttributes')->willReturn([]);
+		$fieldStub = $this->createStub(EmailField::class);
+		$fieldStub->method('getName')->willReturn('email_1');
+		$fieldStub->method('getTitle')->willReturn('edit email_1');
+		$fieldStub->method('getId')->willReturn('email_1');
+		$fieldStub->method('getValue')->willReturn('test@test.kl');
+		$fieldStub->method('getValidationRules')->willReturn([]);
+		$fieldStub->method('getAttributes')->willReturn([]);
 
 		$renderer = new EmailRenderer();
-		$result = $renderer->render($fieldMock);
+		$result = $renderer->render($fieldStub);
 
 		$expected = '<input type="email" name="email_1" id="email_1" value="test@test.kl" title="edit email_1" aria-describedby="error_email_1">';
 		static::assertSame($expected, $result);

@@ -27,13 +27,13 @@ use App\Modules\Player\Enums\TemplateIndexFiles;
 use App\Modules\Player\IndexCreation\IndexTemplateSelector;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class IndexTemplateSelectorTest extends TestCase
 {
 	private IndexTemplateSelector $selector;
-	private PlayerEntity&MockObject $playerEntityMock;
+	private PlayerEntity&Stub $playerEntityStub;
 
 	/**
 	 * @throws Exception
@@ -42,17 +42,17 @@ class IndexTemplateSelectorTest extends TestCase
 	{
 		parent::setUp();
 		$this->selector = new IndexTemplateSelector();
-		$this->playerEntityMock = $this->createMock(PlayerEntity::class);
+		$this->playerEntityStub = $this->createStub(PlayerEntity::class);
 	}
 
 	#[Group('units')]
 	public function testSelectReturnsXmp2xxxForIadeaXmp2x00(): void
 	{
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getModel')
 			->willReturn(PlayerModel::IADEA_XMP2X00);
 
-		$result = $this->selector->select($this->playerEntityMock);
+		$result = $this->selector->select($this->playerEntityStub);
 
 		static::assertSame(TemplateIndexFiles::XMP2XXX, $result);
 	}
@@ -60,11 +60,11 @@ class IndexTemplateSelectorTest extends TestCase
 	#[Group('units')]
 	public function testSelectReturnsXmp2xxxForQBic(): void
 	{
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getModel')
 			->willReturn(PlayerModel::QBIC);
 
-		$result = $this->selector->select($this->playerEntityMock);
+		$result = $this->selector->select($this->playerEntityStub);
 
 		static::assertSame(TemplateIndexFiles::XMP2XXX, $result);
 	}
@@ -72,15 +72,15 @@ class IndexTemplateSelectorTest extends TestCase
 	#[Group('units')]
 	public function testSelectReturnsGarlicForGarlicWithValidFirmware(): void
 	{
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getModel')
 			->willReturn(PlayerModel::GARLIC);
 
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getFirmwareVersion')
 			->willReturn('1.0.566');
 
-		$result = $this->selector->select($this->playerEntityMock);
+		$result = $this->selector->select($this->playerEntityStub);
 
 		static::assertSame(TemplateIndexFiles::GARLIC, $result);
 	}
@@ -88,15 +88,15 @@ class IndexTemplateSelectorTest extends TestCase
 	#[Group('units')]
 	public function testSelectReturnsSimpleForGarlicWithInvalidFirmware(): void
 	{
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getModel')
 			->willReturn(PlayerModel::GARLIC);
 
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getFirmwareVersion')
 			->willReturn('1.0.565');
 
-		$result = $this->selector->select($this->playerEntityMock);
+		$result = $this->selector->select($this->playerEntityStub);
 
 		static::assertSame(TemplateIndexFiles::SIMPLE, $result);
 	}
@@ -104,11 +104,11 @@ class IndexTemplateSelectorTest extends TestCase
 	#[Group('units')]
 	public function testSelectReturnsSimpleForIadeaXmp1x0(): void
 	{
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getModel')
 			->willReturn(PlayerModel::IADEA_XMP1X0);
 
-		$result = $this->selector->select($this->playerEntityMock);
+		$result = $this->selector->select($this->playerEntityStub);
 
 		static::assertSame(TemplateIndexFiles::SIMPLE, $result);
 	}
@@ -116,22 +116,22 @@ class IndexTemplateSelectorTest extends TestCase
 	#[Group('units')]
 	public function testSelectReturnsSimpleForScreenLite(): void
 	{
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getModel')
 			->willReturn(PlayerModel::SCREENLITE);
 
-		$result = $this->selector->select($this->playerEntityMock);
+		$result = $this->selector->select($this->playerEntityStub);
 
 		static::assertSame(TemplateIndexFiles::SIMPLE, $result);
 	}
 	#[Group('units')]
 	public function testSelectReturnsSimpleForUnknownModel(): void
 	{
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getModel')
 			->willReturn(PlayerModel::UNKNOWN);
 
-		$result = $this->selector->select($this->playerEntityMock);
+		$result = $this->selector->select($this->playerEntityStub);
 
 		static::assertSame(TemplateIndexFiles::SIMPLE, $result);
 	}

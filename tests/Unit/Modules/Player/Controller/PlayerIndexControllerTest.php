@@ -28,6 +28,7 @@ use App\Modules\Player\Services\PlayerIndexService;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -38,7 +39,7 @@ class PlayerIndexControllerTest extends TestCase
 	private IndexResponseHandler&MockObject $indexResponseHandler;
 	private Sanitizer&MockObject $sanitizerMock;
 	private ResponseInterface&MockObject $responseMock;
-	private ServerRequestInterface&MockObject $requestMock;
+	private ServerRequestInterface&Stub $requestStub;
 	private PlayerIndexController $playerIndexController;
 
 	/**
@@ -50,7 +51,7 @@ class PlayerIndexControllerTest extends TestCase
 		$this->playerIndexServiceMock = $this->createMock(PlayerIndexService::class);
 		$this->indexResponseHandler   = $this->createMock(IndexResponseHandler::class);
 		$this->sanitizerMock          = $this->createMock(Sanitizer::class);
-		$this->requestMock            = $this->createMock(ServerRequestInterface::class);
+		$this->requestStub            = $this->createStub(ServerRequestInterface::class);
 		$this->responseMock           = $this->createMock(ResponseInterface::class);
 
 		$this->playerIndexController = new PlayerIndexController($this->playerIndexServiceMock, $this->indexResponseHandler, $this->sanitizerMock);
@@ -64,8 +65,8 @@ class PlayerIndexControllerTest extends TestCase
 			'HTTP_X_SIGNAGE_AGENT' => 'extra useragent',
 			'SERVER_NAME' => 'extern'
 		];
-		$this->requestMock->method('getQueryParams')->willReturn([]);
-		$this->requestMock->method('getServerParams')->willReturn($server);
+		$this->requestStub->method('getQueryParams')->willReturn([]);
+		$this->requestStub->method('getServerParams')->willReturn($server);
 
 		$this->sanitizerMock->method('int')->with(0)->willReturn(0);
 		$this->playerIndexServiceMock->method('setUID')->with(0);
@@ -81,15 +82,15 @@ class PlayerIndexControllerTest extends TestCase
 			->with(404)
 			->willReturnSelf();
 
-		$this->playerIndexController->index($this->requestMock, $this->responseMock);
+		$this->playerIndexController->index($this->requestStub, $this->responseMock);
 	}
 
 	#[Group('units')]
 	public function testIndexHandlesLocalhostPlayer(): void
 	{
 		$serverData = ['HTTP_USER_AGENT' => 'TestAgent', 'SERVER_NAME' => 'localhost', 'REMOTE_ADDR' => '192.168.1.10', 'port' => 80];
-		$this->requestMock->method('getQueryParams')->willReturn([]);
-		$this->requestMock->method('getServerParams')->willReturn($serverData);
+		$this->requestStub->method('getQueryParams')->willReturn([]);
+		$this->requestStub->method('getServerParams')->willReturn($serverData);
 		$this->sanitizerMock->method('int')->with(0)->willReturn(0);
 		$this->playerIndexServiceMock->method('setUID')->with(0);
 		$this->playerIndexServiceMock->method('handleIndexRequest')
@@ -105,15 +106,15 @@ class PlayerIndexControllerTest extends TestCase
 			->with(404)
 			->willReturnSelf();
 
-		$this->playerIndexController->index($this->requestMock, $this->responseMock);
+		$this->playerIndexController->index($this->requestStub, $this->responseMock);
 	}
 
 	#[Group('units')]
 	public function testIndexHandlesDdevPlayer(): void
 	{
 		$serverData = ['HTTP_USER_AGENT' => 'TestAgent', 'REQUEST_METHOD' => 'HEAD', 'SERVER_NAME' => 'garlic-hub.ddev.site', 'REMOTE_ADDR' => '192.168.1.10', 'port' => 80];
-		$this->requestMock->method('getQueryParams')->willReturn([]);
-		$this->requestMock->method('getServerParams')->willReturn($serverData);
+		$this->requestStub->method('getQueryParams')->willReturn([]);
+		$this->requestStub->method('getServerParams')->willReturn($serverData);
 
 		$this->sanitizerMock->method('int')->with(0)->willReturn(0);
 		$this->playerIndexServiceMock->method('setUID')->with(0);
@@ -129,12 +130,13 @@ class PlayerIndexControllerTest extends TestCase
 			->with(404)
 			->willReturnSelf();
 
-		$this->playerIndexController->index($this->requestMock, $this->responseMock);
+		$this->playerIndexController->index($this->requestStub, $this->responseMock);
 	}
 
 	#[Group('units')]
 	public function testSendHead(): void
 	{
+		$this->responseMock->expects($this->never())->method($this->anything());
 		$filePath = '/tmp/test.smil';
 		$server = [
 			'HTTP_USER_AGENT' => 'TestAgent',
@@ -142,8 +144,8 @@ class PlayerIndexControllerTest extends TestCase
 			'REQUEST_METHOD' => 'HEAD'
 		];
 
-		$this->requestMock->method('getQueryParams')->willReturn([]);
-		$this->requestMock->method('getServerParams')->willReturn($server);
+		$this->requestStub->method('getQueryParams')->willReturn([]);
+		$this->requestStub->method('getServerParams')->willReturn($server);
 
 		$this->sanitizerMock->method('int')->with(0)->willReturn(0);
 		$this->playerIndexServiceMock->method('setUID')->with(0);
@@ -157,12 +159,13 @@ class PlayerIndexControllerTest extends TestCase
 			->willReturn($this->responseMock);
 		$this->indexResponseHandler->expects($this->never())->method('doGET');
 
-		$this->playerIndexController->index($this->requestMock, $this->responseMock);
+		$this->playerIndexController->index($this->requestStub, $this->responseMock);
 	}
 
 	#[Group('units')]
 	public function testSendGet(): void
 	{
+		$this->responseMock->expects($this->never())->method($this->anything());
 		$filePath = '/tmp/test.smil';
 		$server = [
 			'HTTP_USER_AGENT' => 'TestAgent',
@@ -171,8 +174,8 @@ class PlayerIndexControllerTest extends TestCase
 			'REQUEST_METHOD' => 'GET'
 		];
 
-		$this->requestMock->method('getQueryParams')->willReturn([]);
-		$this->requestMock->method('getServerParams')->willReturn($server);
+		$this->requestStub->method('getQueryParams')->willReturn([]);
+		$this->requestStub->method('getServerParams')->willReturn($server);
 
 		$this->sanitizerMock->method('int')->with(0)->willReturn(0);
 		$this->playerIndexServiceMock->method('setUID')->with(0);
@@ -186,7 +189,7 @@ class PlayerIndexControllerTest extends TestCase
 			->with($this->responseMock)
 			->willReturn($this->responseMock);
 
-		$this->playerIndexController->index($this->requestMock, $this->responseMock);
+		$this->playerIndexController->index($this->requestStub, $this->responseMock);
 	}
 
 }

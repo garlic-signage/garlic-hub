@@ -35,12 +35,13 @@ use App\Modules\Playlists\Collector\Contracts\PlaylistStructureInterface;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class TemplatePreparerTest extends TestCase
 {
-	private PlayerEntity&MockObject $playerEntityMock;
-	private PlaylistStructureInterface&MockObject $playlistStructureMock;
+	private PlayerEntity&Stub $playerEntityStub;
+	private PlaylistStructureInterface&Stub $playlistStructureStub;
 	private PreparerFactory&MockObject $preparerFactoryMock;
 	private TemplatePreparer $templatePreparer;
 
@@ -50,13 +51,13 @@ class TemplatePreparerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->playerEntityMock = $this->createMock(PlayerEntity::class);
-		$this->playlistStructureMock = $this->createMock(PlaylistStructureInterface::class);
+		$this->playerEntityStub = $this->createStub(PlayerEntity::class);
+		$this->playlistStructureStub = $this->createStub(PlaylistStructureInterface::class);
 		$this->preparerFactoryMock = $this->createMock(PreparerFactory::class);
 
 		$this->templatePreparer = new TemplatePreparer($this->preparerFactoryMock);
-		$this->templatePreparer->setPlayerEntity($this->playerEntityMock);
-		$this->templatePreparer->setPlaylistStructure($this->playlistStructureMock);
+		$this->templatePreparer->setPlayerEntity($this->playerEntityStub);
+		$this->templatePreparer->setPlaylistStructure($this->playlistStructureStub);
 	}
 
 	/**
@@ -73,21 +74,21 @@ class TemplatePreparerTest extends TestCase
 		$screenTimesMock  = $this->createMock(ScreenTimesPreparer::class);
 		$playlistMock     = $this->createMock(PlaylistPreparer::class);
 
-		$this->preparerFactoryMock->expects($this->any())
+		$this->preparerFactoryMock->expects($this->atLeastOnce())
 			->method('create')
 			->willReturnMap([
-				[IndexSections::META, $this->playerEntityMock, $metaMock],
-				[IndexSections::SUBSCRIPTIONS, $this->playerEntityMock, $subscriptionMock],
-				[IndexSections::LAYOUT, $this->playerEntityMock, $layoutMock],
-				[IndexSections::STANDBY_TIMES, $this->playerEntityMock, $screenTimesMock],
-				[IndexSections::PLAYLIST, $this->playerEntityMock, $playlistMock],
+				[IndexSections::META, $this->playerEntityStub, $metaMock],
+				[IndexSections::SUBSCRIPTIONS, $this->playerEntityStub, $subscriptionMock],
+				[IndexSections::LAYOUT, $this->playerEntityStub, $layoutMock],
+				[IndexSections::STANDBY_TIMES, $this->playerEntityStub, $screenTimesMock],
+				[IndexSections::PLAYLIST, $this->playerEntityStub, $playlistMock],
 			]);
 		$metaMock->expects($this->once())->method('prepare')->willReturn(['meta']);
 		$subscriptionMock->expects($this->once())->method('prepare')->willReturn(['subscriptions']);
 		$layoutMock->expects($this->once())->method('prepare')->willReturn(['layout']);
 		$screenTimesMock->expects($this->once())->method('prepare')->willReturn(['standby']);
 		$playlistMock->expects($this->once())->method('setPlaylistStructure')
-			->with($this->playlistStructureMock)
+			->with($this->playlistStructureStub)
 			->willReturnSelf();
 		$playlistMock->expects($this->once())->method('prepare')->willReturn(['playlist']);
 
@@ -116,21 +117,21 @@ class TemplatePreparerTest extends TestCase
 		$screenTimesMock  = $this->createMock(ScreenTimesPreparer::class);
 		$playlistMock     = $this->createMock(PlaylistPreparer::class);
 
-		$this->preparerFactoryMock->expects($this->any())
+		$this->preparerFactoryMock->expects($this->atLeastOnce())
 			->method('create')
 			->willReturnMap([
-				[IndexSections::META, $this->playerEntityMock, $metaMock],
-				[IndexSections::SUBSCRIPTIONS, $this->playerEntityMock, $subscriptionMock],
-				[IndexSections::LAYOUT, $this->playerEntityMock, $layoutMock],
-				[IndexSections::STANDBY_TIMES, $this->playerEntityMock, $screenTimesMock],
-				[IndexSections::PLAYLIST, $this->playerEntityMock, $playlistMock],
+				[IndexSections::META, $this->playerEntityStub, $metaMock],
+				[IndexSections::SUBSCRIPTIONS, $this->playerEntityStub, $subscriptionMock],
+				[IndexSections::LAYOUT, $this->playerEntityStub, $layoutMock],
+				[IndexSections::STANDBY_TIMES, $this->playerEntityStub, $screenTimesMock],
+				[IndexSections::PLAYLIST, $this->playerEntityStub, $playlistMock],
 			]);
 		$metaMock->expects($this->once())->method('prepare')->willReturn(['meta']);
 		$subscriptionMock->expects($this->once())->method('prepare')->willReturn(['subscriptions']);
 		$layoutMock->expects($this->once())->method('prepare')->willReturn(['layout']);
 		$screenTimesMock->expects($this->once())->method('prepare')->willReturn(['standby']);
 		$playlistMock->expects($this->once())->method('setPlaylistStructure')
-			->with($this->playlistStructureMock)
+			->with($this->playlistStructureStub)
 			->willReturnSelf();
 		$playlistMock->expects($this->once())->method('prepare')->willReturn(['playlist']);
 
@@ -157,17 +158,17 @@ class TemplatePreparerTest extends TestCase
 		$layoutMock       = $this->createMock(LayoutPreparer::class);
 		$playlistMock     = $this->createMock(PlaylistPreparer::class);
 
-		$this->preparerFactoryMock->expects($this->any())
+		$this->preparerFactoryMock->expects($this->atLeastOnce())
 			->method('create')
 			->willReturnMap([
-				[IndexSections::META, $this->playerEntityMock, $metaMock],
-				[IndexSections::LAYOUT, $this->playerEntityMock, $layoutMock],
-				[IndexSections::PLAYLIST, $this->playerEntityMock, $playlistMock],
+				[IndexSections::META, $this->playerEntityStub, $metaMock],
+				[IndexSections::LAYOUT, $this->playerEntityStub, $layoutMock],
+				[IndexSections::PLAYLIST, $this->playerEntityStub, $playlistMock],
 			]);
 		$metaMock->expects($this->once())->method('prepare')->willReturn(['meta']);
 		$layoutMock->expects($this->once())->method('prepare')->willReturn(['layout']);
 		$playlistMock->expects($this->once())->method('setPlaylistStructure')
-			->with($this->playlistStructureMock)
+			->with($this->playlistStructureStub)
 			->willReturnSelf();
 		$playlistMock->expects($this->once())->method('prepare')->willReturn(['playlist']);
 

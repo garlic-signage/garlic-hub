@@ -64,11 +64,11 @@ class FieldsRenderFactoryTest extends TestCase
 	#[Group('units')]
 	public function testGetRendererForUnsupportedField(): void
 	{
-		$fieldMock = $this->createMock(FieldInterface::class);
+		$fieldStub = $this->createStub(FieldInterface::class);
 
 		$this->expectException(InvalidArgumentException::class);
 		$this->expectExceptionMessage('Unsupported field type: ');
-		$this->fieldsRenderFactory->getRenderer($fieldMock);
+		$this->fieldsRenderFactory->getRenderer($fieldStub);
 	}
 
 	/**
@@ -77,13 +77,13 @@ class FieldsRenderFactoryTest extends TestCase
 	#[Group('units')]
 	public function testGetRendererForSupportedField(): void
 	{
-		$textFieldMock = $this->createMock(TextField::class);
-		$textRenderFieldMock = $this->createMock(TextRenderer::class);
+		$textFieldStub = $this->createStub(TextField::class);
+		$textRenderFieldStub = $this->createStub(TextRenderer::class);
 
 		$renderedText = '<input type="text" name="" id="" value="0" aria-describedby="error_">';
-		$textRenderFieldMock->method('render');
+		$textRenderFieldStub->method('render');
 
-		static::assertSame($renderedText,  $this->fieldsRenderFactory->getRenderer($textFieldMock));
+		static::assertSame($renderedText,  $this->fieldsRenderFactory->getRenderer($textFieldStub));
 	}
 
 	#[Group('units')]

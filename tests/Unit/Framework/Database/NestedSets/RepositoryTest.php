@@ -387,6 +387,7 @@ class RepositoryTest extends TestCase
 	#[Group('units')]
 	public function testMoveSubTree(): void
 	{
+		$this->resultMock->expects($this->never())->method($this->anything());
 		$movedNode  = ['node_id' => 2, 'lft' => 1, 'rgt' => 2, 'root_id' => 1, 'parent_id' => 1, 'level' => 1];
 		$targetNode = ['node_id' => 3, 'lft' => 1, 'rgt' => 2, 'root_id' => 2, 'parent_id' => 2, 'level' => 1];
 		$diffLevel = 0;
@@ -438,6 +439,7 @@ class RepositoryTest extends TestCase
 	#[Group('units')]
 	public function testMoveNodesToRightForInsert(): void
 	{
+		$this->resultMock->expects($this->never())->method($this->anything());
 		$rootId = 2;
 		$width = 6;
 		$position = 3;
@@ -475,6 +477,7 @@ class RepositoryTest extends TestCase
 	#[Group('units')]
 	public function testMoveNodesToLeftForInsert(): void
 	{
+		$this->resultMock->expects($this->never())->method($this->anything());
 		$rootId = 2;
 		$width = 6;
 		$position = 3;
@@ -510,6 +513,7 @@ class RepositoryTest extends TestCase
 	#[Group('units')]
 	public function testMoveNodesToLeftForDeletion(): void
 	{
+		$this->resultMock->expects($this->never())->method($this->anything());
 		$rootId = 2;
 		$width = 6;
 		$position = 3;
@@ -544,6 +548,7 @@ class RepositoryTest extends TestCase
 	#[Group('units')]
 	public function testMoveNodesToRightForDeletionMock(): void
 	{
+		$this->resultMock->expects($this->never())->method($this->anything());
 		$rootId = 1;
 		$width  = 6;
 		$position = 3;
@@ -578,6 +583,7 @@ class RepositoryTest extends TestCase
 	#[Group('units')]
 	public function testDeleteFullTree(): void
 	{
+		$this->resultMock->expects($this->never())->method($this->anything());
 		$node = ['root_id' => 1, 'rgt' => 6, 'lft' => 3];
 		$this->connectionMock->expects($this->once())->method('createQueryBuilder')
 			->willReturn($this->queryBuilderMock);

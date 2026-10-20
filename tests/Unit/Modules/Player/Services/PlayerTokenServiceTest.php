@@ -68,6 +68,7 @@ class PlayerTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testStoreTokenSuccessInsert(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playerId = 1;
 		$accessToken = 'test-token';
 		$expiresAt = '2025-12-31 23:59:59';
@@ -102,6 +103,7 @@ class PlayerTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testStoreTokenSuccessUpdate(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playerId = 1;
 		$accessToken = 'test-token';
 		$expiresAt = '2025-12-31 23:59:59';
@@ -164,6 +166,7 @@ class PlayerTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testGetTokenSuccess(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playerId = 1;
 		$encryptedToken = Crypto::encrypt('test-token', Key::loadFromAsciiSafeString($this->testKey));
 		$tokenData = [
@@ -190,6 +193,8 @@ class PlayerTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testGetTokenExpired(): void
 	{
+		$this->cryptMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playerId = 1;
 		$expiredTokenData = [
 			'player_id' => $playerId,
@@ -213,6 +218,8 @@ class PlayerTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testGetTokenEmptyResponse(): void
 	{
+		$this->cryptMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playerId = 1;
 
 		$this->playerTokenRepositoryMock->expects($this->once())->method('findByPlayerId')
@@ -227,6 +234,8 @@ class PlayerTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testGetTokenFailure(): void
 	{
+		$this->cryptMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playerId = 1;
 
 		$this->playerTokenRepositoryMock->expects($this->once())->method('findByPlayerId')
@@ -246,6 +255,7 @@ class PlayerTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testHasValidTokenSuccess(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playerId = 1;
 		$encryptedToken = Crypto::encrypt('test-token', Key::loadFromAsciiSafeString($this->testKey));
 		$tokenData = [
@@ -270,6 +280,8 @@ class PlayerTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testHasValidTokenFailure(): void
 	{
+		$this->cryptMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playerId = 1;
 
 		$this->playerTokenRepositoryMock->expects($this->once())->method('findByPlayerId')
@@ -287,6 +299,8 @@ class PlayerTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testCleanupExpiredTokensSuccess(): void
 	{
+		$this->cryptMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$deletedCount = 3;
 
 		$this->playerTokenRepositoryMock->expects($this->once())->method('deleteBy')

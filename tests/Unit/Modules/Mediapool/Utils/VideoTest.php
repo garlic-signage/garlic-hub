@@ -35,12 +35,13 @@ use League\Flysystem\FilesystemException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class VideoTest extends TestCase
 {
 	private Video $video;
-	private Filesystem&MockObject $filesystemMock;
+	private Filesystem&Stub $filesystemStub;
 	private Imagick&MockObject $imagickMock;
 	private Ffmpeg&MockObject $ffmpegMock;
 
@@ -51,12 +52,12 @@ class VideoTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$configMock = $this->createMock(Config::class);
-		$this->filesystemMock = $this->createMock(Filesystem::class);
+		$configStub = $this->createStub(Config::class);
+		$this->filesystemStub = $this->createStub(Filesystem::class);
 		$this->imagickMock = $this->createMock(Imagick::class);
 		$this->ffmpegMock = $this->createMock(Ffmpeg::class);
 
-		$configMock->method('getConfigValue')
+		$configStub->method('getConfigValue')
 			->willReturnMap([
 				['width', 'mediapool', 'max_resolution', '3840'],
 				['height', 'mediapool', 'max_resolution', '3840'],
@@ -70,7 +71,7 @@ class VideoTest extends TestCase
 				['videos', 'mediapool', 'max_file_sizes', '1073741824']
 			]);
 
-		$this->video = new Video($configMock, $this->filesystemMock, $this->ffmpegMock, $this->imagickMock);
+		$this->video = new Video($configStub, $this->filesystemStub, $this->ffmpegMock, $this->imagickMock);
 		$this->video->setStoragePaths('mediapool');
 	}
 
@@ -80,7 +81,8 @@ class VideoTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileBeforeUploadValidSizeDoesNotThrowException(): void
 	{
-		$this->expectNotToPerformAssertions();
+		$this->imagickMock->expects($this->never())->method($this->anything());
+		$this->ffmpegMock->expects($this->never())->method($this->anything());
 		$this->video->checkFileBeforeUpload(1073741824);
 	}
 
@@ -90,6 +92,8 @@ class VideoTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileBeforeUploadExceedsMaxSizeThrowsModuleException(): void
 	{
+		$this->imagickMock->expects($this->never())->method($this->anything());
+		$this->ffmpegMock->expects($this->never())->method($this->anything());
 		$this->expectException(ModuleException::class);
 		$this->video->checkFileBeforeUpload(1073741824 + 1);
 	}
@@ -103,8 +107,9 @@ class VideoTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileAfterUploadFileExistsDoesNotThrowException(): void
 	{
-		$this->filesystemMock->method('fileExists')->willReturn(true);
-		$this->filesystemMock->method('fileSize')->willReturn(1073741824);
+		$this->imagickMock->expects($this->never())->method($this->anything());
+		$this->filesystemStub->method('fileExists')->willReturn(true);
+		$this->filesystemStub->method('fileSize')->willReturn(1073741824);
 		$this->ffmpegMock->method('init')->with('/path/to/file');
 		$properties = ['width' => 3840, 'height' => 3840];
 		$this->ffmpegMock->method('getMediaProperties')->willReturn($properties);
@@ -121,8 +126,10 @@ class VideoTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileAfterUploadFileNotExistsThrowsModuleException(): void
 	{
+		$this->imagickMock->expects($this->never())->method($this->anything());
+		$this->ffmpegMock->expects($this->never())->method($this->anything());
 		$this->expectException(ModuleException::class);
-		$this->filesystemMock->method('fileExists')->willReturn(false);
+		$this->filesystemStub->method('fileExists')->willReturn(false);
 		$this->video->validateStoredFile('/path/to/file');
 	}
 
@@ -135,9 +142,11 @@ class VideoTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileAfterUploadExceedsMaxSizeThrowsModuleException(): void
 	{
+		$this->imagickMock->expects($this->never())->method($this->anything());
+		$this->ffmpegMock->expects($this->never())->method($this->anything());
 		$this->expectException(ModuleException::class);
-		$this->filesystemMock->method('fileExists')->willReturn(true);
-		$this->filesystemMock->method('fileSize')->willReturn(1073741824 + 1);
+		$this->filesystemStub->method('fileExists')->willReturn(true);
+		$this->filesystemStub->method('fileSize')->willReturn(1073741824 + 1);
 		$this->video->validateStoredFile('/path/to/file');
 	}
 
@@ -150,9 +159,10 @@ class VideoTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileAfterUploadExceedsMaxWidthThrowsModuleException(): void
 	{
+		$this->imagickMock->expects($this->never())->method($this->anything());
 		$this->expectException(ModuleException::class);
-		$this->filesystemMock->method('fileExists')->willReturn(true);
-		$this->filesystemMock->method('fileSize')->willReturn(1073741824);
+		$this->filesystemStub->method('fileExists')->willReturn(true);
+		$this->filesystemStub->method('fileSize')->willReturn(1073741824);
 		$this->ffmpegMock->method('init')->with('/path/to/file');
 		$properties = ['width' => 3840 + 1, 'height' => 3840];
 		$this->ffmpegMock->method('getMediaProperties')->willReturn($properties);
@@ -169,9 +179,10 @@ class VideoTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileAfterUploadExceedsMaxHeightThrowsModuleException(): void
 	{
+		$this->imagickMock->expects($this->never())->method($this->anything());
 		$this->expectException(ModuleException::class);
-		$this->filesystemMock->method('fileExists')->willReturn(true);
-		$this->filesystemMock->method('fileSize')->willReturn(1073741824);
+		$this->filesystemStub->method('fileExists')->willReturn(true);
+		$this->filesystemStub->method('fileSize')->willReturn(1073741824);
 		$this->ffmpegMock->method('init')->with('/path/to/file');
 		$properties = ['width' => 3840, 'height' => 3840 + 1];
 		$this->ffmpegMock->method('getMediaProperties')->willReturn($properties);
@@ -187,7 +198,7 @@ class VideoTest extends TestCase
 	#[Group('units')]
 	public function testCreateThumbnail(): void
 	{
-		$this->filesystemMock->method('move');
+		$this->filesystemStub->method('move');
 		$this->imagickMock->expects($this->once())->method('readImage');
 		$this->imagickMock->expects($this->once())->method('thumbnailImage')->with(150, 150, true);
 		$this->imagickMock->expects($this->once())->method('writeImage');

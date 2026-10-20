@@ -81,9 +81,9 @@ class AclValidatorTest extends TestCase
 		$UID = 1;
 		$player = ['UID' => 2, 'company_id' => 4, 'player_id' => 12];
 
-		$configMock = $this->createMock(Config::class);
-		$this->aclHelperMock->expects($this->once())->method('getConfig')->willReturn($configMock);
-		$configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
+		$configStub = $this->createStub(Config::class);
+		$this->aclHelperMock->expects($this->once())->method('getConfig')->willReturn($configStub);
+		$configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
 
 		$result = $this->aclValidator->isPlayerEditable($UID, $player);
 

@@ -35,11 +35,12 @@ use App\Modules\Users\Services\AclValidator;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class DatatablePreparerTest extends TestCase
 {
-	private PrepareService&MockObject $prepareServiceMock;
+	private PrepareService&Stub $prepareServiceStub;
 	private AclValidator&MockObject $aclValidatorMock;
 	private Translator&MockObject $translatorMock;
 	private DatatablePreparer $datatablePreparer;
@@ -50,15 +51,15 @@ class DatatablePreparerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->prepareServiceMock = $this->createMock(PrepareService::class);
+		$this->prepareServiceStub = $this->createStub(PrepareService::class);
 		$this->aclValidatorMock = $this->createMock(AclValidator::class);
-		$parametersMock = $this->createMock(Parameters::class);
+		$parametersStub = $this->createStub(Parameters::class);
 		$this->translatorMock = $this->createMock(Translator::class);
 
 		$this->datatablePreparer = new DatatablePreparer(
-			$this->prepareServiceMock,
+			$this->prepareServiceStub,
 			$this->aclValidatorMock,
-			$parametersMock
+			$parametersStub
 		);
 	}
 
@@ -72,17 +73,20 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableBodyWithValidData(): void
 	{
-		$fields = [$this->createMock(HeaderField::class)];
+		$fields = [$this->createStub(HeaderField::class)];
 		$fields[0]->method('getName')->willReturn('username');
 		$fields[0]->method('isSortable')->willReturn(true);
 
 		$this->datatablePreparer->setTranslator($this->translatorMock);
+		// link title of the username and label of the edit action
+		$this->translatorMock->expects($this->exactly(2))->method('translate')
+			->willReturnMap([['edit', 'main', [], 'Edit'], ['edit_settings', 'users', [], 'Settings']]);
 		$this->aclValidatorMock->method('isSimpleAdmin')
 			->with(123)
 			->willReturn(true);
 
-		$this->prepareServiceMock->method('getBodyPreparer')
-			->willReturn($this->createMock(BodyPreparer::class));
+		$this->prepareServiceStub->method('getBodyPreparer')
+			->willReturn($this->createStub(BodyPreparer::class));
 
 		$result = $this->datatablePreparer->prepareTableBody(
 			[['UID' => 1, 'username' => 'testUser']],
@@ -102,6 +106,8 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableBodyWithEmptyData(): void
 	{
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$result = $this->datatablePreparer->prepareTableBody([], [], 123);
 
 		static::assertEmpty($result);
@@ -117,16 +123,16 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableBodyWithAdminPermissions(): void
 	{
-		$fields = [$this->createMock(HeaderField::class)];
+		$fields = [$this->createStub(HeaderField::class)];
 		$fields[0]->method('getName')->willReturn('username');
 		$fields[0]->method('isSortable')->willReturn(true);
 		$this->datatablePreparer->setTranslator($this->translatorMock);
 
-		$this->aclValidatorMock->method('isModuleAdmin')->willReturn(true);
+		$this->aclValidatorMock->expects($this->atLeastOnce())->method('isModuleAdmin')->willReturn(true);
 
-		$this->aclValidatorMock->method('isSimpleAdmin')->willReturn(true);
+		$this->aclValidatorMock->expects($this->atLeastOnce())->method('isSimpleAdmin')->willReturn(true);
 
-		$this->translatorMock->method('translate')
+		$this->translatorMock->expects($this->atLeastOnce())->method('translate')
 			->willReturnCallback(fn(string $key, string $module) => $module . '.' . $key);
 
 		$actionLink = ['LINK_ACTION' => 'users/edit/1'];
@@ -138,7 +144,7 @@ class DatatablePreparerTest extends TestCase
 		$bodyPreparerMock->expects($this->once())->method('formatActionDelete')
 			->with('main.delete', 'users.confirm_delete', '1', 'delete-user')
 			->willReturn($actionDelete);
-		$this->prepareServiceMock->method('getBodyPreparer')->willReturn($bodyPreparerMock);
+		$this->prepareServiceStub->method('getBodyPreparer')->willReturn($bodyPreparerMock);
 
 		$result = $this->datatablePreparer->prepareTableBody(
 			[['UID' => 1, 'username' => 'adminUser', 'status' => 0]],
@@ -160,14 +166,15 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableBodyWithPlatformEditionEdge(): void
 	{
-		$fields = [$this->createMock(HeaderField::class)];
+		$this->translatorMock->expects($this->never())->method($this->anything());
+		$fields = [$this->createStub(HeaderField::class)];
 		$fields[0]->method('getName')->willReturn('username');
 		$fields[0]->method('isSortable')->willReturn(true);
 
-		$configMock = $this->createMock(Config::class);
-		$configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
+		$configStub = $this->createStub(Config::class);
+		$configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
 
-		$this->aclValidatorMock->method('getConfig')->willReturn($configMock);
+		$this->aclValidatorMock->expects($this->atLeastOnce())->method('getConfig')->willReturn($configStub);
 
 		$bodyPreparerMock = $this->createMock(BodyPreparer::class);
 
@@ -175,7 +182,7 @@ class DatatablePreparerTest extends TestCase
 			->with('edgeUsername')
 			->willReturn(['formattedText' => 'edgeUsername']);
 
-		$this->prepareServiceMock->method('getBodyPreparer')->willReturn($bodyPreparerMock);
+		$this->prepareServiceStub->method('getBodyPreparer')->willReturn($bodyPreparerMock);
 
 		$result = $this->datatablePreparer->prepareTableBody(
 			[['UID' => 1, 'username' => 'edgeUsername']],
@@ -196,14 +203,16 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableBodyWithStatus(): void
 	{
-		$fields = [$this->createMock(HeaderField::class)];
+		$fields = [$this->createStub(HeaderField::class)];
 		$fields[0]->method('getName')->willReturn('status');
 		$fields[0]->method('isSortable')->willReturn(true);
 
-		$configMock = $this->createMock(Config::class);
-		$configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
+		$configStub = $this->createStub(Config::class);
+		$configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
 
-		$this->aclValidatorMock->method('getConfig')->willReturn($configMock);
+		$this->aclValidatorMock->method('getConfig')->willReturn($configStub);
+		// not the own user and no admin: no actions for this row
+		$this->aclValidatorMock->expects($this->once())->method('isSimpleAdmin')->with(123)->willReturn(false);
 		$this->datatablePreparer->setTranslator($this->translatorMock);
 
 		$status = ['deleted' => 'Deleted', 'banned' => 'Banned', 'inactive' => 'Inactive', 'active' => 'Active'];
@@ -216,7 +225,7 @@ class DatatablePreparerTest extends TestCase
 			->with('Active')
 			->willReturn(['formattedText' => 'Active']);
 
-		$this->prepareServiceMock
+		$this->prepareServiceStub
 			->method('getBodyPreparer')
 			->willReturn($bodyPreparerMock);
 
@@ -240,22 +249,25 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableBodyWithUnknown(): void
 	{
-		$fields = [$this->createMock(HeaderField::class)];
+		$fields = [$this->createStub(HeaderField::class)];
 		$fields[0]->method('getName')->willReturn('unknown_param');
 		$fields[0]->method('isSortable')->willReturn(false);
 
-		$configMock = $this->createMock(Config::class);
-		$configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
+		$configStub = $this->createStub(Config::class);
+		$configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
 
-		$this->aclValidatorMock->method('getConfig')->willReturn($configMock);
+		$this->aclValidatorMock->method('getConfig')->willReturn($configStub);
+		// not the own user and no admin: no actions for this row
+		$this->aclValidatorMock->expects($this->once())->method('isSimpleAdmin')->with(123)->willReturn(false);
 		$this->datatablePreparer->setTranslator($this->translatorMock);
+		$this->translatorMock->expects($this->never())->method($this->anything());
 
 		$bodyPreparerMock = $this->createMock(BodyPreparer::class);
 		$bodyPreparerMock->method('formatText')
 			->with('some_value')
 			->willReturn(['formattedText' => 'some_value']);
 
-		$this->prepareServiceMock->method('getBodyPreparer')->willReturn($bodyPreparerMock);
+		$this->prepareServiceStub->method('getBodyPreparer')->willReturn($bodyPreparerMock);
 
 		$result = $this->datatablePreparer->prepareTableBody(
 			[['UID' => 1, 'unknown_param' => 'some_value']],

@@ -29,6 +29,7 @@ use App\Modules\Player\Helper\PlayerPlaylist\Orchestrator;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -36,7 +37,7 @@ use Psr\Http\Message\StreamInterface;
 
 class PlayerPlaylistControllerTest extends TestCase
 {
-	private ResponseInterface&MockObject $responseMock;
+	private ResponseInterface&Stub $responseStub;
 	private ServerRequestInterface&MockObject $requestMock;
 	private Orchestrator&MockObject $orchestratorMock;
 	private PlayerPlaylistController $controller;
@@ -49,7 +50,7 @@ class PlayerPlaylistControllerTest extends TestCase
 		parent::setUp();
 		$this->orchestratorMock = $this->createMock(Orchestrator::class);
 		$this->requestMock      = $this->createMock(ServerRequestInterface::class);
-		$this->responseMock     = $this->createMock(ResponseInterface::class);
+		$this->responseStub     = $this->createStub(ResponseInterface::class);
 
 		$this->controller = new PlayerPlaylistController($this->orchestratorMock);
 	}
@@ -62,17 +63,17 @@ class PlayerPlaylistControllerTest extends TestCase
 			->method('getParsedBody')
 			->willReturn($inputData);
 
-		$expectedResponse = $this->createMock(ResponseInterface::class);
+		$expectedResponse = $this->createStub(ResponseInterface::class);
 
 		$this->orchestratorMock->expects($this->once())->method('setInput')
 			->with($inputData)
 			->willReturnSelf();
 
 		$this->orchestratorMock->expects($this->once())->method('validateForReplacePlaylist')
-			->with($this->responseMock)
+			->with($this->responseStub)
 			->willReturn($expectedResponse);
 
-		$result = $this->controller->replacePlaylist($this->requestMock, $this->responseMock);
+		$result = $this->controller->replacePlaylist($this->requestMock, $this->responseStub);
 
 		static::assertSame($expectedResponse, $result);
 	}
@@ -89,16 +90,16 @@ class PlayerPlaylistControllerTest extends TestCase
 			->willReturnSelf();
 
 		$this->orchestratorMock->expects($this->once())->method('validateForReplacePlaylist')
-			->with($this->responseMock)
+			->with($this->responseStub)
 			->willReturn(null);
 
-		$expectedResponse = $this->createMock(ResponseInterface::class);
+		$expectedResponse = $this->createStub(ResponseInterface::class);
 
 		$this->orchestratorMock->expects($this->once())->method('replaceMasterPlaylist')
-			->with($this->responseMock)
+			->with($this->responseStub)
 			->willReturn($expectedResponse);
 
-		$result = $this->controller->replacePlaylist($this->requestMock, $this->responseMock);
+		$result = $this->controller->replacePlaylist($this->requestMock, $this->responseStub);
 
 		static::assertSame($expectedResponse, $result);
 	}
@@ -110,17 +111,17 @@ class PlayerPlaylistControllerTest extends TestCase
 		$this->requestMock->expects($this->once())->method('getParsedBody')
 			->willReturn($inputData);
 
-		$expectedResponse = $this->createMock(ResponseInterface::class);
+		$expectedResponse = $this->createStub(ResponseInterface::class);
 
 		$this->orchestratorMock->expects($this->once())->method('setInput')
 			->with($inputData)
 			->willReturnSelf();
 
 		$this->orchestratorMock->expects($this->once())->method('validateStandardInput')
-			->with($this->responseMock)
+			->with($this->responseStub)
 			->willReturn($expectedResponse);
 
-		$result = $this->controller->pushPlaylist($this->requestMock, $this->responseMock);
+		$result = $this->controller->pushPlaylist($this->requestMock, $this->responseStub);
 
 		static::assertSame($expectedResponse, $result);
 	}
@@ -144,16 +145,16 @@ class PlayerPlaylistControllerTest extends TestCase
 			->willReturnSelf();
 
 		$this->orchestratorMock->expects($this->once())->method('validateStandardInput')
-			->with($this->responseMock)
+			->with($this->responseStub)
 			->willReturn(null);
 
-		$expectedResponse = $this->createMock(ResponseInterface::class);
+		$expectedResponse = $this->createStub(ResponseInterface::class);
 
 		$this->orchestratorMock->expects($this->once())->method('checkPlayer')
-			->with($this->responseMock)
+			->with($this->responseStub)
 			->willReturn($expectedResponse);
 
-		$result = $this->controller->pushPlaylist($this->requestMock, $this->responseMock);
+		$result = $this->controller->pushPlaylist($this->requestMock, $this->responseStub);
 
 		static::assertSame($expectedResponse, $result);
 	}
@@ -171,20 +172,20 @@ class PlayerPlaylistControllerTest extends TestCase
 			->willReturnSelf();
 
 		$this->orchestratorMock->expects($this->once())->method('validateStandardInput')
-			->with($this->responseMock)
+			->with($this->responseStub)
 			->willReturn(null);
 
 		$this->orchestratorMock->expects($this->once())->method('checkPlayer')
-			->with($this->responseMock)
+			->with($this->responseStub)
 			->willReturn(null);
 
-		$expectedResponse = $this->createMock(ResponseInterface::class);
+		$expectedResponse = $this->createStub(ResponseInterface::class);
 
 		$this->orchestratorMock->expects($this->once())->method('pushPlaylist')
-			->with($this->responseMock)
+			->with($this->responseStub)
 			->willReturn($expectedResponse);
 
-		$result = $this->controller->pushPlaylist($this->requestMock, $this->responseMock);
+		$result = $this->controller->pushPlaylist($this->requestMock, $this->responseStub);
 
 		static::assertSame($expectedResponse, $result);
 	}

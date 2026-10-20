@@ -40,10 +40,10 @@ class ClientsRepositoryTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$connectionMock = $this->createMock(Connection::class);
+		$connectionStub = $this->createStub(Connection::class);
 
 		$this->repository = $this->getMockBuilder(ClientsRepository::class)
-								 ->setConstructorArgs([$connectionMock])
+								 ->setConstructorArgs([$connectionStub])
 								 ->onlyMethods(['getFirstDataSet', 'findAllBy'])
 								 ->getMock();
 	}
@@ -61,8 +61,8 @@ class ClientsRepositoryTest extends TestCase
 			'client_name' => 'Test Client'
 		];
 
-		$this->repository->method('findAllBy')->willReturn([$clientData]);
-		$this->repository->method('getFirstDataSet')->willReturn($clientData);
+		$this->repository->expects($this->atLeastOnce())->method('findAllBy')->willReturn([$clientData]);
+		$this->repository->expects($this->atLeastOnce())->method('getFirstDataSet')->willReturn($clientData);
 
 		$clientEntity = $this->repository->getClientEntity('test-client-id');
 
@@ -75,8 +75,8 @@ class ClientsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testGetClientEntityReturnsNullIfClientNotFound(): void
 	{
-		$this->repository->method('findAllBy')->willReturn([]);
-		$this->repository->method('getFirstDataSet')->willReturn([]);
+		$this->repository->expects($this->atLeastOnce())->method('findAllBy')->willReturn([]);
+		$this->repository->expects($this->atLeastOnce())->method('getFirstDataSet')->willReturn([]);
 
 		$this->expectException(FrameworkException::class);
 		$this->expectExceptionMessage('Client not found');
@@ -98,8 +98,8 @@ class ClientsRepositoryTest extends TestCase
 			'grant_type' => 'authorization_code'
 		];
 
-		$this->repository->method('findAllBy')->willReturn([$clientData]);
-		$this->repository->method('getFirstDataSet')->willReturn($clientData);
+		$this->repository->expects($this->atLeastOnce())->method('findAllBy')->willReturn([$clientData]);
+		$this->repository->expects($this->atLeastOnce())->method('getFirstDataSet')->willReturn($clientData);
 
 		$isValid = $this->repository->validateClient('test-client-id', 'client-secret');
 
@@ -112,8 +112,8 @@ class ClientsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testValidateClientReturnsFalseWhenClientNotFound(): void
 	{
-		$this->repository->method('findAllBy')->willReturn([]);
-		$this->repository->method('getFirstDataSet')->willReturn([]);
+		$this->repository->expects($this->atLeastOnce())->method('findAllBy')->willReturn([]);
+		$this->repository->expects($this->atLeastOnce())->method('getFirstDataSet')->willReturn([]);
 
 		$isValid = $this->repository->validateClient('non-existent-client-id', 'client-secret');
 
@@ -133,8 +133,8 @@ class ClientsRepositoryTest extends TestCase
 			'grant_type' => 'authorization_code'
 		];
 
-		$this->repository->method('findAllBy')->willReturn([$clientData]);
-		$this->repository->method('getFirstDataSet')->willReturn($clientData);
+		$this->repository->expects($this->atLeastOnce())->method('findAllBy')->willReturn([$clientData]);
+		$this->repository->expects($this->atLeastOnce())->method('getFirstDataSet')->willReturn($clientData);
 
 		$isValid = $this->repository->validateClient('test-client-id', 'wrong-secret');
 
@@ -154,8 +154,8 @@ class ClientsRepositoryTest extends TestCase
 			'grant_type' => 'client_credentials'
 		];
 
-		$this->repository->method('findAllBy')->willReturn([$clientData]);
-		$this->repository->method('getFirstDataSet')->willReturn($clientData);
+		$this->repository->expects($this->atLeastOnce())->method('findAllBy')->willReturn([$clientData]);
+		$this->repository->expects($this->atLeastOnce())->method('getFirstDataSet')->willReturn($clientData);
 
 		$isValid = $this->repository->validateClient('test-client-id', 'client-secret');
 

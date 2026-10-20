@@ -75,6 +75,7 @@ class ShowAdminControllerTest extends TestCase
 	#[Group('units')]
 	public function testNewUserFormSuccessful(): void
 	{
+		$this->flashMock->expects($this->never())->method($this->anything());
 		$this->setStandardMocks();
 
 		$this->facadeMock->expects($this->once())->method('buildCreateNewParameter');
@@ -92,6 +93,7 @@ class ShowAdminControllerTest extends TestCase
 	#[Group('units')]
 	public function testEditUserFormSuccessful(): void
 	{
+		$this->flashMock->expects($this->never())->method($this->anything());
 		$this->setStandardMocks();
 
 		$userData = ['UID' => 1, 'username' => 'testuser'];
@@ -115,6 +117,8 @@ class ShowAdminControllerTest extends TestCase
 	#[Group('units')]
 	public function testEditUserFormInvalidUIDRedirectsToUsers(): void
 	{
+		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
+		$this->streamInterfaceMock->expects($this->never())->method($this->anything());
 		$this->setStandardMocks();
 
 		$args = ['UID' => 0];
@@ -136,6 +140,8 @@ class ShowAdminControllerTest extends TestCase
 	#[Group('units')]
 	public function testEditUserFormUserNotFoundRedirectsToUsers(): void
 	{
+		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
+		$this->streamInterfaceMock->expects($this->never())->method($this->anything());
 		$this->setStandardMocks();
 
 		$args = ['UID' => 999];
@@ -192,6 +198,8 @@ class ShowAdminControllerTest extends TestCase
 	#[Group('units')]
 	public function testStoreUserSuccessfully(): void
 	{
+		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
+		$this->streamInterfaceMock->expects($this->never())->method($this->anything());
 		$this->setStandardMocks();
 
 		$postData = ['UID' => '1', 'username' => 'JohnDoe', 'standardSubmit' => true];
@@ -217,6 +225,8 @@ class ShowAdminControllerTest extends TestCase
 	#[Group('units')]
 	public function testStorePasswordResetSuccessfully(): void
 	{
+		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
+		$this->streamInterfaceMock->expects($this->never())->method($this->anything());
 		$this->setStandardMocks();
 
 		$postData = ['UID' => '1', 'username' => 'JohnDoe', 'resetPassword' => true];
@@ -272,6 +282,8 @@ class ShowAdminControllerTest extends TestCase
 	#[Group('units')]
 	public function testStoreServiceErrorsWhenResettingPassword(): void
 	{
+		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
+		$this->streamInterfaceMock->expects($this->never())->method($this->anything());
 		$this->setStandardMocks();
 
 		$postData = ['UID' => '1', 'username' => 'JohnDoe', 'resetPassword' => true];
@@ -299,17 +311,17 @@ class ShowAdminControllerTest extends TestCase
 	 */
 	private function setStandardMocks(): void
 	{
-		$translatorMock = $this->createMock(Translator::class);
-		$sessionMock    = $this->createMock(Session::class);
+		$translatorStub = $this->createStub(Translator::class);
+		$sessionStub    = $this->createStub(Session::class);
 		$this->requestMock->expects($this->exactly(3))->method('getAttribute')
 			->willReturnMap([
 				['flash', null, $this->flashMock],
-				['translator', null, $translatorMock],
-				['session', null, $sessionMock],
+				['translator', null, $translatorStub],
+				['session', null, $sessionStub],
 			]);
 
 		$this->facadeMock->expects($this->once())->method('init')
-			->with($translatorMock, $sessionMock);
+			->with($translatorStub, $sessionStub);
 	}
 
 	/**

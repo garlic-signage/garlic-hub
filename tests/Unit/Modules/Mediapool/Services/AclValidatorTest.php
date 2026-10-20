@@ -53,6 +53,7 @@ class AclValidatorTest extends TestCase
 	#[Group('units')]
 	public function testCheckDirectoryPermissionsFailsNoUID(): void
 	{
+		$this->aclHelperMock->expects($this->never())->method($this->anything());
 		$UID       = 1;
 		$directory = ['foo' => 'bar'];
 		$this->expectException(ModuleException::class);
@@ -72,6 +73,11 @@ class AclValidatorTest extends TestCase
 	{
 		$UID = 1;
 		$directory = ['UID' => $UID, 'company_id' => 1, 'node_id' => 1, 'visibility' => 0, 'parent_id' => 0];
+
+		// the owner gets full rights, no further role checks
+		$this->aclHelperMock->expects($this->once())->method('isModuleAdmin')->with($UID, 'mediapool')->willReturn(false);
+		$this->aclHelperMock->expects($this->never())->method('isSubAdmin');
+		$this->aclHelperMock->expects($this->never())->method('isEditor');
 
 		$permissions = $this->aclValidator->checkDirectoryPermissions($UID, $directory);
 
@@ -276,6 +282,12 @@ class AclValidatorTest extends TestCase
 	{
 		$UID = 1;
 		$directory = ['UID' => 2, 'company_id' => 4, 'node_id' => 1, 'visibility' => AclValidator::VISIBILITY_PUBLIC, 'parent_id' => 0];
+
+		// no role at all, only the public visibility grants reading
+		$this->aclHelperMock->expects($this->once())->method('isModuleAdmin')->with($UID, 'mediapool')->willReturn(false);
+		$this->aclHelperMock->expects($this->once())->method('isSubAdmin')->with($UID, 'mediapool')->willReturn(false);
+		$this->aclHelperMock->expects($this->once())->method('isEditor')->with($UID, 'mediapool')->willReturn(false);
+		$this->aclHelperMock->expects($this->once())->method('isViewer')->with($UID, 'mediapool')->willReturn(false);
 
 		$permissions = $this->aclValidator->checkDirectoryPermissions($UID, $directory);
 

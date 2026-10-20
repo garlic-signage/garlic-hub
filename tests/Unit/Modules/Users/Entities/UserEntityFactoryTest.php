@@ -25,12 +25,12 @@ use App\Framework\Core\Config\Config;
 use App\Modules\Profile\Entities\UserEntityFactory;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class UserEntityFactoryTest extends TestCase
 {
-	private Config&MockObject $configMock;
+	private Config&Stub $configStub;
 	private UserEntityFactory $factory;
 
 	/**
@@ -39,8 +39,8 @@ class UserEntityFactoryTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->configMock = $this->createMock(Config::class);
-		$this->factory = new UserEntityFactory($this->configMock);
+		$this->configStub = $this->createStub(Config::class);
+		$this->factory = new UserEntityFactory($this->configStub);
 	}
 
 	#[Group('units')]
@@ -55,7 +55,7 @@ class UserEntityFactoryTest extends TestCase
 			'vip' => ['status' => 'gold'],
 		];
 
-		$this->configMock
+		$this->configStub
 			->method('getEdition')
 			->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
 
@@ -81,7 +81,7 @@ class UserEntityFactoryTest extends TestCase
 			'vip' => ['status' => 'silver'], // Ignoriert in Core
 		];
 
-		$this->configMock
+		$this->configStub
 			->method('getEdition')
 			->willReturn(Config::PLATFORM_EDITION_CORE);
 
@@ -107,7 +107,7 @@ class UserEntityFactoryTest extends TestCase
 			'vip' => ['status' => 'none'], // Ignored in Edge
 		];
 
-		$this->configMock
+		$this->configStub
 			->method('getEdition')
 			->willReturn(Config::PLATFORM_EDITION_EDGE);
 

@@ -62,6 +62,7 @@ class ValidatorTest extends TestCase
 	#[Group('units')]
 	public function testValidateUserInputWithValidData(): void
 	{
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$passwordPattern = '(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}';
 		$this->checkCsrfTokenTrue();
 

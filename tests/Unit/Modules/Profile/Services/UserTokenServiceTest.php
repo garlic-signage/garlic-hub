@@ -48,9 +48,9 @@ class UserTokenServiceTest extends TestCase
 		parent::setUp();
 		$this->userTokensRepositoryMock = $this->createMock(UserTokensRepository::class);
 		$this->cryptMock = $this->createMock(Crypt::class);
-		$loggerMock = $this->createMock(LoggerInterface::class);
+		$loggerStub = $this->createStub(LoggerInterface::class);
 
-		$this->userTokenService = new UserTokenService($this->userTokensRepositoryMock, $this->cryptMock, $loggerMock);
+		$this->userTokenService = new UserTokenService($this->userTokensRepositoryMock, $this->cryptMock, $loggerStub);
 	}
 
 	/**
@@ -59,6 +59,7 @@ class UserTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testFindTokenByUIDWithValidUID(): void
 	{
+		$this->cryptMock->expects($this->never())->method($this->anything());
 		$UID = 1;
 		$resultData = [
 			['token' => 'validToken1', 'UID' => 1, 'purpose' => 'testPurpose1', 'expires_at' => '2025-07-11 15:00:00', 'used_at' => null],
@@ -81,6 +82,9 @@ class UserTokenServiceTest extends TestCase
 	public function testFindByTokenForActionWithInvalidToken(): void
 	{
 		$token = 'invalidToken';
+		// only the hash of a token is stored
+		$this->cryptMock->expects($this->once())->method('createHmacSha256')->with($token)->willReturn('hashed');
+		$this->userTokensRepositoryMock->expects($this->once())->method('findFirstByToken')->with('hashed')->willReturn([]);
 		$result = $this->userTokenService->findByTokenForAction($token);
 		self::assertNull($result);
 	}
@@ -256,6 +260,7 @@ class UserTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testFindTokenByUIDWithInvalidUID(): void
 	{
+		$this->cryptMock->expects($this->never())->method($this->anything());
 		$UID = 42;
 		$this->userTokensRepositoryMock->expects($this->once())
 			->method('findValidByUID')
@@ -338,6 +343,7 @@ class UserTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteTokenWithValidToken(): void
 	{
+		$this->cryptMock->expects($this->never())->method($this->anything());
 		$this->userTokensRepositoryMock->expects($this->once())
 			->method('deleteBy')
 			->willReturn(1);
@@ -353,6 +359,7 @@ class UserTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteTokenWithInvalidHexToken(): void
 	{
+		$this->cryptMock->expects($this->never())->method($this->anything());
 
 		$this->userTokensRepositoryMock->expects($this->never())
 			->method('deleteBy');
@@ -383,6 +390,7 @@ class UserTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testRefreshTokenWithInvalidPurpose(): void
 	{
+		$this->userTokensRepositoryMock->expects($this->never())->method($this->anything());
 		$this->cryptMock->expects($this->never())->method('generateRandomBytes');
 
 		$result = $this->userTokenService->refreshToken(1, 'invalid_purpose');

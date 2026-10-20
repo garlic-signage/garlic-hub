@@ -69,9 +69,10 @@ class DatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testConfigureParametersDoesNothingForEdgeEdition(): void
 	{
+		$this->buildServiceMock->expects($this->never())->method($this->anything());
 		$this->aclValidatorMock
-			->method('getConfig')
-			->willReturn($this->createConfiguredMock(Config::class, ['getEdition' => Config::PLATFORM_EDITION_EDGE]));
+			->expects($this->atLeastOnce())->method('getConfig')
+			->willReturn($this->createConfiguredStub(Config::class, ['getEdition' => Config::PLATFORM_EDITION_EDGE]));
 
 		$this->parametersMock->expects($this->never())->method('addOwner');
 		$this->parametersMock->expects($this->never())->method('addCompany');
@@ -87,9 +88,10 @@ class DatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testConfigureParametersCallsAddOwnerAndCompanyForModuleAdmin(): void
 	{
+		$this->buildServiceMock->expects($this->never())->method($this->anything());
 		$this->aclValidatorMock
 			->method('getConfig')
-			->willReturn($this->createConfiguredMock(Config::class, ['getEdition' => 'some_other_edition']));
+			->willReturn($this->createConfiguredStub(Config::class, ['getEdition' => 'some_other_edition']));
 
 		$this->aclValidatorMock
 			->method('isModuleAdmin')
@@ -114,9 +116,10 @@ class DatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testConfigureParametersCallsAddOwnerAndCompanyForSubAdmin(): void
 	{
+		$this->buildServiceMock->expects($this->never())->method($this->anything());
 		$this->aclValidatorMock
 			->method('getConfig')
-			->willReturn($this->createConfiguredMock(Config::class, ['getEdition' => 'some_other_edition']));
+			->willReturn($this->createConfiguredStub(Config::class, ['getEdition' => 'some_other_edition']));
 
 		$this->aclValidatorMock
 			->method('isModuleAdmin')
@@ -136,6 +139,8 @@ class DatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testDetermineParametersSetsUserInputsAndParsesFilterAllUsers(): void
 	{
+		$this->buildServiceMock->expects($this->never())->method($this->anything());
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$queryParams = ['test_key' => 'test_value'];
 
 		$this->parametersMock->expects($this->once())
@@ -156,6 +161,7 @@ class DatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testBuildTitleSetsCorrectTitle(): void
 	{
+		$this->expectUntouched($this->buildServiceMock, $this->parametersMock, $this->aclValidatorMock);
 		$expectedTitle = 'Translated Title';
 		$translator = $this->createMock(Translator::class);
 		$this->builder->setTranslator($translator);
@@ -177,16 +183,18 @@ class DatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testCollectFormElements(): void
 	{
-		$translator = $this->createMock(Translator::class);
+		// the allowed playlist modes depend on the edition
+		$this->aclValidatorMock->expects($this->once())->method('getConfig')->willReturn($this->createStub(\App\Framework\Core\Config\Config::class));
+		$translator = $this->createStub(Translator::class);
 		$this->builder->setTranslator($translator);
 
-		$this->parametersMock->method('hasParameter')
+		$this->parametersMock->expects($this->atLeastOnce())->method('hasParameter')
 		->willReturnMap([
 			[BaseParameters::PARAMETER_UID, true]
 		]);
 
 
-		$this->parametersMock->method('getValueOfParameter')
+		$this->parametersMock->expects($this->atLeastOnce())->method('getValueOfParameter')
 			->willReturnMap([
 				[Parameters::PARAMETER_PLAYLIST_NAME, 'playlist_name'],
 				[BaseParameters::PARAMETER_UID, 56],
@@ -204,14 +212,14 @@ class DatatableBuilderTest extends TestCase
 		]);
 
 
-		$playlistNameFieldMock = $this->createMock(TextField::class);
-		$ownerFieldMock        = $this->createMock(AutocompleteField::class);
-		$playlistModeFieldMock = $this->createMock(DropdownField::class);
+		$playlistNameFieldStub = $this->createStub(TextField::class);
+		$ownerFieldStub        = $this->createStub(AutocompleteField::class);
+		$playlistModeFieldStub = $this->createStub(DropdownField::class);
 
-		$this->buildServiceMock->method('buildFormField')->willReturnMap([
-			[['type' => FieldType::TEXT, 'id' => Parameters::PARAMETER_PLAYLIST_NAME, 'name' => Parameters::PARAMETER_PLAYLIST_NAME, 'title' => 'Playlist name', 'label' => 'Playlist name', 'value' => 'playlist_name'], $playlistNameFieldMock],
-			[['type' => FieldType::AUTOCOMPLETE, 'id' => BaseParameters::PARAMETER_UID, 'name' => BaseParameters::PARAMETER_UID, 'title' => 'Owner', 'label' => 'Owner', 'value' => 56, 'data-label' => ''], $ownerFieldMock],
-			[['type' => FieldType::DROPDOWN, 'id' => Parameters::PARAMETER_PLAYLIST_MODE, 'name' => Parameters::PARAMETER_PLAYLIST_MODE, 'title' => 'Playlist mode', 'label' => 'Playlist mode', 'value' => '','options' => []], $playlistModeFieldMock]
+		$this->buildServiceMock->expects($this->atLeastOnce())->method('buildFormField')->willReturnMap([
+			[['type' => FieldType::TEXT, 'id' => Parameters::PARAMETER_PLAYLIST_NAME, 'name' => Parameters::PARAMETER_PLAYLIST_NAME, 'title' => 'Playlist name', 'label' => 'Playlist name', 'value' => 'playlist_name'], $playlistNameFieldStub],
+			[['type' => FieldType::AUTOCOMPLETE, 'id' => BaseParameters::PARAMETER_UID, 'name' => BaseParameters::PARAMETER_UID, 'title' => 'Owner', 'label' => 'Owner', 'value' => 56, 'data-label' => ''], $ownerFieldStub],
+			[['type' => FieldType::DROPDOWN, 'id' => Parameters::PARAMETER_PLAYLIST_MODE, 'name' => Parameters::PARAMETER_PLAYLIST_MODE, 'title' => 'Playlist mode', 'label' => 'Playlist mode', 'value' => '','options' => []], $playlistModeFieldStub]
 		]);
 
 
@@ -223,9 +231,9 @@ class DatatableBuilderTest extends TestCase
 		static::assertArrayHasKey(BaseParameters::PARAMETER_UID, $form);
 		static::assertArrayHasKey(Parameters::PARAMETER_PLAYLIST_MODE, $form);
 
-		static::assertEquals($playlistNameFieldMock, $form[Parameters::PARAMETER_PLAYLIST_NAME]);
-		static::assertEquals($ownerFieldMock, $form[BaseParameters::PARAMETER_UID]);
-		static::assertEquals($playlistModeFieldMock, $form[Parameters::PARAMETER_PLAYLIST_MODE]);
+		static::assertEquals($playlistNameFieldStub, $form[Parameters::PARAMETER_PLAYLIST_NAME]);
+		static::assertEquals($ownerFieldStub, $form[BaseParameters::PARAMETER_UID]);
+		static::assertEquals($playlistModeFieldStub, $form[Parameters::PARAMETER_PLAYLIST_MODE]);
 	}
 
 	/**
@@ -236,16 +244,18 @@ class DatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testCollectFormElementsMinimum(): void
 	{
-		$translator = $this->createMock(Translator::class);
+		// the allowed playlist modes depend on the edition
+		$this->aclValidatorMock->expects($this->once())->method('getConfig')->willReturn($this->createStub(\App\Framework\Core\Config\Config::class));
+		$translator = $this->createStub(Translator::class);
 		$this->builder->setTranslator($translator);
 
-		$this->parametersMock->method('hasParameter')
+		$this->parametersMock->expects($this->atLeastOnce())->method('hasParameter')
 			->willReturnMap([
 				[BaseParameters::PARAMETER_UID, false]
 			]);
 
 
-		$this->parametersMock->method('getValueOfParameter')
+		$this->parametersMock->expects($this->atLeastOnce())->method('getValueOfParameter')
 			->willReturnMap([
 				[Parameters::PARAMETER_PLAYLIST_NAME, 'playlist_name'],
 				[Parameters::PARAMETER_PLAYLIST_MODE, '']
@@ -261,12 +271,12 @@ class DatatableBuilderTest extends TestCase
 		]);
 
 
-		$playlistNameFieldMock = $this->createMock(TextField::class);
-		$playlistModeFieldMock = $this->createMock(DropdownField::class);
+		$playlistNameFieldStub = $this->createStub(TextField::class);
+		$playlistModeFieldStub = $this->createStub(DropdownField::class);
 
-		$this->buildServiceMock->method('buildFormField')->willReturnMap([
-			[['type' => FieldType::TEXT, 'id' => Parameters::PARAMETER_PLAYLIST_NAME, 'name' => Parameters::PARAMETER_PLAYLIST_NAME, 'title' => 'Playlist name', 'label' => 'Playlist name', 'value' => 'playlist_name'], $playlistNameFieldMock],
-			[['type' => FieldType::DROPDOWN, 'id' => Parameters::PARAMETER_PLAYLIST_MODE, 'name' => Parameters::PARAMETER_PLAYLIST_MODE, 'title' => 'Playlist mode', 'label' => 'Playlist mode', 'value' => '','options' => []], $playlistModeFieldMock]
+		$this->buildServiceMock->expects($this->atLeastOnce())->method('buildFormField')->willReturnMap([
+			[['type' => FieldType::TEXT, 'id' => Parameters::PARAMETER_PLAYLIST_NAME, 'name' => Parameters::PARAMETER_PLAYLIST_NAME, 'title' => 'Playlist name', 'label' => 'Playlist name', 'value' => 'playlist_name'], $playlistNameFieldStub],
+			[['type' => FieldType::DROPDOWN, 'id' => Parameters::PARAMETER_PLAYLIST_MODE, 'name' => Parameters::PARAMETER_PLAYLIST_MODE, 'title' => 'Playlist mode', 'label' => 'Playlist mode', 'value' => '','options' => []], $playlistModeFieldStub]
 		]);
 
 
@@ -277,8 +287,8 @@ class DatatableBuilderTest extends TestCase
 		static::assertArrayHasKey(Parameters::PARAMETER_PLAYLIST_NAME, $form);
 		static::assertArrayHasKey(Parameters::PARAMETER_PLAYLIST_MODE, $form);
 
-		static::assertEquals($playlistNameFieldMock, $form[Parameters::PARAMETER_PLAYLIST_NAME]);
-		static::assertEquals($playlistModeFieldMock, $form[Parameters::PARAMETER_PLAYLIST_MODE]);
+		static::assertEquals($playlistNameFieldStub, $form[Parameters::PARAMETER_PLAYLIST_NAME]);
+		static::assertEquals($playlistModeFieldStub, $form[Parameters::PARAMETER_PLAYLIST_MODE]);
 	}
 
 	/**
@@ -289,7 +299,8 @@ class DatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testCreateTableFieldsAddsLimitedFieldsForEdgeEdition(): void
 	{
-		$this->parametersMock->method('hasParameter')
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$this->parametersMock->expects($this->atLeastOnce())->method('hasParameter')
 			->willReturn(true);
 
 		$this->buildServiceMock->method('getDatatableFields')->willReturn([]);
@@ -313,9 +324,11 @@ class DatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testDetermineAllowedPlayerModesForEdgeEdition(): void
 	{
-		$configMock = $this->createMock(Config::class);
-		$this->aclValidatorMock->method('getConfig')->willReturn($configMock);
-		$configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
+		$this->buildServiceMock->expects($this->never())->method($this->anything());
+		$this->parametersMock->expects($this->never())->method($this->anything());
+		$configStub = $this->createStub(Config::class);
+		$this->aclValidatorMock->expects($this->atLeastOnce())->method('getConfig')->willReturn($configStub);
+		$configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
 
 		$translatorMock = $this->createMock(Translator::class);
 		$this->builder->setTranslator($translatorMock);
@@ -328,6 +341,11 @@ class DatatableBuilderTest extends TestCase
 
 	}
 
-
-
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
+	}
 }

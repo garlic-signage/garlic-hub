@@ -29,6 +29,7 @@ use App\Modules\Mediapool\Services\NodesService;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -39,10 +40,10 @@ class ShowControllerTest extends TestCase
 {
 	private ServerRequestInterface&MockObject $requestMock;
 	private ResponseInterface&MockObject $responseMock;
-	private NodesService&MockObject $nodesServiceMock;
+	private NodesService&Stub $nodesServiceStub;
 	private Session&MockObject $sessionMock;
 	private Translator&MockObject $translatorMock;
-	private Config&MockObject $configMock;
+	private Config&Stub $configStub;
 	private ShowController $controller;
 
 	/**
@@ -53,12 +54,12 @@ class ShowControllerTest extends TestCase
 		parent::setUp();
 		$this->requestMock      = $this->createMock(ServerRequestInterface::class);
 		$this->responseMock     = $this->createMock(ResponseInterface::class);
-		$this->nodesServiceMock = $this->createMock(NodesService::class);
-		$this->controller       = new ShowController($this->nodesServiceMock);
+		$this->nodesServiceStub = $this->createStub(NodesService::class);
+		$this->controller       = new ShowController($this->nodesServiceStub);
 
 		$this->sessionMock      = $this->createMock(Session::class);
 		$this->translatorMock   = $this->createMock(Translator::class);
-		$this->configMock       = $this->createMock(Config::class);
+		$this->configStub       = $this->createStub(Config::class);
 	}
 
 	/**
@@ -76,14 +77,14 @@ class ShowControllerTest extends TestCase
 				{
 					'translator' => $this->translatorMock,
 					'session' => $this->sessionMock,
-					'config' => $this->configMock,
+					'config' => $this->configStub,
 					default => null,
 				};
 			});
 		$this->sessionMock->method('get')->with('user')->willReturn(['UID' => 1]);
 
-		$this->nodesServiceMock->method('isModuleAdmin')->willReturn(false);
-		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
+		$this->nodesServiceStub->method('isModuleAdmin')->willReturn(false);
+		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
 
 		$this->translatorMock->expects($this->exactly(55))->method('translate');
 
@@ -107,14 +108,14 @@ class ShowControllerTest extends TestCase
 				{
 					'translator' => $this->translatorMock,
 					'session' => $this->sessionMock,
-					'config' => $this->configMock,
+					'config' => $this->configStub,
 					default => null,
 				};
 			});
 		$this->sessionMock->method('get')->with('user')->willReturn(['UID' => 1]);
 
-		$this->nodesServiceMock->method('isModuleAdmin')->willReturn(true);
-		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
+		$this->nodesServiceStub->method('isModuleAdmin')->willReturn(true);
+		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
 
 		$this->translatorMock->expects($this->exactly(57))->method('translate');
 
@@ -138,14 +139,14 @@ class ShowControllerTest extends TestCase
 				{
 					'translator' => $this->translatorMock,
 					'session' => $this->sessionMock,
-					'config' => $this->configMock,
+					'config' => $this->configStub,
 					default => null,
 				};
 			});
 		$this->sessionMock->method('get')->with('user')->willReturn(['UID' => 1]);
 
-		$this->nodesServiceMock->method('isModuleAdmin')->willReturn(false);
-		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
+		$this->nodesServiceStub->method('isModuleAdmin')->willReturn(false);
+		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
 
 		$this->translatorMock->expects($this->exactly(56))->method('translate');
 

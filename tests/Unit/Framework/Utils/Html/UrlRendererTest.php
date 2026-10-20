@@ -27,13 +27,13 @@ use App\Framework\Utils\Html\UrlField;
 use App\Framework\Utils\Html\UrlRenderer;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class UrlRendererTest extends TestCase
 {
 	private UrlRenderer $urlRenderer;
-	private UrlField&MockObject $urlFieldMock;
+	private UrlField&Stub $urlFieldStub;
 
 	/**
 	 * @throws Exception
@@ -41,19 +41,19 @@ class UrlRendererTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->urlFieldMock = $this->createMock(UrlField::class);
+		$this->urlFieldStub = $this->createStub(UrlField::class);
 		$this->urlRenderer = new UrlRenderer();
 	}
 
 	#[Group('units')]
 	public function testRenderWithValidUrlField(): void
 	{
-		$this->urlFieldMock->method('getPattern')->willReturn('[a-z]+://.*');
-		$this->urlFieldMock->method('getPlaceholder')->willReturn('Enter URL');
-		$this->urlFieldMock->method('getId')->willReturn('urlField1');
+		$this->urlFieldStub->method('getPattern')->willReturn('[a-z]+://.*');
+		$this->urlFieldStub->method('getPlaceholder')->willReturn('Enter URL');
+		$this->urlFieldStub->method('getId')->willReturn('urlField1');
 
 		$expectedAttributes = 'pattern="[a-z]+://.*" placeholder="Enter URL" aria-describedby="error_urlField1"';
-		$result = $this->urlRenderer->render($this->urlFieldMock);
+		$result = $this->urlRenderer->render($this->urlFieldStub);
 
 		static::assertStringContainsString('<input type="text" ', $result);
 		static::assertStringContainsString($expectedAttributes, $result);
@@ -65,7 +65,7 @@ class UrlRendererTest extends TestCase
 	#[Group('units')]
 	public function testRenderWithInvalidFieldType(): void
 	{
-		$mockField = $this->createMock(FieldInterface::class);
+		$mockField = $this->createStub(FieldInterface::class);
 
 		$result = $this->urlRenderer->render($mockField);
 
@@ -75,12 +75,12 @@ class UrlRendererTest extends TestCase
 	#[Group('units')]
 	public function testRenderWithEmptyPatternAndPlaceholder(): void
 	{
-		$this->urlFieldMock->method('getPattern')->willReturn('');
-		$this->urlFieldMock->method('getPlaceholder')->willReturn('');
-		$this->urlFieldMock->method('getId')->willReturn('urlField1');
+		$this->urlFieldStub->method('getPattern')->willReturn('');
+		$this->urlFieldStub->method('getPlaceholder')->willReturn('');
+		$this->urlFieldStub->method('getId')->willReturn('urlField1');
 
 		$expectedAttributes = 'pattern="" placeholder="" aria-describedby="error_urlField1"';
-		$result = $this->urlRenderer->render($this->urlFieldMock);
+		$result = $this->urlRenderer->render($this->urlFieldStub);
 
 		static::assertStringContainsString('<input type="text" ', $result);
 		static::assertStringContainsString($expectedAttributes, $result);

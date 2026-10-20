@@ -75,6 +75,7 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadForAdminEditReturnsEmptyArrayWhenUserNotFound(): void
 	{
+		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock, $this->loggerMock);
 		$UID = 123;
 
 		$this->userMainRepositoryMock->expects($this->once())->method('findByIdSecured')
@@ -92,6 +93,7 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadForAdminEditReturnsUserWithTokens(): void
 	{
+		$this->expectUntouched($this->nodesServiceMock, $this->aclValidatorMock, $this->transactionsMock, $this->loggerMock);
 		$UID = 123;
 		$userData = [
 			'UID' => $UID,
@@ -129,6 +131,8 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testInsertNewUserReturnsUserIdWhenSuccessful(): void
 	{
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$postData = [
 			'username' => 'testuser',
 			'email' => 'testuser@example.com',
@@ -161,6 +165,7 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testInsertFailsNotUnique(): void
 	{
+		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock);
 		$postData = [
 			'username' => 'duplicateuser',
 			'email' => 'duplicate@example.com',
@@ -187,6 +192,8 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testInsertFails(): void
 	{
+		$this->nodesServiceMock->expects($this->never())->method($this->anything());
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$postData = [
 			'username' => 'testuser',
 			'email' => 'testuser@example.com',
@@ -218,6 +225,7 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testInsertFailsNodeCreate(): void
 	{
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$postData = [
 			'username' => 'testuser',
 			'email' => 'testuser@example.com',
@@ -259,11 +267,14 @@ class UsersAdminServiceTest extends TestCase
 
 		$this->transactionsMock->expects($this->once())->method('begin');
 		$this->aclValidatorMock->expects($this->once())->method('isModuleAdmin')
-			->with($this->anything())
+			->with(1)
 			->willReturn(true);
 		$this->userMainRepositoryMock->expects($this->once())->method('delete')
 			->with($UID)
 			->willReturn(1);
+		// tokens of a deleted user must not survive
+		$this->userTokenServiceMock->expects($this->once())->method('deleteAllUserTokens')->with($UID);
+		$this->loggerMock->expects($this->never())->method('error');
 		$this->nodesServiceMock->expects($this->once())->method('deleteUserDirectory')
 			->with($UID);
 		$this->transactionsMock->expects($this->once())->method('commit');
@@ -279,6 +290,7 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteUserFailsDueToAcl(): void
 	{
+		$this->expectUntouched($this->userMainRepositoryMock, $this->nodesServiceMock, $this->userTokenServiceMock);
 		$UID = 123;
 
 		$this->transactionsMock->expects($this->once())->method('begin');
@@ -301,6 +313,8 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteUserFailsDueToDBError(): void
 	{
+		$this->nodesServiceMock->expects($this->never())->method($this->anything());
+		$this->userTokenServiceMock->expects($this->never())->method($this->anything());
 		$UID = 123;
 
 		$this->transactionsMock->expects($this->once())->method('begin');
@@ -326,6 +340,8 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteUserLogsAndRollbacksOnException(): void
 	{
+		$this->nodesServiceMock->expects($this->never())->method($this->anything());
+		$this->userTokenServiceMock->expects($this->never())->method($this->anything());
 		$UID = 123;
 
 		$this->transactionsMock->expects($this->once())->method('begin');
@@ -351,6 +367,7 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testCreatePasswordResetTokenReturnsEmptyStringWhenTokensExist(): void
 	{
+		$this->expectUntouched($this->userMainRepositoryMock, $this->nodesServiceMock, $this->aclValidatorMock, $this->transactionsMock, $this->loggerMock);
 		$UID = 123;
 		$existingTokens = [['token' => 'existing_token', 'purpose' => 'password_reset']];
 
@@ -369,6 +386,8 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testCreatePasswordResetTokenFailsWhenUpdateFails(): void
 	{
+		$this->nodesServiceMock->expects($this->never())->method($this->anything());
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$UID = 123;
 
 		$this->userTokenServiceMock->expects($this->once())->method('findTokensByUID')
@@ -394,6 +413,8 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testCreatePasswordResetTokenFailsWhenTokenInsertionFails(): void
 	{
+		$this->nodesServiceMock->expects($this->never())->method($this->anything());
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$UID = 123;
 
 		$this->userTokenServiceMock->expects($this->once())->method('findTokensByUID')
@@ -424,6 +445,7 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testCreatePasswordResetTokenSuccess(): void
 	{
+		$this->expectUntouched($this->nodesServiceMock, $this->aclValidatorMock, $this->loggerMock);
 		$UID = 123;
 		$tokenId = 'new_token_id';
 
@@ -454,6 +476,8 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testCreatePasswordResetTokenLogsAndRollbacksOnException(): void
 	{
+		$this->nodesServiceMock->expects($this->never())->method($this->anything());
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$UID = 123;
 
 		$this->userTokenServiceMock->expects($this->once())->method('findTokensByUID')
@@ -481,6 +505,7 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateUserReturnsZeroWhenNotUnique(): void
 	{
+		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock, $this->loggerMock);
 		$UID = 123;
 		$postData = [
 			'username' => 'duplicateuser',
@@ -504,6 +529,7 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateUserSuccess(): void
 	{
+		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock, $this->loggerMock);
 		$UID = 123;
 		$postData = [
 			'username' => 'testuser',
@@ -531,6 +557,7 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateUserFailsOnUpdateFailure(): void
 	{
+		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock, $this->loggerMock);
 		$UID = 123;
 		$postData = [
 			'username' => 'testuser',
@@ -558,6 +585,7 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateUserFailsExistsUserName(): void
 	{
+		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock, $this->loggerMock);
 		$UID = 123;
 		$postData = [
 			'username' => 'testuser',
@@ -586,6 +614,7 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateUserFailsExistsEmail(): void
 	{
+		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock, $this->loggerMock);
 		$UID = 123;
 		$postData = [
 			'username' => 'testuser',
@@ -614,6 +643,7 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateUserSucceedSameUserExistsUsername(): void
 	{
+		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock, $this->loggerMock);
 		$UID = 123;
 		$postData = [
 			'username' => 'testuser',
@@ -644,6 +674,7 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateUserSucceedSameUserExistsMail(): void
 	{
+		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock, $this->loggerMock);
 		$UID = 123;
 		$postData = [
 			'username' => 'testuser2',
@@ -668,4 +699,11 @@ class UsersAdminServiceTest extends TestCase
 		self::assertEmpty($this->usersAdminService->getErrorMessages());
 	}
 
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
+	}
 }

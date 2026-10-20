@@ -24,13 +24,13 @@ use App\Framework\Utils\Html\NumberField;
 use App\Framework\Utils\Html\NumberRenderer;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class NumberRendererTest extends TestCase
 {
 	private NumberRenderer $numberRenderer;
-	private NumberField&MockObject $fieldMock;
+	private NumberField&Stub $fieldStub;
 
 	/**
 	 * @throws Exception
@@ -38,24 +38,24 @@ class NumberRendererTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->fieldMock = $this->createMock(NumberField::class);
+		$this->fieldStub = $this->createStub(NumberField::class);
 		$this->numberRenderer = new NumberRenderer();
 	}
 
 	#[Group('units')]
 	public function testRenderCorrectHtml(): void
 	{
-		$this->fieldMock->method('getId')->willReturn('test_id');
-		$this->fieldMock->method('getName')->willReturn('test_name');
-		$this->fieldMock->method('getValue')->willReturn('123');
-		$this->fieldMock->method('getAttributes')->willReturn(['class' => 'test-class']);
-		$this->fieldMock->method('getValidationRules')->willReturn([]);
-		$this->fieldMock->method('getTitle')->willReturn('Test Title');
-		$this->fieldMock->method('getLabel')->willReturn('A Label');
+		$this->fieldStub->method('getId')->willReturn('test_id');
+		$this->fieldStub->method('getName')->willReturn('test_name');
+		$this->fieldStub->method('getValue')->willReturn('123');
+		$this->fieldStub->method('getAttributes')->willReturn(['class' => 'test-class']);
+		$this->fieldStub->method('getValidationRules')->willReturn([]);
+		$this->fieldStub->method('getTitle')->willReturn('Test Title');
+		$this->fieldStub->method('getLabel')->willReturn('A Label');
 
 		$expectedHtml = '<input type="number" name="test_name" id="test_id" value="123" title="Test Title" label="A Label" class="test-class" aria-describedby="error_test_id">';
 
-		$actualHtml = $this->numberRenderer->render($this->fieldMock);
+		$actualHtml = $this->numberRenderer->render($this->fieldStub);
 
 		static::assertSame($expectedHtml, $actualHtml);
 	}

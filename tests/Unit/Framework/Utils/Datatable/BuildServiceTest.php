@@ -31,6 +31,7 @@ use App\Framework\Utils\Html\FormBuilder;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -45,7 +46,7 @@ class BuildServiceTest extends TestCase
 	private Builder&MockObject $paginatorBuilderMock;
 	private \App\Framework\Utils\Datatable\Results\Builder&MockObject $resultsBuilderMock;
 	private FormBuilder&MockObject $formBuilderMock;
-	private FieldInterface&MockObject $fieldMock;
+	private FieldInterface&Stub $fieldStub;
 
 	/**
 	 * @throws Exception
@@ -54,7 +55,7 @@ class BuildServiceTest extends TestCase
 	{
 		parent::setUp();
 		$this->formBuilderMock = $this->createMock(FormBuilder::class);
-		$this->fieldMock = $this->createMock(FieldInterface::class);
+		$this->fieldStub = $this->createStub(FieldInterface::class);
 
 		$this->paginatorBuilderMock = $this->createMock(Builder::class);
 		$this->resultsBuilderMock   = $this->createMock(\App\Framework\Utils\Datatable\Results\Builder::class);
@@ -69,6 +70,8 @@ class BuildServiceTest extends TestCase
 	#[Group('units')]
 	public function testBuildFormFieldReturnsFieldInterface(): void
 	{
+		$this->paginatorBuilderMock->expects($this->never())->method($this->anything());
+		$this->resultsBuilderMock->expects($this->never())->method($this->anything());
 		$attributes = [
 			'name' => 'email',
 			'type' => 'text',
@@ -79,11 +82,11 @@ class BuildServiceTest extends TestCase
 			->expects($this->once())
 			->method('createField')
 			->with($attributes)
-			->willReturn($this->fieldMock);
+			->willReturn($this->fieldStub);
 
 		$result = $this->buildService->buildFormField($attributes);
 
-		static::assertSame($this->fieldMock, $result);
+		static::assertSame($this->fieldStub, $result);
 	}
 
 	/**
@@ -92,21 +95,25 @@ class BuildServiceTest extends TestCase
 	#[Group('units')]
 	public function testBuildFormFieldWithEmptyAttributes(): void
 	{
+		$this->resultsBuilderMock->expects($this->never())->method($this->anything());
+		$this->paginatorBuilderMock->expects($this->never())->method($this->anything());
 		$this->formBuilderMock
 			->expects($this->once())
 			->method('createField')
 			->with([])
-			->willReturn($this->fieldMock);
+			->willReturn($this->fieldStub);
 
 		$result = $this->buildService->buildFormField();
 
 		static::assertSame($this->resultsBuilderMock, $this->buildService->getResultsBuilder());
-		static::assertSame($this->fieldMock, $result);
+		static::assertSame($this->fieldStub, $result);
 	}
 
 	#[Group('units')]
 	public function testCreateDatatableFieldAddsField(): void
 	{
+		$this->paginatorBuilderMock->expects($this->never())->method($this->anything());
+		$this->formBuilderMock->expects($this->never())->method($this->anything());
 		$fieldName = 'name';
 
 		$this->resultsBuilderMock
@@ -120,6 +127,8 @@ class BuildServiceTest extends TestCase
 	#[Group('units')]
 	public function testCreateDatatableFieldWithUnSortableField(): void
 	{
+		$this->paginatorBuilderMock->expects($this->never())->method($this->anything());
+		$this->formBuilderMock->expects($this->never())->method($this->anything());
 		$fieldName = 'age';
 
 		$this->resultsBuilderMock
@@ -136,9 +145,11 @@ class BuildServiceTest extends TestCase
 	#[Group('units')]
 	public function testGetDatatableFieldsReturnsExpectedFields(): void
 	{
+		$this->paginatorBuilderMock->expects($this->never())->method($this->anything());
+		$this->formBuilderMock->expects($this->never())->method($this->anything());
 		$expectedFields = [
-			$this->createMock(HeaderField::class),
-			$this->createMock(HeaderField::class)
+			$this->createStub(HeaderField::class),
+			$this->createStub(HeaderField::class)
 		];
 
 		$this->resultsBuilderMock
@@ -155,6 +166,8 @@ class BuildServiceTest extends TestCase
 	#[Group('units')]
 	public function testBuildPaginationDropDownReturnsCorrectSettings(): void
 	{
+		$this->resultsBuilderMock->expects($this->never())->method($this->anything());
+		$this->formBuilderMock->expects($this->never())->method($this->anything());
 		$min = 5;
 		$max = 50;
 		$steps = 5;
@@ -178,6 +191,8 @@ class BuildServiceTest extends TestCase
 	#[Group('units')]
 	public function testBuildPaginationDropDownWithDefaultValues(): void
 	{
+		$this->resultsBuilderMock->expects($this->never())->method($this->anything());
+		$this->formBuilderMock->expects($this->never())->method($this->anything());
 		$this->paginatorBuilderMock
 			->expects($this->once())
 			->method('createDropDown')
@@ -197,6 +212,8 @@ class BuildServiceTest extends TestCase
 	#[Group('units')]
 	public function testBuildPaginationLinksWithValidParameters(): void
 	{
+		$this->resultsBuilderMock->expects($this->never())->method($this->anything());
+		$this->formBuilderMock->expects($this->never())->method($this->anything());
 		$currentPage = 1;
 		$itemsPerPage = 10;
 		$totalItems = 100;
@@ -230,6 +247,8 @@ class BuildServiceTest extends TestCase
 	#[Group('units')]
 	public function testBuildPaginationLinksWithUsePagerTrue(): void
 	{
+		$this->resultsBuilderMock->expects($this->never())->method($this->anything());
+		$this->formBuilderMock->expects($this->never())->method($this->anything());
 		$currentPage = 2;
 		$itemsPerPage = 20;
 		$totalItems = 200;
@@ -263,6 +282,8 @@ class BuildServiceTest extends TestCase
 	#[Group('units')]
 	public function testBuildPaginationLinksWithShortenedFalse(): void
 	{
+		$this->resultsBuilderMock->expects($this->never())->method($this->anything());
+		$this->formBuilderMock->expects($this->never())->method($this->anything());
 		$currentPage = 3;
 		$itemsPerPage = 5;
 		$totalItems = 50;
@@ -296,6 +317,8 @@ class BuildServiceTest extends TestCase
 	#[Group('units')]
 	public function testBuildPaginationLinksWithExceedingCurrentPage(): void
 	{
+		$this->resultsBuilderMock->expects($this->never())->method($this->anything());
+		$this->formBuilderMock->expects($this->never())->method($this->anything());
 		$currentPage = 15;
 		$itemsPerPage = 10;
 		$totalItems = 100;

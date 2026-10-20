@@ -79,14 +79,14 @@ class FilterBaseTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$connectionMock = $this->createMock(Connection::class);
+		$connectionStub = $this->createStub(Connection::class);
 		$this->queryBuilderMock = $this->createMock(QueryBuilder::class);
 		$this->resultMock       = $this->createMock(Result::class);
 
-		$this->FilterBase = new ConcreteFilterBase($connectionMock, 'table', 'id');
+		$this->FilterBase = new ConcreteFilterBase($connectionStub, 'table', 'id');
 
-		$connectionMock->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
-		$connectionMock->method('quoteSingleIdentifier')
+		$connectionStub->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
+		$connectionStub->method('quoteSingleIdentifier')
 			->willReturnCallback(fn(string $identifier): string => '"'.$identifier.'"');
 	}
 
@@ -374,7 +374,7 @@ class FilterBaseTest extends TestCase
 		$this->queryBuilderMock->expects($this->once())->method('addOrderBy')
 			->with('"table"."playlist_id"', 'DESC');
 
-		$this->resultMock->method('fetchAllAssociative')->willReturn([]);
+		$this->resultMock->expects($this->atLeastOnce())->method('fetchAllAssociative')->willReturn([]);
 
 		$this->FilterBase->findAllFiltered($fields);
 	}
@@ -397,7 +397,7 @@ class FilterBaseTest extends TestCase
 
 		$this->queryBuilderMock->expects($this->never())->method('addOrderBy');
 
-		$this->resultMock->method('fetchAllAssociative')->willReturn([]);
+		$this->resultMock->expects($this->atLeastOnce())->method('fetchAllAssociative')->willReturn([]);
 
 		$this->FilterBase->findAllFiltered($fields);
 	}

@@ -36,6 +36,7 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -52,13 +53,13 @@ class FinalRenderMiddlewareTest extends TestCase
 	private FinalRenderMiddleware $middleware;
 	private AclValidator&MockObject $aclValidatorMock;
 	private AdapterInterface&MockObject $templateServiceMock;
-	private ServerRequestInterface&MockObject $requestMock ;
+	private ServerRequestInterface&Stub $requestStub ;
 	private ResponseInterface&MockObject $responseMock;
-	private RequestHandlerInterface&MockObject $handlerMock;
+	private RequestHandlerInterface&Stub $handlerStub;
 	private Translator&MockObject $translatorMock;
 	private Session&MockObject $sessionMock;
 	private Config&MockObject $configMock;
-	private Locales&MockObject $localesMock;
+	private Locales&Stub $localesStub;
 	private Messages&MockObject $flashMock;
 
 	/**
@@ -69,18 +70,18 @@ class FinalRenderMiddlewareTest extends TestCase
 		parent::setUp();
 		$this->templateServiceMock = $this->createMock(AdapterInterface::class);
 		$this->aclValidatorMock    = $this->createMock(AclValidator::class);
-		$this->requestMock         = $this->createMock(ServerRequestInterface::class);
+		$this->requestStub         = $this->createStub(ServerRequestInterface::class);
 		$this->responseMock        = $this->createMock(ResponseInterface::class);
-		$this->handlerMock         = $this->createMock(RequestHandlerInterface::class);
-		$uriInterfaceMock = $this->createMock(UriInterface::class);
+		$this->handlerStub         = $this->createStub(RequestHandlerInterface::class);
+		$uriInterfaceStub = $this->createStub(UriInterface::class);
 		$this->translatorMock      = $this->createMock(Translator::class);
 		$this->sessionMock         = $this->createMock(Session::class);
-		$this->localesMock         = $this->createMock(Locales::class);
+		$this->localesStub         = $this->createStub(Locales::class);
 		$this->configMock          = $this->createMock(Config::class);
 		$this->flashMock 	       = $this->createMock(Messages::class);
-		$this->requestMock->method('getUri')->willReturn($uriInterfaceMock);
-		$csrfTokenMock = $this->createMock(CsrfToken::class);
-		$this->middleware = new FinalRenderMiddleware($this->templateServiceMock, $this->aclValidatorMock, $csrfTokenMock);
+		$this->requestStub->method('getUri')->willReturn($uriInterfaceStub);
+		$csrfTokenStub = $this->createStub(CsrfToken::class);
+		$this->middleware = new FinalRenderMiddleware($this->templateServiceMock, $this->aclValidatorMock, $csrfTokenStub);
 	}
 
 	/**
@@ -98,12 +99,12 @@ class FinalRenderMiddlewareTest extends TestCase
 
 		// no need for layoutData here
 
-		$responseBodyMock = $this->createMock(StreamInterface::class);
+		$responseBodyMock = $this->createStub(StreamInterface::class);
 		$this->responseMock->method('getBody')->willReturn($responseBodyMock);
 		$this->responseMock->method('withHeader')->with('Content-Type', 'text/html')->willReturn($this->responseMock);
 		$this->templateServiceMock->expects($this->never())->method('render');
 
-		$this->middleware->process($this->requestMock, $this->handlerMock);
+		$this->middleware->process($this->requestStub, $this->handlerStub);
 	}
 
 	/**
@@ -143,7 +144,7 @@ class FinalRenderMiddlewareTest extends TestCase
 		;
 		$this->responseMock->method('withHeader')->with('Content-Type', 'text/html')->willReturn($this->responseMock);
 
-		$this->middleware->process($this->requestMock, $this->handlerMock);
+		$this->middleware->process($this->requestStub, $this->handlerStub);
 
 	}
 
@@ -185,7 +186,7 @@ class FinalRenderMiddlewareTest extends TestCase
 
 		$this->responseMock->method('withHeader')->with('Content-Type', 'text/html')->willReturn($this->responseMock);
 
-		$this->middleware->process($this->requestMock, $this->handlerMock);
+		$this->middleware->process($this->requestStub, $this->handlerStub);
 
 	}
 
@@ -206,12 +207,12 @@ class FinalRenderMiddlewareTest extends TestCase
 
 		// no need for layoutData here
 
-		$responseBodyMock = $this->createMock(StreamInterface::class);
+		$responseBodyMock = $this->createStub(StreamInterface::class);
 		$this->responseMock->method('getBody')->willReturn($responseBodyMock);
 		$this->responseMock->method('withHeader')->with('Content-Type', 'text/html')->willReturn($this->responseMock);
 		$this->templateServiceMock->expects($this->never())->method('render');
 
-		$this->middleware->process($this->requestMock, $this->handlerMock);
+		$this->middleware->process($this->requestStub, $this->handlerStub);
 	}
 
 	/**
@@ -258,7 +259,7 @@ class FinalRenderMiddlewareTest extends TestCase
 		$responseBodyMock->expects($this->once())->method('write')	->with('Final Rendered Page');
 		$this->responseMock->method('withHeader')->with('Content-Type', 'text/html')->willReturn($this->responseMock);
 
-		$this->middleware->process($this->requestMock, $this->handlerMock);
+		$this->middleware->process($this->requestStub, $this->handlerStub);
 	}
 
 	/**
@@ -275,8 +276,8 @@ class FinalRenderMiddlewareTest extends TestCase
 		$this->executeStandardMocks(false, true);
 
 		$this->sessionMock->method('get')->with('user')->willReturn(['UID' => 8]);
-		$this->aclValidatorMock->method('isModuleAdmin')->with(8)->willReturn(false);
-		$this->aclValidatorMock->method('isSubAdmin')->with(8)->willReturn(true);
+		$this->aclValidatorMock->expects($this->atLeastOnce())->method('isModuleAdmin')->with(8)->willReturn(false);
+		$this->aclValidatorMock->expects($this->atLeastOnce())->method('isSubAdmin')->with(8)->willReturn(true);
 		$controllerData = serialize([
 			'this_layout' => [
 				'template' => 'content',
@@ -297,15 +298,15 @@ class FinalRenderMiddlewareTest extends TestCase
 		$responseBodyMock->expects($this->once())->method('write')	->with('Final Rendered Page');
 		$this->responseMock->method('withHeader')->with('Content-Type', 'text/html')->willReturn($this->responseMock);
 
-		$this->middleware->process($this->requestMock, $this->handlerMock);
+		$this->middleware->process($this->requestStub, $this->handlerStub);
 
 	}
 
 
 	private function executeStandardMocks(bool $hasMessages = false, bool $hasUser = false): void
 	{
-		$this->handlerMock->method('handle')->willReturn($this->responseMock);
-		$this->requestMock
+		$this->handlerStub->method('handle')->willReturn($this->responseMock);
+		$this->requestStub
 			->method('getAttribute')
 			->willReturnCallback(function ($attribute)
 			{
@@ -314,7 +315,7 @@ class FinalRenderMiddlewareTest extends TestCase
 				elseif ($attribute === 'translator')
 					return $this->translatorMock;
 				elseif ($attribute === 'locales')
-					return $this->localesMock;
+					return $this->localesStub;
 				elseif ($attribute === 'config')
 					return $this->configMock;
 				elseif ($attribute === 'flash')
@@ -322,7 +323,14 @@ class FinalRenderMiddlewareTest extends TestCase
 
 				return null;
 			});
-		$this->flashMock->method('hasMessage')->willReturn($hasMessages);
+		// both message types are always checked
+		$this->flashMock->expects($this->exactly(2))->method('hasMessage')
+			->willReturnMap([['error', $hasMessages], ['success', $hasMessages]]);
+		if (!$hasMessages)
+			$this->flashMock->expects($this->never())->method('getMessage');
+		// the admin menu needs ACL checks only for a logged-in user
+		if (!$hasUser)
+			$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$this->sessionMock->expects($this->any())->method('exists')->with('user')->willReturn($hasUser);
 		$this->translatorMock->method('translate')->willReturn('translate-dummy');
 
@@ -330,9 +338,9 @@ class FinalRenderMiddlewareTest extends TestCase
 			->with('languages', 'menu')
 			->willReturn(['en_US' => 'english', 'de_DE' => 'german']);
 		$availableLanguages = ['en_US', 'de_DE'];
-		$this->localesMock->method('getLanguageCode')->willReturn('en');
+		$this->localesStub->method('getLanguageCode')->willReturn('en');
 
-		$this->localesMock->method('getAvailableLocales')->willReturn($availableLanguages);
+		$this->localesStub->method('getAvailableLocales')->willReturn($availableLanguages);
 
 
 		$this->configMock->method('getEnv')->with('APP_NAME')->willReturn('edge');

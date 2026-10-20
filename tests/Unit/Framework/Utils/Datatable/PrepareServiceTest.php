@@ -35,13 +35,14 @@ use App\Framework\Utils\Html\FormBuilder;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class PrepareServiceTest extends TestCase
 {
 	private PrepareService $prepareService;
 	private HeaderPreparer&MockObject $headerPreparerMock;
-	private BodyPreparer&MockObject $bodyPreparerMock;
+	private BodyPreparer&Stub $bodyPreparerStub;
 	private Preparer&MockObject $paginationPreparerMock;
 	private FormBuilder&MockObject $formBuilderMock;
 
@@ -52,7 +53,7 @@ class PrepareServiceTest extends TestCase
 	{
 		parent::setUp();
 		$this->headerPreparerMock = $this->createMock(HeaderPreparer::class);
-		$this->bodyPreparerMock = $this->createMock(BodyPreparer::class);
+		$this->bodyPreparerStub = $this->createStub(BodyPreparer::class);
 		$this->paginationPreparerMock = $this->createMock(Preparer::class);
 		$this->formBuilderMock = $this->createMock(FormBuilder::class);
 
@@ -60,7 +61,7 @@ class PrepareServiceTest extends TestCase
 			$this->formBuilderMock,
 			$this->paginationPreparerMock,
 			$this->headerPreparerMock,
-			$this->bodyPreparerMock
+			$this->bodyPreparerStub
 		);
 	}
 
@@ -70,9 +71,11 @@ class PrepareServiceTest extends TestCase
 	#[Group('units')]
 	public function testPrepareFormReturnsPreparedFormArray(): void
 	{
+		$this->headerPreparerMock->expects($this->never())->method($this->anything());
+		$this->paginationPreparerMock->expects($this->never())->method($this->anything());
 		$datatableForm = [
-			'field1' => $this->createMock(FieldInterface::class),
-			'field2' => $this->createMock(FieldInterface::class)
+			'field1' => $this->createStub(FieldInterface::class),
+			'field2' => $this->createStub(FieldInterface::class)
 		];
 		$preparedForm = [
 			'hidden' => [
@@ -100,6 +103,8 @@ class PrepareServiceTest extends TestCase
 	#[Group('units')]
 	public function testPreparePaginationReturnsPreparedPaginationArray(): void
 	{
+		$this->headerPreparerMock->expects($this->never())->method($this->anything());
+		$this->formBuilderMock->expects($this->never())->method($this->anything());
 		$paginationLinks = [
 			['name' => 'link1', 'page' => 1, 'active' => true],
 			['name' => 'link2', 'page' => 2, 'active' => null]
@@ -135,21 +140,24 @@ class PrepareServiceTest extends TestCase
 	public function testPrepareDatatableHeaderReturnsPreparedHeaderArray(): void
 	{
 		$tableHeaderFields = [
-			$this->createMock(HeaderField::class),
-			$this->createMock(HeaderField::class)
+			$this->createStub(HeaderField::class),
+			$this->createStub(HeaderField::class)
 		];
 		$langModules = ['module1', 'module2'];
 		$expectedPreparedHeader = [
-			['preparedField1' => $this->createMock(FieldInterface::class)],
-			['preparedField2' => $this->createMock(FieldInterface::class)]
+			['preparedField1' => $this->createStub(FieldInterface::class)],
+			['preparedField2' => $this->createStub(FieldInterface::class)]
 		];
 
-		$basefilterParameterMock = $this->createMock(BaseFilterParameters::class);
-		$this->prepareService->configure($basefilterParameterMock, 'testModule');
+		$basefilterParameterStub = $this->createStub(BaseFilterParameters::class);
+		$this->paginationPreparerMock->expects($this->once())->method('setSite')->with('testModule')->willReturnSelf();
+		$this->paginationPreparerMock->expects($this->once())->method('setBaseFilter')->with($basefilterParameterStub)->willReturnSelf();
+		$this->formBuilderMock->expects($this->never())->method($this->anything());
+		$this->prepareService->configure($basefilterParameterStub, 'testModule');
 		$this->headerPreparerMock
 			->expects($this->once())
 			->method('configure')
-			->with($basefilterParameterMock, 'testModule', $langModules);
+			->with($basefilterParameterStub, 'testModule', $langModules);
 
 		$this->headerPreparerMock
 			->expects($this->once())
@@ -165,8 +173,16 @@ class PrepareServiceTest extends TestCase
 	#[Group('units')]
 	public function testGetBodyPreparer(): void
 	{
+		$this->expectUntouched($this->headerPreparerMock, $this->paginationPreparerMock, $this->formBuilderMock);
 		$result = $this->prepareService->getBodyPreparer();
-		static::assertSame($this->bodyPreparerMock, $result);
+		static::assertSame($this->bodyPreparerStub, $result);
 	}
 
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
+	}
 }

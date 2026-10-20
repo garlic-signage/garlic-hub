@@ -58,6 +58,8 @@ class TokensRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testGetNewAuthCodeReturnsAuthCodeEntity(): void
 	{
+		$this->connectionMock->expects($this->never())->method($this->anything());
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
 		$authCode = $this->repository->getNewAuthCode();
 		// @phpstan-ignore-next-line
 		static::assertNotNull($authCode);
@@ -70,15 +72,16 @@ class TokensRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testPersistNewAuthCodeCallsInsert(): void
 	{
-		$mockAuthCodeEntity = $this->createMock(AuthCodeEntityInterface::class);
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
+		$mockAuthCodeEntity = $this->createStub(AuthCodeEntityInterface::class);
 		$mockAuthCodeEntity->method('getIdentifier')->willReturn('test-auth-code-id');
-		$mockAuthCodeEntity->method('getClient')->willReturn($this->createMock(ClientEntityInterface::class));
+		$mockAuthCodeEntity->method('getClient')->willReturn($this->createStub(ClientEntityInterface::class));
 		$mockAuthCodeEntity->method('getUserIdentifier')->willReturn('test-user-id');
 		$mockAuthCodeEntity->method('getRedirectUri')->willReturn('https://example.com/callback');
 		$datetime_immutable = new DateTimeImmutable('now +1 hour');
 		$mockAuthCodeEntity->method('getExpiryDateTime')->willReturn($datetime_immutable);
-		$scopeEntityMock1 = $this->createMock(ScopeEntityInterface::class);
-		$scopeEntityMock2 = $this->createMock(ScopeEntityInterface::class);
+		$scopeEntityMock1 = $this->createStub(ScopeEntityInterface::class);
+		$scopeEntityMock2 = $this->createStub(ScopeEntityInterface::class);
 		$scopeEntityMock1->method('getIdentifier')->willReturn('test-scope-id1');
 		$scopeEntityMock2->method('getIdentifier')->willReturn('test-scope-id2');
 		$mockAuthCodeEntity->method('getScopes')->willReturn([$scopeEntityMock1, $scopeEntityMock2]);
@@ -148,7 +151,9 @@ class TokensRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testGetNewAccessTokenReturnsAccessTokenEntity(): void
 	{
-		$mockClientEntity = $this->createMock(ClientEntityInterface::class);
+		$this->connectionMock->expects($this->never())->method($this->anything());
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
+		$mockClientEntity = $this->createStub(ClientEntityInterface::class);
 		$accessToken = $this->repository->getNewToken($mockClientEntity, [], 'test-user-id');
 		// @phpstan-ignore-next-line
 		static::assertInstanceOf(AccessTokenEntityInterface::class, $accessToken);
@@ -161,7 +166,9 @@ class TokensRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testGetNewAccessException(): void
 	{
-		$mockClientEntity = $this->createMock(ClientEntityInterface::class);
+		$this->connectionMock->expects($this->never())->method($this->anything());
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
+		$mockClientEntity = $this->createStub(ClientEntityInterface::class);
 
 		static::expectException(FrameworkException::class);
 		static::expectExceptionMessage('User identifier is required.');
@@ -178,9 +185,10 @@ class TokensRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testPersistNewAccessTokenCallsInsert(): void
 	{
-		$mockAccessTokenEntity = $this->createMock(AccessTokenEntityInterface::class);
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
+		$mockAccessTokenEntity = $this->createStub(AccessTokenEntityInterface::class);
 		$mockAccessTokenEntity->method('getIdentifier')->willReturn('test-access-token-id');
-		$mockAccessTokenEntity->method('getClient')->willReturn($this->createMock(ClientEntityInterface::class));
+		$mockAccessTokenEntity->method('getClient')->willReturn($this->createStub(ClientEntityInterface::class));
 		$mockAccessTokenEntity->method('getUserIdentifier')->willReturn('test-user-id');
 		$mockAccessTokenEntity->method('getExpiryDateTime')->willReturn(new DateTimeImmutable('now +1 hour'));
 		$mockAccessTokenEntity->method('getScopes')->willReturn([]);
@@ -233,6 +241,8 @@ class TokensRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testGetNewRefreshTokenReturnsRefreshTokenEntity(): void
 	{
+		$this->connectionMock->expects($this->never())->method($this->anything());
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
 		$refreshToken = $this->repository->getNewRefreshToken();
 		static::assertInstanceOf(RefreshTokenEntityInterface::class, $refreshToken);
 	}
@@ -244,11 +254,12 @@ class TokensRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testPersistNewRefreshTokenCallsInsert(): void
 	{
-		$mockRefreshTokenEntity = $this->createMock(RefreshTokenEntityInterface::class);
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
+		$mockRefreshTokenEntity = $this->createStub(RefreshTokenEntityInterface::class);
 		$mockRefreshTokenEntity->method('getIdentifier')->willReturn('test-refresh-token-id');
 		$mockRefreshTokenEntity->method('getExpiryDateTime')->willReturn(new DateTimeImmutable('now +1 hour'));
-		$mockAccessTokenEntity = $this->createMock(AccessTokenEntityInterface::class);
-		$mockAccessTokenEntity->method('getClient')->willReturn($this->createMock(ClientEntityInterface::class));
+		$mockAccessTokenEntity = $this->createStub(AccessTokenEntityInterface::class);
+		$mockAccessTokenEntity->method('getClient')->willReturn($this->createStub(ClientEntityInterface::class));
 		$mockAccessTokenEntity->method('getUserIdentifier')->willReturn('test-user-id');
 		$mockAccessTokenEntity->method('getScopes')->willReturn([]);
 		$mockRefreshTokenEntity->method('getAccessToken')->willReturn($mockAccessTokenEntity);

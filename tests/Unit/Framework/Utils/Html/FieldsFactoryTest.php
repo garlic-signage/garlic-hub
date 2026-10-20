@@ -114,7 +114,7 @@ class FieldsFactoryTest extends TestCase
 	{
 		$attributes = ['id' => 'csrf_token', 'type' => FieldType::CSRF, 'name' => 'csrf_token_name'];
 
-		$field = $this->fieldsFactory->createCsrfTokenField($attributes, $this->createMock(CsrfToken::class));
+		$field = $this->fieldsFactory->createCsrfTokenField($attributes, $this->createStub(CsrfToken::class));
 
 		static::assertSame('csrf_token', $field->getId());
 		static::assertSame('csrf_token_name', $field->getName());

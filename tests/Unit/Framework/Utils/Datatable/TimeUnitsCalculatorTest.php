@@ -54,6 +54,7 @@ class TimeUnitsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateLastAccess():void
 	{
+		$this->translatorMock->expects($this->never())->method($this->anything());
 
 		$this->timeUnitsCalculator->calculateLastAccess(
 			new DateTime('2025-01-01 00:00:11'),
@@ -66,6 +67,7 @@ class TimeUnitsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateLastAccessNegative(): void
 	{
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$this->expectException(FrameworkException::class);
 		$this->expectExceptionMessage('Negative time difference.');
 

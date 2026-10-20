@@ -47,11 +47,11 @@ class ImageTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$configMock = $this->createMock(Config::class);
+		$configStub = $this->createStub(Config::class);
 		$this->filesystemMock = $this->createMock(Filesystem::class);
 		$this->imagickMock = $this->createMock(Imagick::class);
 
-		$configMock->method('getConfigValue')
+		$configStub->method('getConfigValue')
 			->willReturnMap([
 				['width', 'mediapool', 'max_resolution', '3840'],
 				['height', 'mediapool', 'max_resolution', '3840'],
@@ -65,7 +65,7 @@ class ImageTest extends TestCase
 				['images', 'mediapool', 'max_file_sizes', '20971520']
 			]);
 
-		$this->image = new Image($configMock, $this->filesystemMock, $this->imagickMock);
+		$this->image = new Image($configStub, $this->filesystemMock, $this->imagickMock);
 		$this->image->setStoragePaths('mediapool');
 
 
@@ -74,6 +74,8 @@ class ImageTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileBeforeUploadThrowsExceptionWhenFileSizeExceedsLimit(): void
 	{
+		$this->filesystemMock->expects($this->never())->method($this->anything());
+		$this->imagickMock->expects($this->never())->method($this->anything());
 		$this->expectException(ModuleException::class);
 		$this->expectExceptionMessage('Filesize: 20 MB exceeds max image size.');
 
@@ -86,6 +88,8 @@ class ImageTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileBeforeUploadDoesNotThrowExceptionWhenFileSizeIsWithinLimit(): void
 	{
+		$this->filesystemMock->expects($this->never())->method($this->anything());
+		$this->imagickMock->expects($this->never())->method($this->anything());
 		$this->image->checkFileBeforeUpload(20 * 1024 * 1024);
 		// @phpstan-ignore-next-line
 		static::assertTrue(true); // If no exception is thrown, the test passes
@@ -98,7 +102,8 @@ class ImageTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileAfterUploadThrowsExceptionWhenFileDoesNotExist(): void
 	{
-		$this->filesystemMock->method('fileExists')->willReturn(false);
+		$this->imagickMock->expects($this->never())->method($this->anything());
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileExists')->willReturn(false);
 
 		$this->expectException(ModuleException::class);
 		$this->expectExceptionMessage('After Upload Check: /path/to/file not exists.');
@@ -113,8 +118,9 @@ class ImageTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileAfterUploadThrowsExceptionWhenFileSizeExceedsLimit(): void
 	{
-		$this->filesystemMock->method('fileExists')->willReturn(true);
-		$this->filesystemMock->method('fileSize')->willReturn(20 * 1024 * 1024 + 1);
+		$this->imagickMock->expects($this->never())->method($this->anything());
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileExists')->willReturn(true);
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileSize')->willReturn(20 * 1024 * 1024 + 1);
 
 		$this->expectException(ModuleException::class);
 		$this->expectExceptionMessage('After Upload Check: 20 MB exceeds max image size.');
@@ -129,9 +135,9 @@ class ImageTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileAfterUploadThrowsExceptionWhenImageWidthExceedsLimit(): void
 	{
-		$this->filesystemMock->method('fileExists')->willReturn(true);
-		$this->filesystemMock->method('fileSize')->willReturn(20 * 1024 * 1024);
-		$this->imagickMock->method('getImageWidth')->willReturn(5001);
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileExists')->willReturn(true);
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileSize')->willReturn(20 * 1024 * 1024);
+		$this->imagickMock->expects($this->atLeastOnce())->method('getImageWidth')->willReturn(5001);
 
 		$this->expectException(ModuleException::class);
 		$this->expectExceptionMessage('After Upload Check:  Image width 5001 exceeds maximum.');
@@ -146,9 +152,9 @@ class ImageTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileAfterUploadThrowsExceptionWhenImageHeightExceedsLimit(): void
 	{
-		$this->filesystemMock->method('fileExists')->willReturn(true);
-		$this->filesystemMock->method('fileSize')->willReturn(20 * 1024 * 1024);
-		$this->imagickMock->method('getImageHeight')->willReturn(5001);
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileExists')->willReturn(true);
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileSize')->willReturn(20 * 1024 * 1024);
+		$this->imagickMock->expects($this->atLeastOnce())->method('getImageHeight')->willReturn(5001);
 
 		$this->expectException(ModuleException::class);
 		$this->expectExceptionMessage('After Upload Check:  Image height 5001 exceeds maximum.');
@@ -164,10 +170,10 @@ class ImageTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileAfterUploadDoesNotThrowExceptionWhenFileIsValid(): void
 	{
-		$this->filesystemMock->method('fileExists')->willReturn(true);
-		$this->filesystemMock->method('fileSize')->willReturn(20 * 1024 * 1024);
-		$this->imagickMock->method('getImageWidth')->willReturn(3840);
-		$this->imagickMock->method('getImageHeight')->willReturn(3840);
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileExists')->willReturn(true);
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileSize')->willReturn(20 * 1024 * 1024);
+		$this->imagickMock->expects($this->atLeastOnce())->method('getImageWidth')->willReturn(3840);
+		$this->imagickMock->expects($this->atLeastOnce())->method('getImageHeight')->willReturn(3840);
 
 		$this->image->validateStoredFile('/path/to/file');
 		// @phpstan-ignore-next-line
@@ -181,6 +187,7 @@ class ImageTest extends TestCase
 	#[Group('units')]
 	public function testCreateThumbnailCreatesGifThumbnail(): void
 	{
+		$this->filesystemMock->expects($this->never())->method($this->anything());
 		$this->imagickMock->expects($this->once())->method('thumbnailImage');
 		$this->imagickMock->expects($this->once())->method('writeImage');
 
@@ -194,6 +201,7 @@ class ImageTest extends TestCase
 	#[Group('units')]
 	public function testCreateThumbnailCreatesSvgThumbnail(): void
 	{
+		$this->imagickMock->expects($this->never())->method($this->anything());
 		$this->filesystemMock->expects($this->once())->method('copy');
 
 		$this->image->createThumbnail('/path/to/file.svg');
@@ -206,6 +214,7 @@ class ImageTest extends TestCase
 	#[Group('units')]
 	public function testCreateThumbnailCreatesStandardThumbnail(): void
 	{
+		$this->filesystemMock->expects($this->never())->method($this->anything());
 		$this->imagickMock->expects($this->once())->method('thumbnailImage');
 		$this->imagickMock->expects($this->once())->method('writeImage');
 

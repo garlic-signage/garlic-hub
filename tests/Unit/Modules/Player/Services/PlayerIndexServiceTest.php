@@ -29,6 +29,7 @@ use App\Modules\Player\Services\PlayerIndexService;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -38,7 +39,7 @@ class PlayerIndexServiceTest extends TestCase
 	private PlayerDataAssembler&MockObject $playerDataAssemblerMock;
 	private IndexProvider&MockObject $indexProviderMock;
 	private LoggerInterface&MockObject $loggerMock;
-	private PlayerEntity&MockObject $playerEntityMock;
+	private PlayerEntity&Stub $playerEntityStub;
 	private PlayerIndexService $service;
 
 	/**
@@ -51,7 +52,7 @@ class PlayerIndexServiceTest extends TestCase
 		$this->indexProviderMock       = $this->createMock(IndexProvider::class);
 		$this->loggerMock              = $this->createMock(LoggerInterface::class);
 
-		$this->playerEntityMock = $this->createMock(PlayerEntity::class);
+		$this->playerEntityStub = $this->createStub(PlayerEntity::class);
 		$this->service = new PlayerIndexService(
 			$this->playerDataAssemblerMock,
 			$this->indexProviderMock,
@@ -77,11 +78,11 @@ class PlayerIndexServiceTest extends TestCase
 			->willReturn(true);
 
 		$this->playerDataAssemblerMock->expects($this->once())->method('handleLocalPlayer')
-			->willReturn($this->playerEntityMock);
+			->willReturn($this->playerEntityStub);
 
-		$this->playerEntityMock->method('getStatus')->willReturn(PlayerStatus::RELEASED->value);
+		$this->playerEntityStub->method('getStatus')->willReturn(PlayerStatus::RELEASED->value);
 		$this->indexProviderMock->expects($this->once())->method('handleReleased')
-			->with($this->playerEntityMock);
+			->with($this->playerEntityStub);
 
 		$this->indexProviderMock->expects($this->once())->method('getFilePath')
 			->willReturn($filePath);
@@ -110,9 +111,9 @@ class PlayerIndexServiceTest extends TestCase
 			->with($serverData);
 
 		$this->playerDataAssemblerMock->expects($this->once())->method('fetchDatabase')
-			->willReturn($this->playerEntityMock);
+			->willReturn($this->playerEntityStub);
 
-		$this->playerEntityMock->method('getStatus')->willReturn(PlayerStatus::UNRELEASED->value);
+		$this->playerEntityStub->method('getStatus')->willReturn(PlayerStatus::UNRELEASED->value);
 		$this->indexProviderMock->expects($this->once())->method('handleUnreleased');
 
 		$this->indexProviderMock->expects($this->once())->method('getFilePath')
@@ -142,10 +143,10 @@ class PlayerIndexServiceTest extends TestCase
 			->with($userAgent)
 			->willReturn(true);
 
-		$this->playerEntityMock->method('getStatus')->willReturn(PlayerStatus::UNREGISTERED->value);
+		$this->playerEntityStub->method('getStatus')->willReturn(PlayerStatus::UNREGISTERED->value);
 		$this->playerDataAssemblerMock->expects($this->once())->method('insertNewPlayer')
 			->with(1)
-			->willReturn($this->playerEntityMock);
+			->willReturn($this->playerEntityStub);
 
 		$this->indexProviderMock->expects($this->once())->method('handleNew');
 
@@ -176,9 +177,9 @@ class PlayerIndexServiceTest extends TestCase
 			->with($serverData);
 
 		$this->playerDataAssemblerMock->expects($this->once())->method('fetchDatabase')
-			->willReturn($this->playerEntityMock);
+			->willReturn($this->playerEntityStub);
 
-		$this->playerEntityMock->method('getStatus')->willReturn(PlayerStatus::DEBUG_FTP->value);
+		$this->playerEntityStub->method('getStatus')->willReturn(PlayerStatus::DEBUG_FTP->value);
 		$this->indexProviderMock->expects($this->once())->method('handleTestSMil');
 
 		$this->indexProviderMock->expects($this->once())->method('getFilePath')
@@ -207,9 +208,9 @@ class PlayerIndexServiceTest extends TestCase
 			->with($serverData);
 
 		$this->playerDataAssemblerMock->expects($this->once())->method('fetchDatabase')
-			->willReturn($this->playerEntityMock);
+			->willReturn($this->playerEntityStub);
 
-		$this->playerEntityMock->method('getStatus')->willReturn(PlayerStatus::TEST_SMIL_OK->value);
+		$this->playerEntityStub->method('getStatus')->willReturn(PlayerStatus::TEST_SMIL_OK->value);
 		$this->indexProviderMock->expects($this->once())->method('handleCorrectSMil');
 
 		$this->indexProviderMock->expects($this->once())->method('getFilePath')
@@ -238,9 +239,9 @@ class PlayerIndexServiceTest extends TestCase
 			->with($serverData);
 
 		$this->playerDataAssemblerMock->expects($this->once())->method('fetchDatabase')
-			->willReturn($this->playerEntityMock);
+			->willReturn($this->playerEntityStub);
 
-		$this->playerEntityMock->method('getStatus')->willReturn(PlayerStatus::TEST_SMIL_ERROR->value);
+		$this->playerEntityStub->method('getStatus')->willReturn(PlayerStatus::TEST_SMIL_ERROR->value);
 		$this->indexProviderMock->expects($this->once())->method('handleCorruptSMIL');
 
 		$this->indexProviderMock->expects($this->once())->method('getFilePath')
@@ -269,9 +270,9 @@ class PlayerIndexServiceTest extends TestCase
 			->with($serverData);
 
 		$this->playerDataAssemblerMock->expects($this->once())->method('fetchDatabase')
-			->willReturn($this->playerEntityMock);
+			->willReturn($this->playerEntityStub);
 
-		$this->playerEntityMock->method('getStatus')->willReturn(PlayerStatus::TEST_NO_CONTENT->value);
+		$this->playerEntityStub->method('getStatus')->willReturn(PlayerStatus::TEST_NO_CONTENT->value);
 		$this->indexProviderMock->expects($this->once())->method('handleCorruptContent');
 
 		$this->indexProviderMock->expects($this->once())->method('getFilePath')
@@ -300,9 +301,9 @@ class PlayerIndexServiceTest extends TestCase
 			->with($serverData);
 
 		$this->playerDataAssemblerMock->expects($this->once())->method('fetchDatabase')
-			->willReturn($this->playerEntityMock);
+			->willReturn($this->playerEntityStub);
 
-		$this->playerEntityMock->method('getStatus')->willReturn(PlayerStatus::TEST_NO_PREFETCH->value);
+		$this->playerEntityStub->method('getStatus')->willReturn(PlayerStatus::TEST_NO_PREFETCH->value);
 		$this->indexProviderMock->expects($this->once())->method('handleCorruptPrefetchContent');
 
 		$this->indexProviderMock->expects($this->once())->method('getFilePath')
@@ -330,9 +331,9 @@ class PlayerIndexServiceTest extends TestCase
 			->with($serverData);
 
 		$this->playerDataAssemblerMock->expects($this->once())->method('fetchDatabase')
-			->willReturn($this->playerEntityMock);
+			->willReturn($this->playerEntityStub);
 
-		$this->playerEntityMock->method('getStatus')->willReturn(14);
+		$this->playerEntityStub->method('getStatus')->willReturn(14);
 
 		$this->indexProviderMock->expects($this->never())->method('getFilePath');
 		$this->loggerMock->expects($this->once())->method('error')
@@ -364,6 +365,7 @@ class PlayerIndexServiceTest extends TestCase
 	#[Group('units')]
 	public function testHandleIndexRequestWhenExceptionThrownLogsErrorAndReturnsEmptyString(): void
 	{
+		$this->indexProviderMock->expects($this->never())->method($this->anything());
 		$userAgent = 'ExceptionUserAgent';
 
 		$this->playerDataAssemblerMock->expects($this->once())->method('parseUserAgent')

@@ -65,6 +65,7 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testIsModuleAdmin(): void
 	{
+		$this->expectUntouched($this->nodesRepositoryMock, $this->nestedSetServiceMock, $this->mediaServiceMock);
 		$uid = 123;
 		$this->aclValidatorMock->expects($this->once())
 			->method('isModuleAdmin')
@@ -83,6 +84,8 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testIsNodeUploadable(): void
 	{
+		$this->nestedSetServiceMock->expects($this->never())->method($this->anything());
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$nodeId = 123;
 		$node = ['node_id' => 123, 'UID' => 456, 'parent_id' => 0];
 		$rights = ['create' => true, 'read' => true, 'edit' => true, 'share' => 'global'];
@@ -108,6 +111,7 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testIsNodeUploadableThrowsException(): void
 	{
+		$this->expectUntouched($this->aclValidatorMock, $this->nestedSetServiceMock, $this->mediaServiceMock);
 		$nodeId = 123;
 
 		$this->nodesRepositoryMock->expects($this->once())->method('getNode')
@@ -128,6 +132,8 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testGetNodesRoot(): void
 	{
+		$this->nodesRepositoryMock->expects($this->never())->method($this->anything());
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$parentId = 0;
 		$nodes = [['node_id' => 1, 'name' => 'Root Node', 'children' => 0, 'parent_id' => 0, 'UID' => 123, 'visibility' => 1]];
 		$this->nestedSetServiceMock->expects($this->once())
@@ -157,6 +163,8 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testGetNodesSub(): void
 	{
+		$this->nodesRepositoryMock->expects($this->never())->method($this->anything());
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$parentId = 21;
 		$nodes = [['node_id' => 1, 'name' => 'Sub Node', 'children' => 0, 'parent_id' => 0, 'UID' => 123, 'visibility' => 1]];
 		$this->nestedSetServiceMock->expects($this->never())
@@ -185,6 +193,8 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testAddRootNode(): void
 	{
+		$this->nodesRepositoryMock->expects($this->never())->method($this->anything());
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$uid = 123;
 		$name = 'New Root Node';
 		$this->nodesService->UID = $uid;
@@ -211,6 +221,8 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testAddRootNodeFails(): void
 	{
+		$this->nodesRepositoryMock->expects($this->never())->method($this->anything());
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$uid = 123;
 		$name = 'New Root Node';
 		$this->nodesService->UID = $uid;
@@ -239,6 +251,7 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testAddSubNode(): void
 	{
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$uid = 123;
 		$parentNodeId = 1;
 		$name = 'New Sub Node';
@@ -273,6 +286,7 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testAddSubNodeFailsNopParentNode(): void
 	{
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$uid = 123;
 		$parentNodeId = 1;
 		$name = 'New Sub Node';
@@ -304,6 +318,7 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testAddSubNodeFailsNoRights(): void
 	{
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$uid = 123;
 		$parentNodeId = 1;
 		$name = 'New Sub Node';
@@ -339,6 +354,8 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testEditNodeSucceed(): void
 	{
+		$this->nestedSetServiceMock->expects($this->never())->method($this->anything());
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$nodeId = 1;
 		$name = 'Updated Node Name';
 		$this->nodesService->UID = 12;
@@ -373,6 +390,7 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testAddUserDirectory(): void
 	{
+		$this->expectUntouched($this->nodesRepositoryMock, $this->aclValidatorMock, $this->mediaServiceMock);
 		$UID = 1234;
 		$name = 'User Directory';
 		$expectedNodeId = 5678;
@@ -394,6 +412,7 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteUserDirectorySuccess(): void
 	{
+		$this->nestedSetServiceMock->expects($this->never())->method($this->anything());
 		$UID = 123;
 		$this->nodesService->UID = $UID;
 		$this->nodesRepositoryMock->expects($this->once())->method('getUserRootNode')
@@ -432,6 +451,8 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteUserDirectoryNoActionWhenNotExist(): void
 	{
+		$this->nestedSetServiceMock->expects($this->never())->method($this->anything());
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$UID = 123;
 		$this->nodesRepositoryMock->expects($this->once())->method('getUserRootNode')
 			->with($UID)
@@ -454,6 +475,7 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteUserDirectoryFailsByNoRights(): void
 	{
+		$this->nestedSetServiceMock->expects($this->never())->method($this->anything());
 		$UID = 123;
 		$this->nodesService->UID = $UID;
 		$this->nodesRepositoryMock->expects($this->once())->method('getUserRootNode')
@@ -483,6 +505,7 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteUserDirectoryFailsByDeleteFailure(): void
 	{
+		$this->nestedSetServiceMock->expects($this->never())->method($this->anything());
 		$UID = 123;
 		$this->nodesService->UID = $UID;
 		$this->nodesRepositoryMock->expects($this->once())->method('getUserRootNode')
@@ -527,6 +550,8 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testEditNodeFailsByNode(): void
 	{
+		$this->nestedSetServiceMock->expects($this->never())->method($this->anything());
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$nodeId = 1;
 		$name = 'Updated Node Name';
 		$this->nodesService->UID = 12;
@@ -558,6 +583,8 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testEditNodeFailsByRights(): void
 	{
+		$this->nestedSetServiceMock->expects($this->never())->method($this->anything());
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$nodeId = 1;
 		$name = 'Updated Node Name';
 		$this->nodesService->UID = 12;
@@ -592,6 +619,8 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testMoveNodeSucceed(): void
 	{
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$movedNodeId = 1;
 		$targetNodeId = 2;
 		$region = Calculator::REGION_APPENDCHILD;
@@ -617,6 +646,8 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testMoveNodeFailsByRegion(): void
 	{
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$movedNodeId  = 1;
 		$targetNodeId = 2;
 		$region       = 'Bäm';
@@ -636,6 +667,8 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testMoveNodeFailsByMovedNodeRootDir(): void
 	{
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$movedNodeId = 1;
 		$targetNodeId = 2;
 		$region = Calculator::REGION_APPENDCHILD;
@@ -661,6 +694,8 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testMoveNodeFailsByTargetCreateRoot(): void
 	{
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$movedNodeId = 1;
 		$targetNodeId = 0;
 		$region = Calculator::REGION_APPENDCHILD;
@@ -686,6 +721,8 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testMoveNodeFailsByTargetCreateRootWithBefore(): void
 	{
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$movedNodeId = 1;
 		$targetNodeId = 4;
 		$region = Calculator::REGION_BEFORE;
@@ -711,6 +748,8 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testMoveNodeFailsByTargetCreateRootWithAfter(): void
 	{
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$movedNodeId = 1;
 		$targetNodeId = 4;
 		$region = Calculator::REGION_AFTER;
@@ -738,6 +777,7 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteOneNodeSucceed(): void
 	{
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$nodeId = 1;
 		$this->nodesService->UID = 354;
 		$node = ['node_id' => 1, 'name' => 'Node to Delete', 'parent_id' => 12, 'children' => 0,
@@ -777,6 +817,7 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteFailsByNode(): void
 	{
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$nodeId = 1;
 		$this->nodesService->UID = 34;
 
@@ -808,6 +849,7 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteFailsByRights(): void
 	{
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$nodeId = 1;
 		$this->nodesService->UID = 34;
 		$node = ['node_id' => 1, 'name' => 'Node to Delete', 'parent_id' => 12, 'children' => 0,
@@ -843,6 +885,7 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteNodeTreeSucceed(): void
 	{
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$nodeId = 1;
 		$this->nodesService->UID = 354;
 		$node = ['node_id' => 1, 'name' => 'Node to Delete', 'parent_id' => 12, 'children' => 3,
@@ -873,4 +916,11 @@ class NodesServiceTest extends TestCase
 		static::assertEquals(3, $result);
 	}
 
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
+	}
 }

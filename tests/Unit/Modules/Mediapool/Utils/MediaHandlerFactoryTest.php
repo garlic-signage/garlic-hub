@@ -36,13 +36,13 @@ use Imagick;
 use League\Flysystem\Filesystem;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class MediaHandlerFactoryTest extends TestCase
 {
-	private Config&MockObject $configMock;
-	private ImagickFactory&MockObject $imagickFactoryMock;
+	private Config&Stub $configStub;
+	private ImagickFactory&Stub $imagickFactoryStub;
 	private MediaHandlerFactory $mediaHandlerFactory;
 
 	/**
@@ -51,18 +51,18 @@ class MediaHandlerFactoryTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->configMock         = $this->createMock(Config::class);
-		$filesystemMock           = $this->createMock(Filesystem::class);
-		$zipFilesystemFactoryMock = $this->createMock(ZipFilesystemFactory::class);
-		$this->imagickFactoryMock = $this->createMock(ImagickFactory::class);
-		$ffmpegMock = $this->createMock(Ffmpeg::class);
+		$this->configStub         = $this->createStub(Config::class);
+		$filesystemStub           = $this->createStub(Filesystem::class);
+		$zipFilesystemFactoryStub = $this->createStub(ZipFilesystemFactory::class);
+		$this->imagickFactoryStub = $this->createStub(ImagickFactory::class);
+		$ffmpegStub = $this->createStub(Ffmpeg::class);
 
 		$this->mediaHandlerFactory = new MediaHandlerFactory(
-			$this->configMock,
-			$filesystemMock,
-			$zipFilesystemFactoryMock,
-			$this->imagickFactoryMock,
-			$ffmpegMock
+			$this->configStub,
+			$filesystemStub,
+			$zipFilesystemFactoryStub,
+			$this->imagickFactoryStub,
+			$ffmpegStub
 		);
 	}
 
@@ -72,7 +72,7 @@ class MediaHandlerFactoryTest extends TestCase
 	#[Group('units')]
 	public function testCreateHandlerReturnsImageForImageMimeType(): void
 	{
-		$this->configMock->method('getConfigValue')
+		$this->configStub->method('getConfigValue')
 			->willReturnMap([
 				['width', 'mediapool', 'max_resolution', '3840'],
 				['height', 'mediapool', 'max_resolution', '3840'],
@@ -86,7 +86,7 @@ class MediaHandlerFactoryTest extends TestCase
 				['images', 'mediapool', 'max_file_sizes', '20971520']
 			]);
 
-		$this->imagickFactoryMock->method('createImagick')->willReturn(new Imagick());
+		$this->imagickFactoryStub->method('createImagick')->willReturn(new Imagick());
 		$handler = $this->mediaHandlerFactory->createMediaHandler('image/jpeg');
 		static::assertInstanceOf(Image::class, $handler);
 	}
@@ -97,7 +97,7 @@ class MediaHandlerFactoryTest extends TestCase
 	#[Group('units')]
 	public function testCreateHandlerReturnsVideoForVideoMimeType(): void
 	{
-		$this->configMock->method('getConfigValue')
+		$this->configStub->method('getConfigValue')
 			->willReturnMap([
 				['width', 'mediapool', 'max_resolution', '3840'],
 				['height', 'mediapool', 'max_resolution', '3840'],
@@ -111,7 +111,7 @@ class MediaHandlerFactoryTest extends TestCase
 				['videos', 'mediapool', 'max_file_sizes', '1073741824']
 			]);
 
-		$this->imagickFactoryMock->method('createImagick')->willReturn(new Imagick());
+		$this->imagickFactoryStub->method('createImagick')->willReturn(new Imagick());
 		$handler = $this->mediaHandlerFactory->createMediaHandler('video/mp4');
 		static::assertInstanceOf(Video::class, $handler);
 	}
@@ -122,7 +122,7 @@ class MediaHandlerFactoryTest extends TestCase
 	#[Group('units')]
 	public function testCreateHandlerReturnsPdfForPdfMimeType(): void
 	{
-		$this->configMock->method('getConfigValue')
+		$this->configStub->method('getConfigValue')
 			->willReturnMap([
 				['width', 'mediapool', 'max_resolution', '3840'],
 				['height', 'mediapool', 'max_resolution', '3840'],
@@ -136,7 +136,7 @@ class MediaHandlerFactoryTest extends TestCase
 				['documents', 'mediapool', 'max_file_sizes', '20971520']
 			]);
 
-		$this->imagickFactoryMock->method('createImagick')->willReturn(new Imagick());
+		$this->imagickFactoryStub->method('createImagick')->willReturn(new Imagick());
 		$handler = $this->mediaHandlerFactory->createMediaHandler('application/pdf');
 		static::assertInstanceOf(Pdf::class, $handler);
 	}
@@ -147,7 +147,7 @@ class MediaHandlerFactoryTest extends TestCase
 	#[Group('units')]
 	public function testCreateHandlerReturnsWidgetForWidgetMimeType(): void
 	{
-		$this->configMock->method('getConfigValue')
+		$this->configStub->method('getConfigValue')
 			->willReturnMap([
 				['width', 'mediapool', 'max_resolution', '3840'],
 				['height', 'mediapool', 'max_resolution', '3840'],
@@ -161,7 +161,7 @@ class MediaHandlerFactoryTest extends TestCase
 				['downloads', 'mediapool', 'max_file_sizes', '1073741824']
 			]);
 
-		$this->imagickFactoryMock->method('createImagick')->willReturn(new Imagick());
+		$this->imagickFactoryStub->method('createImagick')->willReturn(new Imagick());
 		$handler = $this->mediaHandlerFactory->createMediaHandler('application/widget');
 		static::assertInstanceOf(Widget::class, $handler);
 	}
@@ -172,7 +172,7 @@ class MediaHandlerFactoryTest extends TestCase
 	#[Group('units')]
 	public function testCreateHandlerReturnsMiscellaneousForMiscellaneousMimeType(): void
 	{
-		$this->configMock->method('getConfigValue')
+		$this->configStub->method('getConfigValue')
 			->willReturnMap([
 				['width', 'mediapool', 'max_resolution', '3840'],
 				['height', 'mediapool', 'max_resolution', '3840'],

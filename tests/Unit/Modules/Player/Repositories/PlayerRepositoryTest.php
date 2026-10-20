@@ -63,6 +63,8 @@ class PlayerRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindAllForDashboardSqlite(): void
 	{
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
+		$this->resultMock->expects($this->never())->method($this->anything());
 		$sqliteplatform = new SQLitePlatform();
 		$this->connectionMock->expects($this->once())
 			->method('getDatabasePlatform')
@@ -93,6 +95,8 @@ class PlayerRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindAllForDashboardMariaDB(): void
 	{
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
+		$this->resultMock->expects($this->never())->method($this->anything());
 		$sqliteplatform = new MariaDBPlatform();
 		$this->connectionMock->expects($this->once())
 			->method('getDatabasePlatform')
@@ -123,6 +127,8 @@ class PlayerRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindAllForDashboardEmpty(): void
 	{
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
+		$this->resultMock->expects($this->never())->method($this->anything());
 		$sqliteplatform = new PostgreSQLPlatform();
 		$this->connectionMock->expects($this->once())
 			->method('getDatabasePlatform')
@@ -137,6 +143,7 @@ class PlayerRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testConstructorInitializesConnection(): void
 	{
+		$this->expectUntouched($this->connectionMock, $this->queryBuilderMock, $this->resultMock);
 		static::assertSame('player', $this->repository->getTable());
 		static::assertSame('player_id', $this->repository->getIdField());
 	}
@@ -147,6 +154,7 @@ class PlayerRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindAllFullFiltered(): void
 	{
+		$this->connectionMock->expects($this->once())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$fields = [
 			'elements_page' => ['value' => 1],
 			'elements_per_page' => ['value' => 10],
@@ -193,6 +201,7 @@ class PlayerRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindAllInactive(): void
 	{
+		$this->connectionMock->expects($this->once())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$fields = [
 			'elements_page' => ['value' => 1],
 			'elements_per_page' => ['value' => 10],
@@ -229,6 +238,7 @@ class PlayerRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindAll(): void
 	{
+		$this->connectionMock->expects($this->once())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$fields = [
 			'elements_page' => ['value' => 1],
 			'elements_per_page' => ['value' => 10],
@@ -263,6 +273,7 @@ class PlayerRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindAllFilteredByUID(): void
 	{
+		$this->connectionMock->expects($this->once())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$fields = [
 			'elements_page' => ['value' => 1],
 			'elements_per_page' => ['value' => 10],
@@ -296,6 +307,7 @@ class PlayerRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindPlaylistIdsByPlaylistIdsWithEmptyArray(): void
 	{
+		$this->expectUntouched($this->connectionMock, $this->queryBuilderMock, $this->resultMock);
 		$result = $this->repository->findPlaylistIdsByPlaylistIds([]);
 		static::assertSame([], $result);
 	}
@@ -306,6 +318,7 @@ class PlayerRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindPlaylistIdsByPlaylistIdsWithValidIds(): void
 	{
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
 		$playlistIds = [1, 2, 3];
 		$expectedSql = 'SELECT playlist_id FROM player WHERE playlist_id IN(1,2,3)';
 		$expectedResult = [
@@ -333,6 +346,7 @@ class PlayerRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindPlaylistIdsByPlaylistIdsWithNonExistentIds(): void
 	{
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
 		$playlistIds = [4, 5, 6];
 		$expectedSql = 'SELECT playlist_id FROM player WHERE playlist_id IN(4,5,6)';
 		$expectedResult = [];
@@ -348,5 +362,13 @@ class PlayerRepositoryTest extends TestCase
 
 		$result = $this->repository->findPlaylistIdsByPlaylistIds($playlistIds);
 		static::assertSame($expectedResult, $result);
+	}
+
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
 	}
 }

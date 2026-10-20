@@ -64,7 +64,7 @@ class FormElementsCreatorTest extends TestCase
 	public function testCreateUserNameField(): void
 	{
 		$value = 'My Playlist';
-		$expectedField = $this->createMock(FieldInterface::class);
+		$expectedField = $this->createStub(FieldInterface::class);
 
 		$this->translatorMock->expects($this->exactly(2))->method('translate')
 			->with(Parameters::PARAMETER_USER_NAME, 'main')
@@ -99,7 +99,7 @@ class FormElementsCreatorTest extends TestCase
 	{
 		$value = 'active';
 		$expectedOptions = ['active' => 'Active', 'inactive' => 'Inactive'];
-		$expectedField = $this->createMock(FieldInterface::class);
+		$expectedField = $this->createStub(FieldInterface::class);
 
 		$this->translatorMock->expects($this->exactly(2))->method('translate')
 			->with(Parameters::PARAMETER_USER_STATUS, 'users')
@@ -138,7 +138,7 @@ class FormElementsCreatorTest extends TestCase
 	public function testCreateUserLocaleField(): void
 	{
 		$value = 'en_US';
-		$expectedField = $this->createMock(FieldInterface::class);
+		$expectedField = $this->createStub(FieldInterface::class);
 
 		$this->translatorMock->expects($this->exactly(2))->method('translate')
 			->with('locale', 'users')
@@ -231,7 +231,7 @@ class FormElementsCreatorTest extends TestCase
 	public function testCreateEmailField(): void
 	{
 		$value = 'test_email@example.com';
-		$expectedField = $this->createMock(FieldInterface::class);
+		$expectedField = $this->createStub(FieldInterface::class);
 
 		$this->translatorMock->expects($this->exactly(2))
 			->method('translate')
@@ -264,8 +264,9 @@ class FormElementsCreatorTest extends TestCase
 	#[Group('units')]
 	public function testCreateHiddenUIDField(): void
 	{
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$value = 42;
-		$expectedField = $this->createMock(FieldInterface::class);
+		$expectedField = $this->createStub(FieldInterface::class);
 
 		$this->formBuilderMock
 			->expects($this->once())
@@ -290,6 +291,7 @@ class FormElementsCreatorTest extends TestCase
 	#[Group('units')]
 	public function testAddResetPasswordButton(): void
 	{
+		$this->formBuilderMock->expects($this->never())->method($this->anything());
 		$translatedButtonName = 'Password Reset';
 
 		$this->translatorMock

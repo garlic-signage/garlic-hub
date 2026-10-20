@@ -32,14 +32,15 @@ use League\Flysystem\FilesystemException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class FfmpegTest extends TestCase
 {
 	private Config&MockObject $configMock;
-	private Filesystem&MockObject $filesystemMock;
-	private ShellExecutor&MockObject $shellExecutorMock;
-	private MediaProperties&MockObject $mediaPropertiesMock;
+	private Filesystem&Stub $filesystemStub;
+	private ShellExecutor&Stub $shellExecutorStub;
+	private MediaProperties&Stub $mediaPropertiesStub;
 	private Ffmpeg $ffmpeg;
 
 	/**
@@ -49,16 +50,17 @@ class FfmpegTest extends TestCase
 	{
 		parent::setUp();
 		$this->configMock          = $this->createMock(Config::class);
-		$this->filesystemMock      = $this->createMock(Filesystem::class);
-		$this->mediaPropertiesMock = $this->createMock(MediaProperties::class);
-		$this->shellExecutorMock   = $this->createMock(ShellExecutor::class);
+		$this->filesystemStub      = $this->createStub(Filesystem::class);
+		$this->mediaPropertiesStub = $this->createStub(MediaProperties::class);
+		$this->shellExecutorStub   = $this->createStub(ShellExecutor::class);
 
-		$this->ffmpeg = new Ffmpeg($this->configMock, $this->filesystemMock, $this->mediaPropertiesMock, $this->shellExecutorMock);
+		$this->ffmpeg = new Ffmpeg($this->configMock, $this->filesystemStub, $this->mediaPropertiesStub, $this->shellExecutorStub);
 	}
 
 	#[Group('units')]
 	public function testSetMetaData(): void
 	{
+		$this->configMock->expects($this->never())->method($this->anything());
 		$metadata = ['test' => 'test'];
 		$this->ffmpeg->setMetadata($metadata);
 
@@ -73,21 +75,22 @@ class FfmpegTest extends TestCase
 	#[Group('units')]
 	public function testInitWithValidFilePath(): void
 	{
-		$this->filesystemMock->method('fileExists')->willReturn(true);
+		$this->filesystemStub->method('fileExists')->willReturn(true);
 		$this->configMock->expects($this->exactly(3))->method('getConfigValue')->willReturn('');
 		$this->configMock->expects($this->once())->method('getPaths');
-		$this->shellExecutorMock->method('executeSimple')->willReturn('{"format": {"filename": "test.mp4", "size": 12345, "format_name": "mp4", "duration": 60, "start_time": 0}, "streams": [{"codec_type": "video", "codec_name": "h264", "width": 1920, "height": 1080}]}');
+		$this->shellExecutorStub->method('executeSimple')->willReturn('{"format": {"filename": "test.mp4", "size": 12345, "format_name": "mp4", "duration": 60, "start_time": 0}, "streams": [{"codec_type": "video", "codec_name": "h264", "width": 1920, "height": 1080}]}');
 
 		$this->ffmpeg->init('/path/to/video.mp4');
-		$this->mediaPropertiesMock->method('toArray')->willReturn(['filename' => 'test.mp4']);
+		$this->mediaPropertiesStub->method('toArray')->willReturn(['filename' => 'test.mp4']);
 		static::assertEquals('test.mp4', $this->ffmpeg->getMediaProperties()['filename']);
 	}
 
 	#[Group('units')]
 	public function testGetDuration(): void
 	{
+		$this->configMock->expects($this->never())->method($this->anything());
 		static::assertSame(0.0, $this->ffmpeg->getDuration());
-		$this->mediaPropertiesMock->method('getDuration')->willReturn(10.0);
+		$this->mediaPropertiesStub->method('getDuration')->willReturn(10.0);
 		static::assertSame(10.0, $this->ffmpeg->getDuration());
 	}
 
@@ -98,7 +101,7 @@ class FfmpegTest extends TestCase
 	#[Group('units')]
 	public function testInitWithNonExistentFileThrowsException(): void
 	{
-		$this->filesystemMock->method('fileExists')->willReturn(false);
+		$this->filesystemStub->method('fileExists')->willReturn(false);
 		$this->configMock->expects($this->exactly(3))->method('getConfigValue')->willReturn('');
 
 		$this->expectException(FrameworkException::class);
@@ -114,10 +117,10 @@ class FfmpegTest extends TestCase
 	#[Group('units')]
 	public function testInitProbeFileNull(): void
 	{
-		$this->filesystemMock->method('fileExists')->willReturn(true);
+		$this->filesystemStub->method('fileExists')->willReturn(true);
 		$this->configMock->expects($this->exactly(3))->method('getConfigValue')->willReturn('');
 		$this->configMock->expects($this->once())->method('getPaths');
-		$this->shellExecutorMock->method('executeSimple')->willReturn('');
+		$this->shellExecutorStub->method('executeSimple')->willReturn('');
 
 		$this->expectException(FrameworkException::class);
 		$this->expectExceptionMessage('Probing media file failed. Unsupported file type for file /path/to/video.mp4. Using command: ');
@@ -132,9 +135,11 @@ class FfmpegTest extends TestCase
 	#[Group('units')]
 	public function testCreateVideoThumbnailWithValidVideo(): void
 	{
-		$this->filesystemMock->method('fileExists')->willReturn(true);
-		$this->mediaPropertiesMock->method('hasVideoStream')->willReturn(true);
-		$this->shellExecutorMock->method('executeSimple')
+		$this->configMock->expects($this->never())->method('getConfigValue');
+		$this->configMock->expects($this->once())->method('getPaths')->with('systemDir')->willReturn('/var/www');
+		$this->filesystemStub->method('fileExists')->willReturn(true);
+		$this->mediaPropertiesStub->method('hasVideoStream')->willReturn(true);
+		$this->shellExecutorStub->method('executeSimple')
 			->willReturn('{"streams": [{"codec_type": "video", "codec_name": "h264", "width": 1920, "height": 1080}]}');
 
 		$vidcapPath = $this->ffmpeg->createVideoThumbnail('/path/to/destination');
@@ -148,11 +153,13 @@ class FfmpegTest extends TestCase
 	#[Group('units')]
 	public function testCreateVideoThumbnailFails(): void
 	{
-		$this->mediaPropertiesMock->method('hasVideoStream')->willReturn(true);
-		$this->filesystemMock->method('fileExists')
+		$this->configMock->expects($this->never())->method('getConfigValue');
+		$this->configMock->expects($this->once())->method('getPaths')->with('systemDir')->willReturn('/var/www');
+		$this->mediaPropertiesStub->method('hasVideoStream')->willReturn(true);
+		$this->filesystemStub->method('fileExists')
 			->willReturn(false);
 
-		$this->shellExecutorMock->method('executeSimple')
+		$this->shellExecutorStub->method('executeSimple')
 			->willReturn('{"streams": [
 			{"codec_type": "video",
 			 "codec_name": "h264",
@@ -173,7 +180,8 @@ class FfmpegTest extends TestCase
 	#[Group('units')]
 	public function testCreateVideoThumbnailWithNoVideoStreamThrowsException(): void
 	{
-		$this->mediaPropertiesMock->method('hasVideoStream')->willReturn(false);
+		$this->configMock->expects($this->never())->method($this->anything());
+		$this->mediaPropertiesStub->method('hasVideoStream')->willReturn(false);
 
 		$this->expectException(FrameworkException::class);
 		$this->expectExceptionMessage('Cannot create video thumbnail for . File has no readable video stream');

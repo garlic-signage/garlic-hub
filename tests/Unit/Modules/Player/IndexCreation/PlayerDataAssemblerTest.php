@@ -65,6 +65,7 @@ class PlayerDataAssemblerTest extends TestCase
 	#[Group('units')]
 	public function testParseUserAgentReturnsFalseForUnknownModel(): void
 	{
+		$this->expectUntouched($this->playerRepositoryMock, $this->configMock, $this->playerEntityFactoryMock);
 		$userAgent = 'TestUserAgent';
 		$this->userAgentHandlerMock->expects($this->once())->method('parseUserAgent')
 			->with($userAgent);
@@ -79,6 +80,7 @@ class PlayerDataAssemblerTest extends TestCase
 	#[Group('units')]
 	public function testParseUserAgentReturnsTrueForKnownModel(): void
 	{
+		$this->expectUntouched($this->playerRepositoryMock, $this->configMock, $this->playerEntityFactoryMock);
 		$userAgent = 'TestUserAgent';
 		$this->userAgentHandlerMock->expects($this->once())->method('parseUserAgent')
 			->with($userAgent);
@@ -98,6 +100,7 @@ class PlayerDataAssemblerTest extends TestCase
 	#[Group('units')]
 	public function testHandleLocalPlayerReturnsExistingPlayer(): void
 	{
+		$this->configMock->expects($this->never())->method($this->anything());
 		$playerData = ['player_id' => 1, 'uuid' => 'valid-uuid', 'status' => PlayerStatus::RELEASED->value, 'is_intranet' => true];
 
 		$this->playerRepositoryMock->expects($this->once())->method('findPlayerById')
@@ -108,7 +111,7 @@ class PlayerDataAssemblerTest extends TestCase
 
 		$this->playerEntityFactoryMock->expects($this->once())->method('create')
 			->with($playerData, $this->userAgentHandlerMock)
-			->willReturn($this->createMock(PlayerEntity::class));
+			->willReturn($this->createStub(PlayerEntity::class));
 
 		$serverData = ['REMOTE_ADDR' => '192.168.10.9'];
 		$this->assembler->setServerData($serverData);
@@ -176,7 +179,7 @@ class PlayerDataAssemblerTest extends TestCase
 
 		$this->playerEntityFactoryMock->expects($this->once())->method('create')
 			->with($result, $this->userAgentHandlerMock)
-			->willReturn($this->createMock(PlayerEntity::class));
+			->willReturn($this->createStub(PlayerEntity::class));
 
 		$serverData = ['REMOTE_ADDR' => '192.168.10.9'];
 		$this->assembler->setServerData($serverData);
@@ -244,7 +247,7 @@ class PlayerDataAssemblerTest extends TestCase
 
 		$this->playerEntityFactoryMock->expects($this->once())->method('create')
 			->with($result, $this->userAgentHandlerMock)
-			->willReturn($this->createMock(PlayerEntity::class));
+			->willReturn($this->createStub(PlayerEntity::class));
 
 		$serverData = ['REMOTE_ADDR' => '192.168.10.9'];
 		$this->assembler->setServerData($serverData);
@@ -259,6 +262,7 @@ class PlayerDataAssemblerTest extends TestCase
 	#[Group('units')]
 	public function testHandleLocalPlayerThrowsExceptionForFailedInsertion(): void
 	{
+		$this->configMock->expects($this->once())->method('getEnv')->with('APP_CONTAINER')->willReturn('');
 		$this->playerRepositoryMock->expects($this->once())->method('findPlayerById')
 			->with(1)
 			->willReturn([]);
@@ -317,6 +321,8 @@ class PlayerDataAssemblerTest extends TestCase
 	#[Group('units')]
 	public function testHandleLocalPlayerThrowsExceptionForInvalidUuid(): void
 	{
+		$this->configMock->expects($this->never())->method($this->anything());
+		$this->playerEntityFactoryMock->expects($this->never())->method($this->anything());
 		$this->expectException(ModuleException::class);
 		$this->expectExceptionMessage('Wrong Uuid for local player');
 
@@ -340,6 +346,7 @@ class PlayerDataAssemblerTest extends TestCase
 	#[Group('units')]
 	public function testInsertNewPlayerInsertsSuccessfully(): void
 	{
+		$this->configMock->expects($this->once())->method('getEdition')->willReturn(\App\Framework\Core\Config\Config::PLATFORM_EDITION_CORE);
 		$ownerId = 1;
 		$saveData = [
 			'uuid' => 'test-uuid',
@@ -371,7 +378,7 @@ class PlayerDataAssemblerTest extends TestCase
 
 		$this->playerEntityFactoryMock->expects($this->once())->method('create')
 			->with($saveData, $this->userAgentHandlerMock)
-			->willReturn($this->createMock(PlayerEntity::class));
+			->willReturn($this->createStub(PlayerEntity::class));
 		$serverData = ['REMOTE_ADDR' => '192.168.10.9'];
 		$this->assembler->setServerData($serverData);
 
@@ -384,6 +391,7 @@ class PlayerDataAssemblerTest extends TestCase
 	#[Group('units')]
 	public function testInsertNewPlayerThrowsExceptionForFailedInsertion(): void
 	{
+		$this->configMock->expects($this->once())->method('getEdition')->willReturn(\App\Framework\Core\Config\Config::PLATFORM_EDITION_CORE);
 		$ownerId = 1;
 		$saveData = [
 			'uuid' => 'test-uuid',
@@ -464,7 +472,7 @@ class PlayerDataAssemblerTest extends TestCase
 
 		$this->playerEntityFactoryMock->expects($this->once())->method('create')
 			->with($saveData, $this->userAgentHandlerMock)
-			->willReturn($this->createMock(PlayerEntity::class));
+			->willReturn($this->createStub(PlayerEntity::class));
 
 		$this->assembler->insertNewPlayer($ownerId);
 	}
@@ -476,6 +484,7 @@ class PlayerDataAssemblerTest extends TestCase
 	#[Group('units')]
 	public function testFetchDatabaseReturnsPlayerEntity(): void
 	{
+		$this->configMock->expects($this->never())->method($this->anything());
 		$this->userAgentHandlerMock->expects($this->once())->method('getUuid')->willReturn('test-uuid');
 		$playerData = ['player_id' => 1, 'uuid' => 'test-uuid', 'status' => PlayerStatus::RELEASED->value];
 
@@ -485,11 +494,19 @@ class PlayerDataAssemblerTest extends TestCase
 
 		$this->playerEntityFactoryMock->expects($this->once())->method('create')
 			->with($playerData, $this->userAgentHandlerMock)
-			->willReturn($this->createMock(PlayerEntity::class));
+			->willReturn($this->createStub(PlayerEntity::class));
 
 		$serverData = ['REMOTE_ADDR' => '192.168.10.9'];
 		$this->assembler->setServerData($serverData);
 
 		$this->assembler->fetchDatabase();
+	}
+
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
 	}
 }

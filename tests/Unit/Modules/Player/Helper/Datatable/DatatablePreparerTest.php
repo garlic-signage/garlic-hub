@@ -37,11 +37,12 @@ use DateMalformedStringException;
 use Exception;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class DatatablePreparerTest extends TestCase
 {
-	private PrepareService&MockObject $prepareServiceMock;
+	private PrepareService&Stub $prepareServiceStub;
 	private BodyPreparer&MockObject $bodyPreparerMock;
 	private Translator&MockObject $translatorMock;
 	private TimeUnitsCalculator&MockObject $timeUnitsCalculatorMock;
@@ -54,15 +55,15 @@ class DatatablePreparerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->prepareServiceMock = $this->createMock(PrepareService::class);
-		$parametersMock           = $this->createMock(Parameters::class);
+		$this->prepareServiceStub = $this->createStub(PrepareService::class);
+		$parametersStub           = $this->createStub(Parameters::class);
 		$this->translatorMock     = $this->createMock(Translator::class);
 		$this->bodyPreparerMock = $this->createMock(BodyPreparer::class);
 		$this->timeUnitsCalculatorMock = $this->createMock(TimeUnitsCalculator::class);
 
 		$this->datatablePreparer = new DatatablePreparer(
-			$this->prepareServiceMock,
-			$parametersMock,
+			$this->prepareServiceStub,
+			$parametersStub,
 			$this->timeUnitsCalculatorMock
 		);
 	}
@@ -75,6 +76,7 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableBodyWithEmptyData(): void
 	{
+		$this->expectUntouched($this->translatorMock, $this->bodyPreparerMock, $this->timeUnitsCalculatorMock);
 		$result = $this->datatablePreparer->prepareTableBody([], [], 123);
 
 		static::assertEmpty($result);
@@ -92,14 +94,14 @@ class DatatablePreparerTest extends TestCase
 	public function testPrepareTableBodyWithLastAccessPlayerActive(): void
 	{
 		$this->datatablePreparer->setTranslator($this->translatorMock);
-		$fields = [$this->createMock(HeaderField::class)];
+		$fields = [$this->createStub(HeaderField::class)];
 		$fields[0]->method('getName')->willReturn('last_access');
 		$fields[0]->method('isSortable')->willReturn(true);
 
-		$this->prepareServiceMock->method('getBodyPreparer')
+		$this->prepareServiceStub->method('getBodyPreparer')
 			->willReturn($this->bodyPreparerMock);
 
-		$this->translatorMock->method('translate')->willReturn('Player Action');
+		$this->translatorMock->expects($this->atLeastOnce())->method('translate')->willReturn('Player Action');
 
 		$this->timeUnitsCalculatorMock->expects($this->once())->method('calculateLastAccess')
 			->willReturnSelf();
@@ -152,14 +154,14 @@ class DatatablePreparerTest extends TestCase
 	public function testPrepareTableBodyWithLastAccessPlayerPending(): void
 	{
 		$this->datatablePreparer->setTranslator($this->translatorMock);
-		$fields = [$this->createMock(HeaderField::class)];
+		$fields = [$this->createStub(HeaderField::class)];
 		$fields[0]->method('getName')->willReturn('last_access');
 		$fields[0]->method('isSortable')->willReturn(true);
 
-		$this->prepareServiceMock->method('getBodyPreparer')
+		$this->prepareServiceStub->method('getBodyPreparer')
 			->willReturn($this->bodyPreparerMock);
 
-		$this->translatorMock->method('translate')->willReturn('Player Action');
+		$this->translatorMock->expects($this->atLeastOnce())->method('translate')->willReturn('Player Action');
 
 
 		$this->timeUnitsCalculatorMock->expects($this->once())->method('calculateLastAccess')
@@ -213,14 +215,14 @@ class DatatablePreparerTest extends TestCase
 	public function testPrepareTableBodyWithLastAccessPlayerInactive(): void
 	{
 		$this->datatablePreparer->setTranslator($this->translatorMock);
-		$fields = [$this->createMock(HeaderField::class)];
+		$fields = [$this->createStub(HeaderField::class)];
 		$fields[0]->method('getName')->willReturn('last_access');
 		$fields[0]->method('isSortable')->willReturn(true);
 
-		$this->prepareServiceMock->method('getBodyPreparer')
+		$this->prepareServiceStub->method('getBodyPreparer')
 			->willReturn($this->bodyPreparerMock);
 
-		$this->translatorMock->method('translate')->willReturn('Player Action');
+		$this->translatorMock->expects($this->atLeastOnce())->method('translate')->willReturn('Player Action');
 
 		$this->timeUnitsCalculatorMock->expects($this->once())->method('calculateLastAccess')
 			->willReturnSelf();
@@ -270,15 +272,16 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableBodyWithPlayerNameReleased(): void
 	{
+		$this->timeUnitsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->datatablePreparer->setTranslator($this->translatorMock);
-		$fields = [$this->createMock(HeaderField::class)];
+		$fields = [$this->createStub(HeaderField::class)];
 		$fields[0]->method('getName')->willReturn('player_name');
 		$fields[0]->method('isSortable')->willReturn(true);
 
-		$this->prepareServiceMock->method('getBodyPreparer')
+		$this->prepareServiceStub->method('getBodyPreparer')
 			->willReturn($this->bodyPreparerMock);
 
-		$this->translatorMock->method('translate')->willReturn('Player Action');
+		$this->translatorMock->expects($this->atLeastOnce())->method('translate')->willReturn('Player Action');
 		$this->bodyPreparerMock->expects($this->once())->method('formatLink');
 
 		$this->bodyPreparerMock->expects($this->once())->method('formatAction');
@@ -312,12 +315,15 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableBodyWithUsername(): void
 	{
+		// only the label of the context menu is translated, no last access is calculated
+		$this->translatorMock->expects($this->once())->method('translate')->with('player_actions', 'player')->willReturn('Actions');
+		$this->timeUnitsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->datatablePreparer->setTranslator($this->translatorMock);
-		$fields = [$this->createMock(HeaderField::class)];
+		$fields = [$this->createStub(HeaderField::class)];
 		$fields[0]->method('getName')->willReturn('UID');
 		$fields[0]->method('isSortable')->willReturn(true);
 
-		$this->prepareServiceMock->method('getBodyPreparer')
+		$this->prepareServiceStub->method('getBodyPreparer')
 			->willReturn($this->bodyPreparerMock);
 		$this->bodyPreparerMock->expects($this->once())->method('formatUID')
 			->with('15', 'Zapappalas');
@@ -351,12 +357,13 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableBodyWithStatusUnreleased(): void
 	{
+		$this->timeUnitsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->datatablePreparer->setTranslator($this->translatorMock);
-		$fields = [$this->createMock(HeaderField::class)];
+		$fields = [$this->createStub(HeaderField::class)];
 		$fields[0]->method('getName')->willReturn('status');
 		$fields[0]->method('isSortable')->willReturn(true);
 
-		$this->prepareServiceMock->method('getBodyPreparer')
+		$this->prepareServiceStub->method('getBodyPreparer')
 			->willReturn($this->bodyPreparerMock);
 		$this->translatorMock->method('translateArrayForOptions')
 			->with('status_selects', 'player')
@@ -392,12 +399,13 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableBodyWithStatusReleased(): void
 	{
+		$this->timeUnitsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->datatablePreparer->setTranslator($this->translatorMock);
-		$fields = [$this->createMock(HeaderField::class)];
+		$fields = [$this->createStub(HeaderField::class)];
 		$fields[0]->method('getName')->willReturn('status');
 		$fields[0]->method('isSortable')->willReturn(true);
 
-		$this->prepareServiceMock->method('getBodyPreparer')
+		$this->prepareServiceStub->method('getBodyPreparer')
 			->willReturn($this->bodyPreparerMock);
 		$this->translatorMock->method('translateArrayForOptions')
 			->with('status_selects', 'player')
@@ -435,12 +443,13 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableBodyWithStatusDebug(): void
 	{
+		$this->timeUnitsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->datatablePreparer->setTranslator($this->translatorMock);
-		$fields = [$this->createMock(HeaderField::class)];
+		$fields = [$this->createStub(HeaderField::class)];
 		$fields[0]->method('getName')->willReturn('status');
 		$fields[0]->method('isSortable')->willReturn(true);
 
-		$this->prepareServiceMock->method('getBodyPreparer')
+		$this->prepareServiceStub->method('getBodyPreparer')
 			->willReturn($this->bodyPreparerMock);
 		$this->translatorMock->method('translateArrayForOptions')
 			->with('status_selects', 'player')
@@ -478,12 +487,13 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableBodyWithModel(): void
 	{
+		$this->timeUnitsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->datatablePreparer->setTranslator($this->translatorMock);
-		$fields = [$this->createMock(HeaderField::class)];
+		$fields = [$this->createStub(HeaderField::class)];
 		$fields[0]->method('getName')->willReturn('model');
 		$fields[0]->method('isSortable')->willReturn(true);
 
-		$this->prepareServiceMock->method('getBodyPreparer')
+		$this->prepareServiceStub->method('getBodyPreparer')
 			->willReturn($this->bodyPreparerMock);
 		$this->translatorMock->method('translateArrayForOptions')
 			->with('model_selects', 'player')
@@ -521,15 +531,16 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableBodyWithPlaylistIdReleased(): void
 	{
+		$this->timeUnitsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->datatablePreparer->setTranslator($this->translatorMock);
-		$fields = [$this->createMock(HeaderField::class)];
+		$fields = [$this->createStub(HeaderField::class)];
 		$fields[0]->method('getName')->willReturn('playlist_id');
 		$fields[0]->method('isSortable')->willReturn(false);
 
-		$this->prepareServiceMock->method('getBodyPreparer')
+		$this->prepareServiceStub->method('getBodyPreparer')
 			->willReturn($this->bodyPreparerMock);
 
-		$this->translatorMock->method('translate');
+		$this->translatorMock->expects($this->atLeastOnce())->method('translate');
 
 
 		$this->bodyPreparerMock->expects($this->once())->method('formatAction');
@@ -564,15 +575,16 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableBodyWithPlaylistIdUnReleased(): void
 	{
+		$this->timeUnitsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->datatablePreparer->setTranslator($this->translatorMock);
-		$fields = [$this->createMock(HeaderField::class)];
+		$fields = [$this->createStub(HeaderField::class)];
 		$fields[0]->method('getName')->willReturn('playlist_id');
 		$fields[0]->method('isSortable')->willReturn(false);
 
-		$this->prepareServiceMock->method('getBodyPreparer')
+		$this->prepareServiceStub->method('getBodyPreparer')
 			->willReturn($this->bodyPreparerMock);
 
-		$this->translatorMock->method('translate')->willReturn('Player Action');
+		$this->translatorMock->expects($this->atLeastOnce())->method('translate')->willReturn('Player Action');
 
 		$this->bodyPreparerMock->expects($this->once())->method('formatAction');
 
@@ -605,12 +617,15 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableBodyWithDefault(): void
 	{
+		// only the label of the context menu is translated, no last access is calculated
+		$this->translatorMock->expects($this->once())->method('translate')->with('player_actions', 'player')->willReturn('Actions');
+		$this->timeUnitsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->datatablePreparer->setTranslator($this->translatorMock);
-		$fields = [$this->createMock(HeaderField::class)];
+		$fields = [$this->createStub(HeaderField::class)];
 		$fields[0]->method('getName')->willReturn('unknown');
 		$fields[0]->method('isSortable')->willReturn(false);
 
-		$this->prepareServiceMock->method('getBodyPreparer')
+		$this->prepareServiceStub->method('getBodyPreparer')
 			->willReturn($this->bodyPreparerMock);
 
 		$this->bodyPreparerMock->expects($this->once())->method('formatText');
@@ -639,6 +654,8 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testFormatContextMenu(): void
 	{
+		$this->bodyPreparerMock->expects($this->never())->method($this->anything());
+		$this->timeUnitsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->datatablePreparer->setTranslator($this->translatorMock);
 
 		$this->translatorMock->expects($this->exactly(6))->method('translate')->willReturnMap([
@@ -666,4 +683,11 @@ class DatatablePreparerTest extends TestCase
 		static::assertEquals($expected, $result);
 	}
 
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
+	}
 }

@@ -29,13 +29,14 @@ use Doctrine\DBAL\Result;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class PlayerIndexRepositoryTest extends TestCase
 {
 	private Connection&MockObject	 $connectionMock;
 	private QueryBuilder&MockObject $queryBuilderMock;
-	private Result&MockObject $resultMock;
+	private Result&Stub $resultStub;
 	private PlayerIndexRepository $repository;
 
 	/**
@@ -47,7 +48,7 @@ class PlayerIndexRepositoryTest extends TestCase
 		parent::setUp();
 		$this->connectionMock   = $this->createMock(Connection::class);
 		$this->queryBuilderMock = $this->createMock(QueryBuilder::class);
-		$this->resultMock       = $this->createMock(Result::class);
+		$this->resultStub       = $this->createStub(Result::class);
 
 		$this->repository = new PlayerIndexRepository($this->connectionMock);
 
@@ -58,6 +59,8 @@ class PlayerIndexRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testConstructor(): void
 	{
+		$this->connectionMock->expects($this->never())->method($this->anything());
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
 		static::assertSame('player', $this->repository->getTable());
 	}
 
@@ -67,6 +70,7 @@ class PlayerIndexRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testInsertPlayerSuccessfullyAddsData(): void
 	{
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
 		$saveData = [
 			'player_id' => '123',
 			'commands' => ['command1', 'command2'],
@@ -105,9 +109,10 @@ class PlayerIndexRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindPlayerByIdReturnsEmptyArray(): void
 	{
+		$this->connectionMock->expects($this->once())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$this->mockQueryBuilder();
 		$this->mockQueryBuilderForId();
-		$this->resultMock->method('fetchAssociative')
+		$this->resultStub->method('fetchAssociative')
 			->willReturn(false);
 
 		$result = $this->repository->findPlayerById(123);
@@ -120,6 +125,7 @@ class PlayerIndexRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindPlayerByIdReturnsExpandedResult(): void
 	{
+		$this->connectionMock->expects($this->once())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$rawData = [
 			'player_id' => '123',
 			'commands' => 'one,two,three',
@@ -147,7 +153,7 @@ class PlayerIndexRepositoryTest extends TestCase
 		$this->mockQueryBuilder();
 		$this->mockQueryBuilderForId();
 
-		$this->resultMock->method('fetchAssociative')
+		$this->resultStub->method('fetchAssociative')
 			->willReturn($rawData);
 
 		$result = $this->repository->findPlayerById(123);
@@ -160,6 +166,7 @@ class PlayerIndexRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testUpdateLastAccessSuccessfully(): void
 	{
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
 		$id = 123;
 		$this->connectionMock->expects($this->once())
 			->method('executeStatement')
@@ -174,9 +181,10 @@ class PlayerIndexRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindPlayerByUuidReturnsEmptyArray(): void
 	{
+		$this->connectionMock->expects($this->once())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$this->mockQueryBuilder();
 		$this->mockQueryBuilderForUuid();
-		$this->resultMock->method('fetchAssociative')->willReturn(false);
+		$this->resultStub->method('fetchAssociative')->willReturn(false);
 
 		$result = $this->repository->findPlayerByUuid('test-uuid');
 		static::assertEmpty($result);
@@ -188,6 +196,7 @@ class PlayerIndexRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindPlayerByUuidReturnsExpandedResult(): void
 	{
+		$this->connectionMock->expects($this->once())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$rawData = [
 			'player_id' => '123',
 			'commands' => 'command1,command2',
@@ -214,7 +223,7 @@ class PlayerIndexRepositoryTest extends TestCase
 
 		$this->mockQueryBuilder();
 		$this->mockQueryBuilderForUuid();
-		$this->resultMock->method('fetchAssociative')->willReturn($rawData);
+		$this->resultStub->method('fetchAssociative')->willReturn($rawData);
 
 		$result = $this->repository->findPlayerByUuid('test-uuid');
 		static::assertSame($expectedData, $result);
@@ -238,7 +247,7 @@ class PlayerIndexRepositoryTest extends TestCase
 		$this->queryBuilderMock->method('setParameters')
 			->with('id', 123);
 		$this->queryBuilderMock->method('executeQuery')
-			->willReturn($this->resultMock);
+			->willReturn($this->resultStub);
 	}
 
 	private function mockQueryBuilderForUuid(): void
@@ -253,6 +262,6 @@ class PlayerIndexRepositoryTest extends TestCase
 
 		$this->queryBuilderMock
 			->method('executeQuery')
-			->willReturn($this->resultMock);
+			->willReturn($this->resultStub);
 	}
 }

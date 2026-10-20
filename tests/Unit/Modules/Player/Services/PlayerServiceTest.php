@@ -31,13 +31,14 @@ use App\Modules\Playlists\Services\PlaylistsService;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 class PlayerServiceTest extends TestCase
 {
 	private PlayerRepository&MockObject $playerRepositoryMock;
-	private PlaylistsService&MockObject $playlistServiceMock;
+	private PlaylistsService&Stub $playlistServiceStub;
 	private AclValidator&MockObject $playerValidatorMock;
 	private LoggerInterface&MockObject $loggerMock;
 	private PlayerService $service;
@@ -49,11 +50,11 @@ class PlayerServiceTest extends TestCase
 	{
 		parent::setUp();
 		$this->playerRepositoryMock = $this->createMock(PlayerRepository::class);
-		$this->playlistServiceMock  = $this->createMock(PlaylistsService::class);
+		$this->playlistServiceStub  = $this->createStub(PlaylistsService::class);
 		$this->playerValidatorMock  = $this->createMock(AclValidator::class);
 		$this->loggerMock           = $this->createMock(LoggerInterface::class);
 
-		$this->service = new PlayerService($this->playerRepositoryMock, $this->playlistServiceMock, $this->playerValidatorMock, $this->loggerMock);
+		$this->service = new PlayerService($this->playerRepositoryMock, $this->playlistServiceStub, $this->playerValidatorMock, $this->loggerMock);
 	}
 
 	/**
@@ -62,7 +63,9 @@ class PlayerServiceTest extends TestCase
 	#[Group('units')]
 	public function testFindAllForDashboardReturnsValidData(): void
 	{
-		$this->playerRepositoryMock->method('findAllForDashboard')
+		$this->playerValidatorMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method($this->anything());
+		$this->playerRepositoryMock->expects($this->atLeastOnce())->method('findAllForDashboard')
 			->willReturn(['active' => 5, 'inactive' => 3, 'pending' => 2]);
 
 		$result = $this->service->findAllForDashboard();
@@ -76,7 +79,9 @@ class PlayerServiceTest extends TestCase
 	#[Group('units')]
 	public function testFindAllForDashboardReturnsDefaultValuesOnEmptyData(): void
 	{
-		$this->playerRepositoryMock->method('findAllForDashboard')
+		$this->playerValidatorMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method($this->anything());
+		$this->playerRepositoryMock->expects($this->atLeastOnce())->method('findAllForDashboard')
 			->willReturn([]);
 
 		$result = $this->service->findAllForDashboard();
@@ -90,6 +95,8 @@ class PlayerServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdatePlayerSuccessfullyUpdatesData(): void
 	{
+		$this->playerValidatorMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playerId = 1;
 		$saveData = ['api_endpoint' => 'http://example.com', 'is_intranet' => 1];
 
@@ -105,17 +112,18 @@ class PlayerServiceTest extends TestCase
 	#[Group('units')]
 	public function testReplaceMasterPlaylist(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(1);
-		$this->playerRepositoryMock->method('findFirstById')
+		$this->playerRepositoryMock->expects($this->atLeastOnce())->method('findFirstById')
 			->willReturn(['id' => 1, 'name' => 'Player 1']);
 
-		$this->playerValidatorMock->method('isPlayerEditable')
+		$this->playerValidatorMock->expects($this->atLeastOnce())->method('isPlayerEditable')
 			->willReturn(true);
 
-		$this->playlistServiceMock->method('loadPureById')
+		$this->playlistServiceStub->method('loadPureById')
 			->willReturn(['playlist_mode' => PlaylistMode::MASTER->value, 'playlist_name' => 'Master Playlist']);
 
-		$this->playerRepositoryMock->method('update')
+		$this->playerRepositoryMock->expects($this->atLeastOnce())->method('update')
 			->willReturn(1);
 
 		$result = $this->service->replaceMasterPlaylist(1, 10);
@@ -127,13 +135,13 @@ class PlayerServiceTest extends TestCase
 	public function testReplaceMasterPlaylistWithInvalidMasterPlaylistMode(): void
 	{
 		$this->service->setUID(1);
-		$this->playerRepositoryMock->method('findFirstById')
+		$this->playerRepositoryMock->expects($this->atLeastOnce())->method('findFirstById')
 			->willReturn(['id' => 1, 'name' => 'Player 1']);
 
-		$this->playerValidatorMock->method('isPlayerEditable')
+		$this->playerValidatorMock->expects($this->atLeastOnce())->method('isPlayerEditable')
 			->willReturn(true);
 
-		$this->playlistServiceMock->method('loadPureById')
+		$this->playlistServiceStub->method('loadPureById')
 			->willReturn(['playlist_mode' => PlaylistMode::CHANNEL->value, 'playlist_name' => 'Channel Playlist']);
 
 		$this->loggerMock->expects($this->once())
@@ -148,14 +156,15 @@ class PlayerServiceTest extends TestCase
 	#[Group('units')]
 	public function testReplaceMasterPlaylistWithoutPlaylistId(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(1);
-		$this->playerRepositoryMock->method('findFirstById')
+		$this->playerRepositoryMock->expects($this->atLeastOnce())->method('findFirstById')
 			->willReturn(['id' => 1, 'name' => 'Player 1']);
 
-		$this->playerValidatorMock->method('isPlayerEditable')
+		$this->playerValidatorMock->expects($this->atLeastOnce())->method('isPlayerEditable')
 			->willReturn(true);
 
-		$this->playerRepositoryMock->method('update')
+		$this->playerRepositoryMock->expects($this->atLeastOnce())->method('update')
 			->willReturn(1);
 
 		$result = $this->service->replaceMasterPlaylist(1, 0);
@@ -166,6 +175,7 @@ class PlayerServiceTest extends TestCase
 	#[Group('units')]
 	public function testReplaceMasterPlaylistPlaylistsFails(): void
 	{
+		$this->loggerMock->expects($this->once())->method('error')->with('Error loading player: 1 is not found.');
 		$this->service->setUID(1);
 		$this->playerRepositoryMock->method('findFirstById')
 			->willReturn([]);
@@ -187,6 +197,7 @@ class PlayerServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchAclCheckedPlayerDataSucceed(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playerId = 1;
 		$playerData = ['UID' => 1, 'company_id' => 101, 'player_id' => $playerId, 'name' => 'Player Name'];
 
@@ -212,6 +223,7 @@ class PlayerServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchAclCheckedPlayerDataReturnsEmptyIfPlayerNotFound(): void
 	{
+		$this->playerValidatorMock->expects($this->never())->method($this->anything());
 		$playerId = 2;
 
 		$this->playerRepositoryMock->method('findFirstById')

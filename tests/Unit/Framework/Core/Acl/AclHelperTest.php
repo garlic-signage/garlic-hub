@@ -29,14 +29,15 @@ use App\Modules\Users\Services\UsersService;
 use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class AclHelperTest extends TestCase
 {
 	private AclHelper $aclHelper;
-	private Config&MockObject $configMock;
-	private UsersService&MockObject $usersServiceMock;
-	private UserEntity&MockObject $userEntityMock;
+	private Config&Stub $configStub;
+	private UsersService&Stub $usersServiceStub;
+	private UserEntity&Stub $userEntityStub;
 
 	/**
 	 * @throws \PHPUnit\Framework\MockObject\Exception
@@ -44,16 +45,16 @@ class AclHelperTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->configMock       = $this->createMock(Config::class);
-		$this->userEntityMock   = $this->createMock(UserEntity::class);
-		$this->usersServiceMock = $this->createMock(UsersService::class);
-		$this->aclHelper        = new AclHelper($this->usersServiceMock, $this->configMock);
+		$this->configStub       = $this->createStub(Config::class);
+		$this->userEntityStub   = $this->createStub(UserEntity::class);
+		$this->usersServiceStub = $this->createStub(UsersService::class);
+		$this->aclHelper        = new AclHelper($this->usersServiceStub, $this->configStub);
 	}
 
 	#[Group('units')]
 	public function testGetConfig(): void
 	{
-		static::assertSame($this->configMock, $this->aclHelper->getConfig());
+		static::assertSame($this->configStub, $this->aclHelper->getConfig());
 	}
 
 	/**
@@ -67,11 +68,11 @@ class AclHelperTest extends TestCase
 		$moduleName = 'testModule';
 		$this->mockConfigValues();
 
-		$this->userEntityMock->method('getAcl')->willReturn([
+		$this->userEntityStub->method('getAcl')->willReturn([
 			['module' => $moduleName, 'acl' => 8]
 		]);
 
-		$this->usersServiceMock->method('getUserById')->willReturn($this->userEntityMock);
+		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
 
 		$result = $this->aclHelper->isModuleAdmin($UID, $moduleName);
 
@@ -89,11 +90,11 @@ class AclHelperTest extends TestCase
 		$moduleName = 'testModule';
 		$this->mockConfigValues();
 
-		$this->userEntityMock->method('getAcl')->willReturn([
+		$this->userEntityStub->method('getAcl')->willReturn([
 			['module' => $moduleName, 'acl' => 4]
 		]);
 
-		$this->usersServiceMock->method('getUserById')->willReturn($this->userEntityMock);
+		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
 
 		$result = $this->aclHelper->isModuleAdmin($UID, $moduleName);
 
@@ -111,11 +112,11 @@ class AclHelperTest extends TestCase
 		$moduleName = 'testModule';
 		$this->mockConfigValues();
 
-		$this->userEntityMock->method('getAcl')->willReturn([
+		$this->userEntityStub->method('getAcl')->willReturn([
 			['module' => $moduleName, 'acl' => 4]
 		]);
 
-		$this->usersServiceMock->method('getUserById')->willReturn($this->userEntityMock);
+		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
 
 		$result = $this->aclHelper->isSubAdmin($UID, $moduleName);
 
@@ -133,11 +134,11 @@ class AclHelperTest extends TestCase
 		$moduleName = 'testModule';
 		$this->mockConfigValues();
 
-		$this->userEntityMock->method('getAcl')->willReturn([
+		$this->userEntityStub->method('getAcl')->willReturn([
 			['module' => $moduleName, 'acl' => 2]
 		]);
 
-		$this->usersServiceMock->method('getUserById')->willReturn($this->userEntityMock);
+		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
 
 		$result = $this->aclHelper->isSubAdmin($UID, $moduleName);
 
@@ -155,11 +156,11 @@ class AclHelperTest extends TestCase
 		$moduleName = 'testModule';
 		$this->mockConfigValues();
 
-		$this->userEntityMock->method('getAcl')->willReturn([
+		$this->userEntityStub->method('getAcl')->willReturn([
 			['module' => $moduleName, 'acl' => 2]
 		]);
 
-		$this->usersServiceMock->method('getUserById')->willReturn($this->userEntityMock);
+		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
 
 		$result = $this->aclHelper->isEditor($UID, $moduleName);
 
@@ -177,11 +178,11 @@ class AclHelperTest extends TestCase
 		$moduleName = 'testModule';
 		$this->mockConfigValues();
 
-		$this->userEntityMock->method('getAcl')->willReturn([
+		$this->userEntityStub->method('getAcl')->willReturn([
 			['module' => $moduleName, 'acl' => 1]
 		]);
 
-		$this->usersServiceMock->method('getUserById')->willReturn($this->userEntityMock);
+		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
 
 		$result = $this->aclHelper->isEditor($UID, $moduleName);
 
@@ -199,11 +200,11 @@ class AclHelperTest extends TestCase
 		$moduleName = 'testModule';
 		$this->mockConfigValues();
 
-		$this->userEntityMock->method('getAcl')->willReturn([
+		$this->userEntityStub->method('getAcl')->willReturn([
 			['module' => $moduleName, 'acl' => 1]
 		]);
 
-		$this->usersServiceMock->method('getUserById')->willReturn($this->userEntityMock);
+		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
 
 		$result = $this->aclHelper->isViewer($UID, $moduleName);
 
@@ -221,11 +222,11 @@ class AclHelperTest extends TestCase
 		$moduleName = 'testModule';
 		$this->mockConfigValues();
 
-		$this->userEntityMock->method('getAcl')->willReturn([
+		$this->userEntityStub->method('getAcl')->willReturn([
 			['module' => $moduleName, 'acl' => 0]
 		]);
 
-		$this->usersServiceMock->method('getUserById')->willReturn($this->userEntityMock);
+		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
 
 		$result = $this->aclHelper->isViewer($UID, $moduleName);
 
@@ -242,11 +243,11 @@ class AclHelperTest extends TestCase
 		$companyId = 100;
 		$moduleName = 'testModule_subadmin';
 
-		$this->userEntityMock->method('getVip')->willReturn([
+		$this->userEntityStub->method('getVip')->willReturn([
 			[$moduleName => $companyId]
 		]);
 
-		$this->usersServiceMock->method('getUserById')->willReturn($this->userEntityMock);
+		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
 
 		$result = $this->aclHelper->hasSubAdminAccessOnCompany($UID, $companyId, 'testModule');
 
@@ -263,11 +264,11 @@ class AclHelperTest extends TestCase
 		$companyId = 100;
 		$moduleName = 'testModule_subadmin';
 
-		$this->userEntityMock->method('getVip')->willReturn([
+		$this->userEntityStub->method('getVip')->willReturn([
 			[$moduleName => 101]
 		]);
 
-		$this->usersServiceMock->method('getUserById')->willReturn($this->userEntityMock);
+		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
 
 		$result = $this->aclHelper->hasSubAdminAccessOnCompany($UID, $companyId, 'testModule');
 
@@ -282,9 +283,9 @@ class AclHelperTest extends TestCase
 	{
 		$UID = 1;
 		$companyId = 100;
-		$this->userEntityMock->method('getVip')->willReturn([]);
+		$this->userEntityStub->method('getVip')->willReturn([]);
 
-		$this->usersServiceMock->method('getUserById')->willReturn($this->userEntityMock);
+		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
 
 		$result = $this->aclHelper->hasSubAdminAccessOnCompany($UID, $companyId, 'testModule');
 		static::assertFalse($result);
@@ -300,11 +301,11 @@ class AclHelperTest extends TestCase
 		$unitId = 200;
 		$moduleName = 'testModule_editor';
 
-		$this->userEntityMock->method('getVip')->willReturn([
+		$this->userEntityStub->method('getVip')->willReturn([
 			[$moduleName => $unitId]
 		]);
 
-		$this->usersServiceMock->method('getUserById')->willReturn($this->userEntityMock);
+		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
 
 		$result = $this->aclHelper->hasEditorAccessOnUnit($UID, $unitId, 'testModule');
 
@@ -321,11 +322,11 @@ class AclHelperTest extends TestCase
 		$unitId = 300;
 		$moduleName = 'testModule_viewer';
 
-		$this->userEntityMock->method('getVip')->willReturn([
+		$this->userEntityStub->method('getVip')->willReturn([
 			[$moduleName => $unitId]
 		]);
 
-		$this->usersServiceMock->method('getUserById')->willReturn($this->userEntityMock);
+		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
 
 		$result = $this->aclHelper->hasViewerAccessOnUnit($UID, $unitId, 'testModule');
 
@@ -342,11 +343,11 @@ class AclHelperTest extends TestCase
 		$unitId = 300;
 		$moduleName = 'testModule_viewer';
 
-		$this->userEntityMock->method('getVip')->willReturn([
+		$this->userEntityStub->method('getVip')->willReturn([
 			[$moduleName => 301]
 		]);
 
-		$this->usersServiceMock->method('getUserById')->willReturn($this->userEntityMock);
+		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
 
 		$result = $this->aclHelper->hasViewerAccessOnUnit($UID, $unitId, 'testModule');
 
@@ -362,9 +363,9 @@ class AclHelperTest extends TestCase
 		$UID = 1;
 		$unitId = 300;
 
-		$this->userEntityMock->method('getVip')->willReturn([]);
+		$this->userEntityStub->method('getVip')->willReturn([]);
 
-		$this->usersServiceMock->method('getUserById')->willReturn($this->userEntityMock);
+		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
 
 		$result = $this->aclHelper->hasViewerAccessOnUnit($UID, $unitId, 'testModule');
 
@@ -381,11 +382,11 @@ class AclHelperTest extends TestCase
 		$unitId = 200;
 		$moduleName = 'testModule_editor';
 
-		$this->userEntityMock->method('getVip')->willReturn([
+		$this->userEntityStub->method('getVip')->willReturn([
 			[$moduleName => 201]
 		]);
 
-		$this->usersServiceMock->method('getUserById')->willReturn($this->userEntityMock);
+		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
 
 		$result = $this->aclHelper->hasEditorAccessOnUnit($UID, $unitId, 'testModule');
 
@@ -401,9 +402,9 @@ class AclHelperTest extends TestCase
 		$UID = 1;
 		$unitId = 200;
 
-		$this->userEntityMock->method('getVip')->willReturn([]);
+		$this->userEntityStub->method('getVip')->willReturn([]);
 
-		$this->usersServiceMock->method('getUserById')->willReturn($this->userEntityMock);
+		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
 
 		$result = $this->aclHelper->hasEditorAccessOnUnit($UID, $unitId, 'testModule');
 		static::assertFalse($result);
@@ -411,7 +412,7 @@ class AclHelperTest extends TestCase
 
 	private function mockConfigValues(): void
 	{
-		$this->configMock->method('getConfigValue')
+		$this->configStub->method('getConfigValue')
 			->willReturnCallback(function ($key)
 			{
 				return match ($key)

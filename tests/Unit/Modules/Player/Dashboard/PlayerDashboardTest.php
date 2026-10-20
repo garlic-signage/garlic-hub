@@ -55,6 +55,8 @@ class PlayerDashboardTest extends TestCase
 	#[Group('units')]
 	public function testGetId(): void
 	{
+		$this->playerServiceMock->expects($this->never())->method($this->anything());
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$result = $this->playerDashboard->getId();
 		static::assertSame('player', $result);
 	}
@@ -66,6 +68,7 @@ class PlayerDashboardTest extends TestCase
 	#[Group('units')]
 	public function testGetTitle(): void
 	{
+		$this->playerServiceMock->expects($this->never())->method($this->anything());
 		$this->translatorMock
 			->expects($this->once())
 			->method('translate')

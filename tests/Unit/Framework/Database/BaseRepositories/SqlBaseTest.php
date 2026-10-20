@@ -25,7 +25,7 @@ namespace Tests\Unit\Framework\Database\BaseRepositories;
 use App\Framework\Database\BaseRepositories\SqlBase;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 class ConcreteSqlBase extends SqlBase
 {
@@ -33,13 +33,13 @@ class ConcreteSqlBase extends SqlBase
 }
 class SqlBaseTest extends TestCase
 {
-	private Connection&MockObject $connection;
+	private Connection&Stub $connection;
 	private ConcreteSqlBase $sqlBase;
 
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->connection = $this->createMock(Connection::class);
+		$this->connection = $this->createStub(Connection::class);
 		$this->sqlBase = new ConcreteSqlBase($this->connection, 'test', 'test_id');
 	}
 

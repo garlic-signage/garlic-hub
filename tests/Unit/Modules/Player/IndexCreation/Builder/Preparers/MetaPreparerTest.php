@@ -25,12 +25,12 @@ use App\Modules\Player\Entities\PlayerEntity;
 use App\Modules\Player\IndexCreation\Builder\Preparers\MetaPreparer;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class MetaPreparerTest extends TestCase
 {
-	private PlayerEntity&MockObject $playerEntityMock;
+	private PlayerEntity&Stub $playerEntityStub;
 	private MetaPreparer $preparer;
 
 	/**
@@ -39,16 +39,16 @@ class MetaPreparerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->playerEntityMock = $this->createMock(PlayerEntity::class);
-		$this->preparer   = new MetaPreparer($this->playerEntityMock);
+		$this->playerEntityStub = $this->createStub(PlayerEntity::class);
+		$this->preparer   = new MetaPreparer($this->playerEntityStub);
 	}
 
 	#[Group('units')]
 	public function testPrepareReturnsExpectedMetaArray(): void
 	{
-		$this->playerEntityMock->method('getPlayerName')->willReturn('Test Player');
-		$this->playerEntityMock->method('getPlaylistName')->willReturn('Test Playlist');
-		$this->playerEntityMock->method('getRefresh')->willReturn(120);
+		$this->playerEntityStub->method('getPlayerName')->willReturn('Test Player');
+		$this->playerEntityStub->method('getPlaylistName')->willReturn('Test Playlist');
+		$this->playerEntityStub->method('getRefresh')->willReturn(120);
 
 		$result = $this->preparer->prepare();
 

@@ -79,33 +79,33 @@ class IndexCreatorTest extends TestCase
 	public function testCreateForReleasedPlayerProcessesCorrectly(): void
 	{
 		parent::setUp();
-		$playerEntityMock      = $this->createMock(PlayerEntity::class);
+		$playerEntityStub      = $this->createStub(PlayerEntity::class);
 		$configMock            = $this->createMock(Config::class);
-		$playlistStructureMock = $this->createMock(PlaylistStructureInterface::class);
+		$playlistStructureStub = $this->createStub(PlaylistStructureInterface::class);
 		$playlistBuilderMock   = $this->createMock(PlaylistBuilderInterface::class);
 
 		$configMock->method('getConfigValue')
 			->with('path_smil_index', 'player')
 			->willReturn('/path/to/index');
-		$playerEntityMock->method('getUuid')->willReturn('uuid123');
-		$playerEntityMock->method('getPlaylistId')->willReturn(456);
+		$playerEntityStub->method('getUuid')->willReturn('uuid123');
+		$playerEntityStub->method('getPlaylistId')->willReturn(456);
 
 		$this->playlistBuilderFactoryMock->expects($this->once())->method('createBuilder')
-			->with($playerEntityMock)
+			->with($playerEntityStub)
 			->willReturn($playlistBuilderMock);
 
 		$playlistBuilderMock->expects($this->once())->method('buildPlaylist')
-			->willReturn($playlistStructureMock);
+			->willReturn($playlistStructureStub);
 
 		$this->templateSelectorMock->expects($this->once())->method('select')
-			->with($playerEntityMock)
+			->with($playerEntityStub)
 			->willReturn(TemplateIndexFiles::GARLIC);
 
 		$this->templatePreparerMock->expects($this->once())->method('setPlayerEntity')
-			->with($playerEntityMock)
+			->with($playerEntityStub)
 			->willReturnSelf();
 		$this->templatePreparerMock->expects($this->once())->method('setPlaylistStructure')
-			->with($playlistStructureMock)
+			->with($playlistStructureStub)
 			->willReturnSelf();
 		$this->templatePreparerMock->expects($this->once())->method('prepare')
 			->with(TemplateIndexFiles::GARLIC)
@@ -127,7 +127,7 @@ class IndexCreatorTest extends TestCase
 			->method('handleIndexFile')
 			->with('smil_content');
 
-		$this->indexCreator->createForReleasedPlayer($playerEntityMock, $configMock);
+		$this->indexCreator->createForReleasedPlayer($playerEntityStub, $configMock);
 
 		static::assertSame($filepath, $this->indexCreator->getIndexFilePath());
 	}

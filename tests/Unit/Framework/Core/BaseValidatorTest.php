@@ -30,46 +30,51 @@ use PHPUnit\Framework\TestCase;
 
 class BaseValidatorTest extends TestCase
 {
-	private Translator $translatorMock;
+	private Translator $translatorStub;
 	private CsrfToken&MockObject $csrfTokenMock;
 	private BaseValidator $baseValidator;
 
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->translatorMock = $this->createMock(Translator::class);
+		$this->translatorStub = $this->createStub(Translator::class);
 		$this->csrfTokenMock = $this->createMock(CsrfToken::class);
 
-		$this->baseValidator = new BaseValidator($this->translatorMock, $this->csrfTokenMock);
+		$this->baseValidator = new BaseValidator($this->translatorStub, $this->csrfTokenMock);
 	}
 
 	#[Group('units')]
 	public function testIsEmailValid(): void
 	{
+		$this->csrfTokenMock->expects($this->never())->method($this->anything());
 		static::assertTrue($this->baseValidator->isEmail('test@example.com'));
 	}
 
 	#[Group('units')]
 	public function testIsEmailInvalid(): void
 	{
+		$this->csrfTokenMock->expects($this->never())->method($this->anything());
 		static::assertFalse($this->baseValidator->isEmail('invalid-email'));
 	}
 
 	#[Group('units')]
 	public function testIsJsonValid(): void
 	{
+		$this->csrfTokenMock->expects($this->never())->method($this->anything());
 		static::assertTrue($this->baseValidator->isJson('{"key": "value"}'));
 	}
 
 	#[Group('units')]
 	public function testIsJsonInvalid(): void
 	{
+		$this->csrfTokenMock->expects($this->never())->method($this->anything());
 		static::assertFalse($this->baseValidator->isJson('invalid-json'));
 	}
 
 	#[Group('units')]
 	public function testIsJsonEmpty(): void
 	{
+		$this->csrfTokenMock->expects($this->never())->method($this->anything());
 		static::assertFalse($this->baseValidator->isJson(''));
 	}
 	#[Group('units')]

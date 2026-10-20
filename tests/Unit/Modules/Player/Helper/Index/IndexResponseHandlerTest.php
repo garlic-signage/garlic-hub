@@ -310,12 +310,12 @@ class IndexResponseHandlerTest extends TestCase
 			->with($filePath)
 			->willReturn($fileSize);
 
-		$filestreamMock = $this->createMock(Stream::class);
+		$filestreamStub = $this->createStub(Stream::class);
 		$this->fileUtilsMock->expects($this->once())->method('createStream')
 			->with($filePath)
-			->willReturn($filestreamMock);
+			->willReturn($filestreamStub);
 
-		$this->responseMock->method('withBody')->with($filestreamMock)->willReturnSelf();
+		$this->responseMock->method('withBody')->with($filestreamStub)->willReturnSelf();
 
 		$this->responseMock->expects($this->exactly(11))->method('withHeader')
 			->willReturnMap([

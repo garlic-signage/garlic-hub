@@ -91,6 +91,7 @@ class ShowDatatableControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowMethodReturnsResponseWithSerializedTemplateData(): void
 	{
+		$this->expectUntouched($this->translatorMock, $this->flashMock, $this->sessionMock, $this->responseHandlerMock);
 		$templateData = ['key' => 'value'];
 
 		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
@@ -136,7 +137,8 @@ class ShowDatatableControllerTest extends TestCase
 	#[Group('units')]
 	public function testDeleteWithInvalidCsrfToken(): void
 	{
-		$this->requestMock->method('getParsedBody')->willReturn(['UID' => 123, 'csrf_token' => 'wrong']);
+		$this->expectUntouched($this->templatePreparerMock, $this->responseMock, $this->streamInterfaceMock);
+		$this->requestMock->expects($this->atLeastOnce())->method('getParsedBody')->willReturn(['UID' => 123, 'csrf_token' => 'wrong']);
 		$this->validatorStub->method('validateCsrfToken')->willReturn(false);
 		$this->setStandardMocks(123);
 
@@ -157,7 +159,8 @@ class ShowDatatableControllerTest extends TestCase
 	#[Group('units')]
 	public function testDeleteNoUser(): void
 	{
-		$this->requestMock->method('getParsedBody')->willReturn(['csrf_token' => 'token']);
+		$this->expectUntouched($this->templatePreparerMock, $this->responseMock, $this->streamInterfaceMock);
+		$this->requestMock->expects($this->atLeastOnce())->method('getParsedBody')->willReturn(['csrf_token' => 'token']);
 		$this->validatorStub->method('validateCsrfToken')->willReturn(true);
 		$this->setStandardMocks(0);
 
@@ -178,7 +181,8 @@ class ShowDatatableControllerTest extends TestCase
 	#[Group('units')]
 	public function testDeleteMethodHandlesSuccessfulDeletion(): void
 	{
-		$this->requestMock->method('getParsedBody')->willReturn(['UID' => 123, 'csrf_token' => 'token']);
+		$this->expectUntouched($this->templatePreparerMock, $this->responseMock, $this->streamInterfaceMock);
+		$this->requestMock->expects($this->atLeastOnce())->method('getParsedBody')->willReturn(['UID' => 123, 'csrf_token' => 'token']);
 		$this->validatorStub->method('validateCsrfToken')->willReturn(true);
 		$this->setStandardMocks(123);
 
@@ -210,7 +214,8 @@ class ShowDatatableControllerTest extends TestCase
 	#[Group('units')]
 	public function testDeleteFails(): void
 	{
-		$this->requestMock->method('getParsedBody')->willReturn(['UID' => 123, 'csrf_token' => 'token']);
+		$this->expectUntouched($this->templatePreparerMock, $this->responseMock, $this->streamInterfaceMock);
+		$this->requestMock->expects($this->atLeastOnce())->method('getParsedBody')->willReturn(['UID' => 123, 'csrf_token' => 'token']);
 		$this->validatorStub->method('validateCsrfToken')->willReturn(true);
 		$this->setStandardMocks(123);
 
@@ -248,5 +253,13 @@ class ShowDatatableControllerTest extends TestCase
 		$this->responseHandlerMock->expects($this->once())->method('jsonError')
 			->with($this->responseMock, $message)
 			->willReturn($this->responseMock);
+	}
+
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
 	}
 }

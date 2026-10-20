@@ -35,14 +35,15 @@ use League\Flysystem\FilesystemException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class WidgetTest extends TestCase
 {
 	private Filesystem&MockObject $filesystemMock;
-	private ZipFilesystemFactory&MockObject $zipFilesystemFactoryMock;
+	private ZipFilesystemFactory&Stub $zipFilesystemFactoryStub;
 	private Imagick&MockObject $imagickMock;
-	private ConfigXML&MockObject $configXmlMock;
+	private ConfigXML&Stub $configXmlStub;
 	private Widget $widget;
 
 	/**
@@ -52,13 +53,13 @@ class WidgetTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$configMock = $this->createMock(Config::class);
+		$configStub = $this->createStub(Config::class);
 		$this->filesystemMock = $this->createMock(Filesystem::class);
 		$this->imagickMock = $this->createMock(Imagick::class);
-		$this->zipFilesystemFactoryMock = $this->createMock(ZipFilesystemFactory::class);
-		$this->configXmlMock = $this->createMock(ConfigXML::class);
+		$this->zipFilesystemFactoryStub = $this->createStub(ZipFilesystemFactory::class);
+		$this->configXmlStub = $this->createStub(ConfigXML::class);
 
-		$configMock->method('getConfigValue')
+		$configStub->method('getConfigValue')
 			->willReturnMap([
 				['width', 'mediapool', 'max_resolution', '3840'],
 				['height', 'mediapool', 'max_resolution', '3840'],
@@ -73,11 +74,11 @@ class WidgetTest extends TestCase
 			]);
 
 		$this->widget = new Widget(
-			$configMock,
+			$configStub,
 			$this->filesystemMock,
-			$this->zipFilesystemFactoryMock,
+			$this->zipFilesystemFactoryStub,
 			$this->imagickMock,
-			$this->configXmlMock
+			$this->configXmlStub
 		);
 		$this->widget->setStoragePaths('mediapool');
 	}
@@ -85,6 +86,8 @@ class WidgetTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileBeforeUploadThrowsExceptionWhenFileSizeExceedsLimit(): void
 	{
+		$this->filesystemMock->expects($this->never())->method($this->anything());
+		$this->imagickMock->expects($this->never())->method($this->anything());
 		$this->expectException(ModuleException::class);
 		$this->expectExceptionMessage('Filesize: 1024 MB exceeds max widget size.');
 
@@ -97,6 +100,8 @@ class WidgetTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileBeforeUploadDoesNotThrowExceptionWhenFileSizeIsWithinLimit(): void
 	{
+		$this->filesystemMock->expects($this->never())->method($this->anything());
+		$this->imagickMock->expects($this->never())->method($this->anything());
 		$this->widget->checkFileBeforeUpload(1073741824);
 		// @phpstan-ignore-next-line
 		static::assertTrue(true); // If no exception is thrown, the test passes
@@ -108,7 +113,8 @@ class WidgetTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileAfterUploadThrowsExceptionWhenFileDoesNotExist(): void
 	{
-		$this->filesystemMock->method('fileExists')->willReturn(false);
+		$this->imagickMock->expects($this->never())->method($this->anything());
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileExists')->willReturn(false);
 
 		$this->expectException(ModuleException::class);
 		$this->expectExceptionMessage('After Upload Check: /path/to/file not exists.');
@@ -122,8 +128,9 @@ class WidgetTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileAfterUploadThrowsExceptionWhenFileSizeExceedsLimit(): void
 	{
-		$this->filesystemMock->method('fileExists')->willReturn(true);
-		$this->filesystemMock->method('fileSize')->willReturn(1073741824 + 1);
+		$this->imagickMock->expects($this->never())->method($this->anything());
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileExists')->willReturn(true);
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileSize')->willReturn(1073741824 + 1);
 
 		$this->expectException(ModuleException::class);
 		$this->expectExceptionMessage('After Upload Check: 1024 MB exceeds max widget size.');
@@ -138,8 +145,9 @@ class WidgetTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileAfterUploadThrowsExceptionWhenFileSizeNotExceedsLimit(): void
 	{
-		$this->filesystemMock->method('fileExists')->willReturn(true);
-		$this->filesystemMock->method('fileSize')->willReturn(1073741824);
+		$this->imagickMock->expects($this->never())->method($this->anything());
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileExists')->willReturn(true);
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileSize')->willReturn(1073741824);
 
 		$this->widget->validateStoredFile('/path/to/file');
 		// @phpstan-ignore-next-line
@@ -156,20 +164,21 @@ class WidgetTest extends TestCase
 	#[Group('units')]
 	public function testCreateThumbnailFromIcon(): void
 	{
-		$zipFilesystemMock = $this->createMock(Filesystem::class);
-		$zipFilesystemMock->method('fileExists')->willReturnMap([
+		$this->filesystemMock->expects($this->never())->method($this->anything());
+		$zipFilesystemStub = $this->createStub(Filesystem::class);
+		$zipFilesystemStub->method('fileExists')->willReturnMap([
 			['config.xml', true],
 			['icon.png', true]
 		]);
-		$zipFilesystemMock->method('read')->willReturnMap([
+		$zipFilesystemStub->method('read')->willReturnMap([
 			['config.xml', '<config><icon>icon.png</icon></config>'],
 			['icon.png', 'image content']
 		]);
 
-		$this->zipFilesystemFactoryMock->method('create')->willReturn($zipFilesystemMock);
-		$this->configXmlMock->method('load')->willReturnSelf();
-		$this->configXmlMock->method('parseBasic')->willReturnSelf();
-		$this->configXmlMock->method('getIcon')->willReturn('icon.png');
+		$this->zipFilesystemFactoryStub->method('create')->willReturn($zipFilesystemStub);
+		$this->configXmlStub->method('load')->willReturnSelf();
+		$this->configXmlStub->method('parseBasic')->willReturnSelf();
+		$this->configXmlStub->method('getIcon')->willReturn('icon.png');
 
 		$this->imagickMock->expects($this->once())->method('readImageBlob')->with('image content');
 		$this->imagickMock->expects($this->once())->method('thumbnailImage');
@@ -188,20 +197,21 @@ class WidgetTest extends TestCase
 	#[Group('units')]
 	public function testCreateThumbnailWhenIconNotFound(): void
 	{
-		$zipFilesystemMock = $this->createMock(Filesystem::class);
+		$this->imagickMock->expects($this->never())->method($this->anything());
+		$zipFilesystemStub = $this->createStub(Filesystem::class);
 
-		$zipFilesystemMock->method('fileExists')->willReturnMap([
+		$zipFilesystemStub->method('fileExists')->willReturnMap([
 			['config.xml', true],
 			['icon.png', false]
 		]);
-		$zipFilesystemMock->method('read')->willReturnMap([
+		$zipFilesystemStub->method('read')->willReturnMap([
 			['config.xml', '<config><icon>icon.png</icon></config>']
 		]);
 
-		$this->zipFilesystemFactoryMock->method('create')->willReturn($zipFilesystemMock);
-		$this->configXmlMock->method('load')->willReturnSelf();
-		$this->configXmlMock->method('parseBasic')->willReturnSelf();
-		$this->configXmlMock->method('getIcon')->willReturn('icon.png');
+		$this->zipFilesystemFactoryStub->method('create')->willReturn($zipFilesystemStub);
+		$this->configXmlStub->method('load')->willReturnSelf();
+		$this->configXmlStub->method('parseBasic')->willReturnSelf();
+		$this->configXmlStub->method('getIcon')->willReturn('icon.png');
 
 		$this->filesystemMock->expects($this->once())->method('copy')->with('//icons/widget.svg', '//thumbnails/file.svg');
 

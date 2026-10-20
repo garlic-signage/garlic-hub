@@ -34,6 +34,7 @@ use App\Framework\Utils\Html\FieldInterface;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class ConcreteDatatablePreparer extends AbstractDatatablePreparer
@@ -44,7 +45,7 @@ class AbstractDatatablePreparerTest extends TestCase
 {
 	private AbstractDatatablePreparer $datatablePreparer;
 	private PrepareService&MockObject $prepareServiceMock;
-	private BaseFilterParameters&MockObject $parametersMock;
+	private BaseFilterParameters&Stub $parametersStub;
 
 	/**
 	 * @throws Exception
@@ -53,8 +54,8 @@ class AbstractDatatablePreparerTest extends TestCase
 	{
 		parent::setUp();
 		$this->prepareServiceMock = $this->createMock(PrepareService::class);
-		$this->parametersMock = $this->createMock(BaseFilterParameters::class);
-		$this->datatablePreparer = new ConcreteDatatablePreparer('TestModule', $this->prepareServiceMock, $this->parametersMock);
+		$this->parametersStub = $this->createStub(BaseFilterParameters::class);
+		$this->datatablePreparer = new ConcreteDatatablePreparer('TestModule', $this->prepareServiceMock, $this->parametersStub);
 	}
 
 	/**
@@ -64,7 +65,7 @@ class AbstractDatatablePreparerTest extends TestCase
 	public function testPrepareFilterForm(): void
 	{
 		$params = [
-			'test' => $this->createMock(FieldInterface::class)
+			'test' => $this->createStub(FieldInterface::class)
 		];
 		$this->prepareServiceMock->expects($this->once())->method('prepareForm')->with($params);
 
@@ -94,8 +95,8 @@ class AbstractDatatablePreparerTest extends TestCase
 	public function testPrepareTableHeader(): void
 	{
 		$params1 = [
-			$this->createMock(HeaderField::class),
-			$this->createMock(HeaderField::class)
+			$this->createStub(HeaderField::class),
+			$this->createStub(HeaderField::class)
 		];
 		$params2 = ['lang1', 'lang22'];
 		$this->prepareServiceMock->expects($this->once())->method('prepareDatatableHeader')->with($params1, $params2);
@@ -111,6 +112,7 @@ class AbstractDatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareAddWithoutParams(): void
 	{
+		$this->prepareServiceMock->expects($this->never())->method($this->anything());
 		$translatorMock = $this->createMock(Translator::class);
 		$this->datatablePreparer->setTranslator($translatorMock);
 
@@ -136,6 +138,7 @@ class AbstractDatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareAddWithParam(): void
 	{
+		$this->prepareServiceMock->expects($this->never())->method($this->anything());
 		$translatorMock = $this->createMock(Translator::class);
 		$this->datatablePreparer->setTranslator($translatorMock);
 
@@ -159,8 +162,9 @@ class AbstractDatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareSort(): void
 	{
+		$this->prepareServiceMock->expects($this->never())->method($this->anything());
 
-		$this->parametersMock
+		$this->parametersStub
 			->method('getValueOfParameter')
 			->willReturnMap([
 				[BaseFilterParametersInterface::PARAMETER_SORT_COLUMN, 'current_column'],
@@ -184,7 +188,8 @@ class AbstractDatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPreparePage(): void
 	{
-		$this->parametersMock
+		$this->prepareServiceMock->expects($this->never())->method($this->anything());
+		$this->parametersStub
 			->method('getValueOfParameter')
 			->willReturnMap([
 				[BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE, 1],

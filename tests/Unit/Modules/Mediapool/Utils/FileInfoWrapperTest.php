@@ -61,18 +61,12 @@ class FileInfoWrapperTest extends TestCase
 	#[Group('units')]
 	public function testDestructClosesFileInfo(): void
 	{
-		$this->fileInfoWrapper = new FileInfoWrapper();
-		$fileInfoWrapperMock = $this->getMockBuilder(FileInfoWrapper::class)
-			->disableOriginalConstructor()
-			->onlyMethods(['__destruct'])
-			->getMock();
+		$wrapper = new FileInfoWrapper();
+		static::assertSame('text/plain', $wrapper->detectMimeTypeFromStreamContent('plain text'));
 
-		$fileInfoWrapperMock->__construct(); // Ensures `finfo_open` is called.
-		// @phpstan-ignore-next-line
-		static::assertNotNull($fileInfoWrapperMock);
-
-		// Expect finfo_close to be called during destruction
-		$fileInfoWrapperMock->__destruct();
+		// closing explicitly must not break the destruction at the end of the scope
+		$wrapper->__destruct();
+		unset($wrapper);
 	}
 
 

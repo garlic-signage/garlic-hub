@@ -33,13 +33,14 @@ use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class HeaderPreparerTest extends TestCase
 {
 	private TranslatorManager&MockObject $translatorManagerMock;
 	private UrlBuilder&MockObject $urlBuilderMock;
-	private BaseFilterParameters&MockObject $filterParametersMock;
+	private BaseFilterParameters&Stub $filterParametersStub;
 	private HeaderPreparer $headerPreparer;
 
 	/**
@@ -50,7 +51,7 @@ class HeaderPreparerTest extends TestCase
 		parent::setUp();
 		$this->translatorManagerMock = $this->createMock(TranslatorManager::class);
 		$this->urlBuilderMock = $this->createMock(UrlBuilder::class);
-		$this->filterParametersMock = $this->createMock(BaseFilterParameters::class);
+		$this->filterParametersStub = $this->createStub(BaseFilterParameters::class);
 
 		$this->headerPreparer = new HeaderPreparer($this->translatorManagerMock, $this->urlBuilderMock);
 	}
@@ -66,19 +67,23 @@ class HeaderPreparerTest extends TestCase
 
 		$this->translatorManagerMock->expects($this->never())->method('addLanguageModule');
 
-		$this->headerPreparer->configure($this->filterParametersMock, $site, $languageModules);
+		$this->headerPreparer->configure($this->filterParametersStub, $site, $languageModules);
 	}
 
 	#[Group('units')]
 	public function testConfigureSetsFilterParameterCorrectly(): void
 	{
 		$site = 'example-site';
-		$languageModules = ['lang1'];
+		$languageModules = ['lang1', 'lang2'];
 
-		$this->headerPreparer->configure($this->filterParametersMock, $site, $languageModules);
+		$this->urlBuilderMock->expects($this->once())->method('setSite')->with($site);
+		$modules = [];
+		$this->translatorManagerMock->expects($this->exactly(2))->method('addLanguageModule')
+			->willReturnCallback(function (string $module) use (&$modules) { $modules[] = $module; return $this->translatorManagerMock; });
 
-		// @phpstan-ignore-next-line
-		static::assertNotNull($this->headerPreparer);
+		$this->headerPreparer->configure($this->filterParametersStub, $site, $languageModules);
+
+		static::assertSame($languageModules, $modules);
 	}
 
 	/**
@@ -90,10 +95,10 @@ class HeaderPreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableHeaderReturnsCorrectHeaderForSortableField(): void
 	{
-		$headerFieldMock = $this->createMock(HeaderField::class);
-		$headerFieldMock->method('getName')->willReturn('column1');
-		$headerFieldMock->method('isSortable')->willReturn(true);
-		$this->filterParametersMock
+		$headerFieldStub = $this->createStub(HeaderField::class);
+		$headerFieldStub->method('getName')->willReturn('column1');
+		$headerFieldStub->method('isSortable')->willReturn(true);
+		$this->filterParametersStub
 			->method('getValueOfParameter')
 			->willReturnMap([
 				[BaseFilterParametersInterface::PARAMETER_SORT_COLUMN, 'column1'],
@@ -105,7 +110,7 @@ class HeaderPreparerTest extends TestCase
 		$site = 'example-site';
 		$languageModules = ['lang1'];
 
-		$this->headerPreparer->configure($this->filterParametersMock, $site, $languageModules);
+		$this->headerPreparer->configure($this->filterParametersStub, $site, $languageModules);
 
 
 		$this->urlBuilderMock->expects($this->once())
@@ -114,7 +119,7 @@ class HeaderPreparerTest extends TestCase
 
 		$this->translatorManagerMock->expects($this->once())
 			->method('translate')
-			->with($headerFieldMock)
+			->with($headerFieldStub)
 			->willReturn('Translated Column 1');
 
 		$expectedResult = [
@@ -129,7 +134,7 @@ class HeaderPreparerTest extends TestCase
 			],
 		];
 
-		$result = $this->headerPreparer->prepareTableHeader([$headerFieldMock]);
+		$result = $this->headerPreparer->prepareTableHeader([$headerFieldStub]);
 
 		static::assertEquals($expectedResult, $result);
 	}
@@ -143,10 +148,10 @@ class HeaderPreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableHeaderReturnsCorrectHeaderForSortableFieldDESC(): void
 	{
-		$headerFieldMock = $this->createMock(HeaderField::class);
-		$headerFieldMock->method('getName')->willReturn('column1');
-		$headerFieldMock->method('isSortable')->willReturn(true);
-		$this->filterParametersMock
+		$headerFieldStub = $this->createStub(HeaderField::class);
+		$headerFieldStub->method('getName')->willReturn('column1');
+		$headerFieldStub->method('isSortable')->willReturn(true);
+		$this->filterParametersStub
 			->method('getValueOfParameter')
 			->willReturnMap([
 				[BaseFilterParametersInterface::PARAMETER_SORT_COLUMN, 'column1'],
@@ -158,7 +163,7 @@ class HeaderPreparerTest extends TestCase
 		$site = 'example-site';
 		$languageModules = ['lang1'];
 
-		$this->headerPreparer->configure($this->filterParametersMock, $site, $languageModules);
+		$this->headerPreparer->configure($this->filterParametersStub, $site, $languageModules);
 
 
 		$this->urlBuilderMock->expects($this->once())
@@ -167,7 +172,7 @@ class HeaderPreparerTest extends TestCase
 
 		$this->translatorManagerMock->expects($this->once())
 			->method('translate')
-			->with($headerFieldMock)
+			->with($headerFieldStub)
 			->willReturn('Translated Column 1');
 
 		$expectedResult = [
@@ -182,7 +187,7 @@ class HeaderPreparerTest extends TestCase
 			],
 		];
 
-		$result = $this->headerPreparer->prepareTableHeader([$headerFieldMock]);
+		$result = $this->headerPreparer->prepareTableHeader([$headerFieldStub]);
 
 		static::assertEquals($expectedResult, $result);
 	}
@@ -196,10 +201,10 @@ class HeaderPreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableHeaderReturnsCorrectHeaderForSortableFieldNotEqual(): void
 	{
-		$headerFieldMock = $this->createMock(HeaderField::class);
-		$headerFieldMock->method('getName')->willReturn('column_alternative');
-		$headerFieldMock->method('isSortable')->willReturn(true);
-		$this->filterParametersMock
+		$headerFieldStub = $this->createStub(HeaderField::class);
+		$headerFieldStub->method('getName')->willReturn('column_alternative');
+		$headerFieldStub->method('isSortable')->willReturn(true);
+		$this->filterParametersStub
 			->method('getValueOfParameter')
 			->willReturnMap([
 				[BaseFilterParametersInterface::PARAMETER_SORT_COLUMN, 'column1'],
@@ -211,7 +216,7 @@ class HeaderPreparerTest extends TestCase
 		$site = 'example-site';
 		$languageModules = ['lang1'];
 
-		$this->headerPreparer->configure($this->filterParametersMock, $site, $languageModules);
+		$this->headerPreparer->configure($this->filterParametersStub, $site, $languageModules);
 
 
 		$this->urlBuilderMock->expects($this->once())
@@ -220,7 +225,7 @@ class HeaderPreparerTest extends TestCase
 
 		$this->translatorManagerMock->expects($this->once())
 			->method('translate')
-			->with($headerFieldMock)
+			->with($headerFieldStub)
 			->willReturn('Translated Column 1');
 
 		$expectedResult = [
@@ -235,7 +240,7 @@ class HeaderPreparerTest extends TestCase
 			],
 		];
 
-		$result = $this->headerPreparer->prepareTableHeader([$headerFieldMock]);
+		$result = $this->headerPreparer->prepareTableHeader([$headerFieldStub]);
 
 		static::assertEquals($expectedResult, $result);
 	}
@@ -250,13 +255,14 @@ class HeaderPreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableHeaderReturnsCorrectHeaderForNonSortableField(): void
 	{
-		$headerFieldMock = $this->createMock(HeaderField::class);
-		$headerFieldMock->method('getName')->willReturn('column2');
-		$headerFieldMock->method('isSortable')->willReturn(false);
+		$this->urlBuilderMock->expects($this->never())->method($this->anything());
+		$headerFieldStub = $this->createStub(HeaderField::class);
+		$headerFieldStub->method('getName')->willReturn('column2');
+		$headerFieldStub->method('isSortable')->willReturn(false);
 
 		$this->translatorManagerMock->expects($this->once())
 			->method('translate')
-			->with($headerFieldMock)
+			->with($headerFieldStub)
 			->willReturn('Translated Column 2');
 
 		$expectedResult = [
@@ -266,7 +272,7 @@ class HeaderPreparerTest extends TestCase
 			],
 		];
 
-		$result = $this->headerPreparer->prepareTableHeader([$headerFieldMock]);
+		$result = $this->headerPreparer->prepareTableHeader([$headerFieldStub]);
 
 		static::assertEquals($expectedResult, $result);
 	}
@@ -279,6 +285,8 @@ class HeaderPreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableHeaderHandlesEmptyInput(): void
 	{
+		$this->translatorManagerMock->expects($this->never())->method($this->anything());
+		$this->urlBuilderMock->expects($this->never())->method($this->anything());
 		$expectedResult = [];
 
 		$result = $this->headerPreparer->prepareTableHeader([]);

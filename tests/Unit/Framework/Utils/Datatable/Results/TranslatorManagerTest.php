@@ -55,7 +55,8 @@ class TranslatorManagerTest extends TestCase
 	#[Group('units')]
 	public function testTranslateShouldReturnEmptyStringWhenTranslationIsSkipped(): void
 	{
-		$headerField = $this->createMock(HeaderField::class);
+		$this->translatorMock->expects($this->never())->method($this->anything());
+		$headerField = $this->createStub(HeaderField::class);
 		$headerField->method('shouldSkipTranslation')->willReturn(true);
 
 		$result = $this->translatorManager->translate($headerField);
@@ -71,7 +72,7 @@ class TranslatorManagerTest extends TestCase
 	#[Group('units')]
 	public function testTranslateShouldUseSpecificLangModuleWhenProvided(): void
 	{
-		$headerField = $this->createMock(HeaderField::class);
+		$headerField = $this->createStub(HeaderField::class);
 		$headerField->method('shouldSkipTranslation')->willReturn(false);
 		$headerField->method('hasSpecificLangModule')->willReturn(true);
 		$headerField->method('getSpecificLanguageModule')->willReturn('specific_lang_module');
@@ -93,14 +94,14 @@ class TranslatorManagerTest extends TestCase
 	#[Group('units')]
 	public function testTranslateShouldIterateOverLanguageModulesAndReturnFirstTranslatedValue(): void
 	{
-		$headerField = $this->createMock(HeaderField::class);
+		$headerField = $this->createStub(HeaderField::class);
 		$headerField->method('shouldSkipTranslation')->willReturn(false);
 		$headerField->method('hasSpecificLangModule')->willReturn(false);
 		$headerField->method('getName')->willReturn('key');
 
 		$this->translatorManager->addLanguageModule('module_1')->addLanguageModule('module_2');
 
-		$this->translatorMock->method('translate')->willReturnMap([
+		$this->translatorMock->expects($this->atLeastOnce())->method('translate')->willReturnMap([
 			['key', 'module_1', [], ''],
 			['key', 'module_2', [], 'translated_value']
 		]);
@@ -116,14 +117,14 @@ class TranslatorManagerTest extends TestCase
 	#[Group('units')]
 	public function testTranslateShouldReturnEmptyStringWhenNoTranslationIsFound(): void
 	{
-		$headerField = $this->createMock(HeaderField::class);
+		$headerField = $this->createStub(HeaderField::class);
 		$headerField->method('shouldSkipTranslation')->willReturn(false);
 		$headerField->method('hasSpecificLangModule')->willReturn(false);
 		$headerField->method('getName')->willReturn('key');
 
 		$this->translatorManager->addLanguageModule('module_1')->addLanguageModule('module_2');
 
-		$this->translatorMock->method('translate')->willReturn('');
+		$this->translatorMock->expects($this->atLeastOnce())->method('translate')->willReturn('');
 
 		$result = $this->translatorManager->translate($headerField);
 
@@ -136,14 +137,14 @@ class TranslatorManagerTest extends TestCase
 	#[Group('units')]
 	public function testTranslateShouldHandleFrameworkExceptionGracefully(): void
 	{
-		$headerField = $this->createMock(HeaderField::class);
+		$headerField = $this->createStub(HeaderField::class);
 		$headerField->method('shouldSkipTranslation')->willReturn(false);
 		$headerField->method('hasSpecificLangModule')->willReturn(false);
 		$headerField->method('getName')->willReturn('key');
 
 		$this->translatorManager->addLanguageModule('module_1')->addLanguageModule('module_2');
 
-		$this->translatorMock->method('translate')->will($this->throwException(new FrameworkException('error')));
+		$this->translatorMock->expects($this->atLeastOnce())->method('translate')->will($this->throwException(new FrameworkException('error')));
 
 		$result = $this->translatorManager->translate($headerField);
 

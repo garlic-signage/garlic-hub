@@ -38,9 +38,9 @@ class PlayerDetectorTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$configMock = $this->createMock(Config::class);
+		$configStub = $this->createStub(Config::class);
 
-		$this->detector = new PlayerDetector($configMock);
+		$this->detector = new PlayerDetector($configStub);
 	}
 
 	#[Group('units')]

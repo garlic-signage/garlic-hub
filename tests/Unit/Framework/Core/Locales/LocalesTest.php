@@ -123,6 +123,7 @@ class LocalesTest extends TestCase
 	#[Group('units')]
 	public function testDetermineCurrentLocaleFallbackToDefault(): void
 	{
+		$this->localeExtractorMock->expects($this->never())->method($this->anything());
 		// do not use the setUp $localeExtractorMock here
 		$localeExtractorMock = $this->createMock(LocaleExtractorInterface::class);
 		$localeExtractorMock
@@ -245,6 +246,7 @@ class LocalesTest extends TestCase
 	#[Group('units')]
 	public function testLoadAvailableLocalesThrowsExceptionIfEmpty(): void
 	{
+		$this->localeExtractorMock->expects($this->never())->method($this->anything());
 		// do not use setUp ConfigMock here
 		$configMock = $this->createMock(Config::class);
 

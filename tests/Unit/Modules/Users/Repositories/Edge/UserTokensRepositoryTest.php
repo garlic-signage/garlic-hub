@@ -57,6 +57,7 @@ class UserTokensRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindFirstByTokenReturnsCorrectData(): void
 	{
+		$this->resultMock->expects($this->never())->method($this->anything());
 		$token = 'sampleToken';
 		$expectedData = [
 			'user_tokens' => ['token' => $token, 'UID' => 1],

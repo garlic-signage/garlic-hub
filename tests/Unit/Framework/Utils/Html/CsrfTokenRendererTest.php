@@ -35,13 +35,13 @@ class CsrfTokenRendererTest extends TestCase
 	#[Group('units')]
 	public function testRenderWithBasicAttributes(): void
 	{
-		$fieldMock = $this->createMock(CsrfTokenField::class);
-		$fieldMock->method('getName')->willReturn('csrf_token');
-		$fieldMock->method('getId')->willReturn('csrf_token');
-		$fieldMock->method('getValue')->willReturn('the_token_in_some_hash');
+		$fieldStub = $this->createStub(CsrfTokenField::class);
+		$fieldStub->method('getName')->willReturn('csrf_token');
+		$fieldStub->method('getId')->willReturn('csrf_token');
+		$fieldStub->method('getValue')->willReturn('the_token_in_some_hash');
 
 		$renderer = new CsrfTokenRenderer();
-		$result = $renderer->render($fieldMock);
+		$result = $renderer->render($fieldStub);
 
 		$expected = '<input type="hidden" name="csrf_token" id="csrf_token" value="the_token_in_some_hash">';
 		static::assertSame($expected, $result);

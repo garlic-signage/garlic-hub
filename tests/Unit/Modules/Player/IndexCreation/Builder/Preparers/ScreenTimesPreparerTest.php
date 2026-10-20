@@ -29,12 +29,12 @@ use DateInvalidOperationException;
 use DateTime;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class ScreenTimesPreparerTest extends TestCase
 {
-	private PlayerEntity&MockObject $playerEntityMock;
+	private PlayerEntity&Stub $playerEntityStub;
 	private ScreenTimesPreparer $preparer;
 
 	/**
@@ -43,8 +43,8 @@ class ScreenTimesPreparerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->playerEntityMock = $this->createMock(PlayerEntity::class);
-		$this->preparer         = new ScreenTimesPreparer($this->playerEntityMock);
+		$this->playerEntityStub = $this->createStub(PlayerEntity::class);
+		$this->preparer         = new ScreenTimesPreparer($this->playerEntityStub);
 	}
 
 	/**
@@ -53,7 +53,7 @@ class ScreenTimesPreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareReturnsEmpty(): void
 	{
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getModel')
 			->willReturn(PlayerModel::COMPATIBLE);
 
@@ -87,8 +87,8 @@ class ScreenTimesPreparerTest extends TestCase
 			'END_WALLCLOCKS' => 'wallclock(R/'.$date.'+w1T08:00:00/P1W);wallclock(R/'.$date.'+w1T14:00:00/P1W)',
 		]];
 
-		$this->playerEntityMock->method('getModel')->willReturn(PlayerModel::GARLIC);
-		$this->playerEntityMock->method('getScreenTimes')->willReturn($screenTimes);
+		$this->playerEntityStub->method('getModel')->willReturn(PlayerModel::GARLIC);
+		$this->playerEntityStub->method('getScreenTimes')->willReturn($screenTimes);
 
 		$result = $this->preparer->prepare();
 
@@ -101,11 +101,11 @@ class ScreenTimesPreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareReturnsEmptyArrayWhenNoValidScreenTimesExist(): void
 	{
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getModel')
 			->willReturn(PlayerModel::GARLIC);
 
-		$this->playerEntityMock
+		$this->playerEntityStub
 			->method('getScreenTimes')
 			->willReturn([]);
 

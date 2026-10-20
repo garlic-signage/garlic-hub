@@ -83,6 +83,7 @@ class CrudTraitTest extends TestCase
 	#[Group('units')]
 	public function testInsert(): void
 	{
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
 		$fields = [
 			'field1' => 'field 1 value',
 			'field2' => 'field 2 value'
@@ -102,6 +103,7 @@ class CrudTraitTest extends TestCase
 	#[Group('units')]
 	public function testUpdate(): void
 	{
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
 		$fields = [
 			'field1' => 'field 1 value',
 			'field2' => 'field 2 value'
@@ -175,6 +177,7 @@ class CrudTraitTest extends TestCase
 	#[Group('units')]
 	public function testDelete(): void
 	{
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
 		$this->connectionMock->expects($this->once())->method('delete')
 			->with('table', ['id' => 36])
 			->willReturn(17);
@@ -188,6 +191,7 @@ class CrudTraitTest extends TestCase
 	#[Group('units')]
 	public function testDeleteByField(): void
 	{
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
 		$this->connectionMock->expects($this->once())->method('delete')
 			->with('table', ['field' => 'value'])
 			->willReturn(94);
@@ -243,9 +247,10 @@ class CrudTraitTest extends TestCase
 	#[Group('units')]
 	public function testFetchAssociativeFails(): void
 	{
-		$resultMock = $this->createMock(Result::class);
-		$this->queryBuilderMock->method('executeQuery')->willReturn($resultMock);
-		$resultMock->method('fetchAssociative')->willReturn(false);
+		$this->connectionMock->expects($this->never())->method($this->anything());
+		$resultStub = $this->createStub(Result::class);
+		$this->queryBuilderMock->expects($this->atLeastOnce())->method('executeQuery')->willReturn($resultStub);
+		$resultStub->method('fetchAssociative')->willReturn(false);
 
 		static::assertEmpty($this->repository->testFetchAssociative($this->queryBuilderMock));
 	}
@@ -257,10 +262,11 @@ class CrudTraitTest extends TestCase
 	#[Group('units')]
 	public function testFetchAssociativeSucceed(): void
 	{
-		$resultMock = $this->createMock(Result::class);
-		$this->queryBuilderMock->method('executeQuery')->willReturn($resultMock);
+		$this->connectionMock->expects($this->never())->method($this->anything());
+		$resultStub = $this->createStub(Result::class);
+		$this->queryBuilderMock->expects($this->atLeastOnce())->method('executeQuery')->willReturn($resultStub);
 		$expected = ['some' => 'result'];
-		$resultMock->method('fetchAssociative')->willReturn($expected);
+		$resultStub->method('fetchAssociative')->willReturn($expected);
 
 		static::assertSame($expected, $this->repository->testFetchAssociative($this->queryBuilderMock));
 	}
@@ -268,12 +274,16 @@ class CrudTraitTest extends TestCase
 	#[Group('units')]
 	public function testSecureExplodeEmpty(): void
 	{
+		$this->connectionMock->expects($this->never())->method($this->anything());
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
 		static::assertEmpty($this->repository->testSecureExplode(''));
 	}
 
 	#[Group('units')]
 	public function testSecureExplode(): void
 	{
+		$this->connectionMock->expects($this->never())->method($this->anything());
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
 		$expected = ['some'];
 		static::assertSame($expected, $this->repository->testSecureExplode('some'));
 
@@ -284,18 +294,24 @@ class CrudTraitTest extends TestCase
 	#[Group('units')]
 	public function testSecureUnserializeEmpty(): void
 	{
+		$this->connectionMock->expects($this->never())->method($this->anything());
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
 		static::assertEmpty($this->repository->testSecureUnserialize(''));
 	}
 
 	#[Group('units')]
 	public function testSecureUnserializeError(): void
 	{
+		$this->connectionMock->expects($this->never())->method($this->anything());
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
 		static::assertEmpty($this->repository->testSecureUnserialize('mbmb'));
 	}
 
 	#[Group('units')]
 	public function testSecureUnserialize(): void
 	{
+		$this->connectionMock->expects($this->never())->method($this->anything());
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
 		$expected = ['some', 'array', 'result'];
 		$result = $this->repository->testSecureUnserialize(serialize($expected));
 		static::assertSame($expected, $result);

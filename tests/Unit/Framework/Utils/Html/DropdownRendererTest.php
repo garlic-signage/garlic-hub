@@ -26,12 +26,12 @@ use App\Framework\Utils\Html\DropdownRenderer;
 use App\Framework\Utils\Html\FieldInterface;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class DropdownRendererTest extends TestCase
 {
-	private DropdownField&MockObject $dropdownFieldMock;
+	private DropdownField&Stub $dropdownFieldStub;
 	private DropdownRenderer $renderer;
 
 	/**
@@ -40,20 +40,20 @@ class DropdownRendererTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->dropdownFieldMock = $this->createMock(DropdownField::class);
+		$this->dropdownFieldStub = $this->createStub(DropdownField::class);
 		$this->renderer = new DropdownRenderer();
 	}
 
 	#[Group('units')]
 	public function testRenderGeneratesValidHtml(): void
 	{
-		$this->dropdownFieldMock->method('getId')->willReturn('test-id');
-		$this->dropdownFieldMock->method('getName')->willReturn('test-name');
-		$this->dropdownFieldMock->method('getOptions')->willReturn(['1' => 'Option 1', '2' => 'Option 2']);
-		$this->dropdownFieldMock->method('getValue')->willReturn('');
-		$this->dropdownFieldMock->method('isOptionsZero')->willReturn(true);
+		$this->dropdownFieldStub->method('getId')->willReturn('test-id');
+		$this->dropdownFieldStub->method('getName')->willReturn('test-name');
+		$this->dropdownFieldStub->method('getOptions')->willReturn(['1' => 'Option 1', '2' => 'Option 2']);
+		$this->dropdownFieldStub->method('getValue')->willReturn('');
+		$this->dropdownFieldStub->method('isOptionsZero')->willReturn(true);
 
-		$html = $this->renderer->render($this->dropdownFieldMock);
+		$html = $this->renderer->render($this->dropdownFieldStub);
 
 		$expectedHtml = '<select id="test-id" name= "test-name" aria-describedby="error_test-id">'
 			. '<option value="">-</option>'
@@ -67,13 +67,13 @@ class DropdownRendererTest extends TestCase
 	#[Group('units')]
 	public function testRenderWithSelectedValue(): void
 	{
-		$this->dropdownFieldMock->method('getId')->willReturn('test-id');
-		$this->dropdownFieldMock->method('getName')->willReturn('test-name');
-		$this->dropdownFieldMock->method('getOptions')->willReturn(['1' => 'Option 1', '2' => 'Option 2']);
-		$this->dropdownFieldMock->method('getValue')->willReturn('2');
-		$this->dropdownFieldMock->method('isOptionsZero')->willReturn(false);
+		$this->dropdownFieldStub->method('getId')->willReturn('test-id');
+		$this->dropdownFieldStub->method('getName')->willReturn('test-name');
+		$this->dropdownFieldStub->method('getOptions')->willReturn(['1' => 'Option 1', '2' => 'Option 2']);
+		$this->dropdownFieldStub->method('getValue')->willReturn('2');
+		$this->dropdownFieldStub->method('isOptionsZero')->willReturn(false);
 
-		$html = $this->renderer->render($this->dropdownFieldMock);
+		$html = $this->renderer->render($this->dropdownFieldStub);
 
 		$expectedHtml = '<select id="test-id" name= "test-name" aria-describedby="error_test-id">'
 			. '<option value="1">Option 1</option>'
@@ -86,13 +86,13 @@ class DropdownRendererTest extends TestCase
 	#[Group('units')]
 	public function testRenderWithEmptyOptions(): void
 	{
-		$this->dropdownFieldMock->method('getId')->willReturn('test-id');
-		$this->dropdownFieldMock->method('getName')->willReturn('test-name');
-		$this->dropdownFieldMock->method('getOptions')->willReturn([]);
-		$this->dropdownFieldMock->method('getValue')->willReturn('');
-		$this->dropdownFieldMock->method('isOptionsZero')->willReturn(true);
+		$this->dropdownFieldStub->method('getId')->willReturn('test-id');
+		$this->dropdownFieldStub->method('getName')->willReturn('test-name');
+		$this->dropdownFieldStub->method('getOptions')->willReturn([]);
+		$this->dropdownFieldStub->method('getValue')->willReturn('');
+		$this->dropdownFieldStub->method('isOptionsZero')->willReturn(true);
 
-		$html = $this->renderer->render($this->dropdownFieldMock);
+		$html = $this->renderer->render($this->dropdownFieldStub);
 
 		$expectedHtml = '<select id="test-id" name= "test-name" aria-describedby="error_test-id">'
 			. '<option value="">-</option>'
@@ -107,12 +107,12 @@ class DropdownRendererTest extends TestCase
 	#[Group('units')]
 	public function testRenderGeneratesNothing(): void
 	{
-		$fieldMock = $this->createMock(FieldInterface::class);
+		$fieldStub = $this->createStub(FieldInterface::class);
 		$renderer = new DropdownRenderer();
 
 		$expectedHtml = '';
 
-		$result = $renderer->render($fieldMock);
+		$result = $renderer->render($fieldStub);
 
 		static::assertSame($expectedHtml, $result);
 	}

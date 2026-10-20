@@ -64,7 +64,7 @@ class FormElementsCreatorTest extends TestCase
 	public function testCreateUserNameField(): void
 	{
 		$value = 'My Playlist';
-		$expectedField = $this->createMock(FieldInterface::class);
+		$expectedField = $this->createStub(FieldInterface::class);
 
 		$this->translatorMock->expects($this->exactly(2))->method('translate')
 			->with(Parameters::PARAMETER_ADMIN_NAME, 'main')
@@ -137,7 +137,7 @@ class FormElementsCreatorTest extends TestCase
 	public function testCreatePasswordConfirmField(): void
 	{
 		$value = 'securePassword123';
-		$expectedField = $this->createMock(PasswordField::class);
+		$expectedField = $this->createStub(PasswordField::class);
 
 		$this->translatorMock->expects($this->exactly(2))->method('translate')
 			->willReturnMap([
@@ -176,7 +176,7 @@ class FormElementsCreatorTest extends TestCase
 	public function testCreateUserLocaleField(): void
 	{
 		$value = 'en_US';
-		$expectedField = $this->createMock(FieldInterface::class);
+		$expectedField = $this->createStub(FieldInterface::class);
 
 		$this->translatorMock->expects($this->exactly(2))->method('translate')
 			->willReturnMap([
@@ -215,7 +215,7 @@ class FormElementsCreatorTest extends TestCase
 	public function testCreateEmailField(): void
 	{
 		$value = 'test@example.com';
-		$expectedField = $this->createMock(FieldInterface::class);
+		$expectedField = $this->createStub(FieldInterface::class);
 
 		$this->translatorMock->expects($this->exactly(2))->method('translate')
 			->willReturnMap([

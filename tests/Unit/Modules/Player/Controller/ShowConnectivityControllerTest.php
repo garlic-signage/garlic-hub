@@ -80,6 +80,7 @@ class ShowConnectivityControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowSucceed(): void
 	{
+		$this->flashMock->expects($this->never())->method($this->anything());
 		$this->initMock();
 
 		$player = [
@@ -108,8 +109,7 @@ class ShowConnectivityControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowFailsNoPlayerId(): void
 	{
-		$requestMock = $this->createMock(ServerRequestInterface::class);
-		$this->responseMock = $this->createMock(ResponseInterface::class);
+		$this->expectUntouched($this->requestMock, $this->facadeMock, $this->formElementPreparerMock, $this->streamInterfaceMock);
 
 		$this->responseMock->expects($this->once())->method('withHeader')
 			->with('Location', '/player')
@@ -124,7 +124,7 @@ class ShowConnectivityControllerTest extends TestCase
 
 		$args = ['player_id' => '0'];
 
-		$this->controller->show($requestMock, $this->responseMock, $args);
+		$this->controller->show($this->requestMock, $this->responseMock, $args);
 	}
 
 	/**
@@ -135,6 +135,8 @@ class ShowConnectivityControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowPlayerNotAccessible(): void
 	{
+		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
+		$this->streamInterfaceMock->expects($this->never())->method($this->anything());
 		$this->initMock();
 		$this->facadeMock->method('loadPlayerForEdit')->willReturnSelf();
 		$this->facadeMock->method('getPlayer')->willReturn([]);
@@ -163,6 +165,8 @@ class ShowConnectivityControllerTest extends TestCase
 		Group('units')]
 	public function testStoreSucceed(): void
 	{
+		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
+		$this->streamInterfaceMock->expects($this->never())->method($this->anything());
 		$this->initMock();
 
 		$postData = [
@@ -221,7 +225,7 @@ class ShowConnectivityControllerTest extends TestCase
 				]);
 
 		$this->facadeMock->method('prepareUITemplate')->with($postData)->willReturn([]);
-		$this->formElementPreparerMock->method('prepareUITemplate')->willReturn([]);
+		$this->formElementPreparerMock->expects($this->atLeastOnce())->method('prepareUITemplate')->willReturn([]);
 
 		$this->responseMock->expects($this->once())->method('getBody')
 			->willReturn($this->streamInterfaceMock);
@@ -249,6 +253,7 @@ class ShowConnectivityControllerTest extends TestCase
 	#[Group('units')]
 	public function testStoreFailsWithSaveError(): void
 	{
+		$this->flashMock->expects($this->never())->method($this->anything());
 		$this->initMock();
 
 		$postData = [
@@ -263,7 +268,7 @@ class ShowConnectivityControllerTest extends TestCase
 		$this->facadeMock->method('storeNetworkData')->willReturn(0);
 
 		$this->facadeMock->method('prepareUITemplate')->with($postData)->willReturn([]);
-		$this->formElementPreparerMock->method('prepareUITemplate')->willReturn([]);
+		$this->formElementPreparerMock->expects($this->atLeastOnce())->method('prepareUITemplate')->willReturn([]);
 
 		$this->responseMock->expects($this->once())->method('getBody')
 			->willReturn($this->streamInterfaceMock);
@@ -314,16 +319,24 @@ class ShowConnectivityControllerTest extends TestCase
 	 */
 	private function initMock(): void
 	{
-		$translatorMock = $this->createMock(Translator::class);
-		$sessionMock = $this->createMock(Session::class);
+		$translatorStub = $this->createStub(Translator::class);
+		$sessionStub = $this->createStub(Session::class);
 		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
 			->willReturnMap([
-				['translator', null, $translatorMock],
-				['session', null, $sessionMock]
+				['translator', null, $translatorStub],
+				['session', null, $sessionStub]
 			]);
 
 		$this->facadeMock->expects($this->once())->method('init')
-			->with($translatorMock, $sessionMock);
+			->with($translatorStub, $sessionStub);
 
+	}
+
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
 	}
 }

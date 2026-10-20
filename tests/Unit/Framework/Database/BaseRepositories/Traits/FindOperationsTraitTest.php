@@ -393,6 +393,7 @@ class FindOperationsTraitTest extends TestCase
 	#[Group('units')]
 	public function testFindOneValueBy(): void
 	{
+		$this->resultMock->expects($this->never())->method($this->anything());
 		$field = 'sinatra_songs';
 
 		$this->connectionMock->expects($this->once())->method('createQueryBuilder')
@@ -422,6 +423,7 @@ class FindOperationsTraitTest extends TestCase
 	#[Group('units')]
 	public function testFindOneValueByReturnsNull(): void
 	{
+		$this->resultMock->expects($this->never())->method($this->anything());
 
 		$this->connectionMock->expects($this->once())->method('createQueryBuilder')
 			->willReturn($this->queryBuilderMock);
@@ -447,6 +449,7 @@ class FindOperationsTraitTest extends TestCase
 	#[Group('units')]
 	public function testGetFirstDataset(): void
 	{
+		$this->expectUntouched($this->connectionMock, $this->queryBuilderMock, $this->resultMock);
 		// if empty
 		static::assertEmpty($this->repository->getFirstDataSet([]));
 
@@ -454,5 +457,13 @@ class FindOperationsTraitTest extends TestCase
 		$data = [['first' => 1], ['second' => 2],['third' => []]];
 		static::assertEquals(['first' => 1], $this->repository->getFirstDataSet($data));
 
+	}
+
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
 	}
 }

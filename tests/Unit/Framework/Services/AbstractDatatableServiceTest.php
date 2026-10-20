@@ -27,6 +27,7 @@ use App\Framework\Utils\FormParameters\BaseParameters;
 use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -49,7 +50,7 @@ class ConcreteDatatableService extends AbstractDatatableService
 }
 class AbstractDatatableServiceTest extends TestCase
 {
-	protected LoggerInterface&MockObject $loggerMock;
+	protected LoggerInterface&Stub $loggerStub;
 	private FilterBase&MockObject $repositoryMock;
 	private BaseParameters&MockObject $parametersMock;
 	private ConcreteDatatableService $service;
@@ -60,10 +61,10 @@ class AbstractDatatableServiceTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->loggerMock = $this->createMock(LoggerInterface::class);
+		$this->loggerStub = $this->createStub(LoggerInterface::class);
 		$this->repositoryMock = $this->createMock(FilterBase::class);
 		$this->parametersMock = $this->createMock(BaseParameters::class);
-		$this->service = new ConcreteDatatableService($this->loggerMock);
+		$this->service = new ConcreteDatatableService($this->loggerStub);
 	}
 
 	/**

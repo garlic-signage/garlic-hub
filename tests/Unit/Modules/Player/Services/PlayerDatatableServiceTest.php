@@ -29,12 +29,13 @@ use App\Modules\Player\Services\PlayerDatatableService;
 use Exception;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 class PlayerDatatableServiceTest extends TestCase
 {
-	protected LoggerInterface&MockObject $loggerMock;
+	protected LoggerInterface&Stub $loggerStub;
 	private PlayerRepository&MockObject $repositoryMock;
 	private Parameters&MockObject $parametersMock;
 	private AclValidator&MockObject $aclValidatorMock;
@@ -46,12 +47,12 @@ class PlayerDatatableServiceTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->loggerMock       = $this->createMock(LoggerInterface::class);
+		$this->loggerStub       = $this->createStub(LoggerInterface::class);
 		$this->repositoryMock   = $this->createMock(PlayerRepository::class);
 		$this->parametersMock   = $this->createMock(Parameters::class);
 		$this->aclValidatorMock = $this->createMock(AclValidator::class);
 
-		$this->service = new PlayerDatatableService($this->repositoryMock, $this->parametersMock, $this->aclValidatorMock, $this->loggerMock);
+		$this->service = new PlayerDatatableService($this->repositoryMock, $this->parametersMock, $this->aclValidatorMock, $this->loggerStub);
 	}
 
 	/**

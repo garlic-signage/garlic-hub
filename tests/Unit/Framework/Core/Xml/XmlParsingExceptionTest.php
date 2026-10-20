@@ -44,15 +44,15 @@ class XmlParsingExceptionTest extends TestCase
 	#[Group('units')]
 	public function testConstructorFormatsLibXmlErrors(): void
 	{
-		$libXmlMock = $this->createMock(\LibXMLError::class);
-		$libXmlMock->level = 2;
-		$libXmlMock->code = 100;
-		$libXmlMock->message = "Invalid tag";
-		$libXmlMock->file = "test.xml";
-		$libXmlMock->line = 5;
-		$libXmlMock->column = 10;
+		$libXmlStub = $this->createStub(\LibXMLError::class);
+		$libXmlStub->level = 2;
+		$libXmlStub->code = 100;
+		$libXmlStub->message = "Invalid tag";
+		$libXmlStub->file = "test.xml";
+		$libXmlStub->line = 5;
+		$libXmlStub->column = 10;
 
-		$exception = new XmlParsingException('An error occurred', [$libXmlMock]);
+		$exception = new XmlParsingException('An error occurred', [$libXmlStub]);
 
 		$expectedErrors = [[
 			'level' => 2,

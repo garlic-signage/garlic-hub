@@ -105,7 +105,7 @@ class FormElementsCreatorTest extends TestCase
 	public function testCreatePasswordConfirmField(): void
 	{
 		$value = 'securePassword123';
-		$expectedField = $this->createMock(PasswordField::class);
+		$expectedField = $this->createStub(PasswordField::class);
 
 		$this->translatorMock->expects($this->exactly(2))->method('translate')
 			->willReturnMap([
@@ -138,8 +138,9 @@ class FormElementsCreatorTest extends TestCase
 	#[Group('units')]
 	public function testCreatePasswordTokenField(): void
 	{
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$value = 'sample_token';
-		$expectedField = $this->createMock(FieldInterface::class);
+		$expectedField = $this->createStub(FieldInterface::class);
 
 		$this->formBuilderMock->expects($this->once())->method('createField')
 			->with([

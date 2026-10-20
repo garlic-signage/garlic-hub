@@ -40,26 +40,26 @@ class EnvironmentMiddlewareTest extends TestCase
 	#[Group('units')]
 	public function testProcessAddsAttributesAndCallsNextHandler(): void
 	{
-		$configMock     = $this->createMock(Config::class);
+		$configStub     = $this->createStub(Config::class);
 		$localesMock    = $this->createMock(Locales::class);
-		$translatorMock = $this->createMock(Translator::class);
+		$translatorStub = $this->createStub(Translator::class);
 
 		$localesMock->expects($this->once())->method('determineCurrentLocale');
 
-		$requestMock = $this->createMock(ServerRequestInterface::class);
-		$requestMock->method('withAttribute')->willReturnSelf();
+		$requestStub = $this->createStub(ServerRequestInterface::class);
+		$requestStub->method('withAttribute')->willReturnSelf();
 
-		$responseMock = $this->createMock(ResponseInterface::class);
+		$responseStub = $this->createStub(ResponseInterface::class);
 
 		$handlerMock = $this->createMock(RequestHandlerInterface::class);
 		$handlerMock->expects($this->once())
 					->method('handle')
 					->with(static::isInstanceOf(ServerRequestInterface::class))
-					->willReturn($responseMock);
+					->willReturn($responseStub);
 
-		$middleware = new EnvironmentMiddleware($configMock, $localesMock, $translatorMock);
-		$result     = $middleware->process($requestMock, $handlerMock);
+		$middleware = new EnvironmentMiddleware($configStub, $localesMock, $translatorStub);
+		$result     = $middleware->process($requestStub, $handlerMock);
 
-		static::assertSame($responseMock, $result);
+		static::assertSame($responseStub, $result);
 	}
 }

@@ -35,6 +35,7 @@ use App\Modules\Player\Services\PlayerService;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 
@@ -45,7 +46,7 @@ class OrchestratorTest extends TestCase
 	private BaseValidator&MockObject $validatorMock;
 	private PlayerService&MockObject $playerServiceMock;
 	private PlayerRestAPIService&MockObject $playerRestAPIServiceMock;
-	private ResponseInterface&MockObject $responseMock;
+	private ResponseInterface&Stub $responseStub;
 	private Orchestrator $orchestrator;
 
 	/**
@@ -59,7 +60,7 @@ class OrchestratorTest extends TestCase
 		$this->validatorMock = $this->createMock(BaseValidator::class);
 		$this->playerServiceMock = $this->createMock(PlayerService::class);
 		$this->playerRestAPIServiceMock = $this->createMock(PlayerRestAPIService::class);
-		$this->responseMock = $this->createMock(ResponseInterface::class);
+		$this->responseStub = $this->createStub(ResponseInterface::class);
 
 		$this->orchestrator = new Orchestrator(
 			$this->responseBuilderMock,
@@ -77,6 +78,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testValidateSucceed(): void
 	{
+		$this->expectUntouched($this->userSessionMock, $this->playerServiceMock, $this->playerRestAPIServiceMock);
 		$input = [
 			'player_id' => '123',
 			'playlist_id' => '456',
@@ -91,7 +93,7 @@ class OrchestratorTest extends TestCase
 
 		$this->responseBuilderMock->expects($this->never())->method('csrfTokenMismatch');
 
-		$result = $this->orchestrator->setInput($input)->validateForReplacePlaylist($this->responseMock);
+		$result = $this->orchestrator->setInput($input)->validateForReplacePlaylist($this->responseStub);
 
 		static::assertNull($result);
 	}
@@ -103,19 +105,20 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testValidateWithInvalidCsrfToken(): void
 	{
+		$this->expectUntouched($this->userSessionMock, $this->playerServiceMock, $this->playerRestAPIServiceMock);
 		$this->validatorMock->expects($this->once())->method('validateCsrfToken')
 			->with('valid_csrf_token')
 			->willReturn(false);
 
 		$this->responseBuilderMock->expects($this->once())->method('csrfTokenMismatch')
-			->willReturn($this->responseMock);
+			->willReturn($this->responseStub);
 
 		$this->orchestrator->setInput([
 			'playlist_id' => '0',
 			BaseEditParameters::PARAMETER_CSRF_TOKEN => 'valid_csrf_token'
 		]);
 
-		$result = $this->orchestrator->validateForReplacePlaylist($this->responseMock);
+		$result = $this->orchestrator->validateForReplacePlaylist($this->responseStub);
 
 		static::assertInstanceOf(ResponseInterface::class, $result);
 	}
@@ -127,19 +130,20 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testValidateWithInvalidPlayerId(): void
 	{
+		$this->expectUntouched($this->userSessionMock, $this->playerServiceMock, $this->playerRestAPIServiceMock);
 		$this->validatorMock->expects($this->once())->method('validateCsrfToken')
 			->with('valid_csrf_token')
 			->willReturn(true);
 
 		$this->responseBuilderMock->expects($this->once())->method('invalidPlayerId')
-			->willReturn($this->responseMock);
+			->willReturn($this->responseStub);
 
 		$this->orchestrator->setInput([
 			'playlist_id' => '23',
 			BaseEditParameters::PARAMETER_CSRF_TOKEN => 'valid_csrf_token'
 		]);
 
-		$result = $this->orchestrator->validateForReplacePlaylist($this->responseMock);
+		$result = $this->orchestrator->validateForReplacePlaylist($this->responseStub);
 
 		static::assertInstanceOf(ResponseInterface::class, $result);
 	}
@@ -153,6 +157,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testReplaceMasterPlaylistSuccess(): void
 	{
+		$this->playerRestAPIServiceMock->expects($this->never())->method($this->anything());
 		$this->fillData();
 
 		$data = ['affected' => 1, 'playlist_name' => 'Test Playlist'];
@@ -165,10 +170,10 @@ class OrchestratorTest extends TestCase
 			->willReturn($data);
 
 		$this->responseBuilderMock->expects($this->once())->method('generalSuccess')
-			->with($this->responseMock, ['playlist_name' => 'Test Playlist'])
-			->willReturn($this->responseMock);
+			->with($this->responseStub, ['playlist_name' => 'Test Playlist'])
+			->willReturn($this->responseStub);
 
-		$this->orchestrator->replaceMasterPlaylist($this->responseMock);
+		$this->orchestrator->replaceMasterPlaylist($this->responseStub);
 	}
 
 	/**
@@ -179,6 +184,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testReplaceMasterPlaylistFailure(): void
 	{
+		$this->playerRestAPIServiceMock->expects($this->never())->method($this->anything());
 		$this->fillData();
 
 		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(1);
@@ -190,10 +196,10 @@ class OrchestratorTest extends TestCase
 		$this->playerServiceMock->expects($this->once())->method('getErrorMessagesAsString')->willReturn('Some error occurred');
 
 		$this->responseBuilderMock->expects($this->once())->method('generalError')
-			->with($this->responseMock, 'Some error occurred')
-			->willReturn($this->responseMock);
+			->with($this->responseStub, 'Some error occurred')
+			->willReturn($this->responseStub);
 
-		$this->orchestrator->replaceMasterPlaylist($this->responseMock);
+		$this->orchestrator->replaceMasterPlaylist($this->responseStub);
 	}
 
 	/**
@@ -205,6 +211,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testCheckPlayerNotFound(): void
 	{
+		$this->playerRestAPIServiceMock->expects($this->never())->method($this->anything());
 		$this->fillData();
 
 		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(1);
@@ -214,11 +221,11 @@ class OrchestratorTest extends TestCase
 			->willReturn([]);
 
 		$this->responseBuilderMock->expects($this->once())->method('playerNotFound')
-			->with($this->responseMock)
-			->willReturn($this->responseMock);
+			->with($this->responseStub)
+			->willReturn($this->responseStub);
 
 		$this->orchestrator->setInput(['player_id' => '123']);
-		$result = $this->orchestrator->checkPlayer($this->responseMock);
+		$result = $this->orchestrator->checkPlayer($this->responseStub);
 
 		static::assertInstanceOf(ResponseInterface::class, $result);
 	}
@@ -232,6 +239,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testCheckPlayerNotReachable(): void
 	{
+		$this->playerRestAPIServiceMock->expects($this->never())->method($this->anything());
 		$this->fillData();
 
 		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(1);
@@ -241,11 +249,11 @@ class OrchestratorTest extends TestCase
 			->willReturn(['is_intranet' => 0, 'playlist_id' => 1, 'api_endpoint' => '', 'player_name' => 'Test']);
 
 		$this->responseBuilderMock->expects($this->once())->method('playerNotReachable')
-			->with($this->responseMock)
-			->willReturn($this->responseMock);
+			->with($this->responseStub)
+			->willReturn($this->responseStub);
 
 		$this->orchestrator->setInput(['player_id' => '123']);
-		$result = $this->orchestrator->checkPlayer($this->responseMock);
+		$result = $this->orchestrator->checkPlayer($this->responseStub);
 
 		static::assertInstanceOf(ResponseInterface::class, $result);
 	}
@@ -259,6 +267,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testCheckPlayerNoPlaylistAssigned(): void
 	{
+		$this->playerRestAPIServiceMock->expects($this->never())->method($this->anything());
 		$this->fillData();
 
 		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(1);
@@ -268,11 +277,11 @@ class OrchestratorTest extends TestCase
 			->willReturn(['is_intranet' => 1, 'playlist_id' => 0, 'api_endpoint' => '', 'player_name' => 'Test']);
 
 		$this->responseBuilderMock->expects($this->once())->method('noPlaylistAssigned')
-			->with($this->responseMock)
-			->willReturn($this->responseMock);
+			->with($this->responseStub)
+			->willReturn($this->responseStub);
 
 		$this->orchestrator->setInput(['player_id' => '123']);
-		$result = $this->orchestrator->checkPlayer($this->responseMock);
+		$result = $this->orchestrator->checkPlayer($this->responseStub);
 
 		static::assertInstanceOf(ResponseInterface::class, $result);
 	}
@@ -286,6 +295,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testCheckPlayerValid(): void
 	{
+		$this->playerRestAPIServiceMock->expects($this->never())->method($this->anything());
 		$this->fillData();
 
 		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(1);
@@ -298,7 +308,7 @@ class OrchestratorTest extends TestCase
 		$this->responseBuilderMock->expects($this->never())->method('playerNotReachable');
 		$this->responseBuilderMock->expects($this->never())->method('noPlaylistAssigned');
 
-		$result = $this->orchestrator->checkPlayer($this->responseMock);
+		$result = $this->orchestrator->checkPlayer($this->responseStub);
 
 		static::assertNull($result);
 	}
@@ -311,6 +321,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testPushPlaylistSuccess(): void
 	{
+		$this->playerServiceMock->expects($this->never())->method($this->anything());
 		$this->fillData();
 		$player = ['is_intranet' => 1, 'playlist_id' => 1, 'api_endpoint' => 'api_endpoint', 'player_name' => 'Test'];
 		$this->orchestrator->setPlayer($player);
@@ -327,10 +338,10 @@ class OrchestratorTest extends TestCase
 			->willReturn(true);
 
 		$this->responseBuilderMock->expects($this->once())->method('generalSuccess')
-			->with($this->responseMock, ['message' => 'Playlist pushed successfully to Test.'])
-			->willReturn($this->responseMock);
+			->with($this->responseStub, ['message' => 'Playlist pushed successfully to Test.'])
+			->willReturn($this->responseStub);
 
-		$this->orchestrator->pushPlaylist($this->responseMock);
+		$this->orchestrator->pushPlaylist($this->responseStub);
 	}
 
 	/**
@@ -341,6 +352,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testPushPlaylistAuthenticationFailure(): void
 	{
+		$this->playerServiceMock->expects($this->never())->method($this->anything());
 		$this->fillData();
 		$player = ['is_intranet' => 1, 'playlist_id' => 1, 'api_endpoint' => 'api_endpoint', 'player_name' => 'Test'];
 		$this->orchestrator->setPlayer($player);
@@ -357,10 +369,10 @@ class OrchestratorTest extends TestCase
 			->willReturn([$errorMessage]);
 
 		$this->responseBuilderMock->expects($this->once())->method('generalError')
-			->with($this->responseMock, $errorMessage)
-			->willReturn($this->responseMock);
+			->with($this->responseStub, $errorMessage)
+			->willReturn($this->responseStub);
 
-		$this->orchestrator->pushPlaylist($this->responseMock);
+		$this->orchestrator->pushPlaylist($this->responseStub);
 	}
 
 	/**
@@ -371,6 +383,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testPushPlaylistSwitchFailure(): void
 	{
+		$this->playerServiceMock->expects($this->never())->method($this->anything());
 		$this->fillData();
 		$player = ['is_intranet' => 1, 'playlist_id' => 1, 'api_endpoint' => 'api_endpoint', 'player_name' => 'Test'];
 		$this->orchestrator->setPlayer($player);
@@ -391,10 +404,10 @@ class OrchestratorTest extends TestCase
 			->willReturn([$errorMessage]);
 
 		$this->responseBuilderMock->expects($this->once())->method('generalError')
-			->with($this->responseMock, $errorMessage)
-			->willReturn($this->responseMock);
+			->with($this->responseStub, $errorMessage)
+			->willReturn($this->responseStub);
 
-		$this->orchestrator->pushPlaylist($this->responseMock);
+		$this->orchestrator->pushPlaylist($this->responseStub);
 	}
 
 	/**
@@ -411,7 +424,15 @@ class OrchestratorTest extends TestCase
 		$this->validatorMock->expects($this->once())->method('validateCsrfToken')
 			->with('valid_csrf_token')
 			->willReturn(true);
-		$this->orchestrator->setInput($input)->validateForReplacePlaylist($this->responseMock);
+		$this->orchestrator->setInput($input)->validateForReplacePlaylist($this->responseStub);
 
+	}
+
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
 	}
 }

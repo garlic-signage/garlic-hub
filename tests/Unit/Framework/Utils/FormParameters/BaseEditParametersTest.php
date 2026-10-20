@@ -57,10 +57,10 @@ class BaseEditParametersTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$sanitizerMock = $this->createMock(Sanitizer::class);
-		$sessionMock = $this->createMock(Session::class);
+		$sanitizerStub = $this->createStub(Sanitizer::class);
+		$sessionStub = $this->createStub(Session::class);
 
-		$this->baseEditParameters = new ConcreteEditBaseParameters($sanitizerMock, $sessionMock);
+		$this->baseEditParameters = new ConcreteEditBaseParameters($sanitizerStub, $sessionStub);
 	}
 
 	/**

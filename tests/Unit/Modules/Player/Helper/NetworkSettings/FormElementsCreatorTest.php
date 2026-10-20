@@ -123,7 +123,8 @@ class FormElementsCreatorTest extends TestCase
 	#[Group('units')]
 	public function testCreateHiddenPlayerIdField(): void
 	{
-		$expectedFieldMock = $this->createMock(FieldInterface::class);
+		$this->translatorMock->expects($this->never())->method($this->anything());
+		$expectedFieldMock = $this->createStub(FieldInterface::class);
 		$value = 123;
 
 		$this->formBuilderMock->expects($this->once())->method('createField')

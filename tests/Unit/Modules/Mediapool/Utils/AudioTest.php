@@ -47,11 +47,11 @@ class AudioTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$configMock           = $this->createMock(Config::class);
+		$configStub           = $this->createStub(Config::class);
 		$this->filesystemMock = $this->createMock(Filesystem::class);
 		$this->ffmpegMock     = $this->createMock(Ffmpeg::class);
 
-		$configMock->method('getConfigValue')
+		$configStub->method('getConfigValue')
 			->willReturnMap([
 				['width', 'mediapool', 'max_resolution', '3840'],
 				['height', 'mediapool', 'max_resolution', '3840'],
@@ -65,7 +65,7 @@ class AudioTest extends TestCase
 				['audios', 'mediapool', 'max_file_sizes', '1073741824']
 			]);
 
-		$this->audio = new Audio($configMock, $this->filesystemMock, $this->ffmpegMock);
+		$this->audio = new Audio($configStub, $this->filesystemMock, $this->ffmpegMock);
 		$this->audio->setStoragePaths('mediapool');
 	}
 
@@ -75,7 +75,8 @@ class AudioTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileBeforeUploadValidSizeDoesNotThrowException(): void
 	{
-		$this->expectNotToPerformAssertions();
+		$this->filesystemMock->expects($this->never())->method($this->anything());
+		$this->ffmpegMock->expects($this->never())->method($this->anything());
 		$this->audio->checkFileBeforeUpload(1073741824);
 	}
 
@@ -85,6 +86,8 @@ class AudioTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileBeforeUploadExceedsMaxSizeThrowsModuleException(): void
 	{
+		$this->filesystemMock->expects($this->never())->method($this->anything());
+		$this->ffmpegMock->expects($this->never())->method($this->anything());
 		$this->expectException(ModuleException::class);
 		$this->audio->checkFileBeforeUpload(1073741824 + 1);
 	}
@@ -98,8 +101,8 @@ class AudioTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileAfterUploadFileExistsDoesNotThrowException(): void
 	{
-		$this->filesystemMock->method('fileExists')->willReturn(true);
-		$this->filesystemMock->method('fileSize')->willReturn(1073741824);
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileExists')->willReturn(true);
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileSize')->willReturn(1073741824);
 		$this->ffmpegMock->method('init')->with('/path/to/file');
 		$properties = [];
 		$this->ffmpegMock->method('getMediaProperties')->willReturn($properties);
@@ -116,8 +119,9 @@ class AudioTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileAfterUploadFileNotExistsThrowsModuleException(): void
 	{
+		$this->ffmpegMock->expects($this->never())->method($this->anything());
 		$this->expectException(ModuleException::class);
-		$this->filesystemMock->method('fileExists')->willReturn(false);
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileExists')->willReturn(false);
 		$this->audio->validateStoredFile('/path/to/file');
 	}
 
@@ -130,9 +134,10 @@ class AudioTest extends TestCase
 	#[Group('units')]
 	public function testCheckFileAfterUploadExceedsMaxSizeThrowsModuleException(): void
 	{
+		$this->ffmpegMock->expects($this->never())->method($this->anything());
 		$this->expectException(ModuleException::class);
-		$this->filesystemMock->method('fileExists')->willReturn(true);
-		$this->filesystemMock->method('fileSize')->willReturn(1073741824 + 1);
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileExists')->willReturn(true);
+		$this->filesystemMock->expects($this->atLeastOnce())->method('fileSize')->willReturn(1073741824 + 1);
 		$this->audio->validateStoredFile('/path/to/file');
 	}
 
@@ -144,6 +149,7 @@ class AudioTest extends TestCase
 	#[Group('units')]
 	public function testCreateThumbnail(): void
 	{
+		$this->ffmpegMock->expects($this->never())->method($this->anything());
 		$this->filesystemMock->method('copy')
 			->with('//icons/audio.svg', '//thumbnails/file.svg');
 

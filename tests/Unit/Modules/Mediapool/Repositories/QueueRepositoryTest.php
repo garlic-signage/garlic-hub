@@ -35,8 +35,8 @@ class QueueRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testConstructor(): void
 	{
-		$connectionMock = $this->createMock(Connection::class);
-		$repository = new QueueRepository($connectionMock);
+		$connectionStub = $this->createStub(Connection::class);
+		$repository = new QueueRepository($connectionStub);
 
 		// @phpstan-ignore-next-line
 		static::assertInstanceOf(QueueRepository::class, $repository);

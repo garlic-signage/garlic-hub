@@ -26,12 +26,12 @@ use App\Modules\Users\Repositories\UserRepositoryFactory;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class UserRepositoryFactoryTest extends TestCase
 {
-	private Config&MockObject $configMock;
+	private Config&Stub $configStub;
 	private UserRepositoryFactory $factory;
 
 	/**
@@ -40,15 +40,15 @@ class UserRepositoryFactoryTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->configMock = $this->createMock(Config::class);
-		$connectionMock = $this->createMock(Connection::class);
-		$this->factory = new UserRepositoryFactory($this->configMock, $connectionMock);
+		$this->configStub = $this->createStub(Config::class);
+		$connectionStub = $this->createStub(Connection::class);
+		$this->factory = new UserRepositoryFactory($this->configStub, $connectionStub);
 	}
 
 	#[Group('units')]
 	public function testCreateEnterpriseEdition(): void
 	{
-		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
+		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
 
 		$result = $this->factory->create();
 
@@ -61,7 +61,7 @@ class UserRepositoryFactoryTest extends TestCase
 	#[Group('units')]
 	public function testCreateCoreEdition(): void
 	{
-		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_CORE);
+		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_CORE);
 
 		$result = $this->factory->create();
 
@@ -74,7 +74,7 @@ class UserRepositoryFactoryTest extends TestCase
 	#[Group('units')]
 	public function testCreateEdgeEdition(): void
 	{
-		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
+		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
 
 		$result = $this->factory->create();
 
@@ -87,7 +87,7 @@ class UserRepositoryFactoryTest extends TestCase
 	#[Group('units')]
 	public function testCreateEdgeEditionFromCache(): void
 	{
-		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
+		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
 
 		$result = $this->factory->create();
 

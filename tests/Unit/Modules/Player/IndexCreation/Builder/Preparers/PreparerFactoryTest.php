@@ -31,12 +31,12 @@ use App\Modules\Player\IndexCreation\Builder\Preparers\ScreenTimesPreparer;
 use App\Modules\Player\IndexCreation\Builder\Preparers\SubscriptionPreparer;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class PreparerFactoryTest extends TestCase
 {
-	private PlayerEntity&MockObject $playerEntityMock;
+	private PlayerEntity&Stub $playerEntityStub;
 	private PreparerFactory $preparerFactory;
 
 	/**
@@ -45,7 +45,7 @@ class PreparerFactoryTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->playerEntityMock = $this->createMock(PlayerEntity::class);
+		$this->playerEntityStub = $this->createStub(PlayerEntity::class);
 		$this->preparerFactory = new PreparerFactory();
 	}
 
@@ -55,7 +55,7 @@ class PreparerFactoryTest extends TestCase
 	#[Group('units')]
 	public function testCreateReturnsMetaPreparer(): void
 	{
-		$result = $this->preparerFactory->create(IndexSections::META, $this->playerEntityMock);
+		$result = $this->preparerFactory->create(IndexSections::META, $this->playerEntityStub);
 		static::assertInstanceOf(MetaPreparer::class, $result);
 	}
 
@@ -65,7 +65,7 @@ class PreparerFactoryTest extends TestCase
 	#[Group('units')]
 	public function testCreateReturnsSubscriptionPreparer(): void
 	{
-		$result = $this->preparerFactory->create(IndexSections::SUBSCRIPTIONS, $this->playerEntityMock);
+		$result = $this->preparerFactory->create(IndexSections::SUBSCRIPTIONS, $this->playerEntityStub);
 		static::assertInstanceOf(SubscriptionPreparer::class, $result);
 	}
 
@@ -75,7 +75,7 @@ class PreparerFactoryTest extends TestCase
 	#[Group('units')]
 	public function testCreateReturnsLayoutPreparer(): void
 	{
-		$result = $this->preparerFactory->create(IndexSections::LAYOUT, $this->playerEntityMock);
+		$result = $this->preparerFactory->create(IndexSections::LAYOUT, $this->playerEntityStub);
 		static::assertInstanceOf(LayoutPreparer::class, $result);
 	}
 
@@ -85,7 +85,7 @@ class PreparerFactoryTest extends TestCase
 	#[Group('units')]
 	public function testCreateReturnsScreenTimesPreparer(): void
 	{
-		$result = $this->preparerFactory->create(IndexSections::STANDBY_TIMES, $this->playerEntityMock);
+		$result = $this->preparerFactory->create(IndexSections::STANDBY_TIMES, $this->playerEntityStub);
 		static::assertInstanceOf(ScreenTimesPreparer::class, $result);
 	}
 
@@ -95,7 +95,7 @@ class PreparerFactoryTest extends TestCase
 	#[Group('units')]
 	public function testCreateReturnsPlaylistPreparer(): void
 	{
-		$result = $this->preparerFactory->create(IndexSections::PLAYLIST, $this->playerEntityMock);
+		$result = $this->preparerFactory->create(IndexSections::PLAYLIST, $this->playerEntityStub);
 		static::assertInstanceOf(PlaylistPreparer::class, $result);
 	}
 }

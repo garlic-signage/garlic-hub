@@ -37,9 +37,9 @@ class AclValidatorTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$aclHelperMock = $this->createMock(AclHelper::class);
+		$aclHelperStub = $this->createStub(AclHelper::class);
 
-		$this->aclValidator    = new AclValidator($aclHelperMock);
+		$this->aclValidator    = new AclValidator($aclHelperStub);
 	}
 
 	/**

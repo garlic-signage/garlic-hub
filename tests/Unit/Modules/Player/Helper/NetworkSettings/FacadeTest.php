@@ -67,6 +67,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testInit(): void
 	{
+		$this->expectUntouched($this->settingsFormBuilderMock, $this->settingsParametersMock, $this->translatorMock);
 		$sessionMock = $this->createMock(Session::class);
 
 		$sessionMock->expects($this->once())
@@ -84,6 +85,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testLoadPlayerForEdit(): void
 	{
+		$this->expectUntouched($this->settingsFormBuilderMock, $this->settingsParametersMock, $this->translatorMock);
 		$playerId = 1;
 		$expectedPlayerData = [
 			'player_id' => 1,
@@ -112,6 +114,8 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testConfigureFormParameterWithPlayerId(): void
 	{
+		$this->settingsParametersMock->expects($this->never())->method($this->anything());
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$post = ['player_id' => 123, 'player_name' => 'Test Player'];
 		$expectedResult = ['processed_input_key' => 'processed_value'];
 
@@ -138,6 +142,8 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testConfigureFormParameterFailsNoPlayer(): void
 	{
+		$this->settingsFormBuilderMock->expects($this->never())->method($this->anything());
+		$this->settingsParametersMock->expects($this->never())->method($this->anything());
 		$post = ['player_id' => 123, 'player_name' => 'Test Player'];
 		$expectedResult = ['player_not_found'];
 
@@ -165,6 +171,8 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testConfigureFormParameterWithoutPlayerId(): void
 	{
+		$this->settingsFormBuilderMock->expects($this->never())->method($this->anything());
+		$this->settingsParametersMock->expects($this->never())->method($this->anything());
 		$post = [];
 		$expectedResult = ['player_not_found'];
 
@@ -187,6 +195,8 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testStoreNetworkDataSuccess(): void
 	{
+		$this->settingsFormBuilderMock->expects($this->never())->method($this->anything());
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$expectedKeys = ['api_endpoint', 'is_intranet'];
 		$expectedValues = ['http://example-api.com', 1];
 		$playerId = 123;
@@ -216,6 +226,8 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testGetUserServiceErrorsWithErrors(): void
 	{
+		$this->settingsFormBuilderMock->expects($this->never())->method($this->anything());
+		$this->settingsParametersMock->expects($this->never())->method($this->anything());
 		$errors = ['error_1', 'error_2'];
 		$translatedErrors = ['Translated Error 1', 'Translated Error 2'];
 
@@ -243,6 +255,8 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testGetUserServiceErrorsWithoutErrors(): void
 	{
+		$this->settingsFormBuilderMock->expects($this->never())->method($this->anything());
+		$this->settingsParametersMock->expects($this->never())->method($this->anything());
 		$this->playerServiceMock->expects($this->once())
 			->method('getErrorMessages')
 			->willReturn([]);
@@ -262,6 +276,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testPrepareUITemplateWithExistingPlayer(): void
 	{
+		$this->settingsParametersMock->expects($this->never())->method($this->anything());
 		$post = ['parameter' => 'value'];
 		$playerId = 123;
 		$name = 'Existing Player';
@@ -340,5 +355,13 @@ class FacadeTest extends TestCase
 			->willReturn($expectedPlayerData);
 
 		$this->facade->loadPlayerForEdit($playerId);
+	}
+
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
 	}
 }

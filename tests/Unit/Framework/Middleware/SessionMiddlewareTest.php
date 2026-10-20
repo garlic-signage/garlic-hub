@@ -27,6 +27,7 @@ use App\Framework\Middleware\SessionMiddleware;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -35,11 +36,11 @@ use Slim\Flash\Messages;
 
 class SessionMiddlewareTest extends TestCase
 {
-	private Session&MockObject $sessionMock;
-	private Cookie&MockObject $cookieMock;
-	private Messages&MockObject $flashMock;
+	private Session&Stub $sessionStub;
+	private Cookie&Stub $cookieStub;
+	private Messages&Stub $flashStub;
 	private RequestHandlerInterface&MockObject $handlerMock;
-	private ServerRequestInterface&MockObject $requestMock;
+	private ServerRequestInterface&Stub $requestStub;
 
 	/**
 	 * @throws Exception
@@ -47,11 +48,11 @@ class SessionMiddlewareTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->sessionMock = $this->createMock(Session::class);
-		$this->cookieMock = $this->createMock(Cookie::class);
-		$this->flashMock = $this->createMock(Messages::class);
+		$this->sessionStub = $this->createStub(Session::class);
+		$this->cookieStub = $this->createStub(Cookie::class);
+		$this->flashStub = $this->createStub(Messages::class);
 		$this->handlerMock = $this->createMock(RequestHandlerInterface::class);
-		$this->requestMock = $this->createMock(ServerRequestInterface::class);
+		$this->requestStub = $this->createStub(ServerRequestInterface::class);
 	}
 
 	/**
@@ -60,25 +61,25 @@ class SessionMiddlewareTest extends TestCase
 	#[Group('units')]
 	public function testProcessAddsAttributesToRequest(): void
 	{
-		$middleware = new SessionMiddleware($this->sessionMock, $this->flashMock, $this->cookieMock);
+		$middleware = new SessionMiddleware($this->sessionStub, $this->flashStub, $this->cookieStub);
 
 		// Simulate the `withAttribute` method for the request mock
-		$this->requestMock
+		$this->requestStub
 			->method('withAttribute')
 			->willReturnSelf();
 
 		// Expect the handler to handle the request
-		$responseMock = $this->createMock(ResponseInterface::class);
+		$responseStub = $this->createStub(ResponseInterface::class);
 		$this->handlerMock
 			->expects($this->once())
 			->method('handle')
-			->with($this->requestMock)
-			->willReturn($responseMock);
+			->with($this->requestStub)
+			->willReturn($responseStub);
 
 		// Execute the middleware
-		$result = $middleware->process($this->requestMock, $this->handlerMock);
+		$result = $middleware->process($this->requestStub, $this->handlerMock);
 
 		// Assert the returned response is as expected
-		static::assertSame($responseMock, $result);
+		static::assertSame($responseStub, $result);
 	}
 }

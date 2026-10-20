@@ -49,6 +49,7 @@ class PlaylistPreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareWithSimpleStructure(): void
 	{
+		$this->playerEntityMock->expects($this->never())->method($this->anything());
 		$this->preparer->setIsSimple(true)
 			->setPlaylistStructure($this->playlistStructureMock);
 
@@ -71,11 +72,11 @@ class PlaylistPreparerTest extends TestCase
 		$this->preparer->setIsSimple(false)
 			->setPlaylistStructure($this->playlistStructureMock);
 
-		$this->playlistStructureMock->method('getExclusive')
+		$this->playlistStructureMock->expects($this->atLeastOnce())->method('getExclusive')
 			->willReturn('exclusiveData');
-		$this->playlistStructureMock->method('getItems')
+		$this->playlistStructureMock->expects($this->atLeastOnce())->method('getItems')
 			->willReturn('item1,item2');
-		$this->playlistStructureMock->method('getPrefetch')
+		$this->playlistStructureMock->expects($this->atLeastOnce())->method('getPrefetch')
 			->willReturn('prefetchData');
 
 		$this->playerEntityMock->expects($this->once())->method('getDuration')
@@ -99,11 +100,12 @@ class PlaylistPreparerTest extends TestCase
 	#[Group('units')]
 	public function testCalculateDurationWhenRefreshIsGreater(): void
 	{
+		$this->playlistStructureMock->expects($this->never())->method($this->anything());
 		$this->playerEntityMock
-			->method('getDuration')
+			->expects($this->atLeastOnce())->method('getDuration')
 			->willReturn(400);
 		$this->playerEntityMock
-			->method('getRefresh')
+			->expects($this->atLeastOnce())->method('getRefresh')
 			->willReturn(800);
 
 		$result = $this->preparer->calculatePrefetchDuration();
@@ -113,11 +115,12 @@ class PlaylistPreparerTest extends TestCase
 	#[Group('units')]
 	public function testCalculateDurationWhenDurationIsGreater(): void
 	{
+		$this->playlistStructureMock->expects($this->never())->method($this->anything());
 		$this->playerEntityMock
-			->method('getDuration')
+			->expects($this->atLeastOnce())->method('getDuration')
 			->willReturn(1200);
 		$this->playerEntityMock
-			->method('getRefresh')
+			->expects($this->atLeastOnce())->method('getRefresh')
 			->willReturn(800);
 
 		$result = $this->preparer->calculatePrefetchDuration();
@@ -127,11 +130,12 @@ class PlaylistPreparerTest extends TestCase
 	#[Group('units')]
 	public function testCalculateDurationWhenMinimumValueApplies(): void
 	{
+		$this->playlistStructureMock->expects($this->never())->method($this->anything());
 		$this->playerEntityMock
-			->method('getDuration')
+			->expects($this->atLeastOnce())->method('getDuration')
 			->willReturn(400);
 		$this->playerEntityMock
-			->method('getRefresh')
+			->expects($this->atLeastOnce())->method('getRefresh')
 			->willReturn(300);
 
 		$result = $this->preparer->calculatePrefetchDuration();
@@ -141,11 +145,12 @@ class PlaylistPreparerTest extends TestCase
 	#[Group('units')]
 	public function testCalculateDurationWhenDoubleValueApplies(): void
 	{
+		$this->playlistStructureMock->expects($this->never())->method($this->anything());
 		$this->playerEntityMock
-			->method('getDuration')
+			->expects($this->atLeastOnce())->method('getDuration')
 			->willReturn(950);
 		$this->playerEntityMock
-			->method('getRefresh')
+			->expects($this->atLeastOnce())->method('getRefresh')
 			->willReturn(1000);
 
 		$result = $this->preparer->calculatePrefetchDuration();

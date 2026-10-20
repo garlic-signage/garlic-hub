@@ -37,7 +37,7 @@ class HomeControllerTest extends TestCase
 	private ServerRequestInterface&MockObject $requestMock;
 	private ResponseInterface&MockObject $responseMock;
 	private Session&MockObject $sessionMock;
-	private DashboardsAggregator $dashboardsAggregatorMock;
+	private DashboardsAggregator $dashboardsAggregatorStub;
 
 	/**
 	 * @throws Exception
@@ -50,7 +50,7 @@ class HomeControllerTest extends TestCase
 		$this->sessionMock  = $this->getMockBuilder(Session::class)
 			->disableOriginalConstructor()
 			->getMock();
-		$this->dashboardsAggregatorMock = $this->createMock(DashboardsAggregator::class);
+		$this->dashboardsAggregatorStub = $this->createStub(DashboardsAggregator::class);
 	}
 
 	/**
@@ -62,10 +62,10 @@ class HomeControllerTest extends TestCase
 		$this->requestMock->method('getAttribute')->with('session')->willReturn($this->sessionMock);
 		$this->sessionMock->method('exists')->with('user')->willReturn(true);
 		$this->sessionMock->method('get')->with('user')->willReturn(['username' => 'testuser']);
-		$this->responseMock->method('getBody')->willReturn($this->createMock(StreamInterface::class));
+		$this->responseMock->method('getBody')->willReturn($this->createStub(StreamInterface::class));
 		$this->responseMock->expects($this->once())->method('withHeader')->with('Content-Type', 'text/html')->willReturnSelf();
 
-		$controller = new HomeController($this->dashboardsAggregatorMock);
+		$controller = new HomeController($this->dashboardsAggregatorStub);
 		$result = $controller->index($this->requestMock, $this->responseMock);
 
 		static::assertSame($this->responseMock, $result);
@@ -77,10 +77,13 @@ class HomeControllerTest extends TestCase
 	#[Group('units')]
 	public function testLegalsReturnsLegalPage(): void
 	{
-		$this->responseMock->method('getBody')->willReturn($this->createMock(StreamInterface::class));
+		// the legal page is static, it neither reads the request nor the session
+		$this->requestMock->expects($this->never())->method($this->anything());
+		$this->sessionMock->expects($this->never())->method($this->anything());
+		$this->responseMock->method('getBody')->willReturn($this->createStub(StreamInterface::class));
 		$this->responseMock->expects($this->once())->method('withHeader')->with('Content-Type', 'text/html')->willReturnSelf();
 
-		$controller = new HomeController($this->dashboardsAggregatorMock);
+		$controller = new HomeController($this->dashboardsAggregatorStub);
 		$result = $controller->legals($this->requestMock, $this->responseMock);
 
 		static::assertSame($this->responseMock, $result);

@@ -62,6 +62,8 @@ class PlayerRestAPIServiceTest extends TestCase
 	#[Group('units')]
 	public function testAuthenticateReturnsTrueWhenTokenExists(): void
 	{
+		$this->apiExecutorMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->playerTokenServiceMock->expects($this->once())->method('hasValidToken')
 			->with(1)
 			->willReturn(true);
@@ -74,6 +76,7 @@ class PlayerRestAPIServiceTest extends TestCase
 	#[Group('units')]
 	public function testAuthenticateReturnsFalseWhenApiExecutorFails(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->playerTokenServiceMock->expects($this->once())->method('hasValidToken')
 			->with(1)
 			->willReturn(false);
@@ -117,6 +120,7 @@ class PlayerRestAPIServiceTest extends TestCase
 	#[Group('units')]
 	public function testAuthenticateReturnsTrueWhenTokenStoredSuccessfully(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->playerTokenServiceMock->expects($this->once())->method('hasValidToken')
 			->with(1)
 			->willReturn(false);
@@ -148,6 +152,9 @@ class PlayerRestAPIServiceTest extends TestCase
 	#[Group('units')]
 	public function testUploadFileFailsWhenTokenIsNotFound(): void
 	{
+		// without token no request is sent to the player
+		$this->apiExecutorMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->once())->method('error')->with('No valid token found for player 1');
 		$this->playerTokenServiceMock->expects($this->once())->method('getToken')
 			->with(1)
 			->willReturn([]);
@@ -179,6 +186,7 @@ class PlayerRestAPIServiceTest extends TestCase
 	#[RunInSeparateProcess] #[Group('units')]
 	public function testUploadFileFailsWhenApiExecution(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->playerTokenServiceMock->expects($this->once())->method('getToken')
 			->with(1)
 			->willReturn(['access_token' => 'dummy_token']);
@@ -227,6 +235,7 @@ class PlayerRestAPIServiceTest extends TestCase
 	#[RunInSeparateProcess] #[Group('units')]
 	public function testUploadFileSucceedsWithValidInputs(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->playerTokenServiceMock->expects($this->once())->method('getToken')
 			->with(1)
 			->willReturn(['access_token' => 'dummy_token']);
@@ -251,6 +260,9 @@ class PlayerRestAPIServiceTest extends TestCase
 	#[Group('units')]
 	public function testStartPlaybackOnceReturnsFalseWhenTokenNotFound(): void
 	{
+		// without token no request is sent to the player
+		$this->apiExecutorMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->once())->method('error')->with('No valid token found for player 1');
 		$this->playerTokenServiceMock->expects($this->once())->method('getToken')
 			->with(1)
 			->willReturn([]);
@@ -263,6 +275,7 @@ class PlayerRestAPIServiceTest extends TestCase
 	#[Group('units')]
 	public function testStartPlaybackOnceReturnsFalseWhenApiExecutionFails(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->playerTokenServiceMock->expects($this->once())->method('getToken')
 			->with(1)
 			->willReturn(['access_token' => 'dummy_token']);
@@ -300,6 +313,7 @@ class PlayerRestAPIServiceTest extends TestCase
 	#[Group('units')]
 	public function testStartPlaybackOnceReturnsTrueWhenSuccessful(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->playerTokenServiceMock->expects($this->once())->method('getToken')
 			->with(1)
 			->willReturn(['access_token' => 'dummy_token']);
@@ -319,6 +333,9 @@ class PlayerRestAPIServiceTest extends TestCase
 	#[Group('units')]
 	public function testSetDefaultContentUrlReturnsFalseWhenTokenIsNotFound(): void
 	{
+		// without token no request is sent to the player
+		$this->apiExecutorMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->once())->method('error')->with('No valid token found for player 1');
 		$this->playerTokenServiceMock->expects($this->once())->method('getToken')
 			->with(1)
 			->willReturn([]);
@@ -331,6 +348,7 @@ class PlayerRestAPIServiceTest extends TestCase
 	#[Group('units')]
 	public function testSetDefaultContentUrlReturnsFalseWhenApiExecutionFails(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->playerTokenServiceMock->expects($this->once())->method('getToken')
 			->with(1)
 			->willReturn(['access_token' => 'dummy_token']);
@@ -369,6 +387,7 @@ class PlayerRestAPIServiceTest extends TestCase
 	#[Group('units')]
 	public function testSetDefaultContentUrlReturnsTrueWhenSuccessful(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->playerTokenServiceMock->expects($this->once())->method('getToken')
 			->with(1)
 			->willReturn(['access_token' => 'dummy_token']);
@@ -388,6 +407,9 @@ class PlayerRestAPIServiceTest extends TestCase
 	#[Group('units')]
 	public function testSwitchToDefaultContentUrlFailsWhenTokenIsNotFound(): void
 	{
+		// without token no request is sent to the player
+		$this->apiExecutorMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->once())->method('error')->with('No valid token found for player 1');
 		$this->playerTokenServiceMock->expects($this->once())->method('getToken')
 			->with(1)
 			->willReturn([]);
@@ -400,6 +422,7 @@ class PlayerRestAPIServiceTest extends TestCase
 	#[Group('units')]
 	public function testSwitchToDefaultContentUrlFailsWhenApiExecutionFails(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->playerTokenServiceMock->expects($this->once())->method('getToken')
 			->with(1)
 			->willReturn(['access_token' => 'dummy_token']);
@@ -437,6 +460,7 @@ class PlayerRestAPIServiceTest extends TestCase
 	#[Group('units')]
 	public function testSwitchToDefaultContentUrlSucceedsWithValidResponse(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->playerTokenServiceMock->expects($this->once())->method('getToken')
 			->with(1)
 			->willReturn(['access_token' => 'dummy_token']);

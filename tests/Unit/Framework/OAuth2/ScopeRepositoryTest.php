@@ -41,8 +41,8 @@ class ScopeRepositoryTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$connectionMock = $this->createMock(Connection::class);
-		$this->repository = new ScopeRepository($connectionMock);
+		$connectionStub = $this->createStub(Connection::class);
+		$this->repository = new ScopeRepository($connectionStub);
 	}
 
 	#[Group('units')]
@@ -65,7 +65,7 @@ class ScopeRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFinalizeScopesReturnsEmptyArray(): void
 	{
-		$mockClientEntity = $this->createMock(ClientEntityInterface::class);
+		$mockClientEntity = $this->createStub(ClientEntityInterface::class);
 
 		$result = $this->repository->finalizeScopes([], 'authorization_code', $mockClientEntity);
 

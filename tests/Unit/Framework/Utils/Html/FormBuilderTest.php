@@ -52,11 +52,11 @@ class FormBuilderTest extends TestCase
 		parent::setUp();
 		$this->fieldsFactoryMock       = $this->createMock(FieldsFactory::class);
 		$this->fieldsRenderFactoryMock = $this->createMock(FieldsRenderFactory::class);
-		$csrfTokenMock = $this->createMock(CsrfToken::class);
+		$csrfTokenStub = $this->createStub(CsrfToken::class);
 		$this->formBuilder             = new FormBuilder(
 			$this->fieldsFactoryMock,
 			$this->fieldsRenderFactoryMock,
-			$csrfTokenMock
+			$csrfTokenStub
 		);
 	}
 
@@ -66,23 +66,24 @@ class FormBuilderTest extends TestCase
 	#[Group('units')]
 	public function testPrepareFormWithMixedFields(): void
 	{
-		$textFieldMock = $this->createMock(TextField::class);
-		$textFieldMock->method('getType')->willReturn(FieldType::TEXT);
-		$textFieldMock->method('getId')->willReturn('text_field_1');
-		$textFieldMock->method('getLabel')->willReturn('Text Field');
+		$this->fieldsFactoryMock->expects($this->never())->method($this->anything());
+		$textFieldStub = $this->createStub(TextField::class);
+		$textFieldStub->method('getType')->willReturn(FieldType::TEXT);
+		$textFieldStub->method('getId')->willReturn('text_field_1');
+		$textFieldStub->method('getLabel')->willReturn('Text Field');
 
-		$csrfFieldMock = $this->createMock(CsrfTokenField::class);
-		$csrfFieldMock->method('getType')->willReturn(FieldType::CSRF);
+		$csrfFieldStub = $this->createStub(CsrfTokenField::class);
+		$csrfFieldStub->method('getType')->willReturn(FieldType::CSRF);
 
 		$this->fieldsRenderFactoryMock
-			->method('getRenderer')
+			->expects($this->atLeastOnce())->method('getRenderer')
 			->willReturnMap([
-				[$textFieldMock, '<input type="text" id="text_field_1" />'],
-				[$csrfFieldMock, '<input type="hidden" name="csrf_token" />']
+				[$textFieldStub, '<input type="text" id="text_field_1" />'],
+				[$csrfFieldStub, '<input type="hidden" name="csrf_token" />']
 			]);
 
 		// @phpstan-ignore-next-line
-		$result = $this->formBuilder->prepareForm([$textFieldMock, $csrfFieldMock]);
+		$result = $this->formBuilder->prepareForm([$textFieldStub, $csrfFieldStub]);
 
 		static::assertCount(1, $result['visible']);
 		static::assertSame(
@@ -108,6 +109,8 @@ class FormBuilderTest extends TestCase
 	#[Group('units')]
 	public function testPrepareFormWithEmptyFields(): void
 	{
+		$this->fieldsFactoryMock->expects($this->never())->method($this->anything());
+		$this->fieldsRenderFactoryMock->expects($this->never())->method($this->anything());
 		$result = $this->formBuilder->prepareForm([]);
 
 		static::assertEmpty($result['visible']);
@@ -120,15 +123,16 @@ class FormBuilderTest extends TestCase
 	#[Group('units')]
 	public function testPrepareFormWithOnlyHiddenFields(): void
 	{
-		$hiddenFieldMock = $this->createMock(HiddenField::class);
-		$hiddenFieldMock->method('getType')->willReturn(FieldType::HIDDEN);
+		$this->fieldsFactoryMock->expects($this->never())->method($this->anything());
+		$hiddenFieldStub = $this->createStub(HiddenField::class);
+		$hiddenFieldStub->method('getType')->willReturn(FieldType::HIDDEN);
 		$this->fieldsRenderFactoryMock
 			->method('getRenderer')
-			->with($hiddenFieldMock)
+			->with($hiddenFieldStub)
 			->willReturn('<input type="hidden" id="hidden_field_1" />');
 
 		// @phpstan-ignore-next-line
-		$result = $this->formBuilder->prepareForm([$hiddenFieldMock]);
+		$result = $this->formBuilder->prepareForm([$hiddenFieldStub]);
 
 		static::assertEmpty($result['visible']);
 		static::assertCount(1, $result['hidden']);
@@ -146,17 +150,18 @@ class FormBuilderTest extends TestCase
 	#[Group('units')]
 	public function testPrepareFormWithOnlyVisibleFields(): void
 	{
-		$visibleFieldMock = $this->createMock(TextField::class);
-		$visibleFieldMock->method('getType')->willReturn(FieldType::TEXT);
-		$visibleFieldMock->method('getId')->willReturn('visible_field_1');
-		$visibleFieldMock->method('getLabel')->willReturn('Visible Field');
+		$this->fieldsFactoryMock->expects($this->never())->method($this->anything());
+		$visibleFieldStub = $this->createStub(TextField::class);
+		$visibleFieldStub->method('getType')->willReturn(FieldType::TEXT);
+		$visibleFieldStub->method('getId')->willReturn('visible_field_1');
+		$visibleFieldStub->method('getLabel')->willReturn('Visible Field');
 		$this->fieldsRenderFactoryMock
 			->method('getRenderer')
-			->with($visibleFieldMock)
+			->with($visibleFieldStub)
 			->willReturn('<input type="text" id="visible_field_1" />');
 
 		// @phpstan-ignore-next-line
-		$result = $this->formBuilder->prepareForm([$visibleFieldMock]);
+		$result = $this->formBuilder->prepareForm([$visibleFieldStub]);
 
 		static::assertEmpty($result['hidden']);
 		static::assertCount(1, $result['visible']);
@@ -180,17 +185,18 @@ class FormBuilderTest extends TestCase
 	#[Group('units')]
 	public function testCreateTextField(): void
 	{
-		$fieldMock = $this->createMock(TextField::class);
+		$this->fieldsRenderFactoryMock->expects($this->never())->method($this->anything());
+		$fieldStub = $this->createStub(TextField::class);
 
 		$this->fieldsFactoryMock
 			->expects($this->once())
 			->method('createTextField')
 			->with(['type' => FieldType::TEXT])
-			->willReturn($fieldMock);
+			->willReturn($fieldStub);
 
 		$field = $this->formBuilder->createField(['type' => FieldType::TEXT]);
 
-		static::assertSame($fieldMock, $field);
+		static::assertSame($fieldStub, $field);
 	}
 
 	/**
@@ -200,17 +206,18 @@ class FormBuilderTest extends TestCase
 	#[Group('units')]
 	public function testCreatePasswordField(): void
 	{
-		$fieldMock = $this->createMock(PasswordField::class);
+		$this->fieldsRenderFactoryMock->expects($this->never())->method($this->anything());
+		$fieldStub = $this->createStub(PasswordField::class);
 
 		$this->fieldsFactoryMock
 			->expects($this->once())
 			->method('createPasswordField')
 			->with(['type' => FieldType::PASSWORD])
-			->willReturn($fieldMock);
+			->willReturn($fieldStub);
 
 		$field = $this->formBuilder->createField(['type' => FieldType::PASSWORD]);
 
-		static::assertSame($fieldMock, $field);
+		static::assertSame($fieldStub, $field);
 	}
 
 	/**
@@ -220,17 +227,18 @@ class FormBuilderTest extends TestCase
 	#[Group('units')]
 	public function testCreateEmailField(): void
 	{
-		$fieldMock = $this->createMock(EmailField::class);
+		$this->fieldsRenderFactoryMock->expects($this->never())->method($this->anything());
+		$fieldStub = $this->createStub(EmailField::class);
 
 		$this->fieldsFactoryMock
 			->expects($this->once())
 			->method('createEmailField')
 			->with(['type' => FieldType::EMAIL])
-			->willReturn($fieldMock);
+			->willReturn($fieldStub);
 
 		$field = $this->formBuilder->createField(['type' => FieldType::EMAIL]);
 
-		static::assertSame($fieldMock, $field);
+		static::assertSame($fieldStub, $field);
 	}
 
 	/**
@@ -240,22 +248,25 @@ class FormBuilderTest extends TestCase
 	#[Group('units')]
 	public function testCreateCsrfTokenField(): void
 	{
-		$fieldMock = $this->createMock(CsrfTokenField::class);
+		$this->fieldsRenderFactoryMock->expects($this->never())->method($this->anything());
+		$fieldStub = $this->createStub(CsrfTokenField::class);
 
 		$this->fieldsFactoryMock
 			->expects($this->once())
 			->method('createCsrfTokenField')
 			->with(['type' => FieldType::CSRF])
-			->willReturn($fieldMock);
+			->willReturn($fieldStub);
 
 		$field = $this->formBuilder->createField(['type' => FieldType::CSRF]);
 
-		static::assertSame($fieldMock, $field);
+		static::assertSame($fieldStub, $field);
 	}
 
 	#[Group('units')]
 	public function testInvalidFieldTypeThrowsException(): void
 	{
+		$this->fieldsFactoryMock->expects($this->never())->method($this->anything());
+		$this->fieldsRenderFactoryMock->expects($this->never())->method($this->anything());
 		$this->expectException(FrameworkException::class);
 
 		$this->formBuilder->createField(['type' => 'invalid']);
@@ -267,15 +278,16 @@ class FormBuilderTest extends TestCase
 	#[Group('units')]
 	public function testRenderField(): void
 	{
-		$fieldMock = $this->createMock(FieldInterface::class);
+		$this->fieldsFactoryMock->expects($this->never())->method($this->anything());
+		$fieldStub = $this->createStub(FieldInterface::class);
 
 		$this->fieldsRenderFactoryMock
 			->expects($this->once())
 			->method('getRenderer')
-			->with($fieldMock)
+			->with($fieldStub)
 			->willReturn('<input type="text" />');
 
-		$output = $this->formBuilder->renderField($fieldMock);
+		$output = $this->formBuilder->renderField($fieldStub);
 
 		static::assertSame('<input type="text" />', $output);
 	}

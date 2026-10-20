@@ -40,11 +40,12 @@ use App\Modules\Users\UserStatus;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class DatatableBuilderTest extends TestCase
 {
-	private BuildService&MockObject $buildServiceMock;
+	private BuildService&Stub $buildServiceStub;
 	private Parameters&MockObject $parametersMock;
 	private AclValidator&MockObject $aclValidatorMock;
 	private DatatableBuilder $builder;
@@ -55,11 +56,11 @@ class DatatableBuilderTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->buildServiceMock = $this->createMock(BuildService::class);
+		$this->buildServiceStub = $this->createStub(BuildService::class);
 		$this->parametersMock = $this->createMock(Parameters::class);
 		$this->aclValidatorMock = $this->createMock(AclValidator::class);
 
-		$this->builder = new DatatableBuilder($this->buildServiceMock, $this->parametersMock, $this->aclValidatorMock);
+		$this->builder = new DatatableBuilder($this->buildServiceStub, $this->parametersMock, $this->aclValidatorMock);
 
 	}
 
@@ -72,8 +73,8 @@ class DatatableBuilderTest extends TestCase
 	public function testConfigureParametersDoesNothingForEdgeEdition(): void
 	{
 		$this->aclValidatorMock
-			->method('getConfig')
-			->willReturn($this->createConfiguredMock(Config::class, ['getEdition' => Config::PLATFORM_EDITION_EDGE]));
+			->expects($this->atLeastOnce())->method('getConfig')
+			->willReturn($this->createConfiguredStub(Config::class, ['getEdition' => Config::PLATFORM_EDITION_EDGE]));
 
 		$this->parametersMock->expects($this->never())->method('addOwner');
 		$this->parametersMock->expects($this->never())->method('addCompany');
@@ -91,7 +92,7 @@ class DatatableBuilderTest extends TestCase
 	{
 		$this->aclValidatorMock
 			->method('getConfig')
-			->willReturn($this->createConfiguredMock(Config::class, ['getEdition' => 'some_other_edition']));
+			->willReturn($this->createConfiguredStub(Config::class, ['getEdition' => 'some_other_edition']));
 
 		$this->aclValidatorMock
 			->method('isModuleAdmin')
@@ -118,7 +119,7 @@ class DatatableBuilderTest extends TestCase
 	{
 		$this->aclValidatorMock
 			->method('getConfig')
-			->willReturn($this->createConfiguredMock(Config::class, ['getEdition' => 'some_other_edition']));
+			->willReturn($this->createConfiguredStub(Config::class, ['getEdition' => 'some_other_edition']));
 
 		$this->aclValidatorMock
 			->method('isModuleAdmin')
@@ -141,6 +142,7 @@ class DatatableBuilderTest extends TestCase
     #[Group('units')]
 	public function testDetermineParametersSetsUserInputsAndParsesFilterAllUsers(): void
 	{
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$queryParams = ['test_key' => 'test_value'];
 
 		$this->parametersMock->expects($this->once())
@@ -161,6 +163,8 @@ class DatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testBuildTitleSetsCorrectTitle(): void
 	{
+		$this->parametersMock->expects($this->never())->method($this->anything());
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$expectedTitle = 'Translated Title';
 		$translator = $this->createMock(Translator::class);
 		$this->builder->setTranslator($translator);
@@ -183,10 +187,11 @@ class DatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testCollectFormElements(): void
 	{
-		$translator = $this->createMock(Translator::class);
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$translator = $this->createStub(Translator::class);
 		$this->builder->setTranslator($translator);
 
-		$this->parametersMock->method('hasParameter')
+		$this->parametersMock->expects($this->atLeastOnce())->method('hasParameter')
 			->willReturnMap([
 				[Parameters::PARAMETER_FIRSTNAME, true],
 				[Parameters::PARAMETER_SURNAME, true],
@@ -196,7 +201,7 @@ class DatatableBuilderTest extends TestCase
 			]);
 
 
-		$this->parametersMock->method('getValueOfParameter')
+		$this->parametersMock->expects($this->atLeastOnce())->method('getValueOfParameter')
 			->willReturnMap([
 				[Parameters::PARAMETER_USERNAME, 'test_username'],
 				[Parameters::PARAMETER_EMAIL, 'test_email@example.com'],
@@ -222,22 +227,22 @@ class DatatableBuilderTest extends TestCase
 		]);
 
 
-		$userFieldMock        = $this->createMock(TextField::class);
-		$emailFieldMock       = $this->createMock(EmailField::class);
-		$firstNameFieldMock   = $this->createMock(TextField::class);
-		$surNameFieldMock     = $this->createMock(TextField::class);
-		$companyNameFieldMock = $this->createMock(TextField::class);
-		$companyIdMock        = $this->createMock(DropdownField::class);
-		$statusMock           = $this->createMock(DropdownField::class);
+		$userFieldStub        = $this->createStub(TextField::class);
+		$emailFieldStub       = $this->createStub(EmailField::class);
+		$firstNameFieldStub   = $this->createStub(TextField::class);
+		$surNameFieldStub     = $this->createStub(TextField::class);
+		$companyNameFieldStub = $this->createStub(TextField::class);
+		$companyIdStub        = $this->createStub(DropdownField::class);
+		$statusStub           = $this->createStub(DropdownField::class);
 
-		$this->buildServiceMock->method('buildFormField')->willReturnMap([
-			[['type' => FieldType::TEXT, 'id' => Parameters::PARAMETER_USERNAME, 'name' => Parameters::PARAMETER_USERNAME, 'title' => 'Username', 'label' => 'Username', 'value' => 'test_username'], $userFieldMock],
-			[['type' => FieldType::TEXT, 'id' => Parameters::PARAMETER_EMAIL, 'name' => Parameters::PARAMETER_EMAIL, 'title' => 'Email', 'label' => 'Email', 'value' => 'test_email@example.com'], $emailFieldMock],
-			[['type' => FieldType::TEXT, 'id' => Parameters::PARAMETER_FIRSTNAME, 'name' => Parameters::PARAMETER_FIRSTNAME, 'title' => 'First Name', 'label' => 'First Name', 'value' => 'John'], $firstNameFieldMock],
-			[['type' => FieldType::TEXT, 'id' => Parameters::PARAMETER_SURNAME, 'name' => Parameters::PARAMETER_SURNAME, 'title' => 'Surname', 'label' => 'Surname', 'value' => 'Doe'], $surNameFieldMock],
-			[['type' => FieldType::TEXT, 'id' => Parameters::PARAMETER_COMPANY_NAME, 'name' => Parameters::PARAMETER_COMPANY_NAME, 'title' => 'Company name', 'label' => 'Company name', 'value' => 'Acme'], $companyNameFieldMock],
-			[['type' => FieldType::DROPDOWN, 'id' => BaseFilterParametersInterface::PARAMETER_COMPANY_ID, 'name' => BaseFilterParametersInterface::PARAMETER_COMPANY_ID, 'title' => 'Belongs company', 'label' => 'Belongs company', 'value' => 56,'options' => []], $companyIdMock],
-			[['type' => FieldType::DROPDOWN, 'id' => Parameters::PARAMETER_STATUS, 'name' => Parameters::PARAMETER_STATUS, 'title' => 'Status', 'label' => 'Status', 'value' => UserStatus::REGISTERED->value, 'options' => $status], $statusMock]
+		$this->buildServiceStub->method('buildFormField')->willReturnMap([
+			[['type' => FieldType::TEXT, 'id' => Parameters::PARAMETER_USERNAME, 'name' => Parameters::PARAMETER_USERNAME, 'title' => 'Username', 'label' => 'Username', 'value' => 'test_username'], $userFieldStub],
+			[['type' => FieldType::TEXT, 'id' => Parameters::PARAMETER_EMAIL, 'name' => Parameters::PARAMETER_EMAIL, 'title' => 'Email', 'label' => 'Email', 'value' => 'test_email@example.com'], $emailFieldStub],
+			[['type' => FieldType::TEXT, 'id' => Parameters::PARAMETER_FIRSTNAME, 'name' => Parameters::PARAMETER_FIRSTNAME, 'title' => 'First Name', 'label' => 'First Name', 'value' => 'John'], $firstNameFieldStub],
+			[['type' => FieldType::TEXT, 'id' => Parameters::PARAMETER_SURNAME, 'name' => Parameters::PARAMETER_SURNAME, 'title' => 'Surname', 'label' => 'Surname', 'value' => 'Doe'], $surNameFieldStub],
+			[['type' => FieldType::TEXT, 'id' => Parameters::PARAMETER_COMPANY_NAME, 'name' => Parameters::PARAMETER_COMPANY_NAME, 'title' => 'Company name', 'label' => 'Company name', 'value' => 'Acme'], $companyNameFieldStub],
+			[['type' => FieldType::DROPDOWN, 'id' => BaseFilterParametersInterface::PARAMETER_COMPANY_ID, 'name' => BaseFilterParametersInterface::PARAMETER_COMPANY_ID, 'title' => 'Belongs company', 'label' => 'Belongs company', 'value' => 56,'options' => []], $companyIdStub],
+			[['type' => FieldType::DROPDOWN, 'id' => Parameters::PARAMETER_STATUS, 'name' => Parameters::PARAMETER_STATUS, 'title' => 'Status', 'label' => 'Status', 'value' => UserStatus::REGISTERED->value, 'options' => $status], $statusStub]
 		]);
 
 
@@ -253,13 +258,13 @@ class DatatableBuilderTest extends TestCase
 		static::assertArrayHasKey(BaseFilterParametersInterface::PARAMETER_COMPANY_ID, $form);
 		static::assertArrayHasKey(Parameters::PARAMETER_STATUS, $form);
 
-		static::assertEquals($userFieldMock, $form[Parameters::PARAMETER_USERNAME]);
-		static::assertEquals($emailFieldMock, $form[Parameters::PARAMETER_EMAIL]);
-		static::assertEquals($firstNameFieldMock, $form[Parameters::PARAMETER_FIRSTNAME]);
-		static::assertEquals($surNameFieldMock, $form[Parameters::PARAMETER_SURNAME]);
-		static::assertEquals($companyNameFieldMock, $form[Parameters::PARAMETER_COMPANY_NAME]);
-		static::assertEquals($companyIdMock, $form[BaseFilterParametersInterface::PARAMETER_COMPANY_ID]);
-		static::assertEquals($statusMock, $form[Parameters::PARAMETER_STATUS]);
+		static::assertEquals($userFieldStub, $form[Parameters::PARAMETER_USERNAME]);
+		static::assertEquals($emailFieldStub, $form[Parameters::PARAMETER_EMAIL]);
+		static::assertEquals($firstNameFieldStub, $form[Parameters::PARAMETER_FIRSTNAME]);
+		static::assertEquals($surNameFieldStub, $form[Parameters::PARAMETER_SURNAME]);
+		static::assertEquals($companyNameFieldStub, $form[Parameters::PARAMETER_COMPANY_NAME]);
+		static::assertEquals($companyIdStub, $form[BaseFilterParametersInterface::PARAMETER_COMPANY_ID]);
+		static::assertEquals($statusStub, $form[Parameters::PARAMETER_STATUS]);
 
 	}
 
@@ -272,12 +277,13 @@ class DatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testCollectFormElementsMinimum(): void
 	{
-		$translator = $this->createMock(Translator::class);
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$translator = $this->createStub(Translator::class);
 		$this->builder->setTranslator($translator);
 
-		$this->parametersMock->method('hasParameter')->willReturn(false);
+		$this->parametersMock->expects($this->atLeastOnce())->method('hasParameter')->willReturn(false);
 
-		$this->parametersMock->method('getValueOfParameter')
+		$this->parametersMock->expects($this->atLeastOnce())->method('getValueOfParameter')
 			->willReturnMap([
 				[Parameters::PARAMETER_USERNAME, 'test_username'],
 				[Parameters::PARAMETER_EMAIL, 'test_email@example.com']
@@ -292,12 +298,12 @@ class DatatableBuilderTest extends TestCase
 			[Parameters::PARAMETER_EMAIL, 'users', [], 'Email']
 		]);
 
-		$userFieldMock        = $this->createMock(TextField::class);
-		$emailFieldMock       = $this->createMock(EmailField::class);
+		$userFieldStub        = $this->createStub(TextField::class);
+		$emailFieldStub       = $this->createStub(EmailField::class);
 
-		$this->buildServiceMock->method('buildFormField')->willReturnMap([
-			[['type' => FieldType::TEXT, 'id' => Parameters::PARAMETER_USERNAME, 'name' => Parameters::PARAMETER_USERNAME, 'title' => 'Username', 'label' => 'Username', 'value' => 'test_username'], $userFieldMock],
-			[['type' => FieldType::TEXT, 'id' => Parameters::PARAMETER_EMAIL, 'name' => Parameters::PARAMETER_EMAIL, 'title' => 'Email', 'label' => 'Email', 'value' => 'test_email@example.com'], $emailFieldMock],
+		$this->buildServiceStub->method('buildFormField')->willReturnMap([
+			[['type' => FieldType::TEXT, 'id' => Parameters::PARAMETER_USERNAME, 'name' => Parameters::PARAMETER_USERNAME, 'title' => 'Username', 'label' => 'Username', 'value' => 'test_username'], $userFieldStub],
+			[['type' => FieldType::TEXT, 'id' => Parameters::PARAMETER_EMAIL, 'name' => Parameters::PARAMETER_EMAIL, 'title' => 'Email', 'label' => 'Email', 'value' => 'test_email@example.com'], $emailFieldStub],
 		]);
 
 
@@ -308,8 +314,8 @@ class DatatableBuilderTest extends TestCase
 		static::assertArrayHasKey(Parameters::PARAMETER_USERNAME, $form);
 		static::assertArrayHasKey(Parameters::PARAMETER_EMAIL, $form);
 
-		static::assertEquals($userFieldMock, $form[Parameters::PARAMETER_USERNAME]);
-		static::assertEquals($emailFieldMock, $form[Parameters::PARAMETER_EMAIL]);
+		static::assertEquals($userFieldStub, $form[Parameters::PARAMETER_USERNAME]);
+		static::assertEquals($emailFieldStub, $form[Parameters::PARAMETER_EMAIL]);
 	}
 
 	/**
@@ -318,12 +324,13 @@ class DatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testCreateTableFieldsAddsCorrectFieldsForCoreAndEnterpriseEditions(): void
 	{
+		$this->parametersMock->expects($this->never())->method($this->anything());
 		$this->aclValidatorMock
-			->method('getConfig')
-			->willReturn($this->createConfiguredMock(Config::class, ['getEdition' => Config::PLATFORM_EDITION_CORE]));
+			->expects($this->atLeastOnce())->method('getConfig')
+			->willReturn($this->createConfiguredStub(Config::class, ['getEdition' => Config::PLATFORM_EDITION_CORE]));
 
 		$resultsBuilderMock = $this->createMock(Builder::class);
-		$this->buildServiceMock->method('getResultsBuilder')->willReturn($resultsBuilderMock);
+		$this->buildServiceStub->method('getResultsBuilder')->willReturn($resultsBuilderMock);
 
 		$resultsBuilderMock->expects($this->exactly(6))
 			->method('createField')
@@ -345,12 +352,13 @@ class DatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testCreateTableFieldsAddsLimitedFieldsForEdgeEdition(): void
 	{
+		$this->parametersMock->expects($this->never())->method($this->anything());
 		$this->aclValidatorMock
-			->method('getConfig')
-			->willReturn($this->createConfiguredMock(Config::class, ['getEdition' => Config::PLATFORM_EDITION_EDGE]));
+			->expects($this->atLeastOnce())->method('getConfig')
+			->willReturn($this->createConfiguredStub(Config::class, ['getEdition' => Config::PLATFORM_EDITION_EDGE]));
 
 		$resultsBuilderMock = $this->createMock(Builder::class);
-		$this->buildServiceMock->method('getResultsBuilder')->willReturn($resultsBuilderMock);
+		$this->buildServiceStub->method('getResultsBuilder')->willReturn($resultsBuilderMock);
 
 		$resultsBuilderMock->expects($this->exactly(3))
 			->method('createField')

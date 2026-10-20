@@ -81,6 +81,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testDetermineUIDByTokenReturnsZero(): void
 	{
+		$this->expectUntouched($this->builderMock, $this->profileServiceMock, $this->settingsParametersMock, $this->translatorMock, $this->configMock);
 		$passwordToken = 'zz11';
 		$this->usersTokenServiceMock->expects($this->never())
 			->method('findByToken');
@@ -98,6 +99,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testDetermineUIDByTokenReturnsZeroIfTokenNotFound(): void
 	{
+		$this->expectUntouched($this->builderMock, $this->profileServiceMock, $this->settingsParametersMock, $this->translatorMock, $this->configMock);
 		$passwordToken = bin2hex(random_bytes(32));
 		$this->usersTokenServiceMock->expects($this->once())
 			->method('findByToken')
@@ -117,6 +119,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testDetermineUIDByTokenReturnsUIDForValidToken(): void
 	{
+		$this->expectUntouched($this->builderMock, $this->settingsParametersMock, $this->translatorMock, $this->configMock);
 		$passwordToken = bin2hex(random_bytes(32));
 		$userData = [
 			'UID' => 123,
@@ -145,6 +148,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testDetermineUIDByTokenInValidToken(): void
 	{
+		$this->expectUntouched($this->builderMock, $this->settingsParametersMock, $this->translatorMock, $this->configMock);
 		$passwordToken = bin2hex(random_bytes(32));
 		$userData = [
 			'UID' => 123,
@@ -171,6 +175,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testInitWithSessionContainingValidUser(): void
 	{
+		$this->expectUntouched($this->builderMock, $this->usersTokenServiceMock, $this->settingsParametersMock, $this->translatorMock, $this->configMock);
 		$sessionMock = $this->createMock(Session::class);
 		$sessionMock->expects($this->once())->method('get')
 			->with('user')
@@ -189,6 +194,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testInitSetsProfileServiceUID(): void
 	{
+		$this->expectUntouched($this->builderMock, $this->usersTokenServiceMock, $this->settingsParametersMock, $this->translatorMock, $this->configMock);
 		$sessionMock = $this->createMock(Session::class);
 		$sessionMock->expects($this->once())->method('get')
 			->with('user')
@@ -208,6 +214,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testConfigureUserFormParameterValidInput(): void
 	{
+		$this->expectUntouched($this->profileServiceMock, $this->usersTokenServiceMock, $this->settingsParametersMock, $this->translatorMock);
 		$postData = ['username' => 'testuser', 'password' => 'Strong@123'];
 		$passwordPattern = '^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$.!%*#?&]{8,}$';
 
@@ -232,6 +239,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testStorePassword(): void
 	{
+		$this->expectUntouched($this->builderMock, $this->usersTokenServiceMock, $this->translatorMock, $this->configMock);
 		$password = 'SecurePass123!';
 
 		$this->settingsParametersMock->expects($this->once())->method('getValueOfParameter')
@@ -262,6 +270,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testGetUserServiceErrorsTranslatesErrorsCorrectly(): void
 	{
+		$this->expectUntouched($this->builderMock, $this->usersTokenServiceMock, $this->settingsParametersMock, $this->configMock);
 		$errorMessages = ['error.password.invalid', 'error.password.mismatch'];
 		$translatedMessages = ['Invalid password', 'Password mismatch'];
 
@@ -284,6 +293,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testPrepareUITemplateStandard(): void
 	{
+		$this->expectUntouched($this->profileServiceMock, $this->usersTokenServiceMock, $this->settingsParametersMock);
 		$passwordPattern = '^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$.!%*#?&]{8,}$';
 		$this->configMock->expects($this->once())
 			->method('getConfigValue')
@@ -373,6 +383,9 @@ class FacadeTest extends TestCase
 				['save', 'main', [], 'Save']
 			]);
 
+		// a token form needs the token as hidden parameter
+		$this->settingsParametersMock->expects($this->once())->method('addToken');
+
 		$result = $this->facade->prepareUITemplate($passwordToken);
 
 		$expectedResult = array_merge($formData, [
@@ -437,6 +450,9 @@ class FacadeTest extends TestCase
 				['save', 'main', [], 'Save']
 			]);
 
+		// a token form needs the token as hidden parameter
+		$this->settingsParametersMock->expects($this->once())->method('addToken');
+
 		$result = $this->facade->prepareUITemplate($passwordToken);
 
 		$expectedResult = array_merge($formData, [
@@ -460,6 +476,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testStoreForcedPasswordThrowsException(): void
 	{
+		$this->expectUntouched($this->builderMock, $this->usersTokenServiceMock, $this->translatorMock, $this->configMock);
 		$UID = 1234;
 		$passwordToken = bin2hex(random_bytes(32));
 
@@ -476,4 +493,11 @@ class FacadeTest extends TestCase
 		$this->facade->storeForcedPassword($UID, $passwordToken);
 	}
 
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
+	}
 }
