@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -19,324 +19,210 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Modules\Player\Controller;
 
-use App\Framework\Core\Session;
-use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Utils\Forms\FormTemplatePreparer;
+use App\Framework\Exceptions\UserException;
 use App\Modules\Player\Controller\ShowConnectivityController;
-use App\Modules\Player\Helper\NetworkSettings\Facade;
+use App\Modules\Player\Helper\NetworkSettings\Orchestrator;
+use App\Modules\Player\Helper\NetworkSettings\TemplatePreparer;
+use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamInterface;
 use Slim\Flash\Messages;
+use Slim\Psr7\Response;
 
 class ShowConnectivityControllerTest extends TestCase
 {
-	private Facade&MockObject $facadeMock;
-	private FormTemplatePreparer&MockObject $formElementPreparerMock;
+	private Orchestrator&MockObject $orchestratorMock;
+	private TemplatePreparer&MockObject $templatePreparerMock;
 	private Messages&MockObject $flashMock;
-	private ResponseInterface&MockObject $responseMock;
-	private ServerRequestInterface&MockObject $requestMock;
-	private StreamInterface&MockObject $streamInterfaceMock;
 	private ShowConnectivityController $controller;
 
+	/** @var array{player_id: int, player_name: string, is_intranet: int, api_endpoint: string} */
+	private array $player = ['player_id' => 5, 'player_name' => 'Lobby', 'is_intranet' => 1, 'api_endpoint' => 'https://example.com'];
+
+	/** @var array{hidden: list<mixed>, visible: list<mixed>} */
+	private array $form = ['hidden' => [], 'visible' => []];
+
+	/** @var array<string,array<string,string>> */
+	private array $templateData = ['main_layout' => ['LANG_PAGE_TITLE' => 'x']];
+
 	/**
-	 * @throws Exception
+	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->facadeMock              = $this->createMock(Facade::class);
-		$this->formElementPreparerMock = $this->createMock(FormTemplatePreparer::class);
-		$this->flashMock               = $this->createMock(Messages::class);
+		$this->orchestratorMock     = $this->createMock(Orchestrator::class);
+		$this->templatePreparerMock = $this->createMock(TemplatePreparer::class);
+		$this->flashMock            = $this->createMock(Messages::class);
 
-		$this->requestMock         = $this->createMock(ServerRequestInterface::class);
-		$this->responseMock        = $this->createMock(ResponseInterface::class);
-		$this->streamInterfaceMock = $this->createMock(StreamInterface::class);
-
-		$this->controller = new ShowConnectivityController(
-			$this->facadeMock,
-			$this->formElementPreparerMock,
-			$this->flashMock
-		);
-
-
+		$this->controller = new ShowConnectivityController($this->orchestratorMock, $this->templatePreparerMock, $this->flashMock);
 	}
 
 	/**
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
+	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testShowSucceed(): void
+	public function testShowRendersForm(): void
 	{
+		$this->orchestratorMock->expects($this->once())->method('loadPlayer')->with(5)->willReturn($this->player);
+		$this->expectRendering($this->player);
 		$this->flashMock->expects($this->never())->method($this->anything());
-		$this->initMock();
 
-		$player = [
-			'player_id' => 1,
-			'player_name' => 'Test Player',
-			'model' => 123,
-			'is_intranet' => 1,
-			'api_endpoint' => 'http://example.com'
-		];
-		$this->outputRenderMock($player);
+		$response = $this->controller->show($this->createStub(ServerRequestInterface::class), new Response(), ['player_id' => '5']);
 
-		$this->facadeMock->method('loadPlayerForEdit')->willReturnSelf();
-		$this->facadeMock->method('getPlayer')->willReturn($player);
-
-		$this->outputRenderMock($player);
-
-		$args = ['player_id' => '1'];
-		$this->controller->show($this->requestMock, $this->responseMock, $args);
+		$this->assertRendered($response);
 	}
 
 	/**
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
+	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testShowFailsNoPlayerId(): void
+	public function testShowWithoutPlayerIdRedirects(): void
 	{
-		$this->expectUntouched($this->requestMock, $this->facadeMock, $this->formElementPreparerMock, $this->streamInterfaceMock);
+		$this->orchestratorMock->expects($this->never())->method($this->anything());
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->flashMock->expects($this->once())->method('addMessage')->with('error', 'No player id given.');
 
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Location', '/player')
-			->willReturnSelf();
+		$response = $this->controller->show($this->createStub(ServerRequestInterface::class), new Response(), []);
 
-		$this->responseMock->expects($this->once())->method('withStatus')
-			->with(302)
-			->willReturnSelf();
-
-		$this->flashMock->expects($this->once())->method('addMessage')
-			->with('error', 'No player id given.');
-
-		$args = ['player_id' => '0'];
-
-		$this->controller->show($this->requestMock, $this->responseMock, $args);
+		$this->assertRedirectedToPlayerList($response);
 	}
 
 	/**
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
+	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testShowPlayerNotAccessible(): void
+	public function testShowWithInaccessiblePlayerRedirects(): void
 	{
-		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
-		$this->streamInterfaceMock->expects($this->never())->method($this->anything());
-		$this->initMock();
-		$this->facadeMock->method('loadPlayerForEdit')->willReturnSelf();
-		$this->facadeMock->method('getPlayer')->willReturn([]);
+		$this->orchestratorMock->expects($this->once())->method('loadPlayer')->with(5)->willReturn([]);
+		$this->orchestratorMock->expects($this->never())->method('buildForm');
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->flashMock->expects($this->once())->method('addMessage')->with('error', 'Player ID not accessible.');
 
-		$this->flashMock->expects($this->once())->method('addMessage')
-			->with('error', 'Player ID not accessible.');
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Location', '/player')
-			->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')
-			->with(302)
-			->willReturnSelf();
+		$response = $this->controller->show($this->createStub(ServerRequestInterface::class), new Response(), ['player_id' => '5']);
 
-		$args = ['player_id' => '1'];
-		$this->controller->show($this->requestMock, $this->responseMock, $args);
+		$this->assertRedirectedToPlayerList($response);
 	}
 
 	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws Exception
-	 * @throws \Doctrine\DBAL\Exception
+	 * @throws UserException
 	 */
-	#[
-		Group('units')]
-	public function testStoreSucceed(): void
+	#[Group('units')]
+	public function testStoreWithInaccessiblePlayerRedirects(): void
 	{
-		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
-		$this->streamInterfaceMock->expects($this->never())->method($this->anything());
-		$this->initMock();
+		$this->orchestratorMock->expects($this->once())->method('loadPlayer')->with(0)->willReturn([]);
+		$this->orchestratorMock->expects($this->never())->method('store');
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->flashMock->expects($this->once())->method('addMessage')->with('error', 'Player ID not accessible.');
 
-		$postData = [
-			'player_id' => 1,
-			'player_name' => 'Player Test',
-			'is_intranet' => 1,
-			'api_endpoint' => 'http://example.com'
-		];
+		$response = $this->controller->store($this->createRequest(['is_intranet' => 1]), new Response());
 
-		$this->requestMock->method('getParsedBody')->willReturn($postData);
-		$this->facadeMock->method('configureFormParameter')->with($postData)->willReturn([]);
-		$this->facadeMock->method('storeNetworkData')->willReturn(1);
+		$this->assertRedirectedToPlayerList($response);
+	}
 
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
+	 */
+	#[Group('units')]
+	public function testStoreWithValidationErrorsRendersFormWithPost(): void
+	{
+		$post = ['player_id' => '5', 'is_intranet' => '1', 'api_endpoint' => ''];
+		$this->orchestratorMock->expects($this->once())->method('loadPlayer')->with(5)->willReturn($this->player);
+		$this->orchestratorMock->expects($this->once())->method('store')->with(5, $post)
+			->willReturn(['success' => false, 'errors' => ['CSRF mismatch', 'No API endpoint.']]);
+		$this->expectRendering($post);
+
+		$messages = [];
+		$this->flashMock->expects($this->exactly(2))->method('addMessageNow')
+			->willReturnCallback(function (string $key, string $message) use (&$messages) { $messages[] = [$key, $message]; });
+		$this->flashMock->expects($this->never())->method('addMessage');
+
+		$response = $this->controller->store($this->createRequest($post), new Response());
+
+		$this->assertRendered($response);
+		static::assertSame([['error', 'CSRF mismatch'], ['error', 'No API endpoint.']], $messages);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
+	 */
+	#[Group('units')]
+	public function testStoreSucceedsAndRedirects(): void
+	{
+		$post = ['player_id' => '5', 'is_intranet' => '1', 'api_endpoint' => 'https://example.com'];
+		$this->orchestratorMock->expects($this->once())->method('loadPlayer')->with(5)->willReturn($this->player);
+		$this->orchestratorMock->expects($this->once())->method('store')->with(5, $post)->willReturn(['success' => true]);
+		$this->orchestratorMock->expects($this->never())->method('buildForm');
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
 		$this->flashMock->expects($this->once())->method('addMessage')
 			->with('success', 'Player connectivity data successfully stored.');
 
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Location', '/player')
-			->willReturnSelf();
+		$response = $this->controller->store($this->createRequest($post), new Response());
 
-		$this->responseMock->expects($this->once())->method('withStatus')
-			->with(302)
-			->willReturnSelf();
-
-		$this->controller->store($this->requestMock, $this->responseMock);
+		$this->assertRedirectedToPlayerList($response);
 	}
 
 	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws Exception
-	 * @throws \Doctrine\DBAL\Exception
+	 * @param array<string,mixed> $networkData
 	 */
-	#[Group('units')]
-	public function testStoreFailsWithInvalidData(): void
+	private function expectRendering(array $networkData): void
 	{
-		$this->initMock();
-
-		$postData = [
-			'player_id' => 1,
-			'player_name' => '',
-			'is_intranet' => 1,
-			'api_endpoint' => ''
-		];
-
-		$errors = ['Invalid player name.', 'Invalid API endpoint.'];
-
-		$this->requestMock->method('getParsedBody')->willReturn($postData);
-		$this->facadeMock->method('configureFormParameter')->with($postData)->willReturn($errors);
-
-			$this->flashMock->expects($this->exactly(2))->method('addMessageNow')
-				->willReturnMap([
-					['error', $errors[0] ],
-					['error', $errors[1]]
-				]);
-
-		$this->facadeMock->method('prepareUITemplate')->with($postData)->willReturn([]);
-		$this->formElementPreparerMock->expects($this->atLeastOnce())->method('prepareUITemplate')->willReturn([]);
-
-		$this->responseMock->expects($this->once())->method('getBody')
-			->willReturn($this->streamInterfaceMock);
-		$this->streamInterfaceMock->expects($this->once())->method('write')
-			->with(serialize([]));
-
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Content-Type', 'text/html')
-			->willReturnSelf();
-
-		$this->responseMock->expects($this->once())->method('withStatus')
-			->with(200)
-			->willReturnSelf();
-
-		$this->controller->store($this->requestMock, $this->responseMock);
+		$this->orchestratorMock->expects($this->once())->method('buildForm')->with($networkData)->willReturn($this->form);
+		$this->templatePreparerMock->expects($this->once())->method('prepare')->with('Lobby', $this->form)
+			->willReturn($this->templateData);
 	}
 
 	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws Exception
-	 * @throws \Doctrine\DBAL\Exception
+	 * @param array<string,mixed> $post
+	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 */
-	#[Group('units')]
-	public function testStoreFailsWithSaveError(): void
+	private function createRequest(array $post): ServerRequestInterface
 	{
-		$this->flashMock->expects($this->never())->method($this->anything());
-		$this->initMock();
+		$request = $this->createStub(ServerRequestInterface::class);
+		$request->method('getParsedBody')->willReturn($post);
 
-		$postData = [
-			'player_id' => 1,
-			'player_name' => 'Player Test',
-			'is_intranet' => 1,
-			'api_endpoint' => 'http://example.com'
-		];
-
-		$this->requestMock->method('getParsedBody')->willReturn($postData);
-		$this->facadeMock->method('configureFormParameter')->with($postData)->willReturn([]);
-		$this->facadeMock->method('storeNetworkData')->willReturn(0);
-
-		$this->facadeMock->method('prepareUITemplate')->with($postData)->willReturn([]);
-		$this->formElementPreparerMock->expects($this->atLeastOnce())->method('prepareUITemplate')->willReturn([]);
-
-		$this->responseMock->expects($this->once())->method('getBody')
-			->willReturn($this->streamInterfaceMock);
-		$this->streamInterfaceMock->expects($this->once())->method('write')
-			->with(serialize([]));
-
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Content-Type', 'text/html')
-			->willReturnSelf();
-
-		$this->responseMock->expects($this->once())->method('withStatus')
-			->with(200)
-			->willReturnSelf();
-
-		$this->controller->store($this->requestMock, $this->responseMock);
+		return $request;
 	}
 
-	/**
-	 * @param array{player_id?:int, player_name?:string, model?:int, is_intranet?:int, api_endpoint?:string} $player
-	 */
-	private function outputRenderMock(array $player): void
+	private function assertRendered(ResponseInterface $response): void
 	{
-		$this->facadeMock->expects($this->once())->method('prepareUITemplate')
-			->with($player)
-			->willReturn([]);
-
-		$this->formElementPreparerMock->expects($this->once())->method('prepareUITemplate')
-			->willReturn([]);
-
-		$this->responseMock->expects($this->once())->method('getBody')
-			->willReturn($this->streamInterfaceMock);
-
-		$this->streamInterfaceMock->expects($this->once())->method('write')
-			->with(serialize([]));
-
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Content-Type', 'text/html')
-			->willReturnSelf();
-
-		$this->responseMock->expects($this->once())->method('withStatus')
-			->with(200)
-			->willReturnSelf();
+		static::assertSame(200, $response->getStatusCode());
+		static::assertSame('text/html', $response->getHeaderLine('Content-Type'));
+		static::assertSame(serialize($this->templateData), (string) $response->getBody());
 	}
 
-
-	/**
-	 * @throws Exception
-	 */
-	private function initMock(): void
+	private function assertRedirectedToPlayerList(ResponseInterface $response): void
 	{
-		$translatorStub = $this->createStub(Translator::class);
-		$sessionStub = $this->createStub(Session::class);
-		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
-			->willReturnMap([
-				['translator', null, $translatorStub],
-				['session', null, $sessionStub]
-			]);
-
-		$this->facadeMock->expects($this->once())->method('init')
-			->with($translatorStub, $sessionStub);
-
-	}
-
-	private function expectUntouched(MockObject ...$mocks): void
-	{
-		foreach ($mocks as $mock)
-		{
-			$mock->expects($this->never())->method($this->anything());
-		}
+		static::assertSame(302, $response->getStatusCode());
+		static::assertSame('/player', $response->getHeaderLine('Location'));
 	}
 }

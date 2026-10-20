@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -23,23 +23,12 @@ namespace App\Modules\Player\Helper\NetworkSettings;
 
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
 
-/**
- * The Builder class is responsible for constructing and validating forms and handling user input.
- */
-readonly class Builder
+class SettingsFormBuilder
 {
-	private FormElementsCreator $formElementsCreator;
-	private Validator $validator;
-	private Parameters $parameters;
-	public function __construct(Parameters $parameters, Validator $validator, FormElementsCreator $formElementsCreator)
-	{
-		$this->parameters           = $parameters;
-		$this->validator            = $validator;
-		$this->formElementsCreator  = $formElementsCreator;
-	}
+	public function __construct(private readonly FormElementsCreator $formElementsCreator)
+	{}
 
 	/**
 	 * @param array<string,mixed> $networkData
@@ -49,9 +38,9 @@ readonly class Builder
 	 */
 	public function buildForm(array $networkData): array
 	{
-		$form       = [];
+		$form = [];
 		$form[Parameters::PARAMETER_IS_INTRANET] = $this->formElementsCreator->createIsIntranet(
-			(bool)($networkData[Parameters::PARAMETER_IS_INTRANET] ?? false),
+			(bool) ($networkData[Parameters::PARAMETER_IS_INTRANET] ?? false),
 		);
 
 		$form[Parameters::PARAMETER_API_ENDPOINT] = $this->formElementsCreator->createApiEndpointField(
@@ -63,21 +52,4 @@ readonly class Builder
 
 		return $this->formElementsCreator->prepareForm($form);
 	}
-
-
-	/**
-	 * @param array{player_id:int, player_name:string, is_intranet:int, api_endpoint:string} $post
-	 * @return string[]
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws ModuleException
-	 */
-	public function handleUserInput(array $post): array
-	{
-		$this->parameters->setUserInputs($post)
-			->parseInputAllParameters();
-
-		return $this->validator->validateUserInput();
-	}
-
 }
