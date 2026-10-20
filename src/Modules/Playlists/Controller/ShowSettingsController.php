@@ -117,13 +117,23 @@ class ShowSettingsController
 		if (!empty($errors))
 			return $this->outputRenderedForm($response, $post);
 
-		$id = $this->facade->storePlaylist($post);
+		try
+		{
+			$id = $this->facade->storePlaylist($post);
+		}
+		catch (ModuleException $e)
+		{
+			$this->flash->addMessageNow('error', $e->getMessage());
+			return $this->outputRenderedForm($response, $post);
+		}
+
 		if ($id > 0)
 		{
 			$this->flash->addMessage('success', 'Playlist “'.$post['playlist_name'].'“ successfully stored.');
 			return $response->withHeader('Location', '/playlists')->withStatus(302);
 		}
 
+		$this->flash->addMessageNow('error', 'Playlist “'.$post['playlist_name'].'“ could not be stored.');
 		return $this->outputRenderedForm($response, $post);
 	}
 

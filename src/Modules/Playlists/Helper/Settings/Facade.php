@@ -124,12 +124,12 @@ class Facade
 
 
 		$playlistId = (int) ($post['playlist_id'] ?? 0);
-		if ($playlistId > 0)
-			$id = $this->playlistsService->updateSecure($saveData);
-		else
-			$id = $this->playlistsService->createNew($saveData);
+		if ($playlistId === 0)
+			return $this->playlistsService->createNew($saveData);
 
-		return $id;
+		// a save without changes affects no rows, but is not a failure
+		$this->playlistsService->updateSecure($saveData);
+		return $playlistId;
 	}
 
 	/**

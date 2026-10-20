@@ -213,10 +213,11 @@ class FacadeTest extends TestCase
 			->method('getInputValuesArray')
 			->willReturn($expectedValues);
 
+		// a save without changes affects no rows
 		$this->playlistsServiceMock->expects($this->once())
 			->method('updateSecure')
 			->with(['id' => 42, 'name' => 'Updated Playlist'])
-			->willReturn($expectedId);
+			->willReturn(0);
 
 		$result = $this->facade->storePlaylist($post);
 

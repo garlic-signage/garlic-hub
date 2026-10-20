@@ -372,7 +372,9 @@ class ShowSettingsControllerTest extends TestCase
 	{
 		// the form is rendered again
 		$this->formElementPreparerMock->expects($this->once())->method('prepareUITemplate')->willReturn(['main_layout' => [], 'this_layout' => []]);
-		$this->flashMock->expects($this->never())->method($this->anything());
+		$this->flashMock->expects($this->once())->method('addMessageNow')
+			->with('error', 'Playlist “Test Playlist“ could not be stored.');
+		$this->flashMock->expects($this->never())->method('addMessage');
 		$post = ['playlist_name' => 'Test Playlist'];
 		$this->setStandardMocks();
 
@@ -385,6 +387,47 @@ class ShowSettingsControllerTest extends TestCase
 		$this->facadeMock->expects($this->once())->method('storePlaylist')
 			->with($post)
 			->willReturn(0);
+
+		$this->facadeMock->expects($this->once())->method('prepareUITemplate')
+			->with($post)
+			->willReturn(['rendered_template' => 'example']);
+
+		$this->responseMock->expects($this->once())->method('getBody')->willReturn($this->streamInterfaceStub);
+
+		$this->responseMock->expects($this->once())->method('withHeader')
+			->with('Content-Type', 'text/html')
+			->willReturnSelf();
+
+		$this->controller->store($this->requestMock, $this->responseMock);
+	}
+
+	/**
+	 * @throws ModuleException
+	 * @throws CoreException
+	 * @throws \Doctrine\DBAL\Exception
+	 * @throws FrameworkException
+	 * @throws Exception
+	 */
+	#[Group('units')]
+	public function testStorePlaylistNotEditable(): void
+	{
+		// the form is rendered again
+		$this->formElementPreparerMock->expects($this->once())->method('prepareUITemplate')->willReturn(['main_layout' => [], 'this_layout' => []]);
+		$this->flashMock->expects($this->once())->method('addMessageNow')
+			->with('error', 'Playlist is not editable.');
+		$this->flashMock->expects($this->never())->method('addMessage');
+		$post = ['playlist_id' => 12, 'playlist_name' => 'Test Playlist'];
+		$this->setStandardMocks();
+
+		$this->requestMock->expects($this->once())->method('getParsedBody')->willReturn($post);
+
+		$this->facadeMock->expects($this->once())->method('configurePlaylistFormParameter')
+			->with($post)
+			->willReturn([]);
+
+		$this->facadeMock->expects($this->once())->method('storePlaylist')
+			->with($post)
+			->willThrowException(new ModuleException('playlists', 'Playlist is not editable.'));
 
 		$this->facadeMock->expects($this->once())->method('prepareUITemplate')
 			->with($post)
