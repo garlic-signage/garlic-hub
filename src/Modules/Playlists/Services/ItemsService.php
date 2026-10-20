@@ -371,11 +371,12 @@ class ItemsService extends AbstractBaseService
 	 *
 	 * 1. Save metrics in the exported playlist (did in export-class)
 	 * 2. Save metrics in all items that represent this playlist. (did in export-class)
-	 * 3. Find all playlists that have the exported playlist nested (here we go)
-	 * 4. Calculate metrics for the new playlists
-	 * 5. Save metrics in new playlists
-	 * 6. Save metrics in all items that represent the new playlist
-	 * 7. Recurse to 3.
+	 * 3. Collect all playlists that have the exported playlist nested, on every level
+	 * 4. Calculate and save the metrics of each of them once, a playlist only
+	 *    after all of its nested playlists are updated
+	 *
+	 * A playlist reachable on several paths is calculated only once. Playlists in a
+	 * nesting cycle are not updated, but logged, instead of recursing endlessly.
 	 *
 	 * @throws CoreException
 	 * @throws Exception
@@ -383,15 +384,75 @@ class ItemsService extends AbstractBaseService
 	 */
 	public function updateMetricsRecursively(int $playlistId): void
 	{
-		$tmp = $this->itemsRepository->findAllPlaylistsContainingPlaylist($playlistId);
-		foreach($tmp as $playlistData)
-		{
-			$this->playlistMetricsCalculator->calculateFromPlaylistData($playlistData);
-			$this->updateItemsMetrics($playlistData['playlist_id']);
-			$this->updatePlaylistMetrics($playlistData['playlist_id']);
+		[$parents, $playlists] = $this->collectContainingPlaylists($playlistId);
 
-			$this->updateMetricsRecursively($playlistData['playlist_id']);
+		// count for every containing playlist the nested playlists which must be updated before
+		// the playlist itself is already updated, so a nesting back to it is a cycle
+		$pending = [];
+		$cyclic  = [];
+		foreach ($parents as $parentIds)
+		{
+			foreach ($parentIds as $parentId)
+			{
+				if ($parentId === $playlistId)
+					$cyclic[] = $playlistId;
+				else
+					$pending[$parentId] = ($pending[$parentId] ?? 0) + 1;
+			}
 		}
+
+		$this->playlistMetricsCalculator->setUID($this->UID);
+		$updated = [$playlistId];
+		while ($updated !== [])
+		{
+			$childId = array_shift($updated);
+			foreach ($parents[$childId] as $parentId)
+			{
+				if ($parentId === $playlistId || --$pending[$parentId] !== 0)
+					continue;
+
+				$this->playlistMetricsCalculator->calculateFromPlaylistData($playlists[$parentId]);
+				$this->updateItemsMetrics($parentId);
+				$this->updatePlaylistMetrics($parentId);
+				$updated[] = $parentId;
+			}
+		}
+
+		$cyclic = array_unique([...$cyclic, ...array_keys(array_filter($pending, fn(int $count) => $count > 0))]);
+		if ($cyclic !== [])
+			$this->logger->warning('Metrics not updated for playlists in a nesting cycle: ' . implode(', ', $cyclic));
+	}
+
+	/**
+	 * Finds all playlists which contain the given playlist directly or nested,
+	 * querying each playlist only once.
+	 *
+	 * @return array{0: array<int,list<int>>, 1: array<int,array<string,mixed>>}
+	 *         parent ids by playlist id, and the data of the containing playlists
+	 * @throws Exception
+	 */
+	private function collectContainingPlaylists(int $playlistId): array
+	{
+		$parents   = [];
+		$playlists = [];
+		$queue     = [$playlistId];
+		while ($queue !== [])
+		{
+			$childId = array_shift($queue);
+			if (isset($parents[$childId]))
+				continue;
+
+			$parents[$childId] = [];
+			foreach ($this->itemsRepository->findAllPlaylistsContainingPlaylist($childId) as $playlistData)
+			{
+				$parentId = (int) $playlistData['playlist_id'];
+				$parents[$childId][]  = $parentId;
+				$playlists[$parentId] = $playlistData;
+				$queue[]              = $parentId;
+			}
+		}
+
+		return [$parents, $playlists];
 	}
 
 	/**

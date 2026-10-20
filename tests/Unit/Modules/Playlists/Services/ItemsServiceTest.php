@@ -1154,6 +1154,7 @@ class ItemsServiceTest extends TestCase
 		$this->expectUntouched($this->mediaServiceMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$playlistId = 2;
 		$playlistsContaining = [['playlist_id' => 3]];
+		$this->itemsService->setUID(1);
 
 		$this->itemsRepositoryMock->expects($this->exactly(2))
 			->method('findAllPlaylistsContainingPlaylist')
@@ -1185,6 +1186,7 @@ class ItemsServiceTest extends TestCase
 	{
 		$this->expectUntouched($this->mediaServiceMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$playlistId = 1;
+		$this->itemsService->setUID(1);
 
 		$this->itemsRepositoryMock->expects($this->once())
 			->method('findAllPlaylistsContainingPlaylist')
@@ -1196,6 +1198,106 @@ class ItemsServiceTest extends TestCase
 		$this->playlistsServiceMock->expects($this->never())->method('update');
 
 		$this->itemsService->updateMetricsRecursively($playlistId);
+	}
+
+	/**
+	 * 1 is nested in 2 and 3, both are nested in 4.
+	 * 4 must be calculated once and only after 2 and 3.
+	 *
+	 * @throws ModuleException
+	 * @throws CoreException
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	#[Group('units')]
+	public function testUpdateMetricsRecursivelyCalculatesSharedParentOnceAfterAllChildren(): void
+	{
+		$this->expectUntouched($this->mediaServiceMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
+		$this->itemsService->setUID(1);
+
+		$this->itemsRepositoryMock->expects($this->exactly(4))
+			->method('findAllPlaylistsContainingPlaylist')
+			->willReturnMap([
+				[1, [['playlist_id' => 2], ['playlist_id' => 3]]],
+				[2, [['playlist_id' => 4]]],
+				[3, [['playlist_id' => 4]]],
+				[4, []]
+			]);
+
+		$calculated = [];
+		$this->playlistMetricsCalculatorMock->expects($this->exactly(3))
+			->method('calculateFromPlaylistData')
+			->willReturnCallback(function (array $playlist) use (&$calculated)
+			{
+				$calculated[] = $playlist['playlist_id'];
+				return $this->playlistMetricsCalculatorMock;
+			});
+
+		$this->itemsRepositoryMock->expects($this->exactly(3))->method('updateWithWhere');
+		$this->playlistsServiceMock->expects($this->exactly(3))->method('update');
+
+		$this->itemsService->updateMetricsRecursively(1);
+
+		$this->assertSame([2, 3, 4], $calculated);
+	}
+
+	/**
+	 * 1 is nested in 2, and 2 is nested in 1.
+	 *
+	 * @throws ModuleException
+	 * @throws CoreException
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	#[Group('units')]
+	public function testUpdateMetricsRecursivelyStopsAtCycleBackToExportedPlaylist(): void
+	{
+		$this->expectUntouched($this->mediaServiceMock, $this->mimeTypeExtensionMapperMock);
+		$this->itemsService->setUID(1);
+
+		$this->itemsRepositoryMock->expects($this->exactly(2))
+			->method('findAllPlaylistsContainingPlaylist')
+			->willReturnMap([
+				[1, [['playlist_id' => 2]]],
+				[2, [['playlist_id' => 1]]]
+			]);
+
+		$this->playlistMetricsCalculatorMock->expects($this->once())
+			->method('calculateFromPlaylistData')
+			->with(['playlist_id' => 2])
+			->willReturnSelf();
+		$this->playlistsServiceMock->expects($this->once())->method('update');
+		$this->loggerMock->expects($this->once())->method('warning')
+			->with('Metrics not updated for playlists in a nesting cycle: 1');
+
+		$this->itemsService->updateMetricsRecursively(1);
+	}
+
+	/**
+	 * 1 is nested in 2, 2 and 3 are nested in each other.
+	 *
+	 * @throws ModuleException
+	 * @throws CoreException
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	#[Group('units')]
+	public function testUpdateMetricsRecursivelySkipsCycleAboveExportedPlaylist(): void
+	{
+		$this->expectUntouched($this->mediaServiceMock, $this->mimeTypeExtensionMapperMock);
+		$this->itemsService->setUID(1);
+
+		$this->itemsRepositoryMock->expects($this->exactly(3))
+			->method('findAllPlaylistsContainingPlaylist')
+			->willReturnMap([
+				[1, [['playlist_id' => 2]]],
+				[2, [['playlist_id' => 3]]],
+				[3, [['playlist_id' => 2]]]
+			]);
+
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateFromPlaylistData');
+		$this->playlistsServiceMock->expects($this->never())->method('update');
+		$this->loggerMock->expects($this->once())->method('warning')
+			->with('Metrics not updated for playlists in a nesting cycle: 2, 3');
+
+		$this->itemsService->updateMetricsRecursively(1);
 	}
 
 	/**
