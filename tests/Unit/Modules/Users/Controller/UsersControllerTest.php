@@ -31,7 +31,6 @@ use App\Modules\Users\Controller\UsersController;
 use App\Modules\Users\Helper\Datatable\Parameters;
 use App\Modules\Users\Services\UsersDatatableService;
 use App\Modules\Users\UserStatus;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -76,7 +75,6 @@ class UsersControllerTest extends TestCase
 	 * @throws ModuleException
 	 * @throws CoreException
 	 * @throws \Doctrine\DBAL\Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]

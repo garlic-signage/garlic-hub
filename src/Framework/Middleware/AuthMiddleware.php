@@ -27,7 +27,6 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Modules\Auth\AuthService;
 use App\Modules\Auth\AutoLoginService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -73,7 +72,6 @@ class AuthMiddleware implements MiddlewareInterface
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 * @throws \DateMalformedStringException

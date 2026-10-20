@@ -27,10 +27,8 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Playlists\Helper\ConditionalPlay\Orchestrator;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Handles conditional play logic by interfacing with an Orchestrator to validate and process requests.
@@ -44,8 +42,6 @@ readonly class ConditionalPlayController
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 * @throws UserException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 */
 	public function fetch(ServerRequestInterface $request, ResponseInterface $response, array $args): ?ResponseInterface
 	{
@@ -60,8 +56,6 @@ readonly class ConditionalPlayController
 	 * @throws ModuleException
 	 * @throws CoreException
 	 * @throws UserException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 */

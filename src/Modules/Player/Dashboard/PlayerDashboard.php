@@ -27,8 +27,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Modules\Player\Services\PlayerService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Represents a dashboard specifically for player-related information.
@@ -52,8 +50,6 @@ readonly class PlayerDashboard implements DashboardInterface
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function getTitle(): string
@@ -63,8 +59,6 @@ readonly class PlayerDashboard implements DashboardInterface
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 */

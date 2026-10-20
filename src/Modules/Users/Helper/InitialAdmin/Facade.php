@@ -28,8 +28,6 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Modules\Users\Services\UsersAdminCreateService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Class Facade
@@ -95,9 +93,7 @@ class Facade
 	 * @return string[]
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function configureUserFormParameter(array $post): array
 	{
@@ -124,8 +120,6 @@ class Facade
 	 * @return string[]
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function getUserServiceErrors(): array
 	{
@@ -143,8 +137,6 @@ class Facade
 	 * @return array<string,mixed>
 	 *
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function prepareUITemplate(array $post): array

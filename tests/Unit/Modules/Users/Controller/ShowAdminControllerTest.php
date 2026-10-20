@@ -31,14 +31,12 @@ use App\Framework\Utils\Forms\FormTemplatePreparer;
 use App\Modules\Users\Controller\ShowAdminController;
 use App\Modules\Users\Helper\Settings\Facade;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 use Slim\Flash\Messages;
 
 class ShowAdminControllerTest extends TestCase
@@ -71,8 +69,6 @@ class ShowAdminControllerTest extends TestCase
 	/**
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 */
@@ -91,8 +87,6 @@ class ShowAdminControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 */
 	#[Group('units')]
@@ -115,8 +109,6 @@ class ShowAdminControllerTest extends TestCase
 	/**
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 */
@@ -138,8 +130,6 @@ class ShowAdminControllerTest extends TestCase
 	/**
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 */
@@ -161,8 +151,6 @@ class ShowAdminControllerTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 * @throws Exception
@@ -197,8 +185,6 @@ class ShowAdminControllerTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 * @throws Exception
@@ -224,8 +210,6 @@ class ShowAdminControllerTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 * @throws Exception
@@ -251,8 +235,6 @@ class ShowAdminControllerTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 * @throws Exception
@@ -283,8 +265,6 @@ class ShowAdminControllerTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 * @throws Exception

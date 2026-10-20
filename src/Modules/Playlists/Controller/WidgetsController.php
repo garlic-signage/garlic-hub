@@ -25,10 +25,8 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Playlists\Helper\Widgets\Orchestrator;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Handles operations related to Widgets.
@@ -54,8 +52,6 @@ readonly class WidgetsController
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	public function save(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface

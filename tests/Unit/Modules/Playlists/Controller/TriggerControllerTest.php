@@ -27,14 +27,12 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Playlists\Controller\TriggerController;
 use App\Modules\Playlists\Helper\Trigger\Orchestrator;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class TriggerControllerTest extends TestCase
 {
@@ -60,8 +58,6 @@ class TriggerControllerTest extends TestCase
 	/**
 	 * @throws UserException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
@@ -88,8 +84,6 @@ class TriggerControllerTest extends TestCase
 	 * @throws UserException
 	 * @throws Exception
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
@@ -114,8 +108,6 @@ class TriggerControllerTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 * @throws ModuleException
 	 * @throws \Doctrine\DBAL\Exception
@@ -148,9 +140,7 @@ class TriggerControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 * @throws \Doctrine\DBAL\Exception
 	 */

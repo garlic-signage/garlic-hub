@@ -30,12 +30,10 @@ use App\Modules\Profile\Helper\Password\Builder;
 use App\Modules\Profile\Helper\Password\FormElementsCreator;
 use App\Modules\Profile\Helper\Password\Parameters;
 use App\Modules\Profile\Helper\Password\Validator;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class BuilderTest extends TestCase
 {
@@ -60,8 +58,6 @@ class BuilderTest extends TestCase
 	 * @throws Exception
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 */
 	#[Group('units')]
 	public function testBuildFormWithEmptyPasswordToken(): void
@@ -104,8 +100,6 @@ class BuilderTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testBuildFormWithPasswordToken(): void
@@ -155,8 +149,6 @@ class BuilderTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]

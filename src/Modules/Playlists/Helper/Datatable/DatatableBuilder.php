@@ -31,8 +31,6 @@ use App\Framework\Utils\FormParameters\BaseParameters;
 use App\Framework\Utils\Html\FieldType;
 use App\Modules\Playlists\Helper\PlaylistMode;
 use App\Modules\Playlists\Services\AclValidator;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Class DatatableBuilder
@@ -49,8 +47,6 @@ class DatatableBuilder extends AbstractDatatableBuilder
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function buildTitle(): void
@@ -62,8 +58,6 @@ class DatatableBuilder extends AbstractDatatableBuilder
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 */
 	public function collectFormElements(): void
 	{
@@ -122,8 +116,6 @@ class DatatableBuilder extends AbstractDatatableBuilder
 	 * @return array<string,string>
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function determineAllowedPlaylistModes(): array
 	{

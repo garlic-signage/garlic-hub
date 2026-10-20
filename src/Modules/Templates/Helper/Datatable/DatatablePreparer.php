@@ -28,8 +28,6 @@ use App\Framework\Utils\Datatable\PrepareService;
 use App\Framework\Utils\Datatable\Results\HeaderField;
 use App\Modules\Templates\Services\AclValidator;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Class DatatablePreparer
@@ -74,8 +72,6 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	 * @return list<array<string,mixed>>
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	public function prepareTableBody(array $currentFilterResults, array $fields, int $currentUID): array
@@ -140,8 +136,6 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	 * @return array<string,string>
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function formatContextMenu(): array
 	{

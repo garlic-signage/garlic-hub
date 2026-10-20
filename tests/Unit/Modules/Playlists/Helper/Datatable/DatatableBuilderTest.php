@@ -36,12 +36,10 @@ use App\Modules\Playlists\Helper\Datatable\DatatableBuilder;
 use App\Modules\Playlists\Helper\Datatable\Parameters;
 use App\Modules\Playlists\Helper\PlaylistMode;
 use App\Modules\Playlists\Services\AclValidator;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class DatatableBuilderTest extends TestCase
 {
@@ -66,7 +64,6 @@ class DatatableBuilderTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -85,7 +82,6 @@ class DatatableBuilderTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -113,7 +109,6 @@ class DatatableBuilderTest extends TestCase
 	/**
 	 * @throws Exception
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -156,8 +151,6 @@ class DatatableBuilderTest extends TestCase
 	/**
 	 * @throws Exception
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
@@ -179,8 +172,6 @@ class DatatableBuilderTest extends TestCase
 	/**
 	 * @throws FrameworkException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws Exception|ModuleException
 	 */
 	#[Group('units')]
@@ -240,8 +231,6 @@ class DatatableBuilderTest extends TestCase
 	/**
 	 * @throws FrameworkException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws Exception|ModuleException
 	 */
 	#[Group('units')]
@@ -295,7 +284,6 @@ class DatatableBuilderTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -321,8 +309,6 @@ class DatatableBuilderTest extends TestCase
 	/**
 	 * @throws Exception
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 */
 	#[Group('units')]
 	public function testDetermineAllowedPlayerModesForEdgeEdition(): void

@@ -31,9 +31,7 @@ use App\Modules\Auth\UserSession;
 use App\Modules\Player\Services\PlayerRestAPIService;
 use App\Modules\Player\Services\PlayerService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Class Orchestrator
@@ -70,8 +68,6 @@ class Orchestrator
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function validateForReplacePlaylist(ResponseInterface $response): ?ResponseInterface
@@ -89,8 +85,6 @@ class Orchestrator
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function validateStandardInput(ResponseInterface $response): ?ResponseInterface
@@ -124,10 +118,8 @@ class Orchestrator
 	/**
 	 * @throws CoreException
 	 * @throws UserException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 */
 	public function checkPlayer(ResponseInterface $response): ?ResponseInterface
 	{

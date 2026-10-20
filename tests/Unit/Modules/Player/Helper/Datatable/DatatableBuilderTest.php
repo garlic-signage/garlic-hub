@@ -36,11 +36,9 @@ use App\Modules\Player\Helper\Datatable\DatatableBuilder;
 use App\Modules\Player\Helper\Datatable\Parameters;
 use App\Modules\Player\Services\AclValidator;
 use Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class DatatableBuilderTest extends TestCase
 {
@@ -66,7 +64,6 @@ class DatatableBuilderTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -85,7 +82,6 @@ class DatatableBuilderTest extends TestCase
 	/**
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -113,7 +109,6 @@ class DatatableBuilderTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -156,8 +151,6 @@ class DatatableBuilderTest extends TestCase
 	/**
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
@@ -179,8 +172,6 @@ class DatatableBuilderTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 */
@@ -248,8 +239,6 @@ class DatatableBuilderTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 */
@@ -302,7 +291,6 @@ class DatatableBuilderTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws \Doctrine\DBAL\Exception
 	 */

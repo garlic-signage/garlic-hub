@@ -28,9 +28,7 @@ use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Services\ExportService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Validates the input for the playlist export and executes it.
@@ -61,8 +59,6 @@ class Orchestrator
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function validate(ResponseInterface $response): ?ResponseInterface
 	{

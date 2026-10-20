@@ -26,7 +26,6 @@ use App\Framework\Core\Acl\AclHelper;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 
 class AclValidator extends AbstractAclValidator
 {
@@ -42,7 +41,6 @@ class AclValidator extends AbstractAclValidator
 	 * @return bool
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws FrameworkException
 	 */
 	public function isPlaylistEditable(int $UID, array $playlist): bool
@@ -62,7 +60,6 @@ class AclValidator extends AbstractAclValidator
 	 * @return bool
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws FrameworkException
 	 */
 	public function isAllowedToDeletePlaylist(int $UID, array $playlist): bool

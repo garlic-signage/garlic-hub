@@ -30,7 +30,6 @@ use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Services\InsertItems\InsertItemFactory;
 use App\Modules\Playlists\Services\ItemsService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -72,7 +71,6 @@ class Orchestrator
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	public function loadItems(ResponseInterface $response): ResponseInterface
@@ -136,7 +134,6 @@ class Orchestrator
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	public function edit(ResponseInterface $response): ResponseInterface
@@ -175,7 +172,6 @@ class Orchestrator
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	public function fetch(ResponseInterface $response): ResponseInterface

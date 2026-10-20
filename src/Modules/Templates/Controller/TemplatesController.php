@@ -32,10 +32,8 @@ use App\Modules\Templates\Helper\Composer\Orchestrator;
 use App\Modules\Templates\Helper\Datatable\Parameters;
 use App\Modules\Templates\Services\TemplatesDatatableService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 readonly class TemplatesController
 {
@@ -74,7 +72,6 @@ readonly class TemplatesController
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function determineRights(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
@@ -98,7 +95,6 @@ readonly class TemplatesController
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function load(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
@@ -115,7 +111,6 @@ readonly class TemplatesController
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	public function find(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -151,8 +146,6 @@ readonly class TemplatesController
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 */

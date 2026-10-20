@@ -27,7 +27,6 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Playlists\Helper\Items\Orchestrator;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -45,7 +44,6 @@ readonly class ItemsController
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	public function loadItems(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
@@ -76,7 +74,6 @@ readonly class ItemsController
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	public function edit(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -96,7 +93,6 @@ readonly class ItemsController
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	public function fetch(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface

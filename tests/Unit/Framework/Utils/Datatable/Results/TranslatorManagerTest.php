@@ -27,12 +27,10 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Utils\Datatable\Results\HeaderField;
 use App\Framework\Utils\Datatable\Results\TranslatorManager;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class TranslatorManagerTest extends TestCase
 {
@@ -53,8 +51,6 @@ class TranslatorManagerTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 */
 	#[Group('units')]
 	public function testTranslateShouldReturnEmptyStringWhenTranslationIsSkipped(): void
@@ -71,8 +67,6 @@ class TranslatorManagerTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 */
 	#[Group('units')]
 	public function testTranslateShouldUseSpecificLangModuleWhenProvided(): void

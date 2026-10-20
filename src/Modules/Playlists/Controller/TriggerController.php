@@ -27,10 +27,8 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Playlists\Helper\Trigger\Orchestrator;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * TriggerController is a readonly class responsible for handling trigger-related operations.
@@ -46,8 +44,6 @@ readonly class TriggerController
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 * @throws UserException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 */
 	public function fetchTrigger(ServerRequestInterface $request, ResponseInterface $response, array $args): ?ResponseInterface
 	{
@@ -62,8 +58,6 @@ readonly class TriggerController
 	 * @throws ModuleException
 	 * @throws CoreException
 	 * @throws UserException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 */

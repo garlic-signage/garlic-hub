@@ -26,7 +26,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 
 /**
  * class for calculating and manipulating durations of
@@ -129,7 +128,6 @@ class PlaylistMetricsCalculator
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function calculateFromItems(array $playlist, array $items): static
 	{
@@ -158,7 +156,6 @@ class PlaylistMetricsCalculator
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function calculateFromPlaylistData(array $playlist): static
 	{
@@ -187,7 +184,6 @@ class PlaylistMetricsCalculator
 	 * @param array<string,mixed> $playlist
 	 * @param array<string,mixed> $media
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception|ModuleException
 	 */
 	public function calculateRemainingMediaDuration(array $playlist, array $media = []): int
@@ -203,7 +199,6 @@ class PlaylistMetricsCalculator
 	 * @param array<string,mixed> $playlist
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	public function calculateRemainingDuration(array $playlist, int $wantedDuration): int
@@ -225,7 +220,6 @@ class PlaylistMetricsCalculator
 
 	/**
 	 * @param array<string,mixed> $playlist
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws Exception
 	 */
@@ -244,7 +238,6 @@ class PlaylistMetricsCalculator
 	 * @param array<string,mixed> $playlist
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	private function calculateAverageDuration(array $playlist): void

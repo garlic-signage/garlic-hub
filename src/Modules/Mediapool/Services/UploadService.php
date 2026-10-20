@@ -32,7 +32,6 @@ use Doctrine\DBAL\Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use League\Flysystem\FilesystemException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use Slim\Psr7\UploadedFile;
@@ -266,7 +265,6 @@ readonly class UploadService
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	private function checkNodeUploadable(int $nodeId, int $UID): void

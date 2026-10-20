@@ -28,7 +28,6 @@ use App\Framework\Exceptions\UserException;
 use App\Modules\Mediapool\Controller\MediaController;
 use App\Modules\Mediapool\Helper\Media\Orchestrator;
 use Doctrine\DBAL\Exception as DBALException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -36,7 +35,6 @@ use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class MediaControllerTest extends TestCase
 {
@@ -70,8 +68,6 @@ class MediaControllerTest extends TestCase
 	 * @throws DBALException
 	 * @throws DatabaseException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -95,8 +91,6 @@ class MediaControllerTest extends TestCase
 	 * @throws DBALException
 	 * @throws DatabaseException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -122,8 +116,6 @@ class MediaControllerTest extends TestCase
 	 * @throws DBALException
 	 * @throws DatabaseException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -147,8 +139,6 @@ class MediaControllerTest extends TestCase
 	 * @throws DBALException
 	 * @throws DatabaseException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -174,8 +164,6 @@ class MediaControllerTest extends TestCase
 	 * @throws DBALException
 	 * @throws DatabaseException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -199,8 +187,6 @@ class MediaControllerTest extends TestCase
 	 * @throws DBALException
 	 * @throws DatabaseException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -226,8 +212,6 @@ class MediaControllerTest extends TestCase
 	 * @throws DBALException
 	 * @throws DatabaseException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -251,8 +235,6 @@ class MediaControllerTest extends TestCase
 	 * @throws DBALException
 	 * @throws DatabaseException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -278,8 +260,6 @@ class MediaControllerTest extends TestCase
 	 * @throws DBALException
 	 * @throws DatabaseException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -303,8 +283,6 @@ class MediaControllerTest extends TestCase
 	 * @throws DBALException
 	 * @throws DatabaseException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -330,8 +308,6 @@ class MediaControllerTest extends TestCase
 	 * @throws DBALException
 	 * @throws DatabaseException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -355,8 +331,6 @@ class MediaControllerTest extends TestCase
 	 * @throws DBALException
 	 * @throws DatabaseException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]

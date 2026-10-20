@@ -27,9 +27,7 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Services\WidgetsService;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Validates the input for the playlist widget endpoints and executes the
@@ -70,8 +68,6 @@ class Orchestrator
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function validateSave(ResponseInterface $response): ?ResponseInterface
 	{

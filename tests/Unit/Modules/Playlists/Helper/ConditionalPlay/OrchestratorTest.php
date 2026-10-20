@@ -34,12 +34,10 @@ use App\Modules\Playlists\Helper\ConditionalPlay\ResponseBuilder;
 use App\Modules\Playlists\Helper\ConditionalPlay\TemplatePreparer;
 use App\Modules\Playlists\Services\ConditionalPlayService;
 use Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class OrchestratorTest extends TestCase
 {
@@ -76,8 +74,6 @@ class OrchestratorTest extends TestCase
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
@@ -99,8 +95,6 @@ class OrchestratorTest extends TestCase
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
@@ -121,8 +115,6 @@ class OrchestratorTest extends TestCase
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
@@ -140,8 +132,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws UserException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
@@ -162,8 +152,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws UserException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
@@ -182,8 +170,6 @@ class OrchestratorTest extends TestCase
 	 * @throws ModuleException
 	 * @throws UserException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -208,8 +194,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 * @throws UserException|ModuleException
 	 */
@@ -231,8 +215,6 @@ class OrchestratorTest extends TestCase
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	private function initMocks():void

@@ -28,8 +28,6 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Modules\Playlists\Services\PlaylistsService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * The Facade class is responsible for orchestrating operations related to the playlists feature.
@@ -76,8 +74,6 @@ class Facade
 	 * @return array<string,mixed>
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 */
@@ -104,7 +100,6 @@ class Facade
 	 * @param array<string,mixed> $post
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 */
@@ -139,7 +134,6 @@ class Facade
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	public function buildCreateNewParameter(string $playlistMode): void
@@ -150,7 +144,6 @@ class Facade
 	/**
 	 * @param array{"UID": int, "company_id": int, playlist_mode: string, playlist_name:string, ...} $playlist
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 */
@@ -164,8 +157,6 @@ class Facade
 	 * @return array<string,mixed>
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function prepareUITemplate(array $post): array

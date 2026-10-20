@@ -27,7 +27,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Modules\Profile\Entities\UserEntity;
 use App\Modules\Users\Services\UsersService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -58,7 +57,6 @@ class AclHelperTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws Exception
 	 */
@@ -81,7 +79,6 @@ class AclHelperTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws Exception
 	 */
@@ -104,7 +101,6 @@ class AclHelperTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws Exception
 	 */
@@ -127,7 +123,6 @@ class AclHelperTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws Exception
 	 */
@@ -150,7 +145,6 @@ class AclHelperTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws Exception
 	 */
@@ -173,7 +167,6 @@ class AclHelperTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws Exception
 	 */
@@ -196,7 +189,6 @@ class AclHelperTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws Exception
 	 */
@@ -219,7 +211,6 @@ class AclHelperTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws Exception
 	 */
@@ -242,7 +233,6 @@ class AclHelperTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	#[Group('units')]
@@ -264,7 +254,6 @@ class AclHelperTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	#[Group('units')]
@@ -286,7 +275,6 @@ class AclHelperTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	#[Group('units')]
@@ -303,7 +291,6 @@ class AclHelperTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	#[Group('units')]
@@ -325,7 +312,6 @@ class AclHelperTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	#[Group('units')]
@@ -347,7 +333,6 @@ class AclHelperTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	#[Group('units')]
@@ -369,7 +354,6 @@ class AclHelperTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	#[Group('units')]
@@ -388,7 +372,6 @@ class AclHelperTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	#[Group('units')]
@@ -410,7 +393,6 @@ class AclHelperTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	#[Group('units')]

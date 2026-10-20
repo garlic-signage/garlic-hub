@@ -30,11 +30,9 @@ use App\Modules\Templates\Helper\Settings\SettingsFormBuilder;
 use App\Modules\Templates\Helper\Settings\SettingsParametersPolicy;
 use App\Modules\Templates\Services\TemplatesService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class OrchestratorTest extends TestCase
 {
@@ -64,7 +62,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testCheckCreateRights(): void
@@ -79,8 +76,6 @@ class OrchestratorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testCheckEditRightsAndBuildEditForm(): void
@@ -99,7 +94,6 @@ class OrchestratorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testCheckEditRightsWithoutRights(): void
@@ -115,7 +109,6 @@ class OrchestratorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testCheckEditRightsPassesDatabaseErrors(): void
@@ -134,8 +127,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testBuildCreateForm(): void
@@ -152,9 +143,7 @@ class OrchestratorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testStoreCreateSettingsWithErrors(): void
@@ -172,9 +161,7 @@ class OrchestratorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testStoreCreateSettings(): void
@@ -192,9 +179,7 @@ class OrchestratorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testStoreCreateSettingsInsertFails(): void
@@ -212,9 +197,7 @@ class OrchestratorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testStoreEditSettingsWithErrors(): void
@@ -231,9 +214,7 @@ class OrchestratorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testStoreEditSettings(): void
@@ -251,9 +232,7 @@ class OrchestratorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testStoreEditSettingsUpdateFails(): void

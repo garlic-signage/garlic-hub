@@ -27,11 +27,9 @@ use App\Framework\Exceptions\ModuleException;
 use App\Modules\Templates\Helper\Settings\FormInputHandler;
 use App\Modules\Templates\Helper\Settings\Parameters;
 use App\Modules\Templates\Helper\Settings\Validator;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class FormInputHandlerTest extends TestCase
 {
@@ -54,9 +52,7 @@ class FormInputHandlerTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testValidateCreateParsesBeforeValidating(): void
@@ -77,9 +73,7 @@ class FormInputHandlerTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testValidateEdit(): void

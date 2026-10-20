@@ -34,7 +34,6 @@ use App\Modules\Templates\Services\TemplatesService;
 use Doctrine\DBAL\Exception;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Log\LoggerInterface;
 
 class Template extends AbstractInsertItem
@@ -122,7 +121,7 @@ class Template extends AbstractInsertItem
 
 			return ['playlist_metrics' => $playlistMetrics, 'item' => $saveItem];
 		}
-		catch (Exception | ModuleException | CoreException | PhpfastcacheSimpleCacheException $e)
+		catch (Exception | ModuleException | CoreException $e)
 		{
 			$this->itemsRepository->rollBackTransaction();
 			$this->logger->error('Error insert playlist: ' . $e->getMessage());

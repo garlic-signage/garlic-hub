@@ -33,7 +33,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 
 class ShowControllerTest extends TestCase
@@ -66,7 +65,6 @@ class ShowControllerTest extends TestCase
 	 * @return void
 	 * @throws Exception
 	 * @throws \Doctrine\DBAL\Exception
-	 * @throws InvalidArgumentException
 	 */
 	#[Group('units')]
 	public function testShowOverview(): void
@@ -98,7 +96,6 @@ class ShowControllerTest extends TestCase
 	 * @return void
 	 * @throws Exception
 	 * @throws \Doctrine\DBAL\Exception
-	 * @throws InvalidArgumentException
 	 */
 	#[Group('units')]
 	public function testShowOverviewWithAdmin(): void
@@ -130,7 +127,6 @@ class ShowControllerTest extends TestCase
 	 * @return void
 	 * @throws Exception
 	 * @throws \Doctrine\DBAL\Exception
-	 * @throws InvalidArgumentException
 	 */
 	#[Group('units')]
 	public function testShowOverviewWithEnterprise(): void

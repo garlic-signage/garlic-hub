@@ -33,12 +33,10 @@ use App\Framework\Utils\Html\FieldType;
 use App\Modules\Templates\Helper\Datatable\DatatableBuilder;
 use App\Modules\Templates\Helper\Datatable\Parameters;
 use App\Modules\Templates\Services\AclValidator;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class DatatableBuilderTest extends TestCase
 {
@@ -66,8 +64,6 @@ class DatatableBuilderTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testBuildTitle(): void
@@ -82,9 +78,7 @@ class DatatableBuilderTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testCollectFormElementsWithoutOwner(): void
@@ -117,9 +111,7 @@ class DatatableBuilderTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testCollectFormElementsWithOwner(): void

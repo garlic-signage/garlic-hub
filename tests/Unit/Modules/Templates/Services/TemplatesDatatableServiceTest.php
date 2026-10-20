@@ -30,7 +30,6 @@ use App\Modules\Templates\Services\AclValidator;
 use App\Modules\Templates\Services\TemplatesDatatableService;
 use App\Modules\Templates\Services\TemplatesUsageService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
@@ -74,7 +73,6 @@ class TemplatesDatatableServiceTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testCheckDisplayRightsUsesSessionUser(): void
@@ -89,7 +87,6 @@ class TemplatesDatatableServiceTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testCheckDisplayRightsDenied(): void
@@ -104,7 +101,6 @@ class TemplatesDatatableServiceTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testLoadDatatableForModuleAdmin(): void
@@ -128,7 +124,6 @@ class TemplatesDatatableServiceTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testLoadDatatableForSubAdminLoadsNothing(): void
@@ -147,7 +142,6 @@ class TemplatesDatatableServiceTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testLoadDatatableForUser(): void

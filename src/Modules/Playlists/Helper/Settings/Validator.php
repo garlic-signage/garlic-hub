@@ -28,8 +28,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Modules\Playlists\Helper\PlaylistMode;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Class Validator
@@ -54,8 +52,6 @@ class Validator extends BaseValidator
 	 * @throws ModuleException
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 */
 	public function validateUserInput(array $post): array
 	{

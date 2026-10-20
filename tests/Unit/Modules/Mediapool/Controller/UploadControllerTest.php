@@ -28,7 +28,6 @@ use App\Modules\Mediapool\Controller\UploadController;
 use App\Modules\Mediapool\Helper\Uploads\Orchestrator;
 use Doctrine\DBAL\Exception as DBALException;
 use GuzzleHttp\Exception\GuzzleException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -36,7 +35,6 @@ use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class UploadControllerTest extends TestCase
 {
@@ -72,8 +70,6 @@ class UploadControllerTest extends TestCase
 	 * @throws DBALException
 	 * @throws FrameworkException
 	 * @throws GuzzleException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -95,8 +91,6 @@ class UploadControllerTest extends TestCase
 	 * @throws DBALException
 	 * @throws FrameworkException
 	 * @throws GuzzleException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -120,8 +114,6 @@ class UploadControllerTest extends TestCase
 	 * @throws DBALException
 	 * @throws FrameworkException
 	 * @throws GuzzleException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -144,8 +136,6 @@ class UploadControllerTest extends TestCase
 	 * @throws DBALException
 	 * @throws FrameworkException
 	 * @throws GuzzleException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -170,8 +160,6 @@ class UploadControllerTest extends TestCase
 	 * @throws DBALException
 	 * @throws FrameworkException
 	 * @throws GuzzleException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -193,8 +181,6 @@ class UploadControllerTest extends TestCase
 	 * @throws DBALException
 	 * @throws FrameworkException
 	 * @throws GuzzleException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]

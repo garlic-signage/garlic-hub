@@ -29,8 +29,6 @@ use App\Framework\Utils\Datatable\PrepareService;
 use App\Framework\Utils\Datatable\Results\HeaderField;
 use App\Modules\Users\Services\AclValidator;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * DatatablePreparer is responsible for preparing table data based on
@@ -56,9 +54,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	 * @return list<array<string,mixed>>
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 */
 	public function prepareTableBody(array $currentFilterResults, array $fields, int $currentUID): array
 	{

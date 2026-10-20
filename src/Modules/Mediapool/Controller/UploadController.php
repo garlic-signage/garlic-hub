@@ -27,10 +27,8 @@ use App\Framework\Exceptions\UserException;
 use App\Modules\Mediapool\Helper\Uploads\Orchestrator;
 use Doctrine\DBAL\Exception;
 use GuzzleHttp\Exception\GuzzleException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Class responsible for handling upload-related operations, including uploading files
@@ -56,8 +54,6 @@ readonly class UploadController
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 * @throws Exception
 	 */
@@ -76,8 +72,6 @@ readonly class UploadController
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	public function uploadFromUrl(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface

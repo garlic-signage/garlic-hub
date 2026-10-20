@@ -28,10 +28,8 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\Forms\FormTemplatePreparer;
 use App\Modules\Users\Helper\InitialAdmin\Facade;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 use Slim\Flash\Messages;
 
 /**
@@ -51,8 +49,6 @@ class ShowInitialAdminController
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 */
@@ -71,8 +67,6 @@ class ShowInitialAdminController
 	 * @throws FrameworkException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 */
 	public function store(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
@@ -112,8 +106,6 @@ class ShowInitialAdminController
 	/**
 	 * @param array{username?:string, email?:string, locale?: string, password?:string, password_confirm?: string} $post
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	private function outputRenderedForm(ResponseInterface $response, array $post): ResponseInterface

@@ -30,8 +30,6 @@ use App\Framework\Exceptions\ModuleException;
 use App\Modules\Templates\Services\TemplatesService;
 use App\Modules\Templates\Services\TemplatesUsageService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Handles orchestration of validation, fetching, and saving processes.
@@ -59,7 +57,6 @@ class Orchestrator extends BaseTemplateOrchestrator
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function checkEditRights(int $templateId): bool
 	{
@@ -78,8 +75,6 @@ class Orchestrator extends BaseTemplateOrchestrator
 	 * @return array{main_layout: array<string,mixed>, this_layout: array{template: string, data: array<string,mixed>}}
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function build(int $templateId): array
 	{
@@ -91,9 +86,7 @@ class Orchestrator extends BaseTemplateOrchestrator
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function saveTemplate(int $templateId, string $content, string $imageBase64): int
 	{

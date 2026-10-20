@@ -31,12 +31,10 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\TemplateEngine\AdapterInterface;
 use App\Modules\Users\Services\AclValidator;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Http\Server\MiddlewareInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 use Random\RandomException;
 use Slim\Flash\Messages;
 use Slim\Psr7\Stream;
@@ -71,8 +69,6 @@ class FinalRenderMiddleware implements MiddlewareInterface
 	 * @return ResponseInterface
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws RandomException
 	 */
@@ -162,9 +158,7 @@ class FinalRenderMiddleware implements MiddlewareInterface
 	/**
 	 * @return list<array<string,string>>
 	 * @throws CoreException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	private function createMainMenu(): array
 	{
@@ -185,8 +179,6 @@ class FinalRenderMiddleware implements MiddlewareInterface
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	private function createUserMenu(): array
 	{
@@ -212,8 +204,6 @@ class FinalRenderMiddleware implements MiddlewareInterface
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	private function createAdminMenuPoints(): array
 	{
@@ -239,8 +229,6 @@ class FinalRenderMiddleware implements MiddlewareInterface
 	 * @return list<array<string,string>>
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	private function createLanguageSelect(): array
 	{

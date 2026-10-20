@@ -30,8 +30,6 @@ use App\Framework\Utils\Datatable\BuildService;
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
 use App\Framework\Utils\Html\FieldType;
 use App\Modules\Users\Services\AclValidator;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Class DatatableBuilder
@@ -49,8 +47,6 @@ class DatatableBuilder extends AbstractDatatableBuilder
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 */
 	public function buildTitle(): void
 	{
@@ -60,9 +56,7 @@ class DatatableBuilder extends AbstractDatatableBuilder
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function collectFormElements(): void
 	{

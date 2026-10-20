@@ -27,7 +27,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Modules\Templates\Services\AclValidator;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
@@ -65,7 +64,6 @@ class AclValidatorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testCanCreateAsModuleAdmin(): void
@@ -79,7 +77,6 @@ class AclValidatorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testCanCreateAsSubAdmin(): void
@@ -93,7 +90,6 @@ class AclValidatorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testCanCreateAsUser(): void
@@ -108,7 +104,6 @@ class AclValidatorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testIsAllowedToDeleteTemplateAsModuleAdmin(): void
@@ -123,7 +118,6 @@ class AclValidatorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testIsAllowedToDeleteTemplateInEdgeEdition(): void
@@ -139,7 +133,6 @@ class AclValidatorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testIsAllowedToDeleteTemplateAsSubAdminWithCompanyAccess(): void
@@ -158,7 +151,6 @@ class AclValidatorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testIsAllowedToDeleteTemplateAsSubAdminWithoutCompanyAccess(): void
@@ -175,7 +167,6 @@ class AclValidatorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testIsTemplateEditableAsAdmin(): void
@@ -190,7 +181,6 @@ class AclValidatorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testIsTemplateEditableAsEditorWithAccess(): void
@@ -209,7 +199,6 @@ class AclValidatorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testIsTemplateEditableWithoutRights(): void

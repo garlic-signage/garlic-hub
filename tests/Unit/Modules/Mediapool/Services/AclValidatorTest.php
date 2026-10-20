@@ -25,7 +25,6 @@ use App\Framework\Core\Acl\AclHelper;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
 use App\Modules\Mediapool\Services\AclValidator;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -48,7 +47,6 @@ class AclValidatorTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -67,7 +65,6 @@ class AclValidatorTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -84,7 +81,6 @@ class AclValidatorTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -105,7 +101,6 @@ class AclValidatorTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -130,7 +125,6 @@ class AclValidatorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -155,7 +149,6 @@ class AclValidatorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -180,7 +173,6 @@ class AclValidatorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -205,7 +197,6 @@ class AclValidatorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -230,7 +221,6 @@ class AclValidatorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -255,7 +245,6 @@ class AclValidatorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -280,7 +269,6 @@ class AclValidatorTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]

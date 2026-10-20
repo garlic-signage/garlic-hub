@@ -31,12 +31,10 @@ use App\Modules\Playlists\Helper\Settings\Builder;
 use App\Modules\Playlists\Helper\Settings\Facade;
 use App\Modules\Playlists\Helper\Settings\Parameters;
 use App\Modules\Playlists\Services\PlaylistsService;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class FacadeTest extends TestCase
 {
@@ -87,8 +85,6 @@ class FacadeTest extends TestCase
 		$this->facade->init($this->translatorMock, $sessionMock);
 	}
 
-	/**
-	 */
 	#[Group('units')]
 	public function testLoadPlaylistForEdit(): void
 	{
@@ -108,8 +104,6 @@ class FacadeTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws \Doctrine\DBAL\Exception
 	 * @throws FrameworkException
 	 */
@@ -139,8 +133,6 @@ class FacadeTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws \Doctrine\DBAL\Exception
 	 * @throws FrameworkException
 	 */
@@ -168,8 +160,6 @@ class FacadeTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws \Doctrine\DBAL\Exception
 	 * @throws FrameworkException
 	 */
@@ -195,7 +185,6 @@ class FacadeTest extends TestCase
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -228,7 +217,6 @@ class FacadeTest extends TestCase
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -261,7 +249,6 @@ class FacadeTest extends TestCase
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -288,7 +275,6 @@ class FacadeTest extends TestCase
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -306,7 +292,6 @@ class FacadeTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -325,8 +310,6 @@ class FacadeTest extends TestCase
 	 * @throws ModuleException
 	 * @throws Exception
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]

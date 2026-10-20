@@ -28,7 +28,6 @@ use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
 use App\Modules\Playlists\Services\PlaylistsService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Log\LoggerInterface;
 
 class Playlist extends AbstractInsertItem
@@ -89,7 +88,7 @@ class Playlist extends AbstractInsertItem
 
 			return ['playlist_metrics' => $playlistMetrics, 'item' => $saveItem];
 		}
-		catch (Exception | ModuleException | CoreException | PhpfastcacheSimpleCacheException $e)
+		catch (Exception | ModuleException | CoreException $e)
 		{
 			$this->itemsRepository->rollBackTransaction();
 			$this->logger->error('Error insert playlist: ' . $e->getMessage());

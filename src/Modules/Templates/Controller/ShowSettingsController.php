@@ -29,9 +29,7 @@ use App\Modules\Templates\Helper\Settings\Orchestrator;
 use App\Modules\Templates\Helper\Settings\TemplatePreparer;
 use Psr\Http\Message\ResponseInterface;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 use Slim\Flash\Messages;
 
 class ShowSettingsController
@@ -48,8 +46,6 @@ class ShowSettingsController
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function create(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
@@ -72,8 +68,6 @@ class ShowSettingsController
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function edit(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
@@ -97,9 +91,7 @@ class ShowSettingsController
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function store(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
@@ -119,9 +111,7 @@ class ShowSettingsController
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	private function insert(ResponseInterface $response, array $post): ResponseInterface
 	{
@@ -158,9 +148,7 @@ class ShowSettingsController
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	private function update(ResponseInterface $response, int $templateId, array $post): ResponseInterface
 	{

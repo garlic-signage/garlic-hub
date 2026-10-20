@@ -31,14 +31,12 @@ use App\Modules\Mediapool\Helper\Uploads\ResponseBuilder;
 use App\Modules\Mediapool\Services\UploadService;
 use Doctrine\DBAL\Exception as DBALException;
 use GuzzleHttp\Exception\GuzzleException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 use Slim\Psr7\UploadedFile;
 
 class OrchestratorTest extends TestCase
@@ -107,8 +105,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testValidateUploadLocalFileWithInvalidCsrfToken(): void
@@ -122,8 +118,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testValidateUploadLocalFileWithoutUploads(): void
@@ -137,8 +131,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testValidateUploadLocalFileWithoutNode(): void
@@ -152,8 +144,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testValidateUploadLocalFileWithoutFileField(): void
@@ -168,8 +158,6 @@ class OrchestratorTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 * @throws Exception
 	 */
@@ -197,8 +185,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testValidateUploadFromUrlWithoutNode(): void
@@ -212,8 +198,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testValidateUploadFromUrlWithoutLink(): void
@@ -228,8 +212,6 @@ class OrchestratorTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 * @throws Exception
 	 */

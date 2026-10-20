@@ -27,7 +27,6 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Services\AbstractBaseService;
 use App\Modules\Playlists\Repositories\PlaylistsRepository;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -58,7 +57,6 @@ class PlaylistsService extends AbstractBaseService
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws FrameworkException
 	 */
 	public function toggleShuffle(int $playlistId): array
@@ -83,7 +81,6 @@ class PlaylistsService extends AbstractBaseService
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws FrameworkException
 	 */
 	public function shufflePicking(int $playlistId, int $shufflePicking): array
@@ -101,7 +98,6 @@ class PlaylistsService extends AbstractBaseService
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws FrameworkException
 	 */
 	public function updateSecure(array $postData): int
@@ -182,7 +178,6 @@ class PlaylistsService extends AbstractBaseService
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function loadPureById(int $playlistId): array
 	{
@@ -214,7 +209,6 @@ class PlaylistsService extends AbstractBaseService
 	 * @return array{UID: int, company_id: int, playlist_id: int, ...}
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 */

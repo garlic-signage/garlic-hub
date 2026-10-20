@@ -31,7 +31,6 @@ use App\Modules\Playlists\Helper\ExportSmil\PlaylistContent;
 use App\Modules\Playlists\Helper\PlaylistMode;
 use Doctrine\DBAL\Exception;
 use League\Flysystem\FilesystemException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Log\LoggerInterface;
 
 class ExportService extends AbstractBaseService
@@ -96,7 +95,7 @@ class ExportService extends AbstractBaseService
 			$this->itemsService->getItemsRepository()->commitTransaction();
 			return $count;
 		}
-		catch (ModuleException|CoreException|Exception|FilesystemException|PhpfastcacheSimpleCacheException $e)
+		catch (ModuleException|CoreException|Exception|FilesystemException $e)
 		{
 			$this->itemsService->getItemsRepository()->rollBackTransaction();
 			$this->logger->error('Error export SMIL playlist: ' . $e->getMessage());
@@ -111,7 +110,6 @@ class ExportService extends AbstractBaseService
 	 * @throws Exception
 	 * @throws FilesystemException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function export(array $playlist): array
 	{

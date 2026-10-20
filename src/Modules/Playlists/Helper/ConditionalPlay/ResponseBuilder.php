@@ -24,9 +24,7 @@ namespace App\Modules\Playlists\Helper\ConditionalPlay;
 use App\Framework\Controller\BaseResponseBuilder;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Class ResponseBuilder
@@ -38,16 +36,12 @@ use Psr\SimpleCache\InvalidArgumentException;
  * translated error message, specific to the respective scenario.
  *
  * @throws CoreException If there is a core system processing error.
- * @throws PhpfastcacheSimpleCacheException If there is an issue with caching during response processing.
- * @throws InvalidArgumentException If invalid arguments are passed to translation or caching methods.
  * @throws FrameworkException If there is a general framework-related issue during execution.
  */
 class ResponseBuilder extends BaseResponseBuilder
 {
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function invalidItemId(ResponseInterface $response): ResponseInterface
@@ -59,8 +53,6 @@ class ResponseBuilder extends BaseResponseBuilder
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function playlistNotFound(ResponseInterface $response): ResponseInterface
@@ -72,8 +64,6 @@ class ResponseBuilder extends BaseResponseBuilder
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function itemNotFound(ResponseInterface $response): ResponseInterface

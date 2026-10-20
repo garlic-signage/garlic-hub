@@ -26,8 +26,6 @@ use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Modules\Playlists\Services\AclValidator;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Class RightsChecker
@@ -63,8 +61,6 @@ class RightsChecker
 	/**
 	 * @return array<string,string>
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function checkInsertExternalMedia(): array
@@ -80,8 +76,6 @@ class RightsChecker
 	/**
 	 * @return array<string,string>
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function checkInsertPlaylist(int $timeLimit): array
@@ -97,8 +91,6 @@ class RightsChecker
 	/**
 	 * @return array<string,string>
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function checkInsertExternalPlaylist(int $timeLimit): array
@@ -114,8 +106,6 @@ class RightsChecker
 	/**
 	 * @return array<string,string>
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function checkInsertTemplates(): array
@@ -128,8 +118,6 @@ class RightsChecker
 	/**
 	 * @return array<string,string>
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function checkInsertChannels():array
@@ -146,8 +134,6 @@ class RightsChecker
 	/**
 	 * @return array<string,string>
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function checkTimeLimit(int $timeLimit): array

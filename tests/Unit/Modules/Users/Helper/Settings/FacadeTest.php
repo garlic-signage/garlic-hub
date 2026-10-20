@@ -30,13 +30,11 @@ use App\Modules\Users\Helper\Settings\Builder;
 use App\Modules\Users\Helper\Settings\Facade;
 use App\Modules\Users\Helper\Settings\Parameters;
 use App\Modules\Users\Services\UsersAdminService;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class FacadeTest extends TestCase
 {
@@ -134,8 +132,6 @@ class FacadeTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws \Doctrine\DBAL\Exception
 	 * @throws FrameworkException
 	 */
@@ -172,8 +168,6 @@ class FacadeTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 * @throws \Doctrine\DBAL\Exception
@@ -206,8 +200,6 @@ class FacadeTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws \Doctrine\DBAL\Exception
 	 * @throws FrameworkException
 	 */
@@ -361,8 +353,6 @@ class FacadeTest extends TestCase
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
@@ -380,8 +370,6 @@ class FacadeTest extends TestCase
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
@@ -411,7 +399,6 @@ class FacadeTest extends TestCase
 
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -425,7 +412,6 @@ class FacadeTest extends TestCase
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 * @throws FrameworkException
 	 */
@@ -457,8 +443,6 @@ class FacadeTest extends TestCase
 	/**
 	 * @throws Exception
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -521,8 +505,6 @@ class FacadeTest extends TestCase
 	/**
 	 * @throws Exception
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]

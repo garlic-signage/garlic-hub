@@ -28,8 +28,6 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Modules\Player\Services\PlayerService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Facade class provides an interface to manage player-related functionality.
@@ -65,7 +63,6 @@ class Facade
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 */
@@ -91,8 +88,6 @@ class Facade
 	 * @return string[]
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function configureFormParameter(array $post): array
@@ -128,8 +123,6 @@ class Facade
 	 * @return string[]
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function getUserServiceErrors(): array
 	{
@@ -147,8 +140,6 @@ class Facade
 	 * @return array<string,mixed>
 	 *
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function prepareUITemplate(array $post): array

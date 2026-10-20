@@ -27,8 +27,6 @@ use App\Modules\Profile\Entities\UserEntity;
 use App\Modules\Users\Services\UsersService;
 use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -52,8 +50,6 @@ class AuthService
 
 	/**
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 */
 	public function login(string $identifier, string $password): ?UserEntity
 	{
@@ -89,7 +85,6 @@ class AuthService
 	 * @throws DateMalformedStringException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function loginByCookie(): ?UserEntity
 	{
@@ -125,8 +120,6 @@ class AuthService
 	/**
 	 * @param array<string,mixed> $user
 	 * @throws Exception
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function logout(array $user): void
 	{
@@ -136,7 +129,6 @@ class AuthService
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	public function getCurrentUser(int $UID): UserEntity

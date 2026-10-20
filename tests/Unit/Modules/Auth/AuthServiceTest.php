@@ -28,12 +28,10 @@ use App\Modules\Auth\AutoLoginService;
 use App\Modules\Profile\Entities\UserEntity;
 use App\Modules\Users\Services\UsersService;
 use DateMalformedStringException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 
 class AuthServiceTest extends TestCase
@@ -61,8 +59,6 @@ class AuthServiceTest extends TestCase
 
 	/**
 	 * @throws Exception
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -88,8 +84,6 @@ class AuthServiceTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -110,8 +104,6 @@ class AuthServiceTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -133,8 +125,6 @@ class AuthServiceTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -158,7 +148,6 @@ class AuthServiceTest extends TestCase
 	/**
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws DateMalformedStringException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -184,7 +173,6 @@ class AuthServiceTest extends TestCase
 	/**
 	 * @throws DateMalformedStringException
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]

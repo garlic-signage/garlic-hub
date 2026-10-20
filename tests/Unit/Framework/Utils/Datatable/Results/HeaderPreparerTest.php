@@ -30,12 +30,10 @@ use App\Framework\Utils\Datatable\Results\TranslatorManager;
 use App\Framework\Utils\Datatable\UrlBuilder;
 use App\Framework\Utils\FormParameters\BaseFilterParameters;
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class HeaderPreparerTest extends TestCase
 {
@@ -87,9 +85,7 @@ class HeaderPreparerTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testPrepareTableHeaderReturnsCorrectHeaderForSortableField(): void
@@ -142,9 +138,7 @@ class HeaderPreparerTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testPrepareTableHeaderReturnsCorrectHeaderForSortableFieldDESC(): void
@@ -198,8 +192,6 @@ class HeaderPreparerTest extends TestCase
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 */
 	#[Group('units')]
 	public function testPrepareTableHeaderReturnsCorrectHeaderForSortableFieldNotEqual(): void
@@ -253,9 +245,7 @@ class HeaderPreparerTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testPrepareTableHeaderReturnsCorrectHeaderForNonSortableField(): void
@@ -284,9 +274,7 @@ class HeaderPreparerTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testPrepareTableHeaderHandlesEmptyInput(): void

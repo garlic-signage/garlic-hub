@@ -26,10 +26,8 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
 use App\Framework\Utils\Datatable\DatatableFacadeInterface;
 use App\Modules\Playlists\Helper\Datatable\DatatableFacade;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Represents a controller responsible for managing the display and functionality
@@ -48,8 +46,6 @@ readonly class ShowDatatableController
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 */
 	public function show(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{

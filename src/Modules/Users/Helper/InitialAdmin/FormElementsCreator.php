@@ -27,8 +27,6 @@ use App\Framework\Utils\Forms\AbstractBaseFormElementsCreator;
 use App\Framework\Utils\Html\FieldInterface;
 use App\Framework\Utils\Html\FieldType;
 use App\Framework\Utils\Html\PasswordField;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Class FormElementsCreator
@@ -40,8 +38,6 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function createUserNameField(string $value): FieldInterface
@@ -60,8 +56,6 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function createPasswordField(string $value, string $pattern): FieldInterface
@@ -84,8 +78,6 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function createPasswordConfirmField(string $value): FieldInterface
@@ -107,8 +99,6 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function createUserLocaleField(string $value): FieldInterface
@@ -127,8 +117,6 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function createEmailField(string $value): FieldInterface

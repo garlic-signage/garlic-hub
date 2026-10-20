@@ -31,7 +31,6 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Middleware\FinalRenderMiddleware;
 use App\Framework\TemplateEngine\AdapterInterface;
 use App\Modules\Users\Services\AclValidator;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
@@ -43,7 +42,6 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 use Random\RandomException;
 use Slim\Flash\Messages;
 
@@ -89,8 +87,6 @@ class FinalRenderMiddlewareTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws RandomException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -114,8 +110,6 @@ class FinalRenderMiddlewareTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws RandomException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -157,8 +151,6 @@ class FinalRenderMiddlewareTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws RandomException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -202,8 +194,6 @@ class FinalRenderMiddlewareTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws RandomException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -228,8 +218,6 @@ class FinalRenderMiddlewareTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws RandomException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -277,8 +265,6 @@ class FinalRenderMiddlewareTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 * @throws RandomException
 	 */

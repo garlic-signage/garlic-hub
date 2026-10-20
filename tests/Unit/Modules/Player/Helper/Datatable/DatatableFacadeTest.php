@@ -31,11 +31,9 @@ use App\Modules\Player\Helper\Datatable\DatatableBuilder;
 use App\Modules\Player\Helper\Datatable\DatatablePreparer;
 use App\Modules\Player\Services\PlayerDatatableService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class DatatableFacadeTest extends TestCase
 {
@@ -68,7 +66,6 @@ class DatatableFacadeTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws Exception
 	 */
@@ -96,7 +93,6 @@ class DatatableFacadeTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testProcessSubmittedUserInput(): void
@@ -109,8 +105,6 @@ class DatatableFacadeTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 */
@@ -129,8 +123,6 @@ class DatatableFacadeTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws CoreException
 	 */
 	#[Group('units')]
@@ -154,9 +146,7 @@ class DatatableFacadeTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \DateMalformedStringException
 	 */
 	#[Group('units')]

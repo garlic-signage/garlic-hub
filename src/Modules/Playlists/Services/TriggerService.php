@@ -26,7 +26,6 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Services\AbstractBaseService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -117,7 +116,6 @@ class TriggerService extends AbstractBaseService
 	 * @return array<string,mixed>
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 */

@@ -28,7 +28,6 @@ use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\AclValidator;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -57,7 +56,6 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testCalculateFromItemsProcessesMetrics(): void
@@ -89,7 +87,6 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
@@ -124,7 +121,6 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	#[Group('units')]
@@ -154,7 +150,6 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	#[Group('units')]
@@ -186,7 +181,6 @@ class PlaylistMetricsCalculatorTest extends TestCase
 
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws Exception
 	 */
@@ -209,7 +203,6 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testCalculateFromPlaylistData(): void
@@ -237,7 +230,6 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testCalculateFromPlaylistDataHandlesEmptyPlaylist(): void
@@ -268,7 +260,6 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	#[Group('units')]
@@ -283,7 +274,6 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
@@ -315,7 +305,6 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	#[Group('units')]
@@ -347,7 +336,6 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testCalculateRemainingMediaDurationHandlesDefaultDuration(): void

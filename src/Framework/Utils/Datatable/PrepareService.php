@@ -31,8 +31,6 @@ use App\Framework\Utils\Datatable\Results\HeaderPreparer;
 use App\Framework\Utils\FormParameters\BaseFilterParameters;
 use App\Framework\Utils\Html\FieldInterface;
 use App\Framework\Utils\Html\FormBuilder;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Class PrepareService
@@ -102,8 +100,6 @@ class PrepareService
 	 * @throws ModuleException
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 */
 	public function prepareDatatableHeader(array $fields, array $langModules):  array
 	{

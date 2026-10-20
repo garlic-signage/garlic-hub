@@ -32,12 +32,10 @@ use App\Framework\Utils\Html\FormBuilder;
 use App\Framework\Utils\Html\UrlField;
 use App\Modules\Player\Helper\NetworkSettings\FormElementsCreator;
 use App\Modules\Player\Helper\NetworkSettings\Parameters;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class FormElementsCreatorTest extends TestCase
 {
@@ -59,8 +57,6 @@ class FormElementsCreatorTest extends TestCase
 	/**
 	 * @throws Exception
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
@@ -94,8 +90,6 @@ class FormElementsCreatorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]

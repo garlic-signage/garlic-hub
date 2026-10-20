@@ -26,8 +26,6 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Utils\Forms\AbstractBaseFormElementsCreator;
 use App\Framework\Utils\Html\FieldInterface;
 use App\Framework\Utils\Html\FieldType;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Class responsible for creating form elements within the application.
@@ -37,8 +35,6 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function createNameField(string $value): FieldInterface
@@ -58,8 +54,6 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function createUIDField(string|int $value, string $username, int $UID): FieldInterface
@@ -78,8 +72,6 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function createVisibilityField(string|int $value): FieldInterface

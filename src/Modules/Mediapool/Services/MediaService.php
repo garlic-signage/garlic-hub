@@ -27,7 +27,6 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Mediapool\Repositories\FilesRepository;
 use App\Modules\Mediapool\Repositories\NodesRepository;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Ramsey\Uuid\Uuid;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
@@ -136,7 +135,7 @@ class MediaService
 
 			return $this->addFileLocations($media);
 		}
-		catch (Exception | CoreException | ModuleException | PhpfastcacheSimpleCacheException $e)
+		catch (Exception | CoreException | ModuleException $e)
 		{
 			$this->logger->error('Error fetch media: ' . $e->getMessage());
 			return [];
@@ -177,7 +176,7 @@ class MediaService
 
 			return $this->mediaRepository->update($mediaId, ['filename' => $filename, 'media_description' => $description]);
 		}
-		catch (Exception | CoreException | ModuleException | PhpfastcacheSimpleCacheException $e)
+		catch (Exception | CoreException | ModuleException $e)
 		{
 			$this->logger->error('Error updating media: ' . $e->getMessage());
 			return 0;

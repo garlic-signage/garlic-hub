@@ -31,7 +31,6 @@ use App\Modules\Mediapool\Helper\Nodes\Orchestrator;
 use App\Modules\Mediapool\Helper\Nodes\ResponseBuilder;
 use App\Modules\Mediapool\Services\NodesService;
 use Doctrine\DBAL\Exception as DBALException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -39,7 +38,6 @@ use PHPUnit\Framework\MockObject\Runtime\PropertyHook;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class OrchestratorTest extends TestCase
 {
@@ -75,7 +73,6 @@ class OrchestratorTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -95,7 +92,6 @@ class OrchestratorTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -113,8 +109,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testValidateAddWithInvalidCsrfToken(): void
@@ -128,8 +122,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testValidateAddWithMissingName(): void
@@ -143,8 +135,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testAdd(): void
@@ -160,8 +150,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testAddRootNodeWithoutNodeId(): void
@@ -177,8 +165,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testAddReturnsServiceError(): void
@@ -194,8 +180,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testValidateEditWithMissingParameters(): void
@@ -209,8 +193,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testEdit(): void
@@ -226,8 +208,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testEditFailsWhenNothingChanged(): void
@@ -243,8 +223,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testValidateMoveWithMissingParameters(): void
@@ -258,8 +236,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testMove(): void
@@ -275,8 +251,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testMoveReturnsServiceError(): void
@@ -292,8 +266,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testValidateDeleteWithMissingNodeId(): void
@@ -307,8 +279,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testDelete(): void
@@ -324,8 +294,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testDeleteReturnsServiceError(): void

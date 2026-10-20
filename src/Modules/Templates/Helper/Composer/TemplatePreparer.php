@@ -25,8 +25,6 @@ namespace App\Modules\Templates\Helper\Composer;
 use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class TemplatePreparer
 {
@@ -39,8 +37,6 @@ class TemplatePreparer
 	 * @return array<string,mixed>
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function replace(int $templateId, int $itemId = 0, int $playlistId = 0): array
 	{
@@ -150,8 +146,6 @@ class TemplatePreparer
 	 * @return array{main_layout: array<string,mixed>, this_layout: array{template: string, data: array<string,mixed>}}
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function prepare(string $name, array $dataSections): array
 	{

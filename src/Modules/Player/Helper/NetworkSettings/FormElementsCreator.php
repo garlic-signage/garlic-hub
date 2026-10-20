@@ -28,8 +28,6 @@ use App\Framework\Utils\Html\CheckboxField;
 use App\Framework\Utils\Html\FieldInterface;
 use App\Framework\Utils\Html\FieldType;
 use App\Framework\Utils\Html\UrlField;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Class responsible for creating form elements within the application.
@@ -39,8 +37,6 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function createApiEndpointField(string $value): UrlField
@@ -64,8 +60,6 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function createIsIntranet(bool $checked): FieldInterface

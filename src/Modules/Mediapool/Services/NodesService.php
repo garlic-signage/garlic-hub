@@ -27,7 +27,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
 use App\Modules\Mediapool\Repositories\NodesRepository;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 
 /**
  * Class NodesService
@@ -53,7 +52,6 @@ class NodesService
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws Exception
 	 */
@@ -65,7 +63,6 @@ class NodesService
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	public function isNodeUploadable(int $nodeId): bool
@@ -84,7 +81,6 @@ class NodesService
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function getNodes(int $parent_id): array
 	{
@@ -116,7 +112,6 @@ class NodesService
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function addNode(int $parent_id, string $name): int
 	{
@@ -143,7 +138,6 @@ class NodesService
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function deleteUserDirectory(int $UID): void
 	{
@@ -170,7 +164,7 @@ class NodesService
 	/**
 	 * @throws ModuleException
 	 * @throws Exception
-	 * @throws CoreException|PhpfastcacheSimpleCacheException
+	 * @throws CoreException
 	 */
 	public function editNode(int $id, string $name, ?int $visibility = null): int
 	{
@@ -229,7 +223,6 @@ class NodesService
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function deleteNode(int $nodeId): int
 	{
@@ -281,7 +274,6 @@ class NodesService
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	private function addRootNode(string $name): int
 	{
@@ -299,7 +291,6 @@ class NodesService
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	private function addSubNode(int $parentNodeId, string $name): int
 	{
@@ -320,7 +311,6 @@ class NodesService
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	private function determineRights(array $node): array
 	{

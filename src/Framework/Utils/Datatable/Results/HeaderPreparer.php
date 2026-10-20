@@ -27,8 +27,6 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\Datatable\UrlBuilder;
 use App\Framework\Utils\FormParameters\BaseFilterParameters;
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * The HeaderPreparer class is responsible for configuring header-related data,
@@ -71,8 +69,6 @@ class HeaderPreparer
 	 * @throws ModuleException
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 */
 	public function prepareTableHeader(array $tableHeaderFields): array
 	{
@@ -98,9 +94,7 @@ class HeaderPreparer
 	 * @return array{SORTABLE_ORDER:string, SORT_CONTROL_NAME:string,LINK_CONTROL_SORT_ORDER: string, LANG_CONTROL_NAME: string}
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	protected function prepareSortableHeaderField(HeaderField $headerField):array
 	{

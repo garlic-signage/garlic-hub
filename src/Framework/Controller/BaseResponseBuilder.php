@@ -25,9 +25,7 @@ namespace App\Framework\Controller;
 use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Abstract class responsible for building standardized response structures.
@@ -42,8 +40,6 @@ abstract class BaseResponseBuilder
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function csrfTokenMismatch(ResponseInterface $response): ResponseInterface

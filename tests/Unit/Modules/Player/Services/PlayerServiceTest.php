@@ -28,7 +28,6 @@ use App\Modules\Player\Services\AclValidator;
 use App\Modules\Player\Services\PlayerService;
 use App\Modules\Playlists\Helper\PlaylistMode;
 use App\Modules\Playlists\Services\PlaylistsService;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -182,7 +181,6 @@ class PlayerServiceTest extends TestCase
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws FrameworkException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -208,7 +206,6 @@ class PlayerServiceTest extends TestCase
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 * @throws FrameworkException
 	 */
@@ -232,7 +229,6 @@ class PlayerServiceTest extends TestCase
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 * @throws FrameworkException
 	 */

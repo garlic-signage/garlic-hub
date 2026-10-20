@@ -24,8 +24,6 @@ namespace App\Framework\Utils\Datatable\Results;
 use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Manages the translation process for provided header fields and language modules.
@@ -50,8 +48,6 @@ class TranslatorManager
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function translate(HeaderField $HeaderField): string

@@ -35,12 +35,10 @@ use App\Modules\Profile\Helper\Password\Parameters;
 use App\Modules\Profile\Services\ProfileService;
 use App\Modules\Profile\Services\UserTokenService;
 use DateMalformedStringException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\InvalidArgumentException;
 use Random\RandomException;
 
 class FacadeTest extends TestCase
@@ -205,8 +203,6 @@ class FacadeTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
@@ -262,8 +258,6 @@ class FacadeTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testGetUserServiceErrorsTranslatesErrorsCorrectly(): void
@@ -286,8 +280,6 @@ class FacadeTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testPrepareUITemplateStandard(): void
@@ -337,8 +329,6 @@ class FacadeTest extends TestCase
 	 * @throws CoreException
 	 * @throws DateMalformedStringException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws RandomException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -403,8 +393,6 @@ class FacadeTest extends TestCase
 	 * @throws CoreException
 	 * @throws DateMalformedStringException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws RandomException
 	 * @throws \Doctrine\DBAL\Exception
 	 */

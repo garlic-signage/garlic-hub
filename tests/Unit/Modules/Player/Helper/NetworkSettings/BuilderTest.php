@@ -32,12 +32,10 @@ use App\Modules\Player\Helper\NetworkSettings\Builder;
 use App\Modules\Player\Helper\NetworkSettings\FormElementsCreator;
 use App\Modules\Player\Helper\NetworkSettings\Parameters;
 use App\Modules\Player\Helper\NetworkSettings\Validator;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class BuilderTest extends TestCase
 {
@@ -65,8 +63,6 @@ class BuilderTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
@@ -112,8 +108,6 @@ class BuilderTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]

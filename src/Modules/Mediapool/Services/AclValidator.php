@@ -27,7 +27,6 @@ use App\Framework\Core\Acl\AclHelper;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 
 /**
  * AclValidator class provides functionality for validating access control
@@ -48,7 +47,6 @@ class AclValidator extends AbstractAclValidator
 	 * @throws CoreException
 	 * @throws ModuleException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function checkDirectoryPermissions(int $UID, array $directory): array
 	{

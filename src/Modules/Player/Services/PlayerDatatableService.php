@@ -27,7 +27,6 @@ use App\Framework\Services\SearchFilterParamsTrait;
 use App\Framework\Utils\FormParameters\BaseParameters;
 use App\Modules\Player\Repositories\PlayerRepository;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -53,7 +52,6 @@ class PlayerDatatableService extends AbstractDatatableService
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws Exception
 	 */

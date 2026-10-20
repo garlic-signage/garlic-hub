@@ -31,8 +31,6 @@ use App\Modules\Playlists\Helper\PlaylistMode;
 use App\Modules\Playlists\Services\AclValidator;
 use DateTime;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * This class is responsible for preparing data tables related to playlists.
@@ -71,8 +69,6 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function prepareTableBody(array $currentFilterResults, array $fields, int $currentUID): array
 	{
@@ -153,8 +149,6 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	 * @return list<array<string,mixed>>
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function formatContextMenu(): array
 	{

@@ -25,7 +25,6 @@ use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 
 /**
  * Abstract class AbstractAclValidator.
@@ -51,7 +50,6 @@ abstract class AbstractAclValidator
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws Exception
 	 */
@@ -67,7 +65,6 @@ abstract class AbstractAclValidator
 	/**
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function isSubAdmin(int $UID): bool
 	{
@@ -77,7 +74,6 @@ abstract class AbstractAclValidator
 	/**
 	 * @param array{UID: int, company_id?: int, ...} $unitData
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 */
@@ -102,7 +98,6 @@ abstract class AbstractAclValidator
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	public function isSimpleAdmin(int $UID): bool
@@ -118,7 +113,6 @@ abstract class AbstractAclValidator
 	 * @return bool
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function isEditor(int $UID): bool
 	{
@@ -130,7 +124,6 @@ abstract class AbstractAclValidator
 	 * @return bool
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function isViewer(int $UID): bool
 	{
@@ -138,7 +131,6 @@ abstract class AbstractAclValidator
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws CoreException
 	 */
@@ -148,7 +140,6 @@ abstract class AbstractAclValidator
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws CoreException
 	 */
@@ -158,7 +149,6 @@ abstract class AbstractAclValidator
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws CoreException
 	 */

@@ -30,12 +30,10 @@ use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\AuthService;
 use App\Modules\Auth\LoginController;
 use App\Modules\Profile\Entities\UserEntity;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Cache\InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
@@ -69,7 +67,7 @@ class LoginControllerTest extends TestCase
 	}
 
 	/**
-	 * @throws Exception|\Psr\SimpleCache\InvalidArgumentException
+	 * @throws Exception
 	 */
 	#[Group('units')]
 	public function testShowLoginRendersForm(): void
@@ -101,8 +99,6 @@ class LoginControllerTest extends TestCase
 
 	/**
 	 * @throws Exception
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws FrameworkException
 	 * @throws \Doctrine\DBAL\Exception|UserException
 	 */
@@ -142,8 +138,6 @@ class LoginControllerTest extends TestCase
 
 	/**
 	 * @throws Exception
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws FrameworkException
 	 * @throws \Doctrine\DBAL\Exception|UserException
 	 */
@@ -188,8 +182,6 @@ class LoginControllerTest extends TestCase
 	/**
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 * @throws UserException
 	 */
@@ -238,8 +230,6 @@ class LoginControllerTest extends TestCase
 	/**
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 * @throws UserException
 	 */
@@ -288,8 +278,6 @@ class LoginControllerTest extends TestCase
 	/**
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception|UserException
 	 */
 	#[Group('units')]
@@ -321,8 +309,6 @@ class LoginControllerTest extends TestCase
 	/**
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception|UserException
 	 */
 	#[Group('units')]
@@ -350,8 +336,6 @@ class LoginControllerTest extends TestCase
 	/**
 	 * @return void
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	#[Group('units')]

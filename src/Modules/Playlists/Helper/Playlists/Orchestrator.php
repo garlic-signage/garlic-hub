@@ -32,9 +32,7 @@ use App\Modules\Playlists\Helper\Datatable\Parameters;
 use App\Modules\Playlists\Services\PlaylistsDatatableService;
 use App\Modules\Playlists\Services\PlaylistsService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Validates the input for the playlist endpoints and executes the
@@ -77,8 +75,6 @@ class Orchestrator
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function validateWithToken(ResponseInterface $response): ?ResponseInterface
 	{
@@ -91,8 +87,6 @@ class Orchestrator
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function validateShufflePicking(ResponseInterface $response): ?ResponseInterface
 	{
@@ -123,7 +117,6 @@ class Orchestrator
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	public function toggleShuffle(ResponseInterface $response): ResponseInterface
@@ -141,7 +134,6 @@ class Orchestrator
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	public function shufflePicking(ResponseInterface $response): ResponseInterface
@@ -197,7 +189,6 @@ class Orchestrator
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	public function findByName(ResponseInterface $response): ResponseInterface
@@ -226,7 +217,6 @@ class Orchestrator
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	public function findForPlayerAssignment(ResponseInterface $response): ResponseInterface

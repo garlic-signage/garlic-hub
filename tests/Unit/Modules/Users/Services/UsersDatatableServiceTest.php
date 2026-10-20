@@ -26,7 +26,6 @@ use App\Modules\Users\Helper\Datatable\Parameters;
 use App\Modules\Users\Repositories\Edge\UserMainRepository;
 use App\Modules\Users\Services\AclValidator;
 use App\Modules\Users\Services\UsersDatatableService;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -55,7 +54,6 @@ class UsersDatatableServiceTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -86,7 +84,6 @@ class UsersDatatableServiceTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws \Doctrine\DBAL\Exception
 	 */

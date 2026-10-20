@@ -29,7 +29,6 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\FormParameters\BaseFilterParameters;
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 
 /**
  * Abstract class for building datatable structures.
@@ -73,7 +72,6 @@ abstract class AbstractDatatableBuilder
 	 * Owner and company filters are only added for module and sub admins.
 	 *
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	public function configureParameters(int $UID): void

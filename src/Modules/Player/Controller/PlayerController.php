@@ -31,7 +31,6 @@ use App\Modules\Auth\UserSession;
 use App\Modules\Player\Enums\PlayerStatus;
 use App\Modules\Player\Services\PlayerService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -54,7 +53,6 @@ class PlayerController
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	public function determineRights(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
@@ -84,7 +82,6 @@ class PlayerController
 	 * @param array<string,string> $args
 	 * @throws CoreException
 	 * @throws UserException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 */
@@ -104,7 +101,6 @@ class PlayerController
 	/**
 	 * @throws CoreException
 	 * @throws UserException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 */
@@ -131,7 +127,6 @@ class PlayerController
 	/**
 	 * @throws CoreException
 	 * @throws UserException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 */

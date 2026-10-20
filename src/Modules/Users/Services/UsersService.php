@@ -29,11 +29,13 @@ use App\Modules\Users\Repositories\Edge\UserAclRepository;
 use App\Modules\Users\Repositories\Edge\UserMainRepository;
 use App\Modules\Users\Repositories\Edge\UserTokensRepository;
 use App\Modules\Users\Repositories\UserRepositoryFactory;
+use App\Framework\Exceptions\CoreException;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
+use Phpfastcache\Exceptions\PhpfastcacheExceptionInterface;
 use Phpfastcache\Helper\Psr16Adapter;
 use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
+use Psr\SimpleCache\CacheException;
 
 /**
  * User service handles and caches the userEntity. This is a central point for authentication and checking
@@ -58,6 +60,8 @@ class UsersService extends AbstractBaseService
 	private UserRepositoryFactory $userRepositoryFactory;
 
 	private Psr16Adapter $cache;
+	/** @var array<int,UserEntity> users already loaded in this request, every ACL check asks for them */
+	private array $loadedUsers = [];
 	/** @var array{
 	 *     main: UserMainRepository,
 	 *     tokens: UserTokensRepository,
@@ -100,35 +104,69 @@ class UsersService extends AbstractBaseService
 
 	/**
 	 * Get the current user from cache or database.
+	 * A failing cache is logged and the user is loaded from the database.
 	 *
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	public function getUserById(int $UID): UserEntity
 	{
+		if (isset($this->loadedUsers[$UID]))
+			return $this->loadedUsers[$UID];
+
 		$cacheKey   = $this->getCacheKey($UID);
-		$cachedData = $this->cache->get($cacheKey);
+		$cachedData = $this->readFromCache($cacheKey);
 
 		if ($cachedData)
-			return $this->userEntityFactory->create($cachedData);
+			return $this->loadedUsers[$UID] = $this->userEntityFactory->create($cachedData);
 
 		$userData = $this->collectUserData($UID);
 
-		// Cache the user data
-		$this->cache->set($cacheKey, $userData, 3600 * 24); // Cache for 1 day
+		try
+		{
+			$this->cache->set($cacheKey, $userData, 3600 * 24); // Cache for 1 day
+		}
+		catch (CacheException|PhpfastcacheExceptionInterface $e)
+		{
+			$this->logger->warning('User cache not writable: ' . $e->getMessage());
+		}
 
-		return $this->userEntityFactory->create($userData);
+		return $this->loadedUsers[$UID] = $this->userEntityFactory->create($userData);
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws \InvalidArgumentException
-	 * @throws InvalidArgumentException
+	 * Must not fail silently, otherwise changed rights would stay in the cache for up to one day.
+	 *
+	 * @throws CoreException
 	 */
 	public function invalidateCache(int $UID): void
 	{
-		$cacheKey = $this->getCacheKey($UID);
-		$this->cache->delete($cacheKey);
+		unset($this->loadedUsers[$UID]);
+		try
+		{
+			$this->cache->delete($this->getCacheKey($UID));
+		}
+		catch (CacheException|PhpfastcacheExceptionInterface|InvalidArgumentException $e)
+		{
+			$previous = $e instanceof \Exception ? $e : null;
+			throw new CoreException('User cache for UID ' . $UID . ' could not be invalidated.', 0, $previous);
+		}
+	}
+
+	/**
+	 * @return array<string,mixed>|null
+	 */
+	private function readFromCache(string $cacheKey): ?array
+	{
+		try
+		{
+			$data = $this->cache->get($cacheKey);
+			return is_array($data) ? $data : null;
+		}
+		catch (CacheException|PhpfastcacheExceptionInterface $e)
+		{
+			$this->logger->warning('User cache not readable: ' . $e->getMessage());
+			return null;
+		}
 	}
 
 	/**

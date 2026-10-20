@@ -26,7 +26,6 @@ use App\Framework\Core\Acl\AclHelper;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 
 /**
  * AclValidator class is responsible for handling access control validation
@@ -52,7 +51,6 @@ class AclValidator extends AbstractAclValidator
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function isTemplateEditable(int $UID, array $template): bool
 	{
@@ -68,7 +66,6 @@ class AclValidator extends AbstractAclValidator
 	/**
 	 * @param array{UID: int, company_id: int, template_id:int, ...} $template
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 */

@@ -30,14 +30,12 @@ use App\Modules\Playlists\Helper\Export\Orchestrator;
 use App\Modules\Playlists\Helper\Export\ResponseBuilder;
 use App\Modules\Playlists\Services\ExportService;
 use Doctrine\DBAL\Exception as DBALException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class OrchestratorTest extends TestCase
 {
@@ -72,8 +70,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testValidateWithInvalidCsrfToken(): void
@@ -87,8 +83,6 @@ class OrchestratorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testValidateWithInvalidPlaylistId(): void
@@ -103,8 +97,6 @@ class OrchestratorTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -126,8 +118,6 @@ class OrchestratorTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -148,8 +138,6 @@ class OrchestratorTest extends TestCase
 	 * @param array<string,mixed> $input
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	private function prepareValid(array $input): void
 	{

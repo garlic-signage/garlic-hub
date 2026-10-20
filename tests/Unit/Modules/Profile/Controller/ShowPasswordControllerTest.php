@@ -32,7 +32,6 @@ use App\Framework\Utils\Forms\FormTemplatePreparer;
 use App\Modules\Profile\Controller\ShowPasswordController;
 use App\Modules\Profile\Helper\Password\Facade;
 use DateMalformedStringException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -40,7 +39,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 use Random\RandomException;
 use Slim\Flash\Messages;
 
@@ -75,8 +73,6 @@ class ShowPasswordControllerTest extends TestCase
 	/**
 	 * @throws Exception
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
@@ -93,8 +89,6 @@ class ShowPasswordControllerTest extends TestCase
 	/**
 	 * @throws DateMalformedStringException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws \Doctrine\DBAL\Exception
 	 * @throws FrameworkException
 	 */
@@ -130,8 +124,6 @@ class ShowPasswordControllerTest extends TestCase
 	/**
 	 * @throws DateMalformedStringException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws \Doctrine\DBAL\Exception
 	 * @throws FrameworkException
 	 * @throws RandomException
@@ -172,8 +164,6 @@ class ShowPasswordControllerTest extends TestCase
 	/**
 	 * @throws DateMalformedStringException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws \Doctrine\DBAL\Exception
 	 * @throws FrameworkException
 	 * @throws RandomException
@@ -222,8 +212,6 @@ class ShowPasswordControllerTest extends TestCase
 	 * @throws ModuleException
 	 * @throws DatabaseException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws DateMalformedStringException
 	 * @throws \Doctrine\DBAL\Exception
@@ -261,8 +249,6 @@ class ShowPasswordControllerTest extends TestCase
 	 * @throws ModuleException
 	 * @throws DatabaseException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws DateMalformedStringException
 	 * @throws \Doctrine\DBAL\Exception
@@ -306,8 +292,6 @@ class ShowPasswordControllerTest extends TestCase
 	 * @throws ModuleException
 	 * @throws DatabaseException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws DateMalformedStringException
 	 * @throws \Doctrine\DBAL\Exception
@@ -349,8 +333,6 @@ class ShowPasswordControllerTest extends TestCase
 	 * @throws ModuleException
 	 * @throws DatabaseException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws DateMalformedStringException
 	 * @throws \Doctrine\DBAL\Exception
@@ -403,8 +385,6 @@ class ShowPasswordControllerTest extends TestCase
 	 * @throws ModuleException
 	 * @throws DatabaseException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws DateMalformedStringException
 	 * @throws \Doctrine\DBAL\Exception
@@ -452,8 +432,6 @@ class ShowPasswordControllerTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 * @throws \Doctrine\DBAL\Exception
@@ -493,8 +471,6 @@ class ShowPasswordControllerTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 * @throws \Doctrine\DBAL\Exception
@@ -523,8 +499,6 @@ class ShowPasswordControllerTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 * @throws \Doctrine\DBAL\Exception

@@ -26,8 +26,6 @@ use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\TemplateEngine\AdapterInterface;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Class responsible for preparing template data for conditional play functionality.
@@ -48,8 +46,6 @@ class TemplatePreparer
 	 * @param array<string,mixed> $conditionalPlayData
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 */
 	public function prepare(int $itemId, array $conditionalPlayData): void
 	{
@@ -100,8 +96,6 @@ class TemplatePreparer
 	 * @return list<array<string,mixed>>
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	private function determineWeekdays(array $weekdays): array
 	{

@@ -32,9 +32,7 @@ use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\ConditionalPlay\ResponseBuilder;
 use App\Modules\Playlists\Services\TriggerService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Handles orchestration of validation, fetching, and saving processes.
@@ -64,8 +62,6 @@ class Orchestrator
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function validateWithToken(ResponseInterface $response): ?ResponseInterface
@@ -78,8 +74,6 @@ class Orchestrator
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function validate(ResponseInterface $response): ?ResponseInterface
@@ -94,8 +88,6 @@ class Orchestrator
 	/**
 	 * @throws UserException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function fetch(ResponseInterface $response): ?ResponseInterface
@@ -123,9 +115,7 @@ class Orchestrator
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	public function save(ResponseInterface $response): ?ResponseInterface

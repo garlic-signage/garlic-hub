@@ -29,9 +29,7 @@ use App\Modules\Auth\UserSession;
 use App\Modules\Profile\Services\UserTokenService;
 use App\Modules\Users\Services\AclValidator;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Validates the input for the user token endpoints and executes the
@@ -66,8 +64,6 @@ class Orchestrator
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	public function validate(ResponseInterface $response): ?ResponseInterface

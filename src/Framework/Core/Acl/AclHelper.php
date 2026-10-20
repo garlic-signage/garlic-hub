@@ -25,7 +25,6 @@ use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Modules\Users\Services\UsersService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 
 /**
  * A helper class for managing Access Control Level (ACL) operations.
@@ -52,7 +51,6 @@ class AclHelper
 	/**
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function isModuleAdmin(int $UID, string $moduleName): bool
 	{
@@ -62,7 +60,6 @@ class AclHelper
 	/**
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function isSubAdmin(int $UID, string $moduleName): bool
 	{
@@ -72,7 +69,6 @@ class AclHelper
 	/**
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function isEditor(int $UID, string $moduleName): bool
 	{
@@ -82,7 +78,6 @@ class AclHelper
 	/**
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function isViewer(int $UID, string $moduleName): bool
 	{
@@ -90,7 +85,6 @@ class AclHelper
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	public function hasSubAdminAccessOnCompany(int $UID, int $companyId, string $moduleName): bool
@@ -99,7 +93,6 @@ class AclHelper
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	public function hasEditorAccessOnUnit(int $UID, int|string $unitId, string $moduleName): bool
@@ -108,7 +101,6 @@ class AclHelper
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	public function hasViewerAccessOnUnit(int $UID, int|string $unitId, string $moduleName): bool
@@ -118,7 +110,6 @@ class AclHelper
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	private function hasVip(int $UID, string $vipName, int|string $id): bool
@@ -137,7 +128,6 @@ class AclHelper
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	private function hasGlobalAcl(int $UID, string $aclName, string $moduleName): bool

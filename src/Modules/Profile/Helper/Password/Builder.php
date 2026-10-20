@@ -24,8 +24,6 @@ namespace App\Modules\Profile\Helper\Password;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * A readonly class responsible for building forms and handling user inputs.
@@ -47,8 +45,6 @@ readonly class Builder
 	 * @return array<string,mixed>
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function buildForm(string $pattern, string $passwordToken = ''): array
 	{
@@ -68,9 +64,7 @@ readonly class Builder
 	 * @return array<string,mixed>
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function handleUserInput(array $post, string $passwordPattern): array
 	{

@@ -31,9 +31,7 @@ use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Services\ConditionalPlayService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * The Orchestrator class provides operations for handling and orchestrating user input,
@@ -66,8 +64,6 @@ class Orchestrator
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function validateSave(ResponseInterface $response): ?ResponseInterface
@@ -80,8 +76,6 @@ class Orchestrator
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function validate(ResponseInterface $response): ?ResponseInterface
@@ -96,8 +90,6 @@ class Orchestrator
 	/**
 	 * @throws UserException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function fetch(ResponseInterface $response): ?ResponseInterface
@@ -121,9 +113,7 @@ class Orchestrator
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	public function save(ResponseInterface $response): ?ResponseInterface

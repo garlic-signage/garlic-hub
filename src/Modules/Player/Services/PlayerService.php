@@ -29,7 +29,6 @@ use App\Modules\Player\Repositories\PlayerRepository;
 use App\Modules\Playlists\Helper\PlaylistMode;
 use App\Modules\Playlists\Services\PlaylistsService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -79,7 +78,6 @@ class PlayerService extends AbstractBaseService
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 */
@@ -133,7 +131,6 @@ class PlayerService extends AbstractBaseService
 	 * @throws Exception
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function fetchAclCheckedPlayerData(int $playerId): array
 	{

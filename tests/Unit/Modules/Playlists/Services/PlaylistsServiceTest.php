@@ -30,7 +30,6 @@ use App\Modules\Playlists\Services\AclValidator;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
 use App\Modules\Playlists\Services\PlaylistsService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -120,7 +119,6 @@ class PlaylistsServiceTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
@@ -157,7 +155,6 @@ class PlaylistsServiceTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 */
@@ -197,7 +194,6 @@ class PlaylistsServiceTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testToggleShuffleThrowsExceptionWhenPlaylistNotEditable(): void
@@ -225,7 +221,6 @@ class PlaylistsServiceTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testShufflePickingSuccessfullyUpdatesData(): void
@@ -264,7 +259,6 @@ class PlaylistsServiceTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testShufflePickingThrowsExceptionWhenPlaylistNotEditable(): void
@@ -293,7 +287,6 @@ class PlaylistsServiceTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testShufflePickingThrowsExceptionWhenPlaylistNotFound(): void
@@ -317,7 +310,6 @@ class PlaylistsServiceTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testUpdateThrowsExceptionWhenPlaylistNotEditable(): void
@@ -344,7 +336,6 @@ class PlaylistsServiceTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testUpdate(): void
@@ -383,8 +374,6 @@ class PlaylistsServiceTest extends TestCase
 		$this->service->updateExport($playlistId, $saveData);
 	}
 
-	/**
-	 */
 	#[Group('units')]
 	public function testDeleteSucceedsWhenPlaylistIsEditable(): void
 	{
@@ -409,8 +398,6 @@ class PlaylistsServiceTest extends TestCase
 		static::assertEquals(1, $result);
 	}
 
-	/**
-	 */
 	#[Group('units')]
 	public function testDeleteThrowsExceptionWhenPlaylistNotEditable(): void
 	{

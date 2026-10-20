@@ -30,8 +30,6 @@ use App\Framework\Utils\Html\ClipboardTextField;
 use App\Framework\Utils\Html\FieldInterface;
 use App\Framework\Utils\Html\FieldType;
 use App\Framework\Utils\Html\FormBuilder;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * This class is responsible for creating and managing form elements.
@@ -41,8 +39,6 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function createUserNameField(string $value): FieldInterface
@@ -61,8 +57,6 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function createUserStatusField(string $value): FieldInterface
@@ -81,8 +75,6 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function createUserLocaleField(string $value): FieldInterface
@@ -101,8 +93,6 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function createClipboardTextField(string $value, string $purpose, string $expiresAt): ClipboardTextField
@@ -133,8 +123,6 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function createEmailField(string $value): FieldInterface
@@ -169,8 +157,6 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 	 * @return array<string,string>
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function addResetPasswordButton(): array
 	{

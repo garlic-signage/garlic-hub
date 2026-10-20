@@ -28,14 +28,12 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Playlists\Controller\ConditionalPlayController;
 use App\Modules\Playlists\Helper\ConditionalPlay\Orchestrator;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class ConditionalPlayControllerTest extends TestCase
 {
@@ -61,8 +59,6 @@ class ConditionalPlayControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws UserException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
@@ -88,8 +84,6 @@ class ConditionalPlayControllerTest extends TestCase
 	 * @throws UserException
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
@@ -119,8 +113,6 @@ class ConditionalPlayControllerTest extends TestCase
 	 * @throws ModuleException
 	 * @throws UserException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 * @throws \Doctrine\DBAL\Exception
@@ -149,8 +141,6 @@ class ConditionalPlayControllerTest extends TestCase
 	 * @throws ModuleException
 	 * @throws UserException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 * @throws \Doctrine\DBAL\Exception

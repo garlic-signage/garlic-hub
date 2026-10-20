@@ -31,7 +31,6 @@ use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
 use App\Modules\Playlists\Services\PlaylistsService;
 use App\Modules\Playlists\Services\WidgetsService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Log\LoggerInterface;
 
 class Media extends AbstractInsertItem
@@ -109,7 +108,7 @@ class Media extends AbstractInsertItem
 
 			return ['playlist_metrics' => $playlistMetrics, 'item' => $saveItem];
 		}
-		catch (Exception | ModuleException | CoreException | PhpfastcacheSimpleCacheException $e)
+		catch (Exception | ModuleException | CoreException $e)
 		{
 			$this->itemsRepository->rollBackTransaction();
 			$this->logger->error('Error insert media: ' . $e->getMessage());

@@ -30,8 +30,6 @@ use App\Framework\Utils\Html\FieldInterface;
 use App\Framework\Utils\Html\FieldType;
 use App\Framework\Utils\Html\FormBuilder;
 use App\Framework\Utils\Html\PasswordField;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Class FormElementsCreator
@@ -45,8 +43,6 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 {
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function createPasswordField(string $value, string $pattern): FieldInterface
@@ -69,8 +65,6 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function createPasswordConfirmField(string $value): FieldInterface

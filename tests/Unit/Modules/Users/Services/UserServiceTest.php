@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Users\Services;
 
+use App\Framework\Exceptions\CoreException;
 use App\Modules\Profile\Entities\UserEntity;
 use App\Modules\Profile\Entities\UserEntityFactory;
 use App\Modules\Users\Repositories\Edge\UserAclRepository;
@@ -34,7 +35,6 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 
 class UserServiceTest extends TestCase
@@ -155,7 +155,6 @@ class UserServiceTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -184,7 +183,6 @@ class UserServiceTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -228,10 +226,6 @@ class UserServiceTest extends TestCase
 		static::assertEquals($mockUserEntity, $result);
 	}
 
-	/**
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
-	 */
 	#[Group('units')]
 	public function testInvalidCache(): void
 	{
@@ -249,5 +243,83 @@ class UserServiceTest extends TestCase
 
 	}
 
+	/**
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	#[Group('units')]
+	public function testGetUserByIdFallsBackToDatabaseWhenCacheFails(): void
+	{
+		$userData = ['UID' => 1, 'username' => 'testuser'];
+		$this->repositoryFactoryMock->method('create')->willReturn(['main' => $this->userMainRepositoryMock]);
+		$this->usersService = new UsersService($this->repositoryFactoryMock, $this->entityFactoryMock, $this->cacheMock, $this->loggerMock);
 
+		$this->cacheMock->expects($this->once())->method('get')->with('user_1')
+			->willThrowException(new PhpfastcacheSimpleCacheException('cache down'));
+		$this->cacheMock->expects($this->once())->method('set')
+			->willThrowException(new PhpfastcacheSimpleCacheException('cache down'));
+		$this->loggerMock->expects($this->exactly(2))->method('warning');
+		$this->userMainRepositoryMock->expects($this->once())->method('findByIdSecured')->with(1)->willReturn($userData);
+		$userEntity = $this->createStub(UserEntity::class);
+		$this->entityFactoryMock->expects($this->once())->method('create')->with(['main' => $userData])->willReturn($userEntity);
+
+		static::assertSame($userEntity, $this->usersService->getUserById(1));
+	}
+
+	#[Group('units')]
+	public function testInvalidateCacheFailureIsReported(): void
+	{
+		$this->repositoryFactoryMock->method('create')->willReturn(['main' => $this->userMainRepositoryMock]);
+		$this->usersService = new UsersService($this->repositoryFactoryMock, $this->entityFactoryMock, $this->cacheMock, $this->loggerMock);
+
+		$this->cacheMock->expects($this->once())->method('delete')->with('user_14')
+			->willThrowException(new PhpfastcacheSimpleCacheException('cache down'));
+
+		$this->expectException(CoreException::class);
+		$this->expectExceptionMessage('User cache for UID 14 could not be invalidated.');
+
+		$this->usersService->invalidateCache(14);
+	}
+
+	/**
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	#[Group('units')]
+	public function testGetUserByIdLoadsUserOncePerRequest(): void
+	{
+		$this->repositoryFactoryMock->method('create')->willReturn(['main' => $this->userMainRepositoryMock]);
+		$this->usersService = new UsersService($this->repositoryFactoryMock, $this->entityFactoryMock, $this->cacheMock, $this->loggerMock);
+
+		$cachedData = ['main' => ['UID' => 3]];
+		$userEntity = $this->createStub(UserEntity::class);
+		$this->cacheMock->expects($this->once())->method('get')->with('user_3')->willReturn($cachedData);
+		$this->entityFactoryMock->expects($this->once())->method('create')->with($cachedData)->willReturn($userEntity);
+		$this->userMainRepositoryMock->expects($this->never())->method('findByIdSecured');
+
+		static::assertSame($userEntity, $this->usersService->getUserById(3));
+		static::assertSame($userEntity, $this->usersService->getUserById(3));
+		static::assertSame($userEntity, $this->usersService->getUserById(3));
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	#[Group('units')]
+	public function testInvalidateCacheAlsoForgetsLoadedUser(): void
+	{
+		$this->repositoryFactoryMock->method('create')->willReturn(['main' => $this->userMainRepositoryMock]);
+		$this->usersService = new UsersService($this->repositoryFactoryMock, $this->entityFactoryMock, $this->cacheMock, $this->loggerMock);
+
+		$before = $this->createStub(UserEntity::class);
+		$after  = $this->createStub(UserEntity::class);
+		$this->cacheMock->expects($this->exactly(2))->method('get')->with('user_3')
+			->willReturnOnConsecutiveCalls(['main' => ['UID' => 3, 'status' => 1]], ['main' => ['UID' => 3, 'status' => 2]]);
+		$this->cacheMock->expects($this->once())->method('delete')->with('user_3');
+		$this->entityFactoryMock->expects($this->exactly(2))->method('create')->willReturnOnConsecutiveCalls($before, $after);
+		$this->userMainRepositoryMock->expects($this->never())->method('findByIdSecured');
+
+		static::assertSame($before, $this->usersService->getUserById(3));
+		$this->usersService->invalidateCache(3);
+		static::assertSame($after, $this->usersService->getUserById(3));
+	}
 }

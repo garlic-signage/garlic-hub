@@ -26,7 +26,6 @@ use App\Modules\Mediapool\Services\NodesService;
 use Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * ShowController is responsible for managing the layout and data for the mediapool interface.
@@ -46,7 +45,7 @@ class ShowController
 	}
 
 	/**
-	 * @throws Exception|InvalidArgumentException
+	 * @throws Exception
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	public function show(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface

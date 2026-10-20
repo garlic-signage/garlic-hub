@@ -6,9 +6,7 @@ namespace App\Modules\Player\Helper\PlayerPlaylist;
 use App\Framework\Controller\BaseResponseBuilder;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Handles building JSON error responses for various scenarios related to players and playlists.
@@ -20,8 +18,6 @@ class ResponseBuilder extends BaseResponseBuilder
 {
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function invalidPlayerId(ResponseInterface $response): ResponseInterface
@@ -33,8 +29,6 @@ class ResponseBuilder extends BaseResponseBuilder
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function invalidPlaylistId(ResponseInterface $response): ResponseInterface
@@ -46,8 +40,6 @@ class ResponseBuilder extends BaseResponseBuilder
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function playerNotFound(ResponseInterface $response): ResponseInterface
@@ -59,8 +51,6 @@ class ResponseBuilder extends BaseResponseBuilder
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function playerNotReachable(ResponseInterface $response): ResponseInterface
@@ -72,8 +62,6 @@ class ResponseBuilder extends BaseResponseBuilder
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function noPlaylistAssigned(ResponseInterface $response): ResponseInterface

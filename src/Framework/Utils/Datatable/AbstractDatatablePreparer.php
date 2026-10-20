@@ -29,8 +29,6 @@ use App\Framework\Utils\Datatable\Results\HeaderField;
 use App\Framework\Utils\FormParameters\BaseFilterParameters;
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
 use App\Framework\Utils\Html\FieldInterface;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Abstract class providing methods to prepare data for a DataTable.
@@ -83,9 +81,7 @@ abstract class AbstractDatatablePreparer
 	 * @return list<array<string,mixed>>
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function prepareTableHeader(array $fields, array $langModules): array
 	{
@@ -95,8 +91,6 @@ abstract class AbstractDatatablePreparer
 	/**
 	 * @return array{ADD_BI_ICON:string, LANG_ELEMENTS_ADD_LINK: string, ELEMENTS_ADD_LINK: string }
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function prepareAdd(string $iconClass = 'folder-plus', string $addLink = '#'): array

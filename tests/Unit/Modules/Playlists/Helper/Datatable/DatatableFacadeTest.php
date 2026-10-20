@@ -31,12 +31,10 @@ use App\Modules\Playlists\Helper\Datatable\DatatableFacade;
 use App\Modules\Playlists\Helper\Datatable\DatatableBuilder;
 use App\Modules\Playlists\Helper\Datatable\DatatablePreparer;
 use App\Modules\Playlists\Services\PlaylistsDatatableService;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class DatatableFacadeTest extends TestCase
 {
@@ -69,7 +67,6 @@ class DatatableFacadeTest extends TestCase
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -101,7 +98,6 @@ class DatatableFacadeTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
@@ -117,8 +113,6 @@ class DatatableFacadeTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
@@ -138,8 +132,6 @@ class DatatableFacadeTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -238,8 +230,6 @@ class DatatableFacadeTest extends TestCase
 		], $result);
 	}
 
-	/**
-	 */
 	#[Group('units')]
 	public function testPrepareContextMenu(): void
 	{

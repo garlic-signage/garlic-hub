@@ -32,8 +32,6 @@ use App\Modules\Profile\Services\ProfileService;
 use App\Modules\Profile\Services\UserTokenService;
 use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * A facade class that encapsulates interactions between multiple services and components
@@ -98,8 +96,6 @@ class Facade
 	 * @return array<string,mixed>
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function configureUserFormParameter(array $post): array
@@ -124,8 +120,6 @@ class Facade
 	 * @return string[]
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function getUserServiceErrors(): array
 	{
@@ -142,8 +136,6 @@ class Facade
 	 * @return array<string,mixed>
 	 *
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function prepareUITemplate(string $passwordToken): array
@@ -186,8 +178,6 @@ class Facade
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	private function determineTitleWhenForced(): string

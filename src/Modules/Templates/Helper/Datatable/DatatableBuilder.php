@@ -29,8 +29,6 @@ use App\Framework\Utils\Datatable\BuildService;
 use App\Framework\Utils\FormParameters\BaseParameters;
 use App\Framework\Utils\Html\FieldType;
 use App\Modules\Templates\Services\AclValidator;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Manages the building process of a datatable for UI representation.
@@ -45,8 +43,6 @@ class DatatableBuilder extends AbstractDatatableBuilder
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function buildTitle(): void
@@ -58,8 +54,6 @@ class DatatableBuilder extends AbstractDatatableBuilder
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 */
 	public function collectFormElements(): void
 	{
@@ -101,8 +95,6 @@ class DatatableBuilder extends AbstractDatatableBuilder
 		$this->datatableStructure['form'] = $form;
 	}
 
-	/**
-	 */
 	public function createTableFields(): static
 	{
 		$this->buildService->createDatatableField('name', true);

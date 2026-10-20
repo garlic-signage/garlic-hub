@@ -29,7 +29,6 @@ use App\Framework\Utils\FormParameters\BaseParameters;
 use App\Modules\Auth\UserSession;
 use App\Modules\Templates\Repositories\TemplatesRepository;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Log\LoggerInterface;
 
 class TemplatesDatatableService extends AbstractDatatableService
@@ -49,7 +48,6 @@ class TemplatesDatatableService extends AbstractDatatableService
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws Exception
 	 */
@@ -64,7 +62,6 @@ class TemplatesDatatableService extends AbstractDatatableService
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	public function loadDatatable(): void

@@ -30,8 +30,6 @@ use App\Framework\Utils\FormParameters\BaseParameters;
 use App\Modules\Playlists\Helper\PlaylistMode;
 use App\Modules\Playlists\Services\AclValidator;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Class Builder
@@ -71,7 +69,6 @@ class Builder
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	public function configNewParameter(string $playlistMode): void
@@ -94,7 +91,6 @@ class Builder
 	 * @param array{"UID": int, "company_id": int, playlist_mode: string, playlist_name:string, ...}$playlist
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws FrameworkException
 	 */
 	public function configEditParameter(array $playlist): void
@@ -118,8 +114,6 @@ class Builder
 	 * @return array<string,mixed>
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws ModuleException
 	 */
 	public function buildForm(array $playlist): array
@@ -167,9 +161,7 @@ class Builder
 	 * @return array<string,mixed>
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function handleUserInput(array $post): array
 	{

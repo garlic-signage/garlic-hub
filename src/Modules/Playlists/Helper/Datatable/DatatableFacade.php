@@ -30,8 +30,6 @@ use App\Framework\Utils\Datatable\DatatableFacadeInterface;
 use App\Framework\Utils\Datatable\Results\HeaderField;
 use App\Modules\Playlists\Services\PlaylistsDatatableService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Provides a facade-like abstraction for managing datatable functionalities.
@@ -52,7 +50,6 @@ class DatatableFacade implements DatatableFacadeInterface
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws Exception
 	 */
@@ -71,7 +68,6 @@ class DatatableFacade implements DatatableFacadeInterface
 	 * @param array<string,mixed> $queryParams
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws ModuleException
 	 */
 	public function processSubmittedUserInput(array $queryParams): void
@@ -83,9 +79,7 @@ class DatatableFacade implements DatatableFacadeInterface
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function prepareDataGrid(): static
 	{
@@ -110,9 +104,7 @@ class DatatableFacade implements DatatableFacadeInterface
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function prepareUITemplate(): array
 	{
@@ -143,8 +135,6 @@ class DatatableFacade implements DatatableFacadeInterface
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	private function prepareList(array $fields): array
 	{

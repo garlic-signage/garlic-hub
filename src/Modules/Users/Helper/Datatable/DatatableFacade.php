@@ -31,8 +31,6 @@ use App\Framework\Utils\Datatable\Results\HeaderField;
 use App\Modules\Users\Services\UsersAdminService;
 use App\Modules\Users\Services\UsersDatatableService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * This class acts as a facade to handle operations related to a datatable framework.
@@ -56,7 +54,6 @@ class DatatableFacade implements DatatableFacadeInterface
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws Exception
 	 */
@@ -84,7 +81,6 @@ class DatatableFacade implements DatatableFacadeInterface
 	 * @param array<string,mixed> $queryParams
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws ModuleException
 	 */
 	public function processSubmittedUserInput(array $queryParams): void
@@ -96,9 +92,7 @@ class DatatableFacade implements DatatableFacadeInterface
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function prepareDataGrid(): static
 	{
@@ -114,8 +108,6 @@ class DatatableFacade implements DatatableFacadeInterface
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 */
@@ -146,8 +138,6 @@ class DatatableFacade implements DatatableFacadeInterface
 	 * @param list<HeaderField> $fields
 	 * @return list<array<string,mixed>>
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 */

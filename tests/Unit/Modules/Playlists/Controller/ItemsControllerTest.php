@@ -27,7 +27,6 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Playlists\Controller\ItemsController;
 use App\Modules\Playlists\Helper\Items\Orchestrator;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -63,7 +62,6 @@ class ItemsControllerTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -89,7 +87,6 @@ class ItemsControllerTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -117,7 +114,6 @@ class ItemsControllerTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -144,7 +140,6 @@ class ItemsControllerTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -173,7 +168,6 @@ class ItemsControllerTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -200,7 +194,6 @@ class ItemsControllerTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -229,7 +222,6 @@ class ItemsControllerTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -255,7 +247,6 @@ class ItemsControllerTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -283,7 +274,6 @@ class ItemsControllerTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -310,7 +300,6 @@ class ItemsControllerTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -339,7 +328,6 @@ class ItemsControllerTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -366,7 +354,6 @@ class ItemsControllerTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 * @throws \Doctrine\DBAL\Exception
 	 */

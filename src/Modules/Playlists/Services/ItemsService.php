@@ -34,7 +34,6 @@ use App\Modules\Mediapool\Services\MediaService;
 use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Log\LoggerInterface;
 
 /**+
@@ -67,7 +66,6 @@ class ItemsService extends AbstractBaseService
 	/**
 	 * @param array<string,mixed> $playlist
 	 * @return array<string,mixed>
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
@@ -116,7 +114,6 @@ class ItemsService extends AbstractBaseService
 	 * @return array<string,mixed>
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 */
@@ -167,7 +164,6 @@ class ItemsService extends AbstractBaseService
 	 * @return array<string,mixed>
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 */
@@ -233,7 +229,6 @@ class ItemsService extends AbstractBaseService
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 */
@@ -263,7 +258,6 @@ class ItemsService extends AbstractBaseService
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 */
@@ -315,7 +309,7 @@ class ItemsService extends AbstractBaseService
 			$this->itemsRepository->commitTransaction();
 			return true;
 		}
-		catch (Exception | ModuleException | CoreException | PhpfastcacheSimpleCacheException $e)
+		catch (Exception | ModuleException | CoreException $e)
 		{
 			$this->itemsRepository->rollBackTransaction();
 			$this->logger->error('Error item reorder: ' . $e->getMessage());
@@ -353,7 +347,7 @@ class ItemsService extends AbstractBaseService
 
 			return ['playlist_metrics' => $playlistMetrics, 'delete_id' => $deleteId];
 		}
-		catch (Exception | ModuleException | CoreException | PhpfastcacheSimpleCacheException $e)
+		catch (Exception | ModuleException | CoreException $e)
 		{
 			$this->itemsRepository->rollBackTransaction();
 			$this->logger->error('Error delete item: ' . $e->getMessage());
@@ -384,7 +378,6 @@ class ItemsService extends AbstractBaseService
 	 * 7. recurse to 3.
 	 *
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws ModuleException
 	 */

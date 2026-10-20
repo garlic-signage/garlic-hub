@@ -31,8 +31,6 @@ use App\Framework\Utils\Datatable\Results\HeaderField;
 use App\Modules\Player\Services\PlayerDatatableService;
 use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Facade class responsible for managing the datatable's configuration, preparation, processing, and rendering.
@@ -54,7 +52,6 @@ class DatatableFacade implements DatatableFacadeInterface
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws Exception
 	 */
@@ -73,7 +70,6 @@ class DatatableFacade implements DatatableFacadeInterface
 	 * @param array<string,mixed> $queryParams
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws ModuleException
 	 */
 	public function processSubmittedUserInput(array $queryParams): void
@@ -85,8 +81,6 @@ class DatatableFacade implements DatatableFacadeInterface
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function prepareDataGrid(): static
@@ -104,8 +98,6 @@ class DatatableFacade implements DatatableFacadeInterface
 	 * @return array<string,string>
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function prepareContextMenu(): array
 	{
@@ -115,9 +107,7 @@ class DatatableFacade implements DatatableFacadeInterface
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws DateMalformedStringException
 	 */
 	public function prepareUITemplate(): array
@@ -150,8 +140,6 @@ class DatatableFacade implements DatatableFacadeInterface
 	 * @return list<array<string,mixed>>
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws DateMalformedStringException
 	 */
 	private function prepareList(array $fields): array

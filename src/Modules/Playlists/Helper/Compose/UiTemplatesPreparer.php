@@ -24,8 +24,6 @@ namespace App\Modules\Playlists\Helper\Compose;
 use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * This class is responsible for preparing various UI templates for playlists.
@@ -48,8 +46,6 @@ readonly class UiTemplatesPreparer
 	 * @param array<string,mixed> $playlist
 	 * @return array<string,mixed>
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function buildExternalEditor(array $playlist): array
@@ -81,8 +77,6 @@ readonly class UiTemplatesPreparer
 	 * @return array<string,mixed>
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 */
 	public function buildMultizoneEditor(array $playlist): array
 	{
@@ -142,8 +136,6 @@ readonly class UiTemplatesPreparer
 	 * @param array<string,mixed> $playlist
 	 * @return array<string,mixed>
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function buildCircularEditor(array $playlist): array

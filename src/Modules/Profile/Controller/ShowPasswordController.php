@@ -30,10 +30,8 @@ use App\Framework\Utils\Forms\FormTemplatePreparer;
 use App\Modules\Profile\Helper\Password\Facade;
 use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 use Slim\Flash\Messages;
 
 /**
@@ -57,8 +55,6 @@ class ShowPasswordController
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function showPasswordForm(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -74,8 +70,6 @@ class ShowPasswordController
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws DateMalformedStringException
 	 */
 	public function showForcedPasswordForm(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -109,9 +103,7 @@ class ShowPasswordController
 	 * @throws DateMalformedStringException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function storeForcedPassword(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
@@ -166,8 +158,6 @@ class ShowPasswordController
 	 * @throws FrameworkException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 */
 	public function store(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
@@ -204,8 +194,6 @@ class ShowPasswordController
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	private function outputRenderedForm(ResponseInterface $response, string $passwordToken = ''): ResponseInterface

@@ -27,8 +27,6 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Modules\Templates\Services\TemplatesService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Handles orchestration of validation, fetching, and saving processes.
@@ -48,7 +46,6 @@ class Orchestrator
 	/**
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function checkCreateRights(): bool
 	{
@@ -61,7 +58,6 @@ class Orchestrator
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function checkEditRights(int $templateId): bool
 	{
@@ -80,8 +76,6 @@ class Orchestrator
 	 * @param array<string,mixed> $post
 	 * @return array{hidden:list<array<string,string>>, visible: list<array<string,string>>}
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function buildCreateForm(array $post = []): array
@@ -93,8 +87,6 @@ class Orchestrator
 	/**
 	 * @return array{hidden:list<array<string,string>>, visible: list<array<string,string>>}
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function buildEditForm(): array
@@ -110,9 +102,7 @@ class Orchestrator
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function storeCreateSettings(array $post): array
 	{
@@ -136,9 +126,7 @@ class Orchestrator
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function storeEditSettings(int $templateId, array $post): array
 	{

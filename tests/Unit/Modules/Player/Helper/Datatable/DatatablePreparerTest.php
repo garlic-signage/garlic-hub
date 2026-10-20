@@ -35,11 +35,9 @@ use App\Modules\Player\Helper\Datatable\DatatablePreparer;
 use App\Modules\Player\Helper\Datatable\Parameters;
 use DateMalformedStringException;
 use Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class DatatablePreparerTest extends TestCase
 {
@@ -72,8 +70,6 @@ class DatatablePreparerTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws DateMalformedStringException
 	 */
 	#[Group('units')]
@@ -87,8 +83,6 @@ class DatatablePreparerTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 * @throws \Doctrine\DBAL\Exception
@@ -149,8 +143,6 @@ class DatatablePreparerTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 * @throws \Doctrine\DBAL\Exception
@@ -212,8 +204,6 @@ class DatatablePreparerTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 * @throws \Doctrine\DBAL\Exception
@@ -275,8 +265,6 @@ class DatatablePreparerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DateMalformedStringException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 */
 	#[Group('units')]
@@ -319,8 +307,6 @@ class DatatablePreparerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DateMalformedStringException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 */
 	#[Group('units')]
@@ -360,8 +346,6 @@ class DatatablePreparerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DateMalformedStringException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 */
 	#[Group('units')]
@@ -403,8 +387,6 @@ class DatatablePreparerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DateMalformedStringException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 */
 	#[Group('units')]
@@ -448,8 +430,6 @@ class DatatablePreparerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DateMalformedStringException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 */
 	#[Group('units')]
@@ -493,8 +473,6 @@ class DatatablePreparerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DateMalformedStringException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 */
 	#[Group('units')]
@@ -538,8 +516,6 @@ class DatatablePreparerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DateMalformedStringException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 */
 	#[Group('units')]
@@ -583,8 +559,6 @@ class DatatablePreparerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DateMalformedStringException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 */
 	#[Group('units')]
@@ -626,8 +600,6 @@ class DatatablePreparerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DateMalformedStringException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 */
 	#[Group('units')]
@@ -664,8 +636,6 @@ class DatatablePreparerTest extends TestCase
 		static::assertArrayHasKey('UNIT_ID', $result[0]);
 	}
 
-	/**
-	 */
 	#[Group('units')]
 	public function testFormatContextMenu(): void
 	{

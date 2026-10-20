@@ -31,7 +31,6 @@ use App\Modules\Auth\UserSession;
 use App\Modules\Templates\Helper\Settings\Parameters;
 use App\Modules\Templates\Repositories\TemplatesRepository;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -84,7 +83,6 @@ class TemplatesService extends AbstractBaseService
 	 * @return array{UID: int, company_id: int, template_id: int, name: string, content: string|null, ...}
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 */

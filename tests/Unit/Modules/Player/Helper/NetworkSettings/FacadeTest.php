@@ -31,12 +31,10 @@ use App\Modules\Player\Helper\NetworkSettings\Builder;
 use App\Modules\Player\Helper\NetworkSettings\Facade;
 use App\Modules\Player\Helper\NetworkSettings\Parameters;
 use App\Modules\Player\Services\PlayerService;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class FacadeTest extends TestCase
 {
@@ -110,8 +108,6 @@ class FacadeTest extends TestCase
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 */
 	#[Group('units')]
 	public function testConfigureFormParameterWithPlayerId(): void
@@ -137,8 +133,6 @@ class FacadeTest extends TestCase
 	 * @throws ModuleException
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
@@ -165,8 +159,6 @@ class FacadeTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 */
@@ -219,8 +211,6 @@ class FacadeTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
@@ -249,8 +239,6 @@ class FacadeTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 */
 	#[Group('units')]
 	public function testGetUserServiceErrorsWithoutErrors(): void
@@ -269,8 +257,6 @@ class FacadeTest extends TestCase
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException|Exception
 	 */
 	#[Group('units')]

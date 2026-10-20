@@ -24,10 +24,10 @@ namespace App\Framework\Core\Translate;
 use App\Framework\Core\Locales\Locales;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
+use Phpfastcache\Exceptions\PhpfastcacheExceptionInterface;
 use Phpfastcache\Helper\Psr16Adapter;
+use Psr\SimpleCache\CacheException;
 use Psr\SimpleCache\CacheInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 use function intl_get_error_message;
 
@@ -38,6 +38,8 @@ use function intl_get_error_message;
  * It supports translation lookups, pluralization handling, and replacement of placeholders
  * within translation strings. Translations can be loaded, cached, and retrieved using a
  * dynamic key and module approach.
+ *
+ * The cache is only an optimization: if it fails, translations are loaded directly from the loader.
  */
 class Translator
 {
@@ -62,8 +64,6 @@ class Translator
 	 * @param array<string,string> $replacements
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function translate(string $key, string $module, array $replacements = []): string
 	{
@@ -80,8 +80,6 @@ class Translator
 	 * @return  array<string,mixed>
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function translateArrayForOptions(string $key, string $module): array
 	{
@@ -97,8 +95,7 @@ class Translator
 	/**
 	 * @param array<string,mixed> $replacements
 	 * @throws CoreException
-	 * @throws InvalidArgumentException
-	 * @throws FrameworkException|PhpfastcacheSimpleCacheException
+	 * @throws FrameworkException
 	 */
 	public function translateWithPlural(string $key, string $module, int $count, array $replacements = []): string
 	{
@@ -117,8 +114,6 @@ class Translator
 	/**
 	 * @param array<string,mixed> $replacements
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function translateArrayWithPlural(string $key, string $section, string $module, int $count, array $replacements = []): string
@@ -135,8 +130,7 @@ class Translator
 
 	/**
 	 * @return string|array<string,mixed>
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws CoreException
 	 */
 	protected function findTranslation(string $key, string $module, string $languageCode): string|array
 	{
@@ -144,17 +138,48 @@ class Translator
 
 		if (!isset($this->translationStack[$cacheKey]))
 		{
-			if ($this->cache->has($cacheKey))
-				$this->translationStack[$cacheKey] = $this->cache->get($cacheKey);
-			else
+			$data = $this->readFromCache($cacheKey);
+			if ($data === null)
 			{
 				$data = $this->loader->load($languageCode, $module);
-				$this->translationStack[$cacheKey] = $data;
-				$this->cache->set($cacheKey, $data);
+				$this->writeToCache($cacheKey, $data);
 			}
+			$this->translationStack[$cacheKey] = $data;
 		}
 
 		return $this->translationStack[$cacheKey][$key] ?? '';
+	}
+
+	/**
+	 * @return array<string,mixed>|null null when not cached or the cache is not available
+	 */
+	protected function readFromCache(string $cacheKey): ?array
+	{
+		try
+		{
+			// one lookup instead of has() + get()
+			$data = $this->cache->get($cacheKey);
+			return is_array($data) ? $data : null;
+		}
+		catch (CacheException|PhpfastcacheExceptionInterface)
+		{
+			return null;
+		}
+	}
+
+	/**
+	 * @param array<string,mixed> $data
+	 */
+	protected function writeToCache(string $cacheKey, array $data): void
+	{
+		try
+		{
+			$this->cache->set($cacheKey, $data);
+		}
+		catch (CacheException|PhpfastcacheExceptionInterface)
+		{
+			// translations are loaded again with the next request
+		}
 	}
 
 	/**

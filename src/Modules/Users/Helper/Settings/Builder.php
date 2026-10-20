@@ -28,8 +28,6 @@ use App\Framework\Exceptions\ModuleException;
 use App\Modules\Profile\Entities\TokenPurposes;
 use App\Modules\Users\Services\AclValidator;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Builder class is responsible for managing form element creation, parameter configuration,
@@ -61,7 +59,6 @@ class Builder
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 */
 	public function configNewParameter(): void
@@ -80,7 +77,6 @@ class Builder
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function configEditParameter(array $user): void
 	{
@@ -98,8 +94,6 @@ class Builder
 	 * @return array<string,mixed>
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function buildForm(array $user, Session $session): array
 	{
@@ -160,8 +154,6 @@ class Builder
 	/**
 	 * @return list<array<string,string>>
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function addButtons(): array
@@ -176,9 +168,7 @@ class Builder
 	 * @return array<string,mixed>
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function handleUserInput(array $post): array
 	{

@@ -34,7 +34,6 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class TranslatorTest extends TestCase
 {
@@ -64,19 +63,16 @@ class TranslatorTest extends TestCase
     }
 
 	/**
-	 * @throws InvalidArgumentException
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
     #[Group('units')]
     public function testTranslateReturnsTranslation(): void
     {
         $this->localesMock->method('getLanguageCode')->willReturn('en');
-        $this->cacheMock->method('has')->willReturn(false);
+        $this->cacheMock->expects($this->once())->method('get')->willReturn(null);
         $this->loaderMock->method('load')->willReturn(['greeting' => 'Hello, {name}!']);
         $this->cacheMock->expects($this->once())->method('set');
-        $this->cacheMock->expects($this->never())->method('get');
 
         $result = $this->translator->translate('greeting', 'test_module', ['{name}' => 'John']);
 
@@ -85,18 +81,15 @@ class TranslatorTest extends TestCase
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
 	public function testTranslateReturnsEmpty(): void
 	{
 		$this->localesMock->method('getLanguageCode')->willReturn('en');
-		$this->cacheMock->method('has')->willReturn(false);
+		$this->cacheMock->method('get')->willReturn(null);
 		$this->loaderMock->method('load')->willReturn(['greeting' => ['Hello','John']]);
 		$this->cacheMock->expects($this->once())->method('set');
-		$this->cacheMock->expects($this->never())->method('get');
 
 		$result = $this->translator->translate('greeting', 'test_module');
 
@@ -107,14 +100,11 @@ class TranslatorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
     #[Group('units')]
     public function testTranslateSucceedWithCacheKey(): void
     {
         $this->localesMock->method('getLanguageCode')->willReturn('en');
-        $this->cacheMock->method('has')->willReturn(true);
         $this->cacheMock->method('get')->willReturn(['greeting' => 'Hello, {name}!']);
         $this->loaderMock->expects($this->never())->method('load');
         $this->cacheMock->expects($this->never())->method('set');
@@ -125,15 +115,13 @@ class TranslatorTest extends TestCase
 
 	/**
 	 * @throws CoreException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
     #[Group('units')]
     public function testTranslateThrowsExceptionForMissingKey(): void
     {
         $this->localesMock->method('getLanguageCode')->willReturn('en');
-        $this->cacheMock->method('has')->willReturn(false);
+        $this->cacheMock->method('get')->willReturn(null);
         $this->loaderMock->method('load')->willReturn(['other_key' => 'Some value']);
         $this->cacheMock->expects($this->once())->method('set');
 
@@ -145,14 +133,12 @@ class TranslatorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
     #[Group('units')]
     public function testTranslatePluralReturnsFormattedString(): void
     {
         $this->localesMock->method('getLanguageCode')->willReturn('en');
-        $this->cacheMock->method('has')->willReturn(false);
+        $this->cacheMock->method('get')->willReturn(null);
         $this->loaderMock->method('load')->willReturn(['item_count' => '{count} items']);
 
         $formatterMock = $this->createMock(MessageFormatter::class);
@@ -166,15 +152,13 @@ class TranslatorTest extends TestCase
 	/**
 	 * @throws Exception
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
 	public function testTranslatePluralReturnsEmpty(): void
 	{
 		$this->localesMock->method('getLanguageCode')->willReturn('en');
-		$this->cacheMock->method('has')->willReturn(false);
+		$this->cacheMock->method('get')->willReturn(null);
 		$this->loaderMock->method('load')->willReturn(['item_count' => ['uiuiuiui']]);
 
 		$formatterMock = $this->createMock(MessageFormatter::class);
@@ -190,14 +174,12 @@ class TranslatorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
     public function testTranslatePluralReturnsFrameworkException(): void
     {
         $this->localesMock->method('getLanguageCode')->willReturn('en');
-        $this->cacheMock->method('has')->willReturn(false);
+        $this->cacheMock->method('get')->willReturn(null);
         $this->loaderMock->method('load')->willReturn(['item_count' => '{count} items']);
 
         $formatterMock = $this->createMock(MessageFormatter::class);
@@ -210,16 +192,14 @@ class TranslatorTest extends TestCase
 
 
 	/**
-	 * @throws InvalidArgumentException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws FrameworkException
 	 */
     #[Group('units')]
     public function testTranslateArrayForOptionsReturnsArray(): void
     {
         $this->localesMock->method('getLanguageCode')->willReturn('en');
-        $this->cacheMock->method('has')->willReturn(false);
+        $this->cacheMock->method('get')->willReturn(null);
         $this->loaderMock->method('load')->willReturn(['options' => ['opt1' => 'Option 1', 'opt2' => 'Option 2']]);
 
         $result = $this->translator->translateArrayForOptions('options', 'test_module');
@@ -229,15 +209,13 @@ class TranslatorTest extends TestCase
 
 	/**
 	 * @throws CoreException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws FrameworkException
 	 */
     #[Group('units')]
     public function testTranslateArrayForOptionsHandlesNonArrayGracefully(): void
     {
         $this->localesMock->method('getLanguageCode')->willReturn('en');
-        $this->cacheMock->method('has')->willReturn(false);
+        $this->cacheMock->method('get')->willReturn(null);
         $this->loaderMock->method('load')->willReturn(['options' => 'Not an array']);
 
 		$result = $this->translator->translateArrayForOptions('options', 'test_module');
@@ -248,14 +226,12 @@ class TranslatorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testTranslateArrayWithPluralReturnsFormattedStringSuccessfully(): void
 	{
 		$this->localesMock->method('getLanguageCode')->willReturn('en');
-		$this->cacheMock->method('has')->willReturn(false);
+		$this->cacheMock->method('get')->willReturn(null);
 		$this->loaderMock->method('load')->willReturn(['time_unit_ago' => ['days' => '{count} days ago']]);
 
 		$formatterMock = $this->createMock(MessageFormatter::class);
@@ -270,14 +246,12 @@ class TranslatorTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testTranslateArrayWithPluralHandlesMissingKeyGracefully(): void
 	{
 		$this->localesMock->method('getLanguageCode')->willReturn('en');
-		$this->cacheMock->method('has')->willReturn(false);
+		$this->cacheMock->method('get')->willReturn(null);
 		$this->loaderMock->method('load')->willReturn(['time_unit_ago' => ['hours' => '{count} hours ago']]);
 
 		$formatterMock = $this->createMock(MessageFormatter::class);
@@ -288,4 +262,39 @@ class TranslatorTest extends TestCase
 		static::assertEquals('', $result);
 	}
 
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testTranslateLoadsDirectlyWhenCacheFails(): void
+	{
+		$this->localesMock->method('getLanguageCode')->willReturn('en');
+		$this->cacheMock->expects($this->once())->method('get')
+			->willThrowException(new PhpfastcacheSimpleCacheException('cache down'));
+		$this->cacheMock->expects($this->never())->method('has');
+		$this->cacheMock->expects($this->once())->method('set')
+			->willThrowException(new PhpfastcacheSimpleCacheException('cache down'));
+		$this->loaderMock->expects($this->once())->method('load')->with('en', 'main')->willReturn(['save' => 'Save']);
+
+		static::assertSame('Save', $this->translator->translate('save', 'main'));
+		// loaded translations stay in memory for this request
+		static::assertSame('Save', $this->translator->translate('save', 'main'));
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testTranslateUsesCachedTranslations(): void
+	{
+		$this->localesMock->method('getLanguageCode')->willReturn('de');
+		$this->cacheMock->expects($this->never())->method('has');
+		$this->cacheMock->expects($this->once())->method('get')->with('lang_de_main')->willReturn(['save' => 'Speichern']);
+		$this->cacheMock->expects($this->never())->method('set');
+		$this->loaderMock->expects($this->never())->method('load');
+
+		static::assertSame('Speichern', $this->translator->translate('save', 'main'));
+	}
 }

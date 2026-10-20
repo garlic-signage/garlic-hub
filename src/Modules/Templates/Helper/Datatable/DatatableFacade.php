@@ -30,8 +30,6 @@ use App\Framework\Utils\Datatable\DatatableFacadeInterface;
 use App\Framework\Utils\Datatable\Results\HeaderField;
 use App\Modules\Templates\Services\TemplatesDatatableService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Facade class responsible for managing the datatable's configuration, preparation, processing, and rendering.
@@ -49,7 +47,6 @@ class DatatableFacade implements DatatableFacadeInterface
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws Exception
 	 */
@@ -81,8 +78,6 @@ class DatatableFacade implements DatatableFacadeInterface
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function prepareDataGrid(): static
@@ -101,9 +96,7 @@ class DatatableFacade implements DatatableFacadeInterface
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function prepareUITemplate(): array
 	{
@@ -135,8 +128,6 @@ class DatatableFacade implements DatatableFacadeInterface
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	private function prepareList(array $fields): array
 	{
@@ -154,8 +145,6 @@ class DatatableFacade implements DatatableFacadeInterface
 	 * @return array<string,string>
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function prepareContextMenu(): array
 	{

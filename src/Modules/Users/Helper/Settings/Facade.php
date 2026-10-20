@@ -29,8 +29,6 @@ use App\Framework\Exceptions\ModuleException;
 use App\Modules\Profile\Entities\TokenPurposes;
 use App\Modules\Users\Services\UsersAdminService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * The Facade class serves as a mediator between various system components, providing streamlined access
@@ -99,8 +97,6 @@ class Facade
 	 * @return string[]
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 */
@@ -163,8 +159,6 @@ class Facade
 	 * @return string[]
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function getUserServiceErrors(): array
 	{
@@ -178,7 +172,6 @@ class Facade
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws CoreException
 	 * @throws Exception
 	 */
@@ -189,7 +182,6 @@ class Facade
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 */
@@ -203,8 +195,6 @@ class Facade
 	 * @return array<string,mixed>
 	 *
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	public function prepareUITemplate(array $post): array

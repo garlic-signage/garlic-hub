@@ -30,8 +30,6 @@ use App\Framework\Utils\Datatable\TimeUnitsCalculator;
 use App\Modules\Player\Enums\PlayerStatus;
 use DateMalformedStringException;
 use DateTime;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Class DatatablePreparer
@@ -60,8 +58,6 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	 * @return list<array<string,mixed>>
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws DateMalformedStringException
 	 */
 	public function prepareTableBody(array $currentFilterResults, array $fields, int $currentUID): array
@@ -155,8 +151,6 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	 * @return array<string,string>
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function formatContextMenu(): array
 	{

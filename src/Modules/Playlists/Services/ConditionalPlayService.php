@@ -28,7 +28,6 @@ use App\Framework\Services\AbstractBaseService;
 use App\Modules\Playlists\Helper\ConditionalPlay\TemplatePreparer;
 use App\Modules\Playlists\Helper\Widgets\ContentDataPreparer;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -94,7 +93,6 @@ class ConditionalPlayService extends AbstractBaseService
 	 * @return array<string,mixed>
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 */

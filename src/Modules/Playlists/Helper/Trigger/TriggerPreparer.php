@@ -24,8 +24,6 @@ namespace App\Modules\Playlists\Helper\Trigger;
 use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * The TriggerPreparer class is responsible for preparing template data for triggers in the system.
@@ -52,8 +50,6 @@ class TriggerPreparer
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 */
 	public function generate(int $itemId): static
 	{
@@ -94,8 +90,6 @@ class TriggerPreparer
 	/**
 	 * @return list<array<string,string>>
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	private function generateWeekdays(): array

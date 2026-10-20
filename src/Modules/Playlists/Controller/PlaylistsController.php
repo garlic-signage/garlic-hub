@@ -27,10 +27,8 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Playlists\Helper\Playlists\Orchestrator;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Controller responsible for handling various playlist-related operations such as deletion, shuffle toggling, zone management, and data retrieval.
@@ -43,8 +41,6 @@ readonly class PlaylistsController
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -59,8 +55,6 @@ readonly class PlaylistsController
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 * @throws Exception
 	 * @throws ModuleException
@@ -77,8 +71,6 @@ readonly class PlaylistsController
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 * @throws Exception
 	 * @throws ModuleException
@@ -109,8 +101,6 @@ readonly class PlaylistsController
 	 * @param array<string,mixed> $args
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	public function saveZone(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
@@ -130,7 +120,6 @@ readonly class PlaylistsController
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	public function findByName(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
@@ -143,7 +132,6 @@ readonly class PlaylistsController
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	public function findForPlayerAssignment(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface

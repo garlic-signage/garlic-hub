@@ -31,14 +31,12 @@ use App\Modules\Users\Helper\InitialAdmin\Builder;
 use App\Modules\Users\Helper\InitialAdmin\Facade;
 use App\Modules\Users\Helper\InitialAdmin\Parameters;
 use App\Modules\Users\Services\UsersAdminCreateService;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class FacadeTest extends TestCase
 {
@@ -118,8 +116,6 @@ class FacadeTest extends TestCase
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
@@ -173,8 +169,6 @@ class FacadeTest extends TestCase
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
@@ -200,8 +194,6 @@ class FacadeTest extends TestCase
 
 	/**
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]

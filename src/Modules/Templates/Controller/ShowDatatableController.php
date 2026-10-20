@@ -28,10 +28,8 @@ use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
 use App\Modules\Templates\Helper\Datatable\DatatableFacade;
 use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * A controller responsible for displaying and managing datatables within the application.
@@ -50,9 +48,7 @@ readonly class ShowDatatableController
 	 * @return ResponseInterface
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws DateMalformedStringException
 	 * @throws Exception
 	 */

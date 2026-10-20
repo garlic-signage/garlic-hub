@@ -28,7 +28,6 @@ use App\Framework\Exceptions\UserException;
 use App\Modules\Playlists\Controller\PlaylistsController;
 use App\Modules\Playlists\Helper\Playlists\Orchestrator;
 use Doctrine\DBAL\Exception as DBALException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -36,7 +35,6 @@ use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class PlaylistsControllerTest extends TestCase
 {
@@ -64,9 +62,7 @@ class PlaylistsControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -91,9 +87,7 @@ class PlaylistsControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -120,9 +114,7 @@ class PlaylistsControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -147,9 +139,7 @@ class PlaylistsControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -176,9 +166,7 @@ class PlaylistsControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -203,9 +191,7 @@ class PlaylistsControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -232,9 +218,7 @@ class PlaylistsControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -258,9 +242,7 @@ class PlaylistsControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -286,9 +268,7 @@ class PlaylistsControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -312,9 +292,7 @@ class PlaylistsControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -340,9 +318,7 @@ class PlaylistsControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -366,9 +342,7 @@ class PlaylistsControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -394,9 +368,7 @@ class PlaylistsControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -419,9 +391,7 @@ class PlaylistsControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]

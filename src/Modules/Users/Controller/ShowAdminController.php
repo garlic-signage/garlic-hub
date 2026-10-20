@@ -27,10 +27,8 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\Forms\FormTemplatePreparer;
 use App\Modules\Users\Helper\Settings\Facade;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 use Slim\Flash\Messages;
 
 /**
@@ -55,8 +53,6 @@ class ShowAdminController
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function newUserForm(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
@@ -74,8 +70,6 @@ class ShowAdminController
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function editUserForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
@@ -101,8 +95,6 @@ class ShowAdminController
 	/**
 	 * @throws ModuleException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 */
@@ -166,8 +158,6 @@ class ShowAdminController
 	 * @return ResponseInterface
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	private function outputRenderedForm(ResponseInterface $response, array $userInput): ResponseInterface
 	{

@@ -29,9 +29,7 @@ use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\UploadService;
 use Doctrine\DBAL\Exception;
 use GuzzleHttp\Exception\GuzzleException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Psr\Http\Message\ResponseInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 use Slim\Psr7\UploadedFile;
 
 /**
@@ -96,8 +94,6 @@ class Orchestrator
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function validateUploadLocalFile(ResponseInterface $response): ?ResponseInterface
 	{
@@ -135,8 +131,6 @@ class Orchestrator
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function validateUploadFromUrl(ResponseInterface $response): ?ResponseInterface
 	{
@@ -187,8 +181,6 @@ class Orchestrator
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	private function validateToken(ResponseInterface $response): ?ResponseInterface
 	{

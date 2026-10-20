@@ -28,7 +28,6 @@ use App\Framework\Exceptions\UserException;
 use App\Modules\Mediapool\Controller\NodesController;
 use App\Modules\Mediapool\Helper\Nodes\Orchestrator;
 use Doctrine\DBAL\Exception as DBALException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -36,7 +35,6 @@ use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 
 class NodesControllerTest extends TestCase
 {
@@ -68,9 +66,7 @@ class NodesControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -92,9 +88,7 @@ class NodesControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -115,9 +109,7 @@ class NodesControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -140,9 +132,7 @@ class NodesControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -163,9 +153,7 @@ class NodesControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -188,9 +176,7 @@ class NodesControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -211,9 +197,7 @@ class NodesControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -236,9 +220,7 @@ class NodesControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]
@@ -259,9 +241,7 @@ class NodesControllerTest extends TestCase
 	 * @throws CoreException
 	 * @throws DBALException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 */
 	#[Group('units')]

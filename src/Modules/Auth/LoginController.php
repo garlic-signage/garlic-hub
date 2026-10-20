@@ -26,8 +26,6 @@ use App\Framework\Core\Session;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
 use Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\Cache\InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -48,7 +46,7 @@ readonly class LoginController
 	}
 
 	/**
-	 * @throws Exception|\Psr\SimpleCache\InvalidArgumentException
+	 * @throws Exception
 	 */
 	public function showLogin(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
@@ -84,8 +82,6 @@ readonly class LoginController
 	 * @param ResponseInterface $response
 	 * @return ResponseInterface
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws UserException
 	 * @throws \Doctrine\DBAL\Exception
 	 * @throws Exception
@@ -140,8 +136,6 @@ readonly class LoginController
 	}
 
 	/**
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws InvalidArgumentException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 */

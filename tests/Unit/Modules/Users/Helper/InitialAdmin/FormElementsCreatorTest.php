@@ -33,7 +33,6 @@ use App\Modules\Users\Helper\InitialAdmin\FormElementsCreator;
 use App\Modules\Users\Helper\InitialAdmin\Parameters;
 use Exception;
 use InvalidArgumentException;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -60,8 +59,6 @@ class FormElementsCreatorTest extends TestCase
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
-	 * @throws PhpfastcacheSimpleCacheException
-	 * @throws \Psr\SimpleCache\InvalidArgumentException
 	 */
 	#[Group('units')]
 	public function testCreateUserNameField(): void
@@ -94,9 +91,8 @@ class FormElementsCreatorTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws CoreException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws InvalidArgumentException
-	 * @throws \PHPUnit\Framework\MockObject\Exception|\Psr\SimpleCache\InvalidArgumentException
+	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 */
 	#[Group('units')]
 	public function testCreatePasswordField(): void
@@ -135,9 +131,7 @@ class FormElementsCreatorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
-	 * @throws \Psr\SimpleCache\InvalidArgumentException
 	 */
 	#[Group('units')]
 	public function testCreatePasswordConfirmField(): void
@@ -175,10 +169,8 @@ class FormElementsCreatorTest extends TestCase
 	 *
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws InvalidArgumentException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
-	 * @throws \Psr\SimpleCache\InvalidArgumentException
 	 */
 	#[Group('units')]
 	public function testCreateUserLocaleField(): void
@@ -217,9 +209,7 @@ class FormElementsCreatorTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 * @throws \PHPUnit\Framework\MockObject\Exception
-	 * @throws \Psr\SimpleCache\InvalidArgumentException
 	 */
 	#[Group('units')]
 	public function testCreateEmailField(): void

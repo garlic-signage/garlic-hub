@@ -25,8 +25,6 @@ namespace App\Modules\Playlists\Helper\Trigger;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\TemplateEngine\AdapterInterface;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * This class is responsible for preparing and rendering templates by utilizing a provided AdapterInterface and TriggerPreparer.
@@ -41,8 +39,6 @@ readonly class TemplatePreparer
 	 * @param int $itemId
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	public function prepare(int $itemId): void
 	{

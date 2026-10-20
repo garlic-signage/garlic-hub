@@ -29,7 +29,6 @@ use App\Modules\Templates\Repositories\TemplatesRepository;
 use App\Modules\Templates\Services\AclValidator;
 use App\Modules\Templates\Services\TemplatesService;
 use Doctrine\DBAL\Exception;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -64,7 +63,6 @@ class TemplatesServiceTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testCheckCreateRights(): void
@@ -79,7 +77,6 @@ class TemplatesServiceTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testCheckCreateRightsDenied(): void
@@ -160,7 +157,6 @@ class TemplatesServiceTest extends TestCase
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testLoadWithUserById(): void
@@ -176,7 +172,6 @@ class TemplatesServiceTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testLoadWithUserByIdNotFound(): void
@@ -195,7 +190,6 @@ class TemplatesServiceTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws PhpfastcacheSimpleCacheException
 	 */
 	#[Group('units')]
 	public function testLoadWithUserByIdNotEditable(): void
