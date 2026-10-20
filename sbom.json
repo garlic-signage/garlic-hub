@@ -2,14 +2,14 @@
     "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
     "bomFormat": "CycloneDX",
     "specVersion": "1.5",
-    "serialNumber": "urn:uuid:c7e248dc-5e96-44ce-9b7b-70a60e17da8a",
+    "serialNumber": "urn:uuid:5714eecd-4620-4e49-8919-173b0d9512ed",
     "version": 1,
     "metadata": {
-        "timestamp": "2026-08-16T15:59:28Z",
+        "timestamp": "2026-10-20T00:17:21Z",
         "tools": [
             {
                 "name": "composer",
-                "version": "2.10.2"
+                "version": "2.10.3"
             },
             {
                 "vendor": "cyclonedx",
@@ -99,11 +99,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "f37c25b4e5bee1c9facc1587f6a1b280700f18d9"
+                    "value": "1646c847ffda5941a488c77033b87eb893f28d20"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "f37c25b4e5bee1c9facc1587f6a1b280700f18d9"
+                    "value": "1646c847ffda5941a488c77033b87eb893f28d20"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -1513,12 +1513,12 @@
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/PHPSocialNetwork/phpfastcache/zipball/7c24491baf23ffb637b18e485f517144cd9af203",
+                    "url": "https://api.github.com/repos/TruCopilot/phpfastcache/zipball/7c24491baf23ffb637b18e485f517144cd9af203",
                     "comment": "dist reference: 7c24491baf23ffb637b18e485f517144cd9af203"
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/PHPSocialNetwork/phpfastcache.git",
+                    "url": "https://github.com/TruCopilot/phpfastcache.git",
                     "comment": "source reference: 7c24491baf23ffb637b18e485f517144cd9af203"
                 },
                 {
