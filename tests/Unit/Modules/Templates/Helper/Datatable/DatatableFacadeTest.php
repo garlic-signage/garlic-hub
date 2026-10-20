@@ -77,10 +77,8 @@ class DatatableFacadeTest extends TestCase
 		$this->facade->configure($this->translatorStub, $this->sessionStub);
 	}
 
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 */
+    /**
+     */
 	#[Group('units')]
 	public function testCheckRights(): void
 	{

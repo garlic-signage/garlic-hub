@@ -24,6 +24,7 @@ namespace Tests\Unit\Modules\Templates\Helper\Settings;
 use App\Framework\Core\Sanitizer;
 use App\Framework\Core\Session;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Modules\Templates\Helper\Settings\Parameters;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
@@ -43,7 +44,7 @@ class ParametersTest extends TestCase
 	{
 		static::assertCount(2, $this->parameters->getCurrentParameters());
 		static::assertSame('templates', $this->parameters->getModuleName());
-		static::assertTrue($this->parameters->hasParameter(Parameters::PARAMETER_CSRF_TOKEN));
+		static::assertTrue($this->parameters->hasParameter(BaseEditParameters::PARAMETER_CSRF_TOKEN));
 		static::assertTrue($this->parameters->hasParameter(Parameters::PARAMETER_NAME));
 	}
 

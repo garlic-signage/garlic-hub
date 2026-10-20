@@ -21,10 +21,14 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Templates\Controller;
 
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\ModuleException;
 use App\Modules\Templates\Controller\ShowSettingsController;
 use App\Modules\Templates\Helper\Settings\Orchestrator;
 use App\Modules\Templates\Helper\Settings\TemplatePreparer;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
@@ -46,7 +50,7 @@ class ShowSettingsControllerTest extends TestCase
 	private array $prepared = ['main_layout' => ['title' => 'x'], 'this_layout' => ['template' => 'templates/edit']];
 
 	/**
-	 * @throws \PHPUnit\Framework\MockObject\Exception
+	 * @throws Exception
 	 */
 	protected function setUp(): void
 	{
@@ -59,7 +63,12 @@ class ShowSettingsControllerTest extends TestCase
 		$this->controller = new ShowSettingsController($this->orchestratorMock, $this->templatePreparerMock);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws CoreException
+     * @throws FrameworkException
+     * @throws \Doctrine\DBAL\Exception
+     */
+    #[Group('units')]
 	public function testCreateWithoutRights(): void
 	{
 		$this->orchestratorMock->expects($this->once())->method('checkCreateRights')->willReturn(false);
@@ -69,7 +78,12 @@ class ShowSettingsControllerTest extends TestCase
 		$this->controller->create($this->request(), $this->responseMock, ['type' => 'canvas']);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws CoreException
+     * @throws FrameworkException
+     * @throws \Doctrine\DBAL\Exception
+     */
+    #[Group('units')]
 	public function testCreate(): void
 	{
 		$this->orchestratorMock->expects($this->once())->method('checkCreateRights')->willReturn(true);
@@ -81,7 +95,12 @@ class ShowSettingsControllerTest extends TestCase
 		$this->controller->create($this->request(), $this->responseMock, ['type' => 'canvas']);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws CoreException
+     * @throws \Doctrine\DBAL\Exception
+     * @throws FrameworkException
+     */
+    #[Group('units')]
 	public function testEditWithoutRights(): void
 	{
 		$this->orchestratorMock->expects($this->once())->method('checkEditRights')->with(12)->willReturn(false);
@@ -91,7 +110,12 @@ class ShowSettingsControllerTest extends TestCase
 		$this->controller->edit($this->request(), $this->responseMock, ['template_id' => '12']);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws CoreException
+     * @throws FrameworkException
+     * @throws \Doctrine\DBAL\Exception
+     */
+    #[Group('units')]
 	public function testEdit(): void
 	{
 		$this->orchestratorMock->expects($this->once())->method('checkEditRights')->with(12)->willReturn(true);
@@ -103,7 +127,13 @@ class ShowSettingsControllerTest extends TestCase
 		$this->controller->edit($this->request(), $this->responseMock, ['template_id' => '12']);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws ModuleException
+     * @throws CoreException
+     * @throws FrameworkException
+     * @throws \Doctrine\DBAL\Exception
+     */
+    #[Group('units')]
 	public function testStoreInsertWithoutRights(): void
 	{
 		$this->orchestratorMock->expects($this->once())->method('checkCreateRights')->willReturn(false);
@@ -113,7 +143,13 @@ class ShowSettingsControllerTest extends TestCase
 		$this->controller->store($this->request(['name' => 'Tpl']), $this->responseMock);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws ModuleException
+     * @throws CoreException
+     * @throws FrameworkException
+     * @throws \Doctrine\DBAL\Exception
+     */
+    #[Group('units')]
 	public function testStoreInsertWithErrorsShowsFormAgain(): void
 	{
 		$post = ['name' => '', 'type' => 'canvas'];
@@ -132,7 +168,13 @@ class ShowSettingsControllerTest extends TestCase
 		static::assertSame(['error:Name is missing.', 'error:CSRF token mismatch.'], $errors);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws ModuleException
+     * @throws CoreException
+     * @throws \Doctrine\DBAL\Exception
+     * @throws FrameworkException
+     */
+    #[Group('units')]
 	public function testStoreInsert(): void
 	{
 		$this->orchestratorMock->expects($this->once())->method('checkCreateRights')->willReturn(true);
@@ -143,7 +185,13 @@ class ShowSettingsControllerTest extends TestCase
 		$this->controller->store($this->request(['name' => 'Tpl']), $this->responseMock);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws ModuleException
+     * @throws CoreException
+     * @throws FrameworkException
+     * @throws \Doctrine\DBAL\Exception
+     */
+    #[Group('units')]
 	public function testStoreUpdateWithoutRights(): void
 	{
 		$this->orchestratorMock->expects($this->once())->method('checkEditRights')->with(12)->willReturn(false);
@@ -154,7 +202,13 @@ class ShowSettingsControllerTest extends TestCase
 		$this->controller->store($this->request(['template_id' => '12']), $this->responseMock);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws ModuleException
+     * @throws CoreException
+     * @throws \Doctrine\DBAL\Exception
+     * @throws FrameworkException
+     */
+    #[Group('units')]
 	public function testStoreUpdateWithErrorsShowsFormAgain(): void
 	{
 		$post = ['template_id' => '12', 'name' => ''];
@@ -169,7 +223,13 @@ class ShowSettingsControllerTest extends TestCase
 		$this->controller->store($this->request($post), $this->responseMock);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws ModuleException
+     * @throws CoreException
+     * @throws \Doctrine\DBAL\Exception
+     * @throws FrameworkException
+     */
+    #[Group('units')]
 	public function testStoreUpdate(): void
 	{
 		$this->orchestratorMock->expects($this->once())->method('checkEditRights')->with(12)->willReturn(true);

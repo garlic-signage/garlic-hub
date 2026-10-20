@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Templates\Controller;
 
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
 use App\Modules\Templates\Controller\ShowComposerController;
 use App\Modules\Templates\Helper\Composer\Orchestrator;
 use PHPUnit\Framework\Attributes\Group;
@@ -56,7 +58,12 @@ class ShowComposerControllerTest extends TestCase
 		$this->controller = new ShowComposerController($this->orchestratorMock);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws CoreException
+     * @throws FrameworkException
+     * @throws \Doctrine\DBAL\Exception
+     */
+    #[Group('units')]
 	public function testShowWithoutRights(): void
 	{
 		$this->orchestratorMock->expects($this->once())->method('checkEditRights')->with(12)->willReturn(false);
@@ -68,7 +75,12 @@ class ShowComposerControllerTest extends TestCase
 		$this->controller->show($this->request, $this->responseMock, ['template_id' => '12']);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws CoreException
+     * @throws FrameworkException
+     * @throws \Doctrine\DBAL\Exception
+     */
+    #[Group('units')]
 	public function testShow(): void
 	{
 		$composer = ['main_layout' => ['title' => 'x'], 'this_layout' => ['template' => 'templates/canvas', 'data' => []]];

@@ -60,10 +60,8 @@ class TemplatesServiceTest extends TestCase
 		$this->service = new TemplatesService($this->repositoryMock, $this->aclValidatorMock, $userSessionStub, $this->loggerMock);
 	}
 
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 */
+    /**
+     */
 	#[Group('units')]
 	public function testCheckCreateRights(): void
 	{
@@ -74,10 +72,8 @@ class TemplatesServiceTest extends TestCase
 		static::assertTrue($this->service->checkCreateRights());
 	}
 
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 */
+    /**
+     */
 	#[Group('units')]
 	public function testCheckCreateRightsDenied(): void
 	{

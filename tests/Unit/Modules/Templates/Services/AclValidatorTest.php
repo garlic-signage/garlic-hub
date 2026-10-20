@@ -61,10 +61,8 @@ class AclValidatorTest extends TestCase
 		static::assertSame('templates', $this->aclValidator->getModuleName());
 	}
 
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 */
+    /**
+     */
 	#[Group('units')]
 	public function testCanCreateAsModuleAdmin(): void
 	{
@@ -74,10 +72,8 @@ class AclValidatorTest extends TestCase
 		static::assertTrue($this->aclValidator->canCreate(1));
 	}
 
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 */
+    /**
+     */
 	#[Group('units')]
 	public function testCanCreateAsSubAdmin(): void
 	{
@@ -87,10 +83,8 @@ class AclValidatorTest extends TestCase
 		static::assertTrue($this->aclValidator->canCreate(1));
 	}
 
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 */
+    /**
+     */
 	#[Group('units')]
 	public function testCanCreateAsUser(): void
 	{

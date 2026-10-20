@@ -135,7 +135,10 @@ class DatatableBuilderTest extends TestCase
 		$this->builder->configureParameters(456);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws ModuleException
+     */
+    #[Group('units')]
 	public function testDetermineParametersSetsUserInputsAndParsesFilterAllUsers(): void
 	{
 		$queryParams = ['test_key' => 'test_value'];

@@ -29,6 +29,7 @@ use App\Framework\Utils\Html\FieldType;
 use App\Framework\Utils\Html\FormBuilder;
 use App\Modules\Templates\Helper\Settings\FormElementsCreator;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -39,7 +40,7 @@ class FormElementsCreatorTest extends TestCase
 	private FormElementsCreator $creator;
 
 	/**
-	 * @throws \PHPUnit\Framework\MockObject\Exception
+	 * @throws Exception
 	 */
 	protected function setUp(): void
 	{

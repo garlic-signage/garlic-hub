@@ -28,6 +28,7 @@ use App\Modules\Templates\Helper\Settings\FormInputHandler;
 use App\Modules\Templates\Helper\Settings\Parameters;
 use App\Modules\Templates\Helper\Settings\Validator;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -38,7 +39,7 @@ class FormInputHandlerTest extends TestCase
 	private FormInputHandler $handler;
 
 	/**
-	 * @throws \PHPUnit\Framework\MockObject\Exception
+	 * @throws Exception
 	 */
 	protected function setUp(): void
 	{

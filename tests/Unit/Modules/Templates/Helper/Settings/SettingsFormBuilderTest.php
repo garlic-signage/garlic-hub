@@ -30,6 +30,7 @@ use App\Modules\Templates\Helper\Settings\FormElementsCreator;
 use App\Modules\Templates\Helper\Settings\Parameters;
 use App\Modules\Templates\Helper\Settings\SettingsFormBuilder;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
@@ -45,7 +46,7 @@ class SettingsFormBuilderTest extends TestCase
 	private array $prepared = ['hidden' => [], 'visible' => [['name' => 'x']]];
 
 	/**
-	 * @throws \PHPUnit\Framework\MockObject\Exception
+	 * @throws Exception
 	 */
 	protected function setUp(): void
 	{

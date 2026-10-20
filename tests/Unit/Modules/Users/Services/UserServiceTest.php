@@ -66,7 +66,6 @@ class UserServiceTest extends TestCase
 	public function testUpdateUserStatsSuccess(): void
 	{
 		$UID = 123;
-		$sessionId = 'abc-123';
 		$expectedData = [
 			'login_time' => date('Y-m-d H:i:s'),
 			'num_logins' => 'num_logins + 1'
@@ -94,7 +93,6 @@ class UserServiceTest extends TestCase
 	public function testUpdateUserStatsFailure(): void
 	{
 		$UID = 123;
-		$sessionId = 'invalid-session';
 
 		$this->repositoryFactoryMock->method('create')
 			->willReturn(['main' => $this->userMainRepositoryMock]);
@@ -226,7 +224,10 @@ class UserServiceTest extends TestCase
 		static::assertEquals($mockUserEntity, $result);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws CoreException
+     */
+    #[Group('units')]
 	public function testInvalidCache(): void
 	{
 		$UID = 14;

@@ -30,6 +30,7 @@ use App\Modules\Templates\Helper\Settings\SettingsFormBuilder;
 use App\Modules\Templates\Helper\Settings\SettingsParametersPolicy;
 use App\Modules\Templates\Services\TemplatesService;
 use Doctrine\DBAL\Exception;
+use Doctrine\DBAL\Exception\ConnectionLost;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -114,7 +115,7 @@ class OrchestratorTest extends TestCase
 	public function testCheckEditRightsPassesDatabaseErrors(): void
 	{
 		$this->serviceMock->expects($this->once())->method('loadWithUserById')
-			->willThrowException(new \Doctrine\DBAL\Exception\ConnectionLost(
+			->willThrowException(new ConnectionLost(
 				$this->createStub(\Doctrine\DBAL\Driver\Exception::class), null
 			));
 		$this->expectNoFormHandling();

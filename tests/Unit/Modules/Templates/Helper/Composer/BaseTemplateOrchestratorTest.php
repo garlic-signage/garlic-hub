@@ -25,6 +25,7 @@ use App\Framework\Core\Config\Config;
 use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Templates\Helper\Composer\BaseTemplateOrchestrator;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
@@ -37,8 +38,8 @@ class TestableTemplateOrchestrator extends BaseTemplateOrchestrator
 	}
 
 	/**
-	 * @param array<mixed> $objects
-	 * @return array<mixed>
+	 * @param array $objects
+	 * @return array
 	 */
 	public function callRestoreSrc(array $objects): array
 	{
@@ -65,7 +66,7 @@ class BaseTemplateOrchestratorTest extends TestCase
 	private array $server;
 
 	/**
-	 * @throws \PHPUnit\Framework\MockObject\Exception
+	 * @throws Exception
 	 */
 	protected function setUp(): void
 	{

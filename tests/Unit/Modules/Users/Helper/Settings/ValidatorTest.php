@@ -27,7 +27,6 @@ use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Modules\Users\Helper\Settings\Parameters;
 use App\Modules\Users\Helper\Settings\Validator;
 use PHPUnit\Framework\Attributes\Group;

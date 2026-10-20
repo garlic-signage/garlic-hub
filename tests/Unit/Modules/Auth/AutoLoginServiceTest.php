@@ -97,7 +97,8 @@ class AutoLoginServiceTest extends TestCase
 	public function testLoginSilentTokenNotFound(): void
 	{
 		$userTokenServiceMock = $this->createMock(UserTokenService::class);
-		$userTokenServiceMock->method('findByToken')->willReturn(null);
+		$userTokenServiceMock->expects($this->once())->method('findByToken')->willReturn(null);
+		$userTokenServiceMock->expects($this->never())->method('deleteExpiredToken');
 
 		$service = $this->buildService($userTokenServiceMock, $this->cookieStub);
 

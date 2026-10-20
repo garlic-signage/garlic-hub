@@ -23,10 +23,14 @@ namespace Tests\Unit\Modules\Templates\Controller;
 
 use App\Framework\Core\Session;
 use App\Framework\Core\Translate\Translator;
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
 use App\Modules\Templates\Controller\ShowDatatableController;
 use App\Modules\Templates\Helper\Datatable\DatatableFacade;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
@@ -44,7 +48,7 @@ class ShowDatatableControllerTest extends TestCase
 	private ShowDatatableController $controller;
 
 	/**
-	 * @throws \PHPUnit\Framework\MockObject\Exception
+	 * @throws Exception
 	 */
 	protected function setUp(): void
 	{
@@ -65,7 +69,14 @@ class ShowDatatableControllerTest extends TestCase
 		$this->controller = new ShowDatatableController($this->facadeMock, $this->templatePreparerMock);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws \DateMalformedStringException
+     * @throws ModuleException
+     * @throws CoreException
+     * @throws \Doctrine\DBAL\Exception
+     * @throws FrameworkException
+     */
+    #[Group('units')]
 	public function testShowWithoutRightsRedirectsToHome(): void
 	{
 		$this->facadeMock->expects($this->once())->method('configure')->with($this->translator, $this->session);
@@ -78,7 +89,14 @@ class ShowDatatableControllerTest extends TestCase
 		static::assertSame($this->responseMock, $this->controller->show($this->request, $this->responseMock));
 	}
 
-	#[Group('units')]
+    /**
+     * @throws \DateMalformedStringException
+     * @throws ModuleException
+     * @throws CoreException
+     * @throws FrameworkException
+     * @throws \Doctrine\DBAL\Exception
+     */
+    #[Group('units')]
 	public function testShow(): void
 	{
 		$this->facadeMock->expects($this->once())->method('configure');

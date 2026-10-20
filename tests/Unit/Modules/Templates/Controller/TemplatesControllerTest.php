@@ -23,12 +23,16 @@ namespace Tests\Unit\Modules\Templates\Controller;
 
 use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Core\CsrfToken;
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\ModuleException;
 use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Templates\Controller\TemplatesController;
 use App\Modules\Templates\Helper\Composer\Orchestrator;
 use App\Modules\Templates\Helper\Datatable\Parameters;
 use App\Modules\Templates\Services\TemplatesDatatableService;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
@@ -46,7 +50,7 @@ class TemplatesControllerTest extends TestCase
 	private TemplatesController $controller;
 
 	/**
-	 * @throws \PHPUnit\Framework\MockObject\Exception
+	 * @throws Exception
 	 */
 	protected function setUp(): void
 	{
@@ -113,7 +117,12 @@ class TemplatesControllerTest extends TestCase
 		$this->controller->delete($this->request(['template_id' => 12, 'csrf_token' => 'token']), $this->response);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws CoreException
+     * @throws \Doctrine\DBAL\Exception
+     * @throws FrameworkException
+     */
+    #[Group('units')]
 	public function testDetermineRightsWithoutTemplateId(): void
 	{
 		$this->serviceMock->expects($this->never())->method('getTemplatesInUse');
@@ -123,7 +132,12 @@ class TemplatesControllerTest extends TestCase
 		$this->controller->determineRights($this->request(), $this->response, []);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws CoreException
+     * @throws \Doctrine\DBAL\Exception
+     * @throws FrameworkException
+     */
+    #[Group('units')]
 	public function testDetermineRightsWithoutEditRights(): void
 	{
 		$this->orchestratorMock->expects($this->once())->method('checkEditRights')->with(12)->willReturn(false);
@@ -134,7 +148,12 @@ class TemplatesControllerTest extends TestCase
 		$this->controller->determineRights($this->request(), $this->response, ['template_id' => '12']);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws CoreException
+     * @throws \Doctrine\DBAL\Exception
+     * @throws FrameworkException
+     */
+    #[Group('units')]
 	public function testDetermineRightsForTemplateInUse(): void
 	{
 		$this->orchestratorMock->expects($this->once())->method('checkEditRights')->with(12)->willReturn(true);
@@ -145,7 +164,12 @@ class TemplatesControllerTest extends TestCase
 		$this->controller->determineRights($this->request(), $this->response, ['template_id' => '12']);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws CoreException
+     * @throws \Doctrine\DBAL\Exception
+     * @throws FrameworkException
+     */
+    #[Group('units')]
 	public function testDetermineRightsForUnusedTemplate(): void
 	{
 		$this->orchestratorMock->expects($this->once())->method('checkEditRights')->with(12)->willReturn(true);
@@ -156,7 +180,12 @@ class TemplatesControllerTest extends TestCase
 		$this->controller->determineRights($this->request(), $this->response, ['template_id' => '12']);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws CoreException
+     * @throws FrameworkException
+     * @throws \Doctrine\DBAL\Exception
+     */
+    #[Group('units')]
 	public function testLoadWithoutRights(): void
 	{
 		$this->orchestratorMock->expects($this->once())->method('checkEditRights')->with(12)->willReturn(false);
@@ -167,7 +196,12 @@ class TemplatesControllerTest extends TestCase
 		$this->controller->load($this->request(), $this->response, ['template_id' => '12']);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws CoreException
+     * @throws FrameworkException
+     * @throws \Doctrine\DBAL\Exception
+     */
+    #[Group('units')]
 	public function testLoad(): void
 	{
 		$this->orchestratorMock->expects($this->once())->method('checkEditRights')->with(12)->willReturn(true);
@@ -178,7 +212,12 @@ class TemplatesControllerTest extends TestCase
 		$this->controller->load($this->request(), $this->response, ['template_id' => '12']);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws ModuleException
+     * @throws CoreException
+     * @throws \Doctrine\DBAL\Exception
+     */
+    #[Group('units')]
 	public function testFindSkipsTemplatesWithoutVisibility(): void
 	{
 		$this->parametersMock->expects($this->once())->method('setUserInputs')->with(['elements_per_page' => 5]);
@@ -200,7 +239,12 @@ class TemplatesControllerTest extends TestCase
 		$this->controller->find($this->request([], ['elements_per_page' => '5']), $this->response);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws ModuleException
+     * @throws CoreException
+     * @throws \Doctrine\DBAL\Exception
+     */
+    #[Group('units')]
 	public function testFindWithoutPagination(): void
 	{
 		$this->parametersMock->expects($this->once())->method('setUserInputs')->with(['elements_per_page' => 0]);
@@ -213,7 +257,13 @@ class TemplatesControllerTest extends TestCase
 		$this->controller->find($this->request(), $this->response);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws ModuleException
+     * @throws CoreException
+     * @throws FrameworkException
+     * @throws \Doctrine\DBAL\Exception
+     */
+    #[Group('units')]
 	public function testSaveWithInvalidCsrfToken(): void
 	{
 		$this->csrfTokenMock->expects($this->once())->method('validateToken')->with('')->willReturn(false);
@@ -224,7 +274,13 @@ class TemplatesControllerTest extends TestCase
 		$this->controller->save($this->request(['template_id' => 12]), $this->response);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws ModuleException
+     * @throws CoreException
+     * @throws \Doctrine\DBAL\Exception
+     * @throws FrameworkException
+     */
+    #[Group('units')]
 	public function testSaveWithoutRights(): void
 	{
 		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
@@ -236,7 +292,13 @@ class TemplatesControllerTest extends TestCase
 		$this->controller->save($this->request(['template_id' => 12, 'csrf_token' => 't', 'content' => '{}']), $this->response);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws ModuleException
+     * @throws CoreException
+     * @throws FrameworkException
+     * @throws \Doctrine\DBAL\Exception
+     */
+    #[Group('units')]
 	public function testSaveFails(): void
 	{
 		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
@@ -248,7 +310,13 @@ class TemplatesControllerTest extends TestCase
 		$this->controller->save($this->request(['template_id' => 12, 'csrf_token' => 't']), $this->response);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws ModuleException
+     * @throws CoreException
+     * @throws FrameworkException
+     * @throws \Doctrine\DBAL\Exception
+     */
+    #[Group('units')]
 	public function testSave(): void
 	{
 		$this->csrfTokenMock->expects($this->once())->method('validateToken')->with('t')->willReturn(true);
@@ -264,7 +332,13 @@ class TemplatesControllerTest extends TestCase
 		]), $this->response);
 	}
 
-	#[Group('units')]
+    /**
+     * @throws ModuleException
+     * @throws CoreException
+     * @throws FrameworkException
+     * @throws \Doctrine\DBAL\Exception
+     */
+    #[Group('units')]
 	public function testSaveWithoutTemplateId(): void
 	{
 		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
