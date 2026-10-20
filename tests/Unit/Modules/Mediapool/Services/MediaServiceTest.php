@@ -372,4 +372,18 @@ class MediaServiceTest extends TestCase
 		static::assertEquals($checksum, $result['checksum']);
 	}
 
+	/**
+	 * An unknown checksum must stay empty, otherwise callers treat the media as found.
+	 *
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	#[Group('units')]
+	public function testFetchMediaByChecksumWithUnknownChecksum(): void
+	{
+		$this->mediaRepositoryMock->expects($this->once())->method('findAllWithOwnerByCheckSum')
+			->with('unknown')
+			->willReturn([]);
+
+		static::assertSame([], $this->mediaService->fetchMediaByChecksum('unknown'));
+	}
 }

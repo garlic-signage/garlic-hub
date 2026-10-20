@@ -183,7 +183,6 @@ trait SearchFilterParamsTrait
 	/**
 	 * @param int $total
 	 * @param list<array<string,mixed>> $results
-	 * @return $this
 	 */
 	protected function setAllResultData(int $total, array $results): static
 	{

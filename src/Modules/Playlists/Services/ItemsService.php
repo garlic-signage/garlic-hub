@@ -123,6 +123,11 @@ class ItemsService extends AbstractBaseService
 	public function fetchItemById(int $itemId): array
 	{
 		$item = $this->itemsRepository->findFirstById($itemId);
+		if ($item === [])
+			throw new ModuleException('items', 'Item not found');
+
+		/** @var array<string,mixed> $item */
+
 		$this->playlistsService->setUID($this->UID);
 		$destinationPlaylist = $this->playlistsService->loadPureById($item['playlist_id']); // check rights
 
@@ -239,6 +244,9 @@ class ItemsService extends AbstractBaseService
 		return $this->update($itemId, $saveData);
 	}
 
+	/**
+	 * @param array<string,mixed> $saveData
+	 */
 	public function update(int $itemId, array $saveData): int
 	{
 		$this->playlistsService->setUID($this->UID);

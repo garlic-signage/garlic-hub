@@ -34,19 +34,19 @@ use Psr\Http\Message\ResponseInterface;
  * Class ExternalContentReader
  *
  * This class is responsible for reading external content, managing cached files, and ensuring the content is updated when necessary.
- * It uses a FileSystem instance for file operations, a Client instance for HTTP requests,
+ * It uses a Filesystem instance for file operations, a Client instance for HTTP requests,
  * and manages cached data related to a playlist represented by a remote URL.
  */
 class ExternalContentReader implements ExternalContentReaderInterface
 {
 	private string $cachePath;
-	private FileSystem $fileSystem;
+	private Filesystem $fileSystem;
 	private Client $client;
 	private string $cachedFile = '';
 	private ResponseInterface $response;
 	private string $playlistLink;
 
-	public function __construct(FileSystem $fileSystem, Client $client, string $cachePath)
+	public function __construct(Filesystem $fileSystem, Client $client, string $cachePath)
 	{
 		$this->cachePath  = $cachePath;
 		$this->client     = $client;

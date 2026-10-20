@@ -61,9 +61,9 @@ class ShowComposeController
 		if ($playlistId === 0)
 			return $this->redirectWithErrors($response, 'Playlist ID not valid.');
 
-		/** @var array<string,mixed>|array<empty,empty> $playlist */
+		/** @var array<string,mixed> $playlist */
 		$playlist = $this->playlistsService->loadPlaylistForEdit($playlistId);
-		if (empty($playlist))
+		if ($playlist === [])
 			return $this->redirectWithErrors($response, 'Playlist not found.');
 
 		switch ($playlist['playlist_mode'])

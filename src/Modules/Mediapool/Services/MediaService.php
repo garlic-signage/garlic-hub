@@ -151,7 +151,12 @@ class MediaService
 	public function fetchMediaByChecksum(string $checksum): array
 	{
 		$media = $this->mediaRepository->findAllWithOwnerByCheckSum($checksum);
-		$media['metadata'] = json_decode($media['metadata'], true);
+		if ($media === [])
+			return [];
+
+		/** @var array<string,mixed> $media */
+
+		$media['metadata'] = json_decode((string) $media['metadata'], true);
 
 		return $media;
 	}

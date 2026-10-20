@@ -32,6 +32,7 @@ use App\Modules\Templates\Helper\Composer\TemplatePreparer;
 
 class Orchestrator extends BaseTemplateOrchestrator
 {
+	/** @var array<string,mixed> */
 	private array $item = [];
 	public function __construct(
 		private readonly ItemsService    $itemsService,
@@ -59,9 +60,16 @@ class Orchestrator extends BaseTemplateOrchestrator
 		}
 	}
 
+	/**
+	 * @return array{main_layout: array<string,mixed>, this_layout: array{template: string, data: array<string,mixed>}}
+	 */
 	public function build(): array
 	{
-		$replaced = $this->templatePreparer->replace((int) $this->item['file_resource'], $this->item['item_id'], $this->item['playlist_id']);
+		$replaced = $this->templatePreparer->replace(
+			(int) $this->item['file_resource'],
+			(int) $this->item['item_id'],
+			(int) $this->item['playlist_id']
+		);
 		return $this->templatePreparer->prepare($this->item['playlist_name'].' / '.$this->item['item_name'], $replaced);
 	}
 
@@ -79,17 +87,21 @@ class Orchestrator extends BaseTemplateOrchestrator
 		return $this->itemsService->update($itemId, $saveData);
 	}
 
+	/**
+	 * Content of the item loaded by checkRights() with fresh signed media urls.
+	 */
 	public function getContent(): string
 	{
-		if ( $this->item['content_data'] === null)
+		$content = $this->item['content_data'] ?? null;
+		if (!is_string($content) || $content === '')
 			return '';
 
-		$json = json_decode($this->item['content_data'], true);
+		$json = json_decode($content, true);
+		if (!is_array($json) || !isset($json['objects']) || !is_array($json['objects']))
+			return '';
+
 		$this->restoreSrc($json['objects']);
 
-		return json_encode($json);
+		return json_encode($json) ?: '';
 	}
-
-
-
 }

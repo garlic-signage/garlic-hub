@@ -281,7 +281,7 @@ class PlaylistsService extends AbstractBaseService
 		try
 		{
 			$playlist = $this->loadWithUserById($playlistId);
-			if ($playlist['layout'] !== null)
+			if (($playlist['layout'] ?? null) !== null)
 			{
 				$layout = unserialize($playlist['layout']);
 				$exploded = explode('x', $layout['resolution']);

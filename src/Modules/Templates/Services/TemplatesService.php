@@ -81,7 +81,7 @@ class TemplatesService extends AbstractBaseService
 	}
 
 	/**
-	 * @return array{UID: int, company_id: int, template_id: int, ...}
+	 * @return array{UID: int, company_id: int, template_id: int, name: string, content: string|null, ...}
 	 * @throws ModuleException
 	 * @throws CoreException
 	 * @throws PhpfastcacheSimpleCacheException
@@ -90,7 +90,7 @@ class TemplatesService extends AbstractBaseService
 	 */
 	public function loadWithUserById(int $templateId): array
 	{
-		/** @var array{UID: int, company_id: int, template_id: int, ...}|array{} $template */
+		/** @var array{UID: int, company_id: int, template_id: int, name: string, content: string|null, ...}|array{} $template */
 		$template = $this->templatesRepository->findFirstWithUserName($templateId);
 		if ($template === [])
 			throw new ModuleException('templates', 'No template with Id: '.$templateId.' found.');

@@ -155,7 +155,7 @@ abstract class AbstractMediaHandler
 	}
 
 	/**
-	 * @param array{curl: array<int, mixed>} $curlOpts
+	 * @param array<string,mixed> $curlOpts Guzzle request options
 	 * @throws GuzzleException
 	 */
 	public function uploadFromExternal(Client $client, string $fileURI, array $curlOpts): string

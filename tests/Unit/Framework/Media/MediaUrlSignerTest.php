@@ -48,7 +48,8 @@ class MediaUrlSignerTest extends TestCase
 	{
 		$query = [];
 		parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
-		preg_match('#^/media\.php/([a-z-]+)/([a-z0-9]+)\.([a-z0-9]+)$#', (string) parse_url($url, PHP_URL_PATH), $m);
+		if (preg_match('#^/media\.php/([a-z-]+)/([a-z0-9]+)\.([a-z0-9]+)$#', (string) parse_url($url, PHP_URL_PATH), $m) !== 1)
+			static::fail('Unexpected media url: ' . $url);
 
 		return ['c' => $m[2], 'ext' => $m[3], 'v' => $m[1]] + $query;
 	}

@@ -36,9 +36,12 @@ class ShowTemplateComposer
 		private CsrfToken           $csrfToken
 	){}
 
-	public function show(ServerRequestInterface $request, ResponseInterface $response, array $args): ?ResponseInterface
+	/**
+	 * @param array<string,string> $args
+	 */
+	public function show(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
-		$itemId = (int) $args['item_id'] ?? 0;
+		$itemId = (int) ($args['item_id'] ?? 0);
 		$flash      = $request->getAttribute('flash');
 		if ($itemId === 0)
 		{
@@ -57,7 +60,7 @@ class ShowTemplateComposer
 
 	public function save(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array{template_id?: int, item_id?: int, csrf_token?: string} $requestData */
+		/** @var array{item_id?: int, content?: string, image?: string, csrf_token?: string} $requestData */
 		$requestData = $request->getParsedBody();
 
 		$itemId = (int) ($requestData['item_id'] ?? 0);
@@ -72,13 +75,15 @@ class ShowTemplateComposer
 		if (!$this->orchestrator->checkRights($itemId))
 			return $this->responseHandler->jsonError($response, 'No rights');
 
-		if ($this->orchestrator->save($itemId, $requestData['content'], $image) === 0)
+		if ($this->orchestrator->save($itemId, $requestData['content'] ?? '', $image) === 0)
 			return $this->responseHandler->jsonError($response, 'Save failed');
 
 		return $this->responseHandler->jsonSuccess($response);
 	}
 
-
+	/**
+	 * @param array<string,string> $args
+	 */
 	public function load(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
 		$itemId = (int) ($args['item_id'] ?? 0);
@@ -88,8 +93,6 @@ class ShowTemplateComposer
 		if (!$this->orchestrator->checkRights($itemId))
 			return $this->responseHandler->jsonError($response, 'No rights');
 
-
 		return $this->responseHandler->jsonSuccess($response, ['content' => $this->orchestrator->getContent()]);
 	}
-
 }

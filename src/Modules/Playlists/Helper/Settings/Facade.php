@@ -115,9 +115,8 @@ class Facade
 			$this->settingsParameters->getInputValuesArray()
 		);
 
-		if (isset($this->oldPlaylist))
-			$layout = $this->oldPlaylist['layout'];
-		else
+		$layout = $this->oldPlaylist['layout'] ?? [];
+		if (!is_array($layout))
 			$layout = [];
 
 		if (array_key_exists('screen_width', $post) && array_key_exists('screen_height', $post))

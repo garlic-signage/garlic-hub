@@ -357,16 +357,7 @@ class LoginControllerTest extends TestCase
 	#[Group('units')]
 	public function testLogoutRedirectsToLogin(): void
 	{
-		$this->requestMock->method('getAttribute')
-			->willReturnCallback(function ($param) use ($cookieMock)
-			{
-				if ($param === 'cookie')
-					return $cookieMock;
-				elseif ($param === 'session')
-					return $this->sessionMock;
-				return null;
-			}
-			);
+		$this->requestMock->method('getAttribute')->willReturnMap([['session', null, $this->sessionMock]]);
 		$this->sessionMock->expects($this->once())->method('get')->with('user')->willReturn(['UID' => 88]);
 		$this->sessionMock->expects($this->once())->method('clear');
 		$this->responseMock->expects($this->once())->method('withHeader')->with('Location', '/login')->willReturnSelf();

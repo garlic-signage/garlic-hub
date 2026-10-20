@@ -278,6 +278,26 @@ class ItemsServiceTest extends TestCase
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
+	public function testFetchItemByIdWithUnknownItem(): void
+	{
+		$this->itemsRepositoryMock->expects($this->once())->method('findFirstById')->with(123)->willReturn([]);
+		$this->playlistsServiceMock->expects($this->never())->method('loadPureById');
+		$this->mediaServiceMock->expects($this->never())->method('fetchMediaByChecksum');
+
+		$this->expectException(ModuleException::class);
+		$this->expectExceptionMessage('Item not found');
+
+		$this->itemsService->fetchItemById(123);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws PhpfastcacheSimpleCacheException
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	#[Group('units')]
 	public function testFetchItemByIdForValidMediapoolVideoException(): void
 	{
 		$itemId = 123;
