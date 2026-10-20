@@ -68,6 +68,7 @@ class PropertiesTest extends TestCase
 	#[Group('units')]
 	public function testParameterValues(): void
 	{
+		$this->configMock->expects($this->never())->method($this->anything());
 		$properties = new Properties($this->configMock, ['fit' => 'slice', 'media_align' => 'midRight', 'volume' => '56']);
 
 		static::assertSame('fit="slice" ', $properties->getFit());

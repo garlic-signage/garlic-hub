@@ -30,13 +30,14 @@ use App\Modules\Playlists\Helper\ExportSmil\Utils\Trigger;
 use Exception;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class ImageTest extends TestCase
 {
-	private Trigger&MockObject $beginMock;
-	private Trigger&MockObject $endMock;
-	private Conditional&MockObject $conditionalMock;
+	private Trigger&Stub $beginStub;
+	private Trigger&Stub $endStub;
+	private Conditional&Stub $conditionalStub;
 	private Image $image;
 
 	/**
@@ -45,22 +46,22 @@ class ImageTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$configMock = $this->createMock(Config::class);
-		$propertiesMock = $this->createMock(Properties::class);
-		$this->beginMock       = $this->createMock(Trigger::class);
-		$this->endMock         = $this->createMock(Trigger::class);
-		$this->conditionalMock = $this->createMock(Conditional::class);
+		$configStub = $this->createStub(Config::class);
+		$propertiesStub = $this->createStub(Properties::class);
+		$this->beginStub       = $this->createStub(Trigger::class);
+		$this->endStub         = $this->createStub(Trigger::class);
+		$this->conditionalStub = $this->createStub(Conditional::class);
 
 		$item = ['item_id' => 1, 'item_name' => 'Sample Item', 'item_duration' => 500, 'flags' => 0, 'datasource' => 'file'];
-		$this->image = new Image($configMock, $item, $propertiesMock, $this->beginMock, $this->endMock, $this->conditionalMock, );
+		$this->image = new Image($configStub, $item, $propertiesStub, $this->beginStub, $this->endStub, $this->conditionalStub, );
 	}
 
 	#[Group('units')]
 	public function testGetSmilElementTag(): void
 	{
-		$this->beginMock->method('hasTriggers')->willReturn(false);
-		$this->endMock->method('hasTriggers')->willReturn(false);
-		$this->conditionalMock->method('determineExprAttribute')->willReturn('');
+		$this->beginStub->method('hasTriggers')->willReturn(false);
+		$this->endStub->method('hasTriggers')->willReturn(false);
+		$this->conditionalStub->method('determineExprAttribute')->willReturn('');
 
 		$this->image->setLink('/path/to//image.jpg');
 

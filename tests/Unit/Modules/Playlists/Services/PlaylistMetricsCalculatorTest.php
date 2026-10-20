@@ -60,6 +60,7 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateFromItemsProcessesMetrics(): void
 	{
+		$this->expectUntouched($this->itemsRepositoryMock, $this->aclValidatorMock, $this->configMock);
 		$playlist = ['UID' => 1, 'shuffle' => 0, 'time_limit' => 0];
 		$items = [
 			['item_filesize' => 100, 'item_duration' => 30, 'UID' => 1],
@@ -94,6 +95,7 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateFromItemsAdjustsMetricsWithShuffle(): void
 	{
+		$this->expectUntouched($this->itemsRepositoryMock, $this->aclValidatorMock, $this->configMock);
 		$playlist = ['UID' => 1, 'time_limit' => 0,  'shuffle' => 1, 'shuffle_picking' => 1];
 		$items = [
 			['item_filesize' => 150, 'item_duration' => 50, 'UID' => 1],
@@ -126,6 +128,7 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateFromItemsAdjustsMetricsWithShuffle2(): void
 	{
+		$this->expectUntouched($this->itemsRepositoryMock, $this->aclValidatorMock, $this->configMock);
 		$playlist = ['UID' => 1, 'time_limit' => 0,  'shuffle' => 1, 'shuffle_picking' => 6];
 		$items = [
 			['item_filesize' => 150, 'item_duration' => 50, 'UID' => 1],
@@ -155,6 +158,7 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateFromItemsAdjustsMetricsWithShuffle3(): void
 	{
+		$this->expectUntouched($this->itemsRepositoryMock, $this->aclValidatorMock, $this->configMock);
 		$playlist = ['UID' => 1, 'time_limit' => 0,  'shuffle' => 1, 'shuffle_picking' => 1];
 		$items = [
 			['item_filesize' => 150, 'item_duration' => 50, 'UID' => 2],
@@ -187,6 +191,8 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateFromItemsThrowsExceptionWhenTimeLimitExceeded(): void
 	{
+		$this->itemsRepositoryMock->expects($this->never())->method($this->anything());
+		$this->configMock->expects($this->never())->method($this->anything());
 		$playlist = ['UID' => 1, 'name' => 'Test Playlist', 'time_limit' => 60, 'shuffle' => 0];
 		$items = [
 			['item_filesize' => 100, 'item_duration' => 70, 'UID' => 1]
@@ -207,6 +213,8 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateFromPlaylistData(): void
 	{
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$this->configMock->expects($this->never())->method($this->anything());
 		$playlist = ['playlist_id' => 5, 'UID' => 1, 'shuffle' => 0, 'time_limit' => 0];
 		$expectedMetrics = [
 			'count_items' => 3,
@@ -234,6 +242,7 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateFromPlaylistDataHandlesEmptyPlaylist(): void
 	{
+		$this->expectUntouched($this->itemsRepositoryMock, $this->aclValidatorMock, $this->configMock);
 		$playlist = [];
 
 		// Ensure that calculateFromPlaylistData will reset metrics for an empty playlist
@@ -265,6 +274,7 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateRemainingMediaDurationWithoutTimeLimit(): void
 	{
+		$this->expectUntouched($this->itemsRepositoryMock, $this->aclValidatorMock, $this->configMock);
 		$playlist = ['UID' => 1, 'time_limit' => 0];
 		$media = ['metadata' => ['duration' => 50]];
 
@@ -281,6 +291,7 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateRemainingMediaDurationExceedsTimeLimitPartially(): void
 	{
+		$this->configMock->expects($this->never())->method($this->anything());
 		$playlist = ['playlist_id' => 5, 'UID' => 1, 'shuffle' => 0, 'time_limit' => 100];
 		$media    = ['metadata' => ['duration' => 60]];
 		$expectedMetrics = [
@@ -310,6 +321,7 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateRemainingMediaDurationExceedsTimeLimitFull(): void
 	{
+		$this->configMock->expects($this->never())->method($this->anything());
 		$playlist = ['playlist_id' => 5, 'UID' => 1, 'shuffle' => 0, 'time_limit' => 100];
 		$media    = ['metadata' => ['duration' => 60]];
 		$expectedMetrics = [
@@ -340,6 +352,8 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateRemainingMediaDurationHandlesDefaultDuration(): void
 	{
+		$this->itemsRepositoryMock->expects($this->never())->method($this->anything());
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$playlist = ['UID' => 1, 'time_limit' => 0];
 		$media = ['metadata' => []]; // No duration metadata
 
@@ -350,5 +364,13 @@ class PlaylistMetricsCalculatorTest extends TestCase
 
 		$result = $this->calculator->calculateRemainingMediaDuration($playlist, $media);
 		static::assertSame(15, $result);
+	}
+
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
 	}
 }

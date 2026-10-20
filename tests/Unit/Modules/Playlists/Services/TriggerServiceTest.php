@@ -52,6 +52,7 @@ class TriggerServiceTest extends TestCase
 	#[Group('units')]
 	public function testValidItemId(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$itemId = 1;
 		$playlistId = 2;
 		$item = [
@@ -76,6 +77,7 @@ class TriggerServiceTest extends TestCase
 	#[Group('units')]
 	public function testEmptyBeginTrigger(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$itemId = 1;
 		$playlistId = 2;
 		$item = [
@@ -115,6 +117,7 @@ class TriggerServiceTest extends TestCase
 	#[Group('units')]
 	public function testSaveBeginTriggerSuccess(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$itemId = 1;
 		$requestData = ['first' => 'trigger1', 'second' => 'trigger2'];
 		$item = ['id' => $itemId];
@@ -182,6 +185,7 @@ class TriggerServiceTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTouchableMediaMediaExcludedFromTouchableMedia(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playlistId = 2;
 		$itemId = 3;
 
@@ -206,6 +210,7 @@ class TriggerServiceTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTouchableMediaEmptyMediaReturned(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playlistId = 2;
 		$itemId = 3;
 
@@ -225,6 +230,7 @@ class TriggerServiceTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTouchableMediaSingleMatchExcluded(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playlistId = 5;
 		$itemId = 10;
 

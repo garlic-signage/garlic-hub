@@ -65,6 +65,7 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testCreateNewSuccessfullyInsertsData(): void
 	{
+		$this->expectUntouched($this->loggerMock, $this->aclValidatorMock, $this->playlistMetricsCalculatorMock);
 		$postData = ['UID' => 123, 'playlist_mode' => 'private', 'playlist_name' => 'Test Playlist', 'time_limit' => 60];
 		$saveData = ['UID' => 123, 'playlist_mode' => 'private', 'playlist_name' => 'Test Playlist', 'time_limit' => 60];
 
@@ -83,6 +84,7 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testCreateNewSuccessfullyInsertsDataWithoutUID(): void
 	{
+		$this->expectUntouched($this->loggerMock, $this->aclValidatorMock, $this->playlistMetricsCalculatorMock);
 		$this->service->setUID(567);
 		$postData = ['playlist_mode' => 'private', 'playlist_name' => 'Test Playlist', 'layout' => []];
 		$saveData = ['UID' => 567, 'playlist_mode' => 'private', 'playlist_name' => 'Test Playlist', 'layout' => []];
@@ -102,6 +104,7 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testCreateNewThrowsExceptionOnRepositoryError(): void
 	{
+		$this->expectUntouched($this->loggerMock, $this->aclValidatorMock, $this->playlistMetricsCalculatorMock);
 		$postData = ['UID' => 123, 'playlist_mode' => 'private', 'playlist_name' => 'Test Playlist'];
 		$saveData = ['UID' => 123, 'playlist_mode' => 'private', 'playlist_name' => 'Test Playlist'];
 
@@ -124,6 +127,7 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testToggleShuffleTurnsOnWhenInitiallyOff(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(1);
 		$playlistId = 123;
 		$playlist = ['playlist_id' => $playlistId, 'shuffle' => 0];
@@ -161,6 +165,7 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testToggleShuffleTurnsOffWhenInitiallyOn(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(1);
 		$playlistId = 456;
 		$playlist = ['playlist_id' => $playlistId, 'shuffle' => 1];
@@ -198,6 +203,8 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testToggleShuffleThrowsExceptionWhenPlaylistNotEditable(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(1);
 		$playlistId = 789;
 		$playlist = ['playlist_id' => $playlistId, 'shuffle' => 0];
@@ -225,6 +232,7 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testShufflePickingSuccessfullyUpdatesData(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(1);
 		$playlistId = 123;
 		$shufflePicking = 2;
@@ -263,6 +271,8 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testShufflePickingThrowsExceptionWhenPlaylistNotEditable(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(1);
 		$playlistId = 123;
 		$shufflePicking = 2;
@@ -291,6 +301,7 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testShufflePickingThrowsExceptionWhenPlaylistNotFound(): void
 	{
+		$this->expectUntouched($this->loggerMock, $this->aclValidatorMock, $this->playlistMetricsCalculatorMock);
 		$this->service->setUID(1);
 		$playlistId = 999;
 		$shufflePicking = 2;
@@ -314,6 +325,8 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateThrowsExceptionWhenPlaylistNotEditable(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(1);
 		$postData = ['playlist_id' => 1, 'playlist_name' => 'Updated Playlist'];
 		$playlist = ['playlist_id' => 1, 'playlist_name' => 'Original Playlist'];
@@ -340,6 +353,8 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdate(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(2);
 		$postData = ['UID' => 789, 'playlist_id' => 1, 'playlist_name' => 'Updated Playlist'];
 		$playlist = ['playlist_id' => 1, 'playlist_name' => 'Original Playlist'];
@@ -366,6 +381,7 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateExport(): void
 	{
+		$this->expectUntouched($this->loggerMock, $this->aclValidatorMock, $this->playlistMetricsCalculatorMock);
 		$playlistId = 1;
 		$saveData = ['some' => 'save', 'stuff' => 'man'];
 		$this->playlistsRepositoryMock->expects($this->once())->method('updateExport')
@@ -377,6 +393,8 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteSucceedsWhenPlaylistIsEditable(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(123);
 		$playlistId = 1;
 		$playlist = ['playlist_id' => $playlistId, 'playlist_name' => 'Deletable Playlist'];
@@ -401,6 +419,7 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteThrowsExceptionWhenPlaylistNotEditable(): void
 	{
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(456);
 		$playlistId = 2;
 		$playlist = ['playlist_id' => $playlistId, 'playlist_name' => 'Non-editable Playlist'];
@@ -423,6 +442,8 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadPlaylistForMultizoneReturnsDeserializedDataWhenEditable(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(1);
 		$playlistId = 123;
 		$playlist = ['playlist_id' => $playlistId, 'layout' => serialize(['zone1', 'zone2'])];
@@ -443,6 +464,8 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadPlaylistForMultizoneThrowsExceptionWhenPlaylistNotFound(): void
 	{
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(1);
 		$playlistId = 123;
 
@@ -462,6 +485,7 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadPlaylistForMultizoneReturnsEmptyArrayWhenNotEditable(): void
 	{
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(1);
 		$playlistId = 123;
 		$playlist = ['playlist_id' => $playlistId];
@@ -486,6 +510,8 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadPlaylistForMultizoneReturnsEmptyArrayOnRepositoryException(): void
 	{
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(1);
 		$playlistId = 123;
 
@@ -505,6 +531,9 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadPlaylistForMultizoneForNewPlaylists(): void
 	{
+		// an empty layout of a new playlist is no error
+		$this->loggerMock->expects($this->never())->method($this->anything());
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(1);
 		$playlistId = 123;
 		$playlist = ['playlist_id' => $playlistId, 'layout' => ''];
@@ -525,6 +554,9 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadPlaylistForMultizoneFails(): void
 	{
+		// a layout which is no serialized string can not be restored
+		$this->loggerMock->expects($this->once())->method('error');
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(1);
 		$playlistId = 123;
 		$playlist = ['playlist_id' => $playlistId, 'playlist_mode' => PlaylistMode::MULTIZONE->value, 'layout' => []];
@@ -545,6 +577,8 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadNameByIdSuccessfullyReturnsPlaylistData(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$playlistId = 456;
 		$playlist = ['playlist_id' => $playlistId, 'playlist_name' => 'Test Playlist'];
 
@@ -565,6 +599,8 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadNameByIdThrowsExceptionWhenPlaylistNotFound(): void
 	{
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$playlistId = 789;
 
 		$this->playlistsRepositoryMock->expects($this->once())->method('findFirstBy')
@@ -583,6 +619,8 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadNameByIdReturnsEmptyArrayOnRepositoryException(): void
 	{
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$playlistId = 123;
 
 		$this->playlistsRepositoryMock->expects($this->once())->method('findFirstBy')
@@ -601,6 +639,8 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testSaveZonesSuccessfullyUpdatesData(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(1);
 		$playlistId = 123;
 		$zones = [
@@ -630,6 +670,8 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testSaveZonesThrowsExceptionWhenPlaylistNotFound(): void
 	{
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(1);
 		$playlistId = 123;
 		$zones = [
@@ -653,6 +695,7 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testSaveZonesThrowsExceptionWhenPlaylistNotEditable(): void
 	{
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(1);
 		$playlistId = 123;
 		$zones = [
@@ -681,6 +724,7 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testSaveZonesReturnsZeroOnRepositoryException(): void
 	{
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(1);
 		$playlistId = 123;
 		$zones = [
@@ -713,6 +757,8 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadPlaylistForEditReturnsPlaylistDataSuccessfully(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(1);
 		$playlistId = 999;
 		$playlist_first = ['playlist_id' => $playlistId, 'playlist_name' => 'Sample Playlist', 'layout' => null];
@@ -736,6 +782,8 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadPlaylistForEditThrowsExceptionWhenPlaylistNotFound(): void
 	{
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(1);
 		$playlistId = 888;
 
@@ -756,6 +804,7 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadPlaylistForEditThrowsExceptionWhenPlaylistNotEditable(): void
 	{
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(2);
 		$playlistId = 777;
 		$playlist = ['playlist_id' => $playlistId, 'playlist_name' => 'Non-Editable Playlist'];
@@ -782,6 +831,8 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadPlaylistForEditReturnsEmptyArrayOnRepositoryException(): void
 	{
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(3);
 		$playlistId = 666;
 
@@ -797,5 +848,13 @@ class PlaylistsServiceTest extends TestCase
 		$result = $this->service->loadPlaylistForEdit($playlistId);
 
 		static::assertEquals([], $result);
+	}
+
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
 	}
 }

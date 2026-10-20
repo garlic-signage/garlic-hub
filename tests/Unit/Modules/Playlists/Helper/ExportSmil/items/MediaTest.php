@@ -30,7 +30,7 @@ use App\Modules\Playlists\Helper\ExportSmil\Utils\Trigger;
 use App\Modules\Playlists\Helper\ItemFlags;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class ConcreteMedia extends Media
@@ -58,11 +58,11 @@ class ConcreteMedia extends Media
 
 class MediaTest extends TestCase
 {
-	private Config&MockObject $configMock;
-	private Trigger&MockObject $beginMock;
-	private Trigger&MockObject $endMock;
-	private Conditional&MockObject $conditionalMock;
-	private Properties&MockObject $propertiesMock;
+	private Config&Stub $configStub;
+	private Trigger&Stub $beginStub;
+	private Trigger&Stub $endStub;
+	private Conditional&Stub $conditionalStub;
+	private Properties&Stub $propertiesStub;
 	private ConcreteMedia $concreteMedia;
 
 	/**
@@ -71,11 +71,11 @@ class MediaTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->configMock = $this->createMock(Config::class);
-		$this->propertiesMock = $this->createMock(Properties::class);
-		$this->beginMock = $this->createMock(Trigger::class);
-		$this->endMock = $this->createMock(Trigger::class);
-		$this->conditionalMock = $this->createMock(Conditional::class);
+		$this->configStub = $this->createStub(Config::class);
+		$this->propertiesStub = $this->createStub(Properties::class);
+		$this->beginStub = $this->createStub(Trigger::class);
+		$this->endStub = $this->createStub(Trigger::class);
+		$this->conditionalStub = $this->createStub(Conditional::class);
 
 	}
 
@@ -83,7 +83,7 @@ class MediaTest extends TestCase
 	public function testGetPrefetchTag(): void
 	{
 		$item = ['item_id' => 1, 'item_name' => 'Example Title', 'item_duration' => 1000, 'mimetype' => 'video/mp4'];
-		$this->concreteMedia = new ConcreteMedia($this->configMock, $item, $this->propertiesMock, $this->beginMock, $this->endMock, $this->conditionalMock,);
+		$this->concreteMedia = new ConcreteMedia($this->configStub, $item, $this->propertiesStub, $this->beginStub, $this->endStub, $this->conditionalStub,);
 
 		$this->concreteMedia->setLink('/example/path');
 
@@ -95,7 +95,7 @@ class MediaTest extends TestCase
 	public function testGetPrefetchTagWithWebsite(): void
 	{
 		$item = ['item_id' => 1, 'item_name' => 'Example Title', 'item_duration' => 1000, 'mimetype' => 'text/html'];
-		$this->concreteMedia = new ConcreteMedia($this->configMock, $item, $this->propertiesMock, $this->beginMock, $this->endMock, $this->conditionalMock,);
+		$this->concreteMedia = new ConcreteMedia($this->configStub, $item, $this->propertiesStub, $this->beginStub, $this->endStub, $this->conditionalStub,);
 
 		$this->concreteMedia->setLink('/example/path');
 
@@ -106,9 +106,9 @@ class MediaTest extends TestCase
 	public function testCollectMediaAttributes(): void
 	{
 		$item = ['item_id' => 1, 'item_name' => 'Sample Item', 'item_duration' => 5000];
-		$this->propertiesMock->method('getFit')->willReturn('fit="fill" ');
-		$this->propertiesMock->method('getMediaAlign')->willReturn('align="center" ');
-		$this->concreteMedia = new ConcreteMedia($this->configMock, $item, $this->propertiesMock, $this->beginMock, $this->endMock, $this->conditionalMock,);
+		$this->propertiesStub->method('getFit')->willReturn('fit="fill" ');
+		$this->propertiesStub->method('getMediaAlign')->willReturn('align="center" ');
+		$this->concreteMedia = new ConcreteMedia($this->configStub, $item, $this->propertiesStub, $this->beginStub, $this->endStub, $this->conditionalStub,);
 
 		$this->concreteMedia->setLink('/test/path');
 
@@ -121,9 +121,9 @@ class MediaTest extends TestCase
 	public function testCollectMediaAttributesEmptyProperties(): void
 	{
 		$item = ['item_id' => 1, 'item_name' => 'Sample Item', 'item_duration' => 5000];
-		$this->propertiesMock->method('getFit')->willReturn('');
-		$this->propertiesMock->method('getMediaAlign')->willReturn('');
-		$this->concreteMedia = new ConcreteMedia($this->configMock, $item, $this->propertiesMock, $this->beginMock, $this->endMock, $this->conditionalMock,);
+		$this->propertiesStub->method('getFit')->willReturn('');
+		$this->propertiesStub->method('getMediaAlign')->willReturn('');
+		$this->concreteMedia = new ConcreteMedia($this->configStub, $item, $this->propertiesStub, $this->beginStub, $this->endStub, $this->conditionalStub,);
 
 		$this->concreteMedia->setLink('/empty/path');
 
@@ -136,7 +136,7 @@ class MediaTest extends TestCase
 	public function testCollectParametersWithFileDatasource(): void
 	{
 		$item = ['item_id' => 1, 'datasource' => 'file', 'flags' => 0];
-		$this->concreteMedia = new ConcreteMedia($this->configMock, $item, $this->propertiesMock, $this->beginMock, $this->endMock, $this->conditionalMock,);
+		$this->concreteMedia = new ConcreteMedia($this->configStub, $item, $this->propertiesStub, $this->beginStub, $this->endStub, $this->conditionalStub,);
 
 		$result = $this->concreteMedia->testCollectParameters();
 
@@ -147,7 +147,7 @@ class MediaTest extends TestCase
 	public function testCollectParametersWithNonFileDatasource(): void
 	{
 		$item = ['item_id' => 1, 'smil_playlist_item_id' => 123, 'datasource' => 'stream', 'flags' => 0];
-		$this->concreteMedia = new ConcreteMedia($this->configMock, $item, $this->propertiesMock, $this->beginMock, $this->endMock, $this->conditionalMock,);
+		$this->concreteMedia = new ConcreteMedia($this->configStub, $item, $this->propertiesStub, $this->beginStub, $this->endStub, $this->conditionalStub,);
 
 		$result = $this->concreteMedia->testCollectParameters();
 
@@ -158,7 +158,7 @@ class MediaTest extends TestCase
 	public function testCollectWithLoggableFlag(): void
 	{
 		$item = ['item_id' => 123, 'flags' => ItemFlags::loggable->value];
-		$this->concreteMedia = new ConcreteMedia($this->configMock, $item, $this->propertiesMock, $this->beginMock, $this->endMock, $this->conditionalMock,);
+		$this->concreteMedia = new ConcreteMedia($this->configStub, $item, $this->propertiesStub, $this->beginStub, $this->endStub, $this->conditionalStub,);
 
 		$result = $this->concreteMedia->testLoggable();
 
@@ -169,7 +169,7 @@ class MediaTest extends TestCase
 	public function testCollectWithOutLoggableFlag(): void
 	{
 		$item = ['item_id' => 123, 'flags' => 0];
-		$this->concreteMedia = new ConcreteMedia($this->configMock, $item, $this->propertiesMock, $this->beginMock, $this->endMock, $this->conditionalMock,);
+		$this->concreteMedia = new ConcreteMedia($this->configStub, $item, $this->propertiesStub, $this->beginStub, $this->endStub, $this->conditionalStub,);
 
 		static::assertEmpty($this->concreteMedia->testLoggable());
 	}

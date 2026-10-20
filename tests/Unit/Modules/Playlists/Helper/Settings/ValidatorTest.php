@@ -66,7 +66,7 @@ class ValidatorTest extends TestCase
 			->with(Parameters::PARAMETER_PLAYLIST_NAME)
 			->willReturn(null);
 
-		$this->translatorMock->method('translate')
+		$this->translatorMock->expects($this->atLeastOnce())->method('translate')
 			->willReturnMap([
 				['no_playlist_name', 'playlists', [], 'Playlist name is missing.'],
 				['parameters_missing', 'playlists', [], 'Parameter are missing.'],
@@ -94,7 +94,7 @@ class ValidatorTest extends TestCase
 			->with(Parameters::PARAMETER_PLAYLIST_NAME)
 			->willReturn(null);
 
-		$this->translatorMock->method('translate')
+		$this->translatorMock->expects($this->atLeastOnce())->method('translate')
 			->willReturnMap([
 				['no_playlist_name', 'playlists', [], 'Playlist name is missing.'],
 				['parameters_missing', 'playlists', [], 'Parameter are missing.'],

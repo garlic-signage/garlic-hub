@@ -30,6 +30,7 @@ use App\Modules\Playlists\Helper\ConditionalPlay\ResponseBuilder;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 
@@ -37,7 +38,7 @@ class ResponseBuilderTest extends TestCase
 {
 	private JsonResponseHandler&MockObject $jsonResponseHandlerMock;
 	private Translator&MockObject $translatorMock;
-	private ResponseInterface&MockObject $responseMock;
+	private ResponseInterface&Stub $responseStub;
 	private ResponseBuilder $responseBuilder;
 
 	/**
@@ -48,7 +49,7 @@ class ResponseBuilderTest extends TestCase
 		parent::setUp();
 		$this->jsonResponseHandlerMock = $this->createMock(JsonResponseHandler::class);
 		$this->translatorMock = $this->createMock(Translator::class);
-		$this->responseMock = $this->createMock(ResponseInterface::class);
+		$this->responseStub = $this->createStub(ResponseInterface::class);
 
 		$this->responseBuilder = new ResponseBuilder(
 			$this->jsonResponseHandlerMock,
@@ -69,12 +70,12 @@ class ResponseBuilderTest extends TestCase
 			->willReturn($translatedMessage);
 
 		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonError')
-			->with($this->responseMock, $translatedMessage)
-			->willReturn($this->responseMock);
+			->with($this->responseStub, $translatedMessage)
+			->willReturn($this->responseStub);
 
-		$result = $this->responseBuilder->invalidItemId($this->responseMock);
+		$result = $this->responseBuilder->invalidItemId($this->responseStub);
 
-		self::assertSame($this->responseMock, $result);
+		self::assertSame($this->responseStub, $result);
 	}
 
 	/**
@@ -90,12 +91,12 @@ class ResponseBuilderTest extends TestCase
 			->willReturn($translatedMessage);
 
 		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonError')
-			->with($this->responseMock, $translatedMessage)
-			->willReturn($this->responseMock);
+			->with($this->responseStub, $translatedMessage)
+			->willReturn($this->responseStub);
 
-		$result = $this->responseBuilder->playlistNotFound($this->responseMock);
+		$result = $this->responseBuilder->playlistNotFound($this->responseStub);
 
-		self::assertSame($this->responseMock, $result);
+		self::assertSame($this->responseStub, $result);
 	}
 
 	/**
@@ -111,11 +112,11 @@ class ResponseBuilderTest extends TestCase
 			->willReturn($translatedMessage);
 
 		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonError')
-			->with($this->responseMock, $translatedMessage)
-			->willReturn($this->responseMock);
+			->with($this->responseStub, $translatedMessage)
+			->willReturn($this->responseStub);
 
-		$result = $this->responseBuilder->itemNotFound($this->responseMock);
+		$result = $this->responseBuilder->itemNotFound($this->responseStub);
 
-		self::assertSame($this->responseMock, $result);
+		self::assertSame($this->responseStub, $result);
 	}
 }

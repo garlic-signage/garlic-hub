@@ -30,6 +30,7 @@ use App\Modules\Playlists\Helper\Trigger\Orchestrator;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -39,7 +40,7 @@ class TriggerControllerTest extends TestCase
 	private TriggerController $triggerController;
 	private Orchestrator&MockObject $orchestratorMock;
 	private ServerRequestInterface&MockObject $requestMock;
-	private ResponseInterface&MockObject $responseMock;
+	private ResponseInterface&Stub $responseStub;
 
 	/**
 	 * @throws Exception
@@ -50,7 +51,7 @@ class TriggerControllerTest extends TestCase
 
 		$this->orchestratorMock = $this->createMock(Orchestrator::class);
 		$this->requestMock      = $this->createMock(ServerRequestInterface::class);
-		$this->responseMock     = $this->createMock(ResponseInterface::class);
+		$this->responseStub     = $this->createStub(ResponseInterface::class);
 
 		$this->triggerController = new TriggerController($this->orchestratorMock);
 	}
@@ -63,6 +64,7 @@ class TriggerControllerTest extends TestCase
 	#[Group('units')]
 	public function testFetchTrigger(): void
 	{
+		$this->requestMock->expects($this->never())->method($this->anything());
 		$args = ['key' => 'value'];
 
 		$this->orchestratorMock->expects($this->once())->method('setInput')
@@ -70,14 +72,14 @@ class TriggerControllerTest extends TestCase
 			->willReturn($this->orchestratorMock);
 
 		$this->orchestratorMock->expects($this->once())->method('validate')
-			->with($this->responseMock)
+			->with($this->responseStub)
 			->willReturn(null);
 
 		$this->orchestratorMock->expects($this->once())->method('fetch')
-			->with($this->responseMock)
-			->willReturn($this->responseMock);
+			->with($this->responseStub)
+			->willReturn($this->responseStub);
 
-		$this->triggerController->fetchTrigger($this->requestMock, $this->responseMock, $args);
+		$this->triggerController->fetchTrigger($this->requestMock, $this->responseStub, $args);
 	}
 
 	/**
@@ -89,20 +91,21 @@ class TriggerControllerTest extends TestCase
 	#[Group('units')]
 	public function testFetchTriggerFailedValidation(): void
 	{
+		$this->requestMock->expects($this->never())->method($this->anything());
 		$args = ['key' => 'value'];
-		$validationResponseMock = $this->createMock(ResponseInterface::class);
+		$validationResponseStub = $this->createStub(ResponseInterface::class);
 
 		$this->orchestratorMock->expects($this->once())->method('setInput')
 			->with($args)
 			->willReturn($this->orchestratorMock);
 
 		$this->orchestratorMock->expects($this->once())->method('validate')
-			->with($this->responseMock)
-			->willReturn($validationResponseMock);
+			->with($this->responseStub)
+			->willReturn($validationResponseStub);
 
 		$this->orchestratorMock->expects($this->never())->method('fetch');
 
-		$this->triggerController->fetchTrigger($this->requestMock, $this->responseMock, $args);
+		$this->triggerController->fetchTrigger($this->requestMock, $this->responseStub, $args);
 	}
 
 	/**
@@ -126,14 +129,14 @@ class TriggerControllerTest extends TestCase
 			->willReturn($this->orchestratorMock);
 
 		$this->orchestratorMock->expects($this->once())->method('validateWithToken')
-			->with($this->responseMock)
+			->with($this->responseStub)
 			->willReturn(null);
 
 		$this->orchestratorMock->expects($this->once())->method('save')
-			->with($this->responseMock)
-			->willReturn($this->responseMock);
+			->with($this->responseStub)
+			->willReturn($this->responseStub);
 
-		$this->triggerController->save($this->requestMock, $this->responseMock);
+		$this->triggerController->save($this->requestMock, $this->responseStub);
 	}
 
 	/**
@@ -148,7 +151,7 @@ class TriggerControllerTest extends TestCase
 	public function testSaveFailedValidation(): void
 	{
 		$inputValues = ['key' => 'value'];
-		$validationResponseMock = $this->createMock(ResponseInterface::class);
+		$validationResponseStub = $this->createStub(ResponseInterface::class);
 
 		$this->requestMock->expects($this->once())
 			->method('getParsedBody')
@@ -159,13 +162,13 @@ class TriggerControllerTest extends TestCase
 			->willReturn($this->orchestratorMock);
 
 		$this->orchestratorMock->expects($this->once())->method('validateWithToken')
-			->with($this->responseMock)
-			->willReturn($validationResponseMock);
+			->with($this->responseStub)
+			->willReturn($validationResponseStub);
 
 		$this->orchestratorMock->expects($this->never())->method('save');
 
-		$response = $this->triggerController->save($this->requestMock, $this->responseMock);
+		$response = $this->triggerController->save($this->requestMock, $this->responseStub);
 
-		static::assertSame($validationResponseMock, $response);
+		static::assertSame($validationResponseStub, $response);
 	}
 }

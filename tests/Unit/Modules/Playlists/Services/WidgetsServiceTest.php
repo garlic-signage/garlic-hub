@@ -57,12 +57,14 @@ class WidgetsServiceTest extends TestCase
 	#[Group('units')]
 	public function testGetErrorTextReturnsDefaultEmptyValue(): void
 	{
+		$this->expectUntouched($this->itemsServiceMock, $this->contentDataMock, $this->loggerMock);
 		static::assertSame('', $this->widgetsService->getErrorText());
 	}
 
 	#[Group('units')]
 	public function testFetchWidgetByItemIdReturnsExpectedResult(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$itemId = 1;
 		$UID = 12;
 		$itemData = [
@@ -121,6 +123,7 @@ class WidgetsServiceTest extends TestCase
 	#[Group('units')]
 	public function testSaveWidgetSuccessfullySaves(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$itemId = 1;
 		$requestData = ['key' => 'value'];
 		$configData = '<config></config>';
@@ -155,6 +158,7 @@ class WidgetsServiceTest extends TestCase
 	#[Group('units')]
 	public function testSaveWidgetHandlesExceptionAndFails(): void
 	{
+		$this->contentDataMock->expects($this->never())->method($this->anything());
 		$itemId = 1;
 		$requestData = ['key' => 'value'];
 		$exceptionMessage = 'Error saving data';
@@ -174,5 +178,13 @@ class WidgetsServiceTest extends TestCase
 
 		static::assertFalse($this->widgetsService->saveWidget($itemId, $requestData));
 		static::assertSame($exceptionMessage, $this->widgetsService->getErrorText());
+	}
+
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
 	}
 }

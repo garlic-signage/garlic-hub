@@ -197,7 +197,7 @@ class ExternalContentReaderTest extends TestCase
 			->willReturn(false);
 
 
-		$responseMock = $this->createMock(ResponseInterface::class);
+		$responseMock = $this->createStub(ResponseInterface::class);
 		$this->clientMock->expects($this->once())
 			->method('head')
 			->with('playlist/url')

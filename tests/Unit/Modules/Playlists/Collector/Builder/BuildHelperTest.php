@@ -56,6 +56,8 @@ class BuildHelperTest extends TestCase
 	#[Group('units')]
 	public function testCollectItemsWithNoPlaceholders(): void
 	{
+		$this->externalContentReaderMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playlistId = 1;
 		$playlistContent = 'Static content with no placeholders.';
 
@@ -74,18 +76,20 @@ class BuildHelperTest extends TestCase
 	#[Group('units')]
 	public function testCollectItemsWithInternalPlaceholders(): void
 	{
+		$this->externalContentReaderMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playlistId = 1;
 		$playlistContent = 'Content before placeholder {ITEMS_2} content after.';
 		$subPlaylistContent = 'SubPlaylist content.';
 
-		$this->contentReaderMock->method('init')
+		$this->contentReaderMock->expects($this->atLeastOnce())->method('init')
 			->willReturnOnConsecutiveCalls(
 				$this->contentReaderMock,
 				$this->contentReaderMock
 			);
 
 		$this->contentReaderMock
-			->method('loadPlaylistItems')
+			->expects($this->atLeastOnce())->method('loadPlaylistItems')
 			->willReturnOnConsecutiveCalls($playlistContent, $subPlaylistContent);
 
 		$result = $this->buildHelper->collectItems($playlistId);
@@ -104,14 +108,15 @@ class BuildHelperTest extends TestCase
 		$subPlaylistContent2 = 'Final resolved content.{ITEMS_4}';
 		$subPlaylistContent3 = '';
 
-		$this->contentReaderMock->method('init')
-			->willReturnOnConsecutiveCalls(
-				$this->contentReaderMock,
-				$this->contentReaderMock,
-				$this->contentReaderMock
-			);
+		// only internal playlists are resolved, nothing goes wrong
+		$this->externalContentReaderMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method('error');
 
-		$this->contentReaderMock->method('loadPlaylistItems')
+		// one level per playlist: 1 -> 2 -> 3 -> 4
+		$this->contentReaderMock->expects($this->exactly(4))->method('init')
+			->willReturn($this->contentReaderMock);
+
+		$this->contentReaderMock->expects($this->exactly(4))->method('loadPlaylistItems')
 			->willReturnOnConsecutiveCalls(
 				$playlistContent,
 				$subPlaylistContent1,
@@ -129,6 +134,7 @@ class BuildHelperTest extends TestCase
 	#[Group('units')]
 	public function testCollectItemsWithExternalPlaceholders(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playlistId = 1;
 		$playlistContent = 'Some content {ITEMS_0#https://example.com} more content.';
 		$externalContent = 'External playlist content.';
@@ -156,9 +162,10 @@ class BuildHelperTest extends TestCase
 	#[Group('units')]
 	public function testCollectItemsOnException(): void
 	{
+		$this->externalContentReaderMock->expects($this->never())->method($this->anything());
 		$playlistId = 1;
 
-		$this->contentReaderMock->method('init')
+		$this->contentReaderMock->expects($this->atLeastOnce())->method('init')
 			->willThrowException(new RuntimeException("Error during collection."));
 
 		$this->loggerMock->expects($this->once())->method('error')
@@ -172,6 +179,8 @@ class BuildHelperTest extends TestCase
 	#[Group('units')]
 	public function testCollectPrefetchesWithNoPlaceholders(): void
 	{
+		$this->externalContentReaderMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playlistId = 1;
 		$prefetchContent = "Static prefetch with no placeholders.";
 
@@ -191,17 +200,19 @@ class BuildHelperTest extends TestCase
 	#[Group('units')]
 	public function testCollectPrefetchesWithInternalPlaceholders(): void
 	{
+		$this->externalContentReaderMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playlistId = 1;
 		$prefetchContent = "Prefetch content {PREFETCH_2}.";
 		$subPrefetchContent = "Sub-prefetch content.";
 
-		$this->contentReaderMock->method('init')
+		$this->contentReaderMock->expects($this->atLeastOnce())->method('init')
 			->willReturnOnConsecutiveCalls(
 				$this->contentReaderMock,
 				$this->contentReaderMock
 			);
 
-		$this->contentReaderMock->method('loadPlaylistPrefetch')
+		$this->contentReaderMock->expects($this->atLeastOnce())->method('loadPlaylistPrefetch')
 			->willReturnOnConsecutiveCalls($prefetchContent, $subPrefetchContent);
 
 		$result = $this->buildHelper->collectPrefetches($playlistId);
@@ -213,9 +224,10 @@ class BuildHelperTest extends TestCase
 	#[Group('units')]
 	public function testCollectPrefetchesOnException(): void
 	{
+		$this->externalContentReaderMock->expects($this->never())->method($this->anything());
 		$playlistId = 1;
 
-		$this->contentReaderMock->method('init')
+		$this->contentReaderMock->expects($this->atLeastOnce())->method('init')
 			->willThrowException(new RuntimeException("Error during prefetch collection."));
 
 		$this->loggerMock->expects($this->once())
@@ -232,6 +244,8 @@ class BuildHelperTest extends TestCase
 	#[Group('units')]
 	public function testCollectExclusivesWithNoPlaceholders(): void
 	{
+		$this->externalContentReaderMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playlistId = 1;
 		$exclusiveContent = "Exclusive content without placeholders.";
 
@@ -250,6 +264,8 @@ class BuildHelperTest extends TestCase
 	#[Group('units')]
 	public function testCollectExclusivesWithInternalPlaceholders(): void
 	{
+		$this->externalContentReaderMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playlistId = 1;
 		$exclusiveContent = "Exclusive content with {ITEMS_2}.";
 		$subPlaylistContent = "Sub exclusive content.";
@@ -276,6 +292,8 @@ class BuildHelperTest extends TestCase
 	#[Group('units')]
 	public function testCollectExclusivesWithRecursivePlaceholders(): void
 	{
+		$this->externalContentReaderMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playlistId = 1;
 		$exclusiveContent = "Exclusive content {ITEMS_2}.";
 		$subPlaylistContent1 = "SubContent 2 {ITEMS_3}.";
@@ -305,10 +323,11 @@ class BuildHelperTest extends TestCase
 	#[Group('units')]
 	public function testCollectExclusivesOnException(): void
 	{
+		$this->externalContentReaderMock->expects($this->never())->method($this->anything());
 		$playlistId = 1;
 
 		$this->contentReaderMock
-			->method('init')
+			->expects($this->atLeastOnce())->method('init')
 			->willThrowException(new RuntimeException("Error during exclusive collection."));
 
 		$this->loggerMock

@@ -83,6 +83,7 @@ class ContentReaderTest extends TestCase
 	#[Group('units')]
 	public function testLoadPlaylistItemsReturnsEmptyForInvalidPlaylistId(): void
 	{
+		$this->fileSystemMock->expects($this->never())->method($this->anything());
 		$this->reader->init(0);
 
 		$result = $this->reader->loadPlaylistItems();
@@ -117,6 +118,7 @@ class ContentReaderTest extends TestCase
 	#[Group('units')]
 	public function testLoadPlaylistPrefetchReturnsEmptyForInvalidPlaylistId(): void
 	{
+		$this->fileSystemMock->expects($this->never())->method($this->anything());
 		$this->reader->init(0);
 
 		$result = $this->reader->loadPlaylistPrefetch();
@@ -151,6 +153,7 @@ class ContentReaderTest extends TestCase
 	#[Group('units')]
 	public function testLoadPlaylistExclusiveReturnsEmptyForInvalidPlaylistId(): void
 	{
+		$this->fileSystemMock->expects($this->never())->method($this->anything());
 		$this->reader->init(0);
 
 		static::assertEmpty($this->reader->loadPlaylistExclusive());

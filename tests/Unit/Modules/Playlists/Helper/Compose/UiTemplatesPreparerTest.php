@@ -57,6 +57,7 @@ class UiTemplatesPreparerTest extends TestCase
 	#[Group('units')]
 	public function testBuildExternalEditor(): void
 	{
+		$this->rightsCheckerMock->expects($this->never())->method($this->anything());
 		$playlist = ['playlist_id' => 123, 'playlist_name' => 'My Playlist'];
 
 		$this->translatorMock->expects($this->exactly(4))
@@ -98,6 +99,7 @@ class UiTemplatesPreparerTest extends TestCase
 	#[Group('units')]
 	public function testBuildMultizoneEditor(): void
 	{
+		$this->rightsCheckerMock->expects($this->never())->method($this->anything());
 		$playlist = ['playlist_id' => 456, 'playlist_name' => 'Multizone Playlist'];
 
 		$this->translatorMock->expects($this->exactly(29))

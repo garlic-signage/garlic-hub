@@ -95,7 +95,7 @@ class StandardPlaylistBuilderTest extends TestCase
 		$this->simplePlaylistStructureFactoryMock->expects($this->once())
 			->method('create')
 			->with($formattedItems, $prefetch, $exclusive)
-			->willReturn($this->createMock(PlaylistStructureInterface::class));
+			->willReturn($this->createStub(PlaylistStructureInterface::class));
 
 
 			$this->builder->buildPlaylist();
@@ -135,7 +135,7 @@ class StandardPlaylistBuilderTest extends TestCase
 			->expects($this->once())
 			->method('create')
 			->with($formattedItems, '', '')
-			->willReturn($this->createMock(PlaylistStructureInterface::class));
+			->willReturn($this->createStub(PlaylistStructureInterface::class));
 
 
 			$this->builder->buildPlaylist();

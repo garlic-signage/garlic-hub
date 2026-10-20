@@ -49,27 +49,27 @@ class InsertItemFactoryTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$mediaServiceMock = $this->createMock(MediaService::class);
-		$itemsRepositoryMock = $this->createMock(ItemsRepository::class);
-		$playlistsServiceMock = $this->createMock(PlaylistsService::class);
-		$playlistMetricsCalculatorMock = $this->createMock(PlaylistMetricsCalculator::class);
-		$templatesServiceMock = $this->createMock(TemplatesService::class);
-		$configMock = $this->createMock(Config::class);
-		$fileSystemMock = $this->createMock(Filesystem::class);
-		$widgetsServiceMock = $this->createMock(WidgetsService::class);
-		$loggerMock = $this->createMock(LoggerInterface::class);
+		$mediaServiceStub = $this->createStub(MediaService::class);
+		$itemsRepositoryStub = $this->createStub(ItemsRepository::class);
+		$playlistsServiceStub = $this->createStub(PlaylistsService::class);
+		$playlistMetricsCalculatorStub = $this->createStub(PlaylistMetricsCalculator::class);
+		$templatesServiceStub = $this->createStub(TemplatesService::class);
+		$configStub = $this->createStub(Config::class);
+		$fileSystemStub = $this->createStub(Filesystem::class);
+		$widgetsServiceStub = $this->createStub(WidgetsService::class);
+		$loggerStub = $this->createStub(LoggerInterface::class);
 
 		$this->factory = new InsertItemFactory(
-			$mediaServiceMock,
-			$itemsRepositoryMock,
-			$playlistsServiceMock,
-			$templatesServiceMock,
-			$configMock,
-			$fileSystemMock,
+			$mediaServiceStub,
+			$itemsRepositoryStub,
+			$playlistsServiceStub,
+			$templatesServiceStub,
+			$configStub,
+			$fileSystemStub,
 			new MediaUrlSigner('unit-test-secret'),
-			$playlistMetricsCalculatorMock,
-			$widgetsServiceMock,
-			$loggerMock
+			$playlistMetricsCalculatorStub,
+			$widgetsServiceStub,
+			$loggerStub
 		);
 	}
 

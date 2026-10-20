@@ -52,6 +52,7 @@ class ConditionalPlayServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchConditionalSucceed(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$itemId = 1;
 		$mockItem = ['conditional' => serialize(['key' => 'value'])];
 
@@ -69,6 +70,7 @@ class ConditionalPlayServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchConditionalReturnsEmptyArrayWhenConditionalIsEmpty(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$itemId = 1;
 		$mockItem = ['conditional' => ''];
 
@@ -93,7 +95,7 @@ class ConditionalPlayServiceTest extends TestCase
 
 		$this->itemServiceMock->expects($this->once())->method('setUID')
 			->with(2)
-			->willThrowException($this->createMock(Throwable::class));
+			->willThrowException($this->createStub(Throwable::class));
 
 		$this->loggerMock->expects($this->once())->method('error')
 			->with(static::stringContains('Error conditional fetch:'));
@@ -106,6 +108,7 @@ class ConditionalPlayServiceTest extends TestCase
 	#[Group('units')]
 	public function testSaveConditionalPlaySucceed(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$itemId = 1;
 		$requestData = ['key' => 'value'];
 
@@ -182,7 +185,7 @@ class ConditionalPlayServiceTest extends TestCase
 
 		$this->itemServiceMock->expects($this->once())->method('fetchItemById')
 			->with($itemId)
-			->willThrowException($this->createMock(Throwable::class));
+			->willThrowException($this->createStub(Throwable::class));
 
 		$this->loggerMock->expects($this->once())->method('error')
 			->with(static::stringContains('Error save conditional play:'));

@@ -67,6 +67,8 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testInit(): void
 	{
+		$this->settingsParametersMock->expects($this->never())->method($this->anything());
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$sessionMock = $this->createMock(Session::class);
 
 		$sessionMock->expects($this->once())
@@ -88,6 +90,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testLoadPlaylistForEdit(): void
 	{
+		$this->expectUntouched($this->settingsFormBuilderMock, $this->settingsParametersMock, $this->translatorMock);
 		$playlistId = 42;
 		$expectedPlaylist = ['id' => $playlistId, 'name' => 'My Playlist'];
 
@@ -110,6 +113,8 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testConfigurePlaylistFormParameterWithPlaylistId(): void
 	{
+		$this->settingsParametersMock->expects($this->never())->method($this->anything());
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$post = ['playlist_id' => 42, 'playlist_name' => 'hurz', 'playlist_mode' => PlaylistMode::MASTER->value, 'other_key' => 'value'];
 		$expectedPlaylist = ['id' => 42, 'name' => 'My Playlist'];
 		$expectedResult = ['processed_input_key' => 'processed_value'];
@@ -139,6 +144,8 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testConfigurePlaylistFormParameterWithEmptyPlaylist(): void
 	{
+		$this->settingsParametersMock->expects($this->never())->method($this->anything());
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$post = ['playlist_id' => 42, 'playlist_name' => 'hurz', 'playlist_mode' => PlaylistMode::MASTER->value, 'other_key' => 'value'];
 		$expectedResult = ['processed_input_key' => 'processed_value'];
 
@@ -166,6 +173,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testConfigurePlaylistFormParameterWithoutPlaylistId(): void
 	{
+		$this->expectUntouched($this->playlistsServiceMock, $this->settingsParametersMock, $this->translatorMock);
 		$post = ['playlist_mode' => 'new_mode', 'playlist_name' => 'Name', 'other_key' => 'value'];
 		$expectedResult = ['processed_input_key' => 'processed_value'];
 
@@ -190,6 +198,8 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testStorePlaylistWithExistingId(): void
 	{
+		$this->settingsFormBuilderMock->expects($this->never())->method($this->anything());
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$post = ['playlist_id' => 42, 'name' => 'Updated Playlist'];
 		$expectedKeys = ['id', 'name'];
 		$expectedValues = [42, 'Updated Playlist'];
@@ -222,6 +232,8 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testStorePlaylistWithoutId(): void
 	{
+		$this->settingsFormBuilderMock->expects($this->never())->method($this->anything());
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$post = ['name' => 'New Playlist'];
 		$expectedKeys = ['name'];
 		$expectedValues = ['New Playlist'];
@@ -254,6 +266,8 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testStorePlaylistWithoutIdCreatesCompleteLayout(): void
 	{
+		$this->settingsFormBuilderMock->expects($this->never())->method($this->anything());
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$post = ['name' => 'New Multizone', 'screen_width' => 1920, 'screen_height' => 1080];
 
 		$this->settingsParametersMock->expects($this->once())
@@ -280,6 +294,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testBuildCreateNewParameter(): void
 	{
+		$this->expectUntouched($this->playlistsServiceMock, $this->settingsParametersMock, $this->translatorMock);
 		$playlistMode = 'new_mode';
 
 		$this->settingsFormBuilderMock->expects($this->once())
@@ -297,6 +312,7 @@ class FacadeTest extends TestCase
 	#[Group('units')]
 	public function testBuildEditParameter(): void
 	{
+		$this->expectUntouched($this->playlistsServiceMock, $this->settingsParametersMock, $this->translatorMock);
 		$playlist = ['UID' => 123, 'company_id' => 1, 'playlist_id' => 12, 'playlist_mode' => PlaylistMode::MASTER->value, 'playlist_name' => 'Test Playlist'];
 
 		$this->settingsFormBuilderMock->expects($this->once())
@@ -329,6 +345,8 @@ class FacadeTest extends TestCase
 
 		$sessionMock = $this->createMock(Session::class);
 		$sessionMock->expects($this->once())->method('get')->willReturn(['UID' => 123]);
+		$this->playlistsServiceMock->expects($this->once())->method('setUID')->with(123);
+		$this->settingsParametersMock->expects($this->never())->method($this->anything());
 		$this->facade->init($this->translatorMock, $sessionMock);
 
 		$this->translatorMock->expects($this->exactly(2))
@@ -353,4 +371,11 @@ class FacadeTest extends TestCase
 		static::assertSame($expectedResult, $result);
 	}
 
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
+	}
 }

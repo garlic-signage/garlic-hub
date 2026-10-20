@@ -66,6 +66,7 @@ class PlaylistTest extends TestCase
 	#[Group('units')]
 	public function testInsertSuccessful(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playlistId = 1;
 		$insertId = 2;
 		$position = 1;
@@ -103,10 +104,10 @@ class PlaylistTest extends TestCase
 			->willReturn(1);
 
 		$this->playlistMetricsCalculatorMock
-			->method('calculateFromPlaylistData')
+			->expects($this->atLeastOnce())->method('calculateFromPlaylistData')
 			->willReturnSelf();
 		$this->playlistMetricsCalculatorMock
-			->method('getMetricsForFrontend')
+			->expects($this->atLeastOnce())->method('getMetricsForFrontend')
 			->willReturn($playlistMetrics);
 
 		$this->itemsRepositoryMock->method('commitTransaction');
@@ -127,6 +128,9 @@ class PlaylistTest extends TestCase
 	#[Group('units')]
 	public function testInsertCheRecursionFailsSamePlaylist(): void
 	{
+		// the acl check sets the user, but nothing is calculated
+		$this->playlistMetricsCalculatorMock->expects($this->exactly(2))->method('setUID')->with(1);
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateFromPlaylistData');
 		$playlistId = 1;
 		$insertId = 1;
 		$position = 1;
@@ -154,6 +158,9 @@ class PlaylistTest extends TestCase
 	#[Group('units')]
 	public function testInsertCheRecursionFailsSamePlaylistAfterRecursion(): void
 	{
+		// the acl check sets the user, but nothing is calculated
+		$this->playlistMetricsCalculatorMock->expects($this->exactly(2))->method('setUID')->with(1);
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateFromPlaylistData');
 		$playlistId = 1;
 		$insertId = 2;
 		$position = 1;

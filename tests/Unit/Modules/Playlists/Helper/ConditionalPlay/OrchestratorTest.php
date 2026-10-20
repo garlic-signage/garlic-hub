@@ -36,6 +36,7 @@ use App\Modules\Playlists\Services\ConditionalPlayService;
 use Exception;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 
@@ -44,7 +45,7 @@ class OrchestratorTest extends TestCase
 	private ResponseBuilder&MockObject $responseBuilderMock;
 	private BaseValidator&MockObject $validatorMock;
 	private TemplatePreparer&MockObject $templatePreparerMock;
-	private ResponseInterface&MockObject $responseMock;
+	private ResponseInterface&Stub $responseStub;
 	private ConditionalPlayService&MockObject $conditionalPlayServiceMock;
 	private Orchestrator $orchestrator;
 
@@ -56,16 +57,16 @@ class OrchestratorTest extends TestCase
 	{
 		parent::setUp();
 		$this->responseBuilderMock = $this->createMock(ResponseBuilder::class);
-		$userSessionMock = $this->createMock(UserSession::class);
+		$userSessionStub = $this->createStub(UserSession::class);
 		$this->validatorMock = $this->createMock(BaseValidator::class);
 		$this->templatePreparerMock = $this->createMock(TemplatePreparer::class);
 		$this->conditionalPlayServiceMock = $this->createMock(ConditionalPlayService::class);
 
-		$this->responseMock = $this->createMock(ResponseInterface::class);
+		$this->responseStub = $this->createStub(ResponseInterface::class);
 
 		$this->orchestrator = new Orchestrator(
 			$this->responseBuilderMock,
-			$userSessionMock,
+			$userSessionStub,
 			$this->validatorMock,
 			$this->templatePreparerMock,
 			$this->conditionalPlayServiceMock
@@ -79,17 +80,19 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testValidateWithTokenCsrfMismatch(): void
 	{
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->conditionalPlayServiceMock->expects($this->never())->method($this->anything());
 		$this->validatorMock->expects($this->once())->method('validateCsrfToken')
 			->with('invalid_token')
 			->willReturn(false);
 
 		$this->responseBuilderMock->expects($this->once())->method('csrfTokenMismatch')
-			->with($this->responseMock)
-			->willReturn($this->responseMock);
+			->with($this->responseStub)
+			->willReturn($this->responseStub);
 
 		$this->orchestrator->setInput([BaseEditParameters::PARAMETER_CSRF_TOKEN => 'invalid_token']);
 
-		$this->orchestrator->validateSave($this->responseMock);
+		$this->orchestrator->validateSave($this->responseStub);
 	}
 
 
@@ -100,17 +103,19 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testValidateWithTokenFailsNoItemId(): void
 	{
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->conditionalPlayServiceMock->expects($this->never())->method($this->anything());
 		$this->validatorMock->expects($this->once())->method('validateCsrfToken')
 			->with('valid_token')
 			->willReturn(true);
 
 		$this->responseBuilderMock->expects($this->once())->method('invalidItemId')
-			->with($this->responseMock)
-			->willReturn($this->responseMock);
+			->with($this->responseStub)
+			->willReturn($this->responseStub);
 
 		$this->orchestrator->setInput([BaseEditParameters::PARAMETER_CSRF_TOKEN => 'valid_token']);
 
-		$this->orchestrator->validateSave($this->responseMock);
+		$this->orchestrator->validateSave($this->responseStub);
 	}
 
 	/**
@@ -120,13 +125,14 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testValidateWithTokenCallsValidate(): void
 	{
+		$this->expectUntouched($this->responseBuilderMock, $this->templatePreparerMock, $this->conditionalPlayServiceMock);
 		$this->validatorMock->expects($this->once())->method('validateCsrfToken')
 			->with('valid_token')
 			->willReturn(true);
 
 		$this->orchestrator->setInput(['item_id' => '1', BaseEditParameters::PARAMETER_CSRF_TOKEN => 'valid_token']);
 
-		$this->orchestrator->validateSave($this->responseMock);
+		$this->orchestrator->validateSave($this->responseStub);
 	}
 
 	/**
@@ -137,15 +143,16 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testFetchSuccess(): void
 	{
+		$this->validatorMock->expects($this->never())->method($this->anything());
 		$itemData = ['item_id' => 123, 'conditional' => ['key' => 'value']];
 
 		$this->conditionalPlayServiceMock->expects($this->once())->method('fetchConditionalByItemId')->with(123)->willReturn($itemData);
 		$this->templatePreparerMock->expects($this->once())->method('prepare')->with(123, $itemData['conditional']);
 		$this->templatePreparerMock->expects($this->once())->method('render')->willReturn('<html lang="en"></html>');
-		$this->responseBuilderMock->expects($this->once())->method('generalSuccess')->with($this->responseMock, ['data' => $itemData, 'html' => '<html lang="en"></html>'])->willReturn($this->responseMock);
+		$this->responseBuilderMock->expects($this->once())->method('generalSuccess')->with($this->responseStub, ['data' => $itemData, 'html' => '<html lang="en"></html>'])->willReturn($this->responseStub);
 
 		$this->initMocks();
-		$this->orchestrator->fetch($this->responseMock);
+		$this->orchestrator->fetch($this->responseStub);
 	}
 
 
@@ -157,11 +164,13 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testFetchItemNotFound(): void
 	{
+		$this->validatorMock->expects($this->never())->method($this->anything());
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
 		$this->conditionalPlayServiceMock->expects($this->once())->method('fetchConditionalByItemId')->with(123)->willReturn([]);
-		$this->responseBuilderMock->expects($this->once())->method('itemNotFound')->with($this->responseMock)->willReturn($this->responseMock);
+		$this->responseBuilderMock->expects($this->once())->method('itemNotFound')->with($this->responseStub)->willReturn($this->responseStub);
 
 		$this->initMocks();
-		$result = $this->orchestrator->fetch($this->responseMock);
+		$result = $this->orchestrator->fetch($this->responseStub);
 
 		static::assertInstanceOf(ResponseInterface::class, $result);
 	}
@@ -176,6 +185,8 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testSaveSuccess(): void
 	{
+		$this->validatorMock->expects($this->never())->method($this->anything());
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
 		$this->conditionalPlayServiceMock->expects($this->once())->method('fetchAccessibleItem')
 			->with(123)
 			->willReturn(['item_id' => '123']);
@@ -184,11 +195,11 @@ class OrchestratorTest extends TestCase
 			->willReturn(true);
 
 		$this->responseBuilderMock->expects($this->once())->method('generalSuccess')
-			->with($this->responseMock, [])
-			->willReturn($this->responseMock);
+			->with($this->responseStub, [])
+			->willReturn($this->responseStub);
 
 		$this->initMocks();
-		$this->orchestrator->save($this->responseMock);
+		$this->orchestrator->save($this->responseStub);
 	}
 
 	/**
@@ -200,17 +211,19 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testSaveItemNotFound(): void
 	{
+		$this->validatorMock->expects($this->never())->method($this->anything());
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
 		$this->conditionalPlayServiceMock->expects($this->once())->method('fetchAccessibleItem')
 			->with(123)
 			->willReturn([]);
 
 		$this->responseBuilderMock->expects($this->once())->method('itemNotFound')
-			->with($this->responseMock)
-			->willReturn($this->responseMock);
+			->with($this->responseStub)
+			->willReturn($this->responseStub);
 
 		$this->orchestrator->setInput(['item_id' => '123']);
 		$this->initMocks();
-		$this->orchestrator->save($this->responseMock);
+		$this->orchestrator->save($this->responseStub);
 	}
 
 	/**
@@ -220,7 +233,14 @@ class OrchestratorTest extends TestCase
 	private function initMocks():void
 	{
 		$this->orchestrator->setInput(['item_id' => '123', 'key' => 'value', BaseEditParameters::PARAMETER_CSRF_TOKEN => 'invalid_token']);
-		$this->orchestrator->validate($this->responseMock);
+		$this->orchestrator->validate($this->responseStub);
 	}
 
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
+	}
 }

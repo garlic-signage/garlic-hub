@@ -36,6 +36,7 @@ use App\Modules\Playlists\Services\PlaylistsService;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -46,7 +47,7 @@ class ItemsServiceTest extends TestCase
 	private PlaylistsService&MockObject $playlistsServiceMock;
 	private PlaylistMetricsCalculator&MockObject $playlistMetricsCalculatorMock;
 	private MimeTypeExtensionMapper&MockObject $mimeTypeExtensionMapperMock;
-	private Config&MockObject $configMock;
+	private Config&Stub $configStub;
 	private LoggerInterface&MockObject $loggerMock;
 	private ItemsService $itemsService;
 
@@ -61,7 +62,7 @@ class ItemsServiceTest extends TestCase
 		$this->playlistsServiceMock = $this->createMock(PlaylistsService::class);
 		$this->playlistMetricsCalculatorMock = $this->createMock(PlaylistMetricsCalculator::class);
 		$this->mimeTypeExtensionMapperMock = $this->createMock(MimeTypeExtensionMapper::class);
-		$this->configMock = $this->createMock(Config::class);
+		$this->configStub = $this->createStub(Config::class);
 		$this->loggerMock = $this->createMock(LoggerInterface::class);
 
 		$this->itemsService = new ItemsService(
@@ -71,7 +72,7 @@ class ItemsServiceTest extends TestCase
 			$this->playlistMetricsCalculatorMock,
 			$this->mimeTypeExtensionMapperMock,
 			new MediaUrlSigner('unit-test-secret'),
-			$this->configMock,
+			$this->configStub,
 			$this->loggerMock
 		);
 	}
@@ -79,6 +80,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testGetItemsRepository(): void
 	{
+		$this->expectUntouched($this->itemsRepositoryMock, $this->mediaServiceMock, $this->playlistsServiceMock, $this->playlistMetricsCalculatorMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$result = $this->itemsService->getItemsRepository();
 		static::assertSame($this->itemsRepositoryMock, $result);
 	}
@@ -91,6 +93,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadByPlaylistForExportWithResults(): void
 	{
+		$this->expectUntouched($this->mediaServiceMock, $this->playlistsServiceMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$playlist = ['playlist_id' => 1];
 		$edition = Config::PLATFORM_EDITION_EDGE;
 
@@ -130,6 +133,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadByPlaylistForExportWithEmptyResults(): void
 	{
+		$this->expectUntouched($this->mediaServiceMock, $this->playlistsServiceMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$playlist = ['playlist_id' => 1];
 		$edition = Config::PLATFORM_EDITION_EDGE;
 
@@ -158,6 +162,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testItemDuration(): void
 	{
+		$this->expectUntouched($this->itemsRepositoryMock, $this->mediaServiceMock, $this->playlistsServiceMock, $this->playlistMetricsCalculatorMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		static::assertSame(0, $this->itemsService->getItemDuration());
 	}
 
@@ -167,6 +172,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testFindMediaInPlaylist(): void
 	{
+		$this->expectUntouched($this->mediaServiceMock, $this->playlistsServiceMock, $this->playlistMetricsCalculatorMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$playlistId = 1;
 		$expected = [
 			['item_id' => 1, 'item_name' => 'Item 1'],
@@ -190,6 +196,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchItemByIdForValidMediapoolVideo(): void
 	{
+		$this->expectUntouched($this->playlistMetricsCalculatorMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$itemId = 123;
 		$itemData = [
 			'item_id' => $itemId,
@@ -232,6 +239,8 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchItemByIdForValidMediapoolImage(): void
 	{
+		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$itemId = 123;
 		$itemData = [
 			'item_id' => $itemId,
@@ -274,6 +283,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchItemByIdWithUnknownItem(): void
 	{
+		$this->expectUntouched($this->playlistMetricsCalculatorMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$this->itemsRepositoryMock->expects($this->once())->method('findFirstById')->with(123)->willReturn([]);
 		$this->playlistsServiceMock->expects($this->never())->method('loadPureById');
 		$this->mediaServiceMock->expects($this->never())->method('fetchMediaByChecksum');
@@ -293,6 +303,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchItemByIdForValidMediapoolVideoException(): void
 	{
+		$this->expectUntouched($this->playlistMetricsCalculatorMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$itemId = 123;
 		$itemData = [
 			'item_id' => $itemId,
@@ -334,6 +345,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchItemByIdForValidPlaylistItem(): void
 	{
+		$this->expectUntouched($this->mediaServiceMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$itemId = 456;
 		$itemData = [
 			'item_id' => $itemId,
@@ -379,6 +391,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchItemByIdForPlaylistItemWithTimeLimitAndBiggeDefualtDuration(): void
 	{
+		$this->expectUntouched($this->mediaServiceMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$itemId = 456;
 		$itemData = [
 			'item_id' => $itemId,
@@ -426,6 +439,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchItemByIdDefaultDuration(): void
 	{
+		$this->expectUntouched($this->mediaServiceMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$itemId = 101;
 		$itemData = [
 			'item_id' => $itemId,
@@ -466,6 +480,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadItemsByPlaylistIdForComposerWithMediapoolImage(): void
 	{
+		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
 		$playlistId = 1;
 		$playlistData = ['playlist_id' => $playlistId];
 		$itemsData = [
@@ -491,7 +506,11 @@ class ItemsServiceTest extends TestCase
 			->with($playlistId)
 			->willReturn($itemsData);
 
+		$this->expectPlaylistMetrics($playlistData);
+
 		$result = $this->itemsService->loadItemsByPlaylistIdForComposer($playlistId);
+
+		static::assertSame(['duration' => 42], $result['playlist_metrics']);
 
 		static::assertArrayHasKey('items', $result);
 		static::assertCount(1, $result['items']);
@@ -539,7 +558,11 @@ class ItemsServiceTest extends TestCase
 			->with($playlistId)
 			->willReturn($itemsData);
 
+		$this->expectPlaylistMetrics($playlistData);
+
 		$result = $this->itemsService->loadItemsByPlaylistIdForComposer($playlistId);
+
+		static::assertSame(['duration' => 42], $result['playlist_metrics']);
 
 		static::assertArrayHasKey('items', $result);
 		static::assertCount(1, $result['items']);
@@ -555,6 +578,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadItemsByPlaylistIdForComposerWithWidget(): void
 	{
+		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
 		$playlistId = 1;
 		$playlistData = ['playlist_id' => $playlistId];
 		$itemsData = [
@@ -581,7 +605,11 @@ class ItemsServiceTest extends TestCase
 			->with($playlistId)
 			->willReturn($itemsData);
 
+		$this->expectPlaylistMetrics($playlistData);
+
 		$result = $this->itemsService->loadItemsByPlaylistIdForComposer($playlistId);
+
+		static::assertSame(['duration' => 42], $result['playlist_metrics']);
 
 		static::assertArrayHasKey('items', $result);
 		static::assertCount(1, $result['items']);
@@ -598,6 +626,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadItemsByPlaylistIdForComposerWithPlaylistType(): void
 	{
+		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
 		$playlistId = 1;
 		$playlistData = ['playlist_id' => $playlistId];
 		$itemsData = [
@@ -622,7 +651,11 @@ class ItemsServiceTest extends TestCase
 			->with($playlistId)
 			->willReturn($itemsData);
 
+		$this->expectPlaylistMetrics($playlistData);
+
 		$result = $this->itemsService->loadItemsByPlaylistIdForComposer($playlistId);
+
+		static::assertSame(['duration' => 42], $result['playlist_metrics']);
 
 		static::assertArrayHasKey('items', $result);
 		static::assertCount(1, $result['items']);
@@ -639,6 +672,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadItemsByPlaylistIdForComposerWithEmptyPlaylist(): void
 	{
+		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
 		$playlistId = 1;
 		$playlistData = ['playlist_id' => $playlistId];
 
@@ -656,7 +690,11 @@ class ItemsServiceTest extends TestCase
 			->with($playlistId)
 			->willReturn([]);
 
+		$this->expectPlaylistMetrics($playlistData);
+
 		$result = $this->itemsService->loadItemsByPlaylistIdForComposer($playlistId);
+
+		static::assertSame(['duration' => 42], $result['playlist_metrics']);
 
 		static::assertArrayHasKey('items', $result);
 		static::assertCount(0, $result['items']);
@@ -671,6 +709,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateFieldSuccess(): void
 	{
+		$this->expectUntouched($this->mediaServiceMock, $this->playlistMetricsCalculatorMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$itemId = 1;
 		$fieldName = 'name';
 		$fieldValue = 'New Playlist Name';
@@ -710,6 +749,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateFieldFails(): void
 	{
+		$this->expectUntouched($this->mediaServiceMock, $this->playlistMetricsCalculatorMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$itemId = 1;
 		$fieldName = 'name';
 		$fieldValue = 'New Playlist Name';
@@ -733,6 +773,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateItemDurationSuccess(): void
 	{
+		$this->expectUntouched($this->mediaServiceMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$itemId = 5;
 		$wantedDuration = 120;
 		$playlistId = 7;
@@ -771,6 +812,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateItemDurationItemNotFound(): void
 	{
+		$this->expectUntouched($this->mediaServiceMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$itemId = 5;
 		$wantedDuration = 120;
 
@@ -790,6 +832,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateItemDurationForPlaylist(): void
 	{
+		$this->expectUntouched($this->mediaServiceMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$itemId           = 5;
 		$wantedDuration   = 300;
 		$playlistId       = 7;
@@ -844,6 +887,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateItemOrderSuccess(): void
 	{
+		$this->expectUntouched($this->mediaServiceMock, $this->playlistMetricsCalculatorMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$playlistId = 10;
 		$itemsOrder = ['5' => '3', '3' => '1', '8' => '2']; // phpstan treats this as array<int,string>
 
@@ -873,6 +917,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateItemOrderThrowsExceptionForInvalidPlaylist(): void
 	{
+		$this->expectUntouched($this->mediaServiceMock, $this->playlistMetricsCalculatorMock, $this->mimeTypeExtensionMapperMock);
 		$playlistId = 10;
 		$itemsOrder = [];
 		$itemsOrder['5'] = '3';  // Explizite String-Zuweisung
@@ -905,6 +950,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteItemSuccessfully(): void
 	{
+		$this->expectUntouched($this->mediaServiceMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$playlistId = 10;
 		$itemId = 20;
 
@@ -959,6 +1005,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeletePlaylistNotFound(): void
 	{
+		$this->expectUntouched($this->mediaServiceMock, $this->playlistMetricsCalculatorMock, $this->mimeTypeExtensionMapperMock);
 		$playlistId = 10;
 		$itemId = 20;
 
@@ -989,6 +1036,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteItemNotFound(): void
 	{
+		$this->expectUntouched($this->mediaServiceMock, $this->playlistMetricsCalculatorMock, $this->mimeTypeExtensionMapperMock);
 		$playlistId = 10;
 		$itemId = 20;
 		$playlistData = ['playlist_id' => $playlistId];
@@ -1026,6 +1074,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteItemFailure(): void
 	{
+		$this->expectUntouched($this->mediaServiceMock, $this->playlistMetricsCalculatorMock, $this->mimeTypeExtensionMapperMock);
 		$playlistId = 10;
 		$itemId = 20;
 
@@ -1071,6 +1120,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateItemsMetricsSuccessfully(): void
 	{
+		$this->expectUntouched($this->mediaServiceMock, $this->playlistsServiceMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$playlistId = 123;
 
 		$this->playlistMetricsCalculatorMock->expects($this->once())
@@ -1101,6 +1151,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateMetricsRecursivelySuccessfully(): void
 	{
+		$this->expectUntouched($this->mediaServiceMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$playlistId = 2;
 		$playlistsContaining = [['playlist_id' => 3]];
 
@@ -1132,6 +1183,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateMetricsRecursivelyWithNoContainingPlaylists(): void
 	{
+		$this->expectUntouched($this->mediaServiceMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$playlistId = 1;
 
 		$this->itemsRepositoryMock->expects($this->once())
@@ -1144,5 +1196,27 @@ class ItemsServiceTest extends TestCase
 		$this->playlistsServiceMock->expects($this->never())->method('update');
 
 		$this->itemsService->updateMetricsRecursively($playlistId);
+	}
+
+	/**
+	 * @param array<string,mixed> $playlistData
+	 */
+	private function expectPlaylistMetrics(array $playlistData): void
+	{
+		$this->playlistMetricsCalculatorMock->expects($this->once())->method('setUID')->with(1);
+		$this->playlistMetricsCalculatorMock->expects($this->once())->method('calculateFromPlaylistData')
+			->with($playlistData)
+			->willReturnSelf();
+		$this->playlistMetricsCalculatorMock->expects($this->once())->method('getMetricsForFrontend')
+			->willReturn(['duration' => 42]);
+		$this->loggerMock->expects($this->never())->method('error');
+	}
+
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
 	}
 }

@@ -36,11 +36,12 @@ use App\Modules\Playlists\Services\AclValidator;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class DatatablePreparerTest extends TestCase
 {
-	private PrepareService&MockObject $prepareServiceMock;
+	private PrepareService&Stub $prepareServiceStub;
 	private AclValidator&MockObject $aclValidatorMock;
 	private BodyPreparer&MockObject $bodyPreparerMock;
 	private Translator&MockObject $translatorMock;
@@ -52,16 +53,16 @@ class DatatablePreparerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->prepareServiceMock = $this->createMock(PrepareService::class);
+		$this->prepareServiceStub = $this->createStub(PrepareService::class);
 		$this->aclValidatorMock   = $this->createMock(AclValidator::class);
-		$parametersMock           = $this->createMock(Parameters::class);
+		$parametersStub           = $this->createStub(Parameters::class);
 		$this->translatorMock     = $this->createMock(Translator::class);
 		$this->bodyPreparerMock = $this->createMock(BodyPreparer::class);
 
 		$this->datatablePreparer = new DatatablePreparer(
-			$this->prepareServiceMock,
+			$this->prepareServiceStub,
 			$this->aclValidatorMock,
-			$parametersMock
+			$parametersStub
 		);
 	}
 
@@ -73,6 +74,7 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableBodyWithEmptyData(): void
 	{
+		$this->expectUntouched($this->aclValidatorMock, $this->translatorMock, $this->bodyPreparerMock);
 		$result = $this->datatablePreparer->prepareTableBody([], [], 123);
 
 		static::assertEmpty($result);
@@ -92,17 +94,17 @@ class DatatablePreparerTest extends TestCase
 		$this->datatablePreparer->setTranslator($this->translatorMock);
 		$usedPlaylists = [];
 		$this->datatablePreparer->setUsedPlaylists($usedPlaylists);
-		$fields = [$this->createMock(HeaderField::class)];
+		$fields = [$this->createStub(HeaderField::class)];
 		$fields[0]->method('getName')->willReturn('playlist_name');
 		$fields[0]->method('isSortable')->willReturn(true);
 
 		$this->aclValidatorMock->method('isSimpleAdmin')
 			->with(123)
 			->willReturn(true);
-		$this->prepareServiceMock->method('getBodyPreparer')
+		$this->prepareServiceStub->method('getBodyPreparer')
 			->willReturn($this->bodyPreparerMock);
 
-		$this->translatorMock->method('translate')
+		$this->translatorMock->expects($this->atLeastOnce())->method('translate')
 			->willReturnMap([
 				['composer', 'playlists', [], 'Compose'],
 				['composer', 'playlists', [], 'Compose'],
@@ -143,21 +145,23 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableBodyWithUID(): void
 	{
+		// labels of the composer and settings actions
+		$this->translatorMock->expects($this->atLeastOnce())->method('translate')->willReturn('label');
 		$this->datatablePreparer->setTranslator($this->translatorMock);
 		$usedPlaylists = [];
 		$this->datatablePreparer->setUsedPlaylists($usedPlaylists);
 
-		$fields = [$this->createMock(HeaderField::class)];
+		$fields = [$this->createStub(HeaderField::class)];
 		$fields[0]->method('getName')->willReturn('UID');
 		$fields[0]->method('isSortable')->willReturn(true);
 
-		$this->prepareServiceMock->method('getBodyPreparer')
+		$this->prepareServiceStub->method('getBodyPreparer')
 			->willReturn($this->bodyPreparerMock);
 		$this->bodyPreparerMock->expects($this->once())->method('formatUID')
 			->with('13', 'Willi');
 
 		$this->aclValidatorMock->method('isModuleAdmin')->willReturn(true);
-		$this->aclValidatorMock->method('isSimpleAdmin')->willReturn(true);
+		$this->aclValidatorMock->expects($this->once())->method('isSimpleAdmin')->with(123)->willReturn(true);
 
 		$result = $this->datatablePreparer->prepareTableBody(
 			[
@@ -184,21 +188,23 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableBodyWithDuration(): void
 	{
+		// labels of the composer and settings actions
+		$this->translatorMock->expects($this->atLeastOnce())->method('translate')->willReturn('label');
 		$this->datatablePreparer->setTranslator($this->translatorMock);
 		$usedPlaylists = [];
 		$this->datatablePreparer->setUsedPlaylists($usedPlaylists);
 
-		$fields = [$this->createMock(HeaderField::class)];
+		$fields = [$this->createStub(HeaderField::class)];
 		$fields[0]->method('getName')->willReturn('duration');
 		$fields[0]->method('isSortable')->willReturn(false);
 
-		$this->prepareServiceMock->method('getBodyPreparer')
+		$this->prepareServiceStub->method('getBodyPreparer')
 			->willReturn($this->bodyPreparerMock);
 		$this->bodyPreparerMock->expects($this->once())->method('formatText')
 			->with('00:00:12');
 
 		$this->aclValidatorMock->method('isModuleAdmin')->willReturn(true);
-		$this->aclValidatorMock->method('isSimpleAdmin')->willReturn(true);
+		$this->aclValidatorMock->expects($this->once())->method('isSimpleAdmin')->with(123)->willReturn(true);
 
 		$result = $this->datatablePreparer->prepareTableBody(
 			[
@@ -231,20 +237,20 @@ class DatatablePreparerTest extends TestCase
 		$usedPlaylists = [];
 		$this->datatablePreparer->setUsedPlaylists($usedPlaylists);
 
-		$fields = [$this->createMock(HeaderField::class)];
+		$fields = [$this->createStub(HeaderField::class)];
 		$fields[0]->method('getName')->willReturn('playlist_mode');
 		$fields[0]->method('isSortable')->willReturn(false);
 
 		$this->translatorMock->method('translateArrayForOptions')
 			->with('playlist_mode_selects', 'playlists')
 			->willReturn(['master' => 'Master']);
-		$this->prepareServiceMock->method('getBodyPreparer')
+		$this->prepareServiceStub->method('getBodyPreparer')
 			->willReturn($this->bodyPreparerMock);
 		$this->bodyPreparerMock->expects($this->once())->method('formatText')
 			->with('Master');
 
 		$this->aclValidatorMock->method('isModuleAdmin')->willReturn(true);
-		$this->aclValidatorMock->method('isSimpleAdmin')->willReturn(true);
+		$this->aclValidatorMock->expects($this->once())->method('isSimpleAdmin')->with(123)->willReturn(true);
 
 		$result = $this->datatablePreparer->prepareTableBody(
 			[
@@ -275,18 +281,22 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableBodyWithUnknown(): void
 	{
-		$fields = [$this->createMock(HeaderField::class)];
+		// neither owner nor admin: no actions for the row
+		$this->aclValidatorMock->expects($this->once())->method('isSimpleAdmin')->with(123)->willReturn(false);
+		$fields = [$this->createStub(HeaderField::class)];
 		$fields[0]->method('getName')->willReturn('unknown_param');
 		$fields[0]->method('isSortable')->willReturn(false);
 
 		$this->datatablePreparer->setTranslator($this->translatorMock);
 
 		$bodyPreparerMock = $this->createMock(BodyPreparer::class);
+		$this->bodyPreparerMock->expects($this->never())->method($this->anything());
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$bodyPreparerMock->method('formatText')
 			->with('some_value')
 			->willReturn(['formattedText' => 'some_value']);
 
-		$this->prepareServiceMock->method('getBodyPreparer')->willReturn($bodyPreparerMock);
+		$this->prepareServiceStub->method('getBodyPreparer')->willReturn($bodyPreparerMock);
 
 		$result = $this->datatablePreparer->prepareTableBody(
 			[
@@ -309,7 +319,9 @@ class DatatablePreparerTest extends TestCase
 	{
 		$this->datatablePreparer->setTranslator($this->translatorMock);
 
-		$this->translatorMock->method('translateArrayForOptions')
+		$this->aclValidatorMock->expects($this->once())->method('getConfig')->willReturn($this->createStub(\App\Framework\Core\Config\Config::class));
+		$this->bodyPreparerMock->expects($this->never())->method($this->anything());
+		$this->translatorMock->expects($this->once())->method('translateArrayForOptions')
 			->with('playlist_mode_selects', 'playlists')
 			->willReturn([PlaylistMode::MASTER->value => 'Master', 'slave' => 'Slave']);
 
@@ -331,10 +343,11 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testFormatContextMenuEdgeForbidden(): void
 	{
+		$this->bodyPreparerMock->expects($this->never())->method($this->anything());
 		$this->datatablePreparer->setTranslator($this->translatorMock);
-		$configMock = $this->createMock(Config::class);
-		$this->aclValidatorMock->method('getConfig')->willReturn($configMock);
-		$configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
+		$configStub = $this->createStub(Config::class);
+		$this->aclValidatorMock->expects($this->atLeastOnce())->method('getConfig')->willReturn($configStub);
+		$configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
 
 		$this->translatorMock->method('translateArrayForOptions')
 			->with('playlist_mode_selects', 'playlists')
@@ -351,4 +364,11 @@ class DatatablePreparerTest extends TestCase
 		);
 	}
 
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
+	}
 }

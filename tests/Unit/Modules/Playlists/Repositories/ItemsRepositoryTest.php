@@ -56,6 +56,7 @@ class ItemsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testConstructor(): void
 	{
+		$this->expectUntouched($this->connectionMock, $this->queryBuilderMock, $this->resultMock);
 		static::assertSame('playlists_items', $this->repository->getTable());
 	}
 
@@ -65,6 +66,7 @@ class ItemsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindAllByPlaylistsId(): void
 	{
+		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$playlistId = 67;
 
 		$this->queryBuilderMock->expects($this->once())->method('select')->with('*')
@@ -97,6 +99,7 @@ class ItemsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindMediaInPlaylistIdReturnsValidMedia(): void
 	{
+		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$playlistId = 42;
 
 		$this->queryBuilderMock->expects($this->once())->method('select')->with('item_id, item_name')
@@ -143,6 +146,7 @@ class ItemsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindAllByPlaylistIdWithJoinsWithCoreEdition(): void
 	{
+		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$this->queryBuilderMock
 			->expects($this->exactly(3))
 			->method('leftJoin')
@@ -187,6 +191,7 @@ class ItemsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindAllByPlaylistIdWithJoinsWithEnterpriseEdition(): void
 	{
+		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$this->queryBuilderMock
 			->expects($this->exactly(4))
 			->method('leftJoin')
@@ -239,6 +244,7 @@ class ItemsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindAllByPlaylistIdWithJoinsWithUnknownEdition(): void
 	{
+		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$this->queryBuilderMock
 			->expects($this->exactly(2))
 			->method('leftJoin')
@@ -273,6 +279,7 @@ class ItemsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindAllPlaylistItemsByPlaylistId(): void
 	{
+		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$playlistId = 96;
 
 		$this->queryBuilderMock->expects($this->once())->method('select')->with('*')
@@ -310,6 +317,7 @@ class ItemsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testSumAndCountMetricsByPlaylistIdAndOwner(): void
 	{
+		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$playlistId = 101;
 		$ownerId = 500;
 
@@ -361,6 +369,7 @@ class ItemsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testSumAndCountMetricsByPlaylistIdAndOwnerReturnNull(): void
 	{
+		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$playlistId = 101;
 		$ownerId = 500;
 
@@ -403,6 +412,7 @@ class ItemsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindAllPlaylistContainingPlaylist(): void
 	{
+		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$playlistId = 96;
 
 		$this->queryBuilderMock->expects($this->once())->method('select')
@@ -442,6 +452,8 @@ class ItemsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testUpdatePositionsWhenInsertedWithAffectedRows(): void
 	{
+		$this->resultMock->expects($this->never())->method($this->anything());
+		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$playlistId = 1;
 		$position = 3;
 
@@ -480,6 +492,8 @@ class ItemsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testUpdatePositionsWhenDeletedWithAffectedRows(): void
 	{
+		$this->resultMock->expects($this->never())->method($this->anything());
+		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$playlistId = 1;
 		$position = 3;
 
@@ -518,6 +532,8 @@ class ItemsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testUpdatePositionsWhenDeletedWithNoAffectedRows(): void
 	{
+		$this->resultMock->expects($this->never())->method($this->anything());
+		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$playlistId = 1;
 		$position = 3;
 
@@ -556,6 +572,8 @@ class ItemsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testUpdateItemOrderSuccessfully(): void
 	{
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
+		$this->resultMock->expects($this->never())->method($this->anything());
 		$itemId = 10;
 		$newOrder = 5;
 
@@ -574,6 +592,7 @@ class ItemsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindFileResourcesByPlaylistIdWithValidIds(): void
 	{
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
 		$playlistIds = [123, 456];
 
 		$sql = "SELECT file_resource as playlist_id FROM playlists_items WHERE item_type = '" . ItemType::PLAYLIST->value . "' AND CAST(file_resource AS UNSIGNED) IN(123,456)";
@@ -602,9 +621,19 @@ class ItemsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindFileResourcesByPlaylistIdReturnsEmptyArrayForEmptyInput(): void
 	{
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
+		$this->resultMock->expects($this->never())->method($this->anything());
 		$this->connectionMock->expects($this->never())
 			->method('executeQuery');
 
 		static::assertEquals([], $this->repository->findFileResourcesByPlaylistId([]));
+	}
+
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
 	}
 }

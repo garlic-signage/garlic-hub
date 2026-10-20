@@ -56,6 +56,7 @@ class TemplatePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareWithFullData(): void
 	{
+		$this->templateMock->expects($this->never())->method($this->anything());
 		$conditionalPlayData = [
 			'date' => ['from' => '2025-08-01', 'until' => '2025-08-31'],
 			'time' => ['from' => '08:00', 'until' => '18:00'],
@@ -86,6 +87,7 @@ class TemplatePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareWithPartialData(): void
 	{
+		$this->templateMock->expects($this->never())->method($this->anything());
 		$conditionalPlayData = [
 			'date' => ['from' => '2025-08-01'],
 			'time' => [],
@@ -116,6 +118,7 @@ class TemplatePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareWithEmptyData(): void
 	{
+		$this->templateMock->expects($this->never())->method($this->anything());
 		$conditionalPlayData = [];
 
 		$this->translatorMock->expects($this->exactly(6))->method('translate')
@@ -142,6 +145,7 @@ class TemplatePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareWithWeekdays(): void
 	{
+		$this->templateMock->expects($this->never())->method($this->anything());
 		$conditionalPlayData = [
 			'date' => [],
 			'time' => [],
@@ -168,6 +172,7 @@ class TemplatePreparerTest extends TestCase
 	#[Group('units')]
 	public function testRenderFullData(): void
 	{
+		$this->translatorMock->expects($this->never())->method($this->anything());
 
 		$this->templateMock->expects($this->once())->method('render')
 			->with('playlists/conditional-play', [])

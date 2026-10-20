@@ -45,14 +45,15 @@ class ItemsFactoryTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$configMock = $this->createMock(Config::class);
-		$configMock->expects($this->any())->method('getConfigValue')
+		// the config only provides default values for the items
+		$configStub = $this->createStub(Config::class);
+		$configStub->method('getConfigValue')
 			->willReturnMap([
 				['fit', 'playlists', 'Defaults', 'meetBest'],
 				['media_align', 'playlists', 'Defaults', 'center'],
 				['volume', 'playlists', 'Defaults', '100']
 			]);
-		$this->itemsFactory = new ItemsFactory($configMock);
+		$this->itemsFactory = new ItemsFactory($configStub);
 	}
 
 	/**

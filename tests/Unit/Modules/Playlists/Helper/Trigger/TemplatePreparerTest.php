@@ -56,6 +56,7 @@ class TemplatePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepare(): void
 	{
+		$this->templateMock->expects($this->never())->method($this->anything());
 		$itemId = 12;
 		$this->triggerPreparerMock->expects($this->once())->method('generate')->with($itemId);
 		$this->templatePreparer->prepare($itemId);

@@ -62,12 +62,12 @@ class LocalWriterTest extends TestCase
 		$playlistId = 123;
 		$this->writer->initExport($playlistId);
 
-		$playlistContentMock = $this->createMock(PlaylistContent::class);
-		$playlistContentMock->method('getContentPrefetch')
+		$playlistContentStub = $this->createStub(PlaylistContent::class);
+		$playlistContentStub->method('getContentPrefetch')
 			->willReturn('prefetch content');
-		$playlistContentMock->method('getContentElements')
+		$playlistContentStub->method('getContentElements')
 			->willReturn('elements content');
-		$playlistContentMock->method('getContentExclusive')
+		$playlistContentStub->method('getContentExclusive')
 			->willReturn('exclusive content');
 
 		$playlistPath = 'path/to/playlists/' . $playlistId;
@@ -83,7 +83,7 @@ class LocalWriterTest extends TestCase
 				[$playlistPath . '/exclusive.smil', 'exclusive content']
 			]);
 
-		$this->writer->writeSMILFiles($playlistContentMock);
+		$this->writer->writeSMILFiles($playlistContentStub);
 	}
 
 }

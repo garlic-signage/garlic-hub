@@ -30,6 +30,7 @@ use App\Modules\Playlists\Services\PlaylistsService;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -39,7 +40,7 @@ use Slim\Flash\Messages;
 class ShowComposeControllerTest extends TestCase
 {
 	private ResponseInterface&MockObject $responseMock;
-	private ServerRequestInterface&MockObject $requestMock;
+	private ServerRequestInterface&Stub $requestStub;
 	private StreamInterface&MockObject $streamInterfaceMock;
 	private PlaylistsService&MockObject $playlistsServiceMock;
 	private UiTemplatesPreparer&MockObject $uiTemplatesPreparerMock;
@@ -52,19 +53,19 @@ class ShowComposeControllerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->requestMock             = $this->createMock(ServerRequestInterface::class);
+		$this->requestStub             = $this->createStub(ServerRequestInterface::class);
 		$this->responseMock            = $this->createMock(ResponseInterface::class);
 		$this->streamInterfaceMock     = $this->createMock(StreamInterface::class);
-		$sessionMock = $this->createMock(Session::class);
+		$sessionStub = $this->createStub(Session::class);
 		$this->playlistsServiceMock    = $this->createMock(PlaylistsService::class);
 		$this->uiTemplatesPreparerMock = $this->createMock(UiTemplatesPreparer::class);
 		$this->flashMock               = $this->createMock(Messages::class);
 
-		$this->requestMock->method('getAttribute')->willReturnMap([
-			['session', $sessionMock],
+		$this->requestStub->method('getAttribute')->willReturnMap([
+			['session', $sessionStub],
 			['flash', $this->flashMock]
 		]);
-		$sessionMock->method('get')->willReturn(['UID' => 123]);
+		$sessionStub->method('get')->willReturn(['UID' => 123]);
 		$this->playlistsServiceMock->expects($this->once())->method('setUID')->with(123);
 
 		$this->controller = new ShowComposeController($this->playlistsServiceMock, $this->uiTemplatesPreparerMock);
@@ -78,10 +79,12 @@ class ShowComposeControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowRedirectsWhenPlaylistIdIsInvalid(): void
 	{
+		$this->streamInterfaceMock->expects($this->never())->method($this->anything());
+		$this->uiTemplatesPreparerMock->expects($this->never())->method($this->anything());
 		$this->outputSimpleErrorMock('Playlist ID not valid.');
 		$this->playlistsServiceMock->expects($this->never())->method('loadPlaylistForEdit');
 
-		$this->controller->show($this->requestMock, $this->responseMock, []);
+		$this->controller->show($this->requestStub, $this->responseMock, []);
 	}
 
 	/**
@@ -92,11 +95,13 @@ class ShowComposeControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowRedirectsWhenPlaylistIsEmpty(): void
 	{
+		$this->streamInterfaceMock->expects($this->never())->method($this->anything());
+		$this->uiTemplatesPreparerMock->expects($this->never())->method($this->anything());
 		$this->playlistsServiceMock->method('loadPlaylistForEdit')->willReturn([]);
 
 		$this->outputSimpleErrorMock('Playlist not found.');
 
-		$this->controller->show($this->requestMock, $this->responseMock,  ['playlist_id' => 1]);
+		$this->controller->show($this->requestStub, $this->responseMock,  ['playlist_id' => 1]);
 	}
 
 	/**
@@ -106,6 +111,7 @@ class ShowComposeControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowCallsBuildMultizoneEditorForMultizoneMode(): void
 	{
+		$this->flashMock->expects($this->never())->method($this->anything());
 		$playlist = ['playlist_mode' => 'multizone'];
 		$this->playlistsServiceMock->method('loadPlaylistForEdit')->willReturn($playlist);
 		$data = ['uiTemplates' => 'someData'];
@@ -114,7 +120,7 @@ class ShowComposeControllerTest extends TestCase
 			->willReturn($data);
 
 		$this->outputStandard($data);
-		$this->controller->show($this->requestMock, $this->responseMock, ['playlist_id' => 1]);
+		$this->controller->show($this->requestStub, $this->responseMock, ['playlist_id' => 1]);
 	}
 
 	/**
@@ -124,6 +130,7 @@ class ShowComposeControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowCallsBuildMultizoneEditorForExternalMode(): void
 	{
+		$this->flashMock->expects($this->never())->method($this->anything());
 		$playlist = ['playlist_mode' => 'external'];
 		$this->playlistsServiceMock->method('loadPlaylistForEdit')->willReturn($playlist);
 		$data = ['uiTemplates' => 'someData'];
@@ -132,7 +139,7 @@ class ShowComposeControllerTest extends TestCase
 			->willReturn($data);
 
 		$this->outputStandard($data);
-		$this->controller->show($this->requestMock, $this->responseMock, ['playlist_id' => 1]);
+		$this->controller->show($this->requestStub, $this->responseMock, ['playlist_id' => 1]);
 	}
 
 	/**
@@ -142,6 +149,7 @@ class ShowComposeControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowCallsBuildMultizoneEditorForStandards(): void
 	{
+		$this->flashMock->expects($this->never())->method($this->anything());
 		$playlist = ['playlist_mode' => 'master'];
 		$this->playlistsServiceMock->method('loadPlaylistForEdit')->willReturn($playlist);
 		$data = ['uiTemplates' => 'someData'];
@@ -150,7 +158,7 @@ class ShowComposeControllerTest extends TestCase
 			->willReturn($data);
 
 		$this->outputStandard($data);
-		$this->controller->show($this->requestMock, $this->responseMock, ['playlist_id' => 1]);
+		$this->controller->show($this->requestStub, $this->responseMock, ['playlist_id' => 1]);
 	}
 
 
@@ -162,11 +170,13 @@ class ShowComposeControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowCallsUnsupported(): void
 	{
+		$this->streamInterfaceMock->expects($this->never())->method($this->anything());
+		$this->uiTemplatesPreparerMock->expects($this->never())->method($this->anything());
 		$playlist = ['playlist_mode' => 'unsupported'];
 		$this->playlistsServiceMock->method('loadPlaylistForEdit')->willReturn($playlist);
 
 		$this->outputSimpleErrorMock('Unsupported playlist mode: .'.$playlist['playlist_mode']);
-		$this->controller->show($this->requestMock, $this->responseMock, ['playlist_id' => 1]);
+		$this->controller->show($this->requestStub, $this->responseMock, ['playlist_id' => 1]);
 	}
 
 
@@ -177,6 +187,8 @@ class ShowComposeControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowFlashErrors(): void
 	{
+		$this->streamInterfaceMock->expects($this->never())->method($this->anything());
+		$this->uiTemplatesPreparerMock->expects($this->never())->method($this->anything());
 		$this->playlistsServiceMock->method('hasErrorMessages')->willReturn(true);
 		$this->playlistsServiceMock->method('getErrorMessages')->willReturn(['error1', 'error2']);
 
@@ -189,7 +201,7 @@ class ShowComposeControllerTest extends TestCase
 		$this->responseMock->method('withHeader')->with('Location', '/playlists')->willReturnSelf();
 		$this->responseMock->method('withStatus')->with('302');
 
-		$this->controller->show($this->requestMock, $this->responseMock, []);
+		$this->controller->show($this->requestStub, $this->responseMock, []);
 	}
 
 	/**

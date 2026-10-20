@@ -36,6 +36,7 @@ use App\Modules\Playlists\Services\TriggerService;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 
@@ -45,7 +46,7 @@ class OrchestratorTest extends TestCase
 	private UserSession&MockObject $userSessionMock;
 	private BaseValidator&MockObject $validatorMock;
 	private TemplatePreparer&MockObject $templatePreparerMock;
-	private ResponseInterface&MockObject $responseMock;
+	private ResponseInterface&Stub $responseStub;
 	private TriggerService&MockObject $triggerServiceMock;
 	private Orchestrator $orchestrator;
 
@@ -61,7 +62,7 @@ class OrchestratorTest extends TestCase
 		$this->templatePreparerMock = $this->createMock(TemplatePreparer::class);
 		$this->triggerServiceMock = $this->createMock(TriggerService::class);
 
-		$this->responseMock = $this->createMock(ResponseInterface::class);
+		$this->responseStub = $this->createStub(ResponseInterface::class);
 
 		$this->orchestrator = new Orchestrator(
 			$this->responseBuilderMock,
@@ -79,17 +80,18 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testValidateWithTokenCsrfMismatch(): void
 	{
+		$this->expectUntouched($this->userSessionMock, $this->templatePreparerMock, $this->triggerServiceMock);
 		$this->validatorMock->expects($this->once())->method('validateCsrfToken')
 			->with('invalid_token')
 			->willReturn(false);
 
 		$this->responseBuilderMock->expects($this->once())->method('csrfTokenMismatch')
-			->with($this->responseMock)
-			->willReturn($this->responseMock);
+			->with($this->responseStub)
+			->willReturn($this->responseStub);
 
 		$this->orchestrator->setInput([BaseEditParameters::PARAMETER_CSRF_TOKEN => 'invalid_token']);
 
-		$this->orchestrator->validateWithToken($this->responseMock);
+		$this->orchestrator->validateWithToken($this->responseStub);
 	}
 
 	/**
@@ -99,17 +101,18 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testValidateWithTokenFailsNoItemId(): void
 	{
+		$this->expectUntouched($this->userSessionMock, $this->templatePreparerMock, $this->triggerServiceMock);
 		$this->validatorMock->expects($this->once())->method('validateCsrfToken')
 			->with('valid_token')
 			->willReturn(true);
 
 		$this->responseBuilderMock->expects($this->once())->method('invalidItemId')
-			->with($this->responseMock)
-			->willReturn($this->responseMock);
+			->with($this->responseStub)
+			->willReturn($this->responseStub);
 
 		$this->orchestrator->setInput([BaseEditParameters::PARAMETER_CSRF_TOKEN => 'valid_token']);
 
-		$this->orchestrator->validateWithToken($this->responseMock);
+		$this->orchestrator->validateWithToken($this->responseStub);
 	}
 
 	/**
@@ -119,13 +122,14 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testValidateWithTokenCallsValidate(): void
 	{
+		$this->expectUntouched($this->responseBuilderMock, $this->userSessionMock, $this->templatePreparerMock, $this->triggerServiceMock);
 		$this->validatorMock->expects($this->once())->method('validateCsrfToken')
 			->with('valid_token')
 			->willReturn(true);
 
 		$this->orchestrator->setInput(['item_id' => '1', BaseEditParameters::PARAMETER_CSRF_TOKEN => 'valid_token']);
 
-		$this->orchestrator->validateWithToken($this->responseMock);
+		$this->orchestrator->validateWithToken($this->responseStub);
 	}
 
 	/**
@@ -136,6 +140,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testFetchSuccess(): void
 	{
+		$this->validatorMock->expects($this->never())->method($this->anything());
 		$itemData = ['item_key' => 'value'];
 		$touchableMedia = ['media_item_1', 'media_item_2'];
 		$preparedHtml = '<html lang="en">Prepared Content</html>';
@@ -165,12 +170,12 @@ class OrchestratorTest extends TestCase
 
 		$this->responseBuilderMock->expects($this->once())
 			->method('generalSuccess')
-			->with($this->responseMock, $data)
-			->willReturn($this->responseMock);
+			->with($this->responseStub, $data)
+			->willReturn($this->responseStub);
 
 		$this->initMocks();
 
-		$this->orchestrator->fetch($this->responseMock);
+		$this->orchestrator->fetch($this->responseStub);
 	}
 
 	/**
@@ -181,6 +186,8 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testFetchItemNotFound(): void
 	{
+		$this->validatorMock->expects($this->never())->method($this->anything());
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
 		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(1);
 		$this->triggerServiceMock->expects($this->once())->method('setUID')->with(1);
 		$this->triggerServiceMock->expects($this->once())->method('fetchBeginTriggerByItemId')->with(123)->willReturn($this->triggerServiceMock);
@@ -188,11 +195,11 @@ class OrchestratorTest extends TestCase
 
 		$this->responseBuilderMock->expects($this->once())
 			->method('itemNotFound')
-			->with($this->responseMock)
-			->willReturn($this->responseMock);
+			->with($this->responseStub)
+			->willReturn($this->responseStub);
 
 		$this->initMocks();
-		$result = $this->orchestrator->fetch($this->responseMock);
+		$result = $this->orchestrator->fetch($this->responseStub);
 
 		static::assertInstanceOf(ResponseInterface::class, $result);
 	}
@@ -207,21 +214,26 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testSaveItemNotFound(): void
 	{
+		// saving works on behalf of the session user, without form handling
+		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(7);
+		$this->triggerServiceMock->expects($this->once())->method('setUID')->with(7);
+		$this->validatorMock->expects($this->never())->method($this->anything());
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
 		$this->triggerServiceMock->expects($this->once())->method('fetchAccessibleItem')
 			->with(123)
 			->willReturn([]);
 
 		$this->responseBuilderMock->expects($this->once())->method('itemNotFound')
-			->with($this->responseMock)
-			->willReturn($this->responseMock);
+			->with($this->responseStub)
+			->willReturn($this->responseStub);
 
 		$this->orchestrator->setInput([
 			'item_id' => '123',
 			'csrf_token' => 'valid_csrf_token'
 		]);
 
-		$this->orchestrator->validate($this->responseMock);
-		$result = $this->orchestrator->save($this->responseMock);
+		$this->orchestrator->validate($this->responseStub);
+		$result = $this->orchestrator->save($this->responseStub);
 
 		static::assertInstanceOf(ResponseInterface::class, $result);
 	}
@@ -236,6 +248,11 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testSaveSuccess(): void
 	{
+		// saving works on behalf of the session user, without form handling
+		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(7);
+		$this->triggerServiceMock->expects($this->once())->method('setUID')->with(7);
+		$this->validatorMock->expects($this->never())->method($this->anything());
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
 		$this->triggerServiceMock->expects($this->once())->method('fetchAccessibleItem')
 			->with(123)
 			->willReturn(['id' => 123]);
@@ -245,8 +262,8 @@ class OrchestratorTest extends TestCase
 			->willReturn(true);
 
 		$this->responseBuilderMock->expects($this->once())->method('generalSuccess')
-			->with($this->responseMock, [])
-			->willReturn($this->responseMock);
+			->with($this->responseStub, [])
+			->willReturn($this->responseStub);
 
 		$this->orchestrator->setInput([
 			'item_id' => '123',
@@ -255,8 +272,8 @@ class OrchestratorTest extends TestCase
 			'param2' => 'value2'
 		]);
 
-		$this->orchestrator->validate($this->responseMock);
-		$result = $this->orchestrator->save($this->responseMock);
+		$this->orchestrator->validate($this->responseStub);
+		$result = $this->orchestrator->save($this->responseStub);
 
 		static::assertInstanceOf(ResponseInterface::class, $result);
 	}
@@ -268,6 +285,14 @@ class OrchestratorTest extends TestCase
 	private function initMocks():void
 	{
 		$this->orchestrator->setInput(['item_id' => '123', BaseEditParameters::PARAMETER_CSRF_TOKEN => 'invalid_token']);
-		$this->orchestrator->validate($this->responseMock);
+		$this->orchestrator->validate($this->responseStub);
+	}
+
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
 	}
 }

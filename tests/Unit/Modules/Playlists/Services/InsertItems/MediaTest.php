@@ -74,6 +74,8 @@ class MediaTest extends TestCase
 	#[Group('units')]
 	public function testInsertSuccess(): void
 	{
+		$this->widgetsServiceMock->expects($this->never())->method($this->anything());
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->checkAclMockSuccessful();
 
 		$this->mediaServiceMock->expects($this->once())->method('fetchMedia')
@@ -111,6 +113,7 @@ class MediaTest extends TestCase
 	#[Group('units')]
 	public function testInsertSuccessWithWidget(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->checkAclMockSuccessful();
 
 		$this->mediaServiceMock->expects($this->once())->method('fetchMedia')
@@ -150,8 +153,13 @@ class MediaTest extends TestCase
 	#[Group('units')]
 	public function testInsertPlaylistNotAccessible(): void
 	{
+		// the acl check sets the user, but nothing is calculated
+		$this->playlistMetricsCalculatorMock->expects($this->once())->method('setUID')->with(1);
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateFromPlaylistData');
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateRemainingMediaDuration');
+		$this->widgetsServiceMock->expects($this->never())->method($this->anything());
 		$this->media->setUID(1);
-		$this->playlistsServiceMock->method('loadPlaylistForEdit')->willReturn([]);
+		$this->playlistsServiceMock->expects($this->once())->method('loadPlaylistForEdit')->with(1)->willReturn([]);
 
 		$this->mediaServiceMock->expects($this->never())->method('fetchMedia');
 
@@ -173,6 +181,11 @@ class MediaTest extends TestCase
 	#[Group('units')]
 	public function testInsertMediaNotAccessible(): void
 	{
+		// the acl check sets the user, but nothing is calculated
+		$this->playlistMetricsCalculatorMock->expects($this->once())->method('setUID')->with(1);
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateFromPlaylistData');
+		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateRemainingMediaDuration');
+		$this->widgetsServiceMock->expects($this->never())->method($this->anything());
 		$this->checkAclMockSuccessful();
 
 		$this->mediaServiceMock->expects($this->once())->method('fetchMedia')
@@ -196,6 +209,7 @@ class MediaTest extends TestCase
 	#[Group('units')]
 	public function testInsertItemInsertFails(): void
 	{
+		$this->widgetsServiceMock->expects($this->never())->method($this->anything());
 		$this->checkAclMockSuccessful();
 
 		$this->mediaServiceMock->expects($this->once())->method('fetchMedia')

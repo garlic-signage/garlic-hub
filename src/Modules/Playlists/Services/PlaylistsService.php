@@ -158,10 +158,11 @@ class PlaylistsService extends AbstractBaseService
 			/** @var array{UID: int, company_id: int, playlist_id: int, layout:string, ...} $playlist */
 			$playlist = $this->loadWithUserById($playlistId);
 
-			if ($playlist['layout'] !== null)
-				return unserialize($playlist['layout']);
+			// new playlists have no layout yet
+			if ($playlist['layout'] === null || $playlist['layout'] === '')
+				return [];
 
-			return [];
+			return unserialize($playlist['layout']);
 		}
 		catch(Throwable $e)
 		{

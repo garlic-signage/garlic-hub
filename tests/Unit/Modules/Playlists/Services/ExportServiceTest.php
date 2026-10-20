@@ -31,12 +31,13 @@ use App\Modules\Playlists\Services\PlaylistsService;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 class ExportServiceTest extends TestCase
 {
-	private Config&MockObject $configMock;
+	private Config&Stub $configStub;
 	private PlaylistsService&MockObject $playlistsServiceMock;
 	private ItemsService&MockObject $itemsServiceMock;
 	private LocalWriter&MockObject $localSmilWriterMock;
@@ -51,7 +52,7 @@ class ExportServiceTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->configMock           = $this->createMock(Config::class);
+		$this->configStub           = $this->createStub(Config::class);
 		$this->playlistsServiceMock = $this->createMock(PlaylistsService::class);
 		$this->itemsServiceMock     = $this->createMock(ItemsService::class);
 		$this->localSmilWriterMock  = $this->createMock(LocalWriter::class);
@@ -61,7 +62,7 @@ class ExportServiceTest extends TestCase
 
 		$this->itemsServiceMock->method('getItemsRepository')->willReturn($this->itemsRepositoryMock);
 		$this->service = new ExportService(
-			$this->configMock,
+			$this->configStub,
 			$this->playlistsServiceMock,
 			$this->itemsServiceMock,
 			$this->localSmilWriterMock,
@@ -89,7 +90,7 @@ class ExportServiceTest extends TestCase
 			->with($playlistId)
 			->willReturn($playlist);
 
-		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
+		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
 		$this->itemsServiceMock->expects($this->once())->method('loadByPlaylistForExport')
 			->with($playlist, Config::PLATFORM_EDITION_EDGE)
 			->willReturn($result);
@@ -137,7 +138,7 @@ class ExportServiceTest extends TestCase
 			->with($playlistId)
 			->willReturn($playlist);
 
-		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
+		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
 		$this->itemsServiceMock->expects($this->once())->method('loadByPlaylistForExport')
 			->with($playlist, Config::PLATFORM_EDITION_EDGE)
 			->willReturn($result);
@@ -197,7 +198,7 @@ class ExportServiceTest extends TestCase
 				[12, $playlistSub12]
 			]);
 
-		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
+		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
 		$this->itemsServiceMock->expects($this->exactly(2))->method('loadByPlaylistForExport')
 			->willReturnMap([
 				[$playlistSub11, Config::PLATFORM_EDITION_EDGE, $results],

@@ -34,6 +34,7 @@ use App\Modules\Playlists\Services\PlaylistsDatatableService;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class DatatableFacadeTest extends TestCase
@@ -42,7 +43,7 @@ class DatatableFacadeTest extends TestCase
 	private DatatableBuilder&MockObject $datatableBuilderMock;
 	private DatatablePreparer&MockObject $datatablePreparerMock;
 	private PlaylistsDatatableService&MockObject $playlistsServiceMock;
-	private Translator&MockObject $translatorMock;
+	private Translator&Stub $translatorStub;
 	private Session&MockObject $sessionMock;
 
 	/**
@@ -54,7 +55,7 @@ class DatatableFacadeTest extends TestCase
 		$this->datatableBuilderMock = $this->createMock(DatatableBuilder::class);
 		$this->datatablePreparerMock = $this->createMock(DatatablePreparer::class);
 		$this->playlistsServiceMock = $this->createMock(PlaylistsDatatableService::class);
-		$this->translatorMock = $this->createMock(Translator::class);
+		$this->translatorStub = $this->createStub(Translator::class);
 		$this->sessionMock = $this->createMock(Session::class);
 
 		$this->datatableFacade = new DatatableFacade(
@@ -87,12 +88,12 @@ class DatatableFacadeTest extends TestCase
 			->with($mockUID);
 
 		$this->datatableBuilderMock->expects($this->once())->method('setTranslator')
-			->with($this->translatorMock);
+			->with($this->translatorStub);
 
 		$this->datatablePreparerMock->expects($this->once())->method('setTranslator')
-			->with($this->translatorMock);
+			->with($this->translatorStub);
 
-		$this->datatableFacade->configure($this->translatorMock, $this->sessionMock);
+		$this->datatableFacade->configure($this->translatorStub, $this->sessionMock);
 	}
 
 	/**
@@ -103,6 +104,8 @@ class DatatableFacadeTest extends TestCase
 	#[Group('units')]
 	public function testProcessSubmittedUserInput(): void
 	{
+		$this->datatablePreparerMock->expects($this->never())->method($this->anything());
+		$this->sessionMock->expects($this->never())->method($this->anything());
 		$this->datatableBuilderMock->expects($this->once())->method('determineParameters')->with(['page' => 2]);
 
 		$this->playlistsServiceMock->expects($this->once())->method('loadDatatable');
@@ -118,6 +121,9 @@ class DatatableFacadeTest extends TestCase
 	#[Group('units')]
 	public function testPrepareDataGrid(): void
 	{
+		$this->playlistsServiceMock->expects($this->once())->method('getCurrentTotalResult')->willReturn(42);
+		$this->datatablePreparerMock->expects($this->never())->method($this->anything());
+		$this->sessionMock->expects($this->never())->method($this->anything());
 		$this->datatableBuilderMock->expects($this->once())->method('buildTitle');
 		$this->datatableBuilderMock->expects($this->once())->method('collectFormElements');
 		$this->datatableBuilderMock->expects($this->once())
@@ -144,7 +150,7 @@ class DatatableFacadeTest extends TestCase
 		$this->sessionMock->expects($this->once())->method('get')
 			->with('user')
 			->willReturn($mockUserData);
-		$this->datatableFacade->configure($this->translatorMock, $this->sessionMock);
+		$this->datatableFacade->configure($this->translatorStub, $this->sessionMock);
 
 		$mockDatatableStructure = [
 			'pager' => ['page_1', 'page_2'],
@@ -233,6 +239,7 @@ class DatatableFacadeTest extends TestCase
 	#[Group('units')]
 	public function testPrepareContextMenu(): void
 	{
+		$this->expectUntouched($this->datatableBuilderMock, $this->playlistsServiceMock, $this->sessionMock);
 		$mockContextMenu = [
 			['name' => 'Option1', 'action' => 'action1'],
 			['name' => 'Option2', 'action' => 'action2']
@@ -245,5 +252,13 @@ class DatatableFacadeTest extends TestCase
 		$result = $this->datatableFacade->prepareContextMenu();
 
 		static::assertSame($mockContextMenu, $result);
+	}
+
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
 	}
 }

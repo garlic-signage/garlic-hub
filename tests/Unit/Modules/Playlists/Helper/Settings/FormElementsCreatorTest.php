@@ -58,8 +58,9 @@ class FormElementsCreatorTest extends TestCase
 	#[Group('units')]
 	public function testPrepareForm(): void
 	{
-		$fieldInterfaceMock1 = $this->createMock(FieldInterface::class);
-		$fieldInterfaceMock2 = $this->createMock(FieldInterface::class);
+		$this->translatorMock->expects($this->never())->method($this->anything());
+		$fieldInterfaceMock1 = $this->createStub(FieldInterface::class);
+		$fieldInterfaceMock2 = $this->createStub(FieldInterface::class);
 
 		$formData = ['field1' => $fieldInterfaceMock1, 'field2' => $fieldInterfaceMock2];
 		$preparedForm = [
@@ -94,7 +95,7 @@ class FormElementsCreatorTest extends TestCase
 	public function testCreatePlaylistNameField(): void
 	{
 		$value = 'My Playlist';
-		$expectedField = $this->createMock(FieldInterface::class);
+		$expectedField = $this->createStub(FieldInterface::class);
 
 		$this->translatorMock->expects($this->exactly(2))->method('translate')
 			->with('playlist_name', 'playlists')
@@ -131,7 +132,7 @@ class FormElementsCreatorTest extends TestCase
 		$value = '12345';
 		$username = 'user1';
 		$UID = 99;
-		$expectedField = $this->createMock(FieldInterface::class);
+		$expectedField = $this->createStub(FieldInterface::class);
 
 		$this->translatorMock->expects($this->exactly(2))
 			->method('translate')
@@ -168,7 +169,7 @@ class FormElementsCreatorTest extends TestCase
 	{
 		$value = 120;
 		$defaultValue = 60;
-		$expectedField = $this->createMock(FieldInterface::class);
+		$expectedField = $this->createStub(FieldInterface::class);
 
 		$this->translatorMock->expects($this->exactly(2))->method('translate')
 			->willReturnMap([
@@ -201,8 +202,9 @@ class FormElementsCreatorTest extends TestCase
 	#[Group('units')]
 	public function testCreateHiddenPlaylistIdField(): void
 	{
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$value = 101;
-		$expectedField = $this->createMock(FieldInterface::class);
+		$expectedField = $this->createStub(FieldInterface::class);
 
 		$this->formBuilderMock
 			->expects($this->once())
@@ -227,8 +229,9 @@ class FormElementsCreatorTest extends TestCase
 	#[Group('units')]
 	public function testCreatePlaylistModeField(): void
 	{
+		$this->translatorMock->expects($this->never())->method($this->anything());
 		$value = '2';
-		$expectedField = $this->createMock(FieldInterface::class);
+		$expectedField = $this->createStub(FieldInterface::class);
 
 		$this->formBuilderMock
 			->expects($this->once())
@@ -252,7 +255,8 @@ class FormElementsCreatorTest extends TestCase
 	#[Group('units')]
 	public function testCreateCSRFTokenField(): void
 	{
-		$expectedField = $this->createMock(FieldInterface::class);
+		$this->translatorMock->expects($this->never())->method($this->anything());
+		$expectedField = $this->createStub(FieldInterface::class);
 
 		$this->formBuilderMock
 			->expects($this->once())

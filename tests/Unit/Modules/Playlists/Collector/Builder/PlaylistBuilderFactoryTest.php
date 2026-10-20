@@ -31,13 +31,13 @@ use App\Modules\Playlists\Collector\SimplePlaylistStructureFactory;
 use App\Modules\Playlists\Helper\PlaylistMode;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class PlaylistBuilderFactoryTest extends TestCase
 {
 	private PlaylistBuilderFactory $factory;
-	private PlayerEntity&MockObject $playerEntityMock;
+	private PlayerEntity&Stub $playerEntityStub;
 
 	/**
 	 * @throws Exception
@@ -45,15 +45,15 @@ class PlaylistBuilderFactoryTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$buildHelperMock = $this->createMock(BuildHelper::class);
-		$simplePlaylistStructureFactoryMock = $this->createMock(SimplePlaylistStructureFactory::class);
+		$buildHelperStub = $this->createStub(BuildHelper::class);
+		$simplePlaylistStructureFactoryStub = $this->createStub(SimplePlaylistStructureFactory::class);
 
-		$this->playerEntityMock = $this->createMock(PlayerEntity::class);
+		$this->playerEntityStub = $this->createStub(PlayerEntity::class);
 
 
 		$this->factory = new PlaylistBuilderFactory(
-			$buildHelperMock,
-			$simplePlaylistStructureFactoryMock
+			$buildHelperStub,
+			$simplePlaylistStructureFactoryStub
 		);
 	}
 
@@ -63,9 +63,9 @@ class PlaylistBuilderFactoryTest extends TestCase
 	#[Group('units')]
 	public function testCreateBuilderReturnsMultizonePlaylistBuilder(): void
 	{
-		$this->playerEntityMock->method('getPlaylistMode')->willReturn(PlaylistMode::MULTIZONE->value);
+		$this->playerEntityStub->method('getPlaylistMode')->willReturn(PlaylistMode::MULTIZONE->value);
 
-		$result = $this->factory->createBuilder($this->playerEntityMock);
+		$result = $this->factory->createBuilder($this->playerEntityStub);
 
 		static::assertInstanceOf(MultiZonePlaylistBuilder::class, $result);
 	}
@@ -76,9 +76,9 @@ class PlaylistBuilderFactoryTest extends TestCase
 	#[Group('units')]
 	public function testCreateBuilderReturnsStandardPlaylistBuilder(): void
 	{
-		$this->playerEntityMock->method('getPlaylistMode')->willReturn(PlaylistMode::MASTER->value);
+		$this->playerEntityStub->method('getPlaylistMode')->willReturn(PlaylistMode::MASTER->value);
 
-		$result = $this->factory->createBuilder($this->playerEntityMock);
+		$result = $this->factory->createBuilder($this->playerEntityStub);
 
 		static::assertInstanceOf(StandardPlaylistBuilder::class, $result);
 	}

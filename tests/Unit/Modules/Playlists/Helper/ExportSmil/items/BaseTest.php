@@ -28,7 +28,7 @@ use App\Modules\Playlists\Helper\ExportSmil\Utils\Properties;
 use App\Modules\Playlists\Helper\ExportSmil\Utils\Trigger;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class ConcreteBase extends Base
@@ -76,11 +76,11 @@ class ConcreteBase extends Base
 
 class BaseTest extends TestCase
 {
-	private Config&MockObject $configMock;
-	private Trigger&MockObject $beginMock;
-	private Trigger&MockObject $endMock;
-	private Conditional&MockObject $conditionalMock;
-	private Properties&MockObject $propertiesMock;
+	private Config&Stub $configStub;
+	private Trigger&Stub $beginStub;
+	private Trigger&Stub $endStub;
+	private Conditional&Stub $conditionalStub;
+	private Properties&Stub $propertiesStub;
 	private ConcreteBase $concreteBase;
 
 	/**
@@ -89,23 +89,23 @@ class BaseTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->configMock      = $this->createMock(Config::class);
-		$this->propertiesMock  = $this->createMock(Properties::class);
-		$this->beginMock       = $this->createMock(Trigger::class);
-		$this->endMock         = $this->createMock(Trigger::class);
-		$this->conditionalMock = $this->createMock(Conditional::class);
+		$this->configStub      = $this->createStub(Config::class);
+		$this->propertiesStub  = $this->createStub(Properties::class);
+		$this->beginStub       = $this->createStub(Trigger::class);
+		$this->endStub         = $this->createStub(Trigger::class);
+		$this->conditionalStub = $this->createStub(Conditional::class);
 
 		$item = ['item_id' => 1, 'item_name' => 'Example Title', 'item_duration' => 1000];
-		$this->concreteBase = new ConcreteBase($this->configMock, $item, $this->propertiesMock, $this->beginMock, $this->endMock, $this->conditionalMock);
+		$this->concreteBase = new ConcreteBase($this->configStub, $item, $this->propertiesStub, $this->beginStub, $this->endStub, $this->conditionalStub);
 	}
 
 	#[Group('units')]
 	public function testDetermineBeginEndTriggerNoMaster(): void
 	{
-		$this->beginMock->method('hasTriggers')->willReturn(true);
-		$this->beginMock->method('determineTrigger')->willReturn('trigger_begin');
-		$this->endMock->method('hasTriggers')->willReturn(true);
-		$this->endMock->method('determineTrigger')->willReturn('trigger_end');
+		$this->beginStub->method('hasTriggers')->willReturn(true);
+		$this->beginStub->method('determineTrigger')->willReturn('trigger_begin');
+		$this->endStub->method('hasTriggers')->willReturn(true);
+		$this->endStub->method('determineTrigger')->willReturn('trigger_end');
 
 		$result = $this->concreteBase->testTrigger();
 		static::assertEmpty($result);
@@ -114,10 +114,10 @@ class BaseTest extends TestCase
 	#[Group('units')]
 	public function testDetermineBeginEndTrigger(): void
 	{
-		$this->beginMock->method('hasTriggers')->willReturn(true);
-		$this->beginMock->method('determineTrigger')->willReturn('trigger_begin');
-		$this->endMock->method('hasTriggers')->willReturn(true);
-		$this->endMock->method('determineTrigger')->willReturn('trigger_end');
+		$this->beginStub->method('hasTriggers')->willReturn(true);
+		$this->beginStub->method('determineTrigger')->willReturn('trigger_begin');
+		$this->endStub->method('hasTriggers')->willReturn(true);
+		$this->endStub->method('determineTrigger')->willReturn('trigger_end');
 
 		$this->concreteBase->setBelongsToMasterPlaylist(true);
 		$result = $this->concreteBase->testTrigger();
@@ -127,9 +127,9 @@ class BaseTest extends TestCase
 	#[Group('units')]
 	public function testDetermineBeginEndTriggerBeginOnly(): void
 	{
-		$this->beginMock->method('hasTriggers')->willReturn(true);
-		$this->beginMock->method('determineTrigger')->willReturn('trigger_begin');
-		$this->endMock->method('hasTriggers')->willReturn(false);
+		$this->beginStub->method('hasTriggers')->willReturn(true);
+		$this->beginStub->method('determineTrigger')->willReturn('trigger_begin');
+		$this->endStub->method('hasTriggers')->willReturn(false);
 
 		$this->concreteBase->setBelongsToMasterPlaylist(true);
 		$result = $this->concreteBase->testTrigger();
@@ -139,9 +139,9 @@ class BaseTest extends TestCase
 	#[Group('units')]
 	public function testDetermineBeginEndTriggerEndOnly(): void
 	{
-		$this->beginMock->method('hasTriggers')->willReturn(false);
-		$this->endMock->method('hasTriggers')->willReturn(true);
-		$this->endMock->method('determineTrigger')->willReturn('trigger_end');
+		$this->beginStub->method('hasTriggers')->willReturn(false);
+		$this->endStub->method('hasTriggers')->willReturn(true);
+		$this->endStub->method('determineTrigger')->willReturn('trigger_end');
 
 		$this->concreteBase->setBelongsToMasterPlaylist(true);
 		$result = $this->concreteBase->testTrigger();
@@ -151,7 +151,7 @@ class BaseTest extends TestCase
 	#[Group('units')]
 	public function testCollectAttributes(): void
 	{
-		$this->conditionalMock->method('determineExprAttribute')->willReturn('expr="" ');
+		$this->conditionalStub->method('determineExprAttribute')->willReturn('expr="" ');
 
 		$result = $this->concreteBase->testCollectAttributes();
 		static::assertSame('expr="" title="Example Title" ', $result);
@@ -179,8 +179,8 @@ class BaseTest extends TestCase
 	public function testGetExclusiveWithTriggers(): void
 	{
 		$this->concreteBase->setBelongsToMasterPlaylist(true);
-		$this->beginMock->method('hasTriggers')->willReturn(true);
-		$this->beginMock->method('determineTrigger')->willReturn('trigger_begin');
+		$this->beginStub->method('hasTriggers')->willReturn(true);
+		$this->beginStub->method('determineTrigger')->willReturn('trigger_begin');
 
 		$result = $this->concreteBase->getExclusive();
 
@@ -191,8 +191,8 @@ class BaseTest extends TestCase
 
 	public function testGetExclusiveWithTriggersNoMaster(): void
 	{
-		$this->beginMock->method('hasTriggers')->willReturn(true);
-		$this->beginMock->method('determineTrigger')->willReturn('trigger_begin');
+		$this->beginStub->method('hasTriggers')->willReturn(true);
+		$this->beginStub->method('determineTrigger')->willReturn('trigger_begin');
 
 		$result = $this->concreteBase->getExclusive();
 		static::assertEmpty($result);
@@ -202,7 +202,7 @@ class BaseTest extends TestCase
 	#[Group('units')]
 	public function testGetExclusiveWithoutTriggers(): void
 	{
-		$this->beginMock->method('hasTriggers')->willReturn(false);
+		$this->beginStub->method('hasTriggers')->willReturn(false);
 
 		$result = $this->concreteBase->getExclusive();
 
@@ -220,7 +220,7 @@ class BaseTest extends TestCase
 	public function testEncodeItemNameForTitleTagWithSpecialCharacters(): void
 	{
 		$item = ['item_id' => 1, 'item_name' => 'Special <Title> & $^', 'item_duration' => 1000];
-		$this->concreteBase = new ConcreteBase($this->configMock, $item, $this->propertiesMock, $this->beginMock, $this->endMock, $this->conditionalMock);
+		$this->concreteBase = new ConcreteBase($this->configStub, $item, $this->propertiesStub, $this->beginStub, $this->endStub, $this->conditionalStub);
 
 		$result = $this->concreteBase->testEncodeTitle();
 		static::assertStringContainsString('title="Special &lt;Title&gt; &amp; $^" ', $result);
@@ -230,7 +230,7 @@ class BaseTest extends TestCase
 	public function testEncodeItemNameForTitleTagWithAmpersand(): void
 	{
 		$item = ['item_id' => 1, 'item_name' => 'Title & Subtitle', 'item_duration' => 1000];
-		$this->concreteBase = new ConcreteBase($this->configMock, $item, $this->propertiesMock, $this->beginMock, $this->endMock, $this->conditionalMock);
+		$this->concreteBase = new ConcreteBase($this->configStub, $item, $this->propertiesStub, $this->beginStub, $this->endStub, $this->conditionalStub);
 
 		$result = $this->concreteBase->testEncodeTitle();
 		static::assertStringContainsString('title="Title &amp; Subtitle" ', $result);
@@ -247,7 +247,7 @@ class BaseTest extends TestCase
 	public function testEncodeItemNameForTitleTagWithNullName(): void
 	{
 		$item = ['item_id' => 1, 'item_name' => null, 'item_duration' => 0];
-		$this->concreteBase = new ConcreteBase($this->configMock, $item, $this->propertiesMock, $this->beginMock, $this->endMock, $this->conditionalMock);
+		$this->concreteBase = new ConcreteBase($this->configStub, $item, $this->propertiesStub, $this->beginStub, $this->endStub, $this->conditionalStub);
 
 		$result = $this->concreteBase->testDetermineDuration();
 		static::assertEmpty($result);

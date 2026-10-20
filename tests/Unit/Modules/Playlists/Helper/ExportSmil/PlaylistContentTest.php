@@ -68,6 +68,7 @@ class PlaylistContentTest extends TestCase
 	#[Group('units')]
 	public function testBuildWithValidItem(): void
 	{
+		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
 		$playlist = ['shuffle' => 0, 'playlist_mode' => PlaylistMode::MASTER->value];
 		$itemData = [
 			[
@@ -115,7 +116,7 @@ class PlaylistContentTest extends TestCase
 			]
 		];
 		$itemMock = $this->createMock(Video::class);
-		$this->itemsFactoryMock->method('createItem')->willReturn($itemMock);
+		$this->itemsFactoryMock->expects($this->atLeastOnce())->method('createItem')->willReturn($itemMock);
 		$this->mimeTypeExtensionMapperMock->method('determineExtension')->with('image/jpeg')->willReturn('jpg');
 
 		$itemMock->expects($this->once())->method('setLink')->with('https://content.server.com/delivery.php/tpl/13'.'.jpg');
@@ -131,6 +132,7 @@ class PlaylistContentTest extends TestCase
 	#[Group('units')]
 	public function testBuildWithValidItemsAndShufflePickingZero(): void
 	{
+		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
 		$playlist = ['shuffle' => 1, 'shuffle_picking' => 0, 'playlist_mode' => PlaylistMode::MASTER->value];
 		$itemData = [
 			[
@@ -167,6 +169,7 @@ class PlaylistContentTest extends TestCase
 	#[Group('units')]
 	public function testBuildWithValidItemsAndShufflePicking(): void
 	{
+		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
 		$playlist = ['shuffle' => 1, 'shuffle_picking' => 4, 'playlist_mode' => PlaylistMode::MASTER->value];
 		$itemData = [
 			[
@@ -207,6 +210,7 @@ class PlaylistContentTest extends TestCase
 	#[Group('units')]
 	public function testBuildWithExternalStream(): void
 	{
+		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
 		$playlist = ['shuffle' => 0, 'playlist_mode' => PlaylistMode::MASTER->value];
 		$itemData = [
 			[
@@ -240,6 +244,7 @@ class PlaylistContentTest extends TestCase
 	#[Group('units')]
 	public function testBuildWithExternalFile(): void
 	{
+		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
 		$playlist = ['shuffle' => 0, 'playlist_mode' => PlaylistMode::MASTER->value];
 		$itemData = [
 			[
@@ -279,6 +284,7 @@ class PlaylistContentTest extends TestCase
 	#[Group('units')]
 	public function testBuildPlaylist(): void
 	{
+		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
 		$playlist = ['shuffle' => 0, 'playlist_mode' => PlaylistMode::MASTER->value];
 		$itemData = [
 			[
@@ -288,14 +294,14 @@ class PlaylistContentTest extends TestCase
 			]
 		];
 
-		$playlistMock = $this->createMock(SeqContainer::class);
+		$playlistStub = $this->createStub(SeqContainer::class);
 		$this->itemsFactoryMock->expects($this->once())->method('createItem')
 			->with($itemData[0])
-			->willReturn($playlistMock);
+			->willReturn($playlistStub);
 
-		$playlistMock->method('getSmilElementTag')->willReturn('smilTag');
-		$playlistMock->method('getPrefetchTag')->willReturn('prefetchTag');
-		$playlistMock->method('getExclusive')->willReturn('exclusiveTag');
+		$playlistStub->method('getSmilElementTag')->willReturn('smilTag');
+		$playlistStub->method('getPrefetchTag')->willReturn('prefetchTag');
+		$playlistStub->method('getExclusive')->willReturn('exclusiveTag');
 
 		$this->playlistContent->init($playlist, $itemData)->build();
 
@@ -311,6 +317,8 @@ class PlaylistContentTest extends TestCase
 	#[Group('units')]
 	public function testUnknown(): void
 	{
+		$this->itemsFactoryMock->expects($this->never())->method($this->anything());
+		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
 		$playlist = ['shuffle' => 0, 'playlist_mode' => PlaylistMode::MASTER->value];
 		$itemData = [
 			[

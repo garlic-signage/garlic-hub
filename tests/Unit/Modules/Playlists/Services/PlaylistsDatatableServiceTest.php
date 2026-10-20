@@ -30,12 +30,13 @@ use App\Modules\Playlists\Services\PlaylistUsageService;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 class PlaylistsDatatableServiceTest extends TestCase
 {
-	protected LoggerInterface&MockObject $loggerMock;
+	protected LoggerInterface&Stub $loggerStub;
 	private PlaylistsRepository&MockObject $repositoryMock;
 	private Parameters&MockObject $parametersMock;
 	private AclValidator&MockObject $aclValidatorMock;
@@ -48,13 +49,13 @@ class PlaylistsDatatableServiceTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->loggerMock       = $this->createMock(LoggerInterface::class);
+		$this->loggerStub       = $this->createStub(LoggerInterface::class);
 		$this->repositoryMock   = $this->createMock(PlaylistsRepository::class);
 		$this->parametersMock   = $this->createMock(Parameters::class);
 		$this->aclValidatorMock = $this->createMock(AclValidator::class);
 		$this->playlistUsageServiceMock = $this->createMock(PlaylistUsageService::class);
 
-		$this->service = new PlaylistsDatatableService($this->repositoryMock, $this->parametersMock, $this->aclValidatorMock, $this->playlistUsageServiceMock, $this->loggerMock);
+		$this->service = new PlaylistsDatatableService($this->repositoryMock, $this->parametersMock, $this->aclValidatorMock, $this->playlistUsageServiceMock, $this->loggerStub);
 	}
 
 	/**
@@ -64,6 +65,7 @@ class PlaylistsDatatableServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchForModuleAdmin(): void
 	{
+		$this->playlistUsageServiceMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(345);
 		$this->aclValidatorMock->expects($this->once())->method('isModuleAdmin')
 			->with(345)
@@ -98,6 +100,7 @@ class PlaylistsDatatableServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchForUser(): void
 	{
+		$this->playlistUsageServiceMock->expects($this->never())->method($this->anything());
 		$this->service->setUID(789);
 		$this->aclValidatorMock->expects($this->once())->method('isModuleAdmin')
 			->with(789)
@@ -130,6 +133,7 @@ class PlaylistsDatatableServiceTest extends TestCase
 	#[Group('units')]
 	public function testGetPlaylistsInUseWithEmptyIds(): void
 	{
+		$this->expectUntouched($this->repositoryMock, $this->parametersMock, $this->aclValidatorMock, $this->playlistUsageServiceMock);
 		$result = $this->service->getPlaylistsInUse([]);
 		static::assertSame([], $result);
 	}
@@ -140,6 +144,7 @@ class PlaylistsDatatableServiceTest extends TestCase
 	#[Group('units')]
 	public function testGetPlaylistsInUseWithValidIds(): void
 	{
+		$this->expectUntouched($this->repositoryMock, $this->parametersMock, $this->aclValidatorMock);
 		$playlistIds = [1, 2, 3];
 		$expectedResult = [
 			1 => true,
@@ -152,5 +157,13 @@ class PlaylistsDatatableServiceTest extends TestCase
 		$result = $this->service->getPlaylistsInUse($playlistIds);
 
 		static::assertSame($expectedResult, $result);
+	}
+
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
 	}
 }

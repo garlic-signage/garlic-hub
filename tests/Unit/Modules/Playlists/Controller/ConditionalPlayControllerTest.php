@@ -31,6 +31,7 @@ use App\Modules\Playlists\Helper\ConditionalPlay\Orchestrator;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -39,7 +40,7 @@ class ConditionalPlayControllerTest extends TestCase
 {
 	private Orchestrator&MockObject $orchestratorMock;
 	private ServerRequestInterface&MockObject $requestMock;
-	private ResponseInterface&MockObject $responseMock;
+	private ResponseInterface&Stub $responseStub;
 	private ConditionalPlayController $controller;
 
 	/**
@@ -52,7 +53,7 @@ class ConditionalPlayControllerTest extends TestCase
 		$this->orchestratorMock = $this->createMock(Orchestrator::class);
 		$this->controller = new ConditionalPlayController($this->orchestratorMock);
 		$this->requestMock = $this->createMock(ServerRequestInterface::class);
-		$this->responseMock = $this->createMock(ResponseInterface::class);
+		$this->responseStub = $this->createStub(ResponseInterface::class);
 	}
 
 	/**
@@ -64,18 +65,19 @@ class ConditionalPlayControllerTest extends TestCase
 	#[Group('units')]
 	public function testValidateReturnsNonNullResponse(): void
 	{
+		$this->requestMock->expects($this->never())->method($this->anything());
 		$args = ['key' => 'value'];
-		$expectedResponse = $this->createMock(ResponseInterface::class);
+		$expectedResponse = $this->createStub(ResponseInterface::class);
 
 		$this->orchestratorMock->expects($this->once())->method('setInput')
 			->with($args)
 			->willReturnSelf();
 
 		$this->orchestratorMock->expects($this->once())->method('validate')
-			->with($this->responseMock)
+			->with($this->responseStub)
 			->willReturn($expectedResponse);
 
-		$actualResponse = $this->controller->fetch($this->requestMock, $this->responseMock, $args);
+		$actualResponse = $this->controller->fetch($this->requestMock, $this->responseStub, $args);
 
 		static::assertSame($expectedResponse, $actualResponse);
 	}
@@ -89,22 +91,23 @@ class ConditionalPlayControllerTest extends TestCase
 	#[Group('units')]
 	public function testValidateReturnsNullFetchMethodCalled(): void
 	{
+		$this->requestMock->expects($this->never())->method($this->anything());
 		$args = ['key' => 'value'];
-		$expectedResponse = $this->createMock(ResponseInterface::class);
+		$expectedResponse = $this->createStub(ResponseInterface::class);
 
 		$this->orchestratorMock->expects($this->once())->method('setInput')
 			->with($args)
 			->willReturnSelf();
 
 		$this->orchestratorMock->expects($this->once())->method('validate')
-			->with($this->responseMock)
+			->with($this->responseStub)
 			->willReturn(null);
 
 		$this->orchestratorMock->expects($this->once())->method('fetch')
-			->with($this->responseMock)
+			->with($this->responseStub)
 			->willReturn($expectedResponse);
 
-		$actualResponse = $this->controller->fetch($this->requestMock, $this->responseMock, $args);
+		$actualResponse = $this->controller->fetch($this->requestMock, $this->responseStub, $args);
 
 		static::assertSame($expectedResponse, $actualResponse);
 	}
@@ -120,7 +123,7 @@ class ConditionalPlayControllerTest extends TestCase
 	#[Group('units')]
 	public function testSaveReturnsNonNullResponse(): void
 	{
-		$expectedResponse = $this->createMock(ResponseInterface::class);
+		$expectedResponse = $this->createStub(ResponseInterface::class);
 
 		$this->requestMock->expects($this->once())->method('getParsedBody')->willReturn(['key' => 'value']);
 
@@ -129,10 +132,10 @@ class ConditionalPlayControllerTest extends TestCase
 			->willReturnSelf();
 
 		$this->orchestratorMock->expects($this->once())->method('validateSave')
-			->with($this->responseMock)
+			->with($this->responseStub)
 			->willReturn($expectedResponse);
 
-		$actualResponse = $this->controller->save($this->requestMock, $this->responseMock);
+		$actualResponse = $this->controller->save($this->requestMock, $this->responseStub);
 
 		static::assertSame($expectedResponse, $actualResponse);
 	}
@@ -148,7 +151,7 @@ class ConditionalPlayControllerTest extends TestCase
 	#[Group('units')]
 	public function testSaveCallsSaveAndReturnsResponse(): void
 	{
-		$expectedResponse = $this->createMock(ResponseInterface::class);
+		$expectedResponse = $this->createStub(ResponseInterface::class);
 
 		$this->requestMock->expects($this->once())->method('getParsedBody')->willReturn(['key' => 'value']);
 
@@ -157,14 +160,14 @@ class ConditionalPlayControllerTest extends TestCase
 			->willReturnSelf();
 
 		$this->orchestratorMock->expects($this->once())->method('validateSave')
-			->with($this->responseMock)
+			->with($this->responseStub)
 			->willReturn(null);
 
 		$this->orchestratorMock->expects($this->once())->method('save')
-			->with($this->responseMock)
+			->with($this->responseStub)
 			->willReturn($expectedResponse);
 
-		$actualResponse = $this->controller->save($this->requestMock, $this->responseMock);
+		$actualResponse = $this->controller->save($this->requestMock, $this->responseStub);
 
 		static::assertSame($expectedResponse, $actualResponse);
 	}

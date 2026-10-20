@@ -32,6 +32,7 @@ use App\Modules\Playlists\Helper\Settings\Facade;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -43,7 +44,7 @@ class ShowSettingsControllerTest extends TestCase
 	private Facade&MockObject $facadeMock;
 	private ServerRequestInterface&MockObject $requestMock;
 	private ResponseInterface&MockObject $responseMock;
-	private StreamInterface&MockObject $streamInterfaceMock;
+	private StreamInterface&Stub $streamInterfaceStub;
 	private FormTemplatePreparer&MockObject $formElementPreparerMock;
 	private Messages&MockObject $flashMock;
 	private ShowSettingsController $controller;
@@ -57,7 +58,7 @@ class ShowSettingsControllerTest extends TestCase
 		$this->facadeMock              = $this->createMock(Facade::class);
 		$this->requestMock             = $this->createMock(ServerRequestInterface::class);
 		$this->responseMock            = $this->createMock(ResponseInterface::class);
-		$this->streamInterfaceMock     = $this->createMock(StreamInterface::class);
+		$this->streamInterfaceStub     = $this->createStub(StreamInterface::class);
 		$this->flashMock               = $this->createMock(Messages::class);
 		$this->formElementPreparerMock = $this->createMock(FormTemplatePreparer::class);
 
@@ -74,6 +75,7 @@ class ShowSettingsControllerTest extends TestCase
 	#[Group('units')]
 	public function testNewPlaylistFormWithDefaultMode(): void
 	{
+		$this->flashMock->expects($this->never())->method($this->anything());
 		$args = []; // No playlist_mode provided means master
 
 		$this->setStandardMocks();
@@ -91,7 +93,7 @@ class ShowSettingsControllerTest extends TestCase
 			->willReturn(['rendered_template' => 'example']);
 
 		$this->responseMock->expects($this->once())->method('getBody')
-			->willReturn($this->createMock(StreamInterface::class));
+			->willReturn($this->createStub(StreamInterface::class));
 
 		$this->responseMock	->expects($this->once())->method('withHeader')
 			->with('Content-Type', 'text/html')
@@ -111,6 +113,7 @@ class ShowSettingsControllerTest extends TestCase
 	#[Group('units')]
 	public function testNewPlaylistForm(): void
 	{
+		$this->flashMock->expects($this->never())->method($this->anything());
 		$args = ['playlist_mode' => 'channel'];
 
 		$this->setStandardMocks();
@@ -128,7 +131,7 @@ class ShowSettingsControllerTest extends TestCase
 			->willReturn(['rendered_template' => 'example']);
 
 		$this->responseMock->expects($this->once())->method('getBody')
-			->willReturn($this->createMock(StreamInterface::class));
+			->willReturn($this->createStub(StreamInterface::class));
 
 		$this->responseMock	->expects($this->once())->method('withHeader')
 			->with('Content-Type', 'text/html')
@@ -147,6 +150,7 @@ class ShowSettingsControllerTest extends TestCase
 	#[Group('units')]
 	public function testEditPlaylistFormWithInvalidPlaylistId(): void
 	{
+		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
 
 		$this->setStandardMocks();
 
@@ -180,6 +184,7 @@ class ShowSettingsControllerTest extends TestCase
 	#[Group('units')]
 	public function testEditPlaylistFormWithNonExistentPlaylist(): void
 	{
+		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
 		$args = ['playlist_id' => '1', 'playlist_mode' => 'master'];
 
 		$this->setStandardMocks();
@@ -212,6 +217,9 @@ class ShowSettingsControllerTest extends TestCase
 	#[Group('units')]
 	public function testEditPlaylistFormWithValidPlaylistId(): void
 	{
+		// the form is rendered again
+		$this->formElementPreparerMock->expects($this->once())->method('prepareUITemplate')->willReturn(['main_layout' => [], 'this_layout' => []]);
+		$this->flashMock->expects($this->never())->method($this->anything());
 		$args = ['playlist_id' => '1'];
 		$playlist = ['id' => 1, 'name' => 'Sample Playlist'];
 
@@ -229,7 +237,7 @@ class ShowSettingsControllerTest extends TestCase
 			->willReturn(['rendered_template' => 'example']);
 
 		$this->responseMock->expects($this->once())->method('getBody')
-			->willReturn($this->createMock(StreamInterface::class));
+			->willReturn($this->createStub(StreamInterface::class));
 
 		$this->responseMock->expects($this->once())->method('withHeader')
 			->with('Content-Type', 'text/html')
@@ -247,6 +255,7 @@ class ShowSettingsControllerTest extends TestCase
 	#[Group('units')]
 	public function testStorePlaylistSuccessfully(): void
 	{
+		$this->formElementPreparerMock->expects($this->never())->method($this->anything());
 		$post = ['playlist_name' => 'Test Playlist'];
 		$this->setStandardMocks();
 
@@ -284,6 +293,8 @@ class ShowSettingsControllerTest extends TestCase
 	#[Group('units')]
 	public function testStorePlaylistWithErrorMessages(): void
 	{
+		// the form is rendered again
+		$this->formElementPreparerMock->expects($this->once())->method('prepareUITemplate')->willReturn(['main_layout' => [], 'this_layout' => []]);
 		$post = ['playlist_name' => 'Test Playlist'];
 		$errors = ['Error 1', 'Error 2'];
 		$this->setStandardMocks();
@@ -303,7 +314,7 @@ class ShowSettingsControllerTest extends TestCase
 
 		$this->facadeMock->expects($this->never())->method('storePlaylist');
 
-		$this->responseMock->expects($this->once())->method('getBody')->willReturn($this->streamInterfaceMock);
+		$this->responseMock->expects($this->once())->method('getBody')->willReturn($this->streamInterfaceStub);
 
 		$this->responseMock->expects($this->once())->method('withHeader')
 			->with('Content-Type', 'text/html')
@@ -322,6 +333,8 @@ class ShowSettingsControllerTest extends TestCase
 	#[Group('units')]
 	public function testStorePlaylistWithInvalidPostData(): void
 	{
+		// the form is rendered again
+		$this->formElementPreparerMock->expects($this->once())->method('prepareUITemplate')->willReturn(['main_layout' => [], 'this_layout' => []]);
 		$post = [];
 		$this->requestMock->expects($this->once())->method('getParsedBody')
 			->willReturn($post);
@@ -337,7 +350,7 @@ class ShowSettingsControllerTest extends TestCase
 
 		$this->facadeMock->expects($this->never())->method('storePlaylist');
 
-		$this->responseMock->expects($this->once())->method('getBody')->willReturn($this->streamInterfaceMock);
+		$this->responseMock->expects($this->once())->method('getBody')->willReturn($this->streamInterfaceStub);
 
 		$this->responseMock->expects($this->once())->method('withHeader')
 			->with('Content-Type', 'text/html')
@@ -357,6 +370,9 @@ class ShowSettingsControllerTest extends TestCase
 	#[Group('units')]
 	public function testStorePlaylistFailsStore(): void
 	{
+		// the form is rendered again
+		$this->formElementPreparerMock->expects($this->once())->method('prepareUITemplate')->willReturn(['main_layout' => [], 'this_layout' => []]);
+		$this->flashMock->expects($this->never())->method($this->anything());
 		$post = ['playlist_name' => 'Test Playlist'];
 		$this->setStandardMocks();
 
@@ -374,7 +390,7 @@ class ShowSettingsControllerTest extends TestCase
 			->with($post)
 			->willReturn(['rendered_template' => 'example']);
 
-		$this->responseMock->expects($this->once())->method('getBody')->willReturn($this->streamInterfaceMock);
+		$this->responseMock->expects($this->once())->method('getBody')->willReturn($this->streamInterfaceStub);
 
 		$this->responseMock->expects($this->once())->method('withHeader')
 			->with('Content-Type', 'text/html')
@@ -388,17 +404,17 @@ class ShowSettingsControllerTest extends TestCase
 	 */
 	private function setStandardMocks(): void
 	{
-		$translatorMock = $this->createMock(Translator::class);
-		$sessionMock = $this->createMock(Session::class);
+		$translatorStub = $this->createStub(Translator::class);
+		$sessionStub = $this->createStub(Session::class);
 		$this->requestMock->expects($this->exactly(3))->method('getAttribute')
 			->willReturnMap([
 				['flash', null, $this->flashMock],
-				['translator', null, $translatorMock],
-				['session', null, $sessionMock]
+				['translator', null, $translatorStub],
+				['session', null, $sessionStub]
 			]);
 
 		$this->facadeMock->expects($this->once())->method('init')
-			->with($translatorMock, $sessionMock);
+			->with($translatorStub, $sessionStub);
 
 	}
 }

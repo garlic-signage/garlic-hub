@@ -31,11 +31,12 @@ use App\Modules\Playlists\Helper\ExportSmil\items\Base;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class MultizonePlaylistBuilderTest extends TestCase
 {
-	private PlayerEntity&MockObject $playerEntityMock;
+	private PlayerEntity&Stub $playerEntityStub;
 	private BuildHelper&MockObject $buildHelperMock;
 	private SimplePlaylistStructureFactory&MockObject $simplePlaylistStructureFactoryMock;
 	private MultizonePlaylistBuilder $builder;
@@ -46,12 +47,12 @@ class MultizonePlaylistBuilderTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->playerEntityMock = $this->createMock(PlayerEntity::class);
+		$this->playerEntityStub = $this->createStub(PlayerEntity::class);
 		$this->buildHelperMock = $this->createMock(BuildHelper::class);
 		$this->simplePlaylistStructureFactoryMock = $this->createMock(SimplePlaylistStructureFactory::class);
 
 		$this->builder = new MultizonePlaylistBuilder(
-			$this->playerEntityMock,
+			$this->playerEntityStub,
 			$this->buildHelperMock,
 			$this->simplePlaylistStructureFactoryMock
 		);
@@ -65,7 +66,7 @@ class MultizonePlaylistBuilderTest extends TestCase
 	{
 		$zones = ['zones' => [1 => ['zone_playlist_id' => 101]]];
 
-		$this->playerEntityMock->method('getLayout')->willReturn($zones);
+		$this->playerEntityStub->method('getLayout')->willReturn($zones);
 
 		$this->buildHelperMock->method('collectItems')
 			->with(101)
@@ -82,7 +83,7 @@ class MultizonePlaylistBuilderTest extends TestCase
 			->willReturn('region="screen" exclusive 101')
 		;
 
-		$playlistStructureMock = $this->createMock(PlaylistStructureInterface::class);
+		$playlistStructureStub = $this->createStub(PlaylistStructureInterface::class);
 
 		$items = Base::TABSTOPS_TAG . '<seq id="media1" repeatCount="indefinite">' . "\n" .
 			'region="screen1" item 101'.
@@ -91,11 +92,11 @@ class MultizonePlaylistBuilderTest extends TestCase
 
 		$this->simplePlaylistStructureFactoryMock->method('create')
 			->with($items, 'prefetch 101'. "\n", 'region="screen1" exclusive 101')
-			->willReturn($playlistStructureMock);
+			->willReturn($playlistStructureStub);
 
 		$result = $this->builder->buildPlaylist();
 
-		static::assertSame($playlistStructureMock, $result);
+		static::assertSame($playlistStructureStub, $result);
 	}
 
 

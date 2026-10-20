@@ -64,6 +64,7 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testInit(): void
 	{
+		$this->expectUntouched($this->collectorMock, $this->aclValidatorMock, $this->validatorMock, $this->parametersMock);
 		$user = ['UID' => 123, 'username' => 'username'];
 		$this->sessionMock->expects($this->once())->method('get')->with('user')->willReturn($user);
 		static::assertSame($this->builder, $this->builder->init($this->sessionMock));
@@ -76,6 +77,8 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testConfigNewParameterWithSimpleAdmin(): void
 	{
+		$this->collectorMock->expects($this->never())->method($this->anything());
+		$this->validatorMock->expects($this->never())->method($this->anything());
 		$this->setStandardMocks();
 
 		$this->aclValidatorMock->expects($this->once())
@@ -97,6 +100,8 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testConfigNewParameterWithoutAdminPrivileges(): void
 	{
+		$this->collectorMock->expects($this->never())->method($this->anything());
+		$this->validatorMock->expects($this->never())->method($this->anything());
 		$this->setStandardMocks();
 		$this->aclValidatorMock->expects($this->once())
 			->method('isSimpleAdmin')
@@ -116,6 +121,8 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testConfigNewParameterWithNoTimeLimit(): void
 	{
+		$this->collectorMock->expects($this->never())->method($this->anything());
+		$this->validatorMock->expects($this->never())->method($this->anything());
 		$this->setStandardMocks();
 		$this->aclValidatorMock->expects($this->once())
 			->method('isSimpleAdmin')
@@ -136,9 +143,11 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testConfigEditParameterAddsPlaylistId(): void
 	{
+		$this->collectorMock->expects($this->never())->method($this->anything());
+		$this->validatorMock->expects($this->never())->method($this->anything());
 		$this->setStandardMocks();
 		$this->parametersMock->expects($this->once())->method('addPlaylistId');
-		$this->aclValidatorMock->method('isAdmin')->willReturn(true);
+		$this->aclValidatorMock->expects($this->atLeastOnce())->method('isAdmin')->willReturn(true);
 
 		$this->builder->configEditParameter(['UID' => 1, 'company_id' => 1, 'playlist_mode' => '', 'playlist_name' => '']);
 	}
@@ -151,10 +160,12 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testConfigEditParameterAddsOwnerIfAdmin(): void
 	{
+		$this->collectorMock->expects($this->never())->method($this->anything());
+		$this->validatorMock->expects($this->never())->method($this->anything());
 		$this->setStandardMocks();
 
 		$this->parametersMock->method('addPlaylistId');
-		$this->aclValidatorMock->method('isAdmin')->willReturn(true);
+		$this->aclValidatorMock->expects($this->atLeastOnce())->method('isAdmin')->willReturn(true);
 
 		$this->parametersMock->expects($this->once())->method('addOwner');
 
@@ -169,11 +180,13 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testConfigEditParameterAddsTimeLimitIfTimeLimitPlaylist(): void
 	{
+		$this->collectorMock->expects($this->never())->method($this->anything());
+		$this->validatorMock->expects($this->never())->method($this->anything());
 		$this->setStandardMocks();
 
 		$this->parametersMock->method('addPlaylistId');
 		$this->parametersMock->method('addOwner');
-		$this->aclValidatorMock->method('isAdmin')->willReturn(true);
+		$this->aclValidatorMock->expects($this->atLeastOnce())->method('isAdmin')->willReturn(true);
 
 		$this->parametersMock->expects($this->once())->method('addTimeLimit');
 
@@ -188,10 +201,12 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testConfigEditParameterReturnsIfNotAdmin(): void
 	{
+		$this->collectorMock->expects($this->never())->method($this->anything());
+		$this->validatorMock->expects($this->never())->method($this->anything());
 		$this->setStandardMocks();
 
 		$this->parametersMock->expects($this->once())->method('addPlaylistId');
-		$this->aclValidatorMock->method('isAdmin')->willReturn(false);
+		$this->aclValidatorMock->expects($this->atLeastOnce())->method('isAdmin')->willReturn(false);
 
 		$this->parametersMock->expects($this->never())->method('addOwner');
 		$this->parametersMock->expects($this->never())->method('addTimeLimit');
@@ -208,25 +223,27 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testBuildFormWithEmptyPlaylistStandard(): void
 	{
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$this->validatorMock->expects($this->never())->method($this->anything());
 		$this->setStandardMocks();
 
-		$fieldInterfaceMock = $this->createMock(FieldInterface::class);
+		$fieldInterfaceStub = $this->createStub(FieldInterface::class);
 
 		$form = [
-			'playlist_name' => $fieldInterfaceMock,
-			'csrf_token' => $fieldInterfaceMock
+			'playlist_name' => $fieldInterfaceStub,
+			'csrf_token' => $fieldInterfaceStub
 		];
 
-		$this->parametersMock->method('hasParameter')->willReturn(false);
+		$this->parametersMock->expects($this->atLeastOnce())->method('hasParameter')->willReturn(false);
 
 		$this->collectorMock->expects($this->once())
 			->method('createPlaylistNameField')
 			->with('')
-			->willReturn($fieldInterfaceMock);
+			->willReturn($fieldInterfaceStub);
 
 		$this->collectorMock->expects($this->once())
 			->method('createCSRFTokenField')
-			->willReturn($fieldInterfaceMock);
+			->willReturn($fieldInterfaceStub);
 
 		$preparedFormWithAllFields = ['key1' => 'value1', 'key2' => 123, 'key3' => true];
 		$this->collectorMock->expects($this->once())
@@ -248,6 +265,8 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testBuildFormWithAllParameters(): void
 	{
+		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$this->validatorMock->expects($this->never())->method($this->anything());
 		$playlist = [
 			BaseParameters::PARAMETER_UID => 123,
 			'username' => 'mockUsername',
@@ -271,42 +290,42 @@ class BuilderTest extends TestCase
 			->with(Parameters::PARAMETER_TIME_LIMIT)
 			->willReturn(500);
 
-		$fieldInterfaceMock = $this->createMock(FieldInterface::class);
+		$fieldInterfaceStub = $this->createStub(FieldInterface::class);
 
 		$this->collectorMock->method('createPlaylistNameField')
 			->with( $playlist[Parameters::PARAMETER_PLAYLIST_NAME])
-			->willReturn($fieldInterfaceMock);
+			->willReturn($fieldInterfaceStub);
 
 		$this->collectorMock->method('createUIDField')
 			->with($playlist[BaseParameters::PARAMETER_UID])
-			->willReturn($fieldInterfaceMock);
+			->willReturn($fieldInterfaceStub);
 
 		$this->collectorMock->method('createTimeLimitField')
 			->with(600, 500)
-			->willReturn($fieldInterfaceMock);
+			->willReturn($fieldInterfaceStub);
 
 		$this->collectorMock->method('createHiddenPlaylistIdField')
 			->with(456)
-			->willReturn($fieldInterfaceMock);
+			->willReturn($fieldInterfaceStub);
 
 		$this->collectorMock->method('createPlaylistModeField')
 			->with(2)
-			->willReturn($fieldInterfaceMock);
+			->willReturn($fieldInterfaceStub);
 
 		$this->collectorMock->method('createCSRFTokenField')
-			->willReturn($fieldInterfaceMock);
+			->willReturn($fieldInterfaceStub);
 
 		$preparedFormWithAllFields = ['key1' => 'value1', 'key2' => 123, 'key3' => true];
 
 		$this->collectorMock->expects($this->once())
 			->method('prepareForm')
 			->with([
-				'playlist_name' => $fieldInterfaceMock,
-				'UID' => $fieldInterfaceMock,
-				'time_limit' => $fieldInterfaceMock,
-				'playlist_id' => $fieldInterfaceMock,
-				'playlist_mode' => $fieldInterfaceMock,
-				'csrf_token' => $fieldInterfaceMock,
+				'playlist_name' => $fieldInterfaceStub,
+				'UID' => $fieldInterfaceStub,
+				'time_limit' => $fieldInterfaceStub,
+				'playlist_id' => $fieldInterfaceStub,
+				'playlist_mode' => $fieldInterfaceStub,
+				'csrf_token' => $fieldInterfaceStub,
 			])
 			->willReturn($preparedFormWithAllFields);
 
@@ -324,6 +343,7 @@ class BuilderTest extends TestCase
 	#[Group('units')]
 	public function testHandleUserInput(): void
 	{
+		$this->expectUntouched($this->collectorMock, $this->aclValidatorMock, $this->sessionMock);
 		$userInput = ['key1' => 'value1', 'key2' => 123, 'key3' => true];
 		$this->parametersMock->expects($this->once())->method('setUserInputs')
 			->with($userInput)
@@ -341,5 +361,13 @@ class BuilderTest extends TestCase
 		$user = ['UID' => 567, 'username' => 'username'];
 		$this->sessionMock->expects($this->once())->method('get')->with('user')->willReturn($user);
 		$this->builder->init($this->sessionMock);
+	}
+
+	private function expectUntouched(MockObject ...$mocks): void
+	{
+		foreach ($mocks as $mock)
+		{
+			$mock->expects($this->never())->method($this->anything());
+		}
 	}
 }

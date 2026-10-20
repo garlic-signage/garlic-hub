@@ -61,6 +61,7 @@ class PlaylistsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testPlaylistModeWithIn(): void
 	{
+		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$fields = [
 			'playlist_mode' => ['value' => 'master,multizone']
 		];
@@ -99,6 +100,7 @@ class PlaylistsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testPlaylistMode(): void
 	{
+		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$fields = [
 			'playlist_mode' => ['value' => 'master']
 		];
@@ -136,6 +138,7 @@ class PlaylistsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testPlaylistModeEmpty(): void
 	{
+		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$fields = [
 			'playlist_mode' => ['value' => '']
 		];
@@ -162,6 +165,7 @@ class PlaylistsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindByUIDPlaylistModeEmpty(): void
 	{
+		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$fields = [
 			'elements_page' => ['value' => 1],
 			'elements_per_page' => ['value' => 10],
@@ -193,6 +197,8 @@ class PlaylistsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testDeleteReturnsExpectedResult(): void
 	{
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
+		$this->resultMock->expects($this->never())->method($this->anything());
 		$id = 1;
 		$expectedResult = 1;
 		$sqliteplatform = new SQLitePlatform();
@@ -218,6 +224,7 @@ class PlaylistsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testFindFirstWithUserNameReturnsExpectedData(): void
 	{
+		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$playlistId = 1;
 		$expectedData = [
 			'playlist_id' => $playlistId,
@@ -250,6 +257,8 @@ class PlaylistsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testUpdateExportUpdatesDataSuccessfully(): void
 	{
+		$this->resultMock->expects($this->never())->method($this->anything());
+		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$playlistId     = 1;
 		$saveData       = ['title' => 'Updated Playlist', 'description' => 'Updated Description'];
 		$expectedResult = 1;
@@ -281,6 +290,7 @@ class PlaylistsRepositoryTest extends TestCase
 	#[Group('units')]
 	public function testCountAllFilteredReturnsCorrectCount(): void
 	{
+		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$fields = [
 			'playlist_mode' => ['value' => 'multizone'],
 			'playlist_name' => ['value' => 'name']

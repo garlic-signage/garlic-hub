@@ -38,8 +38,8 @@ class TestableTemplateOrchestrator extends BaseTemplateOrchestrator
 	}
 
 	/**
-	 * @param array $objects
-	 * @return array
+	 * @param array<mixed> $objects
+	 * @return array<mixed>
 	 */
 	public function callRestoreSrc(array $objects): array
 	{

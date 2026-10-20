@@ -29,16 +29,16 @@ use App\Modules\Playlists\Helper\ExportSmil\Utils\Properties;
 use App\Modules\Playlists\Helper\ExportSmil\Utils\Trigger;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class SeqContainerTest extends TestCase
 {
-	private Config&MockObject $configMock;
-	private Trigger&MockObject $beginMock;
-	private Trigger&MockObject $endMock;
-	private Conditional&MockObject $conditionalMock;
-	private Properties $propertiesMock;
+	private Config&Stub $configStub;
+	private Trigger&Stub $beginStub;
+	private Trigger&Stub $endStub;
+	private Conditional&Stub $conditionalStub;
+	private Properties $propertiesStub;
 	private SeqContainer $seqContainer;
 
 	/**
@@ -47,27 +47,27 @@ class SeqContainerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->configMock = $this->createMock(Config::class);
-		$this->beginMock       = $this->createMock(Trigger::class);
-		$this->endMock         = $this->createMock(Trigger::class);
-		$this->conditionalMock = $this->createMock(Conditional::class);
-		$this->propertiesMock = $this->createMock(Properties::class);
+		$this->configStub = $this->createStub(Config::class);
+		$this->beginStub       = $this->createStub(Trigger::class);
+		$this->endStub         = $this->createStub(Trigger::class);
+		$this->conditionalStub = $this->createStub(Conditional::class);
+		$this->propertiesStub = $this->createStub(Properties::class);
 	}
 
 	#[Group('units')]
 	public function testGetSmilElementTag(): void
 	{
-		$this->beginMock->method('hasTriggers')->willReturn(false);
+		$this->beginStub->method('hasTriggers')->willReturn(false);
 
 		$item = ['item_id' => 1, 'item_name' => 'foo', 'file_resource' => '12345', 'time_limit' => null];
 
 		$this->seqContainer = new SeqContainer(
-			$this->configMock,
+			$this->configStub,
 			$item,
-			$this->propertiesMock,
-			$this->beginMock,
-			$this->endMock,
-			$this->conditionalMock
+			$this->propertiesStub,
+			$this->beginStub,
+			$this->endStub,
+			$this->conditionalStub
 		);
 
 		$expected = Base::TABSTOPS_TAG . '<seq title="foo" >' . "\n" .
@@ -80,17 +80,17 @@ class SeqContainerTest extends TestCase
 	#[Group('units')]
 	public function testGetSmilElementTagWithDur(): void
 	{
-		$this->beginMock->method('hasTriggers')->willReturn(false);
+		$this->beginStub->method('hasTriggers')->willReturn(false);
 
 		$item = ['item_id' => 1, 'item_name' => 'foo', 'file_resource' => '12345', 'time_limit' => 15, 'owner_duration' => 20];
 
 		$this->seqContainer = new SeqContainer(
-			$this->configMock,
+			$this->configStub,
 			$item,
-			$this->propertiesMock,
-			$this->beginMock,
-			$this->endMock,
-			$this->conditionalMock
+			$this->propertiesStub,
+			$this->beginStub,
+			$this->endStub,
+			$this->conditionalStub
 		);
 
 		$expected = Base::TABSTOPS_TAG . '<seq title="foo" dur="15s" >' . "\n" .
@@ -103,16 +103,16 @@ class SeqContainerTest extends TestCase
 	#[Group('units')]
 	public function testGetSmilElementTagWithTriggers(): void
 	{
-		$this->beginMock->method('hasTriggers')->willReturn(true);
+		$this->beginStub->method('hasTriggers')->willReturn(true);
 		$item = ['item_id' => 1, 'item_name' => 'boo', 'file_resource' => '12345', 'time_limit' => 0, 'owner_duration' => 20];
 
 		$this->seqContainer = new SeqContainer(
-		$this->configMock,
+		$this->configStub,
 			$item,
-			$this->propertiesMock,
-			$this->beginMock,
-			$this->endMock,
-			$this->conditionalMock
+			$this->propertiesStub,
+			$this->beginStub,
+			$this->endStub,
+			$this->conditionalStub
 		);
 		$this->seqContainer->setBelongsToMasterPlaylist(true);
 
@@ -122,16 +122,16 @@ class SeqContainerTest extends TestCase
 	#[Group('units')]
 	public function testGetSmilElementTagWithTriggersNoMaster(): void
 	{
-		$this->beginMock->method('hasTriggers')->willReturn(true);
+		$this->beginStub->method('hasTriggers')->willReturn(true);
 		$item = ['item_id' => 1, 'item_name' => 'boo', 'file_resource' => '12345', 'time_limit' => 0, 'owner_duration' => 20];
 
 		$this->seqContainer = new SeqContainer(
-			$this->configMock,
+			$this->configStub,
 			$item,
-			$this->propertiesMock,
-			$this->beginMock,
-			$this->endMock,
-			$this->conditionalMock
+			$this->propertiesStub,
+			$this->beginStub,
+			$this->endStub,
+			$this->conditionalStub
 		);
 		$this->seqContainer->setBelongsToMasterPlaylist(false);
 
@@ -148,12 +148,12 @@ class SeqContainerTest extends TestCase
 		$item = ['external_link' => 'example.com'];
 
 		$this->seqContainer = new SeqContainer(
-			$this->configMock,
+			$this->configStub,
 			$item,
-			$this->propertiesMock,
-			$this->beginMock,
-			$this->endMock,
-			$this->conditionalMock
+			$this->propertiesStub,
+			$this->beginStub,
+			$this->endStub,
+			$this->conditionalStub
 		);
 
 		$expected = Base::TABSTOPS_TAG . '{ITEMS_0#example.com}' . "\n";
@@ -164,17 +164,17 @@ class SeqContainerTest extends TestCase
 	#[Group('units')]
 	public function testGetPrefetchTag(): void
 	{
-		$this->beginMock->method('hasTriggers')->willReturn(false);
+		$this->beginStub->method('hasTriggers')->willReturn(false);
 
 		$item = ['file_resource' => '12345'];
 
 		$this->seqContainer = new SeqContainer(
-			$this->configMock,
+			$this->configStub,
 			$item,
-			$this->propertiesMock,
-			$this->beginMock,
-			$this->endMock,
-			$this->conditionalMock
+			$this->propertiesStub,
+			$this->beginStub,
+			$this->endStub,
+			$this->conditionalStub
 		);
 
 		$expected = Base::TABSTOPS_TAG . '{PREFETCH_12345}' . "\n";
