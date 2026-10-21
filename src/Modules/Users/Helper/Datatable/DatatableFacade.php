@@ -31,6 +31,7 @@ use App\Framework\Utils\Datatable\Results\HeaderField;
 use App\Modules\Users\Services\UsersAdminService;
 use App\Modules\Users\Services\UsersDatatableService;
 use Doctrine\DBAL\Exception;
+use Throwable;
 
 /**
  * This class acts as a facade to handle operations related to a datatable framework.
@@ -69,10 +70,11 @@ class DatatableFacade implements DatatableFacadeInterface
 
 	/**
 	 * @throws Exception
+	 * @throws Throwable
 	 */
-	public function deleteUser(int $UID): bool
+	public function deleteUser(int $UID): void
 	{
-		return $this->usersAdminService->deleteUser($UID);
+		$this->usersAdminService->deleteUser($UID);
 	}
 
 	/**

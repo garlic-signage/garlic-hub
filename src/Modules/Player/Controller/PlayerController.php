@@ -24,8 +24,10 @@ namespace App\Modules\Player\Controller;
 
 use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Core\CsrfToken;
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Player\Enums\PlayerStatus;
 use App\Modules\Player\Services\PlayerService;
@@ -60,9 +62,15 @@ class PlayerController
 		if ($playerId === 0)
 			return $this->responseHandler->jsonSuccess($response, $responseData);
 
-		$this->fetchPlayerData($playerId);
-		if ($this->playerData === [])
+		try
+		{
+			$this->fetchPlayerData($playerId);
+		}
+		catch (NotFoundException|AccessDeniedException)
+		{
+			// asking for rights is no error, the user simply has none for this player
 			return $this->responseHandler->jsonSuccess($response, $responseData);
+		}
 
 		if ((int) $this->playerData['status'] >= PlayerStatus::RELEASED->value && (int) $this->playerData['licence_id'] > 0)
 		{
@@ -90,8 +98,6 @@ class PlayerController
 			return $this->responseHandler->jsonError($response, 'No playerId');
 
 		$this->fetchPlayerData($playerId);
-		if ($this->playerData === [])
-			return $this->responseHandler->jsonError($response, 'No player found');
 
 		return $this->responseHandler->jsonSuccess($response, $this->playerData);
 	}

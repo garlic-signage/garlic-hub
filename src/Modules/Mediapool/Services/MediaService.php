@@ -21,9 +21,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Mediapool\Services;
 
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\DatabaseException;
-use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Auth\UserSession;
@@ -31,8 +31,6 @@ use App\Modules\Mediapool\Repositories\FilesRepository;
 use App\Modules\Mediapool\Repositories\NodesRepository;
 use Ramsey\Uuid\Uuid;
 use Doctrine\DBAL\Exception;
-use Psr\Log\LoggerInterface;
-use Throwable;
 
 /**
  * Class MediaService
@@ -48,7 +46,6 @@ class MediaService
 	private readonly AclValidator $aclValidator;
 	private readonly MediaUrlSigner $mediaUrlSigner;
 	private readonly UserSession $userSession;
-	private readonly LoggerInterface $logger;
 	private string $pathOriginals;
 	private string $pathPreviews;
 	private string $pathThumbnails;
@@ -58,16 +55,15 @@ class MediaService
 	 * @param NodesRepository $nodesRepository
 	 * @param AclValidator $aclValidator
 	 * @param MediaUrlSigner $mediaUrlSigner
-	 * @param LoggerInterface $logger
+	 * @param UserSession $userSession
 	 */
-	public function __construct(FilesRepository $mediaRepository, NodesRepository $nodesRepository, AclValidator $aclValidator, MediaUrlSigner $mediaUrlSigner, UserSession $userSession, LoggerInterface $logger)
+	public function __construct(FilesRepository $mediaRepository, NodesRepository $nodesRepository, AclValidator $aclValidator, MediaUrlSigner $mediaUrlSigner, UserSession $userSession)
 	{
 		$this->mediaRepository = $mediaRepository;
 		$this->nodesRepository = $nodesRepository;
 		$this->aclValidator    = $aclValidator;
 		$this->mediaUrlSigner  = $mediaUrlSigner;
 		$this->userSession     = $userSession;
-		$this->logger          = $logger;
 
 		$this->pathOriginals = $aclValidator->getConfig()->getConfigValue('originals', 'mediapool', 'directories');
 		$this->pathPreviews  = $aclValidator->getConfig()->getConfigValue('previews', 'mediapool', 'directories');
@@ -86,63 +82,46 @@ class MediaService
 
 	/**
 	 * @return list<array<string,mixed>>
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws UserException
 	 */
 	public function listMedia(int $nodeId, string $filter = ''): array
 	{
-		try
+		$node = $this->nodesRepository->findNodeOwner($nodeId);
+		$this->checkPermission($node, 'read');
+
+		$result = $this->mediaRepository->findAllByNodeId($nodeId, $filter);
+
+		foreach ($result as &$media)
 		{
-			$node = $this->nodesRepository->findNodeOwner($nodeId);
-
-			$permissions = $this->aclValidator->checkDirectoryPermissions($this->userSession->getUID(), $node);
-			if (!$permissions['read'])
-				throw new ModuleException('mediapool', 'No read permissions on directory:'. $node['name']);
-
-			$result = $this->mediaRepository->findAllByNodeId($nodeId, $filter);
-
-			foreach ($result as &$media)
-			{
-				$media['metadata'] = json_decode($media['metadata'], true);
-				$media = $this->addFileLocations($media);
-			}
-
-			return $result;
+			$media['metadata'] = json_decode($media['metadata'], true);
+			$media = $this->addFileLocations($media);
 		}
-		catch (Throwable $e)
-		{
-			$this->logger->error('Error listing media: ' . $e->getMessage());
-			return [];
-		}
+
+		return $result;
 	}
 
 	/**
-	 * @param string $mediaId
 	 * @return array<string,mixed>
-	 * @throws DatabaseException
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws NotFoundException
 	 * @throws UserException
 	 */
 	public function fetchMedia(string $mediaId): array
 	{
-		try
-		{
-			$media       = $this->fetchMediaById($mediaId);
-			$node        = $this->nodesRepository->findNodeOwner($media['node_id']);
-			$permissions = $this->aclValidator->checkDirectoryPermissions($this->userSession->getUID(), $node);
-			if (!$permissions['read'])
-				throw new ModuleException('mediapool', 'No read permissions in this directory: '. $media['node_id']);
+		$media = $this->fetchMediaById($mediaId);
+		$this->checkPermission($this->nodesRepository->findNodeOwner($media['node_id']), 'read');
 
-			$media['metadata'] = json_decode($media['metadata'], true);
+		$media['metadata'] = json_decode($media['metadata'], true);
 
-			return $this->addFileLocations($media);
-		}
-		catch (Exception | CoreException | ModuleException $e)
-		{
-			$this->logger->error('Error fetch media: ' . $e->getMessage());
-			return [];
-		}
+		return $this->addFileLocations($media);
 	}
 
 	/**
-	 * @param string $checksum
 	 * @return array<string,mixed>
 	 * @throws Exception
 	 */
@@ -160,27 +139,18 @@ class MediaService
 	}
 
 	/**
-	 * @throws DatabaseException
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws NotFoundException
 	 * @throws UserException
 	 */
 	public function updateMedia(string $mediaId, string $filename, string $description): int
 	{
-		try
-		{
-			$media = $this->fetchMediaById($mediaId);
+		$media = $this->fetchMediaById($mediaId);
+		$this->checkPermission($this->nodesRepository->findNodeOwner($media['node_id']), 'edit');
 
-			$node        = $this->nodesRepository->findNodeOwner($media['node_id']);
-			$permissions = $this->aclValidator->checkDirectoryPermissions($this->userSession->getUID(), $node);
-			if (!$permissions['edit'])
-				throw new ModuleException('mediapool', 'No edit permissions in this directory: '. $media['node_id']);
-
-			return $this->mediaRepository->update($mediaId, ['filename' => $filename, 'media_description' => $description]);
-		}
-		catch (Exception | CoreException | ModuleException $e)
-		{
-			$this->logger->error('Error updating media: ' . $e->getMessage());
-			return 0;
-		}
+		return $this->mediaRepository->update($mediaId, ['filename' => $filename, 'media_description' => $description]);
 	}
 
 	/**
@@ -194,87 +164,66 @@ class MediaService
 		$this->mediaRepository->updateWithWhere($fields, $condition);
 	}
 
+	/**
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws NotFoundException
+	 * @throws UserException
+	 */
 	public function deleteMedia(string $mediaId): int
 	{
-		try
-		{
-			$media = $this->fetchMediaById($mediaId);
-			$node        = $this->nodesRepository->findNodeOwner($media['node_id']);
-			$permissions = $this->aclValidator->checkDirectoryPermissions($this->userSession->getUID(), $node);
-			if (!$permissions['edit'])
-				throw new ModuleException('mediapool', 'No edit permissions in this directory: '. $media['node_id']);
+		$media = $this->fetchMediaById($mediaId);
+		$this->checkPermission($this->nodesRepository->findNodeOwner($media['node_id']), 'edit');
 
-			$field     = ['deleted' => 1];
-			$condition = ['media_id' => $mediaId];
+		$field     = ['deleted' => 1];
+		$condition = ['media_id' => $mediaId];
 
-			return $this->mediaRepository->updateWithWhere($field, $condition);
-		}
-		catch (Throwable $e)
-		{
-			$this->logger->error('Error deleting media: ' . $e->getMessage());
-			return 0;
-		}
-	}
-
-	public function moveMedia(string $mediaId, int $nodeId): int
-	{
-		try
-		{
-			$media = $this->fetchMediaById($mediaId);
-
-			$node = $this->nodesRepository->findNodeOwner($media['node_id']);
-			$permissions = $this->aclValidator->checkDirectoryPermissions($this->userSession->getUID(), $node);
-
-			if (!$permissions['read'])
-				throw new ModuleException('mediapool', 'No read permissions in this directory: '. $media['node_id']);
-
-			$node = $this->nodesRepository->findNodeOwner($nodeId);
-			$permissions = $this->aclValidator->checkDirectoryPermissions($this->userSession->getUID(), $node);
-			if (!$permissions['edit'])
-				throw new ModuleException('mediapool', 'No edit permissions in this directory: '. $node['name']);
-
-			$condition = ['media_id' => $mediaId];
-			$field     = ['node_id'  => $nodeId];
-
-			return $this->mediaRepository->updateWithWhere($field, $condition);
-		}
-		catch (Throwable $e)
-		{
-			$this->logger->error('Error moving media: ' . $e->getMessage());
-			return 0;
-		}
+		return $this->mediaRepository->updateWithWhere($field, $condition);
 	}
 
 	/**
-	 * @param string $mediaId
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws NotFoundException
+	 * @throws UserException
+	 */
+	public function moveMedia(string $mediaId, int $nodeId): int
+	{
+		$media = $this->fetchMediaById($mediaId);
+		$this->checkPermission($this->nodesRepository->findNodeOwner($media['node_id']), 'read');
+		$this->checkPermission($this->nodesRepository->findNodeOwner($nodeId), 'edit');
+
+		$condition = ['media_id' => $mediaId];
+		$field     = ['node_id'  => $nodeId];
+
+		return $this->mediaRepository->updateWithWhere($field, $condition);
+	}
+
+	/**
 	 * @return array<string,mixed>
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws NotFoundException
+	 * @throws UserException
 	 */
 	public function cloneMedia(string $mediaId): array
 	{
-		try
-		{
-			$media = $this->fetchMediaById($mediaId);
-			$node  = $this->nodesRepository->findNodeOwner($media['node_id']);
-			$permissions = $this->aclValidator->checkDirectoryPermissions($this->userSession->getUID(), $node);
-			if (!$permissions['edit'])
-				throw new ModuleException('mediapool', 'No permissions on this directory: '. $media['node_id']);
+		$media = $this->fetchMediaById($mediaId);
+		$this->checkPermission($this->nodesRepository->findNodeOwner($media['node_id']), 'edit');
 
-			// no need to check this as it is only the complete dataset which we checked with fetchMediaById
-			/** @var array<string,mixed> $dataSet */
-			$dataSet = $this->mediaRepository->getFirstDataSet($this->mediaRepository->findById($mediaId));
+		// no need to check this as it is only the complete dataset which we checked with fetchMediaById
+		/** @var array<string,mixed> $dataSet */
+		$dataSet = $this->mediaRepository->getFirstDataSet($this->mediaRepository->findById($mediaId));
 
-			$dataSet['media_id'] = Uuid::uuid4()->toString();
-			$dataSet['UID']      = $this->userSession->getUID();
+		$dataSet['media_id'] = Uuid::uuid4()->toString();
+		$dataSet['UID']      = $this->userSession->getUID();
 
-			$dataSet['uuid']     = $this->mediaRepository->insert($dataSet);
+		$dataSet['uuid']     = $this->mediaRepository->insert($dataSet);
 
-			return $this->addFileLocations($dataSet);
-		}
-		catch (Throwable $e)
-		{
-			$this->logger->error('Error cloning media: ' . $e->getMessage());
-			return [];
-		}
+		return $this->addFileLocations($dataSet);
 	}
 
 	/**
@@ -308,15 +257,31 @@ class MediaService
 	 *  filename:string, extension:string, thumb_extension:string, media_description:string,
 	 *  config_data:string}
 	 * @throws Exception
-	 * @throws ModuleException
+	 * @throws NotFoundException
 	 */
 	private function fetchMediaById(string $mediaId): array
 	{
 		$media = $this->mediaRepository->findAllWithOwnerById($mediaId);
 		if ($media === [])
-			throw new ModuleException('mediapool', 'No media found.');
+			throw new NotFoundException('mediapool', 'media_not_found', ['media_id' => $mediaId]);
 
 		return $media;
+	}
 
+	/**
+	 * @param array<string,mixed> $node
+	 * @param 'read'|'edit' $permission
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws UserException
+	 */
+	private function checkPermission(array $node, string $permission): void
+	{
+		$permissions = $this->aclValidator->checkDirectoryPermissions($this->userSession->getUID(), $node);
+		if (!$permissions[$permission])
+			throw new AccessDeniedException('mediapool', 'directory_not_' . ($permission === 'read' ? 'readable' : 'editable'), [
+				'node_id' => (int) ($node['node_id'] ?? 0)
+			]);
 	}
 }

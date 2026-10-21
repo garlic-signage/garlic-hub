@@ -33,7 +33,6 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 class PlayerTokenServiceTest extends TestCase
@@ -42,7 +41,6 @@ class PlayerTokenServiceTest extends TestCase
 
 	private PlayerTokenRepository&MockObject $playerTokenRepositoryMock;
 	private Crypt&MockObject $cryptMock;
-	private LoggerInterface&MockObject $loggerMock;
 	private PlayerTokenService $playerTokenService;
 
 	/**
@@ -53,11 +51,9 @@ class PlayerTokenServiceTest extends TestCase
 		parent::setUp();
 		$this->playerTokenRepositoryMock = $this->createMock(PlayerTokenRepository::class);
 		$this->cryptMock = $this->createMock(Crypt::class);
-		$this->loggerMock = $this->createMock(LoggerInterface::class);
 		$this->playerTokenService = new PlayerTokenService(
 			$this->playerTokenRepositoryMock,
-			$this->cryptMock,
-			$this->loggerMock
+			$this->cryptMock
 		);
 	}
 
@@ -68,7 +64,6 @@ class PlayerTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testStoreTokenSuccessInsert(): void
 	{
-		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playerId = 1;
 		$accessToken = 'test-token';
 		$expiresAt = '2025-12-31 23:59:59';
@@ -86,14 +81,12 @@ class PlayerTokenServiceTest extends TestCase
 
 		$this->playerTokenRepositoryMock->expects($this->once())->method('insert');
 
-		$result = $this->playerTokenService->storeToken(
+		$this->playerTokenService->storeToken(
 			$playerId,
 			$accessToken,
 			$expiresAt,
 			$tokenType
 		);
-
-		static::assertTrue($result);
 	}
 
 	/**
@@ -103,7 +96,6 @@ class PlayerTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testStoreTokenSuccessUpdate(): void
 	{
-		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playerId = 1;
 		$accessToken = 'test-token';
 		$expiresAt = '2025-12-31 23:59:59';
@@ -121,18 +113,16 @@ class PlayerTokenServiceTest extends TestCase
 
 		$this->playerTokenRepositoryMock->expects($this->once())->method('update');
 
-		$result = $this->playerTokenService->storeToken(
+		$this->playerTokenService->storeToken(
 			$playerId,
 			$accessToken,
 			$expiresAt,
 			$tokenType
 		);
-
-		static::assertTrue($result);
 	}
 
 	#[Group('units')]
-	public function testStoreTokenFailure(): void
+	public function testStoreTokenPassesErrorOn(): void
 	{
 		$playerId = 1;
 		$accessToken = 'test-token';
@@ -144,18 +134,13 @@ class PlayerTokenServiceTest extends TestCase
 			->method('getEncryptionKey')
 			->willThrowException($exception);
 
-		$this->loggerMock
-			->expects($this->once())
-			->method('error')
-			->with('Error occurred');
+		$this->expectExceptionObject($exception);
 
 		$this->playerTokenRepositoryMock
 			->expects($this->never())
 			->method('insert');
 
-		$result = $this->playerTokenService->storeToken($playerId, $accessToken, $expiresAt);
-
-		static::assertFalse($result);
+		$this->playerTokenService->storeToken($playerId, $accessToken, $expiresAt);
 	}
 
 
@@ -166,7 +151,6 @@ class PlayerTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testGetTokenSuccess(): void
 	{
-		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playerId = 1;
 		$encryptedToken = Crypto::encrypt('test-token', Key::loadFromAsciiSafeString($this->testKey));
 		$tokenData = [
@@ -194,7 +178,6 @@ class PlayerTokenServiceTest extends TestCase
 	public function testGetTokenExpired(): void
 	{
 		$this->cryptMock->expects($this->never())->method($this->anything());
-		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playerId = 1;
 		$expiredTokenData = [
 			'player_id' => $playerId,
@@ -219,7 +202,6 @@ class PlayerTokenServiceTest extends TestCase
 	public function testGetTokenEmptyResponse(): void
 	{
 		$this->cryptMock->expects($this->never())->method($this->anything());
-		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playerId = 1;
 
 		$this->playerTokenRepositoryMock->expects($this->once())->method('findByPlayerId')
@@ -232,20 +214,37 @@ class PlayerTokenServiceTest extends TestCase
 	}
 
 	#[Group('units')]
-	public function testGetTokenFailure(): void
+	public function testGetTokenPassesRepositoryErrorOn(): void
 	{
 		$this->cryptMock->expects($this->never())->method($this->anything());
-		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playerId = 1;
+		$exception = new RuntimeException('Error occurred');
 
 		$this->playerTokenRepositoryMock->expects($this->once())->method('findByPlayerId')
 			->with($playerId)
-			->willThrowException(new RuntimeException('Error occurred'));
+			->willThrowException($exception);
 
-		$result = $this->playerTokenService->getToken($playerId);
+		$this->expectExceptionObject($exception);
+		$this->playerTokenService->getToken($playerId);
+	}
 
-		static::assertIsArray($result);
-		static::assertEmpty($result);
+	/**
+	 * @throws EnvironmentIsBrokenException
+	 * @throws BadFormatException
+	 */
+	#[Group('units')]
+	public function testGetTokenEncryptedWithOtherKeyIsNoToken(): void
+	{
+		$this->playerTokenRepositoryMock->expects($this->once())->method('findByPlayerId')
+			->willReturn([
+				'access_token' => Crypto::encrypt('test-token', Key::createNewRandomKey()),
+				'token_type'   => 'Bearer',
+				'expires_at'   => '2035-12-31 23:59:59',
+			]);
+		$this->cryptMock->expects($this->once())->method('getEncryptionKey')
+			->willReturn(Key::loadFromAsciiSafeString($this->testKey));
+
+		static::assertSame([], $this->playerTokenService->getToken(1));
 	}
 
 	/**
@@ -255,7 +254,6 @@ class PlayerTokenServiceTest extends TestCase
 	#[Group('units')]
 	public function testHasValidTokenSuccess(): void
 	{
-		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playerId = 1;
 		$encryptedToken = Crypto::encrypt('test-token', Key::loadFromAsciiSafeString($this->testKey));
 		$tokenData = [
@@ -281,7 +279,6 @@ class PlayerTokenServiceTest extends TestCase
 	public function testHasValidTokenFailure(): void
 	{
 		$this->cryptMock->expects($this->never())->method($this->anything());
-		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playerId = 1;
 
 		$this->playerTokenRepositoryMock->expects($this->once())->method('findByPlayerId')
@@ -300,7 +297,6 @@ class PlayerTokenServiceTest extends TestCase
 	public function testCleanupExpiredTokensSuccess(): void
 	{
 		$this->cryptMock->expects($this->never())->method($this->anything());
-		$this->loggerMock->expects($this->never())->method($this->anything());
 		$deletedCount = 3;
 
 		$this->playerTokenRepositoryMock->expects($this->once())->method('deleteBy')
@@ -313,7 +309,7 @@ class PlayerTokenServiceTest extends TestCase
 	}
 
 	#[Group('units')]
-	public function testRefreshTokenFailure(): void
+	public function testRefreshTokenPassesErrorOn(): void
 	{
 		$playerId = 1;
 		$newTokenData = [
@@ -328,15 +324,10 @@ class PlayerTokenServiceTest extends TestCase
 			->method('getEncryptionKey')
 			->willThrowException($exception);
 
-		$this->loggerMock
-			->expects($this->once())
-			->method('error')
-			->with('Error occurred');
+		$this->expectExceptionObject($exception);
 
 		$this->playerTokenRepositoryMock->expects($this->never())->method('insert');
 
-		$result = $this->playerTokenService->refreshToken($playerId, $newTokenData);
-
-		static::assertFalse($result);
+		$this->playerTokenService->refreshToken($playerId, $newTokenData);
 	}
 }

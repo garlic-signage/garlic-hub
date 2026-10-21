@@ -83,34 +83,10 @@ class ResponseBuilderTest extends TestCase
 	public function testUploadResultSuccessKeepsServiceResult(): void
 	{
 		$result = ['success' => true, 'message' => 'x.jpg successful uploaded'];
-		$this->jsonResponseHandlerMock->expects($this->never())->method('jsonError');
 		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonResponse')
 			->with($this->responseStub, $result)
 			->willReturn($this->responseStub);
 
 		static::assertSame($this->responseStub, $this->responseBuilder->uploadResult($this->responseStub, $result));
-	}
-
-	#[Group('units')]
-	public function testUploadResultFailureIsError(): void
-	{
-		$this->jsonResponseHandlerMock->expects($this->never())->method('jsonResponse');
-		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonError')
-			->with($this->responseStub, 'File type not allowed')
-			->willReturn($this->responseStub);
-
-		$result = $this->responseBuilder->uploadResult($this->responseStub, ['success' => false, 'error_message' => 'File type not allowed']);
-
-		static::assertSame($this->responseStub, $result);
-	}
-
-	#[Group('units')]
-	public function testUploadResultFailureWithoutMessage(): void
-	{
-		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonError')
-			->with($this->responseStub, 'Upload failed.')
-			->willReturn($this->responseStub);
-
-		$this->responseBuilder->uploadResult($this->responseStub, ['success' => false]);
 	}
 }

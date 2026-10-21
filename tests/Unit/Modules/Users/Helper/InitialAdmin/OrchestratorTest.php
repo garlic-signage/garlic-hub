@@ -26,6 +26,7 @@ use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Users\Helper\InitialAdmin\FormInputHandler;
 use App\Modules\Users\Helper\InitialAdmin\Orchestrator;
 use App\Modules\Users\Helper\InitialAdmin\SettingsFormBuilder;
@@ -160,17 +161,17 @@ class OrchestratorTest extends TestCase
 	 * @throws ModuleException
 	 */
 	#[Group('units')]
-	public function testStoreReturnsTranslatedServiceErrors(): void
+	public function testStoreReturnsTranslatedServiceError(): void
 	{
 		$this->expectUntouched($this->formBuilderMock);
 		$this->expectPasswordPattern();
 		$this->inputHandlerMock->expects($this->once())->method('validate')->willReturn([]);
 		$this->inputHandlerMock->expects($this->once())->method('getParsed')->willReturn(['username' => 'admin']);
+		$exception = new TranslatableModuleException('users', 'admin_exists');
 		$this->serviceMock->expects($this->once())->method('insertNewAdminUser')
-			->with(['username' => 'admin'], $this->configMock)->willReturn(0);
-		$this->serviceMock->expects($this->once())->method('getErrorMessages')->willReturn(['user_exists']);
-		$this->translatorMock->expects($this->once())->method('translate')
-			->with('user_exists', 'users')->willReturn('User exists.');
+			->with(['username' => 'admin'], $this->configMock)->willThrowException($exception);
+		$this->translatorMock->expects($this->once())->method('translateException')
+			->with($exception)->willReturn('User exists.');
 
 		static::assertSame(
 			['success' => false, 'errors' => ['User exists.']],
@@ -192,7 +193,6 @@ class OrchestratorTest extends TestCase
 		$this->inputHandlerMock->expects($this->once())->method('validate')->willReturn([]);
 		$this->inputHandlerMock->expects($this->once())->method('getParsed')->willReturn(['username' => 'admin']);
 		$this->serviceMock->expects($this->once())->method('insertNewAdminUser')->willReturn(1);
-		$this->serviceMock->expects($this->never())->method('getErrorMessages');
 
 		static::assertSame(['success' => true], $this->orchestrator->store(['username' => 'admin']));
 	}

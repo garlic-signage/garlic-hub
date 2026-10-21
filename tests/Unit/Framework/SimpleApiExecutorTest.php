@@ -22,22 +22,22 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Framework;
 
+use App\Framework\Exceptions\FrameworkException;
 use App\Framework\SimpleApiExecutor;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\RequestOptions;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\StreamInterface;
-use Psr\Log\LoggerInterface;
-use RuntimeException;
 
 class SimpleApiExecutorTest extends TestCase
 {
 	private Client&MockObject $httpClientMock;
-	private LoggerInterface&MockObject $loggerMock;
 	private SimpleApiExecutor $simpleApiExecutor;
 
 	/**
@@ -47,179 +47,99 @@ class SimpleApiExecutorTest extends TestCase
 	{
 		parent::setUp();
 
-		$this->httpClientMock = $this->createMock(Client::class);
-		$this->loggerMock = $this->createMock(LoggerInterface::class);
-		$this->simpleApiExecutor = new SimpleApiExecutor($this->httpClientMock, $this->loggerMock);
+		$this->httpClientMock    = $this->createMock(Client::class);
+		$this->simpleApiExecutor = new SimpleApiExecutor($this->httpClientMock);
 	}
 
 	/**
-	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws GuzzleException
 	 */
 	#[Group('units')]
-	public function testExecuteApiRequestSuccess(): void
+	public function testExecuteApiRequestReturnsDecodedBody(): void
 	{
-		$this->loggerMock->expects($this->never())->method($this->anything());
-		$endpoint = 'https://example.com/api';
-		$token = 'test_token';
-		$method = 'GET';
-		$options = ['key' => 'value'];
-		$responseBody = '{"success":true}';
-
-		$responseMock = $this->createMock(ResponseInterface::class);
-		$responseMock->expects($this->once())->method('getStatusCode')
-			->willReturn(200);
-
-		$streamInterfaceMock = $this->createMock(StreamInterface::class);
-		$responseMock->expects($this->once())->method('getBody')
-			->willReturn($streamInterfaceMock);
-		$streamInterfaceMock->expects($this->once())->method('getContents')
-			->willReturn($responseBody);
-
-		$this->httpClientMock->expects($this->once())
-			->method('request')
-			->with($method, "$endpoint?access_token=$token", [RequestOptions::JSON => $options])
-			->willReturn($responseMock);
-
-		$result = $this->simpleApiExecutor->executeApiRequest($method, $endpoint, $token, $options);
-
-		static::assertTrue($result);
-		static::assertSame($responseBody, $this->simpleApiExecutor->getBodyContents());
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testExecuteApiRequestFailure(): void
-	{
-		$endpoint = 'https://example.com/api';
-		$token = 'test_token';
-		$method = 'POST';
-		$options = ['key' => 'value'];
-
-		$responseMock = $this->createMock(ResponseInterface::class);
-		$responseMock->expects($this->once())->method('getStatusCode')
-			->willReturn(500);
-
-		$streamInterfaceMock = $this->createMock(StreamInterface::class);
-		$responseMock->expects($this->once())->method('getBody')
-			->willReturn($streamInterfaceMock);
-		$streamInterfaceMock->expects($this->once())->method('getContents')
-			->willReturn('Internal Server Error');
-
-		$this->httpClientMock->expects($this->once())
-			->method('request')
-			->with($method, "$endpoint?access_token=$token", [RequestOptions::JSON => $options])
-			->willReturn($responseMock);
-
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('API request failed: 500');
-
-		$result = $this->simpleApiExecutor->executeApiRequest($method, $endpoint, $token, $options);
-
-		static::assertFalse($result);
-	}
-
-	#[Group('units')]
-	public function testExecuteApiRequestException(): void
-	{
-		$endpoint = 'https://example.com/api';
-		$token = 'test_token';
-		$method = 'DELETE';
-		$options = ['key' => 'value'];
-
 		$this->httpClientMock->expects($this->once())->method('request')
-			->with($method, "$endpoint?access_token=$token", [RequestOptions::JSON => $options])
-			->willThrowException(new RuntimeException('Connection failed'));
+			->with('GET', 'https://example.com/api?access_token=test_token', [RequestOptions::JSON => ['key' => 'value']])
+			->willReturn(new Response(200, [], '{"success":true}'));
 
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('API request error: Connection failed');
+		$result = $this->simpleApiExecutor->executeApiRequest('GET', 'https://example.com/api', 'test_token', ['key' => 'value']);
 
-		$result = $this->simpleApiExecutor->executeApiRequest($method, $endpoint, $token, $options);
-
-		static::assertFalse($result);
+		static::assertSame(['success' => true], $result);
 	}
 
 	/**
-	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws GuzzleException
 	 */
 	#[Group('units')]
-	public function testExecuteAuthSuccess(): void
+	public function testExecuteApiRequestWithoutJsonReturnsEmptyArray(): void
 	{
-		$this->loggerMock->expects($this->never())->method($this->anything());
-		$endpoint = 'https://example.com/auth';
-		$options = ['username' => 'test', 'password' => 'secret'];
-		$responseBody = '{"authenticated":true}';
+		$this->httpClientMock->expects($this->once())->method('request')
+			->willReturn(new Response(200, [], 'no json'));
 
-		$responseMock = $this->createMock(ResponseInterface::class);
-		$responseMock->expects($this->once())->method('getStatusCode')
-			->willReturn(200);
-
-		$streamInterfaceMock = $this->createMock(StreamInterface::class);
-		$responseMock->expects($this->once())->method('getBody')
-			->willReturn($streamInterfaceMock);
-		$streamInterfaceMock->expects($this->once())->method('getContents')
-			->willReturn($responseBody);
-
-		$this->httpClientMock->expects($this->once())
-			->method('post')
-			->with($endpoint, [RequestOptions::JSON => $options])
-			->willReturn($responseMock);
-
-		$result = $this->simpleApiExecutor->executeAuth($endpoint, $options);
-
-		static::assertTrue($result);
-		static::assertSame($responseBody, $this->simpleApiExecutor->getBodyContents());
+		static::assertSame([], $this->simpleApiExecutor->executeApiRequest('GET', 'https://example.com/api', 'test_token'));
 	}
 
 	/**
-	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws GuzzleException
 	 */
 	#[Group('units')]
-	public function testExecuteAuthFailure(): void
+	public function testExecuteApiRequestThrowsOnStatusNot200(): void
 	{
-		$endpoint = 'https://example.com/auth';
-		$options = ['username' => 'test', 'password' => 'wrong_secret'];
+		$this->httpClientMock->expects($this->once())->method('request')
+			->willReturn(new Response(204, [], 'No Content'));
 
-		$responseMock = $this->createMock(ResponseInterface::class);
-		$responseMock->expects($this->once())->method('getStatusCode')
-			->willReturn(401);
+		$this->expectException(FrameworkException::class);
+		$this->expectExceptionMessage('API request failed: 204 No Content');
 
-		$streamInterfaceMock = $this->createMock(StreamInterface::class);
-		$responseMock->expects($this->once())->method('getBody')
-			->willReturn($streamInterfaceMock);
-		$streamInterfaceMock->expects($this->once())->method('getContents')
-			->willReturn('Unauthorized');
-
-		$this->httpClientMock->expects($this->once())
-			->method('post')
-			->with($endpoint, [RequestOptions::JSON => $options])
-			->willReturn($responseMock);
-
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Auth request failed: 401');
-
-		$result = $this->simpleApiExecutor->executeAuth($endpoint, $options);
-
-		static::assertFalse($result);
+		$this->simpleApiExecutor->executeApiRequest('POST', 'https://example.com/api', 'test_token');
 	}
 
+	/**
+	 * @throws FrameworkException
+	 * @throws GuzzleException
+	 */
 	#[Group('units')]
-	public function testExecuteAuthException(): void
+	public function testExecuteApiRequestPassesTransferErrorsOn(): void
 	{
-		$endpoint = 'https://example.com/auth';
-		$options = ['username' => 'test', 'password' => 'secret'];
+		$exception = new ConnectException('Connection refused', new Request('POST', 'https://example.com/api'));
+		$this->httpClientMock->expects($this->once())->method('request')->willThrowException($exception);
 
-		$this->httpClientMock->expects($this->once())
-			->method('post')
-			->with($endpoint, [RequestOptions::JSON => $options])
-			->willThrowException(new RuntimeException('Connection failed'));
+		$this->expectExceptionObject($exception);
 
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('API request error: Connection failed');
+		$this->simpleApiExecutor->executeApiRequest('POST', 'https://example.com/api', 'test_token');
+	}
 
-		$result = $this->simpleApiExecutor->executeAuth($endpoint, $options);
+	/**
+	 * @throws FrameworkException
+	 * @throws GuzzleException
+	 */
+	#[Group('units')]
+	public function testExecuteAuthReturnsDecodedBody(): void
+	{
+		$this->httpClientMock->expects($this->once())->method('post')
+			->with('https://example.com/oauth2/token', [RequestOptions::JSON => ['grant_type' => 'password']])
+			->willReturn(new Response(200, [], '{"access_token":"abc"}'));
 
-		static::assertFalse($result);
+		$result = $this->simpleApiExecutor->executeAuth('https://example.com/oauth2/token', ['grant_type' => 'password']);
+
+		static::assertSame(['access_token' => 'abc'], $result);
+	}
+
+	/**
+	 * @throws FrameworkException
+	 * @throws GuzzleException
+	 */
+	#[Group('units')]
+	public function testExecuteAuthThrowsOnStatusNot200(): void
+	{
+		$this->httpClientMock->expects($this->once())->method('post')
+			->willReturn(new Response(202, [], 'Accepted'));
+
+		$this->expectException(FrameworkException::class);
+		$this->expectExceptionMessage('Auth request failed: 202 Accepted');
+
+		$this->simpleApiExecutor->executeAuth('https://example.com/oauth2/token');
 	}
 }

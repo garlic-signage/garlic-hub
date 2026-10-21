@@ -26,6 +26,7 @@ use App\Framework\Core\CsrfToken;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Templates\Controller\TemplatesController;
 use App\Modules\Templates\Helper\Composer\Orchestrator;
@@ -96,13 +97,14 @@ class TemplatesControllerTest extends TestCase
 	}
 
 	#[Group('units')]
-	public function testDeleteFails(): void
+	public function testDeletePassesErrorOn(): void
 	{
 		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
-		$this->orchestratorMock->expects($this->once())->method('delete')->with(12)->willReturn('Template is in use.');
-		$this->expectError('Template is in use.');
-		$this->expectUntouched($this->serviceMock, $this->parametersMock, $this->signerMock);
+		$exception = new TranslatableModuleException('templates', 'template_in_use', ['template_id' => 12]);
+		$this->orchestratorMock->expects($this->once())->method('delete')->with(12)->willThrowException($exception);
+		$this->expectUntouched($this->serviceMock, $this->parametersMock, $this->signerMock, $this->responseHandlerMock);
 
+		$this->expectExceptionObject($exception);
 		$this->controller->delete($this->request(['template_id' => 12, 'csrf_token' => 'token']), $this->response);
 	}
 
@@ -110,7 +112,7 @@ class TemplatesControllerTest extends TestCase
 	public function testDelete(): void
 	{
 		$this->csrfTokenMock->expects($this->once())->method('validateToken')->with('token')->willReturn(true);
-		$this->orchestratorMock->expects($this->once())->method('delete')->with(12)->willReturn('');
+		$this->orchestratorMock->expects($this->once())->method('delete')->with(12);
 		$this->expectSuccess([]);
 		$this->expectUntouched($this->serviceMock, $this->parametersMock, $this->signerMock);
 

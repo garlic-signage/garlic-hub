@@ -23,6 +23,8 @@ namespace Tests\Unit\Modules\Profile\Services;
 
 use App\Framework\Core\Crypt;
 use App\Framework\Database\BaseRepositories\Transactions;
+use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Profile\Services\ProfileService;
 use App\Modules\Profile\Services\UserTokenService;
 use App\Modules\Users\Repositories\Edge\UserMainRepository;
@@ -31,7 +33,6 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 
 class ProfileServiceTest extends TestCase
 {
@@ -51,14 +52,12 @@ class ProfileServiceTest extends TestCase
 		$this->userTokenServiceMock   = $this->createMock(UserTokenService::class);
 		$this->cryptMock              = $this->createMock(Crypt::class);
 		$this->transactionsMock       = $this->createMock(Transactions::class);
-		$loggerStub = $this->createStub(LoggerInterface::class);
 
 		$this->profileService = new ProfileService(
 			$this->userMainRepositoryMock,
 			$this->userTokenServiceMock,
 			$this->cryptMock,
-			$this->transactionsMock,
-			$loggerStub
+			$this->transactionsMock
 		);
 	}
 
@@ -89,17 +88,16 @@ class ProfileServiceTest extends TestCase
 			->with($UID)
 			->willReturn(['status' => UserStatus::NOT_VERIFIED->value]);
 		$this->transactionsMock->expects($this->once())->method('commit');
+		$this->transactionsMock->expects($this->never())->method('rollBack');
 
-		$result = $this->profileService->storeNewForcedPassword($UID, $passwordToken, $password);
-
-		static::assertSame(1, $result);
+		$this->profileService->storeNewForcedPassword($UID, $passwordToken, $password);
 	}
 
 	/**
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testStoreNewForcedPasswordFailsWhenPasswordUpdateFails(): void
+	public function testStoreNewForcedPasswordThrowsWhenPasswordUpdateThrows(): void
 	{
 		$UID = 1;
 		$passwordToken = 'valid-token';
@@ -115,16 +113,18 @@ class ProfileServiceTest extends TestCase
 
 		$this->userTokenServiceMock->expects($this->never())->method('useToken');
 
-		$result = $this->profileService->storeNewForcedPassword($UID, $passwordToken, $password);
+		$this->transactionsMock->expects($this->never())->method('commit');
 
-		static::assertSame(0, $result);
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('password_update_failed');
+		$this->profileService->storeNewForcedPassword($UID, $passwordToken, $password);
 	}
 
 	/**
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testStoreNewForcedPasswordFailsWhenTokenUpdateFails(): void
+	public function testStoreNewForcedPasswordThrowsWhenTokenUpdateThrows(): void
 	{
 		$UID = 1;
 		$passwordToken = 'valid-token';
@@ -144,16 +144,18 @@ class ProfileServiceTest extends TestCase
 			->willReturn(0);
 		$this->transactionsMock->expects($this->once())->method('rollBack');
 
-		$result = $this->profileService->storeNewForcedPassword($UID, $passwordToken, $password);
+		$this->transactionsMock->expects($this->never())->method('commit');
 
-		static::assertSame(0, $result);
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('token_update_failed');
+		$this->profileService->storeNewForcedPassword($UID, $passwordToken, $password);
 	}
 
 	/**
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testStoreNewForcedPasswordFailsWhenUserNotFound(): void
+	public function testStoreNewForcedPasswordThrowsWhenUserNotFound(): void
 	{
 		$UID = 1;
 		$passwordToken = 'valid-token';
@@ -172,16 +174,18 @@ class ProfileServiceTest extends TestCase
 		$this->userMainRepositoryMock->expects($this->once())->method('findByIdSecured')->with($UID)->willReturn([]);
 		$this->transactionsMock->expects($this->once())->method('rollBack');
 
-		$result = $this->profileService->storeNewForcedPassword($UID, $passwordToken, $password);
+		$this->transactionsMock->expects($this->never())->method('commit');
 
-		static::assertSame(0, $result);
+		$this->expectException(NotFoundException::class);
+		$this->expectExceptionMessage('user_not_found');
+		$this->profileService->storeNewForcedPassword($UID, $passwordToken, $password);
 	}
 
 	/**
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testStoreNewForcedPasswordFailsWhenStatusUpdateFails(): void
+	public function testStoreNewForcedPasswordThrowsWhenStatusUpdateThrows(): void
 	{
 		$UID = 1;
 		$passwordToken = 'valid-token';
@@ -206,9 +210,11 @@ class ProfileServiceTest extends TestCase
 			->willReturn(['status' => UserStatus::NOT_VERIFIED->value]);
 		$this->transactionsMock->expects($this->once())->method('rollBack');
 
-		$result = $this->profileService->storeNewForcedPassword($UID, $passwordToken, $password);
+		$this->transactionsMock->expects($this->never())->method('commit');
 
-		static::assertSame(0, $result);
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('status_update_failed');
+		$this->profileService->storeNewForcedPassword($UID, $passwordToken, $password);
 	}
 
 	/**

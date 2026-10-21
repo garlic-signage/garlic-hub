@@ -61,7 +61,8 @@ class Video extends AbstractMediaHandler
 	public function checkFileBeforeUpload(int $size): void
 	{
 		if ($size > $this->maxVideoSize)
-			throw new ModuleException('mediapool', 'Filesize: '.$this->calculateToMegaByte($size).' MB exceeds max image size.');	}
+			throw $this->createFilesizeError($size, $this->maxVideoSize);
+	}
 
 	/**
 	 * @throws ModuleException
@@ -76,16 +77,16 @@ class Video extends AbstractMediaHandler
 
 		$this->fileSize = $this->filesystem->fileSize($filePath);
 		if ($this->fileSize > $this->maxVideoSize)
-			throw new ModuleException('mediapool', 'After Upload Check: '.$this->calculateToMegaByte($this->fileSize).' MB exceeds max image size.');
+			throw $this->createFilesizeError($this->fileSize, $this->maxVideoSize);
 
 		$this->ffmpeg->setMetadata($this->getMetadata());
 		$this->ffmpeg->init($filePath);
 		$mediaProperties = $this->ffmpeg->getMediaProperties();
 		if ($mediaProperties['width'] > $this->maxWidth)
-			throw new ModuleException('mediapool', 'After Upload Check:  Video width '.$mediaProperties['width'].' exceeds maximum.');
+			throw $this->createResolutionError('width', (int) $mediaProperties['width']);
 
 		if ($mediaProperties['height'] > $this->maxHeight)
-			throw new ModuleException('mediapool', 'After Upload Check:  Video height '.$mediaProperties['height'] .' exceeds maximum.');
+			throw $this->createResolutionError('height', (int) $mediaProperties['height']);
 
 		$this->setMetadata($this->ffmpeg->getMetadata());
 		$this->duration   = $this->ffmpeg->getDuration();

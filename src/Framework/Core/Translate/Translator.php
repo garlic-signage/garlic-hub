@@ -24,6 +24,7 @@ namespace App\Framework\Core\Translate;
 use App\Framework\Core\Locales\Locales;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use Phpfastcache\Exceptions\PhpfastcacheExceptionInterface;
 use Phpfastcache\Helper\Psr16Adapter;
 use Psr\SimpleCache\CacheException;
@@ -74,6 +75,25 @@ class Translator
 			return '';
 
 		return $replacements !== [] ? $this->doReplacements($translation, $replacements) : $translation;
+	}
+
+	/**
+	 * Translates the key of an expected error. Its replacements are written as {name}
+	 * in the translation, e.g. "Playlist {playlist_id} not found."
+	 *
+	 * @return string empty when there is no translation
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	public function translateException(TranslatableModuleException $exception): string
+	{
+		$replacements = [];
+		foreach ($exception->getReplacements() as $name => $value)
+		{
+			$replacements['{' . $name . '}'] = (string) $value;
+		}
+
+		return $this->translate($exception->getTranslationKey(), $exception->getModuleName(), $replacements);
 	}
 
 	/**

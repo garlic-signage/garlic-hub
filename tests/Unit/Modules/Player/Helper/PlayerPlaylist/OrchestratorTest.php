@@ -25,6 +25,8 @@ namespace Tests\Unit\Modules\Player\Helper\PlayerPlaylist;
 use App\Framework\Core\BaseValidator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Modules\Player\Helper\PlayerPlaylist\Orchestrator;
@@ -156,7 +158,7 @@ class OrchestratorTest extends TestCase
 		$this->playerRestAPIServiceMock->expects($this->never())->method($this->anything());
 		$this->fillData();
 
-		$data = ['affected' => 1, 'playlist_name' => 'Test Playlist'];
+		$data = ['affected' => 1, 'playlist_name' => 'Test Playlist', 'is_intranet' => 0];
 
 
 		$this->playerServiceMock->expects($this->once())->method('replaceMasterPlaylist')
@@ -176,23 +178,23 @@ class OrchestratorTest extends TestCase
 	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testReplaceMasterPlaylistFailure(): void
+	public function testReplaceMasterPlaylistWithoutChangeIsSuccess(): void
 	{
 		$this->playerRestAPIServiceMock->expects($this->never())->method($this->anything());
 		$this->fillData();
 
+		// the playlist was already assigned
 		$this->playerServiceMock->expects($this->once())->method('replaceMasterPlaylist')
 			->with(123, 456)
-			->willReturn(['affected' => 0]);
+			->willReturn(['affected' => 0, 'playlist_name' => 'Test Playlist', 'is_intranet' => 0]);
 
-		$this->playerServiceMock->expects($this->once())->method('getErrorMessagesAsString')->willReturn('Some error occurred');
-
-		$this->responseBuilderMock->expects($this->once())->method('generalError')
-			->with($this->responseStub, 'Some error occurred')
+		$this->responseBuilderMock->expects($this->once())->method('generalSuccess')
+			->with($this->responseStub, ['playlist_name' => 'Test Playlist'])
 			->willReturn($this->responseStub);
 
 		$this->orchestrator->replaceMasterPlaylist($this->responseStub);
 	}
+
 
 	/**
 	 * @throws UserException
@@ -201,24 +203,23 @@ class OrchestratorTest extends TestCase
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testCheckPlayerNotFound(): void
+	public function testCheckPlayerPassesNotFoundOn(): void
 	{
 		$this->playerRestAPIServiceMock->expects($this->never())->method($this->anything());
 		$this->fillData();
 
+		$exception = new NotFoundException('player', 'player_not_found', ['player_id' => 123]);
 		$this->playerServiceMock->expects($this->once())->method('fetchAclCheckedPlayerData')
 			->with(123)
-			->willReturn([]);
+			->willThrowException($exception);
 
-		$this->responseBuilderMock->expects($this->once())->method('playerNotFound')
-			->with($this->responseStub)
-			->willReturn($this->responseStub);
+		$this->responseBuilderMock->expects($this->never())->method($this->anything());
 
+		$this->expectExceptionObject($exception);
 		$this->orchestrator->setInput(['player_id' => '123']);
-		$result = $this->orchestrator->checkPlayer($this->responseStub);
-
-		static::assertInstanceOf(ResponseInterface::class, $result);
+		$this->orchestrator->checkPlayer($this->responseStub);
 	}
+
 
 	/**
 	 * @throws CoreException
@@ -288,7 +289,6 @@ class OrchestratorTest extends TestCase
 			->with(123)
 			->willReturn(['is_intranet' => 1, 'playlist_id' => 1, 'api_endpoint' => '', 'player_name' => 'Test']);
 
-		$this->responseBuilderMock->expects($this->never())->method('playerNotFound');
 		$this->responseBuilderMock->expects($this->never())->method('playerNotReachable');
 		$this->responseBuilderMock->expects($this->never())->method('noPlaylistAssigned');
 
@@ -312,12 +312,10 @@ class OrchestratorTest extends TestCase
 
 
 		$this->playerRestAPIServiceMock->expects($this->once())->method('authenticate')
-			->with('api_endpoint', 'admin', '', 123)
-			->willReturn(true);
+			->with('api_endpoint', 'admin', '', 123);
 
 		$this->playerRestAPIServiceMock->expects($this->once())->method('switchToDefaultContentUrl')
-			->with('api_endpoint', 123)
-			->willReturn(true);
+			->with('api_endpoint', 123);
 
 		$this->responseBuilderMock->expects($this->once())->method('generalSuccess')
 			->with($this->responseStub, ['message' => 'Playlist pushed successfully to Test.'])
@@ -332,28 +330,24 @@ class OrchestratorTest extends TestCase
 	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testPushPlaylistAuthenticationFailure(): void
+	public function testPushPlaylistPassesAuthenticationErrorOn(): void
 	{
 		$this->playerServiceMock->expects($this->never())->method($this->anything());
 		$this->fillData();
 		$player = ['is_intranet' => 1, 'playlist_id' => 1, 'api_endpoint' => 'api_endpoint', 'player_name' => 'Test'];
 		$this->orchestrator->setPlayer($player);
 
-
+		$exception = new TranslatableModuleException('player', 'player_not_reachable', ['player_id' => 123]);
 		$this->playerRestAPIServiceMock->expects($this->once())->method('authenticate')
 			->with('api_endpoint', 'admin', '', 123)
-			->willReturn(false);
+			->willThrowException($exception);
+		$this->playerRestAPIServiceMock->expects($this->never())->method('switchToDefaultContentUrl');
+		$this->responseBuilderMock->expects($this->never())->method($this->anything());
 
-		$errorMessage = 'Authentication failed';
-		$this->playerRestAPIServiceMock->expects($this->once())->method('getErrorMessages')
-			->willReturn([$errorMessage]);
-
-		$this->responseBuilderMock->expects($this->once())->method('generalError')
-			->with($this->responseStub, $errorMessage)
-			->willReturn($this->responseStub);
-
+		$this->expectExceptionObject($exception);
 		$this->orchestrator->pushPlaylist($this->responseStub);
 	}
+
 
 	/**
 	 * @throws CoreException
@@ -361,32 +355,26 @@ class OrchestratorTest extends TestCase
 	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testPushPlaylistSwitchFailure(): void
+	public function testPushPlaylistPassesSwitchErrorOn(): void
 	{
 		$this->playerServiceMock->expects($this->never())->method($this->anything());
 		$this->fillData();
 		$player = ['is_intranet' => 1, 'playlist_id' => 1, 'api_endpoint' => 'api_endpoint', 'player_name' => 'Test'];
 		$this->orchestrator->setPlayer($player);
 
-
 		$this->playerRestAPIServiceMock->expects($this->once())->method('authenticate')
-			->with('api_endpoint', 'admin', '', 123)
-			->willReturn(true);
+			->with('api_endpoint', 'admin', '', 123);
 
+		$exception = new TranslatableModuleException('player', 'player_request_failed', ['player_id' => 123]);
 		$this->playerRestAPIServiceMock->expects($this->once())->method('switchToDefaultContentUrl')
 			->with('api_endpoint', 123)
-			->willReturn(false);
+			->willThrowException($exception);
+		$this->responseBuilderMock->expects($this->never())->method($this->anything());
 
-		$errorMessage = 'Switching to default content URL failed';
-		$this->playerRestAPIServiceMock->expects($this->once())->method('getErrorMessages')
-			->willReturn([$errorMessage]);
-
-		$this->responseBuilderMock->expects($this->once())->method('generalError')
-			->with($this->responseStub, $errorMessage)
-			->willReturn($this->responseStub);
-
+		$this->expectExceptionObject($exception);
 		$this->orchestrator->pushPlaylist($this->responseStub);
 	}
+
 
 	/**
 	 * @throws CoreException

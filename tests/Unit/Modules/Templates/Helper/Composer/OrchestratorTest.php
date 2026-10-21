@@ -25,6 +25,8 @@ use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Templates\Helper\Composer\ExportImage;
 use App\Modules\Templates\Helper\Composer\Orchestrator;
@@ -97,7 +99,7 @@ class OrchestratorTest extends TestCase
 	public function testCheckEditRightsWithoutRights(): void
 	{
 		$this->serviceMock->expects($this->once())->method('loadWithUserById')
-			->willThrowException(new ModuleException('templates', 'No template with Id: 12 found.'));
+			->willThrowException(new NotFoundException('templates', 'template_not_found', ['template_id' => 12]));
 		$this->expectUntouched($this->preparerMock, $this->usageServiceMock, $this->exportImageMock, $this->signerMock);
 
 		static::assertFalse($this->orchestrator->checkEditRights(12));
@@ -164,20 +166,9 @@ class OrchestratorTest extends TestCase
 		$this->serviceMock->expects($this->never())->method('delete');
 		$this->expectUntouched($this->preparerMock, $this->exportImageMock, $this->signerMock);
 
-		static::assertSame('Template is in use.', $this->orchestrator->delete(12));
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testDeleteFails(): void
-	{
-		$this->usageServiceMock->expects($this->once())->method('determineTemplatesInUse')->willReturn([]);
-		$this->serviceMock->expects($this->once())->method('delete')->with(12)->willReturn(0);
-		$this->expectUntouched($this->preparerMock, $this->exportImageMock, $this->signerMock);
-
-		static::assertSame('Template not deleted.', $this->orchestrator->delete(12));
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('template_in_use {"template_id":12}');
+		$this->orchestrator->delete(12);
 	}
 
 	/**
@@ -190,7 +181,7 @@ class OrchestratorTest extends TestCase
 		$this->serviceMock->expects($this->once())->method('delete')->with(12)->willReturn(1);
 		$this->expectUntouched($this->preparerMock, $this->exportImageMock, $this->signerMock);
 
-		static::assertSame('', $this->orchestrator->delete(12));
+		$this->orchestrator->delete(12);
 	}
 
 	/**

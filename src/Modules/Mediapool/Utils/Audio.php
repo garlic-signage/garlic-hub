@@ -57,7 +57,7 @@ class Audio extends AbstractMediaHandler
 	public function checkFileBeforeUpload(int $size): void
 	{
 		if ($size > $this->maxAudioSize)
-			throw new ModuleException('mediapool', 'Filesize: '.$this->calculateToMegaByte($size).' MB exceeds max image size.');
+			throw $this->createFilesizeError($size, $this->maxAudioSize);
 	}
 
 	/**
@@ -73,7 +73,7 @@ class Audio extends AbstractMediaHandler
 
 		$this->fileSize = $this->filesystem->fileSize($filePath);
 		if ($this->fileSize > $this->maxAudioSize)
-			throw new ModuleException('mediapool', 'After Upload Check: '.$this->calculateToMegaByte($this->fileSize).' MB exceeds max audio size.');
+			throw $this->createFilesizeError($this->fileSize, $this->maxAudioSize);
 
 		$this->ffmpeg->setMetadata($this->getMetadata());
 		$this->ffmpeg->init($filePath);

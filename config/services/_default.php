@@ -216,8 +216,7 @@ $dependencies[Service::class] = DI\factory(function (ContainerInterface $contain
 	return new Service(
 		new \App\Framework\Database\NestedSets\Repository($container->get('SqlConnection'), '', ''),
 		new Calculator(),
-		$container->get(Transactions::class),
-		$container->get('FrameworkLogger'),
+		$container->get(Transactions::class)
 	);
 });
 $dependencies['LocalFileSystem'] = DI\factory(function (ContainerInterface $container)

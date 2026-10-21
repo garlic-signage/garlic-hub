@@ -26,6 +26,7 @@ use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Profile\Entities\TokenPurposes;
@@ -104,7 +105,7 @@ readonly class Orchestrator
 
 		$UID = $this->userSession->getUID();
 		if ($this->profileService->updatePassword($UID, $this->getParsedPassword()) === 0)
-			return ['success' => false, 'errors' => $this->translateServiceErrors()];
+			return ['success' => false, 'errors' => [$this->translator->translate('password_update_failed', 'profile')]];
 
 		return ['success' => true];
 	}
@@ -129,8 +130,15 @@ readonly class Orchestrator
 		if ($binToken === false)
 			return ['success' => false, 'errors' => [$this->translator->translate('token_error', 'profile')]];
 
-		if ($this->profileService->storeNewForcedPassword($UID, $binToken, $this->getParsedPassword()) === 0)
-			return ['success' => false, 'errors' => $this->translateServiceErrors()];
+		try
+		{
+			$this->profileService->storeNewForcedPassword($UID, $binToken, $this->getParsedPassword());
+		}
+		catch (TranslatableModuleException $e)
+		{
+			// the form is shown again with the error instead of the standard error page
+			return ['success' => false, 'errors' => [$this->translator->translateException($e)]];
+		}
 
 		return ['success' => true];
 	}
@@ -145,21 +153,5 @@ readonly class Orchestrator
 		$password = $this->formInputHandler->getParsed()[Parameters::PARAMETER_PASSWORD] ?? '';
 
 		return is_string($password) ? $password : '';
-	}
-
-	/**
-	 * @return string[]
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	private function translateServiceErrors(): array
-	{
-		$translated = [];
-		foreach ($this->profileService->getErrorMessages() as $error)
-		{
-			$translated[] = $this->translator->translate($error, 'profile');
-		}
-
-		return $translated;
 	}
 }

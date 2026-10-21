@@ -24,29 +24,25 @@ namespace App\Framework\Database\NestedSets;
 use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\DatabaseException;
 use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Services\AbstractBaseService;
 use Doctrine\DBAL\Exception;
-use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
- * Service class that extends AbstractBaseService to handle various operations
- * for managing hierarchical nodes within a repository.
+ * Service class to handle various operations for managing hierarchical nodes within a repository.
  * Provides functionality for retrieving, adding, deleting, and moving nodes and trees.
+ * Every write runs in a transaction, which is rolled back on any error before the error is passed on.
  */
-class Service extends AbstractBaseService
+class Service
 {
 	private readonly Repository $repository;
 	private readonly Calculator $calculator;
 	private readonly Transactions $transactions;
 
-	public function __construct(Repository $repository, Calculator $calculator, Transactions $transactions, LoggerInterface $logger)
+	public function __construct(Repository $repository, Calculator $calculator, Transactions $transactions)
 	{
 		$this->repository   = $repository;
 		$this->calculator   = $calculator;
 		$this->transactions = $transactions;
-
-		parent::__construct($logger);
 	}
 
 	public function initRepository(string $table, string $id): void
@@ -123,13 +119,13 @@ class Service extends AbstractBaseService
 
 	/**
 	 * @throws Exception
+	 * @throws Throwable
 	 */
 	public function addRootNode(int $UID, string $name, bool $isUserFolder = false): int
 	{
+		$this->transactions->begin();
 		try
 		{
-			$this->transactions->begin();
-
 			$nodeData = [
 				'name'              => $name,
 				'parent_id'         => 0,
@@ -159,9 +155,7 @@ class Service extends AbstractBaseService
 		catch (Throwable $e)
 		{
 			$this->transactions->rollBack();
-			$this->logger->error('Add root node failed because of: '. $e->getMessage());
-			$this->addErrorMessage($e->getMessage());
-			return 0;
+			throw $e;
 		}
 	}
 
@@ -171,10 +165,9 @@ class Service extends AbstractBaseService
 	 */
 	public function addSubNode(int $UID, string $name, array $parentNode): int
 	{
+		$this->transactions->begin();
 		try
 		{
-			$this->transactions->begin();
-
 			$fields = [
 				'lft' => $parentNode['rgt'],
 				'rgt' => $parentNode['rgt'] + 1,
@@ -203,23 +196,19 @@ class Service extends AbstractBaseService
 		catch (Throwable $e)
 		{
 			$this->transactions->rollBack();
-			$this->logger->error($e->getMessage());
-			$this->addErrorMessage($e->getMessage());
-			return 0;
+			throw $e;
 		}
 	}
 
 	/**
 	 * @param array<string,mixed> $node
-	 * @return bool
 	 * @throws Exception
 	 */
-	public function deleteSingleNode(array $node): bool
+	public function deleteSingleNode(array $node): void
 	{
+		$this->transactions->begin();
 		try
 		{
-			$this->transactions->begin();
-
 			if ($this->repository->delete($node['node_id']) === 0 )
 				throw new FrameworkException('Node not exists.');
 
@@ -227,14 +216,11 @@ class Service extends AbstractBaseService
 			$this->repository->moveNodesToRightForDeletion($node['root_id'], $node['rgt']);
 
 			$this->transactions->commit();
-			return true;
 		}
 		catch (Throwable $e)
 		{
 			$this->transactions->rollBack();
-			$this->logger->error($e->getMessage());
-			$this->addErrorMessage($e->getMessage());
-			return false;
+			throw $e;
 		}
 	}
 
@@ -242,12 +228,11 @@ class Service extends AbstractBaseService
 	 * @param array<string,mixed> $node
 	 * @throws Exception
 	 */
-	public function deleteTree(array $node): bool
+	public function deleteTree(array $node): void
 	{
+		$this->transactions->begin();
 		try
 		{
-			$this->transactions->begin();
-
 			if ($this->repository->deleteFullTree($node['root_id'], $node['rgt'], $node['lft']) === 0)
 				throw new FrameworkException('Node not exists.');
 
@@ -259,14 +244,11 @@ class Service extends AbstractBaseService
 			$this->repository->moveNodesToRightForDeletion($node['root_id'], $node['rgt'], $move);
 
 			$this->transactions->commit();
-			return true;
 		}
 		catch (Throwable $e)
 		{
 			$this->transactions->rollBack();
-			$this->logger->error($e->getMessage());
-			$this->addErrorMessage($e->getMessage());
-			return false;
+			throw $e;
 		}
 	}
 
@@ -275,12 +257,11 @@ class Service extends AbstractBaseService
 	 * @param array<string,mixed> $targetNode
 	 * @throws Exception
 	 */
-	public function moveNode(array $movedNode, array $targetNode, string $region): bool
+	public function moveNode(array $movedNode, array $targetNode, string $region): void
 	{
+		$this->transactions->begin();
 		try
 		{
-			$this->transactions->begin();
-
 			$diffLevel = $this->calculator->calculateDiffLevelByRegion($region, $movedNode['level'], $targetNode['level']);
 			$newLgtPos = $this->calculator->determineLgtPositionByRegion($region, $targetNode);
 			$width     = $movedNode['rgt'] - $movedNode['lft'] + 1;
@@ -310,14 +291,11 @@ class Service extends AbstractBaseService
 			}
 
 			$this->transactions->commit();
-			return true;
 		}
 		catch (Throwable $e)
 		{
 			$this->transactions->rollBack();
-			$this->logger->error($e->getMessage());
-			$this->addErrorMessage($e->getMessage());
-			return false;
+			throw $e;
 		}
 	}
 }

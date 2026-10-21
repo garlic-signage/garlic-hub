@@ -83,6 +83,7 @@ class PlayerIndexService extends AbstractBaseService
 		}
 		catch (Throwable $e)
 		{
+			// the request comes from a player device, not from the browser: it gets an empty index instead of a json error
 			$this->logger->error('Error fetch Index: ' . $e->getMessage());
 			// Todo send Email with exception reason to admin maybe send an prepared error smil to call operator
 		}

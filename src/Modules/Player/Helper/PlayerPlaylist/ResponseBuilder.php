@@ -42,17 +42,6 @@ class ResponseBuilder extends BaseResponseBuilder
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
-	public function playerNotFound(ResponseInterface $response): ResponseInterface
-    {
-		return $this->jsonResponseHandler->jsonError(
-			$response, $this->translator->translate('player_not_found', 'player')
-		);
-    }
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
 	public function playerNotReachable(ResponseInterface $response): ResponseInterface
     {
 		return $this->jsonResponseHandler->jsonError(

@@ -109,8 +109,7 @@ $dependencies[UploadService::class] = DI\factory(function (ContainerInterface $c
 		new Client(),
 		new FilesRepository($container->get('SqlConnection')),
 		$container->get(MimeTypeService::class),
-		$container->get(SsrfValidator::class),
-		$container->get('ModuleLogger')
+		$container->get(SsrfValidator::class)
 	);
 });
 
@@ -133,8 +132,7 @@ $dependencies[MediaService::class] = DI\factory(function (ContainerInterface $co
 		$container->get(NodesRepository::class),
 		$container->get(AclValidator::class),
 		$container->get(MediaUrlSigner::class),
-		$container->get(UserSession::class),
-		$container->get('ModuleLogger')
+		$container->get(UserSession::class)
 	);
 });
 $dependencies[MediaController::class] = DI\factory(function (ContainerInterface $container)

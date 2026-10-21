@@ -24,7 +24,6 @@ namespace App\Modules\Playlists\Services\InsertItems;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\UserSession;
@@ -78,8 +77,6 @@ class Media extends AbstractInsertItem
 			$playlistData = $this->checkPlaylistAcl($playlistId);
 
 			$media = $this->mediaService->fetchMedia((string) $insertId); // checks rights, too
-			if (empty($media))
-				throw new NotFoundException('playlists', 'media_not_accessible', ['media_id' => (string) $insertId]);
 
 			/*			if (!$this->allowedByTimeLimit($playlistId, $playlistData['time_limit']))
 							throw new ModuleException('items', 'Playlist time limit exceeds');

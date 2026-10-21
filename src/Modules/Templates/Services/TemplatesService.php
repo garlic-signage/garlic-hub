@@ -22,29 +22,24 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Services;
 
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\UserException;
-use App\Framework\Services\AbstractBaseService;
 use App\Framework\Utils\FormParameters\BaseParameters;
 use App\Modules\Auth\UserSession;
 use App\Modules\Templates\Helper\Settings\Parameters;
 use App\Modules\Templates\Repositories\TemplatesRepository;
 use Doctrine\DBAL\Exception;
-use Psr\Log\LoggerInterface;
-use Throwable;
 
-class TemplatesService extends AbstractBaseService
+class TemplatesService
 {
 	public function __construct(
 		private readonly TemplatesRepository $templatesRepository,
 		private readonly AclValidator $aclValidator,
-		private readonly UserSession $userSession,
-		LoggerInterface $logger)
-	{
-		parent::__construct($logger);
-	}
+		private readonly UserSession $userSession
+	) {}
 
     /**
      * @throws CoreException
@@ -68,21 +63,19 @@ class TemplatesService extends AbstractBaseService
 		return $this->templatesRepository->update($templateId, $this->collectDataForSettingsUpdate($saveData));
 	}
 
+	/**
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws NotFoundException
+	 * @throws UserException
+	 */
 	public function delete(int $templateId): int
 	{
-		try
-		{
-			$this->loadWithUserById($templateId);
-			// Todo: Check if used
-			return $this->templatesRepository->delete($templateId);
-		}
-		catch(Throwable $e)
-		{
-			$this->logger->error('Error delete template: '.$e->getMessage());
-			$this->addErrorMessage($e->getMessage());
-			return 0;
-		}
-
+		$this->loadWithUserById($templateId);
+		// Todo: Check if used
+		return $this->templatesRepository->delete($templateId);
 	}
 
     /**
@@ -91,7 +84,8 @@ class TemplatesService extends AbstractBaseService
      * @throws CoreException
      * @throws Exception
      * @throws FrameworkException
-     * @throws ModuleException
+     * @throws NotFoundException
+     * @throws AccessDeniedException
      * @throws UserException
      */
 	public function loadWithUserById(int $templateId): array
@@ -99,10 +93,10 @@ class TemplatesService extends AbstractBaseService
 		/** @var array{UID: int, company_id: int, template_id: int, name: string, content: string|null, ...}|array{} $template */
 		$template = $this->templatesRepository->findFirstWithUserName($templateId);
 		if ($template === [])
-			throw new ModuleException('templates', 'No template with Id: '.$templateId.' found.');
+			throw new NotFoundException('templates', 'template_not_found', ['template_id' => $templateId]);
 
 		if (!$this->aclValidator->isTemplateEditable($this->userSession->getUID(), $template))
-			throw new ModuleException('templates', 'Template is not editable.');
+			throw new AccessDeniedException('templates', 'template_not_editable', ['template_id' => $templateId]);
 
 		return $template;
 	}

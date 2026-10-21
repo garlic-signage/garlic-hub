@@ -107,16 +107,16 @@ class DatatableFacadeTest extends TestCase
 
 	/**
 	 * @throws \Doctrine\DBAL\Exception
+	 * @throws \Throwable
 	 */
 	#[Group('units')]
 	public function testDeleteUser(): void
 	{
 		$this->expectUntouched($this->datatableBuilderMock, $this->datatablePreparerMock, $this->usersServiceMock, $this->sessionMock);
 		$this->usersAdminServiceMock->expects($this->once())->method('deleteUser')
-			->with(12345)
-			->willReturn(true);
+			->with(12345);
 
-		static::assertTrue($this->datatableFacade->deleteUser(12345));
+		$this->datatableFacade->deleteUser(12345);
 	}
 
 	/**

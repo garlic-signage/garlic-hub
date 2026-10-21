@@ -53,8 +53,7 @@ $dependencies[ProfileService::class] = DI\factory(function (ContainerInterface $
 		$repositories['main'],
 		$container->get(UserTokenService::class),
 		$container->get(Crypt::class),
-		$container->get(Transactions::class),
-		$container->get('ModuleLogger')
+		$container->get(Transactions::class)
 	);
 });
 $dependencies[EditLocalesController::class] = DI\factory(function (ContainerInterface $container)

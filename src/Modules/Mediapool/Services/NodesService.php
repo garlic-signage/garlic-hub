@@ -23,8 +23,11 @@ namespace App\Modules\Mediapool\Services;
 
 use App\Framework\Database\NestedSets\Calculator;
 use App\Framework\Database\NestedSets\Service;
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Repositories\NodesRepository;
@@ -70,7 +73,7 @@ class NodesService
 	{
 		$node = $this->nodesRepository->getNode($nodeId);
 		if ($node === [])
-			throw new ModuleException('mediapool','Node Id: '.$nodeId.' not exists.');
+			throw new NotFoundException('mediapool', 'node_not_found', ['node_id' => $nodeId]);
 
 		$rights = $this->determineRights($node);
 
@@ -150,7 +153,7 @@ class NodesService
 
 		/** @var array{UID:int, company_id:int, node_id:int, root_id:int} $node */
 		if (!$this->aclValidator->isModuleAdmin($this->userSession->getUID()))
-			throw new ModuleException('mediapool','No rights to delete user root node.');
+			throw new AccessDeniedException('mediapool', 'user_directory_not_deletable', ['UID' => $UID]);
 
 		$condition = ['root_id' => $this->nodesRepository->generateWhereClause($node['root_id'])];
 		$result = $this->nodesRepository->findAllBy($condition);
@@ -173,11 +176,11 @@ class NodesService
 	{
 		$node = $this->nodesRepository->getNode($id);
 		if ($node === [])
-			throw new ModuleException('mediapool', 'Parent node not found');
+			throw new NotFoundException('mediapool', 'node_not_found', ['node_id' => $id]);
 
 		$rights = $this->determineRights($node);
 		if (!$rights['edit'])
-			throw new ModuleException('mediapool', 'No rights to edit node ' . $node['name']);
+			throw new AccessDeniedException('mediapool', 'node_not_editable', ['node_name' => $node['name']]);
 
 		$data = ['name' => $name];
 		if ($this->aclValidator->isModuleAdmin($this->userSession->getUID()) && !is_null($visibility))
@@ -200,19 +203,23 @@ class NodesService
 		if (!in_array($region, $regions))
 			throw new ModuleException('mediapool', $region.' is not supported');
 
-		/** @var array<string,mixed> $movedNode */
 		$movedNode  = $this->nodesRepository->getNode($movedNodeId);
-		/** @var array<string,mixed> $targetNode */
-		$targetNode = $this->nodesRepository->getNode($targetNodeId);
+		if ($movedNode === [])
+			throw new NotFoundException('mediapool', 'node_not_found', ['node_id' => $movedNodeId]);
 
 		// prevent root dir handling
 		if ($movedNode['parent_id'] === 0)
-			throw new ModuleException('mediapool', 'Moving root node is not allowed');
+			throw new TranslatableModuleException('mediapool', 'root_node_not_movable');
 
-		if (($region === Calculator::REGION_APPENDCHILD && $targetNodeId === 0) ||
-			(($region === Calculator::REGION_BEFORE || $region === Calculator::REGION_AFTER) &&
-				$targetNode['parent_id'] === 0))
-			throw new ModuleException('mediapool', 'Create root node with a move is not allowed');
+		if ($region === Calculator::REGION_APPENDCHILD && $targetNodeId === 0)
+			throw new TranslatableModuleException('mediapool', 'root_node_not_creatable_by_move');
+
+		$targetNode = $this->nodesRepository->getNode($targetNodeId);
+		if ($targetNode === [])
+			throw new NotFoundException('mediapool', 'node_not_found', ['node_id' => $targetNodeId]);
+
+		if (($region === Calculator::REGION_BEFORE || $region === Calculator::REGION_AFTER) && $targetNode['parent_id'] === 0)
+			throw new TranslatableModuleException('mediapool', 'root_node_not_creatable_by_move');
 
 
 		$this->nestedSetsService->moveNode($movedNode, $targetNode, $region);
@@ -230,12 +237,12 @@ class NodesService
 	public function deleteNode(int $nodeId): int
 	{
 		$node = $this->nodesRepository->getNode($nodeId);
-		if (empty($node))
-			throw new ModuleException('mediapool', 'Can not find a node for node_id ' . $nodeId);
+		if ($node === [])
+			throw new NotFoundException('mediapool', 'node_not_found', ['node_id' => $nodeId]);
 
 		$rights = $this->determineRights($node);
 		if (!$rights['delete'])
-			throw new ModuleException('mediapool', 'No rights to delete node ' . $nodeId);
+			throw new AccessDeniedException('mediapool', 'node_not_deletable', ['node_name' => $node['name']]);
 
 		// get all node_id of the partial tree
 		$deleted_nodes = $this->nestedSetsService->findAllSubNodeIdsByRootIdsAndPosition($node['root_id'], $node['rgt'], $node['lft']);
@@ -282,7 +289,7 @@ class NodesService
 	private function addRootNode(string $name): int
 	{
 		if (!$this->aclValidator->isModuleAdmin($this->userSession->getUID()))
-			throw new ModuleException('mediapool','No rights to add root node.');
+			throw new AccessDeniedException('mediapool', 'root_node_not_creatable');
 
 		return $this->nestedSetsService->addRootNode($this->userSession->getUID(), $name);
 	}
@@ -300,12 +307,12 @@ class NodesService
 	private function addSubNode(int $parentNodeId, string $name): int
 	{
 		$parentNode = $this->nodesRepository->getNode($parentNodeId);
-		if (count($parentNode) === 0)
-			throw new ModuleException('mediapool', 'Parent node not found');
+		if ($parentNode === [])
+			throw new NotFoundException('mediapool', 'node_not_found', ['node_id' => $parentNodeId]);
 
 		$rights      = $this->determineRights($parentNode);
 		if (!$rights['create'])
-			throw new ModuleException('mediapool', 'No rights to add node under: ' . $parentNode['name']);
+			throw new AccessDeniedException('mediapool', 'node_not_creatable', ['node_name' => $parentNode['name']]);
 
 		return $this->nestedSetsService->addSubNode($this->userSession->getUID(), $name, $parentNode);
 	}

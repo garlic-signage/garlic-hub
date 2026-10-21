@@ -22,9 +22,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Helper\Settings;
 
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
 use App\Modules\Templates\Services\TemplatesService;
 use Doctrine\DBAL\Exception;
 
@@ -65,8 +67,9 @@ class Orchestrator
 			$this->template = $this->templateService->loadWithUserById($templateId);
 			return true;
 		}
-		catch (ModuleException)
+		catch (NotFoundException|AccessDeniedException)
 		{
+			// the callers answer with their own response, html redirect or json
 			return false;
 		}
 	}

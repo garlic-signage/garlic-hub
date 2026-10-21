@@ -26,6 +26,7 @@ use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Users\Services\UsersAdminCreateService;
 use Doctrine\DBAL\Exception;
 
@@ -90,8 +91,15 @@ readonly class Orchestrator
 
 		/** @var array{username:string, email:string, locale: string, password: string} $saveData */
 		$saveData = $this->formInputHandler->getParsed();
-		if ($this->usersAdminCreateService->insertNewAdminUser($saveData, $this->config) === 0)
-			return ['success' => false, 'errors' => $this->translateServiceErrors()];
+		try
+		{
+			$this->usersAdminCreateService->insertNewAdminUser($saveData, $this->config);
+		}
+		catch (TranslatableModuleException $e)
+		{
+			// the form is shown again with the error instead of the standard error page
+			return ['success' => false, 'errors' => [$this->translator->translateException($e)]];
+		}
 
 		return ['success' => true];
 	}
@@ -99,21 +107,5 @@ readonly class Orchestrator
 	private function getPasswordPattern(): string
 	{
 		return $this->config->getConfigValue('password_pattern', 'main');
-	}
-
-	/**
-	 * @return string[]
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	private function translateServiceErrors(): array
-	{
-		$translated = [];
-		foreach ($this->usersAdminCreateService->getErrorMessages() as $error)
-		{
-			$translated[] = $this->translator->translate($error, 'users');
-		}
-
-		return $translated;
 	}
 }

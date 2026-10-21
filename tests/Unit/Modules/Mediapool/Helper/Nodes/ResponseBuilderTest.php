@@ -60,7 +60,6 @@ class ResponseBuilderTest extends TestCase
 			'missingNameOrId'       => 'node name or id is missing',
 			'missingNodeId'         => 'NodeId is missing',
 			'missingMoveParameters' => 'Source node, target node, or target region is missing',
-			'editFailed'            => 'Edit node failed',
 		];
 
 		$calls = [];

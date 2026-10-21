@@ -131,8 +131,7 @@ $dependencies[PlayerService::class] = DI\factory(function (ContainerInterface $c
 		$container->get(PlayerRepository::class),
 		$container->get(PlaylistsService::class),
 		$container->get(AclValidator::class),
-		$container->get(UserSession::class),
-		$container->get('ModuleLogger'));
+		$container->get(UserSession::class));
 });
 
 
@@ -194,13 +193,11 @@ $dependencies[PlayerDashboard::class] = DI\factory(function (ContainerInterface 
 $dependencies[PlayerRestAPIService::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new PlayerRestAPIService(
-		new SimpleApiExecutor(new Client(), $container->get('ModuleLogger')),
+		new SimpleApiExecutor(new Client()),
 		new PlayerTokenService(
 			new PlayerTokenRepository($container->get('SqlConnection')),
-			$container->get(Crypt::class),
-			$container->get('ModuleLogger')
-		),
-		$container->get('ModuleLogger'),
+			$container->get(Crypt::class)
+		)
 	);
 });
 $dependencies[Orchestrator::class] = DI\factory(function (ContainerInterface $container)

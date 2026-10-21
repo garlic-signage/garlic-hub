@@ -27,6 +27,7 @@ use App\Framework\Core\Translate\TranslationLoaderInterface;
 use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use MessageFormatter;
 use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
 use Phpfastcache\Helper\Psr16Adapter;
@@ -79,6 +80,23 @@ class TranslatorTest extends TestCase
 
         static::assertEquals('Hello, John!', $result);
     }
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testTranslateExceptionUsesKeyModuleAndReplacements(): void
+	{
+		$this->localesStub->method('getLanguageCode')->willReturn('en');
+		$this->cacheMock->expects($this->once())->method('get')->with('lang_en_test_module')->willReturn(['not_found' => 'Item {item_id} of {name} not found.']);
+		$this->loaderMock->expects($this->never())->method('load');
+		$this->cacheMock->expects($this->never())->method('set');
+
+		$exception = new TranslatableModuleException('test_module', 'not_found', ['item_id' => 7, 'name' => 'Lobby']);
+
+		static::assertSame('Item 7 of Lobby not found.', $this->translator->translateException($exception));
+	}
 
 	/**
 	 * @throws CoreException

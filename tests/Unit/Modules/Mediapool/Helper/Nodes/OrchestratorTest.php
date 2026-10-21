@@ -157,11 +157,11 @@ class OrchestratorTest extends TestCase
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testAddReturnsServiceError(): void
+	public function testAddPassesServiceErrorOn(): void
 	{
 		$this->prepareValid(['node_id' => 1, 'name' => 'New Node'], 'validateAdd');
 		$this->nodesServiceMock->expects($this->once())->method('addNode')->willThrowException(new ModuleException('mediapool', 'No rights'));
-		$this->expectGeneralError('No rights');
+		$this->expectServiceError('No rights');
 
 		$this->orchestrator->add($this->responseStub);
 	}
@@ -198,11 +198,11 @@ class OrchestratorTest extends TestCase
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testEditFailsWhenNothingChanged(): void
+	public function testEditSucceedsWhenNothingChanged(): void
 	{
 		$this->prepareValid(['node_id' => 1, 'name' => 'Edited Node'], 'validateEdit');
 		$this->nodesServiceMock->expects($this->once())->method('editNode')->with(1, 'Edited Node', null)->willReturn(0);
-		$this->expectError('editFailed');
+		$this->expectSuccess(['data' => ['id' => 1, 'new_name' => 'Edited Node', 'visibility' => null]]);
 
 		$this->orchestrator->edit($this->responseStub);
 	}
@@ -239,11 +239,11 @@ class OrchestratorTest extends TestCase
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testMoveReturnsServiceError(): void
+	public function testMovePassesServiceErrorOn(): void
 	{
 		$this->prepareValid(['src_node_id' => 1, 'target_node_id' => 2, 'target_region' => 'before'], 'validateMove');
 		$this->nodesServiceMock->expects($this->once())->method('moveNode')->willThrowException(new ModuleException('mediapool', 'Move failed'));
-		$this->expectGeneralError('Move failed');
+		$this->expectServiceError('Move failed');
 
 		$this->orchestrator->move($this->responseStub);
 	}
@@ -280,11 +280,11 @@ class OrchestratorTest extends TestCase
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testDeleteReturnsServiceError(): void
+	public function testDeletePassesServiceErrorOn(): void
 	{
 		$this->prepareValid(['node_id' => 1], 'validateDelete');
 		$this->nodesServiceMock->expects($this->once())->method('deleteNode')->willThrowException(new ModuleException('mediapool', 'Delete failed'));
-		$this->expectGeneralError('Delete failed');
+		$this->expectServiceError('Delete failed');
 
 		$this->orchestrator->delete($this->responseStub);
 	}
@@ -312,12 +312,14 @@ class OrchestratorTest extends TestCase
 			->willReturn($this->responseStub);
 	}
 
-	private function expectGeneralError(string $message): void
+	/**
+	 * Errors of the service are not caught, the central error handler answers.
+	 */
+	private function expectServiceError(string $message): void
 	{
-		$this->responseBuilderMock->expects($this->never())->method('generalSuccess');
-		$this->responseBuilderMock->expects($this->once())->method('generalError')
-			->with($this->responseStub, $message)
-			->willReturn($this->responseStub);
+		$this->responseBuilderMock->expects($this->never())->method($this->anything());
+		$this->expectException(ModuleException::class);
+		$this->expectExceptionMessage($message);
 	}
 
 	/**

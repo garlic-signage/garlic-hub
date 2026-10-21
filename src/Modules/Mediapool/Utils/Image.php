@@ -61,7 +61,7 @@ class Image extends AbstractMediaHandler
 	public function checkFileBeforeUpload(int $size): void
 	{
 		if ($size > $this->maxImageSize)
-			throw new ModuleException('mediapool', 'Filesize: '.$this->calculateToMegaByte($size).' MB exceeds max image size.');
+			throw $this->createFilesizeError($size, $this->maxImageSize);
 	}
 
 	/**
@@ -76,14 +76,14 @@ class Image extends AbstractMediaHandler
 
 		$this->fileSize = $this->filesystem->fileSize($filePath);
 		if ($this->fileSize > $this->maxImageSize)
-			throw new ModuleException('mediapool', 'After Upload Check: '.$this->calculateToMegaByte($this->fileSize).' MB exceeds max image size.');
+			throw $this->createFilesizeError($this->fileSize, $this->maxImageSize);
 
 		$this->imagick->readImage($this->getAbsolutePath($filePath));
 		if ($this->imagick->getImageWidth() > $this->maxWidth)
-			throw new ModuleException('mediapool', 'After Upload Check:  Image width '.$this->imagick->getImageWidth().' exceeds maximum.');
+			throw $this->createResolutionError('width', (int) $this->imagick->getImageWidth());
 
 		if ($this->imagick->getImageHeight() > $this->maxHeight)
-			throw new ModuleException('mediapool', 'After Upload Check:  Image height '.$this->imagick->getImageHeight().' exceeds maximum.');
+			throw $this->createResolutionError('height', (int) $this->imagick->getImageHeight());
 
 		$this->dimensions = ['width' => $this->imagick->getImageWidth(), 'height' => $this->imagick->getImageHeight()];
 	}

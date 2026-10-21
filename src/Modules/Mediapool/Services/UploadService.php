@@ -21,8 +21,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Mediapool\Services;
 
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Media\MimeTypeService;
 use App\Modules\Mediapool\Repositories\FilesRepository;
 use App\Modules\Mediapool\Utils\AbstractMediaHandler;
@@ -31,11 +33,10 @@ use App\Modules\Mediapool\Utils\SsrfValidator;
 use Doctrine\DBAL\Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\TransferException;
 use League\Flysystem\FilesystemException;
-use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use Slim\Psr7\UploadedFile;
-use Throwable;
 
 /**
  * UploadService class provides functionality for managing media uploads, including file uploads, external media handling,
@@ -50,8 +51,7 @@ readonly class UploadService
 		private Client              $client,
 		private FilesRepository     $mediaRepository,
 		private MimeTypeService     $mimeTypeDetector,
-		private SsrfValidator       $ssrfValidator,
-		private LoggerInterface     $logger)
+		private SsrfValidator       $ssrfValidator)
 	{
 	}
 
@@ -80,54 +80,53 @@ readonly class UploadService
 	 * media_id is a UUID to make it more difficult to guess
 	 *
 	 * @param array<string,int|string> $metadata
-	 * @return list<array<string,mixed>>
+	 * @return array<string,bool|string>
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FilesystemException
+	 * @throws ModuleException
 	 */
-	public function uploadMediaFiles(int $nodeId, int $UID, UploadedFile $uploadedFile, array $metadata): array
+	public function uploadMediaFile(int $nodeId, int $UID, UploadedFile $uploadedFile, array $metadata): array
 	{
-		$ret = [];
-		try
-		{
-			$this->checkNodeUploadable($nodeId, $UID);
+		$this->checkNodeUploadable($nodeId);
 
-			$preMimeType      = $uploadedFile->getClientMediaType();
-			if ($preMimeType === null)
-				throw new ModuleException('mediapool', 'Not able to detect mime type.');
-			if ($uploadedFile->getError() !== UPLOAD_ERR_OK)
-				throw new ModuleException('mediapool', $this->codeToMessage($uploadedFile->getError()));
+		if ($uploadedFile->getError() !== UPLOAD_ERR_OK)
+			throw $this->createUploadError($uploadedFile->getError());
 
-			$mediaHandler = $this->mediaHandlerFactory->createMediaHandler($preMimeType);
-			$mediaHandler->setMetadata($metadata);
-			$size = $uploadedFile->getSize();
-			if ($size === null)
-				throw new ModuleException('mediapool', 'Not able to detect size.');
+		$preMimeType = $uploadedFile->getClientMediaType();
+		if ($preMimeType === null)
+			throw new ModuleException('mediapool', 'Not able to detect mime type.');
 
-			$mediaHandler->checkFileBeforeUpload($size);
-			$uploadPath   = $mediaHandler->uploadFromLocal($uploadedFile);
+		$mediaHandler = $this->mediaHandlerFactory->createMediaHandler($preMimeType);
+		$mediaHandler->setMetadata($metadata);
+		$size = $uploadedFile->getSize();
+		if ($size === null)
+			throw new ModuleException('mediapool', 'Not able to detect size.');
 
-			$ret[] = $this->insertDataset($mediaHandler, $uploadPath, $nodeId, $UID);
-		}
-		catch (Throwable $e)
-		{
-			$this->logger->error('UploadService Error: '.$e->getMessage());
-			$ret[] = ['success' => false, 'error_message' => $e->getMessage()];
-		}
-		return $ret;
+		$mediaHandler->checkFileBeforeUpload($size);
+		$uploadPath   = $mediaHandler->uploadFromLocal($uploadedFile);
+
+		return $this->insertDataset($mediaHandler, $uploadPath, $nodeId, $UID);
 	}
 
 	/**
 	 * @param array<string,string> $extMetadata
-	 * @return array<string,bool|mixed>
+	 * @return array<string,bool|string>
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FilesystemException
+	 * @throws ModuleException
 	 */
 	public function uploadExternalMedia(int $nodeId, int $UID, string $externalLink, array $extMetadata): array
 	{
+		$this->checkNodeUploadable($nodeId);
+		$resolved = $this->ssrfValidator->validateAndResolveUrl($externalLink);
+		$curlOpts = ['curl' => [CURLOPT_RESOLVE => ["{$resolved['host']}:{$resolved['port']}:{$resolved['ip']}"]]];
+
 		try
 		{
-
-			$this->checkNodeUploadable($nodeId, $UID);
-			$resolved      = $this->ssrfValidator->validateAndResolveUrl($externalLink);
-			$curlOpts      = ['curl' => [CURLOPT_RESOLVE => ["{$resolved['host']}:{$resolved['port']}:{$resolved['ip']}"]]];
-			$response      = $this->client->head($externalLink, $curlOpts);
-			$preMimeType   = $response->getHeaderLine('Content-Type');
+			$response    = $this->client->head($externalLink, $curlOpts);
+			$preMimeType = $response->getHeaderLine('Content-Type');
 			// workaround if no content-type sent
 			if ($preMimeType === '' && (str_contains($externalLink, 'mp4') ||
 					str_contains($externalLink, 'webm') || str_contains($externalLink, 'video')))
@@ -137,16 +136,14 @@ readonly class UploadService
 			$mediaHandler  = $this->mediaHandlerFactory->createMediaHandler($preMimeType);
 			$mediaHandler->checkFileBeforeUpload((int) $contentLength);
 			$uploadPath    = $mediaHandler->uploadFromExternal($this->client, $externalLink, $curlOpts);
-
-			$ret = $this->insertDataset($mediaHandler, $uploadPath, $nodeId, $UID, $extMetadata);
 		}
-		catch (Throwable $e)
+		catch (TransferException $e)
 		{
-			$this->logger->error('UploadService Error: '.$e->getMessage());
-			$ret = ['success' => false, 'error_message' => $e->getMessage()];
+			// a broken link or an unreachable host is a user error, not a server error
+			throw new TranslatableModuleException('mediapool', 'external_media_not_loadable', ['url' => $externalLink], $e);
 		}
 
-		return $ret;
+		return $this->insertDataset($mediaHandler, $uploadPath, $nodeId, $UID, $extMetadata);
 	}
 
 	/**
@@ -212,18 +209,20 @@ readonly class UploadService
 		return ['success' => true, 'message' => $pathInfo['basename'].' successful uploaded'];
 	}
 
-	private function codeToMessage(int $code): string
+	/**
+	 * Errors the user can fix get a translation, server problems stay technical.
+	 */
+	private function createUploadError(int $code): ModuleException
 	{
 		return match ($code)
 		{
-			UPLOAD_ERR_INI_SIZE   => 'The uploaded file exceeds the upload_max_filesize directive in php.ini',
-			UPLOAD_ERR_FORM_SIZE  => 'The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form',
-			UPLOAD_ERR_PARTIAL    => 'The uploaded file was only partially uploaded',
-			UPLOAD_ERR_NO_FILE    => 'No file was uploaded',
-			UPLOAD_ERR_NO_TMP_DIR => 'Missing a temporary folder',
-			UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
-			UPLOAD_ERR_EXTENSION  => 'File upload stopped by extension',
-			default => 'Unknown upload error',
+			UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => new TranslatableModuleException('mediapool', 'upload_file_too_big'),
+			UPLOAD_ERR_PARTIAL    => new TranslatableModuleException('mediapool', 'upload_partial'),
+			UPLOAD_ERR_NO_FILE    => new TranslatableModuleException('mediapool', 'upload_no_file'),
+			UPLOAD_ERR_NO_TMP_DIR => new ModuleException('mediapool', 'Missing a temporary folder'),
+			UPLOAD_ERR_CANT_WRITE => new ModuleException('mediapool', 'Failed to write file to disk'),
+			UPLOAD_ERR_EXTENSION  => new ModuleException('mediapool', 'File upload stopped by extension'),
+			default               => new ModuleException('mediapool', 'Unknown upload error'),
 		};
 	}
 
@@ -263,16 +262,15 @@ readonly class UploadService
 	}
 
 	/**
-	 * @throws ModuleException
+	 * @throws AccessDeniedException
 	 * @throws CoreException
 	 * @throws Exception
+	 * @throws ModuleException
 	 */
-	private function checkNodeUploadable(int $nodeId, int $UID): void
+	private function checkNodeUploadable(int $nodeId): void
 	{
 		if (!$this->nodeService->isNodeUploadable($nodeId))
-			throw new ModuleException(
-				'mediapool','User '.$UID.' has no upload rights for node '.$UID.'.');
-
+			throw new AccessDeniedException('mediapool', 'node_not_uploadable', ['node_id' => $nodeId]);
 	}
 
 }

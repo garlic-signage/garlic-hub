@@ -24,7 +24,10 @@ namespace Tests\Unit\Modules\Mediapool\Services;
 use App\Framework\Database\NestedSets\Calculator;
 use App\Framework\Database\NestedSets\Service;
 use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Repositories\NodesRepository;
 use App\Modules\Mediapool\Services\MediaService;
@@ -122,8 +125,8 @@ class NodesServiceTest extends TestCase
 			->with($nodeId)
 			->willReturn([]);
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('Node Id: ' . $nodeId . ' not exists.');
+		$this->expectException(NotFoundException::class);
+		$this->expectExceptionMessage('node_not_found');
 
 		$this->nodesService->isNodeUploadable($nodeId);
 	}
@@ -238,8 +241,8 @@ class NodesServiceTest extends TestCase
 		$this->nestedSetServiceMock->expects($this->never())
 			->method('addRootNode');
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('No rights to add root node.');
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('root_node_not_creatable');
 
 		$result = $this->nodesService->addNode(0, $name);
 
@@ -304,8 +307,8 @@ class NodesServiceTest extends TestCase
 		$this->aclValidatorMock->expects($this->never())
 			->method('checkDirectoryPermissions');
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('Parent node not found');
+		$this->expectException(NotFoundException::class);
+		$this->expectExceptionMessage('node_not_found');
 
 		$this->nestedSetServiceMock->expects($this->never())
 			->method('addSubNode');
@@ -342,8 +345,8 @@ class NodesServiceTest extends TestCase
 		$this->nestedSetServiceMock->expects($this->never())
 			->method('addSubNode');
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('No rights to add node under: Parent Node');
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('node_not_creatable {"node_name":"Parent Node"}');
 
 		$result = $this->nodesService->addNode($parentNodeId, $name);
 		static::assertEquals(2, $result);
@@ -494,8 +497,8 @@ class NodesServiceTest extends TestCase
 		$this->mediaServiceMock->expects($this->never())->method('markDeleteMediaByNodeId');
 		$this->nodesRepositoryMock->expects($this->never())->method('deleteBy');
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('No rights to delete user root node.');
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('user_directory_not_deletable');
 
 		$this->nodesService->deleteUserDirectory($UID);
 	}
@@ -573,8 +576,8 @@ class NodesServiceTest extends TestCase
 		$this->nodesRepositoryMock->expects($this->never())
 			->method('update');
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('Parent node not found');
+		$this->expectException(NotFoundException::class);
+		$this->expectExceptionMessage('node_not_found');
 
 		$this->nodesService->editNode($nodeId, $name, $visibility);
 	}
@@ -609,8 +612,8 @@ class NodesServiceTest extends TestCase
 		$this->nodesRepositoryMock->expects($this->never())
 			->method('update');
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('No rights to edit node Node to Edit');
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('node_not_editable {"node_name":"Node to Edit"}');
 
 		$this->nodesService->editNode($nodeId, $name, $visibility);
 	}
@@ -676,16 +679,16 @@ class NodesServiceTest extends TestCase
 		$targetNodeId = 2;
 		$region = Calculator::REGION_APPENDCHILD;
 		$movedNode = ['node_id' => 1, 'name' => 'Moved Node', 'children' => 0, 'UID' => 123, 'visibility' => 1, 'parent_id' => 0];
-		$targetNode = ['node_id' => 2, 'name' => 'Target Node', 'children' => 0, 'UID' => 123, 'visibility' => 1, 'parent_id' => 0];
 
-		$this->nodesRepositoryMock->expects($this->exactly(2))
+		$this->nodesRepositoryMock->expects($this->once())
 			->method('getNode')
-			->willReturnOnConsecutiveCalls($movedNode, $targetNode);
+			->with($movedNodeId)
+			->willReturn($movedNode);
 
 		$this->nestedSetServiceMock->expects($this->never())->method('moveNode');
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('Moving root node is not allowed');
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('root_node_not_movable');
 
 		$this->nodesService->moveNode($movedNodeId, $targetNodeId, $region);
 	}
@@ -703,16 +706,16 @@ class NodesServiceTest extends TestCase
 		$targetNodeId = 0;
 		$region = Calculator::REGION_APPENDCHILD;
 		$movedNode = ['node_id' => 1, 'name' => 'Moved Node', 'children' => 0, 'UID' => 123, 'visibility' => 1, 'parent_id' => 12];
-		$targetNode = ['node_id' => 2, 'name' => 'Target Node', 'children' => 0, 'UID' => 123, 'visibility' => 1, 'parent_id' => 0];
 
-		$this->nodesRepositoryMock->expects($this->exactly(2))
+		$this->nodesRepositoryMock->expects($this->once())
 			->method('getNode')
-			->willReturnOnConsecutiveCalls($movedNode, $targetNode);
+			->with($movedNodeId)
+			->willReturn($movedNode);
 
 		$this->nestedSetServiceMock->expects($this->never())->method('moveNode');
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('Create root node with a move is not allowed');
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('root_node_not_creatable_by_move');
 
 		$this->nodesService->moveNode($movedNodeId, $targetNodeId, $region);
 	}
@@ -738,8 +741,8 @@ class NodesServiceTest extends TestCase
 
 		$this->nestedSetServiceMock->expects($this->never())->method('moveNode');
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('Create root node with a move is not allowed');
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('root_node_not_creatable_by_move');
 
 		$this->nodesService->moveNode($movedNodeId, $targetNodeId, $region);
 	}
@@ -765,8 +768,8 @@ class NodesServiceTest extends TestCase
 
 		$this->nestedSetServiceMock->expects($this->never())->method('moveNode');
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('Create root node with a move is not allowed');
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('root_node_not_creatable_by_move');
 
 
 		$this->nodesService->moveNode($movedNodeId, $targetNodeId, $region);
@@ -838,8 +841,8 @@ class NodesServiceTest extends TestCase
 		$this->nestedSetServiceMock->expects($this->never())
 			->method('deleteTree');
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('Can not find a node for node_id ' . $nodeId);
+		$this->expectException(NotFoundException::class);
+		$this->expectExceptionMessage('node_not_found');
 
 		$this->nodesService->deleteNode($nodeId);
 	}
@@ -874,8 +877,8 @@ class NodesServiceTest extends TestCase
 		$this->nestedSetServiceMock->expects($this->never())
 			->method('deleteTree');
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('No rights to delete node ' . $nodeId);
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('node_not_deletable');
 
 		$this->nodesService->deleteNode($nodeId);
 	}

@@ -123,9 +123,9 @@ class Orchestrator
 		/** @var UploadedFile $file */
 		$file     = $this->uploadedFiles['file'];
 		$metadata = $this->decodeMetadata();
-		$results  = $this->uploadService->uploadMediaFiles($this->nodeId, $this->userSession->getUID(), $file, $metadata);
+		$result   = $this->uploadService->uploadMediaFile($this->nodeId, $this->userSession->getUID(), $file, $metadata);
 
-		return $this->responseBuilder->uploadResult($response, $results[0]);
+		return $this->responseBuilder->uploadResult($response, $result);
 	}
 
 	/**

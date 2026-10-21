@@ -24,44 +24,16 @@ namespace App\Framework\Services;
 use Psr\Log\LoggerInterface;
 
 /**
- * AbstractBaseService serves as a foundational class providing shared functionality
- * to manage and interact with logging and error messages.
+ * AbstractBaseService provides the logger to services.
  *
- * It includes capabilities such as adding and retrieving error messages and checking
- * error states.
+ * Services report errors by throwing exceptions, they keep no error state.
  */
 abstract class AbstractBaseService
 {
 	protected readonly LoggerInterface $logger;
-	/** @var string[]  */
-	protected array $errorMessages = [];
 
 	public function __construct(LoggerInterface $logger)
 	{
 		$this->logger = $logger;
 	}
-
-	/**
-	 * @return string[]
-	 */
-	public function getErrorMessages(): array
-	{
-		return $this->errorMessages;
-	}
-
-	public function getErrorMessagesAsString(): string
-	{
-		return implode(' | ', $this->errorMessages);
-	}
-
-	public function hasErrorMessages(): bool
-	{
-		return !empty($this->errorMessages);
-	}
-
-	protected function addErrorMessage(string $message): void
-	{
-		$this->errorMessages[] = $message;
-	}
-
 }

@@ -55,16 +55,12 @@ class ResponseBuilder extends BaseResponseBuilder
 	}
 
 	/**
-	 * The UploadService returns ['success' => true, 'message' => ...] or
-	 * ['success' => false, 'error_message' => ...].
+	 * The UploadService returns ['success' => true, 'message' => ...] or throws.
 	 *
 	 * @param array<string,mixed> $result
 	 */
 	public function uploadResult(ResponseInterface $response, array $result): ResponseInterface
 	{
-		if (($result['success'] ?? false) === true)
-			return $this->jsonResponseHandler->jsonResponse($response, $result);
-
-		return $this->jsonResponseHandler->jsonError($response, (string) ($result['error_message'] ?? 'Upload failed.'));
+		return $this->jsonResponseHandler->jsonResponse($response, $result);
 	}
 }

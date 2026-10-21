@@ -23,6 +23,7 @@ namespace Tests\Unit\Modules\Mediapool\Utils;
 
 use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Media\Ffmpeg;
 use App\Modules\Mediapool\Utils\Image;
 use App\Modules\Mediapool\Utils\ImagickFactory;
@@ -193,7 +194,8 @@ class MediaHandlerFactoryTest extends TestCase
 	#[Group('units')]
 	public function testCreateHandlerThrowsExceptionForUnsupportedMimeType(): void
 	{
-		$this->expectException(CoreException::class);
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('unsupported_mimetype {"mimetype":"unsupported\\/mime"}');
 		$this->mediaHandlerFactory->createMediaHandler('unsupported/mime');
 	}
 }

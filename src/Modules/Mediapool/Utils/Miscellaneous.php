@@ -53,7 +53,7 @@ class Miscellaneous extends AbstractMediaHandler
 	public function checkFileBeforeUpload(int $size): void
 	{
 		if ($size > $this->maxSize)
-			throw new ModuleException('mediapool', 'Filesize: '.$this->calculateToMegaByte($size).' MB exceeds max size.');
+			throw $this->createFilesizeError($size, $this->maxSize);
 	}
 
 	/**
@@ -67,7 +67,7 @@ class Miscellaneous extends AbstractMediaHandler
 
 		$this->fileSize = $this->filesystem->fileSize($filePath);
 		if ($this->fileSize > $this->maxSize)
-			throw new ModuleException('mediapool', 'After Upload Check: '.$this->calculateToMegaByte($this->fileSize).' MB exceeds max size.');
+			throw $this->createFilesizeError($this->fileSize, $this->maxSize);
 	}
 
 	/**

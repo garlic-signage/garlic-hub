@@ -58,7 +58,7 @@ class Pdf extends AbstractMediaHandler
 	public function checkFileBeforeUpload(int $size): void
 	{
 		if ($size > $this->maxDocumentSize)
-			throw new ModuleException('mediapool', 'Filesize: '.$this->calculateToMegaByte($size).' MB exceeds max document size.');
+			throw $this->createFilesizeError($size, $this->maxDocumentSize);
 	}
 
 	/**
@@ -72,7 +72,7 @@ class Pdf extends AbstractMediaHandler
 
 		$this->fileSize = $this->filesystem->fileSize($filePath);
 		if ($this->fileSize > $this->maxDocumentSize)
-			throw new ModuleException('mediapool', 'After Upload Check: '.$this->calculateToMegaByte($this->fileSize).' MB exceeds max document size.');
+			throw $this->createFilesizeError($this->fileSize, $this->maxDocumentSize);
 
 	}
 

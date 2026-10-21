@@ -83,17 +83,20 @@ readonly class JsonErrorHandler
 	}
 
 	/**
-	 * Replacements are written as {name} in the translation, e.g. "Playlist {playlist_id} not found."
+	 * Falls back to the key like translate() does.
 	 */
 	private function translateException(TranslatableModuleException $exception): string
 	{
-		$replacements = [];
-		foreach ($exception->getReplacements() as $name => $value)
+		try
 		{
-			$replacements['{' . $name . '}'] = (string) $value;
+			$translation = $this->translator->translateException($exception);
+		}
+		catch (Throwable)
+		{
+			$translation = '';
 		}
 
-		return $this->translate($exception->getTranslationKey(), $exception->getModuleName(), $replacements, $exception->getTranslationKey());
+		return $translation !== '' ? $translation : $exception->getTranslationKey();
 	}
 
 	/**

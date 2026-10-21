@@ -67,12 +67,13 @@ class JsonErrorHandlerTest extends TestCase
 	#[Group('units')]
 	public function testNotFoundIsTranslated404(): void
 	{
-		$this->translatorMock->expects($this->once())->method('translate')
-			->with('playlist_not_found', 'playlists', ['{playlist_id}' => '5'])
+		$exception = new NotFoundException('playlists', 'playlist_not_found', ['playlist_id' => 5]);
+		$this->translatorMock->expects($this->once())->method('translateException')
+			->with($exception)
 			->willReturn('Playlist 5 nicht gefunden.');
 		$this->loggerMock->expects($this->once())->method('notice');
 
-		$response = ($this->handler)($this->request, new NotFoundException('playlists', 'playlist_not_found', ['playlist_id' => 5]), false);
+		$response = ($this->handler)($this->request, $exception, false);
 
 		$this->assertJsonError($response, 404, 'Playlist 5 nicht gefunden.');
 	}
@@ -80,7 +81,7 @@ class JsonErrorHandlerTest extends TestCase
 	#[Group('units')]
 	public function testAccessDeniedIsTranslated403(): void
 	{
-		$this->translatorMock->expects($this->once())->method('translate')->willReturn('Keine Rechte.');
+		$this->translatorMock->expects($this->once())->method('translateException')->willReturn('Keine Rechte.');
 		$this->loggerMock->expects($this->once())->method('notice');
 
 		$response = ($this->handler)($this->request, new AccessDeniedException('playlists', 'no_rights'), false);
@@ -91,7 +92,7 @@ class JsonErrorHandlerTest extends TestCase
 	#[Group('units')]
 	public function testOtherTranslatableExceptionIs400(): void
 	{
-		$this->translatorMock->expects($this->once())->method('translate')->willReturn('Zeitlimit überschritten.');
+		$this->translatorMock->expects($this->once())->method('translateException')->willReturn('Zeitlimit überschritten.');
 		$this->loggerMock->expects($this->once())->method('notice');
 
 		$response = ($this->handler)($this->request, new TranslatableModuleException('playlists', 'time_limit_exceeded'), false);
@@ -102,7 +103,7 @@ class JsonErrorHandlerTest extends TestCase
 	#[Group('units')]
 	public function testMissingTranslationFallsBackToKey(): void
 	{
-		$this->translatorMock->expects($this->once())->method('translate')->willReturn('');
+		$this->translatorMock->expects($this->once())->method('translateException')->willReturn('');
 		$this->loggerMock->expects($this->once())->method('notice');
 
 		$response = ($this->handler)($this->request, new NotFoundException('playlists', 'playlist_not_found'), false);
@@ -116,7 +117,7 @@ class JsonErrorHandlerTest extends TestCase
 	#[Group('units')]
 	public function testFailingTranslatorFallsBackToKey(): void
 	{
-		$this->translatorMock->expects($this->once())->method('translate')->willThrowException(new Error('locale not initialized'));
+		$this->translatorMock->expects($this->once())->method('translateException')->willThrowException(new Error('locale not initialized'));
 		$this->loggerMock->expects($this->once())->method('notice');
 
 		$response = ($this->handler)($this->request, new NotFoundException('playlists', 'playlist_not_found'), false);

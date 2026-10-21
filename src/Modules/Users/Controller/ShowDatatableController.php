@@ -27,6 +27,7 @@ use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
 use App\Modules\Users\Helper\Datatable\DatatableFacade;
 use Doctrine\DBAL\Exception;
@@ -68,8 +69,15 @@ readonly class ShowDatatableController
 			return $this->error($response, $flash, $translator->translate('user_not_found', 'users'));
 
 		$this->facade->configure($translator, $request->getAttribute('session'));
-		if (!$this->facade->deleteUser($UID))
-			return $this->error($response, $flash, $translator->translate('user_delete_failed', 'users'));
+		try
+		{
+			$this->facade->deleteUser($UID);
+		}
+		catch (TranslatableModuleException $e)
+		{
+			// this route is not below /async, so the error is answered here with a flash message
+			return $this->error($response, $flash, $translator->translateException($e));
+		}
 
 		$flash->addMessage('success', $translator->translate('user_deleted', 'users'));
 		return $this->responseHandler->jsonSuccess($response);

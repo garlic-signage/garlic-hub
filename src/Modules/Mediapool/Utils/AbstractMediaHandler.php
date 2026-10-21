@@ -23,6 +23,7 @@ namespace App\Modules\Mediapool\Utils;
 
 use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use League\Flysystem\Filesystem;
@@ -234,6 +235,25 @@ abstract class AbstractMediaHandler
 	public function getAbsolutePath(string $filePath): string
 	{
 		return $this->config->getPaths('systemDir') . $filePath;
+	}
+
+	protected function createFilesizeError(int $size, int $maxSize): TranslatableModuleException
+	{
+		return new TranslatableModuleException('mediapool', 'filesize_exceeded', [
+			'size'     => (string) $this->calculateToMegaByte($size),
+			'max_size' => (string) $this->calculateToMegaByte($maxSize)
+		]);
+	}
+
+	/**
+	 * @param 'width'|'height' $dimension
+	 */
+	protected function createResolutionError(string $dimension, int $value): TranslatableModuleException
+	{
+		return new TranslatableModuleException('mediapool', $dimension . '_exceeded', [
+			'value' => $value,
+			'max'   => $dimension === 'width' ? $this->maxWidth : $this->maxHeight
+		]);
 	}
 
 	protected function calculateToMegaByte(int $bytes): float

@@ -24,6 +24,9 @@ namespace Tests\Unit\Modules\Users\Services;
 
 use App\Framework\Core\Config\Config;
 use App\Framework\Database\BaseRepositories\Transactions;
+use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Mediapool\Services\NodesService;
 use App\Modules\Users\Repositories\Edge\UserAclRepository;
 use App\Modules\Users\Repositories\Edge\UserMainRepository;
@@ -179,8 +182,10 @@ class UsersAdminCreateServiceTest extends TestCase
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[RunInSeparateProcess] #[Group('units')]
-	public function testInsertNewAdminWithLockfile(): void
+	public function testInsertNewAdminThrowsWithLockfile(): void
 	{
+		// errors are logged by the error handler, not by the service
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->nodesServiceMock->expects($this->never())->method($this->anything());
 		$postData = ['username' => 'admin', 'email' => 'admin@example.com', 'locale' => 'en', 'password' => 'secure-password'];
 
@@ -196,19 +201,20 @@ class UsersAdminCreateServiceTest extends TestCase
 		$this->userAclRepositoryMock->expects($this->never())->method('addAdminRights');
 
 		$this->transactionsMock->expects($this->once())->method('rollBack');
-		$this->loggerMock->expects($this->once())->method('error')->with('There is an existing lockfile already.');
-
-		$result = $this->service->insertNewAdminUser($postData, $this->configStub);
-
-		static::assertSame(0, $result);
+		$this->transactionsMock->expects($this->never())->method('commit');
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('admin_exists');
+		$this->service->insertNewAdminUser($postData, $this->configStub);
 	}
 
 	/**
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[RunInSeparateProcess] #[Group('units')]
-	public function testInsertNewAdminWhenExists(): void
+	public function testInsertNewAdminThrowsWhenExists(): void
 	{
+		// errors are logged by the error handler, not by the service
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->userAclRepositoryMock->expects($this->never())->method($this->anything());
 		$this->nodesServiceMock->expects($this->never())->method($this->anything());
 		$postData = ['username' => 'admin', 'email' => 'admin@example.com', 'locale' => 'en', 'password' => 'secure-password'];
@@ -223,19 +229,20 @@ class UsersAdminCreateServiceTest extends TestCase
 		$this->userMainRepositoryMock->expects($this->once())->method('findByIdSecured')->with(1)->willReturn(['id' => 1, 'username' => 'admin']);
 
 		$this->transactionsMock->expects($this->once())->method('rollBack');
-		$this->loggerMock->expects($this->once())->method('error')->with('There is an admin user already.');
-
-		$result = $this->service->insertNewAdminUser($postData, $this->configStub);
-
-		static::assertSame(0, $result);
+		$this->transactionsMock->expects($this->never())->method('commit');
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('admin_exists');
+		$this->service->insertNewAdminUser($postData, $this->configStub);
 	}
 
 	/**
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[RunInSeparateProcess] #[Group('units')]
-	public function testInsertNewAdminUserInsertFails(): void
+	public function testInsertNewAdminThrowsWhenInsertFails(): void
 	{
+		// errors are logged by the error handler, not by the service
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->userAclRepositoryMock->expects($this->never())->method($this->anything());
 		$this->nodesServiceMock->expects($this->never())->method($this->anything());
 		$postData = ['username' => 'admin', 'email' => 'admin@example.com', 'locale' => 'en', 'password' => 'secure-password'];
@@ -250,19 +257,20 @@ class UsersAdminCreateServiceTest extends TestCase
 		$this->userMainRepositoryMock->expects($this->once())->method('insert')->willReturn(0);
 
 		$this->transactionsMock->expects($this->once())->method('rollBack');
-		$this->loggerMock->expects($this->once())->method('error')->with('Insert admin user failed.');
-
-		$result = $this->service->insertNewAdminUser($postData, $this->configStub);
-
-		static::assertSame(0, $result);
+		$this->transactionsMock->expects($this->never())->method('commit');
+		$this->expectException(ModuleException::class);
+		$this->expectExceptionMessage('Insert admin user failed.');
+		$this->service->insertNewAdminUser($postData, $this->configStub);
 	}
 
 	/**
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[RunInSeparateProcess] #[Group('units')]
-	public function testInsertNewAdminNodeFails(): void
+	public function testInsertNewAdminRollsBackWhenNodeFails(): void
 	{
+		// errors are logged by the error handler, not by the service
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->userAclRepositoryMock->expects($this->never())->method($this->anything());
 		$postData = ['username' => 'admin', 'email' => 'admin@example.com', 'locale' => 'en', 'password' => 'secure-password'];
 
@@ -274,22 +282,24 @@ class UsersAdminCreateServiceTest extends TestCase
 			->willReturn(false);
 		$this->userMainRepositoryMock->expects($this->once())->method('findByIdSecured')->with(1)->willReturn([]);
 		$this->userMainRepositoryMock->expects($this->once())->method('insert')->willReturn(1);
-		$this->nodesServiceMock->expects($this->once())->method('addUserDirectory')->with(1, 'admin')->willReturn(0);
+		$this->nodesServiceMock->expects($this->once())->method('addUserDirectory')->with(1, 'admin')
+			->willThrowException(new FrameworkException('Insert new node failed'));
 
 		$this->transactionsMock->expects($this->once())->method('rollBack');
-		$this->loggerMock->expects($this->once())->method('error')->with('Create mediapool admin user directory failed.');
-
-		$result = $this->service->insertNewAdminUser($postData, $this->configStub);
-
-		static::assertSame(0, $result);
+		$this->transactionsMock->expects($this->never())->method('commit');
+		$this->expectException(FrameworkException::class);
+		$this->expectExceptionMessage('Insert new node failed');
+		$this->service->insertNewAdminUser($postData, $this->configStub);
 	}
 
 	/**
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[RunInSeparateProcess] #[Group('units')]
-	public function testInsertNewAdminLockfileFails(): void
+	public function testInsertNewAdminThrowsWhenLockfileFails(): void
 	{
+		// errors are logged by the error handler, not by the service
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$postData = ['username' => 'admin', 'email' => 'admin@example.com', 'locale' => 'en', 'password' => 'secure-password'];
 
 		$this->transactionsMock->expects($this->once())->method('begin');
@@ -308,11 +318,10 @@ class UsersAdminCreateServiceTest extends TestCase
 			->with('/mock/path/install.lock', static::isString())
 			->willReturn(false);
 		$this->transactionsMock->expects($this->once())->method('rollBack');
-		$this->loggerMock->expects($this->once())->method('error')->with('Lockfile could not created.');
-
-		$result = $this->service->insertNewAdminUser($postData, $this->configStub);
-
-		static::assertSame(0, $result);
+		$this->transactionsMock->expects($this->never())->method('commit');
+		$this->expectException(ModuleException::class);
+		$this->expectExceptionMessage('Lockfile could not created.');
+		$this->service->insertNewAdminUser($postData, $this->configStub);
 	}
 
 	private function expectUntouched(MockObject ...$mocks): void

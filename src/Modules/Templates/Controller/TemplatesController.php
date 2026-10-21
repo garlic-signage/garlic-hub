@@ -61,9 +61,7 @@ readonly class TemplatesController
 		if ($templateId === 0)
 			return $this->responseHandler->jsonError($response, 'No template Id');
 
-		$error = $this->orchestrator->delete($templateId);
-		if ($error !== '')
-			return $this->responseHandler->jsonError($response, $error);
+		$this->orchestrator->delete($templateId);
 
 		return $this->responseHandler->jsonSuccess($response);
 	}

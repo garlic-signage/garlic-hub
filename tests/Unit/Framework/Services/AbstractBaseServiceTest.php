@@ -29,52 +29,22 @@ use Psr\Log\LoggerInterface;
 
 class ConcreteService extends AbstractBaseService
 {
-	public function addSomeErrors(): void
+	public function logSomething(): void
 	{
-		$this->addErrorMessage('This is an Error');
-	}
-	public function addMultipleErrors(): void
-	{
-		$this->addErrorMessage('This is an Error');
-		$this->addErrorMessage('Another error');
-
+		$this->logger->info('something');
 	}
 }
 class AbstractBaseServiceTest extends TestCase
 {
-	private ConcreteService $service;
-
 	/**
 	 * @throws Exception
 	 */
-	protected function setUp(): void
-	{
-		parent::setUp();
-		$loggerStub = $this->createStub(LoggerInterface::class);
-		$this->service = new ConcreteService($loggerStub);
-	}
-
 	#[Group('units')]
-	public function testErrorMessages(): void
+	public function testLoggerIsAvailableForSubclasses(): void
 	{
-		static::assertFalse($this->service->hasErrorMessages());
-		static::assertEmpty($this->service->getErrorMessages());
+		$loggerMock = $this->createMock(LoggerInterface::class);
+		$loggerMock->expects($this->once())->method('info')->with('something');
 
-		$this->service->addSomeErrors();
-
-		static::assertTrue($this->service->hasErrorMessages());
-		static::assertSame(['This is an Error'], $this->service->getErrorMessages());
+		(new ConcreteService($loggerMock))->logSomething();
 	}
-
-	#[Group('units')]
-	public function testGetErrorMessagesAsString(): void
-	{
-		static::assertSame('', $this->service->getErrorMessagesAsString());
-
-		$this->service->addMultipleErrors();
-
-		static::assertSame('This is an Error | Another error', $this->service->getErrorMessagesAsString());
-	}
-
-
 }

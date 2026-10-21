@@ -29,14 +29,11 @@ use App\Framework\Exceptions\UserException;
 use App\Modules\Mediapool\Services\NodesService;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
-use Throwable;
 
 /**
  * Validates the input for the mediapool node endpoints and executes the
  * requested action. Every validate method returns a response on error
  * and null when the input is valid.
- *
- * Errors of the NodesService are returned with their message, as before.
  */
 class Orchestrator
 {
@@ -87,20 +84,19 @@ class Orchestrator
 		return null;
 	}
 
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws ModuleException
+	 * @throws UserException
+	 */
 	public function add(ResponseInterface $response): ResponseInterface
 	{
-		try
-		{
-			$newNodeId = $this->nodesService->addNode((int) ($this->input['node_id'] ?? 0), $this->input['name']);
+		$newNodeId = $this->nodesService->addNode((int) ($this->input['node_id'] ?? 0), $this->input['name']);
 
-			return $this->responseBuilder->generalSuccess($response, [
-				'data' => ['id' => $newNodeId, 'new_name' => $this->input['name']]
-			]);
-		}
-		catch (Throwable $e)
-		{
-			return $this->responseBuilder->generalError($response, $e->getMessage());
-		}
+		return $this->responseBuilder->generalSuccess($response, [
+			'data' => ['id' => $newNodeId, 'new_name' => $this->input['name']]
+		]);
 	}
 
 	/**
@@ -119,28 +115,26 @@ class Orchestrator
 		return null;
 	}
 
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws ModuleException
+	 * @throws UserException
+	 */
 	public function edit(ResponseInterface $response): ResponseInterface
 	{
-		try
-		{
-			$visibility = $this->input['visibility'] ?? null;
+		$visibility = $this->input['visibility'] ?? null;
 
-			$count = $this->nodesService->editNode((int) $this->input['node_id'], $this->input['name'], $visibility);
-			if ($count === 0)
-				return $this->responseBuilder->editFailed($response);
+		// 0 affected rows only means that nothing has changed
+		$this->nodesService->editNode((int) $this->input['node_id'], $this->input['name'], $visibility);
 
-			return $this->responseBuilder->generalSuccess($response, [
-				'data' => [
-					'id' => $this->input['node_id'],
-					'new_name' => $this->input['name'],
-					'visibility' => $visibility
-				]
-			]);
-		}
-		catch (Throwable $e)
-		{
-			return $this->responseBuilder->generalError($response, $e->getMessage());
-		}
+		return $this->responseBuilder->generalSuccess($response, [
+			'data' => [
+				'id' => $this->input['node_id'],
+				'new_name' => $this->input['name'],
+				'visibility' => $visibility
+			]
+		]);
 	}
 
 	/**
@@ -159,22 +153,19 @@ class Orchestrator
 		return null;
 	}
 
+	/**
+	 * @throws Exception
+	 * @throws ModuleException
+	 */
 	public function move(ResponseInterface $response): ResponseInterface
 	{
-		try
-		{
-			$count = $this->nodesService->moveNode(
-				(int) $this->input['src_node_id'],
-				(int) $this->input['target_node_id'],
-				$this->input['target_region']
-			);
+		$count = $this->nodesService->moveNode(
+			(int) $this->input['src_node_id'],
+			(int) $this->input['target_node_id'],
+			$this->input['target_region']
+		);
 
-			return $this->responseBuilder->generalSuccess($response, ['data' => ['count_deleted_nodes' => $count]]);
-		}
-		catch (Throwable $e)
-		{
-			return $this->responseBuilder->generalError($response, $e->getMessage());
-		}
+		return $this->responseBuilder->generalSuccess($response, ['data' => ['count_deleted_nodes' => $count]]);
 	}
 
 	/**
@@ -193,18 +184,17 @@ class Orchestrator
 		return null;
 	}
 
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws ModuleException
+	 * @throws UserException
+	 */
 	public function delete(ResponseInterface $response): ResponseInterface
 	{
-		try
-		{
-			$count = $this->nodesService->deleteNode((int) $this->input['node_id']);
+		$count = $this->nodesService->deleteNode((int) $this->input['node_id']);
 
-			return $this->responseBuilder->generalSuccess($response, ['data' => ['count_deleted_nodes' => $count]]);
-		}
-		catch (Throwable $e)
-		{
-			return $this->responseBuilder->generalError($response, $e->getMessage());
-		}
+		return $this->responseBuilder->generalSuccess($response, ['data' => ['count_deleted_nodes' => $count]]);
 	}
 
 	/**

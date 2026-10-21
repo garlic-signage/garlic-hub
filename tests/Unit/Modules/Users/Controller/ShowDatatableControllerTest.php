@@ -25,6 +25,7 @@ use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Core\BaseValidator;
 use App\Framework\Core\Session;
 use App\Framework\Core\Translate\Translator;
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -189,8 +190,7 @@ class ShowDatatableControllerTest extends TestCase
 		$this->facadeMock->expects($this->once())->method('configure')
 			->with($this->translatorMock, $this->sessionMock);
 		$this->facadeMock->expects($this->once())->method('deleteUser')
-			->with(123)
-			->willReturn(true);
+			->with(123);
 		$this->translatorMock->expects($this->once())->method('translate')
 			->with('user_deleted', 'users')
 			->willReturn('User deleted');
@@ -212,7 +212,7 @@ class ShowDatatableControllerTest extends TestCase
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testDeleteFails(): void
+	public function testDeleteShowsTranslatedError(): void
 	{
 		$this->expectUntouched($this->templatePreparerMock, $this->responseMock, $this->streamInterfaceMock);
 		$this->requestMock->expects($this->atLeastOnce())->method('getParsedBody')->willReturn(['UID' => 123, 'csrf_token' => 'token']);
@@ -221,13 +221,14 @@ class ShowDatatableControllerTest extends TestCase
 
 		$this->facadeMock->expects($this->once())->method('configure')
 			->with($this->translatorMock, $this->sessionMock);
+		$exception = new AccessDeniedException('users', 'user_not_deletable', ['UID' => 123]);
 		$this->facadeMock->expects($this->once())->method('deleteUser')
 			->with(123)
-			->willReturn(false);
-		$this->translatorMock->expects($this->once())->method('translate')
-			->with('user_delete_failed', 'users')
-			->willReturn('User delete failed.');
-		$this->expectError('User delete failed.');
+			->willThrowException($exception);
+		$this->translatorMock->expects($this->once())->method('translateException')
+			->with($exception)
+			->willReturn('No rights to delete this user.');
+		$this->expectError('No rights to delete this user.');
 
 		$this->controller->delete($this->requestMock, $this->responseMock);
 	}

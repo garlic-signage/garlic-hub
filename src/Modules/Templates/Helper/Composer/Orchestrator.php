@@ -24,9 +24,13 @@ namespace App\Modules\Templates\Helper\Composer;
 
 use App\Framework\Core\Config\Config;
 use App\Framework\Media\MediaUrlSigner;
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
+use App\Framework\Exceptions\UserException;
 use App\Modules\Templates\Services\TemplatesService;
 use App\Modules\Templates\Services\TemplatesUsageService;
 use Doctrine\DBAL\Exception;
@@ -65,8 +69,9 @@ class Orchestrator extends BaseTemplateOrchestrator
 			$this->template = $this->templatesService->loadWithUserById($templateId);
 			return true;
 		}
-		catch (ModuleException)
+		catch (NotFoundException|AccessDeniedException)
 		{
+			// the callers answer with their own response, html redirect or json
 			return false;
 		}
 	}
@@ -105,18 +110,20 @@ class Orchestrator extends BaseTemplateOrchestrator
 	}
 
 	/**
-	 * @return string error text, empty on success
+	 * @throws AccessDeniedException
+	 * @throws CoreException
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws NotFoundException
+	 * @throws TranslatableModuleException
+	 * @throws UserException
 	 */
-	public function delete(int $templateId): string
+	public function delete(int $templateId): void
 	{
 		if ($this->templatesUsageService->determineTemplatesInUse([$templateId]) !== [])
-			return 'Template is in use.';
+			throw new TranslatableModuleException('templates', 'template_in_use', ['template_id' => $templateId]);
 
-		if ($this->templatesService->delete($templateId) === 0)
-			return 'Template not deleted.';
-
-		return '';
+		$this->templatesService->delete($templateId);
 	}
 
 	/**

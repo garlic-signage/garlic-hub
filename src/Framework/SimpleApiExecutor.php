@@ -22,103 +22,59 @@ declare(strict_types=1);
 
 namespace App\Framework;
 
-use App\Framework\Services\AbstractBaseService;
+use App\Framework\Exceptions\FrameworkException;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
-use Psr\Log\LoggerInterface;
-use Throwable;
+use Psr\Http\Message\ResponseInterface;
 
 /**
- * SimpleApiExecutor is a class responsible for handling API requests and managing their responses.
- * It extends the AbstractBaseService to utilize core functionalities such as logging.
+ * Executes simple JSON API requests and returns the decoded response body.
+ * Every failure throws, so the caller decides how to react.
  */
-class SimpleApiExecutor extends AbstractBaseService
+readonly class SimpleApiExecutor
 {
-	private string $bodyContents = '';
-
-	public function __construct(protected readonly Client $httpClient, LoggerInterface $logger)
-	{
-		parent::__construct($logger);
-	}
-
-	public function getBodyContents(): string
-	{
-		return $this->bodyContents;
-	}
+	public function __construct(private Client $httpClient) {}
 
 	/**
-	 * @return array<string,mixed>|array<empty,empty>
+	 * @param array<string,int|string> $options
+	 * @return array<string,mixed>
+	 * @throws FrameworkException
+	 * @throws GuzzleException
 	 */
-	public function getBodyContentsArray(): array
+	public function executeApiRequest(string $method, string $endpoint, string $token, array $options = []): array
 	{
-		return json_decode($this->bodyContents, true) ?? [];
+		$endpoint .= '?access_token='. $token;
+		$response  = $this->httpClient->request($method, $endpoint, [RequestOptions::JSON => $options]);
+
+		return $this->decodeResponse($response, 'API request failed');
 	}
 
 	/**
 	 * @param array<string,int|string> $options
+	 * @return array<string,mixed>
+	 * @throws FrameworkException
+	 * @throws GuzzleException
 	 */
-	public function executeApiRequest(string $method, string $endpoint, string $token, array $options = []): bool
+	public function executeAuth(string $endpoint,  array $options = []): array
 	{
-		try
-		{
-			$endpoint .= '?access_token='. $token;
-			$response = $this->httpClient->request($method, $endpoint, [RequestOptions::JSON => $options]);
-			$statusCode = $response->getStatusCode();
-			if ($statusCode !== 200)
-			{
-				$error = "API request failed: $statusCode";
-				$this->handleHttpError($error, $endpoint, $response->getBody()->getContents());
-				return false;
-			}
+		$response = $this->httpClient->post($endpoint, [RequestOptions::JSON => $options]);
 
-			$this->bodyContents = $response->getBody()->getContents();
-			return true;
-
-		}
-		catch (Throwable $e)
-		{
-			$this->logger->error("API request error: {$e->getMessage()}");
-			$this->addErrorMessage($e->getMessage());
-			return false;
-		}
+		return $this->decodeResponse($response, 'Auth request failed');
 	}
 
 	/**
-	 * @param array<string,int|string> $options
+	 * @return array<string,mixed>
+	 * @throws FrameworkException
 	 */
-	public function executeAuth(string $endpoint,  array $options = []): bool
+	private function decodeResponse(ResponseInterface $response, string $error): array
 	{
-		try
-		{
-			$response = $this->httpClient->post($endpoint, [RequestOptions::JSON => $options]);
+		$body = $response->getBody()->getContents();
+		if ($response->getStatusCode() !== 200)
+			throw new FrameworkException($error . ': ' . $response->getStatusCode() . ' ' . $body);
 
-			$statusCode = $response->getStatusCode();
-			if ($statusCode !== 200)
-			{
-				$error = "Auth request failed: $statusCode";
-				$this->handleHttpError($error, $endpoint, $response->getBody()->getContents());
-				return false;
-			}
+		$decoded = json_decode($body, true);
 
-			$this->bodyContents = $response->getBody()->getContents();
-			return true;
-
-		}
-		catch (Throwable $e)
-		{
-			$this->logger->error("API request error: {$e->getMessage()}");
-			$this->addErrorMessage($e->getMessage());
-			return false;
-		}
+		return is_array($decoded) ? $decoded : [];
 	}
-
-	private function handleHttpError(string $error, string $endpoint, string $body): void
-	{
-		$this->addErrorMessage($error);
-		$this->logger->error($error, [
-			'endpoint' => $endpoint,
-			'body' => $body
-		]);
-	}
-
 }

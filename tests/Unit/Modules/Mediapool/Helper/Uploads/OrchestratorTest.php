@@ -172,9 +172,9 @@ class OrchestratorTest extends TestCase
 			->validateUploadLocalFile($this->responseStub));
 
 		$result = ['success' => true, 'message' => 'x.jpg successful uploaded'];
-		$this->uploadServiceMock->expects($this->once())->method('uploadMediaFiles')
+		$this->uploadServiceMock->expects($this->once())->method('uploadMediaFile')
 			->with(5, 1, $file, ['origin' => 'webcam'])
-			->willReturn([$result]);
+			->willReturn($result);
 		$this->responseBuilderMock->expects($this->once())->method('uploadResult')
 			->with($this->responseStub, $result)
 			->willReturn($this->responseStub);
@@ -249,7 +249,7 @@ class OrchestratorTest extends TestCase
 	 */
 	private function expectValidationError(string $method): void
 	{
-		$this->uploadServiceMock->expects($this->never())->method('uploadMediaFiles');
+		$this->uploadServiceMock->expects($this->never())->method('uploadMediaFile');
 		$this->uploadServiceMock->expects($this->never())->method('uploadExternalMedia');
 		$this->uploadServiceMock->expects($this->never())->method('requestApi');
 		$this->responseBuilderMock->expects($this->never())->method('generalSuccess');

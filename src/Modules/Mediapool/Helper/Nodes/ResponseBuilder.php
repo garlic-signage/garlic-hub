@@ -49,11 +49,6 @@ class ResponseBuilder extends BaseResponseBuilder
 		return $this->jsonResponseHandler->jsonError($response, 'Source node, target node, or target region is missing');
 	}
 
-	public function editFailed(ResponseInterface $response): ResponseInterface
-	{
-		return $this->jsonResponseHandler->jsonError($response, 'Edit node failed');
-	}
-
 	/**
 	 * Wunderbaum loads the nodes directly and expects the plain list without success envelope.
 	 *

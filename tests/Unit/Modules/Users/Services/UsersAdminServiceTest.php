@@ -22,6 +22,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Users\Services;
 
 use App\Framework\Database\BaseRepositories\Transactions;
+use App\Framework\Exceptions\AccessDeniedException;
+use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\NodesService;
 use App\Modules\Profile\Entities\TokenPurposes;
@@ -35,7 +40,6 @@ use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 
 class UsersAdminServiceTest extends TestCase
 {
@@ -43,7 +47,6 @@ class UsersAdminServiceTest extends TestCase
 	private NodesService&MockObject $nodesServiceMock;
 	private UserTokenService&MockObject $userTokenServiceMock;
 	private AclValidator&MockObject $aclValidatorMock;
-	private LoggerInterface&MockObject $loggerMock;
 	private Transactions&MockObject $transactionsMock;
 	private UserSession&Stub $userSessionStub;
 	private UsersAdminService $usersAdminService;
@@ -59,7 +62,6 @@ class UsersAdminServiceTest extends TestCase
 		$this->userTokenServiceMock = $this->createMock(UserTokenService::class);
 		$this->aclValidatorMock = $this->createMock(AclValidator::class);
 		$this->transactionsMock = $this->createMock(Transactions::class);
-		$this->loggerMock = $this->createMock(LoggerInterface::class);
 
 		$this->userSessionStub = $this->createStub(UserSession::class);
 		$this->usersAdminService = new UsersAdminService(
@@ -68,8 +70,7 @@ class UsersAdminServiceTest extends TestCase
 			$this->userTokenServiceMock,
 			$this->aclValidatorMock,
 			$this->transactionsMock,
-			$this->userSessionStub,
-			$this->loggerMock
+			$this->userSessionStub
 		);
 	}
 
@@ -80,7 +81,7 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadForAdminEditReturnsEmptyArrayWhenUserNotFound(): void
 	{
-		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock, $this->loggerMock);
+		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock);
 		$UID = 123;
 
 		$this->userMainRepositoryMock->expects($this->once())->method('findByIdSecured')
@@ -98,7 +99,7 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadForAdminEditReturnsUserWithTokens(): void
 	{
-		$this->expectUntouched($this->nodesServiceMock, $this->aclValidatorMock, $this->transactionsMock, $this->loggerMock);
+		$this->expectUntouched($this->nodesServiceMock, $this->aclValidatorMock, $this->transactionsMock);
 		$UID = 123;
 		$userData = [
 			'UID' => $UID,
@@ -137,7 +138,6 @@ class UsersAdminServiceTest extends TestCase
 	public function testInsertNewUserReturnsUserIdWhenSuccessful(): void
 	{
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
-		$this->loggerMock->expects($this->never())->method($this->anything());
 		$postData = [
 			'username' => 'testuser',
 			'email' => 'testuser@example.com',
@@ -168,7 +168,7 @@ class UsersAdminServiceTest extends TestCase
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testInsertFailsNotUnique(): void
+	public function testInsertThrowsNotUnique(): void
 	{
 		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock);
 		$postData = [
@@ -184,18 +184,18 @@ class UsersAdminServiceTest extends TestCase
 				['UID' => 123, 'username' => 'duplicateuser', 'email' => 'duplicate@example.com'],
 			]);
 		$this->transactionsMock->expects($this->once())->method('rollBack');
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('User or email already exists.');
+		$this->transactionsMock->expects($this->never())->method('commit');
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('username_exists');
 
-		$result = $this->usersAdminService->insertNewUser($postData);
-		self::assertSame(0, $result);
+		$this->usersAdminService->insertNewUser($postData);
 	}
 
 	/**
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testInsertFails(): void
+	public function testInsertThrowsWhenInsertFails(): void
 	{
 		$this->nodesServiceMock->expects($this->never())->method($this->anything());
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
@@ -215,12 +215,12 @@ class UsersAdminServiceTest extends TestCase
 		$this->userTokenServiceMock->expects($this->never())->method('insertToken');
 
 		$this->transactionsMock->expects($this->once())->method('rollBack');
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Insert failed.');
+		$this->transactionsMock->expects($this->never())->method('commit');
+		$this->expectException(ModuleException::class);
+		$this->expectExceptionMessage('Insert failed.');
 
 		$this->userSessionStub->method('getUID')->willReturn(1);
-		$result = $this->usersAdminService->insertNewUser($postData);
-		self::assertSame(0, $result);
+		$this->usersAdminService->insertNewUser($postData);
 	}
 
 
@@ -228,7 +228,7 @@ class UsersAdminServiceTest extends TestCase
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testInsertFailsNodeCreate(): void
+	public function testInsertRollsBackWhenNodeCreateFails(): void
 	{
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$postData = [
@@ -250,15 +250,15 @@ class UsersAdminServiceTest extends TestCase
 			->with($UID, 'token', TokenPurposes::INITIAL_PASSWORD);
 		$this->nodesServiceMock->expects($this->once())->method('addUserDirectory')
 			->with($UID, $postData['username'])
-			->willReturn(0);
+			->willThrowException(new FrameworkException('Insert new node failed'));
 
 		$this->transactionsMock->expects($this->once())->method('rollBack');
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Create mediapool user directory failed.');
+		$this->transactionsMock->expects($this->never())->method('commit');
+		$this->expectException(FrameworkException::class);
+		$this->expectExceptionMessage('Insert new node failed');
 
 		$this->userSessionStub->method('getUID')->willReturn(1);
-		$result = $this->usersAdminService->insertNewUser($postData);
-		self::assertSame(0, $result);
+		$this->usersAdminService->insertNewUser($postData);
 	}
 
 
@@ -279,21 +279,19 @@ class UsersAdminServiceTest extends TestCase
 			->willReturn(1);
 		// tokens of a deleted user must not survive
 		$this->userTokenServiceMock->expects($this->once())->method('deleteAllUserTokens')->with($UID);
-		$this->loggerMock->expects($this->never())->method('error');
 		$this->nodesServiceMock->expects($this->once())->method('deleteUserDirectory')
 			->with($UID);
 		$this->transactionsMock->expects($this->once())->method('commit');
 
 		$this->userSessionStub->method('getUID')->willReturn(1);
-		$result = $this->usersAdminService->deleteUser($UID);
-		self::assertTrue($result);
+		$this->usersAdminService->deleteUser($UID);
 	}
 
 	/**
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testDeleteUserFailsDueToAcl(): void
+	public function testDeleteUserThrowsWithoutRights(): void
 	{
 		$this->expectUntouched($this->userMainRepositoryMock, $this->nodesServiceMock, $this->userTokenServiceMock);
 		$UID = 123;
@@ -304,19 +302,19 @@ class UsersAdminServiceTest extends TestCase
 			->willReturn(false);
 		$this->transactionsMock->expects($this->once())->method('rollBack');
 
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('No rights to delete user');
+		$this->transactionsMock->expects($this->never())->method('commit');
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('user_not_deletable');
 
 		$this->userSessionStub->method('getUID')->willReturn(1);
-		$result = $this->usersAdminService->deleteUser($UID);
-		self::assertFalse($result);
+		$this->usersAdminService->deleteUser($UID);
 	}
 
 	/**
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testDeleteUserFailsDueToDBError(): void
+	public function testDeleteUserThrowsWhenUserNotFound(): void
 	{
 		$this->nodesServiceMock->expects($this->never())->method($this->anything());
 		$this->userTokenServiceMock->expects($this->never())->method($this->anything());
@@ -331,19 +329,19 @@ class UsersAdminServiceTest extends TestCase
 			->willReturn(0);
 		$this->transactionsMock->expects($this->once())->method('rollBack');
 
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Remove the user from db-table failed.');
+		$this->transactionsMock->expects($this->never())->method('commit');
+		$this->expectException(NotFoundException::class);
+		$this->expectExceptionMessage('user_not_found');
 
 		$this->userSessionStub->method('getUID')->willReturn(1);
-		$result = $this->usersAdminService->deleteUser($UID);
-		self::assertFalse($result);
+		$this->usersAdminService->deleteUser($UID);
 	}
 
 	/**
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testDeleteUserLogsAndRollbacksOnException(): void
+	public function testDeleteUserRollsBackAndPassesErrorOn(): void
 	{
 		$this->nodesServiceMock->expects($this->never())->method($this->anything());
 		$this->userTokenServiceMock->expects($this->never())->method($this->anything());
@@ -357,12 +355,12 @@ class UsersAdminServiceTest extends TestCase
 			->with($UID)
 			->willThrowException(new \Exception('Unexpected error'));
 		$this->transactionsMock->expects($this->once())->method('rollBack');
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Unexpected error');
+		$this->transactionsMock->expects($this->never())->method('commit');
+		$this->expectException(\Exception::class);
+		$this->expectExceptionMessage('Unexpected error');
 
 		$this->userSessionStub->method('getUID')->willReturn(1);
-		$result = $this->usersAdminService->deleteUser($UID);
-		self::assertFalse($result);
+		$this->usersAdminService->deleteUser($UID);
 	}
 
 
@@ -370,9 +368,9 @@ class UsersAdminServiceTest extends TestCase
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testCreatePasswordResetTokenReturnsEmptyStringWhenTokensExist(): void
+	public function testCreatePasswordResetTokenThrowsWhenTokensExist(): void
 	{
-		$this->expectUntouched($this->userMainRepositoryMock, $this->nodesServiceMock, $this->aclValidatorMock, $this->transactionsMock, $this->loggerMock);
+		$this->expectUntouched($this->userMainRepositoryMock, $this->nodesServiceMock, $this->aclValidatorMock, $this->transactionsMock);
 		$UID = 123;
 		$existingTokens = [['token' => 'existing_token', 'purpose' => 'password_reset']];
 
@@ -380,16 +378,16 @@ class UsersAdminServiceTest extends TestCase
 			->with($UID)
 			->willReturn($existingTokens);
 
-		$result = $this->usersAdminService->createPasswordResetToken($UID);
-
-		self::assertSame('', $result);
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('tokens_exists');
+		$this->usersAdminService->createPasswordResetToken($UID);
 	}
 
 	/**
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testCreatePasswordResetTokenFailsWhenUpdateFails(): void
+	public function testCreatePasswordResetTokenThrowsWhenUpdateFails(): void
 	{
 		$this->nodesServiceMock->expects($this->never())->method($this->anything());
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
@@ -404,19 +402,18 @@ class UsersAdminServiceTest extends TestCase
 			->with($UID, ['password' => ''])
 			->willReturn(0);
 		$this->transactionsMock->expects($this->once())->method('rollBack');
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Password reset failed.');
+		$this->transactionsMock->expects($this->never())->method('commit');
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('password_reset_failed');
 
-		$result = $this->usersAdminService->createPasswordResetToken($UID);
-
-		self::assertSame('', $result);
+		$this->usersAdminService->createPasswordResetToken($UID);
 	}
 
 	/**
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testCreatePasswordResetTokenFailsWhenTokenInsertionFails(): void
+	public function testCreatePasswordResetTokenThrowsWhenTokenInsertionFails(): void
 	{
 		$this->nodesServiceMock->expects($this->never())->method($this->anything());
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
@@ -436,12 +433,11 @@ class UsersAdminServiceTest extends TestCase
 			->willReturn('');
 
 		$this->transactionsMock->expects($this->once())->method('rollBack');
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Password reset failed.');
+		$this->transactionsMock->expects($this->never())->method('commit');
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('password_reset_failed');
 
-		$result = $this->usersAdminService->createPasswordResetToken($UID);
-
-		self::assertSame('', $result);
+		$this->usersAdminService->createPasswordResetToken($UID);
 	}
 
 	/**
@@ -450,7 +446,7 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testCreatePasswordResetTokenSuccess(): void
 	{
-		$this->expectUntouched($this->nodesServiceMock, $this->aclValidatorMock, $this->loggerMock);
+		$this->expectUntouched($this->nodesServiceMock, $this->aclValidatorMock);
 		$UID = 123;
 		$tokenId = 'new_token_id';
 
@@ -479,7 +475,7 @@ class UsersAdminServiceTest extends TestCase
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testCreatePasswordResetTokenLogsAndRollbacksOnException(): void
+	public function testCreatePasswordResetTokenRollsBackAndPassesErrorOn(): void
 	{
 		$this->nodesServiceMock->expects($this->never())->method($this->anything());
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
@@ -496,21 +492,20 @@ class UsersAdminServiceTest extends TestCase
 			->willThrowException(new \Exception('Unexpected error'));
 
 		$this->transactionsMock->expects($this->once())->method('rollBack');
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Unexpected error');
+		$this->transactionsMock->expects($this->never())->method('commit');
+		$this->expectException(\Exception::class);
+		$this->expectExceptionMessage('Unexpected error');
 
-		$result = $this->usersAdminService->createPasswordResetToken($UID);
-
-		self::assertSame('', $result);
+		$this->usersAdminService->createPasswordResetToken($UID);
 	}
 
 	/**
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testUpdateUserReturnsZeroWhenNotUnique(): void
+	public function testUpdateUserThrowsWhenNotUnique(): void
 	{
-		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock, $this->loggerMock);
+		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock);
 		$UID = 123;
 		$postData = [
 			'username' => 'duplicateuser',
@@ -523,9 +518,9 @@ class UsersAdminServiceTest extends TestCase
 				['UID' => 124, 'username' => 'duplicateuser', 'email' => 'duplicate@example.com']
 			]);
 
-		$result = $this->usersAdminService->updateUser($UID, $postData);
-
-		self::assertSame(0, $result);
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('username_exists');
+		$this->usersAdminService->updateUser($UID, $postData);
 	}
 
 	/**
@@ -534,7 +529,7 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateUserSuccess(): void
 	{
-		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock, $this->loggerMock);
+		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock);
 		$UID = 123;
 		$postData = [
 			'username' => 'testuser',
@@ -562,7 +557,7 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateUserFailsOnUpdateFailure(): void
 	{
-		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock, $this->loggerMock);
+		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock);
 		$UID = 123;
 		$postData = [
 			'username' => 'testuser',
@@ -588,9 +583,9 @@ class UsersAdminServiceTest extends TestCase
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testUpdateUserFailsExistsUserName(): void
+	public function testUpdateUserThrowsExistsUserName(): void
 	{
-		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock, $this->loggerMock);
+		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock);
 		$UID = 123;
 		$postData = [
 			'username' => 'testuser',
@@ -608,18 +603,18 @@ class UsersAdminServiceTest extends TestCase
 
 		$this->userMainRepositoryMock->expects($this->never())->method('update');
 
-		$result = $this->usersAdminService->updateUser($UID, $postData);
-		self::assertSame(0, $result);
-		self::assertSame('username_exists', $this->usersAdminService->getErrorMessages()[0]);
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('username_exists {"username":"testuser"}');
+		$this->usersAdminService->updateUser($UID, $postData);
 	}
 
 	/**
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testUpdateUserFailsExistsEmail(): void
+	public function testUpdateUserThrowsExistsEmail(): void
 	{
-		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock, $this->loggerMock);
+		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock);
 		$UID = 123;
 		$postData = [
 			'username' => 'testuser',
@@ -637,9 +632,9 @@ class UsersAdminServiceTest extends TestCase
 
 		$this->userMainRepositoryMock->expects($this->never())->method('update');
 
-		$result = $this->usersAdminService->updateUser($UID, $postData);
-		self::assertSame(0, $result);
-		self::assertSame('email_exists', $this->usersAdminService->getErrorMessages()[0]);
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('email_exists {"email":"test@example.com"}');
+		$this->usersAdminService->updateUser($UID, $postData);
 	}
 
 	/**
@@ -648,7 +643,7 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateUserSucceedSameUserExistsUsername(): void
 	{
-		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock, $this->loggerMock);
+		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock);
 		$UID = 123;
 		$postData = [
 			'username' => 'testuser',
@@ -670,7 +665,6 @@ class UsersAdminServiceTest extends TestCase
 
 		$result = $this->usersAdminService->updateUser($UID, $postData);
 		self::assertSame(1, $result);
-		self::assertEmpty($this->usersAdminService->getErrorMessages());
 	}
 
 	/**
@@ -679,7 +673,7 @@ class UsersAdminServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateUserSucceedSameUserExistsMail(): void
 	{
-		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock, $this->loggerMock);
+		$this->expectUntouched($this->nodesServiceMock, $this->userTokenServiceMock, $this->aclValidatorMock, $this->transactionsMock);
 		$UID = 123;
 		$postData = [
 			'username' => 'testuser2',
@@ -701,7 +695,6 @@ class UsersAdminServiceTest extends TestCase
 
 		$result = $this->usersAdminService->updateUser($UID, $postData);
 		self::assertSame(1, $result);
-		self::assertEmpty($this->usersAdminService->getErrorMessages());
 	}
 
 	private function expectUntouched(MockObject ...$mocks): void

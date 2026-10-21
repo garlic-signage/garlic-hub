@@ -22,15 +22,16 @@ declare(strict_types=1);
 namespace App\Modules\Users\Services;
 
 use App\Framework\Database\BaseRepositories\Transactions;
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Services\AbstractBaseService;
+use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\NodesService;
 use App\Modules\Profile\Entities\TokenPurposes;
 use App\Modules\Profile\Services\UserTokenService;
 use App\Modules\Users\Repositories\Edge\UserMainRepository;
 use Doctrine\DBAL\Exception;
-use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
@@ -38,7 +39,7 @@ use Throwable;
  * related to user management, including user creation, modification,
  * and deletion, as well as token and directory operations.
  */
-class UsersAdminService extends AbstractBaseService
+class UsersAdminService
 {
 
 	private string $token = '';
@@ -49,11 +50,8 @@ class UsersAdminService extends AbstractBaseService
 		private readonly UserTokenService $userTokenService,
 		private readonly AclValidator $aclValidator,
 		private readonly Transactions $transactions,
-		private readonly UserSession $userSession,
-		LoggerInterface $logger)
-	{
-		parent::__construct($logger);
-	}
+		private readonly UserSession $userSession
+	) {}
 
 	public function getToken(): string
 	{
@@ -95,14 +93,15 @@ class UsersAdminService extends AbstractBaseService
 	/**
 	 * @param array{username:string, email:string, status?: int} $postData
 	 * @throws Exception
+	 * @throws ModuleException
+	 * @throws Throwable
 	 */
 	public function insertNewUser(array $postData): int
 	{
+		$this->transactions->begin();
 		try
 		{
-			$this->transactions->begin();
-			if (!$this->isUnique(0, $postData['username'], $postData['email']))
-				throw new ModuleException('users', 'User or email already exists.');
+			$this->assertUnique(0, $postData['username'], $postData['email']);
 
 			/** @var array{username:string, email:string, status?: int} $saveData */
 			$saveData = $this->collectCommonData($postData);
@@ -114,12 +113,7 @@ class UsersAdminService extends AbstractBaseService
 			$this->token = $this->userTokenService->generateToken();
 			$this->userTokenService->insertToken($UID, $this->token, TokenPurposes::INITIAL_PASSWORD);
 
-			$nodeId = $this->nodesService->addUserDirectory($UID, $saveData['username']);
-			if ($nodeId === 0)
-			{
-				$this->addErrorMessage('create_media_dir_failed');
-				throw new ModuleException('users', 'Create mediapool user directory failed.');
-			}
+			$this->nodesService->addUserDirectory($UID, $saveData['username']);
 
 			$this->transactions->commit();
 
@@ -128,85 +122,80 @@ class UsersAdminService extends AbstractBaseService
 		catch (Throwable $e)
 		{
 			$this->transactions->rollBack();
-			$this->logger->error($e->getMessage());
-			return 0;
+			throw $e;
 		}
 	}
 
 	/**
+	 * @throws AccessDeniedException
 	 * @throws Exception
+	 * @throws NotFoundException
+	 * @throws Throwable
 	 */
-	public function deleteUser(int $UID): bool
+	public function deleteUser(int $UID): void
 	{
+		$this->transactions->begin();
 		try
 		{
-			$this->transactions->begin();
-
 			if (!$this->aclValidator->isModuleAdmin($this->userSession->getUID()))
-				throw new ModuleException('users', 'No rights to delete user');
+				throw new AccessDeniedException('users', 'user_not_deletable', ['UID' => $UID]);
 
 			if ($this->userMainRepository->delete($UID) === 0)
-				throw new ModuleException('users', 'Remove the user from db-table failed.');
+				throw new NotFoundException('users', 'user_not_found', ['UID' => $UID]);
 
 			$this->userTokenService->deleteAllUserTokens($UID);
 
 			$this->nodesService->deleteUserDirectory($UID);
 
 			$this->transactions->commit();
-			return true;
 		}
 		catch (Throwable $e)
 		{
 			$this->transactions->rollBack();
-			$this->logger->error($e->getMessage());
-			$this->addErrorMessage('delete_user_failed');
-			return false;
+			throw $e;
 		}
 	}
 
 	/**
 	 * @throws Exception
+	 * @throws TranslatableModuleException
+	 * @throws Throwable
 	 */
 	public function createPasswordResetToken(int $UID): string
 	{
 		// check first if there is another valid token
-		$tokens = $this->userTokenService->findTokensByUID($UID);
-		if ($tokens !== [])
-		{
-			$this->addErrorMessage('tokens_exists');
-			return '';
-		}
+		if ($this->userTokenService->findTokensByUID($UID) !== [])
+			throw new TranslatableModuleException('users', 'tokens_exists', ['UID' => $UID]);
+
+		$this->transactions->begin();
 		try
 		{
-			$this->transactions->begin();
-			if($this->userMainRepository->update($UID, ['password' => '']) === 0)
-				throw new ModuleException('users', 'Password reset failed.');
+			if ($this->userMainRepository->update($UID, ['password' => '']) === 0)
+				throw new TranslatableModuleException('users', 'password_reset_failed', ['UID' => $UID]);
 
 			$token = $this->userTokenService->generateToken();
-			$id = $this->userTokenService->insertToken($UID,  $token,TokenPurposes::PASSWORD_RESET);
-			if($id === '')
-				throw new ModuleException('users', 'Password reset failed.');
+			if ($this->userTokenService->insertToken($UID, $token, TokenPurposes::PASSWORD_RESET) === '')
+				throw new TranslatableModuleException('users', 'password_reset_failed', ['UID' => $UID]);
 
 			$this->transactions->commit();
+
+			return $token;
 		}
 		catch (Throwable $e)
 		{
 			$this->transactions->rollBack();
-			$this->logger->error($e->getMessage());
-			$this->addErrorMessage('password_reset_failed');
-			return '';
+			throw $e;
 		}
-		return $token;
 	}
 
 	/**
 	 * @param array{username:string, email:string, locale?: string, status?: int} $postData
 	 * @throws Exception
+	 * @throws TranslatableModuleException
 	 */
 	public function updateUser(int $UID, array $postData): int
 	{
-		if (!$this->isUnique($UID, $postData['username'], $postData['email']))
-			return 0;
+		$this->assertUnique($UID, $postData['username'], $postData['email']);
 
 		$saveData = $this->collectCommonData($postData);
 
@@ -237,36 +226,24 @@ class UsersAdminService extends AbstractBaseService
 
 	/**
 	 * @throws Exception
+	 * @throws TranslatableModuleException
 	 */
-	private function isUnique(int $UID, string $username, string $email): bool
+	private function assertUnique(int $UID, string $username, string $email): void
 	{
-		$result =  $this->userMainRepository->findExistingUser($username, $email);
-
-		if ($result === [])
-			return true;
-
 		// if there is similar user we need to check ig the UID is identic,
 		// it could be possible that the user is try to edit the username and or email
 		// of an existing user.
 		// In this case it should be possible
 
 		/** @var array{UID: int, username:string, email:string} $existing */
-		foreach ($result as $existing)
+		foreach ($this->userMainRepository->findExistingUser($username, $email) as $existing)
 		{
 			if ($existing['username'] === $username && (int) $existing['UID'] !== $UID)
-			{
-				$this->addErrorMessage('username_exists');
-				return false;
-			}
+				throw new TranslatableModuleException('users', 'username_exists', ['username' => $username]);
 
 			if ($existing['email'] === $email && (int) $existing['UID'] !== $UID)
-			{
-				$this->addErrorMessage('email_exists');
-				return false;
-			}
+				throw new TranslatableModuleException('users', 'email_exists', ['email' => $email]);
 		}
-
-		return true;
 	}
 
 }

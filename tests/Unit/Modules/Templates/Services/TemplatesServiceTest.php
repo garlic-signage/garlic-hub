@@ -21,9 +21,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Templates\Services;
 
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Templates\Repositories\TemplatesRepository;
 use App\Modules\Templates\Services\AclValidator;
@@ -32,14 +33,12 @@ use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 class TemplatesServiceTest extends TestCase
 {
 	private TemplatesRepository&MockObject $repositoryMock;
 	private AclValidator&MockObject $aclValidatorMock;
-	private LoggerInterface&MockObject $loggerMock;
 	private TemplatesService $service;
 
 	/** @var array{UID: int, company_id: int, template_id: int, name: string} */
@@ -53,11 +52,10 @@ class TemplatesServiceTest extends TestCase
 		parent::setUp();
 		$this->repositoryMock   = $this->createMock(TemplatesRepository::class);
 		$this->aclValidatorMock = $this->createMock(AclValidator::class);
-		$this->loggerMock       = $this->createMock(LoggerInterface::class);
 		$userSessionStub        = $this->createStub(UserSession::class);
 		$userSessionStub->method('getUID')->willReturn(5);
 
-		$this->service = new TemplatesService($this->repositoryMock, $this->aclValidatorMock, $userSessionStub, $this->loggerMock);
+		$this->service = new TemplatesService($this->repositoryMock, $this->aclValidatorMock, $userSessionStub);
 	}
 
     /**
@@ -67,7 +65,6 @@ class TemplatesServiceTest extends TestCase
 	{
 		$this->aclValidatorMock->expects($this->once())->method('canCreate')->with(5)->willReturn(true);
 		$this->repositoryMock->expects($this->never())->method($this->anything());
-		$this->loggerMock->expects($this->never())->method($this->anything());
 
 		static::assertTrue($this->service->checkCreateRights());
 	}
@@ -79,7 +76,6 @@ class TemplatesServiceTest extends TestCase
 	{
 		$this->aclValidatorMock->expects($this->once())->method('canCreate')->with(5)->willReturn(false);
 		$this->repositoryMock->expects($this->never())->method($this->anything());
-		$this->loggerMock->expects($this->never())->method($this->anything());
 
 		static::assertFalse($this->service->checkCreateRights());
 	}
@@ -96,7 +92,6 @@ class TemplatesServiceTest extends TestCase
 			->with(3, ['UID' => 8, 'content' => '{}', 'name' => 'New', 'visibility' => 'public'])
 			->willReturn(1);
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
-		$this->loggerMock->expects($this->never())->method($this->anything());
 
 		static::assertSame(1, $this->service->update(3, $post));
 	}
@@ -111,7 +106,6 @@ class TemplatesServiceTest extends TestCase
 			->with(3, ['name' => 'New'])
 			->willReturn(1);
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
-		$this->loggerMock->expects($this->never())->method($this->anything());
 
 		static::assertSame(1, $this->service->update(3, ['name' => 'New']));
 	}
@@ -128,7 +122,6 @@ class TemplatesServiceTest extends TestCase
 			->with(['UID' => 8, 'type' => 'canvas', 'name' => 'New', 'visibility' => 'private'])
 			->willReturn('17');
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
-		$this->loggerMock->expects($this->never())->method($this->anything());
 
 		static::assertSame(17, $this->service->insert($post));
 	}
@@ -143,7 +136,6 @@ class TemplatesServiceTest extends TestCase
 			->with(['UID' => 5, 'type' => 'canvas', 'name' => 'New'])
 			->willReturn(18);
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
-		$this->loggerMock->expects($this->never())->method($this->anything());
 
 		static::assertSame(18, $this->service->insert(['type' => 'canvas', 'name' => 'New']));
 	}
@@ -152,14 +144,12 @@ class TemplatesServiceTest extends TestCase
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws ModuleException
 	 */
 	#[Group('units')]
 	public function testLoadWithUserById(): void
 	{
 		$this->repositoryMock->expects($this->once())->method('findFirstWithUserName')->with(3)->willReturn($this->template);
 		$this->aclValidatorMock->expects($this->once())->method('isTemplateEditable')->with(5, $this->template)->willReturn(true);
-		$this->loggerMock->expects($this->never())->method($this->anything());
 
 		static::assertSame($this->template, $this->service->loadWithUserById(3));
 	}
@@ -174,10 +164,9 @@ class TemplatesServiceTest extends TestCase
 	{
 		$this->repositoryMock->expects($this->once())->method('findFirstWithUserName')->with(3)->willReturn([]);
 		$this->aclValidatorMock->expects($this->never())->method('isTemplateEditable');
-		$this->loggerMock->expects($this->never())->method($this->anything());
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('No template with Id: 3 found.');
+		$this->expectException(NotFoundException::class);
+		$this->expectExceptionMessage('template_not_found {"template_id":3}');
 
 		$this->service->loadWithUserById(3);
 	}
@@ -192,10 +181,9 @@ class TemplatesServiceTest extends TestCase
 	{
 		$this->repositoryMock->expects($this->once())->method('findFirstWithUserName')->willReturn($this->template);
 		$this->aclValidatorMock->expects($this->once())->method('isTemplateEditable')->willReturn(false);
-		$this->loggerMock->expects($this->never())->method($this->anything());
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('Template is not editable.');
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('template_not_editable {"template_id":3}');
 
 		$this->service->loadWithUserById(3);
 	}
@@ -206,10 +194,8 @@ class TemplatesServiceTest extends TestCase
 		$this->repositoryMock->expects($this->once())->method('findFirstWithUserName')->willReturn($this->template);
 		$this->aclValidatorMock->expects($this->once())->method('isTemplateEditable')->willReturn(true);
 		$this->repositoryMock->expects($this->once())->method('delete')->with(3)->willReturn(1);
-		$this->loggerMock->expects($this->never())->method($this->anything());
 
 		static::assertSame(1, $this->service->delete(3));
-		static::assertFalse($this->service->hasErrorMessages());
 	}
 
 	#[Group('units')]
@@ -218,21 +204,21 @@ class TemplatesServiceTest extends TestCase
 		$this->repositoryMock->expects($this->once())->method('findFirstWithUserName')->willReturn($this->template);
 		$this->aclValidatorMock->expects($this->once())->method('isTemplateEditable')->willReturn(false);
 		$this->repositoryMock->expects($this->never())->method('delete');
-		$this->loggerMock->expects($this->once())->method('error')->with('Error delete template: Template is not editable.');
 
-		static::assertSame(0, $this->service->delete(3));
-		static::assertSame(['Template is not editable.'], $this->service->getErrorMessages());
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('template_not_editable {"template_id":3}');
+		$this->service->delete(3);
 	}
 
 	#[Group('units')]
-	public function testDeleteFailsInRepository(): void
+	public function testDeletePassesRepositoryErrorOn(): void
 	{
 		$this->repositoryMock->expects($this->once())->method('findFirstWithUserName')->willReturn($this->template);
 		$this->aclValidatorMock->expects($this->once())->method('isTemplateEditable')->willReturn(true);
-		$this->repositoryMock->expects($this->once())->method('delete')->willThrowException(new RuntimeException('db gone'));
-		$this->loggerMock->expects($this->once())->method('error')->with('Error delete template: db gone');
+		$exception = new RuntimeException('db gone');
+		$this->repositoryMock->expects($this->once())->method('delete')->willThrowException($exception);
 
-		static::assertSame(0, $this->service->delete(3));
-		static::assertSame(['db gone'], $this->service->getErrorMessages());
+		$this->expectExceptionObject($exception);
+		$this->service->delete(3);
 	}
 }

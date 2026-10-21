@@ -21,18 +21,18 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Services;
 
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Framework\Services\AbstractBaseService;
 use App\Modules\Auth\UserSession;
 use App\Modules\Player\Repositories\PlayerRepository;
 use App\Modules\Playlists\Helper\PlaylistMode;
 use App\Modules\Playlists\Services\PlaylistsService;
 use Doctrine\DBAL\Exception;
-use Psr\Log\LoggerInterface;
-use Throwable;
 
 /**
  * PlayerService class provides functionalities for managing players, including updating player information,
@@ -41,21 +41,19 @@ use Throwable;
  * This service interacts with the PlayerRepository for data persistence, the PlaylistsService for handling
  * associated playlists, and utilizes an AclValidator for enforcing access control logic.
  */
-class PlayerService extends AbstractBaseService
+class PlayerService
 {
 	private readonly PlayerRepository $playerRepository;
 	private readonly PlaylistsService $playlistService;
 	private readonly AclValidator $playerValidator;
 	private readonly UserSession $userSession;
 
-	public function __construct(PlayerRepository $playerRepository, PlaylistsService $playlistService, AclValidator $playerValidator, UserSession $userSession, LoggerInterface $logger)
+	public function __construct(PlayerRepository $playerRepository, PlaylistsService $playlistService, AclValidator $playerValidator, UserSession $userSession)
 	{
 		$this->playerRepository = $playerRepository;
 		$this->playlistService  = $playlistService;
 		$this->playerValidator  = $playerValidator;
 		$this->userSession     = $userSession;
-
-		parent::__construct($logger);
 	}
 
 	/**
@@ -81,80 +79,68 @@ class PlayerService extends AbstractBaseService
 	}
 
 	/**
+	 * @throws AccessDeniedException
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
+	 * @throws NotFoundException
 	 * @throws UserException
 	 */
 	public function delete(int $playerId): int
 	{
-		$player = $this->fetchAclCheckedPlayerData($playerId);
-		if ($player === [])
-			return 0;
+		$this->fetchAclCheckedPlayerData($playerId);
 
 		return $this->playerRepository->delete($playerId);
 	}
 
 	/**
-	 * @return array<string,mixed>
+	 * @return array{affected:int, playlist_name:string, is_intranet:int}
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws NotFoundException
+	 * @throws UserException
 	 */
 	public function replaceMasterPlaylist(int $playerId, int $playlistId): array
 	{
-		try
+		$this->fetchAclCheckedPlayerData($playerId);
+
+		$playlistName = '';
+		$isIntranet   = 0;
+		if ($playlistId > 0)
 		{
-			$player = $this->fetchAclCheckedPlayerData($playerId);
-			if ($player === [])
-				return []; // error is handled in fetchAclCheckedPlayerData
+			$playlist = $this->playlistService->loadPureById($playlistId);
+			if ($playlist['playlist_mode'] !==  PlaylistMode::MASTER->value && $playlist['playlist_mode'] !==  PlaylistMode::MULTIZONE->value)
+				throw new TranslatableModuleException('player', 'playlist_not_master', ['playlist_name' => (string) $playlist['playlist_name']]);
 
-			$playlistName = '';
-			if ($playlistId > 0)
-			{
-				$playlist = $this->playlistService->loadPureById($playlistId);
-				if ($playlist['playlist_mode'] !==  PlaylistMode::MASTER->value && $playlist['playlist_mode'] !==  PlaylistMode::MULTIZONE->value)
-					throw new ModuleException('player', $playlist['playlist_name'] . ' is not a master playlist');
-
-				$playlistName = $playlist['playlist_name'];
-			}
-			$affected = $this->playerRepository->update($playerId, ['playlist_id' => $playlistId]);
-
-			$is_intranet = $playlist['is_intranet'] ?? 0;
-
-			return ['affected' => $affected, 'playlist_name' => $playlistName, 'is_intranet' => $is_intranet];
+			$playlistName = (string) $playlist['playlist_name'];
+			$isIntranet   = (int) ($playlist['is_intranet'] ?? 0);
 		}
-		catch (Throwable $e)
-		{
-			$this->logger->error($e->getMessage());
-			$this->addErrorMessage($e->getMessage());
-			return [];
-		}
+		$affected = $this->playerRepository->update($playerId, ['playlist_id' => $playlistId]);
+
+		return ['affected' => $affected, 'playlist_name' => $playlistName, 'is_intranet' => $isIntranet];
 	}
 
 	/**
-	 * @param int $playerId
-	 * @return array<string,mixed>|array<empty,empty>
-	 * @throws Exception
+	 * @return array<string,mixed>
+	 * @throws AccessDeniedException
 	 * @throws CoreException
+	 * @throws Exception
 	 * @throws FrameworkException
+	 * @throws NotFoundException
 	 * @throws UserException
 	 */
 	public function fetchAclCheckedPlayerData(int $playerId): array
 	{
 		$player = $this->playerRepository->findFirstById($playerId);
 		if ($player === [])
-		{
-			$this->logger->error('Error loading player: '.$playerId.' is not found.');
-			$this->addErrorMessage('Error loading player: '.$playerId.' is not found.');
-
-			return [];
-		}
+			throw new NotFoundException('player', 'player_not_found', ['player_id' => $playerId]);
 
 		/** @var array{UID: int, company_id: int, player_id: int, ...} $player */
-		$UID = $this->userSession->getUID();
-		if (!$this->playerValidator->isPlayerEditable($UID, $player))
-		{
-			$this->logger->error('Error loading player: '.$playerId.' is not editable for User '.$UID.'.');
-			return [];
-		}
+		if (!$this->playerValidator->isPlayerEditable($this->userSession->getUID(), $player))
+			throw new AccessDeniedException('player', 'player_not_editable', ['player_id' => $playerId]);
 
 		return $player;
 	}

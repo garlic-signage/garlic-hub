@@ -24,6 +24,7 @@ namespace Tests\Unit\Modules\Mediapool\Utils;
 use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Mediapool\Utils\Image;
 use Imagick;
 use ImagickException;
@@ -76,8 +77,8 @@ class ImageTest extends TestCase
 	{
 		$this->filesystemMock->expects($this->never())->method($this->anything());
 		$this->imagickMock->expects($this->never())->method($this->anything());
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('Filesize: 20 MB exceeds max image size.');
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('filesize_exceeded {"size":"20"');
 
 		$this->image->checkFileBeforeUpload(20 * 1024 * 1024 + 1);
 	}
@@ -122,8 +123,8 @@ class ImageTest extends TestCase
 		$this->filesystemMock->expects($this->atLeastOnce())->method('fileExists')->willReturn(true);
 		$this->filesystemMock->expects($this->atLeastOnce())->method('fileSize')->willReturn(20 * 1024 * 1024 + 1);
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('After Upload Check: 20 MB exceeds max image size.');
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('filesize_exceeded {"size":"20"');
 
 		$this->image->validateStoredFile('/path/to/file');
 	}
@@ -139,8 +140,8 @@ class ImageTest extends TestCase
 		$this->filesystemMock->expects($this->atLeastOnce())->method('fileSize')->willReturn(20 * 1024 * 1024);
 		$this->imagickMock->expects($this->atLeastOnce())->method('getImageWidth')->willReturn(5001);
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('After Upload Check:  Image width 5001 exceeds maximum.');
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('width_exceeded {"value":5001');
 
 		$this->image->validateStoredFile('/path/to/file');
 	}
@@ -156,8 +157,8 @@ class ImageTest extends TestCase
 		$this->filesystemMock->expects($this->atLeastOnce())->method('fileSize')->willReturn(20 * 1024 * 1024);
 		$this->imagickMock->expects($this->atLeastOnce())->method('getImageHeight')->willReturn(5001);
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('After Upload Check:  Image height 5001 exceeds maximum.');
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('height_exceeded {"value":5001');
 
 		$this->image->validateStoredFile('/path/to/file');
 	}

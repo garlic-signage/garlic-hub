@@ -178,7 +178,7 @@ class MediaTest extends TestCase
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testInsertMediaNotAccessible(): void
+	public function testInsertMediaNotFound(): void
 	{
 		$this->loggerMock->expects($this->never())->method($this->anything());
 		// nothing is calculated
@@ -189,12 +189,12 @@ class MediaTest extends TestCase
 
 		$this->mediaServiceMock->expects($this->once())->method('fetchMedia')
 			->with('invalidMediaId')
-			->willReturn([]);
+			->willThrowException(new NotFoundException('mediapool', 'media_not_found', ['media_id' => 'invalidMediaId']));
 
 		$this->itemsRepositoryMock->expects($this->once())->method('rollBackTransaction');
 
 		$this->expectException(NotFoundException::class);
-		$this->expectExceptionMessage('media_not_accessible');
+		$this->expectExceptionMessage('media_not_found');
 		$this->media->insert(1, 'invalidMediaId', 2);
 	}
 

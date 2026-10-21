@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Templates\Helper\Settings;
 
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -100,7 +101,7 @@ class OrchestratorTest extends TestCase
 	public function testCheckEditRightsWithoutRights(): void
 	{
 		$this->serviceMock->expects($this->once())->method('loadWithUserById')
-			->willThrowException(new ModuleException('templates', 'Template is not editable.'));
+			->willThrowException(new AccessDeniedException('templates', 'template_not_editable', ['template_id' => 12]));
 		$this->expectNoFormHandling();
 
 		static::assertFalse($this->orchestrator->checkEditRights(12));

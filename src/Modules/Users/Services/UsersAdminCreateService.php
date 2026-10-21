@@ -24,7 +24,7 @@ namespace App\Modules\Users\Services;
 use App\Framework\Core\Config\Config;
 use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Services\AbstractBaseService;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Mediapool\Services\NodesService;
 use App\Modules\Users\Repositories\Edge\UserAclRepository;
 use App\Modules\Users\Repositories\Edge\UserMainRepository;
@@ -33,16 +33,14 @@ use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
-class UsersAdminCreateService extends AbstractBaseService
+class UsersAdminCreateService
 {
 	public function __construct(private readonly UserMainRepository $userMainRepository,
 								private readonly UserAclRepository $userAclRepository,
 								private readonly NodesService $nodesService,
 								private readonly Transactions $transactions,
-								LoggerInterface $logger)
+								private readonly LoggerInterface $logger)
 	{
-
-		parent::__construct($logger);
 	}
 
 	/**
@@ -69,26 +67,23 @@ class UsersAdminCreateService extends AbstractBaseService
 	/**
 	 * @param array{username:string, email:string, locale: string, password:string} $postData
 	 * @throws Exception
+	 * @throws ModuleException
+	 * @throws Throwable
 	 */
 	public function insertNewAdminUser(array $postData, Config $config): int
 	{
+		$this->transactions->begin();
 		try
 		{
-			$this->transactions->begin();
-			if (file_exists(INSTALL_LOCK_FILE))
-				throw new ModuleException('users', 'There is an existing lockfile already.');
-
-			if ($this->hasAdminUser())
-				throw new ModuleException('users', 'There is an admin user already.');
+			if (file_exists(INSTALL_LOCK_FILE) || $this->hasAdminUser())
+				throw new TranslatableModuleException('users', 'admin_exists');
 
 			$saveData = $this->collectCommonData($postData);
 			$UID = (int) $this->userMainRepository->insert($saveData);
 			if ($UID !== 1)
 				throw new ModuleException('users', 'Insert admin user failed.');
 
-			$nodeId = $this->nodesService->addUserDirectory($UID, $saveData['username']);
-			if ($nodeId === 0)
-				throw new ModuleException('users', 'Create mediapool admin user directory failed.');
+			$this->nodesService->addUserDirectory($UID, $saveData['username']);
 
 			$this->userAclRepository->addAdminRights($config);
 			if (!$this->creatLockfile())
@@ -100,8 +95,7 @@ class UsersAdminCreateService extends AbstractBaseService
 		catch (Throwable $e)
 		{
 			$this->transactions->rollBack();
-			$this->logger->error($e->getMessage());
-			return 0;
+			throw $e;
 		}
 	}
 

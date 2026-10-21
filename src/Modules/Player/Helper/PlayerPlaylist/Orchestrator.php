@@ -25,6 +25,8 @@ namespace App\Modules\Player\Helper\PlayerPlaylist;
 use App\Framework\Core\BaseValidator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Modules\Player\Services\PlayerRestAPIService;
@@ -98,15 +100,16 @@ class Orchestrator
 	}
 
 	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
 	 * @throws UserException
 	 */
 	public function replaceMasterPlaylist(ResponseInterface $response): ResponseInterface
 	{
-
+		// 0 affected rows only means that the playlist was already assigned
 		$data = $this->playerService->replaceMasterPlaylist($this->playerId, $this->playlistId);
-
-		if (empty($data) || $data['affected'] === 0)
-			return $this->responseBuilder->generalError($response, $this->playerService->getErrorMessagesAsString());
 
 		return $this->responseBuilder->generalSuccess($response, ['playlist_name' => $data['playlist_name']]);
 	}
@@ -121,10 +124,8 @@ class Orchestrator
 	public function checkPlayer(ResponseInterface $response): ?ResponseInterface
 	{
 
-		/** @var array{is_intranet:int, playlist_id:int, api_endpoint:string, player_name:string, ...}|array<empty,empty> $player */
+		/** @var array{is_intranet:int, playlist_id:int, api_endpoint:string, player_name:string, ...} $player */
 		$player = $this->playerService->fetchAclCheckedPlayerData($this->playerId);
-		if ($player === [])
-			return $this->responseBuilder->playerNotFound($response);
 
 		if ($player['is_intranet'] === 0)
 			return $this->responseBuilder->playerNotReachable($response);
@@ -132,7 +133,6 @@ class Orchestrator
 		if ($player['playlist_id'] === 0)
 			return $this->responseBuilder->noPlaylistAssigned($response);
 
-		/** @var array{is_intranet:int, playlist_id:int, api_endpoint:string, player_name:string, ...} $player */
 		$this->setPlayer($player);
 		return null;
 	}
@@ -146,26 +146,16 @@ class Orchestrator
 	}
 
 	/**
-	 * @throws UserException
+	 * @throws Exception
+	 * @throws TranslatableModuleException
 	 */
 	public function pushPlaylist(ResponseInterface $response): ResponseInterface
 	{
-
-		$hasToken = $this->playerRestAPIService->authenticate($this->player['api_endpoint'], 'admin', '', $this->playerId);
-		if (!$hasToken)
-			return $this->responseBuilder->generalError($response,
-				$this->playerRestAPIService->getErrorMessages()[0] ?? 'unknown player token error'
-			);
-
-		$succeed = $this->playerRestAPIService->switchToDefaultContentUrl($this->player['api_endpoint'], $this->playerId);
-		if (!$succeed)
-			return $this->responseBuilder->generalError($response,
-				$this->playerRestAPIService->getErrorMessages()[0] ?? 'unknown player token error'
-			);
+		$this->playerRestAPIService->authenticate($this->player['api_endpoint'], 'admin', '', $this->playerId);
+		$this->playerRestAPIService->switchToDefaultContentUrl($this->player['api_endpoint'], $this->playerId);
 
 		return $this->responseBuilder->generalSuccess($response,
 			[ 'message' => 'Playlist pushed successfully to '.$this->player['player_name'].'.']);
-
 	}
 
 }

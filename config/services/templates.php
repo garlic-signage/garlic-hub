@@ -76,8 +76,7 @@ $dependencies[TemplatesService::class] = DI\factory(function (ContainerInterface
 	return new TemplatesService(
 		$container->get(TemplatesRepository::class),
 		$container->get(AclValidator::class),
-		$container->get(UserSession::class),
-		$container->get('ModuleLogger')
+		$container->get(UserSession::class)
 	);
 });
 

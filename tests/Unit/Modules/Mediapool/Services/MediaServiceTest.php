@@ -22,7 +22,9 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Mediapool\Services;
 
 use App\Framework\Core\Config\Config;
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Repositories\FilesRepository;
@@ -34,7 +36,6 @@ use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 
 class MediaServiceTest extends TestCase
 {
@@ -43,7 +44,6 @@ class MediaServiceTest extends TestCase
 	private FilesRepository&MockObject $mediaRepositoryMock;
 	private NodesRepository&Stub $nodesRepositoryStub;
 	private AclValidator&MockObject $aclValidatorMock;
-	private LoggerInterface&MockObject $loggerMock;
 
 	/**
 	 * @throws Exception
@@ -55,7 +55,6 @@ class MediaServiceTest extends TestCase
 		$this->mediaRepositoryMock = $this->createMock(FilesRepository::class);
 		$this->nodesRepositoryStub = $this->createStub(NodesRepository::class);
 		$this->aclValidatorMock    = $this->createMock(AclValidator::class);
-		$this->loggerMock          = $this->createMock(LoggerInterface::class);
 		$configStub = $this->createStub(Config::class);
 		$userSessionStub = $this->createStub(UserSession::class);
 		$userSessionStub->method('getUID')->willReturn(1);
@@ -72,8 +71,7 @@ class MediaServiceTest extends TestCase
 			$this->nodesRepositoryStub,
 			$this->aclValidatorMock,
 			new MediaUrlSigner('unit-test-secret'),
-			$userSessionStub,
-			$this->loggerMock
+			$userSessionStub
 		);
 	}
 
@@ -90,7 +88,6 @@ class MediaServiceTest extends TestCase
 		$this->nodesRepositoryStub->method('findNodeOwner')->willReturn($node);
 		$this->aclValidatorMock->expects($this->atLeastOnce())->method('checkDirectoryPermissions')->willReturn(['read' => true]);
 		$this->mediaRepositoryMock->expects($this->atLeastOnce())->method('findAllByNodeId')->willReturn($mediaList);
-		$this->loggerMock->expects($this->never())->method('error');
 
 		$result = $this->mediaService->listMedia($nodeId);
 
@@ -111,10 +108,10 @@ class MediaServiceTest extends TestCase
 
 		$this->nodesRepositoryStub->method('findNodeOwner')->willReturn($node);
 		$this->aclValidatorMock->expects($this->atLeastOnce())->method('checkDirectoryPermissions')->willReturn(['read' => false]);
-		$this->loggerMock->expects($this->once())->method('error')
-		->with('Error listing media: No read permissions on directory:Test Node');
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('directory_not_readable');
 
-		static::assertEmpty($this->mediaService->listMedia($nodeId));
+		$this->mediaService->listMedia($nodeId);
 	}
 
 	#[Group('units')]
@@ -132,7 +129,6 @@ class MediaServiceTest extends TestCase
 
 		$this->mediaRepositoryMock->expects($this->atLeastOnce())->method('findAllWithOwnerById')->willReturn($media);
 		$this->aclValidatorMock->expects($this->atLeastOnce())->method('checkDirectoryPermissions')->willReturn(['read' => true]);
-		$this->loggerMock->expects($this->never())->method('error');
 
 		$result = $this->mediaService->fetchMedia($mediaId);
 
@@ -148,10 +144,10 @@ class MediaServiceTest extends TestCase
 
 		$this->mediaRepositoryMock->expects($this->atLeastOnce())->method('findAllWithOwnerById')->willReturn($media);
 		$this->aclValidatorMock->expects($this->atLeastOnce())->method('checkDirectoryPermissions')->willReturn(['read' => false]);
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Error fetch media: No read permissions in this directory: 1');
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('directory_not_readable');
 
-		static::assertEmpty($this->mediaService->fetchMedia($mediaId));
+		$this->mediaService->fetchMedia($mediaId);
 	}
 
 	#[Group('units')]
@@ -165,7 +161,6 @@ class MediaServiceTest extends TestCase
 		$this->mediaRepositoryMock->expects($this->atLeastOnce())->method('findAllWithOwnerById')->willReturn($media);
 		$this->aclValidatorMock->expects($this->atLeastOnce())->method('checkDirectoryPermissions')->willReturn(['edit' => true]);
 		$this->mediaRepositoryMock->expects($this->atLeastOnce())->method('update')->willReturn(1);
-		$this->loggerMock->expects($this->never())->method('error');
 
 		$result = $this->mediaService->updateMedia($mediaId, $filename, $description);
 
@@ -183,17 +178,16 @@ class MediaServiceTest extends TestCase
 		$this->mediaRepositoryMock->expects($this->atLeastOnce())->method('findAllWithOwnerById')->willReturn($media);
 		$this->aclValidatorMock->expects($this->atLeastOnce())->method('checkDirectoryPermissions')->willReturn(['edit' => false]);
 
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Error updating media: No edit permissions in this directory: 2');
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('directory_not_editable');
 
-		static::assertEquals(0, $this->mediaService->updateMedia($mediaId, $filename, $description));
+		$this->mediaService->updateMedia($mediaId, $filename, $description);
 	}
 
 	#[Group('units')]
 	public function testMarkDeleteMediaByNodeIdUpdatesMedia(): void
 	{
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
-		$this->loggerMock->expects($this->never())->method($this->anything());
 		$nodeId = 1;
 
 		$this->mediaRepositoryMock->expects($this->once())->method('updateWithWhere')
@@ -207,7 +201,6 @@ class MediaServiceTest extends TestCase
 	public function testMarkDeleteMediaByNodeIdHandlesNoMedia(): void
 	{
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
-		$this->loggerMock->expects($this->never())->method($this->anything());
 		$nodeId = 1;
 
 		$this->mediaRepositoryMock->expects($this->once())->method('updateWithWhere')
@@ -220,7 +213,6 @@ class MediaServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteMedia(): void
 	{
-		$this->loggerMock->expects($this->never())->method($this->anything());
 		$mediaId = 'media-1';
 		$media = ['id' => $mediaId, 'node_id' => 1];
 
@@ -237,19 +229,17 @@ class MediaServiceTest extends TestCase
 	}
 
 	#[Group('units')]
-	public function testDeleteMediaEmpty(): void
+	public function testDeleteMediaNotFound(): void
 	{
 		$mediaId = 'media-1';
 		$this->mediaRepositoryMock->expects($this->once())->method('findAllWithOwnerById')
 			->willReturn([]);
 		$this->aclValidatorMock->expects($this->never())->method('checkDirectoryPermissions');
 		$this->mediaRepositoryMock->expects($this->never())->method('updateWithWhere');
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Error deleting media: No media found.');
+		$this->expectException(NotFoundException::class);
+		$this->expectExceptionMessage('media_not_found');
 
-		$result = $this->mediaService->deleteMedia($mediaId);
-
-		static::assertEquals(0, $result);
+		$this->mediaService->deleteMedia($mediaId);
 	}
 
 	#[Group('units')]
@@ -261,10 +251,10 @@ class MediaServiceTest extends TestCase
 		$this->mediaRepositoryMock->expects($this->atLeastOnce())->method('findAllWithOwnerById')->willReturn($media);
 		$this->aclValidatorMock->expects($this->atLeastOnce())->method('checkDirectoryPermissions')->willReturn(['edit' => false]);
 
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Error deleting media: No edit permissions in this directory: 1');
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('directory_not_editable');
 
-		static::assertEquals(0, $this->mediaService->deleteMedia($mediaId));
+		$this->mediaService->deleteMedia($mediaId);
 	}
 
 	#[Group('units')]
@@ -279,7 +269,6 @@ class MediaServiceTest extends TestCase
 		$this->nodesRepositoryStub->method('findNodeOwner')->willReturn($node);
 		$this->aclValidatorMock->expects($this->atLeastOnce())->method('checkDirectoryPermissions')->willReturnOnConsecutiveCalls(['read' => true], ['edit' => true]);
 		$this->mediaRepositoryMock->expects($this->atLeastOnce())->method('updateWithWhere')->willReturn(1);
-		$this->loggerMock->expects($this->never())->method('error');
 
 		$result = $this->mediaService->moveMedia($mediaId, $nodeId);
 
@@ -296,8 +285,8 @@ class MediaServiceTest extends TestCase
 		$this->mediaRepositoryMock->expects($this->atLeastOnce())->method('findAllWithOwnerById')->willReturn($media);
 		$this->aclValidatorMock->expects($this->atLeastOnce())->method('checkDirectoryPermissions')->willReturn(['read' => false]);
 
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Error moving media: No read permissions in this directory: 1');
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('directory_not_readable');
 
 		$this->mediaService->moveMedia($mediaId, $nodeId);
 	}
@@ -316,8 +305,8 @@ class MediaServiceTest extends TestCase
 		$this->aclValidatorMock->expects($this->atLeastOnce())->method('checkDirectoryPermissions')
 			->willReturnOnConsecutiveCalls(['read' => true], ['edit' => false]);
 
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Error moving media: No edit permissions in this directory: New Node');
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('directory_not_editable');
 
 		$this->mediaService->moveMedia($mediaId, $nodeId);
 	}
@@ -337,8 +326,6 @@ class MediaServiceTest extends TestCase
 		$this->mediaRepositoryMock->expects($this->atLeastOnce())->method('findById')->willReturn([$dataSet]);
 		$this->mediaRepositoryMock->expects($this->atLeastOnce())->method('getFirstDataSet')->willReturn($dataSet);
 		$this->mediaRepositoryMock->expects($this->atLeastOnce())->method('insert')->willReturn('new-media-id');
-		$this->loggerMock->expects($this->never())->method('error');
-		$this->loggerMock->expects($this->never())->method('error');
 
 		$result = $this->mediaService->cloneMedia($mediaId);
 
@@ -354,8 +341,8 @@ class MediaServiceTest extends TestCase
 		$this->mediaRepositoryMock->expects($this->atLeastOnce())->method('findAllWithOwnerById')->willReturn($media);
 		$this->aclValidatorMock->expects($this->atLeastOnce())->method('checkDirectoryPermissions')->willReturn(['read' => false, 'edit' => false]);
 
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Error cloning media: No permissions on this directory: 1');
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('directory_not_editable');
 
 		$this->mediaService->cloneMedia($mediaId);
 	}
@@ -367,7 +354,6 @@ class MediaServiceTest extends TestCase
 	public function testFetchMediaByChecksumReturnsMedia(): void
 	{
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
-		$this->loggerMock->expects($this->never())->method($this->anything());
 		$checksum = 'checksum-123';
 		$media = [
 			'id' => 'media-1',
@@ -393,7 +379,6 @@ class MediaServiceTest extends TestCase
 	public function testFetchMediaByChecksumWithUnknownChecksum(): void
 	{
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
-		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->mediaRepositoryMock->expects($this->once())->method('findAllWithOwnerByCheckSum')
 			->with('unknown')
 			->willReturn([]);

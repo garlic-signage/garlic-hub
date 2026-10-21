@@ -26,6 +26,7 @@ use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Profile\Entities\TokenPurposes;
 use App\Modules\Users\Services\UsersAdminService;
@@ -132,8 +133,14 @@ class Orchestrator
 
 		/** @var array{username:string, email:string, locale?: string, status?: int} $saveData */
 		$saveData = $this->formInputHandler->getParsed();
-		if ($this->usersAdminService->insertNewUser($saveData) === 0)
-			return ['success' => false, 'errors' => $this->translateServiceErrors()];
+		try
+		{
+			$this->usersAdminService->insertNewUser($saveData);
+		}
+		catch (TranslatableModuleException $e)
+		{
+			return $this->formError($e);
+		}
 
 		// Todo: Eliminate this workaround with a better process
 		$this->session->set(TokenPurposes::INITIAL_PASSWORD->value.'_token', bin2hex($this->usersAdminService->getToken()));
@@ -161,8 +168,14 @@ class Orchestrator
 		/** @var array{username:string, email:string, locale?: string, status?: int} $saveData */
 		$saveData = $this->formInputHandler->getParsed();
 		// a save without changes affects no rows but is not a failure
-		if ($this->usersAdminService->updateUser($UID, $saveData) === 0 && $this->usersAdminService->hasErrorMessages())
-			return ['success' => false, 'errors' => $this->translateServiceErrors()];
+		try
+		{
+			$this->usersAdminService->updateUser($UID, $saveData);
+		}
+		catch (TranslatableModuleException $e)
+		{
+			return $this->formError($e);
+		}
 
 		return ['success' => true];
 	}
@@ -184,9 +197,14 @@ class Orchestrator
 		if ($errors !== [])
 			return ['success' => false, 'errors' => $errors];
 
-		$token = $this->usersAdminService->createPasswordResetToken($UID);
-		if ($token === '')
-			return ['success' => false, 'errors' => $this->translateServiceErrors()];
+		try
+		{
+			$token = $this->usersAdminService->createPasswordResetToken($UID);
+		}
+		catch (TranslatableModuleException $e)
+		{
+			return $this->formError($e);
+		}
 
 		// Todo: Eliminate this workaround with a better process
 		$this->session->set(TokenPurposes::PASSWORD_RESET->value.'_token', bin2hex($token));
@@ -223,18 +241,14 @@ class Orchestrator
 	}
 
 	/**
-	 * @return string[]
+	 * Expected errors are shown in the form again instead of the standard error page.
+	 *
+	 * @return array{success: false, errors: string[]}
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
-	private function translateServiceErrors(): array
+	private function formError(TranslatableModuleException $exception): array
 	{
-		$translated = [];
-		foreach ($this->usersAdminService->getErrorMessages() as $error)
-		{
-			$translated[] = $this->translator->translate($error, 'users');
-		}
-
-		return $translated;
+		return ['success' => false, 'errors' => [$this->translator->translateException($exception)]];
 	}
 }

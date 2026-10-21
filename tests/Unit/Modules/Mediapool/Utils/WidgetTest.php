@@ -25,6 +25,7 @@ use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Utils\Widget\ConfigXML;
 use App\Modules\Mediapool\Utils\Widget;
 use App\Modules\Mediapool\Utils\ZipFilesystemFactory;
@@ -88,8 +89,8 @@ class WidgetTest extends TestCase
 	{
 		$this->filesystemMock->expects($this->never())->method($this->anything());
 		$this->imagickMock->expects($this->never())->method($this->anything());
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('Filesize: 1024 MB exceeds max widget size.');
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('filesize_exceeded {"size":"1024"');
 
 		$this->widget->checkFileBeforeUpload(1073741824 + 1);
 	}
@@ -132,8 +133,8 @@ class WidgetTest extends TestCase
 		$this->filesystemMock->expects($this->atLeastOnce())->method('fileExists')->willReturn(true);
 		$this->filesystemMock->expects($this->atLeastOnce())->method('fileSize')->willReturn(1073741824 + 1);
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('After Upload Check: 1024 MB exceeds max widget size.');
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('filesize_exceeded {"size":"1024"');
 
 		$this->widget->validateStoredFile('/path/to/file');
 	}

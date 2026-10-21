@@ -21,60 +21,58 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Services;
 
-use App\Framework\Services\AbstractBaseService;
+use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\SimpleApiExecutor;
-use Psr\Log\LoggerInterface;
+use Doctrine\DBAL\Exception;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\TransferException;
 
 /**
  * This service class handles interactions with a REST API for player-related operations.
+ *
+ * Every method throws when the player cannot be reached or rejects the request.
  */
-class PlayerRestAPIService extends AbstractBaseService
+readonly class PlayerRestAPIService
 {
-    private readonly SimpleApiExecutor $apiExecutor;
-    private readonly PlayerTokenService $playerTokenService;
+	public function __construct(
+		private SimpleApiExecutor $apiExecutor,
+		private PlayerTokenService $playerTokenService
+	) {}
 
-	public function __construct(SimpleApiExecutor $apiExecutor, PlayerTokenService $playerTokenService, LoggerInterface $logger)
+	/**
+	 * @throws Exception
+	 * @throws TranslatableModuleException
+	 */
+	public function authenticate(string $baseUrl, string $username, string $password, int $playerId): void
 	{
-        $this->apiExecutor = $apiExecutor;
-        $this->playerTokenService = $playerTokenService;
-        parent::__construct($logger);
-    }
-
-    public function authenticate(string $baseUrl, string $username, string $password, int $playerId): bool
-    {
 		if ($this->playerTokenService->hasValidToken($playerId))
-			return true;
+			return;
 
-		$endpoint = $baseUrl . '/oauth2/token';
 		$body = [
 			'grant_type' => 'password',
 			'username' => $username,
 			'password' => $password
 		];
 
-		if ($this->apiExecutor->executeAuth($endpoint, $body) === false)
-		{
-			$this->errorMessages = $this->apiExecutor->getErrorMessages();
-			return false;
-		}
-
-		$response = $this->apiExecutor->getBodyContentsArray();
+		$response = $this->send($playerId, fn() => $this->apiExecutor->executeAuth($baseUrl . '/oauth2/token', $body));
 
 		if (!isset($response['access_token'], $response['expires_in'], $response['token_type']))
-			return $this->handleErrors('Invalid authentication response', $response);
+			throw $this->requestFailed($playerId, 'Invalid authentication response');
 
-		return $this->playerTokenService->storeToken($playerId, $response['access_token'], $response['expires_in'], $response['token_type']);
-    }
+		$this->playerTokenService->storeToken($playerId, $response['access_token'], $response['expires_in'], $response['token_type']);
+	}
 
-    public function uploadFile(string $baseUrl, int $playerId, string $filePath, string $fileName): bool
-    {
-		$token = $this->fetchToken($playerId);
-		if ($token === '')
-			return false;
-
+	/**
+	 * @throws ModuleException
+	 * @throws TranslatableModuleException
+	 */
+	public function uploadFile(string $baseUrl, int $playerId, string $filePath, string $fileName): void
+	{
 		$size = filesize($filePath);
 		if ($size === false)
-			return $this->handleErrors('Filepath '.$filePath.' does not exist.', []);
+			throw new ModuleException('player', 'Filepath '.$filePath.' does not exist.');
 
 		$body = [
 			'downloadPath' => $filePath,
@@ -82,105 +80,102 @@ class PlayerRestAPIService extends AbstractBaseService
 			'fileSize' => $size
 		];
 
-		$isExecuted = $this->apiExecutor->executeApiRequest('POST', $baseUrl.'/files/new', $token, $body);
-		if (!$isExecuted)
-		{
-			$this->errorMessages = $this->apiExecutor->getErrorMessages();
-			return false;
-		}
-
-		$response = $this->apiExecutor->getBodyContentsArray();
-		if ($response['completed'] === false)
-			return $this->handleErrors('Upload file failed', $response);
-
-		return true;
+		$response = $this->request($playerId, 'POST', $baseUrl.'/files/new', $body);
+		if (($response['completed'] ?? false) === false)
+			throw $this->requestFailed($playerId, 'Upload file failed');
 	}
 
 	/**
 	 * Starts a playback of an $uri for one time.
+	 *
+	 * @throws TranslatableModuleException
 	 */
-    public function startPlaybackOnce(string $baseUrl, int $playerId, string $uri): bool
-    {
-		$token = $this->fetchToken($playerId);
-		if ($token === '')
-			return false;
-
-		$body = ['uri'=> $uri];
-		$isExecuted = $this->apiExecutor->executeApiRequest('POST', $baseUrl . '/app/exec', $token, $body);
-		if (!$isExecuted)
-		{
-			$this->errorMessages = $this->apiExecutor->getErrorMessages();
-			return false;
-		}
-
-		$response = $this->apiExecutor->getBodyContentsArray();
-		if ($response['uri'] !== $uri)
-			return $this->handleErrors('Start playback failed', $response);
-
-		return true;
-    }
+	public function startPlaybackOnce(string $baseUrl, int $playerId, string $uri): void
+	{
+		$response = $this->request($playerId, 'POST', $baseUrl . '/app/exec', ['uri' => $uri]);
+		if (($response['uri'] ?? '') !== $uri)
+			throw $this->requestFailed($playerId, 'Start playback failed');
+	}
 
 	/**
 	 * Set a default content-url without interrupting current play
+	 *
+	 * @throws TranslatableModuleException
 	 */
-	public function setDefaultContentUrl(string $baseUrl, int $playerId, string $uri): bool
+	public function setDefaultContentUrl(string $baseUrl, int $playerId, string $uri): void
 	{
-		$token = $this->fetchToken($playerId);
-		if ($token === '')
-			return false;
-
-		$body = ['uri'=> $uri];
-		$isExecuted = $this->apiExecutor->executeApiRequest('POST', $baseUrl . '/app/start', $token, $body);
-		if (!$isExecuted)
-		{
-			$this->errorMessages = $this->apiExecutor->getErrorMessages();
-			return false;
-		}
-
-		$response = $this->apiExecutor->getBodyContentsArray();
-		if ($response['uri'] !== $uri)
-			return $this->handleErrors('Set default content uri failed', $response);
-
-		return true;
+		$response = $this->request($playerId, 'POST', $baseUrl . '/app/start', ['uri' => $uri]);
+		if (($response['uri'] ?? '') !== $uri)
+			throw $this->requestFailed($playerId, 'Set default content uri failed');
 	}
 
 	/**
 	 * Plays the default content-url immediately
+	 *
+	 * @throws TranslatableModuleException
 	 */
-	public function switchToDefaultContentUrl(string $baseUrl, int $playerId): bool
+	public function switchToDefaultContentUrl(string $baseUrl, int $playerId): void
 	{
-		$token = $this->fetchToken($playerId);
-		if ($token === '')
-			return false;
-
-		$body = ['mode'=> 'start'];
-
-		$isExecuted = $this->apiExecutor->executeApiRequest('POST', $baseUrl . '/app/switch', $token, $body);
-		if (!$isExecuted)
-		{
-			$this->errorMessages = $this->apiExecutor->getErrorMessages();
-			return false;
-		}
-
-		$response = $this->apiExecutor->getBodyContentsArray();
+		$response = $this->request($playerId, 'POST', $baseUrl . '/app/switch', ['mode' => 'start']);
 		if (!isset($response['uri']) || $response['uri'] === '')
-			return $this->handleErrors('Switch play default content uri failed', $response);
-
-		return true;
+			throw $this->requestFailed($playerId, 'Switch play default content uri failed');
 	}
 
+	/**
+	 * @param array<string,int|string> $body
+	 * @return array<string,mixed>
+	 * @throws TranslatableModuleException
+	 */
+	private function request(int $playerId, string $method, string $endpoint, array $body): array
+	{
+		$token = $this->fetchToken($playerId);
+
+		return $this->send($playerId, fn() => $this->apiExecutor->executeApiRequest($method, $endpoint, $token, $body));
+	}
+
+	/**
+	 * An unreachable or refusing player is an expected situation, not a server error.
+	 * The original exception stays attached as previous.
+	 *
+	 * @param callable(): array<string,mixed> $call
+	 * @return array<string,mixed>
+	 * @throws TranslatableModuleException
+	 */
+	private function send(int $playerId, callable $call): array
+	{
+		try
+		{
+			return $call();
+		}
+		catch (ConnectException $e)
+		{
+			throw new TranslatableModuleException('player', 'player_not_reachable', ['player_id' => $playerId], $e);
+		}
+		catch (TransferException|FrameworkException $e)
+		{
+			throw $this->requestFailed($playerId, 'Request rejected', $e);
+		}
+	}
+
+	/**
+	 * @throws TranslatableModuleException
+	 */
 	private function fetchToken(int $playerId): string
 	{
 		$tokenData = $this->playerTokenService->getToken($playerId);
 		if ($tokenData === [])
-		{
-			$this->logger->error('No valid token found for player '. $playerId);
-			$this->addErrorMessage('No valid token found for player '. $playerId);
-			return '';
-		}
+			throw new TranslatableModuleException('player', 'player_not_authenticated', ['player_id' => $playerId]);
 
 		/** @var array{access_token:string, UID:int, token_type:string, expired_at:string} $tokenData */ // mimimi of phpstan
 		return $tokenData['access_token'];
+	}
+
+	/**
+	 * The reason is not part of the translated text, it lands only in the log.
+	 */
+	private function requestFailed(int $playerId, string $reason, ?\Exception $previous = null): TranslatableModuleException
+	{
+		return new TranslatableModuleException('player', 'player_request_failed', ['player_id' => $playerId, 'reason' => $reason], $previous);
 	}
 
 	private function encodeMultipart(string $filePath): string
@@ -197,16 +192,5 @@ class PlayerRestAPIService extends AbstractBaseService
 		$data .= "--$delimiter--\r\n";
 
 		return $data;
-	}
-
-	/**
-	 * @param array<string,mixed>|array<empty,empty> $response
-	 */
-	private function handleErrors(string $message, array $response): bool
-	{
-		$this->logger->error($message, ['response' => $response]);
-		$this->addErrorMessage($message.': '. $this->apiExecutor->getBodyContents());
-		return false;
-
 	}
 }

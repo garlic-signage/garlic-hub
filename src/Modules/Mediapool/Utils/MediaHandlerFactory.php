@@ -22,7 +22,7 @@ declare(strict_types=1);
 namespace App\Modules\Mediapool\Utils;
 
 use App\Framework\Core\Config\Config;
-use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Media\Ffmpeg;
 use App\Framework\Utils\Widget\ConfigXML;
 use League\Flysystem\Filesystem;
@@ -48,7 +48,7 @@ class MediaHandlerFactory
 	}
 
 	/**
-	 * @throws CoreException
+	 * @throws TranslatableModuleException
 	 */
 	public function createMediaHandler(string $mimeType): AbstractMediaHandler
 	{
@@ -95,7 +95,7 @@ class MediaHandlerFactory
 				$mimeType === 'application/smil', $mimeType === 'text/xml'
 				=> new Miscellaneous($this->config, $this->fileSystem),
 
-			default => throw new CoreException('Unsupported mime type: ' . $mimeType)
+			default => throw new TranslatableModuleException('mediapool', 'unsupported_mimetype', ['mimetype' => $mimeType])
 		};
 
 	}

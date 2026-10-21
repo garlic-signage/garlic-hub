@@ -23,12 +23,11 @@ namespace App\Modules\Profile\Services;
 
 use App\Framework\Core\Crypt;
 use App\Framework\Database\BaseRepositories\Transactions;
-use App\Framework\Exceptions\ModuleException;
-use App\Framework\Services\AbstractBaseService;
+use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Users\Repositories\Edge\UserMainRepository;
 use App\Modules\Users\UserStatus;
 use Doctrine\DBAL\Exception;
-use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
@@ -36,66 +35,53 @@ use Throwable;
  *
  * Service for managing user profiles including password updates, locale changes, and user token operations.
  */
-class ProfileService extends AbstractBaseService
+class ProfileService
 {
 	private readonly UserMainRepository $userMainRepository;
 	private readonly UserTokenService $userTokenService;
 	private readonly Crypt $crypt;
 	private readonly Transactions $transactions;
 
-	public function __construct(UserMainRepository $userMainRepository, UserTokenService $userTokenService, Crypt $crypt, Transactions $transactions, LoggerInterface $logger)
+	public function __construct(UserMainRepository $userMainRepository, UserTokenService $userTokenService, Crypt $crypt, Transactions $transactions)
 	{
 		$this->userMainRepository = $userMainRepository;
 		$this->userTokenService   = $userTokenService;
 		$this->crypt              = $crypt;
 		$this->transactions       = $transactions;
-
-		parent::__construct($logger);
 	}
 
 	/**
+	 * Sets the password, uses the token and releases a not verified user in one transaction.
+	 *
 	 * @throws Exception
+	 * @throws TranslatableModuleException
+	 * @throws Throwable
 	 */
-	public function storeNewForcedPassword(int $UID, string $passwordToken, string $password): int
+	public function storeNewForcedPassword(int $UID, string $passwordToken, string $password): void
 	{
+		$this->transactions->begin();
 		try
 		{
-			$this->transactions->begin();
-			$count = $this->updatePassword($UID, $password);
-			if ($count === 0)
-			{
-				$this->addErrorMessage('profile//password_update_failed');
-				throw new ModuleException('profile', 'Password update failed');
-			}
+			if ($this->updatePassword($UID, $password) === 0)
+				throw new TranslatableModuleException('profile', 'password_update_failed', ['UID' => $UID]);
 
 			if ($this->userTokenService->useToken($passwordToken) === 0)
-			{
-				$this->addErrorMessage('profile//token_update_failed');
-				throw new ModuleException('profile', 'Token update failed');
-			}
+				throw new TranslatableModuleException('profile', 'token_update_failed', ['UID' => $UID]);
 
 			$user = $this->userMainRepository->findByIdSecured($UID);
 			if (empty($user))
-			{
-				$this->addErrorMessage('users//user_not_found');
-				throw new ModuleException('profile', 'User not found');
-			}
+				throw new NotFoundException('users', 'user_not_found', ['UID' => $UID]);
+
 			if ($user['status'] === UserStatus::NOT_VERIFIED->value &&
 				$this->userMainRepository->update($UID, ['status' => UserStatus::REGISTERED->value]) === 0)
-				{
-					$this->addErrorMessage('users//status_update_failed');
-					throw new ModuleException('profile', 'User status update failed');
-				}
+				throw new TranslatableModuleException('profile', 'status_update_failed', ['UID' => $UID]);
 
 			$this->transactions->commit();
-
-			return $count;
 		}
 		catch (Throwable $e)
 		{
-			$this->logger->error($e->getMessage());
 			$this->transactions->rollBack();
-			return 0;
+			throw $e;
 		}
 	}
 

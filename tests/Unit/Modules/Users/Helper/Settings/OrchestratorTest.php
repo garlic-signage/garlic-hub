@@ -26,6 +26,7 @@ use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Users\Helper\Settings\FormInputHandler;
 use App\Modules\Users\Helper\Settings\Orchestrator;
@@ -201,8 +202,8 @@ class OrchestratorTest extends TestCase
 		$this->expectUntouched($this->sessionMock, $this->formBuilderMock);
 		$this->policyMock->expects($this->once())->method('addCreateFormElements');
 		$this->expectValidInput();
-		$this->serviceMock->expects($this->once())->method('insertNewUser')->with(['username' => 'heidi'])->willReturn(0);
-		$this->expectTranslatedServiceErrors();
+		$this->serviceMock->expects($this->once())->method('insertNewUser')->with(['username' => 'heidi'])
+			->willThrowException($this->expectTranslatedServiceError('username_exists'));
 
 		static::assertSame(
 			['success' => false, 'errors' => ['Failed.']],
@@ -279,15 +280,14 @@ class OrchestratorTest extends TestCase
 	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testStoreEditSettingsReturnsTranslatedServiceErrors(): void
+	public function testStoreEditSettingsReturnsTranslatedServiceError(): void
 	{
 		$this->expectUntouched($this->sessionMock, $this->formBuilderMock);
 		$this->expectUserLoaded();
 		$this->policyMock->expects($this->once())->method('addEditFormElements');
 		$this->expectValidInput();
-		$this->serviceMock->expects($this->once())->method('updateUser')->with(12, ['username' => 'heidi'])->willReturn(0);
-		$this->serviceMock->expects($this->once())->method('hasErrorMessages')->willReturn(true);
-		$this->expectTranslatedServiceErrors();
+		$this->serviceMock->expects($this->once())->method('updateUser')->with(12, ['username' => 'heidi'])
+			->willThrowException($this->expectTranslatedServiceError('email_exists'));
 
 		$this->orchestrator->loadUserForEdit(12);
 		static::assertSame(
@@ -333,8 +333,6 @@ class OrchestratorTest extends TestCase
 		$this->policyMock->expects($this->once())->method('addEditFormElements');
 		$this->expectValidInput();
 		$this->serviceMock->expects($this->once())->method('updateUser')->willReturn(0);
-		$this->serviceMock->expects($this->once())->method('hasErrorMessages')->willReturn(false);
-		$this->serviceMock->expects($this->never())->method('getErrorMessages');
 
 		$this->orchestrator->loadUserForEdit(12);
 		static::assertSame(['success' => true], $this->orchestrator->storeEditSettings(12, ['username' => 'heidi']));
@@ -377,8 +375,8 @@ class OrchestratorTest extends TestCase
 		$this->expectUserLoaded();
 		$this->policyMock->expects($this->once())->method('addEditFormElements');
 		$this->inputHandlerMock->expects($this->once())->method('validate')->willReturn([]);
-		$this->serviceMock->expects($this->once())->method('createPasswordResetToken')->with(12)->willReturn('');
-		$this->expectTranslatedServiceErrors();
+		$this->serviceMock->expects($this->once())->method('createPasswordResetToken')->with(12)
+			->willThrowException($this->expectTranslatedServiceError('tokens_exists'));
 
 		$this->orchestrator->loadUserForEdit(12);
 		static::assertSame(
@@ -419,10 +417,12 @@ class OrchestratorTest extends TestCase
 		$this->inputHandlerMock->expects($this->once())->method('getParsed')->willReturn(['username' => 'heidi']);
 	}
 
-	private function expectTranslatedServiceErrors(): void
+	private function expectTranslatedServiceError(string $key): TranslatableModuleException
 	{
-		$this->serviceMock->expects($this->once())->method('getErrorMessages')->willReturn(['failed']);
-		$this->translatorMock->expects($this->once())->method('translate')->with('failed', 'users')->willReturn('Failed.');
+		$exception = new TranslatableModuleException('users', $key);
+		$this->translatorMock->expects($this->once())->method('translateException')->with($exception)->willReturn('Failed.');
+
+		return $exception;
 	}
 
 	private function expectUntouched(MockObject ...$mocks): void

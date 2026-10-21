@@ -26,6 +26,7 @@ use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Profile\Entities\TokenPurposes;
@@ -188,7 +189,8 @@ class OrchestratorTest extends TestCase
 		$this->expectValidInput();
 		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(7);
 		$this->profileServiceMock->expects($this->once())->method('updatePassword')->with(7, 'secret')->willReturn(0);
-		$this->expectTranslatedServiceErrors();
+		$this->translatorMock->expects($this->once())->method('translate')
+			->with('password_update_failed', 'profile')->willReturn('Something failed.');
 
 		static::assertSame(
 			['success' => false, 'errors' => ['Something failed.']],
@@ -209,7 +211,6 @@ class OrchestratorTest extends TestCase
 		$this->expectValidInput();
 		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(7);
 		$this->profileServiceMock->expects($this->once())->method('updatePassword')->with(7, 'secret')->willReturn(1);
-		$this->profileServiceMock->expects($this->never())->method('getErrorMessages');
 		$this->translatorMock->expects($this->never())->method('translate');
 
 		static::assertSame(['success' => true], $this->orchestrator->storePassword(['password' => 'secret']));
@@ -246,9 +247,11 @@ class OrchestratorTest extends TestCase
 	{
 		$this->expectValidInput();
 		$this->userSessionMock->expects($this->never())->method($this->anything());
+		$exception = new TranslatableModuleException('profile', 'token_update_failed');
 		$this->profileServiceMock->expects($this->once())->method('storeNewForcedPassword')
-			->with(9, hex2bin('abcd'), 'secret')->willReturn(0);
-		$this->expectTranslatedServiceErrors();
+			->with(9, hex2bin('abcd'), 'secret')->willThrowException($exception);
+		$this->translatorMock->expects($this->once())->method('translateException')
+			->with($exception)->willReturn('Something failed.');
 
 		static::assertSame(
 			['success' => false, 'errors' => ['Something failed.']],
@@ -270,7 +273,7 @@ class OrchestratorTest extends TestCase
 		$this->expectValidInput();
 		$this->userSessionMock->expects($this->never())->method($this->anything());
 		$this->profileServiceMock->expects($this->once())->method('storeNewForcedPassword')
-			->with(9, hex2bin('abcd'), 'secret')->willReturn(1);
+			->with(9, hex2bin('abcd'), 'secret');
 		$this->translatorMock->expects($this->never())->method('translate');
 
 		static::assertSame(['success' => true], $this->orchestrator->storeForcedPassword(9, 'abcd', ['password' => 'secret']));
@@ -299,13 +302,6 @@ class OrchestratorTest extends TestCase
 		$this->inputHandlerMock->expects($this->once())->method('validate')->willReturn([]);
 		$this->inputHandlerMock->expects($this->once())->method('getParsed')
 			->willReturn(['password' => 'secret', 'password_confirm' => 'secret']);
-	}
-
-	private function expectTranslatedServiceErrors(): void
-	{
-		$this->profileServiceMock->expects($this->once())->method('getErrorMessages')->willReturn(['failed']);
-		$this->translatorMock->expects($this->once())->method('translate')
-			->with('failed', 'profile')->willReturn('Something failed.');
 	}
 
 	private function expectUntouched(MockObject ...$mocks): void

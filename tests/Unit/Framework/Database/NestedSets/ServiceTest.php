@@ -27,18 +27,17 @@ use App\Framework\Database\NestedSets\Calculator;
 use App\Framework\Database\NestedSets\Repository;
 use App\Framework\Database\NestedSets\Service;
 use App\Framework\Exceptions\DatabaseException;
+use App\Framework\Exceptions\FrameworkException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 
 class ServiceTest extends TestCase
 {
 	private Calculator&MockObject $calculatorMock;
 	private Transactions&MockObject $transactionsMock;
 	private Repository&MockObject $repositoryMock;
-	private LoggerInterface&MockObject $loggerMock;
 	private Service $service;
 
 	/**
@@ -50,9 +49,8 @@ class ServiceTest extends TestCase
 		$this->calculatorMock = $this->createMock(Calculator::class);
 		$this->transactionsMock = $this->createMock(Transactions::class);
 		$this->repositoryMock = $this->createMock(Repository::class);
-		$this->loggerMock = $this->createMock(LoggerInterface::class);
 
-		$this->service = new Service($this->repositoryMock, $this->calculatorMock, $this->transactionsMock, $this->loggerMock);
+		$this->service = new Service($this->repositoryMock, $this->calculatorMock, $this->transactionsMock);
 	}
 
 	#[Group('units')]
@@ -233,7 +231,6 @@ class ServiceTest extends TestCase
 	public function testAddRootNode(): void
 	{
 		$this->calculatorMock->expects($this->never())->method($this->anything());
-		$this->loggerMock->expects($this->never())->method($this->anything());
 		$uid = 1;
 		$name = 'Test Root';
 		$expectedNewNodeId = 5; // Example ID - adjust as needed
@@ -263,7 +260,6 @@ class ServiceTest extends TestCase
 
 		$actualNewNodeId = $this->service->addRootNode($uid, $name, true);
 		static::assertEquals($actualNewNodeId, $actualNewNodeId);
-		static::assertFalse($this->service->hasErrorMessages());
 	}
 
 	/**
@@ -283,11 +279,10 @@ class ServiceTest extends TestCase
 
 		$this->transactionsMock->expects($this->once())->method('rollback');
 
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Add root node failed because of: Insert new node failed');
+		$this->expectException(FrameworkException::class);
+		$this->expectExceptionMessage('Insert new node failed');
 
 		$this->service->addRootNode($uid, $name);
-		static::assertTrue($this->service->hasErrorMessages());
 	}
 
 	/**
@@ -321,11 +316,10 @@ class ServiceTest extends TestCase
 
 		$this->transactionsMock->expects($this->once())->method('rollback');
 
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Add root node failed because of: Update root node failed');
+		$this->expectException(FrameworkException::class);
+		$this->expectExceptionMessage('Update root node failed');
 
 		$this->service->addRootNode($uid, $name);
-		static::assertTrue($this->service->hasErrorMessages());
 	}
 
 	/**
@@ -335,7 +329,6 @@ class ServiceTest extends TestCase
 	public function testAddSubNode(): void
 	{
 		$this->calculatorMock->expects($this->never())->method($this->anything());
-		$this->loggerMock->expects($this->never())->method($this->anything());
 		$uid = 2;
 		$name = 'Test Sub Node';
 		$parentNode = ['rgt' => 5, 'node_id' => 1, 'root_id' => 1, 'level' => 1];
@@ -377,7 +370,8 @@ class ServiceTest extends TestCase
 			->willReturn(0);// Simulate insert failure
 
 		$this->transactionsMock->expects($this->once())->method('rollBack'); // Corrected method name
-		$this->loggerMock->expects($this->once())->method('error')->with('Insert new sub node failed.');
+		$this->expectException(FrameworkException::class);
+		$this->expectExceptionMessage('Insert new sub node failed.');
 		$this->service->addSubNode($uid, $name, $parentNode);
 	}
 
@@ -389,7 +383,6 @@ class ServiceTest extends TestCase
 	public function testDeleteSingleNode(): void
 	{
 		$this->calculatorMock->expects($this->never())->method($this->anything());
-		$this->loggerMock->expects($this->never())->method($this->anything());
 		$node = ['node_id' => 2, 'root_id' => 1, 'rgt' => 5];
 
 		$this->transactionsMock->expects($this->once())->method('begin');
@@ -421,7 +414,8 @@ class ServiceTest extends TestCase
 			->willReturn(0); // Simulate delete failure
 
 		$this->transactionsMock->expects($this->once())->method('rollBack');
-		$this->loggerMock->expects($this->once())->method('error')->with('Node not exists.');
+		$this->expectException(FrameworkException::class);
+		$this->expectExceptionMessage('Node not exists.');
 
 		$this->service->deleteSingleNode($node);
 	}
@@ -434,7 +428,6 @@ class ServiceTest extends TestCase
 	public function testDeleteTree(): void
 	{
 		$this->calculatorMock->expects($this->never())->method($this->anything());
-		$this->loggerMock->expects($this->never())->method($this->anything());
 		$node = ['root_id' => 1, 'rgt' => 6, 'lft' => 3];
 		$move = 4.0;
 		$this->transactionsMock->expects($this->once())->method('begin');
@@ -473,7 +466,8 @@ class ServiceTest extends TestCase
 			->willReturn(0);
 
 		$this->transactionsMock->expects($this->once())->method('rollBack');
-		$this->loggerMock->expects($this->once())->method('error')->with('Node not exists.');
+		$this->expectException(FrameworkException::class);
+		$this->expectExceptionMessage('Node not exists.');
 
 		$this->service->deleteTree($node);
 	}
@@ -486,7 +480,6 @@ class ServiceTest extends TestCase
 	#[Group('units')]
 	public function testMoveNodeBefore(): void
 	{
-		$this->loggerMock->expects($this->never())->method($this->anything());
 		$movedNode  = ['node_id' => 2, 'lft' => 3, 'rgt' => 6, 'root_id' => 1, 'parent_id' => 1, 'level' => 2];
 		$targetNode = ['node_id' => 3, 'lft' => 7, 'rgt' => 8, 'root_id' => 1, 'parent_id' => 1, 'level' => 2];
 		$region     = 'before';
@@ -589,16 +582,17 @@ class ServiceTest extends TestCase
 
 		$this->transactionsMock->expects($this->once())->method('rollBack');
 
-		$this->loggerMock->expects($this->once())->method('error')->with($movedNode['name']. ' cannot be moved via '.$region.' of '. $targetNode['name']);
+		$this->expectException(FrameworkException::class);
+		$this->expectExceptionMessage($movedNode['name']. ' cannot be moved via '.$region.' of '. $targetNode['name']);
 		$this->service->moveNode($movedNode, $targetNode, $region);
 	}
 
 	/**
-	 * Reading a tree is a pure repository call: no calculation, no transaction and nothing to log.
+	 * Reading a tree is a pure repository call: no calculation and no transaction.
 	 */
 	private function expectReadOnlyDelegation(): void
 	{
-		$this->expectUntouched($this->calculatorMock, $this->transactionsMock, $this->loggerMock);
+		$this->expectUntouched($this->calculatorMock, $this->transactionsMock);
 	}
 
 	private function expectUntouched(MockObject ...$mocks): void

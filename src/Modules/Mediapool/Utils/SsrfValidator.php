@@ -22,33 +22,36 @@ declare(strict_types=1);
 
 namespace App\Modules\Mediapool\Utils;
 
+use App\Framework\Exceptions\TranslatableModuleException;
+
 class SsrfValidator
 {
 	/**
 	 * @return array{ip: string, host: string, port: int, path: string}
+	 * @throws TranslatableModuleException
 	 */
 	public function validateAndResolveUrl(string $url): array
 	{
 		$parsed = parse_url($url);
 
 		if (!isset($parsed['scheme'], $parsed['host']))
-			throw new \InvalidArgumentException('Invalid URL.');
+			throw new TranslatableModuleException('mediapool', 'url_invalid', ['url' => $url]);
 
 		if (!in_array($parsed['scheme'], ['https', 'http'], true))
-			throw new \InvalidArgumentException('URL scheme not allowed.');
+			throw new TranslatableModuleException('mediapool', 'url_invalid', ['url' => $url]);
 
 		$host = $parsed['host'];
 		$port = $parsed['port'] ?? ($parsed['scheme'] === 'https' ? 443 : 80);
 		$ip   = gethostbyname($host);
 
 		if ($ip === $host)
-			throw new \InvalidArgumentException('DNS resolution failed.');
+			throw new TranslatableModuleException('mediapool', 'url_not_resolvable', ['url' => $url]);
 
 		if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false)
-			throw new \InvalidArgumentException('URL resolves to forbidden IP range.');
+			throw new TranslatableModuleException('mediapool', 'url_not_allowed', ['url' => $url]);
 
 		if (str_starts_with($ip, '169.254.'))
-			throw new \InvalidArgumentException('URL resolves to forbidden IP range.');
+			throw new TranslatableModuleException('mediapool', 'url_not_allowed', ['url' => $url]);
 
 		return ['ip' => $ip, 'host' => $host, 'port' => $port, 'path' => $parsed['path'] ?? '/'];
 	}

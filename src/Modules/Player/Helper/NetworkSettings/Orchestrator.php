@@ -21,9 +21,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Helper\NetworkSettings;
 
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Player\Services\PlayerService;
 use Doctrine\DBAL\Exception;
@@ -50,8 +52,16 @@ class Orchestrator
 		if ($playerId <= 0)
 			return [];
 
-		/** @var array{player_id:int, player_name:string, model:int, is_intranet:int, api_endpoint:string}|array{} $player */
-		$player = $this->playerService->fetchAclCheckedPlayerData($playerId);
+		try
+		{
+			/** @var array{player_id:int, player_name:string, model:int, is_intranet:int, api_endpoint:string} $player */
+			$player = $this->playerService->fetchAclCheckedPlayerData($playerId);
+		}
+		catch (NotFoundException|AccessDeniedException)
+		{
+			// the html page redirects with a flash message instead of the standard error response
+			return [];
+		}
 
 		return $player;
 	}

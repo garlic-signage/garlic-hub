@@ -94,24 +94,6 @@ class ResponseBuilderTest extends TestCase
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testPlayerNotFound(): void
-	{
-		$this->translatorMock->expects($this->once())->method('translate')
-			->with('player_not_found', 'player')
-			->willReturn('Translated Message');
-
-		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonError')
-			->with($this->responseStub, 'Translated Message')
-			->willReturn($this->responseStub);
-
-		$this->responseBuilder->playerNotFound($this->responseStub);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
 	public function testPlayerNotReachable(): void
 	{
 		$this->translatorMock->expects($this->once())->method('translate')

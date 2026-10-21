@@ -25,7 +25,6 @@ use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Media\MediaUrlSigner;
@@ -79,8 +78,6 @@ class Template extends AbstractInsertItem
 			$playlistData = $this->checkPlaylistAcl($playlistId);
 
 			$template = $this->templatesService->loadWithUserById((int) $insertId); // checks rights, too
-			if (empty($template))
-				throw new NotFoundException('playlists', 'template_not_accessible', ['template_id' => (int) $insertId]);
 
 			/*			if (!$this->allowedByTimeLimit($playlistId, $playlistData['time_limit']))
 							throw new ModuleException('items', 'Playlist time limit exceeds');
