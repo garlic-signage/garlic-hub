@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Services\InsertItems;
 
+use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\NotFoundException;
@@ -37,9 +38,10 @@ use Throwable;
 
 class Playlist extends AbstractInsertItem
 {
-	public function __construct(ItemsRepository $itemsRepository, PlaylistsService $playlistsService, PlaylistMetricsCalculator $playlistMetricsCalculator, UserSession $userSession, LoggerInterface $logger)
+	public function __construct(ItemsRepository $itemsRepository, Transactions $transactions, PlaylistsService $playlistsService, PlaylistMetricsCalculator $playlistMetricsCalculator, UserSession $userSession, LoggerInterface $logger)
 	{
 		$this->itemsRepository  = $itemsRepository;
+		$this->transactions     = $transactions;
 		$this->playlistsService = $playlistsService;
 		$this->playlistMetricsCalculator = $playlistMetricsCalculator;
 		$this->userSession      = $userSession;
@@ -56,7 +58,7 @@ class Playlist extends AbstractInsertItem
 	 */
 	public function insert(int $playlistId, string|int $insertId, int $position): array
 	{
-		$this->itemsRepository->beginTransaction();
+		$this->transactions->begin();
 		try
 		{
 
@@ -93,13 +95,13 @@ class Playlist extends AbstractInsertItem
 
 			$playlistMetrics = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlistTargetData)->toFrontendArray();
 
-			$this->itemsRepository->commitTransaction();
+			$this->transactions->commit();
 
 			return ['playlist_metrics' => $playlistMetrics, 'item' => $saveItem];
 		}
 		catch (Throwable $e)
 		{
-			$this->itemsRepository->rollBackTransaction();
+			$this->transactions->rollBack();
 			throw $e;
 		}
 	}

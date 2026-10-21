@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Services\InsertItems;
 
+use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\ItemType;
@@ -38,6 +39,7 @@ use Psr\Log\LoggerInterface;
 class PlaylistTest extends TestCase
 {
 	private ItemsRepository&MockObject $itemsRepositoryMock;
+	private Transactions&MockObject $transactionsMock;
 	private PlaylistsService&MockObject $playlistsServiceMock;
 	private PlaylistMetricsCalculator&MockObject $playlistMetricsCalculatorMock;
 	private LoggerInterface&MockObject $loggerMock;
@@ -51,6 +53,7 @@ class PlaylistTest extends TestCase
 	{
 		parent::setUp();
 		$this->itemsRepositoryMock = $this->createMock(ItemsRepository::class);
+		$this->transactionsMock = $this->createMock(Transactions::class);
 		$this->playlistsServiceMock = $this->createMock(PlaylistsService::class);
 		$this->playlistMetricsCalculatorMock = $this->createMock(PlaylistMetricsCalculator::class);
 		$this->loggerMock = $this->createMock(LoggerInterface::class);
@@ -60,6 +63,7 @@ class PlaylistTest extends TestCase
 
 		$this->playlist = new Playlist(
 			$this->itemsRepositoryMock,
+			$this->transactionsMock,
 			$this->playlistsServiceMock,
 			$this->playlistMetricsCalculatorMock,
 			$userSessionStub,
@@ -81,7 +85,7 @@ class PlaylistTest extends TestCase
 		$playlistInsertData = ['playlist_id' => 2, 'duration' => 150, 'filesize' => 1024, 'playlist_name' => 'Insert'];
 		$playlistMetrics = new PlaylistMetrics(duration: 42);
 
-		$this->itemsRepositoryMock->expects($this->once())->method('beginTransaction');
+		$this->transactionsMock->expects($this->once())->method('begin');
 		$this->checkAclMockSuccessful($playlistTargetData, $playlistInsertData);
 
 		$this->itemsRepositoryMock->method('findAllPlaylistItemsByPlaylistId')
@@ -113,7 +117,7 @@ class PlaylistTest extends TestCase
 			->expects($this->atLeastOnce())->method('calculateFromPlaylistData')
 			->willReturn($playlistMetrics);
 
-		$this->itemsRepositoryMock->method('commitTransaction');
+		$this->transactionsMock->method('commit');
 
 		$result = $this->playlist->insert($playlistId, $insertId, $position);
 
@@ -140,14 +144,14 @@ class PlaylistTest extends TestCase
 		$playlistTargetData = ['playlist_id' => 1, 'duration' => 300, 'filesize' => 2048, 'playlist_name' => 'Test'];
 		$playlistInsertData = ['playlist_id' => 2, 'duration' => 150, 'filesize' => 1024, 'playlist_name' => 'Insert'];
 
-		$this->itemsRepositoryMock->expects($this->once())->method('beginTransaction');
+		$this->transactionsMock->expects($this->once())->method('begin');
 		$this->checkAclMockSuccessful($playlistTargetData, $playlistInsertData);
 
 		$this->itemsRepositoryMock->expects($this->never())->method('findAllPlaylistItemsByPlaylistId');
 
 		$this->itemsRepositoryMock->expects($this->never())->method('updatePositionsWhenInserted');
 
-		$this->itemsRepositoryMock->expects($this->once())->method('rollBackTransaction');
+		$this->transactionsMock->expects($this->once())->method('rollBack');
 
 		$this->expectException(TranslatableModuleException::class);
 		$this->expectExceptionMessage('playlist_recursion');
@@ -169,7 +173,7 @@ class PlaylistTest extends TestCase
 		$playlistTargetData = ['playlist_id' => 1, 'duration' => 300, 'filesize' => 2048, 'playlist_name' => 'Test'];
 		$playlistInsertData = ['playlist_id' => 2, 'duration' => 150, 'filesize' => 1024, 'playlist_name' => 'Insert'];
 
-		$this->itemsRepositoryMock->expects($this->once())->method('beginTransaction');
+		$this->transactionsMock->expects($this->once())->method('begin');
 		$this->checkAclMockSuccessful($playlistTargetData, $playlistInsertData);
 
 		$this->itemsRepositoryMock->expects($this->once())->method('findAllPlaylistItemsByPlaylistId')
@@ -180,7 +184,7 @@ class PlaylistTest extends TestCase
 
 		$this->itemsRepositoryMock->expects($this->never())->method('updatePositionsWhenInserted');
 
-		$this->itemsRepositoryMock->expects($this->once())->method('rollBackTransaction');
+		$this->transactionsMock->expects($this->once())->method('rollBack');
 
 		$this->expectException(TranslatableModuleException::class);
 		$this->expectExceptionMessage('playlist_recursion');
@@ -200,7 +204,7 @@ class PlaylistTest extends TestCase
 		$playlistTargetData = ['playlist_id' => 1, 'duration' => 300, 'filesize' => 2048, 'playlist_name' => 'Test'];
 		$playlistInsertData = ['playlist_id' => 2, 'duration' => 150, 'filesize' => 1024, 'playlist_name' => 'Insert'];
 
-		$this->itemsRepositoryMock->expects($this->once())->method('beginTransaction');
+		$this->transactionsMock->expects($this->once())->method('begin');
 		$this->checkAclMockSuccessful($playlistTargetData, $playlistInsertData);
 
 		$this->itemsRepositoryMock->method('findAllPlaylistItemsByPlaylistId')
@@ -230,7 +234,7 @@ class PlaylistTest extends TestCase
 
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateFromPlaylistData');
 
-		$this->itemsRepositoryMock->expects($this->once())->method('rollBackTransaction');
+		$this->transactionsMock->expects($this->once())->method('rollBack');
 
 		$this->expectException(TranslatableModuleException::class);
 		$this->expectExceptionMessage('item_not_inserted');

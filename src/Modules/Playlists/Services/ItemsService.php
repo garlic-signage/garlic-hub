@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Services;
 
+use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -46,6 +47,7 @@ class ItemsService extends AbstractBaseService
 {
 
 	public function __construct(private readonly ItemsRepository           $itemsRepository,
+								private readonly Transactions              $transactions,
 								private readonly MediaService              $mediaService,
 								private readonly PlaylistsService          $playlistsService,
 								private readonly PlaylistMetricsCalculator $playlistMetricsCalculator,
@@ -206,7 +208,7 @@ class ItemsService extends AbstractBaseService
 	 */
 	public function updateItemOrder(int $playlistId, array $itemsOrder): void
 	{
-		$this->itemsRepository->beginTransaction();
+		$this->transactions->begin();
 		try
 		{
 			$this->playlistsService->loadPureById($playlistId); // will check for rights
@@ -216,11 +218,11 @@ class ItemsService extends AbstractBaseService
 				if ($this->itemsRepository->updateItemOrder((int)$itemId, $key) === 0)
 					throw new TranslatableModuleException('playlists', 'item_order_not_updated', ['item_id' => $itemId]);
 			}
-			$this->itemsRepository->commitTransaction();
+			$this->transactions->commit();
 		}
 		catch (Throwable $e)
 		{
-			$this->itemsRepository->rollBackTransaction();
+			$this->transactions->rollBack();
 			throw $e;
 		}
 	}
@@ -237,7 +239,7 @@ class ItemsService extends AbstractBaseService
 	 */
 	public function delete(int $playlistId, int $itemId): array
 	{
-		$this->itemsRepository->beginTransaction();
+		$this->transactions->begin();
 		try
 		{
 			$playlistData = $this->checkPlaylistAcl($playlistId);
@@ -255,13 +257,13 @@ class ItemsService extends AbstractBaseService
 
 			$playlistMetrics = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlistData)->toFrontendArray();
 
-			$this->itemsRepository->commitTransaction();
+			$this->transactions->commit();
 
 			return ['playlist_metrics' => $playlistMetrics, 'delete_id' => $deleteId];
 		}
 		catch (Throwable $e)
 		{
-			$this->itemsRepository->rollBackTransaction();
+			$this->transactions->rollBack();
 			throw $e;
 		}
 	}

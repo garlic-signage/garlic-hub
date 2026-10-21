@@ -213,6 +213,7 @@ $dependencies[InsertItemFactory::class] = DI\factory(function (ContainerInterfac
 	return new InsertItemFactory(
 		$container->get(MediaService::class),
 		$container->get(ItemsRepository::class),
+		$container->get(Transactions::class),
 		$container->get(PlaylistsService::class),
 		$container->get(TemplatesService::class),
 		$container->get(Config::class),
@@ -248,6 +249,7 @@ $dependencies[ItemsService::class] = DI\factory(function (ContainerInterface $co
 {
 	return new ItemsService(
 		$container->get(ItemsRepository::class),
+		$container->get(Transactions::class),
 		$container->get(MediaService::class),
 		$container->get(PlaylistsService::class),
 		$container->get(PlaylistMetricsCalculator::class),

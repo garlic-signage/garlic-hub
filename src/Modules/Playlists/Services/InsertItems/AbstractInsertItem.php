@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Services\InsertItems;
 
+use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Services\AbstractBaseService;
 use App\Modules\Auth\UserSession;
@@ -31,6 +32,7 @@ use App\Modules\Playlists\Services\PlaylistsService;
 abstract class AbstractInsertItem extends AbstractBaseService
 {
 	protected ItemsRepository $itemsRepository;
+	protected Transactions $transactions;
 	protected PlaylistsService $playlistsService;
 	protected PlaylistMetricsCalculator $playlistMetricsCalculator;
 	protected UserSession $userSession;

@@ -25,7 +25,6 @@ use App\Framework\Core\Config\Config;
 use App\Framework\Database\BaseRepositories\SqlBase;
 use App\Framework\Database\BaseRepositories\Traits\CrudTraits;
 use App\Framework\Database\BaseRepositories\Traits\FindOperationsTrait;
-use App\Framework\Database\BaseRepositories\Traits\TransactionsTrait;
 use App\Modules\Playlists\Helper\ItemType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
@@ -39,7 +38,6 @@ class ItemsRepository extends SqlBase
 		CONST  int FLAG_LOCKED   = 2;
 		CONST  int FLAG_LOGGABLE  = 4;
 	*/
-	use TransactionsTrait;
 	use FindOperationsTrait;
 
 	public function __construct(Connection $connection)

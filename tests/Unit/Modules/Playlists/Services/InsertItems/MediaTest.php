@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Services\InsertItems;
 
+use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\NotFoundException;
@@ -43,6 +44,7 @@ class MediaTest extends TestCase
 {
 	private MediaService&MockObject $mediaServiceMock;
 	private ItemsRepository&MockObject $itemsRepositoryMock;
+	private Transactions&MockObject $transactionsMock;
 	private PlaylistsService&MockObject $playlistsServiceMock;
 	private PlaylistMetricsCalculator&MockObject $playlistMetricsCalculatorMock;
 	private WidgetsService&MockObject $widgetsServiceMock;
@@ -57,6 +59,7 @@ class MediaTest extends TestCase
 		parent::setUp();
 		$this->mediaServiceMock = $this->createMock(MediaService::class);
 		$this->itemsRepositoryMock = $this->createMock(ItemsRepository::class);
+		$this->transactionsMock = $this->createMock(Transactions::class);
 		$this->playlistsServiceMock = $this->createMock(PlaylistsService::class);
 		$this->playlistMetricsCalculatorMock = $this->createMock(PlaylistMetricsCalculator::class);
 		$this->widgetsServiceMock = $this->createMock(WidgetsService::class);
@@ -67,6 +70,7 @@ class MediaTest extends TestCase
 
 		$this->media = new Media(
 			$this->itemsRepositoryMock,
+			$this->transactionsMock,
 			$this->mediaServiceMock,
 			$this->playlistsServiceMock,
 			$this->playlistMetricsCalculatorMock,
@@ -103,7 +107,7 @@ class MediaTest extends TestCase
 		$this->playlistMetricsCalculatorMock->expects($this->once())->method('calculateFromPlaylistData')
 			->willReturn(new PlaylistMetrics(duration: 42));
 
-		$this->itemsRepositoryMock->expects($this->once())->method('commitTransaction');
+		$this->transactionsMock->expects($this->once())->method('commit');
 
 		$result = $this->media->insert(1, 'mediaId', 2);
 
@@ -140,7 +144,7 @@ class MediaTest extends TestCase
 		$this->playlistMetricsCalculatorMock->expects($this->once())->method('calculateFromPlaylistData')
 			->willReturn(new PlaylistMetrics(duration: 42));
 
-		$this->itemsRepositoryMock->expects($this->once())->method('commitTransaction');
+		$this->transactionsMock->expects($this->once())->method('commit');
 
 		$result = $this->media->insert(1, 'mediaId', 2);
 
@@ -166,7 +170,8 @@ class MediaTest extends TestCase
 
 		$this->mediaServiceMock->expects($this->never())->method('fetchMedia');
 
-		$this->itemsRepositoryMock->expects($this->once())->method('rollBackTransaction');
+		$this->itemsRepositoryMock->expects($this->never())->method($this->anything());
+		$this->transactionsMock->expects($this->once())->method('rollBack');
 
 		$this->expectException(AccessDeniedException::class);
 		$this->expectExceptionMessage('playlist_not_editable');
@@ -191,7 +196,8 @@ class MediaTest extends TestCase
 			->with('invalidMediaId')
 			->willThrowException(new NotFoundException('mediapool', 'media_not_found', ['media_id' => 'invalidMediaId']));
 
-		$this->itemsRepositoryMock->expects($this->once())->method('rollBackTransaction');
+		$this->itemsRepositoryMock->expects($this->never())->method($this->anything());
+		$this->transactionsMock->expects($this->once())->method('rollBack');
 
 		$this->expectException(NotFoundException::class);
 		$this->expectExceptionMessage('media_not_found');
@@ -219,8 +225,8 @@ class MediaTest extends TestCase
 		$this->itemsRepositoryMock->expects($this->once())->method('insert')
 			->willReturn(0);
 
-		$this->itemsRepositoryMock->expects($this->once())
-			->method('rollBackTransaction');
+		$this->transactionsMock->expects($this->once())
+			->method('rollBack');
 
 		$this->expectException(TranslatableModuleException::class);
 		$this->expectExceptionMessage('item_not_inserted');
@@ -229,7 +235,7 @@ class MediaTest extends TestCase
 
 	private function checkAclMockSuccessful(): void
 	{
-		$this->itemsRepositoryMock->expects($this->once())->method('beginTransaction');
+		$this->transactionsMock->expects($this->once())->method('begin');
 		$this->playlistsServiceMock->expects($this->once())->method('loadPlaylistForEdit')->willReturn(['some_stuff']);
 	}
 }

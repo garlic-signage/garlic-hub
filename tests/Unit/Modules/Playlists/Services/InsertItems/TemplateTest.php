@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Playlists\Services\InsertItems;
 
 use App\Framework\Core\Config\Config;
+use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Auth\UserSession;
@@ -41,6 +42,7 @@ use Psr\Log\LoggerInterface;
 class TemplateTest extends TestCase
 {
 	private ItemsRepository&MockObject $itemsRepositoryMock;
+	private Transactions&MockObject $transactionsMock;
 	private TemplatesService&MockObject $templatesServiceMock;
 	private Filesystem&MockObject $fileSystemMock;
 	private PlaylistsService&MockObject $playlistsServiceMock;
@@ -54,6 +56,7 @@ class TemplateTest extends TestCase
 	{
 		parent::setUp();
 		$this->itemsRepositoryMock           = $this->createMock(ItemsRepository::class);
+		$this->transactionsMock              = $this->createMock(Transactions::class);
 		$this->templatesServiceMock          = $this->createMock(TemplatesService::class);
 		$this->fileSystemMock                = $this->createMock(Filesystem::class);
 		$this->playlistsServiceMock          = $this->createMock(PlaylistsService::class);
@@ -66,6 +69,7 @@ class TemplateTest extends TestCase
 
 		$this->template = new Template(
 			$this->itemsRepositoryMock,
+			$this->transactionsMock,
 			$this->templatesServiceMock,
 			$configStub,
 			$this->fileSystemMock,
@@ -89,13 +93,13 @@ class TemplateTest extends TestCase
 			->willReturn(['name' => 'Template', 'content' => '{}']);
 		$this->playlistMetricsCalculatorMock->expects($this->once())->method('calculateRemainingDuration')->willReturn(10);
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateFromPlaylistData');
-		$this->itemsRepositoryMock->expects($this->once())->method('beginTransaction');
+		$this->transactionsMock->expects($this->once())->method('begin');
 		$this->itemsRepositoryMock->expects($this->once())->method('updatePositionsWhenInserted')->with(1, 2);
 		$this->itemsRepositoryMock->expects($this->once())->method('insert')->willReturn(5);
 		$this->fileSystemMock->expects($this->once())->method('copy')
 			->willThrowException(UnableToCopyFile::fromLocationTo('/path/7.jpg', '/path/5.jpg'));
-		$this->itemsRepositoryMock->expects($this->once())->method('rollBackTransaction');
-		$this->itemsRepositoryMock->expects($this->never())->method('commitTransaction');
+		$this->transactionsMock->expects($this->once())->method('rollBack');
+		$this->transactionsMock->expects($this->never())->method('commit');
 
 		$this->expectException(UnableToCopyFile::class);
 		$this->template->insert(1, 7, 2);
@@ -110,9 +114,9 @@ class TemplateTest extends TestCase
 			->willThrowException(new ModuleException('templates', 'Template is not editable.'));
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->fileSystemMock->expects($this->never())->method($this->anything());
-		$this->itemsRepositoryMock->expects($this->once())->method('beginTransaction');
+		$this->transactionsMock->expects($this->once())->method('begin');
 		$this->itemsRepositoryMock->expects($this->never())->method('insert');
-		$this->itemsRepositoryMock->expects($this->once())->method('rollBackTransaction');
+		$this->transactionsMock->expects($this->once())->method('rollBack');
 
 		$this->expectException(ModuleException::class);
 		$this->template->insert(1, 7, 2);

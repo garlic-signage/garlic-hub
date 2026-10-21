@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Services\InsertItems;
 
+use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -44,6 +45,7 @@ class Media extends AbstractInsertItem
 
 	public function __construct(
 		ItemsRepository $itemsRepository,
+		Transactions $transactions,
 		MediaService $mediaService,
 		PlaylistsService $playlistsService,
 		PlaylistMetricsCalculator $playlistMetricsCalculator,
@@ -52,6 +54,7 @@ class Media extends AbstractInsertItem
 		LoggerInterface $logger)
 	{
 		$this->itemsRepository  = $itemsRepository;
+		$this->transactions     = $transactions;
 		$this->playlistsService = $playlistsService;
 		$this->mediaService     = $mediaService;
 		$this->widgetsService   = $widgetsService;
@@ -71,7 +74,7 @@ class Media extends AbstractInsertItem
 	 */
 	public function insert(int $playlistId, int|string $insertId, int $position): array
 	{
-		$this->itemsRepository->beginTransaction();
+		$this->transactions->begin();
 		try
 		{
 			$playlistData = $this->checkPlaylistAcl($playlistId);
@@ -111,13 +114,13 @@ class Media extends AbstractInsertItem
 
 			$playlistMetrics = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlistData)->toFrontendArray();
 
-			$this->itemsRepository->commitTransaction();
+			$this->transactions->commit();
 
 			return ['playlist_metrics' => $playlistMetrics, 'item' => $saveItem];
 		}
 		catch (Throwable $e)
 		{
-			$this->itemsRepository->rollBackTransaction();
+			$this->transactions->rollBack();
 			throw $e;
 		}
 	}

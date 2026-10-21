@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace App\Modules\Playlists\Services\InsertItems;
 
 use App\Framework\Core\Config\Config;
+use App\Framework\Database\BaseRepositories\Transactions;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\MediaService;
 use App\Modules\Playlists\Repositories\ItemsRepository;
@@ -39,6 +40,7 @@ readonly class InsertItemFactory
 
 	public function __construct(private MediaService $mediaService,
 								private ItemsRepository $itemsRepository,
+								private Transactions $transactions,
 								private PlaylistsService $playlistsService,
 								private TemplatesService $templateService,
 								private Config $config,
@@ -55,10 +57,11 @@ readonly class InsertItemFactory
 	{
 		return match ($source)
 		{
-			'mediapool' => new Media($this->itemsRepository, $this->mediaService, $this->playlistsService, $this->playlistMetricsCalculator, $this->widgetsService, $this->userSession, $this->logger),
-			'playlist' => new Playlist($this->itemsRepository, $this->playlistsService, $this->playlistMetricsCalculator, $this->userSession, $this->logger),
+			'mediapool' => new Media($this->itemsRepository, $this->transactions, $this->mediaService, $this->playlistsService, $this->playlistMetricsCalculator, $this->widgetsService, $this->userSession, $this->logger),
+			'playlist' => new Playlist($this->itemsRepository, $this->transactions, $this->playlistsService, $this->playlistMetricsCalculator, $this->userSession, $this->logger),
 			'template' => new Template(
 				$this->itemsRepository,
+				$this->transactions,
 				$this->templateService,
 				$this->config,
 				$this->fileSystem,

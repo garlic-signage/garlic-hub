@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Playlists\Services;
 
 use App\Framework\Core\Config\Config;
+use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -44,6 +45,7 @@ use Psr\Log\LoggerInterface;
 class ItemsServiceTest extends TestCase
 {
 	private ItemsRepository&MockObject $itemsRepositoryMock;
+	private Transactions&MockObject $transactionsMock;
 	private MediaService&MockObject $mediaServiceMock;
 	private PlaylistsService&MockObject $playlistsServiceMock;
 	private PlaylistMetricsCalculator&MockObject $playlistMetricsCalculatorMock;
@@ -58,6 +60,7 @@ class ItemsServiceTest extends TestCase
 	{
 		parent::setUp();
 		$this->itemsRepositoryMock = $this->createMock(ItemsRepository::class);
+		$this->transactionsMock = $this->createMock(Transactions::class);
 		$this->mediaServiceMock = $this->createMock(MediaService::class);
 		$this->playlistsServiceMock = $this->createMock(PlaylistsService::class);
 		$this->playlistMetricsCalculatorMock = $this->createMock(PlaylistMetricsCalculator::class);
@@ -66,6 +69,7 @@ class ItemsServiceTest extends TestCase
 
 		$this->itemsService = new ItemsService(
 			$this->itemsRepositoryMock,
+			$this->transactionsMock,
 			$this->mediaServiceMock,
 			$this->playlistsServiceMock,
 			$this->playlistMetricsCalculatorMock,
@@ -80,7 +84,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testFindMediaInPlaylist(): void
 	{
-		$this->expectUntouched($this->mediaServiceMock, $this->playlistsServiceMock, $this->playlistMetricsCalculatorMock, $this->itemThumbnailResolverMock, $this->loggerMock);
+		$this->expectUntouched($this->transactionsMock, $this->mediaServiceMock, $this->playlistsServiceMock, $this->playlistMetricsCalculatorMock, $this->itemThumbnailResolverMock, $this->loggerMock);
 		$playlistId = 1;
 		$expected = [
 			['item_id' => 1, 'item_name' => 'Item 1'],
@@ -103,7 +107,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchItemByIdForValidMediapoolVideo(): void
 	{
-		$this->expectUntouched($this->playlistMetricsCalculatorMock, $this->itemThumbnailResolverMock, $this->loggerMock);
+		$this->expectUntouched($this->transactionsMock, $this->playlistMetricsCalculatorMock, $this->itemThumbnailResolverMock, $this->loggerMock);
 		$itemId = 123;
 		$itemData = [
 			'item_id' => $itemId,
@@ -141,6 +145,7 @@ class ItemsServiceTest extends TestCase
 	public function testFetchItemByIdForValidMediapoolImage(): void
 	{
 		$this->itemThumbnailResolverMock->expects($this->never())->method($this->anything());
+		$this->transactionsMock->expects($this->never())->method($this->anything());
 		$this->loggerMock->expects($this->never())->method($this->anything());
 		$itemId = 123;
 		$itemData = [
@@ -179,7 +184,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchItemByIdWithUnknownItem(): void
 	{
-		$this->expectUntouched($this->playlistMetricsCalculatorMock, $this->itemThumbnailResolverMock, $this->loggerMock);
+		$this->expectUntouched($this->transactionsMock, $this->playlistMetricsCalculatorMock, $this->itemThumbnailResolverMock, $this->loggerMock);
 		$this->itemsRepositoryMock->expects($this->once())->method('findFirstById')->with(123)->willReturn([]);
 		$this->playlistsServiceMock->expects($this->never())->method('loadPureById');
 		$this->mediaServiceMock->expects($this->never())->method('fetchMediaByChecksum');
@@ -198,7 +203,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchItemByIdThrowsWhenMediaNotFound(): void
 	{
-		$this->expectUntouched($this->playlistMetricsCalculatorMock, $this->itemThumbnailResolverMock, $this->loggerMock);
+		$this->expectUntouched($this->transactionsMock, $this->playlistMetricsCalculatorMock, $this->itemThumbnailResolverMock, $this->loggerMock);
 		$itemId = 123;
 		$itemData = [
 			'item_id' => $itemId,
@@ -233,7 +238,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchItemByIdForValidPlaylistItem(): void
 	{
-		$this->expectUntouched($this->mediaServiceMock, $this->itemThumbnailResolverMock, $this->loggerMock);
+		$this->expectUntouched($this->transactionsMock, $this->mediaServiceMock, $this->itemThumbnailResolverMock, $this->loggerMock);
 		$itemId = 456;
 		$itemData = [
 			'item_id' => $itemId,
@@ -273,7 +278,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchItemByIdForPlaylistItemWithTimeLimitAndBiggeDefualtDuration(): void
 	{
-		$this->expectUntouched($this->mediaServiceMock, $this->itemThumbnailResolverMock, $this->loggerMock);
+		$this->expectUntouched($this->transactionsMock, $this->mediaServiceMock, $this->itemThumbnailResolverMock, $this->loggerMock);
 		$itemId = 456;
 		$itemData = [
 			'item_id' => $itemId,
@@ -313,7 +318,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchItemByIdDefaultDuration(): void
 	{
-		$this->expectUntouched($this->mediaServiceMock, $this->itemThumbnailResolverMock, $this->loggerMock);
+		$this->expectUntouched($this->transactionsMock, $this->mediaServiceMock, $this->itemThumbnailResolverMock, $this->loggerMock);
 		$itemId = 101;
 		$itemData = [
 			'item_id' => $itemId,
@@ -351,7 +356,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadItemsByPlaylistIdForComposerAddsThumbnails(): void
 	{
-		$this->expectUntouched($this->mediaServiceMock, $this->loggerMock);
+		$this->expectUntouched($this->transactionsMock, $this->mediaServiceMock, $this->loggerMock);
 		$playlistId = 1;
 		$playlistData = ['playlist_id' => $playlistId];
 		$itemsData = [
@@ -392,7 +397,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadItemsByPlaylistIdForComposerSkipsItemsWithoutThumbnail(): void
 	{
-		$this->expectUntouched($this->mediaServiceMock, $this->loggerMock);
+		$this->expectUntouched($this->transactionsMock, $this->mediaServiceMock, $this->loggerMock);
 		$playlistId = 1;
 		$playlistData = ['playlist_id' => $playlistId];
 		$itemsData = [['item_id' => 1, 'item_type' => 'unknown']];
@@ -422,7 +427,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadItemsByPlaylistIdForComposerWithEmptyPlaylist(): void
 	{
-		$this->expectUntouched($this->itemThumbnailResolverMock, $this->mediaServiceMock, $this->loggerMock);
+		$this->expectUntouched($this->transactionsMock, $this->itemThumbnailResolverMock, $this->mediaServiceMock, $this->loggerMock);
 		$playlistId = 1;
 		$playlistData = ['playlist_id' => $playlistId];
 
@@ -453,7 +458,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateFieldSuccess(): void
 	{
-		$this->expectUntouched($this->mediaServiceMock, $this->playlistMetricsCalculatorMock, $this->itemThumbnailResolverMock, $this->loggerMock);
+		$this->expectUntouched($this->transactionsMock, $this->mediaServiceMock, $this->playlistMetricsCalculatorMock, $this->itemThumbnailResolverMock, $this->loggerMock);
 		$itemId = 1;
 		$fieldName = 'name';
 		$fieldValue = 'New Playlist Name';
@@ -487,7 +492,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateFieldThrowsWhenItemNotFound(): void
 	{
-		$this->expectUntouched($this->mediaServiceMock, $this->playlistMetricsCalculatorMock, $this->itemThumbnailResolverMock, $this->loggerMock);
+		$this->expectUntouched($this->transactionsMock, $this->mediaServiceMock, $this->playlistMetricsCalculatorMock, $this->itemThumbnailResolverMock, $this->loggerMock);
 		$itemId = 1;
 		$fieldName = 'name';
 		$fieldValue = 'New Playlist Name';
@@ -507,7 +512,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateItemDurationSuccess(): void
 	{
-		$this->expectUntouched($this->mediaServiceMock, $this->itemThumbnailResolverMock, $this->loggerMock);
+		$this->expectUntouched($this->transactionsMock, $this->mediaServiceMock, $this->itemThumbnailResolverMock, $this->loggerMock);
 		$itemId = 5;
 		$wantedDuration = 120;
 		$playlistId = 7;
@@ -539,7 +544,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateItemDurationReturnsNullWhenNotUpdated(): void
 	{
-		$this->expectUntouched($this->mediaServiceMock, $this->itemThumbnailResolverMock, $this->loggerMock);
+		$this->expectUntouched($this->transactionsMock, $this->mediaServiceMock, $this->itemThumbnailResolverMock, $this->loggerMock);
 		$itemId = 5;
 		$wantedDuration = 120;
 		$playlistId = 7;
@@ -571,7 +576,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateItemDurationItemNotFound(): void
 	{
-		$this->expectUntouched($this->mediaServiceMock, $this->itemThumbnailResolverMock, $this->loggerMock);
+		$this->expectUntouched($this->transactionsMock, $this->mediaServiceMock, $this->itemThumbnailResolverMock, $this->loggerMock);
 		$itemId = 5;
 		$wantedDuration = 120;
 
@@ -592,7 +597,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateItemDurationForPlaylist(): void
 	{
-		$this->expectUntouched($this->mediaServiceMock, $this->itemThumbnailResolverMock, $this->loggerMock);
+		$this->expectUntouched($this->transactionsMock, $this->mediaServiceMock, $this->itemThumbnailResolverMock, $this->loggerMock);
 		$itemId           = 5;
 
 		$wantedDuration   = 300;
@@ -645,7 +650,7 @@ class ItemsServiceTest extends TestCase
 		$playlistId = 10;
 		$itemsOrder = ['5' => '3', '3' => '1', '8' => '2']; // phpstan treats this as array<int,string>
 
-		$this->itemsRepositoryMock->expects($this->once())->method('beginTransaction');
+		$this->transactionsMock->expects($this->once())->method('begin');
 
 		$this->playlistsServiceMock->expects($this->once())->method('loadPureById')
 			->with($playlistId);
@@ -656,7 +661,7 @@ class ItemsServiceTest extends TestCase
 				[1, 3, 1],
 				[2, 8, 1],
 			]);
-		$this->itemsRepositoryMock->expects($this->once())->method('commitTransaction');
+		$this->transactionsMock->expects($this->once())->method('commit');
 
 		$this->itemsService->updateItemOrder($playlistId, $itemsOrder);
 	}
@@ -676,7 +681,7 @@ class ItemsServiceTest extends TestCase
 		$itemsOrder['3'] = '1';
 		$itemsOrder['8'] = '2';
 
-		$this->itemsRepositoryMock->expects($this->once())->method('beginTransaction');
+		$this->transactionsMock->expects($this->once())->method('begin');
 
 		$this->playlistsServiceMock->expects($this->once())->method('loadPureById')
 			->with($playlistId);
@@ -684,8 +689,8 @@ class ItemsServiceTest extends TestCase
 		$this->itemsRepositoryMock->expects($this->once())->method('updateItemOrder')
 			->with(3, 5)->willReturn(0);
 
-		$this->itemsRepositoryMock->expects($this->once())->method('rollBackTransaction');
-		$this->itemsRepositoryMock->expects($this->never())->method('commitTransaction');
+		$this->transactionsMock->expects($this->once())->method('rollBack');
+		$this->transactionsMock->expects($this->never())->method('commit');
 
 		$this->expectException(TranslatableModuleException::class);
 		$this->expectExceptionMessage('item_order_not_updated');
@@ -709,8 +714,8 @@ class ItemsServiceTest extends TestCase
 			->with($playlistId)
 			->willReturn($playlistData);
 
-		$this->itemsRepositoryMock->expects($this->once())
-			->method('beginTransaction');
+		$this->transactionsMock->expects($this->once())
+			->method('begin');
 
 		$this->itemsRepositoryMock->expects($this->once())->method('findFirstBy')
 			->with(['item_id' => $itemId])
@@ -728,7 +733,7 @@ class ItemsServiceTest extends TestCase
 			->with($playlistData)
 			->willReturn($metrics);
 
-		$this->itemsRepositoryMock->expects($this->once())->method('commitTransaction');
+		$this->transactionsMock->expects($this->once())->method('commit');
 
 		$result = $this->itemsService->delete($playlistId, $itemId);
 
@@ -749,8 +754,8 @@ class ItemsServiceTest extends TestCase
 		$playlistId = 10;
 		$itemId = 20;
 
-		$this->itemsRepositoryMock->expects($this->once())
-			->method('beginTransaction');
+		$this->transactionsMock->expects($this->once())
+			->method('begin');
 
 		$this->playlistsServiceMock->expects($this->once())->method('loadPlaylistForEdit')
 			->with($playlistId)
@@ -758,8 +763,8 @@ class ItemsServiceTest extends TestCase
 
 		$this->itemsRepositoryMock->expects($this->never())->method('findFirstBy');
 
-		$this->itemsRepositoryMock->expects($this->once())
-			->method('rollBackTransaction');
+		$this->transactionsMock->expects($this->once())
+			->method('rollBack');
 
 		$this->expectException(NotFoundException::class);
 		$this->expectExceptionMessage('playlist_not_found');
@@ -782,15 +787,15 @@ class ItemsServiceTest extends TestCase
 			->with($playlistId)
 			->willReturn($playlistData);
 
-		$this->itemsRepositoryMock->expects($this->once())
-			->method('beginTransaction');
+		$this->transactionsMock->expects($this->once())
+			->method('begin');
 
 		$this->itemsRepositoryMock->expects($this->once())->method('findFirstBy')
 			->with(['item_id' => $itemId])
 			->willReturn([]);
 
-		$this->itemsRepositoryMock->expects($this->once())
-			->method('rollBackTransaction');
+		$this->transactionsMock->expects($this->once())
+			->method('rollBack');
 
 		$this->expectException(NotFoundException::class);
 		$this->expectExceptionMessage('item_not_found');
@@ -818,8 +823,8 @@ class ItemsServiceTest extends TestCase
 			->with($playlistId)
 			->willReturn($playlistData);
 
-		$this->itemsRepositoryMock->expects($this->once())
-			->method('beginTransaction');
+		$this->transactionsMock->expects($this->once())
+			->method('begin');
 
 		$this->itemsRepositoryMock->expects($this->once())
 			->method('findFirstBy')
@@ -831,8 +836,8 @@ class ItemsServiceTest extends TestCase
 			->with($itemId)
 			->willReturn(0);
 
-		$this->itemsRepositoryMock->expects($this->once())
-			->method('rollBackTransaction');
+		$this->transactionsMock->expects($this->once())
+			->method('rollBack');
 
 		$this->expectException(TranslatableModuleException::class);
 		$this->expectExceptionMessage('item_not_deleted');
