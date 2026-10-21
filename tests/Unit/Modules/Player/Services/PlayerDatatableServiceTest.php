@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Player\Services;
 
 use App\Framework\Exceptions\CoreException;
+use App\Modules\Auth\UserSession;
 use App\Modules\Player\Helper\Datatable\Parameters;
 use App\Modules\Player\Repositories\PlayerRepository;
 use App\Modules\Player\Services\AclValidator;
@@ -39,6 +40,7 @@ class PlayerDatatableServiceTest extends TestCase
 	private PlayerRepository&MockObject $repositoryMock;
 	private Parameters&MockObject $parametersMock;
 	private AclValidator&MockObject $aclValidatorMock;
+	private UserSession&Stub $userSessionStub;
 	private PlayerDatatableService $service;
 
 	/**
@@ -52,7 +54,8 @@ class PlayerDatatableServiceTest extends TestCase
 		$this->parametersMock   = $this->createMock(Parameters::class);
 		$this->aclValidatorMock = $this->createMock(AclValidator::class);
 
-		$this->service = new PlayerDatatableService($this->repositoryMock, $this->parametersMock, $this->aclValidatorMock, $this->loggerStub);
+		$this->userSessionStub = $this->createStub(UserSession::class);
+		$this->service = new PlayerDatatableService($this->repositoryMock, $this->parametersMock, $this->aclValidatorMock, $this->userSessionStub, $this->loggerStub);
 	}
 
 	/**
@@ -62,7 +65,7 @@ class PlayerDatatableServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchForModuleAdmin(): void
 	{
-		$this->service->setUID(345);
+		$this->userSessionStub->method('getUID')->willReturn(345);
 		$this->aclValidatorMock->expects($this->once())->method('isModuleAdmin')
 			->with(345)
 			->willReturn(true);
@@ -98,7 +101,7 @@ class PlayerDatatableServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchForUser(): void
 	{
-		$this->service->setUID(789);
+		$this->userSessionStub->method('getUID')->willReturn(789);
 		$this->aclValidatorMock->expects($this->once())->method('isModuleAdmin')
 			->with(789)
 			->willReturn(false);

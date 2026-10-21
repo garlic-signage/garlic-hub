@@ -73,9 +73,6 @@ class WidgetsServiceTest extends TestCase
 			'item_name' => 'Test Widget',
 			'mimetype' => 'application/widget'
 		];
-		$this->widgetsService->setUID($UID);
-		$this->itemsServiceMock->expects($this->once())->method('setUID')
-			->with($UID);
 		$this->itemsServiceMock->expects($this->once())->method('fetchItemById')
 			->with($itemId)
 			->willReturn($itemData);
@@ -105,9 +102,6 @@ class WidgetsServiceTest extends TestCase
 			'item_name' => 'Test Widget',
 			'mimetype' => 'text/html'
 		];
-		$this->widgetsService->setUID($UID);
-		$this->itemsServiceMock->expects($this->once())->method('setUID')
-			->with($UID);
 		$this->itemsServiceMock->expects($this->once())->method('fetchItemById')
 			->with($itemId)
 			->willReturn($itemData);
@@ -136,10 +130,6 @@ class WidgetsServiceTest extends TestCase
 			'mimetype' => 'application/widget'
 		];
 
-		$this->widgetsService->setUID(14);
-		$this->itemsServiceMock->expects($this->once())->method('setUID')
-			->with(14);
-
 		$this->itemsServiceMock->expects($this->once())->method('fetchItemById')
 			->with($itemId)
 			->willReturn($itemData);
@@ -162,10 +152,6 @@ class WidgetsServiceTest extends TestCase
 		$itemId = 1;
 		$requestData = ['key' => 'value'];
 		$exceptionMessage = 'Error saving data';
-
-		$this->widgetsService->setUID(14);
-		$this->itemsServiceMock->expects($this->once())->method('setUID')
-			->with(14);
 
 		$this->itemsServiceMock->expects($this->once())
 			->method('fetchItemById')

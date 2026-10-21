@@ -74,6 +74,7 @@ class DatatableFacadeTest extends TestCase
 	#[Group('units')]
 	public function testConfigure(): void
 	{
+		$this->playlistsServiceMock->expects($this->never())->method($this->anything());
 		$mockUID = 12345;
 		$mockUserData = ['UID' => $mockUID];
 
@@ -81,8 +82,6 @@ class DatatableFacadeTest extends TestCase
 			->with('user')
 			->willReturn($mockUserData);
 
-		$this->playlistsServiceMock->expects($this->once())->method('setUID')
-			->with($mockUID);
 
 		$this->datatableBuilderMock->expects($this->once())->method('configureParameters')
 			->with($mockUID);

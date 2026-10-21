@@ -103,7 +103,6 @@ readonly class Orchestrator
 			return ['success' => false, 'errors' => $errors];
 
 		$UID = $this->userSession->getUID();
-		$this->profileService->setUID($UID);
 		if ($this->profileService->updatePassword($UID, $this->getParsedPassword()) === 0)
 			return ['success' => false, 'errors' => $this->translateServiceErrors()];
 
@@ -130,7 +129,6 @@ readonly class Orchestrator
 		if ($binToken === false)
 			return ['success' => false, 'errors' => [$this->translator->translate('token_error', 'profile')]];
 
-		$this->profileService->setUID($UID);
 		if ($this->profileService->storeNewForcedPassword($UID, $binToken, $this->getParsedPassword()) === 0)
 			return ['success' => false, 'errors' => $this->translateServiceErrors()];
 

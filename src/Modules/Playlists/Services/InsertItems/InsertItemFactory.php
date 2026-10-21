@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace App\Modules\Playlists\Services\InsertItems;
 
 use App\Framework\Core\Config\Config;
+use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\MediaService;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
@@ -45,6 +46,7 @@ readonly class InsertItemFactory
 								private MediaUrlSigner $mediaUrlSigner,
 								private PlaylistMetricsCalculator $playlistMetricsCalculator,
 								private WidgetsService $widgetsService,
+								private UserSession $userSession,
 								private  LoggerInterface $logger)
 	{
 	}
@@ -53,8 +55,8 @@ readonly class InsertItemFactory
 	{
 		return match ($source)
 		{
-			'mediapool' => new Media($this->itemsRepository, $this->mediaService, $this->playlistsService, $this->playlistMetricsCalculator, $this->widgetsService, $this->logger),
-			'playlist' => new Playlist($this->itemsRepository, $this->playlistsService, $this->playlistMetricsCalculator, $this->logger),
+			'mediapool' => new Media($this->itemsRepository, $this->mediaService, $this->playlistsService, $this->playlistMetricsCalculator, $this->widgetsService, $this->userSession, $this->logger),
+			'playlist' => new Playlist($this->itemsRepository, $this->playlistsService, $this->playlistMetricsCalculator, $this->userSession, $this->logger),
 			'template' => new Template(
 				$this->itemsRepository,
 				$this->templateService,
@@ -63,6 +65,7 @@ readonly class InsertItemFactory
 				$this->mediaUrlSigner,
 				$this->playlistsService,
 				$this->playlistMetricsCalculator,
+				$this->userSession,
 				$this->logger),
 			default => null,
 		};

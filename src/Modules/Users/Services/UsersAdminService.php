@@ -24,6 +24,7 @@ namespace App\Modules\Users\Services;
 use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Services\AbstractBaseService;
+use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\NodesService;
 use App\Modules\Profile\Entities\TokenPurposes;
 use App\Modules\Profile\Services\UserTokenService;
@@ -48,6 +49,7 @@ class UsersAdminService extends AbstractBaseService
 		private readonly UserTokenService $userTokenService,
 		private readonly AclValidator $aclValidator,
 		private readonly Transactions $transactions,
+		private readonly UserSession $userSession,
 		LoggerInterface $logger)
 	{
 		parent::__construct($logger);
@@ -112,7 +114,6 @@ class UsersAdminService extends AbstractBaseService
 			$this->token = $this->userTokenService->generateToken();
 			$this->userTokenService->insertToken($UID, $this->token, TokenPurposes::INITIAL_PASSWORD);
 
-			$this->nodesService->UID = $this->UID;
 			$nodeId = $this->nodesService->addUserDirectory($UID, $saveData['username']);
 			if ($nodeId === 0)
 			{
@@ -141,7 +142,7 @@ class UsersAdminService extends AbstractBaseService
 		{
 			$this->transactions->begin();
 
-			if (!$this->aclValidator->isModuleAdmin($this->UID))
+			if (!$this->aclValidator->isModuleAdmin($this->userSession->getUID()))
 				throw new ModuleException('users', 'No rights to delete user');
 
 			if ($this->userMainRepository->delete($UID) === 0)
@@ -149,7 +150,6 @@ class UsersAdminService extends AbstractBaseService
 
 			$this->userTokenService->deleteAllUserTokens($UID);
 
-			$this->nodesService->UID = $this->UID;
 			$this->nodesService->deleteUserDirectory($UID);
 
 			$this->transactions->commit();

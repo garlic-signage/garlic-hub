@@ -28,7 +28,6 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
-use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\ConditionalPlay\Orchestrator;
 use App\Modules\Playlists\Helper\ConditionalPlay\ResponseBuilder;
 use App\Modules\Playlists\Helper\ConditionalPlay\TemplatePreparer;
@@ -57,7 +56,6 @@ class OrchestratorTest extends TestCase
 	{
 		parent::setUp();
 		$this->responseBuilderMock = $this->createMock(ResponseBuilder::class);
-		$userSessionStub = $this->createStub(UserSession::class);
 		$this->validatorMock = $this->createMock(BaseValidator::class);
 		$this->templatePreparerMock = $this->createMock(TemplatePreparer::class);
 		$this->conditionalPlayServiceMock = $this->createMock(ConditionalPlayService::class);
@@ -66,7 +64,6 @@ class OrchestratorTest extends TestCase
 
 		$this->orchestrator = new Orchestrator(
 			$this->responseBuilderMock,
-			$userSessionStub,
 			$this->validatorMock,
 			$this->templatePreparerMock,
 			$this->conditionalPlayServiceMock
@@ -95,10 +92,10 @@ class OrchestratorTest extends TestCase
 		$this->orchestrator->validateSave($this->responseStub);
 	}
 
-
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
+
 	 */
 	#[Group('units')]
 	public function testValidateWithTokenFailsNoItemId(): void
@@ -155,10 +152,10 @@ class OrchestratorTest extends TestCase
 		$this->orchestrator->fetch($this->responseStub);
 	}
 
-
 	/**
 	 * @throws CoreException
 	 * @throws UserException
+
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]

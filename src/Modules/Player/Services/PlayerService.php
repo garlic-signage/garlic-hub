@@ -24,7 +24,9 @@ namespace App\Modules\Player\Services;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\UserException;
 use App\Framework\Services\AbstractBaseService;
+use App\Modules\Auth\UserSession;
 use App\Modules\Player\Repositories\PlayerRepository;
 use App\Modules\Playlists\Helper\PlaylistMode;
 use App\Modules\Playlists\Services\PlaylistsService;
@@ -44,12 +46,14 @@ class PlayerService extends AbstractBaseService
 	private readonly PlayerRepository $playerRepository;
 	private readonly PlaylistsService $playlistService;
 	private readonly AclValidator $playerValidator;
+	private readonly UserSession $userSession;
 
-	public function __construct(PlayerRepository $playerRepository, PlaylistsService $playlistService, AclValidator $playerValidator, LoggerInterface $logger)
+	public function __construct(PlayerRepository $playerRepository, PlaylistsService $playlistService, AclValidator $playerValidator, UserSession $userSession, LoggerInterface $logger)
 	{
 		$this->playerRepository = $playerRepository;
 		$this->playlistService  = $playlistService;
 		$this->playerValidator  = $playerValidator;
+		$this->userSession     = $userSession;
 
 		parent::__construct($logger);
 	}
@@ -80,6 +84,7 @@ class PlayerService extends AbstractBaseService
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
+	 * @throws UserException
 	 */
 	public function delete(int $playerId): int
 	{
@@ -104,7 +109,6 @@ class PlayerService extends AbstractBaseService
 			$playlistName = '';
 			if ($playlistId > 0)
 			{
-				$this->playlistService->setUID($this->UID);
 				$playlist = $this->playlistService->loadPureById($playlistId);
 				if ($playlist['playlist_mode'] !==  PlaylistMode::MASTER->value && $playlist['playlist_mode'] !==  PlaylistMode::MULTIZONE->value)
 					throw new ModuleException('player', $playlist['playlist_name'] . ' is not a master playlist');
@@ -131,6 +135,7 @@ class PlayerService extends AbstractBaseService
 	 * @throws Exception
 	 * @throws CoreException
 	 * @throws FrameworkException
+	 * @throws UserException
 	 */
 	public function fetchAclCheckedPlayerData(int $playerId): array
 	{
@@ -144,9 +149,10 @@ class PlayerService extends AbstractBaseService
 		}
 
 		/** @var array{UID: int, company_id: int, player_id: int, ...} $player */
-		if (!$this->playerValidator->isPlayerEditable($this->UID, $player))
+		$UID = $this->userSession->getUID();
+		if (!$this->playerValidator->isPlayerEditable($UID, $player))
 		{
-			$this->logger->error('Error loading player: '.$playerId.' is not editable for User '.$this->UID.'.');
+			$this->logger->error('Error loading player: '.$playerId.' is not editable for User '.$UID.'.');
 			return [];
 		}
 

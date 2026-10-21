@@ -27,7 +27,6 @@ use App\Framework\Core\CsrfToken;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
 use App\Modules\Player\Enums\PlayerStatus;
 use App\Modules\Player\Services\PlayerService;
 use Doctrine\DBAL\Exception;
@@ -43,7 +42,6 @@ class PlayerController
 
 	public function __construct(
 		private readonly JsonResponseHandler $responseHandler,
-		private readonly UserSession         $userSession,
 		private readonly PlayerService       $playerService,
 		private readonly CsrfToken 		 	 $csrfToken
 	) {}
@@ -116,8 +114,6 @@ class PlayerController
 		if ($playerId === 0)
 			return $this->responseHandler->jsonError($response, 'No playerId');
 
-		$UID = $this->userSession->getUID();
-		$this->playerService->setUID($UID);
 		if ($this->playerService->delete($playerId) === 0)
 			return $this->responseHandler->jsonError($response, 'Player not deleted.');
 
@@ -132,8 +128,6 @@ class PlayerController
 	 */
 	private function fetchPlayerData(int $playerId): void
 	{
-		$UID = $this->userSession->getUID();
-		$this->playerService->setUID($UID);
 		$this->playerData = $this->playerService->fetchAclCheckedPlayerData($playerId);
 	}
 }

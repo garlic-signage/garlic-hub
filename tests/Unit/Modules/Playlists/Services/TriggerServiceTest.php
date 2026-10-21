@@ -60,7 +60,6 @@ class TriggerServiceTest extends TestCase
 			'playlist_id' => $playlistId,
 		];
 
-		$this->itemServiceMock->expects($this->once())->method('setUID')->with(2);
 		$this->itemServiceMock->expects($this->once())->method('fetchItemById')
 			->with($itemId)
 			->willReturn($item);
@@ -68,7 +67,6 @@ class TriggerServiceTest extends TestCase
 		$this->itemServiceMock->method('findMediaInPlaylist')
 			->willReturn([]);
 
-		$this->triggerService->setUID(2);
 		$result = $this->triggerService->fetchBeginTriggerByItemId($itemId);
 
 		static::assertEquals(['trigger1', 'trigger2'], $result->getItemData()['begin_trigger']);
@@ -85,7 +83,6 @@ class TriggerServiceTest extends TestCase
 			'playlist_id' => $playlistId,
 		];
 
-		$this->itemServiceMock->expects($this->once())->method('setUID')->with(2);
 		$this->itemServiceMock->expects($this->once())->method('fetchItemById')
 			->with($itemId)
 			->willReturn($item);
@@ -93,7 +90,6 @@ class TriggerServiceTest extends TestCase
 		$this->itemServiceMock->method('findMediaInPlaylist')
 			->willReturn([]);
 
-		$this->triggerService->setUID(2);
 		$result = $this->triggerService->fetchBeginTriggerByItemId($itemId);
 
 		static::assertEmpty($result->getItemData()['begin_trigger']);
@@ -104,13 +100,12 @@ class TriggerServiceTest extends TestCase
 	{
 		$itemId = 1;
 
-		$this->itemServiceMock->expects($this->once())->method('setUID')->with(2)
+		$this->itemServiceMock->expects($this->once())->method('fetchItemById')->with($itemId)
 			->willThrowException(new \Exception('Test Exception'));
 
 		$this->loggerMock->expects($this->once())->method('error')
 			->with('Error begin trigger fetch: Test Exception');
 
-		$this->triggerService->setUID(2);
 		$this->triggerService->fetchBeginTriggerByItemId($itemId);
 	}
 
@@ -122,7 +117,6 @@ class TriggerServiceTest extends TestCase
 		$requestData = ['first' => 'trigger1', 'second' => 'trigger2'];
 		$item = ['id' => $itemId];
 
-		$this->itemServiceMock->expects($this->once())->method('setUID')->with(2);
 		$this->itemServiceMock->expects($this->once())->method('fetchItemById')
 			->with($itemId)
 			->willReturn($item);
@@ -130,7 +124,6 @@ class TriggerServiceTest extends TestCase
 			->with($itemId, 'begin_trigger', serialize($requestData))
 			->willReturn(1);
 
-		$this->triggerService->setUID(2);
 		$result = $this->triggerService->saveBeginTrigger($itemId, $requestData);
 
 		static::assertTrue($result);
@@ -142,7 +135,6 @@ class TriggerServiceTest extends TestCase
 		$itemId = 1;
 		$requestData = ['first' => 'trigger1', 'second' => 'trigger2'];
 
-		$this->itemServiceMock->expects($this->once())->method('setUID')->with(2);
 		$this->itemServiceMock->expects($this->once())->method('fetchItemById')
 			->with($itemId)
 			->willReturn([]);
@@ -152,7 +144,6 @@ class TriggerServiceTest extends TestCase
 		$this->loggerMock->expects($this->once())->method('error')
 			->with('Error save trigger: No item found.');
 
-		$this->triggerService->setUID(2);
 		$result = $this->triggerService->saveBeginTrigger($itemId, $requestData);
 
 		static::assertFalse($result);
@@ -165,7 +156,6 @@ class TriggerServiceTest extends TestCase
 		$requestData = ['first' => 'trigger1', 'second' => 'trigger2'];
 		$item = ['id' => $itemId];
 
-		$this->itemServiceMock->expects($this->once())->method('setUID')->with(2);
 		$this->itemServiceMock->expects($this->once())->method('fetchItemById')
 			->with($itemId)
 			->willReturn($item);
@@ -173,7 +163,6 @@ class TriggerServiceTest extends TestCase
 		$this->loggerMock->expects($this->once())->method('error')
 			->with('Error save trigger: Could not save begin trigger.');
 
-		$this->triggerService->setUID(2);
 		$result = $this->triggerService->saveBeginTrigger($itemId, $requestData);
 
 		static::assertFalse($result);

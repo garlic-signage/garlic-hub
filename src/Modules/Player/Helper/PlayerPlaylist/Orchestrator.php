@@ -27,7 +27,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
-use App\Modules\Auth\UserSession;
 use App\Modules\Player\Services\PlayerRestAPIService;
 use App\Modules\Player\Services\PlayerService;
 use Doctrine\DBAL\Exception;
@@ -51,7 +50,6 @@ class Orchestrator
 
 	public function __construct(
 		private readonly ResponseBuilder      $responseBuilder,
-		private readonly UserSession          $userSession,
 		private readonly BaseValidator        $validator,
 		private readonly PlayerService        $playerService,
 		private readonly PlayerRestAPIService $playerRestAPIService,
@@ -104,7 +102,6 @@ class Orchestrator
 	 */
 	public function replaceMasterPlaylist(ResponseInterface $response): ResponseInterface
 	{
-		$this->playerService->setUID($this->userSession->getUID());
 
 		$data = $this->playerService->replaceMasterPlaylist($this->playerId, $this->playlistId);
 
@@ -123,7 +120,6 @@ class Orchestrator
 	 */
 	public function checkPlayer(ResponseInterface $response): ?ResponseInterface
 	{
-		$this->playerService->setUID($this->userSession->getUID());
 
 		/** @var array{is_intranet:int, playlist_id:int, api_endpoint:string, player_name:string, ...}|array<empty,empty> $player */
 		$player = $this->playerService->fetchAclCheckedPlayerData($this->playerId);
@@ -154,7 +150,6 @@ class Orchestrator
 	 */
 	public function pushPlaylist(ResponseInterface $response): ResponseInterface
 	{
-		$this->playerRestAPIService->setUID($this->userSession->getUID());
 
 		$hasToken = $this->playerRestAPIService->authenticate($this->player['api_endpoint'], 'admin', '', $this->playerId);
 		if (!$hasToken)

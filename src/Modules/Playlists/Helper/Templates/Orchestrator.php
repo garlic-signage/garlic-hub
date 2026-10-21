@@ -28,7 +28,6 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Media\MediaUrlSigner;
-use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Services\ItemsService;
 use App\Modules\Templates\Helper\Composer\BaseTemplateOrchestrator;
 use App\Modules\Templates\Helper\Composer\ExportImage;
@@ -41,7 +40,6 @@ class Orchestrator extends BaseTemplateOrchestrator
 	private array $item = [];
 	public function __construct(
 		private readonly ItemsService    $itemsService,
-		private readonly UserSession     $userSession,
 		private readonly ExportImage         $exportImage,
 		private readonly TemplatePreparer    $templatePreparer,
 		Config $config,
@@ -56,7 +54,6 @@ class Orchestrator extends BaseTemplateOrchestrator
 	 */
 	public function checkRights(int $itemId): bool
 	{
-		$this->itemsService->setUID($this->userSession->getUID());
 		try
 		{
 			$this->item = $this->itemsService->fetchItemById($itemId);

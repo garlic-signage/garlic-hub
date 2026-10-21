@@ -27,7 +27,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
 use App\Modules\Profile\Entities\TokenPurposes;
 use App\Modules\Users\Services\UsersAdminService;
 use Doctrine\DBAL\Exception;
@@ -49,7 +48,6 @@ class Orchestrator
 	private array $user = [];
 
 	public function __construct(
-		private readonly UserSession              $userSession,
 		private readonly Session                  $session,
 		private readonly UsersAdminService        $usersAdminService,
 		private readonly SettingsParametersPolicy $settingsParametersPolicy,
@@ -74,7 +72,6 @@ class Orchestrator
 	 */
 	public function loadUserForEdit(int $UID): array
 	{
-		$this->usersAdminService->setUID($this->userSession->getUID());
 		$this->user = $this->usersAdminService->loadForAdminEdit($UID);
 
 		return $this->user;
@@ -135,7 +132,6 @@ class Orchestrator
 
 		/** @var array{username:string, email:string, locale?: string, status?: int} $saveData */
 		$saveData = $this->formInputHandler->getParsed();
-		$this->usersAdminService->setUID($this->userSession->getUID());
 		if ($this->usersAdminService->insertNewUser($saveData) === 0)
 			return ['success' => false, 'errors' => $this->translateServiceErrors()];
 

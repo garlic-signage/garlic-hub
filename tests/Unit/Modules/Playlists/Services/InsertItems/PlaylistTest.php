@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Services\InsertItems;
 
+use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\InsertItems\Playlist;
@@ -52,10 +53,14 @@ class PlaylistTest extends TestCase
 		$this->playlistMetricsCalculatorMock = $this->createMock(PlaylistMetricsCalculator::class);
 		$this->loggerMock = $this->createMock(LoggerInterface::class);
 
+		$userSessionStub = $this->createStub(UserSession::class);
+		$userSessionStub->method('getUID')->willReturn(1);
+
 		$this->playlist = new Playlist(
 			$this->itemsRepositoryMock,
 			$this->playlistsServiceMock,
 			$this->playlistMetricsCalculatorMock,
+			$userSessionStub,
 			$this->loggerMock
 		);
 	}
@@ -74,7 +79,6 @@ class PlaylistTest extends TestCase
 		$playlistInsertData = ['playlist_id' => 2, 'duration' => 150, 'filesize' => 1024, 'playlist_name' => 'Insert'];
 		$playlistMetrics = ['some_metrics'];
 
-		$this->playlist->setUID(1);
 		$this->itemsRepositoryMock->expects($this->once())->method('beginTransaction');
 		$this->checkAclMockSuccessful($playlistTargetData, $playlistInsertData);
 
@@ -128,8 +132,7 @@ class PlaylistTest extends TestCase
 	#[Group('units')]
 	public function testInsertCheRecursionFailsSamePlaylist(): void
 	{
-		// the acl check sets the user, but nothing is calculated
-		$this->playlistMetricsCalculatorMock->expects($this->exactly(2))->method('setUID')->with(1);
+		// nothing is calculated
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateFromPlaylistData');
 		$playlistId = 1;
 		$insertId = 1;
@@ -137,7 +140,6 @@ class PlaylistTest extends TestCase
 		$playlistTargetData = ['playlist_id' => 1, 'duration' => 300, 'filesize' => 2048, 'playlist_name' => 'Test'];
 		$playlistInsertData = ['playlist_id' => 2, 'duration' => 150, 'filesize' => 1024, 'playlist_name' => 'Insert'];
 
-		$this->playlist->setUID(1);
 		$this->itemsRepositoryMock->expects($this->once())->method('beginTransaction');
 		$this->checkAclMockSuccessful($playlistTargetData, $playlistInsertData);
 
@@ -158,8 +160,7 @@ class PlaylistTest extends TestCase
 	#[Group('units')]
 	public function testInsertCheRecursionFailsSamePlaylistAfterRecursion(): void
 	{
-		// the acl check sets the user, but nothing is calculated
-		$this->playlistMetricsCalculatorMock->expects($this->exactly(2))->method('setUID')->with(1);
+		// nothing is calculated
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateFromPlaylistData');
 		$playlistId = 1;
 		$insertId = 2;
@@ -167,7 +168,6 @@ class PlaylistTest extends TestCase
 		$playlistTargetData = ['playlist_id' => 1, 'duration' => 300, 'filesize' => 2048, 'playlist_name' => 'Test'];
 		$playlistInsertData = ['playlist_id' => 2, 'duration' => 150, 'filesize' => 1024, 'playlist_name' => 'Insert'];
 
-		$this->playlist->setUID(1);
 		$this->itemsRepositoryMock->expects($this->once())->method('beginTransaction');
 		$this->checkAclMockSuccessful($playlistTargetData, $playlistInsertData);
 
@@ -198,7 +198,6 @@ class PlaylistTest extends TestCase
 		$playlistTargetData = ['playlist_id' => 1, 'duration' => 300, 'filesize' => 2048, 'playlist_name' => 'Test'];
 		$playlistInsertData = ['playlist_id' => 2, 'duration' => 150, 'filesize' => 1024, 'playlist_name' => 'Insert'];
 
-		$this->playlist->setUID(1);
 		$this->itemsRepositoryMock->expects($this->once())->method('beginTransaction');
 		$this->checkAclMockSuccessful($playlistTargetData, $playlistInsertData);
 
@@ -243,8 +242,6 @@ class PlaylistTest extends TestCase
 	 */
 	private function checkAclMockSuccessful(array $playlistTargetData, array $playlistInsertData): void
 	{
-		$this->playlistsServiceMock->expects($this->exactly(2))->method('setUID')
-			->with(1);
 		$this->playlistsServiceMock->expects($this->exactly(2))->method('loadPlaylistForEdit')
 			->willReturnMap([
 				[$playlistTargetData['playlist_id'], $playlistTargetData],

@@ -187,7 +187,6 @@ class OrchestratorTest extends TestCase
 	{
 		$this->expectValidInput();
 		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(7);
-		$this->profileServiceMock->expects($this->once())->method('setUID')->with(7);
 		$this->profileServiceMock->expects($this->once())->method('updatePassword')->with(7, 'secret')->willReturn(0);
 		$this->expectTranslatedServiceErrors();
 
@@ -209,7 +208,6 @@ class OrchestratorTest extends TestCase
 	{
 		$this->expectValidInput();
 		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(7);
-		$this->profileServiceMock->expects($this->once())->method('setUID')->with(7);
 		$this->profileServiceMock->expects($this->once())->method('updatePassword')->with(7, 'secret')->willReturn(1);
 		$this->profileServiceMock->expects($this->never())->method('getErrorMessages');
 		$this->translatorMock->expects($this->never())->method('translate');
@@ -248,7 +246,6 @@ class OrchestratorTest extends TestCase
 	{
 		$this->expectValidInput();
 		$this->userSessionMock->expects($this->never())->method($this->anything());
-		$this->profileServiceMock->expects($this->once())->method('setUID')->with(9);
 		$this->profileServiceMock->expects($this->once())->method('storeNewForcedPassword')
 			->with(9, hex2bin('abcd'), 'secret')->willReturn(0);
 		$this->expectTranslatedServiceErrors();
@@ -272,7 +269,6 @@ class OrchestratorTest extends TestCase
 	{
 		$this->expectValidInput();
 		$this->userSessionMock->expects($this->never())->method($this->anything());
-		$this->profileServiceMock->expects($this->once())->method('setUID')->with(9);
 		$this->profileServiceMock->expects($this->once())->method('storeNewForcedPassword')
 			->with(9, hex2bin('abcd'), 'secret')->willReturn(1);
 		$this->translatorMock->expects($this->never())->method('translate');

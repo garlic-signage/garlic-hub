@@ -25,7 +25,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Services\PlaylistsService;
 use Doctrine\DBAL\Exception;
 
@@ -38,7 +37,6 @@ class Orchestrator
 	private array $playlist = [];
 
 	public function __construct(
-		private readonly UserSession              $userSession,
 		private readonly PlaylistsService         $playlistsService,
 		private readonly SettingsParametersPolicy $settingsParametersPolicy,
 		private readonly FormInputHandler         $formInputHandler,
@@ -53,7 +51,6 @@ class Orchestrator
 	 */
 	public function loadPlaylistForEdit(int $playlistId): array
 	{
-		$this->playlistsService->setUID($this->userSession->getUID());
 		/** @var array{UID: int, company_id: int, playlist_mode: string, playlist_name: string, ...}|array{} $playlist */
 		$playlist       = $this->playlistsService->loadPlaylistForEdit($playlistId);
 		$this->playlist = $playlist;
@@ -115,7 +112,6 @@ class Orchestrator
 			return ['success' => false, 'errors' => $errors];
 
 		$saveData = $this->collectSaveData([], $post);
-		$this->playlistsService->setUID($this->userSession->getUID());
 		if ($this->playlistsService->createNew($saveData) === 0)
 			return ['success' => false, 'errors' => ['Playlist “' . $this->getPlaylistName($post) . '“ could not be stored.']];
 

@@ -27,7 +27,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
 use App\Modules\Users\Helper\Settings\FormInputHandler;
 use App\Modules\Users\Helper\Settings\Orchestrator;
 use App\Modules\Users\Helper\Settings\SettingsFormBuilder;
@@ -40,7 +39,6 @@ use PHPUnit\Framework\TestCase;
 
 class OrchestratorTest extends TestCase
 {
-	private UserSession&MockObject $userSessionMock;
 	private Session&MockObject $sessionMock;
 	private UsersAdminService&MockObject $serviceMock;
 	private SettingsParametersPolicy&MockObject $policyMock;
@@ -62,7 +60,6 @@ class OrchestratorTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->userSessionMock  = $this->createMock(UserSession::class);
 		$this->sessionMock      = $this->createMock(Session::class);
 		$this->serviceMock      = $this->createMock(UsersAdminService::class);
 		$this->policyMock       = $this->createMock(SettingsParametersPolicy::class);
@@ -71,7 +68,6 @@ class OrchestratorTest extends TestCase
 		$this->translatorMock   = $this->createMock(Translator::class);
 
 		$this->orchestrator = new Orchestrator(
-			$this->userSessionMock,
 			$this->sessionMock,
 			$this->serviceMock,
 			$this->policyMock,
@@ -103,7 +99,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testBuildCreateForm(): void
 	{
-		$this->expectUntouched($this->userSessionMock, $this->sessionMock, $this->serviceMock, $this->inputHandlerMock, $this->translatorMock);
+		$this->expectUntouched($this->sessionMock, $this->serviceMock, $this->inputHandlerMock, $this->translatorMock);
 		$this->policyMock->expects($this->once())->method('addCreateFormElements');
 		$this->formBuilderMock->expects($this->once())->method('buildForm')->with(['username' => 'heidi'])->willReturn($this->form);
 		$this->formBuilderMock->expects($this->never())->method('buildButtons');
@@ -121,7 +117,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testBuildEditFormWithoutLoadedUserThrows(): void
 	{
-		$this->expectUntouched($this->userSessionMock, $this->sessionMock, $this->serviceMock, $this->policyMock,
+		$this->expectUntouched($this->sessionMock, $this->serviceMock, $this->policyMock,
 			$this->inputHandlerMock, $this->formBuilderMock, $this->translatorMock);
 		$this->expectException(ModuleException::class);
 
@@ -181,7 +177,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testStoreCreateSettingsReturnsValidationErrors(): void
 	{
-		$this->expectUntouched($this->userSessionMock, $this->sessionMock, $this->serviceMock, $this->formBuilderMock, $this->translatorMock);
+		$this->expectUntouched($this->sessionMock, $this->serviceMock, $this->formBuilderMock, $this->translatorMock);
 		$this->policyMock->expects($this->once())->method('addCreateFormElements');
 		$this->inputHandlerMock->expects($this->once())->method('validate')->with(['username' => ''])->willReturn(['No username.']);
 		$this->inputHandlerMock->expects($this->never())->method('getParsed');
@@ -205,8 +201,6 @@ class OrchestratorTest extends TestCase
 		$this->expectUntouched($this->sessionMock, $this->formBuilderMock);
 		$this->policyMock->expects($this->once())->method('addCreateFormElements');
 		$this->expectValidInput();
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(7);
-		$this->serviceMock->expects($this->once())->method('setUID')->with(7);
 		$this->serviceMock->expects($this->once())->method('insertNewUser')->with(['username' => 'heidi'])->willReturn(0);
 		$this->expectTranslatedServiceErrors();
 
@@ -229,8 +223,6 @@ class OrchestratorTest extends TestCase
 		$this->expectUntouched($this->formBuilderMock, $this->translatorMock);
 		$this->policyMock->expects($this->once())->method('addCreateFormElements');
 		$this->expectValidInput();
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(7);
-		$this->serviceMock->expects($this->once())->method('setUID')->with(7);
 		$this->serviceMock->expects($this->once())->method('insertNewUser')->willReturn(13);
 		$this->serviceMock->expects($this->once())->method('getToken')->willReturn(hex2bin('beef'));
 		$this->sessionMock->expects($this->once())->method('set')->with('initial_password_token', 'beef');
@@ -248,7 +240,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testStoreEditSettingsWithoutLoadedUserThrows(): void
 	{
-		$this->expectUntouched($this->userSessionMock, $this->sessionMock, $this->serviceMock, $this->policyMock,
+		$this->expectUntouched($this->sessionMock, $this->serviceMock, $this->policyMock,
 			$this->inputHandlerMock, $this->formBuilderMock, $this->translatorMock);
 		$this->expectException(ModuleException::class);
 
@@ -418,8 +410,6 @@ class OrchestratorTest extends TestCase
 
 	private function expectUserLoaded(): void
 	{
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(7);
-		$this->serviceMock->expects($this->once())->method('setUID')->with(7);
 		$this->serviceMock->expects($this->once())->method('loadForAdminEdit')->with(12)->willReturn($this->user);
 	}
 

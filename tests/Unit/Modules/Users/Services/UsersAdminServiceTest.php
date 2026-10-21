@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Users\Services;
 
 use App\Framework\Database\BaseRepositories\Transactions;
+use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\NodesService;
 use App\Modules\Profile\Entities\TokenPurposes;
 use App\Modules\Profile\Services\UserTokenService;
@@ -32,6 +33,7 @@ use App\Modules\Users\UserStatus;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -43,6 +45,7 @@ class UsersAdminServiceTest extends TestCase
 	private AclValidator&MockObject $aclValidatorMock;
 	private LoggerInterface&MockObject $loggerMock;
 	private Transactions&MockObject $transactionsMock;
+	private UserSession&Stub $userSessionStub;
 	private UsersAdminService $usersAdminService;
 
 	/**
@@ -58,12 +61,14 @@ class UsersAdminServiceTest extends TestCase
 		$this->transactionsMock = $this->createMock(Transactions::class);
 		$this->loggerMock = $this->createMock(LoggerInterface::class);
 
+		$this->userSessionStub = $this->createStub(UserSession::class);
 		$this->usersAdminService = new UsersAdminService(
 			$this->userMainRepositoryMock,
 			$this->nodesServiceMock,
 			$this->userTokenServiceMock,
 			$this->aclValidatorMock,
 			$this->transactionsMock,
+			$this->userSessionStub,
 			$this->loggerMock
 		);
 	}
@@ -154,7 +159,7 @@ class UsersAdminServiceTest extends TestCase
 			->with($UID, $postData['username'])
 			->willReturn(456);
 		$this->transactionsMock->expects($this->once())->method('commit');
-		$this->usersAdminService->setUID(1);
+		$this->userSessionStub->method('getUID')->willReturn(1);
 		$result = $this->usersAdminService->insertNewUser($postData);
 		self::assertSame($UID, $result);
 	}
@@ -213,7 +218,7 @@ class UsersAdminServiceTest extends TestCase
 		$this->loggerMock->expects($this->once())->method('error')
 			->with('Insert failed.');
 
-		$this->usersAdminService->setUID(1);
+		$this->userSessionStub->method('getUID')->willReturn(1);
 		$result = $this->usersAdminService->insertNewUser($postData);
 		self::assertSame(0, $result);
 	}
@@ -251,7 +256,7 @@ class UsersAdminServiceTest extends TestCase
 		$this->loggerMock->expects($this->once())->method('error')
 			->with('Create mediapool user directory failed.');
 
-		$this->usersAdminService->setUID(1);
+		$this->userSessionStub->method('getUID')->willReturn(1);
 		$result = $this->usersAdminService->insertNewUser($postData);
 		self::assertSame(0, $result);
 	}
@@ -279,7 +284,7 @@ class UsersAdminServiceTest extends TestCase
 			->with($UID);
 		$this->transactionsMock->expects($this->once())->method('commit');
 
-		$this->usersAdminService->setUID(1);
+		$this->userSessionStub->method('getUID')->willReturn(1);
 		$result = $this->usersAdminService->deleteUser($UID);
 		self::assertTrue($result);
 	}
@@ -302,7 +307,7 @@ class UsersAdminServiceTest extends TestCase
 		$this->loggerMock->expects($this->once())->method('error')
 			->with('No rights to delete user');
 
-		$this->usersAdminService->setUID(1);
+		$this->userSessionStub->method('getUID')->willReturn(1);
 		$result = $this->usersAdminService->deleteUser($UID);
 		self::assertFalse($result);
 	}
@@ -329,7 +334,7 @@ class UsersAdminServiceTest extends TestCase
 		$this->loggerMock->expects($this->once())->method('error')
 			->with('Remove the user from db-table failed.');
 
-		$this->usersAdminService->setUID(1);
+		$this->userSessionStub->method('getUID')->willReturn(1);
 		$result = $this->usersAdminService->deleteUser($UID);
 		self::assertFalse($result);
 	}
@@ -355,7 +360,7 @@ class UsersAdminServiceTest extends TestCase
 		$this->loggerMock->expects($this->once())->method('error')
 			->with('Unexpected error');
 
-		$this->usersAdminService->setUID(1);
+		$this->userSessionStub->method('getUID')->willReturn(1);
 		$result = $this->usersAdminService->deleteUser($UID);
 		self::assertFalse($result);
 	}

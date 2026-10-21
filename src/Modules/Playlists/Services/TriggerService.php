@@ -121,7 +121,6 @@ class TriggerService extends AbstractBaseService
 	 */
 	public function fetchAccessibleItem(int $itemId): array
 	{
-		$this->itemService->setUID($this->UID);
 		return $this->itemService->fetchItemById($itemId); // check rights on playlists, too
 	}
 

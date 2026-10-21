@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Users\Services;
 
 use App\Framework\Exceptions\CoreException;
+use App\Modules\Auth\UserSession;
 use App\Modules\Users\Helper\Datatable\Parameters;
 use App\Modules\Users\Repositories\Edge\UserMainRepository;
 use App\Modules\Users\Services\AclValidator;
@@ -29,6 +30,7 @@ use App\Modules\Users\Services\UsersDatatableService;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -37,6 +39,7 @@ class UsersDatatableServiceTest extends TestCase
 	private UserMainRepository&MockObject $repositoryMock;
 	private Parameters&MockObject $parametersMock;
 	private AclValidator&MockObject $aclValidatorMock;
+	private UserSession&Stub $userSessionStub;
 	private UsersDatatableService $service;
 
 	/**
@@ -50,7 +53,8 @@ class UsersDatatableServiceTest extends TestCase
 		$this->parametersMock   = $this->createMock(Parameters::class);
 		$this->aclValidatorMock = $this->createMock(AclValidator::class);
 
-		$this->service = new UsersDatatableService($this->repositoryMock, $this->parametersMock, $this->aclValidatorMock, $loggerStub);
+		$this->userSessionStub = $this->createStub(UserSession::class);
+		$this->service = new UsersDatatableService($this->repositoryMock, $this->parametersMock, $this->aclValidatorMock, $this->userSessionStub, $loggerStub);
 	}
 
 	/**
@@ -60,7 +64,7 @@ class UsersDatatableServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchForModuleAdmin(): void
 	{
-		$this->service->setUID(345);
+		$this->userSessionStub->method('getUID')->willReturn(345);
 		$this->aclValidatorMock->expects($this->once())->method('isModuleAdmin')
 			->with(345)
 			->willReturn(true);
@@ -90,7 +94,7 @@ class UsersDatatableServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchForUser(): void
 	{
-		$this->service->setUID(789);
+		$this->userSessionStub->method('getUID')->willReturn(789);
 		$this->aclValidatorMock->expects($this->once())->method('isModuleAdmin')
 			->with(789)
 			->willReturn(false);

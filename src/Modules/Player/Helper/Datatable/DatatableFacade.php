@@ -41,14 +41,14 @@ class DatatableFacade implements DatatableFacadeInterface
 {
 	private readonly DatatableBuilder $datatableBuilder;
 	private readonly DatatablePreparer $datatablePreparer;
-	private readonly PlayerDatatableService $playerService;
+	private readonly PlayerDatatableService $playerDatatableService;
 	private int $UID;
 
-	public function __construct(DatatableBuilder $datatableBuilder, DatatablePreparer $datatablePreparer, PlayerDatatableService $playerService)
+	public function __construct(DatatableBuilder $datatableBuilder, DatatablePreparer $datatablePreparer, PlayerDatatableService $playerDatatableService)
 	{
 		$this->datatableBuilder  = $datatableBuilder;
 		$this->datatablePreparer = $datatablePreparer;
-		$this->playerService  = $playerService;
+		$this->playerDatatableService  = $playerDatatableService;
 	}
 
 	/**
@@ -60,7 +60,6 @@ class DatatableFacade implements DatatableFacadeInterface
 		/** @var array{UID: string} $user */
 		$user = $session->get('user');
 		$this->UID = (int) $user['UID'];
-		$this->playerService->setUID($this->UID);
 		$this->datatableBuilder->configureParameters($this->UID);
 		$this->datatablePreparer->setTranslator($translator);
 		$this->datatableBuilder->setTranslator($translator);
@@ -75,7 +74,7 @@ class DatatableFacade implements DatatableFacadeInterface
 	public function processSubmittedUserInput(array $queryParams): void
 	{
 		$this->datatableBuilder->determineParameters($queryParams);
-		$this->playerService->loadDatatable();
+		$this->playerDatatableService->loadDatatable();
 	}
 
 	/**
@@ -87,7 +86,7 @@ class DatatableFacade implements DatatableFacadeInterface
 	{
 		$this->datatableBuilder->buildTitle();
 		$this->datatableBuilder->collectFormElements();
-		$this->datatableBuilder->createPagination($this->playerService->getCurrentTotalResult());
+		$this->datatableBuilder->createPagination($this->playerDatatableService->getCurrentTotalResult());
 		$this->datatableBuilder->createDropDown();
 		$this->datatableBuilder->createTableFields();
 
@@ -122,7 +121,7 @@ class DatatableFacade implements DatatableFacadeInterface
 			'has_add'			  => [],
 			'results_header'      => $this->datatablePreparer->prepareTableHeader($datatableStructure['header'], ['player', 'main']),
 			'results_list'        => $this->prepareList($datatableStructure['header']),
-			'results_count'       => $this->playerService->getCurrentTotalResult(),
+			'results_count'       => $this->playerDatatableService->getCurrentTotalResult(),
 			'title'               => $datatableStructure['title'],
 			'template_name'       => 'player/datatable',
 			'module_name'		  => 'player',
@@ -145,7 +144,7 @@ class DatatableFacade implements DatatableFacadeInterface
 	private function prepareList(array $fields): array
 	{
 		return $this->datatablePreparer->prepareTableBody(
-			$this->playerService->getCurrentFilterResults(),
+			$this->playerDatatableService->getCurrentFilterResults(),
 			$fields,
 			$this->UID
 		);

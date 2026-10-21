@@ -26,7 +26,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\Datatable\Parameters;
 use App\Modules\Playlists\Helper\Playlists\Orchestrator;
 use App\Modules\Playlists\Helper\Playlists\ResponseBuilder;
@@ -47,7 +46,6 @@ class OrchestratorTest extends TestCase
 	private PlaylistsService&MockObject $playlistsServiceMock;
 	private PlaylistsDatatableService&MockObject $datatableServiceMock;
 	private Parameters&MockObject $parametersMock;
-	private UserSession&Stub $userSessionStub;
 	private ResponseInterface&Stub $responseStub;
 	private Orchestrator $orchestrator;
 
@@ -62,13 +60,10 @@ class OrchestratorTest extends TestCase
 		$this->playlistsServiceMock = $this->createMock(PlaylistsService::class);
 		$this->responseStub         = $this->createStub(ResponseInterface::class);
 
-		$this->userSessionStub = $this->createStub(UserSession::class);
-		$this->userSessionStub->method('getUID')->willReturn(456);
 
 		// the datatable dependencies are only needed by the find tests, see useDatatableMocks()
 		$this->orchestrator = new Orchestrator(
 			$this->responseBuilderMock,
-			$this->userSessionStub,
 			$this->validatorStub,
 			$this->playlistsServiceMock,
 			$this->createStub(PlaylistsDatatableService::class),
@@ -158,7 +153,7 @@ class OrchestratorTest extends TestCase
 	{
 		$this->validatorStub->method('validateCsrfToken')->willReturn(true);
 		$this->responseBuilderMock->expects($this->never())->method('missingPickingValue');
-		$this->playlistsServiceMock->expects($this->never())->method('setUID');
+		$this->playlistsServiceMock->expects($this->never())->method($this->anything());
 
 		static::assertNull($this->orchestrator->setInput(['playlist_id' => 1, 'shuffle_picking' => 2])
 			->validateShufflePicking($this->responseStub));
@@ -171,7 +166,6 @@ class OrchestratorTest extends TestCase
 	public function testDelete(): void
 	{
 		$this->prepareValid(['playlist_id' => 1]);
-		$this->expectSetUID();
 		$this->playlistsServiceMock->expects($this->once())->method('delete')->with(1)->willReturn(1);
 		$this->expectSuccess([]);
 
@@ -185,7 +179,6 @@ class OrchestratorTest extends TestCase
 	public function testDeleteNotFound(): void
 	{
 		$this->prepareValid(['playlist_id' => 1]);
-		$this->expectSetUID();
 		$this->playlistsServiceMock->expects($this->once())->method('delete')->with(1)->willReturn(0);
 		$this->expectError('playlistNotFound');
 
@@ -203,7 +196,6 @@ class OrchestratorTest extends TestCase
 	public function testToggleShuffle(): void
 	{
 		$this->prepareValid(['playlist_id' => 1]);
-		$this->expectSetUID();
 		$this->playlistsServiceMock->expects($this->once())->method('toggleShuffle')->with(1)
 			->willReturn(['affected' => 1, 'playlist_metrics' => ['duration' => 60]]);
 		$this->expectSuccess(['playlist_metrics' => ['duration' => 60]]);
@@ -222,7 +214,6 @@ class OrchestratorTest extends TestCase
 	public function testToggleShuffleNotAffected(): void
 	{
 		$this->prepareValid(['playlist_id' => 1]);
-		$this->expectSetUID();
 		$this->playlistsServiceMock->expects($this->once())->method('toggleShuffle')->with(1)
 			->willReturn(['affected' => 0, 'playlist_metrics' => []]);
 		$this->expectError('playlistNotFound');
@@ -241,7 +232,6 @@ class OrchestratorTest extends TestCase
 	public function testShufflePicking(): void
 	{
 		$this->prepareValid(['playlist_id' => 1, 'shuffle_picking' => '5']);
-		$this->expectSetUID();
 		$this->playlistsServiceMock->expects($this->once())->method('shufflePicking')->with(1, 5)
 			->willReturn(['affected' => 1, 'playlist_metrics' => ['duration' => 60]]);
 		$this->expectSuccess(['playlist_metrics' => ['duration' => 60]]);
@@ -260,7 +250,6 @@ class OrchestratorTest extends TestCase
 	public function testShufflePickingNotFound(): void
 	{
 		$this->prepareValid(['playlist_id' => 1, 'shuffle_picking' => 5]);
-		$this->expectSetUID();
 		$this->playlistsServiceMock->expects($this->once())->method('shufflePicking')->with(1, 5)
 			->willReturn(['affected' => 0, 'playlist_metrics' => []]);
 		$this->expectError('playlistNotFound');
@@ -275,7 +264,6 @@ class OrchestratorTest extends TestCase
 	public function testLoadZone(): void
 	{
 		$this->prepareValid(['playlist_id' => 1]);
-		$this->expectSetUID();
 		$this->playlistsServiceMock->expects($this->once())->method('loadPlaylistForMultizone')->with(1)
 			->willReturn(['zone1']);
 		$this->playlistsServiceMock->expects($this->once())->method('hasErrorMessages')->willReturn(false);
@@ -291,7 +279,6 @@ class OrchestratorTest extends TestCase
 	public function testLoadZoneWithErrors(): void
 	{
 		$this->prepareValid(['playlist_id' => 1]);
-		$this->expectSetUID();
 		$this->playlistsServiceMock->expects($this->once())->method('loadPlaylistForMultizone')->with(1)->willReturn([]);
 		$this->playlistsServiceMock->expects($this->once())->method('hasErrorMessages')->willReturn(true);
 		$this->playlistsServiceMock->expects($this->once())->method('getErrorMessagesAsString')
@@ -311,7 +298,6 @@ class OrchestratorTest extends TestCase
 	public function testSaveZoneRemovesTokenAndPlaylistId(): void
 	{
 		$this->prepareValid(['playlist_id' => 1, 'csrf_token' => 'token', 'zoom' => 1, 'zones' => ['zone1']]);
-		$this->expectSetUID();
 		$this->playlistsServiceMock->expects($this->once())->method('saveZones')
 			->with(1, ['zoom' => 1, 'zones' => ['zone1']])
 			->willReturn(1);
@@ -327,7 +313,6 @@ class OrchestratorTest extends TestCase
 	public function testSaveZoneFails(): void
 	{
 		$this->prepareValid(['playlist_id' => 1, 'csrf_token' => 'token']);
-		$this->expectSetUID();
 		$this->playlistsServiceMock->expects($this->once())->method('saveZones')->with(1, [])->willReturn(0);
 		$this->expectError('zoneSaveFailed');
 
@@ -341,7 +326,6 @@ class OrchestratorTest extends TestCase
 	public function testFindById(): void
 	{
 		$this->prepareValid(['playlist_id' => 14]);
-		$this->expectSetUID();
 		$this->playlistsServiceMock->expects($this->once())->method('loadNameById')->with(14)
 			->willReturn(['playlist_id' => 14, 'name' => 'playlist']);
 		$this->responseBuilderMock->expects($this->once())->method('plainData')
@@ -405,7 +389,6 @@ class OrchestratorTest extends TestCase
 
 		$this->orchestrator = new Orchestrator(
 			$this->responseBuilderMock,
-			$this->userSessionStub,
 			$this->validatorStub,
 			$this->playlistsServiceMock,
 			$this->datatableServiceMock,
@@ -415,13 +398,12 @@ class OrchestratorTest extends TestCase
 
 	private function expectDatatableResults(): void
 	{
-		$this->datatableServiceMock->expects($this->once())->method('setUID')->with(456);
 		$this->datatableServiceMock->expects($this->once())->method('loadDatatable');
 		$this->datatableServiceMock->expects($this->once())->method('getCurrentFilterResults')->willReturn([
 			['playlist_id' => 1, 'playlist_name' => 'playlist1', 'description' => 'description1'],
 			['playlist_id' => 2, 'playlist_name' => 'playlist2', 'description' => 'description2'],
 		]);
-		$this->playlistsServiceMock->expects($this->never())->method('setUID');
+		$this->playlistsServiceMock->expects($this->never())->method($this->anything());
 		$this->responseBuilderMock->expects($this->once())->method('plainData')
 			->with($this->responseStub, [['id' => 1, 'name' => 'playlist1'], ['id' => 2, 'name' => 'playlist2']])
 			->willReturn($this->responseStub);
@@ -435,11 +417,6 @@ class OrchestratorTest extends TestCase
 	private function prepareValid(array $input): void
 	{
 		static::assertNull($this->orchestrator->setInput($input)->validate($this->responseStub));
-	}
-
-	private function expectSetUID(): void
-	{
-		$this->playlistsServiceMock->expects($this->once())->method('setUID')->with(456);
 	}
 
 	/**
@@ -457,7 +434,7 @@ class OrchestratorTest extends TestCase
 	 */
 	private function expectValidationError(string $method): void
 	{
-		$this->playlistsServiceMock->expects($this->never())->method('setUID');
+		$this->playlistsServiceMock->expects($this->never())->method($this->anything());
 		$this->expectError($method);
 	}
 

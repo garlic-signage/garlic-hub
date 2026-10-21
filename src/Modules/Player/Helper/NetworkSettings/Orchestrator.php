@@ -25,14 +25,12 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
 use App\Modules\Player\Services\PlayerService;
 use Doctrine\DBAL\Exception;
 
 class Orchestrator
 {
 	public function __construct(
-		private readonly UserSession         $userSession,
 		private readonly PlayerService       $playerService,
 		private readonly FormInputHandler    $formInputHandler,
 		private readonly SettingsFormBuilder $settingsFormBuilder
@@ -52,7 +50,6 @@ class Orchestrator
 		if ($playerId <= 0)
 			return [];
 
-		$this->playerService->setUID($this->userSession->getUID());
 		/** @var array{player_id:int, player_name:string, model:int, is_intranet:int, api_endpoint:string}|array{} $player */
 		$player = $this->playerService->fetchAclCheckedPlayerData($playerId);
 

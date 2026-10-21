@@ -24,7 +24,9 @@ namespace App\Modules\Mediapool\Services;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\DatabaseException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\UserException;
 use App\Framework\Media\MediaUrlSigner;
+use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Repositories\FilesRepository;
 use App\Modules\Mediapool\Repositories\NodesRepository;
 use Ramsey\Uuid\Uuid;
@@ -45,8 +47,8 @@ class MediaService
 	private readonly NodesRepository $nodesRepository;
 	private readonly AclValidator $aclValidator;
 	private readonly MediaUrlSigner $mediaUrlSigner;
+	private readonly UserSession $userSession;
 	private readonly LoggerInterface $logger;
-	private int $UID;
 	private string $pathOriginals;
 	private string $pathPreviews;
 	private string $pathThumbnails;
@@ -58,22 +60,18 @@ class MediaService
 	 * @param MediaUrlSigner $mediaUrlSigner
 	 * @param LoggerInterface $logger
 	 */
-	public function __construct(FilesRepository $mediaRepository, NodesRepository $nodesRepository, AclValidator $aclValidator, MediaUrlSigner $mediaUrlSigner, LoggerInterface $logger)
+	public function __construct(FilesRepository $mediaRepository, NodesRepository $nodesRepository, AclValidator $aclValidator, MediaUrlSigner $mediaUrlSigner, UserSession $userSession, LoggerInterface $logger)
 	{
 		$this->mediaRepository = $mediaRepository;
 		$this->nodesRepository = $nodesRepository;
 		$this->aclValidator    = $aclValidator;
 		$this->mediaUrlSigner  = $mediaUrlSigner;
+		$this->userSession     = $userSession;
 		$this->logger          = $logger;
 
 		$this->pathOriginals = $aclValidator->getConfig()->getConfigValue('originals', 'mediapool', 'directories');
 		$this->pathPreviews  = $aclValidator->getConfig()->getConfigValue('previews', 'mediapool', 'directories');
 		$this->pathThumbnails = $aclValidator->getConfig()->getConfigValue('thumbnails', 'mediapool', 'directories');
-	}
-
-	public function setUID(int $UID): void
-	{
-		$this->UID = $UID;
 	}
 
 	public function getPathThumbnails(): string
@@ -95,7 +93,7 @@ class MediaService
 		{
 			$node = $this->nodesRepository->findNodeOwner($nodeId);
 
-			$permissions = $this->aclValidator->checkDirectoryPermissions($this->UID, $node);
+			$permissions = $this->aclValidator->checkDirectoryPermissions($this->userSession->getUID(), $node);
 			if (!$permissions['read'])
 				throw new ModuleException('mediapool', 'No read permissions on directory:'. $node['name']);
 
@@ -120,6 +118,7 @@ class MediaService
 	 * @param string $mediaId
 	 * @return array<string,mixed>
 	 * @throws DatabaseException
+	 * @throws UserException
 	 */
 	public function fetchMedia(string $mediaId): array
 	{
@@ -127,7 +126,7 @@ class MediaService
 		{
 			$media       = $this->fetchMediaById($mediaId);
 			$node        = $this->nodesRepository->findNodeOwner($media['node_id']);
-			$permissions = $this->aclValidator->checkDirectoryPermissions($this->UID, $node);
+			$permissions = $this->aclValidator->checkDirectoryPermissions($this->userSession->getUID(), $node);
 			if (!$permissions['read'])
 				throw new ModuleException('mediapool', 'No read permissions in this directory: '. $media['node_id']);
 
@@ -162,6 +161,7 @@ class MediaService
 
 	/**
 	 * @throws DatabaseException
+	 * @throws UserException
 	 */
 	public function updateMedia(string $mediaId, string $filename, string $description): int
 	{
@@ -170,7 +170,7 @@ class MediaService
 			$media = $this->fetchMediaById($mediaId);
 
 			$node        = $this->nodesRepository->findNodeOwner($media['node_id']);
-			$permissions = $this->aclValidator->checkDirectoryPermissions($this->UID, $node);
+			$permissions = $this->aclValidator->checkDirectoryPermissions($this->userSession->getUID(), $node);
 			if (!$permissions['edit'])
 				throw new ModuleException('mediapool', 'No edit permissions in this directory: '. $media['node_id']);
 
@@ -200,7 +200,7 @@ class MediaService
 		{
 			$media = $this->fetchMediaById($mediaId);
 			$node        = $this->nodesRepository->findNodeOwner($media['node_id']);
-			$permissions = $this->aclValidator->checkDirectoryPermissions($this->UID, $node);
+			$permissions = $this->aclValidator->checkDirectoryPermissions($this->userSession->getUID(), $node);
 			if (!$permissions['edit'])
 				throw new ModuleException('mediapool', 'No edit permissions in this directory: '. $media['node_id']);
 
@@ -223,13 +223,13 @@ class MediaService
 			$media = $this->fetchMediaById($mediaId);
 
 			$node = $this->nodesRepository->findNodeOwner($media['node_id']);
-			$permissions = $this->aclValidator->checkDirectoryPermissions($this->UID, $node);
+			$permissions = $this->aclValidator->checkDirectoryPermissions($this->userSession->getUID(), $node);
 
 			if (!$permissions['read'])
 				throw new ModuleException('mediapool', 'No read permissions in this directory: '. $media['node_id']);
 
 			$node = $this->nodesRepository->findNodeOwner($nodeId);
-			$permissions = $this->aclValidator->checkDirectoryPermissions($this->UID, $node);
+			$permissions = $this->aclValidator->checkDirectoryPermissions($this->userSession->getUID(), $node);
 			if (!$permissions['edit'])
 				throw new ModuleException('mediapool', 'No edit permissions in this directory: '. $node['name']);
 
@@ -255,7 +255,7 @@ class MediaService
 		{
 			$media = $this->fetchMediaById($mediaId);
 			$node  = $this->nodesRepository->findNodeOwner($media['node_id']);
-			$permissions = $this->aclValidator->checkDirectoryPermissions($this->UID, $node);
+			$permissions = $this->aclValidator->checkDirectoryPermissions($this->userSession->getUID(), $node);
 			if (!$permissions['edit'])
 				throw new ModuleException('mediapool', 'No permissions on this directory: '. $media['node_id']);
 
@@ -264,7 +264,7 @@ class MediaService
 			$dataSet = $this->mediaRepository->getFirstDataSet($this->mediaRepository->findById($mediaId));
 
 			$dataSet['media_id'] = Uuid::uuid4()->toString();
-			$dataSet['UID']      = $this->UID;
+			$dataSet['UID']      = $this->userSession->getUID();
 
 			$dataSet['uuid']     = $this->mediaRepository->insert($dataSet);
 

@@ -25,6 +25,7 @@ use App\Framework\Database\NestedSets\Calculator;
 use App\Framework\Database\NestedSets\Service;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
+use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Repositories\NodesRepository;
 use App\Modules\Mediapool\Services\MediaService;
 use App\Modules\Mediapool\Services\NodesService;
@@ -32,6 +33,7 @@ use App\Modules\Mediapool\Services\AclValidator;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class NodesServiceTest extends TestCase
@@ -40,6 +42,7 @@ class NodesServiceTest extends TestCase
 	private Service&MockObject $nestedSetServiceMock;
 	private MediaService&MockObject $mediaServiceMock;
 	private AclValidator&MockObject $aclValidatorMock;
+	private UserSession&Stub $userSessionStub;
 	private NodesService $nodesService;
 
 	/**
@@ -52,9 +55,10 @@ class NodesServiceTest extends TestCase
 		$this->aclValidatorMock = $this->createMock(AclValidator::class);
 		$this->nestedSetServiceMock = $this->createMock(Service::class);
 		$this->mediaServiceMock = $this->createMock(MediaService::class);
+		$this->userSessionStub = $this->createStub(UserSession::class);
 
 		$this->nodesService = new NodesService(
-			$this->nodesRepositoryMock, $this->nestedSetServiceMock, $this->mediaServiceMock,$this->aclValidatorMock
+			$this->nodesRepositoryMock, $this->nestedSetServiceMock, $this->mediaServiceMock, $this->aclValidatorMock, $this->userSessionStub
 		);
 	}
 
@@ -89,14 +93,14 @@ class NodesServiceTest extends TestCase
 		$nodeId = 123;
 		$node = ['node_id' => 123, 'UID' => 456, 'parent_id' => 0];
 		$rights = ['create' => true, 'read' => true, 'edit' => true, 'share' => 'global'];
-		$this->nodesService->UID = 456;
+		$this->userSessionStub->method('getUID')->willReturn(456);
 
 		$this->nodesRepositoryMock->expects($this->once())->method('getNode')
 			->with($nodeId)
 			->willReturn($node);
 
 		$this->aclValidatorMock->expects($this->once())->method('checkDirectoryPermissions')
-			->with($this->nodesService->UID, $node)
+			->with(456, $node)
 			->willReturn($rights);
 
 		$result = $this->nodesService->isNodeUploadable($nodeId);
@@ -148,8 +152,7 @@ class NodesServiceTest extends TestCase
 			->method('checkDirectoryPermissions')
 			->willReturn($rights);
 
-
-		$this->nodesService->UID = 123;
+		$this->userSessionStub->method('getUID')->willReturn(123);
 		$result = $this->nodesService->getNodes($parentId);
 		static::assertCount(1, $result);
 		static::assertEquals('Root Node', $result[0]['title']);
@@ -179,7 +182,7 @@ class NodesServiceTest extends TestCase
 			->method('checkDirectoryPermissions')
 			->willReturn($rights);
 
-		$this->nodesService->UID = 123;
+		$this->userSessionStub->method('getUID')->willReturn(123);
 		$result = $this->nodesService->getNodes($parentId);
 		static::assertCount(1, $result);
 		static::assertEquals('Sub Node', $result[0]['title']);
@@ -197,7 +200,7 @@ class NodesServiceTest extends TestCase
 		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$uid = 123;
 		$name = 'New Root Node';
-		$this->nodesService->UID = $uid;
+		$this->userSessionStub->method('getUID')->willReturn($uid);
 
 		$this->aclValidatorMock->expects($this->once())
 			->method('isModuleAdmin')
@@ -225,7 +228,7 @@ class NodesServiceTest extends TestCase
 		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$uid = 123;
 		$name = 'New Root Node';
-		$this->nodesService->UID = $uid;
+		$this->userSessionStub->method('getUID')->willReturn($uid);
 
 		$this->aclValidatorMock->expects($this->once())
 			->method('isModuleAdmin')
@@ -239,9 +242,9 @@ class NodesServiceTest extends TestCase
 		$this->expectExceptionMessage('No rights to add root node.');
 
 		$result = $this->nodesService->addNode(0, $name);
+
 		static::assertEquals(1, $result);
 	}
-
 
 	/**
 	 * @throws CoreException
@@ -256,7 +259,7 @@ class NodesServiceTest extends TestCase
 		$parentNodeId = 1;
 		$name = 'New Sub Node';
 
-		$this->nodesService->UID = $uid;
+		$this->userSessionStub->method('getUID')->willReturn($uid);
 
 		$parentNode = ['node_id' => 1, 'name' => 'Parent Node', 'parent_id' => 1, 'children' => 0, 'UID' => 123, 'visibility' => 1];
 		$this->nodesRepositoryMock->expects($this->once())
@@ -291,7 +294,7 @@ class NodesServiceTest extends TestCase
 		$parentNodeId = 1;
 		$name = 'New Sub Node';
 
-		$this->nodesService->UID = $uid;
+		$this->userSessionStub->method('getUID')->willReturn($uid);
 
 		$this->nodesRepositoryMock->expects($this->once())
 			->method('getNode')
@@ -323,7 +326,7 @@ class NodesServiceTest extends TestCase
 		$parentNodeId = 1;
 		$name = 'New Sub Node';
 
-		$this->nodesService->UID = $uid;
+		$this->userSessionStub->method('getUID')->willReturn($uid);
 
 		$parentNode = ['node_id' => 1, 'name' => 'Parent Node', 'parent_id' => 1, 'children' => 0, 'UID' => 123, 'visibility' => 1];
 		$this->nodesRepositoryMock->expects($this->once())
@@ -358,7 +361,7 @@ class NodesServiceTest extends TestCase
 		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$nodeId = 1;
 		$name = 'Updated Node Name';
-		$this->nodesService->UID = 12;
+		$this->userSessionStub->method('getUID')->willReturn(12);
 		$visibility = 1;
 		$node = ['node_id' => 1, 'name' => 'Node to Edit', 'parent_id' => 0, 'children' => 0, 'UID' => 123, 'visibility' => 0];
 		$this->nodesRepositoryMock->expects($this->once())
@@ -414,13 +417,13 @@ class NodesServiceTest extends TestCase
 	{
 		$this->nestedSetServiceMock->expects($this->never())->method($this->anything());
 		$UID = 123;
-		$this->nodesService->UID = $UID;
+		$this->userSessionStub->method('getUID')->willReturn($UID);
 		$this->nodesRepositoryMock->expects($this->once())->method('getUserRootNode')
 			->with($UID)
 			->willReturn(['UID' => $UID, 'root_id' => 456, 'node_id' => 789]);
 
 		$this->aclValidatorMock->expects($this->once())->method('isModuleAdmin')
-			->with($this->nodesService->UID)
+			->with($UID)
 			->willReturn(true);
 
 		$condition = ['root_id' => ['test' => 2]];
@@ -477,13 +480,13 @@ class NodesServiceTest extends TestCase
 	{
 		$this->nestedSetServiceMock->expects($this->never())->method($this->anything());
 		$UID = 123;
-		$this->nodesService->UID = $UID;
+		$this->userSessionStub->method('getUID')->willReturn($UID);
 		$this->nodesRepositoryMock->expects($this->once())->method('getUserRootNode')
 			->with($UID)
 			->willReturn(['UID' => $UID, 'root_id' => 456, 'node_id' => 789]);
 
 		$this->aclValidatorMock->expects($this->once())->method('isModuleAdmin')
-			->with($this->nodesService->UID)
+			->with($UID)
 			->willReturn(false);
 
 		$this->nodesRepositoryMock->expects($this->never())->method('generateWhereClause');
@@ -507,13 +510,13 @@ class NodesServiceTest extends TestCase
 	{
 		$this->nestedSetServiceMock->expects($this->never())->method($this->anything());
 		$UID = 123;
-		$this->nodesService->UID = $UID;
+		$this->userSessionStub->method('getUID')->willReturn($UID);
 		$this->nodesRepositoryMock->expects($this->once())->method('getUserRootNode')
 			->with($UID)
 			->willReturn(['UID' => $UID, 'root_id' => 456, 'node_id' => 789]);
 
 		$this->aclValidatorMock->expects($this->once())->method('isModuleAdmin')
-			->with($this->nodesService->UID)
+			->with($UID)
 			->willReturn(true);
 
 		$condition = ['root_id' => ['test' => 2]];
@@ -539,9 +542,9 @@ class NodesServiceTest extends TestCase
 		$this->expectException(ModuleException::class);
 		$this->expectExceptionMessage('Delete nodes by root id failed.');
 
+
 		$this->nodesService->deleteUserDirectory($UID);
 	}
-
 
 	/**
 	 * @throws CoreException
@@ -554,7 +557,7 @@ class NodesServiceTest extends TestCase
 		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$nodeId = 1;
 		$name = 'Updated Node Name';
-		$this->nodesService->UID = 12;
+		$this->userSessionStub->method('getUID')->willReturn(12);
 		$visibility = 1;
 		$this->nodesRepositoryMock->expects($this->once())
 			->method('getNode')
@@ -587,7 +590,7 @@ class NodesServiceTest extends TestCase
 		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$nodeId = 1;
 		$name = 'Updated Node Name';
-		$this->nodesService->UID = 12;
+		$this->userSessionStub->method('getUID')->willReturn(12);
 		$visibility = 1;
 		$node = ['node_id' => 1, 'parent_id' => 1, 'name' => 'Node to Edit', 'children' => 0, 'UID' => 123, 'visibility' => 0];
 		$this->nodesRepositoryMock->expects($this->once())
@@ -765,9 +768,9 @@ class NodesServiceTest extends TestCase
 		$this->expectException(ModuleException::class);
 		$this->expectExceptionMessage('Create root node with a move is not allowed');
 
+
 		$this->nodesService->moveNode($movedNodeId, $targetNodeId, $region);
 	}
-
 
 	/**
 	 * @throws CoreException
@@ -779,7 +782,7 @@ class NodesServiceTest extends TestCase
 	{
 		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$nodeId = 1;
-		$this->nodesService->UID = 354;
+		$this->userSessionStub->method('getUID')->willReturn(354);
 		$node = ['node_id' => 1, 'name' => 'Node to Delete', 'parent_id' => 12, 'children' => 0,
 			'UID' => 123, 'visibility' => 1, 'root_id' => 1, 'rgt' => 2, 'lft' => 1];
 		$this->nodesRepositoryMock->expects($this->once())
@@ -819,7 +822,7 @@ class NodesServiceTest extends TestCase
 	{
 		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$nodeId = 1;
-		$this->nodesService->UID = 34;
+		$this->userSessionStub->method('getUID')->willReturn(34);
 
 		$this->nodesRepositoryMock->expects($this->once())
 			->method('getNode')
@@ -851,7 +854,7 @@ class NodesServiceTest extends TestCase
 	{
 		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$nodeId = 1;
-		$this->nodesService->UID = 34;
+		$this->userSessionStub->method('getUID')->willReturn(34);
 		$node = ['node_id' => 1, 'name' => 'Node to Delete', 'parent_id' => 12, 'children' => 0,
 			'UID' => 123, 'visibility' => 1, 'root_id' => 1, 'rgt' => 2, 'lft' => 1];
 		$this->nodesRepositoryMock->expects($this->once())
@@ -887,7 +890,7 @@ class NodesServiceTest extends TestCase
 	{
 		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$nodeId = 1;
-		$this->nodesService->UID = 354;
+		$this->userSessionStub->method('getUID')->willReturn(354);
 		$node = ['node_id' => 1, 'name' => 'Node to Delete', 'parent_id' => 12, 'children' => 3,
 			'UID' => 123, 'visibility' => 1, 'root_id' => 1, 'rgt' => 2, 'lft' => 1];
 		$this->nodesRepositoryMock->expects($this->once())

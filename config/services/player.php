@@ -131,6 +131,7 @@ $dependencies[PlayerService::class] = DI\factory(function (ContainerInterface $c
 		$container->get(PlayerRepository::class),
 		$container->get(PlaylistsService::class),
 		$container->get(AclValidator::class),
+		$container->get(UserSession::class),
 		$container->get('ModuleLogger'));
 });
 
@@ -142,6 +143,7 @@ $dependencies[PlayerDatatableService::class] = DI\factory(function (ContainerInt
 		$container->get(PlayerRepository::class),
 		$container->get(Parameters::class),
 		$container->get(AclValidator::class),
+		$container->get(UserSession::class),
 		$container->get('ModuleLogger')
 	);
 });$dependencies[Parameters::class] = DI\factory(function (ContainerInterface $container)
@@ -205,7 +207,6 @@ $dependencies[Orchestrator::class] = DI\factory(function (ContainerInterface $co
 {
 	return new Orchestrator(
 		new ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
-		$container->get(UserSession::class),
 		$container->get(BaseValidator::class),
 		$container->get(PlayerService::class),
 		$container->get(PlayerRestAPIService::class)
@@ -219,7 +220,6 @@ $dependencies[PlayerController::class] = DI\factory(function (ContainerInterface
 {
 	return new PlayerController(
 		$container->get(JsonResponseHandler::class),
-		$container->get(UserSession::class),
 		$container->get(PlayerService::class),
 		$container->get(CsrfToken::class)
 	);

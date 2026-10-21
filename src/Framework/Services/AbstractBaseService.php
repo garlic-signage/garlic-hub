@@ -25,27 +25,20 @@ use Psr\Log\LoggerInterface;
 
 /**
  * AbstractBaseService serves as a foundational class providing shared functionality
- * to manage and interact with logging, unique identifier (UID), and error messages.
+ * to manage and interact with logging and error messages.
  *
- * It includes capabilities such as adding and retrieving error messages, checking
- * error states, and maintaining a unique identifier.
+ * It includes capabilities such as adding and retrieving error messages and checking
+ * error states.
  */
 abstract class AbstractBaseService
 {
 	protected readonly LoggerInterface $logger;
-	protected int $UID;
 	/** @var string[]  */
 	protected array $errorMessages = [];
 
 	public function __construct(LoggerInterface $logger)
 	{
 		$this->logger = $logger;
-	}
-
-	public function setUID(int $UID): AbstractBaseService
-	{
-		$this->UID = $UID;
-		return $this;
 	}
 
 	/**

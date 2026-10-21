@@ -26,7 +26,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\Items\Orchestrator;
 use App\Modules\Playlists\Helper\Items\ResponseBuilder;
 use App\Modules\Playlists\Services\InsertItems\AbstractInsertItem;
@@ -60,12 +59,8 @@ class OrchestratorTest extends TestCase
 		$this->insertItemFactoryStub = $this->createStub(InsertItemFactory::class);
 		$this->responseStub          = $this->createStub(ResponseInterface::class);
 
-		$userSessionStub = $this->createStub(UserSession::class);
-		$userSessionStub->method('getUID')->willReturn(456);
-
 		$this->orchestrator = new Orchestrator(
 			$this->responseBuilderMock,
-			$userSessionStub,
 			$this->validatorStub,
 			$this->itemsServiceMock,
 			$this->insertItemFactoryStub
@@ -93,7 +88,6 @@ class OrchestratorTest extends TestCase
 		$this->prepareValid(['playlist_id' => 56], 'validateLoadItems');
 
 		$list = ['some_stuff', 'some_other_stuff', 'and_more_stuff'];
-		$this->expectSetUID();
 		$this->itemsServiceMock->expects($this->once())->method('loadItemsByPlaylistIdForComposer')
 			->with(56)
 			->willReturn($list);
@@ -156,10 +150,9 @@ class OrchestratorTest extends TestCase
 	public function testInsert(): void
 	{
 		$this->prepareValid(['playlist_id' => 1, 'id' => 'item1', 'source' => 'video', 'position' => 5], 'validateInsert');
-		$this->itemsServiceMock->expects($this->never())->method('setUID'); // insert gets the UID directly
+		$this->itemsServiceMock->expects($this->never())->method($this->anything());
 
 		$insertItemMock = $this->createMock(AbstractInsertItem::class);
-		$insertItemMock->expects($this->once())->method('setUID')->with(456);
 		$insertItemMock->expects($this->once())->method('insert')
 			->with(1, 'item1', 5)
 			->willReturn(['inserted_item_data']);
@@ -176,7 +169,7 @@ class OrchestratorTest extends TestCase
 	public function testInsertFactoryReturnsNull(): void
 	{
 		$this->prepareValid(['playlist_id' => 1, 'id' => 'item1', 'source' => 'video', 'position' => 5], 'validateInsert');
-		$this->itemsServiceMock->expects($this->never())->method('setUID'); // insert gets the UID directly
+		$this->itemsServiceMock->expects($this->never())->method($this->anything());
 
 		$this->insertItemFactoryStub->method('create')->willReturn(null);
 		$this->expectError('insertFailed');
@@ -232,7 +225,6 @@ class OrchestratorTest extends TestCase
 	{
 		$this->prepareValid(['item_id' => 123, 'name' => 'item_name', 'value' => 'New Name'], 'validateEdit');
 
-		$this->expectSetUID();
 		$this->itemsServiceMock->expects($this->once())->method('updateField')
 			->with(123, 'item_name', 'New Name')
 			->willReturn(1);
@@ -253,7 +245,6 @@ class OrchestratorTest extends TestCase
 	{
 		$this->prepareValid(['item_id' => '123', 'name' => 'item_duration', 'value' => '300'], 'validateEdit');
 
-		$this->expectSetUID();
 		$this->itemsServiceMock->expects($this->once())->method('updateItemDuration')
 			->with(123, 300)
 			->willReturn(1);
@@ -275,7 +266,6 @@ class OrchestratorTest extends TestCase
 	{
 		$this->prepareValid(['item_id' => 123, 'name' => 'item_duration', 'value' => '300'], 'validateEdit');
 
-		$this->expectSetUID();
 		$this->itemsServiceMock->expects($this->once())->method('updateItemDuration')
 			->with(123, 300)
 			->willReturn(0);
@@ -299,7 +289,7 @@ class OrchestratorTest extends TestCase
 	{
 		$this->prepareValid(['item_id' => 123, 'name' => 'invalid_field', 'value' => 'Some Value'], 'validateEdit');
 
-		$this->expectSetUID();
+		$this->itemsServiceMock->expects($this->never())->method($this->anything());
 		$this->expectError('invalidParameterName');
 
 		$this->orchestrator->edit($this->responseStub);
@@ -326,7 +316,6 @@ class OrchestratorTest extends TestCase
 		$this->prepareValid(['item_id' => 123], 'validateFetch');
 
 		$item = ['id' => 123, 'name' => 'Test Item'];
-		$this->expectSetUID();
 		$this->itemsServiceMock->expects($this->once())->method('fetchItemById')
 			->with(123)
 			->willReturn($item);
@@ -347,7 +336,6 @@ class OrchestratorTest extends TestCase
 	{
 		$this->prepareValid(['item_id' => 999], 'validateFetch');
 
-		$this->expectSetUID();
 		$this->itemsServiceMock->expects($this->once())->method('fetchItemById')
 			->with(999)
 			->willReturn([]);
@@ -395,7 +383,6 @@ class OrchestratorTest extends TestCase
 		$positions = [['id' => 1, 'position' => 2], ['id' => 2, 'position' => 1]];
 		$this->prepareValid(['playlist_id' => 1, 'items_positions' => $positions], 'validateUpdateItemOrders');
 
-		$this->expectSetUID();
 		$this->itemsServiceMock->expects($this->once())->method('updateItemOrder')
 			->with(1, $positions)
 			->willReturn(true);
@@ -443,7 +430,6 @@ class OrchestratorTest extends TestCase
 		$this->prepareValid(['playlist_id' => 1, 'item_id' => 123], 'validateDelete');
 
 		$item = ['id' => 123, 'name' => 'Test Item'];
-		$this->expectSetUID();
 		$this->itemsServiceMock->expects($this->once())->method('delete')
 			->with(1, 123)
 			->willReturn($item);
@@ -461,7 +447,6 @@ class OrchestratorTest extends TestCase
 	{
 		$this->prepareValid(['playlist_id' => 1, 'item_id' => 123], 'validateDelete');
 
-		$this->expectSetUID();
 		$this->itemsServiceMock->expects($this->once())->method('delete')
 			->with(1, 123)
 			->willReturn([]);
@@ -484,11 +469,6 @@ class OrchestratorTest extends TestCase
 		static::assertNull($answer);
 	}
 
-	private function expectSetUID(): void
-	{
-		$this->itemsServiceMock->expects($this->once())->method('setUID')->with(456);
-	}
-
 	/**
 	 * @param array<string,mixed> $data
 	 */
@@ -504,7 +484,7 @@ class OrchestratorTest extends TestCase
 	 */
 	private function expectValidationError(string $method): void
 	{
-		$this->itemsServiceMock->expects($this->never())->method('setUID');
+		$this->itemsServiceMock->expects($this->never())->method($this->anything());
 		$this->expectError($method);
 	}
 

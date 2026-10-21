@@ -22,9 +22,11 @@ declare(strict_types=1);
 namespace App\Modules\Player\Services;
 
 use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\UserException;
 use App\Framework\Services\AbstractDatatableService;
 use App\Framework\Services\SearchFilterParamsTrait;
 use App\Framework\Utils\FormParameters\BaseParameters;
+use App\Modules\Auth\UserSession;
 use App\Modules\Player\Repositories\PlayerRepository;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
@@ -41,12 +43,14 @@ class PlayerDatatableService extends AbstractDatatableService
 	private readonly PlayerRepository $playerRepository;
 	private readonly AclValidator $aclValidator;
 	private BaseParameters $parameters;
+	private readonly UserSession $userSession;
 
-	public function __construct(PlayerRepository $playerRepository, BaseParameters $parameters, AclValidator $aclValidator, LoggerInterface $logger)
+	public function __construct(PlayerRepository $playerRepository, BaseParameters $parameters, AclValidator $aclValidator, UserSession $userSession, LoggerInterface $logger)
 	{
 		$this->playerRepository = $playerRepository;
 		$this->aclValidator = $aclValidator;
 		$this->parameters = $parameters;
+		$this->userSession = $userSession;
 		parent::__construct($logger);
 	}
 
@@ -54,28 +58,30 @@ class PlayerDatatableService extends AbstractDatatableService
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws Exception
+	 * @throws UserException
 	 */
 	public function loadDatatable(): void
 	{
-		if ($this->aclValidator->isModuleAdmin($this->UID))
+		$UID = $this->userSession->getUID();
+		if ($this->aclValidator->isModuleAdmin($UID))
 		{
 			$this->fetchForModuleAdmin($this->playerRepository, $this->parameters);
 		}
-		elseif ($this->aclValidator->isSubAdmin($this->UID))
+		elseif ($this->aclValidator->isSubAdmin($UID))
 		{
 			//		$this->handleRequestSubAdmin($this->playerRepository);
 		}
-		elseif ($this->aclValidator->isEditor($this->UID))
+		elseif ($this->aclValidator->isEditor($UID))
 		{
 			// Todo
 		}
-		elseif ($this->aclValidator->isViewer($this->UID))
+		elseif ($this->aclValidator->isViewer($UID))
 		{
 			// Todo
 		}
 		else
 		{
-			$this->fetchForUser($this->playerRepository, $this->parameters);
+			$this->fetchForUser($this->playerRepository, $this->parameters, $UID);
 		}
 	}
 }

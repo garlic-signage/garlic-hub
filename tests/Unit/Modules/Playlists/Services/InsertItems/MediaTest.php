@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Playlists\Services\InsertItems;
 
 use App\Framework\Exceptions\FrameworkException;
+use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\MediaService;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\InsertItems\Media;
@@ -57,12 +58,16 @@ class MediaTest extends TestCase
 		$this->widgetsServiceMock = $this->createMock(WidgetsService::class);
 		$this->loggerMock = $this->createMock(LoggerInterface::class);
 
+		$userSessionStub = $this->createStub(UserSession::class);
+		$userSessionStub->method('getUID')->willReturn(1);
+
 		$this->media = new Media(
 			$this->itemsRepositoryMock,
 			$this->mediaServiceMock,
 			$this->playlistsServiceMock,
 			$this->playlistMetricsCalculatorMock,
 			$this->widgetsServiceMock,
+			$userSessionStub,
 			$this->loggerMock
 		);
 	}
@@ -153,12 +158,10 @@ class MediaTest extends TestCase
 	#[Group('units')]
 	public function testInsertPlaylistNotAccessible(): void
 	{
-		// the acl check sets the user, but nothing is calculated
-		$this->playlistMetricsCalculatorMock->expects($this->once())->method('setUID')->with(1);
+		// nothing is calculated
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateFromPlaylistData');
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateRemainingMediaDuration');
 		$this->widgetsServiceMock->expects($this->never())->method($this->anything());
-		$this->media->setUID(1);
 		$this->playlistsServiceMock->expects($this->once())->method('loadPlaylistForEdit')->with(1)->willReturn([]);
 
 		$this->mediaServiceMock->expects($this->never())->method('fetchMedia');
@@ -170,9 +173,9 @@ class MediaTest extends TestCase
 
 		$result = $this->media->insert(1, 'invalidMediaId', 2);
 
+
 		static::assertEmpty($result);
 	}
-
 
 	/**
 	 * @throws FrameworkException
@@ -181,8 +184,7 @@ class MediaTest extends TestCase
 	#[Group('units')]
 	public function testInsertMediaNotAccessible(): void
 	{
-		// the acl check sets the user, but nothing is calculated
-		$this->playlistMetricsCalculatorMock->expects($this->once())->method('setUID')->with(1);
+		// nothing is calculated
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateFromPlaylistData');
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateRemainingMediaDuration');
 		$this->widgetsServiceMock->expects($this->never())->method($this->anything());
@@ -235,11 +237,7 @@ class MediaTest extends TestCase
 
 	private function checkAclMockSuccessful(): void
 	{
-		$this->media->setUID(1);
 		$this->itemsRepositoryMock->expects($this->once())->method('beginTransaction');
-		$this->mediaServiceMock->expects($this->once())->method('setUID')
-			->with(1);
-		$this->playlistsServiceMock->method('setUID')->with(1);
-		$this->playlistsServiceMock->method('loadPlaylistForEdit')->willReturn(['some_stuff']);
+		$this->playlistsServiceMock->expects($this->once())->method('loadPlaylistForEdit')->willReturn(['some_stuff']);
 	}
 }

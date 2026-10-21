@@ -25,7 +25,6 @@ use App\Framework\Core\BaseValidator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Services\ExportService;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
@@ -42,7 +41,6 @@ class Orchestrator
 
 	public function __construct(
 		private readonly ResponseBuilder $responseBuilder,
-		private readonly UserSession $userSession,
 		private readonly BaseValidator $validator,
 		private readonly ExportService $exportService
 	) {}
@@ -79,7 +77,6 @@ class Orchestrator
 	 */
 	public function export(ResponseInterface $response): ResponseInterface
 	{
-		$this->exportService->setUID($this->userSession->getUID());
 
 		if ($this->exportService->exportToSmil($this->playlistId) === 0)
 			return $this->responseBuilder->playlistNotFound($response);

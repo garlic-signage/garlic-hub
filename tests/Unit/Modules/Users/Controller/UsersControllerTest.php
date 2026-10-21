@@ -26,7 +26,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\FormParameters\ScalarType;
-use App\Modules\Auth\UserSession;
 use App\Modules\Users\Controller\UsersController;
 use App\Modules\Users\Helper\Datatable\Parameters;
 use App\Modules\Users\Services\UsersDatatableService;
@@ -60,13 +59,10 @@ class UsersControllerTest extends TestCase
 		$this->usersServiceMock    = $this->createMock(UsersDatatableService::class);
 		$this->responseHandlerMock = $this->createMock(JsonResponseHandler::class);
 
-		$userSessionStub = $this->createStub(UserSession::class);
-		$userSessionStub->method('getUID')->willReturn(123);
 
 		$this->controller = new UsersController(
 			$this->usersServiceMock,
 			$this->parametersMock,
-			$userSessionStub,
 			$this->responseHandlerMock
 		);
 	}
@@ -88,7 +84,6 @@ class UsersControllerTest extends TestCase
 		$this->parametersMock->expects($this->once())->method('setUserInputs')->with($args);
 		$this->parametersMock->expects($this->once())->method('parseInputAllParameters');
 
-		$this->usersServiceMock->expects($this->once())->method('setUID')->with(123);
 		$this->usersServiceMock->expects($this->once())->method('loadDatatable');
 		$this->usersServiceMock->expects($this->once())->method('getCurrentFilterResults')->willReturn([
 			['UID' => 1, 'username' => 'JohnDoe'],

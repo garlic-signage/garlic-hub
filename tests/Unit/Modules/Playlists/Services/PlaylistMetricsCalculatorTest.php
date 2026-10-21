@@ -24,12 +24,14 @@ namespace Tests\Unit\Modules\Playlists\Services;
 use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
+use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\AclValidator;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
 use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class PlaylistMetricsCalculatorTest extends TestCase
@@ -37,6 +39,7 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	private ItemsRepository&MockObject $itemsRepositoryMock;
 	private AclValidator&MockObject $aclValidatorMock;
 	private Config&MockObject $configMock;
+	private UserSession&Stub $userSessionStub;
 	private PlaylistMetricsCalculator $calculator;
 
 	/**
@@ -48,8 +51,9 @@ class PlaylistMetricsCalculatorTest extends TestCase
 		$this->itemsRepositoryMock = $this->createMock(ItemsRepository::class);
 		$this->aclValidatorMock = $this->createMock(AclValidator::class);
 		$this->configMock = $this->createMock(Config::class);
+		$this->userSessionStub = $this->createStub(UserSession::class);
 
-		$this->calculator = new PlaylistMetricsCalculator($this->itemsRepositoryMock, $this->aclValidatorMock, $this->configMock);
+		$this->calculator = new PlaylistMetricsCalculator($this->itemsRepositoryMock, $this->aclValidatorMock, $this->configMock, $this->userSessionStub);
 	}
 
 	/**
@@ -179,10 +183,10 @@ class PlaylistMetricsCalculatorTest extends TestCase
 			'duration'          => 50,
 			'owner_duration'    => 0
 		];
+
 		$frontendMetrics =  $this->calculator->getMetricsForFrontend();
 		static::assertSame($expectedMetrics, $frontendMetrics);
 	}
-
 
 	/**
 	 * @throws CoreException
@@ -197,7 +201,7 @@ class PlaylistMetricsCalculatorTest extends TestCase
 		$items = [
 			['item_filesize' => 100, 'item_duration' => 70, 'UID' => 1]
 		];
-		$this->calculator->setUID(1);
+		$this->userSessionStub->method('getUID')->willReturn(1);
 		$this->aclValidatorMock->method('isSimpleAdmin')->with(1)->willReturn(false);
 
 		$this->expectException(ModuleException::class);
@@ -305,7 +309,7 @@ class PlaylistMetricsCalculatorTest extends TestCase
 			->with(5, 1)
 			->willReturn($expectedMetrics);
 
-		$this->calculator->setUID(1);
+		$this->userSessionStub->method('getUID')->willReturn(1);
 		$this->aclValidatorMock->method('isSimpleAdmin')->with(1)->willReturn(false);
 
 		$result = $this->calculator->calculateRemainingMediaDuration($playlist, $media);
@@ -335,14 +339,14 @@ class PlaylistMetricsCalculatorTest extends TestCase
 			->with(5, 1)
 			->willReturn($expectedMetrics);
 
-		$this->calculator->setUID(1);
+		$this->userSessionStub->method('getUID')->willReturn(1);
 		$this->aclValidatorMock->method('isSimpleAdmin')->with(1)->willReturn(false);
 
 		$result = $this->calculator->calculateRemainingMediaDuration($playlist, $media);
 
+
 		static::assertSame(0, $result); // Expected remaining time
 	}
-
 
 	/**
 	 * @throws CoreException

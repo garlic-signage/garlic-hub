@@ -56,12 +56,10 @@ class ConditionalPlayServiceTest extends TestCase
 		$itemId = 1;
 		$mockItem = ['conditional' => serialize(['key' => 'value'])];
 
-		$this->itemServiceMock->expects($this->once())->method('setUID')->with(2);
 		$this->itemServiceMock->expects($this->once())->method('fetchItemById')
 			->with($itemId)
 			->willReturn($mockItem);
 
-		$this->conditionalPlayService->setUID(2);
 		$result = $this->conditionalPlayService->fetchConditionalByItemId($itemId);
 
 		static::assertSame(['key' => 'value'], $result['conditional']);
@@ -74,12 +72,10 @@ class ConditionalPlayServiceTest extends TestCase
 		$itemId = 1;
 		$mockItem = ['conditional' => ''];
 
-		$this->itemServiceMock->expects($this->once())->method('setUID')->with(2);
 		$this->itemServiceMock->expects($this->once())->method('fetchItemById')
 			->with($itemId)
 			->willReturn($mockItem);
 
-		$this->conditionalPlayService->setUID(2);
 		$result = $this->conditionalPlayService->fetchConditionalByItemId($itemId);
 
 		static::assertEmpty($result['conditional']);
@@ -93,14 +89,12 @@ class ConditionalPlayServiceTest extends TestCase
 	{
 		$itemId = 1;
 
-		$this->itemServiceMock->expects($this->once())->method('setUID')
-			->with(2)
+		$this->itemServiceMock->expects($this->once())->method('fetchItemById')->with($itemId)
 			->willThrowException($this->createStub(Throwable::class));
 
 		$this->loggerMock->expects($this->once())->method('error')
 			->with(static::stringContains('Error conditional fetch:'));
 
-		$this->conditionalPlayService->setUID(2);
 		$result = $this->conditionalPlayService->fetchConditionalByItemId($itemId);
 		static::assertEmpty($result);
 	}
@@ -122,7 +116,6 @@ class ConditionalPlayServiceTest extends TestCase
 			->with($itemId, 'conditional', serialize($requestData))
 			->willReturn(1);
 
-		$this->conditionalPlayService->setUID(2);
 		$result = $this->conditionalPlayService->saveConditionalPlay($itemId, $requestData);
 
 		static::assertTrue($result);
@@ -141,7 +134,6 @@ class ConditionalPlayServiceTest extends TestCase
 		$this->loggerMock->expects($this->once())->method('error')
 			->with(static::stringContains('Error save conditional play: No item found.'));
 
-		$this->conditionalPlayService->setUID(2);
 		$result = $this->conditionalPlayService->saveConditionalPlay($itemId, $requestData);
 
 		static::assertFalse($result);
@@ -166,13 +158,10 @@ class ConditionalPlayServiceTest extends TestCase
 		$this->loggerMock->expects($this->once())->method('error')
 			->with(static::stringContains('Error save conditional play: Could not save for item.'));
 
-		$this->conditionalPlayService->setUID(2);
 		$result = $this->conditionalPlayService->saveConditionalPlay($itemId, $requestData);
 
 		static::assertFalse($result);
 	}
-
-
 
 	/**
 	 * @throws Exception
@@ -183,6 +172,8 @@ class ConditionalPlayServiceTest extends TestCase
 		$itemId = 1;
 		$requestData = ['key' => 'value'];
 
+
+
 		$this->itemServiceMock->expects($this->once())->method('fetchItemById')
 			->with($itemId)
 			->willThrowException($this->createStub(Throwable::class));
@@ -190,7 +181,6 @@ class ConditionalPlayServiceTest extends TestCase
 		$this->loggerMock->expects($this->once())->method('error')
 			->with(static::stringContains('Error save conditional play:'));
 
-		$this->conditionalPlayService->setUID(2);
 		$result = $this->conditionalPlayService->saveConditionalPlay($itemId, $requestData);
 
 		static::assertFalse($result);

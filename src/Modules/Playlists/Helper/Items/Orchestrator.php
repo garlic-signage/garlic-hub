@@ -26,7 +26,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Services\InsertItems\InsertItemFactory;
 use App\Modules\Playlists\Services\ItemsService;
 use Doctrine\DBAL\Exception;
@@ -46,7 +45,6 @@ class Orchestrator
 
 	public function __construct(
 		private readonly ResponseBuilder $responseBuilder,
-		private readonly UserSession $userSession,
 		private readonly BaseValidator $validator,
 		private readonly ItemsService $itemsService,
 		private readonly InsertItemFactory $insertItemFactory
@@ -75,7 +73,6 @@ class Orchestrator
 	 */
 	public function loadItems(ResponseInterface $response): ResponseInterface
 	{
-		$this->itemsService->setUID($this->userSession->getUID());
 		$list = $this->itemsService->loadItemsByPlaylistIdForComposer($this->playlistId);
 
 		return $this->responseBuilder->generalSuccess($response, ['data' => $list]);
@@ -108,7 +105,6 @@ class Orchestrator
 		if ($insertItem === null)
 			return $this->responseBuilder->insertFailed($response);
 
-		$insertItem->setUID($this->userSession->getUID());
 		$item = $insertItem->insert($this->playlistId, $this->input['id'], (int) $this->input['position']);
 
 		return $this->responseBuilder->generalSuccess($response, ['data' => $item]);
@@ -138,7 +134,6 @@ class Orchestrator
 	 */
 	public function edit(ResponseInterface $response): ResponseInterface
 	{
-		$this->itemsService->setUID($this->userSession->getUID());
 
 		$name = $this->input['name'];
 		$data = '';
@@ -176,7 +171,6 @@ class Orchestrator
 	 */
 	public function fetch(ResponseInterface $response): ResponseInterface
 	{
-		$this->itemsService->setUID($this->userSession->getUID());
 		$item = $this->itemsService->fetchItemById($this->itemId);
 		if (empty($item))
 			return $this->responseBuilder->itemNotFound($response);
@@ -203,7 +197,6 @@ class Orchestrator
 	 */
 	public function updateItemOrders(ResponseInterface $response): ResponseInterface
 	{
-		$this->itemsService->setUID($this->userSession->getUID());
 		$result = $this->itemsService->updateItemOrder($this->playlistId, $this->input['items_positions']);
 
 		return $this->responseBuilder->itemsOrderUpdated($response, $result);
@@ -222,7 +215,6 @@ class Orchestrator
 	 */
 	public function delete(ResponseInterface $response): ResponseInterface
 	{
-		$this->itemsService->setUID($this->userSession->getUID());
 		$item = $this->itemsService->delete($this->playlistId, $this->itemId);
 		if (empty($item))
 			return $this->responseBuilder->deleteFailed($response);

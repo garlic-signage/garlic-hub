@@ -121,7 +121,6 @@ class WidgetsService extends AbstractBaseService
 	 */
 	private function fetchItem(int $itemId): array
 	{
-		$this->itemService->setUID($this->UID);
 		$item = $this->itemService->fetchItemById($itemId);
 		if ($item['mimetype'] !== 'application/widget')
 			throw new ModuleException('items', 'Not a widget item.');

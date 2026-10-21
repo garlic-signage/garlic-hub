@@ -64,7 +64,8 @@ $dependencies[NodesService::class] = DI\factory(function (ContainerInterface $co
 		$container->get(NodesRepository::class),
 		$container->get(Service::class),
 		$container->get(MediaService::class),
-		$container->get(AclValidator::class)
+		$container->get(AclValidator::class),
+		$container->get(UserSession::class)
 	);
 });
 $dependencies[NodesController::class] = DI\factory(function (ContainerInterface $container)
@@ -72,7 +73,6 @@ $dependencies[NodesController::class] = DI\factory(function (ContainerInterface 
 	return new NodesController(
 		new \App\Modules\Mediapool\Helper\Nodes\Orchestrator(
 			new \App\Modules\Mediapool\Helper\Nodes\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
-			$container->get(UserSession::class),
 			$container->get(BaseValidator::class),
 			$container->get(NodesService::class)
 		)
@@ -133,6 +133,7 @@ $dependencies[MediaService::class] = DI\factory(function (ContainerInterface $co
 		$container->get(NodesRepository::class),
 		$container->get(AclValidator::class),
 		$container->get(MediaUrlSigner::class),
+		$container->get(UserSession::class),
 		$container->get('ModuleLogger')
 	);
 });
@@ -141,7 +142,6 @@ $dependencies[MediaController::class] = DI\factory(function (ContainerInterface 
 	return new MediaController(
 		new \App\Modules\Mediapool\Helper\Media\Orchestrator(
 			new \App\Modules\Mediapool\Helper\Media\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
-			$container->get(UserSession::class),
 			$container->get(BaseValidator::class),
 			$container->get(MediaService::class)
 		)

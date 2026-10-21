@@ -27,7 +27,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
-use App\Modules\Auth\UserSession;
 use App\Modules\Player\Helper\PlayerPlaylist\Orchestrator;
 use App\Modules\Player\Helper\PlayerPlaylist\ResponseBuilder;
 use App\Modules\Player\Services\PlayerRestAPIService;
@@ -42,7 +41,6 @@ use Psr\Http\Message\ResponseInterface;
 class OrchestratorTest extends TestCase
 {
 	private ResponseBuilder&MockObject $responseBuilderMock;
-	private UserSession&MockObject $userSessionMock;
 	private BaseValidator&MockObject $validatorMock;
 	private PlayerService&MockObject $playerServiceMock;
 	private PlayerRestAPIService&MockObject $playerRestAPIServiceMock;
@@ -56,7 +54,6 @@ class OrchestratorTest extends TestCase
 	{
 		parent::setUp();
 		$this->responseBuilderMock = $this->createMock(ResponseBuilder::class);
-		$this->userSessionMock = $this->createMock(UserSession::class);
 		$this->validatorMock = $this->createMock(BaseValidator::class);
 		$this->playerServiceMock = $this->createMock(PlayerService::class);
 		$this->playerRestAPIServiceMock = $this->createMock(PlayerRestAPIService::class);
@@ -64,7 +61,6 @@ class OrchestratorTest extends TestCase
 
 		$this->orchestrator = new Orchestrator(
 			$this->responseBuilderMock,
-			$this->userSessionMock,
 			$this->validatorMock,
 			$this->playerServiceMock,
 			$this->playerRestAPIServiceMock
@@ -78,7 +74,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testValidateSucceed(): void
 	{
-		$this->expectUntouched($this->userSessionMock, $this->playerServiceMock, $this->playerRestAPIServiceMock);
+		$this->expectUntouched($this->playerServiceMock, $this->playerRestAPIServiceMock);
 		$input = [
 			'player_id' => '123',
 			'playlist_id' => '456',
@@ -105,7 +101,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testValidateWithInvalidCsrfToken(): void
 	{
-		$this->expectUntouched($this->userSessionMock, $this->playerServiceMock, $this->playerRestAPIServiceMock);
+		$this->expectUntouched($this->playerServiceMock, $this->playerRestAPIServiceMock);
 		$this->validatorMock->expects($this->once())->method('validateCsrfToken')
 			->with('valid_csrf_token')
 			->willReturn(false);
@@ -130,7 +126,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testValidateWithInvalidPlayerId(): void
 	{
-		$this->expectUntouched($this->userSessionMock, $this->playerServiceMock, $this->playerRestAPIServiceMock);
+		$this->expectUntouched($this->playerServiceMock, $this->playerRestAPIServiceMock);
 		$this->validatorMock->expects($this->once())->method('validateCsrfToken')
 			->with('valid_csrf_token')
 			->willReturn(true);
@@ -162,8 +158,6 @@ class OrchestratorTest extends TestCase
 
 		$data = ['affected' => 1, 'playlist_name' => 'Test Playlist'];
 
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(1);
-		$this->playerServiceMock->expects($this->once())->method('setUID')->with(1);
 
 		$this->playerServiceMock->expects($this->once())->method('replaceMasterPlaylist')
 			->with(123, 456)
@@ -187,8 +181,6 @@ class OrchestratorTest extends TestCase
 		$this->playerRestAPIServiceMock->expects($this->never())->method($this->anything());
 		$this->fillData();
 
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(1);
-		$this->playerServiceMock->expects($this->once())->method('setUID')->with(1);
 		$this->playerServiceMock->expects($this->once())->method('replaceMasterPlaylist')
 			->with(123, 456)
 			->willReturn(['affected' => 0]);
@@ -214,8 +206,6 @@ class OrchestratorTest extends TestCase
 		$this->playerRestAPIServiceMock->expects($this->never())->method($this->anything());
 		$this->fillData();
 
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(1);
-		$this->playerServiceMock->expects($this->once())->method('setUID')->with(1);
 		$this->playerServiceMock->expects($this->once())->method('fetchAclCheckedPlayerData')
 			->with(123)
 			->willReturn([]);
@@ -242,8 +232,6 @@ class OrchestratorTest extends TestCase
 		$this->playerRestAPIServiceMock->expects($this->never())->method($this->anything());
 		$this->fillData();
 
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(1);
-		$this->playerServiceMock->expects($this->once())->method('setUID')->with(1);
 		$this->playerServiceMock->expects($this->once())->method('fetchAclCheckedPlayerData')
 			->with(123)
 			->willReturn(['is_intranet' => 0, 'playlist_id' => 1, 'api_endpoint' => '', 'player_name' => 'Test']);
@@ -270,8 +258,6 @@ class OrchestratorTest extends TestCase
 		$this->playerRestAPIServiceMock->expects($this->never())->method($this->anything());
 		$this->fillData();
 
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(1);
-		$this->playerServiceMock->expects($this->once())->method('setUID')->with(1);
 		$this->playerServiceMock->expects($this->once())->method('fetchAclCheckedPlayerData')
 			->with(123)
 			->willReturn(['is_intranet' => 1, 'playlist_id' => 0, 'api_endpoint' => '', 'player_name' => 'Test']);
@@ -298,8 +284,6 @@ class OrchestratorTest extends TestCase
 		$this->playerRestAPIServiceMock->expects($this->never())->method($this->anything());
 		$this->fillData();
 
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(1);
-		$this->playerServiceMock->expects($this->once())->method('setUID')->with(1);
 		$this->playerServiceMock->expects($this->once())->method('fetchAclCheckedPlayerData')
 			->with(123)
 			->willReturn(['is_intranet' => 1, 'playlist_id' => 1, 'api_endpoint' => '', 'player_name' => 'Test']);
@@ -326,8 +310,6 @@ class OrchestratorTest extends TestCase
 		$player = ['is_intranet' => 1, 'playlist_id' => 1, 'api_endpoint' => 'api_endpoint', 'player_name' => 'Test'];
 		$this->orchestrator->setPlayer($player);
 
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(1);
-		$this->playerRestAPIServiceMock->expects($this->once())->method('setUID')->with(1);
 
 		$this->playerRestAPIServiceMock->expects($this->once())->method('authenticate')
 			->with('api_endpoint', 'admin', '', 123)
@@ -357,8 +339,6 @@ class OrchestratorTest extends TestCase
 		$player = ['is_intranet' => 1, 'playlist_id' => 1, 'api_endpoint' => 'api_endpoint', 'player_name' => 'Test'];
 		$this->orchestrator->setPlayer($player);
 
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(1);
-		$this->playerRestAPIServiceMock->expects($this->once())->method('setUID')->with(1);
 
 		$this->playerRestAPIServiceMock->expects($this->once())->method('authenticate')
 			->with('api_endpoint', 'admin', '', 123)
@@ -388,8 +368,6 @@ class OrchestratorTest extends TestCase
 		$player = ['is_intranet' => 1, 'playlist_id' => 1, 'api_endpoint' => 'api_endpoint', 'player_name' => 'Test'];
 		$this->orchestrator->setPlayer($player);
 
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(1);
-		$this->playerRestAPIServiceMock->expects($this->once())->method('setUID')->with(1);
 
 		$this->playerRestAPIServiceMock->expects($this->once())->method('authenticate')
 			->with('api_endpoint', 'admin', '', 123)

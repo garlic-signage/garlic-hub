@@ -25,7 +25,6 @@ use App\Framework\Core\BaseValidator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Services\WidgetsService;
 use Psr\Http\Message\ResponseInterface;
 
@@ -42,7 +41,6 @@ class Orchestrator
 
 	public function __construct(
 		private readonly ResponseBuilder $responseBuilder,
-		private readonly UserSession $userSession,
 		private readonly BaseValidator $validator,
 		private readonly WidgetsService $widgetsService
 	) {}
@@ -82,7 +80,6 @@ class Orchestrator
 	 */
 	public function fetch(ResponseInterface $response): ResponseInterface
 	{
-		$this->widgetsService->setUID($this->userSession->getUID());
 		$data = $this->widgetsService->fetchWidgetByItemId($this->itemId);
 		if (empty($data))
 			return $this->responseBuilder->widgetLoadFailed($response);
@@ -95,7 +92,6 @@ class Orchestrator
 	 */
 	public function save(ResponseInterface $response): ResponseInterface
 	{
-		$this->widgetsService->setUID($this->userSession->getUID());
 		if (!$this->widgetsService->saveWidget($this->itemId, $this->input))
 			return $this->responseBuilder->saveFailed($response, $this->widgetsService->getErrorText());
 

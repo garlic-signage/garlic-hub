@@ -26,7 +26,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\DatabaseException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\MediaService;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
@@ -51,7 +50,6 @@ class Orchestrator
 
 	public function __construct(
 		private readonly ResponseBuilder $responseBuilder,
-		private readonly UserSession $userSession,
 		private readonly BaseValidator $validator,
 		private readonly MediaService $mediaService
 	) {}
@@ -82,7 +80,6 @@ class Orchestrator
 	{
 		$filter = self::FILTER_MAP[$this->input['filter'] ?? ''] ?? '';
 
-		$this->mediaService->setUID($this->userSession->getUID());
 		$mediaList = $this->mediaService->listMedia($this->nodeId, $filter);
 
 		return $this->responseBuilder->generalSuccess($response, ['media_list' => $mediaList]);
@@ -102,7 +99,6 @@ class Orchestrator
 	 */
 	public function getInfo(ResponseInterface $response): ResponseInterface
 	{
-		$this->mediaService->setUID($this->userSession->getUID());
 		$media = $this->mediaService->fetchMedia($this->input['media_id']);
 
 		return $this->responseBuilder->generalSuccess($response, ['media' => $media]);
@@ -136,7 +132,6 @@ class Orchestrator
 	 */
 	public function edit(ResponseInterface $response): ResponseInterface
 	{
-		$this->mediaService->setUID($this->userSession->getUID());
 		$this->mediaService->updateMedia($this->input['media_id'], $this->input['filename'], $this->input['description']);
 
 		return $this->responseBuilder->generalSuccess($response, []);
@@ -166,7 +161,6 @@ class Orchestrator
 	 */
 	public function delete(ResponseInterface $response): ResponseInterface
 	{
-		$this->mediaService->setUID($this->userSession->getUID());
 		$count = $this->mediaService->deleteMedia($this->input['media_id']);
 
 		return $this->responseBuilder->generalSuccess($response, ['data' => ['deleted_media' => $count]]);
@@ -178,7 +172,6 @@ class Orchestrator
 	 */
 	public function clone(ResponseInterface $response): ResponseInterface
 	{
-		$this->mediaService->setUID($this->userSession->getUID());
 		$newMedia = $this->mediaService->cloneMedia($this->input['media_id']);
 
 		return $this->responseBuilder->generalSuccess($response, ['new_media' => $newMedia]);
@@ -206,7 +199,6 @@ class Orchestrator
 	 */
 	public function move(ResponseInterface $response): ResponseInterface
 	{
-		$this->mediaService->setUID($this->userSession->getUID());
 		$count = $this->mediaService->moveMedia($this->input['media_id'], (int) $this->input['node_id']);
 
 		return $this->responseBuilder->generalSuccess($response, ['data' => ['deleted_media' => $count]]);

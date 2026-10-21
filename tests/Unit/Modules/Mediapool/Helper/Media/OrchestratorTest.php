@@ -26,7 +26,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\DatabaseException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Helper\Media\Orchestrator;
 use App\Modules\Mediapool\Helper\Media\ResponseBuilder;
 use App\Modules\Mediapool\Services\MediaService;
@@ -58,12 +57,8 @@ class OrchestratorTest extends TestCase
 		$this->mediaServiceMock    = $this->createMock(MediaService::class);
 		$this->responseStub        = $this->createStub(ResponseInterface::class);
 
-		$userSessionStub = $this->createStub(UserSession::class);
-		$userSessionStub->method('getUID')->willReturn(1);
-
 		$this->orchestrator = new Orchestrator(
 			$this->responseBuilderMock,
-			$userSessionStub,
 			$this->validatorStub,
 			$this->mediaServiceMock
 		);
@@ -101,7 +96,6 @@ class OrchestratorTest extends TestCase
 	public function testListMapsFilter(string $input, string $filter): void
 	{
 		$this->prepareValid(['node_id' => '5', 'filter' => $input], 'validateList');
-		$this->expectSetUID();
 		$this->mediaServiceMock->expects($this->once())->method('listMedia')->with(5, $filter)->willReturn([['media_id' => 'a']]);
 		$this->expectSuccess(['media_list' => [['media_id' => 'a']]]);
 
@@ -127,7 +121,6 @@ class OrchestratorTest extends TestCase
 	public function testGetInfo(): void
 	{
 		$this->prepareValid(['media_id' => 'abc'], 'validateGetInfo');
-		$this->expectSetUID();
 		$this->mediaServiceMock->expects($this->once())->method('fetchMedia')->with('abc')->willReturn(['filename' => 'x.jpg']);
 		$this->expectSuccess(['media' => ['filename' => 'x.jpg']]);
 
@@ -197,7 +190,6 @@ class OrchestratorTest extends TestCase
 	public function testEditAcceptsEmptyDescription(): void
 	{
 		$this->prepareValid(['media_id' => 'abc', 'filename' => 'new.jpg', 'description' => ''], 'validateEdit');
-		$this->expectSetUID();
 		$this->mediaServiceMock->expects($this->once())->method('updateMedia')->with('abc', 'new.jpg', '')->willReturn(1);
 		$this->expectSuccess([]);
 
@@ -241,7 +233,6 @@ class OrchestratorTest extends TestCase
 	public function testDelete(): void
 	{
 		$this->prepareValid(['media_id' => 'abc'], 'validateWithMediaId');
-		$this->expectSetUID();
 		$this->mediaServiceMock->expects($this->once())->method('deleteMedia')->with('abc')->willReturn(1);
 		$this->expectSuccess(['data' => ['deleted_media' => 1]]);
 
@@ -259,7 +250,6 @@ class OrchestratorTest extends TestCase
 	public function testClone(): void
 	{
 		$this->prepareValid(['media_id' => 'abc'], 'validateWithMediaId');
-		$this->expectSetUID();
 		$this->mediaServiceMock->expects($this->once())->method('cloneMedia')->with('abc')->willReturn(['media_id' => 'def']);
 		$this->expectSuccess(['new_media' => ['media_id' => 'def']]);
 
@@ -290,7 +280,6 @@ class OrchestratorTest extends TestCase
 	public function testMove(): void
 	{
 		$this->prepareValid(['media_id' => 'abc', 'node_id' => '7'], 'validateMove');
-		$this->expectSetUID();
 		$this->mediaServiceMock->expects($this->once())->method('moveMedia')->with('abc', 7)->willReturn(1);
 		$this->expectSuccess(['data' => ['deleted_media' => 1]]);
 
@@ -310,11 +299,6 @@ class OrchestratorTest extends TestCase
 		static::assertNull($this->orchestrator->setInput($input)->$validateMethod($this->responseStub));
 	}
 
-	private function expectSetUID(): void
-	{
-		$this->mediaServiceMock->expects($this->once())->method('setUID')->with(1);
-	}
-
 	/**
 	 * @param array<string,mixed> $data
 	 */
@@ -330,7 +314,7 @@ class OrchestratorTest extends TestCase
 	 */
 	private function expectValidationError(string $method): void
 	{
-		$this->mediaServiceMock->expects($this->never())->method('setUID');
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
 		$this->responseBuilderMock->expects($this->never())->method('generalSuccess');
 		$this->responseBuilderMock->expects($this->once())->method($method)
 			->with($this->responseStub)

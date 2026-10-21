@@ -123,13 +123,11 @@ class ItemsService extends AbstractBaseService
 
 		/** @var array<string,mixed> $item */
 
-		$this->playlistsService->setUID($this->UID);
 		$destinationPlaylist = $this->playlistsService->loadPureById($item['playlist_id']); // check rights
 
 		switch ($item['item_type'])
 		{
 			case ItemType::MEDIAPOOL->value:
-				$this->mediaService->setUID($this->UID);
 				$media = $this->mediaService->fetchMediaByChecksum($item['file_resource']);
 				if (empty($media))
 					throw new ModuleException('items', 'Item not found');
@@ -142,7 +140,6 @@ class ItemsService extends AbstractBaseService
 				break;
 			case ItemType::PLAYLIST->value:
 				$playlist = $this->playlistsService->fetchById((int) $item['file_resource']); // check rights
-				$this->playlistMetricsCalculator->setUID($this->UID);
 				$defaultDuration = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlist)->getDuration();
 				if ($playlist['time_limit'] > 0 && $defaultDuration > $playlist['time_limit'])
 					$item['default_duration'] = $playlist['time_limit'];
@@ -167,7 +164,6 @@ class ItemsService extends AbstractBaseService
 	 */
 	public function loadItemsByPlaylistIdForComposer(int $playlistId): array
 	{
-		$this->playlistsService->setUID($this->UID);
 
 		$playlistData  = $this->playlistsService->loadPureById($playlistId); // checks rights, too
 		$items         = [];
@@ -218,7 +214,6 @@ class ItemsService extends AbstractBaseService
 			}
 		}
 
-		$this->playlistMetricsCalculator->setUID($this->UID);
 		$playlistMetrics = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlistData)->getMetricsForFrontend();
 
 		return ['playlist_metrics' =>  $playlistMetrics, 'playlist' => $playlistData, 'items' => $items];
@@ -244,7 +239,6 @@ class ItemsService extends AbstractBaseService
      */
 	public function update(int $itemId, array $saveData): int
 	{
-		$this->playlistsService->setUID($this->UID);
 		$item = $this->itemsRepository->findFirstById($itemId);
 		if ($item === [])
 			return 0;
@@ -263,8 +257,6 @@ class ItemsService extends AbstractBaseService
 	 */
 	public function updateItemDuration(int $itemId, int $wantedDuration): int
 	{
-		$this->playlistMetricsCalculator->setUID($this->UID);
-		$this->playlistsService->setUID($this->UID);
 		$item = $this->itemsRepository->findFirstById($itemId);
 		if ($item === [])
 			return 0;
@@ -297,7 +289,6 @@ class ItemsService extends AbstractBaseService
 	{
 		try
 		{
-			$this->playlistsService->setUID($this->UID);
 			$this->itemsRepository->beginTransaction();
 			$this->playlistsService->loadPureById($playlistId); // will check for rights
 
@@ -340,7 +331,6 @@ class ItemsService extends AbstractBaseService
 
 			$this->itemsRepository->updatePositionsWhenDeleted($playlistId, $item['item_order']);
 
-			$this->playlistMetricsCalculator->setUID($this->UID);
 			$playlistMetrics = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlistData)->getMetricsForFrontend();
 
 			$this->itemsRepository->commitTransaction();
@@ -401,7 +391,6 @@ class ItemsService extends AbstractBaseService
 			}
 		}
 
-		$this->playlistMetricsCalculator->setUID($this->UID);
 		$updated = [$playlistId];
 		while ($updated !== [])
 		{
@@ -469,7 +458,6 @@ class ItemsService extends AbstractBaseService
 	 */
 	private function checkPlaylistAcl(int $playlistId): array
 	{
-		$this->playlistsService->setUID($this->UID);
 		/** @var array<string,mixed> $playlistData */
 		$playlistData = $this->playlistsService->loadPlaylistForEdit($playlistId); // also checks rights
 		if (empty($playlistData))

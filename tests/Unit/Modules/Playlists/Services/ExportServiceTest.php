@@ -77,14 +77,10 @@ class ExportServiceTest extends TestCase
 	public function testExportToSmilSingleMode(): void
 	{
 		$playlistId = 123;
-		$this->service->setUID(1);
 		$playlist = ['playlist_id' => 123, 'playlist_mode' => 'master'];
 		$metrics = ['filesize' => 100, 'duration' => 60, 'owner_duration' => 60];
 		$result = ['items' => [], 'playlist_metrics' => $metrics];
 		$this->itemsRepositoryMock->method('beginTransaction');
-
-		$this->playlistsServiceMock->method('setUID')->with(1);
-		$this->itemsServiceMock->method('setUID')->with(1);
 
 		$this->playlistsServiceMock->method('loadPureById')
 			->with($playlistId)
@@ -109,11 +105,11 @@ class ExportServiceTest extends TestCase
 			->with($playlist['playlist_id'], $metrics)
 			->willReturn(1);
 
-
 		$this->itemsRepositoryMock->expects($this->once())->method('commitTransaction');
 		$this->itemsRepositoryMock->expects($this->never())->method('rollbackTransaction');
 		$this->loggerMock->expects($this->never())->method('error');
 		$result = $this->service->exportToSmil($playlistId);
+
 
 		static::assertSame(1, $result);
 	}
@@ -125,14 +121,10 @@ class ExportServiceTest extends TestCase
 	public function testExportToSmilSingleModeFailed(): void
 	{
 		$playlistId = 123;
-		$this->service->setUID(1);
 		$playlist = ['playlist_id' => 123, 'playlist_mode' => 'master'];
 		$metrics = ['filesize' => 100, 'duration' => 60, 'owner_duration' => 60];
 		$result = ['items' => [], 'playlist_metrics' => $metrics];
 		$this->itemsRepositoryMock->method('beginTransaction');
-
-		$this->playlistsServiceMock->method('setUID')->with(1);
-		$this->itemsServiceMock->method('setUID')->with(1);
 
 		$this->playlistsServiceMock->method('loadPureById')
 			->with($playlistId)
@@ -174,7 +166,6 @@ class ExportServiceTest extends TestCase
 	public function testExportToSmilMultizoneMode(): void
 	{
 		$playlistId = 123;
-		$this->service->setUID(1);
 
 		$multizone = [
 			['zones' => ['zone_playlist_id' => 11]],
@@ -188,8 +179,6 @@ class ExportServiceTest extends TestCase
 		$results   = ['items' => [], 'playlist_metrics' => $metrics];
 
 		$this->itemsRepositoryMock->method('beginTransaction');
-		$this->playlistsServiceMock->method('setUID')->with(1);
-		$this->itemsServiceMock->method('setUID')->with(1);
 
 		$this->playlistsServiceMock->expects($this->exactly(3))->method('loadPureById')
 			->willReturnMap([
@@ -234,7 +223,6 @@ class ExportServiceTest extends TestCase
 			->with($playlist['playlist_id'], $metrics)
 			->willReturn(1);
 
-
 		$this->itemsRepositoryMock->expects($this->once())->method('commitTransaction');
 		$this->itemsRepositoryMock->expects($this->never())->method('rollbackTransaction');
 		$this->loggerMock->expects($this->never())->method('error');
@@ -245,3 +233,4 @@ class ExportServiceTest extends TestCase
 
 
 }
+

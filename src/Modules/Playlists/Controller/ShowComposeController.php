@@ -24,7 +24,6 @@ namespace App\Modules\Playlists\Controller;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\Compose\UiTemplatesPreparer;
 use App\Modules\Playlists\Helper\PlaylistMode;
 use App\Modules\Playlists\Services\PlaylistsService;
@@ -39,7 +38,6 @@ class ShowComposeController
 {
 	public function __construct(private readonly PlaylistsService $playlistsService,
 								private readonly UiTemplatesPreparer $uiTemplatesPreparer,
-								private readonly UserSession $userSession,
 								private readonly Messages $flash)
 	{}
 
@@ -55,7 +53,6 @@ class ShowComposeController
 		if ($playlistId === 0)
 			return $this->redirectWithErrors($response, 'Playlist ID not valid.');
 
-		$this->playlistsService->setUID($this->userSession->getUID());
 		/** @var array<string,mixed> $playlist */
 		$playlist = $this->playlistsService->loadPlaylistForEdit($playlistId);
 		if ($playlist === [])

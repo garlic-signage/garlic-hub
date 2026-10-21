@@ -63,8 +63,6 @@ class ExportService extends AbstractBaseService
 		try
 		{
 			$this->itemsService->getItemsRepository()->beginTransaction();
-			$this->playlistsService->setUID($this->UID);
-			$this->itemsService->setUID($this->UID);
 
 			$playlist = $this->playlistsService->loadPureById($playlistId); // checks rights
 

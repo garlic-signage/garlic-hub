@@ -59,9 +59,10 @@ class PlayerIndexService extends AbstractBaseService
 	}
 
 	/**
+	 * @param int $ownerId owner of a new player, the request comes from the player itself without a user session
 	 * @param array<string,string> $server
 	 */
-	public function handleIndexRequest(string $userAgent, array $server, bool $localPlayer): string
+	public function handleIndexRequest(int $ownerId, string $userAgent, array $server, bool $localPlayer): string
 	{
 		try
 		{
@@ -71,7 +72,7 @@ class PlayerIndexService extends AbstractBaseService
 			{
 				$this->playerDataAssembler->setServerData($server);
 				$this->determinePlayerEntities($localPlayer);
-				$this->handlePlayerStats();
+				$this->handlePlayerStats($ownerId);
 			}
 			else
 			{
@@ -95,12 +96,12 @@ class PlayerIndexService extends AbstractBaseService
 	 * @throws Exception
 	 * @throws FilesystemException
 	 */
-	private function handlePlayerStats(): void
+	private function handlePlayerStats(int $ownerId): void
 	{
 		switch ($this->playerEntity->getStatus())
 		{
 			case PlayerStatus::UNREGISTERED->value:
-				$this->playerEntity = $this->playerDataAssembler->insertNewPlayer($this->UID);
+				$this->playerEntity = $this->playerDataAssembler->insertNewPlayer($ownerId);
 				$this->indexProvider->handleNew();
 				break;
 			case PlayerStatus::UNRELEASED->value:

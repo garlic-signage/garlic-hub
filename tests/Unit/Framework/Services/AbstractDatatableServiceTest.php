@@ -41,9 +41,9 @@ class ConcreteDatatableService extends AbstractDatatableService
 		return parent::fetchForModuleAdmin($repository, $parameters);
 	}
 
-	public function fetchForUser(FilterBase $repository, BaseParameters $parameters): static
+	public function fetchForUser(FilterBase $repository, BaseParameters $parameters, int $UID): static
 	{
-		return parent::fetchForUser($repository, $parameters);
+		return parent::fetchForUser($repository, $parameters, $UID);
 	}
 
 
@@ -97,7 +97,6 @@ class AbstractDatatableServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchForUser(): void
 	{
-		$this->service->setUID(123);
 
 		$this->parametersMock->expects($this->exactly(2))
 			->method('getInputParametersArray')->willReturn(['empty']);
@@ -111,7 +110,7 @@ class AbstractDatatableServiceTest extends TestCase
 			->with(['empty'], 123)
 			->willReturn($result);
 
-		$this->service->fetchForUser($this->repositoryMock, $this->parametersMock);
+		$this->service->fetchForUser($this->repositoryMock, $this->parametersMock, 123);
 
 		static::assertSame(12, $this->service->getCurrentTotalResult());
 		static::assertSame($result, $this->service->getCurrentFilterResults());

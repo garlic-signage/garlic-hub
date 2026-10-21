@@ -25,6 +25,8 @@ use App\Framework\Database\NestedSets\Calculator;
 use App\Framework\Database\NestedSets\Service;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\UserException;
+use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Repositories\NodesRepository;
 use Doctrine\DBAL\Exception;
 
@@ -38,17 +40,16 @@ class NodesService
 	private readonly MediaService $mediaService;
 	private readonly AclValidator $aclValidator;
 	private readonly Service $nestedSetsService;
-	public int $UID {
-		set {$this->UID = $value;}
-	}
+	private readonly UserSession $userSession;
 
-	public function __construct(NodesRepository $nodesRepository, Service $nestedSetsService, MediaService $mediaService, AclValidator $aclValidator)
+	public function __construct(NodesRepository $nodesRepository, Service $nestedSetsService, MediaService $mediaService, AclValidator $aclValidator, UserSession $userSession)
 	{
 		$this->nodesRepository = $nodesRepository;
 		$this->nestedSetsService = $nestedSetsService;
 		$this->nestedSetsService->initRepository('mediapool_nodes', 'node_id');
 		$this->mediaService    = $mediaService;
 		$this->aclValidator    = $aclValidator;
+		$this->userSession     = $userSession;
 	}
 
 	/**
@@ -138,6 +139,7 @@ class NodesService
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	public function deleteUserDirectory(int $UID): void
 	{
@@ -147,7 +149,7 @@ class NodesService
 			return;
 
 		/** @var array{UID:int, company_id:int, node_id:int, root_id:int} $node */
-		if (!$this->aclValidator->isModuleAdmin($this->UID))
+		if (!$this->aclValidator->isModuleAdmin($this->userSession->getUID()))
 			throw new ModuleException('mediapool','No rights to delete user root node.');
 
 		$condition = ['root_id' => $this->nodesRepository->generateWhereClause($node['root_id'])];
@@ -165,6 +167,7 @@ class NodesService
 	 * @throws ModuleException
 	 * @throws Exception
 	 * @throws CoreException
+	 * @throws UserException
 	 */
 	public function editNode(int $id, string $name, ?int $visibility = null): int
 	{
@@ -177,7 +180,7 @@ class NodesService
 			throw new ModuleException('mediapool', 'No rights to edit node ' . $node['name']);
 
 		$data = ['name' => $name];
-		if ($this->aclValidator->isModuleAdmin($this->UID) && !is_null($visibility))
+		if ($this->aclValidator->isModuleAdmin($this->userSession->getUID()) && !is_null($visibility))
 			$data['visibility'] = $visibility;
 
 		return $this->nodesRepository->update($id, $data);
@@ -274,13 +277,14 @@ class NodesService
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	private function addRootNode(string $name): int
 	{
-		if (!$this->aclValidator->isModuleAdmin($this->UID))
+		if (!$this->aclValidator->isModuleAdmin($this->userSession->getUID()))
 			throw new ModuleException('mediapool','No rights to add root node.');
 
-		return $this->nestedSetsService->addRootNode($this->UID, $name);
+		return $this->nestedSetsService->addRootNode($this->userSession->getUID(), $name);
 	}
 
 
@@ -291,6 +295,7 @@ class NodesService
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	private function addSubNode(int $parentNodeId, string $name): int
 	{
@@ -302,7 +307,7 @@ class NodesService
 		if (!$rights['create'])
 			throw new ModuleException('mediapool', 'No rights to add node under: ' . $parentNode['name']);
 
-		return $this->nestedSetsService->addSubNode($this->UID, $name, $parentNode);
+		return $this->nestedSetsService->addSubNode($this->userSession->getUID(), $name, $parentNode);
 	}
 
 	/**
@@ -311,10 +316,12 @@ class NodesService
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	private function determineRights(array $node): array
 	{
-		$rights     = $this->aclValidator->checkDirectoryPermissions($this->UID, $node);
+		$UID        = $this->userSession->getUID();
+		$rights     = $this->aclValidator->checkDirectoryPermissions($UID, $node);
 
 		if(!$rights['read'])
 			return ['create' => false, 'edit' => false, 'delete' => false, 'share' => ''];
@@ -325,9 +332,9 @@ class NodesService
 		// only admin can edit and delete and root nodes
 		if ($node['parent_id'] === 0)
 		{
-			if ($this->aclValidator->isModuleAdmin($this->UID))
+			if ($this->aclValidator->isModuleAdmin($UID))
 				return ['create' => true, 'edit' => true, 'delete' => true, 'share' => $rights['share']];
-			else if ($this->UID == $node['UID']) // only User dirs
+			else if ($UID == $node['UID']) // only User dirs
 			{
 				$create = true;
 			}

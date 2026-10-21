@@ -62,13 +62,12 @@ readonly class PlayerIndexController
 		$serverName = $server['SERVER_NAME'];
 
 	//	$userAgent = 'GAPI/1.0 (UUID:3f0cd56c-d511-486a-a8e1-9d2cefd78b3f; NAME:9d2cefd78b3f) garlic-macOS/v0.6.0.679 (MODEL:Garlic)';
-		$this->indexService->setUID($ownerId);
 		if (str_contains($serverName, 'localhost') || str_contains($serverName, 'ddev'))
 			$localPlayer = true;
 		else
 			$localPlayer = false;
 
-		$filePath = $this->indexService->handleIndexRequest($userAgent, $server, $localPlayer);
+		$filePath = $this->indexService->handleIndexRequest($ownerId, $userAgent, $server, $localPlayer);
 		if (empty($filePath))
 			return $response->withHeader('Content-Type', 'application/smil+xml')->withStatus(404);
 

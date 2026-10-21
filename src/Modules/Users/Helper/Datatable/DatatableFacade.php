@@ -41,15 +41,15 @@ class DatatableFacade implements DatatableFacadeInterface
 {
 	private readonly DatatableBuilder $datatableBuilder;
 	private readonly DatatablePreparer $datatablePreparer;
-	private readonly UsersDatatableService $usersService;
+	private readonly UsersDatatableService $usersDatatableService;
 	private readonly UsersAdminService $usersAdminService;
 	private int $UID;
 
-	public function __construct(DatatableBuilder $datatableBuilder, DatatablePreparer $datatablePreparer, UsersDatatableService $usersService, UsersAdminService $usersAdminService)
+	public function __construct(DatatableBuilder $datatableBuilder, DatatablePreparer $datatablePreparer, UsersDatatableService $usersDatatableService, UsersAdminService $usersAdminService)
 	{
 		$this->datatableBuilder   = $datatableBuilder;
 		$this->datatablePreparer = $datatablePreparer;
-		$this->usersService       = $usersService;
+		$this->usersDatatableService       = $usersDatatableService;
 		$this->usersAdminService  = $usersAdminService;
 	}
 
@@ -62,8 +62,6 @@ class DatatableFacade implements DatatableFacadeInterface
 		/** @var array{UID: int} $user */
 		$user = $session->get('user');
 		$this->UID = (int) $user['UID'];
-		$this->usersService->setUID($this->UID);
-		$this->usersAdminService->setUID($this->UID);
 		$this->datatableBuilder->configureParameters($this->UID);
 		$this->datatablePreparer->setTranslator($translator);
 		$this->datatableBuilder->setTranslator($translator);
@@ -86,7 +84,7 @@ class DatatableFacade implements DatatableFacadeInterface
 	public function processSubmittedUserInput(array $queryParams): void
 	{
 		$this->datatableBuilder->determineParameters($queryParams);
-		$this->usersService->loadDatatable();
+		$this->usersDatatableService->loadDatatable();
 	}
 
 	/**
@@ -98,7 +96,7 @@ class DatatableFacade implements DatatableFacadeInterface
 	{
 		$this->datatableBuilder->buildTitle();
 		$this->datatableBuilder->collectFormElements();
-		$this->datatableBuilder->createPagination($this->usersService->getCurrentTotalResult());
+		$this->datatableBuilder->createPagination($this->usersDatatableService->getCurrentTotalResult());
 		$this->datatableBuilder->createDropDown();
 		$this->datatableBuilder->createTableFields();
 
@@ -123,7 +121,7 @@ class DatatableFacade implements DatatableFacadeInterface
 			'has_add'			  => $this->datatablePreparer->prepareAdd('person-add', 'users/new'),
 			'results_header'      => $this->datatablePreparer->prepareTableHeader($datatableStructure['header'],  ['users', 'main']),
 			'results_list'        => $this->prepareList($datatableStructure['header']),
-			'results_count'       => $this->usersService->getCurrentTotalResult(),
+			'results_count'       => $this->usersDatatableService->getCurrentTotalResult(),
 			'title'               => $datatableStructure['title'],
 			'template_name'       => 'users/datatable',
 			'module_name'		  => 'users',
@@ -144,7 +142,7 @@ class DatatableFacade implements DatatableFacadeInterface
 	private function prepareList(array $fields): array
 	{
 		return $this->datatablePreparer->prepareTableBody(
-			$this->usersService->getCurrentFilterResults(),
+			$this->usersDatatableService->getCurrentFilterResults(),
 			$fields,
 			$this->UID
 		);

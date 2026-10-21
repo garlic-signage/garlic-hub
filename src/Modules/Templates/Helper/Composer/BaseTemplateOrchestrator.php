@@ -45,7 +45,7 @@ class BaseTemplateOrchestrator
 	}
 
 	/**
-	 * @param array $objects
+	 * @param array<string, mixed> $objects
 	 */
 	protected function restoreSrc(array &$objects): void
 	{
@@ -74,8 +74,8 @@ class BaseTemplateOrchestrator
 	}
 
 	/**
-	 * @param array $objects
-	 */
+     * @param array<string, mixed> $objects
+     */
 	protected function removeSrc(array &$objects): void
 	{
 		foreach ($objects as &$obj)

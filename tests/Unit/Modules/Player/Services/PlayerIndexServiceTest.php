@@ -87,8 +87,7 @@ class PlayerIndexServiceTest extends TestCase
 		$this->indexProviderMock->expects($this->once())->method('getFilePath')
 			->willReturn($filePath);
 
-		$this->service->setUID(1);
-		$result = $this->service->handleIndexRequest($userAgent, $serverData, true);
+		$result = $this->service->handleIndexRequest(1, $userAgent, $serverData, true);
 
 		static::assertSame($filePath, $result);
 	}
@@ -119,8 +118,7 @@ class PlayerIndexServiceTest extends TestCase
 		$this->indexProviderMock->expects($this->once())->method('getFilePath')
 			->willReturn($filePath);
 
-		$this->service->setUID(1);
-		$result = $this->service->handleIndexRequest($userAgent, $serverData,false);
+		$result = $this->service->handleIndexRequest(1, $userAgent, $serverData,false);
 
 		static::assertSame($filePath, $result);
 	}
@@ -153,8 +151,7 @@ class PlayerIndexServiceTest extends TestCase
 		$this->indexProviderMock->expects($this->once())->method('getFilePath')
 			->willReturn($filePath);
 
-		$this->service->setUID(1);
-		$result = $this->service->handleIndexRequest($userAgent, $serverData,false);
+		$result = $this->service->handleIndexRequest(1, $userAgent, $serverData,false);
 
 		static::assertSame($filePath, $result);
 	}
@@ -185,8 +182,7 @@ class PlayerIndexServiceTest extends TestCase
 		$this->indexProviderMock->expects($this->once())->method('getFilePath')
 			->willReturn($filePath);
 
-		$this->service->setUID(1);
-		$result = $this->service->handleIndexRequest($userAgent, $serverData, false);
+		$result = $this->service->handleIndexRequest(1, $userAgent, $serverData, false);
 
 		static::assertSame($filePath, $result);
 	}
@@ -216,8 +212,7 @@ class PlayerIndexServiceTest extends TestCase
 		$this->indexProviderMock->expects($this->once())->method('getFilePath')
 			->willReturn($filePath);
 
-		$this->service->setUID(1);
-		$result = $this->service->handleIndexRequest($userAgent, $serverData,false);
+		$result = $this->service->handleIndexRequest(1, $userAgent, $serverData,false);
 
 		static::assertSame($filePath, $result);
 	}
@@ -247,8 +242,7 @@ class PlayerIndexServiceTest extends TestCase
 		$this->indexProviderMock->expects($this->once())->method('getFilePath')
 			->willReturn($filePath);
 
-		$this->service->setUID(1);
-		$result = $this->service->handleIndexRequest($userAgent, $serverData, false);
+		$result = $this->service->handleIndexRequest(1, $userAgent, $serverData, false);
 
 		static::assertSame($filePath, $result);
 	}
@@ -278,8 +272,7 @@ class PlayerIndexServiceTest extends TestCase
 		$this->indexProviderMock->expects($this->once())->method('getFilePath')
 			->willReturn($filePath);
 
-		$this->service->setUID(1);
-		$result = $this->service->handleIndexRequest($userAgent, $serverData, false);
+		$result = $this->service->handleIndexRequest(1, $userAgent, $serverData, false);
 
 		static::assertSame($filePath, $result);
 	}
@@ -309,8 +302,7 @@ class PlayerIndexServiceTest extends TestCase
 		$this->indexProviderMock->expects($this->once())->method('getFilePath')
 			->willReturn($filePath);
 
-		$this->service->setUID(1);
-		$result = $this->service->handleIndexRequest($userAgent, $serverData,false);
+		$result = $this->service->handleIndexRequest(1, $userAgent, $serverData,false);
 
 		static::assertSame($filePath, $result);
 	}
@@ -339,8 +331,7 @@ class PlayerIndexServiceTest extends TestCase
 		$this->loggerMock->expects($this->once())->method('error')
 			->with('Error fetch Index: Unknown player status: 14');
 
-		$this->service->setUID(1);
-		static::assertEmpty($this->service->handleIndexRequest($userAgent, $serverData, false));
+		static::assertEmpty($this->service->handleIndexRequest(1, $userAgent, $serverData, false));
 	}
 
 	#[Group('units')]
@@ -359,7 +350,7 @@ class PlayerIndexServiceTest extends TestCase
 		$this->loggerMock->expects($this->once())->method('info')
 			->with('Connection from: ' . $userAgent);
 
-		$this->service->handleIndexRequest($userAgent, $serverData, false);
+		$this->service->handleIndexRequest(1, $userAgent, $serverData, false);
 	}
 
 	#[Group('units')]
@@ -381,7 +372,7 @@ class PlayerIndexServiceTest extends TestCase
 		$this->loggerMock->expects($this->once())->method('error')
 			->with('Error fetch Index: Parsing error');
 
-		$result = $this->service->handleIndexRequest($userAgent, $serverData, true);
+		$result = $this->service->handleIndexRequest(1, $userAgent, $serverData, true);
 
 		static::assertSame('', $result);
 	}

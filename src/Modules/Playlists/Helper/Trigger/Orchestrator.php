@@ -28,7 +28,6 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
-use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\ConditionalPlay\ResponseBuilder;
 use App\Modules\Playlists\Services\TriggerService;
 use Doctrine\DBAL\Exception;
@@ -45,7 +44,6 @@ class Orchestrator
 
 	public function __construct(
 		private readonly ResponseBuilder  $responseBuilder,
-		private readonly UserSession      $userSession,
 		private readonly BaseValidator    $validator,
 		private readonly TemplatePreparer $templatePreparer,
 		private readonly TriggerService   $triggerService,
@@ -92,7 +90,6 @@ class Orchestrator
 	 */
 	public function fetch(ResponseInterface $response): ?ResponseInterface
 	{
-		$this->triggerService->setUID($this->userSession->getUID());
 		$itemData = $this->triggerService->fetchBeginTriggerByItemId($this->itemId)->getItemData();
 		if ($itemData === [])
 			return $this->responseBuilder->itemNotFound($response);
@@ -120,7 +117,6 @@ class Orchestrator
 	 */
 	public function save(ResponseInterface $response): ?ResponseInterface
 	{
-		$this->triggerService->setUID($this->userSession->getUID());
 
 		unset($this->input['csrf_token']);
 		unset($this->input['item_id']);

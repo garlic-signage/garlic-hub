@@ -25,7 +25,6 @@ use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Media\MediaUrlSigner;
-use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\Templates\Orchestrator;
 use App\Modules\Playlists\Services\ItemsService;
 use App\Modules\Templates\Helper\Composer\ExportImage;
@@ -37,7 +36,6 @@ use PHPUnit\Framework\TestCase;
 class OrchestratorTest extends TestCase
 {
 	private ItemsService&MockObject $itemsServiceMock;
-	private UserSession&MockObject $userSessionMock;
 	private Orchestrator $orchestrator;
 
 	/**
@@ -47,13 +45,11 @@ class OrchestratorTest extends TestCase
 	{
 		parent::setUp();
 		$this->itemsServiceMock = $this->createMock(ItemsService::class);
-		$this->userSessionMock  = $this->createMock(UserSession::class);
 		$configStub             = $this->createStub(Config::class);
 		$configStub->method('getConfigValue')->willReturn('https://example.com');
 
 		$this->orchestrator = new Orchestrator(
 			$this->itemsServiceMock,
-			$this->userSessionMock,
 			$this->createStub(ExportImage::class),
 			$this->createStub(TemplatePreparer::class),
 			$configStub,
@@ -62,12 +58,11 @@ class OrchestratorTest extends TestCase
 	}
 
 	/**
-	 * The orchestrator must be constructable without a logged-in user.
+	 * The orchestrator must be constructable without touching the service.
 	 */
 	#[Group('units')]
-	public function testConstructorDoesNotTouchUserSession(): void
+	public function testConstructorDoesNotTouchItemsService(): void
 	{
-		$this->userSessionMock->expects($this->never())->method($this->anything());
 		$this->itemsServiceMock->expects($this->never())->method($this->anything());
 
 		static::assertSame('', $this->orchestrator->getContent());
@@ -77,17 +72,12 @@ class OrchestratorTest extends TestCase
 	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testCheckRightsSetsUIDBeforeFetching(): void
+	public function testCheckRightsFetchesItem(): void
 	{
-		$calls = [];
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(7);
-		$this->itemsServiceMock->expects($this->once())->method('setUID')->with(7)
-			->willReturnCallback(function () use (&$calls) { $calls[] = 'setUID'; return $this->itemsServiceMock; });
 		$this->itemsServiceMock->expects($this->once())->method('fetchItemById')->with(9)
-			->willReturnCallback(function () use (&$calls) { $calls[] = 'fetch'; return ['item_id' => 9]; });
+			->willReturn(['item_id' => 9]);
 
 		static::assertTrue($this->orchestrator->checkRights(9));
-		static::assertSame(['setUID', 'fetch'], $calls);
 	}
 
 	/**
@@ -96,8 +86,6 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testCheckRightsWithoutAccess(): void
 	{
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(7);
-		$this->itemsServiceMock->expects($this->once())->method('setUID')->with(7);
 		$this->itemsServiceMock->expects($this->once())->method('fetchItemById')
 			->willThrowException(new ModuleException('playlists', 'No rights.'));
 

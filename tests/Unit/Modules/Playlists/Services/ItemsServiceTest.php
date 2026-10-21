@@ -206,20 +206,14 @@ class ItemsServiceTest extends TestCase
 			'file_resource' => 'checksum_value'
 		];
 
-		$this->itemsService->setUID(1);
 		$this->itemsRepositoryMock->expects($this->once())->method('findFirstById')
 			->with($itemId)
 			->willReturn($itemData);
-
-		$this->playlistsServiceMock->expects($this->once())->method('setUID')
-			->with(1);
 
 		$this->playlistsServiceMock->expects($this->once())->method('loadPureById')
 			->with($itemData['playlist_id']);
 
 		$media = ['metadata' => ['duration' => 120], 'config_data' => ''];
-		$this->mediaServiceMock->expects($this->once())->method('setUID')
-			->with(1);
 		$this->mediaServiceMock->expects($this->once())->method('fetchMediaByChecksum')
 			->with($itemData['file_resource'])
 			->willReturn($media);
@@ -251,18 +245,13 @@ class ItemsServiceTest extends TestCase
 			'config_data' => ''
 		];
 
-		$this->itemsService->setUID(1);
 		$this->itemsRepositoryMock->expects($this->once())->method('findFirstById')
 			->with($itemId)
 			->willReturn($itemData);
 
-		$this->playlistsServiceMock->expects($this->once())->method('setUID')
-			->with(1);
-
 		$this->playlistsServiceMock->expects($this->once())->method('loadPureById')
 			->with($itemData['playlist_id']);
 
-		$this->mediaServiceMock->expects($this->once())->method('setUID');
 		$this->mediaServiceMock->expects($this->once())->method('fetchMediaByChecksum')->willReturn(['config_data' => '']);
 
 		$this->playlistMetricsCalculatorMock->expects($this->once())->method('getDefaultDuration')
@@ -313,19 +302,13 @@ class ItemsServiceTest extends TestCase
 			'file_resource' => 'checksum_value'
 		];
 
-		$this->itemsService->setUID(1);
 		$this->itemsRepositoryMock->expects($this->once())->method('findFirstById')
 			->with($itemId)
 			->willReturn($itemData);
 
-		$this->playlistsServiceMock->expects($this->once())->method('setUID')
-			->with(1);
-
 		$this->playlistsServiceMock->expects($this->once())->method('loadPureById')
 			->with($itemData['playlist_id']);
 
-		$this->mediaServiceMock->expects($this->once())->method('setUID')
-			->with(1);
 		$this->mediaServiceMock->expects($this->once())->method('fetchMediaByChecksum')
 			->with($itemData['file_resource'])
 			->willReturn([]);
@@ -354,13 +337,9 @@ class ItemsServiceTest extends TestCase
 			'item_type' => 'playlist'
 		];
 
-		$this->itemsService->setUID(1);
 		$this->itemsRepositoryMock->expects($this->once())->method('findFirstById')
 			->with($itemId)
 			->willReturn($itemData);
-
-		$this->playlistsServiceMock->expects($this->once())->method('setUID')
-			->with(1);
 
 		$playlist = ['playlist_id' => 7, 'time_limit' => 150];
 		$this->playlistsServiceMock->expects($this->once())->method('loadPureById')
@@ -400,13 +379,9 @@ class ItemsServiceTest extends TestCase
 			'item_type' => 'playlist'
 		];
 
-		$this->itemsService->setUID(1);
 		$this->itemsRepositoryMock->expects($this->once())->method('findFirstById')
 			->with($itemId)
 			->willReturn($itemData);
-
-		$this->playlistsServiceMock->expects($this->once())->method('setUID')
-			->with(1);
 
 		$playlist = ['playlist_id' => 7, 'time_limit' => 150];
 		$this->playlistsServiceMock->expects($this->once())->method('loadPureById')
@@ -428,8 +403,6 @@ class ItemsServiceTest extends TestCase
 		static::assertEquals(150, $result['default_duration']);
 	}
 
-
-
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
@@ -447,18 +420,16 @@ class ItemsServiceTest extends TestCase
 			'item_type' => 'template'
 		];
 
-		$this->itemsService->setUID(1);
 		$this->itemsRepositoryMock->expects($this->once())->method('findFirstById')
 			->with($itemId)
 			->willReturn($itemData);
-
-		$this->playlistsServiceMock->expects($this->once())->method('setUID')
-			->with(1);
 
 		$destinationPlaylist = ['playlist_name' => 'Test Playlist'];
 		$this->playlistsServiceMock->expects($this->once())
 			->method('loadPureById')
 			->with($itemData['playlist_id'])
+
+
 			->willReturn($destinationPlaylist);
 		;
 
@@ -490,10 +461,6 @@ class ItemsServiceTest extends TestCase
 				'file_resource' => 'video_checksum'
 			]
 		];
-
-		$this->itemsService->setUID(1);
-		$this->playlistsServiceMock->expects($this->once())->method('setUID')
-			->with(1);
 
 		$this->playlistsServiceMock->expects($this->once())->method('loadPureById')
 			->with($playlistId)
@@ -543,9 +510,6 @@ class ItemsServiceTest extends TestCase
 		$this->mimeTypeExtensionMapperMock->expects($this->once())->method('determineExtension')
 			->with($itemsData[0]['mimetype'])
 			->willReturn('jpg');
-		$this->itemsService->setUID(1);
-		$this->playlistsServiceMock->expects($this->once())->method('setUID')
-			->with(1);
 
 		$this->playlistsServiceMock->expects($this->once())->method('loadPureById')
 			->with($playlistId)
@@ -590,10 +554,6 @@ class ItemsServiceTest extends TestCase
 			]
 		];
 
-		$this->itemsService->setUID(1);
-		$this->playlistsServiceMock->expects($this->once())->method('setUID')
-			->with(1);
-
 		$this->playlistsServiceMock->expects($this->once())->method('loadPureById')
 			->with($playlistId)
 			->willReturn($playlistData);
@@ -616,7 +576,6 @@ class ItemsServiceTest extends TestCase
 		static::assertEquals('/path/to/thumbnails/image_checksum.png', $result['items'][0]['paths']['thumbnail']);
 	}
 
-
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
@@ -636,10 +595,6 @@ class ItemsServiceTest extends TestCase
 				'file_resource' => ''
 			]
 		];
-
-		$this->itemsService->setUID(1);
-		$this->playlistsServiceMock->expects($this->once())->method('setUID')
-			->with(1);
 
 		$this->playlistsServiceMock->expects($this->once())->method('loadPureById')
 			->with($playlistId)
@@ -661,6 +616,7 @@ class ItemsServiceTest extends TestCase
 		static::assertCount(1, $result['items']);
 		static::assertEquals('public/images/icons/playlist.svg', $result['items'][0]['paths']['thumbnail']);
 		static::assertEquals('/images/icons/playlist.svg', $result['items'][0]['urls']['thumbnail']);
+
 	}
 
 	/**
@@ -675,10 +631,6 @@ class ItemsServiceTest extends TestCase
 		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
 		$playlistId = 1;
 		$playlistData = ['playlist_id' => $playlistId];
-
-		$this->itemsService->setUID(1);
-		$this->playlistsServiceMock->expects($this->once())->method('setUID')
-			->with(1);
 
 		$this->playlistsServiceMock->expects($this->once())->method('loadPureById')
 			->with($playlistId)
@@ -715,15 +667,10 @@ class ItemsServiceTest extends TestCase
 		$fieldValue = 'New Playlist Name';
 		$playlistId = 123;
 
-		$this->itemsService->setUID(10);
-
 		$itemData = ['playlist_id' => $playlistId, 'item_type' => 'playlist'];
 		$this->itemsRepositoryMock->expects($this->once())->method('findFirstById')
 			->with($itemId)
 			->willReturn($itemData);
-
-		$this->playlistsServiceMock->expects($this->once())->method('setUID')
-			->with(10);
 
 		$playlistData = ['playlist_id' => $playlistId, 'time_limit' => 0];
 		$this->playlistsServiceMock->expects($this->once())->method('loadPureById')
@@ -754,9 +701,6 @@ class ItemsServiceTest extends TestCase
 		$fieldName = 'name';
 		$fieldValue = 'New Playlist Name';
 
-		$this->itemsService->setUID(10);
-		$this->playlistsServiceMock->expects($this->once())->method('setUID')
-			->with(10);
 		$this->itemsRepositoryMock->expects($this->once())->method('findFirstById')
 			->with($itemId)
 			->willReturn([]);
@@ -769,7 +713,6 @@ class ItemsServiceTest extends TestCase
 		static::assertEquals(0, $result);
 	}
 
-
 	#[Group('units')]
 	public function testUpdateItemDurationSuccess(): void
 	{
@@ -781,13 +724,6 @@ class ItemsServiceTest extends TestCase
 		$itemData = ['item_id' => $itemId, 'playlist_id' => $playlistId, 'item_type' => 'default'];
 		$playlistData = ['playlist_id' => $playlistId];
 		$calculatedDuration = 100;
-
-		$this->itemsService->setUID(1);
-		$this->playlistMetricsCalculatorMock->expects($this->once())->method('setUID')
-			->with(1);
-
-		$this->playlistsServiceMock->expects($this->once())->method('setUID')
-			->with(1);
 
 		$this->itemsRepositoryMock->expects($this->once())->method('findFirstById')
 			->with($itemId)
@@ -816,7 +752,6 @@ class ItemsServiceTest extends TestCase
 		$itemId = 5;
 		$wantedDuration = 120;
 
-		$this->itemsService->setUID(1);
 		$this->itemsRepositoryMock->expects($this->once())->method('findFirstById')
 			->with($itemId)
 			->willReturn([]);
@@ -834,6 +769,7 @@ class ItemsServiceTest extends TestCase
 	{
 		$this->expectUntouched($this->mediaServiceMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$itemId           = 5;
+
 		$wantedDuration   = 300;
 		$playlistId       = 7;
 		$nestedPlaylistId = 8;
@@ -846,12 +782,6 @@ class ItemsServiceTest extends TestCase
 		$nestedPlaylistData      = ['playlist_id' => $nestedPlaylistId];
 		$remainingNestedDuration = 250;
 		$calculatedDuration      = 200;
-
-		$this->itemsService->setUID(1);
-		$this->playlistMetricsCalculatorMock->expects($this->once())->method('setUID')
-			->with(1);
-		$this->playlistsServiceMock->expects($this->once())->method('setUID')
-			->with(1);
 
 		$this->itemsRepositoryMock->expects($this->once())->method('findFirstById')
 			->with($itemId)
@@ -891,10 +821,7 @@ class ItemsServiceTest extends TestCase
 		$playlistId = 10;
 		$itemsOrder = ['5' => '3', '3' => '1', '8' => '2']; // phpstan treats this as array<int,string>
 
-		$this->itemsService->setUID(1);
 		$this->itemsRepositoryMock->expects($this->once())->method('beginTransaction');
-		$this->playlistsServiceMock->expects($this->once())->method('setUID')
-			->with(1);
 
 		$this->playlistsServiceMock->expects($this->once())->method('loadPureById')
 			->with($playlistId);
@@ -924,10 +851,7 @@ class ItemsServiceTest extends TestCase
 		$itemsOrder['3'] = '1';
 		$itemsOrder['8'] = '2';
 
-		$this->itemsService->setUID(1);
 		$this->itemsRepositoryMock->expects($this->once())->method('beginTransaction');
-		$this->playlistsServiceMock->expects($this->once())->method('setUID')
-			->with(1);
 
 		$this->playlistsServiceMock->expects($this->once())->method('loadPureById')
 			->with($playlistId);
@@ -957,11 +881,6 @@ class ItemsServiceTest extends TestCase
 		$playlistData = ['playlist_id' => $playlistId];
 		$itemData = ['item_id' => $itemId, 'item_order' => 1];
 
-		$this->itemsService->setUID(1);
-
-		$this->playlistsServiceMock->expects($this->once())->method('setUID')
-			->with(1);
-
 		$this->playlistsServiceMock->expects($this->once())->method('loadPlaylistForEdit')
 			->with($playlistId)
 			->willReturn($playlistData);
@@ -981,7 +900,6 @@ class ItemsServiceTest extends TestCase
 			->with($playlistId, $itemData['item_order']);
 
 		$metrics = ['metric1' => 'value1'];
-		$this->playlistMetricsCalculatorMock->setUID(1);
 		$this->playlistMetricsCalculatorMock->expects($this->once())->method('calculateFromPlaylistData')
 			->with($playlistData)
 			->willReturnSelf();
@@ -1011,9 +929,6 @@ class ItemsServiceTest extends TestCase
 
 		$this->itemsRepositoryMock->expects($this->once())
 			->method('beginTransaction');
-		$this->itemsService->setUID(1);
-		$this->playlistsServiceMock->expects($this->once())->method('setUID')
-			->with(1);
 
 		$this->playlistsServiceMock->expects($this->once())->method('loadPlaylistForEdit')
 			->with($playlistId)
@@ -1040,11 +955,6 @@ class ItemsServiceTest extends TestCase
 		$playlistId = 10;
 		$itemId = 20;
 		$playlistData = ['playlist_id' => $playlistId];
-
-		$this->itemsService->setUID(1);
-
-		$this->playlistsServiceMock->expects($this->once())->method('setUID')
-			->with(1);
 
 		$this->playlistsServiceMock->expects($this->once())->method('loadPlaylistForEdit')
 			->with($playlistId)
@@ -1080,12 +990,6 @@ class ItemsServiceTest extends TestCase
 
 		$playlistData = ['playlist_id' => $playlistId];
 		$itemData = ['item_id' => $itemId, 'item_order' => 1];
-
-		$this->itemsService->setUID(1);
-
-		$this->playlistsServiceMock->expects($this->once())
-			->method('setUID')
-			->with(1);
 
 		$this->playlistsServiceMock->expects($this->once())
 			->method('loadPlaylistForEdit')
@@ -1154,7 +1058,6 @@ class ItemsServiceTest extends TestCase
 		$this->expectUntouched($this->mediaServiceMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$playlistId = 2;
 		$playlistsContaining = [['playlist_id' => 3]];
-		$this->itemsService->setUID(1);
 
 		$this->itemsRepositoryMock->expects($this->exactly(2))
 			->method('findAllPlaylistsContainingPlaylist')
@@ -1186,7 +1089,6 @@ class ItemsServiceTest extends TestCase
 	{
 		$this->expectUntouched($this->mediaServiceMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
 		$playlistId = 1;
-		$this->itemsService->setUID(1);
 
 		$this->itemsRepositoryMock->expects($this->once())
 			->method('findAllPlaylistsContainingPlaylist')
@@ -1212,7 +1114,6 @@ class ItemsServiceTest extends TestCase
 	public function testUpdateMetricsRecursivelyCalculatesSharedParentOnceAfterAllChildren(): void
 	{
 		$this->expectUntouched($this->mediaServiceMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
-		$this->itemsService->setUID(1);
 
 		$this->itemsRepositoryMock->expects($this->exactly(4))
 			->method('findAllPlaylistsContainingPlaylist')
@@ -1251,7 +1152,6 @@ class ItemsServiceTest extends TestCase
 	public function testUpdateMetricsRecursivelyStopsAtCycleBackToExportedPlaylist(): void
 	{
 		$this->expectUntouched($this->mediaServiceMock, $this->mimeTypeExtensionMapperMock);
-		$this->itemsService->setUID(1);
 
 		$this->itemsRepositoryMock->expects($this->exactly(2))
 			->method('findAllPlaylistsContainingPlaylist')
@@ -1282,7 +1182,6 @@ class ItemsServiceTest extends TestCase
 	public function testUpdateMetricsRecursivelySkipsCycleAboveExportedPlaylist(): void
 	{
 		$this->expectUntouched($this->mediaServiceMock, $this->mimeTypeExtensionMapperMock);
-		$this->itemsService->setUID(1);
 
 		$this->itemsRepositoryMock->expects($this->exactly(3))
 			->method('findAllPlaylistsContainingPlaylist')
@@ -1305,7 +1204,6 @@ class ItemsServiceTest extends TestCase
 	 */
 	private function expectPlaylistMetrics(array $playlistData): void
 	{
-		$this->playlistMetricsCalculatorMock->expects($this->once())->method('setUID')->with(1);
 		$this->playlistMetricsCalculatorMock->expects($this->once())->method('calculateFromPlaylistData')
 			->with($playlistData)
 			->willReturnSelf();

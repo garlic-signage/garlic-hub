@@ -25,7 +25,9 @@ use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\UserException;
 use App\Framework\Media\MediaUrlSigner;
+use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
@@ -45,11 +47,13 @@ class Template extends AbstractInsertItem
 								private readonly MediaUrlSigner $mediaUrlSigner,
 								PlaylistsService $playlistsService,
 								PlaylistMetricsCalculator $playlistMetricsCalculator,
+								UserSession $userSession,
 								LoggerInterface $logger)
 	{
 		$this->itemsRepository  = $itemsRepository;
 		$this->playlistsService = $playlistsService;
 		$this->playlistMetricsCalculator = $playlistMetricsCalculator;
+		$this->userSession      = $userSession;
 
 		parent::__construct($logger);
 	}
@@ -63,6 +67,9 @@ class Template extends AbstractInsertItem
      * @throws FrameworkException
      * @throws FilesystemException
      */
+	/**
+	 * @throws UserException
+	 */
 	public function insert(int $playlistId, string|int $insertId, int $position): array
 	{
 		try
@@ -88,7 +95,7 @@ class Template extends AbstractInsertItem
 			$saveItem = [
 				'playlist_id'   => $playlistId,
 				'datasource'    => 'file',
-				'UID'           => $this->UID,
+				'UID'           => $this->userSession->getUID(),
 				'item_duration' => $itemDuration,
 				'item_filesize' => 0,
 				'item_order'    => $position,

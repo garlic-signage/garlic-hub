@@ -28,7 +28,6 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
-use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\ConditionalPlay\ResponseBuilder;
 use App\Modules\Playlists\Helper\Trigger\TemplatePreparer;
 use App\Modules\Playlists\Helper\Trigger\Orchestrator;
@@ -43,7 +42,6 @@ use Psr\Http\Message\ResponseInterface;
 class OrchestratorTest extends TestCase
 {
 	private ResponseBuilder&MockObject $responseBuilderMock;
-	private UserSession&MockObject $userSessionMock;
 	private BaseValidator&MockObject $validatorMock;
 	private TemplatePreparer&MockObject $templatePreparerMock;
 	private ResponseInterface&Stub $responseStub;
@@ -57,7 +55,6 @@ class OrchestratorTest extends TestCase
 	{
 		parent::setUp();
 		$this->responseBuilderMock = $this->createMock(ResponseBuilder::class);
-		$this->userSessionMock = $this->createMock(UserSession::class);
 		$this->validatorMock = $this->createMock(BaseValidator::class);
 		$this->templatePreparerMock = $this->createMock(TemplatePreparer::class);
 		$this->triggerServiceMock = $this->createMock(TriggerService::class);
@@ -66,7 +63,6 @@ class OrchestratorTest extends TestCase
 
 		$this->orchestrator = new Orchestrator(
 			$this->responseBuilderMock,
-			$this->userSessionMock,
 			$this->validatorMock,
 			$this->templatePreparerMock,
 			$this->triggerServiceMock
@@ -80,7 +76,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testValidateWithTokenCsrfMismatch(): void
 	{
-		$this->expectUntouched($this->userSessionMock, $this->templatePreparerMock, $this->triggerServiceMock);
+		$this->expectUntouched($this->templatePreparerMock, $this->triggerServiceMock);
 		$this->validatorMock->expects($this->once())->method('validateCsrfToken')
 			->with('invalid_token')
 			->willReturn(false);
@@ -101,7 +97,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testValidateWithTokenFailsNoItemId(): void
 	{
-		$this->expectUntouched($this->userSessionMock, $this->templatePreparerMock, $this->triggerServiceMock);
+		$this->expectUntouched($this->templatePreparerMock, $this->triggerServiceMock);
 		$this->validatorMock->expects($this->once())->method('validateCsrfToken')
 			->with('valid_token')
 			->willReturn(true);
@@ -122,7 +118,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testValidateWithTokenCallsValidate(): void
 	{
-		$this->expectUntouched($this->responseBuilderMock, $this->userSessionMock, $this->templatePreparerMock, $this->triggerServiceMock);
+		$this->expectUntouched($this->responseBuilderMock, $this->templatePreparerMock, $this->triggerServiceMock);
 		$this->validatorMock->expects($this->once())->method('validateCsrfToken')
 			->with('valid_token')
 			->willReturn(true);
@@ -144,11 +140,6 @@ class OrchestratorTest extends TestCase
 		$itemData = ['item_key' => 'value'];
 		$touchableMedia = ['media_item_1', 'media_item_2'];
 		$preparedHtml = '<html lang="en">Prepared Content</html>';
-
-		$this->userSessionMock->expects($this->once())->method('getUID')
-			->willReturn(1);
-		$this->triggerServiceMock->expects($this->once())->method('setUID')
-			->with(1);
 
 		$this->triggerServiceMock->expects($this->once())->method('fetchBeginTriggerByItemId')
 			->with(123)
@@ -188,8 +179,6 @@ class OrchestratorTest extends TestCase
 	{
 		$this->validatorMock->expects($this->never())->method($this->anything());
 		$this->templatePreparerMock->expects($this->never())->method($this->anything());
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(1);
-		$this->triggerServiceMock->expects($this->once())->method('setUID')->with(1);
 		$this->triggerServiceMock->expects($this->once())->method('fetchBeginTriggerByItemId')->with(123)->willReturn($this->triggerServiceMock);
 		$this->triggerServiceMock->expects($this->once())->method('getItemData')->willReturn([]);
 
@@ -215,8 +204,6 @@ class OrchestratorTest extends TestCase
 	public function testSaveItemNotFound(): void
 	{
 		// saving works on behalf of the session user, without form handling
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(7);
-		$this->triggerServiceMock->expects($this->once())->method('setUID')->with(7);
 		$this->validatorMock->expects($this->never())->method($this->anything());
 		$this->templatePreparerMock->expects($this->never())->method($this->anything());
 		$this->triggerServiceMock->expects($this->once())->method('fetchAccessibleItem')
@@ -249,8 +236,6 @@ class OrchestratorTest extends TestCase
 	public function testSaveSuccess(): void
 	{
 		// saving works on behalf of the session user, without form handling
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(7);
-		$this->triggerServiceMock->expects($this->once())->method('setUID')->with(7);
 		$this->validatorMock->expects($this->never())->method($this->anything());
 		$this->templatePreparerMock->expects($this->never())->method($this->anything());
 		$this->triggerServiceMock->expects($this->once())->method('fetchAccessibleItem')

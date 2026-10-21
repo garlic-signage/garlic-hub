@@ -33,9 +33,6 @@ use Psr\Log\LoggerInterface;
 
 class TemplatesDatatableService extends AbstractDatatableService
 {
-	/**
-	 * @throws UserException
-	 */
 	public function __construct(private readonly TemplatesRepository   $templatesRepository,
 								private readonly BaseParameters        $parameters,
 								private readonly UserSession           $userSession,
@@ -43,17 +40,17 @@ class TemplatesDatatableService extends AbstractDatatableService
 								private readonly AclValidator          $aclValidator,
 								LoggerInterface                        $logger)
 	{
-		$this->setUID($this->userSession->getUID());
 		parent::__construct($logger);
 	}
 
 	/**
 	 * @throws CoreException
 	 * @throws Exception
+	 * @throws UserException
 	 */
 	public function checkDisplayRights(): bool
 	{
-		if ($this->aclValidator->isSimpleAdmin($this->UID))
+		if ($this->aclValidator->isSimpleAdmin($this->userSession->getUID()))
 			return true;
 
 		return false;
@@ -63,28 +60,30 @@ class TemplatesDatatableService extends AbstractDatatableService
 	/**
 	 * @throws CoreException
 	 * @throws Exception
+	 * @throws UserException
 	 */
 	public function loadDatatable(): void
 	{
-		if ($this->aclValidator->isModuleAdmin($this->UID))
+		$UID = $this->userSession->getUID();
+		if ($this->aclValidator->isModuleAdmin($UID))
 		{
 			$this->fetchForModuleAdmin($this->templatesRepository, $this->parameters);
 		}
-		elseif ($this->aclValidator->isSubAdmin($this->UID))
+		elseif ($this->aclValidator->isSubAdmin($UID))
 		{
 			//		$this->handleRequestSubAdmin($this->templatesRepository);
 		}
-		elseif ($this->aclValidator->isEditor($this->UID))
+		elseif ($this->aclValidator->isEditor($UID))
 		{
 			// Todo
 		}
-		elseif ($this->aclValidator->isViewer($this->UID))
+		elseif ($this->aclValidator->isViewer($UID))
 		{
 			// Todo
 		}
 		else
 		{
-			$this->fetchForUser($this->templatesRepository, $this->parameters);
+			$this->fetchForUser($this->templatesRepository, $this->parameters, $UID);
 		}
 	}
 

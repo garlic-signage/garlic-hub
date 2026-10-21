@@ -39,11 +39,6 @@ class ConcreteService extends AbstractBaseService
 		$this->addErrorMessage('Another error');
 
 	}
-
-	public function getUID(): int
-	{
-		return $this->UID;
-	}
 }
 class AbstractBaseServiceTest extends TestCase
 {
@@ -69,14 +64,6 @@ class AbstractBaseServiceTest extends TestCase
 
 		static::assertTrue($this->service->hasErrorMessages());
 		static::assertSame(['This is an Error'], $this->service->getErrorMessages());
-	}
-
-	#[Group('units')]
-	public function testSetUID(): void
-	{
-		$this->service->setUID(123);
-
-		static::assertSame(123, $this->service->getUID());
 	}
 
 	#[Group('units')]

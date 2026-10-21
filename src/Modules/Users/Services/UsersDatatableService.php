@@ -22,8 +22,10 @@ declare(strict_types=1);
 namespace App\Modules\Users\Services;
 
 use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\UserException;
 use App\Framework\Services\AbstractDatatableService;
 use App\Framework\Utils\FormParameters\BaseParameters;
+use App\Modules\Auth\UserSession;
 use App\Modules\Users\Repositories\Edge\UserMainRepository;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
@@ -37,42 +39,45 @@ class UsersDatatableService extends AbstractDatatableService
 	private readonly UserMainRepository $userMainRepository;
 	private readonly BaseParameters $parameters;
 	private readonly AclValidator $aclValidator;
+	private readonly UserSession $userSession;
 
-	public function __construct(UserMainRepository $userMainRepository, BaseParameters $parameters, AclValidator $aclValidator, LoggerInterface $logger)
+	public function __construct(UserMainRepository $userMainRepository, BaseParameters $parameters, AclValidator $aclValidator, UserSession $userSession, LoggerInterface $logger)
 	{
 		$this->userMainRepository = $userMainRepository;
 		$this->aclValidator = $aclValidator;
 		$this->parameters = $parameters;
+		$this->userSession = $userSession;
 		parent::__construct($logger);
 	}
 
 	/**
 	 * @throws CoreException
 	 * @throws Exception
+	 * @throws UserException
 	 */
 	public function loadDatatable(): void
 	{
-
-		if ($this->aclValidator->isModuleAdmin($this->UID))
+		$UID = $this->userSession->getUID();
+		if ($this->aclValidator->isModuleAdmin($UID))
 		{
 			$this->fetchForModuleAdmin($this->userMainRepository, $this->parameters);
 		}
-		/*		elseif ($this->aclValidator->isSubAdmin($this->UID))
+		/*		elseif ($this->aclValidator->isSubAdmin($UID))
 				{
 					$this->handleRequestSubAdmin($this->userMainRepository);
 				}
-				elseif ($this->aclValidator->isEditor($this->UID))
+				elseif ($this->aclValidator->isEditor($UID))
 				{
 					// Todo
 				}
-				elseif ($this->aclValidator->isViewer($this->UID))
+				elseif ($this->aclValidator->isViewer($UID))
 				{
 					// Todo
 				}
 		*/
 		else
 		{
-			$this->fetchForUser($this->userMainRepository, $this->parameters);
+			$this->fetchForUser($this->userMainRepository, $this->parameters, $UID);
 		}
 	}
 

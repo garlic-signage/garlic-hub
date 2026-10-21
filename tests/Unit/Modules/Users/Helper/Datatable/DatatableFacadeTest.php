@@ -78,6 +78,8 @@ class DatatableFacadeTest extends TestCase
 	#[Group('units')]
 	public function testConfigure(): void
 	{
+		$this->usersServiceMock->expects($this->never())->method($this->anything());
+		$this->usersAdminServiceMock->expects($this->never())->method($this->anything());
 		$mockUID = 12345;
 		$mockUserData = ['UID' => $mockUID];
 
@@ -86,10 +88,6 @@ class DatatableFacadeTest extends TestCase
 			->with('user')
 			->willReturn($mockUserData);
 
-		$this->usersServiceMock->expects($this->once())
-			->method('setUID')
-			->with($mockUID);
-		$this->usersAdminServiceMock->expects($this->once())->method('setUID')->with($mockUID);
 
 		$this->datatableBuilderMock->expects($this->once())
 			->method('configureParameters')
@@ -173,13 +171,13 @@ class DatatableFacadeTest extends TestCase
 	#[Group('units')]
 	public function testPrepareUITemplate(): void
 	{
+		$this->usersAdminServiceMock->expects($this->never())->method($this->anything());
 		$mockUID = 12345;
 		$mockUserData = ['UID' => $mockUID];
 
 		$this->sessionMock->expects($this->once())->method('get')
 			->with('user')
 			->willReturn($mockUserData);
-		$this->usersAdminServiceMock->expects($this->once())->method('setUID')->with($mockUID);
 		$this->datatableFacade->configure($this->translatorStub, $this->sessionMock);
 
 		$mockDatatableStructure = [

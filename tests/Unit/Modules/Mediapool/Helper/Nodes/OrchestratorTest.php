@@ -26,7 +26,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Helper\Nodes\Orchestrator;
 use App\Modules\Mediapool\Helper\Nodes\ResponseBuilder;
 use App\Modules\Mediapool\Services\NodesService;
@@ -34,7 +33,6 @@ use Doctrine\DBAL\Exception as DBALException;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\MockObject\Runtime\PropertyHook;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
@@ -58,12 +56,8 @@ class OrchestratorTest extends TestCase
 		$this->nodesServiceMock    = $this->createMock(NodesService::class);
 		$this->responseStub        = $this->createStub(ResponseInterface::class);
 
-		$userSessionStub = $this->createStub(UserSession::class);
-		$userSessionStub->method('getUID')->willReturn(1);
-
 		$this->orchestrator = new Orchestrator(
 			$this->responseBuilderMock,
-			$userSessionStub,
 			$this->validatorStub,
 			$this->nodesServiceMock
 		);
@@ -79,7 +73,6 @@ class OrchestratorTest extends TestCase
 	public function testList(): void
 	{
 		$nodes = [['title' => 'folder', 'key' => 2]];
-		$this->expectSetUID();
 		$this->nodesServiceMock->expects($this->once())->method('getNodes')->with(5)->willReturn($nodes);
 		$this->responseBuilderMock->expects($this->once())->method('nodeList')
 			->with($this->responseStub, $nodes)
@@ -97,7 +90,6 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testListRootNodesWithoutParentId(): void
 	{
-		$this->expectSetUID();
 		$this->nodesServiceMock->expects($this->once())->method('getNodes')->with(0)->willReturn([]);
 		$this->responseBuilderMock->expects($this->once())->method('nodeList')
 			->with($this->responseStub, [])
@@ -140,7 +132,6 @@ class OrchestratorTest extends TestCase
 	public function testAdd(): void
 	{
 		$this->prepareValid(['node_id' => 1, 'name' => 'New Node'], 'validateAdd');
-		$this->expectSetUID();
 		$this->nodesServiceMock->expects($this->once())->method('addNode')->with(1, 'New Node')->willReturn(2);
 		$this->expectSuccess(['data' => ['id' => 2, 'new_name' => 'New Node']]);
 
@@ -155,7 +146,6 @@ class OrchestratorTest extends TestCase
 	public function testAddRootNodeWithoutNodeId(): void
 	{
 		$this->prepareValid(['name' => 'Root'], 'validateAdd');
-		$this->expectSetUID();
 		$this->nodesServiceMock->expects($this->once())->method('addNode')->with(0, 'Root')->willReturn(3);
 		$this->expectSuccess(['data' => ['id' => 3, 'new_name' => 'Root']]);
 
@@ -170,8 +160,7 @@ class OrchestratorTest extends TestCase
 	public function testAddReturnsServiceError(): void
 	{
 		$this->prepareValid(['node_id' => 1, 'name' => 'New Node'], 'validateAdd');
-		$this->expectSetUID();
-		$this->nodesServiceMock->method('addNode')->willThrowException(new ModuleException('mediapool', 'No rights'));
+		$this->nodesServiceMock->expects($this->once())->method('addNode')->willThrowException(new ModuleException('mediapool', 'No rights'));
 		$this->expectGeneralError('No rights');
 
 		$this->orchestrator->add($this->responseStub);
@@ -198,7 +187,6 @@ class OrchestratorTest extends TestCase
 	public function testEdit(): void
 	{
 		$this->prepareValid(['node_id' => 1, 'name' => 'Edited Node', 'visibility' => 1], 'validateEdit');
-		$this->expectSetUID();
 		$this->nodesServiceMock->expects($this->once())->method('editNode')->with(1, 'Edited Node', 1)->willReturn(1);
 		$this->expectSuccess(['data' => ['id' => 1, 'new_name' => 'Edited Node', 'visibility' => 1]]);
 
@@ -213,7 +201,6 @@ class OrchestratorTest extends TestCase
 	public function testEditFailsWhenNothingChanged(): void
 	{
 		$this->prepareValid(['node_id' => 1, 'name' => 'Edited Node'], 'validateEdit');
-		$this->expectSetUID();
 		$this->nodesServiceMock->expects($this->once())->method('editNode')->with(1, 'Edited Node', null)->willReturn(0);
 		$this->expectError('editFailed');
 
@@ -241,7 +228,6 @@ class OrchestratorTest extends TestCase
 	public function testMove(): void
 	{
 		$this->prepareValid(['src_node_id' => 1, 'target_node_id' => 2, 'target_region' => 'before'], 'validateMove');
-		$this->expectSetUID();
 		$this->nodesServiceMock->expects($this->once())->method('moveNode')->with(1, 2, 'before')->willReturn(1);
 		$this->expectSuccess(['data' => ['count_deleted_nodes' => 1]]);
 
@@ -256,8 +242,7 @@ class OrchestratorTest extends TestCase
 	public function testMoveReturnsServiceError(): void
 	{
 		$this->prepareValid(['src_node_id' => 1, 'target_node_id' => 2, 'target_region' => 'before'], 'validateMove');
-		$this->expectSetUID();
-		$this->nodesServiceMock->method('moveNode')->willThrowException(new ModuleException('mediapool', 'Move failed'));
+		$this->nodesServiceMock->expects($this->once())->method('moveNode')->willThrowException(new ModuleException('mediapool', 'Move failed'));
 		$this->expectGeneralError('Move failed');
 
 		$this->orchestrator->move($this->responseStub);
@@ -284,7 +269,6 @@ class OrchestratorTest extends TestCase
 	public function testDelete(): void
 	{
 		$this->prepareValid(['node_id' => 1], 'validateDelete');
-		$this->expectSetUID();
 		$this->nodesServiceMock->expects($this->once())->method('deleteNode')->with(1)->willReturn(3);
 		$this->expectSuccess(['data' => ['count_deleted_nodes' => 3]]);
 
@@ -299,8 +283,7 @@ class OrchestratorTest extends TestCase
 	public function testDeleteReturnsServiceError(): void
 	{
 		$this->prepareValid(['node_id' => 1], 'validateDelete');
-		$this->expectSetUID();
-		$this->nodesServiceMock->method('deleteNode')->willThrowException(new ModuleException('mediapool', 'Delete failed'));
+		$this->nodesServiceMock->expects($this->once())->method('deleteNode')->willThrowException(new ModuleException('mediapool', 'Delete failed'));
 		$this->expectGeneralError('Delete failed');
 
 		$this->orchestrator->delete($this->responseStub);
@@ -317,11 +300,6 @@ class OrchestratorTest extends TestCase
 		$this->validatorStub->method('validateCsrfToken')->willReturn(true);
 
 		static::assertNull($this->orchestrator->setInput($input)->$validateMethod($this->responseStub));
-	}
-
-	private function expectSetUID(): void
-	{
-		$this->nodesServiceMock->expects($this->once())->method(PropertyHook::set('UID'))->with(1);
 	}
 
 	/**
@@ -347,7 +325,7 @@ class OrchestratorTest extends TestCase
 	 */
 	private function expectValidationError(string $method): void
 	{
-		$this->nodesServiceMock->expects($this->never())->method(PropertyHook::set('UID'));
+		$this->nodesServiceMock->expects($this->never())->method($this->anything());
 		$this->expectError($method);
 	}
 

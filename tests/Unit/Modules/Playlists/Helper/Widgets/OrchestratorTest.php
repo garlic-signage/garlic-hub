@@ -25,7 +25,6 @@ use App\Framework\Core\BaseValidator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\Widgets\Orchestrator;
 use App\Modules\Playlists\Helper\Widgets\ResponseBuilder;
 use App\Modules\Playlists\Services\WidgetsService;
@@ -55,12 +54,8 @@ class OrchestratorTest extends TestCase
 		$this->widgetsServiceMock  = $this->createMock(WidgetsService::class);
 		$this->responseStub        = $this->createStub(ResponseInterface::class);
 
-		$userSessionStub = $this->createStub(UserSession::class);
-		$userSessionStub->method('getUID')->willReturn(456);
-
 		$this->orchestrator = new Orchestrator(
 			$this->responseBuilderMock,
-			$userSessionStub,
 			$this->validatorStub,
 			$this->widgetsServiceMock
 		);
@@ -78,7 +73,7 @@ class OrchestratorTest extends TestCase
 	public function testValidateWithValidItemId(): void
 	{
 		$this->responseBuilderMock->expects($this->never())->method('invalidItemId');
-		$this->widgetsServiceMock->expects($this->never())->method('setUID');
+		$this->widgetsServiceMock->expects($this->never())->method($this->anything());
 
 		static::assertNull($this->orchestrator->setInput(['item_id' => '12'])->validate($this->responseStub));
 	}
@@ -118,7 +113,6 @@ class OrchestratorTest extends TestCase
 		$this->prepareValid(['item_id' => 12]);
 
 		$data = ['item_id' => 12, 'item_name' => 'Clock'];
-		$this->expectSetUID();
 		$this->widgetsServiceMock->expects($this->once())->method('fetchWidgetByItemId')
 			->with(12)
 			->willReturn($data);
@@ -135,7 +129,6 @@ class OrchestratorTest extends TestCase
 	{
 		$this->prepareValid(['item_id' => 12]);
 
-		$this->expectSetUID();
 		$this->widgetsServiceMock->expects($this->once())->method('fetchWidgetByItemId')
 			->with(12)
 			->willReturn([]);
@@ -153,7 +146,6 @@ class OrchestratorTest extends TestCase
 		$input = ['item_id' => 12, 'csrf_token' => 'token', 'timezone' => 'Europe/Berlin'];
 		$this->prepareValid($input);
 
-		$this->expectSetUID();
 		$this->widgetsServiceMock->expects($this->once())->method('saveWidget')
 			->with(12, $input)
 			->willReturn(true);
@@ -171,7 +163,6 @@ class OrchestratorTest extends TestCase
 		$input = ['item_id' => 12, 'csrf_token' => 'token'];
 		$this->prepareValid($input);
 
-		$this->expectSetUID();
 		$this->widgetsServiceMock->expects($this->once())->method('saveWidget')
 			->with(12, $input)
 			->willReturn(false);
@@ -196,11 +187,6 @@ class OrchestratorTest extends TestCase
 		static::assertNull($this->orchestrator->setInput($input)->validateSave($this->responseStub));
 	}
 
-	private function expectSetUID(): void
-	{
-		$this->widgetsServiceMock->expects($this->once())->method('setUID')->with(456);
-	}
-
 	/**
 	 * @param array<string,mixed> $data
 	 */
@@ -216,7 +202,7 @@ class OrchestratorTest extends TestCase
 	 */
 	private function expectValidationError(string $method): void
 	{
-		$this->widgetsServiceMock->expects($this->never())->method('setUID');
+		$this->widgetsServiceMock->expects($this->never())->method($this->anything());
 		$this->expectError($method);
 	}
 

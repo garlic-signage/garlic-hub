@@ -23,6 +23,7 @@ namespace App\Modules\Playlists\Services\InsertItems;
 
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Services\AbstractBaseService;
+use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
 use App\Modules\Playlists\Services\PlaylistsService;
@@ -32,6 +33,7 @@ abstract class AbstractInsertItem extends AbstractBaseService
 	protected ItemsRepository $itemsRepository;
 	protected PlaylistsService $playlistsService;
 	protected PlaylistMetricsCalculator $playlistMetricsCalculator;
+	protected UserSession $userSession;
 
 	/**
 	 * @return array<string,mixed>
@@ -44,8 +46,6 @@ abstract class AbstractInsertItem extends AbstractBaseService
 	 */
 	protected function checkPlaylistAcl(int $playlistId): array
 	{
-		$this->playlistsService->setUID($this->UID);
-		$this->playlistMetricsCalculator->setUID($this->UID);
 		/** @var array<string,mixed> $playlistData */
 		$playlistData = $this->playlistsService->loadPlaylistForEdit($playlistId); // also checks rights
 		if (empty($playlistData))

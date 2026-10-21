@@ -69,9 +69,8 @@ class PlayerIndexControllerTest extends TestCase
 		$this->requestStub->method('getServerParams')->willReturn($server);
 
 		$this->sanitizerMock->method('int')->with(0)->willReturn(0);
-		$this->playerIndexServiceMock->method('setUID')->with(0);
 		$this->playerIndexServiceMock->method('handleIndexRequest')
-			->with('extra useragent', $server, false)
+			->with(0, 'extra useragent', $server, false)
 			->willReturn('');
 		$this->indexResponseHandler->expects($this->never())->method('init');
 
@@ -92,9 +91,8 @@ class PlayerIndexControllerTest extends TestCase
 		$this->requestStub->method('getQueryParams')->willReturn([]);
 		$this->requestStub->method('getServerParams')->willReturn($serverData);
 		$this->sanitizerMock->method('int')->with(0)->willReturn(0);
-		$this->playerIndexServiceMock->method('setUID')->with(0);
 		$this->playerIndexServiceMock->method('handleIndexRequest')
-			->with('TestAgent', $serverData, true)
+			->with(0, 'TestAgent', $serverData, true)
 			->willReturn('');
 
 		$this->indexResponseHandler->expects($this->never())->method('init');
@@ -117,9 +115,8 @@ class PlayerIndexControllerTest extends TestCase
 		$this->requestStub->method('getServerParams')->willReturn($serverData);
 
 		$this->sanitizerMock->method('int')->with(0)->willReturn(0);
-		$this->playerIndexServiceMock->method('setUID')->with(0);
 		$this->playerIndexServiceMock->method('handleIndexRequest')
-			->with('TestAgent', $serverData, true)
+			->with(0, 'TestAgent', $serverData, true)
 			->willReturn('');
 		$this->indexResponseHandler->expects($this->never())->method('init');
 
@@ -148,9 +145,8 @@ class PlayerIndexControllerTest extends TestCase
 		$this->requestStub->method('getServerParams')->willReturn($server);
 
 		$this->sanitizerMock->method('int')->with(0)->willReturn(0);
-		$this->playerIndexServiceMock->method('setUID')->with(0);
 		$this->playerIndexServiceMock->method('handleIndexRequest')
-			->with('TestAgent', $server, true)->willReturn($filePath);
+			->with(0, 'TestAgent', $server, true)->willReturn($filePath);
 
 		$this->indexResponseHandler->expects($this->once())->method('init')
 			->with($server, $filePath);
@@ -178,9 +174,8 @@ class PlayerIndexControllerTest extends TestCase
 		$this->requestStub->method('getServerParams')->willReturn($server);
 
 		$this->sanitizerMock->method('int')->with(0)->willReturn(0);
-		$this->playerIndexServiceMock->method('setUID')->with(0);
 		$this->playerIndexServiceMock->method('handleIndexRequest')
-			->with('TestAgent', $server, true)->willReturn($filePath);
+			->with(0, 'TestAgent', $server, true)->willReturn($filePath);
 
 		$this->indexResponseHandler->expects($this->once())->method('init')
 			->with($server, $filePath);

@@ -24,6 +24,7 @@ namespace Tests\Unit\Modules\Mediapool\Services;
 use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Media\MediaUrlSigner;
+use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Repositories\FilesRepository;
 use App\Modules\Mediapool\Repositories\NodesRepository;
 use App\Modules\Mediapool\Services\AclValidator;
@@ -56,6 +57,8 @@ class MediaServiceTest extends TestCase
 		$this->aclValidatorMock    = $this->createMock(AclValidator::class);
 		$this->loggerMock          = $this->createMock(LoggerInterface::class);
 		$configStub = $this->createStub(Config::class);
+		$userSessionStub = $this->createStub(UserSession::class);
+		$userSessionStub->method('getUID')->willReturn(1);
 		$this->aclValidatorMock->method('getConfig')->willReturn($configStub);
 		$configStub->method('getConfigValue')->willReturnMap([
 				['originals', 'mediapool', 'directories', 'original_directory'],
@@ -69,9 +72,9 @@ class MediaServiceTest extends TestCase
 			$this->nodesRepositoryStub,
 			$this->aclValidatorMock,
 			new MediaUrlSigner('unit-test-secret'),
+			$userSessionStub,
 			$this->loggerMock
 		);
-		$this->mediaService->setUID(1);
 	}
 
 	#[Group('units')]

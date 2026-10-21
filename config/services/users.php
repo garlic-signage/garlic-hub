@@ -77,6 +77,7 @@ $dependencies[UsersDatatableService::class] = DI\factory(function (ContainerInte
 		new UserMainRepository($container->get('SqlConnection')),
 		$container->get(Parameters::class),
 		$container->get(AclValidator::class),
+		$container->get(UserSession::class),
 		$container->get('ModuleLogger')
 	);
 });
@@ -99,7 +100,6 @@ $dependencies[UsersController::class] = DI\factory(function (ContainerInterface 
 	return new UsersController(
 		$container->get(UsersDatatableService::class),
 		$container->get(Parameters::class),
-		$container->get(UserSession::class),
 		$container->get(JsonResponseHandler::class)
 	);
 });
@@ -162,6 +162,7 @@ $dependencies[UsersAdminService::class] = DI\factory(function (ContainerInterfac
 		$container->get(UserTokenService::class),
 		$container->get(AclValidator::class),
 		$container->get(Transactions::class),
+		$container->get(UserSession::class),
 		$container->get('ModuleLogger')
 	);
 });

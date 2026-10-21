@@ -25,7 +25,6 @@ use App\Framework\Core\BaseValidator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\Export\Orchestrator;
 use App\Modules\Playlists\Helper\Export\ResponseBuilder;
 use App\Modules\Playlists\Services\ExportService;
@@ -56,12 +55,8 @@ class OrchestratorTest extends TestCase
 		$this->exportServiceMock   = $this->createMock(ExportService::class);
 		$this->responseStub        = $this->createStub(ResponseInterface::class);
 
-		$userSessionStub = $this->createStub(UserSession::class);
-		$userSessionStub->method('getUID')->willReturn(456);
-
 		$this->orchestrator = new Orchestrator(
 			$this->responseBuilderMock,
-			$userSessionStub,
 			$this->validatorStub,
 			$this->exportServiceMock
 		);
@@ -104,7 +99,6 @@ class OrchestratorTest extends TestCase
 	{
 		$this->prepareValid(['playlist_id' => '1', 'csrf_token' => 'token']);
 
-		$this->exportServiceMock->expects($this->once())->method('setUID')->with(456);
 		$this->exportServiceMock->expects($this->once())->method('exportToSmil')->with(1)->willReturn(1);
 		$this->responseBuilderMock->expects($this->never())->method('playlistNotFound');
 		$this->responseBuilderMock->expects($this->once())->method('generalSuccess')
@@ -125,7 +119,6 @@ class OrchestratorTest extends TestCase
 	{
 		$this->prepareValid(['playlist_id' => 1, 'csrf_token' => 'token']);
 
-		$this->exportServiceMock->expects($this->once())->method('setUID')->with(456);
 		$this->exportServiceMock->expects($this->once())->method('exportToSmil')->with(1)->willReturn(0);
 		$this->expectError('playlistNotFound');
 
@@ -151,7 +144,7 @@ class OrchestratorTest extends TestCase
 	 */
 	private function expectValidationError(string $method): void
 	{
-		$this->exportServiceMock->expects($this->never())->method('setUID');
+		$this->exportServiceMock->expects($this->never())->method($this->anything());
 		$this->expectError($method);
 	}
 

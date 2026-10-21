@@ -86,7 +86,6 @@ class UsersAdminCreateService extends AbstractBaseService
 			if ($UID !== 1)
 				throw new ModuleException('users', 'Insert admin user failed.');
 
-			$this->nodesService->UID = $UID;
 			$nodeId = $this->nodesService->addUserDirectory($UID, $saveData['username']);
 			if ($nodeId === 0)
 				throw new ModuleException('users', 'Create mediapool admin user directory failed.');

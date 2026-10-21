@@ -22,9 +22,11 @@ declare(strict_types=1);
 namespace App\Modules\Playlists\Services;
 
 use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\UserException;
 use App\Framework\Services\AbstractDatatableService;
 use App\Framework\Services\SearchFilterParamsTrait;
 use App\Framework\Utils\FormParameters\BaseParameters;
+use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Repositories\PlaylistsRepository;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
@@ -36,13 +38,15 @@ class PlaylistsDatatableService extends AbstractDatatableService
 	private readonly AclValidator $aclValidator;
 	private readonly BaseParameters $parameters;
 	private readonly PlaylistUsageService $playlistUsageService;
+	private readonly UserSession $userSession;
 
-	public function __construct(PlaylistsRepository $playlistsRepository, BaseParameters $parameters, AclValidator $aclValidator, PlaylistUsageService $playlistUsageService, LoggerInterface $logger)
+	public function __construct(PlaylistsRepository $playlistsRepository, BaseParameters $parameters, AclValidator $aclValidator, PlaylistUsageService $playlistUsageService, UserSession $userSession, LoggerInterface $logger)
 	{
 		$this->playlistsRepository  = $playlistsRepository;
 		$this->aclValidator         = $aclValidator;
 		$this->parameters           = $parameters;
 		$this->playlistUsageService = $playlistUsageService;
+		$this->userSession = $userSession;
 
 		parent::__construct($logger);
 	}
@@ -50,28 +54,30 @@ class PlaylistsDatatableService extends AbstractDatatableService
 	/**
 	 * @throws CoreException
 	 * @throws Exception
+	 * @throws UserException
 	 */
 	public function loadDatatable(): void
 	{
-		if ($this->aclValidator->isModuleAdmin($this->UID))
+		$UID = $this->userSession->getUID();
+		if ($this->aclValidator->isModuleAdmin($UID))
 		{
 			$this->fetchForModuleAdmin($this->playlistsRepository, $this->parameters);
 		}
-		elseif ($this->aclValidator->isSubAdmin($this->UID))
+		elseif ($this->aclValidator->isSubAdmin($UID))
 		{
 	//		$this->handleRequestSubAdmin($this->playlistsRepository);
 		}
-		elseif ($this->aclValidator->isEditor($this->UID))
+		elseif ($this->aclValidator->isEditor($UID))
 		{
 			// Todo
 		}
-		elseif ($this->aclValidator->isViewer($this->UID))
+		elseif ($this->aclValidator->isViewer($UID))
 		{
 			// Todo
 		}
 		else
 		{
-			$this->fetchForUser($this->playlistsRepository, $this->parameters);
+			$this->fetchForUser($this->playlistsRepository, $this->parameters, $UID);
 		}
 	}
 

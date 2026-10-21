@@ -23,6 +23,7 @@ namespace Tests\Unit\Modules\Player\Services;
 
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Modules\Auth\UserSession;
 use App\Modules\Player\Repositories\PlayerRepository;
 use App\Modules\Player\Services\AclValidator;
 use App\Modules\Player\Services\PlayerService;
@@ -41,6 +42,7 @@ class PlayerServiceTest extends TestCase
 	private PlaylistsService&Stub $playlistServiceStub;
 	private AclValidator&MockObject $playerValidatorMock;
 	private LoggerInterface&MockObject $loggerMock;
+	private UserSession&Stub $userSessionStub;
 	private PlayerService $service;
 
 	/**
@@ -54,7 +56,8 @@ class PlayerServiceTest extends TestCase
 		$this->playerValidatorMock  = $this->createMock(AclValidator::class);
 		$this->loggerMock           = $this->createMock(LoggerInterface::class);
 
-		$this->service = new PlayerService($this->playerRepositoryMock, $this->playlistServiceStub, $this->playerValidatorMock, $this->loggerMock);
+		$this->userSessionStub = $this->createStub(UserSession::class);
+		$this->service = new PlayerService($this->playerRepositoryMock, $this->playlistServiceStub, $this->playerValidatorMock, $this->userSessionStub, $this->loggerMock);
 	}
 
 	/**
@@ -113,7 +116,7 @@ class PlayerServiceTest extends TestCase
 	public function testReplaceMasterPlaylist(): void
 	{
 		$this->loggerMock->expects($this->never())->method($this->anything());
-		$this->service->setUID(1);
+		$this->userSessionStub->method('getUID')->willReturn(1);
 		$this->playerRepositoryMock->expects($this->atLeastOnce())->method('findFirstById')
 			->willReturn(['id' => 1, 'name' => 'Player 1']);
 
@@ -134,7 +137,7 @@ class PlayerServiceTest extends TestCase
 	#[Group('units')]
 	public function testReplaceMasterPlaylistWithInvalidMasterPlaylistMode(): void
 	{
-		$this->service->setUID(1);
+		$this->userSessionStub->method('getUID')->willReturn(1);
 		$this->playerRepositoryMock->expects($this->atLeastOnce())->method('findFirstById')
 			->willReturn(['id' => 1, 'name' => 'Player 1']);
 
@@ -157,7 +160,7 @@ class PlayerServiceTest extends TestCase
 	public function testReplaceMasterPlaylistWithoutPlaylistId(): void
 	{
 		$this->loggerMock->expects($this->never())->method($this->anything());
-		$this->service->setUID(1);
+		$this->userSessionStub->method('getUID')->willReturn(1);
 		$this->playerRepositoryMock->expects($this->atLeastOnce())->method('findFirstById')
 			->willReturn(['id' => 1, 'name' => 'Player 1']);
 
@@ -176,7 +179,7 @@ class PlayerServiceTest extends TestCase
 	public function testReplaceMasterPlaylistPlaylistsFails(): void
 	{
 		$this->loggerMock->expects($this->once())->method('error')->with('Error loading player: 1 is not found.');
-		$this->service->setUID(1);
+		$this->userSessionStub->method('getUID')->willReturn(1);
 		$this->playerRepositoryMock->method('findFirstById')
 			->willReturn([]);
 
@@ -209,7 +212,7 @@ class PlayerServiceTest extends TestCase
 			->with(12, $playerData)
 			->willReturn(true);
 
-		$this->service->setUID(12);
+		$this->userSessionStub->method('getUID')->willReturn(12);
 		$result = $this->service->fetchAclCheckedPlayerData($playerId);
 
 		static::assertSame($playerData, $result);
@@ -262,7 +265,7 @@ class PlayerServiceTest extends TestCase
 			->method('error')
 			->with('Error loading player: ' . $playerId . ' is not editable for User ' . 12 . '.');
 
-		$this->service->setUID(12);
+		$this->userSessionStub->method('getUID')->willReturn(12);
 		$result = $this->service->fetchAclCheckedPlayerData($playerId);
 
 		static::assertSame([], $result);

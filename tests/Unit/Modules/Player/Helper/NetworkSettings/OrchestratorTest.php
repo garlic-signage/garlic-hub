@@ -25,7 +25,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
 use App\Modules\Player\Helper\NetworkSettings\FormInputHandler;
 use App\Modules\Player\Helper\NetworkSettings\Orchestrator;
 use App\Modules\Player\Helper\NetworkSettings\SettingsFormBuilder;
@@ -37,7 +36,6 @@ use PHPUnit\Framework\TestCase;
 
 class OrchestratorTest extends TestCase
 {
-	private UserSession&MockObject $userSessionMock;
 	private PlayerService&MockObject $playerServiceMock;
 	private FormInputHandler&MockObject $inputHandlerMock;
 	private SettingsFormBuilder&MockObject $formBuilderMock;
@@ -49,13 +47,11 @@ class OrchestratorTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->userSessionMock   = $this->createMock(UserSession::class);
 		$this->playerServiceMock = $this->createMock(PlayerService::class);
 		$this->inputHandlerMock  = $this->createMock(FormInputHandler::class);
 		$this->formBuilderMock   = $this->createMock(SettingsFormBuilder::class);
 
 		$this->orchestrator = new Orchestrator(
-			$this->userSessionMock,
 			$this->playerServiceMock,
 			$this->inputHandlerMock,
 			$this->formBuilderMock
@@ -73,7 +69,6 @@ class OrchestratorTest extends TestCase
 	{
 		$this->inputHandlerMock->expects($this->never())->method($this->anything());
 		$this->formBuilderMock->expects($this->never())->method($this->anything());
-		$this->userSessionMock->expects($this->never())->method($this->anything());
 		$this->playerServiceMock->expects($this->never())->method($this->anything());
 
 		static::assertSame([], $this->orchestrator->loadPlayer(0));
@@ -91,8 +86,6 @@ class OrchestratorTest extends TestCase
 		$this->inputHandlerMock->expects($this->never())->method($this->anything());
 		$this->formBuilderMock->expects($this->never())->method($this->anything());
 		$player = ['player_id' => 5, 'player_name' => 'Lobby'];
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(7);
-		$this->playerServiceMock->expects($this->once())->method('setUID')->with(7);
 		$this->playerServiceMock->expects($this->once())->method('fetchAclCheckedPlayerData')
 			->with(5)->willReturn($player);
 
@@ -106,7 +99,6 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testBuildForm(): void
 	{
-		$this->userSessionMock->expects($this->never())->method($this->anything());
 		$this->playerServiceMock->expects($this->never())->method($this->anything());
 		$this->inputHandlerMock->expects($this->never())->method($this->anything());
 		$form = ['hidden' => [], 'visible' => []];
@@ -125,7 +117,6 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testStoreReturnsValidationErrors(): void
 	{
-		$this->userSessionMock->expects($this->never())->method($this->anything());
 		$this->formBuilderMock->expects($this->never())->method($this->anything());
 		$this->inputHandlerMock->expects($this->once())->method('validate')
 			->with(['is_intranet' => 1])->willReturn(['No API endpoint.']);
@@ -149,7 +140,6 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testStoreSucceedsEvenWithoutAffectedRows(): void
 	{
-		$this->userSessionMock->expects($this->never())->method($this->anything());
 		$this->formBuilderMock->expects($this->never())->method($this->anything());
 		$parsed = ['csrf_token' => 'token', 'is_intranet' => false, 'api_endpoint' => ''];
 		$this->inputHandlerMock->expects($this->once())->method('validate')->willReturn([]);

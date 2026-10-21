@@ -24,7 +24,9 @@ namespace App\Modules\Playlists\Services;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\UserException;
 use App\Framework\Services\AbstractBaseService;
+use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Repositories\PlaylistsRepository;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
@@ -35,6 +37,7 @@ class PlaylistsService extends AbstractBaseService
 	public function __construct(private readonly PlaylistsRepository $playlistsRepository,
 								private readonly PlaylistMetricsCalculator $playlistMetricsCalculator,
 								private readonly AclValidator $aclValidator,
+								private readonly UserSession $userSession,
 								LoggerInterface $logger)
 	{
 		parent::__construct($logger);
@@ -43,6 +46,7 @@ class PlaylistsService extends AbstractBaseService
 	/**
 	 * @param array<string,mixed> $postData
 	 * @throws Exception
+	 * @throws UserException
 	 */
 	public function createNew(array $postData): int
 	{
@@ -179,13 +183,14 @@ class PlaylistsService extends AbstractBaseService
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	public function loadPureById(int $playlistId): array
 	{
 		/** @var array{UID: int, company_id: int, playlist_id: int, ...} $playlist */
 		$playlist = $this->fetchById($playlistId); // the playlist is sure not empty here
 
-		if (!$this->aclValidator->isPlaylistEditable($this->UID, $playlist))
+		if (!$this->aclValidator->isPlaylistEditable($this->userSession->getUID(), $playlist))
 			throw new ModuleException('playlists', 'Error loading playlist: Is not editable');
 
 		return $playlist;
@@ -212,6 +217,7 @@ class PlaylistsService extends AbstractBaseService
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
+	 * @throws UserException
 	 */
 	public function loadWithUserById(int $playlistId): array
 	{
@@ -220,7 +226,7 @@ class PlaylistsService extends AbstractBaseService
 		if ($playlist === [])
 			throw new ModuleException('playlists', 'No playlist with Id: '.$playlistId.' found.');
 
-		if (!$this->aclValidator->isPlaylistEditable($this->UID, $playlist))
+		if (!$this->aclValidator->isPlaylistEditable($this->userSession->getUID(), $playlist))
 			throw new ModuleException('playlists', 'Playlist is not editable.');
 
 		return $playlist;
@@ -301,13 +307,14 @@ class PlaylistsService extends AbstractBaseService
 	/**
 	 * @param array<string,mixed> $postData
 	 * @return array<string,mixed>
+	 * @throws UserException
 	 */
 	private function collectDataForInsert(array $postData): array
 	{
 		if (array_key_exists('UID', $postData))
 			$saveData['UID'] = $postData['UID'];
 		else
-			$saveData['UID'] = $this->UID;
+			$saveData['UID'] = $this->userSession->getUID();
 
 		$saveData['playlist_mode'] = $postData['playlist_mode'];
 

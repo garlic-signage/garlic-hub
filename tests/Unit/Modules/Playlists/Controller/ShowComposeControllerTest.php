@@ -24,7 +24,6 @@ namespace Tests\Unit\Modules\Playlists\Controller;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Controller\ShowComposeController;
 use App\Modules\Playlists\Helper\Compose\UiTemplatesPreparer;
 use App\Modules\Playlists\Services\PlaylistsService;
@@ -41,7 +40,6 @@ class ShowComposeControllerTest extends TestCase
 {
 	private PlaylistsService&MockObject $playlistsServiceMock;
 	private UiTemplatesPreparer&MockObject $uiTemplatesPreparerMock;
-	private UserSession&MockObject $userSessionMock;
 	private Messages&MockObject $flashMock;
 	private ShowComposeController $controller;
 
@@ -56,13 +54,11 @@ class ShowComposeControllerTest extends TestCase
 		parent::setUp();
 		$this->playlistsServiceMock    = $this->createMock(PlaylistsService::class);
 		$this->uiTemplatesPreparerMock = $this->createMock(UiTemplatesPreparer::class);
-		$this->userSessionMock         = $this->createMock(UserSession::class);
 		$this->flashMock               = $this->createMock(Messages::class);
 
 		$this->controller = new ShowComposeController(
 			$this->playlistsServiceMock,
 			$this->uiTemplatesPreparerMock,
-			$this->userSessionMock,
 			$this->flashMock
 		);
 	}
@@ -75,7 +71,6 @@ class ShowComposeControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowRedirectsWhenPlaylistIdIsInvalid(): void
 	{
-		$this->userSessionMock->expects($this->never())->method($this->anything());
 		$this->uiTemplatesPreparerMock->expects($this->never())->method($this->anything());
 		$this->playlistsServiceMock->expects($this->never())->method('loadPlaylistForEdit');
 		$this->expectError('Playlist ID not valid.');
@@ -182,8 +177,6 @@ class ShowComposeControllerTest extends TestCase
 	 */
 	private function expectPlaylistLoaded(array $playlist): void
 	{
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(123);
-		$this->playlistsServiceMock->expects($this->once())->method('setUID')->with(123);
 		$this->playlistsServiceMock->expects($this->once())->method('loadPlaylistForEdit')->with(1)->willReturn($playlist);
 	}
 

@@ -39,14 +39,14 @@ class DatatableFacade implements DatatableFacadeInterface
 {
 	private readonly DatatableBuilder $datatableBuilder;
 	private readonly DatatablePreparer $datatablePreparer;
-	private readonly PlaylistsDatatableService $playlistsService;
+	private readonly PlaylistsDatatableService $playlistsDatatableService;
 	private int $UID;
 
-	public function __construct(DatatableBuilder $datatableBuilder, DatatablePreparer $datatablePreparer, PlaylistsDatatableService $playlistsService)
+	public function __construct(DatatableBuilder $datatableBuilder, DatatablePreparer $datatablePreparer, PlaylistsDatatableService $playlistsDatatableService)
 	{
 		$this->datatableBuilder  = $datatableBuilder;
 		$this->datatablePreparer = $datatablePreparer;
-		$this->playlistsService  = $playlistsService;
+		$this->playlistsDatatableService  = $playlistsDatatableService;
 	}
 
 	/**
@@ -58,7 +58,6 @@ class DatatableFacade implements DatatableFacadeInterface
 		/** @var array{UID:int} $user */
 		$user = $session->get('user');
 		$this->UID = (int) $user['UID'];
-		$this->playlistsService->setUID($this->UID);
 		$this->datatableBuilder->configureParameters($this->UID);
 		$this->datatablePreparer->setTranslator($translator);
 		$this->datatableBuilder->setTranslator($translator);
@@ -73,7 +72,7 @@ class DatatableFacade implements DatatableFacadeInterface
 	public function processSubmittedUserInput(array $queryParams): void
 	{
 		$this->datatableBuilder->determineParameters($queryParams);
-		$this->playlistsService->loadDatatable();
+		$this->playlistsDatatableService->loadDatatable();
 	}
 
 	/**
@@ -85,7 +84,7 @@ class DatatableFacade implements DatatableFacadeInterface
 	{
 		$this->datatableBuilder->buildTitle();
 		$this->datatableBuilder->collectFormElements();
-		$this->datatableBuilder->createPagination($this->playlistsService->getCurrentTotalResult());
+		$this->datatableBuilder->createPagination($this->playlistsDatatableService->getCurrentTotalResult());
 		$this->datatableBuilder->createDropDown();
 		$this->datatableBuilder->createTableFields();
 
@@ -118,7 +117,7 @@ class DatatableFacade implements DatatableFacadeInterface
 			'has_add'			  => $this->datatablePreparer->prepareAdd(),
 			'results_header'      => $this->datatablePreparer->prepareTableHeader($datatableStructure['header'], ['playlists', 'main']),
 			'results_list'        => $this->prepareList($datatableStructure['header']),
-			'results_count'       => $this->playlistsService->getCurrentTotalResult(),
+			'results_count'       => $this->playlistsDatatableService->getCurrentTotalResult(),
 			'title'               => $datatableStructure['title'],
 			'template_name'       => 'playlists/datatable',
 			'module_name'		  => 'playlists',
@@ -139,10 +138,10 @@ class DatatableFacade implements DatatableFacadeInterface
 	private function prepareList(array $fields): array
 	{
 		/** @var list<array{"UID": int, "company_id": int, playlist_id:int, playlist_name:string, username:string, duration:int, playlist_mode: string,...}> $currentResults */
-		$currentResults = $this->playlistsService->getCurrentFilterResults();
+		$currentResults = $this->playlistsDatatableService->getCurrentFilterResults();
 		$showedIds = array_column($currentResults, 'playlist_id');
 
-		$used = $this->playlistsService->getPlaylistsInUse($showedIds);
+		$used = $this->playlistsDatatableService->getPlaylistsInUse($showedIds);
 		$this->datatablePreparer->setUsedPlaylists($used);
 
 		return $this->datatablePreparer->prepareTableBody($currentResults, $fields, $this->UID);

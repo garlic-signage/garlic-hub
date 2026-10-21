@@ -269,7 +269,6 @@ readonly class UploadService
 	 */
 	private function checkNodeUploadable(int $nodeId, int $UID): void
 	{
-		$this->nodeService->UID = $UID;
 		if (!$this->nodeService->isNodeUploadable($nodeId))
 			throw new ModuleException(
 				'mediapool','User '.$UID.' has no upload rights for node '.$UID.'.');

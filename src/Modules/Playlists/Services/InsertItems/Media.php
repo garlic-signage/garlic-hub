@@ -24,6 +24,8 @@ namespace App\Modules\Playlists\Services\InsertItems;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\UserException;
+use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\MediaService;
 use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Repositories\ItemsRepository;
@@ -44,6 +46,7 @@ class Media extends AbstractInsertItem
 		PlaylistsService $playlistsService,
 		PlaylistMetricsCalculator $playlistMetricsCalculator,
 		WidgetsService $widgetsService,
+		UserSession $userSession,
 		LoggerInterface $logger)
 	{
 		$this->itemsRepository  = $itemsRepository;
@@ -51,6 +54,7 @@ class Media extends AbstractInsertItem
 		$this->mediaService     = $mediaService;
 		$this->widgetsService   = $widgetsService;
 		$this->playlistMetricsCalculator = $playlistMetricsCalculator;
+		$this->userSession      = $userSession;
 
 		parent::__construct($logger);
 	}
@@ -58,13 +62,13 @@ class Media extends AbstractInsertItem
 	/**
 	 * @throws Exception
 	 * @throws FrameworkException
+	 * @throws UserException
 	 */
 	public function insert(int $playlistId, int|string $insertId, int $position): array
 	{
 		try
 		{
 			$this->itemsRepository->beginTransaction();
-			$this->mediaService->setUID($this->UID);
 			$playlistData = $this->checkPlaylistAcl($playlistId);
 
 			$media = $this->mediaService->fetchMedia((string) $insertId); // checks rights, too
@@ -80,7 +84,7 @@ class Media extends AbstractInsertItem
 			$saveItem = [
 				'playlist_id'   => $playlistId,
 				'datasource'    => 'file',
-				'UID'           => $this->UID,
+				'UID'           => $this->userSession->getUID(),
 				'item_duration' => $itemDuration,
 				'item_filesize' => $media['metadata']['size'],
 				'item_order'    => $position,

@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Playlists\Services;
 
 use App\Framework\Exceptions\CoreException;
+use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\Datatable\Parameters;
 use App\Modules\Playlists\Repositories\PlaylistsRepository;
 use App\Modules\Playlists\Services\AclValidator;
@@ -41,6 +42,7 @@ class PlaylistsDatatableServiceTest extends TestCase
 	private Parameters&MockObject $parametersMock;
 	private AclValidator&MockObject $aclValidatorMock;
 	private PlaylistUsageService&MockObject $playlistUsageServiceMock;
+	private UserSession&Stub $userSessionStub;
 	private PlaylistsDatatableService $service;
 
 	/**
@@ -55,7 +57,8 @@ class PlaylistsDatatableServiceTest extends TestCase
 		$this->aclValidatorMock = $this->createMock(AclValidator::class);
 		$this->playlistUsageServiceMock = $this->createMock(PlaylistUsageService::class);
 
-		$this->service = new PlaylistsDatatableService($this->repositoryMock, $this->parametersMock, $this->aclValidatorMock, $this->playlistUsageServiceMock, $this->loggerStub);
+		$this->userSessionStub = $this->createStub(UserSession::class);
+		$this->service = new PlaylistsDatatableService($this->repositoryMock, $this->parametersMock, $this->aclValidatorMock, $this->playlistUsageServiceMock, $this->userSessionStub, $this->loggerStub);
 	}
 
 	/**
@@ -66,7 +69,7 @@ class PlaylistsDatatableServiceTest extends TestCase
 	public function testFetchForModuleAdmin(): void
 	{
 		$this->playlistUsageServiceMock->expects($this->never())->method($this->anything());
-		$this->service->setUID(345);
+		$this->userSessionStub->method('getUID')->willReturn(345);
 		$this->aclValidatorMock->expects($this->once())->method('isModuleAdmin')
 			->with(345)
 			->willReturn(true);
@@ -101,7 +104,7 @@ class PlaylistsDatatableServiceTest extends TestCase
 	public function testFetchForUser(): void
 	{
 		$this->playlistUsageServiceMock->expects($this->never())->method($this->anything());
-		$this->service->setUID(789);
+		$this->userSessionStub->method('getUID')->willReturn(789);
 		$this->aclValidatorMock->expects($this->once())->method('isModuleAdmin')
 			->with(789)
 			->willReturn(false);

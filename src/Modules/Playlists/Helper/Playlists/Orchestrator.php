@@ -27,7 +27,6 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
-use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\Datatable\Parameters;
 use App\Modules\Playlists\Services\PlaylistsDatatableService;
 use App\Modules\Playlists\Services\PlaylistsService;
@@ -47,7 +46,6 @@ class Orchestrator
 
 	public function __construct(
 		private readonly ResponseBuilder $responseBuilder,
-		private readonly UserSession $userSession,
 		private readonly BaseValidator $validator,
 		private readonly PlaylistsService $playlistsService,
 		private readonly PlaylistsDatatableService $playlistsDatatableService,
@@ -105,7 +103,6 @@ class Orchestrator
 	 */
 	public function delete(ResponseInterface $response): ResponseInterface
 	{
-		$this->playlistsService->setUID($this->userSession->getUID());
 		if ($this->playlistsService->delete($this->playlistId) === 0)
 			return $this->responseBuilder->playlistNotFound($response);
 
@@ -121,7 +118,6 @@ class Orchestrator
 	 */
 	public function toggleShuffle(ResponseInterface $response): ResponseInterface
 	{
-		$this->playlistsService->setUID($this->userSession->getUID());
 		$data = $this->playlistsService->toggleShuffle($this->playlistId);
 		if ($data['affected'] === 0)
 			return $this->responseBuilder->playlistNotFound($response);
@@ -138,7 +134,6 @@ class Orchestrator
 	 */
 	public function shufflePicking(ResponseInterface $response): ResponseInterface
 	{
-		$this->playlistsService->setUID($this->userSession->getUID());
 		$data = $this->playlistsService->shufflePicking($this->playlistId, (int) $this->input['shuffle_picking']);
 		if ($data['affected'] === 0)
 			return $this->responseBuilder->playlistNotFound($response);
@@ -151,7 +146,6 @@ class Orchestrator
 	 */
 	public function loadZone(ResponseInterface $response): ResponseInterface
 	{
-		$this->playlistsService->setUID($this->userSession->getUID());
 		$multizone = $this->playlistsService->loadPlaylistForMultizone($this->playlistId);
 		if ($this->playlistsService->hasErrorMessages())
 			return $this->responseBuilder->generalError($response, $this->playlistsService->getErrorMessagesAsString());
@@ -164,7 +158,6 @@ class Orchestrator
 	 */
 	public function saveZone(ResponseInterface $response): ResponseInterface
 	{
-		$this->playlistsService->setUID($this->userSession->getUID());
 
 		$zones = $this->input;
 		unset($zones['csrf_token'], $zones['playlist_id']);
@@ -180,7 +173,6 @@ class Orchestrator
 	 */
 	public function findById(ResponseInterface $response): ResponseInterface
 	{
-		$this->playlistsService->setUID($this->userSession->getUID());
 
 		return $this->responseBuilder->plainData($response, $this->playlistsService->loadNameById($this->playlistId));
 	}
@@ -202,7 +194,6 @@ class Orchestrator
 		);
 		$this->parameters->parseInputAllParameters();
 
-		$this->playlistsDatatableService->setUID($this->userSession->getUID());
 		$this->playlistsDatatableService->loadDatatable();
 		$results = [];
 		foreach ($this->playlistsDatatableService->getCurrentFilterResults() as $value)

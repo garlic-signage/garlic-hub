@@ -105,6 +105,7 @@ $dependencies[PlaylistsService::class] = DI\factory(function (ContainerInterface
 		$container->get(PlaylistsRepository::class),
 		$container->get(PlaylistMetricsCalculator::class),
 		$container->get(AclValidator::class),
+		$container->get(UserSession::class),
 		$container->get('ModuleLogger')
 	);
 });
@@ -134,6 +135,7 @@ $dependencies[PlaylistsDatatableService::class] = DI\factory(function (Container
 		new PlaylistUsageService(
 			$container->get(PlayerRepository::class),
 			$container->get(ItemsRepository::class)),
+		$container->get(UserSession::class),
 		$container->get('ModuleLogger')
 	);
 });
@@ -185,7 +187,6 @@ $dependencies[ShowComposeController::class] = DI\factory(function (ContainerInte
 			new RightsChecker(
 				$container->get(Translator::class), $container->get(AclValidator::class))
 		),
-		$container->get(UserSession::class),
 		$container->get(Messages::class)
 	);
 });
@@ -194,7 +195,6 @@ $dependencies[PlaylistsController::class] = DI\factory(function (ContainerInterf
 	return new PlaylistsController(
 		new \App\Modules\Playlists\Helper\Playlists\Orchestrator(
 			new \App\Modules\Playlists\Helper\Playlists\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
-			$container->get(UserSession::class),
 			$container->get(BaseValidator::class),
 			$container->get(PlaylistsService::class),
 			$container->get(PlaylistsDatatableService::class),
@@ -216,6 +216,7 @@ $dependencies[InsertItemFactory::class] = DI\factory(function (ContainerInterfac
 		$container->get(MediaUrlSigner::class),
 		$container->get(PlaylistMetricsCalculator::class),
 		$container->get(WidgetsService::class),
+		$container->get(UserSession::class),
 		$container->get('ModuleLogger')
 	);
 });
@@ -224,7 +225,6 @@ $dependencies[ItemsController::class] = DI\factory(function (ContainerInterface 
 	return new ItemsController(
 		new \App\Modules\Playlists\Helper\Items\Orchestrator(
 			new \App\Modules\Playlists\Helper\Items\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
-			$container->get(UserSession::class),
 			$container->get(BaseValidator::class),
 			$container->get(ItemsService::class),
 			$container->get(InsertItemFactory::class)
@@ -237,6 +237,7 @@ $dependencies[PlaylistMetricsCalculator::class] = DI\factory(function (Container
 		$container->get(ItemsRepository::class),
 		$container->get(AclValidator::class),
 		$container->get(Config::class),
+		$container->get(UserSession::class)
 	);
 });
 $dependencies[ItemsService::class] = DI\factory(function (ContainerInterface $container)
@@ -272,7 +273,6 @@ $dependencies[ExportController::class] = DI\factory(function (ContainerInterface
 	return new ExportController(
 		new \App\Modules\Playlists\Helper\Export\Orchestrator(
 			new \App\Modules\Playlists\Helper\Export\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
-			$container->get(UserSession::class),
 			$container->get(BaseValidator::class),
 			$container->get(ExportService::class)
 		)
@@ -315,7 +315,6 @@ $dependencies[WidgetsController::class] = DI\factory(function (ContainerInterfac
 	return new WidgetsController(
 		new \App\Modules\Playlists\Helper\Widgets\Orchestrator(
 			new \App\Modules\Playlists\Helper\Widgets\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
-			$container->get(UserSession::class),
 			$container->get(BaseValidator::class),
 			$container->get(WidgetsService::class)
 		)
@@ -333,7 +332,6 @@ $dependencies[ConditionalPlayController::class] = DI\factory(function (Container
 	return new ConditionalPlayController(
 		new Orchestrator(
 			new ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
-			$container->get(UserSession::class),
 			$container->get(BaseValidator::class),
 			new TemplatePreparer($container->get(Translator::class), $container->get(AdapterInterface::class)),
 			$container->get(ConditionalPlayService::class),
@@ -345,7 +343,6 @@ $dependencies[TriggerController::class] = DI\factory(function (ContainerInterfac
 	return new TriggerController(
 		new \App\Modules\Playlists\Helper\Trigger\Orchestrator(
 			new ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
-			$container->get(UserSession::class),
 			$container->get(BaseValidator::class),
 			new \App\Modules\Playlists\Helper\Trigger\TemplatePreparer($container->get(AdapterInterface::class), new TriggerPreparer($container->get(Translator::class))),
 			new TriggerService($container->get(ItemsService::class), $container->get('ModuleLogger'))
@@ -356,7 +353,6 @@ $dependencies[\App\Modules\Playlists\Helper\Templates\Orchestrator::class] = DI\
 {
 	return new \App\Modules\Playlists\Helper\Templates\Orchestrator(
 		$container->get(ItemsService::class),
-		$container->get(UserSession::class),
 		$container->get(ExportImage::class),
 		$container->get(\App\Modules\Templates\Helper\Composer\TemplatePreparer::class),
 		$container->get(Config::class),

@@ -26,7 +26,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\NodesService;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
@@ -46,7 +45,6 @@ class Orchestrator
 
 	public function __construct(
 		private readonly ResponseBuilder $responseBuilder,
-		private readonly UserSession $userSession,
 		private readonly BaseValidator $validator,
 		private readonly NodesService $nodesService
 	) {}
@@ -68,7 +66,6 @@ class Orchestrator
 	 */
 	public function list(ResponseInterface $response): ResponseInterface
 	{
-		$this->nodesService->UID = $this->userSession->getUID();
 		$nodes = $this->nodesService->getNodes((int) ($this->input['parent_id'] ?? 0));
 
 		return $this->responseBuilder->nodeList($response, $nodes);
@@ -94,7 +91,6 @@ class Orchestrator
 	{
 		try
 		{
-			$this->nodesService->UID = $this->userSession->getUID();
 			$newNodeId = $this->nodesService->addNode((int) ($this->input['node_id'] ?? 0), $this->input['name']);
 
 			return $this->responseBuilder->generalSuccess($response, [
@@ -129,7 +125,6 @@ class Orchestrator
 		{
 			$visibility = $this->input['visibility'] ?? null;
 
-			$this->nodesService->UID = $this->userSession->getUID();
 			$count = $this->nodesService->editNode((int) $this->input['node_id'], $this->input['name'], $visibility);
 			if ($count === 0)
 				return $this->responseBuilder->editFailed($response);
@@ -168,7 +163,6 @@ class Orchestrator
 	{
 		try
 		{
-			$this->nodesService->UID = $this->userSession->getUID();
 			$count = $this->nodesService->moveNode(
 				(int) $this->input['src_node_id'],
 				(int) $this->input['target_node_id'],
@@ -203,7 +197,6 @@ class Orchestrator
 	{
 		try
 		{
-			$this->nodesService->UID = $this->userSession->getUID();
 			$count = $this->nodesService->deleteNode((int) $this->input['node_id']);
 
 			return $this->responseBuilder->generalSuccess($response, ['data' => ['count_deleted_nodes' => $count]]);

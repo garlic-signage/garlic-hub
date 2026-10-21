@@ -73,14 +73,13 @@ class DatatableFacadeTest extends TestCase
 	#[Group('units')]
 	public function testConfigure(): void
 	{
+		$this->playerServiceMock->expects($this->never())->method($this->anything());
 		$mockUID = 12345;
 		$mockUserData = ['UID' => $mockUID];
 		$this->sessionMock->expects($this->once())->method('get')
 			->with('user')
 			->willReturn($mockUserData);
 
-		$this->playerServiceMock->expects($this->once())->method('setUID')
-			->with($mockUID);
 		$this->datatableBuilderMock->expects($this->once())->method('configureParameters')
 			->with($mockUID);
 		$this->datatableBuilderMock->expects($this->once())->method('setTranslator')

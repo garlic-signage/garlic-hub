@@ -23,6 +23,7 @@ namespace Tests\Unit\Modules\Playlists\Services\InsertItems;
 
 use App\Framework\Core\Config\Config;
 use App\Framework\Media\MediaUrlSigner;
+use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\MediaService;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\InsertItems\InsertItemFactory;
@@ -69,6 +70,7 @@ class InsertItemFactoryTest extends TestCase
 			new MediaUrlSigner('unit-test-secret'),
 			$playlistMetricsCalculatorStub,
 			$widgetsServiceStub,
+			$this->createStub(UserSession::class),
 			$loggerStub
 		);
 	}

@@ -50,10 +50,10 @@ abstract class AbstractDatatableService extends AbstractBaseService
 	/**
 	 * @throws Exception
 	 */
-	public function fetchForUser(FilterBase $repository, BaseParameters $parameters): static
+	public function fetchForUser(FilterBase $repository, BaseParameters $parameters, int $UID): static
 	{
-		$total_elements = $repository->countAllFilteredByUID($parameters->getInputParametersArray(), $this->UID);
-		$results        = $repository->findAllFilteredByUID($parameters->getInputParametersArray(), $this->UID);
+		$total_elements = $repository->countAllFilteredByUID($parameters->getInputParametersArray(), $UID);
+		$results        = $repository->findAllFilteredByUID($parameters->getInputParametersArray(), $UID);
 
 		return $this->setAllResultData($total_elements, $results);
 	}

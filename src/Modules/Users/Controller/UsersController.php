@@ -26,7 +26,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\FormParameters\ScalarType;
-use App\Modules\Auth\UserSession;
 use App\Modules\Users\Helper\Datatable\Parameters;
 use App\Modules\Users\Services\UsersDatatableService;
 use App\Modules\Users\UserStatus;
@@ -43,7 +42,6 @@ readonly class UsersController
 	public function __construct(
 		private UsersDatatableService $usersDatatableService,
 		private Parameters $parameters,
-		private UserSession $userSession,
 		private JsonResponseHandler $responseHandler
 	) {}
 
@@ -64,7 +62,6 @@ readonly class UsersController
 		$this->parameters->setUserInputs($args);
 		$this->parameters->parseInputAllParameters();
 
-		$this->usersDatatableService->setUID($this->userSession->getUID());
 		$this->usersDatatableService->loadDatatable();
 		$results = [];
 		foreach ($this->usersDatatableService->getCurrentFilterResults() as $value)

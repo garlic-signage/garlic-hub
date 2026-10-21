@@ -25,7 +25,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\Settings\FormInputHandler;
 use App\Modules\Playlists\Helper\Settings\Orchestrator;
 use App\Modules\Playlists\Helper\Settings\SettingsFormBuilder;
@@ -38,7 +37,6 @@ use PHPUnit\Framework\TestCase;
 
 class OrchestratorTest extends TestCase
 {
-	private UserSession&MockObject $userSessionMock;
 	private PlaylistsService&MockObject $serviceMock;
 	private SettingsParametersPolicy&MockObject $policyMock;
 	private FormInputHandler&MockObject $inputHandlerMock;
@@ -58,14 +56,12 @@ class OrchestratorTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->userSessionMock  = $this->createMock(UserSession::class);
 		$this->serviceMock      = $this->createMock(PlaylistsService::class);
 		$this->policyMock       = $this->createMock(SettingsParametersPolicy::class);
 		$this->inputHandlerMock = $this->createMock(FormInputHandler::class);
 		$this->formBuilderMock  = $this->createMock(SettingsFormBuilder::class);
 
 		$this->orchestrator = new Orchestrator(
-			$this->userSessionMock,
 			$this->serviceMock,
 			$this->policyMock,
 			$this->inputHandlerMock,
@@ -95,7 +91,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testBuildCreateForm(): void
 	{
-		$this->expectUntouched($this->userSessionMock, $this->serviceMock, $this->inputHandlerMock);
+		$this->expectUntouched($this->serviceMock, $this->inputHandlerMock);
 		$this->policyMock->expects($this->once())->method('addCreateFormElements')->with('master');
 		$this->formBuilderMock->expects($this->once())->method('buildForm')
 			->with(['playlist_mode' => 'master'])->willReturn($this->form);
@@ -113,7 +109,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testBuildCreateFormKeepsUserInput(): void
 	{
-		$this->expectUntouched($this->userSessionMock, $this->serviceMock, $this->inputHandlerMock);
+		$this->expectUntouched($this->serviceMock, $this->inputHandlerMock);
 		$this->policyMock->expects($this->once())->method('addCreateFormElements')->with('internal');
 		$this->formBuilderMock->expects($this->once())->method('buildForm')
 			->with(['playlist_name' => '', 'playlist_mode' => 'internal'])->willReturn($this->form);
@@ -131,7 +127,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testBuildEditFormWithoutLoadedPlaylistThrows(): void
 	{
-		$this->expectUntouched($this->userSessionMock, $this->serviceMock, $this->policyMock, $this->inputHandlerMock, $this->formBuilderMock);
+		$this->expectUntouched($this->serviceMock, $this->policyMock, $this->inputHandlerMock, $this->formBuilderMock);
 		$this->expectException(ModuleException::class);
 
 		$this->orchestrator->buildEditForm();
@@ -186,7 +182,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testStoreCreateSettingsReturnsValidationErrors(): void
 	{
-		$this->expectUntouched($this->userSessionMock, $this->serviceMock, $this->formBuilderMock);
+		$this->expectUntouched($this->serviceMock, $this->formBuilderMock);
 		$this->policyMock->expects($this->once())->method('addCreateFormElements')->with('');
 		$this->inputHandlerMock->expects($this->once())->method('validate')->with(['playlist_name' => ''])
 			->willReturn(['No playlist name.', 'Parameters missing.']);
@@ -212,8 +208,6 @@ class OrchestratorTest extends TestCase
 		$post = ['playlist_name' => 'Lobby', 'playlist_mode' => 'internal'];
 		$this->policyMock->expects($this->once())->method('addCreateFormElements')->with('internal');
 		$this->expectValidInput($post, ['playlist_name' => 'Lobby', 'playlist_mode' => 'internal']);
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(7);
-		$this->serviceMock->expects($this->once())->method('setUID')->with(7);
 		$this->serviceMock->expects($this->once())->method('createNew')
 			->with(['playlist_name' => 'Lobby', 'playlist_mode' => 'internal'])->willReturn(0);
 
@@ -237,8 +231,6 @@ class OrchestratorTest extends TestCase
 		$post = ['playlist_name' => 'Lobby', 'playlist_mode' => 'multizone', 'screen_width' => 1920, 'screen_height' => 1080];
 		$this->policyMock->expects($this->once())->method('addCreateFormElements')->with('multizone');
 		$this->expectValidInput($post, ['playlist_name' => 'Lobby']);
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(7);
-		$this->serviceMock->expects($this->once())->method('setUID')->with(7);
 		$expectedLayout = ['resolution' => '1920x1080', 'zoom' => 70, 'export_unit' => 'pixel', 'zones' => []];
 		$this->serviceMock->expects($this->once())->method('createNew')
 			->with(['playlist_name' => 'Lobby', 'layout' => serialize($expectedLayout)])->willReturn(12);
@@ -256,7 +248,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testStoreEditSettingsWithoutLoadedPlaylistThrows(): void
 	{
-		$this->expectUntouched($this->userSessionMock, $this->serviceMock, $this->policyMock, $this->inputHandlerMock, $this->formBuilderMock);
+		$this->expectUntouched($this->serviceMock, $this->policyMock, $this->inputHandlerMock, $this->formBuilderMock);
 		$this->expectException(ModuleException::class);
 
 		$this->orchestrator->storeEditSettings([]);
@@ -338,8 +330,6 @@ class OrchestratorTest extends TestCase
 
 	private function expectPlaylistLoaded(): void
 	{
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(7);
-		$this->serviceMock->expects($this->once())->method('setUID')->with(7);
 		$this->serviceMock->expects($this->once())->method('loadPlaylistForEdit')->with(5)->willReturn($this->playlist);
 	}
 

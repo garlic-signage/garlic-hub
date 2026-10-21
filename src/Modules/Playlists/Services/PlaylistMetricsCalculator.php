@@ -24,6 +24,8 @@ namespace App\Modules\Playlists\Services;
 use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\UserException;
+use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use Doctrine\DBAL\Exception;
 
@@ -36,18 +38,19 @@ class PlaylistMetricsCalculator
 	private readonly ItemsRepository $itemsRepository;
 	private readonly AclValidator $aclValidator;
 	private readonly Config $config;
-	private int $UID;
+	private readonly UserSession $userSession;
 	private int $countEntries;
 	private int $countOwnerEntries;
 	private int $ownerDuration;
 	private int $duration;
 	private int $fileSize;
 
-	public function __construct(ItemsRepository $itemsRepository, AclValidator $aclValidator, Config $config)
+	public function __construct(ItemsRepository $itemsRepository, AclValidator $aclValidator, Config $config, UserSession $userSession)
 	{
 		$this->itemsRepository     = $itemsRepository;
 		$this->aclValidator     = $aclValidator;
 		$this->config           = $config;
+		$this->userSession      = $userSession;
 	}
 
     /**
@@ -76,12 +79,6 @@ class PlaylistMetricsCalculator
 	public function getFileSize(): int
 	{
 		return $this->fileSize;
-	}
-
-	public function setUID(int $UID): static
-	{
-		$this->UID = $UID;
-		return $this;
 	}
 
 	/**
@@ -128,6 +125,7 @@ class PlaylistMetricsCalculator
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	public function calculateFromItems(array $playlist, array $items): static
 	{
@@ -156,6 +154,7 @@ class PlaylistMetricsCalculator
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	public function calculateFromPlaylistData(array $playlist): static
 	{
@@ -185,6 +184,7 @@ class PlaylistMetricsCalculator
 	 * @param array<string,mixed> $media
 	 * @throws CoreException
 	 * @throws Exception|ModuleException
+	 * @throws UserException
 	 */
 	public function calculateRemainingMediaDuration(array $playlist, array $media = []): int
 	{
@@ -200,10 +200,11 @@ class PlaylistMetricsCalculator
 	 * @throws ModuleException
 	 * @throws CoreException
 	 * @throws Exception
+	 * @throws UserException
 	 */
 	public function calculateRemainingDuration(array $playlist, int $wantedDuration): int
 	{
-		if ($playlist['time_limit'] > 0 && !$this->aclValidator->isSimpleAdmin($this->UID))
+		if ($playlist['time_limit'] > 0 && !$this->aclValidator->isSimpleAdmin($this->userSession->getUID()))
 		{
 			$this->calculateFromPlaylistData($playlist);
 			$remaining_duration = $playlist['time_limit'] - $this->getOwnerDuration();
@@ -222,12 +223,13 @@ class PlaylistMetricsCalculator
 	 * @param array<string,mixed> $playlist
 	 * @throws CoreException
 	 * @throws Exception
+	 * @throws UserException
 	 */
 	private function exceedTimeLimit(array $playlist): bool
 	{
 		if ($playlist['time_limit'] > 0 &&
 			$this->ownerDuration > $playlist['time_limit'] &&
-			!$this->aclValidator->isSimpleAdmin($this->UID)) // Check more intensely for real admin needs company_id
+			!$this->aclValidator->isSimpleAdmin($this->userSession->getUID())) // Check more intensely for real admin needs company_id
 		{
 			return true;
 		}
@@ -239,6 +241,7 @@ class PlaylistMetricsCalculator
 	 * @throws ModuleException
 	 * @throws CoreException
 	 * @throws Exception
+	 * @throws UserException
 	 */
 	private function calculateAverageDuration(array $playlist): void
 	{

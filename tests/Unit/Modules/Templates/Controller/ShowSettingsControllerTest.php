@@ -75,7 +75,7 @@ class ShowSettingsControllerTest extends TestCase
 		$this->orchestratorMock->expects($this->never())->method('buildCreateForm');
 		$this->expectNoRightsRedirect();
 
-		$this->controller->create($this->request(), $this->responseMock, ['type' => 'canvas']);
+		$this->controller->create($this->request(), $this->responseMock);
 	}
 
     /**
@@ -92,7 +92,7 @@ class ShowSettingsControllerTest extends TestCase
 		$this->flashMock->expects($this->never())->method($this->anything());
 		$this->expectHtml();
 
-		$this->controller->create($this->request(), $this->responseMock, ['type' => 'canvas']);
+		$this->controller->create($this->request(), $this->responseMock);
 	}
 
     /**
