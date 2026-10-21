@@ -83,7 +83,7 @@ export class CanvasEvents
 		this.screen_height.value = this.MyCanvasView.getHeight();
 		this.export_unit.value = this.MyZonesModel.getExportUnit();
 		this.slider.value = this.MyZonesModel.getZoom();
-		this.zoom_percent.innerHTML = this.slider.value + ' %';
+		this.zoom_percent.textContent = this.slider.value + ' %';
 
 		this.MyCanvasView.renderCanvas();
 
