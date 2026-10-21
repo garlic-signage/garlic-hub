@@ -82,7 +82,13 @@ export class BasePreviewHandler
 		// Tooltip
 		const tooltip = document.createElement("div");
 		tooltip.className = "tooltip";
-		tooltip.innerHTML = `${metadata.name}<br> ${metadata.size}<br /> ${metadata.type}`
+
+		tooltip.append(document.createTextNode(metadata.name));
+		tooltip.append(document.createElement("br"));
+		tooltip.append(document.createTextNode(metadata.size));
+		tooltip.append(document.createElement("br"));
+		tooltip.append(document.createTextNode(metadata.type));
+
 		container.appendChild(tooltip);
 		container.addEventListener("mouseenter", () => {tooltip.style.visibility = "visible";});
 		container.addEventListener("mouseleave", () => {tooltip.style.visibility = "hidden";});

@@ -34,7 +34,7 @@ export class ViewportView
 
 	setZoomPercentHtml(value)
 	{
-		this.#zoomPercent.innerHTML = value;
+		this.#zoomPercent.textContent = value;
 	}
 
 	get zoomSlider()

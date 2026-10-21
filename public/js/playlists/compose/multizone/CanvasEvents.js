@@ -282,7 +282,7 @@ export class CanvasEvents
 	{
 		this.slider.addEventListener("input", () => {
 			this.is_autoresize = false;
-			this.zoom_percent.innerHTML = this.slider.value + ' %';
+			this.zoom_percent.textContent = this.slider.value + ' %';
 			this.MyZonesModel.setZoom(this.slider.value)
 			this.MyCanvasView.scaleCanvas(this.slider.value)
 		})
