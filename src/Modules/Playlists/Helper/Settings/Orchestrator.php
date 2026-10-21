@@ -21,9 +21,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\Settings;
 
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Playlists\Services\PlaylistsService;
 use Doctrine\DBAL\Exception;
@@ -51,8 +53,16 @@ class Orchestrator
 	 */
 	public function loadPlaylistForEdit(int $playlistId): array
 	{
-		/** @var array{UID: int, company_id: int, playlist_mode: string, playlist_name: string, ...}|array{} $playlist */
-		$playlist       = $this->playlistsService->loadPlaylistForEdit($playlistId);
+		try
+		{
+			/** @var array{UID: int, company_id: int, playlist_mode: string, playlist_name: string, ...} $playlist */
+			$playlist = $this->playlistsService->loadPlaylistForEdit($playlistId);
+		}
+		catch (NotFoundException|AccessDeniedException)
+		{
+			// the settings page redirects to the list with a message instead of an error page
+			$playlist = [];
+		}
 		$this->playlist = $playlist;
 
 		return $this->playlist;

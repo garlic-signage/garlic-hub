@@ -65,9 +65,7 @@ class ResponseBuilderTest extends TestCase
 			'missingParameterName'  => 'No parameter name.',
 			'missingParameterValue' => 'No parameter value.',
 			'invalidParameterName'  => 'No valid parametername.',
-			'itemNotFound'          => 'Item not found.',
 			'insertFailed'          => 'Error inserting item.',
-			'deleteFailed'          => 'Error deleting item.',
 		];
 
 		$calls = [];
@@ -102,10 +100,10 @@ class ResponseBuilderTest extends TestCase
 	public function testItemsOrderUpdated(): void
 	{
 		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonResponse')
-			->with($this->responseStub, ['success' => false])
+			->with($this->responseStub, ['success' => true])
 			->willReturn($this->responseStub);
 
-		$result = $this->responseBuilder->itemsOrderUpdated($this->responseStub, false);
+		$result = $this->responseBuilder->itemsOrderUpdated($this->responseStub);
 
 		static::assertSame($this->responseStub, $result);
 	}

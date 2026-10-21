@@ -25,6 +25,8 @@ use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Auth\UserSession;
@@ -37,6 +39,7 @@ use Doctrine\DBAL\Exception;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 class Template extends AbstractInsertItem
 {
@@ -59,28 +62,25 @@ class Template extends AbstractInsertItem
 	}
 
     /**
-     * @param int $playlistId
-     * @param string|int $insertId
-     * @param int $position
      * @return array<string,mixed>
+     * @throws CoreException
      * @throws Exception
-     * @throws FrameworkException
      * @throws FilesystemException
+     * @throws FrameworkException
+     * @throws ModuleException
+     * @throws UserException
      */
-	/**
-	 * @throws UserException
-	 */
 	public function insert(int $playlistId, string|int $insertId, int $position): array
 	{
+		$this->itemsRepository->beginTransaction();
 		try
 		{
-			$this->itemsRepository->beginTransaction();
 
 			$playlistData = $this->checkPlaylistAcl($playlistId);
 
 			$template = $this->templatesService->loadWithUserById((int) $insertId); // checks rights, too
 			if (empty($template))
-				throw new ModuleException('items', 'Template is not accessible');
+				throw new NotFoundException('playlists', 'template_not_accessible', ['template_id' => (int) $insertId]);
 
 			/*			if (!$this->allowedByTimeLimit($playlistId, $playlistData['time_limit']))
 							throw new ModuleException('items', 'Playlist time limit exceeds');
@@ -107,7 +107,7 @@ class Template extends AbstractInsertItem
 			];
 			$id = (int) $this->itemsRepository->insert($saveItem);
 			if ($id === 0)
-				throw new ModuleException('items', 'Template item could not inserted.');
+				throw new TranslatableModuleException('playlists', 'item_not_inserted', ['playlist_id' => $playlistId]);
 
 			$fileNameTemplate     = $insertId.'.jpg';
 			$fileNameItem         = $id.'.jpg';
@@ -128,11 +128,10 @@ class Template extends AbstractInsertItem
 
 			return ['playlist_metrics' => $playlistMetrics, 'item' => $saveItem];
 		}
-		catch (Exception | ModuleException | CoreException $e)
+		catch (Throwable $e)
 		{
 			$this->itemsRepository->rollBackTransaction();
-			$this->logger->error('Error insert playlist: ' . $e->getMessage());
-			return [];
+			throw $e;
 		}
 	}
 

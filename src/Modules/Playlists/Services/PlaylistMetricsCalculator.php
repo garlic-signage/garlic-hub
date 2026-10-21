@@ -24,6 +24,7 @@ namespace App\Modules\Playlists\Services;
 use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\PlaylistMetrics;
@@ -184,8 +185,10 @@ class PlaylistMetricsCalculator
 			[$duration, $ownerDuration] = $this->adjustForShuffle($playlist['shuffle_picking'], $countEntries, $countOwnerEntries, $duration, $ownerDuration);
 
 		if ($this->exceedTimeLimit($playlist, $ownerDuration))
-			throw new ModuleException('playlist_export',
-				'Exceeds time limit '.$playlist['time_limit'].'s of playlist: '.$playlist['name']);
+			throw new TranslatableModuleException('playlists', 'time_limit_exceeded', [
+				'time_limit'    => (int) $playlist['time_limit'],
+				'playlist_name' => (string) ($playlist['playlist_name'] ?? '')
+			]);
 
 		return new PlaylistMetrics($countEntries, $countOwnerEntries, $fileSize, $duration, $ownerDuration);
 	}

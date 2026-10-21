@@ -24,6 +24,7 @@ namespace Tests\Unit\Modules\Playlists\Services;
 use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\AclValidator;
@@ -197,16 +198,23 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	{
 		$this->itemsRepositoryMock->expects($this->never())->method($this->anything());
 		$this->configMock->expects($this->never())->method($this->anything());
-		$playlist = ['UID' => 1, 'name' => 'Test Playlist', 'time_limit' => 60, 'shuffle' => 0];
+		$playlist = ['UID' => 1, 'playlist_name' => 'Test Playlist', 'time_limit' => 60, 'shuffle' => 0];
 		$items = [
 			['item_filesize' => 100, 'item_duration' => 70, 'UID' => 1]
 		];
 		$this->userSessionStub->method('getUID')->willReturn(1);
 		$this->aclValidatorMock->method('isSimpleAdmin')->with(1)->willReturn(false);
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('Exceeds time limit 60s of playlist: Test Playlist');
-		$this->calculator->calculateFromItems($playlist, $items);
+		try
+		{
+			$this->calculator->calculateFromItems($playlist, $items);
+			static::fail('The time limit is exceeded, an exception was expected.');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertSame('time_limit_exceeded', $e->getTranslationKey());
+			static::assertSame(['time_limit' => 60, 'playlist_name' => 'Test Playlist'], $e->getReplacements());
+		}
 	}
 
 	/**

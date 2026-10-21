@@ -136,7 +136,7 @@ class ContentDataPreparerTest extends TestCase
 			->willReturn($preferences);
 
 		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('preference1 is mandatory field.');
+		$this->expectExceptionMessage('widget_field_mandatory {"field":"preference1"}');
 
 		$this->contentDataPreparer->prepareContentData($configData, $requestData);
 	}
@@ -187,7 +187,7 @@ class ContentDataPreparerTest extends TestCase
 			->willReturn(false);
 
 		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('Widget has no editable preferences.');
+		$this->expectExceptionMessage('widget_not_editable');
 
 		$this->contentDataPreparer->determinePreferences($configData);
 	}

@@ -19,9 +19,9 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Modules\Playlists\Services;
 
+use App\Framework\Exceptions\NotFoundException;
 use App\Modules\Playlists\Services\ItemsService;
 use App\Modules\Playlists\Services\TriggerService;
 use PHPUnit\Framework\Attributes\Group;
@@ -42,208 +42,90 @@ class TriggerServiceTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-
 		$this->itemServiceMock = $this->createMock(ItemsService::class);
-		$this->loggerMock = $this->createMock(LoggerInterface::class);
+		$this->loggerMock      = $this->createMock(LoggerInterface::class);
 
 		$this->triggerService = new TriggerService($this->itemServiceMock, $this->loggerMock);
 	}
 
 	#[Group('units')]
-	public function testValidItemId(): void
+	public function testFetchBeginTriggerUnserializesTriggerAndExcludesItemFromTouchableMedia(): void
 	{
 		$this->loggerMock->expects($this->never())->method($this->anything());
-		$itemId = 1;
-		$playlistId = 2;
-		$item = [
-			'begin_trigger' => serialize(['trigger1', 'trigger2']),
-			'playlist_id' => $playlistId,
-		];
+		$item = ['item_id' => 3, 'begin_trigger' => serialize(['trigger1', 'trigger2']), 'playlist_id' => 2];
 
-		$this->itemServiceMock->expects($this->once())->method('fetchItemById')
-			->with($itemId)
-			->willReturn($item);
+		$this->itemServiceMock->expects($this->once())->method('fetchItemById')->with(3)->willReturn($item);
+		$this->itemServiceMock->expects($this->once())->method('findMediaInPlaylist')->with(2)
+			->willReturn([['item_id' => 3, 'item_name' => 'Media 1'], ['item_id' => 4, 'item_name' => 'Media 2']]);
 
-		$this->itemServiceMock->method('findMediaInPlaylist')
-			->willReturn([]);
+		$result = $this->triggerService->fetchBeginTriggerByItemId(3);
 
-		$result = $this->triggerService->fetchBeginTriggerByItemId($itemId);
-
-		static::assertEquals(['trigger1', 'trigger2'], $result->getItemData()['begin_trigger']);
+		static::assertSame(['trigger1', 'trigger2'], $result['item_data']['begin_trigger']);
+		static::assertSame([['item_id' => 4, 'item_name' => 'Media 2']], $result['touchable_media']);
 	}
 
 	#[Group('units')]
-	public function testEmptyBeginTrigger(): void
+	public function testFetchEmptyBeginTriggerWithoutMedia(): void
 	{
 		$this->loggerMock->expects($this->never())->method($this->anything());
-		$itemId = 1;
-		$playlistId = 2;
-		$item = [
-			'begin_trigger' => '',
-			'playlist_id' => $playlistId,
-		];
+		$this->itemServiceMock->expects($this->once())->method('fetchItemById')->with(1)
+			->willReturn(['item_id' => 1, 'begin_trigger' => '', 'playlist_id' => 2]);
+		$this->itemServiceMock->expects($this->once())->method('findMediaInPlaylist')->with(2)->willReturn([]);
 
-		$this->itemServiceMock->expects($this->once())->method('fetchItemById')
-			->with($itemId)
-			->willReturn($item);
+		$result = $this->triggerService->fetchBeginTriggerByItemId(1);
 
-		$this->itemServiceMock->method('findMediaInPlaylist')
-			->willReturn([]);
-
-		$result = $this->triggerService->fetchBeginTriggerByItemId($itemId);
-
-		static::assertEmpty($result->getItemData()['begin_trigger']);
+		static::assertSame([], $result['item_data']['begin_trigger']);
+		static::assertSame([], $result['touchable_media']);
 	}
 
 	#[Group('units')]
-	public function testExceptionHandling(): void
+	public function testFetchBeginTriggerPassesNotFound(): void
 	{
-		$itemId = 1;
+		$this->loggerMock->expects($this->never())->method($this->anything());
+		$this->itemServiceMock->expects($this->once())->method('fetchItemById')->with(1)
+			->willThrowException(new NotFoundException('playlists', 'item_not_found'));
+		$this->itemServiceMock->expects($this->never())->method('findMediaInPlaylist');
 
-		$this->itemServiceMock->expects($this->once())->method('fetchItemById')->with($itemId)
-			->willThrowException(new \Exception('Test Exception'));
-
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Error begin trigger fetch: Test Exception');
-
-		$this->triggerService->fetchBeginTriggerByItemId($itemId);
+		$this->expectException(NotFoundException::class);
+		$this->triggerService->fetchBeginTriggerByItemId(1);
 	}
 
 	#[Group('units')]
-	public function testSaveBeginTriggerSuccess(): void
+	public function testSaveBeginTrigger(): void
 	{
 		$this->loggerMock->expects($this->never())->method($this->anything());
-		$itemId = 1;
 		$requestData = ['first' => 'trigger1', 'second' => 'trigger2'];
-		$item = ['id' => $itemId];
 
-		$this->itemServiceMock->expects($this->once())->method('fetchItemById')
-			->with($itemId)
-			->willReturn($item);
+		$this->itemServiceMock->expects($this->once())->method('fetchItemById')->with(1)->willReturn(['item_id' => 1]);
 		$this->itemServiceMock->expects($this->once())->method('updateField')
-			->with($itemId, 'begin_trigger', serialize($requestData))
+			->with(1, 'begin_trigger', serialize($requestData))
 			->willReturn(1);
 
-		$result = $this->triggerService->saveBeginTrigger($itemId, $requestData);
+		$this->triggerService->saveBeginTrigger(1, $requestData);
+	}
 
-		static::assertTrue($result);
+	/**
+	 * Saving an unchanged trigger changes no rows, which is no error.
+	 */
+	#[Group('units')]
+	public function testSaveUnchangedBeginTrigger(): void
+	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
+		$this->itemServiceMock->expects($this->once())->method('fetchItemById')->with(1)->willReturn(['item_id' => 1]);
+		$this->itemServiceMock->expects($this->once())->method('updateField')->willReturn(0);
+
+		$this->triggerService->saveBeginTrigger(1, ['first' => 'trigger1']);
 	}
 
 	#[Group('units')]
-	public function testSaveBeginTriggerNoItemFound(): void
+	public function testSaveBeginTriggerPassesNotFound(): void
 	{
-		$itemId = 1;
-		$requestData = ['first' => 'trigger1', 'second' => 'trigger2'];
-
-		$this->itemServiceMock->expects($this->once())->method('fetchItemById')
-			->with($itemId)
-			->willReturn([]);
-
+		$this->loggerMock->expects($this->never())->method($this->anything());
+		$this->itemServiceMock->expects($this->once())->method('fetchItemById')->with(1)
+			->willThrowException(new NotFoundException('playlists', 'item_not_found'));
 		$this->itemServiceMock->expects($this->never())->method('updateField');
 
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Error save trigger: No item found.');
-
-		$result = $this->triggerService->saveBeginTrigger($itemId, $requestData);
-
-		static::assertFalse($result);
+		$this->expectException(NotFoundException::class);
+		$this->triggerService->saveBeginTrigger(1, ['first' => 'trigger1']);
 	}
-
-	#[Group('units')]
-	public function testSaveBeginTriggerNothingAffected(): void
-	{
-		$itemId = 1;
-		$requestData = ['first' => 'trigger1', 'second' => 'trigger2'];
-		$item = ['id' => $itemId];
-
-		$this->itemServiceMock->expects($this->once())->method('fetchItemById')
-			->with($itemId)
-			->willReturn($item);
-
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Error save trigger: Could not save begin trigger.');
-
-		$result = $this->triggerService->saveBeginTrigger($itemId, $requestData);
-
-		static::assertFalse($result);
-	}
-
-	/**
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testPrepareTouchableMediaMediaExcludedFromTouchableMedia(): void
-	{
-		$this->loggerMock->expects($this->never())->method($this->anything());
-		$playlistId = 2;
-		$itemId = 3;
-
-		$mediaItems = [
-			['item_id' => 3, 'item_name' => 'Media 1'],
-			['item_id' => 4, 'item_name' => 'Media 2'],
-		];
-
-		$this->itemServiceMock->expects($this->once())->method('findMediaInPlaylist')
-			->with($playlistId)
-			->willReturn($mediaItems);
-
-		$this->triggerService->prepareTouchableMedia($playlistId, $itemId);
-		$result = $this->triggerService->getTouchableMedia();
-
-		static::assertEquals([['item_id' => 4, 'item_name' => 'Media 2']], $result);
-	}
-
-	/**
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testPrepareTouchableMediaEmptyMediaReturned(): void
-	{
-		$this->loggerMock->expects($this->never())->method($this->anything());
-		$playlistId = 2;
-		$itemId = 3;
-
-		$this->itemServiceMock->expects($this->once())->method('findMediaInPlaylist')
-			->with($playlistId)
-			->willReturn([]);
-
-		$this->triggerService->prepareTouchableMedia($playlistId, $itemId);
-		$result = $this->triggerService->getTouchableMedia();
-
-		static::assertEmpty($result);
-	}
-
-	/**
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testPrepareTouchableMediaSingleMatchExcluded(): void
-	{
-		$this->loggerMock->expects($this->never())->method($this->anything());
-		$playlistId = 5;
-		$itemId = 10;
-
-		$mediaItems = [
-			['item_id' => 10, 'item_name' => 'Media A'],
-			['item_id' => 11, 'item_name' => 'Media B'],
-			['item_id' => 12, 'item_name' => 'Media C'],
-		];
-
-		$this->itemServiceMock->expects($this->once())->method('findMediaInPlaylist')
-			->with($playlistId)
-			->willReturn($mediaItems);
-
-		$this->triggerService->prepareTouchableMedia($playlistId, $itemId);
-		$result = $this->triggerService->getTouchableMedia();
-
-		static::assertEquals(
-			[
-				['item_id' => 11, 'item_name' => 'Media B'],
-				['item_id' => 12, 'item_name' => 'Media C']
-			],
-			$result
-		);
-	}
-
-
 }

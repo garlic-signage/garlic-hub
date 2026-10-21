@@ -33,9 +33,4 @@ class ResponseBuilder extends BaseResponseBuilder
 	{
 		return $this->jsonResponseHandler->jsonError($response, 'Playlist ID not valid.');
 	}
-
-	public function playlistNotFound(ResponseInterface $response): ResponseInterface
-	{
-		return $this->jsonResponseHandler->jsonError($response, 'Playlist not found.');
-	}
 }

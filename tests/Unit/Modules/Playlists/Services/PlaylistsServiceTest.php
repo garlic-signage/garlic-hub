@@ -21,9 +21,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Services;
 
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\PlaylistMetrics;
 use App\Modules\Playlists\Helper\PlaylistMode;
@@ -216,9 +218,8 @@ class PlaylistsServiceTest extends TestCase
 			->with(1, $playlist)
 			->willReturn(false);
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('Error loading playlist: Is not editable');
-
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('playlist_not_editable');
 		$this->service->toggleShuffle($playlistId);
 	}
 
@@ -282,9 +283,8 @@ class PlaylistsServiceTest extends TestCase
 			->with(1, $playlist)
 			->willReturn(false);
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('Error loading playlist: Is not editable');
-
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('playlist_not_editable');
 		$this->service->shufflePicking($playlistId, $shufflePicking);
 	}
 
@@ -306,9 +306,8 @@ class PlaylistsServiceTest extends TestCase
 			->with(['playlist_id' => $playlistId])
 			->willReturn([]);
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('Error loading playlist. Playlist with Id: 999 not found');
-
+		$this->expectException(NotFoundException::class);
+		$this->expectExceptionMessage('playlist_not_found');
 		$this->service->shufflePicking($playlistId, $shufflePicking);
 	}
 
@@ -415,6 +414,7 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteThrowsExceptionWhenPlaylistNotEditable(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->userSessionStub->method('getUID')->willReturn(456);
 		$playlistId = 2;
@@ -428,11 +428,9 @@ class PlaylistsServiceTest extends TestCase
 			->with(456, $playlist)
 			->willReturn(false);
 
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Error delete playlist: Playlist is not editable.');
-
-
-		$this->assertEmpty($this->service->delete($playlistId));
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('playlist_not_editable');
+		$this->service->delete($playlistId);
 	}
 
 	#[Group('units')]
@@ -460,6 +458,7 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadPlaylistForMultizoneThrowsExceptionWhenPlaylistNotFound(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->userSessionStub->method('getUID')->willReturn(1);
@@ -469,18 +468,15 @@ class PlaylistsServiceTest extends TestCase
 			->with($playlistId)
 			->willReturn([]);
 
-		$this->loggerMock->expects($this->once())
-			->method('error')
-			->with('No playlist with Id: 123 found.');
-
-		$result = $this->service->loadPlaylistForMultizone($playlistId);
-
-		static::assertEquals([], $result);
+		$this->expectException(NotFoundException::class);
+		$this->expectExceptionMessage('playlist_not_found');
+		$this->service->loadPlaylistForMultizone($playlistId);
 	}
 
 	#[Group('units')]
-	public function testLoadPlaylistForMultizoneReturnsEmptyArrayWhenNotEditable(): void
+	public function testLoadPlaylistForMultizoneThrowsExceptionWhenNotEditable(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->userSessionStub->method('getUID')->willReturn(1);
 		$playlistId = 123;
@@ -494,18 +490,15 @@ class PlaylistsServiceTest extends TestCase
 			->with(1, $playlist)
 			->willReturn(false);
 
-		$this->loggerMock->expects($this->once())
-			->method('error')
-			->with('Playlist is not editable.');
-
-		$result = $this->service->loadPlaylistForMultizone($playlistId);
-
-		static::assertEquals([], $result);
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('playlist_not_editable');
+		$this->service->loadPlaylistForMultizone($playlistId);
 	}
 
 	#[Group('units')]
-	public function testLoadPlaylistForMultizoneReturnsEmptyArrayOnRepositoryException(): void
+	public function testLoadPlaylistForMultizonePassesRepositoryException(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->userSessionStub->method('getUID')->willReturn(1);
@@ -515,13 +508,9 @@ class PlaylistsServiceTest extends TestCase
 			->with($playlistId)
 			->willThrowException(new \Exception('Repository error'));
 
-		$this->loggerMock->expects($this->once())
-			->method('error')
-			->with('Repository error');
-
-		$result = $this->service->loadPlaylistForMultizone($playlistId);
-
-		static::assertEquals([], $result);
+		$this->expectException(\Exception::class);
+		$this->expectExceptionMessage('Repository error');
+		$this->service->loadPlaylistForMultizone($playlistId);
 	}
 
 	#[Group('units')]
@@ -550,8 +539,8 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadPlaylistForMultizoneFails(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		// a layout which is no serialized string can not be restored
-		$this->loggerMock->expects($this->once())->method('error');
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->userSessionStub->method('getUID')->willReturn(1);
 		$playlistId = 123;
@@ -565,9 +554,8 @@ class PlaylistsServiceTest extends TestCase
 			->with(1, $playlist)
 			->willReturn(true);
 
-		$result = $this->service->loadPlaylistForMultizone($playlistId);
-
-		static::assertEmpty($result);
+		$this->expectException(\TypeError::class);
+		$this->service->loadPlaylistForMultizone($playlistId);
 	}
 
 	#[Group('units')]
@@ -595,6 +583,7 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadNameByIdThrowsExceptionWhenPlaylistNotFound(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$playlistId = 789;
@@ -603,18 +592,15 @@ class PlaylistsServiceTest extends TestCase
 			->with(['playlist_id' => $playlistId])
 			->willReturn([]);
 
-		$this->loggerMock->expects($this->once())
-			->method('error')
-			->with('Error loading playlist. Playlist with Id: 789 not found');
-
-		$result = $this->service->loadNameById($playlistId);
-
-		static::assertEquals([], $result);
+		$this->expectException(NotFoundException::class);
+		$this->expectExceptionMessage('playlist_not_found');
+		$this->service->loadNameById($playlistId);
 	}
 
 	#[Group('units')]
-	public function testLoadNameByIdReturnsEmptyArrayOnRepositoryException(): void
+	public function testLoadNameByIdPassesRepositoryException(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$playlistId = 123;
@@ -623,13 +609,9 @@ class PlaylistsServiceTest extends TestCase
 			->with(['playlist_id' => $playlistId])
 			->willThrowException(new \Exception('Repository error'));
 
-		$this->loggerMock->expects($this->once())
-			->method('error')
-			->with('Repository error');
-
-		$result = $this->service->loadNameById($playlistId);
-
-		static::assertEquals([], $result);
+		$this->expectException(\Exception::class);
+		$this->expectExceptionMessage('Repository error');
+		$this->service->loadNameById($playlistId);
 	}
 
 	#[Group('units')]
@@ -666,6 +648,7 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testSaveZonesThrowsExceptionWhenPlaylistNotFound(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->userSessionStub->method('getUID')->willReturn(1);
@@ -680,17 +663,15 @@ class PlaylistsServiceTest extends TestCase
 			->with($playlistId)
 			->willReturn([]);
 
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('No playlist with Id: 123 found.');
-
-		$result = $this->service->saveZones($playlistId, $zones);
-
-		static::assertEquals(0, $result);
+		$this->expectException(NotFoundException::class);
+		$this->expectExceptionMessage('playlist_not_found');
+		$this->service->saveZones($playlistId, $zones);
 	}
 
 	#[Group('units')]
 	public function testSaveZonesThrowsExceptionWhenPlaylistNotEditable(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->userSessionStub->method('getUID')->willReturn(1);
 		$playlistId = 123;
@@ -709,17 +690,17 @@ class PlaylistsServiceTest extends TestCase
 			->with(1, $playlist)
 			->willReturn(false);
 
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Playlist is not editable.');
 		$this->userSessionStub->method('getUID')->willReturn(1);
-		$result = $this->service->saveZones($playlistId, $zones);
 
-		static::assertEquals(0, $result);
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('playlist_not_editable');
+		$this->service->saveZones($playlistId, $zones);
 	}
 
 	#[Group('units')]
-	public function testSaveZonesReturnsZeroOnRepositoryException(): void
+	public function testSaveZonesPassesRepositoryException(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->userSessionStub->method('getUID')->willReturn(1);
 		$playlistId = 123;
@@ -742,12 +723,9 @@ class PlaylistsServiceTest extends TestCase
 			->with($playlistId, ['layout' => serialize($zones)])
 			->willThrowException(new \Exception('Repository error'));
 
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Repository error');
-
-		$result = $this->service->saveZones($playlistId, $zones);
-
-		static::assertEquals(0, $result);
+		$this->expectException(\Exception::class);
+		$this->expectExceptionMessage('Repository error');
+		$this->service->saveZones($playlistId, $zones);
 	}
 
 	#[Group('units')]
@@ -778,6 +756,7 @@ class PlaylistsServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoadPlaylistForEditThrowsExceptionWhenPlaylistNotFound(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->userSessionStub->method('getUID')->willReturn(1);
@@ -788,18 +767,15 @@ class PlaylistsServiceTest extends TestCase
 			->with($playlistId)
 			->willReturn([]);
 
-		$this->loggerMock->expects($this->once())
-			->method('error')
-			->with('No playlist with Id: 888 found.');
-
-		$result = $this->service->loadPlaylistForEdit($playlistId);
-
-		static::assertEquals([], $result);
+		$this->expectException(NotFoundException::class);
+		$this->expectExceptionMessage('playlist_not_found');
+		$this->service->loadPlaylistForEdit($playlistId);
 	}
 
 	#[Group('units')]
 	public function testLoadPlaylistForEditThrowsExceptionWhenPlaylistNotEditable(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->userSessionStub->method('getUID')->willReturn(2);
 		$playlistId = 777;
@@ -815,18 +791,15 @@ class PlaylistsServiceTest extends TestCase
 			->with(2, $playlist)
 			->willReturn(false);
 
-		$this->loggerMock->expects($this->once())
-			->method('error')
-			->with('Playlist is not editable.');
-
-		$result = $this->service->loadPlaylistForEdit($playlistId);
-
-		static::assertEquals([], $result);
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('playlist_not_editable');
+		$this->service->loadPlaylistForEdit($playlistId);
 	}
 
 	#[Group('units')]
-	public function testLoadPlaylistForEditReturnsEmptyArrayOnRepositoryException(): void
+	public function testLoadPlaylistForEditPassesRepositoryException(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method($this->anything());
 		$this->userSessionStub->method('getUID')->willReturn(3);
@@ -837,13 +810,9 @@ class PlaylistsServiceTest extends TestCase
 			->with($playlistId)
 			->willThrowException(new \Exception('Repository error'));
 
-		$this->loggerMock->expects($this->once())
-			->method('error')
-			->with('Repository error');
-
-		$result = $this->service->loadPlaylistForEdit($playlistId);
-
-		static::assertEquals([], $result);
+		$this->expectException(\Exception::class);
+		$this->expectExceptionMessage('Repository error');
+		$this->service->loadPlaylistForEdit($playlistId);
 	}
 
 	private function expectUntouched(MockObject ...$mocks): void

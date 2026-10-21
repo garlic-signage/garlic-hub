@@ -21,13 +21,15 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Services;
 
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\UserException;
 use App\Framework\Services\AbstractBaseService;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 class ConditionalPlayService extends AbstractBaseService
 {
@@ -38,66 +40,46 @@ class ConditionalPlayService extends AbstractBaseService
 
 	/**
 	 * @return array<string,mixed>
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws NotFoundException
+	 * @throws UserException
 	 */
 	public function fetchConditionalByItemId(int $itemId): array
 	{
-		try
-		{
-			$item = $this->fetchAccessibleItem($itemId);
+		$item = $this->itemService->fetchItemById($itemId); // check rights on playlists, too
 
-			$conditional = [];
-			if ($item['conditional'] !== '')
-			{
-				$tmp = @unserialize($item['conditional']);
-				if (is_array($tmp))
-					$conditional = $tmp;
-			}
-			$item['conditional'] = $conditional;
-
-			return $item;
-		}
-		catch (Throwable $e)
+		$conditional = [];
+		if ($item['conditional'] !== '')
 		{
-			$this->logger->error('Error conditional fetch: ' . $e->getMessage());
-			return [];
+			$tmp = @unserialize($item['conditional']);
+			if (is_array($tmp))
+				$conditional = $tmp;
 		}
+		$item['conditional'] = $conditional;
+
+		return $item;
 	}
 
 	/**
+	 * Saving unchanged settings changes no rows, which is no error.
+	 *
 	 * @param array<string,mixed> $requestData
-	 */
-	public function saveConditionalPlay(int $itemId, array $requestData): bool
-	{
-		try
-		{
-			$item = $this->fetchAccessibleItem($itemId);
-			if (empty($item))
-				throw new ModuleException('items', 'No item found.');
-
-			$affected = $this->itemService->updateField($itemId, 'conditional', @serialize($requestData));
-			if ($affected === 0)
-				throw new ModuleException('items', 'Could not save for item.');
-
-			return true;
-		}
-		catch (Throwable $e)
-		{
-			$this->logger->error('Error save conditional play: ' . $e->getMessage());
-			return false;
-		}
-	}
-
-	/**
-	 * @return array<string,mixed>
-	 * @throws ModuleException
+	 * @throws AccessDeniedException
 	 * @throws CoreException
-	 * @throws FrameworkException
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws NotFoundException
+	 * @throws UserException
 	 */
-	public function fetchAccessibleItem(int $itemId): array
+	public function saveConditionalPlay(int $itemId, array $requestData): void
 	{
-		return $this->itemService->fetchItemById($itemId); // check rights on playlists, too
+		$this->itemService->fetchItemById($itemId); // check rights on playlists, too
+		$this->itemService->updateField($itemId, 'conditional', @serialize($requestData));
 	}
-
 
 }

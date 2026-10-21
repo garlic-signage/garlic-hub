@@ -23,6 +23,8 @@ namespace App\Modules\Playlists\Services\InsertItems;
 
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\ItemType;
@@ -31,6 +33,7 @@ use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
 use App\Modules\Playlists\Services\PlaylistsService;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 class Playlist extends AbstractInsertItem
 {
@@ -46,20 +49,22 @@ class Playlist extends AbstractInsertItem
 
 	/**
 	 * @return array<string,mixed>
+	 * @throws CoreException
 	 * @throws Exception
+	 * @throws ModuleException
 	 * @throws UserException
 	 */
 	public function insert(int $playlistId, string|int $insertId, int $position): array
 	{
+		$this->itemsRepository->beginTransaction();
 		try
 		{
-			$this->itemsRepository->beginTransaction();
 
 			$playlistTargetData = $this->checkPlaylistAcl($playlistId);
 			$playlistInsertData = $this->checkPlaylistAcl((int) $insertId);
 
 			if ($this->checkForRecursiveInserts($playlistTargetData['playlist_id'], $playlistInsertData['playlist_id']))
-				throw new ModuleException('items', 'Playlist recursion alert.');
+				throw new TranslatableModuleException('playlists', 'playlist_recursion', ['playlist_id' => $playlistId, 'insert_id' => (int) $insertId]);
 
 			/*			if (!$this->allowedByTimeLimit($targetId, $playlistTargetData['time_limit']))
 							throw new ModuleException('items', 'Playlist time limit exceeds');
@@ -80,7 +85,7 @@ class Playlist extends AbstractInsertItem
 			];
 			$id = $this->itemsRepository->insert($saveItem);
 			if ($id === 0)
-				throw new ModuleException('items', 'Playlist item could not inserted.');
+				throw new TranslatableModuleException('playlists', 'item_not_inserted', ['playlist_id' => $playlistId]);
 
 			$saveItem['item_id'] = $id;
 			$saveItem['paths']['thumbnail'] = 'public/images/icons/playlist.svg';
@@ -92,11 +97,10 @@ class Playlist extends AbstractInsertItem
 
 			return ['playlist_metrics' => $playlistMetrics, 'item' => $saveItem];
 		}
-		catch (Exception | ModuleException | CoreException $e)
+		catch (Throwable $e)
 		{
 			$this->itemsRepository->rollBackTransaction();
-			$this->logger->error('Error insert playlist: ' . $e->getMessage());
-			return [];
+			throw $e;
 		}
 	}
 

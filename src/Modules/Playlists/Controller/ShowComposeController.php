@@ -21,8 +21,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Controller;
 
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Playlists\Helper\Compose\UiTemplatesPreparer;
 use App\Modules\Playlists\Helper\PlaylistMode;
@@ -53,10 +55,20 @@ class ShowComposeController
 		if ($playlistId === 0)
 			return $this->redirectWithErrors($response, 'Playlist ID not valid.');
 
-		/** @var array<string,mixed> $playlist */
-		$playlist = $this->playlistsService->loadPlaylistForEdit($playlistId);
-		if ($playlist === [])
+		try
+		{
+			/** @var array<string,mixed> $playlist */
+			$playlist = $this->playlistsService->loadPlaylistForEdit($playlistId);
+		}
+		// the compose page redirects to the list with a message instead of an error page
+		catch (NotFoundException)
+		{
 			return $this->redirectWithErrors($response, 'Playlist not found.');
+		}
+		catch (AccessDeniedException)
+		{
+			return $this->redirectWithErrors($response, 'Playlist is not editable.');
+		}
 
 		switch ($playlist['playlist_mode'])
 		{
@@ -80,19 +92,9 @@ class ShowComposeController
 		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
 	}
 
-	private function redirectWithErrors(ResponseInterface $response, string $defaultMessage = 'Unknown error.'): ResponseInterface
+	private function redirectWithErrors(ResponseInterface $response, string $message): ResponseInterface
 	{
-		if ($this->playlistsService->hasErrorMessages())
-		{
-			foreach ($this->playlistsService->getErrorMessages() as $message)
-			{
-				$this->flash->addMessage('error', $message);
-			}
-		}
-		else
-		{
-			$this->flash->addMessage('error', $defaultMessage);
-		}
+		$this->flash->addMessage('error', $message);
 		return $response->withHeader('Location', '/playlists')->withStatus(302);
 	}
 }

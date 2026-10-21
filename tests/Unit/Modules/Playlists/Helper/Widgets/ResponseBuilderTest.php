@@ -60,22 +60,6 @@ class ResponseBuilderTest extends TestCase
 		static::assertSame($this->responseStub, $this->responseBuilder->invalidItemId($this->responseStub));
 	}
 
-	#[Group('units')]
-	public function testWidgetLoadFailed(): void
-	{
-		$this->expectJsonError('Widget load failed.');
-
-		static::assertSame($this->responseStub, $this->responseBuilder->widgetLoadFailed($this->responseStub));
-	}
-
-	#[Group('units')]
-	public function testSaveFailed(): void
-	{
-		$this->expectJsonError('Save error');
-
-		static::assertSame($this->responseStub, $this->responseBuilder->saveFailed($this->responseStub, 'Save error'));
-	}
-
 	private function expectJsonError(string $message): void
 	{
 		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonError')

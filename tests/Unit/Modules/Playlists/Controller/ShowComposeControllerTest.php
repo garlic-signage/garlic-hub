@@ -21,8 +21,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Controller;
 
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Playlists\Controller\ShowComposeController;
 use App\Modules\Playlists\Helper\Compose\UiTemplatesPreparer;
@@ -89,7 +91,8 @@ class ShowComposeControllerTest extends TestCase
 	public function testShowRedirectsWhenPlaylistNotFound(): void
 	{
 		$this->uiTemplatesPreparerMock->expects($this->never())->method($this->anything());
-		$this->expectPlaylistLoaded([]);
+		$this->playlistsServiceMock->expects($this->once())->method('loadPlaylistForEdit')->with(1)
+			->willThrowException(new NotFoundException('playlists', 'playlist_not_found'));
 		$this->expectError('Playlist not found.');
 
 		$response = $this->controller->show($this->createStub(ServerRequestInterface::class), new Response(), ['playlist_id' => 1]);
@@ -103,20 +106,16 @@ class ShowComposeControllerTest extends TestCase
 	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testShowRedirectsWithServiceErrors(): void
+	public function testShowRedirectsWhenPlaylistNotEditable(): void
 	{
 		$this->uiTemplatesPreparerMock->expects($this->never())->method($this->anything());
-		$this->expectPlaylistLoaded([]);
-		$this->playlistsServiceMock->expects($this->once())->method('hasErrorMessages')->willReturn(true);
-		$this->playlistsServiceMock->expects($this->once())->method('getErrorMessages')->willReturn(['error1', 'error2']);
-		$messages = [];
-		$this->flashMock->expects($this->exactly(2))->method('addMessage')
-			->willReturnCallback(function (string $key, string $message) use (&$messages): void { $messages[] = $key . ':' . $message; });
+		$this->playlistsServiceMock->expects($this->once())->method('loadPlaylistForEdit')->with(1)
+			->willThrowException(new AccessDeniedException('playlists', 'playlist_not_editable'));
+		$this->expectError('Playlist is not editable.');
 
 		$response = $this->controller->show($this->createStub(ServerRequestInterface::class), new Response(), ['playlist_id' => 1]);
 
 		$this->assertRedirectedToPlaylists($response);
-		static::assertSame(['error:error1', 'error:error2'], $messages);
 	}
 
 	/**
@@ -182,7 +181,6 @@ class ShowComposeControllerTest extends TestCase
 
 	private function expectError(string $message): void
 	{
-		$this->playlistsServiceMock->expects($this->once())->method('hasErrorMessages')->willReturn(false);
 		$this->flashMock->expects($this->once())->method('addMessage')->with('error', $message);
 	}
 

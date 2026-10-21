@@ -19,6 +19,9 @@
 */
 declare(strict_types=1);
 
+use App\Framework\Controller\JsonResponseHandler;
+use App\Framework\Core\Translate\Translator;
+use App\Framework\Middleware\JsonErrorHandler;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -42,33 +45,25 @@ $logger              = $container->get('AppLogger');
 $errorMiddleware     = $app->addErrorMiddleware($_ENV['APP_DEBUG']==='true', true, true, $container->get('AppLogger'));
 $defaultErrorHandler = $errorMiddleware->getDefaultErrorHandler();
 
+$jsonErrorHandler = new JsonErrorHandler(
+	$app->getResponseFactory(),
+	$container->get(JsonResponseHandler::class),
+	$container->get(Translator::class),
+	$logger
+);
+
 $myErrorHandler = function (
 	ServerRequestInterface $request,
 	Throwable $exception,
 	bool $displayErrorDetails,
 	bool $logErrors,
 	bool $logErrorDetails
-) use ($app, $defaultErrorHandler): ResponseInterface
+) use ($jsonErrorHandler, $defaultErrorHandler): ResponseInterface
 {
 	$path = $request->getUri()->getPath();
 
 	if (str_starts_with($path, '/api') || str_starts_with($path, '/async'))
-	{
-		$response = $app->getResponseFactory()->createResponse();
-		$response->withHeader('Content-Type', 'application/json');
-
-		[$status, $error] = match (true) {
-			$exception instanceof Slim\Exception\HttpNotFoundException => [404, 'Route not found'],
-			$exception instanceof Slim\Exception\HttpMethodNotAllowedException => [405, 'Method not allowed'],
-			$exception instanceof DomainException => [400, 'Domain-specific error'],
-			default => [500, 'Internal Server Error'],
-		};
-		$data = json_encode(['error' => $error, 'message' => $displayErrorDetails ? $exception->getMessage() : 'An unexpected error occurred.']);
-		if ($data !== false)
-			$response->getBody()->write($data);
-
-		return $response->withStatus($status);
-	}
+		return $jsonErrorHandler($request, $exception, $displayErrorDetails);
 
 	// for normal Web UI operations
 	return $defaultErrorHandler->__invoke($request, $exception, $displayErrorDetails, $logErrors, $logErrorDetails);

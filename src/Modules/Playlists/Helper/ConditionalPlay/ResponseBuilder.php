@@ -30,7 +30,7 @@ use Psr\Http\Message\ResponseInterface;
  * Class ResponseBuilder
  *
  * Extends the BaseResponseBuilder class and provides methods for handling JSON error responses
- * for various scenarios like invalid item ID, playlist not found, or item not found.
+ * for an invalid item ID.
  *
  * Each method processes the given response by returning an error response with a
  * translated error message, specific to the respective scenario.
@@ -50,27 +50,4 @@ class ResponseBuilder extends BaseResponseBuilder
 			$response, $this->translator->translate('invalid_item_id', 'playlists')
 		);
     }
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	public function playlistNotFound(ResponseInterface $response): ResponseInterface
-    {
-		return $this->jsonResponseHandler->jsonError(
-			$response, $this->translator->translate('playlist_not_found', 'playlists')
-		);
-    }
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	public function itemNotFound(ResponseInterface $response): ResponseInterface
-	{
-		return $this->jsonResponseHandler->jsonError(
-			$response, $this->translator->translate('item_not_found', 'playlists')
-		);
-	}
-
 }

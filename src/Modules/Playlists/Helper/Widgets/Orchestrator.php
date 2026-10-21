@@ -81,8 +81,6 @@ class Orchestrator
 	public function fetch(ResponseInterface $response): ResponseInterface
 	{
 		$data = $this->widgetsService->fetchWidgetByItemId($this->itemId);
-		if (empty($data))
-			return $this->responseBuilder->widgetLoadFailed($response);
 
 		return $this->responseBuilder->generalSuccess($response, ['data' => $data]);
 	}
@@ -92,8 +90,7 @@ class Orchestrator
 	 */
 	public function save(ResponseInterface $response): ResponseInterface
 	{
-		if (!$this->widgetsService->saveWidget($this->itemId, $this->input))
-			return $this->responseBuilder->saveFailed($response, $this->widgetsService->getErrorText());
+		$this->widgetsService->saveWidget($this->itemId, $this->input);
 
 		return $this->responseBuilder->generalSuccess($response, []);
 	}

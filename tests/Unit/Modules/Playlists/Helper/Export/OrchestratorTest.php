@@ -100,27 +100,9 @@ class OrchestratorTest extends TestCase
 		$this->prepareValid(['playlist_id' => '1', 'csrf_token' => 'token']);
 
 		$this->exportServiceMock->expects($this->once())->method('exportToSmil')->with(1)->willReturn(1);
-		$this->responseBuilderMock->expects($this->never())->method('playlistNotFound');
 		$this->responseBuilderMock->expects($this->once())->method('generalSuccess')
 			->with($this->responseStub, [])
 			->willReturn($this->responseStub);
-
-		$this->orchestrator->export($this->responseStub);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws DBALException
-	 * @throws FrameworkException
-	 * @throws UserException
-	 */
-	#[Group('units')]
-	public function testExportWhenPlaylistNotFound(): void
-	{
-		$this->prepareValid(['playlist_id' => 1, 'csrf_token' => 'token']);
-
-		$this->exportServiceMock->expects($this->once())->method('exportToSmil')->with(1)->willReturn(0);
-		$this->expectError('playlistNotFound');
 
 		$this->orchestrator->export($this->responseStub);
 	}

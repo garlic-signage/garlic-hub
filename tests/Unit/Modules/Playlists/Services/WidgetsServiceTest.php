@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Services;
 
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Playlists\Helper\Widgets\ContentDataPreparer;
 use App\Modules\Playlists\Services\ItemsService;
 use App\Modules\Playlists\Services\WidgetsService;
@@ -55,13 +56,6 @@ class WidgetsServiceTest extends TestCase
 	}
 
 	#[Group('units')]
-	public function testGetErrorTextReturnsDefaultEmptyValue(): void
-	{
-		$this->expectUntouched($this->itemsServiceMock, $this->contentDataMock, $this->loggerMock);
-		static::assertSame('', $this->widgetsService->getErrorText());
-	}
-
-	#[Group('units')]
 	public function testFetchWidgetByItemIdReturnsExpectedResult(): void
 	{
 		$this->loggerMock->expects($this->never())->method($this->anything());
@@ -92,8 +86,9 @@ class WidgetsServiceTest extends TestCase
 	}
 
 	#[Group('units')]
-	public function testFetchWidgetByItemIdReturnsEmptyWhenNoWidget(): void
+	public function testFetchWidgetByItemIdThrowsWhenNoWidget(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$itemId = 1;
 		$UID = 12;
 		$itemData = [
@@ -107,11 +102,10 @@ class WidgetsServiceTest extends TestCase
 			->willReturn($itemData);
 
 		$this->contentDataMock->expects($this->never())->method('determinePreferences');
-		$this->loggerMock->expects($this->once())->method('error')
-			->with(static::stringContains('Error widget fetch: Not a widget item.'));
 
-		static::assertEmpty($this->widgetsService->fetchWidgetByItemId($itemId));
-
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('item_not_widget');
+		$this->widgetsService->fetchWidgetByItemId($itemId);
 	}
 
 	#[Group('units')]
@@ -142,12 +136,13 @@ class WidgetsServiceTest extends TestCase
 			->method('updateField')
 			->with($itemId, 'content_data', $serializedContent);
 
-		static::assertTrue($this->widgetsService->saveWidget($itemId, $requestData));
+		$this->widgetsService->saveWidget($itemId, $requestData);
 	}
 
 	#[Group('units')]
-	public function testSaveWidgetHandlesExceptionAndFails(): void
+	public function testSaveWidgetPassesException(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->contentDataMock->expects($this->never())->method($this->anything());
 		$itemId = 1;
 		$requestData = ['key' => 'value'];
@@ -158,19 +153,8 @@ class WidgetsServiceTest extends TestCase
 			->with($itemId)
 			->willThrowException(new \Exception($exceptionMessage));
 
-		$this->loggerMock->expects($this->once())
-			->method('error')
-			->with(static::stringContains($exceptionMessage));
-
-		static::assertFalse($this->widgetsService->saveWidget($itemId, $requestData));
-		static::assertSame($exceptionMessage, $this->widgetsService->getErrorText());
-	}
-
-	private function expectUntouched(MockObject ...$mocks): void
-	{
-		foreach ($mocks as $mock)
-		{
-			$mock->expects($this->never())->method($this->anything());
-		}
+		$this->expectException(\Exception::class);
+		$this->expectExceptionMessage('Error saving data');
+		$this->widgetsService->saveWidget($itemId, $requestData);
 	}
 }

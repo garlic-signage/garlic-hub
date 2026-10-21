@@ -21,16 +21,17 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Services;
 
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Services\AbstractBaseService;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Repositories\PlaylistsRepository;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 class PlaylistsService extends AbstractBaseService
 {
@@ -132,48 +133,39 @@ class PlaylistsService extends AbstractBaseService
 	}
 
 	/**
-	 * @param int $playlistId
-	 * @return int
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws NotFoundException
+	 * @throws UserException
 	 */
 	public function delete(int $playlistId): int
 	{
-		try
-		{
-			$this->loadWithUserById($playlistId);
+		$this->loadWithUserById($playlistId);
 
-			return $this->playlistsRepository->delete($playlistId);
-		}
-		catch(Throwable $e)
-		{
-			$this->logger->error('Error delete playlist: '.$e->getMessage());
-			$this->addErrorMessage($e->getMessage());
-			return 0;
-		}
-
+		return $this->playlistsRepository->delete($playlistId);
 	}
 
 	/**
 	 * @return array<string,mixed>
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws NotFoundException
+	 * @throws UserException
 	 */
 	public function loadPlaylistForMultizone(int $playlistId): array
 	{
-		try
-		{
-			/** @var array{UID: int, company_id: int, playlist_id: int, layout:string, ...} $playlist */
-			$playlist = $this->loadWithUserById($playlistId);
+		/** @var array{UID: int, company_id: int, playlist_id: int, layout:string, ...} $playlist */
+		$playlist = $this->loadWithUserById($playlistId);
 
-			// new playlists have no layout yet
-			if ($playlist['layout'] === null || $playlist['layout'] === '')
-				return [];
-
-			return unserialize($playlist['layout']);
-		}
-		catch(Throwable $e)
-		{
-			$this->logger->error($e->getMessage());
-			$this->addErrorMessage($e->getMessage());
+		// new playlists have no layout yet
+		if ($playlist['layout'] === null || $playlist['layout'] === '')
 			return [];
-		}
+
+		return unserialize($playlist['layout']);
 	}
 
 	/**
@@ -182,8 +174,9 @@ class PlaylistsService extends AbstractBaseService
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws ModuleException
 	 * @throws UserException
+	 * @throws AccessDeniedException
+	 * @throws NotFoundException
 	 */
 	public function loadPureById(int $playlistId): array
 	{
@@ -191,117 +184,107 @@ class PlaylistsService extends AbstractBaseService
 		$playlist = $this->fetchById($playlistId); // the playlist is sure not empty here
 
 		if (!$this->aclValidator->isPlaylistEditable($this->userSession->getUID(), $playlist))
-			throw new ModuleException('playlists', 'Error loading playlist: Is not editable');
+			throw new AccessDeniedException('playlists', 'playlist_not_editable', ['playlist_id' => $playlistId]);
 
 		return $playlist;
 	}
 
 	/**
 	 * @return array<string,mixed>
-	 * @throws ModuleException
 	 * @throws Exception
+	 * @throws NotFoundException
 	 */
 	public function fetchById(int $playlistId): array
 	{
 		/** @var array<string,mixed> $playlist */
 		$playlist = $this->playlistsRepository->findFirstBy(['playlist_id' => $playlistId]);
 		if ($playlist === [])
-			throw new ModuleException('playlists', 'Error loading playlist. Playlist with Id: '.$playlistId.' not found');
+			throw new NotFoundException('playlists', 'playlist_not_found', ['playlist_id' => $playlistId]);
 
 		return $playlist;
 	}
 
 	/**
 	 * @return array{UID: int, company_id: int, playlist_id: int, ...}
-	 * @throws ModuleException
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws UserException
+	 * @throws AccessDeniedException
+	 * @throws NotFoundException
 	 */
 	public function loadWithUserById(int $playlistId): array
 	{
 		/** @var array{UID: int, company_id: int, playlist_id: int, ...} $playlist */
 		$playlist = $this->playlistsRepository->findFirstWithUserName($playlistId);
 		if ($playlist === [])
-			throw new ModuleException('playlists', 'No playlist with Id: '.$playlistId.' found.');
+			throw new NotFoundException('playlists', 'playlist_not_found', ['playlist_id' => $playlistId]);
 
 		if (!$this->aclValidator->isPlaylistEditable($this->userSession->getUID(), $playlist))
-			throw new ModuleException('playlists', 'Playlist is not editable.');
+			throw new AccessDeniedException('playlists', 'playlist_not_editable', ['playlist_id' => $playlistId]);
 
 		return $playlist;
 	}
 
 	/**
-	 * @return array<string,mixed>
+	 * @return array{playlist_id:int, name:mixed}
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws NotFoundException
+	 * @throws UserException
 	 */
 	public function loadNameById(int $playlistId): array
 	{
-		try
-		{
-			$playlist = $this->loadPureById($playlistId);
+		$playlist = $this->loadPureById($playlistId);
 
-			return ['playlist_id' => $playlistId, 'name' => $playlist['playlist_name']];
-		}
-		catch(Throwable $e)
-		{
-			$this->logger->error($e->getMessage());
-			$this->addErrorMessage($e->getMessage());
-			return [];
-		}
+		return ['playlist_id' => $playlistId, 'name' => $playlist['playlist_name']];
 	}
 
 	/**
 	 * @param array<string,mixed> $zones
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws NotFoundException
+	 * @throws UserException
 	 */
 	public function saveZones(int $playlistId, array $zones): int
 	{
-		try
-		{
-			$count = 0;
-			$playlist = $this->loadWithUserById($playlistId);
-
-			if ($zones !== [])
-				$count = $this->playlistsRepository->update($playlist['playlist_id'], ['layout' => serialize($zones)]);
-
-			return $count;
-		}
-		catch(Throwable $e)
-		{
-			$this->logger->error($e->getMessage());
-			$this->addErrorMessage($e->getMessage());
+		$playlist = $this->loadWithUserById($playlistId);
+		if ($zones === [])
 			return 0;
-		}
+
+		return $this->playlistsRepository->update($playlist['playlist_id'], ['layout' => serialize($zones)]);
 	}
 
 	/**
-	 * @return array{"UID": int, "company_id": int, playlist_mode: string,...}|array<empty,empty>
+	 * @return array{"UID": int, "company_id": int, playlist_mode: string,...}
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws NotFoundException
+	 * @throws UserException
 	 */
 	public function loadPlaylistForEdit(int $playlistId): array
 	{
-		try
+		/** @var array{UID: int, company_id: int, playlist_mode: string, ...} $playlist */
+		$playlist = $this->loadWithUserById($playlistId);
+		if (($playlist['layout'] ?? null) !== null)
 		{
-			$playlist = $this->loadWithUserById($playlistId);
-			if (($playlist['layout'] ?? null) !== null)
-			{
-				$layout = unserialize($playlist['layout']);
-				$exploded = explode('x', $layout['resolution']);
-				$playlist['screen_width'] = (int) $exploded[0];
-				$playlist['screen_height'] = (int) $exploded[1];
-				$playlist['layout'] = $layout;
-			}
-			else
-				$playlist['layout'] = [];
-
-			return $playlist;
-
+			$layout = unserialize($playlist['layout']);
+			$exploded = explode('x', $layout['resolution']);
+			$playlist['screen_width'] = (int) $exploded[0];
+			$playlist['screen_height'] = (int) $exploded[1];
+			$playlist['layout'] = $layout;
 		}
-		catch(Throwable $e)
-		{
-			$this->logger->error($e->getMessage());
-			$this->addErrorMessage($e->getMessage());
-			return [];
-		}
+		else
+			$playlist['layout'] = [];
+
+		return $playlist;
 	}
 
 	/**

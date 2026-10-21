@@ -21,20 +21,22 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Services;
 
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
+use App\Framework\Exceptions\UserException;
 use App\Framework\Services\AbstractBaseService;
 use App\Modules\Playlists\Helper\Widgets\ContentDataPreparer;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 class WidgetsService extends AbstractBaseService
 {
 	private readonly ItemsService $itemService;
 	private readonly ContentDataPreparer $contentDataPreparer;
-	private string $errorText = '';
 
 	public function __construct(ItemsService $itemService, ContentDataPreparer $contentDataPreparer, LoggerInterface $logger)
 	{
@@ -43,62 +45,52 @@ class WidgetsService extends AbstractBaseService
 		parent::__construct($logger);
 	}
 
-	public function getErrorText(): string
-	{
-		return $this->errorText;
-	}
-
-
 	/**
-	 * @return array<string,mixed>
+	 * @return array{item_id:int, values:array<mixed>, preferences:mixed, item_name:mixed}
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws NotFoundException
+	 * @throws UserException
 	 */
 	public function fetchWidgetByItemId(int $itemId): array
 	{
-		try
-		{
-			$item            = $this->fetchItem($itemId);
-			$preferencesData = $this->contentDataPreparer->determinePreferences($item['config_data']);
+		$item            = $this->fetchItem($itemId);
+		$preferencesData = $this->contentDataPreparer->determinePreferences($item['config_data']);
 
-			$values = [];
-			if (!is_null($item['content_data']))
-			{
-				$ar = unserialize($item['content_data']);
-				if (is_array($ar))
-					$values = $ar;
-			}
-
-			return [
-				'item_id' => $itemId,
-				'values' => $values,
-				'preferences' => $preferencesData,
-				'item_name' => $item['item_name']
-			];
-		}
-		catch (Throwable $e)
+		$values = [];
+		if (!is_null($item['content_data']))
 		{
-			$this->logger->error('Error widget fetch: ' . $e->getMessage());
-			return [];
+			$ar = unserialize($item['content_data']);
+			if (is_array($ar))
+				$values = $ar;
 		}
+
+		return [
+			'item_id' => $itemId,
+			'values' => $values,
+			'preferences' => $preferencesData,
+			'item_name' => $item['item_name']
+		];
 	}
 
 	/**
 	 * @param array<string,mixed> $requestData
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws NotFoundException
+	 * @throws UserException
 	 */
-	public function saveWidget(int $itemId, array $requestData): bool
+	public function saveWidget(int $itemId, array $requestData): void
 	{
-		try
-		{
-			$item            = $this->fetchItem($itemId);
-			$requestData     = $this->prepareContentData($item['config_data'], $requestData);
-			$this->itemService->updateField($itemId, 'content_data', $requestData);
-			return true;
-		}
-		catch (Throwable $e)
-		{
-			$this->logger->error('Error save widget: ' . $e->getMessage());
-			$this->errorText = $e->getMessage();
-			return false;
-		}
+		$item        = $this->fetchItem($itemId);
+		$requestData = $this->prepareContentData($item['config_data'], $requestData);
+		$this->itemService->updateField($itemId, 'content_data', $requestData);
 	}
 
 	/**
@@ -123,7 +115,7 @@ class WidgetsService extends AbstractBaseService
 	{
 		$item = $this->itemService->fetchItemById($itemId);
 		if ($item['mimetype'] !== 'application/widget')
-			throw new ModuleException('items', 'Not a widget item.');
+			throw new TranslatableModuleException('playlists', 'item_not_widget', ['item_id' => $itemId]);
 
 		return $item;
 	}

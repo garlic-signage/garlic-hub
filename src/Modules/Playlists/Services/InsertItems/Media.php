@@ -24,6 +24,8 @@ namespace App\Modules\Playlists\Services\InsertItems;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\MediaService;
@@ -34,6 +36,7 @@ use App\Modules\Playlists\Services\PlaylistsService;
 use App\Modules\Playlists\Services\WidgetsService;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 class Media extends AbstractInsertItem
 {
@@ -60,20 +63,23 @@ class Media extends AbstractInsertItem
 	}
 
 	/**
+	 * @return array<string,mixed>
+	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
+	 * @throws ModuleException
 	 * @throws UserException
 	 */
 	public function insert(int $playlistId, int|string $insertId, int $position): array
 	{
+		$this->itemsRepository->beginTransaction();
 		try
 		{
-			$this->itemsRepository->beginTransaction();
 			$playlistData = $this->checkPlaylistAcl($playlistId);
 
 			$media = $this->mediaService->fetchMedia((string) $insertId); // checks rights, too
 			if (empty($media))
-				throw new ModuleException('items', 'Media is not accessible');
+				throw new NotFoundException('playlists', 'media_not_accessible', ['media_id' => (string) $insertId]);
 
 			/*			if (!$this->allowedByTimeLimit($playlistId, $playlistData['time_limit']))
 							throw new ModuleException('items', 'Playlist time limit exceeds');
@@ -100,7 +106,7 @@ class Media extends AbstractInsertItem
 
 			$insertId = $this->itemsRepository->insert($saveItem);
 			if ($insertId === 0)
-				throw new ModuleException('items', 'Playlist item could not be inserted.');
+				throw new TranslatableModuleException('playlists', 'item_not_inserted', ['playlist_id' => $playlistId]);
 
 			$saveItem['item_id'] = $insertId;
 			$saveItem['paths'] = $media['paths'];
@@ -112,11 +118,10 @@ class Media extends AbstractInsertItem
 
 			return ['playlist_metrics' => $playlistMetrics, 'item' => $saveItem];
 		}
-		catch (Exception | ModuleException | CoreException $e)
+		catch (Throwable $e)
 		{
 			$this->itemsRepository->rollBackTransaction();
-			$this->logger->error('Error insert media: ' . $e->getMessage());
-			return [];
+			throw $e;
 		}
 	}
 

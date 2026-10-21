@@ -21,9 +21,13 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Services;
 
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
+use App\Framework\Exceptions\UserException;
 use App\Framework\Services\AbstractBaseService;
 use App\Modules\Mediapool\Services\MediaService;
 use App\Modules\Playlists\Helper\Compose\ItemThumbnailResolver;
@@ -31,6 +35,7 @@ use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 /**+
  * Todo Concept:
@@ -68,11 +73,7 @@ class ItemsService extends AbstractBaseService
 	 */
 	public function fetchItemById(int $itemId): array
 	{
-		$item = $this->itemsRepository->findFirstById($itemId);
-		if ($item === [])
-			throw new ModuleException('items', 'Item not found');
-
-		/** @var array<string,mixed> $item */
+		$item = $this->findItem($itemId);
 
 		$destinationPlaylist = $this->playlistsService->loadPureById($item['playlist_id']); // check rights
 
@@ -81,7 +82,7 @@ class ItemsService extends AbstractBaseService
 			case ItemType::MEDIAPOOL->value:
 				$media = $this->mediaService->fetchMediaByChecksum($item['file_resource']);
 				if (empty($media))
-					throw new ModuleException('items', 'Item not found');
+					throw new NotFoundException('playlists', 'item_not_found', ['item_id' => $itemId]);
 
 				$item['config_data'] = $media['config_data'];
 				if (str_starts_with($item['mimetype'], 'video/'))
@@ -156,9 +157,7 @@ class ItemsService extends AbstractBaseService
      */
 	public function update(int $itemId, array $saveData): int
 	{
-		$item = $this->itemsRepository->findFirstById($itemId);
-		if ($item === [])
-			return 0;
+		$item = $this->findItem($itemId);
 
 		$this->playlistsService->loadPureById($item['playlist_id']); // will check for rights
 
@@ -168,7 +167,7 @@ class ItemsService extends AbstractBaseService
 
 	/**
 	 * @return int|null the stored duration, which can be shorter than the wanted one because of time limits,
-	 *                  null when the item could not be updated
+	 *                  null when the database did not change the item
 	 * @throws ModuleException
 	 * @throws CoreException
 	 * @throws FrameworkException
@@ -176,9 +175,7 @@ class ItemsService extends AbstractBaseService
 	 */
 	public function updateItemDuration(int $itemId, int $wantedDuration): ?int
 	{
-		$item = $this->itemsRepository->findFirstById($itemId);
-		if ($item === [])
-			return null;
+		$item = $this->findItem($itemId);
 
 		$playlist = $this->playlistsService->loadPureById($item['playlist_id']); // will check for rights
 		// if an item is a playlist, we need to get this limit first
@@ -198,55 +195,61 @@ class ItemsService extends AbstractBaseService
 
 
 	/**
-	 * @param int $playlistId
 	 * @param array<int,string> $itemsOrder
-	 * @return bool
+	 * @throws AccessDeniedException
+	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws NotFoundException
+	 * @throws UserException
 	 */
-	public function updateItemOrder(int $playlistId, array $itemsOrder): bool
+	public function updateItemOrder(int $playlistId, array $itemsOrder): void
 	{
+		$this->itemsRepository->beginTransaction();
 		try
 		{
-			$this->itemsRepository->beginTransaction();
 			$this->playlistsService->loadPureById($playlistId); // will check for rights
 
 			foreach ($itemsOrder as $key => $itemId)
 			{
 				if ($this->itemsRepository->updateItemOrder((int)$itemId, $key) === 0)
-					throw new ModuleException('items', 'Item order for item_id '.$itemId.' could not be updated');
+					throw new TranslatableModuleException('playlists', 'item_order_not_updated', ['item_id' => $itemId]);
 			}
 			$this->itemsRepository->commitTransaction();
-			return true;
 		}
-		catch (Exception | ModuleException | CoreException $e)
+		catch (Throwable $e)
 		{
 			$this->itemsRepository->rollBackTransaction();
-			$this->logger->error('Error item reorder: ' . $e->getMessage());
-			return false;
+			throw $e;
 		}
 	}
 
 	/**
-	 * @return array<string,mixed>
+	 * @return array{playlist_metrics: array<string,int>, delete_id: int}
+	 * @throws AccessDeniedException
+	 * @throws CoreException
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws NotFoundException
+	 * @throws UserException
 	 */
 	public function delete(int $playlistId, int $itemId): array
 	{
+		$this->itemsRepository->beginTransaction();
 		try
 		{
-			$this->itemsRepository->beginTransaction();
-
 			$playlistData = $this->checkPlaylistAcl($playlistId);
 			$item         = $this->itemsRepository->findFirstBy(['item_id' => $itemId]);
 			if (empty($item))
-				throw new ModuleException('items', 'Item with idem_id: '.$itemId.' not found');
+				throw new NotFoundException('playlists', 'item_not_found', ['item_id' => $itemId]);
 
 			// todo for Core / Enterprise: Check if item belongs to an admin
 
 			$deleteId = $this->itemsRepository->delete($itemId);
 			if ($deleteId === 0)
-				throw new ModuleException('items', 'Item could not deleted');
+				throw new TranslatableModuleException('playlists', 'item_not_deleted', ['item_id' => $itemId]);
 
 			$this->itemsRepository->updatePositionsWhenDeleted($playlistId, $item['item_order']);
 
@@ -256,12 +259,26 @@ class ItemsService extends AbstractBaseService
 
 			return ['playlist_metrics' => $playlistMetrics, 'delete_id' => $deleteId];
 		}
-		catch (Exception | ModuleException | CoreException $e)
+		catch (Throwable $e)
 		{
 			$this->itemsRepository->rollBackTransaction();
-			$this->logger->error('Error delete item: ' . $e->getMessage());
-			return [];
+			throw $e;
 		}
+	}
+
+	/**
+	 * @return array<string,mixed>
+	 * @throws Exception
+	 * @throws NotFoundException
+	 */
+	private function findItem(int $itemId): array
+	{
+		/** @var array<string,mixed> $item */
+		$item = $this->itemsRepository->findFirstById($itemId);
+		if ($item === [])
+			throw new NotFoundException('playlists', 'item_not_found', ['item_id' => $itemId]);
+
+		return $item;
 	}
 
 	/**
@@ -270,11 +287,6 @@ class ItemsService extends AbstractBaseService
 	 */
 	private function checkPlaylistAcl(int $playlistId): array
 	{
-		/** @var array<string,mixed> $playlistData */
-		$playlistData = $this->playlistsService->loadPlaylistForEdit($playlistId); // also checks rights
-		if (empty($playlistData))
-			throw new ModuleException('items', 'Playlist is not accessible');
-
-		return $playlistData;
+		return $this->playlistsService->loadPlaylistForEdit($playlistId); // also checks rights
 	}
 }

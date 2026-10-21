@@ -147,8 +147,6 @@ class Orchestrator
 	public function loadZone(ResponseInterface $response): ResponseInterface
 	{
 		$multizone = $this->playlistsService->loadPlaylistForMultizone($this->playlistId);
-		if ($this->playlistsService->hasErrorMessages())
-			return $this->responseBuilder->generalError($response, $this->playlistsService->getErrorMessagesAsString());
 
 		return $this->responseBuilder->generalSuccess($response, ['zones' => $multizone]);
 	}

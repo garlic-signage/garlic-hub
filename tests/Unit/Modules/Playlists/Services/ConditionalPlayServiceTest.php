@@ -19,9 +19,9 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Modules\Playlists\Services;
 
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Modules\Playlists\Services\ConditionalPlayService;
 use App\Modules\Playlists\Services\ItemsService;
 use PHPUnit\Framework\Attributes\Group;
@@ -29,7 +29,6 @@ use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 class ConditionalPlayServiceTest extends TestCase
 {
@@ -43,149 +42,69 @@ class ConditionalPlayServiceTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-
 		$this->itemServiceMock = $this->createMock(ItemsService::class);
-		$this->loggerMock = $this->createMock(LoggerInterface::class);
+		$this->loggerMock      = $this->createMock(LoggerInterface::class);
+
 		$this->conditionalPlayService = new ConditionalPlayService($this->itemServiceMock, $this->loggerMock);
 	}
 
 	#[Group('units')]
-	public function testFetchConditionalSucceed(): void
+	public function testFetchConditionalUnserializesSettings(): void
 	{
 		$this->loggerMock->expects($this->never())->method($this->anything());
-		$itemId = 1;
-		$mockItem = ['conditional' => serialize(['key' => 'value'])];
+		$this->itemServiceMock->expects($this->once())->method('fetchItemById')->with(1)
+			->willReturn(['item_id' => 1, 'conditional' => serialize(['key' => 'value'])]);
 
-		$this->itemServiceMock->expects($this->once())->method('fetchItemById')
-			->with($itemId)
-			->willReturn($mockItem);
-
-		$result = $this->conditionalPlayService->fetchConditionalByItemId($itemId);
+		$result = $this->conditionalPlayService->fetchConditionalByItemId(1);
 
 		static::assertSame(['key' => 'value'], $result['conditional']);
 	}
 
 	#[Group('units')]
-	public function testFetchConditionalReturnsEmptyArrayWhenConditionalIsEmpty(): void
+	public function testFetchConditionalWithEmptyOrBrokenSettings(): void
 	{
 		$this->loggerMock->expects($this->never())->method($this->anything());
-		$itemId = 1;
-		$mockItem = ['conditional' => ''];
+		$this->itemServiceMock->expects($this->exactly(2))->method('fetchItemById')
+			->willReturnOnConsecutiveCalls(['item_id' => 1, 'conditional' => ''], ['item_id' => 1, 'conditional' => 'no serialized data']);
 
-		$this->itemServiceMock->expects($this->once())->method('fetchItemById')
-			->with($itemId)
-			->willReturn($mockItem);
-
-		$result = $this->conditionalPlayService->fetchConditionalByItemId($itemId);
-
-		static::assertEmpty($result['conditional']);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testFetchConditionalHandlesException(): void
-	{
-		$itemId = 1;
-
-		$this->itemServiceMock->expects($this->once())->method('fetchItemById')->with($itemId)
-			->willThrowException($this->createStub(Throwable::class));
-
-		$this->loggerMock->expects($this->once())->method('error')
-			->with(static::stringContains('Error conditional fetch:'));
-
-		$result = $this->conditionalPlayService->fetchConditionalByItemId($itemId);
-		static::assertEmpty($result);
+		static::assertSame([], $this->conditionalPlayService->fetchConditionalByItemId(1)['conditional']);
+		static::assertSame([], $this->conditionalPlayService->fetchConditionalByItemId(1)['conditional']);
 	}
 
 	#[Group('units')]
-	public function testSaveConditionalPlaySucceed(): void
+	public function testFetchConditionalPassesAccessDenied(): void
 	{
 		$this->loggerMock->expects($this->never())->method($this->anything());
-		$itemId = 1;
+		$this->itemServiceMock->expects($this->once())->method('fetchItemById')->with(1)
+			->willThrowException(new AccessDeniedException('playlists', 'playlist_not_editable'));
+
+		$this->expectException(AccessDeniedException::class);
+		$this->conditionalPlayService->fetchConditionalByItemId(1);
+	}
+
+	#[Group('units')]
+	public function testSaveConditionalPlay(): void
+	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$requestData = ['key' => 'value'];
 
-		$itemMockData = ['id' => 1, 'conditional' => serialize(['key' => 'value'])];
-
-		$this->itemServiceMock->expects($this->once())->method('fetchItemById')
-			->with($itemId)
-			->willReturn($itemMockData);
-
+		$this->itemServiceMock->expects($this->once())->method('fetchItemById')->with(1)->willReturn(['item_id' => 1]);
 		$this->itemServiceMock->expects($this->once())->method('updateField')
-			->with($itemId, 'conditional', serialize($requestData))
+			->with(1, 'conditional', serialize($requestData))
 			->willReturn(1);
 
-		$result = $this->conditionalPlayService->saveConditionalPlay($itemId, $requestData);
-
-		static::assertTrue($result);
+		$this->conditionalPlayService->saveConditionalPlay(1, $requestData);
 	}
 
 	#[Group('units')]
-	public function testSaveConditionalPlayFailsOnNoItem(): void
+	public function testSaveConditionalPlayPassesAccessDenied(): void
 	{
-		$itemId = 1;
-		$requestData = ['key' => 'value'];
+		$this->loggerMock->expects($this->never())->method($this->anything());
+		$this->itemServiceMock->expects($this->once())->method('fetchItemById')->with(1)
+			->willThrowException(new AccessDeniedException('playlists', 'playlist_not_editable'));
+		$this->itemServiceMock->expects($this->never())->method('updateField');
 
-		$this->itemServiceMock->expects($this->once())->method('fetchItemById')
-			->with($itemId)
-			->willReturn([]);
-
-		$this->loggerMock->expects($this->once())->method('error')
-			->with(static::stringContains('Error save conditional play: No item found.'));
-
-		$result = $this->conditionalPlayService->saveConditionalPlay($itemId, $requestData);
-
-		static::assertFalse($result);
+		$this->expectException(AccessDeniedException::class);
+		$this->conditionalPlayService->saveConditionalPlay(1, ['key' => 'value']);
 	}
-
-	#[Group('units')]
-	public function testSaveConditionalPlayFailsOnUpdate(): void
-	{
-		$itemId = 1;
-		$requestData = ['key' => 'value'];
-
-		$itemMockData = ['id' => 1, 'conditional' => serialize(['key' => 'value'])];
-
-		$this->itemServiceMock->expects($this->once())->method('fetchItemById')
-			->with($itemId)
-			->willReturn($itemMockData);
-
-		$this->itemServiceMock->expects($this->once())->method('updateField')
-			->with($itemId, 'conditional', serialize($requestData))
-			->willReturn(0);
-
-		$this->loggerMock->expects($this->once())->method('error')
-			->with(static::stringContains('Error save conditional play: Could not save for item.'));
-
-		$result = $this->conditionalPlayService->saveConditionalPlay($itemId, $requestData);
-
-		static::assertFalse($result);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testSaveConditionalPlayHandlesException(): void
-	{
-		$itemId = 1;
-		$requestData = ['key' => 'value'];
-
-
-
-		$this->itemServiceMock->expects($this->once())->method('fetchItemById')
-			->with($itemId)
-			->willThrowException($this->createStub(Throwable::class));
-
-		$this->loggerMock->expects($this->once())->method('error')
-			->with(static::stringContains('Error save conditional play:'));
-
-		$result = $this->conditionalPlayService->saveConditionalPlay($itemId, $requestData);
-
-		static::assertFalse($result);
-	}
-
-
-
 }

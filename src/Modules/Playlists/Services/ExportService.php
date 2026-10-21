@@ -26,6 +26,8 @@ use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\TranslatableModuleException;
+use App\Framework\Exceptions\UserException;
 use App\Framework\Services\AbstractBaseService;
 use App\Modules\Playlists\Helper\ExportSmil\LocalWriter;
 use App\Modules\Playlists\Helper\ExportSmil\PlaylistContent;
@@ -33,6 +35,7 @@ use App\Modules\Playlists\Helper\PlaylistMode;
 use Doctrine\DBAL\Exception;
 use League\Flysystem\FilesystemException;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 class ExportService extends AbstractBaseService
 {
@@ -58,16 +61,19 @@ class ExportService extends AbstractBaseService
 	}
 
 	/**
-	 * @param int $playlistId
-	 * @return int
+	 * @return int number of exported playlists, more than one for a multizone playlist
+	 * @throws CoreException
 	 * @throws Exception
+	 * @throws FilesystemException
 	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	public function exportToSmil(int $playlistId): int
 	{
+		$this->transactions->begin();
 		try
 		{
-			$this->transactions->begin();
 
 			$playlist = $this->playlistsService->loadPureById($playlistId); // checks rights
 
@@ -93,16 +99,15 @@ class ExportService extends AbstractBaseService
 			}
 
 			if ($this->playlistsService->updateExport($playlistId, $metrics) === 0)
-				throw new ModuleException('export_playlist', 'Export '.$playlistId.' failed. Could not update playlist metrics.');
+				throw new TranslatableModuleException('playlists', 'playlist_export_failed', ['playlist_id' => $playlistId]);
 
 			$this->transactions->commit();
 			return $count;
 		}
-		catch (ModuleException|CoreException|Exception|FilesystemException $e)
+		catch (Throwable $e)
 		{
 			$this->transactions->rollBack();
-			$this->logger->error('Error export SMIL playlist: ' . $e->getMessage());
-			return 0;
+			throw $e;
 		}
 	}
 

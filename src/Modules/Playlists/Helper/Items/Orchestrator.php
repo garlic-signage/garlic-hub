@@ -172,8 +172,6 @@ class Orchestrator
 	public function fetch(ResponseInterface $response): ResponseInterface
 	{
 		$item = $this->itemsService->fetchItemById($this->itemId);
-		if (empty($item))
-			return $this->responseBuilder->itemNotFound($response);
 
 		return $this->responseBuilder->generalSuccess($response, ['item' => $item]);
 	}
@@ -197,9 +195,9 @@ class Orchestrator
 	 */
 	public function updateItemOrders(ResponseInterface $response): ResponseInterface
 	{
-		$result = $this->itemsService->updateItemOrder($this->playlistId, $this->input['items_positions']);
+		$this->itemsService->updateItemOrder($this->playlistId, $this->input['items_positions']);
 
-		return $this->responseBuilder->itemsOrderUpdated($response, $result);
+		return $this->responseBuilder->itemsOrderUpdated($response);
 	}
 
 	public function validateDelete(ResponseInterface $response): ?ResponseInterface
@@ -216,8 +214,6 @@ class Orchestrator
 	public function delete(ResponseInterface $response): ResponseInterface
 	{
 		$item = $this->itemsService->delete($this->playlistId, $this->itemId);
-		if (empty($item))
-			return $this->responseBuilder->deleteFailed($response);
 
 		return $this->responseBuilder->generalSuccess($response, ['data' => $item]);
 	}

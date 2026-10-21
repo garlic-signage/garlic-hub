@@ -21,7 +21,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Services\InsertItems;
 
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\MediaService;
 use App\Modules\Playlists\Helper\PlaylistMetrics;
@@ -153,23 +156,21 @@ class MediaTest extends TestCase
 	#[Group('units')]
 	public function testInsertPlaylistNotAccessible(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		// nothing is calculated
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateFromPlaylistData');
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateRemainingMediaDuration');
 		$this->widgetsServiceMock->expects($this->never())->method($this->anything());
-		$this->playlistsServiceMock->expects($this->once())->method('loadPlaylistForEdit')->with(1)->willReturn([]);
+		$this->playlistsServiceMock->expects($this->once())->method('loadPlaylistForEdit')->with(1)
+			->willThrowException(new AccessDeniedException('playlists', 'playlist_not_editable'));
 
 		$this->mediaServiceMock->expects($this->never())->method('fetchMedia');
 
 		$this->itemsRepositoryMock->expects($this->once())->method('rollBackTransaction');
 
-		$this->loggerMock->expects($this->once())->method('error')
-			->with(static::stringContains('Error insert media: Playlist is not accessible'));
-
-		$result = $this->media->insert(1, 'invalidMediaId', 2);
-
-
-		static::assertEmpty($result);
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('playlist_not_editable');
+		$this->media->insert(1, 'invalidMediaId', 2);
 	}
 
 	/**
@@ -179,6 +180,7 @@ class MediaTest extends TestCase
 	#[Group('units')]
 	public function testInsertMediaNotAccessible(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		// nothing is calculated
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateFromPlaylistData');
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateRemainingMediaDuration');
@@ -191,12 +193,9 @@ class MediaTest extends TestCase
 
 		$this->itemsRepositoryMock->expects($this->once())->method('rollBackTransaction');
 
-		$this->loggerMock->expects($this->once())->method('error')
-			->with(static::stringContains('Error insert media: Media is not accessible'));
-
-		$result = $this->media->insert(1, 'invalidMediaId', 2);
-
-		static::assertEmpty($result);
+		$this->expectException(NotFoundException::class);
+		$this->expectExceptionMessage('media_not_accessible');
+		$this->media->insert(1, 'invalidMediaId', 2);
 	}
 
 	/**
@@ -206,6 +205,7 @@ class MediaTest extends TestCase
 	#[Group('units')]
 	public function testInsertItemInsertFails(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->widgetsServiceMock->expects($this->never())->method($this->anything());
 		$this->checkAclMockSuccessful();
 
@@ -222,12 +222,9 @@ class MediaTest extends TestCase
 		$this->itemsRepositoryMock->expects($this->once())
 			->method('rollBackTransaction');
 
-		$this->loggerMock->expects($this->once())->method('error')
-			->with(static::stringContains('Error insert media: Playlist item could not be inserted.'));
-
-		$result = $this->media->insert(1, 'mediaId', 2);
-
-		static::assertEmpty($result);
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('item_not_inserted');
+		$this->media->insert(1, 'mediaId', 2);
 	}
 
 	private function checkAclMockSuccessful(): void

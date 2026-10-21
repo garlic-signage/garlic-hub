@@ -23,6 +23,7 @@ namespace Tests\Unit\Modules\Playlists\Services;
 
 use App\Framework\Core\Config\Config;
 use App\Framework\Database\BaseRepositories\Transactions;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Playlists\Helper\ExportSmil\LocalWriter;
 use App\Modules\Playlists\Helper\ExportSmil\PlaylistContent;
 use App\Modules\Playlists\Helper\PlaylistMetrics;
@@ -125,6 +126,7 @@ class ExportServiceTest extends TestCase
 	#[Group('units')]
 	public function testExportToSmilSingleModeFailed(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playlistId = 123;
 		$playlist = ['playlist_id' => 123, 'playlist_mode' => 'master'];
 		$metrics = new PlaylistMetrics(fileSize: 100, duration: 60, ownerDuration: 60);
@@ -155,12 +157,11 @@ class ExportServiceTest extends TestCase
 			->with($playlist['playlist_id'], $metrics->toPlaylistTableArray())
 			->willReturn(0);
 
-
 		$this->transactionsMock->expects($this->never())->method('commit');
 		$this->transactionsMock->expects($this->once())->method('rollBack');
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Error export SMIL playlist: Export '.$playlistId.' failed. Could not update playlist metrics.');
 
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('playlist_export_failed');
 		$this->service->exportToSmil($playlistId);
 	}
 

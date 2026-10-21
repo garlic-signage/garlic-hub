@@ -125,52 +125,14 @@ class OrchestratorTest extends TestCase
 	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testFetchWithLoadFailure(): void
-	{
-		$this->prepareValid(['item_id' => 12]);
-
-		$this->widgetsServiceMock->expects($this->once())->method('fetchWidgetByItemId')
-			->with(12)
-			->willReturn([]);
-		$this->expectError('widgetLoadFailed');
-
-		$this->orchestrator->fetch($this->responseStub);
-	}
-
-	/**
-	 * @throws UserException
-	 */
-	#[Group('units')]
 	public function testSave(): void
 	{
 		$input = ['item_id' => 12, 'csrf_token' => 'token', 'timezone' => 'Europe/Berlin'];
 		$this->prepareValid($input);
 
 		$this->widgetsServiceMock->expects($this->once())->method('saveWidget')
-			->with(12, $input)
-			->willReturn(true);
+			->with(12, $input);
 		$this->expectSuccess([]);
-
-		$this->orchestrator->save($this->responseStub);
-	}
-
-	/**
-	 * @throws UserException
-	 */
-	#[Group('units')]
-	public function testSaveWithFailure(): void
-	{
-		$input = ['item_id' => 12, 'csrf_token' => 'token'];
-		$this->prepareValid($input);
-
-		$this->widgetsServiceMock->expects($this->once())->method('saveWidget')
-			->with(12, $input)
-			->willReturn(false);
-		$this->widgetsServiceMock->expects($this->once())->method('getErrorText')->willReturn('Save error');
-		$this->responseBuilderMock->expects($this->never())->method('generalSuccess');
-		$this->responseBuilderMock->expects($this->once())->method('saveFailed')
-			->with($this->responseStub, 'Save error')
-			->willReturn($this->responseStub);
 
 		$this->orchestrator->save($this->responseStub);
 	}

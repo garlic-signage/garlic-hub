@@ -60,14 +60,6 @@ class ResponseBuilderTest extends TestCase
 		static::assertSame($this->responseStub, $this->responseBuilder->invalidPlaylistId($this->responseStub));
 	}
 
-	#[Group('units')]
-	public function testPlaylistNotFound(): void
-	{
-		$this->expectJsonError('Playlist not found.');
-
-		static::assertSame($this->responseStub, $this->responseBuilder->playlistNotFound($this->responseStub));
-	}
-
 	private function expectJsonError(string $message): void
 	{
 		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonError')

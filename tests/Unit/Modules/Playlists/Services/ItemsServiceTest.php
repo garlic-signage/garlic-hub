@@ -25,6 +25,8 @@ use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Mediapool\Services\MediaService;
 use App\Modules\Playlists\Helper\Compose\ItemThumbnailResolver;
 use App\Modules\Playlists\Helper\ItemType;
@@ -182,9 +184,8 @@ class ItemsServiceTest extends TestCase
 		$this->playlistsServiceMock->expects($this->never())->method('loadPureById');
 		$this->mediaServiceMock->expects($this->never())->method('fetchMediaByChecksum');
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('Item not found');
-
+		$this->expectException(NotFoundException::class);
+		$this->expectExceptionMessage('item_not_found');
 		$this->itemsService->fetchItemById(123);
 	}
 
@@ -195,7 +196,7 @@ class ItemsServiceTest extends TestCase
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testFetchItemByIdForValidMediapoolVideoException(): void
+	public function testFetchItemByIdThrowsWhenMediaNotFound(): void
 	{
 		$this->expectUntouched($this->playlistMetricsCalculatorMock, $this->itemThumbnailResolverMock, $this->loggerMock);
 		$itemId = 123;
@@ -218,9 +219,8 @@ class ItemsServiceTest extends TestCase
 			->with($itemData['file_resource'])
 			->willReturn([]);
 
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('Item not found');
-
+		$this->expectException(NotFoundException::class);
+		$this->expectExceptionMessage('item_not_found');
 		$this->itemsService->fetchItemById($itemId);
 	}
 
@@ -485,7 +485,7 @@ class ItemsServiceTest extends TestCase
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testUpdateFieldFails(): void
+	public function testUpdateFieldThrowsWhenItemNotFound(): void
 	{
 		$this->expectUntouched($this->mediaServiceMock, $this->playlistMetricsCalculatorMock, $this->itemThumbnailResolverMock, $this->loggerMock);
 		$itemId = 1;
@@ -499,9 +499,9 @@ class ItemsServiceTest extends TestCase
 		$this->playlistsServiceMock->expects($this->never())->method('loadPureById');
 		$this->itemsRepositoryMock->expects($this->never())->method('update');
 
-		$result = $this->itemsService->updateField($itemId, $fieldName, $fieldValue);
-
-		static::assertEquals(0, $result);
+		$this->expectException(NotFoundException::class);
+		$this->expectExceptionMessage('item_not_found');
+		$this->itemsService->updateField($itemId, $fieldName, $fieldValue);
 	}
 
 	#[Group('units')]
@@ -584,7 +584,9 @@ class ItemsServiceTest extends TestCase
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateRemainingDuration');
 		$this->itemsRepositoryMock->expects($this->never())->method('update');
 
-		static::assertNull($this->itemsService->updateItemDuration($itemId, $wantedDuration));
+		$this->expectException(NotFoundException::class);
+		$this->expectExceptionMessage('item_not_found');
+		$this->itemsService->updateItemDuration($itemId, $wantedDuration);
 	}
 
 	#[Group('units')]
@@ -656,7 +658,7 @@ class ItemsServiceTest extends TestCase
 			]);
 		$this->itemsRepositoryMock->expects($this->once())->method('commitTransaction');
 
-		static::assertTrue($this->itemsService->updateItemOrder($playlistId, $itemsOrder));
+		$this->itemsService->updateItemOrder($playlistId, $itemsOrder);
 	}
 
 	/**
@@ -664,8 +666,9 @@ class ItemsServiceTest extends TestCase
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testUpdateItemOrderThrowsExceptionForInvalidPlaylist(): void
+	public function testUpdateItemOrderThrowsWhenOrderNotUpdated(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->expectUntouched($this->mediaServiceMock, $this->playlistMetricsCalculatorMock, $this->itemThumbnailResolverMock);
 		$playlistId = 10;
 		$itemsOrder = [];
@@ -684,10 +687,9 @@ class ItemsServiceTest extends TestCase
 		$this->itemsRepositoryMock->expects($this->once())->method('rollBackTransaction');
 		$this->itemsRepositoryMock->expects($this->never())->method('commitTransaction');
 
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Error item reorder: Item order for item_id 3 could not be updated');
-
-		static::assertFalse($this->itemsService->updateItemOrder($playlistId, $itemsOrder));
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('item_order_not_updated');
+		$this->itemsService->updateItemOrder($playlistId, $itemsOrder);
 	}
 
 	/**
@@ -742,6 +744,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeletePlaylistNotFound(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->expectUntouched($this->mediaServiceMock, $this->playlistMetricsCalculatorMock, $this->itemThumbnailResolverMock);
 		$playlistId = 10;
 		$itemId = 20;
@@ -751,17 +754,16 @@ class ItemsServiceTest extends TestCase
 
 		$this->playlistsServiceMock->expects($this->once())->method('loadPlaylistForEdit')
 			->with($playlistId)
-			->willReturn([]);
+			->willThrowException(new NotFoundException('playlists', 'playlist_not_found'));
 
 		$this->itemsRepositoryMock->expects($this->never())->method('findFirstBy');
 
 		$this->itemsRepositoryMock->expects($this->once())
 			->method('rollBackTransaction');
 
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Error delete item: Playlist is not accessible');
-
-		static::assertEmpty($this->itemsService->delete($playlistId, $itemId));
+		$this->expectException(NotFoundException::class);
+		$this->expectExceptionMessage('playlist_not_found');
+		$this->itemsService->delete($playlistId, $itemId);
 	}
 
 	/**
@@ -770,6 +772,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteItemNotFound(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->expectUntouched($this->mediaServiceMock, $this->playlistMetricsCalculatorMock, $this->itemThumbnailResolverMock);
 		$playlistId = 10;
 		$itemId = 20;
@@ -789,10 +792,9 @@ class ItemsServiceTest extends TestCase
 		$this->itemsRepositoryMock->expects($this->once())
 			->method('rollBackTransaction');
 
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Error delete item: Item with idem_id: '.$itemId.' not found');
-
-		static::assertEmpty($this->itemsService->delete($playlistId, $itemId));
+		$this->expectException(NotFoundException::class);
+		$this->expectExceptionMessage('item_not_found');
+		$this->itemsService->delete($playlistId, $itemId);
 	}
 
 	/**
@@ -803,6 +805,7 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testDeleteItemFailure(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$this->expectUntouched($this->mediaServiceMock, $this->playlistMetricsCalculatorMock, $this->itemThumbnailResolverMock);
 		$playlistId = 10;
 		$itemId = 20;
@@ -831,10 +834,9 @@ class ItemsServiceTest extends TestCase
 		$this->itemsRepositoryMock->expects($this->once())
 			->method('rollBackTransaction');
 
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Error delete item: Item could not deleted');
-
-		static::assertEmpty($this->itemsService->delete($playlistId, $itemId));
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('item_not_deleted');
+		$this->itemsService->delete($playlistId, $itemId);
 	}
 
 	/**

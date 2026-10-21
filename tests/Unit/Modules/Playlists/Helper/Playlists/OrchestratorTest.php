@@ -266,27 +266,7 @@ class OrchestratorTest extends TestCase
 		$this->prepareValid(['playlist_id' => 1]);
 		$this->playlistsServiceMock->expects($this->once())->method('loadPlaylistForMultizone')->with(1)
 			->willReturn(['zone1']);
-		$this->playlistsServiceMock->expects($this->once())->method('hasErrorMessages')->willReturn(false);
 		$this->expectSuccess(['zones' => ['zone1']]);
-
-		$this->orchestrator->loadZone($this->responseStub);
-	}
-
-	/**
-	 * @throws UserException
-	 */
-	#[Group('units')]
-	public function testLoadZoneWithErrors(): void
-	{
-		$this->prepareValid(['playlist_id' => 1]);
-		$this->playlistsServiceMock->expects($this->once())->method('loadPlaylistForMultizone')->with(1)->willReturn([]);
-		$this->playlistsServiceMock->expects($this->once())->method('hasErrorMessages')->willReturn(true);
-		$this->playlistsServiceMock->expects($this->once())->method('getErrorMessagesAsString')
-			->willReturn('error 1 | error 2');
-		$this->responseBuilderMock->expects($this->never())->method('generalSuccess');
-		$this->responseBuilderMock->expects($this->once())->method('generalError')
-			->with($this->responseStub, 'error 1 | error 2')
-			->willReturn($this->responseStub);
 
 		$this->orchestrator->loadZone($this->responseStub);
 	}

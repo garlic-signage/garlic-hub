@@ -46,11 +46,6 @@ abstract class AbstractInsertItem extends AbstractBaseService
 	 */
 	protected function checkPlaylistAcl(int $playlistId): array
 	{
-		/** @var array<string,mixed> $playlistData */
-		$playlistData = $this->playlistsService->loadPlaylistForEdit($playlistId); // also checks rights
-		if (empty($playlistData))
-			throw new ModuleException('items', 'Playlist is not accessible');
-
-		return $playlistData;
+		return $this->playlistsService->loadPlaylistForEdit($playlistId); // also checks rights
 	}
 }

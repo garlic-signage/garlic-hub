@@ -94,8 +94,6 @@ class Orchestrator
 	{
 
 		$itemData = $this->conditionalPlayService->fetchConditionalByItemId($this->itemId);
-		if ($itemData === [])
-			return $this->responseBuilder->itemNotFound($response);
 
 		$this->templatePreparer->prepare($this->itemId, $itemData['conditional']);
 
@@ -118,10 +116,6 @@ class Orchestrator
 
 		unset($this->input['csrf_token']);
 		unset($this->input['item_id']);
-
-		$item = $this->conditionalPlayService->fetchAccessibleItem($this->itemId);
-		if ($item === [])
-			return $this->responseBuilder->itemNotFound($response);
 
 		$this->conditionalPlayService->saveConditionalPlay($this->itemId, $this->input);
 

@@ -23,6 +23,7 @@ namespace App\Modules\Playlists\Helper\Widgets;
 
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Utils\Widget\ConfigXML;
 
 /**
@@ -54,7 +55,7 @@ readonly class ContentDataPreparer
 			$mandatory = (array_key_exists('mandatory', $value) && $value['mandatory'] === 'true');
 			$has_key = (array_key_exists($key, $requestData) && !empty($requestData[$key]));
 			if (!$init && !$has_key && $mandatory)
-				throw new ModuleException('items', $key . ' is mandatory field.');
+				throw new TranslatableModuleException('playlists', 'widget_field_mandatory', ['field' => $key]);
 
 			if (!$has_key)
 				continue;
@@ -87,7 +88,7 @@ readonly class ContentDataPreparer
 	public function determinePreferences(string $configData): array
 	{
 		if (!$this->configXml->load($configData)->hasEditablePreferences())
-			throw new ModuleException('items', 'Widget has no editable preferences.');
+			throw new TranslatableModuleException('playlists', 'widget_not_editable');
 
 		$this->configXml->parseBasic()->parsePreferences();
 

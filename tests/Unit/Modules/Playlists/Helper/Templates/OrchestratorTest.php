@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Playlists\Helper\Templates;
 
 use App\Framework\Core\Config\Config;
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Media\MediaUrlSigner;
@@ -87,8 +88,23 @@ class OrchestratorTest extends TestCase
 	public function testCheckRightsWithoutAccess(): void
 	{
 		$this->itemsServiceMock->expects($this->once())->method('fetchItemById')
-			->willThrowException(new ModuleException('playlists', 'No rights.'));
+			->willThrowException(new AccessDeniedException('playlists', 'playlist_not_editable'));
 
 		static::assertFalse($this->orchestrator->checkRights(9));
+	}
+
+	/**
+	 * Only missing items and rights are answered by the composer, other errors go to the error handler.
+	 *
+	 * @throws UserException
+	 */
+	#[Group('units')]
+	public function testCheckRightsPassesOtherErrors(): void
+	{
+		$this->itemsServiceMock->expects($this->once())->method('fetchItemById')
+			->willThrowException(new ModuleException('playlists', 'Database is gone.'));
+
+		$this->expectException(ModuleException::class);
+		$this->orchestrator->checkRights(9);
 	}
 }

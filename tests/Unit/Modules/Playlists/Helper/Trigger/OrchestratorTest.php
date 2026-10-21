@@ -143,13 +143,9 @@ class OrchestratorTest extends TestCase
 
 		$this->triggerServiceMock->expects($this->once())->method('fetchBeginTriggerByItemId')
 			->with(123)
-			->willReturn($this->triggerServiceMock);
-		$this->triggerServiceMock->expects($this->once())->method('getItemData')
-			->willReturn($itemData);
+			->willReturn(['item_data' => $itemData, 'touchable_media' => $touchableMedia]);
 		$this->templatePreparerMock->expects($this->once())->method('prepare')
 			->with(123);
-
-		$this->triggerServiceMock->expects($this->once())->method('getTouchableMedia')->willReturn($touchableMedia);
 
 		$this->templatePreparerMock->expects($this->once())->method('render')->willReturn($preparedHtml);
 
@@ -170,62 +166,6 @@ class OrchestratorTest extends TestCase
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws UserException
-	 */
-	#[Group('units')]
-	public function testFetchItemNotFound(): void
-	{
-		$this->validatorMock->expects($this->never())->method($this->anything());
-		$this->templatePreparerMock->expects($this->never())->method($this->anything());
-		$this->triggerServiceMock->expects($this->once())->method('fetchBeginTriggerByItemId')->with(123)->willReturn($this->triggerServiceMock);
-		$this->triggerServiceMock->expects($this->once())->method('getItemData')->willReturn([]);
-
-		$this->responseBuilderMock->expects($this->once())
-			->method('itemNotFound')
-			->with($this->responseStub)
-			->willReturn($this->responseStub);
-
-		$this->initMocks();
-		$result = $this->orchestrator->fetch($this->responseStub);
-
-		static::assertInstanceOf(ResponseInterface::class, $result);
-	}
-
-	/**
-	 * @throws ModuleException
-	 * @throws UserException
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testSaveItemNotFound(): void
-	{
-		// saving works on behalf of the session user, without form handling
-		$this->validatorMock->expects($this->never())->method($this->anything());
-		$this->templatePreparerMock->expects($this->never())->method($this->anything());
-		$this->triggerServiceMock->expects($this->once())->method('fetchAccessibleItem')
-			->with(123)
-			->willReturn([]);
-
-		$this->responseBuilderMock->expects($this->once())->method('itemNotFound')
-			->with($this->responseStub)
-			->willReturn($this->responseStub);
-
-		$this->orchestrator->setInput([
-			'item_id' => '123',
-			'csrf_token' => 'valid_csrf_token'
-		]);
-
-		$this->orchestrator->validate($this->responseStub);
-		$result = $this->orchestrator->save($this->responseStub);
-
-		static::assertInstanceOf(ResponseInterface::class, $result);
-	}
-
-	/**
 	 * @throws ModuleException
 	 * @throws UserException
 	 * @throws CoreException
@@ -238,13 +178,8 @@ class OrchestratorTest extends TestCase
 		// saving works on behalf of the session user, without form handling
 		$this->validatorMock->expects($this->never())->method($this->anything());
 		$this->templatePreparerMock->expects($this->never())->method($this->anything());
-		$this->triggerServiceMock->expects($this->once())->method('fetchAccessibleItem')
-			->with(123)
-			->willReturn(['id' => 123]);
-
 		$this->triggerServiceMock->expects($this->once())->method('saveBeginTrigger')
-			->with(123, ['param1' => 'value1', 'param2' => 'value2'])
-			->willReturn(true);
+			->with(123, ['param1' => 'value1', 'param2' => 'value2']);
 
 		$this->responseBuilderMock->expects($this->once())->method('generalSuccess')
 			->with($this->responseStub, [])

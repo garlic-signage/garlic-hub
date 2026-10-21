@@ -21,126 +21,83 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Services;
 
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\UserException;
 use App\Framework\Services\AbstractBaseService;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
-use Throwable;
 
 class TriggerService extends AbstractBaseService
 {
-	/**
-	 * @var array<string,mixed>|array<empty,empty>
-	 */
-	private array $itemData = [];
-	/**
-	 * @var list<array{item_id:int, item_name:string}>
-	 */
-	private array $touchableMedia = [];
-
 	public function __construct(private readonly ItemsService $itemService, LoggerInterface $logger)
 	{
 		parent::__construct($logger);
 	}
 
 	/**
-	 * @return array<string,mixed>|array<empty,empty>
-	 */
-	public function getItemData(): array
-	{
-		return $this->itemData;
-	}
-
-	/**
-	 * @return array<string,mixed>|array<empty,empty>
-	 */
-	public function getTouchableMedia(): array
-	{
-		return $this->touchableMedia;
-	}
-
-	public function fetchBeginTriggerByItemId(int $itemId): static
-	{
-		try
-		{
-			$item = $this->fetchAccessibleItem($itemId);
-
-			$trigger = [];
-			if ($item['begin_trigger'] !== '')
-			{
-				$tmp = @unserialize($item['begin_trigger']);
-				if (is_array($tmp))
-					$trigger = $tmp;
-			}
-			$item['begin_trigger'] = $trigger;
-
-			$this->prepareTouchableMedia($item['playlist_id'], $itemId);
-
-			$this->itemData = $item;
-		}
-		catch (Throwable $e)
-		{
-			$this->logger->error('Error begin trigger fetch: ' . $e->getMessage());
-		}
-
-		return $this;
-	}
-
-	/**
-	 * @param array<string,mixed> $requestData
-	 */
-	public function saveBeginTrigger(int $itemId, array $requestData): bool
-	{
-		try
-		{
-			$item = $this->fetchAccessibleItem($itemId);
-			if (empty($item))
-				throw new ModuleException('items', 'No item found.');
-
-			$affected = $this->itemService->updateField($itemId, 'begin_trigger', @serialize($requestData));
-			if ($affected === 0)
-				throw new ModuleException('items', 'Could not save begin trigger.');
-
-			return true;
-		}
-		catch (Throwable $e)
-		{
-			$this->logger->error('Error save trigger: ' . $e->getMessage());
-			return false;
-		}
-	}
-
-	/**
-	 * @return array<string,mixed>
-	 * @throws ModuleException
+	 * @return array{item_data: array<string,mixed>, touchable_media: list<array{item_id:int, item_name:string}>}
+	 * @throws AccessDeniedException
 	 * @throws CoreException
-	 * @throws FrameworkException
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws NotFoundException
+	 * @throws UserException
 	 */
-	public function fetchAccessibleItem(int $itemId): array
+	public function fetchBeginTriggerByItemId(int $itemId): array
 	{
-		return $this->itemService->fetchItemById($itemId); // check rights on playlists, too
+		$item = $this->itemService->fetchItemById($itemId); // check rights on playlists, too
+
+		$trigger = [];
+		if ($item['begin_trigger'] !== '')
+		{
+			$tmp = @unserialize($item['begin_trigger']);
+			if (is_array($tmp))
+				$trigger = $tmp;
+		}
+		$item['begin_trigger'] = $trigger;
+
+		return ['item_data' => $item, 'touchable_media' => $this->findTouchableMedia($item['playlist_id'], $itemId)];
 	}
 
 	/**
+	 * Saving an unchanged trigger changes no rows, which is no error.
+	 *
+	 * @param array<string,mixed> $requestData
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws NotFoundException
+	 * @throws UserException
+	 */
+	public function saveBeginTrigger(int $itemId, array $requestData): void
+	{
+		$this->itemService->fetchItemById($itemId); // check rights on playlists, too
+		$this->itemService->updateField($itemId, 'begin_trigger', @serialize($requestData));
+	}
+
+	/**
+	 * All media of the playlist except the item itself.
+	 *
+	 * @return list<array{item_id:int, item_name:string}>
 	 * @throws Exception
 	 */
-	public function prepareTouchableMedia(int $playlistId, int $itemId): void
+	private function findTouchableMedia(int $playlistId, int $itemId): array
 	{
-		$media = $this->itemService->findMediaInPlaylist($playlistId);
-		if ($media === [])
-			return;
-
-		$tmp = [];
-		foreach ($media as $mediaItem)
+		$touchable = [];
+		foreach ($this->itemService->findMediaInPlaylist($playlistId) as $mediaItem)
 		{
 			if ($mediaItem['item_id'] !== $itemId)
-				$tmp[] = $mediaItem;
-
+				$touchable[] = $mediaItem;
 		}
-		$this->touchableMedia = $tmp;
+
+		return $touchable;
 	}
 
 }

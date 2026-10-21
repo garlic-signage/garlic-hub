@@ -153,26 +153,6 @@ class OrchestratorTest extends TestCase
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws UserException
-
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testFetchItemNotFound(): void
-	{
-		$this->validatorMock->expects($this->never())->method($this->anything());
-		$this->templatePreparerMock->expects($this->never())->method($this->anything());
-		$this->conditionalPlayServiceMock->expects($this->once())->method('fetchConditionalByItemId')->with(123)->willReturn([]);
-		$this->responseBuilderMock->expects($this->once())->method('itemNotFound')->with($this->responseStub)->willReturn($this->responseStub);
-
-		$this->initMocks();
-		$result = $this->orchestrator->fetch($this->responseStub);
-
-		static::assertInstanceOf(ResponseInterface::class, $result);
-	}
-
-	/**
 	 * @throws ModuleException
 	 * @throws UserException
 	 * @throws CoreException
@@ -184,41 +164,13 @@ class OrchestratorTest extends TestCase
 	{
 		$this->validatorMock->expects($this->never())->method($this->anything());
 		$this->templatePreparerMock->expects($this->never())->method($this->anything());
-		$this->conditionalPlayServiceMock->expects($this->once())->method('fetchAccessibleItem')
-			->with(123)
-			->willReturn(['item_id' => '123']);
 		$this->conditionalPlayServiceMock->expects($this->once())->method('saveConditionalPlay')
-			->with(123, ['key' => 'value'])
-			->willReturn(true);
+			->with(123, ['key' => 'value']);
 
 		$this->responseBuilderMock->expects($this->once())->method('generalSuccess')
 			->with($this->responseStub, [])
 			->willReturn($this->responseStub);
 
-		$this->initMocks();
-		$this->orchestrator->save($this->responseStub);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws \Doctrine\DBAL\Exception
-	 * @throws UserException|ModuleException
-	 */
-	#[Group('units')]
-	public function testSaveItemNotFound(): void
-	{
-		$this->validatorMock->expects($this->never())->method($this->anything());
-		$this->templatePreparerMock->expects($this->never())->method($this->anything());
-		$this->conditionalPlayServiceMock->expects($this->once())->method('fetchAccessibleItem')
-			->with(123)
-			->willReturn([]);
-
-		$this->responseBuilderMock->expects($this->once())->method('itemNotFound')
-			->with($this->responseStub)
-			->willReturn($this->responseStub);
-
-		$this->orchestrator->setInput(['item_id' => '123']);
 		$this->initMocks();
 		$this->orchestrator->save($this->responseStub);
 	}

@@ -74,11 +74,6 @@ class ResponseBuilder extends BaseResponseBuilder
 		return $this->error($response, 'No valid parametername.');
 	}
 
-	public function itemNotFound(ResponseInterface $response): ResponseInterface
-	{
-		return $this->error($response, 'Item not found.');
-	}
-
 	public function insertFailed(ResponseInterface $response): ResponseInterface
 	{
 		return $this->error($response, 'Error inserting item.');
@@ -89,17 +84,12 @@ class ResponseBuilder extends BaseResponseBuilder
 		return $this->error($response, 'Error updating item field: '.$fieldName.'.');
 	}
 
-	public function deleteFailed(ResponseInterface $response): ResponseInterface
-	{
-		return $this->error($response, 'Error deleting item.');
-	}
-
 	/**
-	 * The frontend expects only the success flag here, without an error message.
+	 * The frontend expects only the success flag here. Errors are thrown and answered by the JsonErrorHandler.
 	 */
-	public function itemsOrderUpdated(ResponseInterface $response, bool $success): ResponseInterface
+	public function itemsOrderUpdated(ResponseInterface $response): ResponseInterface
 	{
-		return $this->jsonResponseHandler->jsonResponse($response, ['success' => $success]);
+		return $this->jsonResponseHandler->jsonResponse($response, ['success' => true]);
 	}
 
 	private function error(ResponseInterface $response, string $message): ResponseInterface

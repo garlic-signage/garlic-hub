@@ -33,14 +33,4 @@ class ResponseBuilder extends BaseResponseBuilder
 	{
 		return $this->jsonResponseHandler->jsonError($response, 'Item ID not valid.');
 	}
-
-	public function widgetLoadFailed(ResponseInterface $response): ResponseInterface
-	{
-		return $this->jsonResponseHandler->jsonError($response, 'Widget load failed.');
-	}
-
-	public function saveFailed(ResponseInterface $response, string $errorText): ResponseInterface
-	{
-		return $this->jsonResponseHandler->jsonError($response, $errorText);
-	}
 }

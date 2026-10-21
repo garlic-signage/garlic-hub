@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Services\InsertItems;
 
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Helper\PlaylistMetrics;
@@ -130,6 +131,7 @@ class PlaylistTest extends TestCase
 	#[Group('units')]
 	public function testInsertCheRecursionFailsSamePlaylist(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		// nothing is calculated
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateFromPlaylistData');
 		$playlistId = 1;
@@ -145,11 +147,11 @@ class PlaylistTest extends TestCase
 
 		$this->itemsRepositoryMock->expects($this->never())->method('updatePositionsWhenInserted');
 
-		$this->itemsRepositoryMock->method('rollBackTransaction');
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Error insert playlist: Playlist recursion alert.');
+		$this->itemsRepositoryMock->expects($this->once())->method('rollBackTransaction');
 
-		static::assertEmpty($this->playlist->insert($playlistId, $insertId, $position));
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('playlist_recursion');
+		$this->playlist->insert($playlistId, $insertId, $position);
 	}
 
 	/**
@@ -158,6 +160,7 @@ class PlaylistTest extends TestCase
 	#[Group('units')]
 	public function testInsertCheRecursionFailsSamePlaylistAfterRecursion(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		// nothing is calculated
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateFromPlaylistData');
 		$playlistId = 1;
@@ -177,11 +180,11 @@ class PlaylistTest extends TestCase
 
 		$this->itemsRepositoryMock->expects($this->never())->method('updatePositionsWhenInserted');
 
-		$this->itemsRepositoryMock->method('rollBackTransaction');
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Error insert playlist: Playlist recursion alert.');
+		$this->itemsRepositoryMock->expects($this->once())->method('rollBackTransaction');
 
-		static::assertEmpty($this->playlist->insert($playlistId, $insertId, $position));
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('playlist_recursion');
+		$this->playlist->insert($playlistId, $insertId, $position);
 	}
 
 	/**
@@ -190,6 +193,7 @@ class PlaylistTest extends TestCase
 	#[Group('units')]
 	public function testInsertFails(): void
 	{
+		$this->loggerMock->expects($this->never())->method($this->anything());
 		$playlistId = 1;
 		$insertId = 2;
 		$position = 1;
@@ -226,11 +230,11 @@ class PlaylistTest extends TestCase
 
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateFromPlaylistData');
 
-		$this->itemsRepositoryMock->method('rollBackTransaction');
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('Error insert playlist: Playlist item could not inserted.');
+		$this->itemsRepositoryMock->expects($this->once())->method('rollBackTransaction');
 
-		static::assertEmpty($this->playlist->insert($playlistId, $insertId, $position));
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('item_not_inserted');
+		$this->playlist->insert($playlistId, $insertId, $position);
 	}
 
 	/**

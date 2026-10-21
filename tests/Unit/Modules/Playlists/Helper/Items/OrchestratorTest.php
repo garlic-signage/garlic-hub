@@ -323,26 +323,6 @@ class OrchestratorTest extends TestCase
 		$this->orchestrator->fetch($this->responseStub);
 	}
 
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 * @throws ModuleException
-	 * @throws UserException
-	 */
-	#[Group('units')]
-	public function testFetchWithNonexistentItem(): void
-	{
-		$this->prepareValid(['item_id' => 999], 'validateFetch');
-
-		$this->itemsServiceMock->expects($this->once())->method('fetchItemById')
-			->with(999)
-			->willReturn([]);
-		$this->expectError('itemNotFound');
-
-		$this->orchestrator->fetch($this->responseStub);
-	}
-
 	#[Group('units')]
 	public function testValidateUpdateItemOrdersWithInvalidCsrfToken(): void
 	{
@@ -383,10 +363,9 @@ class OrchestratorTest extends TestCase
 		$this->prepareValid(['playlist_id' => 1, 'items_positions' => $positions], 'validateUpdateItemOrders');
 
 		$this->itemsServiceMock->expects($this->once())->method('updateItemOrder')
-			->with(1, $positions)
-			->willReturn(true);
+			->with(1, $positions);
 		$this->responseBuilderMock->expects($this->once())->method('itemsOrderUpdated')
-			->with($this->responseStub, true)
+			->with($this->responseStub)
 			->willReturn($this->responseStub);
 
 		$this->orchestrator->updateItemOrders($this->responseStub);
@@ -433,23 +412,6 @@ class OrchestratorTest extends TestCase
 			->with(1, 123)
 			->willReturn($item);
 		$this->expectSuccess(['data' => $item]);
-
-		$this->orchestrator->delete($this->responseStub);
-	}
-
-	/**
-	 * @throws Exception
-	 * @throws UserException
-	 */
-	#[Group('units')]
-	public function testDeleteWithError(): void
-	{
-		$this->prepareValid(['playlist_id' => 1, 'item_id' => 123], 'validateDelete');
-
-		$this->itemsServiceMock->expects($this->once())->method('delete')
-			->with(1, 123)
-			->willReturn([]);
-		$this->expectError('deleteFailed');
 
 		$this->orchestrator->delete($this->responseStub);
 	}

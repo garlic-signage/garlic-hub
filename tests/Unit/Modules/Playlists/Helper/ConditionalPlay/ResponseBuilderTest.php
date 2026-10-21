@@ -77,46 +77,4 @@ class ResponseBuilderTest extends TestCase
 
 		self::assertSame($this->responseStub, $result);
 	}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testPlaylistNotFound(): void
-	{
-		$translatedMessage = 'Playlist not found';
-		$this->translatorMock->expects($this->once())->method('translate')
-			->with('playlist_not_found', 'playlists')
-			->willReturn($translatedMessage);
-
-		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonError')
-			->with($this->responseStub, $translatedMessage)
-			->willReturn($this->responseStub);
-
-		$result = $this->responseBuilder->playlistNotFound($this->responseStub);
-
-		self::assertSame($this->responseStub, $result);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testItemNotFound(): void
-	{
-		$translatedMessage = 'Item not found';
-		$this->translatorMock->expects($this->once())->method('translate')
-			->with('item_not_found', 'playlists')
-			->willReturn($translatedMessage);
-
-		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonError')
-			->with($this->responseStub, $translatedMessage)
-			->willReturn($this->responseStub);
-
-		$result = $this->responseBuilder->itemNotFound($this->responseStub);
-
-		self::assertSame($this->responseStub, $result);
-	}
 }

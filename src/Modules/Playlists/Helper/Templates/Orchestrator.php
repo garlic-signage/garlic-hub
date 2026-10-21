@@ -23,9 +23,11 @@ declare(strict_types=1);
 namespace App\Modules\Playlists\Helper\Templates;
 
 use App\Framework\Core\Config\Config;
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Playlists\Services\ItemsService;
@@ -59,7 +61,8 @@ class Orchestrator extends BaseTemplateOrchestrator
 			$this->item = $this->itemsService->fetchItemById($itemId);
 			return true;
 		}
-		catch (\Throwable $e)
+		// the template composer answers with its own message, other errors go to the error handler
+		catch (NotFoundException|AccessDeniedException)
 		{
 			return false;
 		}

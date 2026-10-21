@@ -90,15 +90,13 @@ class Orchestrator
 	 */
 	public function fetch(ResponseInterface $response): ?ResponseInterface
 	{
-		$itemData = $this->triggerService->fetchBeginTriggerByItemId($this->itemId)->getItemData();
-		if ($itemData === [])
-			return $this->responseBuilder->itemNotFound($response);
+		$trigger = $this->triggerService->fetchBeginTriggerByItemId($this->itemId);
 
 		$this->templatePreparer->prepare($this->itemId);
 
 		$data = [
-			'item_data' => $itemData,
-			'touchable_medialist' => $this->triggerService->getTouchableMedia(),
+			'item_data' => $trigger['item_data'],
+			'touchable_medialist' => $trigger['touchable_media'],
 			'html' => $this->templatePreparer->render()
 		];
 
@@ -120,10 +118,6 @@ class Orchestrator
 
 		unset($this->input['csrf_token']);
 		unset($this->input['item_id']);
-
-		$item = $this->triggerService->fetchAccessibleItem($this->itemId);
-		if ($item === [])
-			return $this->responseBuilder->itemNotFound($response);
 
 		$this->triggerService->saveBeginTrigger($this->itemId, $this->input);
 

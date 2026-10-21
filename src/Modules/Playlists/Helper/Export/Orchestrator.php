@@ -77,9 +77,7 @@ class Orchestrator
 	 */
 	public function export(ResponseInterface $response): ResponseInterface
 	{
-
-		if ($this->exportService->exportToSmil($this->playlistId) === 0)
-			return $this->responseBuilder->playlistNotFound($response);
+		$this->exportService->exportToSmil($this->playlistId);
 
 		return $this->responseBuilder->generalSuccess($response, []);
 	}
