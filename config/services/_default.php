@@ -38,6 +38,8 @@ use App\Framework\Core\Translate\MessageFormatterFactory;
 use App\Framework\Core\Translate\Translator;
 use App\Framework\Dashboards\SystemDashboard;
 use App\Framework\Database\BaseRepositories\Transactions;
+use App\Framework\Database\Datatable\DatatableQuery;
+use App\Framework\Database\Datatable\FilterConditions;
 use App\Framework\Database\Migration\Repository;
 use App\Framework\Database\Migration\Runner;
 use App\Framework\Database\NestedSets\Calculator;
@@ -210,6 +212,14 @@ $dependencies['SqlConnection'] = DI\factory(function (ContainerInterface $contai
 $dependencies[Transactions::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new Transactions($container->get('SqlConnection'));
+});
+$dependencies[FilterConditions::class] = DI\factory(function ()
+{
+	return new FilterConditions();
+});
+$dependencies[DatatableQuery::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new DatatableQuery($container->get('SqlConnection'), $container->get(FilterConditions::class));
 });
 $dependencies[Service::class] = DI\factory(function (ContainerInterface $container)
 {

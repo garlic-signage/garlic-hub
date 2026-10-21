@@ -21,10 +21,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Users\Services;
 
+use App\Framework\Database\Datatable\DatatableQuery;
 use App\Framework\Exceptions\CoreException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Users\Helper\Datatable\Parameters;
-use App\Modules\Users\Repositories\Edge\UserMainRepository;
+use App\Modules\Users\Helper\Datatable\UsersFilterDefinition;
 use App\Modules\Users\Services\AclValidator;
 use App\Modules\Users\Services\UsersDatatableService;
 use PHPUnit\Framework\Attributes\Group;
@@ -36,7 +37,8 @@ use Psr\Log\LoggerInterface;
 
 class UsersDatatableServiceTest extends TestCase
 {
-	private UserMainRepository&MockObject $repositoryMock;
+	private UsersFilterDefinition&Stub $filterDefinitionStub;
+	private DatatableQuery&MockObject $datatableQueryMock;
 	private Parameters&MockObject $parametersMock;
 	private AclValidator&MockObject $aclValidatorMock;
 	private UserSession&Stub $userSessionStub;
@@ -49,12 +51,13 @@ class UsersDatatableServiceTest extends TestCase
 	{
 		parent::setUp();
 		$loggerStub = $this->createStub(LoggerInterface::class);
-		$this->repositoryMock   = $this->createMock(UserMainRepository::class);
+		$this->filterDefinitionStub = $this->createStub(UsersFilterDefinition::class);
+		$this->datatableQueryMock   = $this->createMock(DatatableQuery::class);
 		$this->parametersMock   = $this->createMock(Parameters::class);
 		$this->aclValidatorMock = $this->createMock(AclValidator::class);
 
 		$this->userSessionStub = $this->createStub(UserSession::class);
-		$this->service = new UsersDatatableService($this->repositoryMock, $this->parametersMock, $this->aclValidatorMock, $this->userSessionStub, $loggerStub);
+		$this->service = new UsersDatatableService($this->filterDefinitionStub, $this->datatableQueryMock, $this->parametersMock, $this->aclValidatorMock, $this->userSessionStub, $loggerStub);
 	}
 
 	/**
@@ -69,16 +72,16 @@ class UsersDatatableServiceTest extends TestCase
 			->with(345)
 			->willReturn(true);
 
-		$this->parametersMock->expects($this->exactly(2))
+		$this->parametersMock->expects($this->once())
 			->method('getInputParametersArray')
 			->willReturn(['empty']);
 
-		$this->repositoryMock->expects($this->once())->method('countAllFiltered')
-			->with(['empty'])
+		$this->datatableQueryMock->expects($this->once())->method('countForModuleAdmin')
+			->with($this->filterDefinitionStub, ['empty'])
 			->willReturn(12);
 
-		$this->repositoryMock->expects($this->once())->method('findAllFiltered')
-			->with(['empty'])
+		$this->datatableQueryMock->expects($this->once())->method('findForModuleAdmin')
+			->with($this->filterDefinitionStub, ['empty'])
 			->willReturn([['result' => 1]]);
 
 		$this->service->loadDatatable();
@@ -99,16 +102,16 @@ class UsersDatatableServiceTest extends TestCase
 			->with(789)
 			->willReturn(false);
 
-		$this->parametersMock->expects($this->exactly(2))
+		$this->parametersMock->expects($this->once())
 			->method('getInputParametersArray')->willReturn(['empty']);
 
-		$this->repositoryMock->expects($this->once())->method('countAllFilteredByUID')
-			->with(['empty'], 789)
+		$this->datatableQueryMock->expects($this->once())->method('countForUser')
+			->with($this->filterDefinitionStub, ['empty'], 789)
 			->willReturn(12);
 
 
-		$this->repositoryMock->expects($this->once())->method('findAllFilteredByUID')
-			->with(['empty'], 789)
+		$this->datatableQueryMock->expects($this->once())->method('findForUser')
+			->with($this->filterDefinitionStub, ['empty'], 789)
 			->willReturn([['result' => 1]]);
 
 		$this->service->loadDatatable();

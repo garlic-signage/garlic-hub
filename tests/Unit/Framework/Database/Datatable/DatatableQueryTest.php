@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -19,9 +19,11 @@
 */
 declare(strict_types=1);
 
-namespace Tests\Unit\Framework\Database\BaseRepositories;
+namespace Tests\Unit\Framework\Database\Datatable;
 
-use App\Framework\Database\BaseRepositories\FilterBase;
+use App\Framework\Database\Datatable\DatatableQuery;
+use App\Framework\Database\Datatable\FilterConditions;
+use App\Framework\Database\Datatable\FilterDefinition;
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
@@ -33,45 +35,53 @@ use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-class ConcreteFilterBase extends FilterBase
+readonly class FakeFilterDefinition implements FilterDefinition
 {
-	protected function prepareJoin(): array
+	public function __construct(private FilterConditions $conditions)
+	{
+	}
+
+	public function table(): string
+	{
+		return 'table';
+	}
+
+	public function joins(): array
 	{
 		return ['user_main' => 'test.UID = user_main.UID'];
 	}
 
-	protected function prepareSelectFiltered(): array
+	public function userJoins(): array
+	{
+		return [];
+	}
+
+	public function selects(): array
 	{
 		return ['selected_filtered'];
 	}
 
-	protected function prepareSelectFilteredForUser(): array
+	public function selectsWithUser(): array
 	{
 		return ['selected_filtered_user'];
 	}
 
-	protected function prepareWhereForFiltering(array $filterFields): array
+	public function whereForFiltering(array $fields): array
 	{
 		$where = [];
-		foreach ($filterFields as $key => $parameter)
+		foreach ($fields as $key => $parameter)
 		{
-			$clause = $this->determineWhereForFiltering($key, $parameter);
-			if (!empty($clause))
-				$where = array_merge($where, $clause);
+			$where = array_merge($where, $this->conditions->forField('table', $key, $parameter));
 		}
 		return $where;
 	}
-
-	protected function prepareUserJoin(): array
-	{
-		return [];
-	}
 }
-class FilterBaseTest extends TestCase
+class DatatableQueryTest extends TestCase
 {
 	private QueryBuilder&MockObject $queryBuilderMock;
 	private Result&MockObject $resultMock;
-	private ConcreteFilterBase $FilterBase;
+	private DatatableQuery $query;
+	private FakeFilterDefinition $definition;
 
 	/**
 	 * @throws Exception
@@ -83,7 +93,9 @@ class FilterBaseTest extends TestCase
 		$this->queryBuilderMock = $this->createMock(QueryBuilder::class);
 		$this->resultMock       = $this->createMock(Result::class);
 
-		$this->FilterBase = new ConcreteFilterBase($connectionStub, 'table', 'id');
+		$conditions       = new FilterConditions();
+		$this->query      = new DatatableQuery($connectionStub, $conditions);
+		$this->definition = new FakeFilterDefinition($conditions);
 
 		$connectionStub->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 		$connectionStub->method('quoteSingleIdentifier')
@@ -123,7 +135,7 @@ class FilterBaseTest extends TestCase
 		$expectedCount = 42;
 		$this->resultMock->expects($this->once())->method('fetchOne')->willReturn($expectedCount);
 
-		$result = $this->FilterBase->countAllFiltered($fields);
+		$result = $this->query->countForModuleAdmin($this->definition, $fields);
 		static::assertSame($expectedCount, $result);
 	}
 
@@ -148,7 +160,7 @@ class FilterBaseTest extends TestCase
 
 		$expectedCount = 333;
 		$this->resultMock->expects($this->once())->method('fetchOne')->willReturn($expectedCount);
-		static::assertSame($expectedCount,  $this->FilterBase->countAllFiltered($fields));
+		static::assertSame($expectedCount,  $this->query->countForModuleAdmin($this->definition, $fields));
 	}
 
 	/**
@@ -163,7 +175,7 @@ class FilterBaseTest extends TestCase
 
 		$expectedCount = 888;
 		$this->resultMock->expects($this->once())->method('fetchOne')->willReturn($expectedCount);
-		static::assertSame($expectedCount,  $this->FilterBase->countAllFiltered($fields));
+		static::assertSame($expectedCount,  $this->query->countForModuleAdmin($this->definition, $fields));
 	}
 
 	/**
@@ -194,7 +206,7 @@ class FilterBaseTest extends TestCase
 
 		$this->resultMock->expects($this->once())->method('fetchAllAssociative')->willReturn($expectedResults);
 
-		$result = $this->FilterBase->findAllFiltered($fields);
+		$result = $this->query->findForModuleAdmin($this->definition, $fields);
 		static::assertSame($expectedResults, $result);
 	}
 
@@ -202,36 +214,32 @@ class FilterBaseTest extends TestCase
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testCountAllFilteredByUIDCompanyReseller(): void
+	public function testCountForResellerGroupsScopeInBrackets(): void
 	{
 		$fields = ['unit_name' => ['value' => 'internal']];
-		$companyId = [3, 5, 6];
 		$UID = 12;
 		$this->setStandardMocksForCount();
 
 		$this->queryBuilderMock->expects($this->exactly(2))->method('andWhere')
 			->willReturnMap([
 					['table.unit_name LIKE :tableunit_name', $this->queryBuilderMock],
-					['table.UID = :tableUID', $this->queryBuilderMock],
+					['(table.UID = :tableUID OR user_main.company_id IN (:user_maincompany_id))', $this->queryBuilderMock],
 				]
 			);
-
-		$this->queryBuilderMock->expects($this->once())->method('orWhere')
-			->with('user_main.company_id IN (:user_maincompany_id)')
-			->willReturn($this->queryBuilderMock);
+		$this->queryBuilderMock->expects($this->never())->method('orWhere');
 
 		$this->queryBuilderMock->expects($this->exactly(3))->method('setParameter')
 			->willReturnMap([
 					['tableunit_name', '%internal%', $this->queryBuilderMock],
 					['tableUID', $UID, $this->queryBuilderMock],
-					['user_maincompany_id', ['3','5','6'], ArrayParameterType::INTEGER, $this->queryBuilderMock]
+					['user_maincompany_id', [3, 5, 6], ArrayParameterType::INTEGER, $this->queryBuilderMock]
 				]
 			);
 
 		$expectedCount = 6934;
 		$this->resultMock->expects($this->once())->method('fetchOne')->willReturn($expectedCount);
 
-		$result = $this->FilterBase->countAllFilteredByUIDCompanyReseller($companyId, $fields, $UID);
+		$result = $this->query->countForReseller($this->definition, [3, 5, 6], $fields, $UID);
 		static::assertSame($expectedCount, $result);
 	}
 
@@ -239,7 +247,25 @@ class FilterBaseTest extends TestCase
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testFindAllFilteredByUIDCompanyReseller(): void
+	public function testCountForResellerWithoutCompaniesUsesOnlyUID(): void
+	{
+		$UID = 12;
+		$this->setStandardMocksForCount();
+
+		$this->queryBuilderMock->expects($this->once())->method('andWhere')->with('table.UID = :tableUID');
+		$this->queryBuilderMock->expects($this->never())->method('orWhere');
+		$this->queryBuilderMock->expects($this->once())->method('setParameter')->with('tableUID', $UID);
+
+		$this->resultMock->expects($this->once())->method('fetchOne')->willReturn(2);
+
+		static::assertSame(2, $this->query->countForReseller($this->definition, [], [], $UID));
+	}
+
+	/**
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	#[Group('units')]
+	public function testFindForResellerGroupsScopeInBrackets(): void
 	{
 		$fields = [
 			BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE => ['value' => 0],
@@ -253,17 +279,14 @@ class FilterBaseTest extends TestCase
 		$this->setStandardMocks();
 
 		$this->queryBuilderMock->expects($this->once())->method('andWhere')
-			->with('table.UID = :tableUID')
+			->with('(table.UID = :tableUID OR user_main.company_id IN (:user_maincompany_id))')
 			->willReturn($this->queryBuilderMock);
-
-		$this->queryBuilderMock->expects($this->once())->method('orWhere')
-			->with('user_main.company_id IN (:user_maincompany_id)')
-			->willReturn($this->queryBuilderMock);
+		$this->queryBuilderMock->expects($this->never())->method('orWhere');
 
 		$this->queryBuilderMock->expects($this->exactly(2))->method('setParameter')
 			->willReturnMap([
-					['user_maincompany_id', ['3','5','6'], ArrayParameterType::INTEGER, $this->queryBuilderMock],
-					['tableUID', $UID, ParameterType::STRING, $this->queryBuilderMock]
+					['tableUID', $UID, ParameterType::STRING, $this->queryBuilderMock],
+					['user_maincompany_id', [3, 5, 6], ArrayParameterType::INTEGER, $this->queryBuilderMock]
 				]
 			);
 
@@ -277,7 +300,7 @@ class FilterBaseTest extends TestCase
 
 		$this->resultMock->expects($this->once())->method('fetchAllAssociative')->willReturn($expectedResults);
 
-		$result = $this->FilterBase->findAllFilteredByUIDCompanyReseller($companyId, $fields, $UID);
+		$result = $this->query->findForReseller($this->definition, $companyId, $fields, $UID);
 		static::assertSame($expectedResults, $result);
 
 	}
@@ -309,7 +332,7 @@ class FilterBaseTest extends TestCase
 		$expectedCount = 34;
 		$this->resultMock->expects($this->once())->method('fetchOne')->willReturn($expectedCount);
 
-		$result = $this->FilterBase->countAllFilteredByUID($fields, $UID);
+		$result = $this->query->countForUser($this->definition, $fields, $UID);
 		static::assertSame($expectedCount, $result);
 	}
 
@@ -348,7 +371,7 @@ class FilterBaseTest extends TestCase
 
 		$this->resultMock->expects($this->once())->method('fetchAllAssociative')->willReturn($expectedResults);
 
-		$result = $this->FilterBase->findAllFilteredByUID($fields, $UID);
+		$result = $this->query->findForUser($this->definition, $fields, $UID);
 		static::assertSame($expectedResults, $result);
 	}
 
@@ -376,7 +399,7 @@ class FilterBaseTest extends TestCase
 
 		$this->resultMock->expects($this->atLeastOnce())->method('fetchAllAssociative')->willReturn([]);
 
-		$this->FilterBase->findAllFiltered($fields);
+		$this->query->findForModuleAdmin($this->definition, $fields);
 	}
 
 	/**
@@ -399,7 +422,61 @@ class FilterBaseTest extends TestCase
 
 		$this->resultMock->expects($this->atLeastOnce())->method('fetchAllAssociative')->willReturn([]);
 
-		$this->FilterBase->findAllFiltered($fields);
+		$this->query->findForModuleAdmin($this->definition, $fields);
+	}
+
+	/**
+	 * Count and find of the user view must use the same joins, otherwise filters on joined tables break the count.
+	 *
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	#[Group('units')]
+	public function testCountForUserUsesUserJoins(): void
+	{
+		$definitionStub = $this->createStub(FilterDefinition::class);
+		$definitionStub->method('table')->willReturn('table');
+		$definitionStub->method('userJoins')->willReturn(['user_main' => 'user_main.UID = table.UID']);
+		$definitionStub->method('whereForFiltering')->willReturn([]);
+
+		$this->queryBuilderMock->expects($this->once())->method('select')->with('COUNT(1)')->willReturnSelf();
+		$this->queryBuilderMock->expects($this->once())->method('from')->with('table')->willReturnSelf();
+		$this->queryBuilderMock->expects($this->once())->method('leftJoin')
+			->with('table', 'user_main', 'user_main', 'user_main.UID = table.UID')->willReturnSelf();
+		$this->queryBuilderMock->expects($this->once())->method('andWhere')->with('table.UID = :tableUID');
+		$this->queryBuilderMock->expects($this->once())->method('setParameter')->with('tableUID', 7);
+		$this->queryBuilderMock->expects($this->once())->method('executeQuery')->willReturn($this->resultMock);
+		$this->resultMock->expects($this->once())->method('fetchOne')->willReturn(3);
+
+		static::assertSame(3, $this->query->countForUser($definitionStub, [], 7));
+	}
+
+	/**
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	#[Group('units')]
+	public function testCountForUserAppliesExpressionWithoutParameter(): void
+	{
+		$definitionStub = $this->createStub(FilterDefinition::class);
+		$definitionStub->method('table')->willReturn('table');
+		$definitionStub->method('userJoins')->willReturn([]);
+		$definitionStub->method('whereForFiltering')->willReturn(['table.last_access' => ['expression' => 'table.last_access < NOW()']]);
+
+		$this->queryBuilderMock->expects($this->once())->method('select')->with('COUNT(1)')->willReturnSelf();
+		$this->queryBuilderMock->expects($this->once())->method('from')->with('table')->willReturnSelf();
+		$this->queryBuilderMock->expects($this->never())->method('leftJoin');
+		$this->queryBuilderMock->expects($this->exactly(2))->method('andWhere')
+			->willReturnCallback(function (string $where): QueryBuilder
+			{
+				static $calls = 0;
+				$expected = ['table.last_access < NOW()', 'table.UID = :tableUID'];
+				static::assertSame($expected[$calls++], $where);
+				return $this->queryBuilderMock;
+			});
+		$this->queryBuilderMock->expects($this->once())->method('setParameter')->with('tableUID', 7);
+		$this->queryBuilderMock->expects($this->once())->method('executeQuery')->willReturn($this->resultMock);
+		$this->resultMock->expects($this->once())->method('fetchOne')->willReturn(1);
+
+		static::assertSame(1, $this->query->countForUser($definitionStub, [], 7));
 	}
 
 	private function setStandardMocksForCount(): void

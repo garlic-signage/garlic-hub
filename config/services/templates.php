@@ -26,6 +26,8 @@ use App\Framework\Core\CsrfToken;
 use App\Framework\Core\Sanitizer;
 use App\Framework\Core\Session;
 use App\Framework\Core\Translate\Translator;
+use App\Framework\Database\Datatable\DatatableQuery;
+use App\Framework\Database\Datatable\FilterConditions;
 use App\Framework\Media\DataUrlDecoder;
 use App\Framework\Media\MediaUrlSigner;
 use App\Framework\Utils\Datatable\BuildService;
@@ -44,6 +46,7 @@ use App\Modules\Templates\Helper\Datatable\DatatableBuilder;
 use App\Modules\Templates\Helper\Datatable\DatatableFacade;
 use App\Modules\Templates\Helper\Datatable\DatatablePreparer;
 use App\Modules\Templates\Helper\Datatable\Parameters;
+use App\Modules\Templates\Helper\Datatable\TemplatesFilterDefinition;
 use App\Modules\Templates\Helper\Settings\SettingsFormBuilder;
 use App\Modules\Templates\Helper\Settings\FormInputHandler;
 use App\Modules\Templates\Helper\Settings\FormElementsCreator;
@@ -181,7 +184,8 @@ $dependencies[TemplatesUsageService::class] = DI\factory(function (ContainerInte
 $dependencies[TemplatesDatatableService::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new TemplatesDatatableService(
-		$container->get(TemplatesRepository::class),
+		new TemplatesFilterDefinition($container->get(FilterConditions::class)),
+		$container->get(DatatableQuery::class),
 		$container->get(Parameters::class),
 		$container->get(UserSession::class),
 		$container->get(TemplatesUsageService::class),

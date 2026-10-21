@@ -21,11 +21,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Templates\Services;
 
+use App\Framework\Database\Datatable\DatatableQuery;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Templates\Helper\Datatable\Parameters;
-use App\Modules\Templates\Repositories\TemplatesRepository;
+use App\Modules\Templates\Helper\Datatable\TemplatesFilterDefinition;
 use App\Modules\Templates\Services\AclValidator;
 use App\Modules\Templates\Services\TemplatesDatatableService;
 use App\Modules\Templates\Services\TemplatesUsageService;
@@ -38,7 +39,8 @@ use Psr\Log\LoggerInterface;
 
 class TemplatesDatatableServiceTest extends TestCase
 {
-	private TemplatesRepository&MockObject $repositoryMock;
+	private TemplatesFilterDefinition&Stub $filterDefinitionStub;
+	private DatatableQuery&MockObject $datatableQueryMock;
 	private Parameters&Stub $parametersStub;
 	private TemplatesUsageService&MockObject $usageServiceMock;
 	private AclValidator&MockObject $aclValidatorMock;
@@ -51,7 +53,8 @@ class TemplatesDatatableServiceTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->repositoryMock   = $this->createMock(TemplatesRepository::class);
+		$this->filterDefinitionStub = $this->createStub(TemplatesFilterDefinition::class);
+		$this->datatableQueryMock   = $this->createMock(DatatableQuery::class);
 		$this->parametersStub   = $this->createStub(Parameters::class);
 		$this->usageServiceMock = $this->createMock(TemplatesUsageService::class);
 		$this->aclValidatorMock = $this->createMock(AclValidator::class);
@@ -61,7 +64,8 @@ class TemplatesDatatableServiceTest extends TestCase
 		$this->parametersStub->method('getInputParametersArray')->willReturn(['name' => ['value' => 'x']]);
 
 		$this->service = new TemplatesDatatableService(
-			$this->repositoryMock,
+			$this->filterDefinitionStub,
+			$this->datatableQueryMock,
 			$this->parametersStub,
 			$userSessionStub,
 			$this->usageServiceMock,
@@ -78,7 +82,7 @@ class TemplatesDatatableServiceTest extends TestCase
 	public function testCheckDisplayRightsUsesSessionUser(): void
 	{
 		$this->aclValidatorMock->expects($this->once())->method('isSimpleAdmin')->with(5)->willReturn(true);
-		$this->repositoryMock->expects($this->never())->method($this->anything());
+		$this->datatableQueryMock->expects($this->never())->method($this->anything());
 		$this->usageServiceMock->expects($this->never())->method($this->anything());
 
 		static::assertTrue($this->service->checkDisplayRights());
@@ -92,7 +96,7 @@ class TemplatesDatatableServiceTest extends TestCase
 	public function testCheckDisplayRightsDenied(): void
 	{
 		$this->aclValidatorMock->expects($this->once())->method('isSimpleAdmin')->with(5)->willReturn(false);
-		$this->repositoryMock->expects($this->never())->method($this->anything());
+		$this->datatableQueryMock->expects($this->never())->method($this->anything());
 		$this->usageServiceMock->expects($this->never())->method($this->anything());
 
 		static::assertFalse($this->service->checkDisplayRights());
@@ -107,11 +111,11 @@ class TemplatesDatatableServiceTest extends TestCase
 	{
 		$results = [['template_id' => 1], ['template_id' => 2]];
 		$this->aclValidatorMock->expects($this->once())->method('isModuleAdmin')->with(5)->willReturn(true);
-		$this->repositoryMock->expects($this->once())->method('countAllFiltered')
-			->with(['name' => ['value' => 'x']])
+		$this->datatableQueryMock->expects($this->once())->method('countForModuleAdmin')
+			->with($this->filterDefinitionStub, ['name' => ['value' => 'x']])
 			->willReturn(2);
-		$this->repositoryMock->expects($this->once())->method('findAllFiltered')
-			->with(['name' => ['value' => 'x']])
+		$this->datatableQueryMock->expects($this->once())->method('findForModuleAdmin')
+			->with($this->filterDefinitionStub, ['name' => ['value' => 'x']])
 			->willReturn($results);
 		$this->usageServiceMock->expects($this->never())->method($this->anything());
 
@@ -130,7 +134,7 @@ class TemplatesDatatableServiceTest extends TestCase
 	{
 		$this->aclValidatorMock->expects($this->once())->method('isModuleAdmin')->willReturn(false);
 		$this->aclValidatorMock->expects($this->once())->method('isSubAdmin')->with(5)->willReturn(true);
-		$this->repositoryMock->expects($this->never())->method($this->anything());
+		$this->datatableQueryMock->expects($this->never())->method($this->anything());
 		$this->usageServiceMock->expects($this->never())->method($this->anything());
 
 		$this->service->loadDatatable();
@@ -151,11 +155,11 @@ class TemplatesDatatableServiceTest extends TestCase
 		$this->aclValidatorMock->expects($this->once())->method('isSubAdmin')->willReturn(false);
 		$this->aclValidatorMock->expects($this->once())->method('isEditor')->willReturn(false);
 		$this->aclValidatorMock->expects($this->once())->method('isViewer')->willReturn(false);
-		$this->repositoryMock->expects($this->once())->method('countAllFilteredByUID')
-			->with(['name' => ['value' => 'x']], 5)
+		$this->datatableQueryMock->expects($this->once())->method('countForUser')
+			->with($this->filterDefinitionStub, ['name' => ['value' => 'x']], 5)
 			->willReturn(1);
-		$this->repositoryMock->expects($this->once())->method('findAllFilteredByUID')
-			->with(['name' => ['value' => 'x']], 5)
+		$this->datatableQueryMock->expects($this->once())->method('findForUser')
+			->with($this->filterDefinitionStub, ['name' => ['value' => 'x']], 5)
 			->willReturn($results);
 		$this->usageServiceMock->expects($this->never())->method($this->anything());
 
@@ -174,7 +178,7 @@ class TemplatesDatatableServiceTest extends TestCase
 		$this->usageServiceMock->expects($this->once())->method('determineTemplatesInUse')
 			->with([1, 2])
 			->willReturn([2 => 4]);
-		$this->repositoryMock->expects($this->never())->method($this->anything());
+		$this->datatableQueryMock->expects($this->never())->method($this->anything());
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 
 		static::assertSame([2 => 4], $this->service->getTemplatesInUse([1, 2]));
@@ -187,7 +191,7 @@ class TemplatesDatatableServiceTest extends TestCase
 	public function testGetTemplatesInUseWithoutIds(): void
 	{
 		$this->usageServiceMock->expects($this->never())->method($this->anything());
-		$this->repositoryMock->expects($this->never())->method($this->anything());
+		$this->datatableQueryMock->expects($this->never())->method($this->anything());
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 
 		static::assertSame([], $this->service->getTemplatesInUse([]));

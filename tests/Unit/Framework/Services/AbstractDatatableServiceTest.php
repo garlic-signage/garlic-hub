@@ -21,7 +21,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Framework\Services;
 
-use App\Framework\Database\BaseRepositories\FilterBase;
+use App\Framework\Database\Datatable\DatatableQuery;
+use App\Framework\Database\Datatable\FilterDefinition;
 use App\Framework\Services\AbstractDatatableService;
 use App\Framework\Utils\FormParameters\BaseParameters;
 use Doctrine\DBAL\Exception;
@@ -33,25 +34,13 @@ use Psr\Log\LoggerInterface;
 
 class ConcreteDatatableService extends AbstractDatatableService
 {
-
 	public function loadDatatable(): void {}
-
-	public function fetchForModuleAdmin(FilterBase $repository, BaseParameters $parameters): static
-	{
-		return parent::fetchForModuleAdmin($repository, $parameters);
-	}
-
-	public function fetchForUser(FilterBase $repository, BaseParameters $parameters, int $UID): static
-	{
-		return parent::fetchForUser($repository, $parameters, $UID);
-	}
-
-
 }
+
 class AbstractDatatableServiceTest extends TestCase
 {
-	protected LoggerInterface&Stub $loggerStub;
-	private FilterBase&MockObject $repositoryMock;
+	private FilterDefinition&Stub $definitionStub;
+	private DatatableQuery&MockObject $datatableQueryMock;
 	private BaseParameters&MockObject $parametersMock;
 	private ConcreteDatatableService $service;
 
@@ -61,10 +50,10 @@ class AbstractDatatableServiceTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->loggerStub = $this->createStub(LoggerInterface::class);
-		$this->repositoryMock = $this->createMock(FilterBase::class);
-		$this->parametersMock = $this->createMock(BaseParameters::class);
-		$this->service = new ConcreteDatatableService($this->loggerStub);
+		$this->definitionStub     = $this->createStub(FilterDefinition::class);
+		$this->datatableQueryMock = $this->createMock(DatatableQuery::class);
+		$this->parametersMock     = $this->createMock(BaseParameters::class);
+		$this->service = new ConcreteDatatableService($this->createStub(LoggerInterface::class), $this->datatableQueryMock);
 	}
 
 	/**
@@ -73,19 +62,19 @@ class AbstractDatatableServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchForModuleAdmin(): void
 	{
-		$this->parametersMock->expects($this->exactly(2))
+		$this->parametersMock->expects($this->once())
 			->method('getInputParametersArray')->willReturn(['empty']);
 
-		$this->repositoryMock->expects($this->once())->method('countAllFiltered')
-			->with(['empty'])
+		$this->datatableQueryMock->expects($this->once())->method('countForModuleAdmin')
+			->with($this->definitionStub, ['empty'])
 			->willReturn(12);
 
 		$result = [['key' => 'value']];
-			$this->repositoryMock->expects($this->once())->method('findAllFiltered')
-				->with(['empty'])
-				->willReturn($result);
+		$this->datatableQueryMock->expects($this->once())->method('findForModuleAdmin')
+			->with($this->definitionStub, ['empty'])
+			->willReturn($result);
 
-		$this->service->fetchForModuleAdmin($this->repositoryMock, $this->parametersMock);
+		$this->service->fetchForModuleAdmin($this->definitionStub, $this->parametersMock);
 
 		static::assertSame(12, $this->service->getCurrentTotalResult());
 		static::assertSame($result, $this->service->getCurrentFilterResults());
@@ -97,23 +86,21 @@ class AbstractDatatableServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchForUser(): void
 	{
-
-		$this->parametersMock->expects($this->exactly(2))
+		$this->parametersMock->expects($this->once())
 			->method('getInputParametersArray')->willReturn(['empty']);
 
-		$this->repositoryMock->expects($this->once())->method('countAllFilteredByUID')
-			->with(['empty'], 123)
+		$this->datatableQueryMock->expects($this->once())->method('countForUser')
+			->with($this->definitionStub, ['empty'], 123)
 			->willReturn(12);
 
 		$result = [['key' => 'value']];
-		$this->repositoryMock->expects($this->once())->method('findAllFilteredByUID')
-			->with(['empty'], 123)
+		$this->datatableQueryMock->expects($this->once())->method('findForUser')
+			->with($this->definitionStub, ['empty'], 123)
 			->willReturn($result);
 
-		$this->service->fetchForUser($this->repositoryMock, $this->parametersMock, 123);
+		$this->service->fetchForUser($this->definitionStub, $this->parametersMock, 123);
 
 		static::assertSame(12, $this->service->getCurrentTotalResult());
 		static::assertSame($result, $this->service->getCurrentFilterResults());
 	}
-
 }

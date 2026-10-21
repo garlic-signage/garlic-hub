@@ -21,7 +21,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Users\Repositories\Edge;
 
-use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
 use App\Modules\Users\Repositories\Edge\UserMainRepository;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
@@ -148,50 +147,6 @@ class UserMainRepositoryTest extends TestCase
 
 		$result = $this->userMain->findByIdSecured($UID);
 		static::assertEquals($userData, $result);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testPrepareMethods(): void
-	{
-		$fields = [
-			'username' => ['value' => 'johndoe'],
-			'from_status' => ['value' => 3],
-			BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE => ['value' => 0],
-			BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE => ['value' => 10],
-		];
-		$this->connectionMock->expects($this->once())->method('createQueryBuilder')
-			->willReturn($this->queryBuilderMock);
-
-		$this->queryBuilderMock->expects($this->once())->method('select')
-			->with('user_main.*, \'moduleadmin\'')->willReturnSelf();
-		$this->queryBuilderMock->expects($this->once())->method('from')
-			->with('user_main')->willReturnSelf();
-		$this->queryBuilderMock->expects($this->never())->method('leftJoin');
-		$this->queryBuilderMock->expects($this->once())->method('executeQuery')->willReturn($this->resultMock);
-
-		$this->queryBuilderMock->expects($this->exactly(2))->method('andWhere')
-			->willReturnMap([
-					['user_main.username LIKE :user_mainusername', $this->queryBuilderMock],
-					['status >= :status', $this->queryBuilderMock]
-				]
-			);
-		$this->queryBuilderMock->expects($this->exactly(2))->method('setParameter')
-			->willReturnMap([
-					['user_mainusername', '%johndoe%', $this->queryBuilderMock],
-					['status', 3, $this->queryBuilderMock]
-				]
-			);
-
-		$this->queryBuilderMock->expects($this->never())->method('addOrderBy');
-
-		$expectedResults = [['id' => 1, 'name' => 'John Doe']];
-		$this->resultMock->expects($this->once())->method('fetchAllAssociative')->willReturn($expectedResults);
-
-		$result = $this->userMain->findAllFiltered($fields);
-		static::assertSame($expectedResults, $result);
 	}
 
 	/**

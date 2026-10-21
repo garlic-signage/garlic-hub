@@ -21,12 +21,13 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Services;
 
+use App\Framework\Database\Datatable\DatatableQuery;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Services\AbstractDatatableService;
 use App\Framework\Utils\FormParameters\BaseParameters;
 use App\Modules\Auth\UserSession;
-use App\Modules\Users\Repositories\Edge\UserMainRepository;
+use App\Modules\Users\Helper\Datatable\UsersFilterDefinition;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
 
@@ -36,18 +37,18 @@ use Psr\Log\LoggerInterface;
  */
 class UsersDatatableService extends AbstractDatatableService
 {
-	private readonly UserMainRepository $userMainRepository;
+	private readonly UsersFilterDefinition $filterDefinition;
 	private readonly BaseParameters $parameters;
 	private readonly AclValidator $aclValidator;
 	private readonly UserSession $userSession;
 
-	public function __construct(UserMainRepository $userMainRepository, BaseParameters $parameters, AclValidator $aclValidator, UserSession $userSession, LoggerInterface $logger)
+	public function __construct(UsersFilterDefinition $filterDefinition, DatatableQuery $datatableQuery, BaseParameters $parameters, AclValidator $aclValidator, UserSession $userSession, LoggerInterface $logger)
 	{
-		$this->userMainRepository = $userMainRepository;
+		$this->filterDefinition = $filterDefinition;
 		$this->aclValidator = $aclValidator;
 		$this->parameters = $parameters;
 		$this->userSession = $userSession;
-		parent::__construct($logger);
+		parent::__construct($logger, $datatableQuery);
 	}
 
 	/**
@@ -60,11 +61,11 @@ class UsersDatatableService extends AbstractDatatableService
 		$UID = $this->userSession->getUID();
 		if ($this->aclValidator->isModuleAdmin($UID))
 		{
-			$this->fetchForModuleAdmin($this->userMainRepository, $this->parameters);
+			$this->fetchForModuleAdmin($this->filterDefinition, $this->parameters);
 		}
 		/*		elseif ($this->aclValidator->isSubAdmin($UID))
 				{
-					$this->handleRequestSubAdmin($this->userMainRepository);
+					$this->handleRequestSubAdmin($this->filterDefinition);
 				}
 				elseif ($this->aclValidator->isEditor($UID))
 				{
@@ -77,7 +78,7 @@ class UsersDatatableService extends AbstractDatatableService
 		*/
 		else
 		{
-			$this->fetchForUser($this->userMainRepository, $this->parameters, $UID);
+			$this->fetchForUser($this->filterDefinition, $this->parameters, $UID);
 		}
 	}
 

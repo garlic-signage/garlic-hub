@@ -21,9 +21,11 @@ declare(strict_types=1);
 
 namespace App\Framework\Services;
 
-use App\Framework\Database\BaseRepositories\FilterBase;
+use App\Framework\Database\Datatable\DatatableQuery;
+use App\Framework\Database\Datatable\FilterDefinition;
 use App\Framework\Utils\FormParameters\BaseParameters;
 use Doctrine\DBAL\Exception;
+use Psr\Log\LoggerInterface;
 
 /**
  * Abstract base class for managing datatables in different contexts.
@@ -34,27 +36,36 @@ abstract class AbstractDatatableService extends AbstractBaseService
 {
 	use SearchFilterParamsTrait;
 
+	public function __construct(LoggerInterface $logger, private readonly DatatableQuery $datatableQuery)
+	{
+		parent::__construct($logger);
+	}
+
 	abstract public function loadDatatable(): void;
 
 	/**
 	 * @throws Exception
 	 */
-	public function fetchForModuleAdmin(FilterBase $repository, BaseParameters $parameters): static
+	public function fetchForModuleAdmin(FilterDefinition $definition, BaseParameters $parameters): static
 	{
-		$total_elements 	   = $repository->countAllFiltered($parameters->getInputParametersArray());
-		$results	           = $repository->findAllFiltered($parameters->getInputParametersArray());
+		$fields = $parameters->getInputParametersArray();
 
-		return $this->setAllResultData($total_elements,  $results);
+		return $this->setAllResultData(
+			$this->datatableQuery->countForModuleAdmin($definition, $fields),
+			$this->datatableQuery->findForModuleAdmin($definition, $fields)
+		);
 	}
 
 	/**
 	 * @throws Exception
 	 */
-	public function fetchForUser(FilterBase $repository, BaseParameters $parameters, int $UID): static
+	public function fetchForUser(FilterDefinition $definition, BaseParameters $parameters, int $UID): static
 	{
-		$total_elements = $repository->countAllFilteredByUID($parameters->getInputParametersArray(), $UID);
-		$results        = $repository->findAllFilteredByUID($parameters->getInputParametersArray(), $UID);
+		$fields = $parameters->getInputParametersArray();
 
-		return $this->setAllResultData($total_elements, $results);
+		return $this->setAllResultData(
+			$this->datatableQuery->countForUser($definition, $fields, $UID),
+			$this->datatableQuery->findForUser($definition, $fields, $UID)
+		);
 	}
 }

@@ -21,12 +21,17 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Repositories;
 
-use App\Framework\Database\BaseRepositories\FilterBase;
+use App\Framework\Database\BaseRepositories\SqlBase;
+use App\Framework\Database\BaseRepositories\Traits\CrudTraits;
+use App\Framework\Database\BaseRepositories\Traits\FindOperationsTrait;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
-class TemplatesRepository extends FilterBase
+class TemplatesRepository extends SqlBase
 {
+	use CrudTraits;
+	use FindOperationsTrait;
+
 	public function __construct(Connection $connection)
 	{
 		parent::__construct($connection,'templates', 'template_id');
@@ -38,48 +43,9 @@ class TemplatesRepository extends FilterBase
 	 */
 	public function findFirstWithUserName(int $templateId): array
 	{
-		$select = $this->prepareSelectFilteredForUser();
+		$select = [$this->table.'.*', 'user_main.username', 'user_main.company_id'];
+		$join   = ['user_main' => 'user_main.UID=' . $this->table . '.UID'];
 		$where  = ['template_id' => $this->generateWhereClause($templateId)];
-		return $this->getFirstDataSet($this->findAllByWithFields($select, $where, $this->prepareJoin()));
+		return $this->getFirstDataSet($this->findAllByWithFields($select, $where, $join));
 	}
-
-	protected function prepareJoin(): array
-	{
-		return ['user_main' => 'user_main.UID=' . $this->table . '.UID'];
-	}
-
-	protected function prepareUserJoin(): array
-	{
-		return [];
-	}
-
-	/**
-	 * @return string[]
-	 */
-	protected function prepareSelectFiltered(): array
-	{
-		return [$this->table.'.*'];
-	}
-
-	/**
-	 * @return string[]
-	 */
-	protected function prepareSelectFilteredForUser(): array
-	{
-		return array_merge($this->prepareSelectFiltered(),['user_main.username', 'user_main.company_id']);
-	}
-
-	protected function prepareWhereForFiltering(array $filterFields): array
-	{
-		$where = [];
-		foreach ($filterFields as $key => $parameter)
-		{
-            $clause = $this->determineWhereForFiltering($key, $parameter);
-            if (!empty($clause))
-                $where = array_merge($where, $clause);
-
-        }
-		return $where;
-	}
-
 }

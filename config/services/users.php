@@ -27,6 +27,8 @@ use App\Framework\Core\Sanitizer;
 use App\Framework\Core\Session;
 use App\Framework\Core\Translate\Translator;
 use App\Framework\Database\BaseRepositories\Transactions;
+use App\Framework\Database\Datatable\DatatableQuery;
+use App\Framework\Database\Datatable\FilterConditions;
 use App\Framework\Utils\Datatable\BuildService;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
 use App\Framework\Utils\Datatable\PrepareService;
@@ -41,7 +43,7 @@ use App\Modules\Users\Helper\Datatable\DatatableFacade;
 use App\Modules\Users\Helper\Datatable\DatatableBuilder;
 use App\Modules\Users\Helper\Datatable\DatatablePreparer;
 use App\Modules\Users\Helper\Datatable\Parameters;
-use App\Modules\Users\Repositories\Edge\UserMainRepository;
+use App\Modules\Users\Helper\Datatable\UsersFilterDefinition;
 use App\Modules\Users\Repositories\UserRepositoryFactory;
 use App\Modules\Users\Services\AclValidator;
 use App\Modules\Users\Services\UsersAdminCreateService;
@@ -74,7 +76,8 @@ $dependencies[UsersService::class] = DI\factory(function (ContainerInterface $co
 $dependencies[UsersDatatableService::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new UsersDatatableService(
-		new UserMainRepository($container->get('SqlConnection')),
+		new UsersFilterDefinition($container->get(FilterConditions::class)),
+		$container->get(DatatableQuery::class),
 		$container->get(Parameters::class),
 		$container->get(AclValidator::class),
 		$container->get(UserSession::class),

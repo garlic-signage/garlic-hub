@@ -21,7 +21,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Services;
 
-use App\Framework\Database\BaseRepositories\FilterBase;
 use App\Framework\Services\AbstractBaseService;
 use App\Modules\Profile\Entities\UserEntity;
 use App\Modules\Profile\Entities\UserEntityFactory;
@@ -190,7 +189,7 @@ class UsersService extends AbstractBaseService
 			}
 			else
 			{
-				/** @var FilterBase $repository */
+				/** @var UserTokensRepository $repository */
 				$userData[$key] = $repository->findFirstById($UID);
 			}
 		}

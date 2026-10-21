@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Playlists\Repositories;
 
 use App\Modules\Playlists\Repositories\PlaylistsRepository;
-use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\ParameterType;
@@ -54,142 +53,6 @@ class PlaylistsRepositoryTest extends TestCase
 
 		$this->connectionMock->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
 	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testPlaylistModeWithIn(): void
-	{
-		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
-		$fields = [
-			'playlist_mode' => ['value' => 'master,multizone']
-		];
-
-		$this->queryBuilderMock->expects($this->once())->method('select')
-			->with('COUNT(1)')->willReturnSelf();
-		$this->queryBuilderMock->expects($this->once())->method('from')
-			->with('playlists')->willReturnSelf();
-
-		$this->queryBuilderMock->expects($this->once())->method('leftJoin')
-			->with('playlists', 'user_main', 'user_main', 'user_main.UID=playlists.UID')->willReturnSelf();
-
-		$this->queryBuilderMock->expects($this->once())->method('andWhere')
-			->willReturnMap([
-					['playlist_mode IN (:playlist_mode)', $this->queryBuilderMock]
-				]
-			);
-		$this->queryBuilderMock->expects($this->once())->method('setParameter')
-			->willReturnMap([
-					['playlist_mode', ['master','multizone'], ArrayParameterType::STRING, $this->queryBuilderMock]
-				]
-			);
-
-		$this->queryBuilderMock->expects($this->once())->method('executeQuery')->willReturn($this->resultMock);
-		$expectedCount = 42;
-		$this->resultMock->expects($this->once())->method('fetchOne')->willReturn($expectedCount);
-
-		$result = $this->repository->countAllFiltered($fields);
-		static::assertSame($expectedCount, $result);
-
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testPlaylistMode(): void
-	{
-		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
-		$fields = [
-			'playlist_mode' => ['value' => 'master']
-		];
-
-		$this->queryBuilderMock->expects($this->once())->method('select')
-			->with('COUNT(1)')->willReturnSelf();
-		$this->queryBuilderMock->expects($this->once())->method('from')
-			->with('playlists')->willReturnSelf();
-
-		$this->queryBuilderMock->expects($this->once())->method('leftJoin')
-			->with('playlists', 'user_main', 'user_main', 'user_main.UID=playlists.UID')->willReturnSelf();
-
-		$this->queryBuilderMock->expects($this->once())->method('andWhere')
-			->willReturnMap([
-					['playlist_mode = :playlist_mode', $this->queryBuilderMock]
-				]
-			);
-		$this->queryBuilderMock->expects($this->once())->method('setParameter')
-			->willReturnMap([
-					['playlist_mode', 'master', $this->queryBuilderMock]
-				]
-			);
-
-		$this->queryBuilderMock->expects($this->once())->method('executeQuery')->willReturn($this->resultMock);
-		$expectedCount = 42;
-		$this->resultMock->expects($this->once())->method('fetchOne')->willReturn($expectedCount);
-
-		$result = $this->repository->countAllFiltered($fields);
-		static::assertSame($expectedCount, $result);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testPlaylistModeEmpty(): void
-	{
-		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
-		$fields = [
-			'playlist_mode' => ['value' => '']
-		];
-
-		$this->queryBuilderMock->expects($this->once())->method('select')
-			->with('COUNT(1)')->willReturnSelf();
-		$this->queryBuilderMock->expects($this->once())->method('from')
-			->with('playlists')->willReturnSelf();
-
-		$this->queryBuilderMock->expects($this->once())->method('leftJoin')
-			->with('playlists', 'user_main', 'user_main', 'user_main.UID=playlists.UID')->willReturnSelf();
-
-		$this->queryBuilderMock->expects($this->once())->method('executeQuery')->willReturn($this->resultMock);
-		$expectedCount = 42;
-		$this->resultMock->expects($this->once())->method('fetchOne')->willReturn($expectedCount);
-
-		$result = $this->repository->countAllFiltered($fields);
-		static::assertSame($expectedCount, $result);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testFindByUIDPlaylistModeEmpty(): void
-	{
-		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
-		$fields = [
-			'elements_page' => ['value' => 1],
-			'elements_per_page' => ['value' => 10],
-			'playlist_mode' => ['value' => '']
-		];
-
-		$this->queryBuilderMock->expects($this->once())->method('select')
-			->with('playlists.*, \'user\'')->willReturnSelf();
-		$this->queryBuilderMock->expects($this->once())->method('from')
-			->with('playlists')->willReturnSelf();
-
-		$this->queryBuilderMock->expects($this->never())->method('leftJoin');
-
-		$this->queryBuilderMock->expects($this->once())->method('executeQuery')->willReturn($this->resultMock);
-
-		$expected = [['some_result' => 'result']];
-		$this->queryBuilderMock->expects($this->once())->method('executeQuery')->willReturn($this->resultMock);
-		$this->resultMock->expects($this->once())->method('fetchAllAssociative')->willReturn($expected);
-
-		$result = $this->repository->findAllFilteredByUID($fields, 1);
-		static::assertSame($expected, $result);
-	}
-
-
 
 	/**
 	 * @throws Exception
@@ -282,46 +145,5 @@ class PlaylistsRepositoryTest extends TestCase
 		$result = $this->repository->updateExport($playlistId, $saveData);
 
 		static::assertSame($expectedResult, $result);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testCountAllFilteredReturnsCorrectCount(): void
-	{
-		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
-		$fields = [
-			'playlist_mode' => ['value' => 'multizone'],
-			'playlist_name' => ['value' => 'name']
-		];
-
-		$this->queryBuilderMock->expects($this->once())->method('select')
-			->with('COUNT(1)')->willReturnSelf();
-		$this->queryBuilderMock->expects($this->once())->method('from')->with('playlists');
-
-		$this->queryBuilderMock->expects($this->once())->method('leftJoin')
-			->with('playlists', 'user_main', 'user_main', 'user_main.UID=playlists.UID')->willReturnSelf();
-
-
-		$this->queryBuilderMock->expects($this->exactly(2))->method('andWhere')
-			->willReturnMap([
-					['playlist_mode = :playlist_mode', $this->queryBuilderMock],
-					['playlists.playlist_name LIKE :playlistsplaylist_name', $this->queryBuilderMock]
-				]
-			);
-		$this->queryBuilderMock->expects($this->exactly(2))->method('setParameter')
-			->willReturnMap([
-					['playlist_mode', 'multizone', $this->queryBuilderMock],
-					['playlistsplaylist_name', '%name%', $this->queryBuilderMock]
-				]
-			);
-
-		$expectedCount = 67;
-		$this->queryBuilderMock->expects($this->once())->method('executeQuery')->willReturn($this->resultMock);
-		$this->resultMock->expects($this->once())->method('fetchOne')->willReturn($expectedCount);
-
-		$result = $this->repository->countAllFiltered($fields);
-		static::assertSame($expectedCount, $result);
 	}
 }

@@ -21,34 +21,35 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Services;
 
+use App\Framework\Database\Datatable\DatatableQuery;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Services\AbstractDatatableService;
 use App\Framework\Services\SearchFilterParamsTrait;
 use App\Framework\Utils\FormParameters\BaseParameters;
 use App\Modules\Auth\UserSession;
-use App\Modules\Playlists\Repositories\PlaylistsRepository;
+use App\Modules\Playlists\Helper\Datatable\PlaylistsFilterDefinition;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
 
 class PlaylistsDatatableService extends AbstractDatatableService
 {
 	use SearchFilterParamsTrait;
-	private readonly PlaylistsRepository $playlistsRepository;
+	private readonly PlaylistsFilterDefinition $filterDefinition;
 	private readonly AclValidator $aclValidator;
 	private readonly BaseParameters $parameters;
 	private readonly PlaylistUsageService $playlistUsageService;
 	private readonly UserSession $userSession;
 
-	public function __construct(PlaylistsRepository $playlistsRepository, BaseParameters $parameters, AclValidator $aclValidator, PlaylistUsageService $playlistUsageService, UserSession $userSession, LoggerInterface $logger)
+	public function __construct(PlaylistsFilterDefinition $filterDefinition, DatatableQuery $datatableQuery, BaseParameters $parameters, AclValidator $aclValidator, PlaylistUsageService $playlistUsageService, UserSession $userSession, LoggerInterface $logger)
 	{
-		$this->playlistsRepository  = $playlistsRepository;
+		$this->filterDefinition     = $filterDefinition;
 		$this->aclValidator         = $aclValidator;
 		$this->parameters           = $parameters;
 		$this->playlistUsageService = $playlistUsageService;
 		$this->userSession = $userSession;
 
-		parent::__construct($logger);
+		parent::__construct($logger, $datatableQuery);
 	}
 
 	/**
@@ -61,11 +62,11 @@ class PlaylistsDatatableService extends AbstractDatatableService
 		$UID = $this->userSession->getUID();
 		if ($this->aclValidator->isModuleAdmin($UID))
 		{
-			$this->fetchForModuleAdmin($this->playlistsRepository, $this->parameters);
+			$this->fetchForModuleAdmin($this->filterDefinition, $this->parameters);
 		}
 		elseif ($this->aclValidator->isSubAdmin($UID))
 		{
-	//		$this->handleRequestSubAdmin($this->playlistsRepository);
+	//		$this->handleRequestSubAdmin($this->filterDefinition);
 		}
 		elseif ($this->aclValidator->isEditor($UID))
 		{
@@ -77,7 +78,7 @@ class PlaylistsDatatableService extends AbstractDatatableService
 		}
 		else
 		{
-			$this->fetchForUser($this->playlistsRepository, $this->parameters, $UID);
+			$this->fetchForUser($this->filterDefinition, $this->parameters, $UID);
 		}
 	}
 

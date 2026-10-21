@@ -28,6 +28,8 @@ use App\Framework\Core\Sanitizer;
 use App\Framework\Core\Session;
 use App\Framework\Core\Translate\Translator;
 use App\Framework\Database\BaseRepositories\Transactions;
+use App\Framework\Database\Datatable\DatatableQuery;
+use App\Framework\Database\Datatable\FilterConditions;
 use App\Framework\Media\MediaUrlSigner;
 use App\Framework\Media\MimeTypeExtensionMapper;
 use App\Framework\TemplateEngine\AdapterInterface;
@@ -60,6 +62,7 @@ use App\Modules\Playlists\Helper\ConditionalPlay\TemplatePreparer;
 use App\Modules\Playlists\Helper\Datatable\DatatableFacade;
 use App\Modules\Playlists\Helper\Datatable\DatatableBuilder;
 use App\Modules\Playlists\Helper\Datatable\DatatablePreparer;
+use App\Modules\Playlists\Helper\Datatable\PlaylistsFilterDefinition;
 use App\Framework\Media\DeliveryUrlBuilder;
 use App\Modules\Playlists\Helper\ExportSmil\items\ItemsFactory;
 use App\Modules\Playlists\Helper\ExportSmil\LocalWriter;
@@ -133,7 +136,8 @@ $dependencies[Validator::class] = DI\factory(function (ContainerInterface $conta
 $dependencies[PlaylistsDatatableService::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new PlaylistsDatatableService(
-		$container->get(PlaylistsRepository::class),
+		new PlaylistsFilterDefinition($container->get(FilterConditions::class)),
+		$container->get(DatatableQuery::class),
 		$container->get(\App\Modules\Playlists\Helper\Datatable\Parameters::class),
 		$container->get(AclValidator::class),
 		new PlaylistUsageService(

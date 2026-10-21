@@ -21,16 +21,20 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Repositories\Edge;
 
-use App\Framework\Database\BaseRepositories\FilterBase;
-use App\Modules\Users\Helper\Datatable\Parameters;
+use App\Framework\Database\BaseRepositories\SqlBase;
+use App\Framework\Database\BaseRepositories\Traits\CrudTraits;
+use App\Framework\Database\BaseRepositories\Traits\FindOperationsTrait;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
 /**
  * Provides user data handling for authentication.
  */
-class UserMainRepository extends FilterBase
+class UserMainRepository extends SqlBase
 {
+	use CrudTraits;
+	use FindOperationsTrait;
+
 	public function __construct(Connection $connection)
 	{
 		parent::__construct($connection,'user_main', 'UID');
@@ -100,59 +104,5 @@ class UserMainRepository extends FilterBase
 		;
 
 		return $queryBuilder->executeQuery()->fetchAllAssociative();
-	}
-
-	/**
-	 * @return array<string, string>
-	 */
-	protected function prepareJoin(): array
-	{
-		return $this->prepareUserJoin();
-	}
-
-	/**
-	 * @return array<string, string>
-	 */
-	protected function prepareUserJoin(): array
-	{
-		return [];
-	}
-
-	/**
-	 * @return string[]
-	 */
-	protected function prepareSelectFiltered(): array
-	{
-		return [$this->table.'.*'];
-	}
-
-	protected function prepareSelectFilteredForUser(): array
-	{
-		return $this->prepareSelectFiltered();
-	}
-
-	/**
-	 * @param array<string,mixed> $filterFields
-	 * @return array<string,mixed>
-	 */
-	protected function prepareWhereForFiltering(array $filterFields): array
-	{
-		$where = [];
-		foreach ($filterFields as $key => $parameter)
-		{
-			switch ($key)
-			{
-				case Parameters::PARAMETER_FROM_STATUS:
-					$where['status'] = $this->generateWhereClause($parameter['value'], '>=');
-					break;
-				default:
-					$clause = $this->determineWhereForFiltering($key, $parameter);
-					if (!empty($clause))
-					{
-						$where = array_merge($where, $clause);
-					}
-			}
-		}
-		return $where;
 	}
 }

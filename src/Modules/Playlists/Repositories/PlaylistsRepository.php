@@ -21,14 +21,18 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Repositories;
 
-use App\Framework\Database\BaseRepositories\FilterBase;
-use Doctrine\DBAL\ArrayParameterType;
+use App\Framework\Database\BaseRepositories\SqlBase;
+use App\Framework\Database\BaseRepositories\Traits\CrudTraits;
+use App\Framework\Database\BaseRepositories\Traits\FindOperationsTrait;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\ParameterType;
 
-class PlaylistsRepository extends FilterBase
+class PlaylistsRepository extends SqlBase
 {
+	use CrudTraits;
+	use FindOperationsTrait;
+
 	public function __construct(Connection $connection)
 	{
 		parent::__construct($connection,'playlists', 'playlist_id');
@@ -41,7 +45,7 @@ class PlaylistsRepository extends FilterBase
 		if ($driverName === 'sqliteplatform')
 			$this->connection->executeQuery('PRAGMA foreign_keys = ON');
 
-		return parent::delete($id);
+		return $this->deleteByField($this->getIdField(), $id);
 	}
 
 	/**
@@ -50,7 +54,7 @@ class PlaylistsRepository extends FilterBase
 	 */
 	public function findFirstWithUserName(int $playlistId): array
 	{
-		$select = $this->prepareSelectFilteredForUser();
+		$select = [$this->table.'.*', 'user_main.username', 'user_main.company_id'];
 		$join   = ['user_main' => 'user_main.UID=' . $this->table . '.UID'];
 		$where  = ['playlist_id' => ['value' => $playlistId, 'operator' => '=']];
 		return $this->getFirstDataSet($this->findAllByWithFields($select, $where, $join));
@@ -75,67 +79,4 @@ class PlaylistsRepository extends FilterBase
 
 		return $queryBuilder->executeStatement();
 	}
-
-	/**
-	 * @return array<string,string>
-	 */
-	protected function prepareJoin(): array
-	{
-		return ['user_main' => 'user_main.UID=' . $this->table . '.UID'];
-	}
-
-	protected function prepareUserJoin(): array
-	{
-		return [];
-	}
-
-
-	/**
-	 * @return string[]
-	 */
-	protected function prepareSelectFiltered(): array
-	{
-		return [$this->table.'.*'];
-	}
-
-	/**
-	 * @return string[]
-	 */
-	protected function prepareSelectFilteredForUser(): array
-	{
-		return array_merge($this->prepareSelectFiltered(),['user_main.username', 'user_main.company_id']);
-	}
-
-	/**
-	 * @param array<string, mixed> $filterFields
-	 * @return array<string, mixed>
-	 */
-	protected function prepareWhereForFiltering(array $filterFields): array
-	{
-		$where = [];
-		foreach ($filterFields as $key => $parameter)
-		{
-			switch ($key)
-			{
-				case 'playlist_mode':
-					if (empty($parameter['value']))
-						break;
-						$position = strpos($parameter['value'], ',');
-					if ($position === false)
-						$where[$key] = $this->generateWhereClause($parameter['value']);
-					else
-						$where[$key] = $this->generateWhereClause($parameter['value'], 'IN', 'AND,', ArrayParameterType::STRING);
-					break;
-
-				default:
-					$clause = $this->determineWhereForFiltering($key, $parameter);
-					if (!empty($clause))
-					{
-						$where = array_merge($where, $clause);
-					}
-			}
-		}
-		return $where;
-	}
-
 }

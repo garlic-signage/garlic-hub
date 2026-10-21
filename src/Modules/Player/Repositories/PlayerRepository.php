@@ -21,18 +21,21 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Repositories;
 
-use App\Framework\Database\BaseRepositories\FilterBase;
-use App\Modules\Player\Enums\PlayerActivity;
+use App\Framework\Database\BaseRepositories\SqlBase;
+use App\Framework\Database\BaseRepositories\Traits\CrudTraits;
+use App\Framework\Database\BaseRepositories\Traits\FindOperationsTrait;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
 /**
  * The PlayerRepository class is responsible for managing database operations
- * related to players. It extends the FilterBase class, utilizing functionality for data filtering
- * and query composition for player entities.
+ * related to players. The datatable filtering is done by PlayerFilterDefinition.
  */
-class PlayerRepository extends FilterBase
+class PlayerRepository extends SqlBase
 {
+	use CrudTraits;
+	use FindOperationsTrait;
+
 	public function __construct(Connection $connection)
 	{
 		parent::__construct($connection,'player', 'player_id');
@@ -88,71 +91,5 @@ class PlayerRepository extends FilterBase
 		$sql = 'SELECT playlist_id FROM '.$this->getTable().' WHERE playlist_id IN('.$ids.')';
 
 		return $this->connection->executeQuery($sql)->fetchAllAssociative();
-	}
-
-	protected function prepareJoin(): array
-	{
-		return [
-			'user_main' => 'user_main.UID = ' . $this->table . '.UID',
-			'playlists' => 'playlists.playlist_id = ' . $this->table . '.playlist_id'
-		];
-	}
-
-	protected function prepareUserJoin(): array
-	{
-		return ['playlists' => 'playlists.playlist_id = ' . $this->table . '.playlist_id'];
-	}
-
-
-	protected function prepareSelectFiltered(): array
-	{
-		return ['player_id',
-				$this->table.'.playlist_id',
-				'playlist_name', 'is_intranet',
-				'firmware', $this->table.'.status', 'model',
-				'commands',	'reports',
-				$this->table.'.last_access',
-				'refresh', 'player_name, '.$this->table.'.UID'
-		];
-	}
-
-	protected function prepareSelectFilteredForUser(): array
-	{
-		return array_merge($this->prepareSelectFiltered(),['user_main.username', 'user_main.company_id']);
-	}
-
-	protected function prepareWhereForFiltering(array $filterFields): array
-	{
-		$where = [];
-		foreach ($filterFields as $key => $parameter)
-		{
-			switch ($key)
-			{
-				case 'activity':
-					if (empty($parameter['value']))
-						break;
-
-				if ($parameter['value'] === PlayerActivity::ACTIVE->value)
-					$where['player.last_access'] = '(UNIX_TIMESTAMP(NOW()) - UNIX_TIMESTAMP(player.last_access)) < refresh * 2';
-				else
-					$where['player.last_access'] = '(UNIX_TIMESTAMP(NOW()) - UNIX_TIMESTAMP(player.last_access)) > refresh * 2';
-					break;
-
-				case 'playlist_id':
-					if ($parameter['value'] > 0)
-					{
-						$where[$key] = $parameter['value'];
-					}
-					break;
-
-				default:
-					$clause = $this->determineWhereForFiltering($key, $parameter);
-					if (!empty($clause))
-					{
-						$where = array_merge($where, $clause);
-					}
-			}
-		}
-		return $where;
 	}
 }

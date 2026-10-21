@@ -21,10 +21,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Services;
 
+use App\Framework\Database\Datatable\DatatableQuery;
 use App\Framework\Exceptions\CoreException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\Datatable\Parameters;
-use App\Modules\Playlists\Repositories\PlaylistsRepository;
+use App\Modules\Playlists\Helper\Datatable\PlaylistsFilterDefinition;
 use App\Modules\Playlists\Services\AclValidator;
 use App\Modules\Playlists\Services\PlaylistsDatatableService;
 use App\Modules\Playlists\Services\PlaylistUsageService;
@@ -38,7 +39,8 @@ use Psr\Log\LoggerInterface;
 class PlaylistsDatatableServiceTest extends TestCase
 {
 	protected LoggerInterface&Stub $loggerStub;
-	private PlaylistsRepository&MockObject $repositoryMock;
+	private PlaylistsFilterDefinition&Stub $filterDefinitionStub;
+	private DatatableQuery&MockObject $datatableQueryMock;
 	private Parameters&MockObject $parametersMock;
 	private AclValidator&MockObject $aclValidatorMock;
 	private PlaylistUsageService&MockObject $playlistUsageServiceMock;
@@ -52,13 +54,14 @@ class PlaylistsDatatableServiceTest extends TestCase
 	{
 		parent::setUp();
 		$this->loggerStub       = $this->createStub(LoggerInterface::class);
-		$this->repositoryMock   = $this->createMock(PlaylistsRepository::class);
+		$this->filterDefinitionStub = $this->createStub(PlaylistsFilterDefinition::class);
+		$this->datatableQueryMock   = $this->createMock(DatatableQuery::class);
 		$this->parametersMock   = $this->createMock(Parameters::class);
 		$this->aclValidatorMock = $this->createMock(AclValidator::class);
 		$this->playlistUsageServiceMock = $this->createMock(PlaylistUsageService::class);
 
 		$this->userSessionStub = $this->createStub(UserSession::class);
-		$this->service = new PlaylistsDatatableService($this->repositoryMock, $this->parametersMock, $this->aclValidatorMock, $this->playlistUsageServiceMock, $this->userSessionStub, $this->loggerStub);
+		$this->service = new PlaylistsDatatableService($this->filterDefinitionStub, $this->datatableQueryMock, $this->parametersMock, $this->aclValidatorMock, $this->playlistUsageServiceMock, $this->userSessionStub, $this->loggerStub);
 	}
 
 	/**
@@ -74,20 +77,20 @@ class PlaylistsDatatableServiceTest extends TestCase
 			->with(345)
 			->willReturn(true);
 
-		$this->parametersMock->expects($this->exactly(2))
+		$this->parametersMock->expects($this->once())
 			->method('getInputParametersArray')
 			->willReturn(['empty']);
 
-		$this->repositoryMock->expects($this->once())->method('countAllFiltered')
-			->with(['empty'])
+		$this->datatableQueryMock->expects($this->once())->method('countForModuleAdmin')
+			->with($this->filterDefinitionStub, ['empty'])
 			->willReturn(12);
 
 		$result =	[
 			0 => ['result1' => 'result1'],
 			1 => ['result2' => 1]
 		];
-		$this->repositoryMock->expects($this->once())->method('findAllFiltered')
-			->with(['empty'])
+		$this->datatableQueryMock->expects($this->once())->method('findForModuleAdmin')
+			->with($this->filterDefinitionStub, ['empty'])
 			->willReturn($result);
 
 		$this->service->loadDatatable();
@@ -109,19 +112,19 @@ class PlaylistsDatatableServiceTest extends TestCase
 			->with(789)
 			->willReturn(false);
 
-		$this->parametersMock->expects($this->exactly(2))
+		$this->parametersMock->expects($this->once())
 			->method('getInputParametersArray')->willReturn(['empty']);
 
-		$this->repositoryMock->expects($this->once())->method('countAllFilteredByUID')
-			->with(['empty'], 789)
+		$this->datatableQueryMock->expects($this->once())->method('countForUser')
+			->with($this->filterDefinitionStub, ['empty'], 789)
 			->willReturn(12);
 
 		$result =	[
 			0 => ['result1' => 'result1'],
 			1 => ['result2' => 1]
 		];
-		$this->repositoryMock->expects($this->once())->method('findAllFilteredByUID')
-			->with(['empty'], 789)
+		$this->datatableQueryMock->expects($this->once())->method('findForUser')
+			->with($this->filterDefinitionStub, ['empty'], 789)
 			->willReturn($result);
 
 		$this->service->loadDatatable();
@@ -136,7 +139,7 @@ class PlaylistsDatatableServiceTest extends TestCase
 	#[Group('units')]
 	public function testGetPlaylistsInUseWithEmptyIds(): void
 	{
-		$this->expectUntouched($this->repositoryMock, $this->parametersMock, $this->aclValidatorMock, $this->playlistUsageServiceMock);
+		$this->expectUntouched($this->datatableQueryMock, $this->parametersMock, $this->aclValidatorMock, $this->playlistUsageServiceMock);
 		$result = $this->service->getPlaylistsInUse([]);
 		static::assertSame([], $result);
 	}
@@ -147,7 +150,7 @@ class PlaylistsDatatableServiceTest extends TestCase
 	#[Group('units')]
 	public function testGetPlaylistsInUseWithValidIds(): void
 	{
-		$this->expectUntouched($this->repositoryMock, $this->parametersMock, $this->aclValidatorMock);
+		$this->expectUntouched($this->datatableQueryMock, $this->parametersMock, $this->aclValidatorMock);
 		$playlistIds = [1, 2, 3];
 		$expectedResult = [
 			1 => true,

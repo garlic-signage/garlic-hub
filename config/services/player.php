@@ -28,6 +28,8 @@ use App\Framework\Core\CsrfToken;
 use App\Framework\Core\Sanitizer;
 use App\Framework\Core\Session;
 use App\Framework\Core\Translate\Translator;
+use App\Framework\Database\Datatable\DatatableQuery;
+use App\Framework\Database\Datatable\FilterConditions;
 use App\Framework\SimpleApiExecutor;
 use App\Framework\TemplateEngine\AdapterInterface;
 use App\Framework\Utils\Datatable\BuildService;
@@ -58,6 +60,7 @@ use App\Modules\Player\IndexCreation\PlayerDataAssembler;
 use App\Modules\Player\IndexCreation\PlayerDetector;
 use App\Modules\Player\IndexCreation\UserAgentHandler;
 use App\Modules\Player\Repositories\PlayerIndexRepository;
+use App\Modules\Player\Helper\Datatable\PlayerFilterDefinition;
 use App\Modules\Player\Repositories\PlayerRepository;
 use App\Modules\Player\Repositories\PlayerTokenRepository;
 use App\Modules\Player\Services\AclValidator;
@@ -139,7 +142,8 @@ $dependencies[PlayerService::class] = DI\factory(function (ContainerInterface $c
 $dependencies[PlayerDatatableService::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new PlayerDatatableService(
-		$container->get(PlayerRepository::class),
+		new PlayerFilterDefinition($container->get(FilterConditions::class), $container->get('SqlConnection')->getDatabasePlatform()),
+		$container->get(DatatableQuery::class),
 		$container->get(Parameters::class),
 		$container->get(AclValidator::class),
 		$container->get(UserSession::class),

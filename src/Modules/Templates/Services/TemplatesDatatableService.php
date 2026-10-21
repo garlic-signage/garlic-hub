@@ -22,25 +22,27 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Services;
 
+use App\Framework\Database\Datatable\DatatableQuery;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Services\AbstractDatatableService;
 use App\Framework\Utils\FormParameters\BaseParameters;
 use App\Modules\Auth\UserSession;
-use App\Modules\Templates\Repositories\TemplatesRepository;
+use App\Modules\Templates\Helper\Datatable\TemplatesFilterDefinition;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
 
 class TemplatesDatatableService extends AbstractDatatableService
 {
-	public function __construct(private readonly TemplatesRepository   $templatesRepository,
+	public function __construct(private readonly TemplatesFilterDefinition $filterDefinition,
+								DatatableQuery                         $datatableQuery,
 								private readonly BaseParameters        $parameters,
 								private readonly UserSession           $userSession,
 								private readonly TemplatesUsageService $templatesUsageService,
 								private readonly AclValidator          $aclValidator,
 								LoggerInterface                        $logger)
 	{
-		parent::__construct($logger);
+		parent::__construct($logger, $datatableQuery);
 	}
 
 	/**
@@ -67,11 +69,11 @@ class TemplatesDatatableService extends AbstractDatatableService
 		$UID = $this->userSession->getUID();
 		if ($this->aclValidator->isModuleAdmin($UID))
 		{
-			$this->fetchForModuleAdmin($this->templatesRepository, $this->parameters);
+			$this->fetchForModuleAdmin($this->filterDefinition, $this->parameters);
 		}
 		elseif ($this->aclValidator->isSubAdmin($UID))
 		{
-			//		$this->handleRequestSubAdmin($this->templatesRepository);
+			//		$this->handleRequestSubAdmin($this->filterDefinition);
 		}
 		elseif ($this->aclValidator->isEditor($UID))
 		{
@@ -83,7 +85,7 @@ class TemplatesDatatableService extends AbstractDatatableService
 		}
 		else
 		{
-			$this->fetchForUser($this->templatesRepository, $this->parameters, $UID);
+			$this->fetchForUser($this->filterDefinition, $this->parameters, $UID);
 		}
 	}
 

@@ -21,13 +21,14 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Services;
 
+use App\Framework\Database\Datatable\DatatableQuery;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Services\AbstractDatatableService;
 use App\Framework\Services\SearchFilterParamsTrait;
 use App\Framework\Utils\FormParameters\BaseParameters;
 use App\Modules\Auth\UserSession;
-use App\Modules\Player\Repositories\PlayerRepository;
+use App\Modules\Player\Helper\Datatable\PlayerFilterDefinition;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
 
@@ -40,18 +41,18 @@ use Psr\Log\LoggerInterface;
 class PlayerDatatableService extends AbstractDatatableService
 {
 	use SearchFilterParamsTrait;
-	private readonly PlayerRepository $playerRepository;
+	private readonly PlayerFilterDefinition $filterDefinition;
 	private readonly AclValidator $aclValidator;
 	private BaseParameters $parameters;
 	private readonly UserSession $userSession;
 
-	public function __construct(PlayerRepository $playerRepository, BaseParameters $parameters, AclValidator $aclValidator, UserSession $userSession, LoggerInterface $logger)
+	public function __construct(PlayerFilterDefinition $filterDefinition, DatatableQuery $datatableQuery, BaseParameters $parameters, AclValidator $aclValidator, UserSession $userSession, LoggerInterface $logger)
 	{
-		$this->playerRepository = $playerRepository;
+		$this->filterDefinition = $filterDefinition;
 		$this->aclValidator = $aclValidator;
 		$this->parameters = $parameters;
 		$this->userSession = $userSession;
-		parent::__construct($logger);
+		parent::__construct($logger, $datatableQuery);
 	}
 
 	/**
@@ -65,11 +66,11 @@ class PlayerDatatableService extends AbstractDatatableService
 		$UID = $this->userSession->getUID();
 		if ($this->aclValidator->isModuleAdmin($UID))
 		{
-			$this->fetchForModuleAdmin($this->playerRepository, $this->parameters);
+			$this->fetchForModuleAdmin($this->filterDefinition, $this->parameters);
 		}
 		elseif ($this->aclValidator->isSubAdmin($UID))
 		{
-			//		$this->handleRequestSubAdmin($this->playerRepository);
+			//		$this->handleRequestSubAdmin($this->filterDefinition);
 		}
 		elseif ($this->aclValidator->isEditor($UID))
 		{
@@ -81,7 +82,7 @@ class PlayerDatatableService extends AbstractDatatableService
 		}
 		else
 		{
-			$this->fetchForUser($this->playerRepository, $this->parameters, $UID);
+			$this->fetchForUser($this->filterDefinition, $this->parameters, $UID);
 		}
 	}
 }
