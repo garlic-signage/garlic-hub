@@ -19,7 +19,7 @@
     "phpfastcache/phpfastcache": "^9.2",
     "doctrine/dbal": "^4.4",
     "symfony/console": "^7.4",
-    "guzzlehttp/guzzle": "^7.10",
+    "guzzlehttp/guzzle": "^8.3",
     "defuse/php-encryption": "^2.4",
     "ramsey/uuid": "^4.9",
     "ext-fileinfo": "*",
