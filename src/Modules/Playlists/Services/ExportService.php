@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace App\Modules\Playlists\Services;
 
 use App\Framework\Core\Config\Config;
+use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -37,15 +38,19 @@ class ExportService extends AbstractBaseService
 {
 	private readonly Config $config;
 	private readonly PlaylistsService $playlistsService;
-	private readonly ItemsService $itemsService;
+	private readonly ExportItemsLoader $exportItemsLoader;
+	private readonly PlaylistMetricsUpdater $playlistMetricsUpdater;
+	private readonly Transactions $transactions;
 	private readonly LocalWriter $localSmilWriter;
 	private readonly PlaylistContent $playlistContent;
 
-	public function __construct(Config $config, PlaylistsService $playlistsService, ItemsService $itemsService, LocalWriter $localSmilWriter, PlaylistContent $playlistContent, LoggerInterface $logger )
+	public function __construct(Config $config, PlaylistsService $playlistsService, ExportItemsLoader $exportItemsLoader, PlaylistMetricsUpdater $playlistMetricsUpdater, Transactions $transactions, LocalWriter $localSmilWriter, PlaylistContent $playlistContent, LoggerInterface $logger )
 	{
 		$this->config          = $config;
 		$this->playlistsService = $playlistsService;
-		$this->itemsService    = $itemsService;
+		$this->exportItemsLoader = $exportItemsLoader;
+		$this->playlistMetricsUpdater = $playlistMetricsUpdater;
+		$this->transactions    = $transactions;
 		$this->localSmilWriter = $localSmilWriter;
 		$this->playlistContent = $playlistContent;
 
@@ -62,7 +67,7 @@ class ExportService extends AbstractBaseService
 	{
 		try
 		{
-			$this->itemsService->getItemsRepository()->beginTransaction();
+			$this->transactions->begin();
 
 			$playlist = $this->playlistsService->loadPureById($playlistId); // checks rights
 
@@ -90,12 +95,12 @@ class ExportService extends AbstractBaseService
 			if ($this->playlistsService->updateExport($playlistId, $metrics) === 0)
 				throw new ModuleException('export_playlist', 'Export '.$playlistId.' failed. Could not update playlist metrics.');
 
-			$this->itemsService->getItemsRepository()->commitTransaction();
+			$this->transactions->commit();
 			return $count;
 		}
 		catch (ModuleException|CoreException|Exception|FilesystemException $e)
 		{
-			$this->itemsService->getItemsRepository()->rollBackTransaction();
+			$this->transactions->rollBack();
 			$this->logger->error('Error export SMIL playlist: ' . $e->getMessage());
 			return 0;
 		}
@@ -111,8 +116,8 @@ class ExportService extends AbstractBaseService
 	 */
 	public function export(array $playlist): array
 	{
-		$results = $this->itemsService->loadByPlaylistForExport($playlist, $this->config->getEdition());
-		$this->itemsService->updateItemsMetrics($playlist['playlist_id'], $results['playlist_metrics']);
+		$results = $this->exportItemsLoader->loadByPlaylist($playlist, $this->config->getEdition());
+		$this->playlistMetricsUpdater->updateItemsMetrics($playlist['playlist_id'], $results['playlist_metrics']);
 		/*
 			    1. Save metrics in the exported playlist (did with results as last, but doesn't matter)
 				2. Save metrics in all items wich represent this playlist.
@@ -122,7 +127,7 @@ class ExportService extends AbstractBaseService
 				6. save metrics in all items that represent the new playlist
 				7. recurse to 3.
 		 */
-		$this->itemsService->updateMetricsRecursively($playlist['playlist_id']);
+		$this->playlistMetricsUpdater->updateMetricsRecursively($playlist['playlist_id']);
 
 		$this->playlistContent->init($playlist, $results['items'])->build();
 		$this->localSmilWriter->initExport($playlist['playlist_id']);

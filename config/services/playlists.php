@@ -27,6 +27,7 @@ use App\Framework\Core\CsrfToken;
 use App\Framework\Core\Sanitizer;
 use App\Framework\Core\Session;
 use App\Framework\Core\Translate\Translator;
+use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Media\MediaUrlSigner;
 use App\Framework\Media\MimeTypeExtensionMapper;
 use App\Framework\TemplateEngine\AdapterInterface;
@@ -50,6 +51,7 @@ use App\Modules\Playlists\Controller\ShowComposeController;
 use App\Modules\Playlists\Controller\ShowDatatableController;
 use App\Modules\Playlists\Controller\TriggerController;
 use App\Modules\Playlists\Controller\WidgetsController;
+use App\Modules\Playlists\Helper\Compose\ItemThumbnailResolver;
 use App\Modules\Playlists\Helper\Compose\RightsChecker;
 use App\Modules\Playlists\Helper\Compose\UiTemplatesPreparer;
 use App\Modules\Playlists\Helper\ConditionalPlay\Orchestrator;
@@ -70,10 +72,12 @@ use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Repositories\PlaylistsRepository;
 use App\Modules\Playlists\Services\AclValidator;
 use App\Modules\Playlists\Services\ConditionalPlayService;
+use App\Modules\Playlists\Services\ExportItemsLoader;
 use App\Modules\Playlists\Services\ExportService;
 use App\Modules\Playlists\Services\InsertItems\InsertItemFactory;
 use App\Modules\Playlists\Services\ItemsService;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
+use App\Modules\Playlists\Services\PlaylistMetricsUpdater;
 use App\Modules\Playlists\Services\PlaylistsDatatableService;
 use App\Modules\Playlists\Services\PlaylistsService;
 use App\Modules\Playlists\Services\PlaylistUsageService;
@@ -247,9 +251,11 @@ $dependencies[ItemsService::class] = DI\factory(function (ContainerInterface $co
 		$container->get(MediaService::class),
 		$container->get(PlaylistsService::class),
 		$container->get(PlaylistMetricsCalculator::class),
-		$container->get(MimeTypeExtensionMapper::class),
-		$container->get(MediaUrlSigner::class),
-		$container->get(Config::class),
+		new ItemThumbnailResolver(
+			$container->get(Config::class),
+			$container->get(MimeTypeExtensionMapper::class),
+			$container->get(MediaUrlSigner::class)
+		),
 		$container->get('ModuleLogger')
 	);
 });
@@ -258,7 +264,17 @@ $dependencies[ExportService::class] = DI\factory(function (ContainerInterface $c
 	return new ExportService(
 		$container->get(Config::class),
 		$container->get(PlaylistsService::class),
-		$container->get(ItemsService::class),
+		new ExportItemsLoader(
+			$container->get(ItemsRepository::class),
+			$container->get(PlaylistMetricsCalculator::class)
+		),
+		new PlaylistMetricsUpdater(
+			$container->get(ItemsRepository::class),
+			$container->get(PlaylistsService::class),
+			$container->get(PlaylistMetricsCalculator::class),
+			$container->get('ModuleLogger')
+		),
+		$container->get(Transactions::class),
 		new LocalWriter($container->get(Config::class), $container->get('LocalFileSystem')),
 		new PlaylistContent(
 			new ItemsFactory($container->get(Config::class)),

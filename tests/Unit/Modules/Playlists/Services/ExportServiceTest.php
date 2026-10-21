@@ -22,12 +22,13 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Playlists\Services;
 
 use App\Framework\Core\Config\Config;
+use App\Framework\Database\BaseRepositories\Transactions;
 use App\Modules\Playlists\Helper\ExportSmil\LocalWriter;
 use App\Modules\Playlists\Helper\ExportSmil\PlaylistContent;
 use App\Modules\Playlists\Helper\PlaylistMetrics;
-use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\ExportService;
-use App\Modules\Playlists\Services\ItemsService;
+use App\Modules\Playlists\Services\ExportItemsLoader;
+use App\Modules\Playlists\Services\PlaylistMetricsUpdater;
 use App\Modules\Playlists\Services\PlaylistsService;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
@@ -40,11 +41,12 @@ class ExportServiceTest extends TestCase
 {
 	private Config&Stub $configStub;
 	private PlaylistsService&MockObject $playlistsServiceMock;
-	private ItemsService&MockObject $itemsServiceMock;
+	private ExportItemsLoader&MockObject $exportItemsLoaderMock;
+	private PlaylistMetricsUpdater&MockObject $playlistMetricsUpdaterMock;
 	private LocalWriter&MockObject $localSmilWriterMock;
 	private PlaylistContent&MockObject $playlistContentMock;
 	private LoggerInterface&MockObject $loggerMock;
-	private ItemsRepository&MockObject $itemsRepositoryMock;
+	private Transactions&MockObject $transactionsMock;
 	private ExportService $service;
 
 	/**
@@ -55,17 +57,19 @@ class ExportServiceTest extends TestCase
 		parent::setUp();
 		$this->configStub           = $this->createStub(Config::class);
 		$this->playlistsServiceMock = $this->createMock(PlaylistsService::class);
-		$this->itemsServiceMock     = $this->createMock(ItemsService::class);
+		$this->exportItemsLoaderMock = $this->createMock(ExportItemsLoader::class);
+		$this->playlistMetricsUpdaterMock = $this->createMock(PlaylistMetricsUpdater::class);
 		$this->localSmilWriterMock  = $this->createMock(LocalWriter::class);
 		$this->playlistContentMock  = $this->createMock(PlaylistContent::class);
 		$this->loggerMock           = $this->createMock(LoggerInterface::class);
-		$this->itemsRepositoryMock  = $this->createMock(ItemsRepository::class);
+		$this->transactionsMock     = $this->createMock(Transactions::class);
 
-		$this->itemsServiceMock->method('getItemsRepository')->willReturn($this->itemsRepositoryMock);
 		$this->service = new ExportService(
 			$this->configStub,
 			$this->playlistsServiceMock,
-			$this->itemsServiceMock,
+			$this->exportItemsLoaderMock,
+			$this->playlistMetricsUpdaterMock,
+			$this->transactionsMock,
 			$this->localSmilWriterMock,
 			$this->playlistContentMock,
 			$this->loggerMock);
@@ -81,19 +85,19 @@ class ExportServiceTest extends TestCase
 		$playlist = ['playlist_id' => 123, 'playlist_mode' => 'master'];
 		$metrics = new PlaylistMetrics(fileSize: 100, duration: 60, ownerDuration: 60);
 		$result = ['items' => [], 'playlist_metrics' => $metrics];
-		$this->itemsRepositoryMock->method('beginTransaction');
+		$this->transactionsMock->expects($this->once())->method('begin');
 
 		$this->playlistsServiceMock->method('loadPureById')
 			->with($playlistId)
 			->willReturn($playlist);
 
 		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
-		$this->itemsServiceMock->expects($this->once())->method('loadByPlaylistForExport')
+		$this->exportItemsLoaderMock->expects($this->once())->method('loadByPlaylist')
 			->with($playlist, Config::PLATFORM_EDITION_EDGE)
 			->willReturn($result);
-		$this->itemsServiceMock->expects($this->once())->method('updateItemsMetrics')
+		$this->playlistMetricsUpdaterMock->expects($this->once())->method('updateItemsMetrics')
 			->with($playlist['playlist_id'], $metrics);
-		$this->itemsServiceMock->expects($this->once())->method('updateMetricsRecursively')
+		$this->playlistMetricsUpdaterMock->expects($this->once())->method('updateMetricsRecursively')
 			->with($playlist['playlist_id']);
 
 		$this->playlistContentMock->method('init')->with($playlist, $result['items'])->willReturnSelf();
@@ -106,8 +110,8 @@ class ExportServiceTest extends TestCase
 			->with($playlist['playlist_id'], $metrics->toPlaylistTableArray())
 			->willReturn(1);
 
-		$this->itemsRepositoryMock->expects($this->once())->method('commitTransaction');
-		$this->itemsRepositoryMock->expects($this->never())->method('rollbackTransaction');
+		$this->transactionsMock->expects($this->once())->method('commit');
+		$this->transactionsMock->expects($this->never())->method('rollBack');
 		$this->loggerMock->expects($this->never())->method('error');
 		$result = $this->service->exportToSmil($playlistId);
 
@@ -125,19 +129,19 @@ class ExportServiceTest extends TestCase
 		$playlist = ['playlist_id' => 123, 'playlist_mode' => 'master'];
 		$metrics = new PlaylistMetrics(fileSize: 100, duration: 60, ownerDuration: 60);
 		$result = ['items' => [], 'playlist_metrics' => $metrics];
-		$this->itemsRepositoryMock->method('beginTransaction');
+		$this->transactionsMock->expects($this->once())->method('begin');
 
 		$this->playlistsServiceMock->method('loadPureById')
 			->with($playlistId)
 			->willReturn($playlist);
 
 		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
-		$this->itemsServiceMock->expects($this->once())->method('loadByPlaylistForExport')
+		$this->exportItemsLoaderMock->expects($this->once())->method('loadByPlaylist')
 			->with($playlist, Config::PLATFORM_EDITION_EDGE)
 			->willReturn($result);
-		$this->itemsServiceMock->expects($this->once())->method('updateItemsMetrics')
+		$this->playlistMetricsUpdaterMock->expects($this->once())->method('updateItemsMetrics')
 			->with($playlist['playlist_id'], $metrics);
-		$this->itemsServiceMock->expects($this->once())->method('updateMetricsRecursively')
+		$this->playlistMetricsUpdaterMock->expects($this->once())->method('updateMetricsRecursively')
 			->with($playlist['playlist_id']);
 
 		$this->playlistContentMock->method('init')->with($playlist, $result['items'])->willReturnSelf();
@@ -152,8 +156,8 @@ class ExportServiceTest extends TestCase
 			->willReturn(0);
 
 
-		$this->itemsRepositoryMock->expects($this->never())->method('commitTransaction');
-		$this->itemsRepositoryMock->expects($this->once())->method('rollbackTransaction');
+		$this->transactionsMock->expects($this->never())->method('commit');
+		$this->transactionsMock->expects($this->once())->method('rollBack');
 		$this->loggerMock->expects($this->once())->method('error')
 			->with('Error export SMIL playlist: Export '.$playlistId.' failed. Could not update playlist metrics.');
 
@@ -179,7 +183,7 @@ class ExportServiceTest extends TestCase
 		$metrics   = new PlaylistMetrics(fileSize: 100, duration: 60, ownerDuration: 60);
 		$results   = ['items' => [], 'playlist_metrics' => $metrics];
 
-		$this->itemsRepositoryMock->method('beginTransaction');
+		$this->transactionsMock->expects($this->once())->method('begin');
 
 		$this->playlistsServiceMock->expects($this->exactly(3))->method('loadPureById')
 			->willReturnMap([
@@ -189,23 +193,24 @@ class ExportServiceTest extends TestCase
 			]);
 
 		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
-		$this->itemsServiceMock->expects($this->exactly(2))->method('loadByPlaylistForExport')
+		$this->exportItemsLoaderMock->expects($this->exactly(2))->method('loadByPlaylist')
 			->willReturnMap([
 				[$playlistSub11, Config::PLATFORM_EDITION_EDGE, $results],
 				[$playlistSub12, Config::PLATFORM_EDITION_EDGE, $results]
 			]);
 		$updatedItems = [];
-		$this->itemsServiceMock->expects($this->exactly(2))->method('updateItemsMetrics')
+		$this->playlistMetricsUpdaterMock->expects($this->exactly(2))->method('updateItemsMetrics')
 			->willReturnCallback(function (int $playlistId, PlaylistMetrics $itemMetrics) use (&$updatedItems, $metrics): void
 			{
 				static::assertSame($metrics, $itemMetrics);
 				$updatedItems[] = $playlistId;
 			});
-		$this->itemsServiceMock->expects($this->exactly(2))->method('updateMetricsRecursively')
-			->willReturnMap([
-				[11, $this->itemsServiceMock],
-				[12, $this->itemsServiceMock]
-			]);
+		$recursivelyUpdated = [];
+		$this->playlistMetricsUpdaterMock->expects($this->exactly(2))->method('updateMetricsRecursively')
+			->willReturnCallback(function (int $playlistId) use (&$recursivelyUpdated): void
+			{
+				$recursivelyUpdated[] = $playlistId;
+			});
 
 		$this->playlistContentMock->expects($this->exactly(2))->method('init')
 			->willReturnMap([
@@ -216,8 +221,8 @@ class ExportServiceTest extends TestCase
 
 		$this->localSmilWriterMock->expects($this->exactly(2))->method('initExport')
 			->willReturnMap([
-				[11, $this->itemsServiceMock],
-				[12, $this->itemsServiceMock]
+				[11, null],
+				[12, null]
 			]);
 		$this->localSmilWriterMock->expects($this->exactly(2))->method('writeSMILFiles')
 			->with($this->playlistContentMock);
@@ -226,13 +231,14 @@ class ExportServiceTest extends TestCase
 			->with($playlist['playlist_id'], $metrics->toPlaylistTableArray())
 			->willReturn(1);
 
-		$this->itemsRepositoryMock->expects($this->once())->method('commitTransaction');
-		$this->itemsRepositoryMock->expects($this->never())->method('rollbackTransaction');
+		$this->transactionsMock->expects($this->once())->method('commit');
+		$this->transactionsMock->expects($this->never())->method('rollBack');
 		$this->loggerMock->expects($this->never())->method('error');
 		$result = $this->service->exportToSmil($playlistId);
 
 		static::assertSame(2, $result);
 		static::assertSame([11, 12], $updatedItems);
+		static::assertSame([11, 12], $recursivelyUpdated);
 	}
 
 

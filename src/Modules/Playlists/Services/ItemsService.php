@@ -21,16 +21,13 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Services;
 
-use App\Framework\Core\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Media\MediaUrlSigner;
-use App\Framework\Media\MimeTypeExtensionMapper;
 use App\Framework\Services\AbstractBaseService;
 use App\Modules\Mediapool\Services\MediaService;
+use App\Modules\Playlists\Helper\Compose\ItemThumbnailResolver;
 use App\Modules\Playlists\Helper\ItemType;
-use App\Modules\Playlists\Helper\PlaylistMetrics;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
@@ -47,47 +44,10 @@ class ItemsService extends AbstractBaseService
 								private readonly MediaService              $mediaService,
 								private readonly PlaylistsService          $playlistsService,
 								private readonly PlaylistMetricsCalculator $playlistMetricsCalculator,
-								private readonly MimeTypeExtensionMapper   $mimeTypeExtensionMapper,
-								private readonly MediaUrlSigner            $mediaUrlSigner,
-								private readonly Config                    $config,
+								private readonly ItemThumbnailResolver     $itemThumbnailResolver,
 								LoggerInterface                            $logger)
 	{
 		parent::__construct($logger);
-	}
-
-	public function getItemsRepository(): ItemsRepository
-	{
-		return $this->itemsRepository;
-	}
-
-	/**
-	 * @param array<string,mixed> $playlist
-	 * @return array{playlist_metrics: PlaylistMetrics, items: list<array<string,mixed>>}
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws ModuleException
-	 */
-	public function loadByPlaylistForExport(array $playlist, string $edition): array
-	{
-		$items   = [];
-		$results = $this->itemsRepository->findAllByPlaylistIdWithJoins($playlist['playlist_id'], $edition);
-		foreach ($results as $item)
-		{
-			$item['conditional']   = $this->sanitize($item['conditional']);
-			$item['properties']    = $this->sanitize($item['properties']);
-			$item['categories']    = $this->sanitize($item['categories']);
-			// Todo: I do mot like this. MAybe widgets should also saved as JSON.
-			if ($item['item_type'] !== ItemType::TEMPLATE->value)
-				$item['content_data']  = $this->sanitize($item['content_data']);
-
-			$item['begin_trigger'] = $this->sanitize($item['begin_trigger']);
-			$item['end_trigger']   = $this->sanitize($item['end_trigger']);
-			$items[] = $item;
-		}
-
-		$playlistMetrics = $this->playlistMetricsCalculator->calculateFromItems($playlist, $results);
-
-		return ['playlist_metrics' =>  $playlistMetrics, 'items' => $items];
 	}
 
 	/**
@@ -162,47 +122,13 @@ class ItemsService extends AbstractBaseService
 
 		foreach($result as $value)
 		{
-			switch ($value['item_type'])
-			{
-				case ItemType::MEDIAPOOL->value:
-					$thumbnailPath = $this->mediaService->getPathThumbnails();
+			$thumbnail = $this->itemThumbnailResolver->resolve($value);
+			if ($thumbnail === null)
+				continue;
 
-					$ext = 'jpg';
-					if (str_starts_with($value['mimetype'], 'image/'))
-						$ext = $this->mimeTypeExtensionMapper->determineExtension($value['mimetype']);
-
-					$filename = $value['file_resource'];
-					$isSvgWidget = ($value['mimetype'] === 'application/widget' && $value['content_data'] == '');
-					$finalExt = $isSvgWidget ? 'svg' : $ext;
-
-					// ugly workaround fix this later.
-					if ($value['mimetype'] === 'application/widget'
-						&& !file_exists($thumbnailPath . '/' . $filename . '.' . $finalExt))
-						$finalExt = 'png';
-
-					$tmp = $value;
-					$tmp['paths']['thumbnail'] = $thumbnailPath . '/' . $filename . '.' . $finalExt;
-					// mediapool files are stored outside the document root
-					$tmp['urls']['thumbnail'] = $this->mediaUrlSigner->thumbUrl($filename, $finalExt);
-
-					$items[] = $tmp;
-					break;
-				case ItemType::PLAYLIST->value:
-					$tmp = $value;
-					$tmp['paths']['thumbnail'] = 'public/images/icons/playlist.svg';
-					$tmp['urls']['thumbnail']  = '/images/icons/playlist.svg';
-					$items[] = $tmp;
-					break;
-				case ItemType::TEMPLATE->value:
-					$tmp = $value;
-					// thumbnails are always created as jpg, whatever mimetype the rendered original has
-					$thumbDir = $this->config->getConfigValue('thumbnails', 'playlists', 'directories');
-					$tmp['paths']['thumbnail'] = $thumbDir . '/' . $value['item_id'].'.jpg';
-					$tmp['urls']['thumbnail']  = $this->mediaUrlSigner->itemThumbUrl((int) $value['item_id'], 'jpg');
-					$items[] = $tmp;
-					break;
-
-			}
+			$value['paths']['thumbnail'] = $thumbnail['path'];
+			$value['urls']['thumbnail']  = $thumbnail['url'];
+			$items[] = $value;
 		}
 
 		$playlistMetrics = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlistData)->toFrontendArray();
@@ -339,109 +265,6 @@ class ItemsService extends AbstractBaseService
 	}
 
 	/**
-	 * @throws Exception
-	 */
-	public function updateItemsMetrics(int $playlistId, PlaylistMetrics $metrics): void
-	{
-		$this->itemsRepository->updateWithWhere($metrics->toItemArray(), ['file_resource' => $playlistId]);
-	}
-
-	/**
-	 *
-	 * 1. Save metrics in the exported playlist (did in export-class)
-	 * 2. Save metrics in all items that represent this playlist. (did in export-class)
-	 * 3. Collect all playlists that have the exported playlist nested, on every level
-	 * 4. Calculate and save the metrics of each of them once, a playlist only
-	 *    after all of its nested playlists are updated
-	 *
-	 * A playlist reachable on several paths is calculated only once. Playlists in a
-	 * nesting cycle are not updated, but logged, instead of recursing endlessly.
-	 *
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws ModuleException
-	 */
-	public function updateMetricsRecursively(int $playlistId): void
-	{
-		[$parents, $playlists] = $this->collectContainingPlaylists($playlistId);
-
-		// count for every containing playlist the nested playlists which must be updated before
-		// the playlist itself is already updated, so a nesting back to it is a cycle
-		$pending = [];
-		$cyclic  = [];
-		foreach ($parents as $parentIds)
-		{
-			foreach ($parentIds as $parentId)
-			{
-				if ($parentId === $playlistId)
-					$cyclic[] = $playlistId;
-				else
-					$pending[$parentId] = ($pending[$parentId] ?? 0) + 1;
-			}
-		}
-
-		$updated = [$playlistId];
-		while ($updated !== [])
-		{
-			$childId = array_shift($updated);
-			foreach ($parents[$childId] as $parentId)
-			{
-				if ($parentId === $playlistId || --$pending[$parentId] !== 0)
-					continue;
-
-				$metrics = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlists[$parentId]);
-				$this->updateItemsMetrics($parentId, $metrics);
-				$this->updatePlaylistMetrics($parentId, $metrics);
-				$updated[] = $parentId;
-			}
-		}
-
-		$cyclic = array_unique([...$cyclic, ...array_keys(array_filter($pending, fn(int $count) => $count > 0))]);
-		if ($cyclic !== [])
-			$this->logger->warning('Metrics not updated for playlists in a nesting cycle: ' . implode(', ', $cyclic));
-	}
-
-	/**
-	 * Finds all playlists which contain the given playlist directly or nested,
-	 * querying each playlist only once.
-	 *
-	 * @return array{0: array<int,list<int>>, 1: array<int,array<string,mixed>>}
-	 *         parent ids by playlist id, and the data of the containing playlists
-	 * @throws Exception
-	 */
-	private function collectContainingPlaylists(int $playlistId): array
-	{
-		$parents   = [];
-		$playlists = [];
-		$queue     = [$playlistId];
-		while ($queue !== [])
-		{
-			$childId = array_shift($queue);
-			if (isset($parents[$childId]))
-				continue;
-
-			$parents[$childId] = [];
-			foreach ($this->itemsRepository->findAllPlaylistsContainingPlaylist($childId) as $playlistData)
-			{
-				$parentId = (int) $playlistData['playlist_id'];
-				$parents[$childId][]  = $parentId;
-				$playlists[$parentId] = $playlistData;
-				$queue[]              = $parentId;
-			}
-		}
-
-		return [$parents, $playlists];
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	private function updatePlaylistMetrics(int $playlistId, PlaylistMetrics $metrics): void
-	{
-		$this->playlistsService->update($playlistId, $metrics->toPlaylistTableArray());
-	}
-
-	/**
 	 * @return array<string,mixed>
 	 * @throws ModuleException
 	 */
@@ -453,17 +276,5 @@ class ItemsService extends AbstractBaseService
 			throw new ModuleException('items', 'Playlist is not accessible');
 
 		return $playlistData;
-	}
-
-
-	/**
-	 * @return array<string,mixed>
-	 */
-	private function sanitize(string $value): array
-	{
-		if ($value === '')
-			return [];
-
-		return unserialize($value);
 	}
 }
