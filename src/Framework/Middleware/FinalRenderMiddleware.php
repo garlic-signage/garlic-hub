@@ -28,6 +28,7 @@ use App\Framework\Core\Session;
 use App\Framework\Core\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Helper\Serialization;
 use App\Framework\TemplateEngine\AdapterInterface;
 use App\Modules\Users\Services\AclValidator;
 use Doctrine\DBAL\Exception;
@@ -110,9 +111,9 @@ class FinalRenderMiddleware implements MiddlewareInterface
 			$layoutData['PEAK_MEMORY_USAGE'] = round(memory_get_peak_usage() / 1024, 2) . ' KB';
 		}
 
-		$controllerData = @unserialize((string) $response->getBody());
+		$controllerData = Serialization::unserializeSecure((string) $response->getBody());
 
-		if ($controllerData === false)
+		if ($controllerData === [])
 			return $response->withHeader('Content-Type', 'text/html');
 
 		$mainContent = $this->templateService->render($controllerData['this_layout']['template'], $controllerData['this_layout']['data']);

@@ -27,11 +27,18 @@ namespace App\Framework\Helper;
 class Serialization
 {
 	/**
+	 * Unserializes stored arrays without creating objects, so manipulated data cannot
+	 * instantiate classes (PHP object injection). Everything that is not an array
+	 * results in an empty array.
+	 *
 	 * @return array<string, mixed>
 	 */
-	public static function unserializeSecure(string $value): array
+	public static function unserializeSecure(?string $value): array
 	{
-		$ar = @unserialize($value);
+		if ($value === null || $value === '')
+			return [];
+
+		$ar = @unserialize($value, ['allowed_classes' => false]);
 		return is_array($ar) ? $ar : [];
 	}
 }

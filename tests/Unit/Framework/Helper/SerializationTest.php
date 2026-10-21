@@ -42,4 +42,23 @@ class SerializationTest extends TestCase
         static::assertEquals([], $result);
     }
 
+    #[Group('units')]
+    public function testUnSerializeSecureWithNullAndNoArray(): void
+    {
+        static::assertSame([], Serialization::unserializeSecure(null));
+        static::assertSame([], Serialization::unserializeSecure(serialize('text')));
+        static::assertSame([], Serialization::unserializeSecure('no serialized data'));
+    }
+
+    /**
+     * Stored data must never create objects (PHP object injection), not even nested ones.
+     */
+    #[Group('units')]
+    public function testUnSerializeSecureCreatesNoObjects(): void
+    {
+        $result = Serialization::unserializeSecure(serialize(['item' => new \ArrayObject([1, 2])]));
+
+        static::assertInstanceOf(\__PHP_Incomplete_Class::class, $result['item']);
+    }
+
 }

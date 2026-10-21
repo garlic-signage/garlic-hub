@@ -24,6 +24,7 @@ namespace App\Modules\Playlists\Helper\ExportSmil;
 
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Helper\Serialization;
 use App\Framework\Media\DeliveryUrlBuilder;
 use App\Framework\Media\MimeTypeExtensionMapper;
 use App\Modules\Playlists\Helper\ExportSmil\items\Base;
@@ -175,8 +176,8 @@ class PlaylistContent
 		$item = $this->itemsFactory->createItem($itemData);
 		$item->setBelongsToMasterPlaylist($this->playlist['playlist_mode'] === PlaylistMode::MASTER->value);
 		$item->setTouches($this->touchTrigger);
-		$contentData = @unserialize($itemData['content_data']);
-		$item->setLink(str_replace('&', '&amp;', $contentData['url']));
+		$contentData = Serialization::unserializeSecure($itemData['content_data']);
+		$item->setLink(str_replace('&', '&amp;', (string) ($contentData['url'] ?? '')));
 
 		$this->addContentParts($itemData, $item->getSmilElementTag(), $item->getPrefetchTag(), $item->getExclusive());
 	}

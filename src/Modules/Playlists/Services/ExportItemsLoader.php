@@ -24,6 +24,7 @@ namespace App\Modules\Playlists\Services;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
+use App\Framework\Helper\Serialization;
 use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Helper\PlaylistMetrics;
 use App\Modules\Playlists\Repositories\ItemsRepository;
@@ -76,9 +77,6 @@ readonly class ExportItemsLoader
 	 */
 	private function sanitize(string $value): array
 	{
-		if ($value === '')
-			return [];
-
-		return unserialize($value);
+		return Serialization::unserializeSecure($value);
 	}
 }

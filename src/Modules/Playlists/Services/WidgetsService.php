@@ -28,6 +28,7 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
+use App\Framework\Helper\Serialization;
 use App\Framework\Services\AbstractBaseService;
 use App\Modules\Playlists\Helper\Widgets\ContentDataPreparer;
 use Doctrine\DBAL\Exception;
@@ -60,13 +61,7 @@ class WidgetsService extends AbstractBaseService
 		$item            = $this->fetchItem($itemId);
 		$preferencesData = $this->contentDataPreparer->determinePreferences($item['config_data']);
 
-		$values = [];
-		if (!is_null($item['content_data']))
-		{
-			$ar = unserialize($item['content_data']);
-			if (is_array($ar))
-				$values = $ar;
-		}
+		$values = Serialization::unserializeSecure($item['content_data']);
 
 		return [
 			'item_id' => $itemId,

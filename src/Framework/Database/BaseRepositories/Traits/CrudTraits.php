@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Framework\Database\BaseRepositories\Traits;
 
+use App\Framework\Helper\Serialization;
 use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Query\QueryBuilder;
 
@@ -187,14 +188,7 @@ trait CrudTraits
 	 */
 	protected function secureUnserialize(?string $data): array
 	{
-		if (empty($data))
-			return [];
-
-		$ar = @unserialize($data);
-		if (!is_array($ar))
-			return [];
-
-		return $ar;
+		return Serialization::unserializeSecure($data);
 	}
 
 	/**

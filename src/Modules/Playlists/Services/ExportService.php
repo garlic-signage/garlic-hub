@@ -28,6 +28,7 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
+use App\Framework\Helper\Serialization;
 use App\Framework\Services\AbstractBaseService;
 use App\Modules\Playlists\Helper\ExportSmil\LocalWriter;
 use App\Modules\Playlists\Helper\ExportSmil\PlaylistContent;
@@ -80,7 +81,7 @@ class ExportService extends AbstractBaseService
 			$count = 0;
 			if ($playlist['playlist_mode'] === PlaylistMode::MULTIZONE->value && !empty($playlist['multizone']))
 			{
-				$zones = unserialize($playlist['multizone']);
+				$zones = Serialization::unserializeSecure($playlist['multizone']);
 				$metrics = ['filesize' => 0, 'duration' => 0, 'owner_duration' => 0];
 				foreach ($zones as $zone)
 				{

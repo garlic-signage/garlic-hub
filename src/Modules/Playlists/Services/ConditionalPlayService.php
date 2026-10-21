@@ -27,6 +27,7 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\UserException;
+use App\Framework\Helper\Serialization;
 use App\Framework\Services\AbstractBaseService;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
@@ -52,14 +53,7 @@ class ConditionalPlayService extends AbstractBaseService
 	{
 		$item = $this->itemService->fetchItemById($itemId); // check rights on playlists, too
 
-		$conditional = [];
-		if ($item['conditional'] !== '')
-		{
-			$tmp = @unserialize($item['conditional']);
-			if (is_array($tmp))
-				$conditional = $tmp;
-		}
-		$item['conditional'] = $conditional;
+		$item['conditional'] = Serialization::unserializeSecure($item['conditional']);
 
 		return $item;
 	}

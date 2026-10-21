@@ -27,6 +27,7 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\UserException;
+use App\Framework\Helper\Serialization;
 use App\Framework\Services\AbstractBaseService;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Repositories\PlaylistsRepository;
@@ -162,10 +163,7 @@ class PlaylistsService extends AbstractBaseService
 		$playlist = $this->loadWithUserById($playlistId);
 
 		// new playlists have no layout yet
-		if ($playlist['layout'] === null || $playlist['layout'] === '')
-			return [];
-
-		return unserialize($playlist['layout']);
+		return Serialization::unserializeSecure($playlist['layout']);
 	}
 
 	/**
@@ -273,9 +271,9 @@ class PlaylistsService extends AbstractBaseService
 	{
 		/** @var array{UID: int, company_id: int, playlist_mode: string, ...} $playlist */
 		$playlist = $this->loadWithUserById($playlistId);
-		if (($playlist['layout'] ?? null) !== null)
+		$layout = Serialization::unserializeSecure($playlist['layout'] ?? null);
+		if ($layout !== [])
 		{
-			$layout = unserialize($playlist['layout']);
 			$exploded = explode('x', $layout['resolution']);
 			$playlist['screen_width'] = (int) $exploded[0];
 			$playlist['screen_height'] = (int) $exploded[1];

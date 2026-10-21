@@ -27,6 +27,7 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\UserException;
+use App\Framework\Helper\Serialization;
 use App\Framework\Services\AbstractBaseService;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
@@ -52,14 +53,7 @@ class TriggerService extends AbstractBaseService
 	{
 		$item = $this->itemService->fetchItemById($itemId); // check rights on playlists, too
 
-		$trigger = [];
-		if ($item['begin_trigger'] !== '')
-		{
-			$tmp = @unserialize($item['begin_trigger']);
-			if (is_array($tmp))
-				$trigger = $tmp;
-		}
-		$item['begin_trigger'] = $trigger;
+		$item['begin_trigger'] = Serialization::unserializeSecure($item['begin_trigger']);
 
 		return ['item_data' => $item, 'touchable_media' => $this->findTouchableMedia($item['playlist_id'], $itemId)];
 	}
