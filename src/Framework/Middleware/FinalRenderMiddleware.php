@@ -101,7 +101,7 @@ class FinalRenderMiddleware implements MiddlewareInterface
 			'LANG_TERMS' => $this->translator->translate('terms', 'menu')
 		];
 
-		if ($_ENV['APP_DEBUG']===true)
+		if (filter_var($_ENV['APP_DEBUG'] ?? false, FILTER_VALIDATE_BOOLEAN))
 		{
 			$start_time   = $request->getAttribute('start_time');
 			$start_memory = $request->getAttribute('start_memory');
