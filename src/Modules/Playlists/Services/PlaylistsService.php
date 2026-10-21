@@ -74,7 +74,7 @@ class PlaylistsService extends AbstractBaseService
 
 		$affected            = $this->update($playlistId, $saveData);
 		$playlist['shuffle'] = $saveData['shuffle']; // prevent reloading playlist with new values
-		$playlistMetrics     =  $this->playlistMetricsCalculator->calculateFromPlaylistData($playlist)->getMetricsForFrontend();
+		$playlistMetrics     =  $this->playlistMetricsCalculator->calculateFromPlaylistData($playlist)->toFrontendArray();
 
 		return ['affected' => $affected, 'playlist_metrics' => $playlistMetrics];
 
@@ -92,7 +92,7 @@ class PlaylistsService extends AbstractBaseService
 		$playlist                    = $this->loadPureById($playlistId);
 		$affected                    = $this->update($playlist['playlist_id'], ['shuffle_picking' => $shufflePicking]);
 		$playlist['shuffle_picking'] = $shufflePicking; // prevent reloading playlist with new values
-		$playlistMetrics             =  $this->playlistMetricsCalculator->calculateFromPlaylistData($playlist)->getMetricsForFrontend();
+		$playlistMetrics             =  $this->playlistMetricsCalculator->calculateFromPlaylistData($playlist)->toFrontendArray();
 
 		return ['affected' => $affected, 'playlist_metrics' => $playlistMetrics];
 	}

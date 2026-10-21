@@ -30,6 +30,7 @@ use App\Framework\Media\MimeTypeExtensionMapper;
 use App\Framework\Services\AbstractBaseService;
 use App\Modules\Mediapool\Services\MediaService;
 use App\Modules\Playlists\Helper\ItemType;
+use App\Modules\Playlists\Helper\PlaylistMetrics;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
@@ -41,8 +42,6 @@ use Psr\Log\LoggerInterface;
  */
 class ItemsService extends AbstractBaseService
 {
-
-	private int $itemDuration = 0;
 
 	public function __construct(private readonly ItemsRepository           $itemsRepository,
 								private readonly MediaService              $mediaService,
@@ -63,7 +62,7 @@ class ItemsService extends AbstractBaseService
 
 	/**
 	 * @param array<string,mixed> $playlist
-	 * @return array<string,mixed>
+	 * @return array{playlist_metrics: PlaylistMetrics, items: list<array<string,mixed>>}
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
@@ -86,17 +85,9 @@ class ItemsService extends AbstractBaseService
 			$items[] = $item;
 		}
 
-		$playlistMetrics = $this->playlistMetricsCalculator
-			->reset()
-			->calculateFromItems($playlist, $results)
-			->getMetricsForPlaylistTable();
+		$playlistMetrics = $this->playlistMetricsCalculator->calculateFromItems($playlist, $results);
 
 		return ['playlist_metrics' =>  $playlistMetrics, 'items' => $items];
-	}
-
-	public function getItemDuration(): int
-	{
-		return $this->itemDuration;
 	}
 
 	/**
@@ -140,7 +131,7 @@ class ItemsService extends AbstractBaseService
 				break;
 			case ItemType::PLAYLIST->value:
 				$playlist = $this->playlistsService->fetchById((int) $item['file_resource']); // check rights
-				$defaultDuration = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlist)->getDuration();
+				$defaultDuration = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlist)->duration;
 				if ($playlist['time_limit'] > 0 && $defaultDuration > $playlist['time_limit'])
 					$item['default_duration'] = $playlist['time_limit'];
 				else
@@ -214,7 +205,7 @@ class ItemsService extends AbstractBaseService
 			}
 		}
 
-		$playlistMetrics = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlistData)->getMetricsForFrontend();
+		$playlistMetrics = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlistData)->toFrontendArray();
 
 		return ['playlist_metrics' =>  $playlistMetrics, 'playlist' => $playlistData, 'items' => $items];
 	}
@@ -250,16 +241,18 @@ class ItemsService extends AbstractBaseService
 
 
 	/**
+	 * @return int|null the stored duration, which can be shorter than the wanted one because of time limits,
+	 *                  null when the item could not be updated
 	 * @throws ModuleException
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 * @throws Exception
 	 */
-	public function updateItemDuration(int $itemId, int $wantedDuration): int
+	public function updateItemDuration(int $itemId, int $wantedDuration): ?int
 	{
 		$item = $this->itemsRepository->findFirstById($itemId);
 		if ($item === [])
-			return 0;
+			return null;
 
 		$playlist = $this->playlistsService->loadPureById($item['playlist_id']); // will check for rights
 		// if an item is a playlist, we need to get this limit first
@@ -269,11 +262,11 @@ class ItemsService extends AbstractBaseService
 			$wantedDuration   = $this->playlistMetricsCalculator->calculateRemainingDuration($itemPlaylist, $wantedDuration);
 		}
 
-		$this->itemDuration = $this->playlistMetricsCalculator->calculateRemainingDuration($playlist, $wantedDuration);
+		$itemDuration = $this->playlistMetricsCalculator->calculateRemainingDuration($playlist, $wantedDuration);
+		if ($this->itemsRepository->update($itemId, ['item_duration' => $itemDuration]) === 0)
+			return null;
 
-		$saveData = ['item_duration' => $this->itemDuration];
-
-		return $this->itemsRepository->update($itemId, $saveData);
+		return $itemDuration;
 	}
 
 
@@ -331,7 +324,7 @@ class ItemsService extends AbstractBaseService
 
 			$this->itemsRepository->updatePositionsWhenDeleted($playlistId, $item['item_order']);
 
-			$playlistMetrics = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlistData)->getMetricsForFrontend();
+			$playlistMetrics = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlistData)->toFrontendArray();
 
 			$this->itemsRepository->commitTransaction();
 
@@ -348,13 +341,9 @@ class ItemsService extends AbstractBaseService
 	/**
 	 * @throws Exception
 	 */
-	public function updateItemsMetrics(int $playlistId): void
+	public function updateItemsMetrics(int $playlistId, PlaylistMetrics $metrics): void
 	{
-		$saveItem = [
-			'item_duration' => $this->playlistMetricsCalculator->getDuration(),
-			'item_filesize' => $this->playlistMetricsCalculator->getFileSize()
-		];
-		$this->itemsRepository->updateWithWhere($saveItem, ['file_resource' => $playlistId]);
+		$this->itemsRepository->updateWithWhere($metrics->toItemArray(), ['file_resource' => $playlistId]);
 	}
 
 	/**
@@ -400,9 +389,9 @@ class ItemsService extends AbstractBaseService
 				if ($parentId === $playlistId || --$pending[$parentId] !== 0)
 					continue;
 
-				$this->playlistMetricsCalculator->calculateFromPlaylistData($playlists[$parentId]);
-				$this->updateItemsMetrics($parentId);
-				$this->updatePlaylistMetrics($parentId);
+				$metrics = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlists[$parentId]);
+				$this->updateItemsMetrics($parentId, $metrics);
+				$this->updatePlaylistMetrics($parentId, $metrics);
 				$updated[] = $parentId;
 			}
 		}
@@ -447,9 +436,9 @@ class ItemsService extends AbstractBaseService
 	/**
 	 * @throws Exception
 	 */
-	private function updatePlaylistMetrics(int $playlistId): void
+	private function updatePlaylistMetrics(int $playlistId, PlaylistMetrics $metrics): void
 	{
-		$this->playlistsService->update($playlistId, $this->playlistMetricsCalculator->getMetricsForPlaylistTable());
+		$this->playlistsService->update($playlistId, $metrics->toPlaylistTableArray());
 	}
 
 	/**

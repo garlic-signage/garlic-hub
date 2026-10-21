@@ -29,6 +29,7 @@ use App\Framework\Media\MediaUrlSigner;
 use App\Framework\Media\MimeTypeExtensionMapper;
 use App\Modules\Mediapool\Services\MediaService;
 use App\Modules\Playlists\Helper\ItemType;
+use App\Modules\Playlists\Helper\PlaylistMetrics;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\ItemsService;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
@@ -107,13 +108,9 @@ class ItemsServiceTest extends TestCase
 			->with($playlist['playlist_id'], $edition)
 			->willReturn($results);
 
-		$metrics = ['metric1' => 'value1'];
-		$this->playlistMetricsCalculatorMock->expects($this->once())->method('reset')
-			->willReturnSelf();
+		$metrics = new PlaylistMetrics(2, 1, 300, 70, 30);
 		$this->playlistMetricsCalculatorMock->expects($this->once())->method('calculateFromItems')
 			->with($playlist, $results)
-			->willReturnSelf();
-		$this->playlistMetricsCalculatorMock->expects($this->once())->method('getMetricsForPlaylistTable')
 			->willReturn($metrics);
 
 		$result = $this->itemsService->loadByPlaylistForExport($playlist, $edition);
@@ -121,7 +118,7 @@ class ItemsServiceTest extends TestCase
 		static::assertArrayHasKey('playlist_metrics', $result);
 		static::assertArrayHasKey('items', $result);
 
-		static::assertEquals($metrics, $result['playlist_metrics']);
+		static::assertSame($metrics, $result['playlist_metrics']);
 		static::assertCount(2, $result['items']);
 	}
 
@@ -141,29 +138,18 @@ class ItemsServiceTest extends TestCase
 			->with($playlist['playlist_id'], $edition)
 			->willReturn([]);
 
-		$this->playlistMetricsCalculatorMock->expects($this->once())->method('reset')
-			->willReturnSelf();
-
+		$metrics = new PlaylistMetrics();
 		$this->playlistMetricsCalculatorMock->expects($this->once())->method('calculateFromItems')
 			->with($playlist, [])
-			->willReturnSelf();
-
-		$this->playlistMetricsCalculatorMock->expects($this->once())->method('getMetricsForPlaylistTable')
-			->willReturn(['metric1' => 'value1']);
+			->willReturn($metrics);
 
 		$result = $this->itemsService->loadByPlaylistForExport($playlist, $edition);
 
 		static::assertArrayHasKey('playlist_metrics', $result);
 		static::assertArrayHasKey('items', $result);
 
-		static::assertEquals(['metric1' => 'value1'], $result['playlist_metrics']);
+		static::assertSame($metrics, $result['playlist_metrics']);
 		static::assertCount(0, $result['items']);
-	}
-	#[Group('units')]
-	public function testItemDuration(): void
-	{
-		$this->expectUntouched($this->itemsRepositoryMock, $this->mediaServiceMock, $this->playlistsServiceMock, $this->playlistMetricsCalculatorMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
-		static::assertSame(0, $this->itemsService->getItemDuration());
 	}
 
 	/**
@@ -351,9 +337,7 @@ class ItemsServiceTest extends TestCase
 
 		$this->playlistMetricsCalculatorMock->expects($this->once())->method('calculateFromPlaylistData')
 			->with($playlist)
-			->willReturnSelf();
-		$this->playlistMetricsCalculatorMock->expects($this->once())->method('getDuration')
-			->willReturn(150);
+			->willReturn(new PlaylistMetrics(duration: 150));
 
 		$result = $this->itemsService->fetchItemById($itemId);
 
@@ -393,9 +377,7 @@ class ItemsServiceTest extends TestCase
 
 		$this->playlistMetricsCalculatorMock->expects($this->once())->method('calculateFromPlaylistData')
 			->with($playlist)
-			->willReturnSelf();
-		$this->playlistMetricsCalculatorMock->expects($this->once())->method('getDuration')
-			->willReturn(200);
+			->willReturn(new PlaylistMetrics(duration: 200));
 
 		$result = $this->itemsService->fetchItemById($itemId);
 
@@ -477,7 +459,7 @@ class ItemsServiceTest extends TestCase
 
 		$result = $this->itemsService->loadItemsByPlaylistIdForComposer($playlistId);
 
-		static::assertSame(['duration' => 42], $result['playlist_metrics']);
+		static::assertSame((new PlaylistMetrics(duration: 42))->toFrontendArray(), $result['playlist_metrics']);
 
 		static::assertArrayHasKey('items', $result);
 		static::assertCount(1, $result['items']);
@@ -526,7 +508,7 @@ class ItemsServiceTest extends TestCase
 
 		$result = $this->itemsService->loadItemsByPlaylistIdForComposer($playlistId);
 
-		static::assertSame(['duration' => 42], $result['playlist_metrics']);
+		static::assertSame((new PlaylistMetrics(duration: 42))->toFrontendArray(), $result['playlist_metrics']);
 
 		static::assertArrayHasKey('items', $result);
 		static::assertCount(1, $result['items']);
@@ -569,7 +551,7 @@ class ItemsServiceTest extends TestCase
 
 		$result = $this->itemsService->loadItemsByPlaylistIdForComposer($playlistId);
 
-		static::assertSame(['duration' => 42], $result['playlist_metrics']);
+		static::assertSame((new PlaylistMetrics(duration: 42))->toFrontendArray(), $result['playlist_metrics']);
 
 		static::assertArrayHasKey('items', $result);
 		static::assertCount(1, $result['items']);
@@ -610,7 +592,7 @@ class ItemsServiceTest extends TestCase
 
 		$result = $this->itemsService->loadItemsByPlaylistIdForComposer($playlistId);
 
-		static::assertSame(['duration' => 42], $result['playlist_metrics']);
+		static::assertSame((new PlaylistMetrics(duration: 42))->toFrontendArray(), $result['playlist_metrics']);
 
 		static::assertArrayHasKey('items', $result);
 		static::assertCount(1, $result['items']);
@@ -646,7 +628,7 @@ class ItemsServiceTest extends TestCase
 
 		$result = $this->itemsService->loadItemsByPlaylistIdForComposer($playlistId);
 
-		static::assertSame(['duration' => 42], $result['playlist_metrics']);
+		static::assertSame((new PlaylistMetrics(duration: 42))->toFrontendArray(), $result['playlist_metrics']);
 
 		static::assertArrayHasKey('items', $result);
 		static::assertCount(0, $result['items']);
@@ -742,7 +724,39 @@ class ItemsServiceTest extends TestCase
 			->with($itemId, $saveData)
 			->willReturn(1);
 
-		static::assertEquals(1, $this->itemsService->updateItemDuration($itemId, $wantedDuration));
+		static::assertSame($calculatedDuration, $this->itemsService->updateItemDuration($itemId, $wantedDuration));
+	}
+
+	#[Group('units')]
+	public function testUpdateItemDurationReturnsNullWhenNotUpdated(): void
+	{
+		$this->expectUntouched($this->mediaServiceMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
+		$itemId = 5;
+		$wantedDuration = 120;
+		$playlistId = 7;
+
+		$itemData = ['item_id' => $itemId, 'playlist_id' => $playlistId, 'item_type' => 'default'];
+		$playlistData = ['playlist_id' => $playlistId];
+		$calculatedDuration = 100;
+
+		$this->itemsRepositoryMock->expects($this->once())->method('findFirstById')
+			->with($itemId)
+			->willReturn($itemData);
+
+		$this->playlistsServiceMock->expects($this->once())->method('loadPureById')
+			->with($playlistId)
+			->willReturn($playlistData);
+
+		$this->playlistMetricsCalculatorMock->expects($this->once())->method('calculateRemainingDuration')
+			->with($playlistData, $wantedDuration)
+			->willReturn($calculatedDuration);
+
+		$saveData = ['item_duration' => $calculatedDuration];
+		$this->itemsRepositoryMock->expects($this->once())->method('update')
+			->with($itemId, $saveData)
+			->willReturn(0);
+
+		static::assertNull($this->itemsService->updateItemDuration($itemId, $wantedDuration));
 	}
 
 	#[Group('units')]
@@ -761,7 +775,7 @@ class ItemsServiceTest extends TestCase
 		$this->playlistMetricsCalculatorMock->expects($this->never())->method('calculateRemainingDuration');
 		$this->itemsRepositoryMock->expects($this->never())->method('update');
 
-		static::assertEquals(0, $this->itemsService->updateItemDuration($itemId, $wantedDuration));
+		static::assertNull($this->itemsService->updateItemDuration($itemId, $wantedDuration));
 	}
 
 	#[Group('units')]
@@ -807,7 +821,7 @@ class ItemsServiceTest extends TestCase
 			->with($itemId, $saveData)
 			->willReturn(1);
 
-		static::assertEquals(1, $this->itemsService->updateItemDuration($itemId, $wantedDuration));
+		static::assertSame($calculatedDuration, $this->itemsService->updateItemDuration($itemId, $wantedDuration));
 	}
 
 	/**
@@ -899,12 +913,9 @@ class ItemsServiceTest extends TestCase
 		$this->itemsRepositoryMock->expects($this->once())->method('updatePositionsWhenDeleted')
 			->with($playlistId, $itemData['item_order']);
 
-		$metrics = ['metric1' => 'value1'];
+		$metrics = new PlaylistMetrics(1, 1, 10, 42, 42);
 		$this->playlistMetricsCalculatorMock->expects($this->once())->method('calculateFromPlaylistData')
 			->with($playlistData)
-			->willReturnSelf();
-
-		$this->playlistMetricsCalculatorMock->expects($this->once())->method('getMetricsForFrontend')
 			->willReturn($metrics);
 
 		$this->itemsRepositoryMock->expects($this->once())->method('commitTransaction');
@@ -913,7 +924,7 @@ class ItemsServiceTest extends TestCase
 
 		static::assertArrayHasKey('playlist_metrics', $result);
 		static::assertArrayHasKey('delete_id', $result);
-		static::assertEquals($metrics, $result['playlist_metrics']);
+		static::assertSame($metrics->toFrontendArray(), $result['playlist_metrics']);
 		static::assertEquals(1, $result['delete_id']);
 	}
 
@@ -1024,16 +1035,8 @@ class ItemsServiceTest extends TestCase
 	#[Group('units')]
 	public function testUpdateItemsMetricsSuccessfully(): void
 	{
-		$this->expectUntouched($this->mediaServiceMock, $this->playlistsServiceMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock);
+		$this->expectUntouched($this->mediaServiceMock, $this->playlistsServiceMock, $this->mimeTypeExtensionMapperMock, $this->loggerMock, $this->playlistMetricsCalculatorMock);
 		$playlistId = 123;
-
-		$this->playlistMetricsCalculatorMock->expects($this->once())
-			->method('getDuration')
-			->willReturn(300);
-
-		$this->playlistMetricsCalculatorMock->expects($this->once())
-			->method('getFilesize')
-			->willReturn(1024);
 
 		$saveItem = [
 			'item_duration' => 300,
@@ -1044,7 +1047,7 @@ class ItemsServiceTest extends TestCase
 			->method('updateWithWhere')
 			->with($saveItem, ['file_resource' => $playlistId]);
 
-		$this->itemsService->updateItemsMetrics($playlistId);
+		$this->itemsService->updateItemsMetrics($playlistId, new PlaylistMetrics(fileSize: 1024, duration: 300));
 	}
 
 	/**
@@ -1068,7 +1071,7 @@ class ItemsServiceTest extends TestCase
 
 		$this->playlistMetricsCalculatorMock->expects($this->once())
 			->method('calculateFromPlaylistData')
-			->willReturnSelf();
+			->willReturn(new PlaylistMetrics());
 
 		$this->itemsRepositoryMock->expects($this->once())
 			->method('updateWithWhere');
@@ -1130,7 +1133,7 @@ class ItemsServiceTest extends TestCase
 			->willReturnCallback(function (array $playlist) use (&$calculated)
 			{
 				$calculated[] = $playlist['playlist_id'];
-				return $this->playlistMetricsCalculatorMock;
+				return new PlaylistMetrics();
 			});
 
 		$this->itemsRepositoryMock->expects($this->exactly(3))->method('updateWithWhere');
@@ -1163,7 +1166,7 @@ class ItemsServiceTest extends TestCase
 		$this->playlistMetricsCalculatorMock->expects($this->once())
 			->method('calculateFromPlaylistData')
 			->with(['playlist_id' => 2])
-			->willReturnSelf();
+			->willReturn(new PlaylistMetrics());
 		$this->playlistsServiceMock->expects($this->once())->method('update');
 		$this->loggerMock->expects($this->once())->method('warning')
 			->with('Metrics not updated for playlists in a nesting cycle: 1');
@@ -1206,9 +1209,7 @@ class ItemsServiceTest extends TestCase
 	{
 		$this->playlistMetricsCalculatorMock->expects($this->once())->method('calculateFromPlaylistData')
 			->with($playlistData)
-			->willReturnSelf();
-		$this->playlistMetricsCalculatorMock->expects($this->once())->method('getMetricsForFrontend')
-			->willReturn(['duration' => 42]);
+			->willReturn(new PlaylistMetrics(duration: 42));
 		$this->loggerMock->expects($this->never())->method('error');
 	}
 

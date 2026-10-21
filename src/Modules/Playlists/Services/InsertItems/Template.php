@@ -122,7 +122,7 @@ class Template extends AbstractInsertItem
 			$saveItem['paths']['thumbnail'] = $thumbPathItem;
 			$saveItem['urls']['thumbnail']  = $this->mediaUrlSigner->itemThumbUrl($id, 'jpg');
 
-			$playlistMetrics = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlistData)->getMetricsForFrontend();
+			$playlistMetrics = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlistData)->toFrontendArray();
 
 			$this->itemsRepository->commitTransaction();
 

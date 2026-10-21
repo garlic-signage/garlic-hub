@@ -144,8 +144,8 @@ class Orchestrator
 				break;
 			case 'item_duration':
 				$round = (int) round((float) $this->input['value']);
-				$affected = $this->itemsService->updateItemDuration($this->itemId, $round);
-				$data = $this->itemsService->getItemDuration();
+				$data     = $this->itemsService->updateItemDuration($this->itemId, $round);
+				$affected = $data === null ? 0 : 1;
 				break;
 			default:
 				return $this->responseBuilder->invalidParameterName($response);

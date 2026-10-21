@@ -71,12 +71,12 @@ class PlaylistMetricsCalculatorTest extends TestCase
 			['item_filesize' => 200, 'item_duration' => 40, 'UID' => 2]
 		];
 
-		$this->calculator->calculateFromItems($playlist, $items);
+		$metrics = $this->calculator->calculateFromItems($playlist, $items);
 
-		static::assertSame(2, $this->calculator->getCountEntries());
-		static::assertSame(300, $this->calculator->getFileSize());
-		static::assertSame(70, $this->calculator->getDuration());
-		static::assertSame(30, $this->calculator->getOwnerDuration());
+		static::assertSame(2, $metrics->countEntries);
+		static::assertSame(300, $metrics->fileSize);
+		static::assertSame(70, $metrics->duration);
+		static::assertSame(30, $metrics->ownerDuration);
 
 		$expectedMetrics = [
 			'count_items'       => 2,
@@ -85,7 +85,7 @@ class PlaylistMetricsCalculatorTest extends TestCase
 			'duration'          => 70,
 			'owner_duration'    => 30
 		];
-		$frontendMetrics =  $this->calculator->getMetricsForFrontend();
+		$frontendMetrics =  $metrics->toFrontendArray();
 
 		static::assertSame($expectedMetrics, $frontendMetrics);
 
@@ -107,11 +107,11 @@ class PlaylistMetricsCalculatorTest extends TestCase
 			['item_filesize' => 150, 'item_duration' => 50, 'UID' => 1],
 		];
 
-		$this->calculator->calculateFromItems($playlist, $items);
+		$metrics = $this->calculator->calculateFromItems($playlist, $items);
 
-		static::assertSame(3, $this->calculator->getCountEntries());
-		static::assertLessThan(150, $this->calculator->getDuration());
-		static::assertLessThanOrEqual($this->calculator->getDuration(), $this->calculator->getOwnerDuration());
+		static::assertSame(3, $metrics->countEntries);
+		static::assertLessThan(150, $metrics->duration);
+		static::assertLessThanOrEqual($metrics->duration, $metrics->ownerDuration);
 
 		$expectedMetrics = [
 			'count_items'       => 3,
@@ -120,7 +120,7 @@ class PlaylistMetricsCalculatorTest extends TestCase
 			'duration'          => 50,
 			'owner_duration'    => 50
 		];
-		$frontendMetrics =  $this->calculator->getMetricsForFrontend();
+		$frontendMetrics =  $metrics->toFrontendArray();
 		static::assertSame($expectedMetrics, $frontendMetrics);
 	}
 
@@ -140,7 +140,7 @@ class PlaylistMetricsCalculatorTest extends TestCase
 			['item_filesize' => 150, 'item_duration' => 50, 'UID' => 1],
 		];
 
-		$this->calculator->calculateFromItems($playlist, $items);
+		$metrics = $this->calculator->calculateFromItems($playlist, $items);
 
 
 		$expectedMetrics = [
@@ -150,7 +150,7 @@ class PlaylistMetricsCalculatorTest extends TestCase
 			'duration'          => 150,
 			'owner_duration'    => 150
 		];
-		$frontendMetrics =  $this->calculator->getMetricsForFrontend();
+		$frontendMetrics =  $metrics->toFrontendArray();
 		static::assertSame($expectedMetrics, $frontendMetrics);
 	}
 
@@ -170,11 +170,11 @@ class PlaylistMetricsCalculatorTest extends TestCase
 			['item_filesize' => 150, 'item_duration' => 50, 'UID' => 2],
 		];
 
-		$this->calculator->calculateFromItems($playlist, $items);
+		$metrics = $this->calculator->calculateFromItems($playlist, $items);
 
-		static::assertSame(3, $this->calculator->getCountEntries());
-		static::assertLessThan(150, $this->calculator->getDuration());
-		static::assertLessThanOrEqual($this->calculator->getDuration(), $this->calculator->getOwnerDuration());
+		static::assertSame(3, $metrics->countEntries);
+		static::assertLessThan(150, $metrics->duration);
+		static::assertLessThanOrEqual($metrics->duration, $metrics->ownerDuration);
 
 		$expectedMetrics = [
 			'count_items'       => 3,
@@ -184,7 +184,7 @@ class PlaylistMetricsCalculatorTest extends TestCase
 			'owner_duration'    => 0
 		];
 
-		$frontendMetrics =  $this->calculator->getMetricsForFrontend();
+		$frontendMetrics =  $metrics->toFrontendArray();
 		static::assertSame($expectedMetrics, $frontendMetrics);
 	}
 
@@ -232,8 +232,8 @@ class PlaylistMetricsCalculatorTest extends TestCase
 			->with(5, 1)
 			->willReturn($expectedMetrics);
 
-		$this->calculator->calculateFromPlaylistData($playlist);
-		$frontendMetrics =  $this->calculator->getMetricsForFrontend();
+		$metrics = $this->calculator->calculateFromPlaylistData($playlist);
+		$frontendMetrics =  $metrics->toFrontendArray();
 		static::assertSame($expectedMetrics, $frontendMetrics);
 
 	}
@@ -249,8 +249,8 @@ class PlaylistMetricsCalculatorTest extends TestCase
 		$this->expectUntouched($this->itemsRepositoryMock, $this->aclValidatorMock, $this->configMock);
 		$playlist = [];
 
-		// Ensure that calculateFromPlaylistData will reset metrics for an empty playlist
-		$this->calculator->calculateFromPlaylistData($playlist);
+		// an empty playlist results in empty metrics
+		$metrics = $this->calculator->calculateFromPlaylistData($playlist);
 
 		$expectedMetrics = [
 			'count_items' => 0,
@@ -260,14 +260,14 @@ class PlaylistMetricsCalculatorTest extends TestCase
 			'owner_duration' => 0
 		];
 
-		static::assertSame($expectedMetrics, $this->calculator->getMetricsForFrontend());
+		static::assertSame($expectedMetrics, $metrics->toFrontendArray());
 
 		$expectedMetrics2 = [
 			'filesize' => 0,
 			'duration' => 0,
 			'owner_duration' => 0
 		];
-		static::assertSame($expectedMetrics2, $this->calculator->getMetricsForPlaylistTable());
+		static::assertSame($expectedMetrics2, $metrics->toPlaylistTableArray());
 	}
 
 	/**
@@ -368,6 +368,26 @@ class PlaylistMetricsCalculatorTest extends TestCase
 
 		$result = $this->calculator->calculateRemainingMediaDuration($playlist, $media);
 		static::assertSame(15, $result);
+	}
+
+	/**
+	 * A calculation must not depend on a previous one, the calculator keeps no state.
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testCalculationsAreIndependent(): void
+	{
+		$this->expectUntouched($this->itemsRepositoryMock, $this->aclValidatorMock, $this->configMock);
+		$playlist = ['UID' => 1, 'shuffle' => 0, 'time_limit' => 0];
+
+		$first  = $this->calculator->calculateFromItems($playlist, [['item_filesize' => 100, 'item_duration' => 30, 'UID' => 1]]);
+		$second = $this->calculator->calculateFromItems($playlist, [['item_filesize' => 5, 'item_duration' => 7, 'UID' => 2]]);
+
+		static::assertSame(['filesize' => 100, 'duration' => 30, 'owner_duration' => 30], $first->toPlaylistTableArray());
+		static::assertSame(['filesize' => 5, 'duration' => 7, 'owner_duration' => 0], $second->toPlaylistTableArray());
 	}
 
 	private function expectUntouched(MockObject ...$mocks): void

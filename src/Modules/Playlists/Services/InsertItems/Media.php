@@ -106,7 +106,7 @@ class Media extends AbstractInsertItem
 			$saveItem['paths'] = $media['paths'];
 			$saveItem['urls']  = $media['urls'];
 
-			$playlistMetrics = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlistData)->getMetricsForFrontend();
+			$playlistMetrics = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlistData)->toFrontendArray();
 
 			$this->itemsRepository->commitTransaction();
 

@@ -112,7 +112,7 @@ class ExportService extends AbstractBaseService
 	public function export(array $playlist): array
 	{
 		$results = $this->itemsService->loadByPlaylistForExport($playlist, $this->config->getEdition());
-		$this->itemsService->updateItemsMetrics($playlist['playlist_id']);
+		$this->itemsService->updateItemsMetrics($playlist['playlist_id'], $results['playlist_metrics']);
 		/*
 			    1. Save metrics in the exported playlist (did with results as last, but doesn't matter)
 				2. Save metrics in all items wich represent this playlist.
@@ -128,7 +128,7 @@ class ExportService extends AbstractBaseService
 		$this->localSmilWriter->initExport($playlist['playlist_id']);
 		$this->localSmilWriter->writeSMILFiles($this->playlistContent);
 
-		return $results['playlist_metrics'];
+		return $results['playlist_metrics']->toPlaylistTableArray();
 	}
 
 }

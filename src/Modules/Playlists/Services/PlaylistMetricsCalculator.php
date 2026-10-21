@@ -26,12 +26,13 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\UserSession;
+use App\Modules\Playlists\Helper\PlaylistMetrics;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use Doctrine\DBAL\Exception;
 
 /**
- * class for calculating and manipulating durations of
- * playlist
+ * Calculates the metrics of a playlist. The calculator keeps no state,
+ * every calculation returns its own PlaylistMetrics.
  */
 class PlaylistMetricsCalculator
 {
@@ -39,11 +40,6 @@ class PlaylistMetricsCalculator
 	private readonly AclValidator $aclValidator;
 	private readonly Config $config;
 	private readonly UserSession $userSession;
-	private int $countEntries;
-	private int $countOwnerEntries;
-	private int $ownerDuration;
-	private int $duration;
-	private int $fileSize;
 
 	public function __construct(ItemsRepository $itemsRepository, AclValidator $aclValidator, Config $config, UserSession $userSession)
 	{
@@ -61,64 +57,6 @@ class PlaylistMetricsCalculator
 		return (int) $this->config->getConfigValue('duration', 'playlists', 'Defaults');
 	}
 
-	public function getCountEntries(): int
-	{
-		return $this->countEntries;
-	}
-
-	public function getDuration(): int
-	{
-		return $this->duration;
-	}
-
-	public function getOwnerDuration(): int
-	{
-		return $this->ownerDuration;
-	}
-
-	public function getFileSize(): int
-	{
-		return $this->fileSize;
-	}
-
-	/**
-	 * @return array<string,mixed>
-	 */
-	public function getMetricsForFrontend(): array
-	{
-		return [
-			'count_items'       => $this->getCountEntries(),
-			'count_owner_items' => $this->countOwnerEntries,
-			'filesize'          => $this->getFileSize(),
-			'duration'          => $this->getDuration(),
-			'owner_duration'    => $this->getOwnerDuration()
-		];
-	}
-
-	/**
-	 * @return array<string,mixed>
-	 */
-	public function getMetricsForPlaylistTable(): array
-	{
-		return [
-			'filesize'          => $this->getFileSize(),
-			'duration'          => $this->getDuration(),
-			'owner_duration'    => $this->getOwnerDuration()
-		];
-	}
-
-
-	public function reset(): static
-	{
-		$this->countEntries      = 0;
-		$this->countOwnerEntries = 0;
-		$this->fileSize          = 0;
-		$this->duration          = 0;
-		$this->ownerDuration     = 0;
-
-		return $this;
-	}
-
 	/**
 	 * @param array<string,mixed> $playlist
 	 * @param list<array<string,mixed>> $items
@@ -127,26 +65,26 @@ class PlaylistMetricsCalculator
 	 * @throws ModuleException
 	 * @throws UserException
 	 */
-	public function calculateFromItems(array $playlist, array $items): static
+	public function calculateFromItems(array $playlist, array $items): PlaylistMetrics
 	{
-		$this->reset();
-		$this->countEntries = count($items);
+		$countOwnerEntries = 0;
+		$fileSize          = 0;
+		$duration          = 0;
+		$ownerDuration     = 0;
 
 		foreach ($items as $item)
 		{
-			$this->fileSize += $item['item_filesize'];
-			$this->duration += (int) round($item['item_duration']);
+			$fileSize += $item['item_filesize'];
+			$duration += (int) round($item['item_duration']);
 
 			if ($playlist['UID'] === $item['UID'])
 			{
-				$this->countOwnerEntries++;
-				$this->ownerDuration += (int) round($item['item_duration']);
+				$countOwnerEntries++;
+				$ownerDuration += (int) round($item['item_duration']);
 			}
 		}
 
-		$this->calculateAverageDuration($playlist);
-
-		return $this;
+		return $this->createMetrics($playlist, count($items), $countOwnerEntries, $fileSize, $duration, $ownerDuration);
 	}
 
 	/**
@@ -156,27 +94,23 @@ class PlaylistMetricsCalculator
 	 * @throws ModuleException
 	 * @throws UserException
 	 */
-	public function calculateFromPlaylistData(array $playlist): static
+	public function calculateFromPlaylistData(array $playlist): PlaylistMetrics
 	{
 		// nothing to do?
 		// sometimes we get an item just with default values, but no playlist id, so ignore them as well
 		if (empty($playlist) || !isset($playlist['playlist_id']))
-		{
-			$this->reset();
-			return $this;
-		}
+			return new PlaylistMetrics();
 
 		$tmp = $this->itemsRepository->sumAndCountMetricsByPlaylistIdAndOwner($playlist['playlist_id'], $playlist['UID']);
 
-		$this->countEntries      = $tmp['count_items'] ?? 0;
-		$this->countOwnerEntries = $tmp['count_owner_items'] ?? 0;
-		$this->fileSize          = $tmp['filesize'] ?? 0;
-		$this->duration          = (int) $tmp['duration'];
-		$this->ownerDuration     = (int) $tmp['owner_duration']; // because some videos are floats!
-
-		$this->calculateAverageDuration($playlist);
-
-		return $this;
+		return $this->createMetrics(
+			$playlist,
+			$tmp['count_items'] ?? 0,
+			$tmp['count_owner_items'] ?? 0,
+			$tmp['filesize'] ?? 0,
+			(int) $tmp['duration'],
+			(int) $tmp['owner_duration'] // because some videos are floats!
+		);
 	}
 
 	/**
@@ -206,8 +140,8 @@ class PlaylistMetricsCalculator
 	{
 		if ($playlist['time_limit'] > 0 && !$this->aclValidator->isSimpleAdmin($this->userSession->getUID()))
 		{
-			$this->calculateFromPlaylistData($playlist);
-			$remaining_duration = $playlist['time_limit'] - $this->getOwnerDuration();
+			$ownerDuration      = $this->calculateFromPlaylistData($playlist)->ownerDuration;
+			$remaining_duration = $playlist['time_limit'] - $ownerDuration;
 
 			if ($remaining_duration <= 0)
 				$wantedDuration = 0;
@@ -225,10 +159,10 @@ class PlaylistMetricsCalculator
 	 * @throws Exception
 	 * @throws UserException
 	 */
-	private function exceedTimeLimit(array $playlist): bool
+	private function exceedTimeLimit(array $playlist, int $ownerDuration): bool
 	{
 		if ($playlist['time_limit'] > 0 &&
-			$this->ownerDuration > $playlist['time_limit'] &&
+			$ownerDuration > $playlist['time_limit'] &&
 			!$this->aclValidator->isSimpleAdmin($this->userSession->getUID())) // Check more intensely for real admin needs company_id
 		{
 			return true;
@@ -243,35 +177,38 @@ class PlaylistMetricsCalculator
 	 * @throws Exception
 	 * @throws UserException
 	 */
-	private function calculateAverageDuration(array $playlist): void
+	private function createMetrics(array $playlist, int $countEntries, int $countOwnerEntries, int $fileSize, int $duration, int $ownerDuration): PlaylistMetrics
 	{
 		// calculate average durations if shuffle only when results to avoid division through 0.
-		if ($playlist['shuffle'] > 0 && $this->countEntries > 0)
-			$this->adjustForShuffle($playlist['shuffle_picking']);
+		if ($playlist['shuffle'] > 0 && $countEntries > 0)
+			[$duration, $ownerDuration] = $this->adjustForShuffle($playlist['shuffle_picking'], $countEntries, $countOwnerEntries, $duration, $ownerDuration);
 
-		if ($this->exceedTimeLimit($playlist))
+		if ($this->exceedTimeLimit($playlist, $ownerDuration))
 			throw new ModuleException('playlist_export',
 				'Exceeds time limit '.$playlist['time_limit'].'s of playlist: '.$playlist['name']);
+
+		return new PlaylistMetrics($countEntries, $countOwnerEntries, $fileSize, $duration, $ownerDuration);
 	}
 
-	private function adjustForShuffle(int $shufflePicking): void
+	/**
+	 * @return array{0:int, 1:int} duration and owner duration
+	 */
+	private function adjustForShuffle(int $shufflePicking, int $countEntries, int $countOwnerEntries, int $duration, int $ownerDuration): array
 	{
-		if ($shufflePicking === 0 || $shufflePicking > $this->countEntries)
-			$shufflePicking = $this->countEntries;
+		if ($shufflePicking === 0 || $shufflePicking > $countEntries)
+			$shufflePicking = $countEntries;
 
-		$this->duration = (int) round($this->duration / $this->countEntries * $shufflePicking);
+		$duration = (int) round($duration / $countEntries * $shufflePicking);
 
-		if ($this->countOwnerEntries > 0)
-		{
-			$avgOwnerItemDuration = $this->ownerDuration / $this->countOwnerEntries;
-			$probability          = $this->countOwnerEntries / $this->countEntries;
-			$expectedOwnerItems   = $probability * max($shufflePicking, 1);
+		if ($countOwnerEntries === 0)
+			return [$duration, 0];
 
-			// secure owner duration cannot be higher than avg duration
-			$this->ownerDuration  = min((int) round($avgOwnerItemDuration * $expectedOwnerItems), $this->duration);
-		}
-		else
-			$this->ownerDuration = 0;
+		$avgOwnerItemDuration = $ownerDuration / $countOwnerEntries;
+		$probability          = $countOwnerEntries / $countEntries;
+		$expectedOwnerItems   = $probability * max($shufflePicking, 1);
+
+		// secure owner duration cannot be higher than avg duration
+		return [$duration, min((int) round($avgOwnerItemDuration * $expectedOwnerItems), $duration)];
 	}
 
 }

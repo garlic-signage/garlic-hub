@@ -23,6 +23,7 @@ namespace Tests\Unit\Modules\Playlists\Services\InsertItems;
 
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\ItemType;
+use App\Modules\Playlists\Helper\PlaylistMetrics;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\InsertItems\Playlist;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
@@ -77,7 +78,7 @@ class PlaylistTest extends TestCase
 		$position = 1;
 		$playlistTargetData = ['playlist_id' => 1, 'duration' => 300, 'filesize' => 2048, 'playlist_name' => 'Test'];
 		$playlistInsertData = ['playlist_id' => 2, 'duration' => 150, 'filesize' => 1024, 'playlist_name' => 'Insert'];
-		$playlistMetrics = ['some_metrics'];
+		$playlistMetrics = new PlaylistMetrics(duration: 42);
 
 		$this->itemsRepositoryMock->expects($this->once())->method('beginTransaction');
 		$this->checkAclMockSuccessful($playlistTargetData, $playlistInsertData);
@@ -109,9 +110,6 @@ class PlaylistTest extends TestCase
 
 		$this->playlistMetricsCalculatorMock
 			->expects($this->atLeastOnce())->method('calculateFromPlaylistData')
-			->willReturnSelf();
-		$this->playlistMetricsCalculatorMock
-			->expects($this->atLeastOnce())->method('getMetricsForFrontend')
 			->willReturn($playlistMetrics);
 
 		$this->itemsRepositoryMock->method('commitTransaction');
@@ -122,7 +120,7 @@ class PlaylistTest extends TestCase
 		$saveItem['paths']['thumbnail'] = 'public/images/icons/playlist.svg';
 		$saveItem['urls']['thumbnail']  = '/images/icons/playlist.svg';
 
-		static::assertSame($playlistMetrics, $result['playlist_metrics']);
+		static::assertSame($playlistMetrics->toFrontendArray(), $result['playlist_metrics']);
 		static::assertSame($saveItem, $result['item']);
 	}
 

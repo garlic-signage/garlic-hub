@@ -25,6 +25,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Modules\Auth\UserSession;
+use App\Modules\Playlists\Helper\PlaylistMetrics;
 use App\Modules\Playlists\Helper\PlaylistMode;
 use App\Modules\Playlists\Repositories\PlaylistsRepository;
 use App\Modules\Playlists\Services\AclValidator;
@@ -150,14 +151,11 @@ class PlaylistsServiceTest extends TestCase
 
 		$this->playlistMetricsCalculatorMock->expects($this->once())->method('calculateFromPlaylistData')
 			->with(['playlist_id' => $playlistId, 'shuffle' => 1])
-			->willReturn($this->playlistMetricsCalculatorMock);
-
-		$this->playlistMetricsCalculatorMock->expects($this->once())->method('getMetricsForFrontend')
-			->willReturn(['metric' => 'value']);
+			->willReturn(new PlaylistMetrics(duration: 42));
 
 		$result = $this->service->toggleShuffle($playlistId);
 
-		static::assertEquals(['affected' => 1, 'playlist_metrics' => ['metric' => 'value']], $result);
+		static::assertEquals(['affected' => 1, 'playlist_metrics' => (new PlaylistMetrics(duration: 42))->toFrontendArray()], $result);
 	}
 
 	/**
@@ -188,14 +186,11 @@ class PlaylistsServiceTest extends TestCase
 
 		$this->playlistMetricsCalculatorMock->expects($this->once())->method('calculateFromPlaylistData')
 			->with(['playlist_id' => $playlistId, 'shuffle' => 0])
-			->willReturn($this->playlistMetricsCalculatorMock);
-
-		$this->playlistMetricsCalculatorMock->expects($this->once())->method('getMetricsForFrontend')
-			->willReturn(['metric' => 'value']);
+			->willReturn(new PlaylistMetrics(duration: 42));
 
 		$result = $this->service->toggleShuffle($playlistId);
 
-		static::assertEquals(['affected' => 1, 'playlist_metrics' => ['metric' => 'value']], $result);
+		static::assertEquals(['affected' => 1, 'playlist_metrics' => (new PlaylistMetrics(duration: 42))->toFrontendArray()], $result);
 	}
 
 	/**
@@ -256,14 +251,11 @@ class PlaylistsServiceTest extends TestCase
 
 		$this->playlistMetricsCalculatorMock->expects($this->once())->method('calculateFromPlaylistData')
 			->with(array_merge($playlist, ['shuffle_picking' => $shufflePicking]))
-			->willReturn($this->playlistMetricsCalculatorMock);
-
-		$this->playlistMetricsCalculatorMock->expects($this->once())->method('getMetricsForFrontend')
-			->willReturn(['metric' => 'value']);
+			->willReturn(new PlaylistMetrics(duration: 42));
 
 		$result = $this->service->shufflePicking($playlistId, $shufflePicking);
 
-		static::assertEquals(['affected' => 1, 'playlist_metrics' => ['metric' => 'value']], $result);
+		static::assertEquals(['affected' => 1, 'playlist_metrics' => (new PlaylistMetrics(duration: 42))->toFrontendArray()], $result);
 	}
 
 	/**

@@ -24,6 +24,7 @@ namespace Tests\Unit\Modules\Playlists\Services\InsertItems;
 use App\Framework\Exceptions\FrameworkException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\MediaService;
+use App\Modules\Playlists\Helper\PlaylistMetrics;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\InsertItems\Media;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
@@ -97,10 +98,7 @@ class MediaTest extends TestCase
 			->willReturn(123);
 
 		$this->playlistMetricsCalculatorMock->expects($this->once())->method('calculateFromPlaylistData')
-			->willReturnSelf();
-
-		$this->playlistMetricsCalculatorMock->expects($this->once())->method('getMetricsForFrontend')
-			->willReturn(['frontend_metrics']);
+			->willReturn(new PlaylistMetrics(duration: 42));
 
 		$this->itemsRepositoryMock->expects($this->once())->method('commitTransaction');
 
@@ -137,10 +135,7 @@ class MediaTest extends TestCase
 			->willReturn(123);
 
 		$this->playlistMetricsCalculatorMock->expects($this->once())->method('calculateFromPlaylistData')
-			->willReturnSelf();
-
-		$this->playlistMetricsCalculatorMock->expects($this->once())->method('getMetricsForFrontend')
-			->willReturn(['frontend_metrics']);
+			->willReturn(new PlaylistMetrics(duration: 42));
 
 		$this->itemsRepositoryMock->expects($this->once())->method('commitTransaction');
 

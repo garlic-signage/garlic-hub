@@ -247,9 +247,8 @@ class OrchestratorTest extends TestCase
 
 		$this->itemsServiceMock->expects($this->once())->method('updateItemDuration')
 			->with(123, 300)
-			->willReturn(1);
-		$this->itemsServiceMock->expects($this->once())->method('getItemDuration')->willReturn(300);
-		$this->expectSuccess(['data' => 300]);
+			->willReturn(240); // shortened by a time limit
+		$this->expectSuccess(['data' => 240]);
 
 		$this->orchestrator->edit($this->responseStub);
 	}
@@ -268,7 +267,7 @@ class OrchestratorTest extends TestCase
 
 		$this->itemsServiceMock->expects($this->once())->method('updateItemDuration')
 			->with(123, 300)
-			->willReturn(0);
+			->willReturn(null);
 		$this->responseBuilderMock->expects($this->never())->method('generalSuccess');
 		$this->responseBuilderMock->expects($this->once())->method('updateFieldFailed')
 			->with($this->responseStub, 'item_duration')
