@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Templates\Controller;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Http\Session;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
@@ -35,7 +36,6 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamInterface;
 
 class ShowDatatableControllerTest extends TestCase
 {
@@ -112,12 +112,13 @@ class ShowDatatableControllerTest extends TestCase
 			'a' => 'b',
 			'templates_actions_contextmenu' => ['LANG_COMPOSE' => 'Composer']
 		]]];
-		$streamMock = $this->createMock(StreamInterface::class);
-		$streamMock->expects($this->once())->method('write')->with(serialize($expected));
-		$this->responseMock->expects($this->once())->method('getBody')->willReturn($streamMock);
-		$this->responseMock->expects($this->once())->method('withHeader')->with('Content-Type', 'text/html')->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')->with(200)->willReturnSelf();
+		$this->responseMock->expects($this->never())->method($this->anything());
 
-		static::assertSame($this->responseMock, $this->controller->show($this->request, $this->responseMock));
+		$result = $this->controller->show($this->request, $this->responseMock);
+
+		static::assertInstanceOf(PageResponse::class, $result);
+		static::assertSame($expected['this_layout']['template'], $result->getTemplate());
+		static::assertSame($expected['this_layout']['data'], $result->getTemplateData());
+		static::assertSame($expected['main_layout'], $result->getMainLayoutData());
 	}
 }

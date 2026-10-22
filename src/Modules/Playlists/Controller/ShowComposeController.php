@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Controller;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -88,8 +89,7 @@ class ShowComposeController
 
 		}
 
-		$response->getBody()->write(serialize($data));
-		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
+		return new PageResponse($data);
 	}
 
 	private function redirectWithErrors(ResponseInterface $response, string $message): ResponseInterface

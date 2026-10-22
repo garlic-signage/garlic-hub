@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Player\Controller;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -50,8 +51,8 @@ class ShowConnectivityControllerTest extends TestCase
 	/** @var array{hidden: list<mixed>, visible: list<mixed>} */
 	private array $form = ['hidden' => [], 'visible' => []];
 
-	/** @var array<string,array<string,string>> */
-	private array $templateData = ['main_layout' => ['LANG_PAGE_TITLE' => 'x']];
+	/** @var array{main_layout: array<string,string>, this_layout: array{template: string, data: array<string,string>}} */
+	private array $templateData = ['main_layout' => ['LANG_PAGE_TITLE' => 'x'], 'this_layout' => ['template' => 'test/page', 'data' => ['key' => 'value']]];
 
 	/**
 	 * @throws \PHPUnit\Framework\MockObject\Exception
@@ -216,8 +217,10 @@ class ShowConnectivityControllerTest extends TestCase
 	private function assertRendered(ResponseInterface $response): void
 	{
 		static::assertSame(200, $response->getStatusCode());
-		static::assertSame('text/html', $response->getHeaderLine('Content-Type'));
-		static::assertSame(serialize($this->templateData), (string) $response->getBody());
+		static::assertInstanceOf(PageResponse::class, $response);
+		static::assertSame($this->templateData['this_layout']['template'], $response->getTemplate());
+		static::assertSame($this->templateData['this_layout']['data'], $response->getTemplateData());
+		static::assertSame($this->templateData['main_layout'], $response->getMainLayoutData());
 	}
 
 	private function assertRedirectedToPlayerList(ResponseInterface $response): void

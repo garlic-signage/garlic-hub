@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Controller;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Validation\BaseValidator;
 use App\Framework\Localization\Translate\Translator;
@@ -98,9 +99,7 @@ readonly class ShowDatatableController
 
 		$templateData = $this->templateFormatter->preparerUITemplate($dataGrid);
 
-		$response->getBody()->write(serialize($templateData));
-
-		return $response->withHeader('Content-Type', 'text/html');
+		return new PageResponse($templateData);
 	}
 
 	private function error(ResponseInterface $response, Messages $flash, string $message): ResponseInterface

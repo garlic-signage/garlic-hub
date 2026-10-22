@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Auth;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Http\Cookie;
 use App\Framework\Security\CsrfToken;
 use App\Framework\Http\Session;
@@ -37,7 +38,6 @@ use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamInterface;
 use Slim\Flash\Messages;
 
 class LoginControllerTest extends TestCase
@@ -74,16 +74,13 @@ class LoginControllerTest extends TestCase
 		$translatorMock->expects($this->exactly(5))->method('translate');
 		$this->authServiceMock->expects($this->never())->method($this->anything());
 
-		$body = $this->createMock(StreamInterface::class);
-		$this->responseMock->method('getBody')->willReturn($body);
-
-		$body->expects($this->once())->method('write');
-		$this->responseMock->expects($this->once())->method('withHeader')->with('Content-Type', 'text/html')->willReturnSelf();
+		$this->responseMock->expects($this->never())->method($this->anything());
 
 		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub);
 		$result = $controller->showLogin($this->requestStub, $this->responseMock);
 
-		static::assertSame($this->responseMock, $result);
+		static::assertInstanceOf(PageResponse::class, $result);
+		static::assertSame('auth/login', $result->getTemplate());
 	}
 
 	/**

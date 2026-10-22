@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Controller;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -52,7 +53,7 @@ readonly class ShowInitialAdminController
 		if (!$this->orchestrator->isFunctionAllowed())
 			return $response->withHeader('Location', '/')->withStatus(302);
 
-		return $this->outputRenderedForm($response, []);
+		return $this->outputRenderedForm([]);
 	}
 
 	/**
@@ -76,7 +77,7 @@ readonly class ShowInitialAdminController
 				$this->flash->addMessageNow('error', $errorText);
 			}
 
-			return $this->outputRenderedForm($response, $post);
+			return $this->outputRenderedForm($post);
 		}
 
 		$this->flash->addMessage('success', 'Admin User “' . $post['username'] . '“ successfully stored. You can now login with your username and password.');
@@ -88,12 +89,11 @@ readonly class ShowInitialAdminController
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
-	private function outputRenderedForm(ResponseInterface $response, array $post): ResponseInterface
+	private function outputRenderedForm(array $post): ResponseInterface
 	{
 		$formData     = $this->orchestrator->buildForm($post);
 		$templateData = $this->templatePreparer->prepare($formData);
 
-		$response->getBody()->write(serialize($templateData));
-		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
+		return new PageResponse($templateData);
 	}
 }

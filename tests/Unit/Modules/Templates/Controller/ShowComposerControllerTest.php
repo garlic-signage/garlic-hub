@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Templates\Controller;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Modules\Templates\Controller\ShowComposerController;
@@ -31,7 +32,6 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamInterface;
 use Slim\Flash\Messages;
 
 class ShowComposerControllerTest extends TestCase
@@ -85,12 +85,12 @@ class ShowComposerControllerTest extends TestCase
 		$this->orchestratorMock->expects($this->once())->method('checkEditRights')->with(12)->willReturn(true);
 		$this->orchestratorMock->expects($this->once())->method('build')->with(12)->willReturn($composer);
 		$this->flashMock->expects($this->never())->method($this->anything());
-		$streamMock = $this->createMock(StreamInterface::class);
-		$streamMock->expects($this->once())->method('write')->with(serialize($composer));
-		$this->responseMock->expects($this->once())->method('getBody')->willReturn($streamMock);
-		$this->responseMock->expects($this->once())->method('withHeader')->with('Content-Type', 'text/html')->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')->with(200)->willReturnSelf();
+		$this->responseMock->expects($this->never())->method($this->anything());
 
-		$this->controller->show($this->request, $this->responseMock, ['template_id' => '12']);
+		$result = $this->controller->show($this->request, $this->responseMock, ['template_id' => '12']);
+
+		static::assertInstanceOf(PageResponse::class, $result);
+		static::assertSame('templates/canvas', $result->getTemplate());
+		static::assertSame(['title' => 'x'], $result->getMainLayoutData());
 	}
 }

@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Controller;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -52,7 +53,7 @@ class ShowSettingsController
 	 */
 	public function newPlaylistForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
-		return $this->outputRenderedCreateForm($response, $args['playlist_mode'] ?? 'master', []);
+		return $this->outputRenderedCreateForm($args['playlist_mode'] ?? 'master', []);
 	}
 
 	/**
@@ -73,7 +74,7 @@ class ShowSettingsController
 		if ($playlist === [])
 			return $this->redirectWithError($response, 'Playlist not found.');
 
-		return $this->outputRenderedEditForm($response, $playlist['playlist_mode'], []);
+		return $this->outputRenderedEditForm($playlist['playlist_mode'], []);
 	}
 
 	/**
@@ -114,7 +115,7 @@ class ShowSettingsController
 		{
 			$this->addErrorsNow($result['errors'] ?? []);
 			$playlistMode = $post['playlist_mode'] ?? '';
-			return $this->outputRenderedCreateForm($response, is_string($playlistMode) ? $playlistMode : '', $post);
+			return $this->outputRenderedCreateForm(is_string($playlistMode) ? $playlistMode : '', $post);
 		}
 
 		return $this->redirectWithSuccess($response, $post);
@@ -134,7 +135,7 @@ class ShowSettingsController
 		if (!$result['success'])
 		{
 			$this->addErrorsNow($result['errors'] ?? []);
-			return $this->outputRenderedEditForm($response, $playlistMode, $post);
+			return $this->outputRenderedEditForm($playlistMode, $post);
 		}
 
 		return $this->redirectWithSuccess($response, $post);
@@ -148,13 +149,12 @@ class ShowSettingsController
 	 * @throws ModuleException
 	 * @throws UserException
 	 */
-	private function outputRenderedCreateForm(ResponseInterface $response, string $playlistMode, array $post): ResponseInterface
+	private function outputRenderedCreateForm(string $playlistMode, array $post): ResponseInterface
 	{
 		$formData     = $this->orchestrator->buildCreateForm($playlistMode, $post);
 		$templateData = $this->templatePreparer->prepare($formData, $playlistMode);
 
-		$response->getBody()->write(serialize($templateData));
-		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
+		return new PageResponse($templateData);
 	}
 
 	/**
@@ -165,13 +165,12 @@ class ShowSettingsController
 	 * @throws ModuleException
 	 * @throws UserException
 	 */
-	private function outputRenderedEditForm(ResponseInterface $response, string $playlistMode, array $post): ResponseInterface
+	private function outputRenderedEditForm(string $playlistMode, array $post): ResponseInterface
 	{
 		$formData     = $this->orchestrator->buildEditForm($post);
 		$templateData = $this->templatePreparer->prepare($formData, $playlistMode);
 
-		$response->getBody()->write(serialize($templateData));
-		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
+		return new PageResponse($templateData);
 	}
 
 	/**

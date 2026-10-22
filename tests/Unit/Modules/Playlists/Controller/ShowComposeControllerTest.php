@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Controller;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -46,7 +47,7 @@ class ShowComposeControllerTest extends TestCase
 	private ShowComposeController $controller;
 
 	/** @var array<string,mixed> */
-	private array $data = ['uiTemplates' => 'someData'];
+	private array $data = ['main_layout' => [], 'this_layout' => ['template' => 'playlists/compose', 'data' => ['uiTemplates' => 'someData']]];
 
 	/**
 	 * @throws \PHPUnit\Framework\MockObject\Exception
@@ -150,8 +151,10 @@ class ShowComposeControllerTest extends TestCase
 		$response = $this->controller->show($this->createStub(ServerRequestInterface::class), new Response(), ['playlist_id' => 1]);
 
 		static::assertSame(200, $response->getStatusCode());
-		static::assertSame('text/html', $response->getHeaderLine('Content-Type'));
-		static::assertSame(serialize($this->data), (string) $response->getBody());
+		static::assertInstanceOf(PageResponse::class, $response);
+		static::assertSame($this->data['this_layout']['template'], $response->getTemplate());
+		static::assertSame($this->data['this_layout']['data'], $response->getTemplateData());
+		static::assertSame($this->data['main_layout'], $response->getMainLayoutData());
 	}
 
 	/**

@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Controller;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
@@ -60,9 +61,7 @@ readonly class ShowDatatableController
 		if ($this->facade instanceof DatatableFacade)
 			$templateData['this_layout']['data']['create_playlist_contextmenu'] = $this->facade->prepareContextMenu();
 
-		$response->getBody()->write(serialize($templateData));
-
-		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
+		return new PageResponse($templateData);
 	}
 
 }

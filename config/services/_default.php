@@ -53,6 +53,7 @@ use App\Framework\Media\MimeTypeExtensionMapper;
 use App\Framework\Media\MimeTypeService;
 use App\Framework\Middleware\FinalRenderMiddleware;
 use App\Framework\TemplateEngine\AdapterInterface;
+use App\Framework\TemplateEngine\LayoutDataProviderInterface;
 use App\Framework\TemplateEngine\MustacheAdapter;
 use App\Framework\Utils\Datatable\BuildService;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
@@ -69,7 +70,11 @@ use App\Framework\Utils\Html\FieldsFactory;
 use App\Framework\Utils\Html\FieldsRenderFactory;
 use App\Framework\Utils\Html\FormBuilder;
 use App\Modules\Auth\UserSession;
-use App\Modules\Users\Services\AclValidator;
+use App\Shared\Layout\FlashMessagesBuilder;
+use App\Shared\Layout\LanguageSelectBuilder;
+use App\Shared\Layout\LayoutDataProvider;
+use App\Shared\Layout\MainMenuBuilder;
+use App\Shared\Layout\UserMenuBuilder;
 use App\Shared\User\UsersService;
 use Defuse\Crypto\Key;
 use Doctrine\DBAL\Configuration;
@@ -85,6 +90,7 @@ use Psr\Container\ContainerInterface;
 use Slim\App;
 use Slim\Factory\AppFactory;
 use Slim\Flash\Messages;
+use Slim\Psr7\Factory\StreamFactory;
 use Symfony\Component\Console\Application;
 
 $dependencies = [];
@@ -116,8 +122,25 @@ $dependencies[FinalRenderMiddleware::class] = DI\factory(function (ContainerInte
 {
 	return new FinalRenderMiddleware(
 		$container->get(AdapterInterface::class),
-		$container->get(AclValidator::class),
-		$container->get(CsrfToken::class)
+		$container->get(LayoutDataProviderInterface::class),
+		new StreamFactory()
+	);
+});
+$dependencies[LayoutDataProviderInterface::class] = DI\factory(function (ContainerInterface $container)
+{
+	$session    = $container->get(Session::class);
+	$translator = $container->get(Translator::class);
+	$locales    = $container->get(Locales::class);
+
+	return new LayoutDataProvider(
+		new MainMenuBuilder($session, $translator),
+		new UserMenuBuilder($session, $translator, $container->get(AclHelper::class)),
+		new LanguageSelectBuilder($translator, $locales),
+		new FlashMessagesBuilder($container->get(Messages::class)),
+		$container->get(CsrfToken::class),
+		$locales,
+		$translator,
+		$container->get(Config::class)
 	);
 });
 $dependencies[App::class] = Di\factory([AppFactory::class, 'createFromContainer']); // Slim App
@@ -163,11 +186,13 @@ $dependencies[Translator::class] = DI\factory(function (ContainerInterface $cont
 		$container->get(Psr16Adapter::class)
 	);
 });
-$dependencies[AdapterInterface::class] = DI\factory(function ()
+$dependencies[AdapterInterface::class] = DI\factory(function (ContainerInterface $container)
 {
 	$mustacheEngine = new Engine([
 		'loader' => new Mustache\Loader\FilesystemLoader(__DIR__ . '/../../templates'),
-    	'partials_loader' => new Mustache\Loader\FilesystemLoader(__DIR__ . '/../../templates/generic')
+    	'partials_loader' => new Mustache\Loader\FilesystemLoader(__DIR__ . '/../../templates/generic'),
+		// compiled templates are cached as PHP classes; the key contains a hash of the source, so changes invalidate it
+		'cache' => $container->get(Config::class)->getPaths('cacheDir') . '/mustache'
 	]);
 	return new MustacheAdapter($mustacheEngine);
 });

@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Controller;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -51,7 +52,7 @@ readonly class ShowAdminController
 	 */
 	public function newUserForm(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		return $this->outputRenderedCreateForm($response, []);
+		return $this->outputRenderedCreateForm([]);
 	}
 
 	/**
@@ -72,7 +73,7 @@ readonly class ShowAdminController
 		if ($user === [])
 			return $this->redirectWithError($response, 'User not found.');
 
-		return $this->outputRenderedEditForm($response, $user['username'], []);
+		return $this->outputRenderedEditForm($user['username'], []);
 	}
 
 	/**
@@ -115,7 +116,7 @@ readonly class ShowAdminController
 		if (!$result['success'])
 		{
 			$this->addErrorsNow($result['errors'] ?? []);
-			return $this->outputRenderedCreateForm($response, $post);
+			return $this->outputRenderedCreateForm($post);
 		}
 
 		return $this->redirectWithSuccess($response, $post);
@@ -135,7 +136,7 @@ readonly class ShowAdminController
 		if (!$result['success'])
 		{
 			$this->addErrorsNow($result['errors'] ?? []);
-			return $this->outputRenderedEditForm($response, $username, $post);
+			return $this->outputRenderedEditForm($username, $post);
 		}
 
 		return $this->redirectWithSuccess($response, $post);
@@ -170,13 +171,12 @@ readonly class ShowAdminController
 	 * @throws FrameworkException
 	 * @throws UserException
 	 */
-	private function outputRenderedCreateForm(ResponseInterface $response, array $post): ResponseInterface
+	private function outputRenderedCreateForm(array $post): ResponseInterface
 	{
 		$formData     = $this->orchestrator->buildCreateForm($post);
 		$templateData = $this->templatePreparer->prepareCreateSettings($formData);
 
-		$response->getBody()->write(serialize($templateData));
-		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
+		return new PageResponse($templateData);
 	}
 
 	/**
@@ -187,13 +187,12 @@ readonly class ShowAdminController
 	 * @throws ModuleException
 	 * @throws UserException
 	 */
-	private function outputRenderedEditForm(ResponseInterface $response, string $username, array $post): ResponseInterface
+	private function outputRenderedEditForm(string $username, array $post): ResponseInterface
 	{
 		$formData     = $this->orchestrator->buildEditForm($post);
 		$templateData = $this->templatePreparer->prepareEditSettings($formData, $username);
 
-		$response->getBody()->write(serialize($templateData));
-		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
+		return new PageResponse($templateData);
 	}
 
 	/**

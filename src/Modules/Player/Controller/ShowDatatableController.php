@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Controller;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -66,9 +67,7 @@ readonly class ShowDatatableController
 
 		$templateData = $this->templateFormatter->preparerUITemplate($dataGrid);
 		$templateData['this_layout']['data']['player_actions_contextmenu'] = $this->facade->prepareContextMenu();
-		$response->getBody()->write(serialize($templateData));
-
-		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
+		return new PageResponse($templateData);
 	}
 
 }

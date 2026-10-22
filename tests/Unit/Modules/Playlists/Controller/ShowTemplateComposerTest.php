@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Controller;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Security\CsrfToken;
 use App\Modules\Playlists\Controller\ShowTemplateComposer;
@@ -86,7 +87,7 @@ class ShowTemplateComposerTest extends TestCase
 	#[Group('units')]
 	public function testShow(): void
 	{
-		$composer = ['main_layout' => ['title' => 'x']];
+		$composer = ['main_layout' => ['title' => 'x'], 'this_layout' => ['template' => 'templates/composer', 'data' => ['key' => 'value']]];
 		$this->orchestratorMock->expects($this->once())->method('checkRights')->with(9)->willReturn(true);
 		$this->orchestratorMock->expects($this->once())->method('build')->willReturn($composer);
 		$this->csrfTokenMock->expects($this->never())->method($this->anything());
@@ -95,8 +96,10 @@ class ShowTemplateComposerTest extends TestCase
 		$response = $this->controller->show($this->createStub(ServerRequestInterface::class), new Response(), ['item_id' => '9']);
 
 		static::assertSame(200, $response->getStatusCode());
-		static::assertSame('text/html', $response->getHeaderLine('Content-Type'));
-		static::assertSame(serialize($composer), (string) $response->getBody());
+		static::assertInstanceOf(PageResponse::class, $response);
+		static::assertSame($composer['this_layout']['template'], $response->getTemplate());
+		static::assertSame($composer['this_layout']['data'], $response->getTemplateData());
+		static::assertSame($composer['main_layout'], $response->getMainLayoutData());
 	}
 
 	#[Group('units')]

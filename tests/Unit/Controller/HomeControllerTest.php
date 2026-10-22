@@ -22,22 +22,22 @@ declare(strict_types=1);
 namespace Tests\Unit\Controller;
 
 use App\Controller\HomeController;
-use App\Framework\Http\Session;
 use App\Framework\Dashboards\DashboardsAggregator;
+use App\Framework\TemplateEngine\PageResponse;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamInterface;
 
 class HomeControllerTest extends TestCase
 {
 	private ServerRequestInterface&MockObject $requestMock;
 	private ResponseInterface&MockObject $responseMock;
-	private Session&MockObject $sessionMock;
-	private DashboardsAggregator $dashboardsAggregatorStub;
+	private DashboardsAggregator&Stub $dashboardsAggregatorStub;
+	private HomeController $controller;
 
 	/**
 	 * @throws Exception
@@ -45,48 +45,38 @@ class HomeControllerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->requestMock  = $this->createMock(ServerRequestInterface::class);
-		$this->responseMock = $this->createMock(ResponseInterface::class);
-		$this->sessionMock  = $this->getMockBuilder(Session::class)
-			->disableOriginalConstructor()
-			->getMock();
+		$this->requestMock              = $this->createMock(ServerRequestInterface::class);
+		$this->responseMock             = $this->createMock(ResponseInterface::class);
 		$this->dashboardsAggregatorStub = $this->createStub(DashboardsAggregator::class);
+		$this->controller               = new HomeController($this->dashboardsAggregatorStub);
 	}
 
-	/**
-	 * @throws Exception
-	 */
 	#[Group('units')]
 	public function testIndexReturnsHomePage(): void
 	{
-		$this->requestMock->method('getAttribute')->with('session')->willReturn($this->sessionMock);
-		$this->sessionMock->method('exists')->with('user')->willReturn(true);
-		$this->sessionMock->method('get')->with('user')->willReturn(['username' => 'testuser']);
-		$this->responseMock->method('getBody')->willReturn($this->createStub(StreamInterface::class));
-		$this->responseMock->expects($this->once())->method('withHeader')->with('Content-Type', 'text/html')->willReturnSelf();
+		$this->dashboardsAggregatorStub->method('renderDashboardsContents')->willReturn([['dashboard' => 'player']]);
+		$this->requestMock->expects($this->never())->method($this->anything());
+		$this->responseMock->expects($this->never())->method($this->anything());
 
-		$controller = new HomeController($this->dashboardsAggregatorStub);
-		$result = $controller->index($this->requestMock, $this->responseMock);
+		$result = $this->controller->index($this->requestMock, $this->responseMock);
 
-		static::assertSame($this->responseMock, $result);
+		static::assertInstanceOf(PageResponse::class, $result);
+		static::assertSame('home', $result->getTemplate());
+		static::assertSame([['dashboard' => 'player']], $result->getTemplateData()['dashboard']);
+		static::assertSame(['LANG_PAGE_TITLE' => 'Garlic Hub - Dashboard'], $result->getMainLayoutData());
 	}
 
-	/**
-	 * @throws Exception
-	 */
 	#[Group('units')]
 	public function testLegalsReturnsLegalPage(): void
 	{
-		// the legal page is static, it neither reads the request nor the session
+		// the legal page is static, it neither reads the request nor writes the response
 		$this->requestMock->expects($this->never())->method($this->anything());
-		$this->sessionMock->expects($this->never())->method($this->anything());
-		$this->responseMock->method('getBody')->willReturn($this->createStub(StreamInterface::class));
-		$this->responseMock->expects($this->once())->method('withHeader')->with('Content-Type', 'text/html')->willReturnSelf();
+		$this->responseMock->expects($this->never())->method($this->anything());
 
-		$controller = new HomeController($this->dashboardsAggregatorStub);
-		$result = $controller->legals($this->requestMock, $this->responseMock);
+		$result = $this->controller->legals($this->requestMock, $this->responseMock);
 
-		static::assertSame($this->responseMock, $result);
+		static::assertInstanceOf(PageResponse::class, $result);
+		static::assertSame('legals/legals', $result->getTemplate());
+		static::assertSame([], $result->getTemplateData());
 	}
-
 }

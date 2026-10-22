@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Controller;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Security\CsrfToken;
 use App\Modules\Playlists\Helper\Templates\Orchestrator;
@@ -50,8 +51,7 @@ class ShowTemplateComposer
 		if (!$this->orchestrator->checkRights($itemId))
 			return $this->redirectWithError($response, 'No rights');
 
-		$response->getBody()->write(serialize($this->orchestrator->build()));
-		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
+		return new PageResponse($this->orchestrator->build());
 	}
 
 	public function save(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface

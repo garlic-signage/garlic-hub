@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Account\Controller;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -52,7 +53,7 @@ readonly class ShowPasswordController
 	 */
 	public function showPasswordForm(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		return $this->outputRenderedForm($response);
+		return $this->outputRenderedForm();
 	}
 
 	/**
@@ -71,7 +72,7 @@ readonly class ShowPasswordController
 		if ($tokenUser === [])
 			return $this->redirectToLoginWithError($response, 'token_error');
 
-		return $this->outputRenderedForcedForm($response, $passwordToken, $tokenUser);
+		return $this->outputRenderedForcedForm($passwordToken, $tokenUser);
 	}
 
 	/**
@@ -97,7 +98,7 @@ readonly class ShowPasswordController
 		if (!$result['success'])
 		{
 			$this->addErrorsNow($result['errors'] ?? []);
-			return $this->outputRenderedForcedForm($response, $passwordToken, $tokenUser);
+			return $this->outputRenderedForcedForm($passwordToken, $tokenUser);
 		}
 
 		$this->flash->addMessage('success', $this->translator->translate('forced_password_changed', 'account'));
@@ -119,7 +120,7 @@ readonly class ShowPasswordController
 		if (!$result['success'])
 		{
 			$this->addErrorsNow($result['errors'] ?? []);
-			return $this->outputRenderedForm($response);
+			return $this->outputRenderedForm();
 		}
 
 		$this->flash->addMessage('success', $this->translator->translate('password_changed', 'account'));
@@ -130,12 +131,12 @@ readonly class ShowPasswordController
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
-	private function outputRenderedForm(ResponseInterface $response): ResponseInterface
+	private function outputRenderedForm(): ResponseInterface
 	{
 		$formData     = $this->orchestrator->buildForm();
 		$templateData = $this->templatePreparer->preparePasswordForm($formData);
 
-		return $this->writeHtml($response, $templateData);
+		return $this->writeHtml($templateData);
 	}
 
 	/**
@@ -143,21 +144,20 @@ readonly class ShowPasswordController
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
-	private function outputRenderedForcedForm(ResponseInterface $response, string $passwordToken, array $tokenUser): ResponseInterface
+	private function outputRenderedForcedForm(string $passwordToken, array $tokenUser): ResponseInterface
 	{
 		$formData     = $this->orchestrator->buildForm($passwordToken);
 		$templateData = $this->templatePreparer->prepareForcedPasswordForm($formData, $tokenUser);
 
-		return $this->writeHtml($response, $templateData);
+		return $this->writeHtml($templateData);
 	}
 
 	/**
 	 * @param array<string,mixed> $templateData
 	 */
-	private function writeHtml(ResponseInterface $response, array $templateData): ResponseInterface
+	private function writeHtml(array $templateData): ResponseInterface
 	{
-		$response->getBody()->write(serialize($templateData));
-		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
+		return new PageResponse($templateData);
 	}
 
 	/**

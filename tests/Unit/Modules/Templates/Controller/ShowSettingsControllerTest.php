@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Templates\Controller;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -33,7 +34,6 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamInterface;
 use Slim\Flash\Messages;
 
 class ShowSettingsControllerTest extends TestCase
@@ -90,9 +90,9 @@ class ShowSettingsControllerTest extends TestCase
 		$this->orchestratorMock->expects($this->once())->method('buildCreateForm')->willReturn($this->form);
 		$this->templatePreparerMock->expects($this->once())->method('prepareCreateSettings')->with($this->form)->willReturn($this->prepared);
 		$this->flashMock->expects($this->never())->method($this->anything());
-		$this->expectHtml();
+		$this->responseMock->expects($this->never())->method($this->anything());
 
-		$this->controller->create($this->request(), $this->responseMock);
+		$this->assertPage($this->controller->create($this->request(), $this->responseMock));
 	}
 
     /**
@@ -122,9 +122,9 @@ class ShowSettingsControllerTest extends TestCase
 		$this->orchestratorMock->expects($this->once())->method('buildEditForm')->willReturn($this->form);
 		$this->templatePreparerMock->expects($this->once())->method('prepareEditSettings')->with($this->form)->willReturn($this->prepared);
 		$this->flashMock->expects($this->never())->method($this->anything());
-		$this->expectHtml();
+		$this->responseMock->expects($this->never())->method($this->anything());
 
-		$this->controller->edit($this->request(), $this->responseMock, ['template_id' => '12']);
+		$this->assertPage($this->controller->edit($this->request(), $this->responseMock, ['template_id' => '12']));
 	}
 
     /**
@@ -161,9 +161,9 @@ class ShowSettingsControllerTest extends TestCase
 			->willReturnCallback(function (string $key, string $message) use (&$errors): void { $errors[] = $key . ':' . $message; });
 		$this->orchestratorMock->expects($this->once())->method('buildCreateForm')->willReturn($this->form);
 		$this->templatePreparerMock->expects($this->once())->method('prepareCreateSettings')->with($this->form)->willReturn($this->prepared);
-		$this->expectHtml();
+		$this->responseMock->expects($this->never())->method($this->anything());
 
-		$this->controller->store($this->request($post), $this->responseMock);
+		$this->assertPage($this->controller->store($this->request($post), $this->responseMock));
 
 		static::assertSame(['error:Name is missing.', 'error:CSRF token mismatch.'], $errors);
 	}
@@ -218,9 +218,9 @@ class ShowSettingsControllerTest extends TestCase
 		$this->flashMock->expects($this->once())->method('addMessageNow')->with('error', 'Name is missing.');
 		$this->orchestratorMock->expects($this->once())->method('buildEditForm')->willReturn($this->form);
 		$this->templatePreparerMock->expects($this->once())->method('prepareEditSettings')->with($this->form)->willReturn($this->prepared);
-		$this->expectHtml();
+		$this->responseMock->expects($this->never())->method($this->anything());
 
-		$this->controller->store($this->request($post), $this->responseMock);
+		$this->assertPage($this->controller->store($this->request($post), $this->responseMock));
 	}
 
     /**
@@ -271,12 +271,10 @@ class ShowSettingsControllerTest extends TestCase
 		$this->responseMock->expects($this->once())->method('withStatus')->with(302)->willReturnSelf();
 	}
 
-	private function expectHtml(): void
+	private function assertPage(ResponseInterface $response): void
 	{
-		$streamMock = $this->createMock(StreamInterface::class);
-		$streamMock->expects($this->once())->method('write')->with(serialize($this->prepared));
-		$this->responseMock->expects($this->once())->method('getBody')->willReturn($streamMock);
-		$this->responseMock->expects($this->once())->method('withHeader')->with('Content-Type', 'text/html')->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')->with(200)->willReturnSelf();
+		static::assertInstanceOf(PageResponse::class, $response);
+		static::assertSame('templates/edit', $response->getTemplate());
+		static::assertSame(['title' => 'x'], $response->getMainLayoutData());
 	}
 }

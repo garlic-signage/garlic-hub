@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Auth;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Security\CsrfToken;
 use App\Framework\Http\Session;
 use App\Framework\Exceptions\FrameworkException;
@@ -71,9 +72,7 @@ readonly class LoginController
 				]
 			]
 		];
-		$response->getBody()->write(serialize($data));
-
-		return $response->withHeader('Content-Type', 'text/html');
+		return new PageResponse($data);
 	}
 
 

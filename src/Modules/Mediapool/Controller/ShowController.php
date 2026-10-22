@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Mediapool\Controller;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Config\Config;
 use App\Modules\Mediapool\Services\NodesService;
 use Exception;
@@ -143,15 +144,13 @@ class ShowController
 
 		if ($config->getEdition() === Config::PLATFORM_EDITION_ENTERPRISE)
 		{
-			$data['this_layout']['this_layout'] = ['folder_dialog_visibility' =>
-				['LANG_FOLDER_VISIBILITY' => $translator->translate('visibility', 'main'),
-					'visibility_options' => $translator->translateArrayForOptions('visibility_selects', 'main')
-				]
+			$data['this_layout']['data']['folder_dialog_visibility'] = [
+				'LANG_FOLDER_VISIBILITY' => $translator->translate('visibility', 'main'),
+				'visibility_options'     => $translator->translateArrayForOptions('visibility_selects', 'main')
 			];
 
 		}
 
-		$response->getBody()->write(serialize($data));
-		return $response->withHeader('Content-Type', 'text/html');
+		return new PageResponse($data);
 	}
 }

@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Controller;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -57,7 +58,7 @@ class ShowConnectivityController
 		if ($player === [])
 			return $this->redirectWithError($response, 'Player ID not accessible.');
 
-		return $this->outputRenderedForm($response, $player['player_name'], $player);
+		return $this->outputRenderedForm($player['player_name'], $player);
 	}
 
 	/**
@@ -83,7 +84,7 @@ class ShowConnectivityController
 				$this->flash->addMessageNow('error', $errorText);
 			}
 
-			return $this->outputRenderedForm($response, $player['player_name'], $post);
+			return $this->outputRenderedForm($player['player_name'], $post);
 		}
 
 		$this->flash->addMessage('success', 'Player connectivity data successfully stored.');
@@ -95,13 +96,12 @@ class ShowConnectivityController
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
-	private function outputRenderedForm(ResponseInterface $response, string $playerName, array $networkData): ResponseInterface
+	private function outputRenderedForm(string $playerName, array $networkData): ResponseInterface
 	{
 		$formData     = $this->orchestrator->buildForm($networkData);
 		$templateData = $this->templatePreparer->prepare($playerName, $formData);
 
-		$response->getBody()->write(serialize($templateData));
-		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
+		return new PageResponse($templateData);
 	}
 
 	private function redirectWithError(ResponseInterface $response, string $message): ResponseInterface

@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Mediapool\Controller;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Config\Config;
 use App\Framework\Http\Session;
 use App\Framework\Localization\Translate\Translator;
@@ -33,7 +34,6 @@ use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamInterface;
 
 
 class ShowControllerTest extends TestCase
@@ -88,9 +88,13 @@ class ShowControllerTest extends TestCase
 
 		$this->translatorMock->expects($this->exactly(55))->method('translate');
 
-		$this->mockResponse();
+		$this->responseMock->expects($this->never())->method($this->anything());
 
-		$this->controller->show($this->requestMock, $this->responseMock);
+		$result = $this->controller->show($this->requestMock, $this->responseMock);
+
+		static::assertInstanceOf(PageResponse::class, $result);
+		static::assertSame('mediapool/overview', $result->getTemplate());
+		static::assertArrayNotHasKey('folder_dialog_visibility', $result->getTemplateData());
 	}
 
 	/**
@@ -119,9 +123,12 @@ class ShowControllerTest extends TestCase
 
 		$this->translatorMock->expects($this->exactly(57))->method('translate');
 
-		$this->mockResponse();
+		$this->responseMock->expects($this->never())->method($this->anything());
 
-		$this->controller->show($this->requestMock, $this->responseMock);
+		$result = $this->controller->show($this->requestMock, $this->responseMock);
+
+		static::assertInstanceOf(PageResponse::class, $result);
+		static::assertSame('mediapool/overview', $result->getTemplate());
 	}
 
 	/**
@@ -150,29 +157,15 @@ class ShowControllerTest extends TestCase
 
 		$this->translatorMock->expects($this->exactly(56))->method('translate');
 
-		$this->mockResponse();
+		$this->responseMock->expects($this->never())->method($this->anything());
 
-		$this->controller->show($this->requestMock, $this->responseMock);
+		$result = $this->controller->show($this->requestMock, $this->responseMock);
+
+		static::assertInstanceOf(PageResponse::class, $result);
+		static::assertSame('mediapool/overview', $result->getTemplate());
+		static::assertArrayHasKey('folder_dialog_visibility', $result->getTemplateData());
 	}
 
 
-	/**
-	 * @throws Exception
-	 */
-	private function mockResponse(): void
-	{
-		$streamInterfaceMock = $this->createMock(StreamInterface::class);
-		$this->responseMock->expects($this->once())
-			->method('getBody')
-			->willReturn($streamInterfaceMock);
-
-		$streamInterfaceMock->expects($this->once())
-			->method('write');
-
-		$this->responseMock->expects($this->once())
-			->method('withHeader')
-			->with('Content-Type', 'text/html')
-			->willReturnSelf();
-	}
 
 }

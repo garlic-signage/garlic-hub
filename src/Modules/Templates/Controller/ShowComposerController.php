@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Controller;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Modules\Templates\Helper\Composer\Orchestrator;
@@ -56,8 +57,7 @@ readonly class ShowComposerController
 			return $response->withHeader('Location', '/templates')->withStatus(302);
 		}
 
-		$response->getBody()->write(serialize($this->orchestrator->build($templateId)));
-		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
+		return new PageResponse($this->orchestrator->build($templateId));
 
 	}
 }

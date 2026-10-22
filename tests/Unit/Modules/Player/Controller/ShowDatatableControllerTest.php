@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Player\Controller;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Http\Session;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
@@ -37,7 +38,6 @@ use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\StreamInterface;
 
 class ShowDatatableControllerTest extends TestCase
 {
@@ -47,7 +47,6 @@ class ShowDatatableControllerTest extends TestCase
 	private ResponseInterface&MockObject $responseMock;
 	private Translator&Stub $translatorStub;
 	private Session&Stub $sessionStub;
-	private StreamInterface&MockObject $streamInterfaceMock;
 	private ShowDatatableController $controller;
 
 	/**
@@ -62,8 +61,6 @@ class ShowDatatableControllerTest extends TestCase
 		$this->responseMock         = $this->createMock(ResponseInterface::class);
 		$this->translatorStub       = $this->createStub(Translator::class);
 		$this->sessionStub          = $this->createStub(Session::class);
-		$this->streamInterfaceMock  = $this->createMock(StreamInterface::class);
-		$this->responseMock->method('getBody')->willReturn($this->streamInterfaceMock);
 
 		$this->controller = new ShowDatatableController($this->facadeMock, $this->templatePreparerMock);
 	}
@@ -74,7 +71,7 @@ class ShowDatatableControllerTest extends TestCase
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testShowMethodReturnsResponseWithSerializedTemplateData(): void
+	public function testShowMethodReturnsPageResponse(): void
 	{
 		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
 			->willReturnMap([
@@ -90,7 +87,7 @@ class ShowDatatableControllerTest extends TestCase
 		$this->facadeMock->expects($this->once())->method('prepareUITemplate')
 			->willReturn(['dataGrid' => 'value']);
 
-		$templateData = ['key' => 'value'];
+		$templateData = ['main_layout' => [], 'this_layout' => ['template' => 'generic/datatable', 'data' => ['key' => 'value']]];
 		$this->templatePreparerMock->expects($this->once())->method('preparerUITemplate')
 			->with(['dataGrid' => 'value'])
 			->willReturn($templateData);
@@ -98,17 +95,14 @@ class ShowDatatableControllerTest extends TestCase
 		$this->facadeMock->expects($this->once())->method('prepareContextMenu')->willReturn( ['a contextmenu stub']);
 		$templateData['this_layout']['data']['player_actions_contextmenu'] = ['a contextmenu stub'];
 
-		$this->responseMock->method('getBody')->willReturn($this->streamInterfaceMock);
-		$this->streamInterfaceMock->expects($this->once())->method('write')
-			->with(serialize($templateData));
 
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Content-Type', 'text/html')
-			->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')
-			->with(200);
+		$this->responseMock->expects($this->never())->method($this->anything());
 
-		$this->controller->show($this->requestMock, $this->responseMock);
+		$result = $this->controller->show($this->requestMock, $this->responseMock);
+
+		static::assertInstanceOf(PageResponse::class, $result);
+		static::assertSame($templateData['this_layout']['template'], $result->getTemplate());
+		static::assertSame($templateData['this_layout']['data'], $result->getTemplateData());
 	}
 
 }

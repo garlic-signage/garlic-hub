@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Controller;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -58,8 +59,7 @@ readonly class ShowSettingsController
 		$formData = $this->orchestrator->buildCreateForm();
 		$prepared = $this->templatePreparer->prepareCreateSettings($formData);
 
-		$response->getBody()->write(serialize($prepared));
-		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
+		return new PageResponse($prepared);
 	}
 
 	/**
@@ -81,8 +81,7 @@ readonly class ShowSettingsController
 		$formData = $this->orchestrator->buildEditForm();
 		$prepared = $this->templatePreparer->prepareEditSettings($formData);
 
-		$response->getBody()->write(serialize($prepared));
-		return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
+		return new PageResponse($prepared);
 	}
 
 	/**
@@ -129,8 +128,7 @@ readonly class ShowSettingsController
 			$formData = $this->orchestrator->buildCreateForm();
 			$prepared = $this->templatePreparer->prepareCreateSettings($formData);
 
-			$response->getBody()->write(serialize($prepared));
-			return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
+			return new PageResponse($prepared);
 
 		}
 		else
@@ -166,8 +164,7 @@ readonly class ShowSettingsController
 			$formData = $this->orchestrator->buildEditForm();
 			$prepared = $this->templatePreparer->prepareEditSettings($formData);
 
-			$response->getBody()->write(serialize($prepared));
-			return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
+			return new PageResponse($prepared);
 
 		}
 		else

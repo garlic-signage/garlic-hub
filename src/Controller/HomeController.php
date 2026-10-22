@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Dashboards\DashboardsAggregator;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -45,10 +46,7 @@ class HomeController
 
 	public function index(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		$data = $this->generateHomePageData();
-		$this->writeResponseData($response, $data);
-
-		return $this->setContentType($response);
+		return new PageResponse($this->generateHomePageData());
 	}
 
 	public function legals(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -63,8 +61,7 @@ class HomeController
 			]
 		];
 
-		$this->writeResponseData($response, $data);
-		return $this->setContentType($response);
+		return new PageResponse($data);
 	}
 
 
@@ -87,17 +84,5 @@ class HomeController
 		];
 	}
 
-	/**
-	 * @param array<string,mixed> $data
-	 */
-	private function writeResponseData(ResponseInterface $response, array $data): void
-	{
-		$response->getBody()->write(serialize($data));
-	}
-
-	private function setContentType(ResponseInterface $response): ResponseInterface
-	{
-		return $response->withHeader('Content-Type', 'text/html');
-	}
 
 }
