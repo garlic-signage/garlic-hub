@@ -5,77 +5,113 @@
 
 # Garlic-Hub: Digital Signage Management
 
-Garlic-Hub manages your digital signage network — devices, content, and playlists — 
+Garlic-Hub manages your digital signage network — devices, content and playlists —
 from a single self-hosted interface. No SaaS, no per-device fees, no vendor lock-in.
 
 ![Garlic-Hub Mediapool Screenshot](docs/media/showcase.gif)
 
 ## Part of the GarlicSignage Ecosystem
 
-| Project | Role |
-|---|---|
-| [garlic-player](https://github.com/garlic-signage/garlic-player) | SMIL media player |
-| **garlic-hub** | Device & content management ← you are here |
-| [garlic-launcher](https://github.com/garlic-signage/garlic-launcher) | Root-free Android kiosk launcher |
-| [garlic-daemon](https://github.com/garlic-signage/garlic-daemon) | systemd-based player maintenance |
-| [garlic-proxy](https://github.com/garlic-signage/garlic-proxy) | Proxy for restricted networks |
-
+| Project                                                             | Role                                        |
+|---------------------------------------------------------------------|---------------------------------------------|
+| [garlic-player](https://github.com/garlic-signage/garlic-player)    | SMIL media player                           |
+| **garlic-hub**                                                      | Device and content management ← you are here |
+| [garlic-launcher](https://github.com/garlic-signage/garlic-launcher) | Root-free Android kiosk launcher           |
+| [garlic-daemon](https://github.com/garlic-signage/garlic-daemon)    | systemd-based player maintenance            |
+| [garlic-proxy](https://github.com/garlic-signage/garlic-proxy)      | Proxy for restricted networks               |
 
 ## Live Demo
-To see garlic-hub in action, use the live demo at:
 
-https://garlic-hub.com  
-login: admin  
-password: Demo1234!  
+See garlic-hub in action: https://garlic-hub.com
 
-The environment is regularly deleted and rebuilt.
+- login: `admin`
+- password: `Demo1234!`
 
-## Quick Start
+The demo is deleted and rebuilt regularly.
+
+## Installation
 
 - [User Installation Guide](https://garlic-signage.com/garlic-hub/installation/)
 - [Connecting Media Players](https://garlic-signage.com/garlic-hub/docs/tutorials/connect-media-player/)
 - [Proxmox LXC Helper Script](https://forge.canaryblue.org/CanaryBlue-Public/garlic-hub-lxc) (community contribution, maintained by @SB-CanaryBlue)
 
-## Current Features
-| Section                      | Status | description                                                                                                                            |
-|------------------------------|--------|----------------------------------------------------------------------------------------------------------------------------------------|
-| **Core Framework**           | ✅      | Database, migrations, logging, routing, middleware and error handling with SLIM 4                                                      |
-| **Initial admin user**       | ✅      | Set initial admin user after installation                                                                                              |
-| **User management**          | ✅      | Basic user management                                                                                            |
-| **Template Editor (images)** | ✅       | Template Editor for Images based on fabric.js                                                                                                                  |
-| **Authentication**           | ✅      | Session-based login with remember-me functionality and basic OAuth2 token authorization                                                |
-| **Media Management**         | ✅      | Hierarchical content organization with multi-source uploads (local, external links, screencasts, camera, stock platforms with API-key) |
-| **SMIL Playlists**           | ✅      | Playlist management and export in industry-standard SMIL format                                                                        |
-| **Push support**             | ✅      | Push playlist to a local player                                                                                                        |
-| **Multi-Zone Content**       | ✅      | Graphic display zone editor                                                                                                            |
-| **Conditional Play**         | ✅      | Define datetime conditions for media playback                                                                                          |
-| **Trigger**                  | ✅      | Trigger to play media or nested playlists by priority based on Accesskeys, Touch/Click, Datetime, and Network                          |
-| **Local Player Support**     | ✅      | Integration with one local media player                                                                                                |
-| **Internationalization**     | ✅      | Locale-specific configurations and adaptable UI (English, Spanish, French, Russian, Greek, German)                                     |
+## Features
 
+| Feature                   | Status | Description                                                                                                             |
+|---------------------------|--------|-------------------------------------------------------------------------------------------------------------------------|
+| **Media management**      | ✅      | Hierarchical folders, uploads from local files, external links, screencasts, camera and stock platforms (with API key) |
+| **SMIL playlists**        | ✅      | Create playlists and export them in the industry-standard SMIL format                                                  |
+| **Multi-zone content**    | ✅      | Graphical editor for display zones                                                                                     |
+| **Template editor**       | ✅      | Image templates based on fabric.js                                                                                     |
+| **Conditional play**      | ✅      | Date and time conditions for media playback                                                                            |
+| **Triggers**              | ✅      | Play media or nested playlists by priority, triggered by access keys, touch/click, date/time or network                |
+| **Local player**          | ✅      | Integration of one local media player                                                                                  |
+| **Push**                  | ✅      | Push a playlist to a local player                                                                                      |
+| **User management**       | ✅      | Basic user management with roles per module; initial admin user set up after installation                             |
+| **Authentication**        | ✅      | Session login with remember-me and basic OAuth2 token authorization                                                    |
+| **Internationalization**  | ✅      | UI in English, German, Spanish, French, Greek and Russian                                                              |
 
-## Milestones
-[Milestones](https://github.com/garlic-signage/garlic-hub/milestones)
+Planned work: [Milestones](https://github.com/garlic-signage/garlic-hub/milestones)
 
-## Tech-Stack
-- PHP 8.4 with strict types enabled 
-- SLIM 4 Framework
-- Phpstan Level 8
-- PHPUnit 12
-- Vanilla JavaScript and external libraries
-- Composer libraries
+## Development
+
+### Requirements
+
+- PHP 8.4 with the extensions curl, fileinfo, imagick, intl, mbstring, openssl, simplexml and zip
+- Composer
+- SQLite or MariaDB
+- Docker with [DDEV](https://ddev.com) (recommended for local development)
+
+### Quick Start
+
+```bash
+git clone https://github.com/garlic-signage/garlic-hub.git
+cd garlic-hub
+ddev start
+ddev composer install
+cp .env.dist .env        # then fill in the values
+ddev exec bash dev-install.sh
+```
+
+The full guide, incl. the default login, is in [docs/install.md](docs/install.md).
+
+### Tests and Static Analysis
+
+```bash
+ddev exec vendor/bin/phpunit
+ddev exec vendor/bin/phpstan analyze
+```
+
+`preCommit.sh` runs both, plus coverage report, coverage badge and SBOM.
+
+### Tech Stack
+
+- PHP 8.4 with strict types, PHPStan level 8, PHPUnit 12
+- [Slim 4](https://www.slimframework.com) with PSR-7/PSR-15 middleware and [PHP-DI](https://php-di.org)
+- [Doctrine DBAL](https://www.doctrine-project.org/projects/dbal.html) with SQL migrations
+- [Mustache](https://github.com/bobthecow/mustache.php) templates
+- league/oauth2-server, Flysystem, Monolog, phpfastcache, Symfony Console
+- Vanilla JavaScript (ES modules) and a few external libraries such as fabric.js
 
 ## Developer Documentation
-- [Coding Standards](docs/coding-standards.md)
+
+**Start here**
+- [Architecture](ARCHITECTURE.md) — layers, request flow and every directory explained
 - [Installation](docs/install.md)
+- [Coding Standards](docs/coding-standards.md)
+
+**Concepts**
+- [Controller](docs/controller.md)
+- [DI Container](docs/di-container.md)
 - [Exceptions](docs/exceptions.md)
-- [DI-Container](docs/di-container.md)
-- [CLI.php—Command Line Interface](docs/cli.md)
-- [Api/Oauth2 - API and Oauth2](docs/oauth2.md)
-- [User- Administration](docs/user-administration.md)
-- [Connect Media Player](docs/connect-media-player.md)
-- [Threat Model](docs/threat-model.md)
-- [Architecture](ARCHITECTURE.md)
+- [User Administration](docs/user-administration.md) — roles and access levels
+- [API and OAuth2](docs/oauth2.md)
+- [CLI](docs/cli.md)
+
+**How-tos**
+- [Build a Datatable](docs/how-tos/build-datatables.md)
+- [Paginator](docs/generic/datatable/paginator.md)
+- [Connect a Media Player](docs/connect-media-player.md)
 
 ## Security
 
@@ -90,10 +126,12 @@ A CycloneDX SBOM is generated for each release and attached to the
 [release assets](https://github.com/garlic-signage/garlic-hub/releases).
 
 ## Contributing
-PRs and issues are welcome. The project is in active development. Code and APIs may still change.
+
+PRs and issues are welcome. The project is in active development, so code and APIs may still change.
 
 ## License
-[Affero GPL v3.0 License](https://www.gnu.org/licenses/agpl-3.0.en.html).
 
-Note: AGPL requires that modifications — including server-side deployments —
-be released under the same license.
+[GNU Affero General Public License v3.0](https://www.gnu.org/licenses/agpl-3.0.en.html)
+
+Note: the AGPL requires that modifications — including server-side deployments —
+are released under the same license.

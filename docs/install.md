@@ -17,7 +17,7 @@ apt install curl php-http php-zip php-simplexml php-curl php-intl php-imagick ph
 
 1. **Clone the Repository**
 ```bash
-   git clone https://github.com/sagiadinos/garlic-hub.git
+   git clone https://github.com/garlic-signage/garlic-hub.git
    cd garlic-hub
 ```
 ## Install ddev
