@@ -32,7 +32,7 @@ class StandardPlaylistBuilder extends AbstractPlaylistBuilder
 {
 	public function buildPlaylist(): PlaylistStructureInterface
 	{
-		$playlistId = $this->playerEntity->getPlaylistId();
+		$playlistId = $this->playlistTarget->getPlaylistId();
 
 		$items     = $this->buildHelper->collectItems($playlistId);
 		$prefetch  = $this->buildHelper->collectPrefetches($playlistId);

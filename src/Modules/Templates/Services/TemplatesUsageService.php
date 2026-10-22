@@ -21,12 +21,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Services;
 
-use App\Modules\Playlists\Repositories\ItemsRepository;
+use App\Modules\Templates\Contracts\TemplateUsageCounterInterface;
 use Doctrine\DBAL\Exception;
 
 readonly class TemplatesUsageService
 {
-	public function __construct(private ItemsRepository $itemsRepository)
+	public function __construct(private TemplateUsageCounterInterface $templateUsageCounter)
 	{
 	}
 
@@ -40,12 +40,6 @@ readonly class TemplatesUsageService
 	 */
 	public function determineTemplatesInUse(array $templateIds): array
 	{
-		$results = [];
-		foreach ($this->itemsRepository->countFileResourcesByTemplateId($templateIds) as $value)
-		{
-			$results[(int) $value['template_id']] = (int) $value['count'];
-		}
-
-		return $results;
+		return $this->templateUsageCounter->countUsagesByTemplateIds($templateIds);
 	}
 }

@@ -39,7 +39,6 @@ use App\Framework\Utils\Datatable\PrepareService;
 use App\Framework\Utils\Widget\ConfigXML;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\MediaService;
-use App\Modules\Player\Repositories\PlayerRepository;
 use App\Modules\Playlists\Collector\Builder\BuildHelper;
 use App\Modules\Playlists\Collector\Builder\PlaylistBuilderFactory;
 use App\Modules\Playlists\Collector\ContentReader;
@@ -83,7 +82,10 @@ use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
 use App\Modules\Playlists\Services\PlaylistMetricsUpdater;
 use App\Modules\Playlists\Services\PlaylistsDatatableService;
 use App\Modules\Playlists\Services\PlaylistsService;
+use App\Modules\Playlists\Contracts\PlaylistUsageFinderInterface;
+use App\Modules\Playlists\Services\PlaylistTemplateUsageCounter;
 use App\Modules\Playlists\Services\PlaylistUsageService;
+use App\Modules\Templates\Contracts\TemplateUsageCounterInterface;
 use App\Modules\Playlists\Services\TriggerService;
 use App\Modules\Playlists\Services\WidgetsService;
 use App\Modules\Templates\Helper\Composer\ExportImage;
@@ -97,6 +99,10 @@ $dependencies = [];
 $dependencies[PlaylistsRepository::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new PlaylistsRepository($container->get('SqlConnection'));
+});
+$dependencies[TemplateUsageCounterInterface::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new PlaylistTemplateUsageCounter($container->get(ItemsRepository::class));
 });
 $dependencies[ItemsRepository::class] = DI\factory(function (ContainerInterface $container)
 {
@@ -141,7 +147,7 @@ $dependencies[PlaylistsDatatableService::class] = DI\factory(function (Container
 		$container->get(\App\Modules\Playlists\Helper\Datatable\Parameters::class),
 		$container->get(AclValidator::class),
 		new PlaylistUsageService(
-			$container->get(PlayerRepository::class),
+			$container->get(PlaylistUsageFinderInterface::class),
 			$container->get(ItemsRepository::class)),
 		$container->get(UserSession::class),
 		$container->get('ModuleLogger')

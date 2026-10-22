@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Collector\Builder;
 
-use App\Modules\Player\Entities\PlayerEntity;
+use App\Modules\Playlists\Collector\Contracts\PlaylistTargetInterface;
 use App\Modules\Playlists\Collector\Contracts\PlaylistBuilderInterface;
 use App\Modules\Playlists\Collector\SimplePlaylistStructureFactory;
 
@@ -31,13 +31,13 @@ use App\Modules\Playlists\Collector\SimplePlaylistStructureFactory;
  */
 abstract class AbstractPlaylistBuilder implements PlaylistBuilderInterface
 {
-	protected PlayerEntity $playerEntity;
+	protected PlaylistTargetInterface $playlistTarget;
 	protected BuildHelper $buildHelper;
 	protected SimplePlaylistStructureFactory $simplePlaylistStructureFactory;
 
-	public function __construct(PlayerEntity $playerEntity, BuildHelper $buildHelper, SimplePlaylistStructureFactory $simplePlaylistStructureFactory)
+	public function __construct(PlaylistTargetInterface $playlistTarget, BuildHelper $buildHelper, SimplePlaylistStructureFactory $simplePlaylistStructureFactory)
 	{
-		$this->playerEntity = $playerEntity;
+		$this->playlistTarget = $playlistTarget;
 		$this->buildHelper = $buildHelper;
 		$this->simplePlaylistStructureFactory = $simplePlaylistStructureFactory;
 	}

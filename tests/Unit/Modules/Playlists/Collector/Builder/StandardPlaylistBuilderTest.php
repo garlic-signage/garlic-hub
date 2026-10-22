@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Collector\Builder;
 
-use App\Modules\Player\Entities\PlayerEntity;
+use App\Modules\Playlists\Collector\Contracts\PlaylistTargetInterface;
 use App\Modules\Playlists\Collector\Builder\BuildHelper;
 use App\Modules\Playlists\Collector\Builder\StandardPlaylistBuilder;
 use App\Modules\Playlists\Collector\Contracts\PlaylistStructureInterface;
@@ -35,7 +35,7 @@ use PHPUnit\Framework\TestCase;
 
 class StandardPlaylistBuilderTest extends TestCase
 {
-	private PlayerEntity&MockObject $playerEntityMock;
+	private PlaylistTargetInterface&MockObject $playlistTargetMock;
 	private BuildHelper&MockObject $buildHelperMock;
 	private SimplePlaylistStructureFactory&MockObject $simplePlaylistStructureFactoryMock;
 	private StandardPlaylistBuilder $builder;
@@ -46,12 +46,12 @@ class StandardPlaylistBuilderTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->playerEntityMock = $this->createMock(PlayerEntity::class);
+		$this->playlistTargetMock = $this->createMock(PlaylistTargetInterface::class);
 		$this->buildHelperMock = $this->createMock(BuildHelper::class);
 		$this->simplePlaylistStructureFactoryMock = $this->createMock(SimplePlaylistStructureFactory::class);
 
 		$this->builder = new StandardPlaylistBuilder(
-			$this->playerEntityMock,
+			$this->playlistTargetMock,
 			$this->buildHelperMock,
 			$this->simplePlaylistStructureFactoryMock
 		);
@@ -65,7 +65,7 @@ class StandardPlaylistBuilderTest extends TestCase
 	{
 		$playlistId = 123;
 
-		$this->playerEntityMock->expects($this->once())
+		$this->playlistTargetMock->expects($this->once())
 			->method('getPlaylistId')
 			->willReturn($playlistId);
 
@@ -109,7 +109,7 @@ class StandardPlaylistBuilderTest extends TestCase
 	{
 		$playlistId = 123;
 
-		$this->playerEntityMock->expects($this->once())
+		$this->playlistTargetMock->expects($this->once())
 			->method('getPlaylistId')
 			->willReturn($playlistId);
 

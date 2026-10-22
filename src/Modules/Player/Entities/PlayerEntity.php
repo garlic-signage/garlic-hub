@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Entities;
 
+use App\Modules\Playlists\Collector\Contracts\PlaylistTargetInterface;
 use App\Framework\Config\Config;
 use App\Modules\Player\Enums\PlayerModel;
 use App\Modules\Player\IndexCreation\UserAgentHandler;
@@ -46,7 +47,7 @@ use DateTime;
  * - Offering methods for accessing remote administration and screen time settings.
  * - Providing access to configuration and system URLs like API endpoints and report servers.
  */
-class PlayerEntity
+class PlayerEntity implements PlaylistTargetInterface
 {
 	const int DEFAULT_PLAYER_REFRESH = 300;
 	private readonly Config $config;

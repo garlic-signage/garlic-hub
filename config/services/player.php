@@ -62,6 +62,8 @@ use App\Modules\Player\IndexCreation\UserAgentHandler;
 use App\Modules\Player\Repositories\PlayerIndexRepository;
 use App\Modules\Player\Helper\Datatable\PlayerFilterDefinition;
 use App\Modules\Player\Repositories\PlayerRepository;
+use App\Modules\Player\Services\PlayerPlaylistUsageFinder;
+use App\Modules\Playlists\Contracts\PlaylistUsageFinderInterface;
 use App\Modules\Player\Repositories\PlayerTokenRepository;
 use App\Modules\Player\Services\AclValidator;
 use App\Modules\Player\Helper\Datatable\DatatablePreparer;
@@ -77,6 +79,10 @@ use Psr\Container\ContainerInterface;
 
 $dependencies = [];
 
+$dependencies[PlaylistUsageFinderInterface::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new PlayerPlaylistUsageFinder($container->get(PlayerRepository::class));
+});
 $dependencies[PlayerRepository::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new PlayerRepository($container->get('SqlConnection'));

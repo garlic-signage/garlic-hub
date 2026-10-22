@@ -38,7 +38,7 @@ class MultizonePlaylistBuilder extends AbstractPlaylistBuilder
 		$items     = '';
 		$prefetch  = '';
 		$exclusive = '';
-		$zones = $this->playerEntity->getLayout();
+		$zones = $this->playlistTarget->getLayout();
 		foreach ($zones['zones'] as $screenId => $value)
 		{
 			$zonePlaylistId = (int) $value['zone_playlist_id'];

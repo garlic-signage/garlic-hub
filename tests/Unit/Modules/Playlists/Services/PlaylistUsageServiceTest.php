@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Services;
 
-use App\Modules\Player\Repositories\PlayerRepository;
+use App\Modules\Playlists\Contracts\PlaylistUsageFinderInterface;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\PlaylistUsageService;
 use PHPUnit\Framework\Attributes\Group;
@@ -31,7 +31,7 @@ use PHPUnit\Framework\TestCase;
 
 class PlaylistUsageServiceTest extends TestCase
 {
-	private PlayerRepository&MockObject $playerRepositoryMock;
+	private PlaylistUsageFinderInterface&MockObject $playlistUsageFinderMock;
 	private ItemsRepository&MockObject $itemsRepositoryMock;
 	private PlaylistUsageService $service;
 
@@ -41,10 +41,10 @@ class PlaylistUsageServiceTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->playerRepositoryMock = $this->createMock(PlayerRepository::class);
+		$this->playlistUsageFinderMock = $this->createMock(PlaylistUsageFinderInterface::class);
 		$this->itemsRepositoryMock  = $this->createMock(ItemsRepository::class);
 
-		$this->service = new PlaylistUsageService($this->playerRepositoryMock, $this->itemsRepositoryMock);
+		$this->service = new PlaylistUsageService($this->playlistUsageFinderMock, $this->itemsRepositoryMock);
 	}
 
 	/**
@@ -55,11 +55,9 @@ class PlaylistUsageServiceTest extends TestCase
 	{
 		$playlistIds = [1, 2, 3];
 
-		$this->playerRepositoryMock->method('findPlaylistIdsByPlaylistIds')
+		$this->playlistUsageFinderMock->method('findUsedPlaylistIds')
 			->with($playlistIds)
-			->willReturnMap([
-				[$playlistIds, [['playlist_id' => 1], ['playlist_id' => 2]]]
-			]);
+			->willReturn([1, 2]);
 
 		$this->itemsRepositoryMock->method('findFileResourcesByPlaylistId')
 			->with($playlistIds)
@@ -84,11 +82,9 @@ class PlaylistUsageServiceTest extends TestCase
 	{
 		$playlistIds = [1, 2, 3];
 
-		$this->playerRepositoryMock->method('findPlaylistIdsByPlaylistIds')
+		$this->playlistUsageFinderMock->method('findUsedPlaylistIds')
 			->with($playlistIds)
-			->willReturnMap([
-				[$playlistIds, []]
-			]);
+			->willReturn([]);
 
 		$this->itemsRepositoryMock->method('findFileResourcesByPlaylistId')
 			->with($playlistIds)

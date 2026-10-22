@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Collector\Builder;
 
-use App\Modules\Player\Entities\PlayerEntity;
+use App\Modules\Playlists\Collector\Contracts\PlaylistTargetInterface;
 use App\Modules\Playlists\Collector\Builder\BuildHelper;
 use App\Modules\Playlists\Collector\Builder\MultizonePlaylistBuilder;
 use App\Modules\Playlists\Collector\Builder\PlaylistBuilderFactory;
@@ -37,7 +37,7 @@ use PHPUnit\Framework\TestCase;
 class PlaylistBuilderFactoryTest extends TestCase
 {
 	private PlaylistBuilderFactory $factory;
-	private PlayerEntity&Stub $playerEntityStub;
+	private PlaylistTargetInterface&Stub $playlistTargetStub;
 
 	/**
 	 * @throws Exception
@@ -48,7 +48,7 @@ class PlaylistBuilderFactoryTest extends TestCase
 		$buildHelperStub = $this->createStub(BuildHelper::class);
 		$simplePlaylistStructureFactoryStub = $this->createStub(SimplePlaylistStructureFactory::class);
 
-		$this->playerEntityStub = $this->createStub(PlayerEntity::class);
+		$this->playlistTargetStub = $this->createStub(PlaylistTargetInterface::class);
 
 
 		$this->factory = new PlaylistBuilderFactory(
@@ -63,9 +63,9 @@ class PlaylistBuilderFactoryTest extends TestCase
 	#[Group('units')]
 	public function testCreateBuilderReturnsMultizonePlaylistBuilder(): void
 	{
-		$this->playerEntityStub->method('getPlaylistMode')->willReturn(PlaylistMode::MULTIZONE->value);
+		$this->playlistTargetStub->method('getPlaylistMode')->willReturn(PlaylistMode::MULTIZONE->value);
 
-		$result = $this->factory->createBuilder($this->playerEntityStub);
+		$result = $this->factory->createBuilder($this->playlistTargetStub);
 
 		static::assertInstanceOf(MultiZonePlaylistBuilder::class, $result);
 	}
@@ -76,9 +76,9 @@ class PlaylistBuilderFactoryTest extends TestCase
 	#[Group('units')]
 	public function testCreateBuilderReturnsStandardPlaylistBuilder(): void
 	{
-		$this->playerEntityStub->method('getPlaylistMode')->willReturn(PlaylistMode::MASTER->value);
+		$this->playlistTargetStub->method('getPlaylistMode')->willReturn(PlaylistMode::MASTER->value);
 
-		$result = $this->factory->createBuilder($this->playerEntityStub);
+		$result = $this->factory->createBuilder($this->playlistTargetStub);
 
 		static::assertInstanceOf(StandardPlaylistBuilder::class, $result);
 	}

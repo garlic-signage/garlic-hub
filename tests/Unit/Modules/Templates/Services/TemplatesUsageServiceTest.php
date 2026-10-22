@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Templates\Services;
 
-use App\Modules\Playlists\Repositories\ItemsRepository;
+use App\Modules\Templates\Contracts\TemplateUsageCounterInterface;
 use App\Modules\Templates\Services\TemplatesUsageService;
 use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
@@ -30,7 +30,7 @@ use PHPUnit\Framework\TestCase;
 
 class TemplatesUsageServiceTest extends TestCase
 {
-	private ItemsRepository&MockObject $itemsRepositoryMock;
+	private TemplateUsageCounterInterface&MockObject $templateUsageCounterMock;
 	private TemplatesUsageService $service;
 
 	/**
@@ -39,8 +39,8 @@ class TemplatesUsageServiceTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->itemsRepositoryMock = $this->createMock(ItemsRepository::class);
-		$this->service             = new TemplatesUsageService($this->itemsRepositoryMock);
+		$this->templateUsageCounterMock = $this->createMock(TemplateUsageCounterInterface::class);
+		$this->service                  = new TemplatesUsageService($this->templateUsageCounterMock);
 	}
 
 	/**
@@ -49,12 +49,9 @@ class TemplatesUsageServiceTest extends TestCase
 	#[Group('units')]
 	public function testDetermineTemplatesInUseReturnsCountsPerTemplate(): void
 	{
-		$this->itemsRepositoryMock->expects($this->once())->method('countFileResourcesByTemplateId')
+		$this->templateUsageCounterMock->expects($this->once())->method('countUsagesByTemplateIds')
 			->with([3, 7, 9])
-			->willReturn([
-				['template_id' => '3', 'count' => '2'],
-				['template_id' => '7', 'count' => 5]
-			]);
+			->willReturn([3 => 2, 7 => 5]);
 
 		static::assertSame([3 => 2, 7 => 5], $this->service->determineTemplatesInUse([3, 7, 9]));
 	}
@@ -65,7 +62,7 @@ class TemplatesUsageServiceTest extends TestCase
 	#[Group('units')]
 	public function testDetermineTemplatesInUseWithoutUsage(): void
 	{
-		$this->itemsRepositoryMock->expects($this->once())->method('countFileResourcesByTemplateId')
+		$this->templateUsageCounterMock->expects($this->once())->method('countUsagesByTemplateIds')
 			->with([3])
 			->willReturn([]);
 

@@ -37,7 +37,6 @@ use App\Framework\Utils\Forms\FormTemplatePreparer;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Utils\ImagickFactory;
 use App\Modules\Mediapool\Utils\MediaHandlerFactory;
-use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Templates\Controller\ShowComposerController;
 use App\Modules\Templates\Controller\ShowDatatableController;
 use App\Modules\Templates\Controller\ShowSettingsController;
@@ -58,6 +57,7 @@ use App\Modules\Templates\Repositories\TemplatesRepository;
 use App\Modules\Templates\Services\AclValidator;
 use App\Modules\Templates\Services\TemplatesDatatableService;
 use App\Modules\Templates\Services\TemplatesService;
+use App\Modules\Templates\Contracts\TemplateUsageCounterInterface;
 use App\Modules\Templates\Services\TemplatesUsageService;
 use Psr\Container\ContainerInterface;
 use Slim\Flash\Messages;
@@ -177,7 +177,7 @@ $dependencies[ShowSettingsController::class] = DI\factory(function (ContainerInt
 $dependencies[TemplatesUsageService::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new TemplatesUsageService(
-		$container->get(ItemsRepository::class)
+		$container->get(TemplateUsageCounterInterface::class)
 	);
 });
 

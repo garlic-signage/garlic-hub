@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Services;
 
-use App\Modules\Player\Repositories\PlayerRepository;
+use App\Modules\Playlists\Contracts\PlaylistUsageFinderInterface;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use Doctrine\DBAL\Exception;
 
@@ -11,13 +11,13 @@ use Doctrine\DBAL\Exception;
 
 readonly class PlaylistUsageService
 {
-    private PlayerRepository $playerRepository;
+    private PlaylistUsageFinderInterface $playlistUsageFinder;
     private ItemsRepository $itemsRepository;
     // private readonly ChannelRepository $channelRepository;
 
-    public function __construct(PlayerRepository $playerRepository, ItemsRepository $itemsRepository /*ChannelRepository $channelRepository*/)
+    public function __construct(PlaylistUsageFinderInterface $playlistUsageFinder, ItemsRepository $itemsRepository /*ChannelRepository $channelRepository*/)
 	{
-        $this->playerRepository = $playerRepository;
+        $this->playlistUsageFinder = $playlistUsageFinder;
         $this->itemsRepository  = $itemsRepository;
         // $this->channelRepository = $channelRepository;
     }
@@ -31,9 +31,9 @@ readonly class PlaylistUsageService
     {
         $results = [];
         
-        foreach($this->playerRepository->findPlaylistIdsByPlaylistIds($playlistIds) as $value)
+        foreach($this->playlistUsageFinder->findUsedPlaylistIds($playlistIds) as $playlistId)
 		{
-            $results[$value['playlist_id']] = true;
+            $results[$playlistId] = true;
         }
         
         foreach($this->itemsRepository->findFileResourcesByPlaylistId($playlistIds) as $value)

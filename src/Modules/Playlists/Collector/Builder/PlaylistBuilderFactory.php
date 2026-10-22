@@ -22,15 +22,15 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Collector\Builder;
 
-use App\Modules\Player\Entities\PlayerEntity;
 use App\Modules\Playlists\Collector\SimplePlaylistStructureFactory;
 use App\Modules\Playlists\Helper\PlaylistMode;
 use App\Modules\Playlists\Collector\Contracts\PlaylistBuilderInterface;
+use App\Modules\Playlists\Collector\Contracts\PlaylistTargetInterface;
 
 /**
  * Factory class responsible for creating instances of PlaylistBuilderInterface.
  * Determines the appropriate playlist builder implementation based on the
- * playlist mode of the provided PlayerEntity.
+ * playlist mode of the provided target (e.g. a player).
  */
 class PlaylistBuilderFactory
 {
@@ -43,11 +43,11 @@ class PlaylistBuilderFactory
 		$this->simplePlaylistStructureFactory = $simplePlaylistStructureFactory;
 	}
 
-	public function createBuilder(PlayerEntity $playerEntity): PlaylistBuilderInterface
+	public function createBuilder(PlaylistTargetInterface $playlistTarget): PlaylistBuilderInterface
 	{
-		if ($playerEntity->getPlaylistMode() === PlaylistMode::MULTIZONE->value)
-			return new MultizonePlaylistBuilder($playerEntity, $this->buildHelper, $this->simplePlaylistStructureFactory);
+		if ($playlistTarget->getPlaylistMode() === PlaylistMode::MULTIZONE->value)
+			return new MultizonePlaylistBuilder($playlistTarget, $this->buildHelper, $this->simplePlaylistStructureFactory);
 
-		return new StandardPlaylistBuilder($playerEntity, $this->buildHelper, $this->simplePlaylistStructureFactory);
+		return new StandardPlaylistBuilder($playlistTarget, $this->buildHelper, $this->simplePlaylistStructureFactory);
 	}
 }

@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Collector\Builder;
 
-use App\Modules\Player\Entities\PlayerEntity;
+use App\Modules\Playlists\Collector\Contracts\PlaylistTargetInterface;
 use App\Modules\Playlists\Collector\Builder\BuildHelper;
 use App\Modules\Playlists\Collector\Builder\MultizonePlaylistBuilder;
 use App\Modules\Playlists\Collector\Contracts\PlaylistStructureInterface;
@@ -36,7 +36,7 @@ use PHPUnit\Framework\TestCase;
 
 class MultizonePlaylistBuilderTest extends TestCase
 {
-	private PlayerEntity&Stub $playerEntityStub;
+	private PlaylistTargetInterface&Stub $playlistTargetStub;
 	private BuildHelper&MockObject $buildHelperMock;
 	private SimplePlaylistStructureFactory&MockObject $simplePlaylistStructureFactoryMock;
 	private MultizonePlaylistBuilder $builder;
@@ -47,12 +47,12 @@ class MultizonePlaylistBuilderTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->playerEntityStub = $this->createStub(PlayerEntity::class);
+		$this->playlistTargetStub = $this->createStub(PlaylistTargetInterface::class);
 		$this->buildHelperMock = $this->createMock(BuildHelper::class);
 		$this->simplePlaylistStructureFactoryMock = $this->createMock(SimplePlaylistStructureFactory::class);
 
 		$this->builder = new MultizonePlaylistBuilder(
-			$this->playerEntityStub,
+			$this->playlistTargetStub,
 			$this->buildHelperMock,
 			$this->simplePlaylistStructureFactoryMock
 		);
@@ -66,7 +66,7 @@ class MultizonePlaylistBuilderTest extends TestCase
 	{
 		$zones = ['zones' => [1 => ['zone_playlist_id' => 101]]];
 
-		$this->playerEntityStub->method('getLayout')->willReturn($zones);
+		$this->playlistTargetStub->method('getLayout')->willReturn($zones);
 
 		$this->buildHelperMock->method('collectItems')
 			->with(101)
