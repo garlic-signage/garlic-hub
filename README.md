@@ -73,7 +73,7 @@ cp .env.dist .env        # then fill in the values
 ddev exec bash dev-install.sh
 ```
 
-The full guide, incl. the default login, is in [docs/install.md](docs/install.md).
+Then open https://garlic-hub.ddev.site and create the admin user. The full guide is in [docs/install.md](docs/install.md).
 
 ### Tests and Static Analysis
 
@@ -109,7 +109,6 @@ ddev exec vendor/bin/phpstan analyze
 - [CLI](docs/cli.md)
 
 **How-tos**
-- [Build a Datatable](docs/how-tos/build-datatables.md)
 - [Paginator](docs/generic/datatable/paginator.md)
 - [Connect a Media Player](docs/connect-media-player.md)
 

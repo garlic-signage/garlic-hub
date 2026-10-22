@@ -1,48 +1,105 @@
-# Adding Modules to the Dependency Injection Container
+# DI Container
 
-This guide explains how to structure and add modules to the Dependency Injection (DI) container. Each module provides its own service definitions and is located in the `config/services` directory. Each service definition file must return an array of dependencies to be added to the DI container.
+garlic-hub uses [PHP-DI](https://php-di.org). All services are defined explicitly in
+`config/services/`, one file per module.
 
----
+## How the container is built
 
-## Folder Structure
+`config/bootstrap.php` builds the container in this order:
 
-Your `config/services` directory should contain one PHP file for each module, with each file returning an array of service definitions. For example:
+1. `Config` — created directly in the bootstrap, because every other definition may need it.
+2. `config/services/_default.php` — framework and shared services. It must come first.
+3. All other `*.php` files below `config/services/`, found recursively.
 
-config/
-└── services/
-├──── _default.php
-├──── auth.php
-├──── player.php
-├──── playlists.php
-├──── templates.php
-└──── mediapool.php
+The container is built once per request. A service is created on first use and then shared:
+every `$container->get(Session::class)` within a request returns the same instance.
 
+## Files
 
-## Service Definition Example
+| File              | Defines                                                                    |
+|-------------------|----------------------------------------------------------------------------|
+| `_default.php`    | Framework and shared services: session, cookie, flash, translator, locales, template engine, logger, database, cache, users, ACL, layout, middleware |
+| `<module>.php`    | Everything of one module: controllers, orchestrators, services, repositories, helpers |
 
-Each service definition file should return an array of dependencies. Example for `auth.php`:
+The file name is the module name in lowercase: `src/Modules/Playlists` → `playlists.php`.
+
+## Writing a definition
+
+Every file collects its definitions in `$dependencies` and returns it:
 
 ```php
+<?php
+declare(strict_types=1);
+
+use App\Modules\Playlists\Controller\PlaylistsController;
+use App\Modules\Playlists\Helper\Playlists\Orchestrator;
 use Psr\Container\ContainerInterface;
 
 $dependencies = [];
 
-$dependencies[LoginController::class] = DI\factory(function (ContainerInterface $container) {
-    return new LoginController($container->get(UserMain::class));
+$dependencies[PlaylistsController::class] = DI\factory(function (ContainerInterface $container)
+{
+    return new PlaylistsController($container->get(Orchestrator::class));
 });
 
 return $dependencies;
 ```
 
-## Loading All Modules
-The `bootstrap.php`  dynamically load all service files recursively from config/services and add them to the DI container:
+Rules:
 
-## Best Practices
-1. **File Naming**
-   Use the same names for your service files which you also use in `src/Modules` directory but in lowercase, e.g., auth.php, player.php, mediapool.php
-   For default services, prefix the file name with _, e.g., _default.php.
-2. **Modularity**
-   Each module should define only the services it needs.
-   Avoid hardcoding unrelated dependencies in a module's file.
-3. **Lazy Loading**
-   Use DI\factory() or DI\autowire() to define services, enabling the DI container to lazily load dependencies.
+1. **Explicit factories.** Every service is created in a `DI\factory()` with `new` and its
+   dependencies from `$container->get()`. Autowiring is not used, so the wiring stays readable
+   in one place.
+2. **Constructor injection only.** Classes get their dependencies by constructor, never from
+   request attributes or by calling the container themselves.
+3. **Register what is shared, create inline what is not.** A class that is used in several
+   places gets its own entry. A small helper that belongs to exactly one service can be created
+   with `new` inside that service's factory.
+4. **Key by class name.** Use `Foo::class` as key. A few services use a name instead, because
+   there are several of the same type:
+
+   | Name                  | Service                                          |
+   |-----------------------|--------------------------------------------------|
+   | `SqlConnection`       | Doctrine DBAL connection                         |
+   | `AppLogger`           | Logger for the application (`var/logs/app.log`)   |
+   | `ModuleLogger`        | Logger for the modules                           |
+   | `FrameworkLogger`     | Logger for the framework                         |
+   | `LocalFileSystem`     | Flysystem for the local file system              |
+   | `AuthorizationServer` | OAuth2 server                                    |
+
+## Interfaces
+
+When code depends on an interface, the container binds it to an implementation:
+
+```php
+$dependencies[PlaylistUsageFinderInterface::class] = DI\factory(function (ContainerInterface $container)
+{
+    return new PlayerPlaylistUsageFinder($container->get(PlayerRepository::class));
+});
+```
+
+Between modules the **implementing** module binds the interface in its own file. Example:
+`Playlists\Contracts\PlaylistUsageFinderInterface` is implemented by the Player module, so the
+binding is in `player.php`. This keeps the module that defines the interface free of any
+knowledge of the other module (see [Architecture](../ARCHITECTURE.md)).
+
+Current bindings:
+
+| Interface                         | Implementation                    | File            |
+|-----------------------------------|-----------------------------------|-----------------|
+| `TemplateEngine\AdapterInterface` | `MustacheAdapter`                 | `_default.php`  |
+| `TemplateEngine\LayoutDataProviderInterface` | `Shared\Layout\LayoutDataProvider` | `_default.php` |
+| `Playlists\Contracts\PlaylistUsageFinderInterface` | `Player\Services\PlayerPlaylistUsageFinder` | `player.php` |
+| `Templates\Contracts\TemplateUsageCounterInterface` | `Playlists\Services\PlaylistTemplateUsageCounter` | `playlists.php` |
+
+## Controllers and middleware
+
+- **Controllers** are fetched lazily: `resolve([Controller::class, 'method'], $container)` in
+  `config/route.php` asks the container only when the route is called.
+- **Middleware** is created in `config/middleware.php` and in `config/route.php`
+  (`FinalRenderMiddleware` for the HTML route group).
+
+## Console commands
+
+`bin/console.php` uses the same bootstrap. Every class in `src/Commands/` is fetched from
+the container and added to the console, so a command needs a definition like any other service.

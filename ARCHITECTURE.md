@@ -72,7 +72,7 @@ Wiring of the application.
 ### `docs/`
 Project documentation.
 - `*.md` — topics like installation, CLI, controllers, DI container, exceptions, OAuth2, threat model.
-- `how-tos/` — step-by-step guides (e.g. building a datatable).
+- `how-tos/` — step-by-step guides.
 - `generic/` — documentation of generic components (e.g. `datatable/paginator.md`).
 - `media/` — images for the documentation.
 
