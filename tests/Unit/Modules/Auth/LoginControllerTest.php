@@ -68,7 +68,6 @@ class LoginControllerTest extends TestCase
 	public function testShowLoginRendersForm(): void
 	{
 		$translatorMock = $this->createMock(Translator::class);
-		$this->requestStub->method('getAttribute')->willReturnMap([['translator', null, $translatorMock]]);
 		$this->sessionMock->expects($this->never())->method($this->anything());
 
 		$translatorMock->expects($this->exactly(5))->method('translate');
@@ -76,7 +75,7 @@ class LoginControllerTest extends TestCase
 
 		$this->responseMock->expects($this->never())->method($this->anything());
 
-		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $this->createStub(Messages::class));
+		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $this->createStub(Messages::class), $translatorMock);
 		$result = $controller->showLogin($this->requestStub, $this->responseMock);
 
 		static::assertInstanceOf(PageResponse::class, $result);
@@ -116,7 +115,7 @@ class LoginControllerTest extends TestCase
 		$this->responseMock->expects($this->once())->method('withHeader')->with('Location', '/')->willReturnSelf();
 		$this->responseMock->expects($this->once())->method('withStatus')->with(302)->willReturnSelf();
 
-		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $flash);
+		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $flash, $this->createStub(Translator::class));
 		$result = $controller->login($this->requestStub, $this->responseMock);
 
 		static::assertSame($this->responseMock, $result);
@@ -159,7 +158,7 @@ class LoginControllerTest extends TestCase
 		$this->responseMock->expects($this->once())->method('withHeader')->with('Location', '/')->willReturnSelf();
 		$this->responseMock->expects($this->once())->method('withStatus')->with(302)->willReturnSelf();
 
-		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $flash);
+		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $flash, $this->createStub(Translator::class));
 		$result = $controller->login($this->requestStub, $this->responseMock);
 
 		static::assertSame($this->responseMock, $result);
@@ -207,7 +206,7 @@ class LoginControllerTest extends TestCase
 		$this->responseMock->expects($this->once())->method('withHeader')->with('Location', '/api/authorize?some=stuff')->willReturnSelf();
 		$this->responseMock->expects($this->once())->method('withStatus')->with(302)->willReturnSelf();
 
-		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $flash);
+		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $flash, $this->createStub(Translator::class));
 		$result = $controller->login($this->requestStub, $this->responseMock);
 
 		static::assertSame($this->responseMock, $result);
@@ -254,7 +253,7 @@ class LoginControllerTest extends TestCase
 		$this->responseMock->expects($this->once())->method('withHeader')->with('Location', '/')->willReturnSelf();
 		$this->responseMock->expects($this->once())->method('withStatus')->with(302)->willReturnSelf();
 
-		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $flash);
+		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $flash, $this->createStub(Translator::class));
 		$result = $controller->login($this->requestStub, $this->responseMock);
 
 		static::assertSame($this->responseMock, $result);
@@ -285,7 +284,7 @@ class LoginControllerTest extends TestCase
 		$this->responseMock->expects($this->once())->method('withHeader')->with('Location', '/login')->willReturnSelf();
 		$this->responseMock->expects($this->once())->method('withStatus')->with(302)->willReturnSelf();
 
-		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $flash);
+		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $flash, $this->createStub(Translator::class));
 		$result = $controller->login($this->requestStub, $this->responseMock);
 
 		static::assertSame($this->responseMock, $result);
@@ -311,7 +310,7 @@ class LoginControllerTest extends TestCase
 		$this->responseMock->expects($this->once())->method('withHeader')->with('Location', '/login')->willReturnSelf();
 		$this->responseMock->expects($this->once())->method('withStatus')->with(302)->willReturnSelf();
 
-		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $flash);
+		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $flash, $this->createStub(Translator::class));
 		$result = $controller->login($this->requestStub, $this->responseMock);
 
 		static::assertSame($this->responseMock, $result);
@@ -334,7 +333,7 @@ class LoginControllerTest extends TestCase
 		$this->authServiceMock->expects($this->once())->method('logout');
 		$this->sessionMock->expects($this->once())->method('regenerateID');
 
-		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $this->createStub(Messages::class));
+		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $this->createStub(Messages::class), $this->createStub(Translator::class));
 		$result = $controller->logout($this->requestStub, $this->responseMock);
 
 		static::assertSame($this->responseMock, $result);

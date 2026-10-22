@@ -35,11 +35,13 @@ class EditLocalesController
 {
 	private AccountService $accountService;
 	private Session $session;
+	private Locales $locales;
 
-	public function __construct(AccountService $accountService, Session $session)
+	public function __construct(AccountService $accountService, Session $session, Locales $locales)
 	{
 		$this->accountService = $accountService;
 		$this->session        = $session;
+		$this->locales        = $locales;
 	}
 
 	/**
@@ -65,9 +67,7 @@ class EditLocalesController
 
 		// determine current locale secure because it checks a whitelist
 		// of available locales
-		/** @var  Locales $locales */
-		$locales    = $request->getAttribute('locales');
-		$locales->determineCurrentLocale();
+		$this->locales->determineCurrentLocale();
 		$previousUrl = $request->getHeaderLine('Referer') ?: '/';
 
 		return $response

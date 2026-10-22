@@ -20,6 +20,7 @@
 declare(strict_types=1);
 
 use App\Framework\Config\Config;
+use App\Framework\Localization\Translate\Translator;
 use Slim\Flash\Messages;
 use App\Framework\Http\Session;
 use App\Framework\Http\Cookie;
@@ -63,7 +64,8 @@ $dependencies[LoginController::class] = DI\factory(function (ContainerInterface 
 		$container->get(AuthService::class),
 		$container->get(CsrfToken::class),
 		$container->get(Session::class),
-		$container->get(Messages::class)
+		$container->get(Messages::class),
+		$container->get(Translator::class)
 	);
 });
 

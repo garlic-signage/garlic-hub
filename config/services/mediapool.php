@@ -80,7 +80,12 @@ $dependencies[NodesController::class] = DI\factory(function (ContainerInterface 
 });
 $dependencies[ShowController::class] = DI\factory(function (ContainerInterface $container)
 {
-	return new ShowController($container->get(NodesService::class), $container->get(UserSession::class));
+	return new ShowController(
+		$container->get(NodesService::class),
+		$container->get(UserSession::class),
+		$container->get(Translator::class),
+		$container->get(Config::class)
+	);
 });
 $dependencies[MediaHandlerFactory::class] = DI\factory(function (ContainerInterface $container)
 {

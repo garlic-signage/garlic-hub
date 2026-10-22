@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Controller;
 
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Http\Session;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Exceptions\CoreException;
@@ -40,12 +41,14 @@ readonly class ShowDatatableController
 	private DatatableFacadeInterface $facade;
 	private DatatableTemplatePreparer $templateFormatter;
 	private Session $session;
+	private Translator $translator;
 
-	public function __construct(DatatableFacadeInterface $facade, DatatableTemplatePreparer $templateFormatter, Session $session)
+	public function __construct(DatatableFacadeInterface $facade, DatatableTemplatePreparer $templateFormatter, Session $session, Translator $translator)
 	{
 		$this->facade            = $facade;
 		$this->templateFormatter = $templateFormatter;
 		$this->session           = $session;
+		$this->translator        = $translator;
 	}
 
 	/**
@@ -54,7 +57,7 @@ readonly class ShowDatatableController
 	 */
 	public function show(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		$this->facade->configure($request->getAttribute('translator'), $this->session);
+		$this->facade->configure($this->translator, $this->session);
 		$this->facade->processSubmittedUserInput($request->getQueryParams());
 
 		$this->facade->prepareDataGrid();

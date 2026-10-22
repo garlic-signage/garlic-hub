@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Auth;
 
+use App\Framework\Localization\Translate\Translator;
 use Slim\Flash\Messages;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Security\CsrfToken;
@@ -42,13 +43,15 @@ readonly class LoginController
 	private CsrfToken $csrfToken;
 	private Session $session;
 	private Messages $flash;
+	private Translator $translator;
 
-	public function __construct(AuthService $authService, CsrfToken $csrfToken, Session $session, Messages $flash)
+	public function __construct(AuthService $authService, CsrfToken $csrfToken, Session $session, Messages $flash, Translator $translator)
 	{
 		$this->authService = $authService;
 		$this->csrfToken   = $csrfToken;
 		$this->session     = $session;
 		$this->flash       = $flash;
+		$this->translator  = $translator;
 	}
 
 	/**
@@ -56,9 +59,8 @@ readonly class LoginController
 	 */
 	public function showLogin(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		$translator = $request->getAttribute('translator');
 
-		$page_name = $translator->translate('login', 'login');
+		$page_name = $this->translator->translate('login', 'login');
 		$data = [
 			'main_layout' => [
 				'LANG_PAGE_TITLE' => $page_name,
@@ -68,11 +70,11 @@ readonly class LoginController
 				'template' => 'auth/login', // Template-name
 				'data' => [
 					'LANG_PAGE_HEADER' => $page_name,
-					'LANG_USERNAME' => $translator->translate('username', 'main').' / '. $translator->translate('email', 'main'),
-					'LANG_PASSWORD' => $translator->translate('password', 'login'),
+					'LANG_USERNAME' => $this->translator->translate('username', 'main').' / '. $this->translator->translate('email', 'main'),
+					'LANG_PASSWORD' => $this->translator->translate('password', 'login'),
 					'CSRF_TOKEN' => $this->csrfToken->getToken(),
 					'LANG_SUBMIT' => $page_name,
-					'LANG_AUTOLOGIN' => $translator->translate('autologin', 'login')
+					'LANG_AUTOLOGIN' => $this->translator->translate('autologin', 'login')
 
 				]
 			]

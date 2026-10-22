@@ -112,7 +112,7 @@ class JsonErrorHandlerTest extends TestCase
 	}
 
 	/**
-	 * e.g. the locale is not determined yet, because the error happened before the EnvironmentMiddleware
+	 * e.g. the locale is not determined yet, because the error happened before the LocaleMiddleware
 	 */
 	#[Group('units')]
 	public function testFailingTranslatorFallsBackToKey(): void

@@ -61,7 +61,7 @@ class ShowDatatableControllerTest extends TestCase
 		$this->translatorStub       = $this->createStub(Translator::class);
 		$this->sessionStub          = $this->createStub(Session::class);
 
-		$this->controller = new ShowDatatableController($this->facadeMock, $this->templatePreparerMock, $this->sessionStub);
+		$this->controller = new ShowDatatableController($this->facadeMock, $this->templatePreparerMock, $this->sessionStub, $this->translatorStub);
 	}
 
 	/**
@@ -72,13 +72,11 @@ class ShowDatatableControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowMethodReturnsPageResponse(): void
 	{
-		$this->requestMock->expects($this->once())->method('getAttribute')->with('translator')
-			->willReturn($this->translatorStub);
 
 		$this->facadeMock->expects($this->once())->method('configure')
 			->with($this->translatorStub, $this->sessionStub);
 
-		$this->requestMock->method('getQueryParams')->willReturn(['page' => 2]);
+		$this->requestMock->expects($this->once())->method('getQueryParams')->willReturn(['page' => 2]);
 		$this->facadeMock->expects($this->once())->method('processSubmittedUserInput')->with(['page' => 2]);
 		$this->facadeMock->expects($this->once())->method('prepareDataGrid');
 		$this->facadeMock->expects($this->once())->method('prepareUITemplate')

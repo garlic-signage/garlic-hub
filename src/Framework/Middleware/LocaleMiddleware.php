@@ -21,44 +21,27 @@ declare(strict_types=1);
 
 namespace App\Framework\Middleware;
 
-use App\Framework\Config\Config;
 use App\Framework\Localization\Locales\Locales;
-use App\Framework\Localization\Translate\Translator;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
 /**
- * Middleware responsible for injecting environment-specific data into the request.
+ * Determines the locale of the current request.
  *
- * This middleware adds configuration, locale, and translation-related data
- * as attributes in the PSR-7 request object, enabling their access throughout
- * the application lifecycle.
+ * Runs after the AuthMiddleware on purpose: an auto login by cookie writes
+ * the user's locale into the session first.
  */
-class EnvironmentMiddleware implements MiddlewareInterface
+readonly class LocaleMiddleware implements MiddlewareInterface
 {
-	private Config $config;
-	private Locales $locales;
-	private Translator $translator;
-
-	public function __construct(Config $config, Locales $locale, Translator $translator)
+	public function __construct(private Locales $locales)
 	{
-		$this->config = $config;
-		$this->locales = $locale;
-		$this->translator = $translator;
 	}
-	/**
-	 * @inheritDoc
-	 */
+
 	public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
 	{
 		$this->locales->determineCurrentLocale();
-
-		$request = $request
-			->withAttribute('config', $this->config)
-			->withAttribute('locales', $this->locales)
-			->withAttribute('translator', $this->translator);
 
 		return $handler->handle($request);
 	}

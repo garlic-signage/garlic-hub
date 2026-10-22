@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2024 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -21,10 +21,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Framework\Middleware;
 
-use App\Framework\Config\Config;
 use App\Framework\Localization\Locales\Locales;
-use App\Framework\Localization\Translate\Translator;
-use App\Framework\Middleware\EnvironmentMiddleware;
+use App\Framework\Middleware\LocaleMiddleware;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\TestCase;
@@ -32,34 +30,30 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
-class EnvironmentMiddlewareTest extends TestCase
+class LocaleMiddlewareTest extends TestCase
 {
 	/**
 	 * @throws Exception
 	 */
 	#[Group('units')]
-	public function testProcessAddsAttributesAndCallsNextHandler(): void
+	public function testDeterminesLocaleBeforeHandlingRequest(): void
 	{
-		$configStub     = $this->createStub(Config::class);
-		$localesMock    = $this->createMock(Locales::class);
-		$translatorStub = $this->createStub(Translator::class);
+		$calls       = [];
+		$localesMock = $this->createMock(Locales::class);
+		$localesMock->expects($this->once())->method('determineCurrentLocale')
+			->willReturnCallback(static function () use (&$calls): void { $calls[] = 'locale'; });
 
-		$localesMock->expects($this->once())->method('determineCurrentLocale');
-
-		$requestStub = $this->createStub(ServerRequestInterface::class);
-		$requestStub->method('withAttribute')->willReturnSelf();
-
-		$responseStub = $this->createStub(ResponseInterface::class);
-
+		$request     = $this->createStub(ServerRequestInterface::class);
+		$response    = $this->createStub(ResponseInterface::class);
 		$handlerMock = $this->createMock(RequestHandlerInterface::class);
-		$handlerMock->expects($this->once())
-					->method('handle')
-					->with(static::isInstanceOf(ServerRequestInterface::class))
-					->willReturn($responseStub);
+		$handlerMock->expects($this->once())->method('handle')->with($request)
+			->willReturnCallback(static function () use (&$calls, $response): ResponseInterface
+			{
+				$calls[] = 'handler';
+				return $response;
+			});
 
-		$middleware = new EnvironmentMiddleware($configStub, $localesMock, $translatorStub);
-		$result     = $middleware->process($requestStub, $handlerMock);
-
-		static::assertSame($responseStub, $result);
+		static::assertSame($response, new LocaleMiddleware($localesMock)->process($request, $handlerMock));
+		static::assertSame(['locale', 'handler'], $calls);
 	}
 }

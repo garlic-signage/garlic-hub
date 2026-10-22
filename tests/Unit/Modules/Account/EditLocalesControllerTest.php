@@ -59,14 +59,6 @@ class EditLocalesControllerTest extends TestCase
 	#[Group('units')]
 	public function testSetLocales(): void
 	{
-		$this->requestMock->method('getAttribute')
-						  ->willReturnCallback(function ($attribute) {
-							  return match ($attribute) {
-								  'locales' => $this->localesMock,
-								  default => null,
-							  };
-						  });
-
 		$this->sessionMock->method('exists')->with('user')->willReturn(true);
 		$this->sessionMock->method('get')->with('user')->willReturn(['UID' => 1, 'locale' => 'en_US']);
 		$this->sessionMock->expects($this->exactly(2))->method('set');
@@ -86,7 +78,7 @@ class EditLocalesControllerTest extends TestCase
 			 ->with(1, 'de_DE');
 
 
-		$controller = new EditLocalesController($this->accountServiceMock, $this->sessionMock);
+		$controller = new EditLocalesController($this->accountServiceMock, $this->sessionMock, $this->localesMock);
 		$result = $controller->setLocales($this->requestMock, $this->responseMock, ['locale' => 'de_DE']);
 		static::assertSame($this->responseMock, $result);
 	}
@@ -97,13 +89,6 @@ class EditLocalesControllerTest extends TestCase
 	#[Group('units')]
 	public function testSetLocalesWithBrokenUserArray(): void
 	{
-		$this->requestMock->method('getAttribute')
-						  ->willReturnCallback(function ($attribute) {
-							  return match ($attribute) {
-								  'locales' => $this->localesMock,
-								  default => null,
-							  };
-						  });
 		$this->sessionMock->method('get')->with('user')->willReturn('not_an_array');
 		$this->sessionMock->expects($this->once())->method('set')->with('locale', 'de_DE');
 
@@ -118,7 +103,7 @@ class EditLocalesControllerTest extends TestCase
 		$this->accountServiceMock->expects($this->never())->method('updateLocale');
 		$this->responseMock->expects($this->once())->method('withStatus')->with(302)->willReturn($this->responseMock);
 
-		$controller = new EditLocalesController($this->accountServiceMock, $this->sessionMock);
+		$controller = new EditLocalesController($this->accountServiceMock, $this->sessionMock, $this->localesMock);
 		$result = $controller->setLocales($this->requestMock, $this->responseMock, ['locale' => 'de_DE']);
 		static::assertSame($this->responseMock, $result);
 	}

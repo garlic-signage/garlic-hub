@@ -1,4 +1,5 @@
 <?php
+
 /*
  garlic-hub: Digital Signage Management Platform
 
@@ -21,6 +22,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Controller;
 
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Http\Session;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Exceptions\CoreException;
@@ -42,7 +44,8 @@ readonly class ShowDatatableController
 {
 	public function __construct(private DatatableFacade $facade,
 								private DatatableTemplatePreparer $templateFormatter,
-								private Session $session)
+								private Session $session,
+								private Translator $translator)
 	{}
 
     /**
@@ -56,7 +59,7 @@ readonly class ShowDatatableController
      */
 	public function show(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		$this->facade->configure($request->getAttribute('translator'), $this->session);
+		$this->facade->configure($this->translator, $this->session);
 		if (!$this->facade->checkRights())
 			return $response->withHeader('Location', '/')->withStatus(302);
 

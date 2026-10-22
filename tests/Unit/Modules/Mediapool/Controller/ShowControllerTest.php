@@ -57,10 +57,9 @@ class ShowControllerTest extends TestCase
 		$this->nodesServiceStub = $this->createStub(NodesService::class);
 		$this->userSessionStub  = $this->createStub(UserSession::class);
 		$this->userSessionStub->method('getUID')->willReturn(1);
-		$this->controller       = new ShowController($this->nodesServiceStub, $this->userSessionStub);
-
 		$this->translatorMock   = $this->createMock(Translator::class);
 		$this->configStub       = $this->createStub(Config::class);
+		$this->controller       = new ShowController($this->nodesServiceStub, $this->userSessionStub, $this->translatorMock, $this->configStub);
 	}
 
 	/**
@@ -71,16 +70,7 @@ class ShowControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowOverview(): void
 	{
-		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
-			->willReturnCallback(function ($attribute)
-			{
-				return match ($attribute)
-				{
-					'translator' => $this->translatorMock,
-					'config' => $this->configStub,
-					default => null,
-				};
-			});
+		$this->requestMock->expects($this->never())->method($this->anything());
 
 		$this->nodesServiceStub->method('isModuleAdmin')->willReturn(false);
 		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
@@ -104,16 +94,7 @@ class ShowControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowOverviewWithAdmin(): void
 	{
-		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
-			->willReturnCallback(function ($attribute)
-			{
-				return match ($attribute)
-				{
-					'translator' => $this->translatorMock,
-					'config' => $this->configStub,
-					default => null,
-				};
-			});
+		$this->requestMock->expects($this->never())->method($this->anything());
 
 		$this->nodesServiceStub->method('isModuleAdmin')->willReturn(true);
 		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
@@ -136,16 +117,7 @@ class ShowControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowOverviewWithEnterprise(): void
 	{
-		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
-			->willReturnCallback(function ($attribute)
-			{
-				return match ($attribute)
-				{
-					'translator' => $this->translatorMock,
-					'config' => $this->configStub,
-					default => null,
-				};
-			});
+		$this->requestMock->expects($this->never())->method($this->anything());
 
 		$this->nodesServiceStub->method('isModuleAdmin')->willReturn(false);
 		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);

@@ -20,6 +20,7 @@
 declare(strict_types=1);
 
 use App\Framework\Security\Crypt;
+use App\Framework\Localization\Locales\Locales;
 use App\Framework\Validation\Sanitizer;
 use App\Framework\Http\Session;
 use App\Framework\Database\BaseRepositories\Transactions;
@@ -58,7 +59,7 @@ $dependencies[AccountService::class] = DI\factory(function (ContainerInterface $
 });
 $dependencies[EditLocalesController::class] = DI\factory(function (ContainerInterface $container)
 {
-	return new EditLocalesController($container->get(AccountService::class), $container->get(Session::class));
+	return new EditLocalesController($container->get(AccountService::class), $container->get(Session::class), $container->get(Locales::class));
 });
 $dependencies[Parameters::class] = DI\factory(function (ContainerInterface $container)
 {

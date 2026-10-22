@@ -21,12 +21,10 @@ declare(strict_types=1);
 
 use Psr\Container\ContainerInterface;
 use Slim\App;
-use App\Framework\Config\Config;
 use App\Framework\Http\Cookie;
 use App\Framework\Localization\Locales\Locales;
 use App\Framework\Http\Session;
-use App\Framework\Localization\Translate\Translator;
-use App\Framework\Middleware\EnvironmentMiddleware;
+use App\Framework\Middleware\LocaleMiddleware;
 use App\Modules\Auth\AuthMiddleware;
 use App\Modules\Auth\AuthService;
 
@@ -37,12 +35,8 @@ return function (ContainerInterface $container, $start_time, $start_memory): App
 
 	require_once __DIR__ . '/route.php';
 
-	// Environment Middleware
-	$app->add(new EnvironmentMiddleware(
-		$container->get(Config::class),
-		$container->get(Locales::class),
-		$container->get(Translator::class)
-	));
+	// determines the locale after the auth middleware (auto login writes it into the session)
+	$app->add(new LocaleMiddleware($container->get(Locales::class)));
 
 	$app->add(new AuthMiddleware(
 		$container->get(AuthService::class),

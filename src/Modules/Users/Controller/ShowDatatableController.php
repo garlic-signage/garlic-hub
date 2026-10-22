@@ -45,7 +45,8 @@ readonly class ShowDatatableController
 		private BaseValidator $validator,
 		private JsonResponseHandler $responseHandler,
 		private Session $session,
-		private Messages $flash
+		private Messages $flash,
+		private Translator $translator
 	) {}
 
 	/**
@@ -60,17 +61,15 @@ readonly class ShowDatatableController
 	{
 		/** @var array<string,mixed> $post */
 		$post       = $request->getParsedBody();
-		/** @var Translator $translator */
-		$translator = $request->getAttribute('translator');
 
 		if (!$this->validator->validateCsrfToken($post['csrf_token'] ?? ''))
-			return $this->error($response, $translator->translate('csrf_token_mismatch', 'security'));
+			return $this->error($response, $this->translator->translate('csrf_token_mismatch', 'security'));
 
 		$UID = (int) ($post['UID'] ?? 0);
 		if ($UID === 0)
-			return $this->error($response, $translator->translate('user_not_found', 'users'));
+			return $this->error($response, $this->translator->translate('user_not_found', 'users'));
 
-		$this->facade->configure($translator, $this->session);
+		$this->facade->configure($this->translator, $this->session);
 		try
 		{
 			$this->facade->deleteUser($UID);
@@ -78,10 +77,10 @@ readonly class ShowDatatableController
 		catch (TranslatableModuleException $e)
 		{
 			// this route is not below /async, so the error is answered here with a flash message
-			return $this->error($response, $translator->translateException($e));
+			return $this->error($response, $this->translator->translateException($e));
 		}
 
-		$this->flash->addMessage('success', $translator->translate('user_deleted', 'users'));
+		$this->flash->addMessage('success', $this->translator->translate('user_deleted', 'users'));
 		return $this->responseHandler->jsonSuccess($response);
 	}
 
@@ -92,7 +91,7 @@ readonly class ShowDatatableController
 	 */
 	public function show(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		$this->facade->configure($request->getAttribute('translator'), $this->session);
+		$this->facade->configure($this->translator, $this->session);
 		$this->facade->processSubmittedUserInput($request->getQueryParams());
 
 		$this->facade->prepareDataGrid();

@@ -102,7 +102,7 @@ readonly class JsonErrorHandler
 	/**
 	 * An error while handling an error must not hide the original one. When the translation
 	 * fails, e.g. the locale is not determined yet because the error happened before the
-	 * EnvironmentMiddleware, or the key is missing, the fallback is used.
+	 * LocaleMiddleware, or the key is missing, the fallback is used.
 	 *
 	 * @param array<string,string> $replacements
 	 */

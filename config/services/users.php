@@ -127,7 +127,8 @@ $dependencies[ShowDatatableController::class] = DI\factory(function (ContainerIn
 		$container->get(BaseValidator::class),
 		$container->get(JsonResponseHandler::class),
 		$container->get(Session::class),
-		$container->get(Messages::class)
+		$container->get(Messages::class),
+		$container->get(Translator::class)
 	);
 });
 
