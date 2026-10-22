@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Player\IndexCreation;
 
-use App\Framework\Core\Config\Config;
+use App\Framework\Config\Config;
 use App\Modules\Player\Enums\PlayerModel;
 use App\Modules\Player\IndexCreation\PlayerDetector;
 use PHPUnit\Framework\Attributes\Group;

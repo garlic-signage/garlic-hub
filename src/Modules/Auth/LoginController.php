@@ -21,8 +21,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Auth;
 
-use App\Framework\Core\CsrfToken;
-use App\Framework\Core\Session;
+use App\Framework\Security\CsrfToken;
+use App\Framework\Http\Session;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
 use Exception;

@@ -21,8 +21,8 @@ declare(strict_types=1);
 
 namespace App\Framework\Middleware;
 
-use App\Framework\Core\Cookie;
-use App\Framework\Core\Session;
+use App\Framework\Http\Cookie;
+use App\Framework\Http\Session;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;

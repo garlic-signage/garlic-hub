@@ -21,8 +21,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Services;
 
-use App\Framework\Core\Acl\AbstractAclValidator;
-use App\Framework\Core\Acl\AclHelper;
+use App\Shared\Acl\AbstractAclValidator;
+use App\Shared\Acl\AclHelper;
 
 /**
  * Class AclValidator is responsible for validating ACL (Access Control List) rules.

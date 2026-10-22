@@ -21,8 +21,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\Datatable;
 
-use App\Framework\Core\Session;
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Http\Session;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;

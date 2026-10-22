@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Users\Helper\Settings;
 
-use App\Framework\Core\Session;
+use App\Framework\Http\Session;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Utils\FormParameters\BaseEditParameters;

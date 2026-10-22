@@ -22,7 +22,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Framework\Middleware;
 
 use App\Framework\Controller\JsonResponseHandler;
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;

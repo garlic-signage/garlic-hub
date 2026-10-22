@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Mediapool\Services;
 
-use App\Framework\Core\Acl\AclHelper;
+use App\Shared\Acl\AclHelper;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
 use App\Modules\Mediapool\Services\AclValidator;

@@ -21,8 +21,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Templates\Services;
 
-use App\Framework\Core\Acl\AclHelper;
-use App\Framework\Core\Config\Config;
+use App\Shared\Acl\AclHelper;
+use App\Framework\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Modules\Templates\Services\AclValidator;

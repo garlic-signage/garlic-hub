@@ -21,8 +21,8 @@ declare(strict_types=1);
 
 namespace App\Framework\Dashboards;
 
-use App\Framework\Core\SystemStats;
-use App\Framework\Core\Translate\Translator;
+use App\Framework\System\SystemStats;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 

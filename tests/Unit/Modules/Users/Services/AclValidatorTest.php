@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Users\Services;
 
-use App\Framework\Core\Acl\AclHelper;
+use App\Shared\Acl\AclHelper;
 use App\Modules\Users\Services\AclValidator;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;

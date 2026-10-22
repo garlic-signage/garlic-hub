@@ -17,7 +17,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 export const UsersApiConfig = {
-	USER_TOKENS_BASE_URI: "/async/profile/tokens",
+	USER_TOKENS_BASE_URI: "/async/users/tokens",
 	USER_DELETE_FROM_UI: "/users"
 
 }

@@ -21,8 +21,8 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Datatable;
 
-use App\Framework\Core\Session;
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Http\Session;
+use App\Framework\Localization\Translate\Translator;
 
 /**
  * Interface for managing the behavior of datatables.

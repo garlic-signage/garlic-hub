@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Repositories;
 
-use App\Framework\Core\Config\Config;
+use App\Framework\Config\Config;
 use App\Framework\Database\BaseRepositories\SqlBase;
 use App\Framework\Database\BaseRepositories\Traits\CrudTraits;
 use App\Framework\Database\BaseRepositories\Traits\FindOperationsTrait;
@@ -38,8 +38,6 @@ class ItemsRepository extends SqlBase
 		CONST  int FLAG_LOCKED   = 2;
 		CONST  int FLAG_LOGGABLE  = 4;
 	*/
-	use FindOperationsTrait;
-
 	public function __construct(Connection $connection)
 	{
 		parent::__construct($connection, 'playlists_items', 'item_id');

@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Helper\Composer;
 
-use App\Framework\Core\Config\Config;
+use App\Framework\Config\Config;
 use App\Framework\Media\MediaUrlSigner;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;

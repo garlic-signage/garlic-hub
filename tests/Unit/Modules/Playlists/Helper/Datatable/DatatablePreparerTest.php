@@ -21,8 +21,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Helper\Datatable;
 
-use App\Framework\Core\Config\Config;
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Config\Config;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -319,7 +319,7 @@ class DatatablePreparerTest extends TestCase
 	{
 		$this->datatablePreparer->setTranslator($this->translatorMock);
 
-		$this->aclValidatorMock->expects($this->once())->method('getConfig')->willReturn($this->createStub(\App\Framework\Core\Config\Config::class));
+		$this->aclValidatorMock->expects($this->once())->method('getConfig')->willReturn($this->createStub(\App\Framework\Config\Config::class));
 		$this->bodyPreparerMock->expects($this->never())->method($this->anything());
 		$this->translatorMock->expects($this->once())->method('translateArrayForOptions')
 			->with('playlist_mode_selects', 'playlists')

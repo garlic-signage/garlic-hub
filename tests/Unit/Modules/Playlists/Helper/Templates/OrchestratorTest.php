@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Helper\Templates;
 
-use App\Framework\Core\Config\Config;
+use App\Framework\Config\Config;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;

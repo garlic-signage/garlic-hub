@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Player\Helper\NetworkSettings;
 
-use App\Framework\Core\Sanitizer;
-use App\Framework\Core\Session;
+use App\Framework\Validation\Sanitizer;
+use App\Framework\Http\Session;
 use App\Modules\Player\Helper\NetworkSettings\Parameters;
 use Exception;
 use PHPUnit\Framework\Attributes\Group;

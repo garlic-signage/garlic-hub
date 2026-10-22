@@ -21,8 +21,8 @@ declare(strict_types=1);
 
 namespace App\Framework\Middleware;
 
-use App\Framework\Core\Cookie;
-use App\Framework\Core\Session;
+use App\Framework\Http\Cookie;
+use App\Framework\Http\Session;
 use App\Framework\Exceptions\FrameworkException;
 use App\Modules\Auth\AuthService;
 use App\Modules\Auth\AutoLoginService;

@@ -21,9 +21,9 @@ declare(strict_types=1);
 
 namespace App\Framework\Middleware;
 
-use App\Framework\Core\Config\Config;
-use App\Framework\Core\Locales\Locales;
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Config\Config;
+use App\Framework\Localization\Locales\Locales;
+use App\Framework\Localization\Translate\Translator;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;

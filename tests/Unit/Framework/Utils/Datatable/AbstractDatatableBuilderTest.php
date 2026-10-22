@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Framework\Utils\Datatable;
 
-use App\Framework\Core\Acl\AbstractAclValidator;
-use App\Framework\Core\Config\Config;
+use App\Shared\Acl\AbstractAclValidator;
+use App\Framework\Config\Config;
 use App\Framework\Utils\Datatable\AbstractDatatableBuilder;
 use App\Framework\Utils\Datatable\BuildService;
 use App\Framework\Utils\FormParameters\BaseFilterParameters;

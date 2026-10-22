@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Helper\InitialAdmin;
 
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Utils\Forms\FormTemplatePreparer;
@@ -41,8 +41,8 @@ readonly class TemplatePreparer
 	public function prepare(array $dataSections): array
 	{
 		$dataSections['title']             = $this->translator->translate('create_admin', 'users');
-		$dataSections['additional_css']    = ['/css/users/edit.css', '/css/profile/password.css'];
-		$dataSections['footer_modules']    = ['/js/profile/password/init.js'];
+		$dataSections['additional_css']    = ['/css/users/edit.css', '/css/account/password.css'];
+		$dataSections['footer_modules']    = ['/js/account/password/init.js'];
 		$dataSections['template_name']     = 'users/edit';
 		$dataSections['form_action']       = '/create-initial';
 		$dataSections['save_button_label'] = $this->translator->translate('save', 'main');

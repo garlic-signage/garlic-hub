@@ -21,11 +21,11 @@ declare(strict_types=1);
 
 namespace App\Framework\Middleware;
 
-use App\Framework\Core\Config\Config;
-use App\Framework\Core\CsrfToken;
-use App\Framework\Core\Locales\Locales;
-use App\Framework\Core\Session;
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Config\Config;
+use App\Framework\Security\CsrfToken;
+use App\Framework\Localization\Locales\Locales;
+use App\Framework\Http\Session;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Helper\Serialization;

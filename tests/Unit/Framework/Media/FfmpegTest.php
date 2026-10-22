@@ -21,8 +21,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Framework\Media;
 
-use App\Framework\Core\Config\Config;
-use App\Framework\Core\ShellExecutor;
+use App\Framework\Config\Config;
+use App\Framework\System\ShellExecutor;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Media\Ffmpeg;

@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Helper\NetworkSettings;
 
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Utils\Forms\FormTemplatePreparer;
 
 class TemplatePreparer

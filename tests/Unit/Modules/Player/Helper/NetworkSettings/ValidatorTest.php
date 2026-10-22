@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Player\Helper\NetworkSettings;
 
-use App\Framework\Core\CsrfToken;
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Security\CsrfToken;
+use App\Framework\Localization\Translate\Translator;
 use App\Modules\Player\Helper\NetworkSettings\Parameters;
 use App\Modules\Player\Helper\NetworkSettings\Validator;
 use PHPUnit\Framework\Attributes\Group;

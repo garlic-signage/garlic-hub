@@ -22,8 +22,8 @@ declare(strict_types=1);
 namespace App\Modules\Users\Controller;
 
 use App\Framework\Controller\JsonResponseHandler;
-use App\Framework\Core\BaseValidator;
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Validation\BaseValidator;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;

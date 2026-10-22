@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Framework\Utils\FormParameters;
 
-use App\Framework\Core\Sanitizer;
+use App\Framework\Validation\Sanitizer;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\FormParameters\BaseParameters;
 use App\Framework\Utils\FormParameters\ScalarType;

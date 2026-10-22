@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Helper\Datatable;
 
-use App\Framework\Core\Config\Config;
+use App\Framework\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;

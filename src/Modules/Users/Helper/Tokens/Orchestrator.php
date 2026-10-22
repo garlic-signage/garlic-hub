@@ -21,12 +21,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Helper\Tokens;
 
-use App\Framework\Core\BaseValidator;
+use App\Framework\Validation\BaseValidator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\UserSession;
-use App\Modules\Profile\Services\UserTokenService;
+use App\Shared\User\UserTokenService;
 use App\Modules\Users\Services\AclValidator;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;

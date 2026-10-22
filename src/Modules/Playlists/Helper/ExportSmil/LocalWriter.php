@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\ExportSmil;
 
-use App\Framework\Core\Config\Config;
+use App\Framework\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;

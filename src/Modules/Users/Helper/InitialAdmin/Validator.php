@@ -21,9 +21,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Helper\InitialAdmin;
 
-use App\Framework\Core\BaseValidator;
-use App\Framework\Core\CsrfToken;
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Validation\BaseValidator;
+use App\Framework\Security\CsrfToken;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -62,17 +62,17 @@ class Validator extends BaseValidator
 
 		$password = $this->inputEditParameters->getValueOfParameter(Parameters::PARAMETER_ADMIN_PASSWORD);
 		if ($password === '')
-			$errors[] = $this->translator->translate('no_password', 'profile');
+			$errors[] = $this->translator->translate('no_password', 'users');
 
 		$passwordConfirm = $this->inputEditParameters->getValueOfParameter(Parameters::PARAMETER_ADMIN_PASSWORD_CONFIRM);
 		if ($passwordConfirm === '')
-			$errors[] = $this->translator->translate('no_password_confirm', 'profile');
+			$errors[] = $this->translator->translate('no_password_confirm', 'users');
 
 		if ($password !== $passwordConfirm)
-			$errors[] = $this->translator->translate('no_passwords_match', 'profile');
+			$errors[] = $this->translator->translate('no_passwords_match', 'users');
 
 		if (!$this->validatePassword($password, $passwordPattern))
-			$errors[] = $this->translator->translate('password_explanation', 'profile');
+			$errors[] = $this->translator->translate('password_explanation', 'users');
 
 		return $errors;
 	}

@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Auth;
 
-use App\Framework\Core\Session;
+use App\Framework\Http\Session;
 use App\Modules\Auth\AuthService;
 use App\Modules\Auth\OAuth2Controller;
 use League\OAuth2\Server\AuthorizationServer;

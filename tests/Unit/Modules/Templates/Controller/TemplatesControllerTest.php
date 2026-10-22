@@ -22,7 +22,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Templates\Controller;
 
 use App\Framework\Controller\JsonResponseHandler;
-use App\Framework\Core\CsrfToken;
+use App\Framework\Security\CsrfToken;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;

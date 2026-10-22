@@ -65,8 +65,8 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 			'type' => FieldType::PASSWORD,
 			'id' => Parameters::PARAMETER_ADMIN_PASSWORD,
 			'name' => Parameters::PARAMETER_ADMIN_PASSWORD,
-			'title' => $this->translator->translate('password_explanation', 'profile'),
-			'label' => $this->translator->translate(Parameters::PARAMETER_ADMIN_PASSWORD, 'profile'),
+			'title' => $this->translator->translate('password_explanation', 'users'),
+			'label' => $this->translator->translate(Parameters::PARAMETER_ADMIN_PASSWORD, 'users'),
 			'value' => $value,
 			'rules' => ['required' => true, 'minlength' => 8],
 			'default_value' => ''
@@ -87,8 +87,8 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 			'type' => FieldType::PASSWORD,
 			'id' => Parameters::PARAMETER_ADMIN_PASSWORD_CONFIRM,
 			'name' => Parameters::PARAMETER_ADMIN_PASSWORD_CONFIRM,
-			'title' => $this->translator->translate('password_explanation', 'profile'),
-			'label' => $this->translator->translate(Parameters::PARAMETER_ADMIN_PASSWORD_CONFIRM, 'profile'),
+			'title' => $this->translator->translate('password_explanation', 'users'),
+			'label' => $this->translator->translate(Parameters::PARAMETER_ADMIN_PASSWORD_CONFIRM, 'users'),
 			'value' => $value,
 			'rules' => ['required' => true, 'minlength' => 8],
 			'default_value' => ''

@@ -21,8 +21,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Helper\Datatable;
 
-use App\Framework\Core\Config\Config;
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Config\Config;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -184,7 +184,7 @@ class DatatableBuilderTest extends TestCase
 	public function testCollectFormElements(): void
 	{
 		// the allowed playlist modes depend on the edition
-		$this->aclValidatorMock->expects($this->once())->method('getConfig')->willReturn($this->createStub(\App\Framework\Core\Config\Config::class));
+		$this->aclValidatorMock->expects($this->once())->method('getConfig')->willReturn($this->createStub(\App\Framework\Config\Config::class));
 		$translator = $this->createStub(Translator::class);
 		$this->builder->setTranslator($translator);
 
@@ -245,7 +245,7 @@ class DatatableBuilderTest extends TestCase
 	public function testCollectFormElementsMinimum(): void
 	{
 		// the allowed playlist modes depend on the edition
-		$this->aclValidatorMock->expects($this->once())->method('getConfig')->willReturn($this->createStub(\App\Framework\Core\Config\Config::class));
+		$this->aclValidatorMock->expects($this->once())->method('getConfig')->willReturn($this->createStub(\App\Framework\Config\Config::class));
 		$translator = $this->createStub(Translator::class);
 		$this->builder->setTranslator($translator);
 

@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Auth;
 
-use App\Framework\Core\Session;
+use App\Framework\Http\Session;
 use Doctrine\DBAL\Exception;
 use InvalidArgumentException;
 use League\OAuth2\Server\AuthorizationServer;

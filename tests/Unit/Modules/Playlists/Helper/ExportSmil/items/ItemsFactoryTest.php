@@ -20,7 +20,7 @@
 declare(strict_types=1);
 namespace Tests\Unit\Modules\Playlists\Helper\ExportSmil\items;
 
-use App\Framework\Core\Config\Config;
+use App\Framework\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
 use App\Modules\Playlists\Helper\ExportSmil\items\Audio;

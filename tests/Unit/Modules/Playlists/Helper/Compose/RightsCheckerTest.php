@@ -21,8 +21,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Helper\Compose;
 
-use App\Framework\Core\Config\Config;
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Config\Config;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Modules\Playlists\Helper\Compose\RightsChecker;

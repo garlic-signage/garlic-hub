@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\FormParameters;
 
-use App\Framework\Core\Sanitizer;
+use App\Framework\Validation\Sanitizer;
 use App\Framework\Exceptions\ModuleException;
 
 /**

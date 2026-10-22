@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Auth;
 
-use App\Framework\Core\Session;
+use App\Framework\Http\Session;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\UserSession;
 use PHPUnit\Framework\Attributes\Group;

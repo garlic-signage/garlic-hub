@@ -19,9 +19,9 @@
 */
 declare(strict_types=1);
 
-use App\Framework\Core\Config\Config;
-use App\Framework\Core\Cookie;
-use App\Framework\Core\CsrfToken;
+use App\Framework\Config\Config;
+use App\Framework\Http\Cookie;
+use App\Framework\Security\CsrfToken;
 use App\Framework\OAuth2\ClientsRepository;
 use App\Framework\OAuth2\ScopeRepository;
 use App\Framework\OAuth2\TokensRepository;
@@ -29,8 +29,8 @@ use App\Modules\Auth\AuthService;
 use App\Modules\Auth\AutoLoginService;
 use App\Modules\Auth\LoginController;
 use App\Modules\Auth\OAuth2Controller;
-use App\Modules\Profile\Services\UserTokenService;
-use App\Modules\Users\Services\UsersService;
+use App\Shared\User\UserTokenService;
+use App\Shared\User\UsersService;
 use Defuse\Crypto\Key;
 use League\OAuth2\Server\AuthorizationServer;
 use League\OAuth2\Server\CryptKey;

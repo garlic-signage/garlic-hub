@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Player\Controller;
 
-use App\Framework\Core\Sanitizer;
+use App\Framework\Validation\Sanitizer;
 use App\Modules\Player\Controller\PlayerIndexController;
 use App\Modules\Player\Helper\Index\IndexResponseHandler;
 use App\Modules\Player\Services\PlayerIndexService;

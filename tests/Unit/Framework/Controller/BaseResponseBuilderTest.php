@@ -24,7 +24,7 @@ namespace Tests\Unit\Framework\Controller;
 
 use App\Framework\Controller\BaseResponseBuilder;
 use App\Framework\Controller\JsonResponseHandler;
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use PHPUnit\Framework\Attributes\Group;

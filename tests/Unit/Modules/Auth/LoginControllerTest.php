@@ -21,15 +21,15 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Auth;
 
-use App\Framework\Core\Cookie;
-use App\Framework\Core\CsrfToken;
-use App\Framework\Core\Session;
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Http\Cookie;
+use App\Framework\Security\CsrfToken;
+use App\Framework\Http\Session;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\AuthService;
 use App\Modules\Auth\LoginController;
-use App\Modules\Profile\Entities\UserEntity;
+use App\Shared\User\UserEntity;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;

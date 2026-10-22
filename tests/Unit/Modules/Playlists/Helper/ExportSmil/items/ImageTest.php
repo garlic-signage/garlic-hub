@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Helper\ExportSmil\items;
 
-use App\Framework\Core\Config\Config;
+use App\Framework\Config\Config;
 use App\Modules\Playlists\Helper\ExportSmil\items\Base;
 use App\Modules\Playlists\Helper\ExportSmil\items\Image;
 use App\Modules\Playlists\Helper\ExportSmil\Utils\Conditional;

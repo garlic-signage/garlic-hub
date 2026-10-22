@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Mediapool\Controller;
 
-use App\Framework\Core\Config\Config;
+use App\Framework\Config\Config;
 use App\Modules\Mediapool\Services\NodesService;
 use Exception;
 use Psr\Http\Message\ResponseInterface;

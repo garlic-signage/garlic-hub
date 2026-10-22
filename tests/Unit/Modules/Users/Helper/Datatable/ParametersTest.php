@@ -21,8 +21,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Users\Helper\Datatable;
 
-use App\Framework\Core\Sanitizer;
-use App\Framework\Core\Session;
+use App\Framework\Validation\Sanitizer;
+use App\Framework\Http\Session;
 use App\Framework\Exceptions\ModuleException;
 use App\Modules\Users\Helper\Datatable\Parameters;
 use PHPUnit\Framework\Attributes\Group;

@@ -22,7 +22,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Mediapool\Utils;
 
 
-use App\Framework\Core\Config\Config;
+use App\Framework\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;

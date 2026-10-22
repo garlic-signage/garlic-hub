@@ -60,7 +60,7 @@ In the template/module-dir create an overview.mustache file and integrate
 [datatable.mustache](../../templates/generic/datatable.mustache).
 
 This will give you the opportunity to embed additionally HTML like Context menus, javascript etc
-Create the corresponding TemplateRenderer class. This class will also need the Parameter and [Translator.php](../../src/Framework/Core/Translate/Translator.php) injected by the constructor.
+Create the corresponding TemplateRenderer class. This class will also need the Parameter and [Translator.php](../../src/Framework/Localization/Translate/Translator.php) injected by the constructor.
 
 Have a look here how the context menu for creating playlists is realized.
 [datatable.mustache](../../templates/player/datatable.mustache)

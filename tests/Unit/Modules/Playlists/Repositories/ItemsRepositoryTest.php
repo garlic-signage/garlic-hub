@@ -20,7 +20,7 @@
 declare(strict_types=1);
 namespace Tests\Unit\Modules\Playlists\Repositories;
 
-use App\Framework\Core\Config\Config;
+use App\Framework\Config\Config;
 use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use Doctrine\DBAL\Connection;

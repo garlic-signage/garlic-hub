@@ -21,8 +21,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Framework\Utils\FormParameters;
 
-use App\Framework\Core\Sanitizer;
-use App\Framework\Core\Session;
+use App\Framework\Validation\Sanitizer;
+use App\Framework\Http\Session;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
 use PHPUnit\Framework\Attributes\Group;

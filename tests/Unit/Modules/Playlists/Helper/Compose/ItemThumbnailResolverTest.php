@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Helper\Compose;
 
-use App\Framework\Core\Config\Config;
+use App\Framework\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Media\MediaUrlSigner;
 use App\Framework\Media\MimeTypeExtensionMapper;

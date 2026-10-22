@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\ExportSmil\items;
 
-use App\Framework\Core\Config\Config;
+use App\Framework\Config\Config;
 use App\Modules\Playlists\Helper\ExportSmil\Utils\Conditional;
 use App\Modules\Playlists\Helper\ExportSmil\Utils\Properties;
 use App\Modules\Playlists\Helper\ExportSmil\Utils\Trigger;

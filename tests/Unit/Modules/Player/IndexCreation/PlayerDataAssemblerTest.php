@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Player\IndexCreation;
 
-use App\Framework\Core\Config\Config;
+use App\Framework\Config\Config;
 use App\Framework\Exceptions\ModuleException;
 use App\Modules\Player\Entities\PlayerEntity;
 use App\Modules\Player\Entities\PlayerEntityFactory;
@@ -346,7 +346,7 @@ class PlayerDataAssemblerTest extends TestCase
 	#[Group('units')]
 	public function testInsertNewPlayerInsertsSuccessfully(): void
 	{
-		$this->configMock->expects($this->once())->method('getEdition')->willReturn(\App\Framework\Core\Config\Config::PLATFORM_EDITION_CORE);
+		$this->configMock->expects($this->once())->method('getEdition')->willReturn(\App\Framework\Config\Config::PLATFORM_EDITION_CORE);
 		$ownerId = 1;
 		$saveData = [
 			'uuid' => 'test-uuid',
@@ -391,7 +391,7 @@ class PlayerDataAssemblerTest extends TestCase
 	#[Group('units')]
 	public function testInsertNewPlayerThrowsExceptionForFailedInsertion(): void
 	{
-		$this->configMock->expects($this->once())->method('getEdition')->willReturn(\App\Framework\Core\Config\Config::PLATFORM_EDITION_CORE);
+		$this->configMock->expects($this->once())->method('getEdition')->willReturn(\App\Framework\Config\Config::PLATFORM_EDITION_CORE);
 		$ownerId = 1;
 		$saveData = [
 			'uuid' => 'test-uuid',

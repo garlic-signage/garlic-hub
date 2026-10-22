@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Html;
 
-use App\Framework\Core\CsrfToken;
+use App\Framework\Security\CsrfToken;
 use App\Framework\Exceptions\FrameworkException;
 use Exception;
 

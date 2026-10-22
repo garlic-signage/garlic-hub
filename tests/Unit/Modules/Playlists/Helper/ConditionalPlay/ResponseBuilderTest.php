@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Playlists\Helper\ConditionalPlay;
 
 use App\Framework\Controller\JsonResponseHandler;
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Modules\Playlists\Helper\ConditionalPlay\ResponseBuilder;

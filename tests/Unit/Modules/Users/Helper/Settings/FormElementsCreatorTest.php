@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Users\Helper\Settings;
 
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Utils\Html\ClipboardTextField;
@@ -189,12 +189,12 @@ class FormElementsCreatorTest extends TestCase
 
 		$this->translatorMock->expects($this->once())
 			->method('translateArrayForOptions')
-			->with('purposes_selects', 'profile')
+			->with('purposes_selects', 'users')
 			->willReturn(['email_verification' => 'Email Verification']);
 
 		$this->translatorMock->expects($this->exactly(4))->method('translate')
 			->willReturnMap([
-				['verification_link', 'profile', [], 'Verification link for %s expires at %s. Please copy it now, as it will only be displayed once.'],
+				['verification_link', 'users', [], 'Verification link for %s expires at %s. Please copy it now, as it will only be displayed once.'],
 				['copy_to_clipboard', 'main', [], 'Copy to clipboard'],
 				['remove', 'main', [], 'Remove'],
 				['refresh', 'main', [], 'Refresh']
@@ -297,7 +297,7 @@ class FormElementsCreatorTest extends TestCase
 		$this->translatorMock
 			->expects(static::once())
 			->method('translate')
-			->with('password_reset', 'profile')
+			->with('password_reset', 'users')
 			->willReturn($translatedButtonName);
 
 		$result = $this->collector->addResetPasswordButton();

@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Framework\Utils\Datatable;
 
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;

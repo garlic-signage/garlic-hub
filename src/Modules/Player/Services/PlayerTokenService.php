@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Services;
 
-use App\Framework\Core\Crypt;
+use App\Framework\Security\Crypt;
 use App\Modules\Player\Repositories\PlayerTokenRepository;
 use DateMalformedStringException;
 use Defuse\Crypto\Crypto;

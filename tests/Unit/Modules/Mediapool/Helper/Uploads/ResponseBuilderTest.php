@@ -22,7 +22,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Mediapool\Helper\Uploads;
 
 use App\Framework\Controller\JsonResponseHandler;
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Localization\Translate\Translator;
 use App\Modules\Mediapool\Helper\Uploads\ResponseBuilder;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;

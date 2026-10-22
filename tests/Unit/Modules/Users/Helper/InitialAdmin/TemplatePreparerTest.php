@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Users\Helper\InitialAdmin;
 
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Utils\Forms\FormTemplatePreparer;
@@ -51,8 +51,8 @@ class TemplatePreparerTest extends TestCase
 				'hidden'            => [],
 				'visible'           => [],
 				'title'             => 'users.create_admin',
-				'additional_css'    => ['/css/users/edit.css', '/css/profile/password.css'],
-				'footer_modules'    => ['/js/profile/password/init.js'],
+				'additional_css'    => ['/css/users/edit.css', '/css/account/password.css'],
+				'footer_modules'    => ['/js/account/password/init.js'],
 				'template_name'     => 'users/edit',
 				'form_action'       => '/create-initial',
 				'save_button_label' => 'main.save'

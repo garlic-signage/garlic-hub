@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Mediapool\Utils;
 
-use App\Framework\Core\Config\Config;
+use App\Framework\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
 use League\Flysystem\Filesystem;

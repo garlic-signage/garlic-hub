@@ -22,8 +22,8 @@ declare(strict_types=1);
 namespace App\Modules\Mediapool\Services;
 
 
-use App\Framework\Core\Acl\AbstractAclValidator;
-use App\Framework\Core\Acl\AclHelper;
+use App\Shared\Acl\AbstractAclValidator;
+use App\Shared\Acl\AclHelper;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
 use Doctrine\DBAL\Exception;

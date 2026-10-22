@@ -21,9 +21,9 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Datatable;
 
-use App\Framework\Core\Acl\AbstractAclValidator;
-use App\Framework\Core\Config\Config;
-use App\Framework\Core\Translate\Translator;
+use App\Shared\Acl\AbstractAclValidator;
+use App\Framework\Config\Config;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\FormParameters\BaseFilterParameters;

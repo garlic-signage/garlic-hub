@@ -23,8 +23,8 @@ namespace App\Modules\Auth;
 
 use App\Framework\Exceptions\AuthException;
 use App\Framework\Exceptions\FrameworkException;
-use App\Modules\Profile\Entities\UserEntity;
-use App\Modules\Users\Services\UsersService;
+use App\Shared\User\UserEntity;
+use App\Shared\User\UsersService;
 use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;

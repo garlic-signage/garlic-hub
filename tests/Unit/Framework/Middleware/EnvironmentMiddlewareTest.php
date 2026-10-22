@@ -21,9 +21,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Framework\Middleware;
 
-use App\Framework\Core\Config\Config;
-use App\Framework\Core\Locales\Locales;
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Config\Config;
+use App\Framework\Localization\Locales\Locales;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Middleware\EnvironmentMiddleware;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;

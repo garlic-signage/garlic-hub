@@ -22,7 +22,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Controller;
 
 use App\Controller\HomeController;
-use App\Framework\Core\Session;
+use App\Framework\Http\Session;
 use App\Framework\Dashboards\DashboardsAggregator;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;

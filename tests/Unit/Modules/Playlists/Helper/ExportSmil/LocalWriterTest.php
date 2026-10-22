@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Helper\ExportSmil;
 
-use App\Framework\Core\Config\Config;
+use App\Framework\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Modules\Playlists\Helper\ExportSmil\LocalWriter;
 use App\Modules\Playlists\Helper\ExportSmil\PlaylistContent;

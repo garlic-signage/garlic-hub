@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Services\InsertItems;
 
-use App\Framework\Core\Config\Config;
+use App\Framework\Config\Config;
 use App\Framework\Database\BaseRepositories\Transactions;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\MediaService;

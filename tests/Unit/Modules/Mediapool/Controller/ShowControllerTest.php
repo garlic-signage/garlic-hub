@@ -21,9 +21,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Mediapool\Controller;
 
-use App\Framework\Core\Config\Config;
-use App\Framework\Core\Session;
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Config\Config;
+use App\Framework\Http\Session;
+use App\Framework\Localization\Translate\Translator;
 use App\Modules\Mediapool\Controller\ShowController;
 use App\Modules\Mediapool\Services\NodesService;
 use PHPUnit\Framework\Attributes\Group;

@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Helper\ConditionalPlay;
 
-use App\Framework\Core\BaseValidator;
+use App\Framework\Validation\BaseValidator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;

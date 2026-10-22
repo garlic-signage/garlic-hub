@@ -21,8 +21,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Helper\Datatable;
 
-use App\Framework\Core\Sanitizer;
-use App\Framework\Core\Session;
+use App\Framework\Validation\Sanitizer;
+use App\Framework\Http\Session;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\FormParameters\BaseFilterParameters;
 use App\Framework\Utils\FormParameters\ScalarType;

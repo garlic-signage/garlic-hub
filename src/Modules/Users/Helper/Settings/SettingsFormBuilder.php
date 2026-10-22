@@ -21,11 +21,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Helper\Settings;
 
-use App\Framework\Core\Session;
+use App\Framework\Http\Session;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
-use App\Modules\Profile\Entities\TokenPurposes;
+use App\Shared\User\TokenPurposes;
 
 readonly class SettingsFormBuilder
 {

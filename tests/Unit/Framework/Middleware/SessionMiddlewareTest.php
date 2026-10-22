@@ -21,8 +21,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Framework\Middleware;
 
-use App\Framework\Core\Cookie;
-use App\Framework\Core\Session;
+use App\Framework\Http\Cookie;
+use App\Framework\Http\Session;
 use App\Framework\Middleware\SessionMiddleware;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;

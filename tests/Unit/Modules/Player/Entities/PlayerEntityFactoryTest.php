@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Player\Entities;
 
-use App\Framework\Core\Config\Config;
+use App\Framework\Config\Config;
 use App\Modules\Player\Entities\PlayerEntity;
 use App\Modules\Player\Entities\PlayerEntityFactory;
 use App\Modules\Player\Enums\PlayerModel;

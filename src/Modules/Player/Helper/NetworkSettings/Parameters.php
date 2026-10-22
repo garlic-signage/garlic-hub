@@ -21,8 +21,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Helper\NetworkSettings;
 
-use App\Framework\Core\Sanitizer;
-use App\Framework\Core\Session;
+use App\Framework\Validation\Sanitizer;
+use App\Framework\Http\Session;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Framework\Utils\FormParameters\ScalarType;
 

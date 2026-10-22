@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace App\Modules\Playlists\Controller;
 
 use App\Framework\Controller\JsonResponseHandler;
-use App\Framework\Core\CsrfToken;
+use App\Framework\Security\CsrfToken;
 use App\Modules\Playlists\Helper\Templates\Orchestrator;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;

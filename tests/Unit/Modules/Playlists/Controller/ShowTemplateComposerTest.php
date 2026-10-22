@@ -22,7 +22,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Playlists\Controller;
 
 use App\Framework\Controller\JsonResponseHandler;
-use App\Framework\Core\CsrfToken;
+use App\Framework\Security\CsrfToken;
 use App\Modules\Playlists\Controller\ShowTemplateComposer;
 use App\Modules\Playlists\Helper\Templates\Orchestrator;
 use PHPUnit\Framework\Attributes\Group;

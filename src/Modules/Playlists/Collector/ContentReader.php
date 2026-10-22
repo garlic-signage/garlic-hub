@@ -23,7 +23,7 @@ namespace App\Modules\Playlists\Collector;
 
 // Todo create a base Class ContentHelper
 
-use App\Framework\Core\Config\Config;
+use App\Framework\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Modules\Playlists\Collector\Contracts\ContentReaderInterface;
 use League\Flysystem\Filesystem;

@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Users\Helper\InitialAdmin;
 
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Utils\Html\FieldInterface;
@@ -103,8 +103,8 @@ class FormElementsCreatorTest extends TestCase
 
 		$this->translatorMock->expects($this->exactly(2))->method('translate')
 			->willReturnMap([
-				['password_explanation', 'profile', [], 'Please provide a secure password'],
-				[Parameters::PARAMETER_ADMIN_PASSWORD, 'profile', [], 'Password']
+				['password_explanation', 'users', [], 'Please provide a secure password'],
+				[Parameters::PARAMETER_ADMIN_PASSWORD, 'users', [], 'Password']
 			]);
 
 		$this->formBuilderMock->expects($this->once())->method('createField')
@@ -141,8 +141,8 @@ class FormElementsCreatorTest extends TestCase
 
 		$this->translatorMock->expects($this->exactly(2))->method('translate')
 			->willReturnMap([
-				['password_explanation', 'profile', [], 'Please provide a secure password'],
-				[Parameters::PARAMETER_ADMIN_PASSWORD_CONFIRM, 'profile', [], 'Confirm Password']
+				['password_explanation', 'users', [], 'Please provide a secure password'],
+				[Parameters::PARAMETER_ADMIN_PASSWORD_CONFIRM, 'users', [], 'Confirm Password']
 			]);
 
 		$this->formBuilderMock->expects($this->once())->method('createField')

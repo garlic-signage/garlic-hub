@@ -41,8 +41,8 @@ use App\Modules\Playlists\Controller\ShowSettingsController;
 use App\Modules\Playlists\Controller\ShowTemplateComposer;
 use App\Modules\Playlists\Controller\TriggerController;
 use App\Modules\Playlists\Controller\WidgetsController;
-use App\Modules\Profile\Controller\EditLocalesController;
-use App\Modules\Profile\Controller\ShowPasswordController;
+use App\Modules\Account\Controller\EditLocalesController;
+use App\Modules\Account\Controller\ShowPasswordController;
 use App\Modules\Templates\Controller\ShowComposerController;
 use App\Modules\Templates\Controller\TemplatesController;
 use App\Modules\Users\Controller\ShowAdminController;
@@ -99,9 +99,9 @@ $app->group('', function (RouteCollectorProxy $group) use ($container)
 
 	// for later profile call
 //	$group->get('/user/{UID:\d}', createControllerCallable([xxxx::class, 'profile'], $container));
-	$group->get('/profile/settings', resolve([\App\Modules\Profile\Controller\ShowSettingsController::class, 'show'], $container));
-	$group->get('/profile/password', resolve([ShowPasswordController::class, 'showPasswordForm'], $container));
-	$group->post('/profile/password', resolve([ShowPasswordController::class, 'store'], $container));
+	$group->get('/account/settings', resolve([\App\Modules\Account\Controller\ShowSettingsController::class, 'show'], $container));
+	$group->get('/account/password', resolve([ShowPasswordController::class, 'showPasswordForm'], $container));
+	$group->post('/account/password', resolve([ShowPasswordController::class, 'store'], $container));
 	$group->get('/force-password', resolve([ShowPasswordController::class, 'showForcedPasswordForm'], $container));
 	$group->post('/force-password', resolve([ShowPasswordController::class, 'storeForcedPassword'], $container));
 
@@ -189,8 +189,8 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 
 	$group->get('/users/find/{username}', resolve([UsersController::class, 'findByName'], $container));
 
-	$group->post('/profile/tokens', resolve([UserTokenController::class, 'refresh'], $container));
-	$group->delete('/profile/tokens', resolve([UserTokenController::class, 'delete'], $container));
+	$group->post('/users/tokens', resolve([UserTokenController::class, 'refresh'], $container));
+	$group->delete('/users/tokens', resolve([UserTokenController::class, 'delete'], $container));
 
 	$group->delete('/templates', resolve([TemplatesController::class, 'delete'], $container));
 	$group->get('/templates/{template_id:\d+}', resolve([TemplatesController::class, 'load'], $container));

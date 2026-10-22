@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Framework\Utils\Html;
 
-use App\Framework\Core\CsrfToken;
+use App\Framework\Security\CsrfToken;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Utils\Html\CsrfTokenField;
 use App\Framework\Utils\Html\EmailField;

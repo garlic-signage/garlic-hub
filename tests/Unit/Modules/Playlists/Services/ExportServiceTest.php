@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Services;
 
-use App\Framework\Core\Config\Config;
+use App\Framework\Config\Config;
 use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Playlists\Helper\ExportSmil\LocalWriter;

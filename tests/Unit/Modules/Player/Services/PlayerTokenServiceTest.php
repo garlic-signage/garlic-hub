@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Player\Services;
 
-use App\Framework\Core\Crypt;
+use App\Framework\Security\Crypt;
 use App\Modules\Player\Repositories\PlayerTokenRepository;
 use App\Modules\Player\Services\PlayerTokenService;
 use Defuse\Crypto\Crypto;

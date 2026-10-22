@@ -97,8 +97,8 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 		$http = isset($_SERVER['HTTPS']) ? 'https://': 'http://';
 		$host = $_SERVER['HTTP_HOST'] ?? '';
 
-		$purposeStr = $this->translator->translateArrayForOptions('purposes_selects', 'profile')[$purpose];
-		$label = sprintf($this->translator->translate('verification_link', 'profile'),
+		$purposeStr = $this->translator->translateArrayForOptions('purposes_selects', 'users')[$purpose];
+		$label = sprintf($this->translator->translate('verification_link', 'users'),
 			$purposeStr,
 			$expiresAt
 		);
@@ -160,7 +160,7 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 		return [
 			'ADDITIONAL_BUTTON_TYPE' => 'submit',
 			'ADDITIONAL_BUTTON_NAME' => 'resetPassword',
-			'LANG_ADDITIONAL_BUTTON' => $this->translator->translate('password_reset', 'profile')
+			'LANG_ADDITIONAL_BUTTON' => $this->translator->translate('password_reset', 'users')
 		];
 	}
 

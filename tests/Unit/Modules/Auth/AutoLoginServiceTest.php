@@ -22,12 +22,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Auth;
 
-use App\Framework\Core\Cookie;
+use App\Framework\Http\Cookie;
 use App\Framework\Exceptions\AuthException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Modules\Auth\AutoLoginService;
-use App\Modules\Profile\Entities\TokenPurposes;
-use App\Modules\Profile\Services\UserTokenService;
+use App\Shared\User\TokenPurposes;
+use App\Shared\User\UserTokenService;
 use DateMalformedStringException;
 use DateTime;
 use Doctrine\DBAL\Exception;

@@ -22,9 +22,9 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Users\Controller;
 
 use App\Framework\Controller\JsonResponseHandler;
-use App\Framework\Core\BaseValidator;
-use App\Framework\Core\Session;
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Validation\BaseValidator;
+use App\Framework\Http\Session;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;

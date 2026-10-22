@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Player\Helper\NetworkSettings;
 
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Utils\Forms\FormTemplatePreparer;
 use App\Modules\Player\Helper\NetworkSettings\TemplatePreparer;
 use PHPUnit\Framework\Attributes\Group;

@@ -28,9 +28,9 @@ use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\NodesService;
-use App\Modules\Profile\Entities\TokenPurposes;
-use App\Modules\Profile\Services\UserTokenService;
-use App\Modules\Users\Repositories\Edge\UserMainRepository;
+use App\Shared\User\TokenPurposes;
+use App\Shared\User\UserTokenService;
+use App\Shared\User\Repositories\Edge\UserMainRepository;
 use Doctrine\DBAL\Exception;
 use Throwable;
 

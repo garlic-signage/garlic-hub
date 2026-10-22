@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Users\Helper\InitialAdmin;
 
-use App\Framework\Core\CsrfToken;
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Security\CsrfToken;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -150,9 +150,9 @@ class ValidatorTest extends TestCase
 
 		$this->translatorMock->expects($this->exactly(3))->method('translate')
 			->willReturnMap([
-				['no_password', 'profile', [], 'No password.'],
-				['no_passwords_match', 'profile', [], 'No match.'],
-				['password_explanation', 'profile', [], 'Explain.'],
+				['no_password', 'users', [], 'No password.'],
+				['no_passwords_match', 'users', [], 'No match.'],
+				['password_explanation', 'users', [], 'Explain.'],
 			]);
 
 		$errors = $this->validator->validateUserInput($passwordPattern);
@@ -181,8 +181,8 @@ class ValidatorTest extends TestCase
 
 		$this->translatorMock->expects($this->exactly(2))->method('translate')
 			->willReturnMap([
-				['no_password_confirm', 'profile', [], 'No confirm.'],
-				['no_passwords_match', 'profile', [], 'No match.']
+				['no_password_confirm', 'users', [], 'No confirm.'],
+				['no_passwords_match', 'users', [], 'No match.']
 			]);
 
 		$errors = $this->validator->validateUserInput($passwordPattern);
@@ -209,7 +209,7 @@ class ValidatorTest extends TestCase
 			[Parameters::PARAMETER_ADMIN_PASSWORD_CONFIRM, 'differentPassword'],
 		]);
 
-		$this->translatorMock->method('translate')->with('no_passwords_match', 'profile')->willReturn('Passwords do not match.');
+		$this->translatorMock->method('translate')->with('no_passwords_match', 'users')->willReturn('Passwords do not match.');
 
 		$errors = $this->validator->validateUserInput($passwordPattern);
 
@@ -235,7 +235,7 @@ class ValidatorTest extends TestCase
 			[Parameters::PARAMETER_ADMIN_PASSWORD_CONFIRM, 'short'],
 		]);
 
-		$this->translatorMock->method('translate')->with('password_explanation', 'profile')->willReturn('Invalid password.');
+		$this->translatorMock->method('translate')->with('password_explanation', 'users')->willReturn('Invalid password.');
 
 		$errors = $this->validator->validateUserInput($passwordPattern);
 

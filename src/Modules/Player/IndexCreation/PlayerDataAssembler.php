@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\IndexCreation;
 
-use App\Framework\Core\Config\Config;
+use App\Framework\Config\Config;
 use App\Framework\Exceptions\ModuleException;
 use App\Modules\Player\Entities\PlayerEntity;
 use App\Modules\Player\Entities\PlayerEntityFactory;

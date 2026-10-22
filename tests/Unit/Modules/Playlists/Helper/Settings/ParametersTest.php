@@ -21,8 +21,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Helper\Settings;
 
-use App\Framework\Core\Sanitizer;
-use App\Framework\Core\Session;
+use App\Framework\Validation\Sanitizer;
+use App\Framework\Http\Session;
 use App\Modules\Playlists\Helper\Settings\Parameters;
 use Exception;
 use PHPUnit\Framework\Attributes\Group;

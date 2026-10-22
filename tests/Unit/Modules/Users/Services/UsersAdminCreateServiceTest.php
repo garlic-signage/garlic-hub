@@ -22,14 +22,14 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Users\Services;
 
-use App\Framework\Core\Config\Config;
+use App\Framework\Config\Config;
 use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Mediapool\Services\NodesService;
-use App\Modules\Users\Repositories\Edge\UserAclRepository;
-use App\Modules\Users\Repositories\Edge\UserMainRepository;
+use App\Shared\User\Repositories\Edge\UserAclRepository;
+use App\Shared\User\Repositories\Edge\UserMainRepository;
 use App\Modules\Users\Services\UsersAdminCreateService;
 use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\Attributes\Group;
