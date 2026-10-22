@@ -21,15 +21,15 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Templates\Helper\Datatable;
 
-use App\Framework\Http\Session;
-use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\Datatable\Results\HeaderField;
 use App\Modules\Templates\Helper\Datatable\DatatableBuilder;
-use App\Modules\Templates\Helper\Datatable\DatatableFacade;
 use App\Modules\Templates\Helper\Datatable\DatatablePreparer;
+use App\Modules\Templates\Helper\Datatable\Orchestrator;
+use App\Modules\Auth\UserSession;
 use App\Modules\Templates\Services\TemplatesDatatableService;
 use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
@@ -37,14 +37,13 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
-class DatatableFacadeTest extends TestCase
+class OrchestratorTest extends TestCase
 {
 	private DatatableBuilder&MockObject $builderMock;
 	private DatatablePreparer&MockObject $preparerMock;
 	private TemplatesDatatableService&MockObject $serviceMock;
-	private Translator&Stub $translatorStub;
-	private Session&Stub $sessionStub;
-	private DatatableFacade $facade;
+	private UserSession&Stub $userSessionStub;
+	private Orchestrator $orchestrator;
 
 	/**
 	 * @throws \PHPUnit\Framework\MockObject\Exception
@@ -55,26 +54,25 @@ class DatatableFacadeTest extends TestCase
 		$this->builderMock    = $this->createMock(DatatableBuilder::class);
 		$this->preparerMock   = $this->createMock(DatatablePreparer::class);
 		$this->serviceMock    = $this->createMock(TemplatesDatatableService::class);
-		$this->translatorStub = $this->createStub(Translator::class);
-		$this->sessionStub    = $this->createStub(Session::class);
-		$this->sessionStub->method('get')->willReturnMap([['user', ['UID' => '7']]]);
+		$this->userSessionStub = $this->createStub(UserSession::class);
+		$this->userSessionStub->method('getUID')->willReturn(7);
 
-		$this->facade = new DatatableFacade($this->builderMock, $this->preparerMock, $this->serviceMock);
+		$this->orchestrator = new Orchestrator($this->builderMock, $this->preparerMock, $this->serviceMock, $this->userSessionStub);
 	}
 
 	/**
 	 * @throws CoreException
 	 * @throws Exception
+	 * @throws UserException
 	 */
 	#[Group('units')]
 	public function testConfigure(): void
 	{
 		$this->builderMock->expects($this->once())->method('configureParameters')->with(7);
-		$this->builderMock->expects($this->once())->method('setTranslator')->with($this->translatorStub);
-		$this->preparerMock->expects($this->once())->method('setTranslator')->with($this->translatorStub);
+		$this->preparerMock->expects($this->never())->method($this->anything());
 		$this->serviceMock->expects($this->never())->method($this->anything());
 
-		$this->facade->configure($this->translatorStub, $this->sessionStub);
+		$this->orchestrator->configure();
 	}
 
     /**
@@ -86,7 +84,7 @@ class DatatableFacadeTest extends TestCase
 		$this->builderMock->expects($this->never())->method($this->anything());
 		$this->preparerMock->expects($this->never())->method($this->anything());
 
-		static::assertTrue($this->facade->checkRights());
+		static::assertTrue($this->orchestrator->checkRights());
 	}
 
 	/**
@@ -99,7 +97,7 @@ class DatatableFacadeTest extends TestCase
 		$this->serviceMock->expects($this->once())->method('loadDatatable');
 		$this->preparerMock->expects($this->never())->method($this->anything());
 
-		$this->facade->processSubmittedUserInput(['page' => 2]);
+		$this->orchestrator->processSubmittedUserInput(['page' => 2]);
 	}
 
 	/**
@@ -118,7 +116,7 @@ class DatatableFacadeTest extends TestCase
 		$this->builderMock->expects($this->once())->method('createTableFields');
 		$this->preparerMock->expects($this->never())->method($this->anything());
 
-		static::assertSame($this->facade, $this->facade->prepareDataGrid());
+		static::assertSame($this->orchestrator, $this->orchestrator->prepareDataGrid());
 	}
 
 	/**
@@ -130,7 +128,7 @@ class DatatableFacadeTest extends TestCase
 	#[Group('units')]
 	public function testPrepareUITemplate(): void
 	{
-		$this->facade->configure($this->translatorStub, $this->sessionStub);
+		$this->orchestrator->configure();
 
 		$header    = [$this->createStub(HeaderField::class)];
 		$structure = [
@@ -172,7 +170,7 @@ class DatatableFacadeTest extends TestCase
 			'footer_modules'      => ['/js/templates/datatable/init.js'],
 			'sort'                => ['sort'],
 			'page'                => ['page']
-		], $this->facade->prepareUITemplate());
+		], $this->orchestrator->prepareUITemplate());
 	}
 
 	/**
@@ -186,6 +184,6 @@ class DatatableFacadeTest extends TestCase
 		$this->builderMock->expects($this->never())->method($this->anything());
 		$this->serviceMock->expects($this->never())->method($this->anything());
 
-		static::assertSame(['LANG_COMPOSE' => 'Composer'], $this->facade->prepareContextMenu());
+		static::assertSame(['LANG_COMPOSE' => 'Composer'], $this->orchestrator->prepareContextMenu());
 	}
 }

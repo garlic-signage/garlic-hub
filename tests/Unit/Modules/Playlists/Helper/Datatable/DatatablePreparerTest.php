@@ -62,7 +62,8 @@ class DatatablePreparerTest extends TestCase
 		$this->datatablePreparer = new DatatablePreparer(
 			$this->prepareServiceStub,
 			$this->aclValidatorMock,
-			$parametersStub
+			$parametersStub,
+			$this->translatorMock
 		);
 	}
 
@@ -91,7 +92,6 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableBodyWithPlaylistName(): void
 	{
-		$this->datatablePreparer->setTranslator($this->translatorMock);
 		$usedPlaylists = [];
 		$this->datatablePreparer->setUsedPlaylists($usedPlaylists);
 		$fields = [$this->createStub(HeaderField::class)];
@@ -147,7 +147,6 @@ class DatatablePreparerTest extends TestCase
 	{
 		// labels of the composer and settings actions
 		$this->translatorMock->expects($this->atLeastOnce())->method('translate')->willReturn('label');
-		$this->datatablePreparer->setTranslator($this->translatorMock);
 		$usedPlaylists = [];
 		$this->datatablePreparer->setUsedPlaylists($usedPlaylists);
 
@@ -190,7 +189,6 @@ class DatatablePreparerTest extends TestCase
 	{
 		// labels of the composer and settings actions
 		$this->translatorMock->expects($this->atLeastOnce())->method('translate')->willReturn('label');
-		$this->datatablePreparer->setTranslator($this->translatorMock);
 		$usedPlaylists = [];
 		$this->datatablePreparer->setUsedPlaylists($usedPlaylists);
 
@@ -233,7 +231,6 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareTableBodyWithPlaylistModes(): void
 	{
-		$this->datatablePreparer->setTranslator($this->translatorMock);
 		$usedPlaylists = [];
 		$this->datatablePreparer->setUsedPlaylists($usedPlaylists);
 
@@ -287,7 +284,6 @@ class DatatablePreparerTest extends TestCase
 		$fields[0]->method('getName')->willReturn('unknown_param');
 		$fields[0]->method('isSortable')->willReturn(false);
 
-		$this->datatablePreparer->setTranslator($this->translatorMock);
 
 		$bodyPreparerMock = $this->createMock(BodyPreparer::class);
 		$this->bodyPreparerMock->expects($this->never())->method($this->anything());
@@ -317,7 +313,6 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testFormatContextMenu(): void
 	{
-		$this->datatablePreparer->setTranslator($this->translatorMock);
 
 		$this->aclValidatorMock->expects($this->once())->method('getConfig')->willReturn($this->createStub(\App\Framework\Config\Config::class));
 		$this->bodyPreparerMock->expects($this->never())->method($this->anything());
@@ -344,7 +339,6 @@ class DatatablePreparerTest extends TestCase
 	public function testFormatContextMenuEdgeForbidden(): void
 	{
 		$this->bodyPreparerMock->expects($this->never())->method($this->anything());
-		$this->datatablePreparer->setTranslator($this->translatorMock);
 		$configStub = $this->createStub(Config::class);
 		$this->aclValidatorMock->expects($this->atLeastOnce())->method('getConfig')->willReturn($configStub);
 		$configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);

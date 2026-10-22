@@ -23,6 +23,7 @@ namespace App\Modules\Templates\Helper\Datatable;
 
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Utils\Datatable\AbstractDatatablePreparer;
 use App\Framework\Utils\Datatable\PrepareService;
 use App\Framework\Utils\Datatable\Results\HeaderField;
@@ -43,9 +44,10 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	 */
 	private array $usedTemplates = [];
 
-	public function __construct(PrepareService $prepareService, private readonly AclValidator $aclValidator, Parameters $parameters)
+	public function __construct(PrepareService $prepareService, private readonly AclValidator $aclValidator, Parameters $parameters, Translator $translator)
 	{
 		parent::__construct('templates', $prepareService, $parameters);
+		$this->translator = $translator;
 	}
 
 	/**

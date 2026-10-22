@@ -38,6 +38,7 @@ use App\Modules\Player\Services\AclValidator;
 use Exception;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class DatatableBuilderTest extends TestCase
@@ -45,6 +46,7 @@ class DatatableBuilderTest extends TestCase
 	private BuildService&MockObject $buildServiceMock;
 	private Parameters&MockObject $parametersMock;
 	private AclValidator&MockObject $aclValidatorMock;
+	private Translator&Stub $translatorStub;
 	private DatatableBuilder $builder;
 
 	/**
@@ -57,8 +59,9 @@ class DatatableBuilderTest extends TestCase
 		$this->buildServiceMock = $this->createMock(BuildService::class);
 		$this->parametersMock   = $this->createMock(Parameters::class);
 		$this->aclValidatorMock = $this->createMock(AclValidator::class);
+		$this->translatorStub   = $this->createStub(Translator::class);
 
-		$this->builder = new DatatableBuilder($this->buildServiceMock, $this->parametersMock, $this->aclValidatorMock);
+		$this->builder = new DatatableBuilder($this->buildServiceMock, $this->parametersMock, $this->aclValidatorMock, $this->translatorStub);
 	}
 
 	/**
@@ -163,12 +166,9 @@ class DatatableBuilderTest extends TestCase
 	{
 		$this->expectUntouched($this->buildServiceMock, $this->parametersMock, $this->aclValidatorMock);
 		$expectedTitle = 'Translated Title';
-		$translator = $this->createMock(Translator::class);
-		$this->builder->setTranslator($translator);
 
-		$translator->method('translate')
-			->with('overview', 'player')
-			->willReturn($expectedTitle);
+		$this->translatorStub->method('translate')
+			->willReturnMap([['overview', 'player', [], $expectedTitle]]);
 
 		$this->builder->buildTitle();
 
@@ -185,8 +185,6 @@ class DatatableBuilderTest extends TestCase
 	public function testCollectFormElements(): void
 	{
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
-		$translator = $this->createStub(Translator::class);
-		$this->builder->setTranslator($translator);
 
 		$this->parametersMock->expects($this->atLeastOnce())->method('hasParameter')
 			->willReturnMap([
@@ -202,13 +200,13 @@ class DatatableBuilderTest extends TestCase
 				[Parameters::PARAMETER_MODEL, '']
 			]);
 
-		$translator->method('translateArrayForOptions')
+		$this->translatorStub->method('translateArrayForOptions')
 			->willReturnMap([
 				[Parameters::PARAMETER_ACTIVITY.'_selects', 'player', []],
 				[Parameters::PARAMETER_MODEL.'_selects', 'player', []]
 			]);
 
-		$translator->method('translate')->willReturnMap([
+		$this->translatorStub->method('translate')->willReturnMap([
 			[Parameters::PARAMETER_ACTIVITY, 'player', [], 'Activity'],
 			[Parameters::PARAMETER_PLAYER_NAME, 'player', [], 'Player name'],
 			['owner', 'main', [], 'Owner'],
@@ -253,8 +251,6 @@ class DatatableBuilderTest extends TestCase
 	public function testCollectFormElementsMinimum(): void
 	{
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
-		$translator = $this->createStub(Translator::class);
-		$this->builder->setTranslator($translator);
 
 		$this->parametersMock->expects($this->atLeastOnce())->method('hasParameter')
 			->willReturnMap([
@@ -268,12 +264,12 @@ class DatatableBuilderTest extends TestCase
 				[Parameters::PARAMETER_MODEL, '']
 			]);
 
-		$translator->method('translateArrayForOptions')
+		$this->translatorStub->method('translateArrayForOptions')
 			->willReturnMap([
 				[Parameters::PARAMETER_MODEL.'_selects', 'player', []]
 			]);
 
-		$translator->method('translate')->willReturnMap([
+		$this->translatorStub->method('translate')->willReturnMap([
 			[Parameters::PARAMETER_PLAYER_NAME, 'player', [], 'Player name'],
 			[Parameters::PARAMETER_MODEL, 'player', 'Player model']
 		]);

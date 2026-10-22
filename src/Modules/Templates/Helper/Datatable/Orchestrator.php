@@ -19,62 +19,63 @@
 */
 declare(strict_types=1);
 
-namespace App\Modules\Player\Helper\Datatable;
+namespace App\Modules\Templates\Helper\Datatable;
 
-use App\Framework\Http\Session;
-use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Utils\Datatable\DatatableFacadeInterface;
+use App\Framework\Exceptions\UserException;
+use App\Framework\Utils\Datatable\DatatableOrchestratorInterface;
 use App\Framework\Utils\Datatable\Results\HeaderField;
-use App\Modules\Player\Services\PlayerDatatableService;
-use DateMalformedStringException;
+use App\Modules\Auth\UserSession;
+use App\Modules\Templates\Services\TemplatesDatatableService;
 use Doctrine\DBAL\Exception;
 
 /**
- * Facade class responsible for managing the datatable's configuration, preparation, processing, and rendering.
- * It interacts with datatable components such as the builder, preparer, and specific player service in order
- * to streamline complex operations and present a cohesive interface.
+ * Orchestrates the templates datatable: configuration, processing of user input, and preparation for rendering.
+ * It coordinates the builder, preparer, and templates datatable service.
  */
-class DatatableFacade implements DatatableFacadeInterface
+class Orchestrator implements DatatableOrchestratorInterface
 {
-	private readonly DatatableBuilder $datatableBuilder;
-	private readonly DatatablePreparer $datatablePreparer;
-	private readonly PlayerDatatableService $playerDatatableService;
 	private int $UID;
 
-	public function __construct(DatatableBuilder $datatableBuilder, DatatablePreparer $datatablePreparer, PlayerDatatableService $playerDatatableService)
-	{
-		$this->datatableBuilder  = $datatableBuilder;
-		$this->datatablePreparer = $datatablePreparer;
-		$this->playerDatatableService  = $playerDatatableService;
-	}
+	public function __construct(
+		private readonly DatatableBuilder          $datatableBuilder,
+		private readonly DatatablePreparer         $datatablePreparer,
+		private readonly TemplatesDatatableService $templatesService,
+		private readonly UserSession               $userSession
+	) {}
 
 	/**
 	 * @throws CoreException
 	 * @throws Exception
+	 * @throws UserException
 	 */
-	public function configure(Translator $translator, Session $session): void
+	public function configure(): void
 	{
-		/** @var array{UID: string} $user */
-		$user = $session->get('user');
-		$this->UID = (int) $user['UID'];
+		$this->UID = $this->userSession->getUID();
 		$this->datatableBuilder->configureParameters($this->UID);
-		$this->datatablePreparer->setTranslator($translator);
-		$this->datatableBuilder->setTranslator($translator);
 	}
 
-	/**
-	 * @param array<string,mixed> $queryParams
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws ModuleException
-	 */
+    /**
+     * @throws CoreException
+     * @throws Exception
+     */
+    public function checkRights(): bool
+	{
+		return $this->templatesService->checkDisplayRights();
+	}
+
+    /**
+     * @param array<string,mixed> $queryParams
+     * @throws CoreException
+     * @throws Exception
+     * @throws ModuleException
+     */
 	public function processSubmittedUserInput(array $queryParams): void
 	{
 		$this->datatableBuilder->determineParameters($queryParams);
-		$this->playerDatatableService->loadDatatable();
+		$this->templatesService->loadDatatable();
 	}
 
 	/**
@@ -86,11 +87,61 @@ class DatatableFacade implements DatatableFacadeInterface
 	{
 		$this->datatableBuilder->buildTitle();
 		$this->datatableBuilder->collectFormElements();
-		$this->datatableBuilder->createPagination($this->playerDatatableService->getCurrentTotalResult());
+		$this->datatableBuilder->createPagination($this->templatesService->getCurrentTotalResult());
 		$this->datatableBuilder->createDropDown();
 		$this->datatableBuilder->createTableFields();
 
 		return $this;
+	}
+
+	/**
+	 * @return array<string,mixed>
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 */
+	public function prepareUITemplate(): array
+	{
+		$datatableStructure = $this->datatableBuilder->getDatatableStructure();
+		$pagination         = $this->datatablePreparer->preparePagination($datatableStructure['pager'], $datatableStructure['dropdown']);
+
+		return [
+			'filter_elements'     => $this->datatablePreparer->prepareFilterForm($datatableStructure['form']),
+			'pagination_dropdown' => $pagination['dropdown'],
+			'pagination_links'    => $pagination['links'],
+			'has_add'			  => $this->datatablePreparer->prepareAdd('file-plus', 'templates/settings/canvas'),
+			'results_header'      => $this->datatablePreparer->prepareTableHeader($datatableStructure['header'], ['templates', 'main']),
+			'results_list'        => $this->prepareList($datatableStructure['header']),
+			'results_count'       => $this->templatesService->getCurrentTotalResult(),
+			'title'               => $datatableStructure['title'],
+			'template_name'       => 'templates/datatable',
+			'module_name'		  => 'templates',
+			'additional_css'      => ['/css/templates/datatable.css'],
+			'footer_modules'      => ['/js/templates/datatable/init.js'],
+			'sort'				  => $this->datatablePreparer->prepareSort(),
+			'page'      		  => $this->datatablePreparer->preparePage()
+		];
+	}
+
+
+	/**
+	 * @param list<HeaderField> $fields
+	 * @return list<array<string,mixed>>
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 */
+	private function prepareList(array $fields): array
+	{
+		/** @var list<array{"UID": int, "company_id": int, template_id:int, type:string, name:string, username:string, ...}> $currentResults */
+		$currentResults = $this->templatesService->getCurrentFilterResults();
+		$showedIds = array_column($currentResults, 'template_id');
+
+		$used = $this->templatesService->getTemplatesInUse($showedIds);
+		$this->datatablePreparer->setUsedTemplates($used);
+
+		return $this->datatablePreparer->prepareTableBody($currentResults, $fields, $this->UID);
 	}
 
 	/**
@@ -102,52 +153,4 @@ class DatatableFacade implements DatatableFacadeInterface
 	{
 		return $this->datatablePreparer->formatContextMenu();
 	}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws ModuleException
-	 * @throws DateMalformedStringException
-	 */
-	public function prepareUITemplate(): array
-	{
-		$datatableStructure = $this->datatableBuilder->getDatatableStructure();
-		$pagination         = $this->datatablePreparer->preparePagination($datatableStructure['pager'], $datatableStructure['dropdown']);
-
-		return [
-			'filter_elements'     => $this->datatablePreparer->prepareFilterForm($datatableStructure['form']),
-			'pagination_dropdown' => $pagination['dropdown'],
-			'pagination_links'    => $pagination['links'],
-			'has_add'			  => [],
-			'results_header'      => $this->datatablePreparer->prepareTableHeader($datatableStructure['header'], ['player', 'main']),
-			'results_list'        => $this->prepareList($datatableStructure['header']),
-			'results_count'       => $this->playerDatatableService->getCurrentTotalResult(),
-			'title'               => $datatableStructure['title'],
-			'template_name'       => 'player/datatable',
-			'module_name'		  => 'player',
-			'additional_css'      => ['/css/player/datatable.css'],
-			'footer_modules'      => ['/js/player/datatable/init.js'],
-			'sort'				  => $this->datatablePreparer->prepareSort(),
-			'page'      		  => $this->datatablePreparer->preparePage()
-		];
-	}
-
-
-	/**
-	 *
-	 * @param list<HeaderField> $fields
-	 * @return list<array<string,mixed>>
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws DateMalformedStringException
-	 */
-	private function prepareList(array $fields): array
-	{
-		return $this->datatablePreparer->prepareTableBody(
-			$this->playerDatatableService->getCurrentFilterResults(),
-			$fields,
-			$this->UID
-		);
-	}
-
 }

@@ -42,7 +42,6 @@ use App\Modules\Templates\Controller\ShowDatatableController;
 use App\Modules\Templates\Controller\ShowSettingsController;
 use App\Modules\Templates\Helper\Composer\ExportImage;
 use App\Modules\Templates\Helper\Datatable\DatatableBuilder;
-use App\Modules\Templates\Helper\Datatable\DatatableFacade;
 use App\Modules\Templates\Helper\Datatable\DatatablePreparer;
 use App\Modules\Templates\Helper\Datatable\Parameters;
 use App\Modules\Templates\Helper\Datatable\TemplatesFilterDefinition;
@@ -205,7 +204,8 @@ $dependencies[DatatableBuilder::class] = DI\factory(function (ContainerInterface
 	return new DatatableBuilder(
 		$container->get(BuildService::class),
 		$container->get(Parameters::class),
-		$container->get(AclValidator::class)
+		$container->get(AclValidator::class),
+		$container->get(Translator::class)
 	);
 });
 $dependencies[DatatablePreparer::class] = DI\factory(function (ContainerInterface $container)
@@ -213,25 +213,25 @@ $dependencies[DatatablePreparer::class] = DI\factory(function (ContainerInterfac
 	return new DatatablePreparer(
 		$container->get(PrepareService::class),
 		$container->get(AclValidator::class),
-		$container->get(Parameters::class)
+		$container->get(Parameters::class),
+		$container->get(Translator::class)
 	);
 });
-$dependencies[DatatableFacade::class] = DI\factory(function (ContainerInterface $container)
+$dependencies[\App\Modules\Templates\Helper\Datatable\Orchestrator::class] = DI\factory(function (ContainerInterface $container)
 {
-	return new DatatableFacade(
+	return new \App\Modules\Templates\Helper\Datatable\Orchestrator(
 		$container->get(DatatableBuilder::class),
 		$container->get(DatatablePreparer::class),
-		$container->get(TemplatesDatatableService::class)
+		$container->get(TemplatesDatatableService::class),
+		$container->get(UserSession::class)
 	);
 });
 
 $dependencies[ShowDatatableController::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new ShowDatatableController(
-		$container->get(DatatableFacade::class),
-		$container->get(DatatableTemplatePreparer::class),
-		$container->get(Session::class),
-		$container->get(Translator::class)
+		$container->get(\App\Modules\Templates\Helper\Datatable\Orchestrator::class),
+		$container->get(DatatableTemplatePreparer::class)
 	);
 });
 

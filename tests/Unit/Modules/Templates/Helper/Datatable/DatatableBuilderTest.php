@@ -58,8 +58,7 @@ class DatatableBuilderTest extends TestCase
 			->willReturnCallback(fn(string $key, string $module): string => $module . '.' . $key);
 		$translatorStub->method('translateArrayForOptions')->willReturn(['canvas' => 'Canvas']);
 
-		$this->builder = new DatatableBuilder($this->buildServiceMock, $this->parametersStub, $this->createStub(AclValidator::class));
-		$this->builder->setTranslator($translatorStub);
+		$this->builder = new DatatableBuilder($this->buildServiceMock, $this->parametersStub, $this->createStub(AclValidator::class), $translatorStub);
 	}
 
 	/**

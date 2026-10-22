@@ -92,7 +92,6 @@ $app->group('', function (RouteCollectorProxy $group) use ($container)
 	$group->get('/set-locales/{locale}', resolve([EditLocalesController::class, 'setLocales'], $container));
 
 	$group->get('/users', resolve([\App\Modules\Users\Controller\ShowDatatableController::class, 'show'], $container));
-	$group->delete('/users', resolve([\App\Modules\Users\Controller\ShowDatatableController::class, 'delete'], $container));
 	$group->post('/users/edit', resolve([ShowAdminController::class, 'store'], $container));
 	$group->get('/users/new', resolve([ShowAdminController::class, 'newUserForm'], $container));
 	$group->get('/users/edit/{UID:\d+}', resolve([ShowAdminController::class, 'editUserForm'], $container));
@@ -188,6 +187,7 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 	$group->delete('/player', resolve([PlayerController::class, 'delete'], $container));
 
 	$group->get('/users/find/{username}', resolve([UsersController::class, 'findByName'], $container));
+	$group->delete('/users', resolve([UsersController::class, 'delete'], $container));
 
 	$group->post('/users/tokens', resolve([UserTokenController::class, 'refresh'], $container));
 	$group->delete('/users/tokens', resolve([UserTokenController::class, 'delete'], $container));

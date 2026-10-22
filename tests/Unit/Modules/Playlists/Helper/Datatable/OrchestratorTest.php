@@ -22,29 +22,27 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Helper\Datatable;
 
-use App\Framework\Http\Session;
-use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Modules\Playlists\Helper\Datatable\DatatableFacade;
+use App\Framework\Exceptions\UserException;
+use App\Modules\Auth\UserSession;
+use App\Modules\Playlists\Helper\Datatable\Orchestrator;
 use App\Modules\Playlists\Helper\Datatable\DatatableBuilder;
 use App\Modules\Playlists\Helper\Datatable\DatatablePreparer;
 use App\Modules\Playlists\Services\PlaylistsDatatableService;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
-class DatatableFacadeTest extends TestCase
+class OrchestratorTest extends TestCase
 {
-	private DatatableFacade $datatableFacade;
+	private Orchestrator $orchestrator;
 	private DatatableBuilder&MockObject $datatableBuilderMock;
 	private DatatablePreparer&MockObject $datatablePreparerMock;
 	private PlaylistsDatatableService&MockObject $playlistsServiceMock;
-	private Translator&Stub $translatorStub;
-	private Session&MockObject $sessionMock;
+	private UserSession&MockObject $userSessionMock;
 
 	/**
 	 * @throws Exception
@@ -55,13 +53,13 @@ class DatatableFacadeTest extends TestCase
 		$this->datatableBuilderMock = $this->createMock(DatatableBuilder::class);
 		$this->datatablePreparerMock = $this->createMock(DatatablePreparer::class);
 		$this->playlistsServiceMock = $this->createMock(PlaylistsDatatableService::class);
-		$this->translatorStub = $this->createStub(Translator::class);
-		$this->sessionMock = $this->createMock(Session::class);
+		$this->userSessionMock = $this->createMock(UserSession::class);
 
-		$this->datatableFacade = new DatatableFacade(
+		$this->orchestrator = new Orchestrator(
 			$this->datatableBuilderMock,
 			$this->datatablePreparerMock,
-			$this->playlistsServiceMock
+			$this->playlistsServiceMock,
+			$this->userSessionMock
 		);
 
 		$this->playlistsServiceMock->method('getCurrentTotalResult')->willReturn(42);
@@ -70,29 +68,19 @@ class DatatableFacadeTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws \Doctrine\DBAL\Exception
+	 * @throws UserException
 	 */
 	#[Group('units')]
 	public function testConfigure(): void
 	{
-		$this->playlistsServiceMock->expects($this->never())->method($this->anything());
+		$this->expectUntouched($this->playlistsServiceMock, $this->datatablePreparerMock);
 		$mockUID = 12345;
-		$mockUserData = ['UID' => $mockUID];
-
-		$this->sessionMock->expects($this->once())->method('get')
-			->with('user')
-			->willReturn($mockUserData);
-
+		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn($mockUID);
 
 		$this->datatableBuilderMock->expects($this->once())->method('configureParameters')
 			->with($mockUID);
 
-		$this->datatableBuilderMock->expects($this->once())->method('setTranslator')
-			->with($this->translatorStub);
-
-		$this->datatablePreparerMock->expects($this->once())->method('setTranslator')
-			->with($this->translatorStub);
-
-		$this->datatableFacade->configure($this->translatorStub, $this->sessionMock);
+		$this->orchestrator->configure();
 	}
 
 	/**
@@ -104,12 +92,12 @@ class DatatableFacadeTest extends TestCase
 	public function testProcessSubmittedUserInput(): void
 	{
 		$this->datatablePreparerMock->expects($this->never())->method($this->anything());
-		$this->sessionMock->expects($this->never())->method($this->anything());
+		$this->userSessionMock->expects($this->never())->method($this->anything());
 		$this->datatableBuilderMock->expects($this->once())->method('determineParameters')->with(['page' => 2]);
 
 		$this->playlistsServiceMock->expects($this->once())->method('loadDatatable');
 
-		$this->datatableFacade->processSubmittedUserInput(['page' => 2]);
+		$this->orchestrator->processSubmittedUserInput(['page' => 2]);
 	}
 
 	/**
@@ -122,7 +110,7 @@ class DatatableFacadeTest extends TestCase
 	{
 		$this->playlistsServiceMock->expects($this->once())->method('getCurrentTotalResult')->willReturn(42);
 		$this->datatablePreparerMock->expects($this->never())->method($this->anything());
-		$this->sessionMock->expects($this->never())->method($this->anything());
+		$this->userSessionMock->expects($this->never())->method($this->anything());
 		$this->datatableBuilderMock->expects($this->once())->method('buildTitle');
 		$this->datatableBuilderMock->expects($this->once())->method('collectFormElements');
 		$this->datatableBuilderMock->expects($this->once())
@@ -130,8 +118,8 @@ class DatatableFacadeTest extends TestCase
 			->with(42);
 		$this->datatableBuilderMock->expects($this->once())->method('createDropDown');
 		$this->datatableBuilderMock->expects($this->once())->method('createTableFields');
-		$result = $this->datatableFacade->prepareDataGrid();
-		static::assertSame($this->datatableFacade, $result);
+		$result = $this->orchestrator->prepareDataGrid();
+		static::assertSame($this->orchestrator, $result);
 	}
 
 	/**
@@ -144,12 +132,8 @@ class DatatableFacadeTest extends TestCase
 	public function testPrepareUITemplate(): void
 	{
 		$mockUID = 12345;
-		$mockUserData = ['UID' => $mockUID];
-
-		$this->sessionMock->expects($this->once())->method('get')
-			->with('user')
-			->willReturn($mockUserData);
-		$this->datatableFacade->configure($this->translatorStub, $this->sessionMock);
+		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn($mockUID);
+		$this->orchestrator->configure();
 
 		$mockDatatableStructure = [
 			'pager' => ['page_1', 'page_2'],
@@ -215,7 +199,7 @@ class DatatableFacadeTest extends TestCase
 			->with($currentFilterResults, $mockDatatableStructure['header'], static::anything())
 			->willReturn($mockFormattedList);
 
-		$result = $this->datatableFacade->prepareUITemplate();
+		$result = $this->orchestrator->prepareUITemplate();
 
 		static::assertEquals([
 			'filter_elements' => ['prepared_filter_form'],
@@ -238,7 +222,7 @@ class DatatableFacadeTest extends TestCase
 	#[Group('units')]
 	public function testPrepareContextMenu(): void
 	{
-		$this->expectUntouched($this->datatableBuilderMock, $this->playlistsServiceMock, $this->sessionMock);
+		$this->expectUntouched($this->datatableBuilderMock, $this->playlistsServiceMock, $this->userSessionMock);
 		$mockContextMenu = [
 			['name' => 'Option1', 'action' => 'action1'],
 			['name' => 'Option2', 'action' => 'action2']
@@ -248,7 +232,7 @@ class DatatableFacadeTest extends TestCase
 			->method('formatContextMenu')
 			->willReturn($mockContextMenu);
 
-		$result = $this->datatableFacade->prepareContextMenu();
+		$result = $this->orchestrator->prepareContextMenu();
 
 		static::assertSame($mockContextMenu, $result);
 	}

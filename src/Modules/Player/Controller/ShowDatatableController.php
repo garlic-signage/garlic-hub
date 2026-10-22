@@ -21,14 +21,13 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Controller;
 
-use App\Framework\Localization\Translate\Translator;
-use App\Framework\Http\Session;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
-use App\Modules\Player\Helper\Datatable\DatatableFacade;
+use App\Framework\Exceptions\UserException;
+use App\Modules\Player\Helper\Datatable\Orchestrator;
 use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
@@ -41,18 +40,10 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 readonly class ShowDatatableController
 {
-	private DatatableFacade $facade;
-	private DatatableTemplatePreparer $templateFormatter;
-	private Session $session;
-	private Translator $translator;
-
-	public function __construct(DatatableFacade $facade, DatatableTemplatePreparer $templateFormatter, Session $session, Translator $translator)
-	{
-		$this->facade            = $facade;
-		$this->templateFormatter = $templateFormatter;
-		$this->session           = $session;
-		$this->translator        = $translator;
-	}
+	public function __construct(
+		private Orchestrator              $orchestrator,
+		private DatatableTemplatePreparer $templateFormatter
+	) {}
 
 	/**
 	 * @param ServerRequestInterface $request
@@ -63,17 +54,18 @@ readonly class ShowDatatableController
 	 * @throws ModuleException
 	 * @throws DateMalformedStringException
 	 * @throws Exception
+	 * @throws UserException
 	 */
 	public function show(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		$this->facade->configure($this->translator, $this->session);
-		$this->facade->processSubmittedUserInput($request->getQueryParams());
+		$this->orchestrator->configure();
+		$this->orchestrator->processSubmittedUserInput($request->getQueryParams());
 
-		$this->facade->prepareDataGrid();
-		$dataGrid = $this->facade->prepareUITemplate();
+		$this->orchestrator->prepareDataGrid();
+		$dataGrid = $this->orchestrator->prepareUITemplate();
 
 		$templateData = $this->templateFormatter->preparerUITemplate($dataGrid);
-		$templateData['this_layout']['data']['player_actions_contextmenu'] = $this->facade->prepareContextMenu();
+		$templateData['this_layout']['data']['player_actions_contextmenu'] = $this->orchestrator->prepareContextMenu();
 		return new PageResponse($templateData);
 	}
 

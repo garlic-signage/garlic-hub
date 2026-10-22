@@ -21,60 +21,40 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Helper\Datatable;
 
-use App\Framework\Http\Session;
-use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Utils\Datatable\DatatableFacadeInterface;
+use App\Framework\Exceptions\UserException;
+use App\Framework\Utils\Datatable\DatatableOrchestratorInterface;
 use App\Framework\Utils\Datatable\Results\HeaderField;
-use App\Modules\Users\Services\UsersAdminService;
+use App\Modules\Auth\UserSession;
 use App\Modules\Users\Services\UsersDatatableService;
 use Doctrine\DBAL\Exception;
-use Throwable;
 
 /**
- * This class acts as a facade to handle operations related to a datatable framework.
- * It integrates multiple services and components to streamline data management
- * for users and administrators.
+ * Orchestrates the users datatable: configuration, processing of user input, and preparation for rendering.
+ * It coordinates the builder, preparer, and users datatable service.
  */
-class DatatableFacade implements DatatableFacadeInterface
+class Orchestrator implements DatatableOrchestratorInterface
 {
-	private readonly DatatableBuilder $datatableBuilder;
-	private readonly DatatablePreparer $datatablePreparer;
-	private readonly UsersDatatableService $usersDatatableService;
-	private readonly UsersAdminService $usersAdminService;
 	private int $UID;
 
-	public function __construct(DatatableBuilder $datatableBuilder, DatatablePreparer $datatablePreparer, UsersDatatableService $usersDatatableService, UsersAdminService $usersAdminService)
-	{
-		$this->datatableBuilder   = $datatableBuilder;
-		$this->datatablePreparer = $datatablePreparer;
-		$this->usersDatatableService       = $usersDatatableService;
-		$this->usersAdminService  = $usersAdminService;
-	}
+	public function __construct(
+		private readonly DatatableBuilder      $datatableBuilder,
+		private readonly DatatablePreparer     $datatablePreparer,
+		private readonly UsersDatatableService $usersDatatableService,
+		private readonly UserSession           $userSession
+	) {}
 
 	/**
 	 * @throws CoreException
 	 * @throws Exception
+	 * @throws UserException
 	 */
-	public function configure(Translator $translator, Session $session): void
+	public function configure(): void
 	{
-		/** @var array{UID: int} $user */
-		$user = $session->get('user');
-		$this->UID = (int) $user['UID'];
+		$this->UID = $this->userSession->getUID();
 		$this->datatableBuilder->configureParameters($this->UID);
-		$this->datatablePreparer->setTranslator($translator);
-		$this->datatableBuilder->setTranslator($translator);
-	}
-
-	/**
-	 * @throws Exception
-	 * @throws Throwable
-	 */
-	public function deleteUser(int $UID): void
-	{
-		$this->usersAdminService->deleteUser($UID);
 	}
 
 	/**

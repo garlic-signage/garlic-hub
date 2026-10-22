@@ -23,30 +23,25 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Player\Controller;
 
 use App\Framework\TemplateEngine\PageResponse;
-use App\Framework\Http\Session;
-use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
 use App\Modules\Player\Controller\ShowDatatableController;
-use App\Modules\Player\Helper\Datatable\DatatableFacade;
+use App\Modules\Player\Helper\Datatable\Orchestrator;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 class ShowDatatableControllerTest extends TestCase
 {
-	private DatatableFacade&MockObject $facadeMock;
+	private Orchestrator&MockObject $orchestratorMock;
 	private DatatableTemplatePreparer&MockObject $templatePreparerMock;
 	private ServerRequestInterface&MockObject $requestMock;
 	private ResponseInterface&MockObject $responseMock;
-	private Translator&Stub $translatorStub;
-	private Session&Stub $sessionStub;
 	private ShowDatatableController $controller;
 
 	/**
@@ -55,14 +50,12 @@ class ShowDatatableControllerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->facadeMock           = $this->createMock(DatatableFacade::class);
+		$this->orchestratorMock     = $this->createMock(Orchestrator::class);
 		$this->templatePreparerMock = $this->createMock(DatatableTemplatePreparer::class);
 		$this->requestMock          = $this->createMock(ServerRequestInterface::class);
 		$this->responseMock         = $this->createMock(ResponseInterface::class);
-		$this->translatorStub       = $this->createStub(Translator::class);
-		$this->sessionStub          = $this->createStub(Session::class);
 
-		$this->controller = new ShowDatatableController($this->facadeMock, $this->templatePreparerMock, $this->sessionStub, $this->translatorStub);
+		$this->controller = new ShowDatatableController($this->orchestratorMock, $this->templatePreparerMock);
 	}
 
 	/**
@@ -73,13 +66,12 @@ class ShowDatatableControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowMethodReturnsPageResponse(): void
 	{
-		$this->facadeMock->expects($this->once())->method('configure')
-			->with($this->translatorStub, $this->sessionStub);
+		$this->orchestratorMock->expects($this->once())->method('configure');
 
 		$this->requestMock->expects($this->once())->method('getQueryParams')->willReturn(['page' => 2]);
-		$this->facadeMock->expects($this->once())->method('processSubmittedUserInput')->with(['page' => 2]);
-		$this->facadeMock->expects($this->once())->method('prepareDataGrid');
-		$this->facadeMock->expects($this->once())->method('prepareUITemplate')
+		$this->orchestratorMock->expects($this->once())->method('processSubmittedUserInput')->with(['page' => 2]);
+		$this->orchestratorMock->expects($this->once())->method('prepareDataGrid');
+		$this->orchestratorMock->expects($this->once())->method('prepareUITemplate')
 			->willReturn(['dataGrid' => 'value']);
 
 		$templateData = ['main_layout' => [], 'this_layout' => ['template' => 'generic/datatable', 'data' => ['key' => 'value']]];
@@ -87,7 +79,7 @@ class ShowDatatableControllerTest extends TestCase
 			->with(['dataGrid' => 'value'])
 			->willReturn($templateData);
 
-		$this->facadeMock->expects($this->once())->method('prepareContextMenu')->willReturn( ['a contextmenu stub']);
+		$this->orchestratorMock->expects($this->once())->method('prepareContextMenu')->willReturn( ['a contextmenu stub']);
 		$templateData['this_layout']['data']['player_actions_contextmenu'] = ['a contextmenu stub'];
 
 

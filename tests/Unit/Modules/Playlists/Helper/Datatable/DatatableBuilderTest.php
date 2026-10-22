@@ -39,6 +39,7 @@ use App\Modules\Playlists\Services\AclValidator;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class DatatableBuilderTest extends TestCase
@@ -46,6 +47,7 @@ class DatatableBuilderTest extends TestCase
 	private BuildService&MockObject $buildServiceMock;
 	private Parameters&MockObject $parametersMock;
 	private AclValidator&MockObject $aclValidatorMock;
+	private Translator&Stub $translatorStub;
 	private DatatableBuilder $builder;
 
 	/**
@@ -58,7 +60,9 @@ class DatatableBuilderTest extends TestCase
 		$this->parametersMock   = $this->createMock(Parameters::class);
 		$this->aclValidatorMock = $this->createMock(AclValidator::class);
 
-		$this->builder = new DatatableBuilder($this->buildServiceMock, $this->parametersMock, $this->aclValidatorMock);
+		$this->translatorStub   = $this->createStub(Translator::class);
+
+		$this->builder = new DatatableBuilder($this->buildServiceMock, $this->parametersMock, $this->aclValidatorMock, $this->translatorStub);
 	}
 
 	/**
@@ -163,12 +167,9 @@ class DatatableBuilderTest extends TestCase
 	{
 		$this->expectUntouched($this->buildServiceMock, $this->parametersMock, $this->aclValidatorMock);
 		$expectedTitle = 'Translated Title';
-		$translator = $this->createMock(Translator::class);
-		$this->builder->setTranslator($translator);
 
-		$translator->method('translate')
-			->with('overview', 'playlists')
-			->willReturn($expectedTitle);
+		$this->translatorStub->method('translate')
+			->willReturnMap([['overview', 'playlists', [], $expectedTitle]]);
 
 		$this->builder->buildTitle();
 
@@ -185,8 +186,6 @@ class DatatableBuilderTest extends TestCase
 	{
 		// the allowed playlist modes depend on the edition
 		$this->aclValidatorMock->expects($this->once())->method('getConfig')->willReturn($this->createStub(\App\Framework\Config\Config::class));
-		$translator = $this->createStub(Translator::class);
-		$this->builder->setTranslator($translator);
 
 		$this->parametersMock->expects($this->atLeastOnce())->method('hasParameter')
 		->willReturnMap([
@@ -202,10 +201,10 @@ class DatatableBuilderTest extends TestCase
 			]);
 
 		$mode = [];
-		$translator->method('translateArrayForOptions')
+		$this->translatorStub->method('translateArrayForOptions')
 			->willReturn($mode);
 
-		$translator->method('translate')->willReturnMap([
+		$this->translatorStub->method('translate')->willReturnMap([
 			[Parameters::PARAMETER_PLAYLIST_NAME, 'playlists', [], 'Playlist name'],
 			['owner', 'main', [], 'Owner'],
 			[Parameters::PARAMETER_PLAYLIST_MODE, 'playlists', 'Playlist mode']
@@ -246,8 +245,6 @@ class DatatableBuilderTest extends TestCase
 	{
 		// the allowed playlist modes depend on the edition
 		$this->aclValidatorMock->expects($this->once())->method('getConfig')->willReturn($this->createStub(\App\Framework\Config\Config::class));
-		$translator = $this->createStub(Translator::class);
-		$this->builder->setTranslator($translator);
 
 		$this->parametersMock->expects($this->atLeastOnce())->method('hasParameter')
 			->willReturnMap([
@@ -262,10 +259,10 @@ class DatatableBuilderTest extends TestCase
 			]);
 
 		$mode = [];
-		$translator->method('translateArrayForOptions')
+		$this->translatorStub->method('translateArrayForOptions')
 			->willReturn($mode);
 
-		$translator->method('translate')->willReturnMap([
+		$this->translatorStub->method('translate')->willReturnMap([
 			[Parameters::PARAMETER_PLAYLIST_NAME, 'playlists', [], 'Playlist name'],
 			[Parameters::PARAMETER_PLAYLIST_MODE, 'playlists', 'Playlist mode']
 		]);
@@ -330,11 +327,8 @@ class DatatableBuilderTest extends TestCase
 		$this->aclValidatorMock->expects($this->atLeastOnce())->method('getConfig')->willReturn($configStub);
 		$configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
 
-		$translatorMock = $this->createMock(Translator::class);
-		$this->builder->setTranslator($translatorMock);
-		$translatorMock->method('translateArrayForOptions')
-			->with('playlist_mode_selects', 'playlists')
-			->willReturn([PlaylistMode::MASTER->value => 'Master', PlaylistMode::CHANNEL->value => 'Channel', PlaylistMode::EXTERNAL->value => 'External']);
+		$this->translatorStub->method('translateArrayForOptions')
+			->willReturnMap([['playlist_mode_selects', 'playlists', [PlaylistMode::MASTER->value => 'Master', PlaylistMode::CHANNEL->value => 'Channel', PlaylistMode::EXTERNAL->value => 'External']]]);
 
 		$result = $this->builder->determineAllowedPlaylistModes();
 		static::assertSame([PlaylistMode::MASTER->value => 'Master'], $result);

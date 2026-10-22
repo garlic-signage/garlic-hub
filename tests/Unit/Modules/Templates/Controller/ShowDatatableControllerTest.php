@@ -22,14 +22,12 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Templates\Controller;
 
 use App\Framework\TemplateEngine\PageResponse;
-use App\Framework\Http\Session;
-use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
 use App\Modules\Templates\Controller\ShowDatatableController;
-use App\Modules\Templates\Helper\Datatable\DatatableFacade;
+use App\Modules\Templates\Helper\Datatable\Orchestrator;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -39,12 +37,10 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class ShowDatatableControllerTest extends TestCase
 {
-	private DatatableFacade&MockObject $facadeMock;
+	private Orchestrator&MockObject $orchestratorMock;
 	private DatatableTemplatePreparer&MockObject $templatePreparerMock;
 	private ResponseInterface&MockObject $responseMock;
 	private ServerRequestInterface $request;
-	private Translator $translator;
-	private Session $session;
 	private ShowDatatableController $controller;
 
 	/**
@@ -53,16 +49,14 @@ class ShowDatatableControllerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->facadeMock           = $this->createMock(DatatableFacade::class);
+		$this->orchestratorMock     = $this->createMock(Orchestrator::class);
 		$this->templatePreparerMock = $this->createMock(DatatableTemplatePreparer::class);
 		$this->responseMock         = $this->createMock(ResponseInterface::class);
-		$this->translator           = $this->createStub(Translator::class);
-		$this->session              = $this->createStub(Session::class);
 		$request                    = $this->createStub(ServerRequestInterface::class);
 		$request->method('getQueryParams')->willReturn(['elements_page' => 2]);
 		$this->request = $request;
 
-		$this->controller = new ShowDatatableController($this->facadeMock, $this->templatePreparerMock, $this->session, $this->translator);
+		$this->controller = new ShowDatatableController($this->orchestratorMock, $this->templatePreparerMock);
 	}
 
     /**
@@ -75,9 +69,9 @@ class ShowDatatableControllerTest extends TestCase
     #[Group('units')]
 	public function testShowWithoutRightsRedirectsToHome(): void
 	{
-		$this->facadeMock->expects($this->once())->method('configure')->with($this->translator, $this->session);
-		$this->facadeMock->expects($this->once())->method('checkRights')->willReturn(false);
-		$this->facadeMock->expects($this->never())->method('processSubmittedUserInput');
+		$this->orchestratorMock->expects($this->once())->method('configure');
+		$this->orchestratorMock->expects($this->once())->method('checkRights')->willReturn(false);
+		$this->orchestratorMock->expects($this->never())->method('processSubmittedUserInput');
 		$this->templatePreparerMock->expects($this->never())->method($this->anything());
 		$this->responseMock->expects($this->once())->method('withHeader')->with('Location', '/')->willReturnSelf();
 		$this->responseMock->expects($this->once())->method('withStatus')->with(302)->willReturnSelf();
@@ -95,12 +89,12 @@ class ShowDatatableControllerTest extends TestCase
     #[Group('units')]
 	public function testShow(): void
 	{
-		$this->facadeMock->expects($this->once())->method('configure');
-		$this->facadeMock->expects($this->once())->method('checkRights')->willReturn(true);
-		$this->facadeMock->expects($this->once())->method('processSubmittedUserInput')->with(['elements_page' => 2]);
-		$this->facadeMock->expects($this->once())->method('prepareDataGrid')->willReturnSelf();
-		$this->facadeMock->expects($this->once())->method('prepareUITemplate')->willReturn(['grid' => 'data']);
-		$this->facadeMock->expects($this->once())->method('prepareContextMenu')->willReturn(['LANG_COMPOSE' => 'Composer']);
+		$this->orchestratorMock->expects($this->once())->method('configure');
+		$this->orchestratorMock->expects($this->once())->method('checkRights')->willReturn(true);
+		$this->orchestratorMock->expects($this->once())->method('processSubmittedUserInput')->with(['elements_page' => 2]);
+		$this->orchestratorMock->expects($this->once())->method('prepareDataGrid')->willReturnSelf();
+		$this->orchestratorMock->expects($this->once())->method('prepareUITemplate')->willReturn(['grid' => 'data']);
+		$this->orchestratorMock->expects($this->once())->method('prepareContextMenu')->willReturn(['LANG_COMPOSE' => 'Composer']);
 		$this->templatePreparerMock->expects($this->once())->method('preparerUITemplate')->with(['grid' => 'data'])
 			->willReturn(['main_layout' => ['title' => 't'], 'this_layout' => ['template' => 'x', 'data' => ['a' => 'b']]]);
 

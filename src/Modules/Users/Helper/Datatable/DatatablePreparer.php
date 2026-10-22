@@ -24,6 +24,7 @@ namespace App\Modules\Users\Helper\Datatable;
 use App\Framework\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Utils\Datatable\AbstractDatatablePreparer;
 use App\Framework\Utils\Datatable\PrepareService;
 use App\Framework\Utils\Datatable\Results\HeaderField;
@@ -40,10 +41,11 @@ class DatatablePreparer extends AbstractDatatablePreparer
 {
 	private AclValidator $aclValidator;
 
-	public function __construct(PrepareService $prepareService, AclValidator $aclValidator, Parameters $parameters)
+	public function __construct(PrepareService $prepareService, AclValidator $aclValidator, Parameters $parameters, Translator $translator)
 	{
 		$this->aclValidator = $aclValidator;
 		parent::__construct('users', $prepareService, $parameters);
+		$this->translator = $translator;
 	}
 
 	/**

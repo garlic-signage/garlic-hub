@@ -58,7 +58,6 @@ use App\Modules\Playlists\Helper\Compose\UiTemplatesPreparer;
 use App\Modules\Playlists\Helper\ConditionalPlay\Orchestrator;
 use App\Modules\Playlists\Helper\ConditionalPlay\ResponseBuilder;
 use App\Modules\Playlists\Helper\ConditionalPlay\TemplatePreparer;
-use App\Modules\Playlists\Helper\Datatable\DatatableFacade;
 use App\Modules\Playlists\Helper\Datatable\DatatableBuilder;
 use App\Modules\Playlists\Helper\Datatable\DatatablePreparer;
 use App\Modules\Playlists\Helper\Datatable\PlaylistsFilterDefinition;
@@ -165,7 +164,8 @@ $dependencies[DatatableBuilder::class] = DI\factory(function (ContainerInterface
 	return new DatatableBuilder(
 		$container->get(BuildService::class),
 		$container->get(\App\Modules\Playlists\Helper\Datatable\Parameters::class),
-		$container->get(AclValidator::class)
+		$container->get(AclValidator::class),
+		$container->get(Translator::class)
 	);
 });
 $dependencies[DatatablePreparer::class] = DI\factory(function (ContainerInterface $container)
@@ -173,25 +173,25 @@ $dependencies[DatatablePreparer::class] = DI\factory(function (ContainerInterfac
 	return new DatatablePreparer(
 		$container->get(PrepareService::class),
 		$container->get(AclValidator::class),
-		$container->get(\App\Modules\Playlists\Helper\Datatable\Parameters::class)
+		$container->get(\App\Modules\Playlists\Helper\Datatable\Parameters::class),
+		$container->get(Translator::class)
 	);
 });
-$dependencies[DatatableFacade::class] = DI\factory(function (ContainerInterface $container)
+$dependencies[\App\Modules\Playlists\Helper\Datatable\Orchestrator::class] = DI\factory(function (ContainerInterface $container)
 {
-	return new DatatableFacade(
+	return new \App\Modules\Playlists\Helper\Datatable\Orchestrator(
 		$container->get(DatatableBuilder::class),
 		$container->get(DatatablePreparer::class),
-		$container->get(PlaylistsDatatableService::class)
+		$container->get(PlaylistsDatatableService::class),
+		$container->get(UserSession::class)
 	);
 });
 
 $dependencies[ShowDatatableController::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new ShowDatatableController(
-		$container->get(DatatableFacade::class),
-		$container->get(DatatableTemplatePreparer::class),
-		$container->get(Session::class),
-		$container->get(Translator::class)
+		$container->get(\App\Modules\Playlists\Helper\Datatable\Orchestrator::class),
+		$container->get(DatatableTemplatePreparer::class)
 	);
 });
 $dependencies[ShowComposeController::class] = DI\factory(function (ContainerInterface $container)

@@ -43,7 +43,6 @@ use App\Modules\Player\Controller\PlayerIndexController;
 use App\Modules\Player\Controller\ShowDatatableController;
 use App\Modules\Player\Dashboard\PlayerDashboard;
 use App\Modules\Player\Entities\PlayerEntityFactory;
-use App\Modules\Player\Helper\Datatable\DatatableFacade;
 use App\Modules\Player\Helper\Datatable\DatatableBuilder;
 use App\Modules\Player\Helper\Datatable\Parameters;
 use App\Modules\Player\Helper\Index\FileUtils;
@@ -167,7 +166,8 @@ $dependencies[DatatableBuilder::class] = DI\factory(function (ContainerInterface
 	return new DatatableBuilder(
 		$container->get(BuildService::class),
 		$container->get(Parameters::class),
-		$container->get(AclValidator::class)
+		$container->get(AclValidator::class),
+		$container->get(Translator::class)
 	);
 });
 $dependencies[DatatablePreparer::class] = DI\factory(function (ContainerInterface $container)
@@ -175,24 +175,24 @@ $dependencies[DatatablePreparer::class] = DI\factory(function (ContainerInterfac
 	return new DatatablePreparer(
 		$container->get(PrepareService::class),
 		$container->get(Parameters::class),
-		$container->get(TimeUnitsCalculator::class)
+		$container->get(TimeUnitsCalculator::class),
+		$container->get(Translator::class)
 	);
 });
-$dependencies[DatatableFacade::class] = DI\factory(function (ContainerInterface $container)
+$dependencies[\App\Modules\Player\Helper\Datatable\Orchestrator::class] = DI\factory(function (ContainerInterface $container)
 {
-	return new DatatableFacade(
+	return new \App\Modules\Player\Helper\Datatable\Orchestrator(
 		$container->get(DatatableBuilder::class),
 		$container->get(DatatablePreparer::class),
-		$container->get(PlayerDatatableService::class)
+		$container->get(PlayerDatatableService::class),
+		$container->get(UserSession::class)
 	);
 });
 $dependencies[ShowDatatableController::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new ShowDatatableController(
-		$container->get(DatatableFacade::class),
-		$container->get(DatatableTemplatePreparer::class),
-		$container->get(Session::class),
-		$container->get(Translator::class)
+		$container->get(\App\Modules\Player\Helper\Datatable\Orchestrator::class),
+		$container->get(DatatableTemplatePreparer::class)
 	);
 });
 $dependencies[PlayerDashboard::class] = DI\factory(function (ContainerInterface $container)

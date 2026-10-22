@@ -59,7 +59,8 @@ class DatatablePreparerTest extends TestCase
 		$this->datatablePreparer = new DatatablePreparer(
 			$this->prepareServiceStub,
 			$this->aclValidatorMock,
-			$parametersStub
+			$parametersStub,
+			$this->translatorMock
 		);
 	}
 
@@ -77,7 +78,6 @@ class DatatablePreparerTest extends TestCase
 		$fields[0]->method('getName')->willReturn('username');
 		$fields[0]->method('isSortable')->willReturn(true);
 
-		$this->datatablePreparer->setTranslator($this->translatorMock);
 		// link title of the username and label of the edit action
 		$this->translatorMock->expects($this->exactly(2))->method('translate')
 			->willReturnMap([['edit', 'main', [], 'Edit'], ['edit_settings', 'users', [], 'Settings']]);
@@ -126,7 +126,6 @@ class DatatablePreparerTest extends TestCase
 		$fields = [$this->createStub(HeaderField::class)];
 		$fields[0]->method('getName')->willReturn('username');
 		$fields[0]->method('isSortable')->willReturn(true);
-		$this->datatablePreparer->setTranslator($this->translatorMock);
 
 		$this->aclValidatorMock->expects($this->atLeastOnce())->method('isModuleAdmin')->willReturn(true);
 
@@ -213,7 +212,6 @@ class DatatablePreparerTest extends TestCase
 		$this->aclValidatorMock->method('getConfig')->willReturn($configStub);
 		// not the own user and no admin: no actions for this row
 		$this->aclValidatorMock->expects($this->once())->method('isSimpleAdmin')->with(123)->willReturn(false);
-		$this->datatablePreparer->setTranslator($this->translatorMock);
 
 		$status = ['deleted' => 'Deleted', 'banned' => 'Banned', 'inactive' => 'Inactive', 'active' => 'Active'];
 		$this->translatorMock->method('translateArrayForOptions')
@@ -259,7 +257,6 @@ class DatatablePreparerTest extends TestCase
 		$this->aclValidatorMock->method('getConfig')->willReturn($configStub);
 		// not the own user and no admin: no actions for this row
 		$this->aclValidatorMock->expects($this->once())->method('isSimpleAdmin')->with(123)->willReturn(false);
-		$this->datatablePreparer->setTranslator($this->translatorMock);
 		$this->translatorMock->expects($this->never())->method($this->anything());
 
 		$bodyPreparerMock = $this->createMock(BodyPreparer::class);

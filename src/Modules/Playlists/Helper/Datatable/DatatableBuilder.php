@@ -24,6 +24,7 @@ namespace App\Modules\Playlists\Helper\Datatable;
 use App\Framework\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\Datatable\AbstractDatatableBuilder;
 use App\Framework\Utils\Datatable\BuildService;
@@ -40,9 +41,10 @@ use App\Modules\Playlists\Services\AclValidator;
  */
 class DatatableBuilder extends AbstractDatatableBuilder
 {
-	public function __construct(BuildService $buildService, Parameters $parameters, AclValidator $aclValidator)
+	public function __construct(BuildService $buildService, Parameters $parameters, AclValidator $aclValidator, Translator $translator)
 	{
 		parent::__construct($buildService, $parameters, $aclValidator);
+		$this->translator = $translator;
 	}
 
 	/**

@@ -20,7 +20,6 @@
 declare(strict_types=1);
 
 use App\Framework\Controller\JsonResponseHandler;
-use Slim\Flash\Messages;
 use App\Shared\Acl\AclHelper;
 use App\Framework\Validation\BaseValidator;
 use App\Framework\Config\Config;
@@ -40,7 +39,6 @@ use App\Shared\User\UserTokenService;
 use App\Modules\Users\Controller\ShowDatatableController;
 use App\Modules\Users\Controller\UsersController;
 use App\Modules\Users\Controller\UserTokenController;
-use App\Modules\Users\Helper\Datatable\DatatableFacade;
 use App\Modules\Users\Helper\Datatable\DatatableBuilder;
 use App\Modules\Users\Helper\Datatable\DatatablePreparer;
 use App\Modules\Users\Helper\Datatable\Parameters;
@@ -52,6 +50,7 @@ use App\Modules\Users\Services\UsersAdminService;
 use App\Modules\Users\Services\UsersDatatableService;
 use App\Shared\User\UsersService;
 use Phpfastcache\Helper\Psr16Adapter;
+use App\Framework\Security\CsrfToken;
 use Psr\Container\ContainerInterface;
 
 $dependencies = [];
@@ -103,8 +102,10 @@ $dependencies[UsersController::class] = DI\factory(function (ContainerInterface 
 {
 	return new UsersController(
 		$container->get(UsersDatatableService::class),
+		$container->get(UsersAdminService::class),
 		$container->get(Parameters::class),
-		$container->get(JsonResponseHandler::class)
+		$container->get(JsonResponseHandler::class),
+		$container->get(CsrfToken::class)
 	);
 });
 $dependencies[UserTokenController::class] = DI\factory(function (ContainerInterface $container)
@@ -122,13 +123,8 @@ $dependencies[UserTokenController::class] = DI\factory(function (ContainerInterf
 $dependencies[ShowDatatableController::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new ShowDatatableController(
-		$container->get(DatatableFacade::class),
-		$container->get(DatatableTemplatePreparer::class),
-		$container->get(BaseValidator::class),
-		$container->get(JsonResponseHandler::class),
-		$container->get(Session::class),
-		$container->get(Messages::class),
-		$container->get(Translator::class)
+		$container->get(\App\Modules\Users\Helper\Datatable\Orchestrator::class),
+		$container->get(DatatableTemplatePreparer::class)
 	);
 });
 
@@ -137,7 +133,8 @@ $dependencies[DatatableBuilder::class] = DI\factory(function (ContainerInterface
 	return new DatatableBuilder(
 		$container->get(BuildService::class),
 		$container->get(Parameters::class),
-		$container->get(AclValidator::class)
+		$container->get(AclValidator::class),
+		$container->get(Translator::class)
 	);
 });
 $dependencies[DatatablePreparer::class] = DI\factory(function (ContainerInterface $container)
@@ -145,16 +142,17 @@ $dependencies[DatatablePreparer::class] = DI\factory(function (ContainerInterfac
 	return new DatatablePreparer(
 		$container->get(PrepareService::class),
 		$container->get(AclValidator::class),
-		$container->get(Parameters::class)
+		$container->get(Parameters::class),
+		$container->get(Translator::class)
 	);
 });
-$dependencies[DatatableFacade::class] = DI\factory(function (ContainerInterface $container)
+$dependencies[\App\Modules\Users\Helper\Datatable\Orchestrator::class] = DI\factory(function (ContainerInterface $container)
 {
-	return new DatatableFacade(
+	return new \App\Modules\Users\Helper\Datatable\Orchestrator(
 		$container->get(DatatableBuilder::class),
 		$container->get(DatatablePreparer::class),
 		$container->get(UsersDatatableService::class),
-		$container->get(UsersAdminService::class),
+		$container->get(UserSession::class)
 	);
 });
 

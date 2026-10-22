@@ -21,29 +21,27 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Player\Helper\Datatable;
 
-use App\Framework\Http\Session;
-use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Modules\Player\Helper\Datatable\DatatableFacade;
+use App\Framework\Exceptions\UserException;
+use App\Modules\Auth\UserSession;
+use App\Modules\Player\Helper\Datatable\Orchestrator;
 use App\Modules\Player\Helper\Datatable\DatatableBuilder;
 use App\Modules\Player\Helper\Datatable\DatatablePreparer;
 use App\Modules\Player\Services\PlayerDatatableService;
 use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
-class DatatableFacadeTest extends TestCase
+class OrchestratorTest extends TestCase
 {
 	private DatatableBuilder&MockObject $datatableBuilderMock;
 	private DatatablePreparer&MockObject $datatablePreparerMock;
 	private PlayerDatatableService&MockObject $playerServiceMock;
-	private Translator&Stub $translatorStub;
-	private Session&MockObject $sessionMock;
-	private DatatableFacade $datatableFacade;
+	private UserSession&MockObject $userSessionMock;
+	private Orchestrator $orchestrator;
 
 	/**
 	 * @throws \PHPUnit\Framework\MockObject\Exception
@@ -54,13 +52,13 @@ class DatatableFacadeTest extends TestCase
 		$this->datatableBuilderMock = $this->createMock(DatatableBuilder::class);
 		$this->datatablePreparerMock = $this->createMock(DatatablePreparer::class);
 		$this->playerServiceMock = $this->createMock(PlayerDatatableService::class);
-		$this->translatorStub = $this->createStub(Translator::class);
-		$this->sessionMock = $this->createMock(Session::class);
+		$this->userSessionMock = $this->createMock(UserSession::class);
 
-		$this->datatableFacade = new DatatableFacade(
+		$this->orchestrator = new Orchestrator(
 			$this->datatableBuilderMock,
 			$this->datatablePreparerMock,
-			$this->playerServiceMock
+			$this->playerServiceMock,
+			$this->userSessionMock
 		);
 
 		$this->playerServiceMock->method('getCurrentTotalResult')->willReturn(42);
@@ -69,24 +67,18 @@ class DatatableFacadeTest extends TestCase
 	/**
 	 * @throws CoreException
 	 * @throws Exception
+	 * @throws UserException
 	 */
 	#[Group('units')]
 	public function testConfigure(): void
 	{
-		$this->playerServiceMock->expects($this->never())->method($this->anything());
+		$this->expectUntouched($this->playerServiceMock, $this->datatablePreparerMock);
 		$mockUID = 12345;
-		$mockUserData = ['UID' => $mockUID];
-		$this->sessionMock->expects($this->once())->method('get')
-			->with('user')
-			->willReturn($mockUserData);
+		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn($mockUID);
 
 		$this->datatableBuilderMock->expects($this->once())->method('configureParameters')
 			->with($mockUID);
-		$this->datatableBuilderMock->expects($this->once())->method('setTranslator')
-			->with($this->translatorStub);
-		$this->datatablePreparerMock->expects($this->once())->method('setTranslator')
-			->with($this->translatorStub);
-		$this->datatableFacade->configure($this->translatorStub, $this->sessionMock);
+		$this->orchestrator->configure();
 	}
 
 	/**
@@ -98,10 +90,10 @@ class DatatableFacadeTest extends TestCase
 	public function testProcessSubmittedUserInput(): void
 	{
 		$this->datatablePreparerMock->expects($this->never())->method($this->anything());
-		$this->sessionMock->expects($this->never())->method($this->anything());
+		$this->userSessionMock->expects($this->never())->method($this->anything());
 		$this->datatableBuilderMock->expects($this->once())->method('determineParameters')->with(['page' => 2]);
 		$this->playerServiceMock->expects($this->once())->method('loadDatatable');
-		$this->datatableFacade->processSubmittedUserInput(['page' => 2]);
+		$this->orchestrator->processSubmittedUserInput(['page' => 2]);
 	}
 
 	/**
@@ -115,7 +107,7 @@ class DatatableFacadeTest extends TestCase
 	{
 		$this->playerServiceMock->expects($this->once())->method('getCurrentTotalResult')->willReturn(42);
 		$this->datatablePreparerMock->expects($this->never())->method($this->anything());
-		$this->sessionMock->expects($this->never())->method($this->anything());
+		$this->userSessionMock->expects($this->never())->method($this->anything());
 		$this->datatableBuilderMock->expects($this->once())->method('buildTitle');
 		$this->datatableBuilderMock->expects($this->once())->method('collectFormElements');
 		$this->datatableBuilderMock->expects($this->once())
@@ -123,8 +115,8 @@ class DatatableFacadeTest extends TestCase
 			->with(42);
 		$this->datatableBuilderMock->expects($this->once())->method('createDropDown');
 		$this->datatableBuilderMock->expects($this->once())->method('createTableFields');
-		$result = $this->datatableFacade->prepareDataGrid();
-		static::assertSame($this->datatableFacade, $result);
+		$result = $this->orchestrator->prepareDataGrid();
+		static::assertSame($this->orchestrator, $result);
 	}
 
 	/**
@@ -133,7 +125,7 @@ class DatatableFacadeTest extends TestCase
 	#[Group('units')]
 	public function testPrepareContextMenu(): void
 	{
-		$this->expectUntouched($this->datatableBuilderMock, $this->playerServiceMock, $this->sessionMock);
+		$this->expectUntouched($this->datatableBuilderMock, $this->playerServiceMock, $this->userSessionMock);
 		$mockedContextMenu = [
 			['label' => 'Edit', 'action' => 'edit'],
 			['label' => 'Delete', 'action' => 'delete']
@@ -143,7 +135,7 @@ class DatatableFacadeTest extends TestCase
 			->method('formatContextMenu')
 			->willReturn($mockedContextMenu);
 
-		$result = $this->datatableFacade->prepareContextMenu();
+		$result = $this->orchestrator->prepareContextMenu();
 		static::assertSame($mockedContextMenu, $result);
 	}
 
@@ -154,16 +146,14 @@ class DatatableFacadeTest extends TestCase
 	 * @throws FrameworkException
 	 * @throws ModuleException
 	 * @throws \DateMalformedStringException
+	 * @throws UserException
 	 */
 	#[Group('units')]
 	public function testPrepareUITemplate(): void
 	{
-		$mockUserData = ['UID' => 1];
-		$this->sessionMock->expects($this->once())->method('get')
-			->with('user')
-			->willReturn($mockUserData);
+		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(1);
 
-		$this->datatableFacade->configure($this->translatorStub, $this->sessionMock);
+		$this->orchestrator->configure();
 
 		$datatableStructure = [
 			'pager' => ['links' => ['prev' => '...', 'next' => '...']],
@@ -213,7 +203,7 @@ class DatatableFacadeTest extends TestCase
 			->with($this->playerServiceMock->getCurrentFilterResults(), $datatableStructure['header'], 1)
 			->willReturn(['body' => 'rows']);
 
-		$result = $this->datatableFacade->prepareUITemplate();
+		$result = $this->orchestrator->prepareUITemplate();
 
 		$expectedResult = [
 			'filter_elements' => ['filter' => 'form'],

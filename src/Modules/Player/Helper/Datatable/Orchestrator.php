@@ -19,72 +19,68 @@
 */
 declare(strict_types=1);
 
-namespace App\Modules\Playlists\Helper\Datatable;
+namespace App\Modules\Player\Helper\Datatable;
 
-use App\Framework\Http\Session;
-use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Utils\Datatable\DatatableFacadeInterface;
+use App\Framework\Exceptions\UserException;
+use App\Framework\Utils\Datatable\DatatableOrchestratorInterface;
 use App\Framework\Utils\Datatable\Results\HeaderField;
-use App\Modules\Playlists\Services\PlaylistsDatatableService;
+use App\Modules\Auth\UserSession;
+use App\Modules\Player\Services\PlayerDatatableService;
+use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
 
 /**
- * Provides a facade-like abstraction for managing datatable functionalities.
- * Handles configuration, processing user input, and preparing data for UI elements.
+ * Orchestrates the player datatable: configuration, processing of user input, and preparation for rendering.
+ * It coordinates the builder, preparer, and player datatable service.
  */
-class DatatableFacade implements DatatableFacadeInterface
+class Orchestrator implements DatatableOrchestratorInterface
 {
-	private readonly DatatableBuilder $datatableBuilder;
-	private readonly DatatablePreparer $datatablePreparer;
-	private readonly PlaylistsDatatableService $playlistsDatatableService;
 	private int $UID;
 
-	public function __construct(DatatableBuilder $datatableBuilder, DatatablePreparer $datatablePreparer, PlaylistsDatatableService $playlistsDatatableService)
-	{
-		$this->datatableBuilder  = $datatableBuilder;
-		$this->datatablePreparer = $datatablePreparer;
-		$this->playlistsDatatableService  = $playlistsDatatableService;
-	}
+	public function __construct(
+		private readonly DatatableBuilder       $datatableBuilder,
+		private readonly DatatablePreparer      $datatablePreparer,
+		private readonly PlayerDatatableService $playerDatatableService,
+		private readonly UserSession            $userSession
+	) {}
 
 	/**
 	 * @throws CoreException
 	 * @throws Exception
+	 * @throws UserException
 	 */
-	public function configure(Translator $translator, Session $session): void
+	public function configure(): void
 	{
-		/** @var array{UID:int} $user */
-		$user = $session->get('user');
-		$this->UID = (int) $user['UID'];
+		$this->UID = $this->userSession->getUID();
 		$this->datatableBuilder->configureParameters($this->UID);
-		$this->datatablePreparer->setTranslator($translator);
-		$this->datatableBuilder->setTranslator($translator);
 	}
 
-	/**
-	 * @param array<string,mixed> $queryParams
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws ModuleException
-	 */
+    /**
+     * @param array<string,mixed> $queryParams
+     * @throws CoreException
+     * @throws Exception
+     * @throws ModuleException
+     * @throws UserException
+     */
 	public function processSubmittedUserInput(array $queryParams): void
 	{
 		$this->datatableBuilder->determineParameters($queryParams);
-		$this->playlistsDatatableService->loadDatatable();
+		$this->playerDatatableService->loadDatatable();
 	}
 
 	/**
+	 * @throws ModuleException
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws ModuleException
 	 */
 	public function prepareDataGrid(): static
 	{
 		$this->datatableBuilder->buildTitle();
 		$this->datatableBuilder->collectFormElements();
-		$this->datatableBuilder->createPagination($this->playlistsDatatableService->getCurrentTotalResult());
+		$this->datatableBuilder->createPagination($this->playerDatatableService->getCurrentTotalResult());
 		$this->datatableBuilder->createDropDown();
 		$this->datatableBuilder->createTableFields();
 
@@ -92,7 +88,9 @@ class DatatableFacade implements DatatableFacadeInterface
 	}
 
 	/**
-	 * @return list<array<string,mixed>>
+	 * @return array<string,string>
+	 * @throws CoreException
+	 * @throws FrameworkException
 	 */
 	public function prepareContextMenu(): array
 	{
@@ -101,9 +99,9 @@ class DatatableFacade implements DatatableFacadeInterface
 
 	/**
 	 * @throws CoreException
-	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
+	 * @throws DateMalformedStringException
 	 */
 	public function prepareUITemplate(): array
 	{
@@ -114,37 +112,36 @@ class DatatableFacade implements DatatableFacadeInterface
 			'filter_elements'     => $this->datatablePreparer->prepareFilterForm($datatableStructure['form']),
 			'pagination_dropdown' => $pagination['dropdown'],
 			'pagination_links'    => $pagination['links'],
-			'has_add'			  => $this->datatablePreparer->prepareAdd(),
-			'results_header'      => $this->datatablePreparer->prepareTableHeader($datatableStructure['header'], ['playlists', 'main']),
+			'has_add'			  => [],
+			'results_header'      => $this->datatablePreparer->prepareTableHeader($datatableStructure['header'], ['player', 'main']),
 			'results_list'        => $this->prepareList($datatableStructure['header']),
-			'results_count'       => $this->playlistsDatatableService->getCurrentTotalResult(),
+			'results_count'       => $this->playerDatatableService->getCurrentTotalResult(),
 			'title'               => $datatableStructure['title'],
-			'template_name'       => 'playlists/datatable',
-			'module_name'		  => 'playlists',
-			'additional_css'      => ['/css/playlists/overview.css'],
-			'footer_modules'      => ['/js/playlists/overview/init.js'],
+			'template_name'       => 'player/datatable',
+			'module_name'		  => 'player',
+			'additional_css'      => ['/css/player/datatable.css'],
+			'footer_modules'      => ['/js/player/datatable/init.js'],
 			'sort'				  => $this->datatablePreparer->prepareSort(),
 			'page'      		  => $this->datatablePreparer->preparePage()
 		];
 	}
 
+
 	/**
+	 *
 	 * @param list<HeaderField> $fields
 	 * @return list<array<string,mixed>>
 	 * @throws CoreException
-	 * @throws Exception
 	 * @throws FrameworkException
+	 * @throws DateMalformedStringException
 	 */
 	private function prepareList(array $fields): array
 	{
-		/** @var list<array{"UID": int, "company_id": int, playlist_id:int, playlist_name:string, username:string, duration:int, playlist_mode: string,...}> $currentResults */
-		$currentResults = $this->playlistsDatatableService->getCurrentFilterResults();
-		$showedIds = array_column($currentResults, 'playlist_id');
-
-		$used = $this->playlistsDatatableService->getPlaylistsInUse($showedIds);
-		$this->datatablePreparer->setUsedPlaylists($used);
-
-		return $this->datatablePreparer->prepareTableBody($currentResults, $fields, $this->UID);
+		return $this->datatablePreparer->prepareTableBody(
+			$this->playerDatatableService->getCurrentFilterResults(),
+			$fields,
+			$this->UID
+		);
 	}
 
 }

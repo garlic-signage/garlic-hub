@@ -22,16 +22,19 @@ declare(strict_types=1);
 namespace App\Modules\Users\Controller;
 
 use App\Framework\Controller\JsonResponseHandler;
+use App\Framework\Security\CsrfToken;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\FormParameters\ScalarType;
 use App\Modules\Users\Helper\Datatable\Parameters;
+use App\Modules\Users\Services\UsersAdminService;
 use App\Modules\Users\Services\UsersDatatableService;
 use App\Modules\Users\UserStatus;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Throwable;
 
 /**
  * UsersController handles user-related operations and interacts with services
@@ -41,9 +44,32 @@ readonly class UsersController
 {
 	public function __construct(
 		private UsersDatatableService $usersDatatableService,
+		private UsersAdminService $usersAdminService,
 		private Parameters $parameters,
-		private JsonResponseHandler $responseHandler
+		private JsonResponseHandler $responseHandler,
+		private CsrfToken $csrfToken
 	) {}
+
+	/**
+	 * @throws Exception
+	 * @throws Throwable
+	 */
+	public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	{
+		/** @var array{UID?: int, csrf_token?: string} $requestData */
+		$requestData = $request->getParsedBody();
+
+		if (!$this->csrfToken->validateToken($requestData['csrf_token'] ?? ''))
+			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.');
+
+		$UID = (int) ($requestData['UID'] ?? 0);
+		if ($UID === 0)
+			return $this->responseHandler->jsonError($response, 'No UID');
+
+		$this->usersAdminService->deleteUser($UID);
+
+		return $this->responseHandler->jsonSuccess($response);
+	}
 
 	/**
 	 * Returns the plain list without a success envelope, because the autocomplete expects it.

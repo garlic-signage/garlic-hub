@@ -21,90 +21,41 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Controller;
 
-use App\Framework\Http\Session;
 use App\Framework\TemplateEngine\PageResponse;
-use App\Framework\Controller\JsonResponseHandler;
-use App\Framework\Validation\BaseValidator;
-use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Exceptions\TranslatableModuleException;
+use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
-use App\Modules\Users\Helper\Datatable\DatatableFacade;
+use App\Modules\Users\Helper\Datatable\Orchestrator;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Slim\Flash\Messages;
 
 readonly class ShowDatatableController
 {
 	public function __construct(
-		private DatatableFacade $facade,
-		private DatatableTemplatePreparer $templateFormatter,
-		private BaseValidator $validator,
-		private JsonResponseHandler $responseHandler,
-		private Session $session,
-		private Messages $flash,
-		private Translator $translator
+		private Orchestrator              $orchestrator,
+		private DatatableTemplatePreparer $templateFormatter
 	) {}
 
 	/**
-	 * The frontend reloads the page after the request, so the result is also
-	 * stored as a flash message, which is shown after the reload.
-	 *
 	 * @throws CoreException
+	 * @throws FrameworkException
 	 * @throws Exception
-	 * @throws FrameworkException
-	 */
-	public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-	{
-		/** @var array<string,mixed> $post */
-		$post       = $request->getParsedBody();
-
-		if (!$this->validator->validateCsrfToken($post['csrf_token'] ?? ''))
-			return $this->error($response, $this->translator->translate('csrf_token_mismatch', 'security'));
-
-		$UID = (int) ($post['UID'] ?? 0);
-		if ($UID === 0)
-			return $this->error($response, $this->translator->translate('user_not_found', 'users'));
-
-		$this->facade->configure($this->translator, $this->session);
-		try
-		{
-			$this->facade->deleteUser($UID);
-		}
-		catch (TranslatableModuleException $e)
-		{
-			// this route is not below /async, so the error is answered here with a flash message
-			return $this->error($response, $this->translator->translateException($e));
-		}
-
-		$this->flash->addMessage('success', $this->translator->translate('user_deleted', 'users'));
-		return $this->responseHandler->jsonSuccess($response);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws Exception|ModuleException
+	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	public function show(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		$this->facade->configure($this->translator, $this->session);
-		$this->facade->processSubmittedUserInput($request->getQueryParams());
+		$this->orchestrator->configure();
+		$this->orchestrator->processSubmittedUserInput($request->getQueryParams());
 
-		$this->facade->prepareDataGrid();
-		$dataGrid = $this->facade->prepareUITemplate();
+		$this->orchestrator->prepareDataGrid();
+		$dataGrid = $this->orchestrator->prepareUITemplate();
 
 		$templateData = $this->templateFormatter->preparerUITemplate($dataGrid);
 
 		return new PageResponse($templateData);
-	}
-
-	private function error(ResponseInterface $response, string $message): ResponseInterface
-	{
-		$this->flash->addMessage('error', $message);
-		return $this->responseHandler->jsonError($response, $message);
 	}
 }

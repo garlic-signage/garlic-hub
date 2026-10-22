@@ -63,8 +63,7 @@ class DatatablePreparerTest extends TestCase
 			->willReturnCallback(fn(string $key, string $module): string => $module . '.' . $key);
 		$translatorStub->method('translateArrayForOptions')->willReturn(['canvas' => 'Canvas']);
 
-		$this->preparer = new DatatablePreparer($prepareServiceStub, $this->aclValidatorMock, $this->createStub(Parameters::class));
-		$this->preparer->setTranslator($translatorStub);
+		$this->preparer = new DatatablePreparer($prepareServiceStub, $this->aclValidatorMock, $this->createStub(Parameters::class), $translatorStub);
 	}
 
 	/**

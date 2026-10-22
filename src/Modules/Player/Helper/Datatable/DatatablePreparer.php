@@ -23,6 +23,7 @@ namespace App\Modules\Player\Helper\Datatable;
 
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Utils\Datatable\AbstractDatatablePreparer;
 use App\Framework\Utils\Datatable\PrepareService;
 use App\Framework\Utils\Datatable\Results\HeaderField;
@@ -42,11 +43,12 @@ class DatatablePreparer extends AbstractDatatablePreparer
 {
 	private TimeUnitsCalculator $timeUnitsCalculator;
 
-	public function __construct(PrepareService $prepareService, Parameters $parameters, TimeUnitsCalculator $timeUnitsCalculator)
+	public function __construct(PrepareService $prepareService, Parameters $parameters, TimeUnitsCalculator $timeUnitsCalculator, Translator $translator)
 	{
 		$this->timeUnitsCalculator = $timeUnitsCalculator;
 
 		parent::__construct('player', $prepareService, $parameters);
+		$this->translator = $translator;
 	}
 
 	/**
