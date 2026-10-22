@@ -135,7 +135,7 @@ Technical building blocks without business knowledge.
 | `Http/`            | `Session` and `Cookie`                                                      |
 | `Localization/`    | `Locales/` (current and available locales) and `Translate/` (translator, INI loader, ICU formatter) |
 | `Media/`           | Mime types, ffmpeg, media properties, signed media URLs                     |
-| `Middleware/`      | PSR-15 middleware: session, auth, environment, JSON errors, final render    |
+| `Middleware/`      | PSR-15 middleware: session, environment, JSON errors, final render          |
 | `OAuth2/`          | Entities and repositories for the OAuth2 server                             |
 | `Security/`        | `Crypt` and `CsrfToken`                                                     |
 | `Services/`        | Base classes for services and datatable services                            |
@@ -172,7 +172,7 @@ The features. Every module follows the same layout:
 The modules:
 
 - **`Account/`** — the logged-in user's own account: change password, forced password change, language.
-- **`Auth/`** — login, logout, auto login, OAuth2 endpoints, `UserSession`.
+- **`Auth/`** — login, logout, auto login, OAuth2 endpoints, `UserSession` and the `AuthMiddleware` (protects all routes except a list of public ones).
 - **`Mediapool/`** — media management.
   - `Helper/Media`, `Helper/Nodes`, `Helper/Uploads` — media files, folder tree, uploads.
   - `Utils/` — handlers per media type (image, video, audio, PDF, widget) and the SSRF check for URL uploads.

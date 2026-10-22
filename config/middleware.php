@@ -26,9 +26,9 @@ use App\Framework\Http\Cookie;
 use App\Framework\Localization\Locales\Locales;
 use App\Framework\Http\Session;
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Middleware\AuthMiddleware;
 use App\Framework\Middleware\EnvironmentMiddleware;
 use App\Framework\Middleware\SessionMiddleware;
+use App\Modules\Auth\AuthMiddleware;
 use App\Modules\Auth\AuthService;
 use Slim\Flash\Messages;
 
@@ -46,7 +46,10 @@ return function (ContainerInterface $container, $start_time, $start_memory): App
 		$container->get(Translator::class)
 	));
 
-	$app->add(new AuthMiddleware($container->get(AuthService::class)));
+	$app->add(new AuthMiddleware(
+		$container->get(AuthService::class),
+		$container->get(Session::class),
+		$container->get(Cookie::class)));
 	$app->add(new SessionMiddleware(
 		$container->get(Session::class),
 		$container->get(Messages::class),
