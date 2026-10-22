@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Auth;
 
+use Slim\Flash\Messages;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Security\CsrfToken;
 use App\Framework\Http\Session;
@@ -39,11 +40,15 @@ readonly class LoginController
 {
 	private AuthService $authService;
 	private CsrfToken $csrfToken;
+	private Session $session;
+	private Messages $flash;
 
-	public function __construct(AuthService $authService, CsrfToken $csrfToken)
+	public function __construct(AuthService $authService, CsrfToken $csrfToken, Session $session, Messages $flash)
 	{
 		$this->authService = $authService;
 		$this->csrfToken   = $csrfToken;
+		$this->session     = $session;
+		$this->flash       = $flash;
 	}
 
 	/**
@@ -87,50 +92,47 @@ readonly class LoginController
 	 */
 	public function login(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var Session $session */
-		$session  = $request->getAttribute('session');
 		$params   = (array) $request->getParsedBody();
-		$flash    = $request->getAttribute('flash');
 		// no need to sanitize here, as we are executing prepared statements in DB
 		$username = $params['username'] ?? null;
 		$password = $params['password'] ?? null;
 
 		$csrfToken = $params['csrf_token'] ?? null;
 
-		if(!$session->exists('csrf_token') || $session->get('csrf_token') !== $csrfToken)
+		if(!$this->session->exists('csrf_token') || $this->session->get('csrf_token') !== $csrfToken)
 		{
-			$flash->addMessage('error', 'Invalid CSRF token');
+			$this->flash->addMessage('error', 'Invalid CSRF token');
 			return $this->redirect($response, '/login');
 		}
 
 		$userEntity = $this->authService->login($username, $password);
 		if ($userEntity === null)
 		{
-			$flash->addMessage('error', $this->authService->getErrorMessage());
+			$this->flash->addMessage('error', $this->authService->getErrorMessage());
 			return $this->redirect($response, '/login');
 		}
 
 		$main_data = $userEntity->getMain();
-		$session->set('user', $main_data);
-		$session->set('locale', $main_data['locale']);
+		$this->session->set('user', $main_data);
+		$this->session->set('locale', $main_data['locale']);
 
 		if (array_key_exists('autologin', $params))
 		{
 			$this->authService->createAutologin($main_data['UID']);
 		}
 
-		if (!$session->exists('oauth_redirect_params'))
+		if (!$this->session->exists('oauth_redirect_params'))
 		{
 			$this->csrfToken->generateToken();
 			return $this->redirect($response);
 		}
 
-		$oauthParams = $session->get('oauth_redirect_params');
+		$oauthParams = $this->session->get('oauth_redirect_params');
 		
 		if (!is_array($oauthParams))
 			return $this->redirect($response);
 
-		$session->delete('oauth_redirect_params');
+		$this->session->delete('oauth_redirect_params');
 		return $this->redirect($response, '/api/authorize?' . http_build_query($oauthParams));
 	}
 
@@ -140,14 +142,12 @@ readonly class LoginController
 	 */
 	public function logout(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var Session $session */
-		$session = $request->getAttribute('session');
-		$user    = $session->get('user');
+		$user    = $this->session->get('user');
 		if (is_array($user))
 			$this->authService->logout($user);
 
-		$session->clear();
-		$session->regenerateID();
+		$this->session->clear();
+		$this->session->regenerateID();
 		$this->csrfToken->generateToken();
 
 		return $this->redirect($response, '/login');

@@ -44,6 +44,7 @@ class OAuth2ControllerTest extends TestCase
 	private AuthorizationServer&MockObject $authServerMock;
 	private ServerRequestInterface&Stub $requestStub;
 	private ResponseInterface&MockObject $responseMock;
+	private Session&MockObject $sessionMock;
 
 	/** @var array<string,string> */
 	private array $validParams = ['response_type' => 'code', 'client_id' => '123', 'redirect_uri' => 'https://example.com', 'state' => '123'];
@@ -58,8 +59,9 @@ class OAuth2ControllerTest extends TestCase
 		$this->authServerMock  = $this->createMock(AuthorizationServer::class);
 		$this->requestStub     = $this->createStub(ServerRequestInterface::class);
 		$this->responseMock    = $this->createMock(ResponseInterface::class);
+		$this->sessionMock     = $this->createMock(Session::class);
 
-		$this->controller = new OAuth2Controller($this->authServiceMock, $this->authServerMock);
+		$this->controller = new OAuth2Controller($this->authServiceMock, $this->authServerMock, $this->sessionMock);
 	}
 
 	/**
@@ -122,6 +124,7 @@ class OAuth2ControllerTest extends TestCase
 	#[Group('units')]
 	public function testAuthorizeOAuthServerException(): void
 	{
+		$this->sessionMock->expects($this->never())->method($this->anything());
 		$this->authServerMock->expects($this->once())->method('validateAuthorizationRequest')
 			->willThrowException(new OAuthServerException('error dam dam', 123, 'error'));
 		$this->authServiceMock->expects($this->never())->method('getCurrentUser');
@@ -138,6 +141,7 @@ class OAuth2ControllerTest extends TestCase
 	#[Group('units')]
 	public function testAuthorizeException(): void
 	{
+		$this->sessionMock->expects($this->never())->method($this->anything());
 		$this->authServerMock->expects($this->once())->method('validateAuthorizationRequest')
 			->willThrowException(new \Exception('unknown bum bum'));
 		$this->authServiceMock->expects($this->never())->method('getCurrentUser');
@@ -157,11 +161,9 @@ class OAuth2ControllerTest extends TestCase
 			->with($this->requestStub)
 			->willReturn($authRequestMock);
 
-		$sessionMock = $this->createMock(Session::class);
-		$sessionMock->method('exists')->willReturnMap([['user', true]]);
-		$sessionMock->expects($this->never())->method('set');
-		$sessionMock->expects($this->once())->method('get')->with('user')->willReturn(['UID' => 159]);
-		$this->requestStub->method('getAttribute')->willReturnMap([['session', null, $sessionMock]]);
+		$this->sessionMock->method('exists')->willReturnMap([['user', true]]);
+		$this->sessionMock->expects($this->never())->method('set');
+		$this->sessionMock->expects($this->once())->method('get')->with('user')->willReturn(['UID' => 159]);
 
 		$this->authServiceMock->expects($this->once())->method('getCurrentUser')->with(159);
 		$authRequestMock->expects($this->once())->method('setUser');
@@ -177,6 +179,7 @@ class OAuth2ControllerTest extends TestCase
 	#[Group('units')]
 	public function testTokenReturnsAccessTokenResponse(): void
 	{
+		$this->sessionMock->expects($this->never())->method($this->anything());
 		$tokenResponse = $this->createStub(ResponseInterface::class);
 		$this->authServerMock->expects($this->once())->method('respondToAccessTokenRequest')
 			->with($this->requestStub, $this->responseMock)
@@ -190,6 +193,7 @@ class OAuth2ControllerTest extends TestCase
 	#[Group('units')]
 	public function testTokenOAuthServerException(): void
 	{
+		$this->sessionMock->expects($this->never())->method($this->anything());
 		$this->authServerMock->expects($this->once())->method('respondToAccessTokenRequest')
 			->willThrowException(new OAuthServerException('bäm', 123, 'error'));
 		$this->authServiceMock->expects($this->never())->method($this->anything());
@@ -203,6 +207,7 @@ class OAuth2ControllerTest extends TestCase
 	#[Group('units')]
 	public function testTokenException(): void
 	{
+		$this->sessionMock->expects($this->never())->method($this->anything());
 		$this->authServerMock->expects($this->once())->method('respondToAccessTokenRequest')
 			->willThrowException(new \Exception('unknown double bäm'));
 		$this->authServiceMock->expects($this->never())->method($this->anything());
@@ -224,12 +229,10 @@ class OAuth2ControllerTest extends TestCase
 	 */
 	private function sessionWithoutUser(array $queryParams): Session&MockObject
 	{
-		$sessionMock = $this->createMock(Session::class);
-		$sessionMock->method('exists')->willReturnMap([['user', false]]);
-		$this->requestStub->method('getAttribute')->willReturnMap([['session', null, $sessionMock]]);
+		$this->sessionMock->method('exists')->willReturnMap([['user', false]]);
 		$this->requestStub->method('getQueryParams')->willReturn($queryParams);
 
-		return $sessionMock;
+		return $this->sessionMock;
 	}
 
 	private function expectJsonError(string $error): void

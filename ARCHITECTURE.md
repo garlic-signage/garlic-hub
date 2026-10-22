@@ -24,7 +24,7 @@ in `config/services/`.
 ## Request flow (HTML pages)
 
 1. `public/index.php` loads `config/bootstrap.php` (container, middleware, routes).
-2. Middleware: session → authentication → environment (locale, translator) → routing.
+2. Middleware: routing → authentication → environment (locale, translator). The session is started when the container creates it.
 3. The controller returns a `PageResponse` with the page data.
 4. `FinalRenderMiddleware` renders the content template into `templates/layouts/main_layout.mustache`,
    using `Shared/Layout` for menus, language switch and flash messages.
@@ -135,7 +135,7 @@ Technical building blocks without business knowledge.
 | `Http/`            | `Session` and `Cookie`                                                      |
 | `Localization/`    | `Locales/` (current and available locales) and `Translate/` (translator, INI loader, ICU formatter) |
 | `Media/`           | Mime types, ffmpeg, media properties, signed media URLs                     |
-| `Middleware/`      | PSR-15 middleware: session, environment, JSON errors, final render          |
+| `Middleware/`      | PSR-15 middleware: environment, JSON errors, final render                   |
 | `OAuth2/`          | Entities and repositories for the OAuth2 server                             |
 | `Security/`        | `Crypt` and `CsrfToken`                                                     |
 | `Services/`        | Base classes for services and datatable services                            |

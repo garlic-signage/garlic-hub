@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Controller;
 
+use App\Framework\Http\Session;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -41,10 +42,13 @@ readonly class ShowDatatableController
 {
 	private DatatableFacade $facade;
 	private DatatableTemplatePreparer $templateFormatter;
-	public function __construct(DatatableFacade $facade, DatatableTemplatePreparer $templateFormatter)
+	private Session $session;
+
+	public function __construct(DatatableFacade $facade, DatatableTemplatePreparer $templateFormatter, Session $session)
 	{
 		$this->facade            = $facade;
 		$this->templateFormatter = $templateFormatter;
+		$this->session           = $session;
 	}
 
 	/**
@@ -59,7 +63,7 @@ readonly class ShowDatatableController
 	 */
 	public function show(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		$this->facade->configure($request->getAttribute('translator'), $request->getAttribute('session'));
+		$this->facade->configure($request->getAttribute('translator'), $this->session);
 		$this->facade->processSubmittedUserInput($request->getQueryParams());
 
 		$this->facade->prepareDataGrid();

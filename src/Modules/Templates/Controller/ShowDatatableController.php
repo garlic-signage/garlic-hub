@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Controller;
 
+use App\Framework\Http\Session;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -40,7 +41,8 @@ use Psr\Http\Message\ServerRequestInterface;
 readonly class ShowDatatableController
 {
 	public function __construct(private DatatableFacade $facade,
-								private DatatableTemplatePreparer $templateFormatter)
+								private DatatableTemplatePreparer $templateFormatter,
+								private Session $session)
 	{}
 
     /**
@@ -54,7 +56,7 @@ readonly class ShowDatatableController
      */
 	public function show(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		$this->facade->configure($request->getAttribute('translator'), $request->getAttribute('session'));
+		$this->facade->configure($request->getAttribute('translator'), $this->session);
 		if (!$this->facade->checkRights())
 			return $response->withHeader('Location', '/')->withStatus(302);
 

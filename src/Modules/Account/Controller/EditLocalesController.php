@@ -34,10 +34,12 @@ use Psr\Http\Message\ServerRequestInterface;
 class EditLocalesController
 {
 	private AccountService $accountService;
+	private Session $session;
 
-	public function __construct(AccountService $accountService)
+	public function __construct(AccountService $accountService, Session $session)
 	{
 		$this->accountService = $accountService;
+		$this->session        = $session;
 	}
 
 	/**
@@ -50,16 +52,14 @@ class EditLocalesController
 		$locale  = htmlentities($args['locale'], ENT_QUOTES);
 
 		// set locale into session
-		/** @var  Session $session */
-		$session = $request->getAttribute('session');
-		$session->set('locale', $locale);
+		$this->session->set('locale', $locale);
 
-		if ($session->exists('user'))
+		if ($this->session->exists('user'))
 		{
 			/** @var array<string,mixed> $user */
-			$user = $session->get('user');
+			$user = $this->session->get('user');
 			$user['locale'] = $locale;
-			$session->set('user', $user);
+			$this->session->set('user', $user);
 			$this->accountService->updateLocale($user['UID'], $locale);
 		}
 

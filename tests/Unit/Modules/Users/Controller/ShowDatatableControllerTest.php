@@ -77,7 +77,9 @@ class ShowDatatableControllerTest extends TestCase
 			$this->facadeMock,
 			$this->templatePreparerMock,
 			$this->validatorStub,
-			$this->responseHandlerMock
+			$this->responseHandlerMock,
+			$this->sessionMock,
+			$this->flashMock
 		);
 	}
 
@@ -93,11 +95,8 @@ class ShowDatatableControllerTest extends TestCase
 		$this->expectUntouched($this->translatorMock, $this->flashMock, $this->sessionMock, $this->responseHandlerMock);
 		$templateData = ['main_layout' => [], 'this_layout' => ['template' => 'generic/datatable', 'data' => ['key' => 'value']]];
 
-		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
-			->willReturnMap([
-				['translator', null, $this->translatorMock],
-				['session', null, $this->sessionMock],
-			]);
+		$this->requestMock->expects($this->once())->method('getAttribute')->with('translator')
+			->willReturn($this->translatorMock);
 
 		$this->facadeMock->expects($this->once())->method('configure')
 			->with($this->translatorMock, $this->sessionMock);
@@ -228,12 +227,7 @@ class ShowDatatableControllerTest extends TestCase
 
 	private function setStandardMocks(int $UID): void
 	{
-		$this->requestMock->method('getAttribute')
-			->willReturnMap([
-				['flash', null, $this->flashMock],
-				['translator', null, $this->translatorMock],
-				['session', null, $this->sessionMock]
-			]);
+		$this->requestMock->method('getAttribute')->with('translator')->willReturn($this->translatorMock);
 		$this->sessionMock->method('get')->with('user')->willReturn(['UID' => $UID]);
 	}
 

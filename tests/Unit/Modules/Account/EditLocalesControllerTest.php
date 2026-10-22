@@ -62,7 +62,6 @@ class EditLocalesControllerTest extends TestCase
 		$this->requestMock->method('getAttribute')
 						  ->willReturnCallback(function ($attribute) {
 							  return match ($attribute) {
-								  'session' => $this->sessionMock,
 								  'locales' => $this->localesMock,
 								  default => null,
 							  };
@@ -87,7 +86,7 @@ class EditLocalesControllerTest extends TestCase
 			 ->with(1, 'de_DE');
 
 
-		$controller = new EditLocalesController($this->accountServiceMock);
+		$controller = new EditLocalesController($this->accountServiceMock, $this->sessionMock);
 		$result = $controller->setLocales($this->requestMock, $this->responseMock, ['locale' => 'de_DE']);
 		static::assertSame($this->responseMock, $result);
 	}
@@ -101,7 +100,6 @@ class EditLocalesControllerTest extends TestCase
 		$this->requestMock->method('getAttribute')
 						  ->willReturnCallback(function ($attribute) {
 							  return match ($attribute) {
-								  'session' => $this->sessionMock,
 								  'locales' => $this->localesMock,
 								  default => null,
 							  };
@@ -120,7 +118,7 @@ class EditLocalesControllerTest extends TestCase
 		$this->accountServiceMock->expects($this->never())->method('updateLocale');
 		$this->responseMock->expects($this->once())->method('withStatus')->with(302)->willReturn($this->responseMock);
 
-		$controller = new EditLocalesController($this->accountServiceMock);
+		$controller = new EditLocalesController($this->accountServiceMock, $this->sessionMock);
 		$result = $controller->setLocales($this->requestMock, $this->responseMock, ['locale' => 'de_DE']);
 		static::assertSame($this->responseMock, $result);
 	}

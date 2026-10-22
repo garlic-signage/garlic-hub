@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Mediapool\Controller;
 
+use App\Modules\Auth\UserSession;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Config\Config;
 use App\Modules\Mediapool\Services\NodesService;
@@ -36,13 +37,12 @@ class ShowController
 {
 
 	private NodesService $nodesService;
+	private UserSession $userSession;
 
-	/**
-	 * @param NodesService $nodesService
-	 */
-	public function __construct(NodesService $nodesService)
+	public function __construct(NodesService $nodesService, UserSession $userSession)
 	{
 		$this->nodesService = $nodesService;
+		$this->userSession  = $userSession;
 	}
 
 	/**
@@ -130,9 +130,7 @@ class ShowController
 				]
 			]
 		];
-		$session = $request->getAttribute('session');
-
-		if ($this->nodesService->isModuleAdmin($session->get('user')['UID']))
+		if ($this->nodesService->isModuleAdmin($this->userSession->getUID()))
 		{
 			$data['this_layout']['data']['add_root_folder'] = [
 				'LANG_ADD_ROOT_FOLDER' => $translator->translate('add_root_folder', 'mediapool')

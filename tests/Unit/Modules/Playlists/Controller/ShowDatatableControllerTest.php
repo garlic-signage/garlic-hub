@@ -61,7 +61,7 @@ class ShowDatatableControllerTest extends TestCase
 		$this->translatorStub       = $this->createStub(Translator::class);
 		$this->sessionStub          = $this->createStub(Session::class);
 
-		$this->controller = new ShowDatatableController($this->facadeMock, $this->templatePreparerMock);
+		$this->controller = new ShowDatatableController($this->facadeMock, $this->templatePreparerMock, $this->sessionStub);
 	}
 
 	/**
@@ -72,11 +72,8 @@ class ShowDatatableControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowMethodReturnsPageResponse(): void
 	{
-		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
-			->willReturnMap([
-				['translator', null, $this->translatorStub],
-				['session', null, $this->sessionStub],
-			]);
+		$this->requestMock->expects($this->once())->method('getAttribute')->with('translator')
+			->willReturn($this->translatorStub);
 
 		$this->facadeMock->expects($this->once())->method('configure')
 			->with($this->translatorStub, $this->sessionStub);

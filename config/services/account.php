@@ -58,7 +58,7 @@ $dependencies[AccountService::class] = DI\factory(function (ContainerInterface $
 });
 $dependencies[EditLocalesController::class] = DI\factory(function (ContainerInterface $container)
 {
-	return new EditLocalesController($container->get(AccountService::class));
+	return new EditLocalesController($container->get(AccountService::class), $container->get(Session::class));
 });
 $dependencies[Parameters::class] = DI\factory(function (ContainerInterface $container)
 {

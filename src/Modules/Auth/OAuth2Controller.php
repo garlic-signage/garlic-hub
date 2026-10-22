@@ -37,15 +37,18 @@ class OAuth2Controller
 {
 	private AuthService $authService;
 	private AuthorizationServer $authServer;
+	private Session $session;
 
 	/**
 	 * @param AuthService $auth2Service
 	 * @param AuthorizationServer $authServer
+	 * @param Session $session
 	 */
-	public function __construct(AuthService $auth2Service, AuthorizationServer $authServer)
+	public function __construct(AuthService $auth2Service, AuthorizationServer $authServer, Session $session)
 	{
 		$this->authService = $auth2Service;
-		$this->authServer = $authServer;
+		$this->authServer  = $authServer;
+		$this->session     = $session;
 	}
 
 	/**
@@ -60,10 +63,8 @@ class OAuth2Controller
 		try
 		{
 			$authRequest = $this->authServer->validateAuthorizationRequest($request);
-			/**  @var Session $session */
 			// check if a user is logged in
-			$session  = $request->getAttribute('session');
-			if (!$session->exists('user'))
+			if (!$this->session->exists('user'))
 			{
 				$params = $request->getQueryParams();
 				$sanitizedParams = [
@@ -72,13 +73,13 @@ class OAuth2Controller
 					'redirect_uri'  => $this->validateRedirectUri($params['redirect_uri'] ?? null),
 					'state'         => $this->validateState($params['state'] ?? null),
 				];
-				$session->set('oauth_redirect_params', $sanitizedParams);
+				$this->session->set('oauth_redirect_params', $sanitizedParams);
 				// redirect to ath site
 				return $response->withHeader('Location', '/login')->withStatus(302);
 			}
 
 			/** @var array{UID: int} $user */
-			$user = $session->get('user');
+			$user = $this->session->get('user');
 			$authRequest->setUser($this->authService->getCurrentUser($user['UID'])); // an instance of UserEntityInterface
 
 			// Once the user has approved or denied the client update the status

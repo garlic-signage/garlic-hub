@@ -189,7 +189,8 @@ $dependencies[ShowDatatableController::class] = DI\factory(function (ContainerIn
 {
 	return new ShowDatatableController(
 		$container->get(DatatableFacade::class),
-		$container->get(DatatableTemplatePreparer::class)
+		$container->get(DatatableTemplatePreparer::class),
+		$container->get(Session::class)
 	);
 });
 $dependencies[ShowComposeController::class] = DI\factory(function (ContainerInterface $container)

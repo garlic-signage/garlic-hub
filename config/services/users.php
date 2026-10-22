@@ -20,6 +20,7 @@
 declare(strict_types=1);
 
 use App\Framework\Controller\JsonResponseHandler;
+use Slim\Flash\Messages;
 use App\Shared\Acl\AclHelper;
 use App\Framework\Validation\BaseValidator;
 use App\Framework\Config\Config;
@@ -124,7 +125,9 @@ $dependencies[ShowDatatableController::class] = DI\factory(function (ContainerIn
 		$container->get(DatatableFacade::class),
 		$container->get(DatatableTemplatePreparer::class),
 		$container->get(BaseValidator::class),
-		$container->get(JsonResponseHandler::class)
+		$container->get(JsonResponseHandler::class),
+		$container->get(Session::class),
+		$container->get(Messages::class)
 	);
 });
 

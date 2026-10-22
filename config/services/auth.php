@@ -20,6 +20,8 @@
 declare(strict_types=1);
 
 use App\Framework\Config\Config;
+use Slim\Flash\Messages;
+use App\Framework\Http\Session;
 use App\Framework\Http\Cookie;
 use App\Framework\Security\CsrfToken;
 use App\Framework\OAuth2\ClientsRepository;
@@ -57,7 +59,12 @@ $dependencies[AuthService::class] = DI\factory(function (ContainerInterface $con
 });
 $dependencies[LoginController::class] = DI\factory(function (ContainerInterface $container)
 {
-	return new LoginController($container->get(AuthService::class), $container->get(CsrfToken::class));
+	return new LoginController(
+		$container->get(AuthService::class),
+		$container->get(CsrfToken::class),
+		$container->get(Session::class),
+		$container->get(Messages::class)
+	);
 });
 
 $dependencies['AuthorizationServer'] = DI\factory(function (ContainerInterface $container) {
@@ -91,7 +98,8 @@ $dependencies[OAuth2Controller::class] = DI\factory(function (ContainerInterface
 {
 	return new OAuth2Controller(
 		$container->get(AuthService::class),
-		$container->get('AuthorizationServer')
+		$container->get('AuthorizationServer'),
+		$container->get(Session::class)
 	);
 });
 

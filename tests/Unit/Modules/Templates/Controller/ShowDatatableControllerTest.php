@@ -59,14 +59,11 @@ class ShowDatatableControllerTest extends TestCase
 		$this->translator           = $this->createStub(Translator::class);
 		$this->session              = $this->createStub(Session::class);
 		$request                    = $this->createStub(ServerRequestInterface::class);
-		$request->method('getAttribute')->willReturnMap([
-			['translator', null, $this->translator],
-			['session', null, $this->session],
-		]);
+		$request->method('getAttribute')->willReturnMap([['translator', null, $this->translator]]);
 		$request->method('getQueryParams')->willReturn(['elements_page' => 2]);
 		$this->request = $request;
 
-		$this->controller = new ShowDatatableController($this->facadeMock, $this->templatePreparerMock);
+		$this->controller = new ShowDatatableController($this->facadeMock, $this->templatePreparerMock, $this->session);
 	}
 
     /**

@@ -21,9 +21,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Mediapool\Controller;
 
+use App\Modules\Auth\UserSession;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Config\Config;
-use App\Framework\Http\Session;
 use App\Framework\Localization\Translate\Translator;
 use App\Modules\Mediapool\Controller\ShowController;
 use App\Modules\Mediapool\Services\NodesService;
@@ -41,7 +41,7 @@ class ShowControllerTest extends TestCase
 	private ServerRequestInterface&MockObject $requestMock;
 	private ResponseInterface&MockObject $responseMock;
 	private NodesService&Stub $nodesServiceStub;
-	private Session&MockObject $sessionMock;
+	private UserSession&Stub $userSessionStub;
 	private Translator&MockObject $translatorMock;
 	private Config&Stub $configStub;
 	private ShowController $controller;
@@ -55,9 +55,10 @@ class ShowControllerTest extends TestCase
 		$this->requestMock      = $this->createMock(ServerRequestInterface::class);
 		$this->responseMock     = $this->createMock(ResponseInterface::class);
 		$this->nodesServiceStub = $this->createStub(NodesService::class);
-		$this->controller       = new ShowController($this->nodesServiceStub);
+		$this->userSessionStub  = $this->createStub(UserSession::class);
+		$this->userSessionStub->method('getUID')->willReturn(1);
+		$this->controller       = new ShowController($this->nodesServiceStub, $this->userSessionStub);
 
-		$this->sessionMock      = $this->createMock(Session::class);
 		$this->translatorMock   = $this->createMock(Translator::class);
 		$this->configStub       = $this->createStub(Config::class);
 	}
@@ -70,18 +71,16 @@ class ShowControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowOverview(): void
 	{
-		$this->requestMock->expects($this->exactly(3))->method('getAttribute')
+		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
 			->willReturnCallback(function ($attribute)
 			{
 				return match ($attribute)
 				{
 					'translator' => $this->translatorMock,
-					'session' => $this->sessionMock,
 					'config' => $this->configStub,
 					default => null,
 				};
 			});
-		$this->sessionMock->method('get')->with('user')->willReturn(['UID' => 1]);
 
 		$this->nodesServiceStub->method('isModuleAdmin')->willReturn(false);
 		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
@@ -105,18 +104,16 @@ class ShowControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowOverviewWithAdmin(): void
 	{
-		$this->requestMock->expects($this->exactly(3))->method('getAttribute')
+		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
 			->willReturnCallback(function ($attribute)
 			{
 				return match ($attribute)
 				{
 					'translator' => $this->translatorMock,
-					'session' => $this->sessionMock,
 					'config' => $this->configStub,
 					default => null,
 				};
 			});
-		$this->sessionMock->method('get')->with('user')->willReturn(['UID' => 1]);
 
 		$this->nodesServiceStub->method('isModuleAdmin')->willReturn(true);
 		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
@@ -139,18 +136,16 @@ class ShowControllerTest extends TestCase
 	#[Group('units')]
 	public function testShowOverviewWithEnterprise(): void
 	{
-		$this->requestMock->expects($this->exactly(3))->method('getAttribute')
+		$this->requestMock->expects($this->exactly(2))->method('getAttribute')
 			->willReturnCallback(function ($attribute)
 			{
 				return match ($attribute)
 				{
 					'translator' => $this->translatorMock,
-					'session' => $this->sessionMock,
 					'config' => $this->configStub,
 					default => null,
 				};
 			});
-		$this->sessionMock->method('get')->with('user')->willReturn(['UID' => 1]);
 
 		$this->nodesServiceStub->method('isModuleAdmin')->willReturn(false);
 		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
