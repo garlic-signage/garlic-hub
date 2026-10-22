@@ -21,11 +21,11 @@ declare(strict_types=1);
 
 use Psr\Container\ContainerInterface;
 use Slim\App;
-use App\Framework\Core\Config\Config;
-use App\Framework\Core\Cookie;
-use App\Framework\Core\Locales\Locales;
-use App\Framework\Core\Session;
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Config\Config;
+use App\Framework\Http\Cookie;
+use App\Framework\Localization\Locales\Locales;
+use App\Framework\Http\Session;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Middleware\AuthMiddleware;
 use App\Framework\Middleware\EnvironmentMiddleware;
 use App\Framework\Middleware\SessionMiddleware;

@@ -20,7 +20,7 @@
 declare(strict_types=1);
 
 use App\Framework\Controller\JsonResponseHandler;
-use App\Framework\Core\Translate\Translator;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Middleware\JsonErrorHandler;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;

@@ -20,11 +20,11 @@
 declare(strict_types=1);
 
 use App\Framework\Controller\JsonResponseHandler;
-use App\Framework\Core\Acl\AclHelper;
-use App\Framework\Core\BaseValidator;
-use App\Framework\Core\Config\Config;
-use App\Framework\Core\ShellExecutor;
-use App\Framework\Core\Translate\Translator;
+use App\Shared\Acl\AclHelper;
+use App\Framework\Validation\BaseValidator;
+use App\Framework\Config\Config;
+use App\Framework\System\ShellExecutor;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Database\NestedSets\Service;
 use App\Framework\Media\Ffmpeg;
 use App\Framework\Media\MediaProperties;

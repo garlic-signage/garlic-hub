@@ -20,12 +20,12 @@
 declare(strict_types=1);
 
 
-use App\Framework\Core\Acl\AclHelper;
-use App\Framework\Core\Config\Config;
-use App\Framework\Core\CsrfToken;
-use App\Framework\Core\Sanitizer;
-use App\Framework\Core\Session;
-use App\Framework\Core\Translate\Translator;
+use App\Shared\Acl\AclHelper;
+use App\Framework\Config\Config;
+use App\Framework\Security\CsrfToken;
+use App\Framework\Validation\Sanitizer;
+use App\Framework\Http\Session;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Database\Datatable\DatatableQuery;
 use App\Framework\Database\Datatable\FilterConditions;
 use App\Framework\Media\DataUrlDecoder;

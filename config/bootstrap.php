@@ -19,9 +19,9 @@
 */
 declare(strict_types=1);
 
-use App\Framework\Core\Config\Config;
-use App\Framework\Core\Config\IniConfigLoader;
-use App\Framework\Core\CsrfToken;
+use App\Framework\Config\Config;
+use App\Framework\Config\IniConfigLoader;
+use App\Framework\Security\CsrfToken;
 use DI\ContainerBuilder;
 use Psr\Container\ContainerInterface;
 use Slim\App;
