@@ -19,7 +19,7 @@
 */
 declare(strict_types=1);
 
-namespace Tests\Integration;
+namespace Tests\Integration\Support;
 
 use App\Framework\Config\Config;
 use App\Framework\Config\IniConfigLoader;
@@ -40,7 +40,7 @@ use RecursiveIteratorIterator;
  */
 final class TestContainerFactory
 {
-	private const string ROOT = __DIR__ . '/../..';
+	private const string ROOT = __DIR__ . '/../../..';
 
 	/**
 	 * @throws \Exception

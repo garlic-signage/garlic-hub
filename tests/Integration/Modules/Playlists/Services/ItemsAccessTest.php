@@ -19,14 +19,14 @@
 */
 declare(strict_types=1);
 
-namespace Tests\Integration\Security\Playlists;
+namespace Tests\Integration\Modules\Playlists\Services;
 
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\NotFoundException;
 use App\Modules\Playlists\Services\ItemsService;
 use PHPUnit\Framework\Attributes\Group;
 use Throwable;
-use Tests\Integration\ContainerTestCase;
+use Tests\Integration\Support\ContainerTestCase;
 
 /**
  * Who may change which playlist items. Fixtures: items 1 to 5 are in the playlist 1 of anna,
@@ -35,7 +35,7 @@ use Tests\Integration\ContainerTestCase;
  * The item ids come from the request. Everything must be checked against the playlist the
  * item really belongs to, not against a playlist id the client sends along.
  */
-#[Group('security')]
+#[Group('acl')]
 class ItemsAccessTest extends ContainerTestCase
 {
 	private ItemsService $itemsService;
@@ -43,7 +43,7 @@ class ItemsAccessTest extends ContainerTestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->loadFixture('security/users.sql');
+		$this->loadFixture('acl/users.sql');
 		$this->loadFixture('playlists/playlists.sql');
 		$this->loadFixture('playlists/mediapool_files.sql');
 		$this->loadFixture('playlists/items.sql');

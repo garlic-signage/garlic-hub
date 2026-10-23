@@ -19,7 +19,7 @@
 */
 declare(strict_types=1);
 
-namespace Tests\Integration;
+namespace Tests\Integration\Support;
 
 use App\Framework\Http\Session;
 use Phpfastcache\Helper\Psr16Adapter;
@@ -30,7 +30,7 @@ use Psr\Container\ContainerInterface;
  * container, on a database built by the real migrations.
  *
  * PHPUnit does not inherit groups from a parent class: every concrete test class needs its
- * own group, e.g. #[Group('security')].
+ * own group, e.g. #[Group('acl')].
  */
 abstract class ContainerTestCase extends DatabaseTestCase
 {

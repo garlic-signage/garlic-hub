@@ -19,12 +19,12 @@
 */
 declare(strict_types=1);
 
-namespace Tests\Integration\Db\Modules\Playlists\Repositories;
+namespace Tests\Integration\Modules\Playlists\Repositories;
 
 use App\Modules\Playlists\Repositories\PlaylistsRepository;
 use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
-use Tests\Integration\Db\RepositoryTestCase;
+use Tests\Integration\Support\RepositoryTestCase;
 
 #[Group('db')]
 class PlaylistsRepositoryTest extends RepositoryTestCase
@@ -35,7 +35,7 @@ class PlaylistsRepositoryTest extends RepositoryTestCase
 	{
 		parent::setUp();
 		$this->repository = new PlaylistsRepository($this->connection);
-		$this->loadFixture('security/users.sql');
+		$this->loadFixture('acl/users.sql');
 		$this->loadFixture('playlists/playlists.sql');
 		$this->loadFixture('playlists/items.sql');
 	}

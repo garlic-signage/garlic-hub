@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2024 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -18,3 +18,16 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 declare(strict_types=1);
+
+namespace Tests\Integration\Support;
+
+
+/**
+ * Base class for tests of repositories against the real schema.
+ *
+ * PHPUnit does not inherit groups from a parent class: every concrete test class needs
+ * #[Group('db')] itself. Then they run separately with --group db.
+ */
+abstract class RepositoryTestCase extends DatabaseTestCase
+{
+}

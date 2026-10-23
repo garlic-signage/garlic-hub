@@ -19,24 +19,24 @@
 */
 declare(strict_types=1);
 
-namespace Tests\Integration\Security\Player;
+namespace Tests\Integration\Modules\Player\Services;
 
 use App\Modules\Player\Services\PlayerDatatableService;
 use PHPUnit\Framework\Attributes\Group;
-use Tests\Integration\ContainerTestCase;
+use Tests\Integration\Support\ContainerTestCase;
 
 /**
  * Who sees which players in the player list. Fixtures: players 1 and 2 belong to anna,
  * 3 to bernd, 4 to the admin.
  */
-#[Group('security')]
+#[Group('acl')]
 class PlayerVisibilityTest extends ContainerTestCase
 {
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->loadFixture('security/users.sql');
-		$this->loadFixture('security/players.sql');
+		$this->loadFixture('acl/users.sql');
+		$this->loadFixture('acl/players.sql');
 	}
 
 	public function testAdminSeesAllPlayers(): void

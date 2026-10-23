@@ -19,20 +19,20 @@
 */
 declare(strict_types=1);
 
-namespace Tests\Integration\Security\Playlists;
+namespace Tests\Integration\Modules\Playlists\Services;
 
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\NotFoundException;
 use App\Modules\Playlists\Services\PlaylistsService;
 use PHPUnit\Framework\Attributes\Group;
-use Tests\Integration\ContainerTestCase;
+use Tests\Integration\Support\ContainerTestCase;
 
 /**
  * Who may read, change and delete which playlist. The owner may edit and delete a playlist
  * (different from players), the admin may do everything, everybody else nothing.
  * Fixtures: playlists 1 and 3 belong to anna, 2 to bernd.
  */
-#[Group('security')]
+#[Group('acl')]
 class PlaylistAccessTest extends ContainerTestCase
 {
 	private PlaylistsService $playlistsService;
@@ -40,7 +40,7 @@ class PlaylistAccessTest extends ContainerTestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->loadFixture('security/users.sql');
+		$this->loadFixture('acl/users.sql');
 		$this->loadFixture('playlists/playlists.sql');
 		$this->loadFixture('playlists/mediapool_files.sql');
 		$this->loadFixture('playlists/items.sql');

@@ -19,12 +19,12 @@
 */
 declare(strict_types=1);
 
-namespace Tests\Integration\Db\Modules\Player\Repositories;
+namespace Tests\Integration\Modules\Player\Repositories;
 
 use App\Modules\Player\Repositories\PlayerTokenRepository;
 use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
-use Tests\Integration\Db\RepositoryTestCase;
+use Tests\Integration\Support\RepositoryTestCase;
 
 #[Group('db')]
 class PlayerTokenRepositoryTest extends RepositoryTestCase

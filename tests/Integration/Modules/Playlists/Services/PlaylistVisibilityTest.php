@@ -19,22 +19,22 @@
 */
 declare(strict_types=1);
 
-namespace Tests\Integration\Security\Playlists;
+namespace Tests\Integration\Modules\Playlists\Services;
 
 use App\Modules\Playlists\Services\PlaylistsDatatableService;
 use PHPUnit\Framework\Attributes\Group;
-use Tests\Integration\ContainerTestCase;
+use Tests\Integration\Support\ContainerTestCase;
 
 /**
  * Who sees which playlists in the playlist list. Fixtures: playlists 1 and 3 belong to anna, 2 to bernd.
  */
-#[Group('security')]
+#[Group('acl')]
 class PlaylistVisibilityTest extends ContainerTestCase
 {
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->loadFixture('security/users.sql');
+		$this->loadFixture('acl/users.sql');
 		$this->loadFixture('playlists/playlists.sql');
 	}
 

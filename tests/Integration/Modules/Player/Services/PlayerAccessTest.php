@@ -19,13 +19,13 @@
 */
 declare(strict_types=1);
 
-namespace Tests\Integration\Security\Player;
+namespace Tests\Integration\Modules\Player\Services;
 
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\NotFoundException;
 use App\Modules\Player\Services\PlayerService;
 use PHPUnit\Framework\Attributes\Group;
-use Tests\Integration\ContainerTestCase;
+use Tests\Integration\Support\ContainerTestCase;
 
 /**
  * Who may change or delete which player. Fixtures: players 1 and 2 belong to anna,
@@ -34,7 +34,7 @@ use Tests\Integration\ContainerTestCase;
  * Currently only the module admin may change a player in the edge edition. Even the owner
  * is denied. These tests describe that and protect the "deny by default".
  */
-#[Group('security')]
+#[Group('acl')]
 class PlayerAccessTest extends ContainerTestCase
 {
 	private PlayerService $playerService;
@@ -42,8 +42,8 @@ class PlayerAccessTest extends ContainerTestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->loadFixture('security/users.sql');
-		$this->loadFixture('security/players.sql');
+		$this->loadFixture('acl/users.sql');
+		$this->loadFixture('acl/players.sql');
 		$this->playerService = $this->container->get(PlayerService::class);
 	}
 

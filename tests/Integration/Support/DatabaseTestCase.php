@@ -19,7 +19,7 @@
 */
 declare(strict_types=1);
 
-namespace Tests\Integration;
+namespace Tests\Integration\Support;
 
 use App\Framework\Database\Migration\Repository;
 use App\Framework\Database\Migration\Runner;
@@ -39,12 +39,12 @@ use PHPUnit\Framework\TestCase;
  * Test data comes from SQL scripts in tests/resources/sql, loaded with loadFixture().
  *
  * Do not extend this class directly. Use RepositoryTestCase (group db) or
- * ContainerTestCase (group integration). Groups are not inherited, set them on every concrete class.
+ * ContainerTestCase (group acl). Groups are not inherited, set them on every concrete class.
  */
 abstract class DatabaseTestCase extends TestCase
 {
-	private const string MIGRATION_DIR = __DIR__ . '/../../migrations/edge';
-	private const string FIXTURE_DIR   = __DIR__ . '/../resources/sql';
+	private const string MIGRATION_DIR = __DIR__ . '/../../../migrations/edge';
+	private const string FIXTURE_DIR   = __DIR__ . '/../../resources/sql';
 
 	protected Connection $connection;
 
