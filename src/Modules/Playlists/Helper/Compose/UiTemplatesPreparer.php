@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\Compose;
 
+use App\Framework\Helper\Json;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -126,7 +127,9 @@ readonly class UiTemplatesPreparer
 					'LANG_ZONE_HEIGHT' => $this->translator->translate('zone_height', self::MODULE_NAME),
 					'LANG_ZONE_BGCOLOR' => $this->translator->translate('zone_bgcolor', self::MODULE_NAME),
 					'LANG_ZONE_TRANSPARENT' => $this->translator->translate('zone_transparent', self::MODULE_NAME),
-					'LANG_CONFIRM_CLOSE_EDITOR' => $this->translator->translate('confirm_close_editor', self::MODULE_NAME)
+					'LANG_JS' => Json::encodeForScript([
+						'confirm_close' => $this->translator->translate('confirm_close_editor', self::MODULE_NAME)
+					])
 				]
 			]
 		];
@@ -173,7 +176,7 @@ readonly class UiTemplatesPreparer
 					'LANG_TOTAL_FILESIZE' => $this->translator->translate('total_filesize', self::MODULE_NAME),
 					'has_time_limit' => $this->rightsChecker->checkTimeLimit($playlist['time_limit']),
 					'LANG_SHUFFLE' => $this->translator->translate('shuffle', self::MODULE_NAME),
-					'LANG_PICKING_OPTION_ALL' => $this->translator->translate('all', self::MODULE_NAME),
+					'LANG_JS' => Json::encodeForScript(['picking_all' => $this->translator->translate('all', self::MODULE_NAME)]),
 					'LANG_PICKING_MEDIA_PER_CYCLE' => $this->translator->translate('picking_media_per_cycle', self::MODULE_NAME),
 					'LANG_PLAYER_EXPORT' => $this->translator->translate('player_export', self::MODULE_NAME),
 					'LANG_PLAYLIST_PREVIEW' => $this->translator->translate('preview', self::MODULE_NAME),

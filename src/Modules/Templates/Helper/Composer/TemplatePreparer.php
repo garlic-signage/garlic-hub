@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Helper\Composer;
 
+use App\Framework\Helper\Json;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -105,6 +106,12 @@ readonly class TemplatePreparer
 			'LANG_APPLY_MEDIA' => $this->translator->translate('apply', 'main'),
 			'LANG_CANCEL' => $this->translator->translate('cancel', 'main'),
 			'LANG_TRANSFER' => $this->translator->translate('transfer', 'main'),
+			'LANG_JS' => Json::encodeForScript([
+				'confirm_close' => $this->translator->translate('confirm_close_composer', 'templates'),
+				'confirm_reset' => $this->translator->translate('confirm_reset', 'templates'),
+				'add_image'     => $this->translator->translate('insert_image', 'templates'),
+				'replace_image' => $this->translator->translate('replace_image', 'templates')
+			]),
 			'TEMPLATE_ID' => $templateId
 		];
 

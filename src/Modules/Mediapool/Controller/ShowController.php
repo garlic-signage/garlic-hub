@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Mediapool\Controller;
 
+use App\Framework\Helper\Json;
 use App\Framework\Localization\Translate\Translator;
 use App\Modules\Auth\UserSession;
 use App\Framework\TemplateEngine\PageResponse;
@@ -140,6 +141,13 @@ class ShowController
 				];
 			$data['this_layout']['data']['LANG_ADD_ROOT_FOLDER'] = $this->translator->translate('add_root_folder', 'mediapool');
 		}
+		$data['this_layout']['data']['LANG_JS'] = Json::encodeForScript([
+			'add_root_folder'    => $this->translator->translate('add_root_folder', 'mediapool'),
+			'add_sub_folder'     => $this->translator->translate('add_sub_folder', 'mediapool'),
+			'edit_folder'        => $this->translator->translate('edit_folder', 'mediapool'),
+			'start_record_video' => $this->translator->translate('start_record_video', 'mediapool'),
+			'stop_record_video'  => $this->translator->translate('stop_record_video', 'mediapool')
+		]);
 		if ($this->config->getEdition() === Config::PLATFORM_EDITION_ENTERPRISE)
 		{
 			$data['this_layout']['data']['folder_dialog_visibility'] = [

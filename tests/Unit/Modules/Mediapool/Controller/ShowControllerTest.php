@@ -75,7 +75,7 @@ class ShowControllerTest extends TestCase
 		$this->nodesServiceStub->method('isModuleAdmin')->willReturn(false);
 		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
 
-		$this->translatorMock->expects($this->exactly(55))->method('translate');
+		$this->translatorMock->expects($this->exactly(60))->method('translate');
 
 		$this->responseMock->expects($this->never())->method($this->anything());
 
@@ -99,7 +99,7 @@ class ShowControllerTest extends TestCase
 		$this->nodesServiceStub->method('isModuleAdmin')->willReturn(true);
 		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
 
-		$this->translatorMock->expects($this->exactly(57))->method('translate');
+		$this->translatorMock->expects($this->exactly(62))->method('translate');
 
 		$this->responseMock->expects($this->never())->method($this->anything());
 
@@ -122,7 +122,7 @@ class ShowControllerTest extends TestCase
 		$this->nodesServiceStub->method('isModuleAdmin')->willReturn(false);
 		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
 
-		$this->translatorMock->expects($this->exactly(56))->method('translate');
+		$this->translatorMock->expects($this->exactly(61))->method('translate');
 
 		$this->responseMock->expects($this->never())->method($this->anything());
 

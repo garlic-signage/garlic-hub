@@ -188,7 +188,7 @@ class UiTemplatesPreparerTest extends TestCase
 					'LANG_ZONE_HEIGHT' => 'Height',
 					'LANG_ZONE_BGCOLOR' => 'Background Color',
 					'LANG_ZONE_TRANSPARENT' => 'Transparent',
-					'LANG_CONFIRM_CLOSE_EDITOR' => 'Confirm Close Editor'
+					'LANG_JS' => '{"confirm_close":"Confirm Close Editor"}'
 				]
 			]
 		];
@@ -287,7 +287,7 @@ class UiTemplatesPreparerTest extends TestCase
 					'LANG_TOTAL_FILESIZE' => 'Total Filesize',
 					'has_time_limit' => [],
 					'LANG_SHUFFLE' => 'Shuffle',
-					'LANG_PICKING_OPTION_ALL' => 'All',
+					'LANG_JS' => '{"picking_all":"All"}',
 					'LANG_PICKING_MEDIA_PER_CYCLE' => 'Picking Media Per Cycle',
 					'LANG_PLAYER_EXPORT' => 'Player Export',
 					'LANG_PLAYLIST_PREVIEW' => 'Playlist Preview',
