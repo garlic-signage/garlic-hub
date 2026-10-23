@@ -79,12 +79,7 @@ class UsersService extends AbstractBaseService
 	 */
 	public function updateUserStats(int $UID): int
 	{
-		$data = [
-			'login_time' => date('Y-m-d H:i:s'),
-			'num_logins' => 'num_logins + 1'
-		];
-
-		return $this->userRepositories['main']->update($UID, $data);
+		return $this->userRepositories['main']->registerLogin($UID);
 	}
 
 	/**

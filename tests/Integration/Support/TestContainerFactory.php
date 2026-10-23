@@ -23,8 +23,10 @@ namespace Tests\Integration\Support;
 
 use App\Framework\Config\Config;
 use App\Framework\Config\IniConfigLoader;
+use App\Framework\Http\Cookie;
 use App\Framework\Http\Session;
 use DI\ContainerBuilder;
+use Defuse\Crypto\Key;
 use Doctrine\DBAL\Connection;
 use FilesystemIterator;
 use Phpfastcache\Helper\Psr16Adapter;
@@ -36,7 +38,7 @@ use RecursiveIteratorIterator;
 /**
  * Builds the real dependency container of the application (config/services/*)
  * for tests. Only the parts which touch the outside world are replaced:
- * database connection, session, user cache and logging.
+ * database connection, session, cookies, user cache and logging.
  */
 final class TestContainerFactory
 {
@@ -67,6 +69,11 @@ final class TestContainerFactory
 			'DB_MASTER_DRIVER'     => 'pdo_sqlite',
 		];
 
+		// Crypt reads the key from the keys directory
+		if (!is_dir($paths['keysDir']))
+			mkdir($paths['keysDir'], 0775, true);
+		file_put_contents($paths['keysDir'] . '/encryption.key', Key::createNewRandomKey()->saveToAsciiSafeString());
+
 		$builder = new ContainerBuilder();
 		$builder->addDefinitions([
 			Config::class => new Config(new IniConfigLoader($paths['configDir'] . '/settings'), $paths, $env),
@@ -83,6 +90,7 @@ final class TestContainerFactory
 		$builder->addDefinitions([
 			'SqlConnection'     => $connection,
 			Session::class      => new Session(), // not started: it works on $_SESSION
+			Cookie::class       => new InMemoryCookie(),
 			Psr16Adapter::class => new Psr16Adapter('Memstatic'),
 			'ModuleLogger'      => new NullLogger(),
 			'FrameworkLogger'   => new NullLogger(),

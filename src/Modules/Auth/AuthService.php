@@ -113,6 +113,14 @@ class AuthService
 
 			$userEntity = $this->getCurrentUser($UID);
 			$this->validateUserStatus($userEntity->getMain()['status']);
+			if (!empty($this->errorMessage))
+			{
+				// a deleted, blocked or not verified user must not get in with an old cookie either
+				$this->logger->warning('Autologin refused for user ' . $UID . ': ' . $this->errorMessage);
+				$this->autoLoginService->removeAutoLogin();
+				return null;
+			}
+
 			$this->userService->updateUserStats($UID);
 			return $userEntity;
 		}

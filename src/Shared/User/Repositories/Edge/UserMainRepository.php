@@ -89,6 +89,24 @@ class UserMainRepository extends SqlBase
 	}
 
 	/**
+	 * Counts the login in the database: the increase can not be a bound value.
+	 *
+	 * @throws Exception
+	 */
+	public function registerLogin(int $UID): int
+	{
+		$queryBuilder = $this->connection->createQueryBuilder();
+		$queryBuilder->update($this->table)
+			->set('login_time', ':login_time')
+			->set('num_logins', 'num_logins + 1')
+			->where($this->idField . ' = :id')
+			->setParameter('login_time', date('Y-m-d H:i:s'))
+			->setParameter('id', $UID);
+
+		return (int) $queryBuilder->executeStatement();
+	}
+
+	/**
 	 * @return list<array{UID: int, username:string, email:string}>|array<empty,empty>
 	 * @throws Exception
 	 */

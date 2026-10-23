@@ -97,7 +97,7 @@ class AutoLoginServiceTest extends TestCase
 	public function testLoginSilentTokenNotFound(): void
 	{
 		$userTokenServiceMock = $this->createMock(UserTokenService::class);
-		$userTokenServiceMock->expects($this->once())->method('findByToken')->willReturn(null);
+		$userTokenServiceMock->expects($this->once())->method('findByTokenForAction')->willReturn(null);
 		$userTokenServiceMock->expects($this->never())->method('deleteExpiredToken');
 
 		$service = $this->buildService($userTokenServiceMock, $this->cookieStub);
@@ -114,12 +114,35 @@ class AutoLoginServiceTest extends TestCase
 	 * @throws Exception
 	 */
 	#[Group('units')]
-	public function testLoginSilentTokenExpired(): void
+	public function testLoginSilentRejectsATokenOfAnotherPurpose(): void
 	{
-		$dbToken = ['UID' => 1, 'expires_at' => '2000-01-01 00:00:00', 'used_at' => null];
+		$dbToken = ['UID' => 1, 'purpose' => 'password_reset', 'expires_at' => '2999-01-01 00:00:00', 'used_at' => null];
 
 		$userTokenServiceMock = $this->createMock(UserTokenService::class);
-		$userTokenServiceMock->method('findByToken')->willReturn($dbToken);
+		$userTokenServiceMock->method('findByTokenForAction')->willReturn($dbToken);
+		$userTokenServiceMock->expects($this->never())->method('useToken');
+		$userTokenServiceMock->expects($this->never())->method('insertToken');
+
+		$service = $this->buildService($userTokenServiceMock, $this->cookieStub);
+
+		$this->expectException(AuthException::class);
+		$this->expectExceptionMessage('Token is no autologin token.');
+
+		$service->loginSilent('reset_token');
+	}
+
+	/**
+	 * @throws DateMalformedStringException
+	 * @throws FrameworkException
+	 * @throws Exception
+	 */
+	#[Group('units')]
+	public function testLoginSilentTokenExpired(): void
+	{
+		$dbToken = ['UID' => 1, 'purpose' => 'autologin', 'expires_at' => '2000-01-01 00:00:00', 'used_at' => null];
+
+		$userTokenServiceMock = $this->createMock(UserTokenService::class);
+		$userTokenServiceMock->method('findByTokenForAction')->willReturn($dbToken);
 		$userTokenServiceMock->expects($this->once())->method('deleteExpiredToken');
 
 		$service = $this->buildService($userTokenServiceMock, $this->cookieStub);
@@ -138,10 +161,10 @@ class AutoLoginServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoginSilentTokenAlreadyUsed(): void
 	{
-		$dbToken = ['UID' => 5, 'expires_at' => '2999-01-01 00:00:00', 'used_at' => '2026-01-01 00:00:00'];
+		$dbToken = ['UID' => 5, 'purpose' => 'autologin', 'expires_at' => '2999-01-01 00:00:00', 'used_at' => '2026-01-01 00:00:00'];
 
 		$userTokenServiceMock = $this->createMock(UserTokenService::class);
-		$userTokenServiceMock->method('findByToken')->willReturn($dbToken);
+		$userTokenServiceMock->method('findByTokenForAction')->willReturn($dbToken);
 		$userTokenServiceMock->expects($this->once())
 			->method('deleteAllUserTokens')
 			->with(5);
@@ -162,10 +185,10 @@ class AutoLoginServiceTest extends TestCase
 	#[Group('units')]
 	public function testLoginSilentSucceeds(): void
 	{
-		$dbToken = ['UID' => 42, 'expires_at' => '2999-01-01 00:00:00', 'used_at' => null];
+		$dbToken = ['UID' => 42, 'purpose' => 'autologin', 'expires_at' => '2999-01-01 00:00:00', 'used_at' => null];
 
 		$userTokenServiceMock = $this->createMock(UserTokenService::class);
-		$userTokenServiceMock->method('findByToken')->willReturn($dbToken);
+		$userTokenServiceMock->method('findByTokenForAction')->willReturn($dbToken);
 		$userTokenServiceMock->expects($this->once())
 			->method('useToken')
 			->with('valid_token');

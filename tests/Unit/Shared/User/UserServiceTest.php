@@ -68,10 +68,6 @@ class UserServiceTest extends TestCase
 	{
 		$this->expectUntouched($this->entityFactoryMock, $this->cacheMock, $this->loggerMock);
 		$UID = 123;
-		$expectedData = [
-			'login_time' => date('Y-m-d H:i:s'),
-			'num_logins' => 'num_logins + 1'
-		];
 
 		$this->repositoryFactoryStub->method('create')
 			->willReturn(['main' => $this->userMainRepositoryMock]);
@@ -79,8 +75,8 @@ class UserServiceTest extends TestCase
 
 		$this->userMainRepositoryMock
 			->expects($this->once())
-			->method('update')
-			->with($UID, static::equalTo($expectedData))
+			->method('registerLogin')
+			->with($UID)
 			->willReturn(1);
 
 		$result = $this->usersService->updateUserStats($UID);
@@ -103,8 +99,8 @@ class UserServiceTest extends TestCase
 
 		$this->userMainRepositoryMock
 			->expects($this->once())
-			->method('update')
-			->with($UID, static::arrayHasKey('login_time'))
+			->method('registerLogin')
+			->with($UID)
 			->willReturn(0);
 
 		$result = $this->usersService->updateUserStats($UID);

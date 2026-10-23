@@ -48,7 +48,9 @@ class UserTokenService extends AbstractBaseService
 	}
 
 	/**
-	 * @return array{"UID":int, "company_id":int, "username":string, "status":int, "purpose":string}|null
+	 * Finds the token also when it is used or expired. The caller has to decide what to do with it.
+	 *
+	 * @return array{"UID":int, "company_id":int, "username":string, "status":int, "purpose":string, "expires_at":string, "used_at":null|string}|null
 	 * @throws Exception
 	 * @throws \Exception
 	 */
@@ -60,7 +62,7 @@ class UserTokenService extends AbstractBaseService
 		if ($token === [])
 			return null;
 
-		/** @var array{"UID":int, "company_id":int, "username":string, "status":int, "purpose":string} $token */
+		/** @var array{"UID":int, "company_id":int, "username":string, "status":int, "purpose":string, "expires_at":string, "used_at":null|string} $token */
 		return $token;
 	}
 

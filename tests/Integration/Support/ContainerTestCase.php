@@ -41,6 +41,7 @@ abstract class ContainerTestCase extends DatabaseTestCase
 		parent::setUp();
 
 		$_SESSION        = [];
+		$_COOKIE         = [];
 		$this->container = TestContainerFactory::create($this->connection, sys_get_temp_dir() . '/garlic-hub-tests');
 		$this->container->get(Psr16Adapter::class)->clear();
 	}
@@ -48,6 +49,8 @@ abstract class ContainerTestCase extends DatabaseTestCase
 	protected function tearDown(): void
 	{
 		$_SESSION = [];
+		$_COOKIE  = [];
+		unset($_SERVER['REMOTE_ADDR']);
 		parent::tearDown();
 	}
 

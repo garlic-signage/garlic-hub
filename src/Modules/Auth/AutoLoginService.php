@@ -65,9 +65,14 @@ class AutoLoginService
 	public function loginSilent(string $cookieToken): int
 	{
 		$this->logger->info('Attempt silent login.');
-		$dbToken = $this->userTokenService->findByToken($cookieToken);
+		// the lookup must also find used tokens, otherwise the reuse below can not be detected
+		$dbToken = $this->userTokenService->findByTokenForAction($cookieToken);
 		if ($dbToken === null)
 			throw new AuthException('Autologin token not found.');
+
+		// tokens for a password or email link must not work as a login cookie
+		if ($dbToken['purpose'] !== TokenPurposes::AUTOLOGIN->value)
+			throw new AuthException('Token is no autologin token.');
 
 		if ($dbToken['expires_at'] < new DateTime()->format('Y-m-d H:i:s'))
 		{
