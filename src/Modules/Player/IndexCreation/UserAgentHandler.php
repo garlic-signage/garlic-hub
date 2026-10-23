@@ -28,6 +28,12 @@ use App\Modules\Player\Enums\PlayerModel;
  */
 class UserAgentHandler
 {
+	/**
+	 * The UUID is a directory name of the SMIL index and part of report URLs.
+	 * Known formats: UUIDv4 (f9d65c88-e4cd-43b4-89eb-5c338e856344) and 16 digit hex (1628414f155256b4).
+	 */
+	private const string UUID_PATTERN = '/^(?:[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}|[0-9a-f]{16})$/iD';
+
 	private readonly PlayerDetector $playerDetector;
 	private string $uuid;
 	private string $firmware;
@@ -74,7 +80,7 @@ class UserAgentHandler
 
 	public function parseUserAgent(string $userAgent): static
 	{
-		// ADAPI/1.0 (UUID:a8294bat-c28f-50af-f94o-800869af5854; NAME:Player with spaces in name) SK8855-ADAPI/2.0.5 (MODEL:XMP-330)
+		// ADAPI/1.0 (UUID:a8294bad-c28f-50af-f940-800869af5854; NAME:Player with spaces in name) SK8855-ADAPI/2.0.5 (MODEL:XMP-330)
 		if (preg_match('/([^ ]+) \(UUID:(.*?); NAME:(.*?)\) (.*?) \(MODEL:(.*?)\)/', $userAgent, $matches))
 		{
 			$this->uuid     = $matches[2];
@@ -99,12 +105,21 @@ class UserAgentHandler
 		}
 		else
 		{
-			$this->uuid     =  '';
-			$this->firmware = '';
-			$this->name     = '';
-			$this->model    = PlayerModel::UNKNOWN;
+			$this->resetToUnknown();
 		}
+
+		if (preg_match(self::UUID_PATTERN, $this->uuid) !== 1)
+			$this->resetToUnknown();
+
 		return $this;
+	}
+
+	private function resetToUnknown(): void
+	{
+		$this->uuid     = '';
+		$this->firmware = '';
+		$this->name     = '';
+		$this->model    = PlayerModel::UNKNOWN;
 	}
 
 }

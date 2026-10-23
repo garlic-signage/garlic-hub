@@ -24,6 +24,7 @@ namespace Tests\Unit\Modules\Player\IndexCreation;
 use App\Modules\Player\Enums\PlayerModel;
 use App\Modules\Player\IndexCreation\PlayerDetector;
 use App\Modules\Player\IndexCreation\UserAgentHandler;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\Stub;
@@ -65,12 +66,12 @@ class UserAgentHandlerTest extends TestCase
 	#[Group('units')]
 	public function testParseUserAgentWithSpaces(): void
 	{
-		$userAgent = 'ADAPI/1.0 (UUID:a8294bat-c28f-50af-f94o-800869af5854; NAME:Player with spaces in name) SK8855-ADAPI/2.0.5 (MODEL:XMP-330)';
+		$userAgent = 'ADAPI/1.0 (UUID:a8294bad-c28f-50af-f940-800869af5854; NAME:Player with spaces in name) SK8855-ADAPI/2.0.5 (MODEL:XMP-330)';
 		$this->playerDetectorStub->method('detectModelId')->willReturnSelf();
 		$this->playerDetectorStub->method('getModelId')->willReturn(PlayerModel::IADEA_XMP3X0);
 		$this->handler->parseUserAgent($userAgent);
 		$expected = [
-			'uuid' => 'a8294bat-c28f-50af-f94o-800869af5854',
+			'uuid' => 'a8294bad-c28f-50af-f940-800869af5854',
 			'firmware' => 'SK8855-ADAPI/2.0.5',
 			'name' => 'Player with spaces in name',
 			'model' => PlayerModel::IADEA_XMP3X0
@@ -255,13 +256,13 @@ class UserAgentHandlerTest extends TestCase
 	#[Group('units')]
 	public function testParseFallbackOldIadeasWithSpaces(): void
 	{
-		$userAgent = 'ADAPI/1.0 (UUID:a8294bat-c28f-50af-f94o-800869af5854; NAME:Player with spaces in name) SK8855-ADAPI/2.0.5 (MODEL:XMP-330)';
+		$userAgent = 'ADAPI/1.0 (UUID:a8294bad-c28f-50af-f940-800869af5854; NAME:Player with spaces in name) SK8855-ADAPI/2.0.5 (MODEL:XMP-330)';
 		$this->playerDetectorStub->method('detectModelId')->willReturnSelf();
 		$this->playerDetectorStub->method('getModelId')->willReturn(PlayerModel::IADEA_XMP3X0);
 		$this->handler->parseUserAgent($userAgent);
 
 		$expected = [
-			'uuid' => 'a8294bat-c28f-50af-f94o-800869af5854',
+			'uuid' => 'a8294bad-c28f-50af-f940-800869af5854',
 			'firmware' => 'SK8855-ADAPI/2.0.5',
 			'name' => 'Player with spaces in name',
 			'model' => PlayerModel::IADEA_XMP3X0
@@ -304,4 +305,66 @@ class UserAgentHandlerTest extends TestCase
 
 	}
 
+	/**
+	 * @return array<string,array{string}>
+	 */
+	public static function invalidUuidProvider(): array
+	{
+		return [
+			'path traversal'   => ['../../etc'],
+			'slash'            => ['abc/def'],
+			'dot'              => ['abc.def'],
+			'space'            => ['abc def'],
+			'quote'            => ['abc"def'],
+			'markup'           => ['<b>abc</b>'],
+			'trailing newline' => ["abc\n"],
+			'too long'         => [str_repeat('a', 65)],
+			'not hex'          => ['a8294bat-c28f-50af-f94o-800869af5854'],
+			'uuid too short'   => ['f9d65c88-e4cd-43b4-89eb-5c338e85634'],
+			'uuid without dash'=> ['f9d65c88e4cd43b489eb5c338e856344'],
+			'hex 15 digits'    => ['1628414f155256b'],
+			'hex 17 digits'    => ['1628414f155256b4a'],
+		];
+	}
+
+	#[Group('units')]
+	#[DataProvider('invalidUuidProvider')]
+	public function testParseUserAgentRejectsInvalidUuid(string $uuid): void
+	{
+		$userAgent = 'ADAPI/1.0 (UUID:' . $uuid . '; NAME:testplayername) SK8855-ADAPI/2.0.5 (MODEL:XDS-101)';
+		$this->playerDetectorStub->method('detectModelId')->willReturnSelf();
+		$this->playerDetectorStub->method('getModelId')->willReturn(PlayerModel::IADEA_XMP1X0);
+		$this->handler->parseUserAgent($userAgent);
+
+		static::assertEquals([
+			'uuid'     => '',
+			'firmware' => '',
+			'name'     => '',
+			'model'    => PlayerModel::UNKNOWN
+		], $this->handler->getInfo());
+	}
+
+	/**
+	 * @return array<string,array{string}>
+	 */
+	public static function validUuidProvider(): array
+	{
+		return [
+			'uuid v4'     => ['f9d65c88-e4cd-43b4-89eb-5c338e856344'],
+			'uuid upper'  => ['F9D65C88-E4CD-43B4-89EB-5C338E856344'],
+			'16 digit hex' => ['1628414f155256b4'],
+		];
+	}
+
+	#[Group('units')]
+	#[DataProvider('validUuidProvider')]
+	public function testParseUserAgentAcceptsKnownUuidFormats(string $uuid): void
+	{
+		$userAgent = 'ADAPI/1.0 (UUID:' . $uuid . '; NAME:testplayername) SK8855-ADAPI/2.0.5 (MODEL:XDS-101)';
+		$this->playerDetectorStub->method('detectModelId')->willReturnSelf();
+		$this->playerDetectorStub->method('getModelId')->willReturn(PlayerModel::IADEA_XMP1X0);
+		$this->handler->parseUserAgent($userAgent);
+
+		static::assertSame($uuid, $this->handler->getUuid());
+	}
 }
