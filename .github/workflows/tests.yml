@@ -107,3 +107,40 @@ jobs:
         run: |
           docker run --rm -v "$PWD":/repo zricethezav/gitleaks:v8.30.1 \
             git /repo --no-banner --redact -c /repo/.gitleaks.toml
+
+  # The coverage badge of the README. It lives alone in the branch "badges", which this job
+  # creates and replaces with one new commit, so there is nothing to maintain. It runs only
+  # on main, never with the code of a pull request, because it may write.
+  badge:
+    name: coverage badge
+    needs: coverage
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-app
+
+      - name: Load the coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage
+          path: coverage
+
+      - name: Make the badge and publish it in the branch "badges"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          badges="$RUNNER_TEMP/badges"
+          mkdir -p "$badges"
+          vendor/bin/coverage-badge coverage/clover.xml "$badges/coverage.svg" coverage
+          cd "$badges"
+          git init -q -b badges
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add coverage.svg
+          git commit -q -m "coverage badge of ${GITHUB_SHA::8}"
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force origin badges

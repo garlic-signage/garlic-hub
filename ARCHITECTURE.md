@@ -83,7 +83,7 @@ Configuration files copied into the Docker image: Apache vhost, PHP ini, ImageMa
 Local development environment with DDEV.
 
 ### `.github/`
-- `workflows/tests.yml` — CI on every push and pull request, one job each: static analysis with the architecture tests, unit tests, integration tests, coverage, security checks (`composer audit`, secret scan with `.gitleaks.toml`).
+- `workflows/tests.yml` — CI on every push and pull request, one job each: static analysis with the architecture tests, unit tests, integration tests, coverage, security checks (`composer audit`, secret scan with `.gitleaks.toml`). On `main` the job `badge` writes the coverage badge of the README into the branch `badges` (one commit, replaced on every run).
 - `workflows/docker-*.yml` — Docker Hub images, started by hand.
 - `actions/setup-app/` — PHP, Composer packages and environment, shared by the jobs of the tests.
 - `dependabot.yml` — weekly updates of the Composer packages and the actions.
