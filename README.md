@@ -136,6 +136,7 @@ A CycloneDX SBOM is generated for each release and attached to the
 ## Contributing
 
 PRs and issues are welcome. The project is in active development, so code and APIs may still change.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the checks to run before a PR, what the CI requires and how to write tests.
 
 ## License
 
