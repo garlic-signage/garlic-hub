@@ -1,4 +1,4 @@
-name: docker-hub image for manually releases
+name: docker-hub image
 
 on:
   workflow_dispatch:
