@@ -2,7 +2,7 @@
 			<label id="wrap_tree_filter">
 				<input id="treeViewFilter" type="search" placeholder="Filter">
 				{{#add_root_folder}}
-				<a class="bi bi-folder-plus" id="addRootFolder" title="{{{LANG_ADD_ROOT_FOLDER}}}"></a>
+				<a class="bi bi-folder-plus" id="addRootFolder" title="{{LANG_ADD_ROOT_FOLDER}}"></a>
 				{{/add_root_folder}}
 			</label>
 
@@ -17,14 +17,14 @@
 						<button id="closeEditDialog" class="close-button bi bi-x" aria-label="Close"></button>
 					</header>
 					<fieldset>
-						<label for="folderName">{{{LANG_FOLDER_NAME}}}:
+						<label for="folderName">{{LANG_FOLDER_NAME}}:
 							<input type="text" id="folderName" name="folderName" required>
 						</label>
 						{{#folder_dialog_visibility}}
-						<label for="visibility"> {{{LANG_FOLDER_VISIBILITY}}}
+						<label for="visibility"> {{LANG_FOLDER_VISIBILITY}}
 							<select>
 								{{#visibility_options}}
-								<option id="visibility_{{{VISIBILITY_OPTIONS_VALUE}}}" value="{{{VISIBILITY_OPTIONS_VALUE}}}">{{{VISIBILITY_OPTIONS_NAME
+								<option id="visibility_{{VISIBILITY_OPTIONS_VALUE}}" value="{{VISIBILITY_OPTIONS_VALUE}}">{{{VISIBILITY_OPTIONS_NAME
 								}}}</option>
 								{{/visibility_options}}
 							</select>
@@ -35,8 +35,8 @@
 						<input type="hidden" id="current_node_id" name="current_node_id">
 
 						<footer>
-							<button value="submit" type="submit">{{{LANG_SAVE}}}</button>
-							<button value="cancel" formnovalidate autofocus>{{{LANG_CANCEL}}}</button>
+							<button value="submit" type="submit">{{LANG_SAVE}}</button>
+							<button value="cancel" formnovalidate autofocus>{{LANG_CANCEL}}</button>
 						</footer>
 					</fieldset>
 				</form>
@@ -44,13 +44,13 @@
 			<template id="treeViewContextMenuTemplate">
 				<ul class="context-menu">
 					<li id="edit_node">
-						<i class="bi bi-pencil"></i> {{{LANG_EDIT}}}
+						<i class="bi bi-pencil"></i> {{LANG_EDIT}}
 					</li>
 					<li id="add_node">
-						<i class="bi bi-folder-plus"></i> {{{LANG_ADD_SUB_FOLDER}}}
+						<i class="bi bi-folder-plus"></i> {{LANG_ADD_SUB_FOLDER}}
 					</li>
 					<li id="remove_node">
-						<i class="bi bi-trash"></i> {{{LANG_REMOVE}}}
+						<i class="bi bi-trash"></i> {{LANG_REMOVE}}
 					</li>
 				</ul>
 			</template>
@@ -59,83 +59,83 @@
 		<section class="content">
 			<dialog id="uploaderDialog">
 				<header>
-					<span class="dialog-name">{{{LANG_UPLOADER}}}</span>
+					<span class="dialog-name">{{LANG_UPLOADER}}</span>
 					<button id="closeUploadDialog" class="close-button bi bi-x" aria-label="Close"></button>
 				</header>
 				<nav class="tab-header">
-					<button class="tab-button active" data-tab="dragDropTab">{{{LANG_UPLOAD_LOCAL_FILES}}}</button>
-					<button class="tab-button" data-tab="linkTab">{{{LANG_UPLOAD_EXTERNAL_FILES}}}</button>
-					<button class="tab-button" data-tab="webcamTab">{{{LANG_UPLOAD_CAMERA}}}</button>
-					<button class="tab-button" data-tab="screencastTab">{{{LANG_UPLOAD_SCREENCAST}}}</button>
-					<button class="tab-button" data-tab="stockPlatformsTab">{{{LANG_UPLOAD_STOCK_LIBRARIES}}}</button>
+					<button class="tab-button active" data-tab="dragDropTab">{{LANG_UPLOAD_LOCAL_FILES}}</button>
+					<button class="tab-button" data-tab="linkTab">{{LANG_UPLOAD_EXTERNAL_FILES}}</button>
+					<button class="tab-button" data-tab="webcamTab">{{LANG_UPLOAD_CAMERA}}</button>
+					<button class="tab-button" data-tab="screencastTab">{{LANG_UPLOAD_SCREENCAST}}</button>
+					<button class="tab-button" data-tab="stockPlatformsTab">{{LANG_UPLOAD_STOCK_LIBRARIES}}</button>
 				</nav>
 
 				<section class="tab-content active" id="dragDropTab">
-					<h3>{{{LANG_DRAG_AND_DROP}}}</h3>
+					<h3>{{LANG_DRAG_AND_DROP}}</h3>
 					<p id="dropzone">
-						{{{LANG_INSERT_FILES_HERE}}}
+						{{LANG_INSERT_FILES_HERE}}
 						<input type="file" id="fileInput" style="display: none;" multiple>
 					</p>
 					<div id="dropzonePreview" class="preview-media"></div>
-					<button id="startLocalFilesUpload" class="upload-button">{{{LANG_START_UPLOAD}}}</button>
+					<button id="startLocalFilesUpload" class="upload-button">{{LANG_START_UPLOAD}}</button>
 				</section>
 
 				<section class="tab-content" id="linkTab">
-					<h3>{{{LANG_ENTER_FILE_URL}}}</h3>
+					<h3>{{LANG_ENTER_FILE_URL}}</h3>
 					<label>
 						<input type="url" placeholder="https://example.com/media.jpg" id="externalLinkField">
 					</label>
-					<button id="startExternalFileUpload" class="upload-button">{{{LANG_START_UPLOAD}}}</button>
+					<button id="startExternalFileUpload" class="upload-button">{{LANG_START_UPLOAD}}</button>
 				</section>
 
 				<section class="tab-content" id="webcamTab">
-					<h3>{{{LANG_RECORD_CAMERA}}}</h3>
+					<h3>{{LANG_RECORD_CAMERA}}</h3>
 					<div class="wrapVideoElements">
 						<video id="webcamVideo" autoplay playsinline class="live-preview-video"></video>
 						<div>
 							<p>
-								<button id="detectCameras" type="button">{{{LANG_DETECT_CAMERAS}}}</button>
+								<button id="detectCameras" type="button">{{LANG_DETECT_CAMERAS}}</button>
 							</p>
-							<label for="selectCamera">{{{LANG_SELECT_CAMERA}}}<br>
+							<label for="selectCamera">{{LANG_SELECT_CAMERA}}<br>
 								<select id="selectCamera" disabled>
 									<option value="-">-</option>
 								</select>
 							</label>
 							<p>
 								<label for="toggleWebcam"><input id="toggleWebcam" type="checkbox" disabled>
-									{{{LANG_ACTIVATE_CAMERA}}}
+									{{LANG_ACTIVATE_CAMERA}}
 								</label>
 							</p>
 
-							<button id="capturePhoto" disabled>{{{LANG_CAPTURE_PHOTO}}}</button>
-							<button	id="recordCamera" disabled>{{{LANG_START_RECORD_VIDEO}}}</button>
+							<button id="capturePhoto" disabled>{{LANG_CAPTURE_PHOTO}}</button>
+							<button	id="recordCamera" disabled>{{LANG_START_RECORD_VIDEO}}</button>
 						</div>
 					</div>
 
 					<div id="previewRecordsArea" class="preview-media"></div>
-					<button id="startCameraUpload" class="upload-button">{{{LANG_START_UPLOAD}}}</button>
+					<button id="startCameraUpload" class="upload-button">{{LANG_START_UPLOAD}}</button>
 				</section>
 
 				<section class="tab-content" id="screencastTab">
-					<h3>{{{LANG_RECORD_YOUR_SCREEN}}}</h3>
+					<h3>{{LANG_RECORD_YOUR_SCREEN}}</h3>
 					<div class="wrapVideoElements">
 						<video id="screencastVideo" autoplay playsinline class="live-preview-video"></video>
 						<div>
 							<p>
 								<label for="toggleScreencast"><input id="toggleScreencast" type="checkbox">
-									{{{LANG_ACTIVATE_SCREENCAST}}}
+									{{LANG_ACTIVATE_SCREENCAST}}
 								</label>
 							</p>
-							<button id="captureScreenshot" disabled>{{{LANG_CAPTURE_PHOTO}}}</button>
-							<button	id="recordingScreencast" disabled>{{{LANG_START_RECORD_VIDEO}}}</button>
+							<button id="captureScreenshot" disabled>{{LANG_CAPTURE_PHOTO}}</button>
+							<button	id="recordingScreencast" disabled>{{LANG_START_RECORD_VIDEO}}</button>
 						</div>
 					</div>
 					<div id="previewScreencastsArea" class="preview-media"></div>
-					<button id="startScreencastsUpload" class="upload-button">{{{LANG_START_UPLOAD}}}</button>
+					<button id="startScreencastsUpload" class="upload-button">{{LANG_START_UPLOAD}}</button>
 				</section>
 
 				<section class="tab-content" id="stockPlatformsTab">
-					<h3>{{{LANG_SEARCH_STOCK_MEDIA}}}</h3>
+					<h3>{{LANG_SEARCH_STOCK_MEDIA}}</h3>
 					<div class="platform-mask">
 						<label>
 							<select id="selectStockPlatform">
@@ -144,40 +144,40 @@
 						</label>
 						<div id="radioSearchConfig" style="display:none;">
 							<label>
-								<input type="radio" name="config_search" value="configPlatform" id="checkConfigPlatform"> {{{LANG_CONFIGURATION}}}
+								<input type="radio" name="config_search" value="configPlatform" id="checkConfigPlatform"> {{LANG_CONFIGURATION}}
 							</label>
 							<label>
-								<input type="radio" name="config_search" value="searchPlatform" id="checkSearchPlatform" checked> {{{LANG_SEARCH}}}
+								<input type="radio" name="config_search" value="searchPlatform" id="checkSearchPlatform" checked> {{LANG_SEARCH}}
 							</label>
 						</div>
 						<div id="radioSelectMediatype" style="display:none;">
 							<label>
-								<input type="radio" name="mediatype_search" value="images" id="searchMediatypeImages" checked> {{{LANG_IMAGES_SEARCH}}}
+								<input type="radio" name="mediatype_search" value="images" id="searchMediatypeImages" checked> {{LANG_IMAGES_SEARCH}}
 							</label>
 							<label>
-								<input type="radio" name="mediatype_search" value="videos" id="searchMediatypeVideos"> {{{LANG_VIDEOS_SEARCH}}}
+								<input type="radio" name="mediatype_search" value="videos" id="searchMediatypeVideos"> {{LANG_VIDEOS_SEARCH}}
 							</label>
 						</div>
 					</div>
 					<div id="searchInPlatform" class="platform-mask" style="display:none;">
 						<label>
-							<input type="text" id="searchTerms" placeholder="{{{LANG_ENTER_SEARCH_TERM}}}">
+							<input type="text" id="searchTerms" placeholder="{{LANG_ENTER_SEARCH_TERM}}">
 						</label>
-						<button id="searchStockPlatform">{{{LANG_SEARCH}}}</button>
+						<button id="searchStockPlatform">{{LANG_SEARCH}}</button>
 						<div id="searchResultsArea" class="search-results-media"></div>
 					</div>
 					<div id="configPlatform" class="platform-mask"  style="display:none;">
 						<label>
-							<input type="text" id="platformApiToken" placeholder="{{{LANG_ENTER_API_TOKEN}}}">
+							<input type="text" id="platformApiToken" placeholder="{{LANG_ENTER_API_TOKEN}}">
 						</label>
-						<button id="savePlatformApiToken">{{{LANG_SAVE}}}</button>
+						<button id="savePlatformApiToken">{{LANG_SAVE}}</button>
 					</div>
 					<div id="downloadStatus"></div>
-					<button id="startPlatformsUpload" class="upload-button">{{{LANG_DOWNLOAD_MARKED}}}</button>
+					<button id="startPlatformsUpload" class="upload-button">{{LANG_DOWNLOAD_MARKED}}</button>
 
 					<template id="resultMediaTemplate">
 						<article class="result-media-container">
-							<input type="checkbox" class="result-checkbox" title="{{{LANG_MARK_FOR_DOWNLOAD}}}">
+							<input type="checkbox" class="result-checkbox" title="{{LANG_MARK_FOR_DOWNLOAD}}">
 							<img src="" class="result-thumbnail" alt="result-thumbnail" >
 							<i class="media-view-detail bi-eye-fill bi"></i>
 						</article>
@@ -186,7 +186,7 @@
 				</section>
 
 				<footer>
-					<button id="closeDialog">{{{LANG_CLOSE}}}</button>
+					<button id="closeDialog">{{LANG_CLOSE}}</button>
 				</footer>
 			</dialog>
 
@@ -201,49 +201,49 @@
 			</div>
 			<dialog id="editMediaDialog">
 				<header>
-					<span class="dialog-name">{{{LANG_EDIT}}}: </span>
+					<span class="dialog-name">{{LANG_EDIT}}: </span>
 					<button id="closeEditMediaDialog" class="close-button bi bi-x" aria-label="Close"></button>
 				</header>
 				<form method="dialog">
 					<fieldset>
 						<legend></legend>
-						<label for="editFilename">{{{LANG_FILENAME}}}:
+						<label for="editFilename">{{LANG_FILENAME}}:
 							<input type="text" id="editFilename" name="editFilename">
 						</label>
-						<label for="editDescription">{{{LANG_DESCRIPTION}}}:
+						<label for="editDescription">{{LANG_DESCRIPTION}}:
 							<textarea id="editDescription" name="editDescription">
 							</textarea>
 						</label>
 						<footer>
-							<button id="submitEditMedia" type="submit">{{{LANG_SAVE}}}</button>
-							<button value="cancel" formnovalidate autofocus>{{{LANG_CANCEL}}}</button>
+							<button id="submitEditMedia" type="submit">{{LANG_SAVE}}</button>
+							<button value="cancel" formnovalidate autofocus>{{LANG_CANCEL}}</button>
 						</footer>
 					</fieldset>
 				</form>
 			</dialog>
 			<dialog id="editInfoDialog">
 				<header>
-					<span class="dialog-name">{{{LANG_INFORMATION}}} </span>
+					<span class="dialog-name">{{LANG_INFORMATION}} </span>
 					<button id="closeInfoMediaDialog" class="close-button bi bi-x" aria-label="Close"></button>
 				</header>
 				<ul>
-					<li><span class="info-parameter">{{{LANG_FILENAME}}}:</span> <span class="media-filename"></span></li>
-					<li><span class="info-parameter">{{{LANG_MIMETYPE}}}:</span> <span class="media-mimetype"></span></li>
-					<li><span class="info-parameter">{{{LANG_DIMENSIONS}}}:</span> <span class="media-dimensions"></span></li>
-					<li><span class="info-parameter">{{{LANG_MEDIA_DURATION}}}:</span> <span class="media-duration"></span></li>
-					<li><span class="info-parameter">{{{LANG_OWNER}}}:</span> <span class="media-owner"></span></li>
-					<li><span class="info-parameter">{{{LANG_UPLOADED_AT}}}:</span> <span class="media-uploaded-at"></span></li>
-					<li><span class="info-parameter">{{{LANG_FILESIZE}}}:</span> <span class="media-filesize"></span></li>
-					<li><span class="info-parameter">{{{LANG_DESCRIPTION}}}:</span> <span class="media-description"></span></li>
-					<li><span class="info-parameter">{{{LANG_MEDIA_ORIGIN}}}:</span> <span class="stock-name"></span></li>
-					<li><span class="info-parameter"></span><a class="stock-page-url" target="_blank">{{{LANG_PAGE_URL}}}</a></li>
-					<li><span class="info-parameter">{{{LANG_STOCK_DESCRIPTION}}}:</span> <span class="stock-description"></span></li>
-					<li><span class="info-parameter">{{{LANG_STOCK_USERNAME}}}:</span> <span class="stock-username"></span></li>
-					<li><span class="info-parameter">{{{LANG_STOCK_REALNAME}}}:</span> <span class="stock-realname"></span></li>
-					<li><span class="info-parameter">{{{LANG_STOCK_USER_URL}}}:</span> <span class="stock-user-url"></span></li>
+					<li><span class="info-parameter">{{LANG_FILENAME}}:</span> <span class="media-filename"></span></li>
+					<li><span class="info-parameter">{{LANG_MIMETYPE}}:</span> <span class="media-mimetype"></span></li>
+					<li><span class="info-parameter">{{LANG_DIMENSIONS}}:</span> <span class="media-dimensions"></span></li>
+					<li><span class="info-parameter">{{LANG_MEDIA_DURATION}}:</span> <span class="media-duration"></span></li>
+					<li><span class="info-parameter">{{LANG_OWNER}}:</span> <span class="media-owner"></span></li>
+					<li><span class="info-parameter">{{LANG_UPLOADED_AT}}:</span> <span class="media-uploaded-at"></span></li>
+					<li><span class="info-parameter">{{LANG_FILESIZE}}:</span> <span class="media-filesize"></span></li>
+					<li><span class="info-parameter">{{LANG_DESCRIPTION}}:</span> <span class="media-description"></span></li>
+					<li><span class="info-parameter">{{LANG_MEDIA_ORIGIN}}:</span> <span class="stock-name"></span></li>
+					<li><span class="info-parameter"></span><a class="stock-page-url" target="_blank">{{LANG_PAGE_URL}}</a></li>
+					<li><span class="info-parameter">{{LANG_STOCK_DESCRIPTION}}:</span> <span class="stock-description"></span></li>
+					<li><span class="info-parameter">{{LANG_STOCK_USERNAME}}:</span> <span class="stock-username"></span></li>
+					<li><span class="info-parameter">{{LANG_STOCK_REALNAME}}:</span> <span class="stock-realname"></span></li>
+					<li><span class="info-parameter">{{LANG_STOCK_USER_URL}}:</span> <span class="stock-user-url"></span></li>
 				</ul>
 				<footer>
-					<button id="closeInfoDialog">{{{LANG_CLOSE}}}</button>
+					<button id="closeInfoDialog">{{LANG_CLOSE}}</button>
 				</footer>
 			</dialog>
 
@@ -272,31 +272,24 @@
 			<template id="media-contextmenu-template">
 				<ul class="context-menu">
 					<li id="infoMedia">
-						<i class="bi bi-info-circle"></i> {{{LANG_INFORMATION}}}
+						<i class="bi bi-info-circle"></i> {{LANG_INFORMATION}}
 					</li>
 					<li id="editMedia">
-						<i class="bi bi-pencil"></i> {{{LANG_EDIT}}}
+						<i class="bi bi-pencil"></i> {{LANG_EDIT}}
 					</li>
 					<li id="cloneMedia">
-						<i class="bi bi-clipboard-plus"></i> {{{LANG_CLONE}}}
+						<i class="bi bi-clipboard-plus"></i> {{LANG_CLONE}}
 					</li>
 			<!--		<li id="download_media">
-						<i class="bi bi-download"></i> {{{LANG_DOWNLOAD}}}
+						<i class="bi bi-download"></i> {{LANG_DOWNLOAD}}
 					</li>
 				-->	<li id="removeMedia">
-						<i class="bi bi-trash"></i> {{{LANG_REMOVE}}}
+						<i class="bi bi-trash"></i> {{LANG_REMOVE}}
 					</li>
 				</ul>
 			</template>
 		</section>
 
 	<script>
-		let lang = {
-            "add_root_folder": "{{{LANG_ADD_ROOT_FOLDER}}}",
-			"add_sub_folder": "{{{LANG_ADD_SUB_FOLDER}}}",
-			"edit_folder": "{{{LANG_EDIT_FOLDER}}}",
-			"user_folder": "{{{LANG_USER_FOLDER}}}",
-			"start_record_video": "{{{LANG_START_RECORD_VIDEO}}}",
-			"stop_record_video": "{{{LANG_STOP_RECORD_VIDEO}}}",
-        };
+		let lang = {{{LANG_JS}}};
 	</script>

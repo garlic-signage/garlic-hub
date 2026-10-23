@@ -1,13 +1,13 @@
-<h1>{{{LANG_PAGE_HEADER}}}</h1>
+<h1>{{LANG_PAGE_HEADER}}</h1>
 <template id="context-menu" xmlns="http://www.w3.org/1999/html">
 	<ul class="context-menu">
-		<li id="duplicate_zone"><i class="bi bi-copy"></i>{{{LANG_DUPLICATE}}}</li>
-		<li id="delete_zone"><i class="bi bi-trash"></i>{{{LANG_DELETE}}}</li>
+		<li id="duplicate_zone"><i class="bi bi-copy"></i>{{LANG_DUPLICATE}}</li>
+		<li id="delete_zone"><i class="bi bi-trash"></i>{{LANG_DELETE}}</li>
     	<li class="divider"></li>
-		<li id="move_background"><i class="bi bi-back"></i>{{{LANG_MOVE_BACKGROUND}}}</li>
-		<li id="move_back"><i class="bi bi-layer-backward"></i>{{{LANG_MOVE_BACK}}}</li>
-		<li id="move_front"><i class="bi bi-layer-forward"></i>{{{LANG_MOVE_FRONT}}}</li>
-		<li id="move_foreground"><i class="bi bi-front"></i>{{{LANG_MOVE_FOREGROUND}}}</li>
+		<li id="move_background"><i class="bi bi-back"></i>{{LANG_MOVE_BACKGROUND}}</li>
+		<li id="move_back"><i class="bi bi-layer-backward"></i>{{LANG_MOVE_BACK}}</li>
+		<li id="move_front"><i class="bi bi-layer-forward"></i>{{LANG_MOVE_FRONT}}</li>
+		<li id="move_foreground"><i class="bi bi-front"></i>{{LANG_MOVE_FOREGROUND}}</li>
 	</ul>
 </template>
 
@@ -15,7 +15,7 @@
     <li id="inserts">
         <ul class="action_group">
             <li class="edit_dropdown">
-                <button id="add_zone" class="svg_button" title="{{{LANG_ADD_ZONE}}}">
+                <button id="add_zone" class="svg_button" title="{{LANG_ADD_ZONE}}">
                     <svg width="24px" height="24px" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
                         <line x1="128" y1="48" x2="128" y2="208" stroke="black" stroke-width="16" stroke-linecap="round"/>
                         <line x1="48" y1="128" x2="208" y2="128" stroke="black" stroke-width="16" stroke-linecap="round"/>
@@ -27,29 +27,29 @@
     <li style="margin-left: auto;">
         <ul class="action_group">
             <li>
-                <label for="export_unit"> {{{LANG_MULTIZONE_EXPORT_UNIT}}}
+                <label for="export_unit"> {{LANG_MULTIZONE_EXPORT_UNIT}}
                     <select id="export_unit">
                         {{#export_units}}
-						<option value="{{{VALUE_OPTION}}}">{{{LANG_OPTION}}}</option>
+						<option value="{{VALUE_OPTION}}">{{LANG_OPTION}}</option>
 						{{/export_units}}
                     </select>
                 </label>
             </li>
             <li>
-                <label>{{{LANG_SCREEN_RESOLUTION}}}:
+                <label>{{LANG_SCREEN_RESOLUTION}}:
                     <input type="number" id="screen_width" value="" step="1" min="0" style="width:80px;"> x
                     <input type="number" id="screen_height" value="" step="1" min="0" style="width:80px;">
                 </label>
             </li>
             <li style="display: flex; justify-content: center; align-items:center;">
                 <label>
-                    <input style="width:120px;" type="range" min="5" max="200" value="100" step="5" id="slider" title="{{{LANG_ZOOM}}}">
+                    <input style="width:120px;" type="range" min="5" max="200" value="100" step="5" id="slider" title="{{LANG_ZOOM}}">
                 </label>
                 <span id="percent">100%</span>
             </li>
             <li>
-                <button id="save_zones">{{{LANG_SAVE}}}</button>
-                <button id="close_zones_editor">{{{LANG_CLOSE}}}</button>
+                <button id="save_zones">{{LANG_SAVE}}</button>
+                <button id="close_zones_editor">{{LANG_CLOSE}}</button>
 			</li>
         </ul>
     </li>
@@ -58,57 +58,57 @@
 <ul id="editor">
     <li>
         <fieldset id="zone_properties" disabled>
-            <legend>{{{LANG_ZONE_PROPERTIES}}}</legend>
+            <legend>{{LANG_ZONE_PROPERTIES}}</legend>
             <ul id="zone_data">
                 <li>
-                    <label>{{{LANG_ZONE_NAME}}}:<br>
+                    <label>{{LANG_ZONE_NAME}}:<br>
                         <input type="text" id="zone_name">
                     </label>
                 </li>
                 <li>
-                    <label>{{{LANG_PLAYLIST_NAME}}}:<br>
+                    <label>{{LANG_PLAYLIST_NAME}}:<br>
                         <input type="text" id="zone_playlist_search" list="zone_playlist_suggestions">
                         <datalist id="zone_playlist_suggestions"></datalist>
                     </label>
                     <input type="hidden" id="zone_playlist">
                 </li>
                 <li>
-                    <label>{{{LANG_ZONE_LEFT}}}:<br>
+                    <label>{{LANG_ZONE_LEFT}}:<br>
                         <input type="number" id="zone_left" step="1" max="99999">
                     </label>
                 </li>
                 <li>
-                    <label>{{{LANG_ZONE_TOP}}}:<br>
+                    <label>{{LANG_ZONE_TOP}}:<br>
                         <input type="number" id="zone_top" step="1"  max="99999">
                     </label>
                 </li>
                 <li>
-                    <label>{{{LANG_ZONE_WIDTH}}}:<br>
+                    <label>{{LANG_ZONE_WIDTH}}:<br>
                         <input type="number" id="zone_width" step="1"  max="99999">
                     </label>
                 </li>
                 <li>
-                    <label>{{{LANG_ZONE_HEIGHT}}}:<br>
+                    <label>{{LANG_ZONE_HEIGHT}}:<br>
                         <input type="number" id="zone_height" step="1">
                     </label>
                 </li>
                 <li>
-                    <label>{{{LANG_ZONE_BGCOLOR}}}:<br>
-                        <input type="color" id="zone_bgcolor"> <label><input type="checkbox" id="zone_transparent">{{{LANG_ZONE_TRANSPARENT}}}
+                    <label>{{LANG_ZONE_BGCOLOR}}:<br>
+                        <input type="color" id="zone_bgcolor"> <label><input type="checkbox" id="zone_transparent">{{LANG_ZONE_TRANSPARENT}}
                     </label></label>
                 </li>
             </ul>
         </fieldset>
         <p>
         <fieldset id="zones_container">
-            <legend>{{{LANG_ZONES_SELECTS}}}</legend>
+            <legend>{{LANG_ZONES_SELECTS}}</legend>
         </fieldset>
     </li>
     <li id="canvas_wrap" tabIndex="-1">
-        <input type="hidden" id="playlist_id" value="{{{PLAYLIST_ID}}}">
+        <input type="hidden" id="playlist_id" value="{{PLAYLIST_ID}}">
         <canvas id="canvas"></canvas>
     </li>
 </ul>
 <script>
-    let lang = { "confirm_close": "{{{LANG_CONFIRM_CLOSE_EDITOR}}}" };
+    let lang = {{{LANG_JS}}};
 </script>

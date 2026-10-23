@@ -1,14 +1,14 @@
-		<h1>{{{LANG_PAGE_HEADER}}}</h1>
+		<h1>{{LANG_PAGE_HEADER}}</h1>
 		<form action="{{FORM_ACTION}}" method="post" enctype="multipart/form-data" id="formElementsEdit" class="main-element-group">
 			{{#element_hidden}}
 				{{{HIDDEN_HTML_ELEMENT}}}
 			{{/element_hidden}}
-			<p>{{{LANG_FORM_EXPLANATION}}}</p>
+			<p>{{LANG_FORM_EXPLANATION}}</p>
 
 			<div class="form-elements">
 				{{#form_element}}
 				<div class="field-wrapper">
-					<label for="{{HTML_ELEMENT_ID}}">{{{LANG_ELEMENT_LABEL}}} {{ELEMENT_MUST_FIELD}}</label>
+					<label for="{{HTML_ELEMENT_ID}}">{{LANG_ELEMENT_LABEL}} {{ELEMENT_MUST_FIELD}}</label>
 					{{{HTML_ELEMENT}}}
 					<span class="error-message" id="error_{{HTML_ELEMENT_ID}}"></span>
 				</div>
@@ -17,10 +17,10 @@
 
 			<div class="form-submits">
 				{{#form_button}}
-					<button type="{{ELEMENT_BUTTON_TYPE}}" name="{{ELEMENT_BUTTON_NAME}}" id="{{ELEMENT_BUTTON_NAME}}" value="{{{LANG_ELEMENT_BUTTON}}}">{{{LANG_ELEMENT_BUTTON}}}</button>
+					<button type="{{ELEMENT_BUTTON_TYPE}}" name="{{ELEMENT_BUTTON_NAME}}" id="{{ELEMENT_BUTTON_NAME}}" value="{{LANG_ELEMENT_BUTTON}}">{{LANG_ELEMENT_BUTTON}}</button>
 				{{/form_button}}
 				{{#additional_buttons}}
-					<button type="{{ADDITIONAL_BUTTON_TYPE}}" name="{{ADDITIONAL_BUTTON_NAME}}" id="{{ADDITIONAL_BUTTON_NAME}}" value="{{{LANG_ADDITIONAL_BUTTON}}}">{{{LANG_ADDITIONAL_BUTTON}}}</button>
+					<button type="{{ADDITIONAL_BUTTON_TYPE}}" name="{{ADDITIONAL_BUTTON_NAME}}" id="{{ADDITIONAL_BUTTON_NAME}}" value="{{LANG_ADDITIONAL_BUTTON}}">{{LANG_ADDITIONAL_BUTTON}}</button>
 				{{/additional_buttons}}
 			</div>
 		</form>

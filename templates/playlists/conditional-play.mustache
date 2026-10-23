@@ -1,35 +1,35 @@
-<input type="hidden" name="conditional_play_item_id" id="edit_item_id" value="{{{CONDITIONAL_PLAY_ITEM_ID}}}" />
+<input type="hidden" name="conditional_play_item_id" id="edit_item_id" value="{{CONDITIONAL_PLAY_ITEM_ID}}" />
 
 		<div class="form-group">
-			<input type="checkbox" id="enable_conditional_play" value="1" {{{CONDITIONAL_PLAY_CHECKED}}} />
-			<label for="enable_conditional_play">{{{LANG_CONDITIONAL_PLAY}}}</label>
+			<input type="checkbox" id="enable_conditional_play" value="1" {{CONDITIONAL_PLAY_CHECKED}} />
+			<label for="enable_conditional_play">{{LANG_CONDITIONAL_PLAY}}</label>
 		</div>
 	<fieldset id="edit_conditional_play">
 		<div class="form-group">
-			<input type="checkbox" id="enable_date_period" value="1" {{{DATE_PERIOD_CHECKED}}} />
-			<label for="enable_date_period">{{{LANG_DATE_PERIOD}}}</label>
+			<input type="checkbox" id="enable_date_period" value="1" {{DATE_PERIOD_CHECKED}} />
+			<label for="enable_date_period">{{LANG_DATE_PERIOD}}</label>
 			<div id="edit_date_period">
-				<label for="date_from">{{{LANG_FROM}}}</label><input type="date" id="date_from" value="{{{DATE_FROM}}}" />
-				<label for="date_until">{{{LANG_UNTIL}}}</label><input type="date" id="date_until" value="{{{DATE_UNTIL}}}" />
+				<label for="date_from">{{LANG_FROM}}</label><input type="date" id="date_from" value="{{DATE_FROM}}" />
+				<label for="date_until">{{LANG_UNTIL}}</label><input type="date" id="date_until" value="{{DATE_UNTIL}}" />
 			</div>
 		</div>
 		<div class="form-group">
-			<input type="checkbox" id="enable_time_period" value="1" {{{TIME_PERIOD_CHECKED}}} />
-			<label for="enable_time_period">{{{LANG_DAILY}}}</label>
+			<input type="checkbox" id="enable_time_period" value="1" {{TIME_PERIOD_CHECKED}} />
+			<label for="enable_time_period">{{LANG_DAILY}}</label>
 			<div id="edit_time_period">
-				<label for="time_from">{{{LANG_FROM}}}</label><input type="time" id="time_from" value="{{{TIME_FROM}}}" />
-				<label for="time_until">{{{LANG_UNTIL}}}</label><input type="time" id="time_until" value="{{{TIME_UNTIL}}}" />
+				<label for="time_from">{{LANG_FROM}}</label><input type="time" id="time_from" value="{{TIME_FROM}}" />
+				<label for="time_until">{{LANG_UNTIL}}</label><input type="time" id="time_until" value="{{TIME_UNTIL}}" />
 			</div>
 		</div>
 		<div id="checkboxes_weekdays">
-			<strong>{{{LANG_WEEKDAYS}}}</strong>
+			<strong>{{LANG_WEEKDAYS}}</strong>
 			{{#list_weekdays}}
-			<div class="sliders-group" id="week_day_{{{WEEKDAY_NUMBER}}}">
-				<input type="checkbox" value="{{{WEEKDAY_NUMBER}}}" id="enable_weekday_{{{WEEKDAY_NUMBER}}}" {{{WEEK_DAY_CHECKED}}} class="enable_weekdays"/>
-				<label for="enable_weekday_{{{WEEKDAY_NUMBER}}}">{{{WEEKDAY}}}</label>
+			<div class="sliders-group" id="week_day_{{WEEKDAY_NUMBER}}">
+				<input type="checkbox" value="{{WEEKDAY_NUMBER}}" id="enable_weekday_{{WEEKDAY_NUMBER}}" {{WEEK_DAY_CHECKED}} class="enable_weekdays"/>
+				<label for="enable_weekday_{{WEEKDAY_NUMBER}}">{{WEEKDAY}}</label>
 				<div class="slider">
-					<span id="range_from_{{{WEEKDAY_NUMBER}}}"></span> - <span id="range_until_{{{WEEKDAY_NUMBER}}}"></span>
-					<div class="slider-range" id="slider_{{{WEEKDAY_NUMBER}}}"></div>
+					<span id="range_from_{{WEEKDAY_NUMBER}}"></span> - <span id="range_until_{{WEEKDAY_NUMBER}}"></span>
+					<div class="slider-range" id="slider_{{WEEKDAY_NUMBER}}"></div>
 				</div>
 			</div>
 			{{/list_weekdays}}

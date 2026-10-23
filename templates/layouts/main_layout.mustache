@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="UTF-8">
 		<title>{{APP_NAME}}: {{LANG_PAGE_TITLE}}</title>
-		<meta name="csrf-token" content="{{{CSRF_TOKEN}}}">
+		<meta name="csrf-token" content="{{CSRF_TOKEN}}">
         <meta name="robots" content="noindex, nofollow">
         <link rel="icon" href="/images/logo.svg" type="image/svg+xml">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
@@ -68,7 +68,7 @@
 					<ul>
 						{{#has_user_access}}
 						<li>
-							<a class="dropdown-item" href="{{{LINK_USER_ACCESS}}}">{{LANG_USER_ACCESS}}</a>
+							<a class="dropdown-item" href="{{LINK_USER_ACCESS}}">{{LANG_USER_ACCESS}}</a>
 						</li>
 						{{/has_user_access}}
 						<li>

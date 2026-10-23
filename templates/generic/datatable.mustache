@@ -1,4 +1,4 @@
-	<h1>{{{LANG_PAGE_HEADER}}}</h1>
+	<h1>{{LANG_PAGE_HEADER}}</h1>
 	{{{INSERT_SUBMENU}}}
 	<form action="{{FORM_ACTION}}" method="get" id="form_elements_search" class="main-element-group">
 				<input type="hidden" name="sort_column" id="sort_column" value="{{SORT_COLUMN}}">
@@ -11,17 +11,17 @@
 		<div class="form-filter">
 			{{#form_element}}
 				<div class="field-wrapper">
-						<label for="{{HTML_ELEMENT_ID}}">{{{LANG_ELEMENT_LABEL}}}</label>
+						<label for="{{HTML_ELEMENT_ID}}">{{LANG_ELEMENT_LABEL}}</label>
 					{{{HTML_ELEMENT}}}
 					</div>
 			{{/form_element}}
 		</div>
 		<div class="form-action">
 			<div>
-				<button type="submit" id="submit_search" value="{{{LANG_ELEMENTS_FILTER}}}">{{{LANG_ELEMENTS_FILTER}}}</button>
+				<button type="submit" id="submit_search" value="{{LANG_ELEMENTS_FILTER}}">{{LANG_ELEMENTS_FILTER}}</button>
 			</div>
 			<div>
-				{{{LANG_COUNT_SEARCH_RESULTS}}}
+				{{LANG_COUNT_SEARCH_RESULTS}}
 			</div>
 			<div>
 				<label>
@@ -33,7 +33,7 @@
 				</label>
 			</div>
 			<div>
-				{{{LANG_ELEMENTS_PER_PAGE}}}
+				{{LANG_ELEMENTS_PER_PAGE}}
 			</div>
 			<div>
 				{{#elements_pager}}
@@ -43,12 +43,12 @@
 			<div class="export_csv"></div>
 			{{#elements_export_results}}
 			<div>
-				<a href="{{ELEMENTS_EXPORT_RESULTS_LINK}}" class="button" target="blank">{{{LANG_ELEMENTS_EXPORT_RESULTS}}}</a>
+				<a href="{{ELEMENTS_EXPORT_RESULTS_LINK}}" class="button" target="blank">{{LANG_ELEMENTS_EXPORT_RESULTS}}</a>
 			</div>
 			{{/elements_export_results}}
 			{{#has_add}}
 			<div>
-				<a href="{{ELEMENTS_ADD_LINK}}" title="{{{LANG_ELEMENTS_ADD_LINK}}}" class="add-unit" id="createUnitAction"><i class="bi bi-{{ADD_BI_ICON}}"></i> {{{LANG_ELEMENTS_ADD_LINK}}}</a>
+				<a href="{{ELEMENTS_ADD_LINK}}" title="{{LANG_ELEMENTS_ADD_LINK}}" class="add-unit" id="createUnitAction"><i class="bi bi-{{ADD_BI_ICON}}"></i> {{LANG_ELEMENTS_ADD_LINK}}</a>
 			</div>
 			{{/has_add}}
 		</div>
@@ -59,9 +59,9 @@
 				{{#elements_result_header}}
 				<li class="{{CONTROL_NAME}}">
 					{{#if_sortable}}
-					<a href="{{LINK_CONTROL_SORT_ORDER}}" class="header_sort_column" id="{{SORT_CONTROL_NAME}}_sort_column">{{{LANG_CONTROL_NAME}}}</a> {{SORTABLE_ORDER}}
+					<a href="{{LINK_CONTROL_SORT_ORDER}}" class="header_sort_column" id="{{SORT_CONTROL_NAME}}_sort_column">{{LANG_CONTROL_NAME}}</a> {{SORTABLE_ORDER}}
 					{{/if_sortable}}
-					{{{LANG_CONTROL_NAME_2}}}
+					{{LANG_CONTROL_NAME_2}}
 				</li>
 				{{/elements_result_header}}
 				<li class="actions"></li>
@@ -94,7 +94,7 @@
 					{{/is_icon}}
 
 					{{#is_checkbox}}
-						<label><input type="checkbox" {{SELECT_DISABLED}} title="{{{LANG_CHECKBOX_NAME}}}"></label>
+						<label><input type="checkbox" {{SELECT_DISABLED}} title="{{LANG_CHECKBOX_NAME}}"></label>
 					{{/is_checkbox}}
 
 					{{#is_icon_column_linked}}
@@ -121,7 +121,7 @@
                     <ul>
                         {{#has_action}}
                         <li>
-                            <button title="{{{LANG_ACTION}}}"
+                            <button title="{{LANG_ACTION}}"
 							   data-action="{{ACTION_NAME}}" data-action-id="{{ACTION_ID}}"
 							   style="{{ACTION_INLINE_CSS}}"
 							   class="unit-action bi bi-{{ACTION_ICON_CLASS}} {{ACTION_CLASS}}"></button>
@@ -129,7 +129,7 @@
                         {{/has_action}}
                         {{#has_action_link}}
                         <li>
-                            <a href="{{LINK_ACTION}}" title="{{{LANG_LINK_ACTION}}}"
+                            <a href="{{LINK_ACTION}}" title="{{LANG_LINK_ACTION}}"
                                data-action="{{LINK_ACTION_NAME}}" data-action-id="{{LINK_ACTION_ID}}"
                                style="{{LINK_ACTION_INLINE_CSS}}"
                                class="unit-action bi bi-{{LINK_ACTION_ICON_CLASS}} {{LINK_ACTION_CLASS}}"></a>
@@ -138,8 +138,8 @@
 						{{#has_delete}}
                         <li>
                             <button data-delete-id="{{DELETE_ID}}"
-                                    data-confirm="{{{LANG_CONFIRM_DELETE}}}"
-                                    title="{{{LANG_DELETE_ACTION}}}"
+                                    data-confirm="{{LANG_CONFIRM_DELETE}}"
+                                    title="{{LANG_DELETE_ACTION}}"
                                     class="unit-action bi bi-trash {{ELEMENT_DELETE_CLASS}}">&nbsp;</button>
                         </li>
 						{{/has_delete}}

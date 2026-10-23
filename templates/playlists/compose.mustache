@@ -1,43 +1,43 @@
-		<h1>{{{LANG_PAGE_HEADER}}}</h1>
+		<h1>{{LANG_PAGE_HEADER}}</h1>
 		<header class="composer-header main-element-group">
-			<input type="hidden" id="playlist_id" value="{{{PLAYLIST_ID}}}" />
-			<input type="hidden" id="cms_edition" value="{{{CMS_EDITION}}}" />
-			<div id="insertMenu" tabindex="0" title="{{{LANG_INSERT}}}">
-				<label><i title="{{{LANG_INSERT}}}" class="bi bi-plus-circle"></i>
+			<input type="hidden" id="playlist_id" value="{{PLAYLIST_ID}}" />
+			<input type="hidden" id="cms_edition" value="{{CMS_EDITION}}" />
+			<div id="insertMenu" tabindex="0" title="{{LANG_INSERT}}">
+				<label><i title="{{LANG_INSERT}}" class="bi bi-plus-circle"></i>
 					<select id="insertMenuSelect">
-						<option value="insertMedia">{{{LANG_INSERT_MEDIA}}}</option>
+						<option value="insertMedia">{{LANG_INSERT_MEDIA}}</option>
 						{{#can_external_media}}
-							<option value="insertExternalMedia">{{{LANG_INSERT_EXTERNAL_MEDIA}}}</option>
+							<option value="insertExternalMedia">{{LANG_INSERT_EXTERNAL_MEDIA}}</option>
 						{{/can_external_media}}
 						{{#can_playlists}}
-							<option value="insertPlaylists">{{{LANG_INSERT_PLAYLISTS}}}</option>
+							<option value="insertPlaylists">{{LANG_INSERT_PLAYLISTS}}</option>
 						{{/can_playlists}}
 						{{#can_external_playlists}}
-							<option value="insertExternalPlaylists">{{{LANG_INSERT_EXTERNAL_PLAYLISTS}}}</option>
+							<option value="insertExternalPlaylists">{{LANG_INSERT_EXTERNAL_PLAYLISTS}}</option>
 						{{/can_external_playlists}}
 						{{#can_templates}}
-							<option value="insertTemplates">{{{LANG_INSERT_TEMPLATES}}}</option>
+							<option value="insertTemplates">{{LANG_INSERT_TEMPLATES}}</option>
 						{{/can_templates}}
 						{{#can_channels}}
-							<option value="insertChannels">{{{LANG_INSERT_CHANNELS}}}</option>
+							<option value="insertChannels">{{LANG_INSERT_CHANNELS}}</option>
 						{{/can_channels}}
 					</select>
 					</label>
 			</div>
 			<section class="information">
-				<div>{{{LANG_PLAYLIST_DURATION}}}: <strong id="playlistDuration">00:00:00</strong></div>
-				<div>{{{LANG_TOTAL}}}: <strong id="totalItems">0</strong></div>
-				<div>{{{LANG_TOTAL_FILESIZE}}}: <strong id="totalFilesize">0 MB</strong></div>
+				<div>{{LANG_PLAYLIST_DURATION}}: <strong id="playlistDuration">00:00:00</strong></div>
+				<div>{{LANG_TOTAL}}: <strong id="totalItems">0</strong></div>
+				<div>{{LANG_TOTAL_FILESIZE}}: <strong id="totalFilesize">0 MB</strong></div>
 				{{#has_time_limit}}
-					<div>{{{LANG_PLAYLIST_REMAIN_DURATION}}}: <span id="remain_playlist_duration"></span></div>
+					<div>{{LANG_PLAYLIST_REMAIN_DURATION}}: <span id="remain_playlist_duration"></span></div>
 				{{/has_time_limit}}
-				<div><label for="toggleShuffle"><input type="checkbox" value="1" id="toggleShuffle" /> {{{LANG_SHUFFLE}}}</label></div>
+				<div><label for="toggleShuffle"><input type="checkbox" value="1" id="toggleShuffle" /> {{LANG_SHUFFLE}}</label></div>
 				<div>
-					 <select id="shufflePicking"></select> <label for="shufflePicking">{{{LANG_PICKING_MEDIA_PER_CYCLE}}}</label>
+					 <select id="shufflePicking"></select> <label for="shufflePicking">{{LANG_PICKING_MEDIA_PER_CYCLE}}</label>
 				</div>
 				<div>
-					<button id="playerExport" class="{{CLASS_EXPORT_NOTIFY}}"><i class="bi bi-floppy"></i> {{{LANG_PLAYER_EXPORT}}}</button>
-		<!--			<button id="preview">{{{LANG_PLAYLIST_PREVIEW}}}</button> -->
+					<button id="playerExport" class="{{CLASS_EXPORT_NOTIFY}}"><i class="bi bi-floppy"></i> {{LANG_PLAYER_EXPORT}}</button>
+		<!--			<button id="preview">{{LANG_PLAYLIST_PREVIEW}}</button> -->
 				</div>
 			</section>
 		</header>
@@ -58,14 +58,14 @@
 					<div class="properties">
 						<div class="actions" data-item-id="">
 							<span class="item-duration">00:00:00</span>
-							<a class="bi bi-link link-playlist button" title="{{{LANG_LINK_PLAYLIST}}}"></a>
-							<button class="bi bi-alarm conditional-play" title="{{{LANG_CONDITIONAL_PLAY_EDIT}}}"></button>
-							<button class="bi bi-lightning edit-trigger" title="{{{LANG_TRIGGER_EDIT}}}"></button>
-							<button class="bi bi-pencil edit-widget" title="{{{LANG_WIDGET_EDIT}}}"></button>
-							<a class="bi bi-pencil edit-template button" title="{{{LANG_EDIT_TEMPLATE}}}"></a>
-							<button class="bi bi-gear edit-settings" title="{{{LANG_SETTINGS}}}"></button>
-							<button class="bi bi-copy copy-item" title="{{{LANG_COPY_ITEM}}}"> </button>
-							<button class="bi bi-trash delete-item" title="{{{LANG_DELETE_ITEM}}}"></button>
+							<a class="bi bi-link link-playlist button" title="{{LANG_LINK_PLAYLIST}}"></a>
+							<button class="bi bi-alarm conditional-play" title="{{LANG_CONDITIONAL_PLAY_EDIT}}"></button>
+							<button class="bi bi-lightning edit-trigger" title="{{LANG_TRIGGER_EDIT}}"></button>
+							<button class="bi bi-pencil edit-widget" title="{{LANG_WIDGET_EDIT}}"></button>
+							<a class="bi bi-pencil edit-template button" title="{{LANG_EDIT_TEMPLATE}}"></a>
+							<button class="bi bi-gear edit-settings" title="{{LANG_SETTINGS}}"></button>
+							<button class="bi bi-copy copy-item" title="{{LANG_COPY_ITEM}}"> </button>
+							<button class="bi bi-trash delete-item" title="{{LANG_DELETE_ITEM}}"></button>
 						</div>
 						<p class="item-name"></p>
 					</div>
@@ -73,7 +73,7 @@
 			</template>
 			<dialog id="editItemDialog">
 				<header>
-					<span>{{{LANG_ITEM_NAME}}}: </span><span id="editItemName"></span>
+					<span>{{LANG_ITEM_NAME}}: </span><span id="editItemName"></span>
 					<button id="closeEditDialog" class="close-button bi bi-x" aria-label="Close"></button>
 				</header>
 				<div id="editItemErrorMessage"></div>
@@ -85,15 +85,13 @@
 					<input type="hidden" id="editItemId" name="editItemId">
 
 					<footer>
-						<button value="submit" type="submit">{{{LANG_SAVE}}}</button>
-						<button value="cancel" formnovalidate autofocus>{{{LANG_CANCEL}}}</button>
+						<button value="submit" type="submit">{{LANG_SAVE}}</button>
+						<button value="cancel" formnovalidate autofocus>{{LANG_CANCEL}}</button>
 					</footer>
 				</form>
 			</dialog>
 
 		</section>
 	<script>
-		let lang = {
-			"picking_all": "{{{LANG_PICKING_OPTION_ALL}}}"
-		};
+		let lang = {{{LANG_JS}}};
 	</script>

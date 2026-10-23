@@ -1,26 +1,26 @@
 <section id="trigger">
 	<div>
-		<input type="hidden" name="trigger_item_id" id="edit_item_id" value="{{{TRIGGER_ITEM_ID}}}" />
-		<button type="button"  title="{{{LANG_ADD_WALLCLOCK}}}" class="bi bi-plus-circle naked-button" id="addWallclock">
-			{{{LANG_WALLCLOCK}}}
+		<input type="hidden" name="trigger_item_id" id="edit_item_id" value="{{TRIGGER_ITEM_ID}}" />
+		<button type="button"  title="{{LANG_ADD_WALLCLOCK}}" class="bi bi-plus-circle naked-button" id="addWallclock">
+			{{LANG_WALLCLOCK}}
 		</button>
 	</div>
 	<div id="wallclocksContainer" class="trigger-form-container"></div>
 	<div>
-		<button type="button"  title="{{{LANG_ADD_ACCESSKEY}}}" class="bi bi-plus-circle naked-button"  id="addAccesskey">
-			{{{LANG_ACCESSKEY}}}
+		<button type="button"  title="{{LANG_ADD_ACCESSKEY}}" class="bi bi-plus-circle naked-button"  id="addAccesskey">
+			{{LANG_ACCESSKEY}}
 		</button>
 	</div>
 	<div id="accesskeysContainer" class="trigger-form-container"></div>
 	<div>
-		<button type="button"  title="{{{LANG_ADD_TOUCH}}}" class="bi bi-plus-circle naked-button" id="addTouch">
-			{{{LANG_TOUCH}}}
+		<button type="button"  title="{{LANG_ADD_TOUCH}}" class="bi bi-plus-circle naked-button" id="addTouch">
+			{{LANG_TOUCH}}
 		</button>
 	</div>
 	<div id="touchesContainer" class="trigger-form-container"></div>
 	<div>
-		<button type="button" title="{{{LANG_ADD_NOTIFY}}}" class="bi bi-plus-circle naked-button" id="addNotify">
-			{{{LANG_NOTIFY}}}
+		<button type="button" title="{{LANG_ADD_NOTIFY}}" class="bi bi-plus-circle naked-button" id="addNotify">
+			{{LANG_NOTIFY}}
 		</button>
 	</div>
 	<div id="notifiesContainer" class="trigger-form-container"></div>
@@ -28,60 +28,60 @@
 <template id="wallclockTemplate">
 	<div class="trigger-form">
 		<p>
-			<button type="button" title="{{{LANG_REMOVE_WALLCLOCK}}}" class="bi bi-trash remove naked-button"> {{{LANG_REMOVE_WALLCLOCK}}}</button>
+			<button type="button" title="{{LANG_REMOVE_WALLCLOCK}}" class="bi bi-trash remove naked-button"> {{LANG_REMOVE_WALLCLOCK}}</button>
 		</p>
 		<div class="edit-point">
-			<label>{{{LANG_WEEKDAY}}}
+			<label>{{LANG_WEEKDAY}}
 				<select class="edit-weekday">
 					<option value="0">-</option>
 					{{#wallclock_weekdays}}
-						<option value="{{{WEEKDAY_NUMBER}}}">{{{LANG_WEEKDAY_NAME}}}</option>
+						<option value="{{WEEKDAY_NUMBER}}">{{LANG_WEEKDAY_NAME}}</option>
 					{{/wallclock_weekdays}}
 				</select>
 			</label>
 			<label>
 				<select class="edit-weekday-prefix">
-					<option value="+">{{{LANG_WEEKDAY_AFTER}}}</option>
-					<option value="-">{{{LANG_WEEKDAY_BEFORE}}}</option>
+					<option value="+">{{LANG_WEEKDAY_AFTER}}</option>
+					<option value="-">{{LANG_WEEKDAY_BEFORE}}</option>
 				</select>
 			</label>
-			<label>{{{LANG_DATETIME}}}
+			<label>{{LANG_DATETIME}}
 				<input type="datetime-local" class="edit-datetime" step="1">
 			</label>
 		</div>
-		<p>{{{LANG_REPEATS}}}</p>
+		<p>{{LANG_REPEATS}}</p>
 		<div class="edit-repeats">
 			<label>
-				<input type="radio" value="-1" class="no-repeats-select"> {{{LANG_NO_REPEATS}}}
+				<input type="radio" value="-1" class="no-repeats-select"> {{LANG_NO_REPEATS}}
 			</label>
 			<label>
-				<input type="radio"  value="0" class="infinite-repeats-select"> {{{LANG_INFINITE_REPEATS}}}
+				<input type="radio"  value="0" class="infinite-repeats-select"> {{LANG_INFINITE_REPEATS}}
 			</label>
 			<label>
-				<input type="radio" value="1" class="number-repeats-select"> {{{LANG_NUMBER_REPEATS}}}
+				<input type="radio" value="1" class="number-repeats-select"> {{LANG_NUMBER_REPEATS}}
 				<input type="number" class="number-repeats" min="1" max="9999">
 			</label>
 		</div>
 		<div class="edit-repeat-periods">
-			{{{LANG_EVERY}}}:
+			{{LANG_EVERY}}:
 			<div>
 				<label>
-					<input type="number" class="repeat-minutes" min="0" max="59"> {{{LANG_REPEAT_MINUTES}}}
+					<input type="number" class="repeat-minutes" min="0" max="59"> {{LANG_REPEAT_MINUTES}}
 				</label>
 				<label>
-					<input type="number" class="repeat-hours" min="0" max="23"> {{{LANG_REPEAT_HOURS}}}
+					<input type="number" class="repeat-hours" min="0" max="23"> {{LANG_REPEAT_HOURS}}
 				</label>
 				<label for="repeat_days">
-					<input type="number" class="repeat-days" min="0" max="7"> {{{LANG_REPEAT_DAYS}}}
+					<input type="number" class="repeat-days" min="0" max="7"> {{LANG_REPEAT_DAYS}}
 				</label>
 				<label for="repeat_weeks">
-					<input type="number" class="repeat-weeks" min="0" max="4"> {{{LANG_REPEAT_WEEKS}}}
+					<input type="number" class="repeat-weeks" min="0" max="4"> {{LANG_REPEAT_WEEKS}}
 				</label>
 				<label for="repeat_months">
-					<input type="number" class="repeat-months" min="0" max="11"> {{{LANG_REPEAT_MONTHS}}}
+					<input type="number" class="repeat-months" min="0" max="11"> {{LANG_REPEAT_MONTHS}}
 				</label>
 				<label>
-					<input type="number" class="repeat-years" min="0" max="11"> {{{LANG_REPEAT_YEARS}}}
+					<input type="number" class="repeat-years" min="0" max="11"> {{LANG_REPEAT_YEARS}}
 				</label>
 			</div>
 		</div>
@@ -91,17 +91,17 @@
 <template id="accesskeyTemplate">
 	<div class="trigger-form">
 		<p>
-			<button type="button" title="{{{LANG_REMOVE_ACCESSKEY}}}" class="bi bi-trash remove naked-button"> {{{LANG_REMOVE_ACCESSKEY}}}</button>
+			<button type="button" title="{{LANG_REMOVE_ACCESSKEY}}" class="bi bi-trash remove naked-button"> {{LANG_REMOVE_ACCESSKEY}}</button>
 		</p>
 		<label>
-			 <input type="text" class="edit-accesskey" maxlength="1" pattern="[a-zA-Z0-9]*" title="{{{LANG_ONLY_ALPHANUMERIC}}}">
+			 <input type="text" class="edit-accesskey" maxlength="1" pattern="[a-zA-Z0-9]*" title="{{LANG_ONLY_ALPHANUMERIC}}">
 		</label>
 	</div>
 </template>
 <template id="touchTemplate">
 	<div class="trigger-form">
 			<p>
-				<button type="button" title="{{{LANG_REMOVE_TOUCH}}}" class="bi bi-trash remove naked-button"> {{{LANG_REMOVE_TOUCH}}}</button>
+				<button type="button" title="{{LANG_REMOVE_TOUCH}}" class="bi bi-trash remove naked-button"> {{LANG_REMOVE_TOUCH}}</button>
 			</p>
 			<label>
 				<select class="edit-touch-item">
@@ -112,9 +112,9 @@
 </template>
 <template id="notifyTemplate">
 	<div class="trigger-form">
-		<p><button type="button" title="{{{LANG_REMOVE_NOTIFY}}}" class="bi bi-trash remove naked-button"> {{{LANG_REMOVE_NOTIFY}}}</button></p>
+		<p><button type="button" title="{{LANG_REMOVE_NOTIFY}}" class="bi bi-trash remove naked-button"> {{LANG_REMOVE_NOTIFY}}</button></p>
 		<label>
-			<input type="text" class="edit-notify" pattern="[a-zA-Z0-9]*" title="{{{LANG_ONLY_ALPHANUMERIC}}}">
+			<input type="text" class="edit-notify" pattern="[a-zA-Z0-9]*" title="{{LANG_ONLY_ALPHANUMERIC}}">
 		</label>
 	</div>
 </template>

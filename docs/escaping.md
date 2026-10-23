@@ -33,8 +33,9 @@ gets entities it does not want. The next escaping step then escapes the entities
   and is escaped inside, e.g. the form fields from `FormBuilder` (`HTML_ELEMENT`).
 - Never use `{{{ }}}` for names, titles, texts, IDs, URLs or anything else that came from a user, the
   database, a player or a file name.
-- `LANG_*` translations still use `{{{ }}}` in most templates. Translation files are trusted,
-  but must not contain user data.
+- `LANG_*` translations use `{{ }}` as well. Translations can contain replacements with user data
+  (`translate($key, $module, ['{name}' => $userName])`), so they are not trusted. A translation file must
+  not contain HTML. Text which needs markup is built in the template.
 
 ### Generated HTML (`Framework\Utils\Html`)
 
@@ -54,9 +55,18 @@ into an attribute or a text. Their result is passed to the template as `{{{HTML_
 
 ### JavaScript and JSON inside HTML
 
-Do not put values in inline scripts with `{{ }}`. Use `json_encode` with
-`JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT`, or write the value into a
-`data-` attribute and read it with `dataset`.
+Do not put values into an inline `<script>` with `{{ }}` or `{{{ }}}` directly. A `"` or `</script>` in the
+value would break the script. Build the data in PHP with `App\Framework\Helper\Json::encodeForScript()`
+and write the result with `{{{ }}}`:
+
+```html
+<script>
+	let lang = {{{LANG_JS}}};
+</script>
+```
+
+The helper hex-escapes `<`, `>`, `&` and `'`. For single values in the HTML (not in a script), use a
+`data-` attribute with `{{ }}` and read it with `dataset`.
 
 ### URLs
 
