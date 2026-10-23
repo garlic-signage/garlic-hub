@@ -278,8 +278,17 @@ class UsersAdminServiceTest extends TestCase
 		$this->aclValidatorMock->expects($this->once())->method('isModuleAdmin')
 			->with(1)
 			->willReturn(true);
-		$this->userMainRepositoryMock->expects($this->once())->method('delete')
+		$this->userMainRepositoryMock->expects($this->once())->method('findByIdSecured')
 			->with($UID)
+			->willReturn(['UID' => $UID]);
+		$this->userMainRepositoryMock->expects($this->once())->method('update')
+			->with($UID, [
+				'email'      => 'deleted-123@garlic-hub.com',
+				'password'   => '',
+				'session_id' => null,
+				'gender'     => null,
+				'status'     => 0
+			])
 			->willReturn(1);
 		// tokens of a deleted user must not survive
 		$this->userTokenServiceMock->expects($this->once())->method('deleteAllUserTokens')->with($UID);
@@ -339,9 +348,10 @@ class UsersAdminServiceTest extends TestCase
 		$this->aclValidatorMock->expects($this->once())->method('isModuleAdmin')
 			->with($this->anything())
 			->willReturn(true);
-		$this->userMainRepositoryMock->expects($this->once())->method('delete')
+		$this->userMainRepositoryMock->expects($this->once())->method('findByIdSecured')
 			->with($UID)
-			->willReturn(0);
+			->willReturn([]);
+		$this->userMainRepositoryMock->expects($this->never())->method('update');
 		$this->transactionsMock->expects($this->once())->method('rollBack');
 
 		$this->transactionsMock->expects($this->never())->method('commit');
@@ -366,8 +376,10 @@ class UsersAdminServiceTest extends TestCase
 		$this->aclValidatorMock->expects($this->once())->method('isModuleAdmin')
 			->with($this->anything())
 			->willReturn(true);
-		$this->userMainRepositoryMock->expects($this->once())->method('delete')
+		$this->userMainRepositoryMock->expects($this->once())->method('findByIdSecured')
 			->with($UID)
+			->willReturn(['UID' => $UID]);
+		$this->userMainRepositoryMock->expects($this->once())->method('update')
 			->willThrowException(new \Exception('Unexpected error'));
 		$this->transactionsMock->expects($this->once())->method('rollBack');
 		$this->transactionsMock->expects($this->never())->method('commit');

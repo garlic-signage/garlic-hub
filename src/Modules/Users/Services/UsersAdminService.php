@@ -28,6 +28,7 @@ use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\NodesService;
+use App\Modules\Users\UserStatus;
 use App\Shared\User\TokenPurposes;
 use App\Shared\User\UserTokenService;
 use App\Shared\User\Repositories\Edge\UserAclRepository;
@@ -129,6 +130,12 @@ class UsersAdminService
 	}
 
 	/**
+	 * "Deletes" a user by anonymizing: the row stays, so the UID is never given to somebody else and
+	 * the content of the user (players, playlists) keeps an owner. The email is replaced, password,
+	 * session and gender are cleared and the status is deleted, so nobody can log in. The username
+	 * stays. Tokens and rights are removed, the media directory is deleted and its media are
+	 * marked as deleted (the files stay in the storage).
+	 *
 	 * @throws AccessDeniedException
 	 * @throws Exception
 	 * @throws NotFoundException
@@ -142,8 +149,16 @@ class UsersAdminService
 			if (!$this->aclValidator->isModuleAdmin($this->userSession->getUID()))
 				throw new AccessDeniedException('users', 'user_not_deletable', ['UID' => $UID]);
 
-			if ($this->userMainRepository->delete($UID) === 0)
+			if ($this->userMainRepository->findByIdSecured($UID) === [])
 				throw new NotFoundException('users', 'user_not_found', ['UID' => $UID]);
+
+			$this->userMainRepository->update($UID, [
+				'email'      => 'deleted-' . $UID . '@garlic-hub.com',
+				'password'   => '',
+				'session_id' => null,
+				'gender'     => null,
+				'status'     => UserStatus::DELETED->value
+			]);
 
 			$this->userTokenService->deleteAllUserTokens($UID);
 			// the rights must not outlive the user: SQLite does not cascade without a pragma
