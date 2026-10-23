@@ -102,6 +102,7 @@ ddev exec vendor/bin/phpstan analyze
 
 **Concepts**
 - [Controller](docs/controller.md)
+- [Datatables](docs/datatable.md)
 - [DI Container](docs/di-container.md)
 - [Exceptions](docs/exceptions.md)
 - [Input, Validation and Escaping](docs/escaping.md)
@@ -110,7 +111,7 @@ ddev exec vendor/bin/phpstan analyze
 - [CLI](docs/cli.md)
 
 **How-tos**
-- [Paginator](docs/generic/datatable/paginator.md)
+- [Paginator](docs/paginator.md)
 - [Connect a Media Player](docs/connect-media-player.md)
 
 ## Security
