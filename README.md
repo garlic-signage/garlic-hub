@@ -104,6 +104,7 @@ ddev exec vendor/bin/phpstan analyze
 - [Controller](docs/controller.md)
 - [DI Container](docs/di-container.md)
 - [Exceptions](docs/exceptions.md)
+- [Input, Validation and Escaping](docs/escaping.md)
 - [User Administration](docs/user-administration.md) — roles and access levels
 - [API and OAuth2](docs/oauth2.md)
 - [CLI](docs/cli.md)
