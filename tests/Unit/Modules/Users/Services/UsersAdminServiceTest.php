@@ -31,6 +31,7 @@ use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\NodesService;
 use App\Shared\User\TokenPurposes;
 use App\Shared\User\UserTokenService;
+use App\Shared\User\Repositories\Edge\UserAclRepository;
 use App\Shared\User\Repositories\Edge\UserMainRepository;
 use App\Modules\Users\Services\AclValidator;
 use App\Modules\Users\Services\UsersAdminService;
@@ -44,6 +45,7 @@ use PHPUnit\Framework\TestCase;
 class UsersAdminServiceTest extends TestCase
 {
 	private UserMainRepository&MockObject $userMainRepositoryMock;
+	private UserAclRepository&Stub $userAclRepositoryStub;
 	private NodesService&MockObject $nodesServiceMock;
 	private UserTokenService&MockObject $userTokenServiceMock;
 	private AclValidator&MockObject $aclValidatorMock;
@@ -58,6 +60,7 @@ class UsersAdminServiceTest extends TestCase
 	{
 		parent::setUp();
 		$this->userMainRepositoryMock = $this->createMock(UserMainRepository::class);
+		$this->userAclRepositoryStub = $this->createStub(UserAclRepository::class);
 		$this->nodesServiceMock = $this->createMock(NodesService::class);
 		$this->userTokenServiceMock = $this->createMock(UserTokenService::class);
 		$this->aclValidatorMock = $this->createMock(AclValidator::class);
@@ -66,6 +69,7 @@ class UsersAdminServiceTest extends TestCase
 		$this->userSessionStub = $this->createStub(UserSession::class);
 		$this->usersAdminService = new UsersAdminService(
 			$this->userMainRepositoryMock,
+			$this->userAclRepositoryStub,
 			$this->nodesServiceMock,
 			$this->userTokenServiceMock,
 			$this->aclValidatorMock,
@@ -279,12 +283,23 @@ class UsersAdminServiceTest extends TestCase
 			->willReturn(1);
 		// tokens of a deleted user must not survive
 		$this->userTokenServiceMock->expects($this->once())->method('deleteAllUserTokens')->with($UID);
+		$aclRepositoryMock = $this->createMock(UserAclRepository::class);
+		$aclRepositoryMock->expects($this->once())->method('delete')->with($UID);
 		$this->nodesServiceMock->expects($this->once())->method('deleteUserDirectory')
 			->with($UID);
 		$this->transactionsMock->expects($this->once())->method('commit');
 
 		$this->userSessionStub->method('getUID')->willReturn(1);
-		$this->usersAdminService->deleteUser($UID);
+		$service = new UsersAdminService(
+			$this->userMainRepositoryMock,
+			$aclRepositoryMock,
+			$this->nodesServiceMock,
+			$this->userTokenServiceMock,
+			$this->aclValidatorMock,
+			$this->transactionsMock,
+			$this->userSessionStub
+		);
+		$service->deleteUser($UID);
 	}
 
 	/**
@@ -372,7 +387,7 @@ class UsersAdminServiceTest extends TestCase
 	{
 		$this->expectUntouched($this->userMainRepositoryMock, $this->nodesServiceMock, $this->aclValidatorMock, $this->transactionsMock);
 		$UID = 123;
-		$existingTokens = [['token' => 'existing_token', 'purpose' => 'password_reset']];
+		$existingTokens = [['token' => 'existing_token', 'purpose' => 'password_reset', 'expires_at' => '2999-01-01 00:00:00']];
 
 		$this->userTokenServiceMock->expects($this->once())->method('findTokensByUID')
 			->with($UID)

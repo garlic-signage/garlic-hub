@@ -30,6 +30,7 @@ use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\NodesService;
 use App\Shared\User\TokenPurposes;
 use App\Shared\User\UserTokenService;
+use App\Shared\User\Repositories\Edge\UserAclRepository;
 use App\Shared\User\Repositories\Edge\UserMainRepository;
 use Doctrine\DBAL\Exception;
 use Throwable;
@@ -46,6 +47,7 @@ class UsersAdminService
 
 	public function __construct(
 		private readonly UserMainRepository $userMainRepository,
+		private readonly UserAclRepository $userAclRepository,
 		private readonly NodesService $nodesService,
 		private readonly UserTokenService $userTokenService,
 		private readonly AclValidator $aclValidator,
@@ -144,6 +146,8 @@ class UsersAdminService
 				throw new NotFoundException('users', 'user_not_found', ['UID' => $UID]);
 
 			$this->userTokenService->deleteAllUserTokens($UID);
+			// the rights must not outlive the user: SQLite does not cascade without a pragma
+			$this->userAclRepository->delete($UID);
 
 			$this->nodesService->deleteUserDirectory($UID);
 
@@ -163,8 +167,8 @@ class UsersAdminService
 	 */
 	public function createPasswordResetToken(int $UID): string
 	{
-		// check first if there is another valid token
-		if ($this->userTokenService->findTokensByUID($UID) !== [])
+		// a link which can still be used is refreshed with the token buttons, not replaced by a second one
+		if ($this->hasUsableLinkToken($UID))
 			throw new TranslatableModuleException('users', 'tokens_exists', ['UID' => $UID]);
 
 		$this->transactions->begin();
@@ -172,6 +176,9 @@ class UsersAdminService
 		{
 			if ($this->userMainRepository->update($UID, ['password' => '']) === 0)
 				throw new TranslatableModuleException('users', 'password_reset_failed', ['UID' => $UID]);
+
+			// without password there is no reason to keep remember-me logins alive
+			$this->userTokenService->deleteByUserPurpose($UID, TokenPurposes::AUTOLOGIN->value);
 
 			$token = $this->userTokenService->generateToken();
 			if ($this->userTokenService->insertToken($UID, $token, TokenPurposes::PASSWORD_RESET) === '')
@@ -186,6 +193,25 @@ class UsersAdminService
 			$this->transactions->rollBack();
 			throw $e;
 		}
+	}
+
+	/**
+	 * Remember-me logins and expired links do not count: they are no reason to refuse a reset.
+	 *
+	 * @throws Exception
+	 */
+	private function hasUsableLinkToken(int $UID): bool
+	{
+		$now = date('Y-m-d H:i:s');
+		/** @var list<array{token:string, UID: int, purpose: string, expires_at: string, used_at:string|null}> $tokens */
+		$tokens = $this->userTokenService->findTokensByUID($UID);
+		foreach ($tokens as $token)
+		{
+			if ($token['purpose'] !== TokenPurposes::AUTOLOGIN->value && $token['expires_at'] > $now)
+				return true;
+		}
+
+		return false;
 	}
 
 	/**

@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace Tests\Integration\Support;
 
 use App\Framework\Http\Session;
+use App\Framework\Localization\Locales\Locales;
 use Phpfastcache\Helper\Psr16Adapter;
 use Psr\Container\ContainerInterface;
 
@@ -65,5 +66,7 @@ abstract class ContainerTestCase extends DatabaseTestCase
 			self::fail('No user ' . $UID . ' in the test database.');
 
 		$this->container->get(Session::class)->set('user', $user);
+		// the LocaleMiddleware does this in the application
+		$this->container->get(Locales::class)->determineCurrentLocale();
 	}
 }
