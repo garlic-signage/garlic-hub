@@ -126,6 +126,34 @@ class RepositoryTest extends NestedSetsTestCase
 		static::assertSame(6, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM mediapool_nodes WHERE root_id = 1'));
 	}
 
+	public function testTheServicePassesTheFindersOnToTheRepository(): void
+	{
+		$node = $this->node($this->ids['B']);
+
+		static::assertSame($this->repository->findAllRootNodes(), $this->service->findAllRootNodes());
+		static::assertSame($this->repository->findNodeOwner($this->ids['B1']), $this->service->findNodeOwner($this->ids['B1']));
+		static::assertSame(
+			$this->repository->findAllChildNodesByParentNode($this->ids['A']),
+			$this->service->findAllChildNodesByParentNode($this->ids['A'])
+		);
+		static::assertSame(
+			$this->repository->findRootIdRgtAndLevelByNodeId($this->ids['B']),
+			$this->service->findRootIdRgtAndLevelByNodeId($this->ids['B'])
+		);
+		static::assertSame(
+			$this->repository->findAllSubNodeIdsByRootIdsAndPosition((int) $node['root_id'], (int) $node['rgt'], (int) $node['lft']),
+			$this->service->findAllSubNodeIdsByRootIdsAndPosition((int) $node['root_id'], (int) $node['rgt'], (int) $node['lft'])
+		);
+	}
+
+	public function testTheServiceCanWorkOnAnotherTable(): void
+	{
+		$this->service->initRepository('templates', 'template_id');
+
+		static::assertSame('templates', $this->repository->getTable());
+		static::assertSame('template_id', $this->repository->getIdField());
+	}
+
 	/**
 	 * findTreeByRootId() joins a table user_name, findAllChildrenInTreeOfNodeId() selects a column
 	 * category_name and has an unbalanced bracket in its where clause. Nothing calls them, so
