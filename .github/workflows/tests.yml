@@ -1,0 +1,41 @@
+name: tests and static analysis
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Set up PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.4'
+        extensions: curl, fileinfo, imagick, intl, mbstring, openssl, simplexml, zip
+        coverage: none
+        tools: composer:v2
+
+    - name: Install dependencies
+      run: composer install --no-interaction --no-progress --prefer-dist
+
+    - name: Prepare environment
+      run: |
+        cp .env.dist .env
+        sed -i -e 's|^APP_ENV=.*|APP_ENV=test|' \
+               -e 's|^DB_MASTER_DRIVER=.*|DB_MASTER_DRIVER="PDO_SQLITE"|' \
+               -e 's|^DB_MASTER_PATH=.*|DB_MASTER_PATH="/tmp/garlic-hub-ci.db"|' .env
+        bash dev-install.sh
+
+    - name: PHPStan
+      run: vendor/bin/phpstan analyse --no-progress
+
+    - name: PHPUnit
+      run: vendor/bin/phpunit

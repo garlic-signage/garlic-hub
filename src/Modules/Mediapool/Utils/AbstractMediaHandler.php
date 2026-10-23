@@ -147,12 +147,32 @@ abstract class AbstractMediaHandler
 	abstract public function validateStoredFile(string $filePath): void;
 	abstract public function createThumbnail(string $filePath): void;
 
+	/**
+	 * @throws ModuleException
+	 */
 	public function uploadFromLocal(UploadedFileInterface $uploadedFile): string
 	{
-		$targetPath = strtolower('/'. $this->originalPath .'/'. $uploadedFile->getClientFilename());
+		$targetPath = strtolower('/'. $this->originalPath .'/'. $this->sanitizeClientFilename($uploadedFile->getClientFilename()));
 		$uploadedFile->moveTo($this->getAbsolutePath($targetPath));
 
 		return $targetPath;
+	}
+
+	/**
+	 * The client filename is user input: strip any directory part (also with backslashes)
+	 * and control characters so it can not leave the upload directory.
+	 *
+	 * @throws ModuleException
+	 */
+	private function sanitizeClientFilename(?string $clientFilename): string
+	{
+		$name = (string) preg_replace('/[\x00-\x1F\x7F]/', '', (string) $clientFilename);
+		$name = basename(str_replace('\\', '/', $name));
+
+		if ($name === '' || $name === '.' || $name === '..')
+			throw new ModuleException('mediapool', 'Invalid file name.');
+
+		return $name;
 	}
 
 	/**

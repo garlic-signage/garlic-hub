@@ -30,6 +30,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
 use phpmock\phpunit\PHPMock;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\MockObject\Exception;
@@ -269,6 +270,57 @@ class AbstractMediaHandlerTest extends TestCase
 		$result = $this->concreteMediaHandler->uploadFromLocal($uploadedFileMock);
 
 		static::assertEquals('//originals/testfile.jpg', $result);
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	#[Group('units')]
+	#[DataProvider('traversalFilenameProvider')]
+	public function testUploadFromLocalStripsDirectoryPartsFromClientFilename(string $clientFilename, string $expected): void
+	{
+		$uploadedFileMock = $this->createMock(UploadedFileInterface::class);
+		$uploadedFileMock->method('getClientFilename')->willReturn($clientFilename);
+		$this->configMock->method('getPaths')->with('systemDir')->willReturn('/var/www');
+		$uploadedFileMock->expects($this->once())->method('moveTo')->with('/var/www' . $expected);
+
+		static::assertEquals($expected, $this->concreteMediaHandler->uploadFromLocal($uploadedFileMock));
+	}
+
+	/**
+	 * @return array<string,array{string,string}>
+	 */
+	public static function traversalFilenameProvider(): array
+	{
+		return [
+			'unix traversal'    => ['../../public/Evil.php', '//originals/evil.php'],
+			'absolute path'     => ['/etc/cron.d/job', '//originals/job'],
+			'windows traversal' => ['..\\..\\evil.jpg', '//originals/evil.jpg'],
+			'null byte'         => ["a.php\0.jpg", '//originals/a.php.jpg'],
+		];
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	#[Group('units')]
+	#[DataProvider('invalidFilenameProvider')]
+	public function testUploadFromLocalRejectsInvalidClientFilename(?string $clientFilename): void
+	{
+		$uploadedFileMock = $this->createMock(UploadedFileInterface::class);
+		$uploadedFileMock->method('getClientFilename')->willReturn($clientFilename);
+		$uploadedFileMock->expects($this->never())->method('moveTo');
+
+		$this->expectException(ModuleException::class);
+		$this->concreteMediaHandler->uploadFromLocal($uploadedFileMock);
+	}
+
+	/**
+	 * @return array<string,array{string|null}>
+	 */
+	public static function invalidFilenameProvider(): array
+	{
+		return ['null' => [null], 'empty' => [''], 'dot' => ['.'], 'dotdot' => ['..'], 'trailing slash' => ['foo/..']];
 	}
 
 	/**
