@@ -127,6 +127,28 @@ class AuthServiceTest extends TestCase
 
 	/**
 	 * @throws \Doctrine\DBAL\Exception
+	 */
+	#[Group('units')]
+	public function testLoginUnknownUserTakesAsLongAsWrongPassword(): void
+	{
+		$this->userServiceStub->method('findUser')->willReturnOnConsecutiveCalls([], ['UID' => 1, 'password' => password_hash('correct_password', PASSWORD_DEFAULT)]);
+
+		$start = hrtime(true);
+		$this->authService->login('unknown', 'wrong');
+		$unknown = hrtime(true) - $start;
+
+		$start = hrtime(true);
+		$this->authService->login('known', 'wrong');
+		$wrong = hrtime(true) - $start;
+
+		// both paths do one expensive hash operation (about 50ms and more), so they stay in the same order of magnitude
+		static::assertGreaterThan(10_000_000, $unknown);
+		static::assertLessThan(3, $unknown / $wrong);
+		static::assertGreaterThan(1 / 3, $unknown / $wrong);
+	}
+
+	/**
+	 * @throws \Doctrine\DBAL\Exception
 	 * @throws InvalidArgumentException
 	 */
 	#[Group('units')]

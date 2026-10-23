@@ -66,6 +66,11 @@ class AuthService
 		}
 
 		$userData = $this->userService->findUser($identifier);
+		if ($userData === [])
+		{
+			// hashing costs as much as verifying, so the response time does not reveal whether the user exists
+			password_hash($password, PASSWORD_DEFAULT);
+		}
 		if ($userData === [] || !password_verify($password, $userData['password']))
 		{
 			$this->loginThrottle->registerFailure($identifier, $ip);
