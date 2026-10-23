@@ -1,5 +1,5 @@
 [![tests](https://github.com/garlic-signage/garlic-hub/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/garlic-signage/garlic-hub/actions/workflows/tests.yml)
-[![docker-hub image](https://github.com/garlic-signage/garlic-hub/actions/workflows/dockerhub-releases-manually.yml/badge.svg?branch=main)](https://github.com/garlic-signage/garlic-hub/actions/workflows/docker-image.yml)
+[![docker-hub image](https://github.com/garlic-signage/garlic-hub/actions/workflows/dockerhub-releases.yml/badge.svg?branch=main)](https://github.com/garlic-signage/garlic-hub/actions/workflows/docker-releases.yml)
 [![garlic-hub coverage](https://raw.githubusercontent.com/garlic-signage/garlic-hub/badges/coverage.svg)](https://github.com/garlic-signage/garlic-hub/actions/workflows/tests.yml)
 [![phpstan level](https://github.com/garlic-signage/garlic-hub/blob/main/misc/phpstan-level.svg)](https://github.com/garlic-signage/garlic-hub/blob/main/misc/phpstan-level.svg)
 [![php version](https://github.com/garlic-signage/garlic-hub/blob/main/misc/php-version.svg)](https://github.com/garlic-signage/garlic-hub/blob/main/misc/php-version.svg)
