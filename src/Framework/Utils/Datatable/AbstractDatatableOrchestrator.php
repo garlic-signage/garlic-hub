@@ -76,7 +76,6 @@ abstract class AbstractDatatableOrchestrator implements DatatableOrchestratorInt
 		$this->datatableBuilder->collectFormElements();
 		$this->datatableBuilder->createPagination($this->datatableService->getCurrentTotalResult());
 		$this->datatableBuilder->createDropDown();
-		$this->datatableBuilder->createTableFields();
 
 		return $this;
 	}

@@ -37,6 +37,7 @@ use App\Modules\Users\Helper\Datatable\DatatableBuilder;
 use App\Modules\Users\Helper\Datatable\Parameters;
 use App\Modules\Users\Services\AclValidator;
 use App\Modules\Users\UserStatus;
+use App\Framework\Utils\Datatable\Results\HeaderField;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -145,15 +146,25 @@ class DatatableBuilderTest extends TestCase
     #[Group('units')]
 	public function testDetermineParametersSetsUserInputsAndParsesFilterAllUsers(): void
 	{
-		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$this->aclValidatorMock
+			->expects($this->atLeastOnce())->method('getConfig')
+			->willReturn($this->createConfiguredStub(Config::class, ['getEdition' => Config::PLATFORM_EDITION_EDGE]));
 		$queryParams = ['test_key' => 'test_value'];
+
+		$resultsBuilderStub = $this->createStub(Builder::class);
+		$this->buildServiceStub->method('getResultsBuilder')->willReturn($resultsBuilderStub);
+		$this->buildServiceStub->method('getDatatableFields')->willReturn([
+			new HeaderField()->setName('username')->sortable(true),
+			new HeaderField()->setName('status')->sortable(false)
+		]);
 
 		$this->parametersMock->expects($this->once())
 			->method('setUserInputs')
 			->with($queryParams);
 
 		$this->parametersMock->expects($this->once())
-			->method('parseInputFilterAllUsers');
+			->method('parseInputFilterAllUsers')
+			->with(['username']);
 
 		$this->builder->determineParameters($queryParams);
 	}

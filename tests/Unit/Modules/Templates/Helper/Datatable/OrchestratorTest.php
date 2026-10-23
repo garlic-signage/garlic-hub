@@ -113,7 +113,7 @@ class OrchestratorTest extends TestCase
 		$this->builderMock->expects($this->once())->method('collectFormElements');
 		$this->builderMock->expects($this->once())->method('createPagination')->with(3);
 		$this->builderMock->expects($this->once())->method('createDropDown');
-		$this->builderMock->expects($this->once())->method('createTableFields');
+		$this->builderMock->expects($this->never())->method('createTableFields');
 		$this->preparerMock->expects($this->never())->method($this->anything());
 
 		static::assertSame($this->orchestrator, $this->orchestrator->prepareDataGrid());

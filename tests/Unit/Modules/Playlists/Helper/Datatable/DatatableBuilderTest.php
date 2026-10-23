@@ -36,6 +36,7 @@ use App\Modules\Playlists\Helper\Datatable\DatatableBuilder;
 use App\Modules\Playlists\Helper\Datatable\Parameters;
 use App\Modules\Playlists\Helper\PlaylistMode;
 use App\Modules\Playlists\Services\AclValidator;
+use App\Framework\Utils\Datatable\Results\HeaderField;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -143,16 +144,23 @@ class DatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testDetermineParametersSetsUserInputsAndParsesFilterAllUsers(): void
 	{
-		$this->buildServiceMock->expects($this->never())->method($this->anything());
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$queryParams = ['test_key' => 'test_value'];
+
+		$this->buildServiceMock->expects($this->atLeastOnce())->method('createDatatableField');
+		$this->buildServiceMock->expects($this->exactly(2))->method('getDatatableFields')->willReturn([
+			new HeaderField()->setName('playlist_name')->sortable(true),
+			new HeaderField()->setName('other')->sortable(false)
+		]);
+		$this->parametersMock->method('hasParameter')->willReturn(false);
 
 		$this->parametersMock->expects($this->once())
 			->method('setUserInputs')
 			->with($queryParams);
 
 		$this->parametersMock->expects($this->once())
-			->method('parseInputFilterAllUsers');
+			->method('parseInputFilterAllUsers')
+			->with(['playlist_name']);
 
 		$this->builder->determineParameters($queryParams);
 	}

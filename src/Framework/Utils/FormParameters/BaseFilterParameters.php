@@ -88,18 +88,24 @@ abstract class BaseFilterParameters extends BaseParameters implements BaseFilter
 	 * checks if parameters are stored in session from previous visit
 	 * iterates over all parameters and sets the values
 	 *
+	 * Only the values are taken from the session, the parameter set itself
+	 * is always the current one, as it depends on the role of the user.
+	 *
+	 * @param list<string> $sortableColumns columns allowed for sorting besides the default sort column
 	 * @throws  ModuleException
 	 */
-	public function parseInputFilterAllUsers(): static
+	public function parseInputFilterAllUsers(array $sortableColumns): static
 	{
 		$storedParameters = [];
 		if ($this->storedParametersInSessionExists())
 		{
-			$storedParameters        = $this->getStoredSearchParamsFromSession();
-			$this->currentParameters = $storedParameters;
+			$storedParameters = $this->getStoredSearchParamsFromSession();
+			$this->restoreStoredValues($storedParameters);
 		}
 
 		$this->parseInputAllParameters();
+		$this->limitSorting($sortableColumns);
+		$this->limitPagination();
 		if ($this->hasFilterParametersChanged($storedParameters))
 		{
 			$this->setValueOfParameter(self::PARAMETER_ELEMENTS_PAGE, 1);
@@ -150,6 +156,65 @@ abstract class BaseFilterParameters extends BaseParameters implements BaseFilter
 			return [];
 
 		return $ret;
+	}
+
+	/**
+	 * @param array<string, array{scalar_type: ScalarType, default_value: mixed, parsed: bool, value?:mixed}> $storedParameters
+	 */
+	protected function restoreStoredValues(array $storedParameters): void
+	{
+		foreach ($this->currentParameters as $key => $parameter)
+		{
+			if (!isset($storedParameters[$key]) || !array_key_exists('value', $storedParameters[$key]))
+				continue;
+
+			$parameter['value']  = $storedParameters[$key]['value'];
+			$parameter['parsed'] = $storedParameters[$key]['parsed'];
+			$this->currentParameters[$key] = $parameter;
+		}
+	}
+
+	/**
+	 * Unknown sort columns fall back to the default, as the column ends up in ORDER BY.
+	 *
+	 * @param list<string> $sortableColumns
+	 * @throws ModuleException
+	 */
+	protected function limitSorting(array $sortableColumns): void
+	{
+		if ($this->hasParameter(self::PARAMETER_SORT_COLUMN))
+		{
+			$default = $this->getDefaultValueOfParameter(self::PARAMETER_SORT_COLUMN);
+			if (!in_array($this->getValueOfParameter(self::PARAMETER_SORT_COLUMN), [...$sortableColumns, $default], true))
+				$this->setValueOfParameter(self::PARAMETER_SORT_COLUMN, (string) $default);
+		}
+
+		if ($this->hasParameter(self::PARAMETER_SORT_ORDER))
+		{
+			$order = strtoupper((string) $this->getValueOfParameter(self::PARAMETER_SORT_ORDER));
+			$this->setValueOfParameter(self::PARAMETER_SORT_ORDER, $order === 'DESC' ? 'DESC' : 'ASC');
+		}
+	}
+
+	/**
+	 * @throws ModuleException
+	 */
+	protected function limitPagination(): void
+	{
+		if ($this->hasParameter(self::PARAMETER_ELEMENTS_PER_PAGE))
+		{
+			$perPage = (int) $this->getValueOfParameter(self::PARAMETER_ELEMENTS_PER_PAGE);
+			if ($perPage < 1)
+				$perPage = (int) $this->getDefaultValueOfParameter(self::PARAMETER_ELEMENTS_PER_PAGE);
+
+			$this->setValueOfParameter(self::PARAMETER_ELEMENTS_PER_PAGE, min($perPage, self::MAX_ELEMENTS_PER_PAGE));
+		}
+
+		if ($this->hasParameter(self::PARAMETER_ELEMENTS_PAGE))
+		{
+			$page = (int) $this->getValueOfParameter(self::PARAMETER_ELEMENTS_PAGE);
+			$this->setValueOfParameter(self::PARAMETER_ELEMENTS_PAGE, max($page, 1));
+		}
 	}
 
 	/**

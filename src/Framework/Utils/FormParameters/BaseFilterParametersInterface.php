@@ -33,12 +33,16 @@ interface BaseFilterParametersInterface
 	public const string PARAMETER_SORT_COLUMN       = 'sort_column';
 	public const string PARAMETER_SORT_ORDER        = 'sort_order';
 	const string PARAMETER_COMPANY_ID               = 'company_id';
+	public const int MAX_ELEMENTS_PER_PAGE          = 100;
 
 	public function setParameterDefaultValues(string $defaultSortColumn): static;
 
 	public function setElementsParametersToNull(): static;
 
-	public function parseInputFilterAllUsers(): static;
+	/**
+	 * @param list<string> $sortableColumns
+	 */
+	public function parseInputFilterAllUsers(array $sortableColumns): static;
 
 	public function hasSessionKeyStore(): bool;
 

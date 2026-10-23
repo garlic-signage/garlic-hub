@@ -29,6 +29,7 @@ use App\Framework\Utils\Datatable\AbstractDatatableBuilder;
 use App\Framework\Utils\Datatable\BuildService;
 use App\Framework\Utils\FormParameters\BaseFilterParameters;
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
+use App\Framework\Utils\Datatable\Results\HeaderField;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -136,10 +137,13 @@ class AbstractDatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testDetermineParameters(): void
 	{
-		$this->buildServiceMock->expects($this->never())->method($this->anything());
 		$this->aclValidatorMock->expects($this->never())->method($this->anything());
+		$this->buildServiceMock->expects($this->once())->method('getDatatableFields')->willReturn([
+			new HeaderField()->setName('name')->sortable(true),
+			new HeaderField()->setName('type')->sortable(false)
+		]);
 		$this->parametersMock->expects($this->once())->method('setUserInputs')->with(['some' => 'input']);
-		$this->parametersMock->expects($this->once())->method('parseInputFilterAllUsers');
+		$this->parametersMock->expects($this->once())->method('parseInputFilterAllUsers')->with(['name']);
 
 		$this->datatableBuilder->determineParameters(['some' => 'input']);
 	}

@@ -114,7 +114,7 @@ class OrchestratorTest extends TestCase
 			->method('createPagination')
 			->with(42);
 		$this->datatableBuilderMock->expects($this->once())->method('createDropDown');
-		$this->datatableBuilderMock->expects($this->once())->method('createTableFields');
+		$this->datatableBuilderMock->expects($this->never())->method('createTableFields');
 		$result = $this->orchestrator->prepareDataGrid();
 		static::assertSame($this->orchestrator, $result);
 	}

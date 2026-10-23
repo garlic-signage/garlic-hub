@@ -141,7 +141,7 @@ class BaseFilterParametersTest extends TestCase
 		$this->sessionMock->method('exists')->with('testKeyStore')->willReturn(true);
 		$this->sessionMock->method('get')->with('testKeyStore')->willReturn($sessionStored);
 
-		$this->baseFilterParameters->parseInputFilterAllUsers();
+		$this->baseFilterParameters->parseInputFilterAllUsers(['name']);
 
 		static::assertSame(15, $this->baseFilterParameters->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE));
 		static::assertSame('name', $this->baseFilterParameters->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_SORT_COLUMN));
@@ -154,16 +154,124 @@ class BaseFilterParametersTest extends TestCase
 	#[Group('units')]
 	public function testParseInputFilterAllUsersUsesStoredSessionParametersFails(): void
 	{
-		$this->sanitizerMock->expects($this->never())->method($this->anything());
+		$this->mockSanitizerCasts();
 		$this->baseFilterParameters->setUserInputs([]);
 		$sessionStored = 'tralala';
 
 		$this->sessionMock->method('exists')->with('testKeyStore')->willReturn(true);
 		$this->sessionMock->method('get')->with('testKeyStore')->willReturn($sessionStored);
 
-		$this->baseFilterParameters->parseInputFilterAllUsers();
+		$this->baseFilterParameters->parseInputFilterAllUsers([]);
 
-		static::assertEmpty($this->baseFilterParameters->getCurrentParameters());
+		// invalid session content is ignored, the current parameter set with its defaults stays
+		static::assertCount(4, $this->baseFilterParameters->getCurrentParameters());
+		static::assertSame(10, $this->baseFilterParameters->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE));
+	}
+
+	/**
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testParseInputFilterAllUsersTakesOnlyValuesFromSession(): void
+	{
+		$this->sanitizerMock->expects($this->never())->method($this->anything());
+		$this->baseFilterParameters->setUserInputs([]);
+		$sessionStored = [
+			BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE  =>
+				['scalar_type'  => ScalarType::INT, 'default_value' => 10, 'parsed' => true, 'value' => 20],
+			BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE =>
+				['scalar_type'  => ScalarType::INT, 'default_value' => 1, 'parsed' => true, 'value' => 2],
+			BaseFilterParametersInterface::PARAMETER_SORT_COLUMN =>
+				['scalar_type'  => ScalarType::STRING, 'default_value' => '', 'parsed' => true, 'value' => ''],
+			BaseFilterParametersInterface::PARAMETER_SORT_ORDER         =>
+				['scalar_type'  => ScalarType::STRING, 'default_value' => 'ASC', 'parsed' => true, 'value' => 'ASC'],
+			// stored from a previous role, not part of the current parameter set
+			BaseFilterParameters::PARAMETER_UID =>
+				['scalar_type'  => ScalarType::INT, 'default_value' => 0, 'parsed' => true, 'value' => 5],
+		];
+
+		$this->sessionMock->method('exists')->with('testKeyStore')->willReturn(true);
+		$this->sessionMock->method('get')->with('testKeyStore')->willReturn($sessionStored);
+
+		$this->baseFilterParameters->parseInputFilterAllUsers([]);
+
+		static::assertFalse($this->baseFilterParameters->hasParameter(BaseFilterParameters::PARAMETER_UID));
+		static::assertSame(20, $this->baseFilterParameters->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE));
+		static::assertSame(2, $this->baseFilterParameters->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE));
+	}
+
+	/**
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testParseInputFilterAllUsersFallsBackToDefaultSortColumn(): void
+	{
+		$this->mockSanitizerCasts();
+		$this->sessionMock->expects($this->once())->method('exists')->willReturn(false);
+		$this->baseFilterParameters->setParameterDefaultValues('player_id');
+		$this->baseFilterParameters->setUserInputs([
+			BaseFilterParametersInterface::PARAMETER_SORT_COLUMN => 'password',
+			BaseFilterParametersInterface::PARAMETER_SORT_ORDER  => 'something'
+		]);
+
+		$this->baseFilterParameters->parseInputFilterAllUsers(['player_name']);
+
+		static::assertSame('player_id', $this->baseFilterParameters->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_SORT_COLUMN));
+		static::assertSame('ASC', $this->baseFilterParameters->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_SORT_ORDER));
+	}
+
+	/**
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testParseInputFilterAllUsersAcceptsSortableColumn(): void
+	{
+		$this->mockSanitizerCasts();
+		$this->sessionMock->expects($this->once())->method('exists')->willReturn(false);
+		$this->baseFilterParameters->setParameterDefaultValues('player_id');
+		$this->baseFilterParameters->setUserInputs([
+			BaseFilterParametersInterface::PARAMETER_SORT_COLUMN => 'player_name',
+			BaseFilterParametersInterface::PARAMETER_SORT_ORDER  => 'desc'
+		]);
+
+		$this->baseFilterParameters->parseInputFilterAllUsers(['player_name']);
+
+		static::assertSame('player_name', $this->baseFilterParameters->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_SORT_COLUMN));
+		static::assertSame('DESC', $this->baseFilterParameters->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_SORT_ORDER));
+	}
+
+	/**
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testParseInputFilterAllUsersLimitsPagination(): void
+	{
+		$this->mockSanitizerCasts();
+		$this->sessionMock->expects($this->once())->method('exists')->willReturn(false);
+		$this->baseFilterParameters->setUserInputs([
+			BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE => 1000000,
+			BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE     => -5
+		]);
+
+		$this->baseFilterParameters->parseInputFilterAllUsers([]);
+
+		static::assertSame(BaseFilterParametersInterface::MAX_ELEMENTS_PER_PAGE, $this->baseFilterParameters->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE));
+		static::assertSame(1, $this->baseFilterParameters->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE));
+	}
+
+	/**
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testParseInputFilterAllUsersUsesDefaultForInvalidElementsPerPage(): void
+	{
+		$this->mockSanitizerCasts();
+		$this->sessionMock->expects($this->once())->method('exists')->willReturn(false);
+		$this->baseFilterParameters->setUserInputs([BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE => 0]);
+
+		$this->baseFilterParameters->parseInputFilterAllUsers([]);
+
+		static::assertSame(10, $this->baseFilterParameters->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE));
 	}
 
 
@@ -183,7 +291,7 @@ class BaseFilterParametersTest extends TestCase
 			->method('int')
 			->willReturnMap([[10, 10], [1,1]]);
 
-		$this->baseFilterParameters->parseInputFilterAllUsers();
+		$this->baseFilterParameters->parseInputFilterAllUsers([]);
 
 		static::assertSame(10, $this->baseFilterParameters->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE));
 		static::assertSame(1, $this->baseFilterParameters->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE));
@@ -205,10 +313,18 @@ class BaseFilterParametersTest extends TestCase
 			->method('int')
 			->willReturnMap([[10, 10], [1,1]]);
 
-		$baseFilterParameters1->parseInputFilterAllUsers();
+		$baseFilterParameters1->parseInputFilterAllUsers([]);
 
 		static::assertSame(10, $baseFilterParameters1->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE));
 		static::assertSame(1, $baseFilterParameters1->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE));
+	}
+
+	private function mockSanitizerCasts(): void
+	{
+		$this->sanitizerMock->expects($this->atLeastOnce())->method('int')
+			->willReturnCallback(fn(int|string $value): int => (int) $value);
+		$this->sanitizerMock->expects($this->atLeastOnce())->method('string')
+			->willReturnCallback(fn(string $value): string => $value);
 	}
 
 }

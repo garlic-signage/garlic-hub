@@ -84,13 +84,24 @@ abstract class AbstractDatatableBuilder
 	}
 
 	/**
+	 * The table fields are created first, as their sortable columns limit the sort parameter.
+	 *
 	 * @param array<string,mixed> $queryParams
 	 * @throws ModuleException
 	 */
 	public function determineParameters(array $queryParams): void
 	{
+		$this->createTableFields();
+
+		$sortableColumns = [];
+		foreach ($this->buildService->getDatatableFields() as $field)
+		{
+			if ($field->isSortable())
+				$sortableColumns[] = $field->getName();
+		}
+
 		$this->parameters->setUserInputs($queryParams);
-		$this->parameters->parseInputFilterAllUsers();
+		$this->parameters->parseInputFilterAllUsers($sortableColumns);
 	}
 
 	abstract public function collectFormElements(): void;
@@ -112,7 +123,7 @@ abstract class AbstractDatatableBuilder
 		$this->datatableStructure['pager'] = $pager;
 	}
 
-	public function createDropDown(int $min = 10, int $max = 100, int $steps = 10): void
+	public function createDropDown(int $min = 10, int $max = BaseFilterParametersInterface::MAX_ELEMENTS_PER_PAGE, int $steps = 10): void
 	{
 		$this->datatableStructure['dropdown'] = $this->buildService->buildPaginationDropDown($min, $max, $steps);
 	}
