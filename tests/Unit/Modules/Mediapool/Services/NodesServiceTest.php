@@ -625,8 +625,11 @@ class NodesServiceTest extends TestCase
 	#[Group('units')]
 	public function testMoveNodeSucceed(): void
 	{
-		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$this->mediaServiceMock->expects($this->never())->method($this->anything());
+		$this->userSessionStub->method('getUID')->willReturn(123);
+		// the user may take the moved directory away and create in the target (his own user folder)
+		$this->aclValidatorMock->expects($this->exactly(2))->method('checkDirectoryPermissions')
+			->willReturn(['create' => true, 'read' => true, 'edit' => true, 'share' => 'global']);
 		$movedNodeId = 1;
 		$targetNodeId = 2;
 		$region = Calculator::REGION_APPENDCHILD;
@@ -643,6 +646,52 @@ class NodesServiceTest extends TestCase
 
 		$result = $this->nodesService->moveNode($movedNodeId, $targetNodeId, $region);
 		static::assertEquals(1, $result);
+	}
+
+	/**
+	 * @throws ModuleException
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	#[Group('units')]
+	public function testMoveNodeFailsWithoutRightsOnTheMovedNode(): void
+	{
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
+		$this->userSessionStub->method('getUID')->willReturn(456);
+		$movedNode  = ['node_id' => 1, 'name' => 'Foreign Node', 'children' => 0, 'UID' => 123, 'visibility' => 0, 'parent_id' => 2];
+		$targetNode = ['node_id' => 3, 'name' => 'Own Node', 'children' => 0, 'UID' => 456, 'visibility' => 0, 'parent_id' => 4];
+
+		$this->nodesRepositoryMock->expects($this->exactly(2))->method('getNode')->willReturnOnConsecutiveCalls($movedNode, $targetNode);
+		$this->aclValidatorMock->expects($this->once())->method('checkDirectoryPermissions')
+			->willReturn(['create' => false, 'read' => false, 'edit' => false, 'share' => '']);
+		$this->nestedSetServiceMock->expects($this->never())->method('moveNode');
+
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('node_not_editable');
+		$this->nodesService->moveNode(1, 3, Calculator::REGION_APPENDCHILD);
+	}
+
+	/**
+	 * @throws ModuleException
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	#[Group('units')]
+	public function testMoveNodeFailsWithoutCreateRightInTheTarget(): void
+	{
+		$this->mediaServiceMock->expects($this->never())->method($this->anything());
+		$this->userSessionStub->method('getUID')->willReturn(456);
+		$movedNode  = ['node_id' => 1, 'name' => 'Own Node', 'children' => 0, 'UID' => 456, 'visibility' => 0, 'parent_id' => 2];
+		$targetNode = ['node_id' => 3, 'name' => 'Foreign Node', 'children' => 0, 'UID' => 123, 'visibility' => 0, 'parent_id' => 4];
+
+		$this->nodesRepositoryMock->expects($this->exactly(2))->method('getNode')->willReturnOnConsecutiveCalls($movedNode, $targetNode);
+		$this->aclValidatorMock->expects($this->exactly(2))->method('checkDirectoryPermissions')->willReturnOnConsecutiveCalls(
+			['create' => true, 'read' => true, 'edit' => true, 'share' => 'global'],
+			['create' => false, 'read' => true, 'edit' => false, 'share' => '']
+		);
+		$this->nestedSetServiceMock->expects($this->never())->method('moveNode');
+
+		$this->expectException(AccessDeniedException::class);
+		$this->expectExceptionMessage('node_not_creatable');
+		$this->nodesService->moveNode(1, 3, Calculator::REGION_APPENDCHILD);
 	}
 
 	/**

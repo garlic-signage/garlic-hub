@@ -192,7 +192,8 @@ class MediaService
 	public function moveMedia(string $mediaId, int $nodeId): int
 	{
 		$media = $this->fetchMediaById($mediaId);
-		$this->checkPermission($this->nodesRepository->findNodeOwner($media['node_id']), 'read');
+		// moving takes the media away from its directory: reading it there is not enough
+		$this->checkPermission($this->nodesRepository->findNodeOwner($media['node_id']), 'edit');
 		$this->checkPermission($this->nodesRepository->findNodeOwner($nodeId), 'edit');
 
 		$condition = ['media_id' => $mediaId];

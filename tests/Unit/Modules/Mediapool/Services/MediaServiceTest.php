@@ -267,7 +267,7 @@ class MediaServiceTest extends TestCase
 
 		$this->mediaRepositoryMock->expects($this->atLeastOnce())->method('findAllWithOwnerById')->willReturn($media);
 		$this->nodesRepositoryStub->method('findNodeOwner')->willReturn($node);
-		$this->aclValidatorMock->expects($this->atLeastOnce())->method('checkDirectoryPermissions')->willReturnOnConsecutiveCalls(['read' => true], ['edit' => true]);
+		$this->aclValidatorMock->expects($this->atLeastOnce())->method('checkDirectoryPermissions')->willReturnOnConsecutiveCalls(['edit' => true], ['edit' => true]);
 		$this->mediaRepositoryMock->expects($this->atLeastOnce())->method('updateWithWhere')->willReturn(1);
 
 		$result = $this->mediaService->moveMedia($mediaId, $nodeId);
@@ -276,17 +276,19 @@ class MediaServiceTest extends TestCase
 	}
 
 	#[Group('units')]
-	public function testMoveMediaNoReadPermissions(): void
+	public function testMoveMediaNoEditPermissionOnTheSourceDirectory(): void
 	{
 		$mediaId = 'media-1';
 		$nodeId = 2;
 		$media = ['id' => $mediaId, 'node_id' => 1];
 
 		$this->mediaRepositoryMock->expects($this->atLeastOnce())->method('findAllWithOwnerById')->willReturn($media);
-		$this->aclValidatorMock->expects($this->atLeastOnce())->method('checkDirectoryPermissions')->willReturn(['read' => false]);
+		$this->mediaRepositoryMock->expects($this->never())->method('updateWithWhere');
+		// readable (public directory) is not enough to take the media away
+		$this->aclValidatorMock->expects($this->atLeastOnce())->method('checkDirectoryPermissions')->willReturn(['read' => true, 'edit' => false]);
 
 		$this->expectException(AccessDeniedException::class);
-		$this->expectExceptionMessage('directory_not_readable');
+		$this->expectExceptionMessage('directory_not_editable');
 
 		$this->mediaService->moveMedia($mediaId, $nodeId);
 	}
@@ -303,7 +305,7 @@ class MediaServiceTest extends TestCase
 		$this->nodesRepositoryStub->method('findNodeOwner')->willReturn($node);
 
 		$this->aclValidatorMock->expects($this->atLeastOnce())->method('checkDirectoryPermissions')
-			->willReturnOnConsecutiveCalls(['read' => true], ['edit' => false]);
+			->willReturnOnConsecutiveCalls(['edit' => true], ['edit' => false]);
 
 		$this->expectException(AccessDeniedException::class);
 		$this->expectExceptionMessage('directory_not_editable');

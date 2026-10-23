@@ -23,127 +23,43 @@ namespace Tests\Unit\Modules\Playlists\Repositories;
 
 use App\Modules\Playlists\Repositories\PlaylistsRepository;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Exception;
-use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\Platforms\SQLitePlatform;
-use Doctrine\DBAL\Query\QueryBuilder;
-use Doctrine\DBAL\Result;
+use Doctrine\DBAL\Platforms\MariaDBPlatform;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Only what the integration tests (tests/Integration) can not reach with SQLite: MariaDB needs
+ * no pragma for the foreign keys. Everything else of PlaylistsRepository is covered there.
+ */
 class PlaylistsRepositoryTest extends TestCase
 {
-	private Connection&MockObject	 $connectionMock;
-	private QueryBuilder&MockObject $queryBuilderMock;
-	private Result&MockObject $resultMock;
+	private Connection&MockObject $connectionMock;
 	private PlaylistsRepository $repository;
 
 	/**
-	 * @throws \PHPUnit\Framework\MockObject\Exception
+	 * @throws Exception
 	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->connectionMock   = $this->createMock(Connection::class);
-		$this->queryBuilderMock = $this->createMock(QueryBuilder::class);
-		$this->resultMock       = $this->createMock(Result::class);
-
-		$this->repository = new PlaylistsRepository($this->connectionMock);
-
-		$this->connectionMock->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
+		$this->connectionMock = $this->createMock(Connection::class);
+		$this->repository     = new PlaylistsRepository($this->connectionMock);
 	}
 
 	/**
-	 * @throws Exception
+	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testDeleteReturnsExpectedResult(): void
+	public function testDeleteDoesNotSetThePragmaOutsideOfSqlite(): void
 	{
-		$this->queryBuilderMock->expects($this->never())->method($this->anything());
-		$this->resultMock->expects($this->never())->method($this->anything());
-		$id = 1;
-		$expectedResult = 1;
-		$sqliteplatform = new SQLitePlatform();
-		$this->connectionMock->expects($this->once())
-			->method('getDatabasePlatform')
-			->willReturn($sqliteplatform);
-
-		$this->connectionMock->expects($this->once())->method('executeQuery')
-			->with('PRAGMA foreign_keys = ON');
-
+		$this->connectionMock->expects($this->once())->method('getDatabasePlatform')->willReturn(new MariaDBPlatform());
+		$this->connectionMock->expects($this->never())->method('executeQuery');
 		$this->connectionMock->expects($this->once())->method('delete')
-			->with('playlists', ['playlist_id' => $id])
-			->willReturn($expectedResult);
+			->with('playlists', ['playlist_id' => 1])
+			->willReturn(1);
 
-		$result = $this->repository->delete($id);
-
-		static::assertSame($expectedResult, $result);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testFindFirstWithUserNameReturnsExpectedData(): void
-	{
-		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
-		$playlistId = 1;
-		$expectedData = [
-			'playlist_id' => $playlistId,
-			'title' => 'Sample Playlist',
-			'username' => 'test_user',
-			'company_id' => 123
-		];
-
-		$this->queryBuilderMock->expects($this->once())->method('select')
-			->with('playlists.*, user_main.username, user_main.company_id')
-			->willReturnSelf();
-		$this->queryBuilderMock->expects($this->once())->method('from')->with('playlists');
-		$this->queryBuilderMock->expects($this->once())->method('andWhere')->with('playlist_id = :playlist_id');
-		$this->queryBuilderMock->expects($this->once())->method('setParameter')->with('playlist_id', $playlistId);
-		$this->queryBuilderMock->expects($this->once())->method('executeQuery')
-			->willReturn($this->resultMock);
-
-		$this->queryBuilderMock->expects($this->once())->method('executeQuery')->willReturn($this->resultMock);
-
-		$this->resultMock->expects($this->once())->method('fetchAllAssociative')->willReturn([$expectedData]);
-
-		$result = $this->repository->findFirstWithUserName($playlistId);
-
-		static::assertSame($expectedData, $result);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testUpdateExportUpdatesDataSuccessfully(): void
-	{
-		$this->resultMock->expects($this->never())->method($this->anything());
-		$this->connectionMock->expects($this->atLeastOnce())->method('createQueryBuilder')->willReturn($this->queryBuilderMock);
-		$playlistId     = 1;
-		$saveData       = ['title' => 'Updated Playlist', 'description' => 'Updated Description'];
-		$expectedResult = 1;
-
-		$this->queryBuilderMock->expects($this->once())->method('update')->with('playlists')->willReturnSelf();
-
-		$this->queryBuilderMock->expects($this->exactly(3))->method('set')
-			->willReturnMap([
-				['title', 'Updated Playlist', $this->queryBuilderMock],
-				['description', 'Updated Description', $this->queryBuilderMock],
-				['export_time', 'CURRENT_TIMESTAMP', $this->queryBuilderMock]
-			]);
-
-		$this->queryBuilderMock->expects($this->once())->method('where')->with('playlist_id = :playlist_id')->willReturnSelf();
-
-		$this->queryBuilderMock->expects($this->once())->method('setParameter')
-			->with('playlist_id', $playlistId, ParameterType::INTEGER)->willReturnSelf();
-
-		$this->queryBuilderMock->expects($this->once())->method('executeStatement')->willReturn($expectedResult);
-
-		$result = $this->repository->updateExport($playlistId, $saveData);
-
-		static::assertSame($expectedResult, $result);
+		static::assertSame(1, $this->repository->delete(1));
 	}
 }

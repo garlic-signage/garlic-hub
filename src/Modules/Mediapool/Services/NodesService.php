@@ -194,8 +194,11 @@ class NodesService
 	 * @param int $targetNodeId
 	 * @param string $region
 	 * @return int
+	 * @throws AccessDeniedException
+	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
+	 * @throws UserException
 	 */
 	public function moveNode(int $movedNodeId, int $targetNodeId, string $region): int
 	{
@@ -221,6 +224,16 @@ class NodesService
 		if (($region === Calculator::REGION_BEFORE || $region === Calculator::REGION_AFTER) && $targetNode['parent_id'] === 0)
 			throw new TranslatableModuleException('mediapool', 'root_node_not_creatable_by_move');
 
+		// the ids come from the request: the user must be allowed to take the directory away from
+		// where it is ...
+		if (!$this->determineRights($movedNode)['delete'])
+			throw new AccessDeniedException('mediapool', 'node_not_editable', ['node_name' => $movedNode['name']]);
+
+		// ... and to create directories where it is moved to: below the target or next to it,
+		// which means below the parent of the target
+		$newParent = $region === Calculator::REGION_APPENDCHILD ? $targetNode : $this->nodesRepository->getNode($targetNode['parent_id']);
+		if ($newParent === [] || !$this->determineRights($newParent)['create'])
+			throw new AccessDeniedException('mediapool', 'node_not_creatable', ['node_name' => $targetNode['name']]);
 
 		$this->nestedSetsService->moveNode($movedNode, $targetNode, $region);
 
