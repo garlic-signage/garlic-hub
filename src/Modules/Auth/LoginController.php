@@ -114,6 +114,9 @@ readonly class LoginController
 			return $this->redirect($response, '/login');
 		}
 
+		// a new session id for the logged in user: somebody who knew the id before must not know it now
+		$this->session->regenerateID();
+
 		$main_data = $userEntity->getMain();
 		$this->session->set('user', $main_data);
 		$this->session->set('locale', $main_data['locale']);

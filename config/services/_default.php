@@ -131,12 +131,15 @@ $dependencies[LayoutDataProviderInterface::class] = DI\factory(function (Contain
 	$session    = $container->get(Session::class);
 	$translator = $container->get(Translator::class);
 	$locales    = $container->get(Locales::class);
+	// The flash messages need the session. This provider is built for every request, but only pages
+	// use it: the lazy object creates Messages (and starts the session) when a message is needed.
+	$flash      = new ReflectionClass(Messages::class)->newLazyProxy(static fn(): Messages => $container->get(Messages::class));
 
 	return new LayoutDataProvider(
 		new MainMenuBuilder($session, $translator),
 		new UserMenuBuilder($session, $translator, $container->get(AclHelper::class)),
 		new LanguageSelectBuilder($translator, $locales),
-		new FlashMessagesBuilder($container->get(Messages::class)),
+		new FlashMessagesBuilder($flash),
 		$container->get(CsrfToken::class),
 		$locales,
 		$translator,
@@ -145,13 +148,14 @@ $dependencies[LayoutDataProviderInterface::class] = DI\factory(function (Contain
 });
 $dependencies[App::class] = Di\factory([AppFactory::class, 'createFromContainer']); // Slim App
 $dependencies[Application::class] = DI\factory(function (){ return new Application();}); // symfony console app
-$dependencies[Session::class] = DI\factory(function ()
+// the session starts when it is used, see Session::open()
+$dependencies[Session::class] = DI\factory(function () { return new Session(); });
+$dependencies[Messages::class] = DI\factory(function (ContainerInterface $container)
 {
-	$session = new Session();
-	$session->start();
-	return $session;
+	// the flash messages live in the session
+	$container->get(Session::class)->start();
+	return new Messages();
 });
-$dependencies[Messages::class] = DI\factory(function (){return new Messages();});
 $dependencies[Crypt::class] = DI\factory(function (ContainerInterface $container)
 {
 	/** @var Config $config */

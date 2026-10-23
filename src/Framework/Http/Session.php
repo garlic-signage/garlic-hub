@@ -36,11 +36,17 @@ class Session
 	}
 
 	/**
+	 * Starts the session. It is called when the session is needed, not for every request: a media
+	 * player asks for its index over and over, never sends the cookie back and would create a session
+	 * file with every request.
+	 *
 	 * @param array<string,mixed> $options
-	 * @return void
 	 */
 	public function start(array $options = []): void
 	{
+		if (session_status() === PHP_SESSION_ACTIVE)
+			return;
+
 		$defaultOptions = [
 			'cookie_lifetime' => 0, // to end when browser closed
 			'cookie_path' => '/',
@@ -100,6 +106,7 @@ class Session
 	 */
 	public function set(string $key, string|array $value): void
 	{
+		$this->open(true);
 		$_SESSION[$key] = $value;
 	}
 
@@ -114,17 +121,35 @@ class Session
 	 */
 	public function getSession(): array
 	{
-		return $_SESSION;
+		return $this->open(false) ? $_SESSION : [];
 	}
 
 	public function clear(): void
 	{
+		$this->open(true);
 		$_SESSION = [];
 	}
 
 	public function exists(string $key): bool
 	{
-		return array_key_exists($key, $_SESSION);
+		return $this->open(false) && array_key_exists($key, $_SESSION);
+	}
+
+	/**
+	 * Makes the session usable. Reading starts it only when the visitor sends the session cookie:
+	 * without it there is nothing to read and no session file is created. Writing always starts it.
+	 */
+	protected function open(bool $forWrite): bool
+	{
+		if (session_status() === PHP_SESSION_ACTIVE)
+			return true;
+
+		if (!$forWrite && !isset($_COOKIE[(string) session_name()]))
+			return false;
+
+		$this->start();
+
+		return isset($_SESSION);
 	}
 
 	public function id(bool $new = false): false|string

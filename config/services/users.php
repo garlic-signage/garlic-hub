@@ -168,7 +168,8 @@ $dependencies[UsersAdminService::class] = DI\factory(function (ContainerInterfac
 		$container->get(UserTokenService::class),
 		$container->get(AclValidator::class),
 		$container->get(Transactions::class),
-		$container->get(UserSession::class)
+		$container->get(UserSession::class),
+		$container->get(UsersService::class)
 	);
 });
 $dependencies[UsersAdminCreateService::class] = DI\factory(function (ContainerInterface $container)

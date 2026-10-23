@@ -89,7 +89,7 @@ final class TestContainerFactory
 		// definitions added later win
 		$builder->addDefinitions([
 			'SqlConnection'     => $connection,
-			Session::class      => new Session(), // not started: it works on $_SESSION
+			Session::class      => new ArraySession(), // works on $_SESSION, PHP starts no session
 			Cookie::class       => new InMemoryCookie(),
 			Psr16Adapter::class => new Psr16Adapter('Memstatic'),
 			'ModuleLogger'      => new NullLogger(),

@@ -60,6 +60,8 @@ class LoginFlowTest extends BlackboxTestCase
 		$page = $browser->get('/player');
 		static::assertSame(302, $page->getStatusCode());
 		static::assertSame('/login', $page->getHeaderLine('Location'));
+		// a redirect for a guest needs no session
+		static::assertSame([], $page->getHeader('Set-Cookie'));
 
 		$api = $browser->get('/async/playlists/items/load/1');
 		static::assertSame(401, $api->getStatusCode());

@@ -232,6 +232,23 @@ class PlayerIndexTest extends BlackboxTestCase
 		static::assertStringNotContainsString($checksumA, (string) $b->getBody());
 	}
 
+	/**
+	 * A player never sends a cookie back. If every answer started a session, the server would
+	 * collect a session file per request, and the cookie would make the cacheable answer uncacheable
+	 * for proxies.
+	 */
+	public function testThePlayerGetsNoSessionAndNoCookie(): void
+	{
+		for ($i = 0; $i < 5; $i++)
+		{
+			$response = $this->ask(self::UUID_A);
+			static::assertSame([], $response->getHeader('Set-Cookie'), 'Request ' . $i);
+		}
+
+		static::assertSame([], glob($this->deployment()->directory() . '/var/sessions/sess_*') ?: []);
+		static::assertSame([], glob($this->deployment()->directory() . '/tmp/sess_*') ?: []);
+	}
+
 	public function testThePlayerPageIsNotForPlayers(): void
 	{
 		$response = $this->browser()->request('GET', '/player', ['headers' => ['User-Agent' => $this->agent(self::UUID_A)]]);

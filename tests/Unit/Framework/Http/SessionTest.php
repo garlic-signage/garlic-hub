@@ -139,6 +139,7 @@ class SessionTest extends TestCase
 	#[Group('units')]
 	public function testGet(): void
 	{
+		$this->session->start();
 		$_SESSION['test_key'] = 'test_value';
 		static::assertEquals('test_value', $this->session->get('test_key'));
 		static::assertNull($this->session->get('non_existent_key'));
@@ -158,6 +159,7 @@ class SessionTest extends TestCase
 	#[Group('units')]
 	public function testDelete(): void
 	{
+		$this->session->start();
 		$_SESSION['test_key'] = 'test_value';
 		$this->session->delete('test_key');
 		static::assertArrayNotHasKey('test_key', $_SESSION);
@@ -177,9 +179,67 @@ class SessionTest extends TestCase
 	#[Group('units')]
 	public function testExists(): void
 	{
+		$this->session->start();
 		$_SESSION['test_key'] = 'test_value';
 		static::assertTrue($this->session->exists('test_key'));
 		static::assertFalse($this->session->exists('non_existent_key'));
+	}
+
+	/**
+	 * A media player never sends the session cookie: reading must not create a session for it.
+	 */
+	#[Group('units')]
+	public function testReadingWithoutTheSessionCookieStartsNoSession(): void
+	{
+		unset($_COOKIE[session_name()]);
+
+		static::assertNull($this->session->get('locale'));
+		static::assertFalse($this->session->exists('user'));
+		static::assertSame([], $this->session->getSession());
+		$this->session->delete('user');
+
+		static::assertSame(PHP_SESSION_NONE, session_status());
+	}
+
+	#[Group('units')]
+	public function testReadingWithTheSessionCookieStartsTheSession(): void
+	{
+		$_COOKIE[session_name()] = 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6';
+
+		static::assertNull($this->session->get('locale'));
+
+		static::assertSame(PHP_SESSION_ACTIVE, session_status());
+		unset($_COOKIE[session_name()]);
+	}
+
+	#[Group('units')]
+	public function testWritingStartsTheSessionWithoutTheCookie(): void
+	{
+		unset($_COOKIE[session_name()]);
+
+		$this->session->set('user', 'anna');
+
+		static::assertSame(PHP_SESSION_ACTIVE, session_status());
+		static::assertSame('anna', $this->session->get('user'));
+	}
+
+	#[Group('units')]
+	public function testClearStartsTheSession(): void
+	{
+		unset($_COOKIE[session_name()]);
+
+		$this->session->clear();
+
+		static::assertSame(PHP_SESSION_ACTIVE, session_status());
+	}
+
+	#[Group('units')]
+	public function testStartingTwiceIsHarmless(): void
+	{
+		$this->session->start();
+		$this->session->start();
+
+		static::assertSame(PHP_SESSION_ACTIVE, session_status());
 	}
 
 	#[Group('units')]

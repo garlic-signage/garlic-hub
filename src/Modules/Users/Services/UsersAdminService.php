@@ -30,6 +30,7 @@ use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\NodesService;
 use App\Modules\Users\UserStatus;
 use App\Shared\User\TokenPurposes;
+use App\Shared\User\UsersService;
 use App\Shared\User\UserTokenService;
 use App\Shared\User\Repositories\Edge\UserAclRepository;
 use App\Shared\User\Repositories\Edge\UserMainRepository;
@@ -53,7 +54,8 @@ class UsersAdminService
 		private readonly UserTokenService $userTokenService,
 		private readonly AclValidator $aclValidator,
 		private readonly Transactions $transactions,
-		private readonly UserSession $userSession
+		private readonly UserSession $userSession,
+		private readonly UsersService $usersService
 	) {}
 
 	public function getToken(): string
@@ -165,6 +167,7 @@ class UsersAdminService
 			$this->userAclRepository->delete($UID);
 
 			$this->nodesService->deleteUserDirectory($UID);
+			$this->usersService->invalidateCache($UID);
 
 			$this->transactions->commit();
 		}
@@ -239,8 +242,12 @@ class UsersAdminService
 		$this->assertUnique($UID, $postData['username'], $postData['email']);
 
 		$saveData = $this->collectCommonData($postData);
+		$affected = $this->userMainRepository->update($UID, $saveData);
 
-		return $this->userMainRepository->update($UID, $saveData);
+		// the user is cached for a day: a new status (blocked) or locale must count at once
+		$this->usersService->invalidateCache($UID);
+
+		return $affected;
 	}
 
 	/**
