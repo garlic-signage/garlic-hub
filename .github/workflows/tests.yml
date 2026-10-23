@@ -101,7 +101,7 @@ jobs:
           tools: composer:v2
 
       - name: Known vulnerabilities in the packages
-        run: composer audit --no-interaction
+        run: composer audit --locked --no-interaction
 
       - name: Secrets in the code and the history
         run: |
