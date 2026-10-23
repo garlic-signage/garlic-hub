@@ -43,6 +43,8 @@ abstract class ContainerTestCase extends DatabaseTestCase
 
 		$_SESSION        = [];
 		$_COOKIE         = [];
+		// built into urls, a command line run has no host
+		$_SERVER['HTTP_HOST'] = 'garlic-hub.test';
 		$this->container = TestContainerFactory::create($this->connection, sys_get_temp_dir() . '/garlic-hub-tests');
 		$this->container->get(Psr16Adapter::class)->clear();
 	}
@@ -51,7 +53,7 @@ abstract class ContainerTestCase extends DatabaseTestCase
 	{
 		$_SESSION = [];
 		$_COOKIE  = [];
-		unset($_SERVER['REMOTE_ADDR']);
+		unset($_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_HOST']);
 		parent::tearDown();
 	}
 
