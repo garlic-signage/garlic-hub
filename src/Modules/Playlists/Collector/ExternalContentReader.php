@@ -54,6 +54,11 @@ class ExternalContentReader implements ExternalContentReaderInterface
 	}
 
 	/**
+	 * Todo: External playlists are not released yet. Before connecting this feature the URL must be checked:
+	 *  - only http/https, no '{' or '}' (BuildHelper replaces the placeholder {ITEMS_0#url} by string)
+	 *  - block loopback, private and link-local addresses (SSRF), configurable for intranet installations
+	 *  - set timeouts and a maximum response size, follow redirects only to allowed targets
+	 *
 	 * @throws GuzzleException
 	 */
 	public function init(string $url): static
