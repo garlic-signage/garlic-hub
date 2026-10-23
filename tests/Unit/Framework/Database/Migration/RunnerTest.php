@@ -152,7 +152,7 @@ class RunnerTest extends TestCase
 		$this->repositoryMock->method('showTables')
 			->willReturn(['_migration_version']);
 		$this->repositoryMock->method('getAppliedMigrations')
-			->willReturn([['version' => 2], ['version' => 3]]);
+			->willReturn([['version' => 1], ['version' => 2]]);
 
 		$fileMock1 = $this->createStub(FileAttributes::class);
 		$fileMock1->method('isFile')->willReturn(true);

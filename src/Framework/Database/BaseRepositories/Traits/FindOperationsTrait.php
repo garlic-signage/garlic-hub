@@ -164,7 +164,10 @@ trait FindOperationsTrait
 	{
 		$queryBuilder = $this->buildQuery($field, $conditions, $joins, $groupBy, $orderBy);
 
-		return $queryBuilder->fetchOne() ?? '';
+		// fetchOne() gives false, not null, when there is no row
+		$value = $queryBuilder->fetchOne();
+
+		return ($value === false || $value === null) ? '' : $value;
 	}
 
 	/**

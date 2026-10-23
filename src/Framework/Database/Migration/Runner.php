@@ -60,9 +60,9 @@ class Runner
 		$appliedMigrations   = $this->getAppliedMigrations();
 		$availableMigrations = $this->determineAvailableMigrations();
 
-		// Filter all available migrations that are >= a target version
+		// Filter all available migrations up to the target version, the key of the array is the version
 		$targetMigrations = $targetVersion
-			? array_filter($availableMigrations, fn($version) => $version <= $targetVersion)
+			? array_filter($availableMigrations, fn(int $version) => $version <= $targetVersion, ARRAY_FILTER_USE_KEY)
 			: $availableMigrations; // or apply all available migrations
 
 		foreach ($targetMigrations as $version => $file)
@@ -87,21 +87,22 @@ class Runner
 		if (!$this->hasMigrationTable())
 			throw new DatabaseException('Migration table not found.');
 
-		$availableRollbacks = $this->determineAvailableRollbacks();
+		// only what is applied can be undone: the files of a version which was undone already do not fit any more
+		$applied = array_map('intval', array_column($this->getAppliedMigrations(), 'version'));
+		$availableRollbacks = array_filter(
+			$this->determineAvailableRollbacks(),
+			fn(int $version) => in_array($version, $applied, true),
+			ARRAY_FILTER_USE_KEY
+		);
 
-		// Filter all available rollbacks that are >= a target version
-		$targetRollback = $targetVersion
-			? array_filter($availableRollbacks, fn($version) => $version <= $targetVersion)
-			: $availableRollbacks; // or apply all available rollbacks
-
-		foreach (array_reverse($targetRollback, true) as $version => $file)
+		// undo the versions from the newest down to the target version, without a target all of them
+		foreach (array_reverse($availableRollbacks, true) as $version => $file)
 		{
-			if ($version >= $targetVersion)
-			{
-				$this->rollbackMigration($version, $file);
-				$this->applied = true;
-			}
+			if ($targetVersion !== null && $version < $targetVersion)
+				break;
 
+			$this->rollbackMigration($version, $file);
+			$this->applied = true;
 		}
 	}
 
