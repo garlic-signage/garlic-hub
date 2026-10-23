@@ -23,6 +23,8 @@ namespace Tests\Unit\Modules\Playlists\Repositories;
 use App\Framework\Config\Config;
 use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Repositories\ItemsRepository;
+use Doctrine\DBAL\ArrayParameterType;
+use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Result;
@@ -595,11 +597,11 @@ class ItemsRepositoryTest extends TestCase
 		$this->queryBuilderMock->expects($this->never())->method($this->anything());
 		$playlistIds = [123, 456];
 
-		$sql = "SELECT file_resource as playlist_id FROM playlists_items WHERE item_type = '" . ItemType::PLAYLIST->value . "' AND CAST(file_resource AS UNSIGNED) IN(123,456)";
+		$sql = 'SELECT file_resource as playlist_id FROM playlists_items WHERE item_type = ? AND CAST(file_resource AS UNSIGNED) IN(?)';
 
 		$this->connectionMock->expects($this->once())
 			->method('executeQuery')
-			->with($sql)
+			->with($sql, [ItemType::PLAYLIST->value, $playlistIds], [ParameterType::STRING, ArrayParameterType::INTEGER])
 			->willReturn($this->resultMock);
 
 		$this->resultMock->expects($this->once())
@@ -627,6 +629,38 @@ class ItemsRepositoryTest extends TestCase
 			->method('executeQuery');
 
 		static::assertEquals([], $this->repository->findFileResourcesByPlaylistId([]));
+	}
+
+	/**
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	#[Group('units')]
+	public function testCountFileResourcesByTemplateIdWithValidIds(): void
+	{
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
+		$sql = 'SELECT file_resource as template_id, COUNT(*) as count FROM playlists_items WHERE item_type = ? AND CAST(file_resource AS UNSIGNED) IN(?) GROUP BY file_resource';
+		$expected = [['template_id' => '7', 'count' => 2]];
+
+		$this->connectionMock->expects($this->once())
+			->method('executeQuery')
+			->with($sql, [ItemType::TEMPLATE->value, [7, 8]], [ParameterType::STRING, ArrayParameterType::INTEGER])
+			->willReturn($this->resultMock);
+		$this->resultMock->expects($this->once())->method('fetchAllAssociative')->willReturn($expected);
+
+		static::assertSame($expected, $this->repository->countFileResourcesByTemplateId([7, 8]));
+	}
+
+	/**
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	#[Group('units')]
+	public function testCountFileResourcesByTemplateIdReturnsEmptyArrayForEmptyInput(): void
+	{
+		$this->queryBuilderMock->expects($this->never())->method($this->anything());
+		$this->resultMock->expects($this->never())->method($this->anything());
+		$this->connectionMock->expects($this->never())->method('executeQuery');
+
+		static::assertSame([], $this->repository->countFileResourcesByTemplateId([]));
 	}
 
 	private function expectUntouched(MockObject ...$mocks): void

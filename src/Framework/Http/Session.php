@@ -45,7 +45,7 @@ class Session
 			'cookie_lifetime' => 0, // to end when browser closed
 			'cookie_path' => '/',
 			'cookie_domain' => '',
-			'cookie_secure' => false,
+			'cookie_secure' => Https::isActive(),
 			'cookie_httponly' => true,
 			'cookie_samesite' => 'Strict',
 		];
@@ -76,7 +76,14 @@ class Session
 		if ($cookieLifetime === false)
 			throw new FrameworkException('Cookie lifetime failed for regenerating.');
 
-		setcookie($sessionName, $sessionId, (int) $cookieLifetime, '/');
+		// same flags as in start(), a plain setcookie() would drop HttpOnly and SameSite
+		setcookie($sessionName, $sessionId, [
+			'expires'  => (int) $cookieLifetime,
+			'path'     => '/',
+			'secure'   => Https::isActive(),
+			'httponly' => true,
+			'samesite' => 'Strict',
+		]);
 	}
 
 

@@ -26,6 +26,7 @@ use App\Framework\Database\BaseRepositories\Traits\CrudTraits;
 use App\Framework\Database\BaseRepositories\Traits\FindOperationsTrait;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
+use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Query\QueryBuilder;
 
 /**
@@ -59,10 +60,10 @@ class PlayerIndexRepository extends SqlBase
 	 */
 	public function updateLastAccess(int $id): void
 	{
-		$time = 'last_access = CURRENT_TIMESTAMP';
-
 		$this->connection->executeStatement(
-			'UPDATE '.$this->table.' SET '.$time.' WHERE player_id = '.$id
+			'UPDATE '.$this->table.' SET last_access = CURRENT_TIMESTAMP WHERE player_id = ?',
+			[$id],
+			[ParameterType::INTEGER]
 		);
 	}
 

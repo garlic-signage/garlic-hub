@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Player\Repositories;
 
 use App\Modules\Player\Repositories\PlayerIndexRepository;
+use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception as DBALException;
 use Doctrine\DBAL\Query\QueryBuilder;
@@ -170,7 +171,7 @@ class PlayerIndexRepositoryTest extends TestCase
 		$id = 123;
 		$this->connectionMock->expects($this->once())
 			->method('executeStatement')
-			->with('UPDATE player SET last_access = CURRENT_TIMESTAMP WHERE player_id = ' . $id);
+			->with('UPDATE player SET last_access = CURRENT_TIMESTAMP WHERE player_id = ?', [$id], [ParameterType::INTEGER]);
 
 		$this->repository->updateLastAccess($id);
 	}

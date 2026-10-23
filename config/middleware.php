@@ -25,6 +25,7 @@ use App\Framework\Http\Cookie;
 use App\Framework\Localization\Locales\Locales;
 use App\Framework\Http\Session;
 use App\Framework\Middleware\LocaleMiddleware;
+use App\Framework\Middleware\SecurityHeadersMiddleware;
 use App\Modules\Auth\AuthMiddleware;
 use App\Modules\Auth\AuthService;
 
@@ -53,6 +54,9 @@ return function (ContainerInterface $container, $start_time, $start_memory): App
 	$app->addRoutingMiddleware();
 
 	require __DIR__ . '/error_handling.php'; // call error middleware as last
+
+	// outermost, so error responses get the headers too
+	$app->add(new SecurityHeadersMiddleware());
 
 	return $app;
 };

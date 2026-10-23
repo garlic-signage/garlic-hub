@@ -31,7 +31,9 @@ use App\Framework\OAuth2\TokensRepository;
 use App\Modules\Auth\AuthService;
 use App\Modules\Auth\AutoLoginService;
 use App\Modules\Auth\LoginController;
+use App\Modules\Auth\LoginThrottle;
 use App\Modules\Auth\OAuth2Controller;
+use Phpfastcache\Helper\Psr16Adapter;
 use App\Shared\User\UserTokenService;
 use App\Shared\User\UsersService;
 use Defuse\Crypto\Key;
@@ -55,7 +57,8 @@ $dependencies[AuthService::class] = DI\factory(function (ContainerInterface $con
 	return new AuthService(
 		$container->get(UsersService::class),
 		$container->get(AutoLoginService::class),
-		$container->get('ModuleLogger')
+		$container->get('ModuleLogger'),
+		new LoginThrottle($container->get(Psr16Adapter::class))
 	);
 });
 $dependencies[LoginController::class] = DI\factory(function (ContainerInterface $container)

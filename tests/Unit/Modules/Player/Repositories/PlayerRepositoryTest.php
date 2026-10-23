@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Player\Repositories;
 
 use App\Modules\Player\Repositories\PlayerRepository;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\MariaDBPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
@@ -166,7 +167,7 @@ class PlayerRepositoryTest extends TestCase
 	{
 		$this->queryBuilderMock->expects($this->never())->method($this->anything());
 		$playlistIds = [1, 2, 3];
-		$expectedSql = 'SELECT playlist_id FROM player WHERE playlist_id IN(1,2,3)';
+		$expectedSql = 'SELECT playlist_id FROM player WHERE playlist_id IN(?)';
 		$expectedResult = [
 			['playlist_id' => 1],
 			['playlist_id' => 2],
@@ -175,7 +176,7 @@ class PlayerRepositoryTest extends TestCase
 
 		$this->connectionMock->expects($this->once())
 			->method('executeQuery')
-			->with($expectedSql)
+			->with($expectedSql, [$playlistIds], [ArrayParameterType::INTEGER])
 			->willReturn($this->resultMock);
 
 		$this->resultMock->expects($this->once())
@@ -194,12 +195,12 @@ class PlayerRepositoryTest extends TestCase
 	{
 		$this->queryBuilderMock->expects($this->never())->method($this->anything());
 		$playlistIds = [4, 5, 6];
-		$expectedSql = 'SELECT playlist_id FROM player WHERE playlist_id IN(4,5,6)';
+		$expectedSql = 'SELECT playlist_id FROM player WHERE playlist_id IN(?)';
 		$expectedResult = [];
 
 		$this->connectionMock->expects($this->once())
 			->method('executeQuery')
-			->with($expectedSql)
+			->with($expectedSql, [$playlistIds], [ArrayParameterType::INTEGER])
 			->willReturn($this->resultMock);
 
 		$this->resultMock->expects($this->once())

@@ -24,6 +24,7 @@ namespace App\Modules\Player\Repositories;
 use App\Framework\Database\BaseRepositories\SqlBase;
 use App\Framework\Database\BaseRepositories\Traits\CrudTraits;
 use App\Framework\Database\BaseRepositories\Traits\FindOperationsTrait;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
@@ -87,9 +88,8 @@ class PlayerRepository extends SqlBase
 		if (empty($playlistIds))
 			return [];
 
-		$ids =  implode(',', $playlistIds);
-		$sql = 'SELECT playlist_id FROM '.$this->getTable().' WHERE playlist_id IN('.$ids.')';
+		$sql = 'SELECT playlist_id FROM '.$this->getTable().' WHERE playlist_id IN(?)';
 
-		return $this->connection->executeQuery($sql)->fetchAllAssociative();
+		return $this->connection->executeQuery($sql, [array_map(intval(...), $playlistIds)], [ArrayParameterType::INTEGER])->fetchAllAssociative();
 	}
 }

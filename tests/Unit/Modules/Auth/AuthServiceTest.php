@@ -25,6 +25,7 @@ use App\Framework\Exceptions\AuthException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Modules\Auth\AuthService;
 use App\Modules\Auth\AutoLoginService;
+use App\Modules\Auth\LoginThrottle;
 use App\Shared\User\UserEntity;
 use App\Shared\User\UsersService;
 use DateMalformedStringException;
@@ -33,12 +34,14 @@ use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Psr\SimpleCache\InvalidArgumentException;
 
 class AuthServiceTest extends TestCase
 {
 	private AuthService $authService;
 	private UsersService&Stub $userServiceStub;
 	private AutoLoginService&Stub $autoLoginServiceStub;
+	private LoginThrottle&Stub $loginThrottleStub;
 
 	/**
 	 * @throws Exception
@@ -49,11 +52,13 @@ class AuthServiceTest extends TestCase
 		$this->userServiceStub       = static::createStub(UsersService::class);
 		$this->autoLoginServiceStub  = static::createStub(AutoLoginService::class);
 		$loggerStub                  = static::createStub(LoggerInterface::class);
+		$this->loginThrottleStub     = static::createStub(LoginThrottle::class);
 
 		$this->authService = new AuthService(
 			$this->userServiceStub,
 			$this->autoLoginServiceStub,
-			$loggerStub
+			$loggerStub,
+			$this->loginThrottleStub
 		);
 	}
 
@@ -101,6 +106,43 @@ class AuthServiceTest extends TestCase
 
 		static::assertNull($userEntity);
 		static::assertEquals('Invalid credentials.', $this->authService->getErrorMessage());
+	}
+
+	/**
+	 * @throws \Doctrine\DBAL\Exception
+	 * @throws InvalidArgumentException
+	 */
+	#[Group('units')]
+	public function testLoginInvalidCredentialsRegistersFailure(): void
+	{
+		$_SERVER['REMOTE_ADDR'] = '10.0.0.1';
+		$this->userServiceStub->method('findUser')->willReturn([]);
+		$throttleMock = $this->createMock(LoginThrottle::class);
+		$throttleMock->expects($this->once())->method('registerFailure')->with('user@example.com', '10.0.0.1');
+		$throttleMock->expects($this->never())->method('reset');
+		$authService = new AuthService($this->userServiceStub, $this->autoLoginServiceStub, static::createStub(LoggerInterface::class), $throttleMock);
+
+		static::assertNull($authService->login('user@example.com', 'wrong'));
+	}
+
+	/**
+	 * @throws \Doctrine\DBAL\Exception
+	 * @throws InvalidArgumentException
+	 */
+	#[Group('units')]
+	public function testLoginBlockedSkipsPasswordCheck(): void
+	{
+		$_SERVER['REMOTE_ADDR'] = '10.0.0.1';
+		$userServiceMock = $this->createMock(UsersService::class);
+		$userServiceMock->expects($this->never())->method('findUser');
+		$throttleMock = $this->createMock(LoginThrottle::class);
+		$throttleMock->expects($this->once())->method('isBlocked')->with('user@example.com', '10.0.0.1')->willReturn(true);
+		$throttleMock->expects($this->never())->method('registerFailure');
+
+		$authService = new AuthService($userServiceMock, $this->autoLoginServiceStub, static::createStub(LoggerInterface::class), $throttleMock);
+
+		static::assertNull($authService->login('user@example.com', 'correct_password'));
+		static::assertEquals('Too many failed login attempts. Please try again later.', $authService->getErrorMessage());
 	}
 
 	/**

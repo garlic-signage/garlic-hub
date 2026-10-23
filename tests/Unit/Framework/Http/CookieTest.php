@@ -71,7 +71,7 @@ class CookieTest extends TestCase
 
 		$setcookieMock = $this->getFunctionMock('App\Framework\Http', 'setcookie');
 		$setcookieMock->expects($this->once())
-			->with('test_cookie', 'test_value', $expire->getTimestamp(), '/', '', false, true)
+			->with('test_cookie', 'test_value', ['expires' => $expire->getTimestamp(), 'path' => '/', 'secure' => false, 'httponly' => true, 'samesite' => 'Lax'])
 			->willReturn(true);
 
 		$this->cookie->createCookie('test_cookie', 'test_value', $expire);
@@ -84,7 +84,7 @@ class CookieTest extends TestCase
 
 		$setcookieMock = $this->getFunctionMock('App\Framework\Http', 'setcookie');
 		$setcookieMock->expects($this->once())
-			->with('test_cookie', 'test_value', $expire->getTimestamp(), '/', '', false, true)
+			->with('test_cookie', 'test_value', ['expires' => $expire->getTimestamp(), 'path' => '/', 'secure' => false, 'httponly' => true, 'samesite' => 'Lax'])
 			->willReturn(false);
 
 		$this->expectException(FrameworkException::class);

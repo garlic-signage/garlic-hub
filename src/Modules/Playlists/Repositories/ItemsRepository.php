@@ -26,8 +26,10 @@ use App\Framework\Database\BaseRepositories\SqlBase;
 use App\Framework\Database\BaseRepositories\Traits\CrudTraits;
 use App\Framework\Database\BaseRepositories\Traits\FindOperationsTrait;
 use App\Modules\Playlists\Helper\ItemType;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
+use Doctrine\DBAL\ParameterType;
 
 class ItemsRepository extends SqlBase
 {
@@ -247,10 +249,13 @@ class ItemsRepository extends SqlBase
 		if (empty($playlistIds))
 			return [];
 
-		$ids   = implode(',', $playlistIds);
-		$sql   = 'SELECT file_resource as playlist_id FROM '.$this->getTable().' WHERE item_type = \''.ItemType::PLAYLIST->value. '\' AND CAST(file_resource AS UNSIGNED) IN('.$ids.')';
+		$sql = 'SELECT file_resource as playlist_id FROM '.$this->getTable().' WHERE item_type = ? AND CAST(file_resource AS UNSIGNED) IN(?)';
 
-		return $this->connection->executeQuery($sql)->fetchAllAssociative();
+		return $this->connection->executeQuery(
+			$sql,
+			[ItemType::PLAYLIST->value, array_map(intval(...), $playlistIds)],
+			[ParameterType::STRING, ArrayParameterType::INTEGER]
+		)->fetchAllAssociative();
 	}
 
 	/**
@@ -263,10 +268,13 @@ class ItemsRepository extends SqlBase
 		if (empty($templateIds))
 			return [];
 
-		$ids   = implode(',', $templateIds);
-		$sql = 'SELECT file_resource as template_id, COUNT(*) as count FROM ' . $this->getTable() . ' WHERE item_type = \'' . ItemType::TEMPLATE->value . '\' AND CAST(file_resource AS UNSIGNED) IN(' . $ids . ') GROUP BY file_resource';
+		$sql = 'SELECT file_resource as template_id, COUNT(*) as count FROM ' . $this->getTable() . ' WHERE item_type = ? AND CAST(file_resource AS UNSIGNED) IN(?) GROUP BY file_resource';
 
-		return $this->connection->executeQuery($sql)->fetchAllAssociative();
+		return $this->connection->executeQuery(
+			$sql,
+			[ItemType::TEMPLATE->value, array_map(intval(...), $templateIds)],
+			[ParameterType::STRING, ArrayParameterType::INTEGER]
+		)->fetchAllAssociative();
 	}
 
 }

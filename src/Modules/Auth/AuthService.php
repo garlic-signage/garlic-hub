@@ -28,6 +28,7 @@ use App\Shared\User\UsersService;
 use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
+use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Authentication service responsible for managing user authentication,
@@ -40,7 +41,8 @@ class AuthService
 
 	public function __construct(private readonly UsersService 		$userService,
 								private readonly AutoLoginService   $autoLoginService,
-								private readonly LoggerInterface    $logger)
+								private readonly LoggerInterface    $logger,
+								private readonly LoginThrottle      $loginThrottle)
 	{}
 
 	public function getErrorMessage(): string
@@ -50,17 +52,27 @@ class AuthService
 
 	/**
 	 * @throws Exception
+	 * @throws InvalidArgumentException
 	 */
 	public function login(string $identifier, string $password): ?UserEntity
 	{
-		$userData = $this->userService->findUser($identifier);
+		$ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 		$this->logger->info('Login attempt from: '. $identifier);
+		if ($this->loginThrottle->isBlocked($identifier, $ip))
+		{
+			$this->errorMessage = 'Too many failed login attempts. Please try again later.';
+			$this->logger->warning('Login blocked', ['username' => $identifier, 'ip_address' => $ip]);
+			return null;
+		}
+
+		$userData = $this->userService->findUser($identifier);
 		if ($userData === [] || !password_verify($password, $userData['password']))
 		{
+			$this->loginThrottle->registerFailure($identifier, $ip);
 			$this->errorMessage = 'Invalid credentials.';
 			$this->logger->error('Login failed', [
 				'username' => $identifier,
-				'ip_address' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+				'ip_address' => $ip,
 				'time' => date('Y-m-d H:i:s'),
 				'reason' => 'Invalid credentials.',
 			]);
@@ -70,6 +82,7 @@ class AuthService
 		if (!empty($this->errorMessage))
 			return null;
 
+		$this->loginThrottle->reset($identifier, $ip);
 		$this->userService->invalidateCache($userData['UID']);
 		$this->logger->info('Invalidate user cache for: '. $identifier. ' with id:'. $userData['UID']);
 

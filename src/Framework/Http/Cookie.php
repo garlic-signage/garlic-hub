@@ -46,7 +46,13 @@ class Cookie
 	public function createCookie(string $name, string $content, DateTime $expire): void
 	{
 		$expire  = $expire->getTimestamp();
-		$result  = setcookie($name, $content, $expire, '/', '', false, true);
+		$result  = setcookie($name, $content, [
+			'expires'  => $expire,
+			'path'     => '/',
+			'secure'   => Https::isActive(),
+			'httponly' => true,
+			'samesite' => 'Lax',
+		]);
 
 		if ($result === false)
 			throw new FrameworkException('Cookie failed to set.');
