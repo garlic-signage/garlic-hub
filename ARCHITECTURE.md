@@ -45,7 +45,6 @@ in `config/services/`.
 | `.env.dist`                        | Template for the environment file `.env`                        |
 | `Dockerfile` / `entrypoint.sh` / `.dockerignore` | Production image and its start script          |
 | `docker-compose.yaml`              | Local container stack                                           |
-| `Caddyfile`                        | Web server configuration for FrankenPHP/Caddy                   |
 | `.htaccess`                        | Forwards requests to `public/` when Apache serves the project root |
 | `dev-install.sh`                   | Creates the runtime directories below `var/` for development    |
 | `getloc.sh`                        | Counts lines of code with `cloc`                                |
