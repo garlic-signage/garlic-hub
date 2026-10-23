@@ -17,6 +17,9 @@
         <testsuite name="integration">
             <directory>tests/Integration</directory>
         </testsuite>
+        <testsuite name="architecture">
+            <directory>tests/Architecture</directory>
+        </testsuite>
     </testsuites>
     <php>
         <env name="TEST_BASE_DIR" value="tests" />

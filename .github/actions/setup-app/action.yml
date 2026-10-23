@@ -1,0 +1,44 @@
+name: Set up the app
+description: PHP 8.4 with the extensions, the dependencies and the environment for the tests
+
+inputs:
+  coverage:
+    description: Coverage driver for PHPUnit (none or pcov)
+    required: false
+    default: none
+
+runs:
+  using: composite
+  steps:
+    - name: Set up PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.4'
+        extensions: curl, fileinfo, imagick, intl, mbstring, openssl, simplexml, zip
+        coverage: ${{ inputs.coverage }}
+        tools: composer:v2
+
+    - name: Find the Composer cache
+      id: composer-cache
+      shell: bash
+      run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+    - name: Cache the Composer packages
+      uses: actions/cache@v4
+      with:
+        path: ${{ steps.composer-cache.outputs.dir }}
+        key: composer-${{ hashFiles('composer.lock') }}
+        restore-keys: composer-
+
+    - name: Install dependencies
+      shell: bash
+      run: composer install --no-interaction --no-progress --prefer-dist
+
+    - name: Prepare the environment
+      shell: bash
+      run: |
+        cp .env.dist .env
+        sed -i -e 's|^APP_ENV=.*|APP_ENV=test|' \
+               -e 's|^DB_MASTER_DRIVER=.*|DB_MASTER_DRIVER="PDO_SQLITE"|' \
+               -e 's|^DB_MASTER_PATH=.*|DB_MASTER_PATH="/tmp/garlic-hub-ci.db"|' .env
+        bash dev-install.sh

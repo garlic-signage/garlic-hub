@@ -1,0 +1,15 @@
+# Secret scan of the CI (gitleaks). The default rules plus the exceptions below.
+title = "garlic-hub"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Keys in tests are made up for the test"
+paths = [
+	'''tests/Unit/Framework/Security/CryptTest\.php''',
+	'''tests/Unit/Modules/Player/Services/PlayerTokenServiceTest\.php''',
+	# old paths, only in the history of git
+	'''tests/Unit/Framework/Core/CryptTest\.php''',
+	'''tests/Unit/Modules/Auth/OAuth2ControllerTest\.php''',
+]

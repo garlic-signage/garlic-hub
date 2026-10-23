@@ -83,7 +83,10 @@ Configuration files copied into the Docker image: Apache vhost, PHP ini, ImageMa
 Local development environment with DDEV.
 
 ### `.github/`
-Dependabot configuration and GitHub Actions workflows (Docker image builds).
+- `workflows/tests.yml` — CI on every push and pull request, one job each: static analysis with the architecture tests, unit tests, integration tests, coverage, security checks (`composer audit`, secret scan with `.gitleaks.toml`).
+- `workflows/docker-*.yml` — Docker Hub images, started by hand.
+- `actions/setup-app/` — PHP, Composer packages and environment, shared by the jobs of the tests.
+- `dependabot.yml` — weekly updates of the Composer packages and the actions.
 
 ### `migrations/`
 SQL migrations as `NNN_name.up.sql` / `NNN_name.down.sql`.
@@ -207,6 +210,7 @@ PHPUnit tests, namespace `Tests\`.
   - `Support/` — base classes (`DatabaseTestCase`, `RepositoryTestCase`, `ContainerTestCase`) and the factory for the real DI container.
   - `Modules/<Module>/Repositories/` — repository tests, group `db`.
   - `Modules/<Module>/Services/` — tests of who sees and may change what through the real services, group `acl`.
+- `Architecture/` — rules for the structure, suite `architecture`: the layers and module dependencies of `src/` (`LayersTest`) and the groups of the integration tests (`TestGroupsTest`).
 - `resources/` — fixtures: config files, translations, widgets, temporary files.
   - `sql/<topic>/` — SQL scripts which insert test data for integration tests (`acl/` holds the shared users).
 

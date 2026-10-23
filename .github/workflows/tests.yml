@@ -1,41 +1,109 @@
-name: tests and static analysis
+name: tests
 
+# Fast checks run in parallel on every push and pull request. Each job has one task, so the
+# failing one tells what is wrong: static analysis, unit tests, integration tests with a real
+# database, the security checks. Coverage is measured on its own.
 on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
+  static:
+    name: static analysis and architecture
     runs-on: ubuntu-latest
-
+    timeout-minutes: 15
     steps:
-    - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-app
 
-    - name: Set up PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.4'
-        extensions: curl, fileinfo, imagick, intl, mbstring, openssl, simplexml, zip
-        coverage: none
-        tools: composer:v2
+      - name: PHPStan
+        run: vendor/bin/phpstan analyse --no-progress
 
-    - name: Install dependencies
-      run: composer install --no-interaction --no-progress --prefer-dist
+      - name: Architecture (layers, groups of the tests)
+        run: vendor/bin/phpunit --testsuite architecture
 
-    - name: Prepare environment
-      run: |
-        cp .env.dist .env
-        sed -i -e 's|^APP_ENV=.*|APP_ENV=test|' \
-               -e 's|^DB_MASTER_DRIVER=.*|DB_MASTER_DRIVER="PDO_SQLITE"|' \
-               -e 's|^DB_MASTER_PATH=.*|DB_MASTER_PATH="/tmp/garlic-hub-ci.db"|' .env
-        bash dev-install.sh
+  unit:
+    name: unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-app
 
-    - name: PHPStan
-      run: vendor/bin/phpstan analyse --no-progress
+      - name: PHPUnit unit
+        run: vendor/bin/phpunit --testsuite unit
 
-    - name: PHPUnit
-      run: vendor/bin/phpunit
+  integration:
+    name: integration tests (real database)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-app
+
+      - name: PHPUnit integration
+        run: vendor/bin/phpunit --testsuite integration
+
+  coverage:
+    name: coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-app
+        with:
+          coverage: pcov
+
+      - name: PHPUnit with coverage
+        run: |
+          mkdir -p coverage
+          vendor/bin/phpunit --coverage-text --coverage-clover=coverage/clover.xml | tee coverage/coverage.txt
+
+      - name: Show the numbers on the summary page
+        if: always()
+        run: |
+          {
+            echo '### Coverage'
+            echo '```'
+            grep -E '^ +(Classes|Methods|Lines):' coverage/coverage.txt | head -3
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep the report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/clover.xml
+
+  security:
+    name: security checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # the secret scan reads the whole history
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+          tools: composer:v2
+
+      - name: Known vulnerabilities in the packages
+        run: composer audit --no-interaction
+
+      - name: Secrets in the code and the history
+        run: |
+          docker run --rm -v "$PWD":/repo zricethezav/gitleaks:v8.30.1 \
+            git /repo --no-banner --redact -c /repo/.gitleaks.toml
