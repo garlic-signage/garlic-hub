@@ -55,7 +55,7 @@ class AbstractDatatablePreparerTest extends TestCase
 		parent::setUp();
 		$this->prepareServiceMock = $this->createMock(PrepareService::class);
 		$this->parametersStub = $this->createStub(BaseFilterParameters::class);
-		$this->datatablePreparer = new ConcreteDatatablePreparer('TestModule', $this->prepareServiceMock, $this->parametersStub);
+		$this->datatablePreparer = new ConcreteDatatablePreparer('TestModule', $this->prepareServiceMock, $this->parametersStub, $this->createStub(Translator::class));
 	}
 
 	/**
@@ -112,9 +112,9 @@ class AbstractDatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareAddWithoutParams(): void
 	{
-		$this->prepareServiceMock->expects($this->never())->method($this->anything());
 		$translatorMock = $this->createMock(Translator::class);
-		$this->datatablePreparer->setTranslator($translatorMock);
+		$this->datatablePreparer = new ConcreteDatatablePreparer('TestModule', $this->prepareServiceMock, $this->parametersStub, $translatorMock);
+		$this->prepareServiceMock->expects($this->never())->method($this->anything());
 
 		$translatorMock->expects($this->once())->method('translate')
 			->with('add', 'TestModule')->willReturn('test');
@@ -138,9 +138,9 @@ class AbstractDatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPrepareAddWithParam(): void
 	{
-		$this->prepareServiceMock->expects($this->never())->method($this->anything());
 		$translatorMock = $this->createMock(Translator::class);
-		$this->datatablePreparer->setTranslator($translatorMock);
+		$this->datatablePreparer = new ConcreteDatatablePreparer('TestModule', $this->prepareServiceMock, $this->parametersStub, $translatorMock);
+		$this->prepareServiceMock->expects($this->never())->method($this->anything());
 
 		$translatorMock->expects($this->once())->method('translate')
 			->with('add', 'TestModule')->willReturn('test2');

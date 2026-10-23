@@ -23,9 +23,8 @@ namespace App\Modules\Templates\Helper\Datatable;
 
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Framework\Utils\Datatable\DatatableOrchestratorInterface;
+use App\Framework\Utils\Datatable\AbstractDatatableOrchestrator;
 use App\Framework\Utils\Datatable\Results\HeaderField;
 use App\Modules\Auth\UserSession;
 use App\Modules\Templates\Services\TemplatesDatatableService;
@@ -34,17 +33,20 @@ use Doctrine\DBAL\Exception;
 /**
  * Orchestrates the templates datatable: configuration, processing of user input, and preparation for rendering.
  * It coordinates the builder, preparer, and templates datatable service.
+ *
+ * @extends AbstractDatatableOrchestrator<DatatableBuilder, DatatablePreparer, TemplatesDatatableService>
  */
-class Orchestrator implements DatatableOrchestratorInterface
+class Orchestrator extends AbstractDatatableOrchestrator
 {
-	private int $UID;
-
 	public function __construct(
-		private readonly DatatableBuilder          $datatableBuilder,
-		private readonly DatatablePreparer         $datatablePreparer,
-		private readonly TemplatesDatatableService $templatesService,
-		private readonly UserSession               $userSession
-	) {}
+		DatatableBuilder          $datatableBuilder,
+		DatatablePreparer         $datatablePreparer,
+		TemplatesDatatableService $datatableService,
+		private readonly UserSession $userSession
+	)
+	{
+		parent::__construct($datatableBuilder, $datatablePreparer, $datatableService);
+	}
 
 	/**
 	 * @throws CoreException
@@ -57,91 +59,13 @@ class Orchestrator implements DatatableOrchestratorInterface
 		$this->datatableBuilder->configureParameters($this->UID);
 	}
 
-    /**
-     * @throws CoreException
-     * @throws Exception
-     */
-    public function checkRights(): bool
-	{
-		return $this->templatesService->checkDisplayRights();
-	}
-
-    /**
-     * @param array<string,mixed> $queryParams
-     * @throws CoreException
-     * @throws Exception
-     * @throws ModuleException
-     */
-	public function processSubmittedUserInput(array $queryParams): void
-	{
-		$this->datatableBuilder->determineParameters($queryParams);
-		$this->templatesService->loadDatatable();
-	}
-
 	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	public function prepareDataGrid(): static
-	{
-		$this->datatableBuilder->buildTitle();
-		$this->datatableBuilder->collectFormElements();
-		$this->datatableBuilder->createPagination($this->templatesService->getCurrentTotalResult());
-		$this->datatableBuilder->createDropDown();
-		$this->datatableBuilder->createTableFields();
-
-		return $this;
-	}
-
-	/**
-	 * @return array<string,mixed>
 	 * @throws CoreException
 	 * @throws Exception
-	 * @throws FrameworkException
-	 * @throws ModuleException
 	 */
-	public function prepareUITemplate(): array
+	public function checkRights(): bool
 	{
-		$datatableStructure = $this->datatableBuilder->getDatatableStructure();
-		$pagination         = $this->datatablePreparer->preparePagination($datatableStructure['pager'], $datatableStructure['dropdown']);
-
-		return [
-			'filter_elements'     => $this->datatablePreparer->prepareFilterForm($datatableStructure['form']),
-			'pagination_dropdown' => $pagination['dropdown'],
-			'pagination_links'    => $pagination['links'],
-			'has_add'			  => $this->datatablePreparer->prepareAdd('file-plus', 'templates/settings/canvas'),
-			'results_header'      => $this->datatablePreparer->prepareTableHeader($datatableStructure['header'], ['templates', 'main']),
-			'results_list'        => $this->prepareList($datatableStructure['header']),
-			'results_count'       => $this->templatesService->getCurrentTotalResult(),
-			'title'               => $datatableStructure['title'],
-			'template_name'       => 'templates/datatable',
-			'module_name'		  => 'templates',
-			'additional_css'      => ['/css/templates/datatable.css'],
-			'footer_modules'      => ['/js/templates/datatable/init.js'],
-			'sort'				  => $this->datatablePreparer->prepareSort(),
-			'page'      		  => $this->datatablePreparer->preparePage()
-		];
-	}
-
-
-	/**
-	 * @param list<HeaderField> $fields
-	 * @return list<array<string,mixed>>
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
-	private function prepareList(array $fields): array
-	{
-		/** @var list<array{"UID": int, "company_id": int, template_id:int, type:string, name:string, username:string, ...}> $currentResults */
-		$currentResults = $this->templatesService->getCurrentFilterResults();
-		$showedIds = array_column($currentResults, 'template_id');
-
-		$used = $this->templatesService->getTemplatesInUse($showedIds);
-		$this->datatablePreparer->setUsedTemplates($used);
-
-		return $this->datatablePreparer->prepareTableBody($currentResults, $fields, $this->UID);
+		return $this->datatableService->checkDisplayRights();
 	}
 
 	/**
@@ -152,5 +76,39 @@ class Orchestrator implements DatatableOrchestratorInterface
 	public function prepareContextMenu(): array
 	{
 		return $this->datatablePreparer->formatContextMenu();
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	protected function prepareModuleTemplate(): array
+	{
+		return [
+			'has_add'        => $this->datatablePreparer->prepareAdd('file-plus', 'templates/settings/canvas'),
+			'template_name'  => 'templates/datatable',
+			'module_name'    => 'templates',
+			'additional_css' => ['/css/templates/datatable.css'],
+			'footer_modules' => ['/js/templates/datatable/init.js']
+		];
+	}
+
+	/**
+	 * @param list<HeaderField> $fields
+	 * @return list<array<string,mixed>>
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 */
+	protected function prepareList(array $fields): array
+	{
+		/** @var list<array{"UID": int, "company_id": int, template_id:int, type:string, name:string, username:string, ...}> $currentResults */
+		$currentResults = $this->datatableService->getCurrentFilterResults();
+		$showedIds = array_column($currentResults, 'template_id');
+
+		$used = $this->datatableService->getTemplatesInUse($showedIds);
+		$this->datatablePreparer->setUsedTemplates($used);
+
+		return $this->datatablePreparer->prepareTableBody($currentResults, $fields, $this->UID);
 	}
 }

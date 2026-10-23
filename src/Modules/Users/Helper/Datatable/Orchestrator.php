@@ -23,10 +23,8 @@ namespace App\Modules\Users\Helper\Datatable;
 
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Framework\Utils\Datatable\DatatableOrchestratorInterface;
-use App\Framework\Utils\Datatable\Results\HeaderField;
+use App\Framework\Utils\Datatable\AbstractDatatableOrchestrator;
 use App\Modules\Auth\UserSession;
 use App\Modules\Users\Services\UsersDatatableService;
 use Doctrine\DBAL\Exception;
@@ -34,17 +32,20 @@ use Doctrine\DBAL\Exception;
 /**
  * Orchestrates the users datatable: configuration, processing of user input, and preparation for rendering.
  * It coordinates the builder, preparer, and users datatable service.
+ *
+ * @extends AbstractDatatableOrchestrator<DatatableBuilder, DatatablePreparer, UsersDatatableService>
  */
-class Orchestrator implements DatatableOrchestratorInterface
+class Orchestrator extends AbstractDatatableOrchestrator
 {
-	private int $UID;
-
 	public function __construct(
-		private readonly DatatableBuilder      $datatableBuilder,
-		private readonly DatatablePreparer     $datatablePreparer,
-		private readonly UsersDatatableService $usersDatatableService,
-		private readonly UserSession           $userSession
-	) {}
+		DatatableBuilder      $datatableBuilder,
+		DatatablePreparer     $datatablePreparer,
+		UsersDatatableService $datatableService,
+		private readonly UserSession $userSession
+	)
+	{
+		parent::__construct($datatableBuilder, $datatablePreparer, $datatableService);
+	}
 
 	/**
 	 * @throws CoreException
@@ -58,75 +59,17 @@ class Orchestrator implements DatatableOrchestratorInterface
 	}
 
 	/**
-	 * @param array<string,mixed> $queryParams
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws ModuleException
-	 */
-	public function processSubmittedUserInput(array $queryParams): void
-	{
-		$this->datatableBuilder->determineParameters($queryParams);
-		$this->usersDatatableService->loadDatatable();
-	}
-
-	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws ModuleException
 	 */
-	public function prepareDataGrid(): static
+	protected function prepareModuleTemplate(): array
 	{
-		$this->datatableBuilder->buildTitle();
-		$this->datatableBuilder->collectFormElements();
-		$this->datatableBuilder->createPagination($this->usersDatatableService->getCurrentTotalResult());
-		$this->datatableBuilder->createDropDown();
-		$this->datatableBuilder->createTableFields();
-
-		return $this;
-	}
-
-	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws Exception
-	 */
-	public function prepareUITemplate(): array
-	{
-		$datatableStructure = $this->datatableBuilder->getDatatableStructure();
-		$pagination         = $this->datatablePreparer->preparePagination($datatableStructure['pager'], $datatableStructure['dropdown']);
-
 		return [
-			'filter_elements'     => $this->datatablePreparer->prepareFilterForm($datatableStructure['form']),
-			'pagination_dropdown' => $pagination['dropdown'],
-			'pagination_links'    => $pagination['links'],
-			'has_add'			  => $this->datatablePreparer->prepareAdd('person-add', 'users/new'),
-			'results_header'      => $this->datatablePreparer->prepareTableHeader($datatableStructure['header'],  ['users', 'main']),
-			'results_list'        => $this->prepareList($datatableStructure['header']),
-			'results_count'       => $this->usersDatatableService->getCurrentTotalResult(),
-			'title'               => $datatableStructure['title'],
-			'template_name'       => 'users/datatable',
-			'module_name'		  => 'users',
-			'additional_css'      => ['/css/users/datatable.css'],
-			'footer_modules'      => ['/js/users/datatable/init.js'],
-			'sort'				  => $this->datatablePreparer->prepareSort(),
-			'page'      		  => $this->datatablePreparer->preparePage()
+			'has_add'        => $this->datatablePreparer->prepareAdd('person-add', 'users/new'),
+			'template_name'  => 'users/datatable',
+			'module_name'    => 'users',
+			'additional_css' => ['/css/users/datatable.css'],
+			'footer_modules' => ['/js/users/datatable/init.js']
 		];
-	}
-
-	/**
-	 * @param list<HeaderField> $fields
-	 * @return list<array<string,mixed>>
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
-	private function prepareList(array $fields): array
-	{
-		return $this->datatablePreparer->prepareTableBody(
-			$this->usersDatatableService->getCurrentFilterResults(),
-			$fields,
-			$this->UID
-		);
 	}
 }

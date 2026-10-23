@@ -44,17 +44,12 @@ abstract class AbstractDatatableBuilder
 	/** @var array<string,mixed> */
 	protected array $datatableStructure = [];
 
-	public function __construct(BuildService $buildService, BaseFilterParameters $parameters, AbstractAclValidator $aclValidator)
+	public function __construct(BuildService $buildService, BaseFilterParameters $parameters, AbstractAclValidator $aclValidator, Translator $translator)
 	{
 		$this->buildService  = $buildService;
 		$this->parameters    = $parameters;
 		$this->aclValidator  = $aclValidator;
-	}
-
-	public function setTranslator(Translator $translator): AbstractDatatableBuilder
-	{
-		$this->translator = $translator;
-		return $this;
+		$this->translator    = $translator;
 	}
 
 	/**

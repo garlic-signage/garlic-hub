@@ -43,8 +43,7 @@ class DatatableBuilder extends AbstractDatatableBuilder
 {
 	public function __construct(BuildService $buildService, Parameters $parameters, AclValidator $aclValidator, Translator $translator)
 	{
-		parent::__construct($buildService, $parameters, $aclValidator);
-		$this->translator = $translator;
+		parent::__construct($buildService, $parameters, $aclValidator, $translator);
 	}
 
 	/**

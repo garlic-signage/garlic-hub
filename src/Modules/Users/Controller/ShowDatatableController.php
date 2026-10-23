@@ -28,6 +28,7 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
 use App\Modules\Users\Helper\Datatable\Orchestrator;
+use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -41,8 +42,9 @@ readonly class ShowDatatableController
 
 	/**
 	 * @throws CoreException
-	 * @throws FrameworkException
+	 * @throws DateMalformedStringException
 	 * @throws Exception
+	 * @throws FrameworkException
 	 * @throws ModuleException
 	 * @throws UserException
 	 */

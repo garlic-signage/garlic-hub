@@ -46,8 +46,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 
 	public function __construct(PrepareService $prepareService, private readonly AclValidator $aclValidator, Parameters $parameters, Translator $translator)
 	{
-		parent::__construct('templates', $prepareService, $parameters);
-		$this->translator = $translator;
+		parent::__construct('templates', $prepareService, $parameters, $translator);
 	}
 
 	/**

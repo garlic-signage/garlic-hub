@@ -47,8 +47,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	{
 		$this->timeUnitsCalculator = $timeUnitsCalculator;
 
-		parent::__construct('player', $prepareService, $parameters);
-		$this->translator = $translator;
+		parent::__construct('player', $prepareService, $parameters, $translator);
 	}
 
 	/**

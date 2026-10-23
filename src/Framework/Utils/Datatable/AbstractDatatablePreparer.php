@@ -41,18 +41,13 @@ abstract class AbstractDatatablePreparer
 	protected Translator $translator;
 	private BaseFilterParameters $parameters;
 
-	public function __construct(string $moduleName, PrepareService $prepareService, BaseFilterParameters $parameters)
+	public function __construct(string $moduleName, PrepareService $prepareService, BaseFilterParameters $parameters, Translator $translator)
 	{
 		$this->moduleName     = $moduleName;
 		$this->prepareService = $prepareService;
 		$this->parameters     = $parameters;
+		$this->translator     = $translator;
 		$this->prepareService->configure($parameters, $moduleName);
-	}
-
-	public function setTranslator(Translator $translator): AbstractDatatablePreparer
-	{
-		$this->translator = $translator;
-		return $this;
 	}
 
 	/**

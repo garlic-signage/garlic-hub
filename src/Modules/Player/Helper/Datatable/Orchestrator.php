@@ -23,29 +23,29 @@ namespace App\Modules\Player\Helper\Datatable;
 
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Framework\Utils\Datatable\DatatableOrchestratorInterface;
-use App\Framework\Utils\Datatable\Results\HeaderField;
+use App\Framework\Utils\Datatable\AbstractDatatableOrchestrator;
 use App\Modules\Auth\UserSession;
 use App\Modules\Player\Services\PlayerDatatableService;
-use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
 
 /**
  * Orchestrates the player datatable: configuration, processing of user input, and preparation for rendering.
  * It coordinates the builder, preparer, and player datatable service.
+ *
+ * @extends AbstractDatatableOrchestrator<DatatableBuilder, DatatablePreparer, PlayerDatatableService>
  */
-class Orchestrator implements DatatableOrchestratorInterface
+class Orchestrator extends AbstractDatatableOrchestrator
 {
-	private int $UID;
-
 	public function __construct(
-		private readonly DatatableBuilder       $datatableBuilder,
-		private readonly DatatablePreparer      $datatablePreparer,
-		private readonly PlayerDatatableService $playerDatatableService,
-		private readonly UserSession            $userSession
-	) {}
+		DatatableBuilder       $datatableBuilder,
+		DatatablePreparer      $datatablePreparer,
+		PlayerDatatableService $datatableService,
+		private readonly UserSession $userSession
+	)
+	{
+		parent::__construct($datatableBuilder, $datatablePreparer, $datatableService);
+	}
 
 	/**
 	 * @throws CoreException
@@ -58,35 +58,6 @@ class Orchestrator implements DatatableOrchestratorInterface
 		$this->datatableBuilder->configureParameters($this->UID);
 	}
 
-    /**
-     * @param array<string,mixed> $queryParams
-     * @throws CoreException
-     * @throws Exception
-     * @throws ModuleException
-     * @throws UserException
-     */
-	public function processSubmittedUserInput(array $queryParams): void
-	{
-		$this->datatableBuilder->determineParameters($queryParams);
-		$this->playerDatatableService->loadDatatable();
-	}
-
-	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	public function prepareDataGrid(): static
-	{
-		$this->datatableBuilder->buildTitle();
-		$this->datatableBuilder->collectFormElements();
-		$this->datatableBuilder->createPagination($this->playerDatatableService->getCurrentTotalResult());
-		$this->datatableBuilder->createDropDown();
-		$this->datatableBuilder->createTableFields();
-
-		return $this;
-	}
-
 	/**
 	 * @return array<string,string>
 	 * @throws CoreException
@@ -97,51 +68,14 @@ class Orchestrator implements DatatableOrchestratorInterface
 		return $this->datatablePreparer->formatContextMenu();
 	}
 
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws ModuleException
-	 * @throws DateMalformedStringException
-	 */
-	public function prepareUITemplate(): array
+	protected function prepareModuleTemplate(): array
 	{
-		$datatableStructure = $this->datatableBuilder->getDatatableStructure();
-		$pagination         = $this->datatablePreparer->preparePagination($datatableStructure['pager'], $datatableStructure['dropdown']);
-
 		return [
-			'filter_elements'     => $this->datatablePreparer->prepareFilterForm($datatableStructure['form']),
-			'pagination_dropdown' => $pagination['dropdown'],
-			'pagination_links'    => $pagination['links'],
-			'has_add'			  => [],
-			'results_header'      => $this->datatablePreparer->prepareTableHeader($datatableStructure['header'], ['player', 'main']),
-			'results_list'        => $this->prepareList($datatableStructure['header']),
-			'results_count'       => $this->playerDatatableService->getCurrentTotalResult(),
-			'title'               => $datatableStructure['title'],
-			'template_name'       => 'player/datatable',
-			'module_name'		  => 'player',
-			'additional_css'      => ['/css/player/datatable.css'],
-			'footer_modules'      => ['/js/player/datatable/init.js'],
-			'sort'				  => $this->datatablePreparer->prepareSort(),
-			'page'      		  => $this->datatablePreparer->preparePage()
+			'has_add'        => [],
+			'template_name'  => 'player/datatable',
+			'module_name'    => 'player',
+			'additional_css' => ['/css/player/datatable.css'],
+			'footer_modules' => ['/js/player/datatable/init.js']
 		];
 	}
-
-
-	/**
-	 *
-	 * @param list<HeaderField> $fields
-	 * @return list<array<string,mixed>>
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws DateMalformedStringException
-	 */
-	private function prepareList(array $fields): array
-	{
-		return $this->datatablePreparer->prepareTableBody(
-			$this->playerDatatableService->getCurrentFilterResults(),
-			$fields,
-			$this->UID
-		);
-	}
-
 }

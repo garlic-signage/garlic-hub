@@ -46,14 +46,11 @@ readonly class ShowDatatableController
 	) {}
 
 	/**
-	 * @param ServerRequestInterface $request
-	 * @param ResponseInterface $response
-	 * @return ResponseInterface
 	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws ModuleException
 	 * @throws DateMalformedStringException
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
 	 * @throws UserException
 	 */
 	public function show(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -68,5 +65,4 @@ readonly class ShowDatatableController
 		$templateData['this_layout']['data']['player_actions_contextmenu'] = $this->orchestrator->prepareContextMenu();
 		return new PageResponse($templateData);
 	}
-
 }

@@ -24,6 +24,7 @@ namespace Tests\Unit\Framework\Utils\Datatable;
 
 use App\Shared\Acl\AbstractAclValidator;
 use App\Framework\Config\Config;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Utils\Datatable\AbstractDatatableBuilder;
 use App\Framework\Utils\Datatable\BuildService;
 use App\Framework\Utils\FormParameters\BaseFilterParameters;
@@ -71,7 +72,7 @@ class AbstractDatatableBuilderTest extends TestCase
 		$this->configStub = $this->createStub(Config::class);
 		$this->aclValidatorMock->method('getConfig')->willReturn($this->configStub);
 
-		$this->datatableBuilder = new ConcreteDatatableBuilder($this->buildServiceMock, $this->parametersMock, $this->aclValidatorMock);
+		$this->datatableBuilder = new ConcreteDatatableBuilder($this->buildServiceMock, $this->parametersMock, $this->aclValidatorMock, $this->createStub(Translator::class));
 	}
 
 	#[Group('units')]

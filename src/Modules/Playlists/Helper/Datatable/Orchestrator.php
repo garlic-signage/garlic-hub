@@ -23,9 +23,8 @@ namespace App\Modules\Playlists\Helper\Datatable;
 
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Framework\Utils\Datatable\DatatableOrchestratorInterface;
+use App\Framework\Utils\Datatable\AbstractDatatableOrchestrator;
 use App\Framework\Utils\Datatable\Results\HeaderField;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Services\PlaylistsDatatableService;
@@ -34,17 +33,20 @@ use Doctrine\DBAL\Exception;
 /**
  * Orchestrates the playlists datatable: configuration, processing of user input, and preparation for rendering.
  * It coordinates the builder, preparer, and playlists datatable service.
+ *
+ * @extends AbstractDatatableOrchestrator<DatatableBuilder, DatatablePreparer, PlaylistsDatatableService>
  */
-class Orchestrator implements DatatableOrchestratorInterface
+class Orchestrator extends AbstractDatatableOrchestrator
 {
-	private int $UID;
-
 	public function __construct(
-		private readonly DatatableBuilder          $datatableBuilder,
-		private readonly DatatablePreparer         $datatablePreparer,
-		private readonly PlaylistsDatatableService $playlistsDatatableService,
-		private readonly UserSession               $userSession
-	) {}
+		DatatableBuilder          $datatableBuilder,
+		DatatablePreparer         $datatablePreparer,
+		PlaylistsDatatableService $datatableService,
+		private readonly UserSession $userSession
+	)
+	{
+		parent::__construct($datatableBuilder, $datatablePreparer, $datatableService);
+	}
 
 	/**
 	 * @throws CoreException
@@ -58,34 +60,6 @@ class Orchestrator implements DatatableOrchestratorInterface
 	}
 
 	/**
-	 * @param array<string,mixed> $queryParams
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws ModuleException
-	 */
-	public function processSubmittedUserInput(array $queryParams): void
-	{
-		$this->datatableBuilder->determineParameters($queryParams);
-		$this->playlistsDatatableService->loadDatatable();
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws ModuleException
-	 */
-	public function prepareDataGrid(): static
-	{
-		$this->datatableBuilder->buildTitle();
-		$this->datatableBuilder->collectFormElements();
-		$this->datatableBuilder->createPagination($this->playlistsDatatableService->getCurrentTotalResult());
-		$this->datatableBuilder->createDropDown();
-		$this->datatableBuilder->createTableFields();
-
-		return $this;
-	}
-
-	/**
 	 * @return list<array<string,mixed>>
 	 */
 	public function prepareContextMenu(): array
@@ -95,30 +69,16 @@ class Orchestrator implements DatatableOrchestratorInterface
 
 	/**
 	 * @throws CoreException
-	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws ModuleException
 	 */
-	public function prepareUITemplate(): array
+	protected function prepareModuleTemplate(): array
 	{
-		$datatableStructure = $this->datatableBuilder->getDatatableStructure();
-		$pagination         = $this->datatablePreparer->preparePagination($datatableStructure['pager'], $datatableStructure['dropdown']);
-
 		return [
-			'filter_elements'     => $this->datatablePreparer->prepareFilterForm($datatableStructure['form']),
-			'pagination_dropdown' => $pagination['dropdown'],
-			'pagination_links'    => $pagination['links'],
-			'has_add'			  => $this->datatablePreparer->prepareAdd(),
-			'results_header'      => $this->datatablePreparer->prepareTableHeader($datatableStructure['header'], ['playlists', 'main']),
-			'results_list'        => $this->prepareList($datatableStructure['header']),
-			'results_count'       => $this->playlistsDatatableService->getCurrentTotalResult(),
-			'title'               => $datatableStructure['title'],
-			'template_name'       => 'playlists/datatable',
-			'module_name'		  => 'playlists',
-			'additional_css'      => ['/css/playlists/overview.css'],
-			'footer_modules'      => ['/js/playlists/overview/init.js'],
-			'sort'				  => $this->datatablePreparer->prepareSort(),
-			'page'      		  => $this->datatablePreparer->preparePage()
+			'has_add'        => $this->datatablePreparer->prepareAdd(),
+			'template_name'  => 'playlists/datatable',
+			'module_name'    => 'playlists',
+			'additional_css' => ['/css/playlists/overview.css'],
+			'footer_modules' => ['/js/playlists/overview/init.js']
 		];
 	}
 
@@ -129,16 +89,15 @@ class Orchestrator implements DatatableOrchestratorInterface
 	 * @throws Exception
 	 * @throws FrameworkException
 	 */
-	private function prepareList(array $fields): array
+	protected function prepareList(array $fields): array
 	{
 		/** @var list<array{"UID": int, "company_id": int, playlist_id:int, playlist_name:string, username:string, duration:int, playlist_mode: string,...}> $currentResults */
-		$currentResults = $this->playlistsDatatableService->getCurrentFilterResults();
+		$currentResults = $this->datatableService->getCurrentFilterResults();
 		$showedIds = array_column($currentResults, 'playlist_id');
 
-		$used = $this->playlistsDatatableService->getPlaylistsInUse($showedIds);
+		$used = $this->datatableService->getPlaylistsInUse($showedIds);
 		$this->datatablePreparer->setUsedPlaylists($used);
 
 		return $this->datatablePreparer->prepareTableBody($currentResults, $fields, $this->UID);
 	}
-
 }

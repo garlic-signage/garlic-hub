@@ -28,6 +28,7 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
 use App\Modules\Playlists\Helper\Datatable\Orchestrator;
+use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -45,9 +46,10 @@ readonly class ShowDatatableController
 
 	/**
 	 * @throws CoreException
+	 * @throws DateMalformedStringException
+	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
-	 * @throws Exception
 	 * @throws UserException
 	 */
 	public function show(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
@@ -62,5 +64,4 @@ readonly class ShowDatatableController
 		$templateData['this_layout']['data']['create_playlist_contextmenu'] = $this->orchestrator->prepareContextMenu();
 		return new PageResponse($templateData);
 	}
-
 }
