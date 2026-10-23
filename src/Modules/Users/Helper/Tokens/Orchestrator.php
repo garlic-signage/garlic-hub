@@ -78,7 +78,8 @@ class Orchestrator
 		if ($this->UID === 0)
 			return $this->responseBuilder->missingUID($response);
 
-		$this->purpose = htmlspecialchars($this->input['purpose'] ?? '', ENT_QUOTES);
+		// validated against TokenPurposes in UserTokenService
+		$this->purpose = (string) ($this->input['purpose'] ?? '');
 		if ($this->purpose === '')
 			return $this->responseBuilder->missingPurpose($response);
 

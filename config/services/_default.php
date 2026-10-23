@@ -192,7 +192,9 @@ $dependencies[AdapterInterface::class] = DI\factory(function (ContainerInterface
 		'loader' => new Mustache\Loader\FilesystemLoader(__DIR__ . '/../../templates'),
     	'partials_loader' => new Mustache\Loader\FilesystemLoader(__DIR__ . '/../../templates/generic'),
 		// compiled templates are cached as PHP classes; the key contains a hash of the source, so changes invalidate it
-		'cache' => $container->get(Config::class)->getPaths('cacheDir') . '/mustache'
+		'cache' => $container->get(Config::class)->getPaths('cacheDir') . '/mustache',
+		// escape single quotes too, so {{value}} is safe in single quoted attributes (Mustache default is ENT_COMPAT)
+		'entity_flags' => ENT_QUOTES | ENT_SUBSTITUTE
 	]);
 	return new MustacheAdapter($mustacheEngine);
 });

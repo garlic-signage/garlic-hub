@@ -51,18 +51,21 @@ class EditLocalesController
 	public function setLocales(ServerRequestInterface $request, ResponseInterface $response, array $args):
 	ResponseInterface
 	{
-		$locale  = htmlentities($args['locale'], ENT_QUOTES);
+		$locale = $args['locale'];
 
-		// set locale into session
-		$this->session->set('locale', $locale);
-
-		if ($this->session->exists('user'))
+		// only locales from the whitelist are stored in session and database
+		if ($this->locales->isLocaleValid($locale))
 		{
-			/** @var array<string,mixed> $user */
-			$user = $this->session->get('user');
-			$user['locale'] = $locale;
-			$this->session->set('user', $user);
-			$this->accountService->updateLocale($user['UID'], $locale);
+			$this->session->set('locale', $locale);
+
+			if ($this->session->exists('user'))
+			{
+				/** @var array<string,mixed> $user */
+				$user = $this->session->get('user');
+				$user['locale'] = $locale;
+				$this->session->set('user', $user);
+				$this->accountService->updateLocale($user['UID'], $locale);
+			}
 		}
 
 		// determine current locale secure because it checks a whitelist

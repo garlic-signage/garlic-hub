@@ -63,6 +63,7 @@ class EditLocalesControllerTest extends TestCase
 		$this->sessionMock->method('get')->with('user')->willReturn(['UID' => 1, 'locale' => 'en_US']);
 		$this->sessionMock->expects($this->exactly(2))->method('set');
 
+		$this->localesMock->method('isLocaleValid')->with('de_DE')->willReturn(true);
 		$this->localesMock->expects($this->once())->method('determineCurrentLocale');
 
 		$previousUrl = 'some/url/line';
@@ -92,6 +93,7 @@ class EditLocalesControllerTest extends TestCase
 		$this->sessionMock->method('get')->with('user')->willReturn('not_an_array');
 		$this->sessionMock->expects($this->once())->method('set')->with('locale', 'de_DE');
 
+		$this->localesMock->method('isLocaleValid')->with('de_DE')->willReturn(true);
 		$this->localesMock->expects($this->once())->method('determineCurrentLocale');
 
 		$previousUrl = 'some/url/line';
@@ -105,6 +107,27 @@ class EditLocalesControllerTest extends TestCase
 
 		$controller = new EditLocalesController($this->accountServiceMock, $this->sessionMock, $this->localesMock);
 		$result = $controller->setLocales($this->requestMock, $this->responseMock, ['locale' => 'de_DE']);
+		static::assertSame($this->responseMock, $result);
+	}
+
+	/**
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	#[Group('units')]
+	public function testSetLocalesIgnoresUnknownLocale(): void
+	{
+		$this->localesMock->method('isLocaleValid')->with('<script>')->willReturn(false);
+		$this->localesMock->expects($this->once())->method('determineCurrentLocale');
+
+		$this->sessionMock->expects($this->never())->method('set');
+		$this->accountServiceMock->expects($this->never())->method('updateLocale');
+
+		$this->requestMock->method('getHeaderLine')->with('Referer')->willReturn('some/url/line');
+		$this->responseMock->method('withHeader')->willReturn($this->responseMock);
+		$this->responseMock->expects($this->once())->method('withStatus')->with(302)->willReturn($this->responseMock);
+
+		$controller = new EditLocalesController($this->accountServiceMock, $this->sessionMock, $this->localesMock);
+		$result = $controller->setLocales($this->requestMock, $this->responseMock, ['locale' => '<script>']);
 		static::assertSame($this->responseMock, $result);
 	}
 

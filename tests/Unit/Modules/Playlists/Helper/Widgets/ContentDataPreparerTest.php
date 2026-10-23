@@ -108,7 +108,7 @@ class ContentDataPreparerTest extends TestCase
 
 		$result = $this->contentDataPreparer->prepareContentData($configData, $requestData);
 
-		static::assertSame(['preference1' => '&lt;value&gt;', 'preference2' => 123], $result);
+		static::assertSame(['preference1' => '<value>', 'preference2' => 123], $result);
 	}
 
 	/**

@@ -39,9 +39,17 @@ abstract class AbstractInputFieldRenderer
 		$parts = [];
 		foreach ($this->attributes as $key => $value)
 		{
-			$parts[] = sprintf('%s="%s"', $key, $value);
+			$parts[] = sprintf('%s="%s"', $key, $this->escape($value));
 		}
 		return implode(' ', $parts);
+	}
+
+	/**
+	 * Escapes a value for output in HTML text and in quoted attributes.
+	 */
+	protected function escape(mixed $value): string
+	{
+		return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 	}
 
 	protected function addBaseAttributes(): static

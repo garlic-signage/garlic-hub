@@ -35,7 +35,7 @@ class PasswordRenderer extends AbstractInputFieldRenderer implements FieldRender
 	public function render(FieldInterface $field): string
 	{
 		$this->field = $field;
-		$id = $this->field->getId();
+		$id = $this->escape($this->field->getId());
 
 		return '<div class="password-container"><input type="password" '.$this->buildAttributes().' aria-describedby="error_'.$id.'"><span class="toggle-password bi bi-eye-fill" id="toggle_'.$id.'"></span></div>';
 	}

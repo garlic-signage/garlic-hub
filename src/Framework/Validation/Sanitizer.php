@@ -33,9 +33,18 @@ class Sanitizer
 		$this->allowedTags = $allowedTags;
 	}
 
+	/**
+	 * Normalizes a string: valid UTF-8, no control characters, no surrounding whitespace.
+	 *
+	 * It does NOT escape. Escaping is the job of the output (template, XML writer),
+	 * because only the output knows its context.
+	 */
 	public function string(string $value): string
 	{
-		return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+		$value = mb_scrub($value, 'UTF-8');
+		$value = (string) preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $value);
+
+		return trim($value);
 	}
 
 	public function html(string $value = ''): string
@@ -55,39 +64,39 @@ class Sanitizer
 
 	public function bool(string|bool $value = ''): bool
 	{
-		return (bool) $value;
+		return filter_var($value, FILTER_VALIDATE_BOOLEAN);
 	}
 
 	/**
-	 * @param string[] $values
+	 * Non-scalar entries (nested arrays from manipulated requests) are dropped.
+	 *
+	 * @param array<mixed> $values
 	 * @return string[]
 	 */
 	public function stringArray(array $values = []): array
 	{
-		return array_map(function (string $s){
-			return htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
-		}, $values);
+		return array_map(
+			fn(mixed $s): string => $this->string((string) $s),
+			array_filter($values, 'is_scalar')
+		);
 	}
 
 	/**
-	 * @param int[] $values
+	 * @param array<mixed> $values
 	 * @return int[]
 	 */
 	public function intArray(array $values = []): array
 	{
-		return array_map(function (int $i) {
-			return $i;
-		}, $values);
+		return array_map(fn(mixed $i): int => (int) $i, array_filter($values, 'is_scalar'));
 	}
 
 	/**
-	 * @param float[] $values
+	 * @param array<mixed> $values
 	 * @return float[]
-	 */	public function floatArray(array $values = []): array
+	 */
+	public function floatArray(array $values = []): array
 	{
-		return array_map(function (float $f) {
-			return $f;
-		}, $values);
+		return array_map(fn(mixed $f): float => (float) $f, array_filter($values, 'is_scalar'));
 	}
 
 	/**
@@ -104,6 +113,9 @@ class Sanitizer
 	}
 
 	/**
+	 * Decodes JSON and normalizes all strings (also nested ones) like string() does.
+	 * Other types are kept. Does not escape.
+	 *
 	 * @return array<string,mixed>|list<array<string,mixed>>
 	 */
 	public function jsonHTML(string $jsonString): array
@@ -113,9 +125,13 @@ class Sanitizer
 		if (json_last_error() !== JSON_ERROR_NONE || !is_array($data))
 			return [];
 
-		return array_map(function (string $s){
-			return htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
-		}, $data);
+		array_walk_recursive($data, function (mixed &$value): void
+		{
+			if (is_string($value))
+				$value = $this->string($value);
+		});
+
+		return $data;
 	}
 
 }

@@ -33,10 +33,10 @@ class CheckboxRenderer extends AbstractInputFieldRenderer implements FieldRender
 		if (!($this->field instanceof CheckboxField))
 			return '';
 
-		$id      = $this->field->getId();
+		$id      = $this->escape($this->field->getId());
 		$checked = $this->field->isChecked() ? 'checked' : '';
 
-		return '<input type="checkbox" id="'.$id.'" name="'.$id.'" '.$checked.' value="1" aria-describedby="error_'.$id.'"> '.$this->field->getTitle();
+		return '<input type="checkbox" id="'.$id.'" name="'.$id.'" '.$checked.' value="1" aria-describedby="error_'.$id.'"> '.$this->escape($this->field->getTitle());
 
 	}
 }

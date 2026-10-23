@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\ExportSmil\Utils;
 
+use App\Framework\Helper\Xml;
+
 /**
  * The Conditional class handles conditions based on date, time, and weekdays,
  * allowing the generation of a specific expression attribute based on the provided input.
@@ -51,21 +53,21 @@ class Conditional
 		$expr = '';
 		if (isset($this->conditional['date']['from']) && $this->conditional['date']['from'] != '')
 		{
-			$expr .= "adapi-compare(substring-before(adapi-date(), 'T'), '".$this->conditional['date']['from']."')&gt;=0";
+			$expr .= "adapi-compare(substring-before(adapi-date(), 'T'), '".Xml::escape($this->conditional['date']['from'])."')&gt;=0";
 		}
 		if (isset($this->conditional['date']['until']) && $this->conditional['date']['until'] != '')
 		{
 			if ($expr != '')
 				$expr .= ' and ';
 
-			$expr .= "adapi-compare(substring-before(adapi-date(), 'T'), '".$this->conditional['date']['until']."')&lt;=0";
+			$expr .= "adapi-compare(substring-before(adapi-date(), 'T'), '".Xml::escape($this->conditional['date']['until'])."')&lt;=0";
 		}
 		if (isset($this->conditional['time']['from']) && $this->conditional['time']['from'] != '')
 		{
 			if ($expr != '')
 				$expr .= ' and ';
 
-			$expr .= "adapi-compare(substring-after(adapi-date(), 'T'), '".$this->conditional['time']['from']."')&gt;=0";
+			$expr .= "adapi-compare(substring-after(adapi-date(), 'T'), '".Xml::escape($this->conditional['time']['from'])."')&gt;=0";
 		}
 
 		if (isset($this->conditional['time']['until']) && $this->conditional['time']['until'] != '')
@@ -77,7 +79,7 @@ class Conditional
 			if ($time_until === '00:00:00')
 				$time_until = '23:59:59';
 
-			$expr .= "adapi-compare(substring-after(adapi-date(), 'T'), '".$time_until."')&lt;=0";
+			$expr .= "adapi-compare(substring-after(adapi-date(), 'T'), '".Xml::escape($time_until)."')&lt;=0";
 		}
 		$weekdays = '';
 

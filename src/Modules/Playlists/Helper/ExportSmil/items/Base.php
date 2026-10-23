@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\ExportSmil\items;
 
+use App\Framework\Helper\Xml;
 use App\Framework\Config\Config;
 use App\Modules\Playlists\Helper\ExportSmil\Utils\Conditional;
 use App\Modules\Playlists\Helper\ExportSmil\Utils\Properties;
@@ -143,7 +144,7 @@ abstract class Base implements ItemInterface
 	 */
 	protected function encodeItemNameForTitleTag(): string
 	{
-		$title = htmlspecialchars($this->item['item_name'], ENT_XML1);
+		$title = Xml::escape($this->item['item_name']);
 		return 'title="'.$title.'" ';
 	}
 

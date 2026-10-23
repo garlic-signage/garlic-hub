@@ -117,4 +117,22 @@ class DropdownRendererTest extends TestCase
 		static::assertSame($expectedHtml, $result);
 	}
 
+	#[Group('units')]
+	public function testRenderEscapesSpecialCharacters(): void
+	{
+		$this->dropdownFieldStub->method('getId')->willReturn('test-id');
+		$this->dropdownFieldStub->method('getName')->willReturn('test-name');
+		$this->dropdownFieldStub->method('getOptions')->willReturn(['a"b' => '<b>Tom & Jerry</b>']);
+		$this->dropdownFieldStub->method('getValue')->willReturn('');
+		$this->dropdownFieldStub->method('isOptionsZero')->willReturn(false);
+
+		$html = $this->renderer->render($this->dropdownFieldStub);
+
+		$expectedHtml = '<select id="test-id" name= "test-name" aria-describedby="error_test-id">'
+			. '<option value="a&quot;b">&lt;b&gt;Tom &amp; Jerry&lt;/b&gt;</option>'
+			. '</select>';
+
+		static::assertSame($expectedHtml, $html);
+	}
+
 }

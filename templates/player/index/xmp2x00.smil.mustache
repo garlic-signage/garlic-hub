@@ -2,18 +2,18 @@
 <smil>
 	<head>
 		{{#meta}}
-		<meta name="title" content="{{{TITLE}}}" />
-		<meta http-equiv="Refresh" content="{{{REFRESH_TIME}}}" />
+		<meta name="title" content="{{TITLE}}" />
+		<meta http-equiv="Refresh" content="{{REFRESH_TIME}}" />
 		{{/meta}}
 		<meta name="internal_name" content="IAdeaAndroid Player Index" />
 		<metadata>
 			<x-server xmlns="http://schemas.adfotain.org/adapi-1.0">
 				<subscriptionList>
 					{{#subscriptions}}
-                    <subscription random="{{{SUBSCRIPTION_RANDOM}}}">
-						<type>{{{SUBSCRIPTION_TYPE}}}</type>
-						<action>{{{SUBSCRIPTION_ACTION}}}</action>
-						<method>{{{SUBSCRIPTION_METHOD}}}</method>
+                    <subscription random="{{SUBSCRIPTION_RANDOM}}">
+						<type>{{SUBSCRIPTION_TYPE}}</type>
+						<action>{{SUBSCRIPTION_ACTION}}</action>
+						<method>{{SUBSCRIPTION_METHOD}}</method>
 					</subscription>
                     {{/subscriptions}}
 					</subscriptionList>
@@ -21,9 +21,9 @@
 		</metadata>
 		{{#layout}}
 		<layout>
-            <root-layout id="display:0" width="{{{ROOT_LAYOUT_WIDTH}}}" height="{{{ROOT_LAYOUT_HEIGHT}}}" />
+            <root-layout id="display:0" width="{{ROOT_LAYOUT_WIDTH}}" height="{{ROOT_LAYOUT_HEIGHT}}" />
 			{{#regions}}
-			<region regionName="screen{{{SCREEN_ID}}}" top="{{{REGION_TOP}}}" left="{{{REGION_LEFT}}}" width="{{{REGION_WIDTH}}}" height="{{{REGION_HEIGHT}}}" z-index="{{{REGION_Z_INDEX}}}" backgroundColor="{{{REGION_BGCOLOR}}}" mediaAlign="center"/>
+			<region regionName="screen{{SCREEN_ID}}" top="{{REGION_TOP}}" left="{{REGION_LEFT}}" width="{{REGION_WIDTH}}" height="{{REGION_HEIGHT}}" z-index="{{REGION_Z_INDEX}}" backgroundColor="{{REGION_BGCOLOR}}" mediaAlign="center"/>
 			{{/regions}}
 		</layout>
 		{{/layout}}
@@ -32,7 +32,7 @@
 		<excl repeatCount="indefinite">
 			{{#standby_times}}
             <priorityClass>
-				<ref begin="{{{BEGIN_WALLCLOCKS}}}" end="{{{END_WALLCLOCKS}}}" dur="indefinite" src="adapi:blankScreen"/>
+				<ref begin="{{BEGIN_WALLCLOCKS}}" end="{{END_WALLCLOCKS}}" dur="indefinite" src="adapi:blankScreen"/>
 			</priorityClass>
             {{/standby_times}}
 {{#playlist}}
@@ -41,7 +41,7 @@
 				<par begin="0">
 {{{INSERT_ELEMENTS}}}
                     <par repeatCount="indefinite">
-						<seq dur="{{{PREFETCH_REFRESH_TIME}}}">
+						<seq dur="{{PREFETCH_REFRESH_TIME}}">
 {{{INSERT_PREFETCH_ELEMENTS}}}
 						</seq>
 					</par>

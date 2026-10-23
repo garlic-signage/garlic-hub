@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\ExportSmil\items;
 
+use App\Framework\Helper\Xml;
+
 /**
  * Represents a Widget class that extends the Media class.
  * Provides methods for generating SMIL tag structure and managing widget-specific attributes and parameters.
@@ -57,7 +59,7 @@ class Widget extends Media
 
 		foreach ($this->item['content_data'] as $key => $value)
 		{
-			$ret .=  self::TABSTOPS_PARAMETER.'<param name="'.$key.'" value="'.$value.'" />'."\n";
+			$ret .=  self::TABSTOPS_PARAMETER.'<param name="'.Xml::escape($key).'" value="'.Xml::escape($value).'" />'."\n";
 		}
 		return $ret;
 	}

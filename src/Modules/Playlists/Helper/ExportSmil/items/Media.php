@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\ExportSmil\items;
 
+use App\Framework\Helper\Xml;
 use App\Modules\Playlists\Helper\ItemDatasource;
 use App\Modules\Playlists\Helper\ItemFlags;
 
@@ -44,7 +45,7 @@ abstract class Media extends Base implements ItemInterface
 	{
 		$ret = '';
 		if ($this->item['mimetype'] !== 'text/html') // to not set prefetch for websites
-			$ret = self::TABSTOPS_TAG.'<prefetch src="'.$this->link.'" />'."\n";
+			$ret = self::TABSTOPS_TAG.'<prefetch src="'.Xml::escape($this->link).'" />'."\n";
 
 		return $ret;
 	}
@@ -52,7 +53,7 @@ abstract class Media extends Base implements ItemInterface
 	protected function collectMediaAttributes(): string
 	{
 		return $this->collectAttributes().
-			'region="screen" src="'.$this->link.'" '. $this->determineDuration().
+			'region="screen" src="'.Xml::escape($this->link).'" '. $this->determineDuration().
 			$this->properties->getFit().
 			$this->properties->getMediaAlign();
 	}
@@ -69,7 +70,7 @@ abstract class Media extends Base implements ItemInterface
 	protected function checkLoggable(): string
 	{
 		if (($this->item['flags'] & ItemFlags::loggable->value) > 0)
-			return self::TABSTOPS_PARAMETER.'<param name="logContentId" value="'. $this->item['item_id'].'" />'."\n";
+			return self::TABSTOPS_PARAMETER.'<param name="logContentId" value="'. Xml::escape($this->item['item_id']).'" />'."\n";
 
 		return '';
 	}

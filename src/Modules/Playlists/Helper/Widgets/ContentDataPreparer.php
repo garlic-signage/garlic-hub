@@ -72,7 +72,7 @@ readonly class ContentDataPreparer
 				case 'color':
 				case 'list':
 				case 'combo':
-					$requestData[$key] = htmlspecialchars($requestData[$key], ENT_QUOTES);
+					$requestData[$key] = is_scalar($requestData[$key]) ? (string) $requestData[$key] : '';
 					break;
 			}
 		}

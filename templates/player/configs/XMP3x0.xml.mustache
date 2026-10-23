@@ -6,20 +6,20 @@
 	<userPref>
 
 		{{#info_player_name}}
-		<prop name="info.playerName" value="{{{INFO_PLAYER_NAME}}}"/>
+		<prop name="info.playerName" value="{{INFO_PLAYER_NAME}}"/>
 		{{/info_player_name}}
 
 		{{#content_server_url}}
 		<prop name="content.bootFromServer" value="true"/>
-		<prop name="content.serverUrl" value="{{{CONTENT_SERVER_URL}}}"/>
+		<prop name="content.serverUrl" value="{{CONTENT_SERVER_URL}}"/>
 		{{/content_server_url}}
 
 		{{#brightness}}
-		<prop name="display.brightness" value="{{{BRIGHTNESS}}}%"/>
+		<prop name="display.brightness" value="{{BRIGHTNESS}}%"/>
 		{{/brightness}}
 
 		{{#volume}}
-		<prop name="audio.soundLevel" value="{{{VOLUME}}}%"/>
+		<prop name="audio.soundLevel" value="{{VOLUME}}%"/>
 		{{/volume}}
 
 		{{#display_format}}
@@ -27,51 +27,51 @@
 		{{/display_format}}
 
 		{{#net_wifi_section}}
-		<prop name="net.wifi.ssid" value="{{{NET_WIFI_SSID}}}"/>
-		<prop name="net.wifi.authentication" value="{{{NET_WIFI_AUTHENTICATION}}}"/>
-		<prop name="net.wifi.encryption" value="{{{NET_WIFI_ENCRYPTION}}}"/>
-		<prop name="net.wifi.password" value="{{{NET_WIFI_PASSWORD}}}"/>
+		<prop name="net.wifi.ssid" value="{{NET_WIFI_SSID}}"/>
+		<prop name="net.wifi.authentication" value="{{NET_WIFI_AUTHENTICATION}}"/>
+		<prop name="net.wifi.encryption" value="{{NET_WIFI_ENCRYPTION}}"/>
+		<prop name="net.wifi.password" value="{{NET_WIFI_PASSWORD}}"/>
 		{{/net_wifi_section}}
 
 		{{#net_umts_section}}
-		<prop name="net.mobile.apn" value="{{{NET_UMTS_APN}}}"/>
-		<prop name="net.mobile.pin" value="{{{NET_UMTS_PIN}}}"/>
-		<prop name="net.mobile.user" value="{{{NET_UMTS_USER}}}"/>
-		<prop name="net.mobile.password" value="{{{NET_UMTS_PASSWORD}}}"/>
+		<prop name="net.mobile.apn" value="{{NET_UMTS_APN}}"/>
+		<prop name="net.mobile.pin" value="{{NET_UMTS_PIN}}"/>
+		<prop name="net.mobile.user" value="{{NET_UMTS_USER}}"/>
+		<prop name="net.mobile.password" value="{{NET_UMTS_PASSWORD}}"/>
 		{{/net_umts_section}}
 
 		{{#net_ethernet_section}}
-		<prop name="net.ethernet.dhcp.enabled" value="{{{NET_DHCP_ENABLED}}}"/>
+		<prop name="net.ethernet.dhcp.enabled" value="{{NET_DHCP_ENABLED}}"/>
 		{{#net_ethernet_nodhcp}}
-		<prop name="net.ethernet.ip" value="{{{NET_ETHERNET_IP}}}"/>
-		<prop name="net.ethernet.netmask" value="{{{NET_ETHERNET_NETMASK}}}"/>
-		<prop name="net.ethernet.gateway" value="{{{NET_ETHERNET_GATEWAY}}}"/>
-		<prop name="net.ethernet.domain" value="{{{NET_ETHERNET_DOMAIN}}}"/>
-		<prop name="net.ethernet.dnsServers" value="{{{NET_ETHERNET_DNS}}}"/>
+		<prop name="net.ethernet.ip" value="{{NET_ETHERNET_IP}}"/>
+		<prop name="net.ethernet.netmask" value="{{NET_ETHERNET_NETMASK}}"/>
+		<prop name="net.ethernet.gateway" value="{{NET_ETHERNET_GATEWAY}}"/>
+		<prop name="net.ethernet.domain" value="{{NET_ETHERNET_DOMAIN}}"/>
+		<prop name="net.ethernet.dnsServers" value="{{NET_ETHERNET_DNS}}"/>
 		{{/net_ethernet_nodhcp}}
 		{{/net_ethernet_section}}
 
 		{{#net_proxy_section}}
-		<prop name="net.proxy.type" value="{{{NET_PROXY_TYPE}}}"/>
-		<prop name="net.proxy.host" value="{{{NET_PROXY_HOST}}}"/>
-		<prop name="net.proxy.port" value="{{{NET_PROXY_PORT}}}"/>
-		<prop name="net.proxy.user" value="{{{NET_PROXY_USER}}}"/>
-		<prop name="net.proxy.password" value="{{{NET_PROXY_PASSWORD}}}"/>
+		<prop name="net.proxy.type" value="{{NET_PROXY_TYPE}}"/>
+		<prop name="net.proxy.host" value="{{NET_PROXY_HOST}}"/>
+		<prop name="net.proxy.port" value="{{NET_PROXY_PORT}}"/>
+		<prop name="net.proxy.user" value="{{NET_PROXY_USER}}"/>
+		<prop name="net.proxy.password" value="{{NET_PROXY_PASSWORD}}"/>
 		{{/net_proxy_section}}
 
 		{{#time_zone}}
- 		<prop name="time.tzDescription" value="{{{TZ_DESCRIPTION}}}"/>
-		<prop name="time.tzCode" value="{{{TZ_CODE}}}"/>
+ 		<prop name="time.tzDescription" value="{{TZ_DESCRIPTION}}"/>
+		<prop name="time.tzCode" value="{{TZ_CODE}}"/>
 		{{/time_zone}}
 
 		{{#time_update}}
-		<prop name="time.autoUpdate.protocol" value="{{{TIME_PROTOCOL}}}"/>
-		<prop name="time.autoUpdate.server" value="{{{TIME_SERVER}}}"/>
+		<prop name="time.autoUpdate.protocol" value="{{TIME_PROTOCOL}}"/>
+		<prop name="time.autoUpdate.server" value="{{TIME_SERVER}}"/>
 		{{/time_update}}
 
 		{{#scheduled_reboot}}
-		<prop name="task.scheduledReboot.days" value="{{{REBOOT_DAYS}}}"/>
-		<prop name="task.scheduledReboot.time" value="{{{REBOOT_TIME}}}"/>
+		<prop name="task.scheduledReboot.days" value="{{REBOOT_DAYS}}"/>
+		<prop name="task.scheduledReboot.time" value="{{REBOOT_TIME}}"/>
 		{{/scheduled_reboot}}
 	</userPref>
 </configuration>

@@ -6,50 +6,50 @@
 	<userPref>
 
 		{{#info_player_name}}
-		<prop name="info.playerName" value="{{{INFO_PLAYER_NAME}}}"/>
+		<prop name="info.playerName" value="{{INFO_PLAYER_NAME}}"/>
 		{{/info_player_name}}
 
 		{{#content_server_url}}
 		<prop name="content.bootFromServer" value="true"/>
-		<prop name="content.serverUrl" value="{{{CONTENT_SERVER_URL}}}"/>
+		<prop name="content.serverUrl" value="{{CONTENT_SERVER_URL}}"/>
 		{{/content_server_url}}
 
 		{{#brightness}}
-		<prop name="brightness" value="{{{BRIGHTNESS}}}%"/>
+		<prop name="brightness" value="{{BRIGHTNESS}}%"/>
 		{{/brightness}}
 
 		{{#volume}}
-		<prop name="volume" value="{{{VOLUME}}}%"/>
+		<prop name="volume" value="{{VOLUME}}%"/>
 		{{/volume}}
 
 		{{#rotation}}
-		<prop name="rotation" value="{{{ROTATION}}}"/>
+		<prop name="rotation" value="{{ROTATION}}"/>
 		{{/rotation}}
 
 		{{#standby_mode}}
-		<prop name="standby_mode" value="{{{STANDBY_MODE}}}"/>
+		<prop name="standby_mode" value="{{STANDBY_MODE}}"/>
 		{{/standby_mode}}
 
 		{{#net_wifi_section}}
-		<prop name="net.wifi.enabled" value="{{{NET_WIFI_ENABLED}}}"/>
-		<prop name="net.wifi.ssid" value="{{{NET_WIFI_SSID}}}"/>
-		<prop name="net.wifi.authentication" value="{{{NET_WIFI_AUTHENTICATION}}}"/>
-		<prop name="net.wifi.password" value="{{{NET_WIFI_PASSWORD}}}"/>
+		<prop name="net.wifi.enabled" value="{{NET_WIFI_ENABLED}}"/>
+		<prop name="net.wifi.ssid" value="{{NET_WIFI_SSID}}"/>
+		<prop name="net.wifi.authentication" value="{{NET_WIFI_AUTHENTICATION}}"/>
+		<prop name="net.wifi.password" value="{{NET_WIFI_PASSWORD}}"/>
 		{{/net_wifi_section}}
 
 		{{#net_ethernet_section}}
-		<prop name="net.ethernet.dhcp.enabled" value="{{{NET_DHCP_ENABLED}}}"/>
+		<prop name="net.ethernet.dhcp.enabled" value="{{NET_DHCP_ENABLED}}"/>
 		{{#net_ethernet_nodhcp}}
-		<prop name="net.ethernet.ip" value="{{{NET_ETHERNET_IP}}}"/>
-		<prop name="net.ethernet.netmask" value="{{{NET_ETHERNET_NETMASK}}}"/>
-		<prop name="net.ethernet.gateway" value="{{{NET_ETHERNET_GATEWAY}}}"/>
-		<prop name="net.ethernet.dnsServers" value="{{{NET_ETHERNET_DNS}}}"/>
+		<prop name="net.ethernet.ip" value="{{NET_ETHERNET_IP}}"/>
+		<prop name="net.ethernet.netmask" value="{{NET_ETHERNET_NETMASK}}"/>
+		<prop name="net.ethernet.gateway" value="{{NET_ETHERNET_GATEWAY}}"/>
+		<prop name="net.ethernet.dnsServers" value="{{NET_ETHERNET_DNS}}"/>
 		{{/net_ethernet_nodhcp}}
 		{{/net_ethernet_section}}
 
 		{{#scheduled_reboot}}
-		<prop name="schedule.reboot.days" value="{{{REBOOT_DAYS}}}"/>
-		<prop name="schedule.reboot.time" value="{{{REBOOT_TIME}}}"/>
+		<prop name="schedule.reboot.days" value="{{REBOOT_DAYS}}"/>
+		<prop name="schedule.reboot.time" value="{{REBOOT_TIME}}"/>
 		{{/scheduled_reboot}}
 
 	</userPref>

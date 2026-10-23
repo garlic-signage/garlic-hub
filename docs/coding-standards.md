@@ -230,6 +230,7 @@ The following are the guidelines for writing templates:
 - normal variable names in upper case
 - blocks in lower case
 - use `{{#block_name}}` for opening a block and `{{/block_name}}` for closing a block
+- use `{{VARIABLE}}` (escaped) by default, `{{{VARIABLE}}}` only for HTML built by the code itself, see [escaping](escaping.md)
 ### Example
 ```html
 {{#main_menu}}

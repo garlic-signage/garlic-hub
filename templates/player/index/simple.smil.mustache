@@ -2,15 +2,15 @@
 <smil>
 	<head>
 		{{#meta}}
-		<meta name="title" content="{{{TITLE}}}" />
-		<meta http-equiv="Refresh" content="{{{REFRESH_TIME}}}" />
+		<meta name="title" content="{{TITLE}}" />
+		<meta http-equiv="Refresh" content="{{REFRESH_TIME}}" />
 		<meta name="internal_name" content="Simple Index" />
 		{{/meta}}
 		{{#layout}}
 		<layout>
-			<root-layout id="display:0" width="{{{ROOT_LAYOUT_WIDTH}}}" height="{{{ROOT_LAYOUT_HEIGHT}}}" />
+			<root-layout id="display:0" width="{{ROOT_LAYOUT_WIDTH}}" height="{{ROOT_LAYOUT_HEIGHT}}" />
 			{{#regions}}
-			<region regionName="screen{{{SCREEN_ID}}}" top="{{{REGION_TOP}}}" left="{{{REGION_LEFT}}}" width="{{{REGION_WIDTH}}}" height="{{{REGION_HEIGHT}}}" z-index="{{{REGION_Z_INDEX}}}" backgroundColor="{{{REGION_BGCOLOR}}}" mediaAlign="center"/>
+			<region regionName="screen{{SCREEN_ID}}" top="{{REGION_TOP}}" left="{{REGION_LEFT}}" width="{{REGION_WIDTH}}" height="{{REGION_HEIGHT}}" z-index="{{REGION_Z_INDEX}}" backgroundColor="{{REGION_BGCOLOR}}" mediaAlign="center"/>
 			{{/regions}}
 		</layout>
 		{{/layout}}

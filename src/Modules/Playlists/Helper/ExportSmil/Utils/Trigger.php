@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\ExportSmil\Utils;
 
+use App\Framework\Helper\Xml;
 use App\Modules\Playlists\Helper\ExportSmil\items\Base;
 
 /**
@@ -90,7 +91,7 @@ class Trigger
 		$determined = [];
 		foreach ($accessKeys as $accessKey)
 		{
-			$determined[] = 'accesskey('.$accessKey['accesskey'].')';
+			$determined[] = 'accesskey('.Xml::escape($accessKey['accesskey']).')';
 		}
 
 		return $determined;
@@ -120,7 +121,7 @@ class Trigger
 		$determined = [];
 		foreach ($notifies as $notify)
 		{
-			$determined[] = 'notify('.$notify['notify'].')';
+			$determined[] = 'notify('.Xml::escape($notify['notify']).')';
 		}
 
 		return $determined;

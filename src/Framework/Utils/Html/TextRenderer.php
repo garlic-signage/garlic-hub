@@ -30,6 +30,6 @@ class TextRenderer extends AbstractInputFieldRenderer implements FieldRenderInte
 	public function render(FieldInterface $field): string
 	{
 		$this->field = $field;
-		return '<input type="text" '.$this->buildAttributes().' aria-describedby="error_'.$this->field->getId().'">';
+		return '<input type="text" '.$this->buildAttributes().' aria-describedby="error_'.$this->escape($this->field->getId()).'">';
 	}
 }

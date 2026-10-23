@@ -79,7 +79,7 @@ class UserAgentHandler
 		{
 			$this->uuid     = $matches[2];
 			$this->firmware = $matches[4];
-			$this->name     = htmlspecialchars(urldecode($matches[3]), ENT_QUOTES, 'UTF-8');
+			$this->name     = urldecode($matches[3]);
 			$this->model    = $this->playerDetector->detectModelId($matches[5])->getModelId();
 		}
 		// SmartAPI/1.0 (UUID:cc009f47-5a8d-42b4-af5a-1865710c05ba; NAME:05B200T100223; VERSION:v1.0.16; MODEL:TD-1050)
@@ -87,14 +87,14 @@ class UserAgentHandler
 		{
 			$this->uuid     =  $matches[2];
 			$this->firmware = $matches[4];
-			$this->name     = htmlspecialchars(urldecode($matches[3]), ENT_QUOTES, 'UTF-8');
+			$this->name     = urldecode($matches[3]);
 			$this->model    = $this->playerDetector->detectModelId($matches[5])->getModelId();
 		}
 		elseif (preg_match('/([^ ]+) \(UUID:(.*?)\) (.*?)-(.*?) \(MODEL:(.*?)\)/', $userAgent, $matches))
 		{
 			$this->uuid     =  $matches[2];
 			$this->firmware = $matches[4];
-			$this->name     = htmlspecialchars(urldecode($matches[3]), ENT_QUOTES, 'UTF-8');
+			$this->name     = urldecode($matches[3]);
 			$this->model    = $this->playerDetector->detectModelId($matches[5])->getModelId();
 		}
 		else

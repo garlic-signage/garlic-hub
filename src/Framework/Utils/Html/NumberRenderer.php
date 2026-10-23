@@ -33,6 +33,6 @@ class NumberRenderer extends AbstractInputFieldRenderer implements FieldRenderIn
 	public function render(FieldInterface $field): string
 	{
 		$this->field = $field;
-		return '<input type="number" '.$this->buildAttributes().' aria-describedby="error_'.$this->field->getId().'">';
+		return '<input type="number" '.$this->buildAttributes().' aria-describedby="error_'.$this->escape($this->field->getId()).'">';
 	}
 }

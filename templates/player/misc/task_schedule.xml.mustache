@@ -2,55 +2,55 @@
 	<timedTaskList at="0" abortOnError="false">
 
 		{{#firmware}}
-		<firmwareUpdate id="{{{FIRMWARE_TASK_ID}}}">
-			<sourceURI>{{{FIRMWARE_FILE_URI}}}</sourceURI>
-			<version applyIf="always">{{{FIRMWARE_TARGET_VERSION}}}</version>
+		<firmwareUpdate id="{{FIRMWARE_TASK_ID}}">
+			<sourceURI>{{FIRMWARE_FILE_URI}}</sourceURI>
+			<version applyIf="always">{{FIRMWARE_TARGET_VERSION}}</version>
 			<contentType>x-firmware-update/x-pkg</contentType>
-			<contentLength>{{{FIRMWARE_FILE_LENGHT}}}</contentLength>
-			<contentChecksum>{{{FIRMWARE_FILE_CHECKSUM}}}</contentChecksum>
+			<contentLength>{{FIRMWARE_FILE_LENGHT}}</contentLength>
+			<contentChecksum>{{FIRMWARE_FILE_CHECKSUM}}</contentChecksum>
 			<checksumMethod>MD5</checksumMethod>
 		</firmwareUpdate>
 		{{/firmware}}
 
 		{{#firmware_qbic}}
 		<firmware trigger="immediately">
-			<source>{{{FIRMWARE_FILE_URI}}}</source>
-			<version>{{{FIRMWARE_TARGET_VERSION}}}</version>
+			<source>{{FIRMWARE_FILE_URI}}</source>
+			<version>{{FIRMWARE_TARGET_VERSION}}</version>
 			<contentType>x-firmware-update/x-zip</contentType>
-			<contentLength>{{{FIRMWARE_FILE_LENGHT}}}</contentLength>
-			<contentChecksum>{{{FIRMWARE_FILE_CHECKSUM}}}</contentChecksum>
+			<contentLength>{{FIRMWARE_FILE_LENGHT}}</contentLength>
+			<contentChecksum>{{FIRMWARE_FILE_CHECKSUM}}</contentChecksum>
 			<checksumMethod>MD5</checksumMethod>
 		</firmware>
 		{{/firmware_qbic}}
 
 		{{#shutdown}}
-		<shutdownPlayer id="{{{SHUTDOWN_TASK_ID}}}">
+		<shutdownPlayer id="{{SHUTDOWN_TASK_ID}}">
 			<type>reboot</type>
 		</shutdownPlayer>
 		{{/shutdown}}
 
 		{{#apply_command}}
-		<applyCommand id="{{{COMMAND_TASK_ID}}}">
-            <command>{{{COMMAND}}}</command>
+		<applyCommand id="{{COMMAND_TASK_ID}}">
+            <command>{{COMMAND}}</command>
         </applyCommand>
 		{{/apply_command}}
 
 		{{#configuration}}
-		<updateSettings id="{{{CONFIGURATION_TASK_ID}}}">
-			<sourceURI>{{{CONFIGURATION_FILE_URI}}}</sourceURI>
+		<updateSettings id="{{CONFIGURATION_TASK_ID}}">
+			<sourceURI>{{CONFIGURATION_FILE_URI}}</sourceURI>
 			<contentType>x-configuration/xml</contentType>
-			<contentLength>{{{CONFIGURATION_FILE_LENGHT}}}</contentLength>
-			<contentChecksum>{{{CONFIGURATION_FILE_CHECKSUM}}}</contentChecksum>
+			<contentLength>{{CONFIGURATION_FILE_LENGHT}}</contentLength>
+			<contentChecksum>{{CONFIGURATION_FILE_CHECKSUM}}</contentChecksum>
 			<checksumMethod>MD5</checksumMethod>
 		</updateSettings>
 		{{/configuration}}
 
 		{{#urls_list}}
-		<updateUrlsList id="{{{URLS_LIST_TASK_ID}}}">
-			<sourceURI>{{{URLS_LIST_FILE_URI}}}</sourceURI>
+		<updateUrlsList id="{{URLS_LIST_TASK_ID}}">
+			<sourceURI>{{URLS_LIST_FILE_URI}}</sourceURI>
 			<contentType>x-configuration/xml</contentType>
-			<contentLength>{{{URLS_LIST_FILE_LENGHT}}}</contentLength>
-			<contentChecksum>{{{URLS_LIST_FILE_CHECKSUM}}}</contentChecksum>
+			<contentLength>{{URLS_LIST_FILE_LENGHT}}</contentLength>
+			<contentChecksum>{{URLS_LIST_FILE_CHECKSUM}}</contentChecksum>
 			<checksumMethod>MD5</checksumMethod>
 		</updateUrlsList>
 		{{/urls_list}}

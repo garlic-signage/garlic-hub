@@ -124,4 +124,25 @@ class TextInputRendererTest extends TestCase
 		$expected = '<input type="text" name="password" id="password_input" value="" title="edit password" class="password-input" placeholder="Enter your password" required="required" maxlength="20" aria-describedby="error_password_input">';
 		static::assertSame($expected, $result);
 	}
+
+	/**
+	 * @throws Exception
+	 */
+	#[Group('units')]
+	public function testRenderEscapesSpecialCharacters(): void
+	{
+		$fieldStub = $this->createStub(TextField::class);
+		$fieldStub->method('getName')->willReturn('name');
+		$fieldStub->method('getTitle')->willReturn('say "hi"');
+		$fieldStub->method('getId')->willReturn('id_1');
+		$fieldStub->method('getValue')->willReturn('"><script>alert(\'x\')</script> & Co');
+		$fieldStub->method('getValidationRules')->willReturn([]);
+		$fieldStub->method('getAttributes')->willReturn([]);
+
+		$renderer = new TextRenderer();
+		$result = $renderer->render($fieldStub);
+
+		$expected = '<input type="text" name="name" id="id_1" value="&quot;&gt;&lt;script&gt;alert(&#039;x&#039;)&lt;/script&gt; &amp; Co" title="say &quot;hi&quot;" aria-describedby="error_id_1">';
+		static::assertSame($expected, $result);
+	}
 }

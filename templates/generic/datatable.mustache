@@ -1,17 +1,17 @@
 	<h1>{{{LANG_PAGE_HEADER}}}</h1>
 	{{{INSERT_SUBMENU}}}
-	<form action="{{{FORM_ACTION}}}" method="get" id="form_elements_search" class="main-element-group">
-				<input type="hidden" name="sort_column" id="sort_column" value="{{{SORT_COLUMN}}}">
-				<input type="hidden" name="sort_order" id="sort_order" value="{{{SORT_ORDER}}}">
-				<input type="hidden" name="elements_page" id="elements_page" value="{{{ELEMENTS_PAGE}}}">
-				<input type="hidden" name="elements_per_page" id="elements_per_page" value="{{{ELEMENTS_PER_PAGE}}}">
+	<form action="{{FORM_ACTION}}" method="get" id="form_elements_search" class="main-element-group">
+				<input type="hidden" name="sort_column" id="sort_column" value="{{SORT_COLUMN}}">
+				<input type="hidden" name="sort_order" id="sort_order" value="{{SORT_ORDER}}">
+				<input type="hidden" name="elements_page" id="elements_page" value="{{ELEMENTS_PAGE}}">
+				<input type="hidden" name="elements_per_page" id="elements_per_page" value="{{ELEMENTS_PER_PAGE}}">
 		{{#element_hidden}}
 			{{{HIDDEN_HTML_ELEMENT}}}
 		{{/element_hidden}}
 		<div class="form-filter">
 			{{#form_element}}
 				<div class="field-wrapper">
-						<label for="{{{HTML_ELEMENT_ID}}}">{{{LANG_ELEMENT_LABEL}}}</label>
+						<label for="{{HTML_ELEMENT_ID}}">{{{LANG_ELEMENT_LABEL}}}</label>
 					{{{HTML_ELEMENT}}}
 					</div>
 			{{/form_element}}
@@ -27,7 +27,7 @@
 				<label>
 					<select name="elements_per_page" id="elements_per_page">
 						{{#elements_per_page}}
-							<option value="{{{ELEMENTS_PER_PAGE_VALUE}}}" data-link="{{{ELEMENTS_PER_PAGE_DATA_LINK}}}" {{{ELEMENTS_PER_PAGE_SELECTED}}}>{{{ELEMENTS_PER_PAGE_NAME}}}</option>
+							<option value="{{ELEMENTS_PER_PAGE_VALUE}}" data-link="{{ELEMENTS_PER_PAGE_DATA_LINK}}" {{ELEMENTS_PER_PAGE_SELECTED}}>{{ELEMENTS_PER_PAGE_NAME}}</option>
 						{{/elements_per_page}}
 					</select>
 				</label>
@@ -37,18 +37,18 @@
 			</div>
 			<div>
 				{{#elements_pager}}
-					<a href="{{{ELEMENTS_PAGELINK}}}" class="page_numbers {{{ELEMENTS_ACTIVE_PAGE}}}" id="page_number_{{{ELEMENTS_PAGENUMBER}}}">{{{ELEMENTS_PAGENAME}}}</a>&nbsp;
+					<a href="{{ELEMENTS_PAGELINK}}" class="page_numbers {{ELEMENTS_ACTIVE_PAGE}}" id="page_number_{{ELEMENTS_PAGENUMBER}}">{{ELEMENTS_PAGENAME}}</a>&nbsp;
 				{{/elements_pager}}
 			</div>
 			<div class="export_csv"></div>
 			{{#elements_export_results}}
 			<div>
-				<a href="{{{ELEMENTS_EXPORT_RESULTS_LINK}}}" class="button" target="blank">{{{LANG_ELEMENTS_EXPORT_RESULTS}}}</a>
+				<a href="{{ELEMENTS_EXPORT_RESULTS_LINK}}" class="button" target="blank">{{{LANG_ELEMENTS_EXPORT_RESULTS}}}</a>
 			</div>
 			{{/elements_export_results}}
 			{{#has_add}}
 			<div>
-				<a href="{{{ELEMENTS_ADD_LINK}}}" title="{{{LANG_ELEMENTS_ADD_LINK}}}" class="add-unit" id="createUnitAction"><i class="bi bi-{{ADD_BI_ICON}}"></i> {{{LANG_ELEMENTS_ADD_LINK}}}</a>
+				<a href="{{ELEMENTS_ADD_LINK}}" title="{{{LANG_ELEMENTS_ADD_LINK}}}" class="add-unit" id="createUnitAction"><i class="bi bi-{{ADD_BI_ICON}}"></i> {{{LANG_ELEMENTS_ADD_LINK}}}</a>
 			</div>
 			{{/has_add}}
 		</div>
@@ -57,9 +57,9 @@
 		<li>
 			<ul class="results-header">
 				{{#elements_result_header}}
-				<li class="{{{CONTROL_NAME}}}">
+				<li class="{{CONTROL_NAME}}">
 					{{#if_sortable}}
-					<a href="{{{LINK_CONTROL_SORT_ORDER}}}" class="header_sort_column" id="{{{SORT_CONTROL_NAME}}}_sort_column">{{{LANG_CONTROL_NAME}}}</a> {{{SORTABLE_ORDER}}}
+					<a href="{{LINK_CONTROL_SORT_ORDER}}" class="header_sort_column" id="{{SORT_CONTROL_NAME}}_sort_column">{{{LANG_CONTROL_NAME}}}</a> {{SORTABLE_ORDER}}
 					{{/if_sortable}}
 					{{{LANG_CONTROL_NAME_2}}}
 				</li>
@@ -69,51 +69,51 @@
 		</li>
 		{{#elements_results}}
 		<li>
-			<ul style="{{{MARKED_AS_DISABLED}}}" class="results-body" data-id="{{{UNIT_ID}}}">
+			<ul style="{{MARKED_AS_DISABLED}}" class="results-body" data-id="{{UNIT_ID}}">
 				{{#elements_result_element}}
-				<li class="{{{CONTROL_NAME_BODY}}}">
+				<li class="{{CONTROL_NAME_BODY}}">
 					{{#is_link}}
-						<a href="{{{CONTROL_ELEMENT_VALUE_LINK}}}" id="{{{CONTROL_ELEMENT_VALUE_ID}}}" class="{{{CONTROL_ELEMENT_VALUE_CLASS}}}" title="{{{CONTROL_ELEMENT_VALUE_TITLE}}}">{{{CONTROL_ELEMENT_VALUE_NAME}}}</a>
-						{{{CONTROL_ELEMENT_ADDITIONAL_TEXT}}}
+						<a href="{{CONTROL_ELEMENT_VALUE_LINK}}" id="{{CONTROL_ELEMENT_VALUE_ID}}" class="{{CONTROL_ELEMENT_VALUE_CLASS}}" title="{{CONTROL_ELEMENT_VALUE_TITLE}}">{{CONTROL_ELEMENT_VALUE_NAME}}</a>
+						{{CONTROL_ELEMENT_ADDITIONAL_TEXT}}
 					{{/is_link}}
 
 					{{#is_span}}
-						<span id="{{{CONTROL_ELEMENT_VALUE_ID}}}" class="{{{CONTROL_ELEMENT_VALUE_CLASS}}}" title="{{{CONTROL_ELEMENT_VALUE_TITLE}}}">{{{CONTROL_ELEMENT_VALUE_NAME}}}</span>
+						<span id="{{CONTROL_ELEMENT_VALUE_ID}}" class="{{CONTROL_ELEMENT_VALUE_CLASS}}" title="{{CONTROL_ELEMENT_VALUE_TITLE}}">{{CONTROL_ELEMENT_VALUE_NAME}}</span>
 					{{/is_span}}
 
 					{{#is_text}}
-					{{{CONTROL_ELEMENT_VALUE_TEXT}}}
+					{{CONTROL_ELEMENT_VALUE_TEXT}}
 					{{/is_text}}
 
 					{{#is_button}}
-						<button data-id="{{{CONTROL_BUTTON_ID}}}" class="{{{CONTROL_BUTTON_CLASS}}}" title="{{{CONTROL_BUTTON_TITLE}}}">{{{CONTROL_BUTTON_VALUE}}}</button>
+						<button data-id="{{CONTROL_BUTTON_ID}}" class="{{CONTROL_BUTTON_CLASS}}" title="{{CONTROL_BUTTON_TITLE}}">{{CONTROL_BUTTON_VALUE}}</button>
 					{{/is_button}}
 
 					{{#is_icon}}
-						<i class="{{{ICON_CLASS}}}" title="{{{ICON_TITLE}}}"></i>
+						<i class="{{ICON_CLASS}}" title="{{ICON_TITLE}}"></i>
 					{{/is_icon}}
 
 					{{#is_checkbox}}
-						<label><input type="checkbox" {{{SELECT_DISABLED}}} title="{{{LANG_CHECKBOX_NAME}}}"></label>
+						<label><input type="checkbox" {{SELECT_DISABLED}} title="{{{LANG_CHECKBOX_NAME}}}"></label>
 					{{/is_checkbox}}
 
 					{{#is_icon_column_linked}}
-					<div class="{{{CONTROL_ICON_CLASSNAME_LINKED}}}"><a href="{{{CONTROL_ELEMENT_LINK}}}" title="{{{CONTROL_ELEMENT_MESSAGE_LINKED}}}" class=""></a></div>
+					<div class="{{CONTROL_ICON_CLASSNAME_LINKED}}"><a href="{{CONTROL_ELEMENT_LINK}}" title="{{CONTROL_ELEMENT_MESSAGE_LINKED}}" class=""></a></div>
 					{{/is_icon_column_linked}}
 
 					{{#is_expand_collapse}}
 					<details>
-						<summary>{{{CONTROL_ELEMENT_MESSAGE_COLLAPSED}}}</summary>
+						<summary>{{CONTROL_ELEMENT_MESSAGE_COLLAPSED}}</summary>
 						<div>
-							{{{CONTROL_ELEMENT_MESSAGE_EXPANDED}}}
+							{{CONTROL_ELEMENT_MESSAGE_EXPANDED}}
 						</div>
 					</details>
 					{{/is_expand_collapse}}
 					{{#is_UID}}
-						<a data-uid="{{{OWNER_UID}}}')" title="{{{OWNER_NAME}}}">{{{OWNER_NAME}}}</a>
+						<a data-uid="{{OWNER_UID}}')" title="{{OWNER_NAME}}">{{OWNER_NAME}}</a>
 					{{/is_UID}}
 					{{#is_UID_ShowOnly}}
-					{{{OWNER_NAME}}}
+					{{OWNER_NAME}}
 					{{/is_UID_ShowOnly}}
 				</li>
 				{{/elements_result_element}}
@@ -122,25 +122,25 @@
                         {{#has_action}}
                         <li>
                             <button title="{{{LANG_ACTION}}}"
-							   data-action="{{{ACTION_NAME}}}" data-action-id="{{{ACTION_ID}}}"
-							   style="{{{ACTION_INLINE_CSS}}}"
-							   class="unit-action bi bi-{{{ACTION_ICON_CLASS}}} {{{ACTION_CLASS}}}"></button>
+							   data-action="{{ACTION_NAME}}" data-action-id="{{ACTION_ID}}"
+							   style="{{ACTION_INLINE_CSS}}"
+							   class="unit-action bi bi-{{ACTION_ICON_CLASS}} {{ACTION_CLASS}}"></button>
                         </li>
                         {{/has_action}}
                         {{#has_action_link}}
                         <li>
-                            <a href="{{{LINK_ACTION}}}" title="{{{LANG_LINK_ACTION}}}"
-                               data-action="{{{LINK_ACTION_NAME}}}" data-action-id="{{{LINK_ACTION_ID}}}"
-                               style="{{{LINK_ACTION_INLINE_CSS}}}"
-                               class="unit-action bi bi-{{{LINK_ACTION_ICON_CLASS}}} {{{LINK_ACTION_CLASS}}}"></a>
+                            <a href="{{LINK_ACTION}}" title="{{{LANG_LINK_ACTION}}}"
+                               data-action="{{LINK_ACTION_NAME}}" data-action-id="{{LINK_ACTION_ID}}"
+                               style="{{LINK_ACTION_INLINE_CSS}}"
+                               class="unit-action bi bi-{{LINK_ACTION_ICON_CLASS}} {{LINK_ACTION_CLASS}}"></a>
                         </li>
 						{{/has_action_link}}
 						{{#has_delete}}
                         <li>
-                            <button data-delete-id="{{{DELETE_ID}}}"
+                            <button data-delete-id="{{DELETE_ID}}"
                                     data-confirm="{{{LANG_CONFIRM_DELETE}}}"
                                     title="{{{LANG_DELETE_ACTION}}}"
-                                    class="unit-action bi bi-trash {{{ELEMENT_DELETE_CLASS}}}">&nbsp;</button>
+                                    class="unit-action bi bi-trash {{ELEMENT_DELETE_CLASS}}">&nbsp;</button>
                         </li>
 						{{/has_delete}}
                     </ul>
