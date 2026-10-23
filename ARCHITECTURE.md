@@ -202,9 +202,15 @@ Mustache templates, one folder per module.
 
 ### `tests/`
 PHPUnit tests, namespace `Tests\`.
-- `Unit/` — unit tests, mirroring the structure of `src/`.
-- `Integration/` — bootstrap for integration tests.
+- `Unit/` — unit tests with mocks, mirroring the structure of `src/`. Test suite `unit`.
+- `Integration/` — tests against a real database built by the real migrations. Test suite `integration`.
+  - `Support/` — base classes (`DatabaseTestCase`, `RepositoryTestCase`, `ContainerTestCase`) and the factory for the real DI container.
+  - `Modules/<Module>/Repositories/` — repository tests, group `db`.
+  - `Modules/<Module>/Services/` — tests of who sees and may change what through the real services, group `acl`.
 - `resources/` — fixtures: config files, translations, widgets, temporary files.
+  - `sql/<topic>/` — SQL scripts which insert test data for integration tests (`acl/` holds the shared users).
+
+See [Coding Standards](docs/coding-standards.md#14-testing-standards) for how to write them.
 
 ### `translations/`
 One folder per language (`de`, `el`, `en`, `es`, `fr`, `ru`) with one INI file per module.

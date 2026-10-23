@@ -78,11 +78,15 @@ Then open https://garlic-hub.ddev.site and create the admin user. The full guide
 ### Tests and Static Analysis
 
 ```bash
-ddev exec vendor/bin/phpunit
+ddev exec vendor/bin/phpunit                                          # everything
+ddev exec vendor/bin/phpunit --testsuite unit                         # fast unit tests with mocks
+ddev exec vendor/bin/phpunit --testsuite integration                  # real database, real migrations, real services
+ddev exec vendor/bin/phpunit --testsuite integration --group db       # only repository tests
+ddev exec vendor/bin/phpunit --testsuite integration --group acl      # only who-sees-and-may-do-what tests
 ddev exec vendor/bin/phpstan analyze
 ```
 
-`preCommit.sh` runs both, plus coverage report, coverage badge and SBOM.
+`preCommit.sh` runs the tests with coverage and the static analysis, plus coverage badge and SBOM.
 
 ### Tech Stack
 

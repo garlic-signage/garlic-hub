@@ -247,4 +247,24 @@ The following are the guidelines for writing templates:
 - Use descriptive names for test methods (e.g., `testProcessOrderReturnsConfirmationNumber`) for clarity.
 - Use proper assertions to validate expected results (e.g., `assertEquals`, `assertTrue`, `assertFalse`).
 - End mocked classes with Mock as Suffix (e.g., userRepositoryMock)
-- Ensure tests are isolated and avoid dependencies on external resources (e.g., database, filesystem) for reliable results.
+- Unit tests are isolated and avoid dependencies on external resources (e.g., database, filesystem) for reliable results.
+
+### Unit and integration tests
+
+| Suite | Directory | Groups | Purpose |
+|-------|-----------|--------|---------|
+| `unit` | `tests/Unit` | `units` | Logic of one class, collaborators are mocked. Must stay fast. |
+| `integration` | `tests/Integration` | `db`, `acl` | Real SQLite database, real code, no mocks of our own classes. |
+
+- Do not test repositories with a mocked query builder. Such a test repeats the code and breaks on every refactoring without finding a wrong query. Write a `db` test instead.
+- The database of an integration test is built by the real migrations (`migrations/edge`), not by a schema made for tests. A changed schema must make the tests fail.
+- Every test gets a fresh in-memory database. Test data comes from SQL scripts in `tests/resources/sql/<topic>/`, loaded with `loadFixture('<topic>/<file>.sql')`. Shared users (admin `1`, anna `2`, bernd `3`) are in `acl/users.sql`.
+- The directory mirrors `src/`: `tests/Integration/Modules/<Module>/Repositories/` and `.../Services/`.
+
+**Group `db`** (extend `RepositoryTestCase`): one test class per repository. Test every public method, including the empty result and the neighbours which must stay untouched.
+
+**Group `acl`** (extend `ContainerTestCase`): who sees which rows and who may change or delete what. The test uses the real services from the real DI container and logs in with `actingAs($UID)`. Cover at least the module admin, the owner and a foreign user, and assert that nothing was changed after a rejection. Ids which come from a request must be checked against the object they really belong to, not against another id sent along.
+
+**Groups are not inherited by PHPUnit.** Every concrete test class needs its own attribute, for example `#[Group('db')]` above the class. A class without it is not selected by `--group`.
+
+After writing a test, break the code on purpose (remove a `WHERE`, flip a comparison) and check that the test fails.
