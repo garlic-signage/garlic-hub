@@ -213,6 +213,14 @@ class ItemsService extends AbstractBaseService
 		{
 			$this->playlistsService->loadPureById($playlistId); // will check for rights
 
+			// the item ids come from the client: only items of this playlist may be touched
+			$playlistItemIds = array_map('intval', array_column($this->itemsRepository->findAllByPlaylistId($playlistId), 'item_id'));
+			foreach ($itemsOrder as $itemId)
+			{
+				if (!in_array((int) $itemId, $playlistItemIds, true))
+					throw new NotFoundException('playlists', 'item_not_found', ['item_id' => $itemId]);
+			}
+
 			foreach ($itemsOrder as $key => $itemId)
 			{
 				if ($this->itemsRepository->updateItemOrder((int)$itemId, $key) === 0)
@@ -244,7 +252,8 @@ class ItemsService extends AbstractBaseService
 		{
 			$playlistData = $this->checkPlaylistAcl($playlistId);
 			$item         = $this->itemsRepository->findFirstBy(['item_id' => $itemId]);
-			if (empty($item))
+			// the item id comes from the client: it must belong to the playlist the ACL was checked for
+			if (empty($item) || (int) $item['playlist_id'] !== $playlistId)
 				throw new NotFoundException('playlists', 'item_not_found', ['item_id' => $itemId]);
 
 			// todo for Core / Enterprise: Check if item belongs to an admin

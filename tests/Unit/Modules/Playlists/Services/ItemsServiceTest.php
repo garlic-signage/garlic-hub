@@ -683,6 +683,8 @@ class ItemsServiceTest extends TestCase
 
 		$this->playlistsServiceMock->expects($this->once())->method('loadPureById')
 			->with($playlistId);
+		$this->itemsRepositoryMock->method('findAllByPlaylistId')->with($playlistId)
+			->willReturn([['item_id' => 3], ['item_id' => 1], ['item_id' => 2]]);
 
 		$this->itemsRepositoryMock->expects($this->exactly(3))->method('updateItemOrder')
 			->willReturnMap([
@@ -714,6 +716,8 @@ class ItemsServiceTest extends TestCase
 
 		$this->playlistsServiceMock->expects($this->once())->method('loadPureById')
 			->with($playlistId);
+		$this->itemsRepositoryMock->method('findAllByPlaylistId')->with($playlistId)
+			->willReturn([['item_id' => 3], ['item_id' => 1], ['item_id' => 2]]);
 
 		$this->itemsRepositoryMock->expects($this->once())->method('updateItemOrder')
 			->with(3, 5)->willReturn(0);
@@ -737,7 +741,7 @@ class ItemsServiceTest extends TestCase
 		$itemId = 20;
 
 		$playlistData = ['playlist_id' => $playlistId];
-		$itemData = ['item_id' => $itemId, 'item_order' => 1];
+		$itemData = ['item_id' => $itemId, 'playlist_id' => $playlistId, 'item_order' => 1];
 
 		$this->playlistsServiceMock->expects($this->once())->method('loadPlaylistForEdit')
 			->with($playlistId)
@@ -845,7 +849,7 @@ class ItemsServiceTest extends TestCase
 		$itemId = 20;
 
 		$playlistData = ['playlist_id' => $playlistId];
-		$itemData = ['item_id' => $itemId, 'item_order' => 1];
+		$itemData = ['item_id' => $itemId, 'playlist_id' => $playlistId, 'item_order' => 1];
 
 		$this->playlistsServiceMock->expects($this->once())
 			->method('loadPlaylistForEdit')
