@@ -17,6 +17,9 @@
         <testsuite name="integration">
             <directory>tests/Integration</directory>
         </testsuite>
+        <testsuite name="blackbox">
+            <directory>tests/Blackbox</directory>
+        </testsuite>
         <testsuite name="architecture">
             <directory>tests/Architecture</directory>
         </testsuite>

@@ -1,4 +1,4 @@
-SQlite soll <?php
+<?php
 /*
  garlic-hub: Digital Signage Management Platform
 

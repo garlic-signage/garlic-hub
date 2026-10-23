@@ -86,6 +86,19 @@ class TestGroupsTest extends TestCase
 		}
 	}
 
+	public function testEveryBlackboxTestIsInTheGroupBlackbox(): void
+	{
+		$files = $this->testFiles('Blackbox');
+		static::assertNotEmpty($files);
+		foreach ($files as $file)
+		{
+			$class = $this->classOf($file);
+			static::assertTrue(class_exists($class), 'The file ' . $file . ' does not contain the class ' . $class . '.');
+			if (!(new ReflectionClass($class))->isAbstract())
+				static::assertSame(['blackbox'], $this->groupsOf($class), $class . ' needs #[Group(\'blackbox\')]. PHPUnit does not inherit it from the parent class.');
+		}
+	}
+
 	public function testTheFileNameIsTheClassName(): void
 	{
 		foreach ($this->integrationTestFiles() as $file)
@@ -131,8 +144,16 @@ class TestGroupsTest extends TestCase
 	 */
 	private function integrationTestFiles(): array
 	{
+		return $this->testFiles('Integration');
+	}
+
+	/**
+	 * @return list<string> the test files of a directory below tests/, without the support classes
+	 */
+	private function testFiles(string $directory): array
+	{
 		$files    = [];
-		$root     = (string) realpath(__DIR__ . '/../Integration');
+		$root     = (string) realpath(__DIR__ . '/../' . $directory);
 		$iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS));
 		foreach ($iterator as $file)
 		{

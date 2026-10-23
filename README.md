@@ -85,6 +85,7 @@ ddev exec vendor/bin/phpunit --testsuite integration                  # real dat
 ddev exec vendor/bin/phpunit --testsuite integration --group db       # only repository tests
 ddev exec vendor/bin/phpunit --testsuite integration --group acl      # only who-sees-and-may-do-what tests
 ddev exec vendor/bin/phpunit --testsuite architecture                 # layers, module dependencies, groups of the tests
+ddev exec vendor/bin/phpunit --testsuite blackbox                     # the real application behind a web server, asked over HTTP
 ddev exec vendor/bin/phpstan analyze
 ```
 

@@ -53,6 +53,17 @@ jobs:
       - name: PHPUnit integration
         run: vendor/bin/phpunit --testsuite integration
 
+  blackbox:
+    name: blackbox tests (real server over HTTP)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-app
+
+      - name: PHPUnit blackbox
+        run: vendor/bin/phpunit --testsuite blackbox
+
   coverage:
     name: coverage
     runs-on: ubuntu-latest
