@@ -11,15 +11,13 @@
          failOnRisky="true"
          failOnWarning="true">
     <testsuites>
-        <testsuite name="default">
-            <directory>tests</directory>
+        <testsuite name="unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="integration">
+            <directory>tests/Integration</directory>
         </testsuite>
     </testsuites>
-    <groups>
-        <include>
-            <group>units</group>
-        </include>
-    </groups>
     <php>
         <env name="TEST_BASE_DIR" value="tests" />
     </php>

@@ -282,6 +282,7 @@ class AbstractMediaHandlerTest extends TestCase
 		$uploadedFileMock = $this->createMock(UploadedFileInterface::class);
 		$uploadedFileMock->method('getClientFilename')->willReturn($clientFilename);
 		$this->configMock->method('getPaths')->with('systemDir')->willReturn('/var/www');
+		$this->filesystemMock->expects($this->never())->method($this->anything());
 		$uploadedFileMock->expects($this->once())->method('moveTo')->with('/var/www' . $expected);
 
 		static::assertEquals($expected, $this->concreteMediaHandler->uploadFromLocal($uploadedFileMock));
@@ -309,6 +310,8 @@ class AbstractMediaHandlerTest extends TestCase
 	{
 		$uploadedFileMock = $this->createMock(UploadedFileInterface::class);
 		$uploadedFileMock->method('getClientFilename')->willReturn($clientFilename);
+		$this->configMock->expects($this->never())->method($this->anything());
+		$this->filesystemMock->expects($this->never())->method($this->anything());
 		$uploadedFileMock->expects($this->never())->method('moveTo');
 
 		$this->expectException(ModuleException::class);
