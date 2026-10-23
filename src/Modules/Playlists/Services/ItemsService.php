@@ -143,7 +143,7 @@ class ItemsService extends AbstractBaseService
      */
 	public function updateField(mixed $itemId, string $fieldName, string|int $fieldValue): int
 	{
-		$saveData = [strip_tags($fieldName) => strip_tags((string)$fieldValue)];
+    		$saveData = [$fieldName => (string) $fieldValue];
 
 		return $this->update($itemId, $saveData);
 	}

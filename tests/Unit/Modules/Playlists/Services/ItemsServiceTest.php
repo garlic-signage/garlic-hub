@@ -484,6 +484,35 @@ class ItemsServiceTest extends TestCase
 	}
 
 	/**
+	 * Serialized widget data must reach the repository untouched. Stripping tags would
+	 * break the length prefixes and the whole content_data would be lost.
+	 *
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	#[Group('units')]
+	public function testUpdateFieldKeepsTagsInSerializedValue(): void
+	{
+		$this->expectUntouched($this->transactionsMock, $this->mediaServiceMock, $this->playlistMetricsCalculatorMock, $this->itemThumbnailResolverMock, $this->loggerMock);
+		$itemId     = 1;
+		$fieldValue = serialize(['text' => '<b>Tom & "Jerry"</b>']);
+
+		$this->itemsRepositoryMock->expects($this->once())->method('findFirstById')
+			->with($itemId)
+			->willReturn(['playlist_id' => 123, 'item_type' => 'widget']);
+		$this->playlistsServiceMock->expects($this->once())->method('loadPureById')
+			->willReturn(['playlist_id' => 123, 'time_limit' => 0]);
+
+		$this->itemsRepositoryMock->expects($this->once())->method('update')
+			->with($itemId, ['content_data' => $fieldValue])
+			->willReturn(1);
+
+		static::assertEquals(1, $this->itemsService->updateField($itemId, 'content_data', $fieldValue));
+	}
+
+	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 * @throws ModuleException
