@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Account\Services;
 
+use App\Shared\User\TokenPurposes;
 use App\Shared\User\UserTokenService;
 use App\Framework\Security\Crypt;
 use App\Framework\Database\BaseRepositories\Transactions;
@@ -87,13 +88,20 @@ class AccountService
 	}
 
 	/**
+	 * A changed password ends all remember-me logins: whoever has copied such a cookie
+	 * must not stay logged in after the owner has changed the password.
+	 *
 	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public function updatePassword(int $UID, string $password): int
 	{
-		$data = ['password' => $this->crypt->createPasswordHash($password)];
+		$data     = ['password' => $this->crypt->createPasswordHash($password)];
+		$affected = $this->userMainRepository->update($UID, $data);
+		if ($affected > 0)
+			$this->userTokenService->deleteByUserPurpose($UID, TokenPurposes::AUTOLOGIN->value);
 
-		return $this->userMainRepository->update($UID, $data);
+		return $affected;
 	}
 
 	/**

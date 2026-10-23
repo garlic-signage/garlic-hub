@@ -22,6 +22,11 @@ declare(strict_types=1);
 namespace Tests\Integration\Modules\Account\Services;
 
 use App\Framework\Exceptions\TranslatableModuleException;
+use App\Modules\Auth\AuthService;
+use App\Modules\Auth\AutoLoginService;
+use App\Modules\Auth\LoginThrottle;
+use App\Shared\User\UsersService;
+use Phpfastcache\Helper\Psr16Adapter;
 use App\Modules\Account\Helper\Password\Orchestrator;
 use App\Modules\Account\Services\AccountService;
 use App\Shared\User\TokenPurposes;
@@ -118,6 +123,62 @@ class PasswordTest extends ContainerTestCase
 		}
 	}
 
+	public function testChangingThePasswordEndsAllRememberMeLoginsOfTheUser(): void
+	{
+		$this->createToken(10, TokenPurposes::AUTOLOGIN);
+		$this->createToken(10, TokenPurposes::AUTOLOGIN);
+		$this->createToken(14, TokenPurposes::AUTOLOGIN);
+
+		$this->accountService->updatePassword(10, 'New-Pass1!');
+
+		static::assertSame(0, $this->countTokens(10, TokenPurposes::AUTOLOGIN));
+		static::assertSame(1, $this->countTokens(14, TokenPurposes::AUTOLOGIN));
+	}
+
+	public function testChangingThePasswordKeepsTheOtherTokensOfTheUser(): void
+	{
+		$this->createToken(10, TokenPurposes::AUTOLOGIN);
+		$this->createToken(10, TokenPurposes::EMAIL_VERIFICATION);
+
+		$this->accountService->updatePassword(10, 'New-Pass1!');
+
+		static::assertSame(1, $this->countTokens(10, TokenPurposes::EMAIL_VERIFICATION));
+	}
+
+	public function testTheOldRememberMeCookieDoesNotLogInAfterThePasswordChange(): void
+	{
+		$this->container->get(AutoLoginService::class)->createAutologinCookie(10);
+		$this->accountService->updatePassword(10, 'New-Pass1!');
+
+		$authService = new AuthService(
+			$this->container->get(UsersService::class),
+			$this->container->get(AutoLoginService::class),
+			$this->container->get('ModuleLogger'),
+			new LoginThrottle($this->container->get(Psr16Adapter::class))
+		);
+
+		static::assertNull($authService->loginByCookie());
+	}
+
+	public function testAFailedPasswordChangeKeepsTheRememberMeLogins(): void
+	{
+		$this->createToken(10, TokenPurposes::AUTOLOGIN);
+
+		static::assertSame(0, $this->accountService->updatePassword(999, 'New-Pass1!'));
+
+		static::assertSame(1, $this->countTokens(10, TokenPurposes::AUTOLOGIN));
+	}
+
+	public function testThePasswordChangeByLinkEndsTheRememberMeLoginsToo(): void
+	{
+		$this->createToken(10, TokenPurposes::AUTOLOGIN);
+		$resetToken = $this->createToken(10, TokenPurposes::PASSWORD_RESET);
+
+		$this->accountService->storeNewForcedPassword(10, $resetToken, 'New-Pass1!');
+
+		static::assertSame(0, $this->countTokens(10, TokenPurposes::AUTOLOGIN));
+	}
+
 	public function testTheLinkOfAValidTokenIsAccepted(): void
 	{
 		$user = $this->orchestrator()->loadTokenUser(bin2hex($this->createToken(10, TokenPurposes::PASSWORD_RESET)));
@@ -183,6 +244,11 @@ class PasswordTest extends ContainerTestCase
 	public function testBrokenTokensAreRejected(string $token): void
 	{
 		static::assertSame([], $this->orchestrator()->loadTokenUser($token));
+	}
+
+	private function countTokens(int $UID, TokenPurposes $purpose): int
+	{
+		return (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_tokens WHERE UID = ? AND purpose = ?', [$UID, $purpose->value]);
 	}
 
 	private function createToken(int $UID, TokenPurposes $purpose): string
