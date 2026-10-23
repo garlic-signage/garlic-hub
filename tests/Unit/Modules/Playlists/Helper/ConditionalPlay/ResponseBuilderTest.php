@@ -77,4 +77,25 @@ class ResponseBuilderTest extends TestCase
 
 		self::assertSame($this->responseStub, $result);
 	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testInvalidConditionalData(): void
+	{
+		$translatedMessage = 'Invalid conditional play data.';
+		$this->translatorMock->expects($this->once())->method('translate')
+			->with('invalid_conditional_data', 'playlists')
+			->willReturn($translatedMessage);
+
+		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonError')
+			->with($this->responseStub, $translatedMessage)
+			->willReturn($this->responseStub);
+
+		$result = $this->responseBuilder->invalidConditionalData($this->responseStub);
+
+		self::assertSame($this->responseStub, $result);
+	}
 }

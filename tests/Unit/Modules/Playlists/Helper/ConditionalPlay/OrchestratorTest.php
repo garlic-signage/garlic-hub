@@ -29,6 +29,7 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Modules\Playlists\Helper\ConditionalPlay\Orchestrator;
+use App\Modules\Playlists\Helper\ConditionalPlay\Schema;
 use App\Modules\Playlists\Helper\ConditionalPlay\ResponseBuilder;
 use App\Modules\Playlists\Helper\ConditionalPlay\TemplatePreparer;
 use App\Modules\Playlists\Services\ConditionalPlayService;
@@ -46,6 +47,7 @@ class OrchestratorTest extends TestCase
 	private TemplatePreparer&MockObject $templatePreparerMock;
 	private ResponseInterface&Stub $responseStub;
 	private ConditionalPlayService&MockObject $conditionalPlayServiceMock;
+	private Schema $schema;
 	private Orchestrator $orchestrator;
 
 	/**
@@ -62,11 +64,14 @@ class OrchestratorTest extends TestCase
 
 		$this->responseStub = $this->createStub(ResponseInterface::class);
 
+		$this->schema = new Schema();
+
 		$this->orchestrator = new Orchestrator(
 			$this->responseBuilderMock,
 			$this->validatorMock,
 			$this->templatePreparerMock,
-			$this->conditionalPlayServiceMock
+			$this->conditionalPlayServiceMock,
+			$this->schema
 		);
 	}
 
@@ -134,6 +139,30 @@ class OrchestratorTest extends TestCase
 
 	/**
 	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testValidateSaveRejectsInvalidConditionalData(): void
+	{
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->conditionalPlayServiceMock->expects($this->never())->method($this->anything());
+		$this->validatorMock->expects($this->once())->method('validateCsrfToken')->with('valid_token')->willReturn(true);
+
+		$this->responseBuilderMock->expects($this->once())->method('invalidConditionalData')
+			->with($this->responseStub)
+			->willReturn($this->responseStub);
+
+		$this->orchestrator->setInput([
+			'item_id'    => '1',
+			'csrf_token' => 'valid_token',
+			'date'       => ['from' => "2026-01-01') or ('1'='1", 'until' => '']
+		]);
+
+		static::assertSame($this->responseStub, $this->orchestrator->validateSave($this->responseStub));
+	}
+
+	/**
+	 * @throws CoreException
 	 * @throws UserException
 	 * @throws FrameworkException
 	 */
@@ -162,16 +191,27 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testSaveSuccess(): void
 	{
-		$this->validatorMock->expects($this->never())->method($this->anything());
+		$this->validatorMock->expects($this->once())->method('validateCsrfToken')->with('valid_token')->willReturn(true);
 		$this->templatePreparerMock->expects($this->never())->method($this->anything());
 		$this->conditionalPlayServiceMock->expects($this->once())->method('saveConditionalPlay')
-			->with(123, ['key' => 'value']);
+			->with(123, [
+				'date'     => ['from' => '2026-01-31', 'until' => ''],
+				'time'     => ['from' => '', 'until' => ''],
+				'weekdays' => [2 => ['from' => 4, 'until' => 40]]
+			]);
 
 		$this->responseBuilderMock->expects($this->once())->method('generalSuccess')
 			->with($this->responseStub, [])
 			->willReturn($this->responseStub);
 
-		$this->initMocks();
+		$this->orchestrator->setInput([
+			'item_id'    => '123',
+			'csrf_token' => 'valid_token',
+			'unknown'    => 'dropped',
+			'date'       => ['from' => '2026-01-31', 'until' => ''],
+			'weekdays'   => ['2' => ['from' => 4, 'until' => 40]]
+		]);
+		static::assertNull($this->orchestrator->validateSave($this->responseStub));
 		$this->orchestrator->save($this->responseStub);
 	}
 

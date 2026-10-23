@@ -57,6 +57,7 @@ use App\Modules\Playlists\Helper\Compose\RightsChecker;
 use App\Modules\Playlists\Helper\Compose\UiTemplatesPreparer;
 use App\Modules\Playlists\Helper\ConditionalPlay\Orchestrator;
 use App\Modules\Playlists\Helper\ConditionalPlay\ResponseBuilder;
+use App\Modules\Playlists\Helper\ConditionalPlay\Schema;
 use App\Modules\Playlists\Helper\ConditionalPlay\TemplatePreparer;
 use App\Modules\Playlists\Helper\Datatable\DatatableBuilder;
 use App\Modules\Playlists\Helper\Datatable\DatatablePreparer;
@@ -365,6 +366,7 @@ $dependencies[ConditionalPlayController::class] = DI\factory(function (Container
 			$container->get(BaseValidator::class),
 			new TemplatePreparer($container->get(Translator::class), $container->get(AdapterInterface::class)),
 			$container->get(ConditionalPlayService::class),
+			new Schema(),
 		)
 	);
 });

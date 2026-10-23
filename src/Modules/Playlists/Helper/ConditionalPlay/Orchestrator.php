@@ -40,19 +40,22 @@ use Psr\Http\Message\ResponseInterface;
  */
 class Orchestrator
 {
-	/** @var array<string,string>  */
+	/** @var array<string,mixed>  */
 	private array $input;
 	private int $itemId;
+	/** @var array<string,mixed> */
+	private array $conditional = [];
 
 	public function __construct(
 		private readonly ResponseBuilder        $responseBuilder,
 		private readonly BaseValidator          $validator,
 		private readonly TemplatePreparer       $templatePreparer,
 		private readonly ConditionalPlayService $conditionalPlayService,
+		private readonly Schema                 $schema,
 	) {}
 
 	/**
-	 * @param array<string,string> $input
+	 * @param array<string,mixed> $input
 	 */
 	public function setInput(array $input): static
 	{
@@ -69,7 +72,17 @@ class Orchestrator
 		if (!$this->validator->validateCsrfToken($this->input[BaseEditParameters::PARAMETER_CSRF_TOKEN]))
 			return $this->responseBuilder->csrfTokenMismatch($response);
 
-		return $this->validate($response);
+		$answer = $this->validate($response);
+		if ($answer !== null)
+			return $answer;
+
+		$conditional = $this->schema->parse($this->input);
+		if ($conditional === null)
+			return $this->responseBuilder->invalidConditionalData($response);
+
+		$this->conditional = $conditional;
+
+		return null;
 	}
 
 	/**
@@ -114,10 +127,7 @@ class Orchestrator
 	public function save(ResponseInterface $response): ?ResponseInterface
 	{
 
-		unset($this->input['csrf_token']);
-		unset($this->input['item_id']);
-
-		$this->conditionalPlayService->saveConditionalPlay($this->itemId, $this->input);
+		$this->conditionalPlayService->saveConditionalPlay($this->itemId, $this->conditional);
 
 		return $this->responseBuilder->generalSuccess($response, []);
 	}
