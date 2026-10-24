@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -22,93 +22,96 @@ declare(strict_types=1);
 namespace Tests\Unit\Framework\Middleware;
 
 use App\Framework\Controller\JsonResponseHandler;
-use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\AccessDeniedException;
+use App\Framework\Exceptions\AuthException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\TranslatableModuleException;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Middleware\JsonErrorHandler;
 use DomainException;
 use Error;
+use Monolog\Handler\TestHandler;
+use Monolog\Level;
+use Monolog\Logger;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Log\LoggerInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 use Slim\Exception\HttpMethodNotAllowedException;
 use Slim\Exception\HttpNotFoundException;
 use Slim\Psr7\Factory\ResponseFactory;
 use Slim\Psr7\Factory\ServerRequestFactory;
-use Psr\Http\Message\ServerRequestInterface;
+use Throwable;
 
 class JsonErrorHandlerTest extends TestCase
 {
-	private Translator&MockObject $translatorMock;
-	private LoggerInterface&MockObject $loggerMock;
+	private Translator&Stub $translatorStub;
+	private TestHandler $logs;
 	private ServerRequestInterface $request;
 	private JsonErrorHandler $handler;
 
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->translatorMock = $this->createMock(Translator::class);
-		$this->loggerMock     = $this->createMock(LoggerInterface::class);
-		$this->request        = (new ServerRequestFactory())->createServerRequest('POST', '/async/playlists/delete');
 
-		$this->handler = new JsonErrorHandler(new ResponseFactory(), new JsonResponseHandler(), $this->translatorMock, $this->loggerMock);
+		$this->translatorStub = $this->createStub(Translator::class);
+		$this->translatorStub->method('translateException')->willReturnCallback(
+			static fn(TranslatableModuleException $e): string => [
+				'playlist_not_found' => 'Playlist ' . ($e->getReplacements()['playlist_id'] ?? '') . ' nicht gefunden.',
+				'no_rights'          => 'Keine Rechte.',
+				'time_limit_exceeded' => 'Zeitlimit überschritten.',
+			][$e->getTranslationKey()] ?? ''
+		);
+		$this->translatorStub->method('translate')->willReturnMap([['unexpected_error', 'main', [], 'Ein unerwarteter Fehler ist aufgetreten.']]);
+
+		$this->logs    = new TestHandler();
+		$this->request = (new ServerRequestFactory())->createServerRequest('POST', '/async/playlists/delete');
+		$this->handler = new JsonErrorHandler(new ResponseFactory(), new JsonResponseHandler(), $this->translatorStub, new Logger('test', [$this->logs]));
+	}
+
+	/**
+	 * @param class-string<TranslatableModuleException> $class
+	 */
+	#[Group('units')]
+	#[DataProvider('translatableProvider')]
+	public function testExpectedErrorsAreTranslatedAndKeepTheirStatus(string $class, string $key, int $status, string $message): void
+	{
+		$response = ($this->handler)($this->request, new $class('playlists', $key, ['playlist_id' => 5]), false);
+
+		$this->assertJsonError($response, $status, $message);
+	}
+
+	/**
+	 * @return array<string, array{class-string<TranslatableModuleException>, string, int, string}>
+	 */
+	public static function translatableProvider(): array
+	{
+		return [
+			'not found'     => [NotFoundException::class, 'playlist_not_found', 404, 'Playlist 5 nicht gefunden.'],
+			'access denied' => [AccessDeniedException::class, 'no_rights', 403, 'Keine Rechte.'],
+			'other'         => [TranslatableModuleException::class, 'time_limit_exceeded', 400, 'Zeitlimit überschritten.'],
+		];
 	}
 
 	#[Group('units')]
-	public function testNotFoundIsTranslated404(): void
+	public function testDebugModeDoesNotChangeTranslatedErrors(): void
 	{
-		$exception = new NotFoundException('playlists', 'playlist_not_found', ['playlist_id' => 5]);
-		$this->translatorMock->expects($this->once())->method('translateException')
-			->with($exception)
-			->willReturn('Playlist 5 nicht gefunden.');
-		$this->loggerMock->expects($this->once())->method('notice');
-
-		$response = ($this->handler)($this->request, $exception, false);
+		$response = ($this->handler)($this->request, new NotFoundException('playlists', 'playlist_not_found', ['playlist_id' => 5]), true);
 
 		$this->assertJsonError($response, 404, 'Playlist 5 nicht gefunden.');
 	}
 
 	#[Group('units')]
-	public function testAccessDeniedIsTranslated403(): void
-	{
-		$this->translatorMock->expects($this->once())->method('translateException')->willReturn('Keine Rechte.');
-		$this->loggerMock->expects($this->once())->method('notice');
-
-		$response = ($this->handler)($this->request, new AccessDeniedException('playlists', 'no_rights'), false);
-
-		$this->assertJsonError($response, 403, 'Keine Rechte.');
-	}
-
-	#[Group('units')]
-	public function testOtherTranslatableExceptionIs400(): void
-	{
-		$this->translatorMock->expects($this->once())->method('translateException')->willReturn('Zeitlimit überschritten.');
-		$this->loggerMock->expects($this->once())->method('notice');
-
-		$response = ($this->handler)($this->request, new TranslatableModuleException('playlists', 'time_limit_exceeded'), false);
-
-		$this->assertJsonError($response, 400, 'Zeitlimit überschritten.');
-	}
-
-	#[Group('units')]
 	public function testMissingTranslationFallsBackToKey(): void
 	{
-		$this->translatorMock->expects($this->once())->method('translateException')->willReturn('');
-		$this->loggerMock->expects($this->once())->method('notice');
+		$response = ($this->handler)($this->request, new NotFoundException('playlists', 'no_such_key'), false);
 
-		$response = ($this->handler)($this->request, new NotFoundException('playlists', 'playlist_not_found'), false);
-
-		$this->assertJsonError($response, 404, 'playlist_not_found');
+		$this->assertJsonError($response, 404, 'no_such_key');
 	}
 
 	/**
@@ -117,10 +120,11 @@ class JsonErrorHandlerTest extends TestCase
 	#[Group('units')]
 	public function testFailingTranslatorFallsBackToKey(): void
 	{
-		$this->translatorMock->expects($this->once())->method('translateException')->willThrowException(new Error('locale not initialized'));
-		$this->loggerMock->expects($this->once())->method('notice');
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translateException')->willThrowException(new Error('locale not initialized'));
+		$handler = new JsonErrorHandler(new ResponseFactory(), new JsonResponseHandler(), $translator, new Logger('test', [$this->logs]));
 
-		$response = ($this->handler)($this->request, new NotFoundException('playlists', 'playlist_not_found'), false);
+		$response = $handler($this->request, new NotFoundException('playlists', 'playlist_not_found'), false);
 
 		$this->assertJsonError($response, 404, 'playlist_not_found');
 	}
@@ -128,40 +132,48 @@ class JsonErrorHandlerTest extends TestCase
 	#[Group('units')]
 	public function testLegacyModuleExceptionShowsItsText(): void
 	{
-		$this->translatorMock->expects($this->never())->method('translate');
-		$this->loggerMock->expects($this->once())->method('notice')
-			->with('Playlist is not accessible', ['method' => 'POST', 'path' => '/async/playlists/delete', 'status' => 400]);
-
 		$response = ($this->handler)($this->request, new ModuleException('playlists', 'Playlist is not accessible'), false);
 
 		$this->assertJsonError($response, 400, 'Playlist is not accessible');
 	}
 
 	#[Group('units')]
-	public function testHttpErrors(): void
+	#[DataProvider('httpErrorProvider')]
+	public function testHttpErrors(Throwable $exception, int $status, string $message): void
 	{
-		$this->translatorMock->expects($this->never())->method('translate');
-		$this->loggerMock->expects($this->exactly(3))->method('notice');
-		$response = ($this->handler)($this->request, new HttpNotFoundException($this->request), false);
-		$this->assertJsonError($response, 404, 'Route not found');
+		$this->assertJsonError(($this->handler)($this->request, $exception, false), $status, $message);
+	}
 
-		$response = ($this->handler)($this->request, new HttpMethodNotAllowedException($this->request), false);
-		$this->assertJsonError($response, 405, 'Method not allowed');
+	/**
+	 * @return array<string, array{Throwable, int, string}>
+	 */
+	public static function httpErrorProvider(): array
+	{
+		$request = (new ServerRequestFactory())->createServerRequest('GET', '/async/x');
 
-		$response = ($this->handler)($this->request, new DomainException('anything'), false);
-		$this->assertJsonError($response, 400, 'Domain-specific error');
+		return [
+			'route not found'    => [new HttpNotFoundException($request), 404, 'Route not found'],
+			'method not allowed' => [new HttpMethodNotAllowedException($request), 405, 'Method not allowed'],
+			'domain exception'   => [new DomainException('anything'), 400, 'Domain-specific error'],
+		];
 	}
 
 	#[Group('units')]
 	public function testUnexpectedErrorHidesDetails(): void
 	{
-		$this->translatorMock->expects($this->once())->method('translate')
-			->with('unexpected_error', 'main', [])
-			->willReturn('Ein unerwarteter Fehler ist aufgetreten.');
-		$this->loggerMock->expects($this->once())->method('error')
-			->with('SQLSTATE[HY000] connection refused', static::callback(fn(array $context) => $context['status'] === 500 && isset($context['exception'])));
-
 		$response = ($this->handler)($this->request, new RuntimeException('SQLSTATE[HY000] connection refused'), false);
+
+		$this->assertJsonError($response, 500, 'Ein unerwarteter Fehler ist aufgetreten.');
+		static::assertStringNotContainsString('SQLSTATE', (string) $response->getBody());
+	}
+
+	/**
+	 * A login error is no module error, it is treated like every unexpected one.
+	 */
+	#[Group('units')]
+	public function testAnAuthExceptionIsAnUnexpectedError(): void
+	{
+		$response = ($this->handler)($this->request, new AuthException('Login failed'), false);
 
 		$this->assertJsonError($response, 500, 'Ein unerwarteter Fehler ist aufgetreten.');
 	}
@@ -169,23 +181,69 @@ class JsonErrorHandlerTest extends TestCase
 	#[Group('units')]
 	public function testUnexpectedErrorWithoutTranslationUsesEnglishText(): void
 	{
-		$this->translatorMock->expects($this->once())->method('translate')->willThrowException(new CoreException('no config'));
-		$this->loggerMock->expects($this->once())->method('error');
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willThrowException(new CoreException('no config'));
+		$handler = new JsonErrorHandler(new ResponseFactory(), new JsonResponseHandler(), $translator, new Logger('test', [$this->logs]));
 
-		$response = ($this->handler)($this->request, new RuntimeException('internal'), false);
+		$this->assertJsonError($handler($this->request, new RuntimeException('internal'), false), 500, 'An unexpected error occurred.');
+	}
 
-		$this->assertJsonError($response, 500, 'An unexpected error occurred.');
+	#[Group('units')]
+	public function testUnexpectedErrorWithAnEmptyTranslationUsesEnglishText(): void
+	{
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturn('');
+		$handler = new JsonErrorHandler(new ResponseFactory(), new JsonResponseHandler(), $translator, new Logger('test', [$this->logs]));
+
+		$this->assertJsonError($handler($this->request, new RuntimeException('internal'), false), 500, 'An unexpected error occurred.');
 	}
 
 	#[Group('units')]
 	public function testUnexpectedErrorShowsDetailsInDebugMode(): void
 	{
-		$this->translatorMock->expects($this->never())->method('translate');
-		$this->loggerMock->expects($this->once())->method('error');
+		$this->assertJsonError(($this->handler)($this->request, new RuntimeException('internal'), true), 500, 'internal');
+	}
 
-		$response = ($this->handler)($this->request, new RuntimeException('internal'), true);
+	/**
+	 * The message of an exception may contain bytes which are no UTF-8, the answer must stay valid JSON.
+	 */
+	#[Group('units')]
+	public function testDebugMessageWithInvalidUtf8StaysValidJson(): void
+	{
+		$response = ($this->handler)($this->request, new RuntimeException("broken\xB1text"), true);
 
-		$this->assertJsonError($response, 500, 'internal');
+		$this->assertJsonError($response, 500, "broken\u{FFFD}text");
+	}
+
+	#[Group('units')]
+	#[DataProvider('logProvider')]
+	public function testTheErrorIsLoggedWithMethodPathAndStatus(Throwable $exception, Level $level, int $status, bool $withException): void
+	{
+		($this->handler)($this->request, $exception, false);
+
+		$records = $this->logs->getRecords();
+		static::assertCount(1, $records);
+		static::assertSame($level, $records[0]->level);
+		static::assertSame($exception->getMessage(), $records[0]->message);
+		static::assertSame($status, $records[0]->context['status']);
+		static::assertSame('POST', $records[0]->context['method']);
+		static::assertSame('/async/playlists/delete', $records[0]->context['path']);
+		// only the unexpected errors carry the exception with its trace
+		static::assertSame($withException ? $exception : null, $records[0]->context['exception'] ?? null);
+	}
+
+	/**
+	 * @return array<string, array{Throwable, Level, int, bool}>
+	 */
+	public static function logProvider(): array
+	{
+		return [
+			'not found'     => [new NotFoundException('playlists', 'playlist_not_found'), Level::Notice, 404, false],
+			'access denied' => [new AccessDeniedException('playlists', 'no_rights'), Level::Notice, 403, false],
+			'legacy module' => [new ModuleException('playlists', 'Not accessible'), Level::Notice, 400, false],
+			'domain'        => [new DomainException('anything'), Level::Notice, 400, false],
+			'unexpected'    => [new RuntimeException('SQLSTATE[HY000] connection refused'), Level::Error, 500, true],
+		];
 	}
 
 	private function assertJsonError(ResponseInterface $response, int $status, string $message): void

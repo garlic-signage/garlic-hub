@@ -29,6 +29,8 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use RuntimeException;
+use Slim\Psr7\Response;
 
 class LocaleMiddlewareTest extends TestCase
 {
@@ -55,5 +57,34 @@ class LocaleMiddlewareTest extends TestCase
 
 		static::assertSame($response, new LocaleMiddleware($localesMock)->process($request, $handlerMock));
 		static::assertSame(['locale', 'handler'], $calls);
+	}
+
+	#[Group('units')]
+	public function testAFailingLocaleStopsTheRequest(): void
+	{
+		$localesStub = $this->createStub(Locales::class);
+		$localesStub->method('determineCurrentLocale')->willThrowException(new RuntimeException('no locale'));
+		$request     = $this->createStub(ServerRequestInterface::class);
+		$called      = false;
+		$handlerStub = $this->createStub(RequestHandlerInterface::class);
+		$handlerStub->method('handle')->willReturnCallback(static function () use (&$called): ResponseInterface
+		{
+			$called = true;
+			return new Response();
+		});
+
+		try
+		{
+			new LocaleMiddleware($localesStub)->process($request, $handlerStub);
+		}
+		catch (RuntimeException $e)
+		{
+			static::assertSame('no locale', $e->getMessage());
+			static::assertFalse($called, 'The request must not be handled without a locale.');
+
+			return;
+		}
+
+		static::fail('Expected a RuntimeException.');
 	}
 }

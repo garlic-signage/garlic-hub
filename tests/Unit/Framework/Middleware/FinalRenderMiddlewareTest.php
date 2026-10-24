@@ -26,11 +26,11 @@ use App\Framework\Middleware\FinalRenderMiddleware;
 use App\Framework\TemplateEngine\AdapterInterface;
 use App\Framework\TemplateEngine\LayoutDataProviderInterface;
 use App\Framework\TemplateEngine\PageResponse;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Slim\Psr7\Factory\StreamFactory;
@@ -38,35 +38,52 @@ use Slim\Psr7\Response;
 
 class FinalRenderMiddlewareTest extends TestCase
 {
-	private AdapterInterface&MockObject $templateEngineMock;
-	private LayoutDataProviderInterface&MockObject $layoutDataProviderMock;
+	private AdapterInterface&Stub $templateEngineStub;
+	private LayoutDataProviderInterface&Stub $layoutDataProviderStub;
 	private ServerRequestInterface&Stub $requestStub;
 	private RequestHandlerInterface&Stub $handlerStub;
 	private FinalRenderMiddleware $middleware;
 
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->templateEngineMock     = $this->createMock(AdapterInterface::class);
-		$this->layoutDataProviderMock = $this->createMock(LayoutDataProviderInterface::class);
 		$this->requestStub            = $this->createStub(ServerRequestInterface::class);
 		$this->handlerStub            = $this->createStub(RequestHandlerInterface::class);
+		$this->layoutDataProviderStub = $this->createStub(LayoutDataProviderInterface::class);
+		// the page and the layout are rendered as text which shows what was put in
+		$this->templateEngineStub = $this->createStub(AdapterInterface::class);
+		$this->templateEngineStub->method('render')->willReturnCallback(
+			static fn(string $template, array $data): string => $template . ':' . json_encode($data)
+		);
 
-		$this->middleware = new FinalRenderMiddleware($this->templateEngineMock, $this->layoutDataProviderMock, new StreamFactory());
+		$this->middleware = new FinalRenderMiddleware($this->templateEngineStub, $this->layoutDataProviderStub, new StreamFactory());
 	}
 
+	/**
+	 * @throws FrameworkException
+	 */
 	#[Group('units')]
-	public function testPassesOtherResponsesUnchanged(): void
+	#[DataProvider('otherResponseProvider')]
+	public function testPassesOtherResponsesUnchanged(ResponseInterface $response): void
 	{
-		$redirect = new Response(302)->withHeader('Location', '/login');
-		$this->handlerStub->method('handle')->willReturn($redirect);
-		$this->templateEngineMock->expects($this->never())->method('render');
-		$this->layoutDataProviderMock->expects($this->never())->method('collect');
+		$this->handlerStub->method('handle')->willReturn($response);
 
-		static::assertSame($redirect, $this->middleware->process($this->requestStub, $this->handlerStub));
+		static::assertSame($response, $this->middleware->process($this->requestStub, $this->handlerStub));
+	}
+
+	/**
+	 * @return array<string, array{ResponseInterface}>
+	 */
+	public static function otherResponseProvider(): array
+	{
+		$json = new Response(200)->withHeader('Content-Type', 'application/json');
+		$json->getBody()->write('{"success":true}');
+
+		return [
+			'redirect'   => [new Response(302)->withHeader('Location', '/login')],
+			'json'       => [$json],
+			'no content' => [new Response(204)],
+		];
 	}
 
 	/**
@@ -79,22 +96,78 @@ class FinalRenderMiddlewareTest extends TestCase
 			'main_layout' => ['LANG_PAGE_TITLE' => 'Page title'],
 			'this_layout' => ['template' => 'module/page', 'data' => ['key' => 'value']]
 		], 201));
-		$this->layoutDataProviderMock->expects($this->once())->method('collect')->with($this->requestStub)
-			->willReturn(['main_menu' => ['menu'], 'LANG_PAGE_TITLE' => 'Default title']);
-
-		$this->templateEngineMock->expects($this->exactly(2))->method('render')
-			->willReturnCallback(static fn(string $template, array $data): string => match ($template)
-			{
-				'module/page'         => 'content of ' . $data['key'],
-				'layouts/main_layout' => $data['LANG_PAGE_TITLE'] . '|' . $data['MAIN_CONTENT'] . '|' . $data['main_menu'][0],
-				default               => static::fail('unexpected template ' . $template)
-			});
+		$this->layoutDataProviderStub->method('collect')->willReturn(['main_menu' => ['menu'], 'LANG_PAGE_TITLE' => 'Default title']);
 
 		$response = $this->middleware->process($this->requestStub, $this->handlerStub);
 
-		// page values win over the layout defaults
-		static::assertSame('Page title|content of value|menu', (string) $response->getBody());
+		// the page is rendered with its data, the layout gets the page, the menu of the provider and the title of the page
+		static::assertSame(
+			'layouts/main_layout:' . json_encode([
+				'main_menu'       => ['menu'],
+				'LANG_PAGE_TITLE' => 'Page title',
+				'MAIN_CONTENT'    => 'module/page:{"key":"value"}',
+			]),
+			(string) $response->getBody()
+		);
 		static::assertSame('text/html', $response->getHeaderLine('Content-Type'));
 		static::assertSame(201, $response->getStatusCode());
+	}
+
+	/**
+	 * The layout data of the provider is collected for the request which is handled.
+	 *
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testTheLayoutDataIsCollectedForTheRequest(): void
+	{
+		$this->handlerStub->method('handle')->willReturn(new PageResponse([
+			'main_layout' => [],
+			'this_layout' => ['template' => 'module/page', 'data' => []]
+		]));
+		$request = $this->requestStub;
+		$this->layoutDataProviderStub->method('collect')->willReturnCallback(
+			static fn(ServerRequestInterface $given): array => ['same_request' => $given === $request]
+		);
+
+		$response = $this->middleware->process($this->requestStub, $this->handlerStub);
+
+		static::assertStringContainsString('"same_request":true', (string) $response->getBody());
+	}
+
+	/**
+	 * The main layout data of a page is applied last, it wins even over the rendered content.
+	 *
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testTheMainLayoutDataOfAPageWinsOverEverything(): void
+	{
+		$this->handlerStub->method('handle')->willReturn(new PageResponse([
+			'main_layout' => ['MAIN_CONTENT' => 'set by the page'],
+			'this_layout' => ['template' => 'module/page', 'data' => []]
+		]));
+		$this->layoutDataProviderStub->method('collect')->willReturn([]);
+
+		$response = $this->middleware->process($this->requestStub, $this->handlerStub);
+
+		static::assertSame('layouts/main_layout:{"MAIN_CONTENT":"set by the page"}', (string) $response->getBody());
+	}
+
+	/**
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testHeadersOfThePageAreKept(): void
+	{
+		$this->handlerStub->method('handle')->willReturn(
+			new PageResponse(['main_layout' => [], 'this_layout' => ['template' => 'module/page', 'data' => []]])
+				->withHeader('X-Custom', 'yes')
+		);
+		$this->layoutDataProviderStub->method('collect')->willReturn([]);
+
+		$response = $this->middleware->process($this->requestStub, $this->handlerStub);
+
+		static::assertSame('yes', $response->getHeaderLine('X-Custom'));
 	}
 }
