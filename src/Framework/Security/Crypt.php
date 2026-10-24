@@ -32,6 +32,8 @@ use InvalidArgumentException;
  */
 readonly class Crypt
 {
+	public const int MIN_PASSWORD_LENGTH = 8;
+
 	private Key $encryptionKey;
 
 	public function __construct(Key $encryptionKey)
@@ -64,17 +66,21 @@ readonly class Crypt
 	}
 
 	/**
+	 * A password is never shorter than 8 signs, a smaller length is raised to 8.
+	 *
 	 * @throws Exception
 	 */
 	public function generatePassword(int $length = 8): string
 	{
+		$length = max($length, self::MIN_PASSWORD_LENGTH);
 		$chars = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ123456789!@#$%*()_-=+;:,.?';
 		$password = '';
 		for ($i = 0; $i < $length; $i++)
 		{
 			$password .= $chars[random_int(0, strlen($chars) - 1)];
 		}
-		return $password;	}
+		return $password;
+	}
 
 	/**
 	 * @throws Exception
