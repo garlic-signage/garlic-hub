@@ -19,36 +19,57 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Framework;
 
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\SimpleApiExecutor;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\ServerException;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\RequestOptions;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use Throwable;
 
+/**
+ * SimpleApiExecutor with a real Guzzle client. Only the transfer is replaced: the test sees the request which
+ * would go over the wire, and the client behaves like the one of the application (4xx and 5xx throw by itself).
+ */
 class SimpleApiExecutorTest extends TestCase
 {
-	private Client&MockObject $httpClientMock;
+	private MockHandler $mock;
+	/** @var array<array{request: RequestInterface, response: ResponseInterface|null, error: mixed, options: array<mixed>}> */
+	private array $history = [];
 	private SimpleApiExecutor $simpleApiExecutor;
 
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
 
-		$this->httpClientMock    = $this->createMock(Client::class);
-		$this->simpleApiExecutor = new SimpleApiExecutor($this->httpClientMock);
+		$this->history = [];
+		$this->mock    = new MockHandler();
+		$stack         = HandlerStack::create($this->mock);
+		// @phpstan-ignore-next-line // Guzzle takes the history by reference and types it as array|ArrayAccess
+		$stack->push(Middleware::history($this->history));
+
+		$this->simpleApiExecutor = new SimpleApiExecutor(new Client(['handler' => $stack]));
+	}
+
+	private function sentRequest(): RequestInterface
+	{
+		static::assertCount(1, $this->history, 'Exactly one request is expected.');
+
+		return array_values($this->history)[0]['request'];
 	}
 
 	/**
@@ -58,9 +79,7 @@ class SimpleApiExecutorTest extends TestCase
 	#[Group('units')]
 	public function testExecuteApiRequestReturnsDecodedBody(): void
 	{
-		$this->httpClientMock->expects($this->once())->method('request')
-			->with('GET', 'https://example.com/api?access_token=test_token', [RequestOptions::JSON => ['key' => 'value']])
-			->willReturn(new Response(200, [], '{"success":true}'));
+		$this->mock->append(new Response(200, [], '{"success":true}'));
 
 		$result = $this->simpleApiExecutor->executeApiRequest('GET', 'https://example.com/api', 'test_token', ['key' => 'value']);
 
@@ -72,12 +91,19 @@ class SimpleApiExecutorTest extends TestCase
 	 * @throws GuzzleException
 	 */
 	#[Group('units')]
-	public function testExecuteApiRequestWithoutJsonReturnsEmptyArray(): void
+	public function testExecuteApiRequestSendsMethodTokenAndJsonBody(): void
 	{
-		$this->httpClientMock->expects($this->once())->method('request')
-			->willReturn(new Response(200, [], 'no json'));
+		$this->mock->append(new Response(200, [], '{}'));
 
-		static::assertSame([], $this->simpleApiExecutor->executeApiRequest('GET', 'https://example.com/api', 'test_token'));
+		$this->simpleApiExecutor->executeApiRequest('POST', 'https://example.com/api/players', 'test_token', ['key' => 'value', 'count' => 3]);
+
+		$request = $this->sentRequest();
+		static::assertSame('POST', $request->getMethod());
+		static::assertSame('example.com', $request->getUri()->getHost());
+		static::assertSame('/api/players', $request->getUri()->getPath());
+		static::assertSame('access_token=test_token', $request->getUri()->getQuery());
+		static::assertSame('application/json', $request->getHeaderLine('Content-Type'));
+		static::assertSame('{"key":"value","count":3}', (string) $request->getBody());
 	}
 
 	/**
@@ -85,15 +111,139 @@ class SimpleApiExecutorTest extends TestCase
 	 * @throws GuzzleException
 	 */
 	#[Group('units')]
-	public function testExecuteApiRequestThrowsOnStatusNot200(): void
+	#[DataProvider('tokenProvider')]
+	public function testTheTokenIsEncodedInTheQuery(string $token, string $expectedQuery): void
 	{
-		$this->httpClientMock->expects($this->once())->method('request')
-			->willReturn(new Response(204, [], 'No Content'));
+		$this->mock->append(new Response(200, [], '{}'));
+
+		$this->simpleApiExecutor->executeApiRequest('GET', 'https://example.com/api', $token);
+
+		static::assertSame($expectedQuery, $this->sentRequest()->getUri()->getQuery());
+	}
+
+	/**
+	 * @return array<string, array{string, string}>
+	 */
+	public static function tokenProvider(): array
+	{
+		return [
+			'plain'            => ['abc123', 'access_token=abc123'],
+			'base64 signs'     => ['a+b/c=', 'access_token=a%2Bb%2Fc%3D'],
+			'ampersand'        => ['a&admin=1', 'access_token=a%26admin%3D1'],
+			'hash and space'   => ['a#b c', 'access_token=a%23b%20c'],
+		];
+	}
+
+	/**
+	 * @throws FrameworkException
+	 * @throws GuzzleException
+	 */
+	#[Group('units')]
+	public function testAnEndpointWithAQueryGetsTheTokenAsAnotherParameter(): void
+	{
+		$this->mock->append(new Response(200, [], '{}'));
+
+		$this->simpleApiExecutor->executeApiRequest('GET', 'https://example.com/api?playlist=5', 'test_token');
+
+		static::assertSame('playlist=5&access_token=test_token', $this->sentRequest()->getUri()->getQuery());
+	}
+
+	/**
+	 * Without options the body is an empty JSON array, not an object.
+	 *
+	 * @throws FrameworkException
+	 * @throws GuzzleException
+	 */
+	#[Group('units')]
+	public function testWithoutOptionsAnEmptyJsonArrayIsSent(): void
+	{
+		$this->mock->append(new Response(200, [], '{}'));
+
+		$this->simpleApiExecutor->executeApiRequest('GET', 'https://example.com/api', 'test_token');
+
+		static::assertSame('[]', (string) $this->sentRequest()->getBody());
+	}
+
+	/**
+	 * @throws FrameworkException
+	 * @throws GuzzleException
+	 */
+	#[Group('units')]
+	#[DataProvider('unusableBodyProvider')]
+	public function testAnAnswerWhichIsNoJsonObjectOrListReturnsAnEmptyArray(string $body): void
+	{
+		$this->mock->append(new Response(200, [], $body));
+
+		static::assertSame([], $this->simpleApiExecutor->executeApiRequest('GET', 'https://example.com/api', 'test_token'));
+	}
+
+	/**
+	 * @return array<string, array{string}>
+	 */
+	public static function unusableBodyProvider(): array
+	{
+		return ['no json' => ['no json'], 'empty' => [''], 'string' => ['"text"'], 'number' => ['5'], 'null' => ['null'], 'cut off' => ['{"a":']];
+	}
+
+	/**
+	 * @throws FrameworkException
+	 * @throws GuzzleException
+	 */
+	#[Group('units')]
+	public function testAListIsReturnedAsItIs(): void
+	{
+		$this->mock->append(new Response(200, [], '[{"id":1},{"id":2}]'));
+
+		static::assertSame([['id' => 1], ['id' => 2]], $this->simpleApiExecutor->executeApiRequest('GET', 'https://example.com/api', 'test_token'));
+	}
+
+	/**
+	 * @throws GuzzleException
+	 */
+	#[Group('units')]
+	public function testExecuteApiRequestThrowsOnASuccessStatusWhichIsNot200(): void
+	{
+		$this->mock->append(new Response(204, [], 'No Content'));
 
 		$this->expectException(FrameworkException::class);
 		$this->expectExceptionMessage('API request failed: 204 No Content');
 
 		$this->simpleApiExecutor->executeApiRequest('POST', 'https://example.com/api', 'test_token');
+	}
+
+	/**
+	 * The client throws for 4xx and 5xx by itself, the caller gets the Guzzle exception with the response.
+	 *
+	 * @param class-string<Throwable> $exceptionClass
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	#[DataProvider('errorStatusProvider')]
+	public function testExecuteApiRequestPassesTheErrorsOfTheClientOn(int $status, string $exceptionClass): void
+	{
+		$this->mock->append(new Response($status, [], 'error body'));
+
+		try
+		{
+			$this->simpleApiExecutor->executeApiRequest('GET', 'https://example.com/api', 'test_token');
+		}
+		catch (BadResponseException $e)
+		{
+			static::assertInstanceOf($exceptionClass, $e);
+			static::assertSame($status, $e->getResponse()->getStatusCode());
+
+			return;
+		}
+
+		static::fail('Expected a BadResponseException.');
+	}
+
+	/**
+	 * @return array<string, array{int, class-string<Throwable>}>
+	 */
+	public static function errorStatusProvider(): array
+	{
+		return ['not found' => [404, ClientException::class], 'unauthorized' => [401, ClientException::class], 'server error' => [500, ServerException::class]];
 	}
 
 	/**
@@ -104,7 +254,7 @@ class SimpleApiExecutorTest extends TestCase
 	public function testExecuteApiRequestPassesTransferErrorsOn(): void
 	{
 		$exception = new ConnectException('Connection refused', new Request('POST', 'https://example.com/api'));
-		$this->httpClientMock->expects($this->once())->method('request')->willThrowException($exception);
+		$this->mock->append($exception);
 
 		$this->expectExceptionObject($exception);
 
@@ -118,9 +268,7 @@ class SimpleApiExecutorTest extends TestCase
 	#[Group('units')]
 	public function testExecuteAuthReturnsDecodedBody(): void
 	{
-		$this->httpClientMock->expects($this->once())->method('post')
-			->with('https://example.com/oauth2/token', [RequestOptions::JSON => ['grant_type' => 'password']])
-			->willReturn(new Response(200, [], '{"access_token":"abc"}'));
+		$this->mock->append(new Response(200, [], '{"access_token":"abc"}'));
 
 		$result = $this->simpleApiExecutor->executeAuth('https://example.com/oauth2/token', ['grant_type' => 'password']);
 
@@ -132,14 +280,44 @@ class SimpleApiExecutorTest extends TestCase
 	 * @throws GuzzleException
 	 */
 	#[Group('units')]
-	public function testExecuteAuthThrowsOnStatusNot200(): void
+	public function testExecuteAuthPostsTheJsonBodyWithoutAToken(): void
 	{
-		$this->httpClientMock->expects($this->once())->method('post')
-			->willReturn(new Response(202, [], 'Accepted'));
+		$this->mock->append(new Response(200, [], '{}'));
+
+		$this->simpleApiExecutor->executeAuth('https://example.com/oauth2/token', ['grant_type' => 'password', 'username' => 'anna']);
+
+		$request = $this->sentRequest();
+		static::assertSame('POST', $request->getMethod());
+		static::assertSame('/oauth2/token', $request->getUri()->getPath());
+		static::assertSame('', $request->getUri()->getQuery());
+		static::assertSame('application/json', $request->getHeaderLine('Content-Type'));
+		static::assertSame('{"grant_type":"password","username":"anna"}', (string) $request->getBody());
+	}
+
+	/**
+	 * @throws GuzzleException
+	 */
+	#[Group('units')]
+	public function testExecuteAuthThrowsOnASuccessStatusWhichIsNot200(): void
+	{
+		$this->mock->append(new Response(202, [], 'Accepted'));
 
 		$this->expectException(FrameworkException::class);
 		$this->expectExceptionMessage('Auth request failed: 202 Accepted');
 
 		$this->simpleApiExecutor->executeAuth('https://example.com/oauth2/token');
+	}
+
+	/**
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testExecuteAuthPassesTheErrorsOfTheClientOn(): void
+	{
+		$this->mock->append(new Response(401, [], 'denied'));
+
+		$this->expectException(ClientException::class);
+
+		$this->simpleApiExecutor->executeAuth('https://example.com/oauth2/token', ['grant_type' => 'password']);
 	}
 }

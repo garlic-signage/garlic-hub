@@ -44,7 +44,8 @@ readonly class SimpleApiExecutor
 	 */
 	public function executeApiRequest(string $method, string $endpoint, string $token, array $options = []): array
 	{
-		$endpoint .= '?access_token='. $token;
+		// the token is encoded: signs like + / = & # would break the query or start another parameter
+		$endpoint .= (str_contains($endpoint, '?') ? '&' : '?') . 'access_token=' . rawurlencode($token);
 		$response  = $this->httpClient->request($method, $endpoint, [RequestOptions::JSON => $options]);
 
 		return $this->decodeResponse($response, 'API request failed');
