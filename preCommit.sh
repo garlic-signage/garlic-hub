@@ -6,6 +6,5 @@
 XDEBUG_MODE=coverage
 php vendor/bin/phpunit --coverage-html public/clover/ --coverage-clover  public/clover/clover.xml
 vendor/bin/phpstan analyze
-vendor/bin/coverage-badge public/clover/clover.xml misc/coverage.svg coverage
 
 composer CycloneDX:make-sbom --omit=dev --output-format=JSON --output-file=sbom.json
