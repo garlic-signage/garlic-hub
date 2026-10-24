@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Framework\Config;
 
 use App\Framework\Config\Config;
-use App\Framework\Config\ConfigLoaderInterface;
 use App\Framework\Exceptions\CoreException;
 use Monolog\Level;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -32,37 +31,16 @@ use PHPUnit\Framework\TestCase;
 class ConfigTest extends TestCase
 {
 	private Config $config;
-	private ConfigLoaderInterface $loader;
-
-	/** @var list<string> modules in the order the loader was asked for them */
-	private array $loaded = [];
+	private RecordingConfigLoader $loader;
 
 	protected function setUp(): void
 	{
 		parent::setUp();
 
-		$this->loaded = [];
-		$this->loader = new class($this->loaded) implements ConfigLoaderInterface
-		{
-			/** @var array<string,array<string,string|array<string,string>>> */
-			public array $data = [];
-
-			/** @param list<string> $loaded */
-			public function __construct(private array &$loaded) {}
-
-			public function load(string $module): array
-			{
-				$this->loaded[] = $module;
-				if (!array_key_exists($module, $this->data))
-					throw new CoreException('Unable to access configuration file for ' . $module);
-
-				return $this->data[$module];
-			}
-		};
-		$this->loader->data = [
+		$this->loader = new RecordingConfigLoader([
 			'module_a' => ['top_key' => 'top_a', 'section' => ['key' => 'value_a']],
 			'module_b' => ['section' => ['key' => 'value_b']],
-		];
+		]);
 		$this->config = new Config($this->loader, ['key_path' => 'value_path'], ['key_env' => 'value_env']);
 	}
 
@@ -135,7 +113,7 @@ class ConfigTest extends TestCase
 		$this->config->getConfigValue('key', 'module_a', 'section');
 		$this->config->getFullConfigDataByModule('module_a');
 
-		static::assertSame(['module_a'], $this->loaded);
+		static::assertSame(['module_a'], $this->loader->loaded);
 	}
 
 	/**
@@ -148,7 +126,7 @@ class ConfigTest extends TestCase
 		$a = $this->config->getFullConfigDataByModule('module_a');
 		$b = $this->config->getFullConfigDataByModule('module_b');
 
-		static::assertSame(['module_a', 'module_b'], $this->loaded);
+		static::assertSame(['module_a', 'module_b'], $this->loader->loaded);
 		static::assertSame('value_a', $a['section']['key']);
 		static::assertSame('value_b', $b['section']['key']);
 	}
