@@ -29,16 +29,28 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 
-#[Group('units')]
 class CookieTest extends TestCase
 {
 	use PHPMock;
 	private Cookie $cookie;
 
+	/** @var array<string,mixed> */
+	private array $serverBackup;
+
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->cookie    = new Cookie();
+		$this->serverBackup = $_SERVER;
+		$_COOKIE            = [];
+		unset($_SERVER['HTTPS'], $_SERVER['SERVER_PORT'], $_SERVER['HTTP_X_FORWARDED_PROTO']);
+		$this->cookie       = new Cookie();
+	}
+
+	protected function tearDown(): void
+	{
+		$_COOKIE = [];
+		$_SERVER = $this->serverBackup;
+		parent::tearDown();
 	}
 
 	#[Group('units')]
@@ -47,13 +59,11 @@ class CookieTest extends TestCase
 		$_COOKIE = ['test_cookie' => 'test_value'];
 		$result = $this->cookie->getCookie('test_cookie');
 		self::assertSame('test_value', $result);
-		$_COOKIE = [];
 	}
 
 	#[Group('units')]
 	public function testGetCookieDoesNotExist(): void
 	{
-		$_COOKIE = [];
 		$result = $this->cookie->getCookie('nonexistent_cookie');
 
 		self::assertNull($result);
@@ -77,6 +87,23 @@ class CookieTest extends TestCase
 		$this->cookie->createCookie('test_cookie', 'test_value', $expire);
 	}
 
+	/**
+	 * @throws FrameworkException
+	 */
+	#[RunInSeparateProcess] #[Group('units')]
+	public function testCreateCookieIsSecureOverHttps(): void
+	{
+		$_SERVER['HTTPS'] = 'on';
+		$expire = new DateTime('2035-05-17');
+
+		$setcookieMock = $this->getFunctionMock('App\Framework\Http', 'setcookie');
+		$setcookieMock->expects($this->once())
+			->with('test_cookie', 'test_value', ['expires' => $expire->getTimestamp(), 'path' => '/', 'secure' => true, 'httponly' => true, 'samesite' => 'Lax'])
+			->willReturn(true);
+
+		$this->cookie->createCookie('test_cookie', 'test_value', $expire);
+	}
+
 	#[RunInSeparateProcess] #[Group('units')]
 	public function testCreateCookieFailure(): void
 	{
@@ -94,7 +121,7 @@ class CookieTest extends TestCase
 	}
 
 	#[RunInSeparateProcess] #[Group('units')]
-	public function testDeleteCookieSuccess(): void
+	public function testDeleteCookieExpiresItInThePastForThePathOfTheApp(): void
 	{
 		$setcookieMock = $this->getFunctionMock('App\Framework\Http', 'setcookie');
 		$setcookieMock->expects($this->once())
@@ -104,19 +131,6 @@ class CookieTest extends TestCase
 		$this->cookie->deleteCookie('test_cookie');
 	}
 
-	#[RunInSeparateProcess] #[Group('units')]
-	public function testDeleteCookieWhenCookieNotExists(): void
-	{
-		$_COOKIE = [];
-
-		$setcookieMock = $this->getFunctionMock('App\Framework\Http', 'setcookie');
-		$setcookieMock->expects($this->once())
-			->with('nonexistent_cookie', '', static::lessThan(time()), '/')
-			->willReturn(true);
-
-		$this->cookie->deleteCookie('nonexistent_cookie');
-	}
-
 	#[Group('units')]
 	public function testHasCookieExists(): void
 	{
@@ -124,13 +138,11 @@ class CookieTest extends TestCase
 		$result = $this->cookie->hasCookie('existing_cookie');
 
 		self::assertTrue($result);
-		$_COOKIE = [];
 	}
 
 	#[Group('units')]
 	public function testHasCookieDoesNotExist(): void
 	{
-		$_COOKIE = [];
 		$result = $this->cookie->hasCookie('missing_cookie');
 
 		self::assertFalse($result);

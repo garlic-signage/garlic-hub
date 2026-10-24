@@ -33,6 +33,7 @@ class HttpsTest extends TestCase
 
 	protected function setUp(): void
 	{
+		parent::setUp();
 		$this->serverBackup = $_SERVER;
 		unset($_SERVER['HTTPS'], $_SERVER['SERVER_PORT'], $_SERVER['HTTP_X_FORWARDED_PROTO']);
 	}
@@ -40,6 +41,7 @@ class HttpsTest extends TestCase
 	protected function tearDown(): void
 	{
 		$_SERVER = $this->serverBackup;
+		parent::tearDown();
 	}
 
 	/**
@@ -64,10 +66,15 @@ class HttpsTest extends TestCase
 			'https on'            => [['HTTPS' => 'on'], true],
 			'https off (IIS)'     => [['HTTPS' => 'off'], false],
 			'https empty'         => [['HTTPS' => ''], false],
+			'https ON uppercase'  => [['HTTPS' => 'ON'], true],
 			'port 443'            => [['SERVER_PORT' => '443'], true],
+			'port 443 as integer' => [['SERVER_PORT' => 443], true],
 			'port 80'             => [['SERVER_PORT' => '80'], false],
+			'https off, port 443' => [['HTTPS' => 'off', 'SERVER_PORT' => '443'], true],
 			'proxy https'         => [['HTTP_X_FORWARDED_PROTO' => 'https'], true],
+			'proxy HTTPS uppercase' => [['HTTP_X_FORWARDED_PROTO' => 'HTTPS'], true],
 			'proxy http'          => [['HTTP_X_FORWARDED_PROTO' => 'http'], false],
+			'proxy unknown value' => [['HTTP_X_FORWARDED_PROTO' => 'ftp'], false],
 		];
 	}
 }

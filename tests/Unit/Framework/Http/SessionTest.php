@@ -24,6 +24,7 @@ namespace Tests\Unit\Framework\Http;
 use App\Framework\Http\Session;
 use App\Framework\Exceptions\FrameworkException;
 use phpmock\phpunit\PHPMock;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
@@ -33,20 +34,141 @@ class SessionTest extends TestCase
 	use PHPMock;
 	private Session $session;
 
+	/** @var array<string,mixed> */
+	private array $serverBackup;
+
 	protected function setUp(): void
 	{
 		parent::setUp();
-		session_unset();
-		session_destroy();
-		$this->session = new Session(); // Or new Session('TestSession') if you want a custom name
+		$this->serverBackup = $_SERVER;
+		unset($_SERVER['HTTPS'], $_SERVER['SERVER_PORT'], $_SERVER['HTTP_X_FORWARDED_PROTO']);
+		$this->closeSession();
+		$this->session = new Session();
+		$_SESSION      = [];
+	}
+
+	protected function tearDown(): void
+	{
+		$this->closeSession();
 		$_SESSION = [];
+		$_COOKIE  = [];
+		$_SERVER  = $this->serverBackup;
+		parent::tearDown();
+	}
+
+	private function closeSession(): void
+	{
+		if (session_status() === PHP_SESSION_ACTIVE)
+		{
+			session_unset();
+			session_destroy();
+		}
+	}
+
+	#[Group('units')]
+	public function testTheConstructorSetsTheSessionName(): void
+	{
+		new Session('TestSession');
+
+		static::assertSame('TestSession', session_name());
+	}
+
+	/**
+	 * @param array<string,mixed> $server
+	 * @param array<string,mixed> $options
+	 * @param array<string,mixed> $expectedOptions
+	 */
+	#[RunInSeparateProcess] #[Group('units')]
+	#[DataProvider('startOptionsProvider')]
+	public function testStartPassesSecureOptions(array $server, array $options, array $expectedOptions): void
+	{
+		$_SERVER = array_merge($_SERVER, $server);
+
+		$session_status = $this->getFunctionMock('App\Framework\Http', 'session_status');
+		$session_status->expects($this->once())->willReturn(PHP_SESSION_NONE);
+
+		$session_start = $this->getFunctionMock('App\Framework\Http', 'session_start');
+		$session_start->expects($this->once())->with($expectedOptions)->willReturn(true);
+
+		$this->session->start($options);
+	}
+
+	/**
+	 * @return array<string,array{array<string,mixed>,array<string,mixed>,array<string,mixed>}>
+	 */
+	public static function startOptionsProvider(): array
+	{
+		$defaults = [
+			'cookie_lifetime' => 0,
+			'cookie_path'     => '/',
+			'cookie_domain'   => '',
+			'cookie_secure'   => false,
+			'cookie_httponly' => true,
+			'cookie_samesite' => 'Strict',
+		];
+
+		return [
+			'plain http'            => [[], [], $defaults],
+			'https sets secure'     => [['HTTPS' => 'on'], [], array_merge($defaults, ['cookie_secure' => true])],
+			'behind a proxy'        => [['HTTP_X_FORWARDED_PROTO' => 'https'], [], array_merge($defaults, ['cookie_secure' => true])],
+			'own options override'  => [[], ['cookie_lifetime' => 3600, 'cookie_samesite' => 'Lax'], array_merge($defaults, ['cookie_lifetime' => 3600, 'cookie_samesite' => 'Lax'])],
+		];
+	}
+
+	#[RunInSeparateProcess] #[Group('units')]
+	public function testStartDoesNothingWhenTheSessionIsActive(): void
+	{
+		$session_status = $this->getFunctionMock('App\Framework\Http', 'session_status');
+		$session_status->expects($this->once())->willReturn(PHP_SESSION_ACTIVE);
+
+		$session_start = $this->getFunctionMock('App\Framework\Http', 'session_start');
+		$session_start->expects($this->never());
+
+		$this->session->start();
+	}
+
+	/**
+	 * A plain setcookie() would drop HttpOnly and SameSite, so the new id gets the flags of start().
+	 *
+	 * @param array<string,mixed> $server
+	 */
+	#[RunInSeparateProcess] #[Group('units')]
+	#[DataProvider('regenerateCookieProvider')]
+	public function testRegenerateIdSetsTheCookieWithTheSecureFlags(array $server, bool $secure): void
+	{
+		$_SERVER = array_merge($_SERVER, $server);
+
+		$this->getFunctionMock('App\Framework\Http', 'session_status')->expects($this->once())->willReturn(PHP_SESSION_ACTIVE);
+		// true deletes the old session, an old id must not stay valid
+		$this->getFunctionMock('App\Framework\Http', 'session_regenerate_id')->expects($this->once())->with(true)->willReturn(true);
+		$this->getFunctionMock('App\Framework\Http', 'session_name')->expects($this->once())->willReturn('GhSid');
+		$this->getFunctionMock('App\Framework\Http', 'session_id')->expects($this->once())->willReturn('new_id');
+		$this->getFunctionMock('App\Framework\Http', 'ini_get')->expects($this->once())->with('session.cookie_lifetime')->willReturn('0');
+
+		$setcookie = $this->getFunctionMock('App\Framework\Http', 'setcookie');
+		$setcookie->expects($this->once())
+			->with('GhSid', 'new_id', ['expires' => 0, 'path' => '/', 'secure' => $secure, 'httponly' => true, 'samesite' => 'Strict'])
+			->willReturn(true);
+
+		$this->session->regenerateID();
+	}
+
+	/**
+	 * @return array<string,array{array<string,mixed>,bool}>
+	 */
+	public static function regenerateCookieProvider(): array
+	{
+		return [
+			'plain http' => [[], false],
+			'https'      => [['HTTPS' => 'on'], true],
+		];
 	}
 
 	#[Group('units')]
 	public function testStart(): void
 	{
 		$this->session->start();
-		static::assertEquals(PHP_SESSION_ACTIVE, session_status());
+		static::assertSame(PHP_SESSION_ACTIVE, session_status());
 	}
 
 	/**
@@ -60,7 +182,7 @@ class SessionTest extends TestCase
 		$this->session->regenerateID();
 		$newId = session_id();
 
-		static::assertNotEquals($oldId, $newId);
+		static::assertNotSame($oldId, $newId);
 	}
 
 	#[Group('units')]
@@ -141,7 +263,7 @@ class SessionTest extends TestCase
 	{
 		$this->session->start();
 		$_SESSION['test_key'] = 'test_value';
-		static::assertEquals('test_value', $this->session->get('test_key'));
+		static::assertSame('test_value', $this->session->get('test_key'));
 		static::assertNull($this->session->get('non_existent_key'));
 	}
 
@@ -149,11 +271,11 @@ class SessionTest extends TestCase
 	public function testSet(): void
 	{
 		$this->session->set('test_key', 'test_value');
-		static::assertEquals('test_value', $_SESSION['test_key']);
+		static::assertSame('test_value', $_SESSION['test_key']);
 
 		$testArray = ['a' => 1, 'b' => 2];
 		$this->session->set('test_array', $testArray);
-		static::assertEquals($testArray, $_SESSION['test_array']);
+		static::assertSame($testArray, $_SESSION['test_array']);
 	}
 
 	#[Group('units')]
@@ -251,7 +373,7 @@ class SessionTest extends TestCase
 
 		$newId =$this->session->id(true); //regenerate
 		static::assertNotEmpty($newId);
-		static::assertNotEquals($id, $newId);
+		static::assertNotSame($id, $newId);
 	}
 
 	#[Group('units')]
