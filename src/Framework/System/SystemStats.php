@@ -109,6 +109,8 @@ class SystemStats
 		$mem = explode(' ', $freeArr[1]);
 		$mem = array_filter($mem); // Remove empty values
 		$mem = array_merge($mem); // Reindex array
+		if (count($mem) < 4) // label, total, used, free
+			return;
 
 		$this->ramStats = [
 			'total' => (int) $mem[1],
@@ -142,11 +144,12 @@ class SystemStats
 		{
 			$line = trim($line);
 
-			if (!str_starts_with($line, 'total'))
+			// the sum line has "total" as its first column, a file system can be named "total…" too
+			$parts = preg_split('/\s+/', $line);
+			if ($parts === false || $parts[0] !== 'total')
 				continue;
 
-			$parts = preg_split('/\s+/', $line);
-			if ($parts === false || count($parts) < 5)
+			if (count($parts) < 5)
 				return;
 
 			$this->discInfo = [
