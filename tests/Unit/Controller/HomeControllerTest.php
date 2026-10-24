@@ -26,7 +26,6 @@ use App\Framework\Dashboards\DashboardsAggregator;
 use App\Framework\TemplateEngine\PageResponse;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
@@ -34,8 +33,8 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class HomeControllerTest extends TestCase
 {
-	private ServerRequestInterface&MockObject $requestMock;
-	private ResponseInterface&MockObject $responseMock;
+	private ServerRequestInterface&Stub $requestStub;
+	private ResponseInterface&Stub $responseStub;
 	private DashboardsAggregator&Stub $dashboardsAggregatorStub;
 	private HomeController $controller;
 
@@ -45,8 +44,8 @@ class HomeControllerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->requestMock              = $this->createMock(ServerRequestInterface::class);
-		$this->responseMock             = $this->createMock(ResponseInterface::class);
+		$this->requestStub              = $this->createStub(ServerRequestInterface::class);
+		$this->responseStub             = $this->createStub(ResponseInterface::class);
 		$this->dashboardsAggregatorStub = $this->createStub(DashboardsAggregator::class);
 		$this->controller               = new HomeController($this->dashboardsAggregatorStub);
 	}
@@ -55,13 +54,11 @@ class HomeControllerTest extends TestCase
 	public function testIndexReturnsHomePage(): void
 	{
 		$this->dashboardsAggregatorStub->method('renderDashboardsContents')->willReturn([['dashboard' => 'player']]);
-		$this->requestMock->expects($this->never())->method($this->anything());
-		$this->responseMock->expects($this->never())->method($this->anything());
-
-		$result = $this->controller->index($this->requestMock, $this->responseMock);
+		$result = $this->controller->index($this->requestStub, $this->responseStub);
 
 		static::assertInstanceOf(PageResponse::class, $result);
 		static::assertSame('home', $result->getTemplate());
+		static::assertSame('Garlic Hub - Dashboard', $result->getTemplateData()['LANG_PAGE_HEADER']);
 		static::assertSame([['dashboard' => 'player']], $result->getTemplateData()['dashboard']);
 		static::assertSame(['LANG_PAGE_TITLE' => 'Garlic Hub - Dashboard'], $result->getMainLayoutData());
 	}
@@ -69,14 +66,23 @@ class HomeControllerTest extends TestCase
 	#[Group('units')]
 	public function testLegalsReturnsLegalPage(): void
 	{
-		// the legal page is static, it neither reads the request nor writes the response
-		$this->requestMock->expects($this->never())->method($this->anything());
-		$this->responseMock->expects($this->never())->method($this->anything());
-
-		$result = $this->controller->legals($this->requestMock, $this->responseMock);
+		$result = $this->controller->legals($this->requestStub, $this->responseStub);
 
 		static::assertInstanceOf(PageResponse::class, $result);
 		static::assertSame('legals/legals', $result->getTemplate());
 		static::assertSame([], $result->getTemplateData());
+		static::assertSame(['LANG_PAGE_TITLE' => 'Garlic Hub - Website Legal Notice'], $result->getMainLayoutData());
+	}
+
+	#[Group('units')]
+	public function testIndexWithoutDashboardsReturnsEmptyDashboardList(): void
+	{
+		$this->dashboardsAggregatorStub->method('renderDashboardsContents')->willReturn([]);
+
+		$result = $this->controller->index($this->requestStub, $this->responseStub);
+
+		static::assertInstanceOf(PageResponse::class, $result);
+		static::assertSame('home', $result->getTemplate());
+		static::assertSame([], $result->getTemplateData()['dashboard']);
 	}
 }
