@@ -63,6 +63,15 @@ class MigrateCommand extends Command
 	protected function execute(InputInterface $input, OutputInterface $output): int
 	{
 		$version    = $input->getArgument('version');
+		if ($version !== null)
+		{
+			if (!ctype_digit($version))
+			{
+				$output->writeln('<error>Invalid version "' . $version . '": a positive number is required.</error>');
+				return Command::FAILURE;
+			}
+			$version = (int) $version;
+		}
 		$isRollback = $input->getOption('rollback');
 
 		try

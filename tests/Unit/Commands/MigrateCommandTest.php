@@ -24,20 +24,21 @@ namespace Tests\Unit\Commands;
 use App\Commands\MigrateCommand;
 use App\Framework\Database\Migration\Runner;
 use App\Framework\Exceptions\DatabaseException;
+use Doctrine\DBAL\Exception as DbalException;
+use League\Flysystem\FilesystemException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Console\Exception\ExceptionInterface;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Tester\CommandTester;
+use Throwable;
 
 class MigrateCommandTest extends TestCase
 {
 	private Runner&MockObject $runnerMock;
-	private InputInterface&MockObject $inputMock;
-	private OutputInterface&MockObject $outputMock;
-	private MigrateCommand $command;
+	private CommandTester $tester;
 
 	/**
 	 * @throws Exception
@@ -47,117 +48,130 @@ class MigrateCommandTest extends TestCase
 		parent::setUp();
 
 		$this->runnerMock = $this->createMock(Runner::class);
-		$this->inputMock = $this->createMock(InputInterface::class);
-		$this->outputMock = $this->createMock(OutputInterface::class);
-
-		// Command mit Runner-Mock erstellen
-		$this->command = new MigrateCommand($this->runnerMock);
+		$this->tester     = new CommandTester(new MigrateCommand($this->runnerMock));
 	}
 
-	/**
-	 * @throws ExceptionInterface
-	 */
 	#[Group('units')]
 	public function testMigrationSuccess(): void
 	{
-		$this->runnerMock->expects($this->once())
-			->method('execute')
-			->with(null); // Default argument
-		$this->runnerMock->method('isApplied')
-			->willReturn(true);
+		$this->runnerMock->expects($this->once())->method('execute')->with(null);
+		$this->runnerMock->expects($this->never())->method('rollback');
+		$this->runnerMock->method('isApplied')->willReturn(true);
 
-		$this->inputMock->method('getArgument')
-			->with('version')
-			->willReturn(null);
-		$this->inputMock->method('getOption')
-			->with('rollback')
-			->willReturn(false);
+		$this->tester->execute([]);
 
-		$this->outputMock->expects($this->once())
-			->method('writeln')
-			->with('<info>Migration succeed.</info>');
-
-		$result = $this->command->run($this->inputMock, $this->outputMock);
-		static::assertSame(0, $result); // Command::SUCCESS
+		static::assertSame(Command::SUCCESS, $this->tester->getStatusCode());
+		static::assertStringContainsString('Migration succeed.', $this->tester->getDisplay());
 	}
 
-	/**
-	 * @throws ExceptionInterface
-	 */
+	#[Group('units')]
+	public function testMigrationPassesVersion(): void
+	{
+		$this->runnerMock->expects($this->once())->method('execute')->with(20240101);
+		$this->runnerMock->method('isApplied')->willReturn(true);
+
+		$this->tester->execute(['version' => '20240101']);
+
+		static::assertSame(Command::SUCCESS, $this->tester->getStatusCode());
+	}
+
 	#[Group('units')]
 	public function testRollbackSuccess(): void
 	{
-		$this->runnerMock->expects($this->once())
-			->method('rollback')
-			->with(null);
-		$this->runnerMock->method('isApplied')
-			->willReturn(true);
+		$this->runnerMock->expects($this->once())->method('rollback')->with(null);
+		$this->runnerMock->expects($this->never())->method('execute');
+		$this->runnerMock->method('isApplied')->willReturn(true);
 
-		$this->inputMock->method('getArgument')
-			->with('version')
-			->willReturn(null);
-		$this->inputMock->method('getOption')
-			->with('rollback')
-			->willReturn(true);
+		$this->tester->execute(['--rollback' => true]);
 
-		$this->outputMock->expects($this->once())
-			->method('writeln')
-			->with('<info>Migration succeed.</info>');
-
-		$result = $this->command->run($this->inputMock, $this->outputMock);
-		static::assertSame(0, $result); // Command::SUCCESS
+		static::assertSame(Command::SUCCESS, $this->tester->getStatusCode());
+		static::assertStringContainsString('Migration succeed.', $this->tester->getDisplay());
 	}
 
-	/**
-	 * @throws ExceptionInterface
-	 */
 	#[Group('units')]
-	public function testMigrationFailsWithException(): void
+	public function testRollbackShortOptionPassesVersion(): void
 	{
-		$this->runnerMock->expects($this->once())
-			->method('execute')
-			->willThrowException(new DatabaseException('Test Exception'));
+		$this->runnerMock->expects($this->once())->method('rollback')->with(20240101);
+		$this->runnerMock->expects($this->never())->method('execute');
+		$this->runnerMock->method('isApplied')->willReturn(true);
 
-		$this->inputMock->method('getArgument')
-			->with('version')
-			->willReturn(null);
-		$this->inputMock->method('getOption')
-			->with('rollback')
-			->willReturn(false);
+		$this->tester->execute(['-r' => true, 'version' => '20240101']);
 
-		$this->outputMock->expects($this->once())
-			->method('writeln')
-			->with('<error>Migration failed: Test Exception</error>');
-
-		$result = $this->command->run($this->inputMock, $this->outputMock);
-
-		static::assertSame(1, $result); // Command::FAILURE
+		static::assertSame(Command::SUCCESS, $this->tester->getStatusCode());
 	}
 
-	/**
-	 * @throws ExceptionInterface
-	 */
+	#[Group('units')]
+	#[DataProvider('migrationExceptionProvider')]
+	public function testMigrationFailsWithException(Throwable $exception): void
+	{
+		$this->runnerMock->expects($this->once())->method('execute')->willThrowException($exception);
+
+		$this->tester->execute([]);
+
+		static::assertSame(Command::FAILURE, $this->tester->getStatusCode());
+		static::assertStringContainsString('Migration failed: Test Exception', $this->tester->getDisplay());
+	}
+
+	#[Group('units')]
+	#[DataProvider('migrationExceptionProvider')]
+	public function testRollbackFailsWithException(Throwable $exception): void
+	{
+		$this->runnerMock->expects($this->once())->method('rollback')->willThrowException($exception);
+
+		$this->tester->execute(['--rollback' => true]);
+
+		static::assertSame(Command::FAILURE, $this->tester->getStatusCode());
+		static::assertStringContainsString('Migration failed: Test Exception', $this->tester->getDisplay());
+	}
+
+	#[Group('units')]
+	#[DataProvider('invalidVersionProvider')]
+	public function testInvalidVersionIsRejected(string $version, bool $rollback): void
+	{
+		$this->runnerMock->expects($this->never())->method('execute');
+		$this->runnerMock->expects($this->never())->method('rollback');
+
+		$this->tester->execute(['version' => $version, '--rollback' => $rollback]);
+
+		static::assertSame(Command::FAILURE, $this->tester->getStatusCode());
+		static::assertStringContainsString('Invalid version "' . $version . '"', $this->tester->getDisplay());
+	}
+
 	#[Group('units')]
 	public function testNoMigrationsFound(): void
 	{
-		$this->runnerMock->expects($this->once())
-			->method('execute')
-			->with(null);
-		$this->runnerMock->method('isApplied')
-			->willReturn(false);
+		$this->runnerMock->expects($this->once())->method('execute')->with(null);
+		$this->runnerMock->method('isApplied')->willReturn(false);
 
-		$this->inputMock->method('getArgument')
-			->with('version')
-			->willReturn(null);
-		$this->inputMock->method('getOption')
-			->with('rollback')
-			->willReturn(false);
+		$this->tester->execute([]);
 
-		$this->outputMock->expects($this->once())
-			->method('writeln')
-			->with('<comment>No migrations found to apply.</comment>');
+		static::assertSame(Command::SUCCESS, $this->tester->getStatusCode());
+		static::assertStringContainsString('No migrations found to apply.', $this->tester->getDisplay());
+	}
 
-		$result = $this->command->run($this->inputMock, $this->outputMock);
-		static::assertSame(0, $result); // Command::SUCCESS
+	/**
+	 * @return array<string, array{string, bool}>
+	 */
+	public static function invalidVersionProvider(): array
+	{
+		return [
+			'text'              => ['abc', false],
+			'text on rollback'  => ['abc', true],
+			'negative'          => ['-1', false],
+			'decimal'           => ['1.5', false],
+			'number with text'  => ['2x', false],
+		];
+	}
+
+	/**
+	 * @return array<string, array{Throwable}>
+	 */
+	public static function migrationExceptionProvider(): array
+	{
+		return [
+			'database'   => [new DatabaseException('Test Exception')],
+			'dbal'       => [new class('Test Exception') extends \RuntimeException implements DbalException {}],
+			'filesystem' => [new class('Test Exception') extends \RuntimeException implements FilesystemException {}],
+		];
 	}
 }
