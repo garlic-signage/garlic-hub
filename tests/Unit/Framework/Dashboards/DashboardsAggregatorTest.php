@@ -24,30 +24,65 @@ namespace Tests\Unit\Framework\Dashboards;
 use App\Framework\Dashboards\DashboardInterface;
 use App\Framework\Dashboards\DashboardsAggregator;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\TestCase;
 
 class DashboardsAggregatorTest extends TestCase
 {
-	/**
-	 * @throws Exception
-	 */
+	private DashboardsAggregator $aggregator;
+
+	protected function setUp(): void
+	{
+		parent::setUp();
+
+		$this->aggregator = new DashboardsAggregator();
+	}
+
 	#[Group('units')]
 	public function testRegisterAndRenderDashboardsContents(): void
 	{
-		$dashboardStub = $this->createStub(DashboardInterface::class);
-		$dashboardStub->method('getId')->willReturn('test');
-		$dashboardStub->method('getTitle')->willReturn('Test Title');
-		$dashboardStub->method('renderContent')->willReturn('Test Content');
+		$this->aggregator->registerDashboard($this->dashboard('test', 'Test Title', 'Test Content'));
 
-		$aggregator = new DashboardsAggregator();
-		$aggregator->registerDashboard($dashboardStub);
+		$result = $this->aggregator->renderDashboardsContents();
 
-		$result = $aggregator->renderDashboardsContents();
-
-		static::assertCount(1, $result);
-		static::assertSame('Test Title', $result[0]['LANG_DASHBOARD_TITLE']);
-		static::assertSame('Test Content', $result[0]['DASHBOARD_CONTENT']);
+		static::assertSame([['LANG_DASHBOARD_TITLE' => 'Test Title', 'DASHBOARD_CONTENT' => 'Test Content']], $result);
 	}
 
+	#[Group('units')]
+	public function testRenderWithoutDashboardsReturnsEmptyList(): void
+	{
+		static::assertSame([], $this->aggregator->renderDashboardsContents());
+	}
+
+	#[Group('units')]
+	public function testDashboardsAreRenderedInOrderOfRegistration(): void
+	{
+		$this->aggregator->registerDashboard($this->dashboard('first', 'First', 'Content 1'));
+		$this->aggregator->registerDashboard($this->dashboard('second', 'Second', 'Content 2'));
+
+		$result = $this->aggregator->renderDashboardsContents();
+
+		static::assertSame(['First', 'Second'], array_column($result, 'LANG_DASHBOARD_TITLE'));
+		static::assertSame(['Content 1', 'Content 2'], array_column($result, 'DASHBOARD_CONTENT'));
+	}
+
+	#[Group('units')]
+	public function testRegisteringTheSameIdTwiceReplacesTheDashboard(): void
+	{
+		$this->aggregator->registerDashboard($this->dashboard('player', 'Old', 'Old Content'));
+		$this->aggregator->registerDashboard($this->dashboard('player', 'New', 'New Content'));
+
+		$result = $this->aggregator->renderDashboardsContents();
+
+		static::assertSame([['LANG_DASHBOARD_TITLE' => 'New', 'DASHBOARD_CONTENT' => 'New Content']], $result);
+	}
+
+	private function dashboard(string $id, string $title, string $content): DashboardInterface
+	{
+		$dashboardStub = $this->createStub(DashboardInterface::class);
+		$dashboardStub->method('getId')->willReturn($id);
+		$dashboardStub->method('getTitle')->willReturn($title);
+		$dashboardStub->method('renderContent')->willReturn($content);
+
+		return $dashboardStub;
+	}
 }
