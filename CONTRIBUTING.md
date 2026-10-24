@@ -48,7 +48,7 @@ The blackbox tests (the real application behind a web server, asked over HTTP) a
 
 New behaviour and bug fixes come with a test. Which kind:
 
-1. **Integration test (preferred)** in `tests/Integration/`. Real database, real migrations, SQL fixtures in `tests/resources/sql`. Because it uses the real schema, it breaks when the schema changes, which is wanted. Use `#[Group('db')]` for repository tests and `#[Group('acl')]` for "who sees and may do what" tests.
+1. **Integration test (preferred)** in `tests/Integration/`. Real database, real migrations, SQL fixtures in `tests/resources/sql`. Because it uses the real schema, it breaks when the schema changes, which is wanted. Use `#[Group('db')]` for repository tests, `#[Group('acl')]` for "who sees and may do what" tests and `#[Group('io')]` for tests with real files or other system boundaries but without a database.
 2. **Unit test** in `tests/Unit/` for pure logic (calculations, mapping, validation) and for real boundaries (filesystem, network, time). Please do not mock your way through a whole service: such tests break with every refactoring and prove little. If you need five mocks, write an integration test instead.
 3. **Blackbox test** in `tests/Blackbox/` only for behaviour that is visible over HTTP: redirects, headers, cookies, status codes.
 

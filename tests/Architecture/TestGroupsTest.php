@@ -34,10 +34,11 @@ use Tests\Integration\Support\RepositoryTestCase;
  *  - db:   tests of repositories and the database against the real schema (RepositoryTestCase)
  *  - acl:  who sees and may do what, through the real services (ContainerTestCase)
  *  - auth: login, remember me cookie, passwords and tokens (ContainerTestCase)
+ *  - io:   real files or other system boundaries without a database or container
  */
 class TestGroupsTest extends TestCase
 {
-	private const array GROUPS = ['db', 'acl', 'auth'];
+	private const array GROUPS = ['db', 'acl', 'auth', 'io'];
 
 	public function testThereAreIntegrationTests(): void
 	{
@@ -74,15 +75,6 @@ class TestGroupsTest extends TestCase
 			$groups = $this->groupsOf($class);
 			static::assertNotContains('db', $groups, $class . ' uses the container: group acl or auth, not db.');
 			static::assertNotSame([], array_intersect($groups, ['acl', 'auth']), $class . ' uses the container and needs the group acl or auth.');
-		}
-	}
-
-	public function testOtherIntegrationTestsAreInTheGroupDb(): void
-	{
-		foreach ($this->integrationTestClasses() as $class)
-		{
-			if (!is_subclass_of($class, RepositoryTestCase::class) && !is_subclass_of($class, ContainerTestCase::class))
-				static::assertContains('db', $this->groupsOf($class), $class . ' works on the database and belongs to the group db.');
 		}
 	}
 

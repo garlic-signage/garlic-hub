@@ -25,220 +25,194 @@ use App\Framework\Config\Config;
 use App\Framework\Config\ConfigLoaderInterface;
 use App\Framework\Exceptions\CoreException;
 use Monolog\Level;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 class ConfigTest extends TestCase
 {
-    private Config $config;
-    private ConfigLoaderInterface&MockObject $configLoaderMock;
+	private Config $config;
+	private ConfigLoaderInterface $loader;
 
-    /**
-     * @throws Exception
-     */
-    protected function setUp(): void
-    {
+	/** @var list<string> modules in the order the loader was asked for them */
+	private array $loaded = [];
+
+	protected function setUp(): void
+	{
 		parent::setUp();
-		$this->configLoaderMock = $this->createMock(ConfigLoaderInterface::class);
-        $this->config           = new Config($this->configLoaderMock, ['key_path' => 'value_path'], ['key_env' => 'value_env']);
-    }
 
+		$this->loaded = [];
+		$this->loader = new class($this->loaded) implements ConfigLoaderInterface
+		{
+			/** @var array<string,array<string,string|array<string,string>>> */
+			public array $data = [];
 
-    /**
-     * @throws CoreException
-     */
-    #[Group('units')]
-    public function testGetConfigValueReturnsValue(): void
-    {
-        $module = 'test_module';
-        $key    = 'test_key';
-        $value  = 'test_value';
+			/** @param list<string> $loaded */
+			public function __construct(private array &$loaded) {}
 
-        $this->configLoaderMock
-            ->method('load')
-            ->with($module)
-            ->willReturn(['heidewitzka' => 'Der Kapitan', 'section' => [$key => $value]]);
+			public function load(string $module): array
+			{
+				$this->loaded[] = $module;
+				if (!array_key_exists($module, $this->data))
+					throw new CoreException('Unable to access configuration file for ' . $module);
 
-        $result = $this->config->getConfigValue($key, $module, 'section');
+				return $this->data[$module];
+			}
+		};
+		$this->loader->data = [
+			'module_a' => ['top_key' => 'top_a', 'section' => ['key' => 'value_a']],
+			'module_b' => ['section' => ['key' => 'value_b']],
+		];
+		$this->config = new Config($this->loader, ['key_path' => 'value_path'], ['key_env' => 'value_env']);
+	}
 
-        static::assertEquals($value, $result);
-    }
+	/**
+	 * @throws CoreException
+	 */
+	#[Group('units')]
+	public function testGetConfigValueReturnsValueOfSection(): void
+	{
+		static::assertSame('value_a', $this->config->getConfigValue('key', 'module_a', 'section'));
+	}
+
+	/**
+	 * @throws CoreException
+	 */
+	#[Group('units')]
+	public function testGetConfigValueKeepsModulesApart(): void
+	{
+		static::assertSame('value_b', $this->config->getConfigValue('key', 'module_b', 'section'));
+		static::assertSame('value_a', $this->config->getConfigValue('key', 'module_a', 'section'));
+	}
+
+	/**
+	 * @throws CoreException
+	 */
+	#[Group('units')]
+	public function testGetConfigValueWithoutSectionReadsTopLevel(): void
+	{
+		static::assertSame('top_a', $this->config->getConfigValue('top_key', 'module_a'));
+	}
+
+	/**
+	 * @throws CoreException
+	 */
+	#[Group('units')]
+	public function testGetConfigValueFallsBackToTopLevelWhenSectionDoesNotExist(): void
+	{
+		static::assertSame('top_a', $this->config->getConfigValue('top_key', 'module_a', 'missing_section'));
+	}
+
+	/**
+	 * @throws CoreException
+	 */
+	#[Group('units')]
+	public function testGetConfigValueReturnsEmptyStringForMissingKey(): void
+	{
+		static::assertSame('', $this->config->getConfigValue('missing_key', 'module_a', 'section'));
+		static::assertSame('', $this->config->getConfigValue('missing_key', 'module_a'));
+	}
+
+	/**
+	 * @throws CoreException
+	 */
+	#[Group('units')]
+	public function testGetFullConfigDataByModule(): void
+	{
+		static::assertSame(
+			['top_key' => 'top_a', 'section' => ['key' => 'value_a']],
+			$this->config->getFullConfigDataByModule('module_a')
+		);
+	}
+
+	/**
+	 * @throws CoreException
+	 */
+	#[Group('units')]
+	public function testModuleIsLoadedOnlyOnce(): void
+	{
+		$this->config->getFullConfigDataByModule('module_a');
+		$this->config->getConfigValue('key', 'module_a', 'section');
+		$this->config->getFullConfigDataByModule('module_a');
+
+		static::assertSame(['module_a'], $this->loaded);
+	}
+
+	/**
+	 * @throws CoreException
+	 */
+	#[Group('units')]
+	public function testPreloadModulesLoadsEachModuleOnceAndServesThemFromCache(): void
+	{
+		$this->config->preloadModules(['module_a', 'module_b']);
+		$a = $this->config->getFullConfigDataByModule('module_a');
+		$b = $this->config->getFullConfigDataByModule('module_b');
+
+		static::assertSame(['module_a', 'module_b'], $this->loaded);
+		static::assertSame('value_a', $a['section']['key']);
+		static::assertSame('value_b', $b['section']['key']);
+	}
+
+	#[Group('units')]
+	public function testFailingLoaderThrowsException(): void
+	{
+		$this->expectException(CoreException::class);
+		$this->expectExceptionMessage('Unable to access configuration file for unknown');
+
+		$this->config->getFullConfigDataByModule('unknown');
+	}
 
 	#[Group('units')]
 	public function testGetEnv(): void
 	{
-		$this->configLoaderMock->expects($this->never())->method($this->anything());
-		static::assertEquals('value_env', $this->config->getEnv('key_env'));
-		static::assertEmpty($this->config->getEnv('manamana'));
-	}
-
-	#[Group('units')]
-	public function testGetEdition(): void
-	{
-		$this->configLoaderMock->expects($this->never())->method($this->anything());
-		$config           = new Config($this->configLoaderMock, [], ['APP_PLATFORM_EDITION' => 'enterprise']);
-		static::assertEquals(Config::PLATFORM_EDITION_ENTERPRISE, $config->getEdition());
-	}
-
-	#[Group('units')]
-	public function testGetEditionDefault(): void
-	{
-		$this->configLoaderMock->expects($this->never())->method($this->anything());
-		static::assertEquals(Config::PLATFORM_EDITION_EDGE, $this->config->getEdition());
+		static::assertSame('value_env', $this->config->getEnv('key_env'));
+		static::assertSame('', $this->config->getEnv('unknown'));
 	}
 
 	#[Group('units')]
 	public function testGetPaths(): void
 	{
-		$this->configLoaderMock->expects($this->never())->method($this->anything());
-		static::assertEquals('value_path', $this->config->getPaths('key_path'));
-		static::assertEmpty($this->config->getPaths('manamana'));
-
-	}
-
-		/**
-     * @throws CoreException
-     */
-    #[Group('units')]
-    public function testGetConfigValueReturnsNullForNonExistentKey(): void
-    {
-        $module = 'test_module';
-        $key = 'nonexistent_key';
-
-        $this->configLoaderMock
-            ->method('load')
-            ->with($module)
-            ->willReturn(['section' => ['existing_key' => 'value']]);
-
-        $result = $this->config->getConfigValue($key, $module, 'section');
-
-        static::assertEmpty($result);
-    }
-
-	#[Group('units')]
-	public function testLogLevelIsDebugInDevEnvironment(): void
-	{
-		$this->configLoaderMock->expects($this->never())->method($this->anything());
-		$config = new Config($this->configLoaderMock, [], ['APP_ENV' => 'dev']);
-		static::assertEquals(Level::Debug, $config->getLogLevel());
+		static::assertSame('value_path', $this->config->getPaths('key_path'));
+		static::assertSame('', $this->config->getPaths('unknown'));
 	}
 
 	#[Group('units')]
-	public function testLogLevelIsInfoInTestEnvironment(): void
+	public function testGetEdition(): void
 	{
-		$this->configLoaderMock->expects($this->never())->method($this->anything());
-		$config = new Config($this->configLoaderMock, [], ['APP_ENV' => 'test']);
-		static::assertEquals(Level::Info, $config->getLogLevel());
+		$config = new Config($this->loader, [], ['APP_PLATFORM_EDITION' => 'enterprise']);
+
+		static::assertSame(Config::PLATFORM_EDITION_ENTERPRISE, $config->getEdition());
 	}
 
 	#[Group('units')]
-	public function testLogLevelIsErrorInProdEnvironment(): void
+	public function testGetEditionDefaultsToEdge(): void
 	{
-		$this->configLoaderMock->expects($this->never())->method($this->anything());
-		$config = new Config($this->configLoaderMock, [], ['APP_ENV' => 'prod']);
-		static::assertEquals(Level::Error, $config->getLogLevel());
-	}
-
-	#[Group('units')]
-	public function testLogLevelIsWarningInUnknownEnvironment(): void
-	{
-		$this->configLoaderMock->expects($this->never())->method($this->anything());
-		$config = new Config($this->configLoaderMock, [], ['APP_ENV' => 'unknown']);
-		static::assertEquals(Level::Info, $config->getLogLevel());
-	}
-
-	#[Group('units')]
-	public function logLevelIsWarningWhenEnvIsNotSet(): void
-	{
-		$config = new Config($this->configLoaderMock, [], []);
-		static::assertEquals(Level::Warning, $config->getLogLevel());
+		static::assertSame(Config::PLATFORM_EDITION_EDGE, $this->config->getEdition());
 	}
 
 	/**
-     * @throws CoreException
-     */
-    #[Group('units')]
-    public function testGetFullConfigDataByModule(): void
-    {
-        $module = 'test_module';
-        $configData = ['key1' => 'value1', 'key2' => 'value2'];
+	 * @param array<string,string> $env
+	 */
+	#[Group('units')]
+	#[DataProvider('logLevelProvider')]
+	public function testGetLogLevel(array $env, Level $expected): void
+	{
+		$config = new Config($this->loader, [], $env);
 
-        $this->configLoaderMock
-            ->method('load')
-            ->with($module)
-            ->willReturn($configData);
+		static::assertSame($expected, $config->getLogLevel());
+	}
 
-        $result = $this->config->getFullConfigDataByModule($module);
-
-        static::assertEquals($configData, $result);
-    }
-
-    /**
-     * @throws CoreException
-     */
-    #[Group('units')]
-    public function testPreloadModulesCachesConfigurations(): void
-    {
-        $modules = ['module1', 'module2'];
-        $configData = [
-            'module1' => ['key1' => 'value1'],
-            'module2' => ['key2' => 'value2'],
-        ];
-
-        $this->configLoaderMock
-            ->expects($this->atLeastOnce())->method('load')
-            ->willReturnCallback(function ($module) use ($configData) {
-                return $configData[$module] ?? [];
-            });
-
-        // Preload Module
-        $this->config->preloadModules($modules);
-
-        // check if configuration loaded correctly
-        static::assertEquals($configData['module1'], $this->config->getFullConfigDataByModule('module1'));
-        static::assertEquals($configData['module2'], $this->config->getFullConfigDataByModule('module2'));
-    }
-
-    /**
-     * @throws CoreException
-     */
-    #[Group('units')]
-    public function testGetConfigForModuleCachesResults(): void
-    {
-        $module = 'test_module';
-        $configData = ['key1' => 'value1'];
-
-        $this->configLoaderMock
-            ->expects($this->once())
-            ->method('load')
-            ->with($module)
-            ->willReturn($configData);
-
-        // request from loader
-        $result1 = $this->config->getFullConfigDataByModule($module);
-
-        // 2nd request from cache
-        $result2 = $this->config->getFullConfigDataByModule($module);
-
-        static::assertEquals($configData, $result1);
-        static::assertEquals($configData, $result2);
-    }
-
-    #[Group('units')]
-    public function testGetConfigForModuleThrowsExceptionIfLoaderFails(): void
-    {
-        $module = 'test_module';
-
-        $this->configLoaderMock
-            ->method('load')
-            ->with($module)
-            ->willThrowException(new CoreException('Error loading module'));
-
-        $this->expectException(CoreException::class);
-        $this->expectExceptionMessage('Error loading module');
-
-        $this->config->getFullConfigDataByModule($module);
-    }
+	/**
+	 * @return array<string, array{array<string,string>, Level}>
+	 */
+	public static function logLevelProvider(): array
+	{
+		return [
+			'dev'         => [['APP_ENV' => 'dev'], Level::Debug],
+			'test'        => [['APP_ENV' => 'test'], Level::Info],
+			'prod'        => [['APP_ENV' => 'prod'], Level::Error],
+			'unknown env' => [['APP_ENV' => 'unknown'], Level::Info],
+			'env not set' => [[], Level::Info],
+		];
+	}
 }

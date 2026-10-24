@@ -30,42 +30,73 @@ class IniConfigLoaderTest extends TestCase
 {
 	protected string $baseDirectory;
 
-    protected function setUp(): void
-    {
+	protected function setUp(): void
+	{
 		parent::setUp();
 		$this->baseDirectory = getenv('TEST_BASE_DIR') . '/resources/config_tests/';
-    }
+	}
 
-    /**
-     * @throws CoreException
-     */
-    #[Group('units')]
-    public function testLoadForValidFile(): void
-    {
-        $loader = new IniConfigLoader($this->baseDirectory);
-        $result = $loader->load('valid');
-        static::assertArrayHasKey('edition', $result);
-    }
+	/**
+	 * @throws CoreException
+	 */
+	#[Group('units')]
+	public function testLoadForValidFile(): void
+	{
+		$loader = new IniConfigLoader($this->baseDirectory);
 
-    #[Group('units')]
-    public function testLoadThrowsExceptionForMissingFile(): void
-    {
-        $loader = new IniConfigLoader($this->baseDirectory);
+		static::assertSame(['edition' => 'core'], $loader->load('valid'));
+	}
 
-        $this->expectException(CoreException::class);
-        $this->expectExceptionMessage('Unable to access configuration file: '.$this->baseDirectory.'config_nonexistent.ini');
+	/**
+	 * @throws CoreException
+	 */
+	#[Group('units')]
+	public function testLoadKeepsSectionsAndRawValues(): void
+	{
+		$loader = new IniConfigLoader($this->baseDirectory);
 
-        $loader->load('nonexistent');
-    }
+		static::assertSame(
+			[
+				'top_key' => 'top',
+				'player'  => ['enabled' => 'true', 'limit' => '10', 'name' => 'Lobby'],
+				'other'   => ['name' => 'Other'],
+			],
+			$loader->load('sections')
+		);
+	}
 
-    #[Group('units')]
-    public function testLoadThrowsExceptionForUnreadableFile(): void
-    {
-        $loader = new IniConfigLoader($this->baseDirectory);
+	/**
+	 * @throws CoreException
+	 */
+	#[Group('units')]
+	public function testLoadWorksWithAndWithoutTrailingSlashInPath(): void
+	{
+		$withSlash    = new IniConfigLoader(rtrim($this->baseDirectory, '/') . '/');
+		$withoutSlash = new IniConfigLoader(rtrim($this->baseDirectory, '/'));
 
-        $this->expectException(CoreException::class);
-        $this->expectExceptionMessage('Error parsing configuration file: '.$this->baseDirectory.'config_invalid.ini');
+		static::assertSame(['edition' => 'core'], $withSlash->load('valid'));
+		static::assertSame(['edition' => 'core'], $withoutSlash->load('valid'));
+	}
 
-        $loader->load('invalid');
-    }
+	#[Group('units')]
+	public function testLoadThrowsExceptionForMissingFile(): void
+	{
+		$loader = new IniConfigLoader($this->baseDirectory);
+
+		$this->expectException(CoreException::class);
+		$this->expectExceptionMessage('Unable to access configuration file: ' . $this->baseDirectory . 'config_nonexistent.ini');
+
+		$loader->load('nonexistent');
+	}
+
+	#[Group('units')]
+	public function testLoadThrowsExceptionForUnparsableFile(): void
+	{
+		$loader = new IniConfigLoader($this->baseDirectory);
+
+		$this->expectException(CoreException::class);
+		$this->expectExceptionMessage('Error parsing configuration file: ' . $this->baseDirectory . 'config_invalid.ini');
+
+		$loader->load('invalid');
+	}
 }
