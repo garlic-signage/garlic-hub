@@ -21,65 +21,191 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Framework\Localization\Translate;
 
-use App\Framework\Localization\Locales\Locales;
-use App\Framework\Localization\Translate\MessageFormatterFactory;
-use App\Framework\Localization\Translate\TranslationLoaderInterface;
-use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\TranslatableModuleException;
-use MessageFormatter;
-use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
-use Phpfastcache\Helper\Psr16Adapter;
+use App\Framework\Localization\Locales\Locales;
+use App\Framework\Localization\Translate\MessageFormatterFactory;
+use App\Framework\Localization\Translate\Translator;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Translator with a real MessageFormatter (the plural rules are the point of it), an in-memory loader
+ * and an in-memory cache. Only the language code of Locales is faked.
+ */
 class TranslatorTest extends TestCase
 {
-    private Locales&Stub $localesStub;
-    private TranslationLoaderInterface&MockObject $loaderMock;
-    private Psr16Adapter&MockObject $cacheMock;
-    private MessageFormatterFactory&Stub $formatterFactoryStub;
+	private string $languageCode = 'en';
+	private RecordingTranslationLoader $loader;
+	private MemoryCache $cache;
 	private Translator $translator;
 
-    /**
-     * @throws Exception
-     */
-    protected function setUp(): void
-    {
+	protected function setUp(): void
+	{
 		parent::setUp();
-		$this->localesStub = $this->createStub(Locales::class);
-        $this->loaderMock = $this->createMock(TranslationLoaderInterface::class);
-        $this->cacheMock = $this->createMock(Psr16Adapter::class);
-        $this->formatterFactoryStub = $this->createStub(MessageFormatterFactory::class);
 
-        $this->translator = new Translator(
-            $this->localesStub,
-            $this->loaderMock,
-            $this->formatterFactoryStub,
-            $this->cacheMock
-        );
-    }
+		$this->languageCode = 'en';
+		$localesStub        = $this->createStub(Locales::class);
+		$localesStub->method('getLanguageCode')->willReturnCallback(fn(): string => $this->languageCode);
+
+		$this->loader     = new RecordingTranslationLoader($this->translations());
+		$this->cache      = new MemoryCache();
+		$this->translator = new Translator($localesStub, $this->loader, new MessageFormatterFactory(), $this->cache);
+	}
+
+	/**
+	 * @return array<string,array<string,array<string,mixed>>>
+	 */
+	private function translations(): array
+	{
+		return [
+			'en' => ['main' => [
+				'save'          => 'Save',
+				'greeting'      => 'Hello, {name}!',
+				'not_found'     => 'Item {item_id} of {name} not found.',
+				'options'       => ['opt1' => 'Option 1', 'opt2' => 'Option 2'],
+				'item_count'    => '{count, plural, one {# item} other {# items}}',
+				'time_unit_ago' => ['days' => '{count, plural, one {1 day ago} other {# days ago}}'],
+				'broken_format' => '{when, date}',
+			]],
+			'de' => ['main' => [
+				'save'       => 'Speichern',
+				'item_count' => '{count, plural, one {# Eintrag} other {# Einträge}}',
+			]],
+			'ru' => ['main' => [
+				'item_count' => '{count, plural, one {# файл} few {# файла} many {# файлов} other {# файла}}',
+			]],
+		];
+	}
 
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
-    #[Group('units')]
-    public function testTranslateReturnsTranslation(): void
-    {
-        $this->localesStub->method('getLanguageCode')->willReturn('en');
-        $this->cacheMock->expects($this->once())->method('get')->willReturn(null);
-        $this->loaderMock->expects($this->atLeastOnce())->method('load')->willReturn(['greeting' => 'Hello, {name}!']);
-        $this->cacheMock->expects($this->once())->method('set');
+	#[Group('units')]
+	public function testTranslateReturnsTranslation(): void
+	{
+		static::assertSame('Save', $this->translator->translate('save', 'main'));
+	}
 
-        $result = $this->translator->translate('greeting', 'test_module', ['{name}' => 'John']);
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testTranslateReplacesPlaceholders(): void
+	{
+		static::assertSame('Hello, John!', $this->translator->translate('greeting', 'main', ['{name}' => 'John']));
+	}
 
-        static::assertEquals('Hello, John!', $result);
-    }
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testTranslateUsesTheLanguageOfTheCurrentLocale(): void
+	{
+		static::assertSame('Save', $this->translator->translate('save', 'main'));
+
+		$this->languageCode = 'de';
+
+		static::assertSame('Speichern', $this->translator->translate('save', 'main'));
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testTranslateReturnsAnEmptyStringForAMissingKey(): void
+	{
+		static::assertSame('', $this->translator->translate('missing_key', 'main'));
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testTranslateReturnsAnEmptyStringWhenTheEntryIsASection(): void
+	{
+		static::assertSame('', $this->translator->translate('options', 'main'));
+	}
+
+	/**
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testTranslateThrowsWhenTheLoaderFindsNoFile(): void
+	{
+		$this->expectException(CoreException::class);
+		$this->expectExceptionMessage('Translation file not found: en/unknown_module.ini');
+
+		$this->translator->translate('save', 'unknown_module');
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testTranslationsAreLoadedOnceAndCachedPerLanguageAndModule(): void
+	{
+		$this->translator->translate('save', 'main');
+		$this->translator->translate('greeting', 'main');
+		$this->languageCode = 'de';
+		$this->translator->translate('save', 'main');
+		$this->translator->translate('save', 'main');
+
+		static::assertSame([['en', 'main'], ['de', 'main']], $this->loader->loaded);
+		static::assertSame(['lang_en_main', 'lang_de_main'], array_keys($this->cache->store));
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testCachedTranslationsAreUsedWithoutTheLoader(): void
+	{
+		$this->cache->store['lang_de_main'] = ['save' => 'Aus dem Cache'];
+		$this->languageCode = 'de';
+
+		static::assertSame('Aus dem Cache', $this->translator->translate('save', 'main'));
+		static::assertSame([], $this->loader->loaded);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testAnEntryInTheCacheWhichIsNoArrayIsIgnored(): void
+	{
+		$this->cache->store['lang_en_main'] = 'garbage';
+
+		static::assertSame('Save', $this->translator->translate('save', 'main'));
+		static::assertSame([['en', 'main']], $this->loader->loaded);
+	}
+
+	/**
+	 * The cache is only an optimization.
+	 *
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testTranslateWorksWhenTheCacheIsDown(): void
+	{
+		$this->cache->down = true;
+
+		static::assertSame('Save', $this->translator->translate('save', 'main'));
+		// the loaded translations stay in memory for the request
+		static::assertSame('Save', $this->translator->translate('save', 'main'));
+		static::assertSame([['en', 'main']], $this->loader->loaded);
+	}
 
 	/**
 	 * @throws CoreException
@@ -88,197 +214,23 @@ class TranslatorTest extends TestCase
 	#[Group('units')]
 	public function testTranslateExceptionUsesKeyModuleAndReplacements(): void
 	{
-		$this->localesStub->method('getLanguageCode')->willReturn('en');
-		$this->cacheMock->expects($this->once())->method('get')->with('lang_en_test_module')->willReturn(['not_found' => 'Item {item_id} of {name} not found.']);
-		$this->loaderMock->expects($this->never())->method('load');
-		$this->cacheMock->expects($this->never())->method('set');
-
-		$exception = new TranslatableModuleException('test_module', 'not_found', ['item_id' => 7, 'name' => 'Lobby']);
+		$exception = new TranslatableModuleException('main', 'not_found', ['item_id' => 7, 'name' => 'Lobby']);
 
 		static::assertSame('Item 7 of Lobby not found.', $this->translator->translateException($exception));
 	}
 
 	/**
+	 * The error handler falls back to the translation key when there is no text.
+	 *
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testTranslateReturnsEmpty(): void
+	public function testTranslateExceptionWithoutATranslationIsEmpty(): void
 	{
-		$this->localesStub->method('getLanguageCode')->willReturn('en');
-		$this->cacheMock->method('get')->willReturn(null);
-		$this->loaderMock->expects($this->atLeastOnce())->method('load')->willReturn(['greeting' => ['Hello','John']]);
-		$this->cacheMock->expects($this->once())->method('set');
+		$exception = new TranslatableModuleException('main', 'no_such_key');
 
-		$result = $this->translator->translate('greeting', 'test_module');
-
-		static::assertEmpty($result);
-	}
-
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-    #[Group('units')]
-    public function testTranslateSucceedWithCacheKey(): void
-    {
-        $this->localesStub->method('getLanguageCode')->willReturn('en');
-        $this->cacheMock->method('get')->willReturn(['greeting' => 'Hello, {name}!']);
-        $this->loaderMock->expects($this->never())->method('load');
-        $this->cacheMock->expects($this->never())->method('set');
-
-        $result = $this->translator->translate('greeting', 'test_module', ['{name}' => 'John']);
-        static::assertEquals('Hello, John!', $result);
-    }
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-    #[Group('units')]
-    public function testTranslateThrowsExceptionForMissingKey(): void
-    {
-        $this->localesStub->method('getLanguageCode')->willReturn('en');
-        $this->cacheMock->method('get')->willReturn(null);
-        $this->loaderMock->expects($this->atLeastOnce())->method('load')->willReturn(['other_key' => 'Some value']);
-        $this->cacheMock->expects($this->once())->method('set');
-
-        $result = $this->translator->translate('missing_key', 'test_module');
-        static::assertEmpty($result);
-    }
-
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
-    #[Group('units')]
-    public function testTranslatePluralReturnsFormattedString(): void
-    {
-        $this->localesStub->method('getLanguageCode')->willReturn('en');
-        $this->cacheMock->expects($this->atLeastOnce())->method('get')->willReturn(null);
-        $this->loaderMock->expects($this->atLeastOnce())->method('load')->willReturn(['item_count' => '{count} items']);
-
-        $formatterStub = $this->createStub(MessageFormatter::class);
-        $formatterStub->method('format')->willReturn('5 items');
-        $this->formatterFactoryStub->method('create')->willReturn($formatterStub);
-
-        $result = $this->translator->translateWithPlural('item_count', 'test_module', 5);
-        static::assertEquals('5 items', $result);
-    }
-
-	/**
-	 * @throws Exception
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testTranslatePluralReturnsEmpty(): void
-	{
-		$this->localesStub->method('getLanguageCode')->willReturn('en');
-		$this->cacheMock->expects($this->atLeastOnce())->method('get')->willReturn(null);
-		$this->loaderMock->expects($this->atLeastOnce())->method('load')->willReturn(['item_count' => ['uiuiuiui']]);
-
-		$formatterStub = $this->createStub(MessageFormatter::class);
-		$formatterStub->method('format')->willReturn('5 items');
-		$this->formatterFactoryStub->method('create')->willReturn($formatterStub);
-
-		$result = $this->translator->translateWithPlural('item_count', 'test_module', 5);
-		static::assertEmpty($result);
-	}
-
-
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-    public function testTranslatePluralReturnsFrameworkException(): void
-    {
-        $this->localesStub->method('getLanguageCode')->willReturn('en');
-        $this->cacheMock->expects($this->atLeastOnce())->method('get')->willReturn(null);
-        $this->loaderMock->expects($this->atLeastOnce())->method('load')->willReturn(['item_count' => '{count} items']);
-
-        $formatterStub = $this->createStub(MessageFormatter::class);
-        $formatterStub->method('format')->willReturn(false);
-
-        $this->expectException(FrameworkException::class);
-        $this->expectExceptionMessage('MessageFormatter error: ');
-        $this->translator->translateWithPlural('item_count', 'test_module', 5);
-    }
-
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-    #[Group('units')]
-    public function testTranslateArrayForOptionsReturnsArray(): void
-    {
-        $this->localesStub->method('getLanguageCode')->willReturn('en');
-        $this->cacheMock->expects($this->atLeastOnce())->method('get')->willReturn(null);
-        $this->loaderMock->expects($this->atLeastOnce())->method('load')->willReturn(['options' => ['opt1' => 'Option 1', 'opt2' => 'Option 2']]);
-
-        $result = $this->translator->translateArrayForOptions('options', 'test_module');
-        static::assertArrayHasKey('opt1', $result);
-        static::assertEquals('Option 1', $result['opt1']);
-    }
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-    #[Group('units')]
-    public function testTranslateArrayForOptionsHandlesNonArrayGracefully(): void
-    {
-        $this->localesStub->method('getLanguageCode')->willReturn('en');
-        $this->cacheMock->expects($this->atLeastOnce())->method('get')->willReturn(null);
-        $this->loaderMock->expects($this->atLeastOnce())->method('load')->willReturn(['options' => 'Not an array']);
-
-		$result = $this->translator->translateArrayForOptions('options', 'test_module');
-        static::assertEmpty($result);
-    }
-
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testTranslateArrayWithPluralReturnsFormattedStringSuccessfully(): void
-	{
-		$this->localesStub->method('getLanguageCode')->willReturn('en');
-		$this->cacheMock->expects($this->atLeastOnce())->method('get')->willReturn(null);
-		$this->loaderMock->expects($this->atLeastOnce())->method('load')->willReturn(['time_unit_ago' => ['days' => '{count} days ago']]);
-
-		$formatterStub = $this->createStub(MessageFormatter::class);
-		$formatterStub->method('format')->willReturn('5 days ago');
-		$this->formatterFactoryStub->method('create')->willReturn($formatterStub);
-
-		$result = $this->translator->translateArrayWithPlural('days', 'time_unit_ago', 'test_module', 5);
-		static::assertEquals('5 days ago', $result);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testTranslateArrayWithPluralHandlesMissingKeyGracefully(): void
-	{
-		$this->localesStub->method('getLanguageCode')->willReturn('en');
-		$this->cacheMock->expects($this->atLeastOnce())->method('get')->willReturn(null);
-		$this->loaderMock->expects($this->atLeastOnce())->method('load')->willReturn(['time_unit_ago' => ['hours' => '{count} hours ago']]);
-
-		$formatterStub = $this->createStub(MessageFormatter::class);
-		$formatterStub->method('format')->willReturn('');
-		$this->formatterFactoryStub->method('create')->willReturn($formatterStub);
-
-		$result = $this->translator->translateArrayWithPlural('days', 'time_unit_ago', 'test_module', 5);
-		static::assertEquals('', $result);
+		static::assertSame('', $this->translator->translateException($exception));
 	}
 
 	/**
@@ -286,19 +238,9 @@ class TranslatorTest extends TestCase
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testTranslateLoadsDirectlyWhenCacheFails(): void
+	public function testTranslateArrayForOptions(): void
 	{
-		$this->localesStub->method('getLanguageCode')->willReturn('en');
-		$this->cacheMock->expects($this->once())->method('get')
-			->willThrowException(new PhpfastcacheSimpleCacheException('cache down'));
-		$this->cacheMock->expects($this->never())->method('has');
-		$this->cacheMock->expects($this->once())->method('set')
-			->willThrowException(new PhpfastcacheSimpleCacheException('cache down'));
-		$this->loaderMock->expects($this->once())->method('load')->with('en', 'main')->willReturn(['save' => 'Save']);
-
-		static::assertSame('Save', $this->translator->translate('save', 'main'));
-		// loaded translations stay in memory for this request
-		static::assertSame('Save', $this->translator->translate('save', 'main'));
+		static::assertSame(['opt1' => 'Option 1', 'opt2' => 'Option 2'], $this->translator->translateArrayForOptions('options', 'main'));
 	}
 
 	/**
@@ -306,14 +248,107 @@ class TranslatorTest extends TestCase
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testTranslateUsesCachedTranslations(): void
+	public function testTranslateArrayForOptionsIsEmptyForATextOrAMissingKey(): void
 	{
-		$this->localesStub->method('getLanguageCode')->willReturn('de');
-		$this->cacheMock->expects($this->never())->method('has');
-		$this->cacheMock->expects($this->once())->method('get')->with('lang_de_main')->willReturn(['save' => 'Speichern']);
-		$this->cacheMock->expects($this->never())->method('set');
-		$this->loaderMock->expects($this->never())->method('load');
+		static::assertSame([], $this->translator->translateArrayForOptions('save', 'main'));
+		static::assertSame([], $this->translator->translateArrayForOptions('missing_key', 'main'));
+	}
 
-		static::assertSame('Speichern', $this->translator->translate('save', 'main'));
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	#[DataProvider('pluralProvider')]
+	public function testTranslateWithPluralAppliesThePluralRulesOfTheLanguage(string $languageCode, int $count, string $expected): void
+	{
+		$this->languageCode = $languageCode;
+
+		static::assertSame($expected, $this->translator->translateWithPlural('item_count', 'main', $count));
+	}
+
+	/**
+	 * @return array<string, array{string, int, string}>
+	 */
+	public static function pluralProvider(): array
+	{
+		return [
+			'en one'   => ['en', 1, '1 item'],
+			'en other' => ['en', 5, '5 items'],
+			'en zero'  => ['en', 0, '0 items'],
+			'de one'   => ['de', 1, '1 Eintrag'],
+			'de other' => ['de', 2, '2 Einträge'],
+			'ru one'   => ['ru', 1, '1 файл'],
+			'ru few'   => ['ru', 3, '3 файла'],
+			'ru many'  => ['ru', 5, '5 файлов'],
+		];
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testTranslateWithPluralIsEmptyForASection(): void
+	{
+		static::assertSame('', $this->translator->translateWithPlural('options', 'main', 5));
+	}
+
+	/**
+	 * A missing translation is an empty text, not an error: an empty pattern can not be formatted.
+	 *
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testTranslateWithPluralIsEmptyForAMissingKey(): void
+	{
+		static::assertSame('', $this->translator->translateWithPlural('missing_key', 'main', 5));
+	}
+
+	/**
+	 * @throws CoreException
+	 */
+	#[Group('units')]
+	public function testTranslateWithPluralThrowsWhenTheMessageCanNotBeFormatted(): void
+	{
+		$this->expectException(FrameworkException::class);
+		$this->expectExceptionMessage('MessageFormatter error: ');
+
+		$this->translator->translateWithPlural('broken_format', 'main', 1, ['when' => 'not a date']);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testTranslateArrayWithPlural(): void
+	{
+		static::assertSame('1 day ago', $this->translator->translateArrayWithPlural('days', 'time_unit_ago', 'main', 1));
+		static::assertSame('5 days ago', $this->translator->translateArrayWithPlural('days', 'time_unit_ago', 'main', 5));
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	#[DataProvider('missingArrayEntryProvider')]
+	public function testTranslateArrayWithPluralIsEmptyForAMissingEntry(string $key, string $section): void
+	{
+		static::assertSame('', $this->translator->translateArrayWithPlural($key, $section, 'main', 5));
+	}
+
+	/**
+	 * @return array<string, array{string, string}>
+	 */
+	public static function missingArrayEntryProvider(): array
+	{
+		return [
+			'missing key'               => ['hours', 'time_unit_ago'],
+			'missing section'           => ['days', 'no_such_section'],
+			'section is a plain text'   => ['days', 'save'],
+		];
 	}
 }

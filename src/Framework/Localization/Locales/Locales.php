@@ -54,6 +54,7 @@ class Locales
 		$this->localeExtractor  = $localeExtractor;
 		$this->availableLocales = $this->loadAvailableLocales();
 		$this->defaultLocale    = $this->config->getConfigValue('default_locale', self::CONFIG_MODULE_NAME, 'general');
+		$this->currentLocale    = $this->defaultLocale;
 	}
 
 	public function getCurrentLocale(): string

@@ -122,7 +122,8 @@ class Translator
 		$languageCode = $this->locales->getLanguageCode();
 		$translation  = $this->findTranslation($key, $module, $languageCode);
 
-		if (!is_string($translation))
+		// an empty pattern (missing translation) can not be formatted
+		if (!is_string($translation) || $translation === '')
 			return '';
 
 		// add number of replacements
@@ -140,7 +141,11 @@ class Translator
 	{
 		$languageCode = $this->locales->getLanguageCode();
 		$section      = $this->findTranslation($section, $module, $languageCode);
-		$translation  = $section[$key] ?? '';
+		$translation  = is_array($section) ? ($section[$key] ?? '') : '';
+
+		// an empty pattern (missing translation) can not be formatted
+		if (!is_string($translation) || $translation === '')
+			return '';
 
 		// add number of replacements
 		$replacements['count'] = $count;

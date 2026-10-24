@@ -21,60 +21,70 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Framework\Localization\Locales;
 
-use App\Framework\Localization\Locales\LocaleExtractorInterface;
-use App\Framework\Localization\Locales\SessionLocaleExtractor;
 use App\Framework\Http\Session;
+use App\Framework\Localization\Locales\SessionLocaleExtractor;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class SessionLocaleExtractorTest extends TestCase
 {
-	private Session&MockObject $sessionMock;
-	private LocaleExtractorInterface $localeExtractor;
+	private const array WHITE_LIST = ['en_US', 'de_DE', 'fr_FR'];
 
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
+	private Session&Stub $sessionStub;
+
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->sessionMock = $this->createMock(Session::class);
-		$this->localeExtractor = new SessionLocaleExtractor($this->sessionMock, 'en_US');
+		$this->sessionStub = $this->createStub(Session::class);
 	}
 
 	#[Group('units')]
 	public function testExtractLocaleFromSession(): void
 	{
-		$this->sessionMock->method('get')->with('locale')->willReturn('de_DE');
+		$this->sessionStub->method('get')->willReturnMap([['locale', 'de_DE']]);
 
-		$whiteList = ['en_US', 'de_DE', 'fr_FR'];
-		$result = $this->localeExtractor->extractLocale($whiteList);
+		static::assertSame('de_DE', $this->extractor()->extractLocale(self::WHITE_LIST));
+	}
 
-		static::assertEquals('de_DE', $result);
+	/**
+	 * @param string|array<string,mixed>|null $sessionValue
+	 */
+	#[Group('units')]
+	#[DataProvider('invalidLocaleProvider')]
+	public function testExtractLocaleFallsBackToTheDefault(string|array|null $sessionValue): void
+	{
+		$this->sessionStub->method('get')->willReturnMap([['locale', $sessionValue]]);
+
+		static::assertSame('en_US', $this->extractor()->extractLocale(self::WHITE_LIST));
+	}
+
+	/**
+	 * @return array<string, array{string|array<string,mixed>|null}>
+	 */
+	public static function invalidLocaleProvider(): array
+	{
+		return [
+			'nothing in the session'  => [null],
+			'locale not allowed'      => ['es_ES'],
+			'empty string'            => [''],
+			'wrong case'              => ['de_de'],
+			'array instead of string' => [['locale' => 'es_ES']],
+			'array with an allowed value' => [['locale' => 'de_DE']],
+		];
 	}
 
 	#[Group('units')]
-	public function testExtractLocaleFallbackToDefault(): void
+	public function testTheDefaultLocaleIsReturnedEvenIfItIsNotInTheWhiteList(): void
 	{
-		$this->sessionMock->method('get')->with('locale')->willReturn(null);
+		$this->sessionStub->method('get')->willReturn(null);
 
-		$whiteList = ['en_US', 'de_DE', 'fr_FR'];
-		$result = $this->localeExtractor->extractLocale($whiteList);
-
-		static::assertEquals('en_US', $result);
+		static::assertSame('en', (new SessionLocaleExtractor($this->sessionStub))->extractLocale(self::WHITE_LIST));
 	}
 
-	#[Group('units')]
-	public function testExtractLocaleFallbackToDefaultForInvalidLocale(): void
+	private function extractor(): SessionLocaleExtractor
 	{
-		$this->sessionMock->method('get')->with('locale')->willReturn(['locale' => 'es_ES']);
-
-		$whiteList = ['en_US', 'de_DE', 'fr_FR'];
-		$result = $this->localeExtractor->extractLocale($whiteList);
-
-		static::assertEquals('en_US', $result);
+		return new SessionLocaleExtractor($this->sessionStub, 'en_US');
 	}
 }
