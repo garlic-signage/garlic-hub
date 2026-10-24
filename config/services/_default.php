@@ -55,6 +55,7 @@ use App\Framework\Middleware\FinalRenderMiddleware;
 use App\Framework\TemplateEngine\AdapterInterface;
 use App\Framework\TemplateEngine\LayoutDataProviderInterface;
 use App\Framework\TemplateEngine\MustacheAdapter;
+use App\Framework\TemplateEngine\MustacheEngineFactory;
 use App\Framework\Utils\Datatable\BuildService;
 use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
 use App\Framework\Utils\Datatable\Paginator\Builder;
@@ -84,7 +85,6 @@ use League\Flysystem\Filesystem;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
-use Mustache\Engine;
 use Phpfastcache\Helper\Psr16Adapter;
 use Psr\Container\ContainerInterface;
 use Slim\App;
@@ -192,14 +192,10 @@ $dependencies[Translator::class] = DI\factory(function (ContainerInterface $cont
 });
 $dependencies[AdapterInterface::class] = DI\factory(function (ContainerInterface $container)
 {
-	$mustacheEngine = new Engine([
-		'loader' => new Mustache\Loader\FilesystemLoader(__DIR__ . '/../../templates'),
-    	'partials_loader' => new Mustache\Loader\FilesystemLoader(__DIR__ . '/../../templates/generic'),
-		// compiled templates are cached as PHP classes; the key contains a hash of the source, so changes invalidate it
-		'cache' => $container->get(Config::class)->getPaths('cacheDir') . '/mustache',
-		// escape single quotes too, so {{value}} is safe in single quoted attributes (Mustache default is ENT_COMPAT)
-		'entity_flags' => ENT_QUOTES | ENT_SUBSTITUTE
-	]);
+	$mustacheEngine = new MustacheEngineFactory()->create(
+		__DIR__ . '/../../templates',
+		$container->get(Config::class)->getPaths('cacheDir') . '/mustache'
+	);
 	return new MustacheAdapter($mustacheEngine);
 });
 $dependencies['SqlConnection'] = DI\factory(function (ContainerInterface $container)
