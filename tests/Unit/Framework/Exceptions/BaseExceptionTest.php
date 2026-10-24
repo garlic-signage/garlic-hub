@@ -28,6 +28,12 @@ use PHPUnit\Framework\TestCase;
 class BaseExceptionTest extends TestCase
 {
 	#[Group('units')]
+	public function testModuleNameIsEmptyByDefault(): void
+	{
+		static::assertSame('', (new BaseException('Test Exception'))->getModuleName());
+	}
+
+	#[Group('units')]
 	public function testSetAndGetModuleName(): void
 	{
 		$exception = new BaseException('Test Exception');
@@ -37,16 +43,31 @@ class BaseExceptionTest extends TestCase
 	}
 
 	#[Group('units')]
+	public function testSetModuleNameIsChainable(): void
+	{
+		$exception = new BaseException('Test Exception');
+
+		static::assertSame($exception, $exception->setModuleName('TestModule'));
+	}
+
+	#[Group('units')]
 	public function testGetDetails(): void
 	{
+		$line      = __LINE__ + 1;
 		$exception = new BaseException('Test Exception', 123);
 		$exception->setModuleName('TestModule');
 
-		$details = $exception->getDetails();
-
-		static::assertSame('TestModule', $details['module_name']);
-		static::assertSame('Test Exception', $details['message']);
-		static::assertSame(123, $details['code']);
+		static::assertSame(
+			[
+				'module_name' => 'TestModule',
+				'message'     => 'Test Exception',
+				'code'        => 123,
+				'file'        => __FILE__,
+				'line'        => $line,
+				'trace'       => $exception->getTraceAsString(),
+			],
+			$exception->getDetails()
+		);
 	}
 
 	#[Group('units')]
@@ -55,12 +76,12 @@ class BaseExceptionTest extends TestCase
 		$exception = new BaseException('Test Exception', 123);
 		$exception->setModuleName('TestModule');
 
-		$detailsString = $exception->getDetailsAsString();
+		$expected = "Module: TestModule\n"
+			. "Message: Test Exception\n"
+			. "Code: 123\n"
+			. 'File: ' . __FILE__ . ' (Line ' . $exception->getLine() . ")\n"
+			. "Trace:\n" . $exception->getTraceAsString() . "\n";
 
-		static::assertStringContainsString('Module: TestModule', $detailsString);
-		static::assertStringContainsString('Message: Test Exception', $detailsString);
-		static::assertStringContainsString('Code: 123', $detailsString);
-		static::assertStringContainsString('File:', $detailsString);
-		static::assertStringContainsString('Trace:', $detailsString);
+		static::assertSame($expected, $exception->getDetailsAsString());
 	}
 }

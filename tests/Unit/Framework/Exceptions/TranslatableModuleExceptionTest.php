@@ -56,4 +56,16 @@ class TranslatableModuleExceptionTest extends TestCase
 		static::assertSame('playlists: no_rights', $exception->getMessage());
 		static::assertSame([], $exception->getReplacements());
 	}
+
+	/**
+	 * The message is for the log, so umlauts stay escaped (json_encode without flags) and several values are kept.
+	 */
+	#[Group('units')]
+	public function testMessageWithSeveralReplacementsAndUmlauts(): void
+	{
+		$exception = new TranslatableModuleException('playlists', 'rename_failed', ['name' => 'Büro', 'count' => 2]);
+
+		static::assertSame('playlists: rename_failed {"name":"B\u00fcro","count":2}', $exception->getMessage());
+		static::assertSame(['name' => 'Büro', 'count' => 2], $exception->getReplacements());
+	}
 }
