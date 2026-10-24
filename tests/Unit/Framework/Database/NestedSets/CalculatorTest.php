@@ -23,35 +23,42 @@ namespace Tests\Unit\Framework\Database\NestedSets;
 
 use App\Framework\Database\NestedSets\Calculator;
 use App\Framework\Exceptions\DatabaseException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 class CalculatorTest extends TestCase
 {
 	private Calculator $calculator;
-	
+
 	protected function setUp(): void
 	{
 		parent::setUp();
 		$this->calculator = new Calculator();
 	}
-	
+
 	/**
 	 * @throws DatabaseException
 	 */
 	#[Group('units')]
-	public function testDetermineLgtPositionByRegionWithValidRegions(): void
+	#[DataProvider('lftPositionProvider')]
+	public function testDetermineLgtPositionByRegion(string $region, int $expected): void
 	{
-		$node = ['lft' => 5, 'rgt' => 10];
-
-		static::assertSame(5, $this->calculator->determineLgtPositionByRegion(Calculator::REGION_BEFORE, $node));
-		static::assertSame(10, $this->calculator->determineLgtPositionByRegion(Calculator::REGION_APPENDCHILD, $node));
-		static::assertSame(11, $this->calculator->determineLgtPositionByRegion(Calculator::REGION_AFTER, $node));
+		static::assertSame($expected, $this->calculator->determineLgtPositionByRegion($region, ['lft' => 5, 'rgt' => 10]));
 	}
 
 	/**
-	 * @throws DatabaseException
+	 * @return array<string, array{string, int}>
 	 */
+	public static function lftPositionProvider(): array
+	{
+		return [
+			'before the target'        => [Calculator::REGION_BEFORE, 5],
+			'as last child of target'  => [Calculator::REGION_APPENDCHILD, 10],
+			'after the target'         => [Calculator::REGION_AFTER, 11],
+		];
+	}
+
 	#[Group('units')]
 	public function testDetermineLgtPositionByRegionThrowsExceptionForInvalidRegion(): void
 	{
@@ -61,132 +68,80 @@ class CalculatorTest extends TestCase
 		$this->calculator->determineLgtPositionByRegion('invalid', ['lft' => 5, 'rgt' => 10]);
 	}
 
-
 	#[Group('units')]
-	public function testCalculateDiffLevelByRegionForBeforeRegion(): void
+	#[DataProvider('diffLevelProvider')]
+	public function testCalculateDiffLevelByRegion(string $region, int $movedLevel, int $targetLevel, int $expected): void
 	{
-		$region = Calculator::REGION_BEFORE;
-		$movedLevel = 3;
-		$targetLevel = 5;
+		static::assertSame($expected, $this->calculator->calculateDiffLevelByRegion($region, $movedLevel, $targetLevel));
+	}
 
-		$expectedDiffLevel = $targetLevel - $movedLevel;
-
-		static::assertSame($expectedDiffLevel, $this->calculator->calculateDiffLevelByRegion($region, $movedLevel, $targetLevel));
+	/**
+	 * A child lives one level below its parent, so appendChild is one level deeper than a sibling move.
+	 *
+	 * @return array<string, array{string, int, int, int}>
+	 */
+	public static function diffLevelProvider(): array
+	{
+		return [
+			'before, target deeper'        => [Calculator::REGION_BEFORE, 3, 5, 2],
+			'before, same level'           => [Calculator::REGION_BEFORE, 6, 6, 0],
+			'before, target higher'        => [Calculator::REGION_BEFORE, 5, 3, -2],
+			'after, target deeper'         => [Calculator::REGION_AFTER, 3, 7, 4],
+			'after, negative moved level'  => [Calculator::REGION_AFTER, -2, 3, 5],
+			'appendChild'                  => [Calculator::REGION_APPENDCHILD, 2, 4, 3],
+			'appendChild, same level'      => [Calculator::REGION_APPENDCHILD, 4, 4, 1],
+			'appendChild, far apart'       => [Calculator::REGION_APPENDCHILD, 1, 1000, 1000],
+		];
 	}
 
 	#[Group('units')]
-	public function testCalculateDiffLevelByRegionWhenMovedAndTargetLevelsAreEqual(): void
+	public function testDetermineParentIdByRegionForAppendChildIsTheTargetItself(): void
 	{
-		$region = Calculator::REGION_BEFORE;
-		$movedLevel = 6;
-		$targetLevel = 6;
-
-		$expectedDiffLevel = 0;
-
-		static::assertSame($expectedDiffLevel, $this->calculator->calculateDiffLevelByRegion($region, $movedLevel, $targetLevel));
+		static::assertSame(10, $this->calculator->determineParentIdByRegion(Calculator::REGION_APPENDCHILD, ['node_id' => 10, 'parent_id' => 5]));
 	}
 
 	#[Group('units')]
-	public function testCalculateDiffLevelByRegionForNegativeMovedLevel(): void
+	#[DataProvider('siblingRegionProvider')]
+	public function testDetermineParentIdByRegionForSiblingMovesIsTheParentOfTheTarget(string $region): void
 	{
-		$region = Calculator::REGION_AFTER;
-		$movedLevel = -2;
-		$targetLevel = 3;
-
-		$expectedDiffLevel = $targetLevel - $movedLevel;
-
-		static::assertSame($expectedDiffLevel, $this->calculator->calculateDiffLevelByRegion($region, $movedLevel, $targetLevel));
+		static::assertSame(5, $this->calculator->determineParentIdByRegion($region, ['node_id' => 10, 'parent_id' => 5]));
 	}
 
-	#[Group('units')]
-	public function testCalculateDiffLevelByRegionForAppendChildWithHighLevelDifference(): void
+	/**
+	 * @return array<string, array{string}>
+	 */
+	public static function siblingRegionProvider(): array
 	{
-		$region = Calculator::REGION_APPENDCHILD;
-		$movedLevel = 1;
-		$targetLevel = 1000;
-
-		$expectedDiffLevel = ($targetLevel - $movedLevel) + 1;
-
-		static::assertSame($expectedDiffLevel, $this->calculator->calculateDiffLevelByRegion($region, $movedLevel, $targetLevel));
-	}
-
-	#[Group('units')]
-	public function testCalculateDiffLevelByRegionForAfterRegion(): void
-	{
-		$region = Calculator::REGION_AFTER;
-		$movedLevel = 3;
-		$targetLevel = 7;
-
-		$expectedDiffLevel = $targetLevel - $movedLevel;
-
-		static::assertSame($expectedDiffLevel, $this->calculator->calculateDiffLevelByRegion($region, $movedLevel, $targetLevel));
-	}
-
-	#[Group('units')]
-	public function testCalculateDiffLevelByRegionForAppendChildRegion(): void
-	{
-		$region = Calculator::REGION_APPENDCHILD;
-		$movedLevel = 2;
-		$targetLevel = 4;
-
-		$expectedDiffLevel = ($targetLevel - $movedLevel) + 1;
-
-		static::assertSame($expectedDiffLevel, $this->calculator->calculateDiffLevelByRegion($region, $movedLevel, $targetLevel));
-	}
-
-	#[Group('units')]
-	public function testDetermineParentIdByRegionForAppendChild(): void
-	{
-		$node = ['node_id' => 10, 'parent_id' => 5];
-		$region = Calculator::REGION_APPENDCHILD;
-
-		static::assertSame(10, $this->calculator->determineParentIdByRegion($region, $node));
-	}
-
-	#[Group('units')]
-	public function testDetermineParentIdByRegionForNonAppendChild(): void
-	{
-		$node = ['node_id' => 10, 'parent_id' => 5];
-		$region = Calculator::REGION_BEFORE;
-
-		static::assertSame(5, $this->calculator->determineParentIdByRegion($region, $node));
+		return ['before' => [Calculator::REGION_BEFORE], 'after' => [Calculator::REGION_AFTER]];
 	}
 
 	#[Group('units')]
 	public function testCalculateBeforeMoveSubTreeWithPositiveDistance(): void
 	{
-		$movedNode = ['lft' => 3, 'root_id' => 1];
-		$targetNode = ['lft' => 7, 'root_id' => 1];
-		$newLgtPos = 10;
-		$width = 4;
-
-		$result = $this->calculator->calculateBeforeMoveSubTree($movedNode, $targetNode, $newLgtPos, $width);
+		$result = $this->calculator->calculateBeforeMoveSubTree(['lft' => 3, 'root_id' => 1], ['lft' => 7, 'root_id' => 1], 10, 4);
 
 		static::assertSame(['distance' => 7, 'tmpPos' => 3, 'width' => 4], $result);
 	}
 
+	/**
+	 * Moving to the left inside one tree: the gap made for the subtree pushes it to the right,
+	 * so its temporary position and the distance are corrected by its width.
+	 */
 	#[Group('units')]
 	public function testCalculateBeforeMoveSubTreeWithNegativeDistanceSameRoot(): void
 	{
-		$movedNode = ['lft' => 10, 'root_id' => 1];
-		$targetNode = ['lft' => 3, 'root_id' => 1];
-		$newLgtPos = 5;
-		$width = 4;
-
-		$result = $this->calculator->calculateBeforeMoveSubTree($movedNode, $targetNode, $newLgtPos, $width);
+		$result = $this->calculator->calculateBeforeMoveSubTree(['lft' => 10, 'root_id' => 1], ['lft' => 3, 'root_id' => 1], 5, 4);
 
 		static::assertSame(['distance' => -9, 'tmpPos' => 14, 'width' => 4], $result);
 	}
 
+	/**
+	 * Another tree has no gap in the tree of the moved node, nothing to correct.
+	 */
 	#[Group('units')]
 	public function testCalculateBeforeMoveSubTreeWithNegativeDistanceDifferentRoot(): void
 	{
-		$movedNode = ['lft' => 8, 'root_id' => 1];
-		$targetNode = ['lft' => 5, 'root_id' => 2];
-		$newLgtPos = 4;
-		$width = 5;
-
-		$result = $this->calculator->calculateBeforeMoveSubTree($movedNode, $targetNode, $newLgtPos, $width);
+		$result = $this->calculator->calculateBeforeMoveSubTree(['lft' => 8, 'root_id' => 1], ['lft' => 5, 'root_id' => 2], 4, 5);
 
 		static::assertSame(['distance' => -4, 'tmpPos' => 8, 'width' => 5], $result);
 	}
@@ -194,12 +149,7 @@ class CalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateBeforeMoveSubTreeWithZeroDistance(): void
 	{
-		$movedNode = ['lft' => 3, 'root_id' => 1];
-		$targetNode = ['lft' => 3, 'root_id' => 1];
-		$newLgtPos = 3;
-		$width = 2;
-
-		$result = $this->calculator->calculateBeforeMoveSubTree($movedNode, $targetNode, $newLgtPos, $width);
+		$result = $this->calculator->calculateBeforeMoveSubTree(['lft' => 3, 'root_id' => 1], ['lft' => 3, 'root_id' => 1], 3, 2);
 
 		static::assertSame(['distance' => 0, 'tmpPos' => 3, 'width' => 2], $result);
 	}

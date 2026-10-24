@@ -285,6 +285,9 @@ class TraitsTest extends RepositoryTestCase
 
 	public function testTheTableAndTheIdFieldCanBeChanged(): void
 	{
+		static::assertSame('templates', $this->repository->getTable());
+		static::assertSame('template_id', $this->repository->getIdField());
+
 		$this->repository->setTable('user_main')->setIdField('UID');
 
 		static::assertSame('user_main', $this->repository->getTable());

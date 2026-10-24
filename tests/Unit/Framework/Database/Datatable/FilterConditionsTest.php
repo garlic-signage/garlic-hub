@@ -24,6 +24,7 @@ namespace Tests\Unit\Framework\Database\Datatable;
 use App\Framework\Database\Datatable\FilterConditions;
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
 use Doctrine\DBAL\ArrayParameterType;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
@@ -79,7 +80,15 @@ class FilterConditionsTest extends TestCase
 	{
 		$result = $this->conditions->forField('table', 'username', ['value' => 'jo*hn']);
 
-		static::assertSame(['user_main.username' => $this->conditions->whereClause('%jo%hn%', 'LIKE')], $result);
+		static::assertSame(['user_main.username' => $this->like('%jo%hn%')], $result);
+	}
+
+	#[Group('units')]
+	public function testForFieldReplacesEveryAsterisk(): void
+	{
+		$result = $this->conditions->forField('table', 'name', ['value' => 'a*b*c']);
+
+		static::assertSame(['table.name' => $this->like('%a%b%c%')], $result);
 	}
 
 	#[Group('units')]
@@ -87,13 +96,7 @@ class FilterConditionsTest extends TestCase
 	{
 		$result = $this->conditions->forField('table', 'UID', ['value' => 'john']);
 
-		static::assertSame(['user_main.username' => $this->conditions->whereClause('%john%', 'LIKE')], $result);
-	}
-
-	#[Group('units')]
-	public function testForFieldEmptyUsernameIsIgnored(): void
-	{
-		static::assertSame([], $this->conditions->forField('table', 'username', ['value' => '']));
+		static::assertSame(['user_main.username' => $this->like('%john%')], $result);
 	}
 
 	#[Group('units')]
@@ -101,7 +104,7 @@ class FilterConditionsTest extends TestCase
 	{
 		$result = $this->conditions->forField('table', 'company_id', ['value' => 123]);
 
-		static::assertSame(['user_main.company_id' => $this->conditions->whereClause(123)], $result);
+		static::assertSame(['user_main.company_id' => ['value' => 123, 'compare' => '=', 'logic' => 'AND', 'type' => ArrayParameterType::INTEGER]], $result);
 	}
 
 	#[Group('units')]
@@ -115,12 +118,62 @@ class FilterConditionsTest extends TestCase
 	{
 		$result = $this->conditions->forField('table', 'name', ['value' => 'abc']);
 
-		static::assertSame(['table.name' => $this->conditions->whereClause('%abc%', 'LIKE')], $result);
+		static::assertSame(['table.name' => $this->like('%abc%')], $result);
+	}
+
+	/**
+	 * "0" is typed in a text field and is a search term. The integer 0 is the default of a select ("all").
+	 */
+	#[Group('units')]
+	#[DataProvider('searchFieldsProvider')]
+	public function testForFieldTheTextZeroIsASearchTerm(string $key, string $column): void
+	{
+		$result = $this->conditions->forField('table', $key, ['value' => '0']);
+
+		static::assertSame([$column => $this->like('%0%')], $result);
 	}
 
 	#[Group('units')]
-	public function testForFieldDefaultEmptyIsIgnored(): void
+	#[DataProvider('searchKeysProvider')]
+	public function testForFieldTheIntegerZeroIsIgnored(string $key): void
 	{
-		static::assertSame([], $this->conditions->forField('table', 'name', ['value' => '']));
+		static::assertSame([], $this->conditions->forField('table', $key, ['value' => 0]));
+	}
+
+	#[Group('units')]
+	#[DataProvider('searchKeysProvider')]
+	public function testForFieldEmptyAndMissingValuesAreIgnored(string $key): void
+	{
+		static::assertSame([], $this->conditions->forField('table', $key, ['value' => '']));
+		static::assertSame([], $this->conditions->forField('table', $key, ['value' => null]));
+		static::assertSame([], $this->conditions->forField('table', $key, []));
+	}
+
+	/**
+	 * @return array<string, array{string}>
+	 */
+	public static function searchKeysProvider(): array
+	{
+		return ['username' => ['username'], 'UID' => ['UID'], 'other' => ['name']];
+	}
+
+	/**
+	 * @return array<string, array{string, string}>
+	 */
+	public static function searchFieldsProvider(): array
+	{
+		return [
+			'username' => ['username', 'user_main.username'],
+			'UID'      => ['UID', 'user_main.username'],
+			'other'    => ['name', 'table.name'],
+		];
+	}
+
+	/**
+	 * @return array{value: string, compare: string, logic: string, type: ArrayParameterType}
+	 */
+	private function like(string $value): array
+	{
+		return ['value' => $value, 'compare' => 'LIKE', 'logic' => 'AND', 'type' => ArrayParameterType::INTEGER];
 	}
 }

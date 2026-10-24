@@ -68,10 +68,10 @@ readonly class FilterConditions
 
 			case 'UID':
 			case 'username':
-				if (empty($parameter['value']))
+				if ($this->isEmpty($parameter))
 					break;
 
-				$value = '%'.str_replace('*', '%', $parameter['value']).'%';
+				$value = '%'.str_replace('*', '%', (string) $parameter['value']).'%';
 				$where['user_main.username'] = $this->whereClause($value, 'LIKE');
 				break;
 
@@ -81,11 +81,23 @@ readonly class FilterConditions
 				break;
 
 			default:
-				if (empty($parameter['value']))
+				if ($this->isEmpty($parameter))
 					break;
 				$value = '%'.str_replace('*', '%', (string) $parameter['value']).'%';
 				$where[$table.'.'.$key] = $this->whereClause($value, 'LIKE');
 		}
 		return $where;
+	}
+
+	/**
+	 * The text "0" is a search term. The integer 0 is the default of a select (e.g. "all") and no filter.
+	 *
+	 * @param array<string, mixed> $parameter
+	 */
+	private function isEmpty(array $parameter): bool
+	{
+		$value = $parameter['value'] ?? '';
+
+		return empty($value) && $value !== '0';
 	}
 }

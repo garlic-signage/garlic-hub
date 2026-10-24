@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace Tests\Integration\Framework\Database\NestedSets;
 
 use App\Framework\Database\NestedSets\Calculator;
+use App\Framework\Exceptions\FrameworkException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 
@@ -129,12 +130,29 @@ class ServiceTest extends NestedSetsTestCase
 		$ids = $this->buildTree();
 		$ghost = ['node_id' => 9999, 'root_id' => $ids['A'], 'lft' => 20, 'rgt' => 21];
 
+		$this->expectException(FrameworkException::class);
 		try
 		{
 			$this->service->deleteSingleNode($ghost);
-			static::fail('Expected an exception');
 		}
-		catch (\Throwable)
+		finally
+		{
+			static::assertSame(['A', '-B', '--B1', '--B2', '-C', '-D'], $this->outline($ids['A']));
+			$this->assertValidTrees();
+		}
+	}
+
+	public function testDeleteTreeOfAnUnknownNodeFailsAndChangesNothing(): void
+	{
+		$ids = $this->buildTree();
+		$ghost = ['node_id' => 9999, 'root_id' => $ids['A'], 'lft' => 20, 'rgt' => 21];
+
+		$this->expectException(FrameworkException::class);
+		try
+		{
+			$this->service->deleteTree($ghost);
+		}
+		finally
 		{
 			static::assertSame(['A', '-B', '--B1', '--B2', '-C', '-D'], $this->outline($ids['A']));
 			$this->assertValidTrees();
