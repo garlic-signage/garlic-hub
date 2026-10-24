@@ -64,7 +64,7 @@ class FileInfoWrapper
 
 	public function isStream(mixed $stream): bool
 	{
-		return (get_resource_type($stream) === 'stream');
+		return is_resource($stream) && get_resource_type($stream) === 'stream';
 	}
 
 	public function getStreamContent(mixed $stream): bool|string

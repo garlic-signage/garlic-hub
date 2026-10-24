@@ -31,8 +31,13 @@ class DeliveryUrlBuilder
 {
 	private const string ENDPOINT = '/delivery.php';
 
-	public function __construct(private readonly string $serverUrl)
-	{}
+	private readonly string $serverUrl;
+
+	public function __construct(string $serverUrl)
+	{
+		// a slash at the end of the configured url must not give a double slash in the path
+		$this->serverUrl = rtrim($serverUrl, '/');
+	}
 
 	public function mediapoolUrl(string $checksum, string $extension): string
 	{

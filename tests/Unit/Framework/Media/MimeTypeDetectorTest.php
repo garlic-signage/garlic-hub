@@ -26,43 +26,35 @@ use App\Framework\Media\FileInfoWrapper;
 use App\Framework\Media\MimeTypeDetector;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * The logic of the detector around FileInfoWrapper. The detection itself (finfo) is tested
+ * with real files in tests/Integration/Framework/Media.
+ */
 class MimeTypeDetectorTest extends TestCase
 {
-	private FileInfoWrapper&MockObject $fileInfoWrapperMock;
-
+	private FileInfoWrapper&Stub $fileInfoWrapperStub;
 	private MimeTypeDetector $mimeTypeDetector;
 
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->fileInfoWrapperMock = $this->createMock(FileInfoWrapper::class);
-
-		$this->mimeTypeDetector = new MimeTypeDetector($this->fileInfoWrapperMock);
+		$this->fileInfoWrapperStub = $this->createStub(FileInfoWrapper::class);
+		$this->mimeTypeDetector    = new MimeTypeDetector($this->fileInfoWrapperStub);
 	}
 
 	/**
 	 * @throws ModuleException
 	 */
 	#[Group('units')]
-	public function testDetectFromFileReturnsCorrectMimeType(): void
+	public function testDetectFromFileReturnsTheDetectedMimeType(): void
 	{
-		$filePath = 'some/testfile.txt';
-		$this->fileInfoWrapperMock->method('fileExists')
-			->with($filePath)
-			->willReturn(true);
+		$this->fileInfoWrapperStub->method('fileExists')->willReturn(true);
+		$this->fileInfoWrapperStub->method('detectMimeTypeFromFile')->willReturnMap([['some/testfile.txt', 'text/plain']]);
 
-		$this->fileInfoWrapperMock->expects($this->once())->method('detectMimeTypeFromFile')
-			->with($filePath)
-			->willReturn('mime/type');
-		$mimeType = $this->mimeTypeDetector->detectFromFile($filePath);
-		static::assertEquals('mime/type', $mimeType);
+		static::assertSame('text/plain', $this->mimeTypeDetector->detectFromFile('some/testfile.txt'));
 	}
 
 	/**
@@ -71,8 +63,8 @@ class MimeTypeDetectorTest extends TestCase
 	#[Group('units')]
 	public function testDetectFromFileThrowsExceptionForNonExistentFile(): void
 	{
-		$this->fileInfoWrapperMock->method('fileExists')->willReturn(false);
-		$this->fileInfoWrapperMock->expects($this->never())->method('detectMimeTypeFromFile');
+		$this->fileInfoWrapperStub->method('fileExists')->willReturn(false);
+		$this->fileInfoWrapperStub->method('detectMimeTypeFromFile')->willReturn('text/plain');
 
 		$this->expectException(InvalidArgumentException::class);
 		$this->expectExceptionMessage("File 'non_existent_file.txt' not exists.");
@@ -81,122 +73,111 @@ class MimeTypeDetectorTest extends TestCase
 	}
 
 	/**
+	 * Widgets are zip archives which finfo can not tell from others: the extension decides.
+	 *
 	 * @throws ModuleException
 	 */
 	#[Group('units')]
 	public function testDetectFromFileReturnsWidgetMimeTypeForWgtExtension(): void
 	{
-		$filePath = 'some/path/to/a/testfile.wgt';
-		$this->fileInfoWrapperMock->method('fileExists')->willReturn(true);
-		$this->fileInfoWrapperMock->expects($this->never())->method('detectMimeTypeFromFile');
+		$this->fileInfoWrapperStub->method('fileExists')->willReturn(true);
+		$this->fileInfoWrapperStub->method('detectMimeTypeFromFile')->willReturn('application/zip');
 
-		$mimeType = $this->mimeTypeDetector->detectFromFile($filePath);
-		static::assertEquals('application/widget', $mimeType);
-		unlink($filePath);
+		static::assertSame('application/widget', $this->mimeTypeDetector->detectFromFile('some/path/to/a/testfile.wgt'));
 	}
 
 	/**
 	 * @throws ModuleException
 	 */
+	#[Group('units')]
+	public function testTheWidgetExceptionDependsOnTheCaseOfTheExtension(): void
+	{
+		$this->fileInfoWrapperStub->method('fileExists')->willReturn(true);
+		$this->fileInfoWrapperStub->method('detectMimeTypeFromFile')->willReturn('application/zip');
+
+		static::assertSame('application/zip', $this->mimeTypeDetector->detectFromFile('some/path/to/a/testfile.WGT'));
+	}
+
 	#[Group('units')]
 	public function testDetectFromFileFails(): void
 	{
-		$filePath = 'some/undetectableMime.type';
-		$this->fileInfoWrapperMock->method('fileExists')->willReturn(true);
-		$this->fileInfoWrapperMock->expects($this->once())->method('detectMimeTypeFromFile')
-			->with($filePath)
-			->willReturn(false);
+		$this->fileInfoWrapperStub->method('fileExists')->willReturn(true);
+		$this->fileInfoWrapperStub->method('detectMimeTypeFromFile')->willReturn(false);
 
 		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage("MIME-Type for '$filePath' could not be detected.");
-		$this->mimeTypeDetector->detectFromFile($filePath);
+		$this->expectExceptionMessage("MIME-Type for 'some/undetectableMime.type' could not be detected.");
+
+		$this->mimeTypeDetector->detectFromFile('some/undetectableMime.type');
 	}
 
 	/**
 	 * @throws ModuleException
 	 */
 	#[Group('units')]
-	public function testDetectFromStreamReturnsCorrectMimeType(): void
+	public function testDetectFromStreamReturnsTheMimeTypeOfTheContent(): void
 	{
-		$stream        = 'some stream';
-		$streamContent = 'some stream content';
-		$mimetype      = 'video/ogg';
+		$this->fileInfoWrapperStub->method('isStream')->willReturn(true);
+		$this->fileInfoWrapperStub->method('getStreamContent')->willReturn('some stream content');
+		$this->fileInfoWrapperStub->method('detectMimeTypeFromStreamContent')->willReturnMap([['some stream content', 'video/ogg']]);
 
-		$this->fileInfoWrapperMock->method('isStream')
-			->with($stream)
-			->willReturn(true);
-		$this->fileInfoWrapperMock->method('getStreamContent')
-			->with($stream)
-			->willReturn($streamContent);
-		$this->fileInfoWrapperMock->method('detectMimeTypeFromStreamContent')
-			->with($streamContent)
-			->willReturn($mimetype);
-
-		static::assertEquals($mimetype, $this->mimeTypeDetector->detectFromStream($stream));
+		static::assertSame('video/ogg', $this->mimeTypeDetector->detectFromStream('some stream'));
 	}
 
-	/**
-	 * @throws ModuleException
-	 */
 	#[Group('units')]
 	public function testDetectFromStreamThrowsExceptionForInvalidStream(): void
 	{
-		$stream        = 'some not stream';
-		$this->fileInfoWrapperMock->method('isStream')
-			->with($stream)
-			->willReturn(false);
-		$this->fileInfoWrapperMock->expects($this->never())->method('getStreamContent');
-		$this->fileInfoWrapperMock->expects($this->never())->method('detectMimeTypeFromStreamContent');
+		$this->fileInfoWrapperStub->method('isStream')->willReturn(false);
 
 		$this->expectException(InvalidArgumentException::class);
 		$this->expectExceptionMessage('Invalid stream.');
 
-		$this->mimeTypeDetector->detectFromStream($stream);
+		$this->mimeTypeDetector->detectFromStream('some not stream');
 	}
 
-	/**
-	 * @throws ModuleException
-	 */
 	#[Group('units')]
 	public function testDetectFromStreamThrowsModuleExceptionForUnreadableStream(): void
 	{
-		$stream        = 'some stream';
-		$this->fileInfoWrapperMock->method('isStream')
-			->with($stream)
-			->willReturn(true);
-		$this->fileInfoWrapperMock->method('getStreamContent')
-			->with($stream)
-			->willReturn(false);
-		$this->fileInfoWrapperMock->expects($this->never())->method('detectMimeTypeFromStreamContent');
+		$this->fileInfoWrapperStub->method('isStream')->willReturn(true);
+		$this->fileInfoWrapperStub->method('getStreamContent')->willReturn(false);
 
 		$this->expectException(ModuleException::class);
 		$this->expectExceptionMessage('Stream was not readable.');
 
-		$this->mimeTypeDetector->detectFromStream($stream);
+		$this->mimeTypeDetector->detectFromStream('some stream');
+	}
+
+	#[Group('units')]
+	public function testDetectFromStreamThrowsModuleExceptionForUnknownMimeType(): void
+	{
+		$this->fileInfoWrapperStub->method('isStream')->willReturn(true);
+		$this->fileInfoWrapperStub->method('getStreamContent')->willReturn('some stream content');
+		$this->fileInfoWrapperStub->method('detectMimeTypeFromStreamContent')->willReturn(false);
+
+		$this->expectException(ModuleException::class);
+		$this->expectExceptionMessage('MIME-Type could not be detected from stream.');
+
+		$this->mimeTypeDetector->detectFromStream('some stream');
 	}
 
 	/**
 	 * @throws ModuleException
 	 */
 	#[Group('units')]
-	public function testDetectFromStreamThrowsModuleExceptionForUnknownMimeType(): void
+	public function testDetectFromStringContentReturnsTheMimeType(): void
 	{
-		$stream        = 'some stream';
-		$streamContent = 'some stream content';
+		$this->fileInfoWrapperStub->method('detectMimeTypeFromStreamContent')->willReturnMap([['plain text', 'text/plain']]);
 
-		$this->fileInfoWrapperMock->method('isStream')
-			->with($stream)
-			->willReturn(true);
-		$this->fileInfoWrapperMock->method('getStreamContent')
-			->with($stream)
-			->willReturn($streamContent);
-		$this->fileInfoWrapperMock->method('detectMimeTypeFromStreamContent')
-			->with($streamContent)
-			->willReturn(false);
+		static::assertSame('text/plain', $this->mimeTypeDetector->detectFromStringContent('plain text'));
+	}
+
+	#[Group('units')]
+	public function testDetectFromStringContentThrowsModuleExceptionForUnknownMimeType(): void
+	{
+		$this->fileInfoWrapperStub->method('detectMimeTypeFromStreamContent')->willReturn(false);
 
 		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('MIME-Type could not be detected from stream.');
+		$this->expectExceptionMessage('MIME-Type could not be detected from string content.');
 
-		$this->mimeTypeDetector->detectFromStream($stream);
+		$this->mimeTypeDetector->detectFromStringContent('???');
 	}
 }

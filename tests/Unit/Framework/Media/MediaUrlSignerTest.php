@@ -179,4 +179,57 @@ class MediaUrlSignerTest extends TestCase
 
 		static::assertSame('1760004000', $this->queryOf($signer->thumbUrl(self::CHECKSUM, 'jpg', self::NOW))['exp']);
 	}
+
+	/**
+	 * The format of the signature is part of every url which is out there: changing it
+	 * invalidates all of them. These values were computed with hash_hmac('sha256', 'checksum|ext|variant|exp', secret).
+	 */
+	#[Group('units')]
+	public function testTheSignatureIsStable(): void
+	{
+		static::assertSame(
+			['exp' => 1760004000, 'sig' => '2908e7f829c81180ab8159a7d7ead77a02875a4af7845a44f9ced14d1692af35'],
+			$this->mediaUrlSigner->sign(self::CHECKSUM, 'jpg', 'thumb', self::NOW)
+		);
+		static::assertSame(
+			'/media.php/orig/' . self::CHECKSUM . '.mp4?exp=1760004000&sig=dd28c3ca5c23f717a10c3afa043dceb0a8d17fa0de723f6537ec7506c85928b5',
+			$this->mediaUrlSigner->originalUrl(self::CHECKSUM, 'mp4', self::NOW)
+		);
+	}
+
+	#[Group('units')]
+	public function testVerifyAcceptsTheLastSecondAndRejectsTheNext(): void
+	{
+		$query = $this->queryOf($this->mediaUrlSigner->thumbUrl(self::CHECKSUM, 'jpg', self::NOW));
+
+		static::assertTrue(MediaUrlSigner::verify($query, self::SECRET, (int) $query['exp']));
+		static::assertFalse(MediaUrlSigner::verify($query, self::SECRET, (int) $query['exp'] + 1));
+	}
+
+	#[Group('units')]
+	public function testVerifyRejectsAnExpiryWhichIsNotANumber(): void
+	{
+		$query        = $this->queryOf($this->mediaUrlSigner->thumbUrl(self::CHECKSUM, 'jpg', self::NOW));
+		$query['exp'] = 'tomorrow';
+
+		static::assertFalse(MediaUrlSigner::verify($query, self::SECRET, self::NOW));
+	}
+
+	#[Group('units')]
+	public function testVerifyRejectsAnExpiryWhichWasExtended(): void
+	{
+		$query        = $this->queryOf($this->mediaUrlSigner->thumbUrl(self::CHECKSUM, 'jpg', self::NOW));
+		$query['exp'] = (string) ((int) $query['exp'] + 86400);
+
+		static::assertFalse(MediaUrlSigner::verify($query, self::SECRET, self::NOW));
+	}
+
+	#[Group('units')]
+	public function testVerifyRejectsAnEmptySignature(): void
+	{
+		$query        = $this->queryOf($this->mediaUrlSigner->thumbUrl(self::CHECKSUM, 'jpg', self::NOW));
+		$query['sig'] = '';
+
+		static::assertFalse(MediaUrlSigner::verify($query, self::SECRET, self::NOW));
+	}
 }

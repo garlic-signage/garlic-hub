@@ -72,12 +72,15 @@ const MEDIA_MIME = [
 	'zip'   => 'application/zip',
 	'json'  => 'application/json',
 	'xml'   => 'application/xml',
+	'rss'   => 'application/rss+xml',
+	'atom'  => 'application/atom+xml',
 	'apk'   => 'application/vnd.android.package-archive',
+	'smil'  => 'application/smil',
 	'txt'   => 'text/plain',
 	'csv'   => 'text/csv',
 	'bin'   => 'application/octet-stream',
 ];
-const MEDIA_DOWNLOAD = ['wgt', 'zip', 'json', 'xml', 'apk', 'txt', 'csv', 'bin'];
+const MEDIA_DOWNLOAD = ['wgt', 'zip', 'json', 'xml', 'rss', 'atom', 'apk', 'smil', 'txt', 'csv', 'bin'];
 
 function deliveryFail(int $status): never
 {

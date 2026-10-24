@@ -141,12 +141,13 @@ class Ffmpeg
 			);
 		}
 
+		// the paths are quoted for the shell, the binary path comes from the config and may carry options
 		$command = sprintf(
-			'%s -i %s %s -ss 00:00:02 -an -r 1 -vframes 1 -y %s/vid_%%d.jpg 2>&1',
+			'%s -i %s %s -ss 00:00:02 -an -r 1 -vframes 1 -y %s 2>&1',
 			$this->executablePath,
-			$this->mediaProperties->getFilename(),
+			escapeshellarg($this->mediaProperties->getFilename()),
 			$this->scaleOptions,
-			$this->getAbsolutePath($destination)
+			escapeshellarg($this->getAbsolutePath($destination) . '/vid_%d.jpg')
 		);
 
 		$this->shellExecutor->setCommand($command);
@@ -196,7 +197,7 @@ class Ffmpeg
 		$command = sprintf(
 			'%s -v quiet -print_format json -show_format -show_streams %s',
 			$this->probePath,
-			$filePath
+			escapeshellarg($filePath)
 		);
 
 		$this->shellExecutor->setCommand($command);

@@ -43,8 +43,8 @@ class MediaPropertiesTest extends TestCase
 		$stdClass = json_decode($json);
 		$this->mediaProperties->fromStdClass($stdClass);
 
-		static::assertEquals('test.mp4', $this->mediaProperties->getFilename());
-		static::assertEquals(60, $this->mediaProperties->getDuration());
+		static::assertSame('test.mp4', $this->mediaProperties->getFilename());
+		static::assertSame(60.0, $this->mediaProperties->getDuration());
 	}
 
 	#[Group('units')]
@@ -55,8 +55,8 @@ class MediaPropertiesTest extends TestCase
 		$stdClass = json_decode($json);
 		$this->mediaProperties->fromStdClass($stdClass, ['duration' => '160']);
 
-		static::assertEquals('test.mp4', $this->mediaProperties->getFilename());
-		static::assertEquals(160, $this->mediaProperties->getDuration());
+		static::assertSame('test.mp4', $this->mediaProperties->getFilename());
+		static::assertSame(160.0, $this->mediaProperties->getDuration());
 	}
 
 	#[Group('units')]
@@ -67,11 +67,11 @@ class MediaPropertiesTest extends TestCase
 		$stdClass = json_decode($json);
 		$this->mediaProperties->fromStdClass($stdClass);
 
-		static::assertEquals(1280, $this->mediaProperties->getWidth());
-		static::assertEquals(720, $this->mediaProperties->getHeight());
-		static::assertEquals('vp9', $this->mediaProperties->getVideoCodec());
-		static::assertEquals('aac', $this->mediaProperties->getAudioCodec());
-		static::assertEquals('media.mp4', $this->mediaProperties->getFilename());
+		static::assertSame(1280, $this->mediaProperties->getWidth());
+		static::assertSame(720, $this->mediaProperties->getHeight());
+		static::assertSame('vp9', $this->mediaProperties->getVideoCodec());
+		static::assertSame('aac', $this->mediaProperties->getAudioCodec());
+		static::assertSame('media.mp4', $this->mediaProperties->getFilename());
 		static::assertTrue($this->mediaProperties->hasVideoStream());
 
 	}
@@ -94,7 +94,7 @@ class MediaPropertiesTest extends TestCase
 		];
 		static::assertFalse($this->mediaProperties->hasVideoStream());
 
-		static::assertEquals($expected, $this->mediaProperties->toArray());
+		static::assertSame($expected, $this->mediaProperties->toArray());
 	}
 
 	#[Group('units')]
@@ -119,7 +119,7 @@ class MediaPropertiesTest extends TestCase
 			'container' => 'mkv',
 		];
 
-		static::assertEquals($expected, $this->mediaProperties->toArray());
+		static::assertSame($expected, $this->mediaProperties->toArray());
 	}
 
 	#[Group('units')]
@@ -134,41 +134,95 @@ class MediaPropertiesTest extends TestCase
 		$this->mediaProperties->reset();
 
 		// Verify that all properties have been reset to defaults
-		static::assertEquals(0, $this->mediaProperties->getWidth());
-		static::assertEquals(0, $this->mediaProperties->getHeight());
-		static::assertEquals('', $this->mediaProperties->getVideoCodec());
-		static::assertEquals('', $this->mediaProperties->getAudioCodec());
-		static::assertEquals('', $this->mediaProperties->getAspectRatio());
-		static::assertEquals('', $this->mediaProperties->getStartTime());
-		static::assertEquals(0.0, $this->mediaProperties->getDuration());
-		static::assertEquals('', $this->mediaProperties->getFilename());
-		static::assertEquals(0, $this->mediaProperties->getFilesize());
-		static::assertEquals('', $this->mediaProperties->getContainer());
+		static::assertSame(0, $this->mediaProperties->getWidth());
+		static::assertSame(0, $this->mediaProperties->getHeight());
+		static::assertSame('', $this->mediaProperties->getVideoCodec());
+		static::assertSame('', $this->mediaProperties->getAudioCodec());
+		static::assertSame('', $this->mediaProperties->getAspectRatio());
+		static::assertSame('', $this->mediaProperties->getStartTime());
+		static::assertSame(0.0, $this->mediaProperties->getDuration());
+		static::assertSame('', $this->mediaProperties->getFilename());
+		static::assertSame(0, $this->mediaProperties->getFilesize());
+		static::assertSame('', $this->mediaProperties->getContainer());
 	}
 
 	#[Group('units')]
-	public function testWithoutCodecName(): void
+	public function testStreamsWithoutACodecNameAreSkipped(): void
 	{
-		// Populate the MediaProperties object with sample values
 		$json = '{"format": {"filename": "sample.mp4", "size": 50000, "format_name": "avi", "duration": 300.5, "start_time": 0.1}, "streams": [{"codec_type": "video", "width": 1024, "height": 768}, {"codec_type": "audio"}]}';
 
-		$stdClass = json_decode($json);
-		$this->mediaProperties->fromStdClass($stdClass);
+		$this->mediaProperties->fromStdClass(json_decode($json));
 
-		// Reset the object
-		$this->mediaProperties->reset();
-
-		// Verify that all properties have been reset to defaults
-		static::assertEquals(0, $this->mediaProperties->getWidth());
-		static::assertEquals(0, $this->mediaProperties->getHeight());
-		static::assertEquals('', $this->mediaProperties->getVideoCodec());
-		static::assertEquals('', $this->mediaProperties->getAudioCodec());
-		static::assertEquals('', $this->mediaProperties->getAspectRatio());
-		static::assertEquals('', $this->mediaProperties->getStartTime());
-		static::assertEquals(0.0, $this->mediaProperties->getDuration());
-		static::assertEquals('', $this->mediaProperties->getFilename());
-		static::assertEquals(0, $this->mediaProperties->getFilesize());
-		static::assertEquals('', $this->mediaProperties->getContainer());
+		static::assertFalse($this->mediaProperties->hasVideoStream());
+		static::assertSame(0, $this->mediaProperties->getWidth());
+		static::assertSame(0, $this->mediaProperties->getHeight());
+		static::assertSame('', $this->mediaProperties->getVideoCodec());
+		static::assertSame('', $this->mediaProperties->getAudioCodec());
+		// the format is read in any case
+		static::assertSame('sample.mp4', $this->mediaProperties->getFilename());
+		static::assertSame(300.5, $this->mediaProperties->getDuration());
 	}
 
+	#[Group('units')]
+	public function testStreamsWithoutACodecTypeAreSkipped(): void
+	{
+		$json = '{"format": {"filename": "f.mp4", "size": 1, "format_name": "mp4", "start_time": 0}, "streams": [{"codec_name": "h264", "width": 1024}]}';
+
+		$this->mediaProperties->fromStdClass(json_decode($json));
+
+		static::assertFalse($this->mediaProperties->hasVideoStream());
+	}
+
+	#[Group('units')]
+	public function testTheAspectRatioOfTheVideoStreamIsTaken(): void
+	{
+		$json = '{"format": {"filename": "f.mp4", "size": 1, "format_name": "mp4", "start_time": 0}, "streams": [{"codec_type": "video", "codec_name": "h264", "width": 1920, "height": 1080, "display_aspect_ratio": "16:9"}]}';
+
+		$this->mediaProperties->fromStdClass(json_decode($json));
+
+		static::assertSame('16:9', $this->mediaProperties->getAspectRatio());
+	}
+
+	#[Group('units')]
+	public function testTheDurationOfTheFormatWinsOverTheUserValue(): void
+	{
+		$json = '{"format": {"filename": "f.mp4", "size": 1, "format_name": "mp4", "duration": "12.5", "start_time": 0}, "streams": []}';
+
+		$this->mediaProperties->fromStdClass(json_decode($json), ['duration' => '99']);
+
+		static::assertSame(12.5, $this->mediaProperties->getDuration());
+	}
+
+	#[Group('units')]
+	public function testWithoutAnyDurationItIsZero(): void
+	{
+		$json = '{"format": {"filename": "f.png", "size": 1, "format_name": "png_pipe", "start_time": 0}, "streams": []}';
+
+		$this->mediaProperties->fromStdClass(json_decode($json));
+
+		static::assertSame(0.0, $this->mediaProperties->getDuration());
+	}
+
+	#[Group('units')]
+	public function testAWidthWhichIsNoNumberIsZero(): void
+	{
+		$json = '{"format": {"filename": "f.mp4", "size": 1, "format_name": "mp4", "start_time": 0}, "streams": [{"codec_type": "video", "codec_name": "h264", "width": "wide", "height": "high"}]}';
+
+		$this->mediaProperties->fromStdClass(json_decode($json));
+
+		static::assertSame(0, $this->mediaProperties->getWidth());
+		static::assertSame(0, $this->mediaProperties->getHeight());
+		static::assertTrue($this->mediaProperties->hasVideoStream());
+	}
+
+	#[Group('units')]
+	public function testTheLastAudioStreamWins(): void
+	{
+		$json = '{"format": {"filename": "f.mp4", "size": 1, "format_name": "mp4", "start_time": 0}, "streams": [{"codec_type": "audio", "codec_name": "aac"}, {"codec_type": "audio", "codec_name": "mp3"}]}';
+
+		$this->mediaProperties->fromStdClass(json_decode($json));
+
+		static::assertSame('mp3', $this->mediaProperties->getAudioCodec());
+		static::assertFalse($this->mediaProperties->hasVideoStream());
+	}
 }
