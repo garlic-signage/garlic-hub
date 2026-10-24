@@ -31,7 +31,18 @@ class JsonTest extends TestCase
 	public function testEncodeForScriptReturnsObjectLiteral(): void
 	{
 		static::assertSame('{"a":"Hello","b":"Grüße"}', Json::encodeForScript(['a' => 'Hello', 'b' => 'Grüße']));
-		static::assertSame('[]', Json::encodeForScript([]));
+	}
+
+	#[Group('units')]
+	public function testEncodeForScriptOfEmptyDataIsAnEmptyObject(): void
+	{
+		static::assertSame('{}', Json::encodeForScript([]));
+	}
+
+	#[Group('units')]
+	public function testEncodeForScriptKeepsNestedEmptyArraysAndLists(): void
+	{
+		static::assertSame('{"a":[],"b":[1,2]}', Json::encodeForScript(['a' => [], 'b' => [1, 2]]));
 	}
 
 	#[Group('units')]
@@ -39,6 +50,7 @@ class JsonTest extends TestCase
 	{
 		$result = Json::encodeForScript(['x' => '</script><b>Tom & Jerry\'s</b>']);
 
+		static::assertSame('{"x":"\u003C\/script\u003E\u003Cb\u003ETom \u0026 Jerry\u0027s\u003C\/b\u003E"}', $result);
 		static::assertStringNotContainsString('<', $result);
 		static::assertStringNotContainsString('>', $result);
 		static::assertStringNotContainsString('&', $result);
@@ -59,5 +71,22 @@ class JsonTest extends TestCase
 	public function testEncodeForScriptSubstitutesInvalidUtf8(): void
 	{
 		static::assertSame(['x' => "a\u{FFFD}b"], json_decode(Json::encodeForScript(['x' => "a\xC3b"]), true));
+	}
+
+	/**
+	 * U+2028 and U+2029 end a line in JavaScript and break a string literal in older engines.
+	 */
+	#[Group('units')]
+	public function testEncodeForScriptEscapesLineSeparators(): void
+	{
+		$result = Json::encodeForScript(['x' => "a\u{2028}b\u{2029}c"]);
+
+		static::assertSame('{"x":"a\u2028b\u2029c"}', $result);
+	}
+
+	#[Group('units')]
+	public function testEncodeForScriptFallsBackToAnEmptyObjectForDataWhichCanNotBeEncoded(): void
+	{
+		static::assertSame('{}', Json::encodeForScript(['x' => NAN]));
 	}
 }

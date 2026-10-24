@@ -29,9 +29,15 @@ class Xml
 	/**
 	 * ENT_QUOTES is required: ENT_XML1 alone leaves double quotes untouched,
 	 * which breaks out of a quoted attribute.
+	 *
+	 * Characters which XML 1.0 does not allow at all (control characters like a vertical tab
+	 * from copied text) are removed, even as entity they would make the document unparsable.
+	 * The escaping comes first: it substitutes invalid UTF-8, so the pattern with /u can not fail.
 	 */
 	public static function escape(string|int|float|null $value): string
 	{
-		return htmlspecialchars((string) $value, ENT_XML1 | ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+		$escaped = htmlspecialchars((string) $value, ENT_XML1 | ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+		return (string) preg_replace('/[^\x{9}\x{A}\x{D}\x{20}-\x{D7FF}\x{E000}-\x{FFFD}\x{10000}-\x{10FFFF}]/u', '', $escaped);
 	}
 }

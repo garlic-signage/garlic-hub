@@ -27,13 +27,16 @@ namespace App\Framework\Helper;
 class Json
 {
 	/**
-	 * The result is a JS object literal and must be written with {{{ }}}.
+	 * The result is a JS object literal ({} for empty data) and must be written with {{{ }}}.
 	 * <, >, & and ' are hex-escaped, so a value can neither close the script tag nor start a tag.
 	 *
 	 * @param array<string,mixed> $data
 	 */
 	public static function encodeForScript(array $data): string
 	{
+		if ($data === [])
+			return '{}';
+
 		$json = json_encode($data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
 
 		return $json === false ? '{}' : $json;

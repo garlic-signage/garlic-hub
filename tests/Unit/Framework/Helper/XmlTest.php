@@ -46,4 +46,34 @@ class XmlTest extends TestCase
 	{
 		static::assertSame("\u{FFFD}", Xml::escape("\xC3"));
 	}
+
+	/**
+	 * XML 1.0 does not allow these characters, not even as entity.
+	 */
+	#[Group('units')]
+	public function testEscapeRemovesCharactersWhichAreNotAllowedInXml(): void
+	{
+		static::assertSame('abc', Xml::escape("a\x01b\x0Bc\x1F"));
+		static::assertSame('ab', Xml::escape("a\u{FFFE}b"));
+		static::assertSame('ab', Xml::escape("a\x00b"));
+	}
+
+	#[Group('units')]
+	public function testEscapeKeepsTabNewlineCarriageReturnAndUnicode(): void
+	{
+		static::assertSame("a\tb\nc\rd", Xml::escape("a\tb\nc\rd"));
+		static::assertSame('Grüße 日本 😀', Xml::escape('Grüße 日本 😀'));
+	}
+
+	#[Group('units')]
+	public function testEscapedValueMakesAParsableAttributeAndTextNode(): void
+	{
+		$value = "Title \x0B with <\"special\"> & 'chars'\x01";
+
+		$xml = simplexml_load_string('<r a="' . Xml::escape($value) . '">' . Xml::escape($value) . '</r>');
+
+		static::assertNotFalse($xml);
+		static::assertSame('Title  with <"special"> & \'chars\'', (string) $xml['a']);
+		static::assertSame('Title  with <"special"> & \'chars\'', (string) $xml);
+	}
 }

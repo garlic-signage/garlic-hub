@@ -22,43 +22,70 @@ declare(strict_types=1);
 namespace Tests\Unit\Framework\Helper;
 
 use App\Framework\Helper\Serialization;
+use ArrayObject;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use __PHP_Incomplete_Class;
 
 class SerializationTest extends TestCase
 {
-    #[Group('units')]
-    public function testUnSerializeSecureSucceed(): void
-    {
-        $expected = ['a', 'b', 'c', 'd'];
-        $result   = Serialization::unserializeSecure(serialize($expected));
-        static::assertEquals($expected, $result);
-    }
+	#[Group('units')]
+	public function testUnserializeSecureReturnsTheArray(): void
+	{
+		static::assertSame(['a', 'b', 'c', 'd'], Serialization::unserializeSecure(serialize(['a', 'b', 'c', 'd'])));
+	}
 
-    #[Group('units')]
-    public function testUnSerializeSecureFails(): void
-    {
-        $result   = Serialization::unserializeSecure('');
-        static::assertEquals([], $result);
-    }
+	#[Group('units')]
+	public function testUnserializeSecureKeepsKeysAndNestedArrays(): void
+	{
+		$data = ['zone' => ['x' => 1, 'y' => [2, 3]], 'name' => 'Lobby', 5 => true];
 
-    #[Group('units')]
-    public function testUnSerializeSecureWithNullAndNoArray(): void
-    {
-        static::assertSame([], Serialization::unserializeSecure(null));
-        static::assertSame([], Serialization::unserializeSecure(serialize('text')));
-        static::assertSame([], Serialization::unserializeSecure('no serialized data'));
-    }
+		static::assertSame($data, Serialization::unserializeSecure(serialize($data)));
+	}
 
-    /**
-     * Stored data must never create objects (PHP object injection), not even nested ones.
-     */
-    #[Group('units')]
-    public function testUnSerializeSecureCreatesNoObjects(): void
-    {
-        $result = Serialization::unserializeSecure(serialize(['item' => new \ArrayObject([1, 2])]));
+	#[Group('units')]
+	public function testUnserializeSecureOfEmptyStringAndNullIsAnEmptyArray(): void
+	{
+		static::assertSame([], Serialization::unserializeSecure(''));
+		static::assertSame([], Serialization::unserializeSecure(null));
+	}
 
-        static::assertInstanceOf(\__PHP_Incomplete_Class::class, $result['item']);
-    }
+	#[Group('units')]
+	#[DataProvider('noArrayProvider')]
+	public function testUnserializeSecureOfAnythingButAnArrayIsAnEmptyArray(string $value): void
+	{
+		static::assertSame([], Serialization::unserializeSecure($value));
+	}
 
+	/**
+	 * @return array<string, array{string}>
+	 */
+	public static function noArrayProvider(): array
+	{
+		return [
+			'string'            => [serialize('text')],
+			'integer'           => [serialize(5)],
+			'false'             => [serialize(false)],
+			'no serialized data' => ['no serialized data'],
+			'truncated array'   => ['a:1:{i:0;'],
+		];
+	}
+
+	/**
+	 * Stored data must never create objects (PHP object injection), not even nested ones.
+	 */
+	#[Group('units')]
+	public function testUnserializeSecureCreatesNoObjects(): void
+	{
+		$result = Serialization::unserializeSecure(serialize(['item' => new ArrayObject([1, 2])]));
+
+		static::assertInstanceOf(__PHP_Incomplete_Class::class, $result['item']);
+	}
+
+	#[Group('units')]
+	public function testUnserializeSecureOfAnObjectIsAnEmptyArray(): void
+	{
+		static::assertSame([], Serialization::unserializeSecure(serialize(new ArrayObject([1, 2]))));
+	}
 }
