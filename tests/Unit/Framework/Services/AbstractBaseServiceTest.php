@@ -22,10 +22,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Framework\Services;
 
 use App\Framework\Services\AbstractBaseService;
+use Monolog\Handler\TestHandler;
+use Monolog\Level;
+use Monolog\Logger;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 
 class ConcreteService extends AbstractBaseService
 {
@@ -34,17 +35,19 @@ class ConcreteService extends AbstractBaseService
 		$this->logger->info('something');
 	}
 }
+
 class AbstractBaseServiceTest extends TestCase
 {
-	/**
-	 * @throws Exception
-	 */
 	#[Group('units')]
-	public function testLoggerIsAvailableForSubclasses(): void
+	public function testTheLoggerIsAvailableForSubclasses(): void
 	{
-		$loggerMock = $this->createMock(LoggerInterface::class);
-		$loggerMock->expects($this->once())->method('info')->with('something');
+		$logs = new TestHandler();
 
-		(new ConcreteService($loggerMock))->logSomething();
+		new ConcreteService(new Logger('test', [$logs]))->logSomething();
+
+		$records = $logs->getRecords();
+		static::assertCount(1, $records);
+		static::assertSame(Level::Info, $records[0]->level);
+		static::assertSame('something', $records[0]->message);
 	}
 }

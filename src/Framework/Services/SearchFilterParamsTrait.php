@@ -174,10 +174,15 @@ trait SearchFilterParamsTrait
 		$allowed_ids       = array_flip($this->getAllowedCompanyIds());
 		$allowed_companies = array_intersect_key($this->getCompanyArray(), $allowed_ids);
 
-		$domain_ids = array_map( function($value) { return pow(2, $value); }, $this->getAllowedCompanyIds());
+		// the bit value is built from the id of the company itself, not from its position in the list
+		$domains = [];
+		foreach ($allowed_companies as $company_id => $company_name)
+		{
+			$domains[2 ** $company_id] = $company_name;
+		}
 
 		// notice: we can not use array_merge() because this will renumber any numeric key
-		return ['-'] + array_combine($domain_ids, $allowed_companies);
+		return ['-'] + $domains;
 	}
 
 	/**

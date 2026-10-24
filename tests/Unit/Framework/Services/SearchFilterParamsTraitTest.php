@@ -74,9 +74,9 @@ class SearchFilterParamsTraitTest extends TestCase
 	#[Group('units')]
 	public function testSetAndGetCurrentTotalResult(): void
 	{
-		$totalResult = 100;
-		$this->searchFilterService->setCurrentTotalResult($totalResult);
-		static::assertEquals($totalResult, $this->searchFilterService->getCurrentTotalResult());
+		$this->searchFilterService->setCurrentTotalResult(100);
+
+		static::assertSame(100, $this->searchFilterService->getCurrentTotalResult());
 	}
 
 	#[Group('units')]
@@ -84,7 +84,16 @@ class SearchFilterParamsTraitTest extends TestCase
 	{
 		$companies = [1 => 'Company A', 2 => 'Company B', 3 => []];
 		$this->searchFilterService->setCompanyArray($companies);
-		static::assertEquals($companies, $this->searchFilterService->getCompanyArray());
+
+		static::assertSame($companies, $this->searchFilterService->getCompanyArray());
+	}
+
+	#[Group('units')]
+	public function testSetAndGetAllowedCompanyIds(): void
+	{
+		$this->searchFilterService->setAllowedCompanyIds([3, 1]);
+
+		static::assertSame([3, 1], $this->searchFilterService->getAllowedCompanyIds());
 	}
 
 	#[Group('units')]
@@ -92,13 +101,27 @@ class SearchFilterParamsTraitTest extends TestCase
 	{
 		$filterResults = [['id' => 1, 'name' => 'Result 1'], ['id' => 2, 'name' => 'Result 2']];
 		$this->searchFilterService->setCurrentFilterResults($filterResults);
-		static::assertEquals($filterResults, $this->searchFilterService->getCurrentFilterResults());
+
+		static::assertSame($filterResults, $this->searchFilterService->getCurrentFilterResults());
+	}
+
+	#[Group('units')]
+	public function testTheSettersCanBeChained(): void
+	{
+		$result = $this->searchFilterService
+			->setCurrentFilterParams([])
+			->setCurrentTotalResult(1)
+			->setCompanyArray([])
+			->setAllowedCompanyIds([])
+			->setCurrentFilterResults([]);
+
+		static::assertSame($this->searchFilterService, $result);
 	}
 
 	#[Group('units')]
 	public function testReturnFilteredDomainsArrayForCheckBoxes(): void
 	{
-		static::assertEquals([], $this->searchFilterService->returnFilteredDomainsArrayForCheckBoxes());
+		static::assertSame([], $this->searchFilterService->returnFilteredDomainsArrayForCheckBoxes());
 	}
 
 	#[Group('units')]
@@ -106,8 +129,26 @@ class SearchFilterParamsTraitTest extends TestCase
 	{
 		$this->searchFilterService->setAllowedCompanyIds([1, 2]);
 		$this->searchFilterService->setCompanyArray([1 => 'Company A', 2 => 'Company B', 3 => 'Company C']);
-		$expected = [0 => '-', 1 => 'Company A', 2 => 'Company B'];
-		static::assertEquals($expected, $this->searchFilterService->returnFilteredCompaniesForDropdowns());
+
+		static::assertSame([0 => '-', 1 => 'Company A', 2 => 'Company B'], $this->searchFilterService->returnFilteredCompaniesForDropdowns());
+	}
+
+	#[Group('units')]
+	public function testReturnFilteredCompaniesForDropdownsSkipsUnknownIdsAndKeepsTheKeys(): void
+	{
+		$this->searchFilterService->setAllowedCompanyIds([3, 9]);
+		$this->searchFilterService->setCompanyArray([1 => 'Company A', 2 => 'Company B', 3 => 'Company C']);
+
+		static::assertSame([0 => '-', 3 => 'Company C'], $this->searchFilterService->returnFilteredCompaniesForDropdowns());
+	}
+
+	#[Group('units')]
+	public function testWithoutAllowedCompaniesOnlyTheDashRemains(): void
+	{
+		$this->searchFilterService->setCompanyArray([1 => 'Company A']);
+
+		static::assertSame([0 => '-'], $this->searchFilterService->returnFilteredCompaniesForDropdowns());
+		static::assertSame([0 => '-'], $this->searchFilterService->returnFilteredDomainsForDropdowns());
 	}
 
 	#[Group('units')]
@@ -115,17 +156,43 @@ class SearchFilterParamsTraitTest extends TestCase
 	{
 		$this->searchFilterService->setAllowedCompanyIds([1, 2, 3]);
 		$this->searchFilterService->setCompanyArray([1 => 'Company A', 2 => 'Company B', 3 => 'Company C']);
-		$expected = [0 => '-', 2 => 'Company A', 4 => 'Company B', 8 => 'Company C'];
-		static::assertEquals($expected, $this->searchFilterService->returnFilteredDomainsForDropdowns());
+
+		static::assertSame([0 => '-', 2 => 'Company A', 4 => 'Company B', 8 => 'Company C'], $this->searchFilterService->returnFilteredDomainsForDropdowns());
+	}
+
+	/**
+	 * The bit value belongs to the company, whatever the order of the allowed ids is.
+	 */
+	#[Group('units')]
+	public function testTheBitValueFollowsTheCompanyAndNotTheOrderOfTheAllowedIds(): void
+	{
+		$this->searchFilterService->setAllowedCompanyIds([3, 1]);
+		$this->searchFilterService->setCompanyArray([1 => 'Company A', 2 => 'Company B', 3 => 'Company C']);
+
+		static::assertSame([0 => '-', 2 => 'Company A', 8 => 'Company C'], $this->searchFilterService->returnFilteredDomainsForDropdowns());
+	}
+
+	/**
+	 * An allowed id without a company is skipped, it must not break the list.
+	 */
+	#[Group('units')]
+	public function testReturnFilteredDomainsForDropdownsSkipsUnknownIds(): void
+	{
+		$this->searchFilterService->setAllowedCompanyIds([1, 9]);
+		$this->searchFilterService->setCompanyArray([1 => 'Company A', 2 => 'Company B']);
+
+		static::assertSame([0 => '-', 2 => 'Company A'], $this->searchFilterService->returnFilteredDomainsForDropdowns());
 	}
 
 	#[Group('units')]
 	public function testSetAllResultData(): void
 	{
-		$total = 50;
 		$results = [['id' => 1, 'name' => 'Result 1'], ['id' => 2, 'name' => 'Result 2']];
-		$this->searchFilterService->setPublicAllResultData($total, $results);
-		static::assertEquals($total, $this->searchFilterService->getCurrentTotalResult());
-		static::assertEquals($results, $this->searchFilterService->getCurrentFilterResults());
+
+		$result = $this->searchFilterService->setPublicAllResultData(50, $results);
+
+		static::assertSame($this->searchFilterService, $result);
+		static::assertSame(50, $this->searchFilterService->getCurrentTotalResult());
+		static::assertSame($results, $this->searchFilterService->getCurrentFilterResults());
 	}
 }

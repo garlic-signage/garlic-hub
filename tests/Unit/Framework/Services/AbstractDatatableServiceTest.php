@@ -27,33 +27,38 @@ use App\Framework\Services\AbstractDatatableService;
 use App\Framework\Utils\FormParameters\BaseParameters;
 use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 class ConcreteDatatableService extends AbstractDatatableService
 {
 	public function loadDatatable(): void {}
 }
 
+/**
+ * The service hands the input fields to the query and keeps what comes back. The stubs answer only when they get
+ * the definition, the fields and the user which belong to the call, so a wrong call shows up as a wrong result.
+ * With a real query and database this is tested in tests/Integration/Framework/Services.
+ */
 class AbstractDatatableServiceTest extends TestCase
 {
+	private const array FIELDS = ['name' => ['value' => 'Anna']];
+
 	private FilterDefinition&Stub $definitionStub;
-	private DatatableQuery&MockObject $datatableQueryMock;
-	private BaseParameters&MockObject $parametersMock;
+	private DatatableQuery&Stub $datatableQueryStub;
+	private BaseParameters&Stub $parametersStub;
 	private ConcreteDatatableService $service;
 
-	/**
-	 * @throws \PHPUnit\Framework\MockObject\Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
 		$this->definitionStub     = $this->createStub(FilterDefinition::class);
-		$this->datatableQueryMock = $this->createMock(DatatableQuery::class);
-		$this->parametersMock     = $this->createMock(BaseParameters::class);
-		$this->service = new ConcreteDatatableService($this->createStub(LoggerInterface::class), $this->datatableQueryMock);
+		$this->datatableQueryStub = $this->createStub(DatatableQuery::class);
+		$this->parametersStub     = $this->createStub(BaseParameters::class);
+		$this->parametersStub->method('getInputParametersArray')->willReturn(self::FIELDS);
+
+		$this->service = new ConcreteDatatableService(new NullLogger(), $this->datatableQueryStub);
 	}
 
 	/**
@@ -62,22 +67,18 @@ class AbstractDatatableServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchForModuleAdmin(): void
 	{
-		$this->parametersMock->expects($this->once())
-			->method('getInputParametersArray')->willReturn(['empty']);
+		$rows = [['key' => 'value']];
+		$this->datatableQueryStub->method('countForModuleAdmin')->willReturnCallback(
+			fn(FilterDefinition $definition, array $fields): int => $definition === $this->definitionStub && $fields === self::FIELDS ? 12 : -1
+		);
+		$this->datatableQueryStub->method('findForModuleAdmin')->willReturnCallback(
+			fn(FilterDefinition $definition, array $fields): array => $definition === $this->definitionStub && $fields === self::FIELDS ? $rows : []
+		);
 
-		$this->datatableQueryMock->expects($this->once())->method('countForModuleAdmin')
-			->with($this->definitionStub, ['empty'])
-			->willReturn(12);
-
-		$result = [['key' => 'value']];
-		$this->datatableQueryMock->expects($this->once())->method('findForModuleAdmin')
-			->with($this->definitionStub, ['empty'])
-			->willReturn($result);
-
-		$this->service->fetchForModuleAdmin($this->definitionStub, $this->parametersMock);
+		$this->service->fetchForModuleAdmin($this->definitionStub, $this->parametersStub);
 
 		static::assertSame(12, $this->service->getCurrentTotalResult());
-		static::assertSame($result, $this->service->getCurrentFilterResults());
+		static::assertSame($rows, $this->service->getCurrentFilterResults());
 	}
 
 	/**
@@ -86,21 +87,36 @@ class AbstractDatatableServiceTest extends TestCase
 	#[Group('units')]
 	public function testFetchForUser(): void
 	{
-		$this->parametersMock->expects($this->once())
-			->method('getInputParametersArray')->willReturn(['empty']);
+		$rows = [['key' => 'value']];
+		$this->datatableQueryStub->method('countForUser')->willReturnCallback(
+			fn(FilterDefinition $definition, array $fields, int $UID): int => $definition === $this->definitionStub && $fields === self::FIELDS && $UID === 123 ? 12 : -1
+		);
+		$this->datatableQueryStub->method('findForUser')->willReturnCallback(
+			fn(FilterDefinition $definition, array $fields, int $UID): array => $definition === $this->definitionStub && $fields === self::FIELDS && $UID === 123 ? $rows : []
+		);
 
-		$this->datatableQueryMock->expects($this->once())->method('countForUser')
-			->with($this->definitionStub, ['empty'], 123)
-			->willReturn(12);
-
-		$result = [['key' => 'value']];
-		$this->datatableQueryMock->expects($this->once())->method('findForUser')
-			->with($this->definitionStub, ['empty'], 123)
-			->willReturn($result);
-
-		$this->service->fetchForUser($this->definitionStub, $this->parametersMock, 123);
+		$this->service->fetchForUser($this->definitionStub, $this->parametersStub, 123);
 
 		static::assertSame(12, $this->service->getCurrentTotalResult());
-		static::assertSame($result, $this->service->getCurrentFilterResults());
+		static::assertSame($rows, $this->service->getCurrentFilterResults());
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	#[Group('units')]
+	public function testFetchReturnsTheServiceAndReplacesTheLastResult(): void
+	{
+		$this->datatableQueryStub->method('countForModuleAdmin')->willReturnOnConsecutiveCalls(5, 0);
+		$this->datatableQueryStub->method('findForModuleAdmin')->willReturnOnConsecutiveCalls([['id' => 1]], []);
+
+		$first  = $this->service->fetchForModuleAdmin($this->definitionStub, $this->parametersStub);
+		static::assertSame($this->service, $first);
+		static::assertSame(5, $this->service->getCurrentTotalResult());
+
+		$this->service->fetchForModuleAdmin($this->definitionStub, $this->parametersStub);
+
+		static::assertSame(0, $this->service->getCurrentTotalResult());
+		static::assertSame([], $this->service->getCurrentFilterResults());
 	}
 }
