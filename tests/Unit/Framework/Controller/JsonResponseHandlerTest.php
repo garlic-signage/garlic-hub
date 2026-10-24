@@ -19,109 +19,123 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Framework\Controller;
 
 use App\Framework\Controller\JsonResponseHandler;
+use JsonException;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\StreamInterface;
+use Slim\Psr7\Response;
 
 class JsonResponseHandlerTest extends TestCase
 {
-	private ResponseInterface&MockObject $responseMock;
-	private StreamInterface&MockObject $streamInterfaceMock;
 	private JsonResponseHandler $jsonResponseHandler;
 
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
 
-		$this->responseMock        = $this->createMock(ResponseInterface::class);
-		$this->streamInterfaceMock = $this->createMock(StreamInterface::class);
 		$this->jsonResponseHandler = new JsonResponseHandler();
 	}
 
+	#[Group('units')]
+	public function testJsonResponseWritesDataAsJsonWithDefaultStatus(): void
+	{
+		$response = $this->jsonResponseHandler->jsonResponse(new Response(), ['anotherKey' => 'anotherValue']);
+
+		static::assertSame(200, $response->getStatusCode());
+		static::assertSame('application/json', $response->getHeaderLine('Content-Type'));
+		static::assertSame(['anotherKey' => 'anotherValue'], $this->body($response));
+	}
 
 	#[Group('units')]
-	public function testJsonResponseCorrect(): void
+	public function testJsonResponseUsesGivenStatus(): void
 	{
-		$data = ['anotherKey' => 'anotherValue'];
-		$this->responseMock->method('getBody')->willReturn($this->streamInterfaceMock);
-		$this->streamInterfaceMock->method('write')->with(json_encode($data));
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Content-Type', 'application/json')
-			->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')->with('200');
+		$response = $this->jsonResponseHandler->jsonResponse(new Response(), ['a' => 1], 201);
 
-		$this->jsonResponseHandler->jsonResponse($this->responseMock, $data);
+		static::assertSame(201, $response->getStatusCode());
+	}
 
+	#[Group('units')]
+	public function testJsonResponseKeepsSpecialCharacters(): void
+	{
+		$data     = ['text' => 'Grüße "quoted" <b>&</b> / 日本'];
+		$response = $this->jsonResponseHandler->jsonResponse(new Response(), $data);
+
+		static::assertSame($data, $this->body($response));
+	}
+
+	#[Group('units')]
+	public function testJsonResponseSubstitutesInvalidUtf8(): void
+	{
+		$response = $this->jsonResponseHandler->jsonResponse(new Response(), ['name' => "broken\xB1name"]);
+
+		static::assertSame(200, $response->getStatusCode());
+		static::assertSame(['name' => "broken\u{FFFD}name"], $this->body($response));
+	}
+
+	#[Group('units')]
+	public function testJsonResponseThrowsForDataWhichCanNotBeEncoded(): void
+	{
+		$this->expectException(JsonException::class);
+
+		$this->jsonResponseHandler->jsonResponse(new Response(), ['value' => NAN]);
 	}
 
 	#[Group('units')]
 	public function testJsonSuccessWithoutAdditionalData(): void
 	{
-		$data = ['success' => true];
-		$this->responseMock->method('getBody')->willReturn($this->streamInterfaceMock);
-		$this->streamInterfaceMock->method('write')->with(json_encode($data));
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Content-Type', 'application/json')
-			->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')->with(200);
+		$response = $this->jsonResponseHandler->jsonSuccess(new Response());
 
-		$this->jsonResponseHandler->jsonSuccess($this->responseMock);
+		static::assertSame(200, $response->getStatusCode());
+		static::assertSame('application/json', $response->getHeaderLine('Content-Type'));
+		static::assertSame(['success' => true], $this->body($response));
 	}
 
 	#[Group('units')]
 	public function testJsonSuccessWithAdditionalData(): void
 	{
-		$additionalData = ['anotherKey' => 'anotherValue'];
-		$data = ['success' => true] + $additionalData;
+		$response = $this->jsonResponseHandler->jsonSuccess(new Response(), ['id' => 7, 'name' => 'Lobby']);
 
-		$this->responseMock->method('getBody')->willReturn($this->streamInterfaceMock);
-		$this->streamInterfaceMock->method('write')->with(json_encode($data));
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Content-Type', 'application/json')
-			->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')->with(200);
+		static::assertSame(200, $response->getStatusCode());
+		static::assertSame(['success' => true, 'id' => 7, 'name' => 'Lobby'], $this->body($response));
+	}
 
-		$this->jsonResponseHandler->jsonSuccess($this->responseMock, $additionalData);
+	#[Group('units')]
+	public function testJsonSuccessCanNotBeOverwrittenByData(): void
+	{
+		$response = $this->jsonResponseHandler->jsonSuccess(new Response(), ['success' => false]);
+
+		static::assertSame(['success' => true], $this->body($response));
 	}
 
 	#[Group('units')]
 	public function testJsonErrorWithDefaultStatus(): void
 	{
-		$errorMessage = 'An error occurred';
+		$response = $this->jsonResponseHandler->jsonError(new Response(), 'An error occurred');
 
-		$this->responseMock->method('getBody')->willReturn($this->streamInterfaceMock);
-		$this->streamInterfaceMock->method('write')->with(json_encode(['success' => false, 'error_message' => $errorMessage]));
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Content-Type', 'application/json')
-			->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')->with(400);
-
-		$this->jsonResponseHandler->jsonError($this->responseMock, $errorMessage);
+		static::assertSame(400, $response->getStatusCode());
+		static::assertSame('application/json', $response->getHeaderLine('Content-Type'));
+		static::assertSame(['success' => false, 'error_message' => 'An error occurred'], $this->body($response));
 	}
 
 	#[Group('units')]
 	public function testJsonErrorWithCustomStatus(): void
 	{
-		$errorMessage = 'Custom error';
-		$customStatus = 500;
+		$response = $this->jsonResponseHandler->jsonError(new Response(), 'Custom error', 500);
 
-		$this->responseMock->method('getBody')->willReturn($this->streamInterfaceMock);
-		$this->streamInterfaceMock->method('write')->with(json_encode(['success' => false, 'error_message' => $errorMessage]));
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Content-Type', 'application/json')
-			->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')->with($customStatus);
+		static::assertSame(500, $response->getStatusCode());
+		static::assertSame(['success' => false, 'error_message' => 'Custom error'], $this->body($response));
+	}
 
-		$this->jsonResponseHandler->jsonError($this->responseMock, $errorMessage, $customStatus);
+	/**
+	 * @return array<mixed>
+	 */
+	private function body(ResponseInterface $response): array
+	{
+		$response->getBody()->rewind();
+
+		return json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
 	}
 }

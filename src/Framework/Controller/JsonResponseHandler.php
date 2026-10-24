@@ -29,13 +29,15 @@ use Psr\Http\Message\ResponseInterface;
 class JsonResponseHandler
 {
     /**
+	 * Invalid UTF-8 is substituted. A value which can not be encoded at all (NAN, INF, recursion)
+	 * is a programming error and throws a JsonException, which the JsonErrorHandler answers.
+	 *
 	 * @param array<string,mixed>|list<array<string,mixed>>|array<empty,empty> $data
+	 * @throws \JsonException
 	 */
     public function jsonResponse(ResponseInterface $response, array $data, int $status = 200): ResponseInterface
     {
-        $json = json_encode($data);
-        if ($json !== false)
-            $response->getBody()->write($json);
+        $response->getBody()->write(json_encode($data, JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR));
 
         return $response->withHeader('Content-Type', 'application/json')->withStatus($status);
     }

@@ -19,99 +19,74 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Framework\Controller;
 
 use App\Framework\Controller\BaseResponseBuilder;
 use App\Framework\Controller\JsonResponseHandler;
-use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Localization\Translate\Translator;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
+use Slim\Psr7\Response;
 
-class ConcreteResponseBuilder extends BaseResponseBuilder{}
 class BaseResponseBuilderTest extends TestCase
 {
-	private JsonResponseHandler&MockObject $jsonResponseHandlerMock;
-	private Translator&MockObject $translatorMock;
-	private ConcreteResponseBuilder $baseResponseBuilder;
+	private Translator&Stub $translatorStub;
+	private BaseResponseBuilder $baseResponseBuilder;
 
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
 
-		$this->jsonResponseHandlerMock = $this->createMock(JsonResponseHandler::class);
-		$this->translatorMock          = $this->createMock(Translator::class);
-		$this->baseResponseBuilder      = new ConcreteResponseBuilder($this->jsonResponseHandlerMock, $this->translatorMock);
+		$this->translatorStub     = $this->createStub(Translator::class);
+		$this->baseResponseBuilder = new class(new JsonResponseHandler(), $this->translatorStub) extends BaseResponseBuilder {};
 	}
 
 	/**
-	 * @throws Exception
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testCsrfTokenMismatch(): void
+	public function testCsrfTokenMismatchAnswersWithTranslatedError(): void
 	{
-		$mockResponse = $this->createStub(ResponseInterface::class);
-		$translatedError = 'CSRF Token Mismatch';
+		// only the right translation key gives a text
+		$this->translatorStub->method('translate')->willReturnMap([['csrf_token_mismatch', 'security', [], 'CSRF Token Mismatch']]);
 
-		$this->translatorMock->expects($this->once())->method('translate')
-			->with('csrf_token_mismatch', 'security')
-			->willReturn($translatedError);
+		$response = $this->baseResponseBuilder->csrfTokenMismatch(new Response());
 
-		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonError')
-			->with($mockResponse, $translatedError)
-			->willReturn($mockResponse);
-
-		$response = $this->baseResponseBuilder->csrfTokenMismatch($mockResponse);
-
-		static::assertSame($mockResponse, $response);
+		static::assertSame(400, $response->getStatusCode());
+		static::assertSame('application/json', $response->getHeaderLine('Content-Type'));
+		static::assertSame(['success' => false, 'error_message' => 'CSRF Token Mismatch'], $this->body($response));
 	}
 
-
-	/**
-	 * @throws Exception
-	 */
 	#[Group('units')]
-	public function testGeneralErrorReturnsJsonErrorWithMessage(): void
+	public function testGeneralErrorAnswersWithTheGivenMessage(): void
 	{
-		$this->translatorMock->expects($this->never())->method($this->anything());
-		$mockResponse = $this->createStub(ResponseInterface::class);
-		$errorMessage = 'An unexpected error occurred';
+		$response = $this->baseResponseBuilder->generalError(new Response(), 'An unexpected error occurred');
 
-		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonError')
-			->with($mockResponse, $errorMessage)
-			->willReturn($mockResponse);
+		static::assertSame(400, $response->getStatusCode());
+		static::assertSame(['success' => false, 'error_message' => 'An unexpected error occurred'], $this->body($response));
+	}
 
-		$response = $this->baseResponseBuilder->generalError($mockResponse, $errorMessage);
+	#[Group('units')]
+	public function testGeneralSuccessAnswersWithSuccessAndTheGivenData(): void
+	{
+		$response = $this->baseResponseBuilder->generalSuccess(new Response(), ['message' => 'Operation was successful']);
 
-		static::assertSame($mockResponse, $response);
+		static::assertSame(200, $response->getStatusCode());
+		static::assertSame(['success' => true, 'message' => 'Operation was successful'], $this->body($response));
 	}
 
 	/**
-	 * @throws Exception
+	 * @return array<mixed>
 	 */
-	#[Group('units')]
-	public function testGeneralSuccessReturnsJsonSuccessWithMessage(): void
+	private function body(ResponseInterface $response): array
 	{
-		$this->translatorMock->expects($this->never())->method($this->anything());
-		$mockResponse = $this->createStub(ResponseInterface::class);
-		$successMessage = ['message' => 'Operation was successful'];
+		$response->getBody()->rewind();
 
-		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonSuccess')
-			->with($mockResponse, $successMessage)
-			->willReturn($mockResponse);
-
-		$response = $this->baseResponseBuilder->generalSuccess($mockResponse, $successMessage);
-
-		static::assertSame($mockResponse, $response);
+		return json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
 	}
 }
