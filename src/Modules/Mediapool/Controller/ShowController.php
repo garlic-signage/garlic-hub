@@ -84,7 +84,6 @@ class ShowController
 					'LANG_CANCEL' => $this->translator->translate('cancel', 'main'),
 					'LANG_CLOSE' => $this->translator->translate('close', 'main'),
 					'LANG_FOLDER_NAME' => $this->translator->translate('name', 'main'),
-					'LANG_IS_PUBLIC' => $this->translator->translate('is_public', 'main'),
 					'LANG_EDIT' => $this->translator->translate('edit', 'main'),
 					'LANG_CLONE' => $this->translator->translate('clone', 'main'),
 					'LANG_DOWNLOAD' => $this->translator->translate('download', 'main'),

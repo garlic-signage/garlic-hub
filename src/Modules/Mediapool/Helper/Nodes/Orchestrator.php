@@ -26,6 +26,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
+use App\Modules\Mediapool\Helper\ReadsInput;
 use App\Modules\Mediapool\Services\NodesService;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
@@ -37,23 +38,14 @@ use Psr\Http\Message\ResponseInterface;
  */
 class Orchestrator
 {
-	/** @var array<string,mixed> */
-	private array $input = [];
+	use ReadsInput;
+
 
 	public function __construct(
 		private readonly ResponseBuilder $responseBuilder,
 		private readonly BaseValidator $validator,
 		private readonly NodesService $nodesService
 	) {}
-
-	/**
-	 * @param array<string,mixed> $input
-	 */
-	public function setInput(array $input): static
-	{
-		$this->input = $input;
-		return $this;
-	}
 
 	/**
 	 * @throws CoreException
@@ -63,7 +55,7 @@ class Orchestrator
 	 */
 	public function list(ResponseInterface $response): ResponseInterface
 	{
-		$nodes = $this->nodesService->getNodes((int) ($this->input['parent_id'] ?? 0));
+		$nodes = $this->nodesService->getNodes($this->id('parent_id'));
 
 		return $this->responseBuilder->nodeList($response, $nodes);
 	}
@@ -78,8 +70,12 @@ class Orchestrator
 		if ($answer !== null)
 			return $answer;
 
-		if (!isset($this->input['name']))
+		if ($this->text('name') === '')
 			return $this->responseBuilder->missingName($response);
+
+		// without a parent the directory is a root directory: a parent which is no number is no parent
+		if (isset($this->input['node_id']) && !$this->hasId('node_id'))
+			return $this->responseBuilder->missingNodeId($response);
 
 		return null;
 	}
@@ -92,10 +88,10 @@ class Orchestrator
 	 */
 	public function add(ResponseInterface $response): ResponseInterface
 	{
-		$newNodeId = $this->nodesService->addNode((int) ($this->input['node_id'] ?? 0), $this->input['name']);
+		$newNodeId = $this->nodesService->addNode($this->id('node_id'), $this->text('name'));
 
 		return $this->responseBuilder->generalSuccess($response, [
-			'data' => ['id' => $newNodeId, 'new_name' => $this->input['name']]
+			'data' => ['id' => $newNodeId, 'new_name' => $this->text('name')]
 		]);
 	}
 
@@ -109,7 +105,7 @@ class Orchestrator
 		if ($answer !== null)
 			return $answer;
 
-		if (!isset($this->input['name']) || !isset($this->input['node_id']))
+		if ($this->text('name') === '' || !$this->hasId('node_id'))
 			return $this->responseBuilder->missingNameOrId($response);
 
 		return null;
@@ -123,15 +119,15 @@ class Orchestrator
 	 */
 	public function edit(ResponseInterface $response): ResponseInterface
 	{
-		$visibility = $this->input['visibility'] ?? null;
+		$visibility = $this->optionalInt('visibility');
 
 		// 0 affected rows only means that nothing has changed
-		$this->nodesService->editNode((int) $this->input['node_id'], $this->input['name'], $visibility);
+		$this->nodesService->editNode($this->id('node_id'), $this->text('name'), $visibility);
 
 		return $this->responseBuilder->generalSuccess($response, [
 			'data' => [
-				'id' => $this->input['node_id'],
-				'new_name' => $this->input['name'],
+				'id' => $this->id('node_id'),
+				'new_name' => $this->text('name'),
 				'visibility' => $visibility
 			]
 		]);
@@ -147,7 +143,7 @@ class Orchestrator
 		if ($answer !== null)
 			return $answer;
 
-		if (!isset($this->input['src_node_id'], $this->input['target_node_id'], $this->input['target_region']))
+		if (!$this->hasId('src_node_id') || !$this->hasId('target_node_id') || $this->text('target_region') === '')
 			return $this->responseBuilder->missingMoveParameters($response);
 
 		return null;
@@ -160,9 +156,9 @@ class Orchestrator
 	public function move(ResponseInterface $response): ResponseInterface
 	{
 		$count = $this->nodesService->moveNode(
-			(int) $this->input['src_node_id'],
-			(int) $this->input['target_node_id'],
-			$this->input['target_region']
+			$this->id('src_node_id'),
+			$this->id('target_node_id'),
+			$this->text('target_region')
 		);
 
 		return $this->responseBuilder->generalSuccess($response, ['data' => ['count_deleted_nodes' => $count]]);
@@ -178,7 +174,7 @@ class Orchestrator
 		if ($answer !== null)
 			return $answer;
 
-		if (!isset($this->input['node_id']))
+		if (!$this->hasId('node_id'))
 			return $this->responseBuilder->missingNodeId($response);
 
 		return null;
@@ -192,7 +188,7 @@ class Orchestrator
 	 */
 	public function delete(ResponseInterface $response): ResponseInterface
 	{
-		$count = $this->nodesService->deleteNode((int) $this->input['node_id']);
+		$count = $this->nodesService->deleteNode($this->id('node_id'));
 
 		return $this->responseBuilder->generalSuccess($response, ['data' => ['count_deleted_nodes' => $count]]);
 	}
@@ -203,7 +199,7 @@ class Orchestrator
 	 */
 	private function validateToken(ResponseInterface $response): ?ResponseInterface
 	{
-		if (!$this->validator->validateCsrfToken($this->input['csrf_token'] ?? ''))
+		if (!$this->validator->validateCsrfToken($this->text('csrf_token')))
 			return $this->responseBuilder->csrfTokenMismatch($response);
 
 		return null;

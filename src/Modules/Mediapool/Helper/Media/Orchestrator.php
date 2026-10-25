@@ -26,6 +26,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\DatabaseException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
+use App\Modules\Mediapool\Helper\ReadsInput;
 use App\Modules\Mediapool\Services\MediaService;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
@@ -37,6 +38,8 @@ use Psr\Http\Message\ResponseInterface;
  */
 class Orchestrator
 {
+	use ReadsInput;
+
 	private const array FILTER_MAP = [
 		'images'    => 'image',
 		'videos'    => 'video',
@@ -44,8 +47,6 @@ class Orchestrator
 		'documents' => 'application/pdf',
 	];
 
-	/** @var array<string,mixed> */
-	private array $input = [];
 	private int $nodeId = 0;
 
 	public function __construct(
@@ -54,18 +55,9 @@ class Orchestrator
 		private readonly MediaService $mediaService
 	) {}
 
-	/**
-	 * @param array<string,mixed> $input
-	 */
-	public function setInput(array $input): static
-	{
-		$this->input = $input;
-		return $this;
-	}
-
 	public function validateList(ResponseInterface $response): ?ResponseInterface
 	{
-		$this->nodeId = (int) ($this->input['node_id'] ?? 0);
+		$this->nodeId = $this->id('node_id');
 		if ($this->nodeId === 0)
 			return $this->responseBuilder->missingNode($response);
 
@@ -78,7 +70,7 @@ class Orchestrator
 	 */
 	public function list(ResponseInterface $response): ResponseInterface
 	{
-		$filter = self::FILTER_MAP[$this->input['filter'] ?? ''] ?? '';
+		$filter = self::FILTER_MAP[$this->text('filter')] ?? '';
 
 		$mediaList = $this->mediaService->listMedia($this->nodeId, $filter);
 
@@ -87,7 +79,7 @@ class Orchestrator
 
 	public function validateGetInfo(ResponseInterface $response): ?ResponseInterface
 	{
-		if (($this->input['media_id'] ?? '') === '')
+		if ($this->text('media_id') === '')
 			return $this->responseBuilder->missingMediaId($response);
 
 		return null;
@@ -99,7 +91,7 @@ class Orchestrator
 	 */
 	public function getInfo(ResponseInterface $response): ResponseInterface
 	{
-		$media = $this->mediaService->fetchMedia($this->input['media_id']);
+		$media = $this->mediaService->fetchMedia($this->text('media_id'));
 
 		return $this->responseBuilder->generalSuccess($response, ['media' => $media]);
 	}
@@ -114,13 +106,13 @@ class Orchestrator
 		if ($answer !== null)
 			return $answer;
 
-		if (!array_key_exists('media_id', $this->input))
+		if ($this->text('media_id') === '')
 			return $this->responseBuilder->missingMediaId($response);
 
-		if (!array_key_exists('filename', $this->input))
+		if (!is_string($this->input['filename'] ?? null))
 			return $this->responseBuilder->missingFilename($response);
 
-		if (!array_key_exists('description', $this->input))
+		if (!is_string($this->input['description'] ?? null))
 			return $this->responseBuilder->missingDescription($response);
 
 		return null;
@@ -132,7 +124,7 @@ class Orchestrator
 	 */
 	public function edit(ResponseInterface $response): ResponseInterface
 	{
-		$this->mediaService->updateMedia($this->input['media_id'], $this->input['filename'], $this->input['description']);
+		$this->mediaService->updateMedia($this->text('media_id'), $this->text('filename'), $this->text('description'));
 
 		return $this->responseBuilder->generalSuccess($response, []);
 	}
@@ -149,7 +141,7 @@ class Orchestrator
 		if ($answer !== null)
 			return $answer;
 
-		if (!isset($this->input['media_id']))
+		if ($this->text('media_id') === '')
 			return $this->responseBuilder->missingMediaId($response);
 
 		return null;
@@ -161,7 +153,7 @@ class Orchestrator
 	 */
 	public function delete(ResponseInterface $response): ResponseInterface
 	{
-		$count = $this->mediaService->deleteMedia($this->input['media_id']);
+		$count = $this->mediaService->deleteMedia($this->text('media_id'));
 
 		return $this->responseBuilder->generalSuccess($response, ['data' => ['deleted_media' => $count]]);
 	}
@@ -172,7 +164,7 @@ class Orchestrator
 	 */
 	public function clone(ResponseInterface $response): ResponseInterface
 	{
-		$newMedia = $this->mediaService->cloneMedia($this->input['media_id']);
+		$newMedia = $this->mediaService->cloneMedia($this->text('media_id'));
 
 		return $this->responseBuilder->generalSuccess($response, ['new_media' => $newMedia]);
 	}
@@ -187,7 +179,7 @@ class Orchestrator
 		if ($answer !== null)
 			return $answer;
 
-		if (!isset($this->input['media_id'], $this->input['node_id']))
+		if ($this->text('media_id') === '' || !$this->hasId('node_id'))
 			return $this->responseBuilder->missingMediaIdOrNode($response);
 
 		return null;
@@ -199,7 +191,7 @@ class Orchestrator
 	 */
 	public function move(ResponseInterface $response): ResponseInterface
 	{
-		$count = $this->mediaService->moveMedia($this->input['media_id'], (int) $this->input['node_id']);
+		$count = $this->mediaService->moveMedia($this->text('media_id'), $this->id('node_id'));
 
 		return $this->responseBuilder->generalSuccess($response, ['data' => ['deleted_media' => $count]]);
 	}
@@ -210,7 +202,7 @@ class Orchestrator
 	 */
 	private function validateToken(ResponseInterface $response): ?ResponseInterface
 	{
-		if (!$this->validator->validateCsrfToken($this->input['csrf_token'] ?? ''))
+		if (!$this->validator->validateCsrfToken($this->text('csrf_token')))
 			return $this->responseBuilder->csrfTokenMismatch($response);
 
 		return null;

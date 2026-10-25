@@ -24,58 +24,67 @@ namespace Tests\Unit\Modules\Mediapool\Helper\Media;
 use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Localization\Translate\Translator;
 use App\Modules\Mediapool\Helper\Media\ResponseBuilder;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\ResponseInterface;
+use Slim\Psr7\Response;
 
+/**
+ * The answers are what the browser reads: the JSON body and the status, made by the real JsonResponseHandler.
+ */
 class ResponseBuilderTest extends TestCase
 {
-	private JsonResponseHandler&MockObject $jsonResponseHandlerMock;
-	private ResponseInterface&Stub $responseStub;
 	private ResponseBuilder $responseBuilder;
 
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->jsonResponseHandlerMock = $this->createMock(JsonResponseHandler::class);
-		$this->responseStub            = $this->createStub(ResponseInterface::class);
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
+		$this->responseBuilder = new ResponseBuilder(new JsonResponseHandler(), $translator);
+	}
 
-		$this->responseBuilder = new ResponseBuilder(
-			$this->jsonResponseHandlerMock,
-			$this->createStub(Translator::class)
-		);
+	/**
+	 * @return array<string,array{string,string}>
+	 */
+	public static function errors(): array
+	{
+		return [
+			'missingNode' => ['missingNode', 'node is missing'],
+			'missingMediaId' => ['missingMediaId', 'Media id is missing'],
+			'missingFilename' => ['missingFilename', 'Filename is missing'],
+			'missingDescription' => ['missingDescription', 'Description is missing'],
+			'missingMediaIdOrNode' => ['missingMediaIdOrNode', 'media id or node is missing']
+		];
 	}
 
 	#[Group('units')]
-	public function testErrorResponses(): void
+	#[DataProvider('errors')]
+	public function testEveryErrorIsAJsonErrorWithItsMessage(string $method, string $message): void
 	{
-		$expected = [
-			'missingNode'          => 'node is missing',
-			'missingMediaId'       => 'Media id is missing',
-			'missingFilename'      => 'Filename is missing',
-			'missingDescription'   => 'Description is missing',
-			'missingMediaIdOrNode' => 'media id or node is missing',
-		];
+		$response = $this->responseBuilder->$method(new Response());
 
-		$calls = [];
-		$this->jsonResponseHandlerMock->expects($this->exactly(count($expected)))->method('jsonError')
-			->willReturnCallback(function (ResponseInterface $response, string $message) use (&$calls)
-			{
-				$calls[] = $message;
-				return $response;
-			});
+		static::assertSame(400, $response->getStatusCode());
+		static::assertSame('application/json', $response->getHeaderLine('Content-Type'));
+		static::assertSame(['success' => false, 'error_message' => $message], json_decode((string) $response->getBody(), true));
+	}
 
-		foreach (array_keys($expected) as $method)
-		{
-			static::assertSame($this->responseStub, $this->responseBuilder->$method($this->responseStub));
-		}
+	#[Group('units')]
+	public function testTheTokenErrorHasTheTextOfTheLanguage(): void
+	{
+		$response = $this->responseBuilder->csrfTokenMismatch(new Response());
 
-		static::assertSame(array_values($expected), $calls);
+		static::assertSame(['success' => false, 'error_message' => 'security.csrf_token_mismatch'], json_decode((string) $response->getBody(), true));
+	}
+
+	#[Group('units')]
+	public function testAGeneralSuccessAndAGeneralErrorAreMarked(): void
+	{
+		$success = $this->responseBuilder->generalSuccess(new Response(), ['data' => ['id' => 5]]);
+		$error   = $this->responseBuilder->generalError(new Response(), 'It failed');
+
+		static::assertSame(200, $success->getStatusCode());
+		static::assertSame(['success' => true, 'data' => ['id' => 5]], json_decode((string) $success->getBody(), true));
+		static::assertSame(['success' => false, 'error_message' => 'It failed'], json_decode((string) $error->getBody(), true));
 	}
 }

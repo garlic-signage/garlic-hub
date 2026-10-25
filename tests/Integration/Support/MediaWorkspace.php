@@ -23,6 +23,12 @@ namespace Tests\Integration\Support;
 
 use App\Framework\Config\Config;
 use App\Framework\Config\IniConfigLoader;
+use App\Framework\Media\Ffmpeg;
+use App\Framework\Media\MediaProperties;
+use App\Framework\System\ShellExecutor;
+use App\Modules\Mediapool\Utils\ImagickFactory;
+use App\Modules\Mediapool\Utils\MediaHandlerFactory;
+use App\Modules\Mediapool\Utils\ZipFilesystemFactory;
 use League\Flysystem\Filesystem;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 
@@ -49,6 +55,20 @@ final class MediaWorkspace
 
 		$this->config     = new Config(new IniConfigLoader($root . '/config/settings'), ['systemDir' => $this->dir], ['APP_PLATFORM_EDITION' => 'edge']);
 		$this->filesystem = new Filesystem(new LocalFilesystemAdapter($this->dir));
+	}
+
+	/**
+	 * The handlers of the media, working in this storage.
+	 */
+	public function handlerFactory(): MediaHandlerFactory
+	{
+		return new MediaHandlerFactory(
+			$this->config,
+			$this->filesystem,
+			new ZipFilesystemFactory(),
+			new ImagickFactory(),
+			new Ffmpeg($this->config, $this->filesystem, new MediaProperties(), new ShellExecutor())
+		);
 	}
 
 	/**

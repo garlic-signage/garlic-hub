@@ -24,68 +24,76 @@ namespace Tests\Unit\Modules\Mediapool\Helper\Nodes;
 use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Localization\Translate\Translator;
 use App\Modules\Mediapool\Helper\Nodes\ResponseBuilder;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\ResponseInterface;
+use Slim\Psr7\Response;
 
+/**
+ * The answers are what the browser reads: the JSON body and the status, made by the real JsonResponseHandler.
+ */
 class ResponseBuilderTest extends TestCase
 {
-	private JsonResponseHandler&MockObject $jsonResponseHandlerMock;
-	private ResponseInterface&Stub $responseStub;
 	private ResponseBuilder $responseBuilder;
 
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->jsonResponseHandlerMock = $this->createMock(JsonResponseHandler::class);
-		$this->responseStub            = $this->createStub(ResponseInterface::class);
-
-		$this->responseBuilder = new ResponseBuilder(
-			$this->jsonResponseHandlerMock,
-			$this->createStub(Translator::class)
-		);
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
+		$this->responseBuilder = new ResponseBuilder(new JsonResponseHandler(), $translator);
 	}
 
-	#[Group('units')]
-	public function testErrorResponses(): void
+	/**
+	 * @return array<string,array{string,string}>
+	 */
+	public static function errors(): array
 	{
-		$expected = [
-			'missingName'           => 'node name is missing',
-			'missingNameOrId'       => 'node name or id is missing',
-			'missingNodeId'         => 'NodeId is missing',
-			'missingMoveParameters' => 'Source node, target node, or target region is missing',
+		return [
+			'missingName' => ['missingName', 'node name is missing'],
+			'missingNameOrId' => ['missingNameOrId', 'node name or id is missing'],
+			'missingNodeId' => ['missingNodeId', 'NodeId is missing'],
+			'missingMoveParameters' => ['missingMoveParameters', 'Source node, target node, or target region is missing']
 		];
-
-		$calls = [];
-		$this->jsonResponseHandlerMock->expects($this->exactly(count($expected)))->method('jsonError')
-			->willReturnCallback(function (ResponseInterface $response, string $message) use (&$calls)
-			{
-				$calls[] = $message;
-				return $response;
-			});
-
-		foreach (array_keys($expected) as $method)
-		{
-			static::assertSame($this->responseStub, $this->responseBuilder->$method($this->responseStub));
-		}
-
-		static::assertSame(array_values($expected), $calls);
 	}
 
 	#[Group('units')]
-	public function testNodeListHasNoSuccessEnvelope(): void
+	#[DataProvider('errors')]
+	public function testEveryErrorIsAJsonErrorWithItsMessage(string $method, string $message): void
 	{
-		$nodes = [['title' => 'root', 'key' => 1]];
-		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonResponse')
-			->with($this->responseStub, $nodes)
-			->willReturn($this->responseStub);
+		$response = $this->responseBuilder->$method(new Response());
 
-		static::assertSame($this->responseStub, $this->responseBuilder->nodeList($this->responseStub, $nodes));
+		static::assertSame(400, $response->getStatusCode());
+		static::assertSame('application/json', $response->getHeaderLine('Content-Type'));
+		static::assertSame(['success' => false, 'error_message' => $message], json_decode((string) $response->getBody(), true));
+	}
+
+	#[Group('units')]
+	public function testTheTokenErrorHasTheTextOfTheLanguage(): void
+	{
+		$response = $this->responseBuilder->csrfTokenMismatch(new Response());
+
+		static::assertSame(['success' => false, 'error_message' => 'security.csrf_token_mismatch'], json_decode((string) $response->getBody(), true));
+	}
+
+	#[Group('units')]
+	public function testAGeneralSuccessAndAGeneralErrorAreMarked(): void
+	{
+		$success = $this->responseBuilder->generalSuccess(new Response(), ['data' => ['id' => 5]]);
+		$error   = $this->responseBuilder->generalError(new Response(), 'It failed');
+
+		static::assertSame(200, $success->getStatusCode());
+		static::assertSame(['success' => true, 'data' => ['id' => 5]], json_decode((string) $success->getBody(), true));
+		static::assertSame(['success' => false, 'error_message' => 'It failed'], json_decode((string) $error->getBody(), true));
+	}
+
+	#[Group('units')]
+	public function testTheListOfTheTreeIsTheListItselfWithoutAnEnvelope(): void
+	{
+		$nodes    = [['title' => 'root', 'key' => 1]];
+		$response = $this->responseBuilder->nodeList(new Response(), $nodes);
+
+		static::assertSame(200, $response->getStatusCode());
+		static::assertSame($nodes, json_decode((string) $response->getBody(), true));
 	}
 }

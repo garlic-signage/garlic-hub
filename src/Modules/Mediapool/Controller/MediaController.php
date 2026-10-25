@@ -136,8 +136,9 @@ readonly class MediaController
 	 */
 	private function parsedBody(ServerRequestInterface $request): array
 	{
-		/** @var array<string,mixed> $input */
 		$input = $request->getParsedBody();
-		return $input;
+
+		// no body, or one which could not be read: nothing was sent
+		return is_array($input) ? $input : [];
 	}
 }

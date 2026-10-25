@@ -217,26 +217,19 @@ abstract class AbstractMediaHandler
 		$name       = $this->cleanFilename((string) parse_url($fileURI, PHP_URL_PATH));
 		$targetPath = $this->createUploadTarget($name !== '' ? $name : 'external');
 		$maxSize    = $this->getMaxFileSize();
-		$handle     = fopen($this->getAbsolutePath($targetPath), 'w');
-		if ($handle === false)
-		{
-			$this->removeUploadedFile($targetPath);
-			throw new ModuleException('mediapool', 'The file for the download can not be created.');
-		}
-
-		$sink       = new SizeLimitedStream(
-			Utils::streamFor($handle),
-			$maxSize,
-			fn(int $size): TranslatableModuleException => $this->createFilesizeError($size, $maxSize)
-		);
-
+		$sink = null;
 		try
 		{
+			$sink = new SizeLimitedStream(
+				Utils::streamFor(Utils::tryFopen($this->getAbsolutePath($targetPath), 'w')),
+				$maxSize,
+				fn(int $size): TranslatableModuleException => $this->createFilesizeError($size, $maxSize)
+			);
 			$client->request('GET', $fileURI, array_merge($curlOpts, ['sink' => $sink]));
 		}
 		catch (Throwable $e)
 		{
-			$sink->close();
+			$sink?->close();
 			$this->removeUploadedFile($targetPath);
 			// Guzzle wraps what a write throws: the message about the size is for the user
 			throw $this->findFilesizeError($e) ?? $e;

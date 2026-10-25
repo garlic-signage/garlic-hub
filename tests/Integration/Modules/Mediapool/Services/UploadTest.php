@@ -40,6 +40,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use League\Flysystem\Filesystem;
 use League\Flysystem\Local\LocalFilesystemAdapter;
+use Imagick;
 use PHPUnit\Framework\Attributes\Group;
 use Slim\Psr7\UploadedFile;
 use Tests\Integration\Support\ContainerTestCase;
@@ -335,6 +336,34 @@ class UploadTest extends ContainerTestCase
 
 		$this->expectException(\App\Framework\Exceptions\ModuleException::class);
 		$this->uploadService->uploadMediaFile(8, 2, $this->png($name), []);
+	}
+
+	/**
+	 * The checks of the sizes keep their own texts, and the file does not stay in the storage.
+	 */
+	public function testAnImageOverTheMaximumResolutionIsRefusedWithItsOwnTextAndLeavesNothing(): void
+	{
+		$this->actingAs(2);
+		$imagick = new Imagick();
+		$imagick->newImage(3841, 2, 'red');
+		$imagick->setImageFormat('png');
+		$path = $this->dir . '/incoming/wide.tmp';
+		file_put_contents($path, $imagick->getImagesBlob());
+
+		try
+		{
+			$this->uploadService->uploadMediaFile(8, 2, new UploadedFile($path, 'wide.png', 'image/png', (int) filesize($path)), []);
+			static::fail('Expected a TranslatableModuleException');
+		}
+		catch (\App\Framework\Exceptions\TranslatableModuleException $e)
+		{
+			static::assertSame('width_exceeded', $e->getTranslationKey());
+		}
+
+		static::assertSame([], $this->listing('originals'));
+		static::assertSame([], $this->listing('thumbs'));
+		static::assertSame([], $this->listing('uploads'));
+		static::assertSame([], $this->rows());
 	}
 
 	public function testAnExternalImageIsStoredLikeAnUploadedOne(): void

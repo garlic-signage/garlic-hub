@@ -34,6 +34,11 @@ class ResponseBuilder extends BaseResponseBuilder
 		return $this->jsonResponseHandler->jsonError($response, 'Host not allowed.');
 	}
 
+	public function headerNotAllowed(ResponseInterface $response): ResponseInterface
+	{
+		return $this->jsonResponseHandler->jsonError($response, 'Header not allowed.');
+	}
+
 	public function noFilesToUpload(ResponseInterface $response): ResponseInterface
 	{
 		return $this->jsonResponseHandler->jsonError($response, 'No files to upload.');

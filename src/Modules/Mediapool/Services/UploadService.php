@@ -70,7 +70,8 @@ readonly class UploadService
 	 */
 	public function requestApi(string $apiUrl, array $headers = []): array
 	{
-		$options = [];
+		// the stock services do not redirect: a redirect would take the token of the user to another host
+		$options = ['allow_redirects' => false];
 		if (!empty($headers))
 			$options['headers'] = $headers;
 
@@ -89,7 +90,7 @@ readonly class UploadService
 	 *
 	 * media_id is a UUID to make it more difficult to guess
 	 *
-	 * @param array<string,int|string> $metadata
+	 * @param array<string,string|int|float|bool> $metadata
 	 * @return array<string,bool|string>
 	 * @throws CoreException
 	 * @throws Exception
@@ -120,7 +121,7 @@ readonly class UploadService
 	}
 
 	/**
-	 * @param array<string,string> $extMetadata
+	 * @param array<string,string|int|float|bool> $extMetadata
 	 * @return array<string,bool|string>
 	 * @throws CoreException
 	 * @throws Exception
@@ -168,7 +169,7 @@ readonly class UploadService
 	}
 
 	/**
-	 * @param array<string,string> $extMetadata
+	 * @param array<string,string|int|float|bool> $extMetadata
 	 * @return array<string,bool|string>
 	 * @throws ModuleException
 	 * @throws FilesystemException
@@ -279,8 +280,8 @@ readonly class UploadService
 	 *  we must combine them and prevent the double handling of duration
 	 *
 	 * Todo: Fix this when we have a better solution
-	 * @param array<string,string> $extMetadata
-	 * @return array<string,string>
+	 * @param array<string,string|int|float|bool> $extMetadata
+	 * @return array<string,mixed>
 	 */
 	private function combineMetaData(AbstractMediaHandler$mediaHandler, array $extMetadata): array
 	{

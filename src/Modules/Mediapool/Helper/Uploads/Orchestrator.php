@@ -26,6 +26,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\UserSession;
+use App\Modules\Mediapool\Helper\ReadsInput;
 use App\Modules\Mediapool\Services\UploadService;
 use Doctrine\DBAL\Exception;
 use GuzzleHttp\Exception\GuzzleException;
@@ -39,10 +40,12 @@ use Slim\Psr7\UploadedFile;
  */
 class Orchestrator
 {
-	private const array ALLOWED_STOCK_HOSTS = ['api.unsplash.com', 'api.pexels.com', 'pixabay.com'];
+	use ReadsInput;
 
-	/** @var array<string,mixed> */
-	private array $input = [];
+	private const array ALLOWED_STOCK_HOSTS = ['api.unsplash.com', 'api.pexels.com', 'pixabay.com'];
+	/** the headers of a request to a stock service which the user may set (the token of the service) */
+	private const array ALLOWED_STOCK_HEADERS = ['authorization', 'accept', 'x-api-key'];
+
 	/** @var array<string,mixed> */
 	private array $uploadedFiles = [];
 	private int $nodeId = 0;
@@ -55,15 +58,6 @@ class Orchestrator
 	) {}
 
 	/**
-	 * @param array<string,mixed> $input
-	 */
-	public function setInput(array $input): static
-	{
-		$this->input = $input;
-		return $this;
-	}
-
-	/**
 	 * @param array<string,mixed> $uploadedFiles
 	 */
 	public function setUploadedFiles(array $uploadedFiles): static
@@ -74,9 +68,12 @@ class Orchestrator
 
 	public function validateSearchStockImages(ResponseInterface $response): ?ResponseInterface
 	{
-		$host = parse_url((string) ($this->input['api_url'] ?? ''), PHP_URL_HOST);
-		if (!in_array($host, self::ALLOWED_STOCK_HOSTS, true))
+		$parts = parse_url($this->text('api_url'));
+		if ($parts === false || strtolower($parts['scheme'] ?? '') !== 'https' || !in_array(strtolower($parts['host'] ?? ''), self::ALLOWED_STOCK_HOSTS, true))
 			return $this->responseBuilder->hostNotAllowed($response);
+
+		if ($this->stockHeaders() === null)
+			return $this->responseBuilder->headerNotAllowed($response);
 
 		return null;
 	}
@@ -86,9 +83,29 @@ class Orchestrator
 	 */
 	public function searchStockImages(ResponseInterface $response): ResponseInterface
 	{
-		$body = $this->uploadService->requestApi($this->input['api_url'], $this->input['headers'] ?? []);
+		$body = $this->uploadService->requestApi($this->text('api_url'), $this->stockHeaders() ?? []);
 
 		return $this->responseBuilder->generalSuccess($response, ['data' => $body]);
+	}
+
+	/**
+	 * The headers for the stock service: the token of the user for the service, nothing else.
+	 *
+	 * @return array<string,string>|null null when there is a header which is not allowed or no text
+	 */
+	private function stockHeaders(): ?array
+	{
+		$headers = $this->input['headers'] ?? [];
+		if (!is_array($headers))
+			return null;
+
+		foreach ($headers as $name => $value)
+		{
+			if (!is_string($name) || !is_string($value) || !in_array(strtolower($name), self::ALLOWED_STOCK_HEADERS, true))
+				return null;
+		}
+
+		return $headers;
 	}
 
 	/**
@@ -108,7 +125,8 @@ class Orchestrator
 		if ($answer !== null)
 			return $answer;
 
-		if (empty($this->uploadedFiles['file']))
+		// a field with several files (file[]) is a list: the upload takes one file
+		if (!($this->uploadedFiles['file'] ?? null) instanceof UploadedFile)
 			return $this->responseBuilder->noFiles($response);
 
 		return null;
@@ -120,8 +138,9 @@ class Orchestrator
 	 */
 	public function uploadLocalFile(ResponseInterface $response): ResponseInterface
 	{
-		/** @var UploadedFile $file */
+		/** @var UploadedFile $file checked by validateUploadLocalFile() */
 		$file     = $this->uploadedFiles['file'];
+
 		$metadata = $this->decodeMetadata();
 		$result   = $this->uploadService->uploadMediaFile($this->nodeId, $this->userSession->getUID(), $file, $metadata);
 
@@ -138,7 +157,7 @@ class Orchestrator
 		if ($answer !== null)
 			return $answer;
 
-		if (!isset($this->input['external_link']))
+		if ($this->text('external_link') === '')
 			return $this->responseBuilder->missingExternalLink($response);
 
 		return null;
@@ -152,7 +171,7 @@ class Orchestrator
 		$result = $this->uploadService->uploadExternalMedia(
 			$this->nodeId,
 			$this->userSession->getUID(),
-			$this->input['external_link'],
+			$this->text('external_link'),
 			$this->decodeMetadata()
 		);
 
@@ -162,16 +181,31 @@ class Orchestrator
 	/**
 	 * @return array<string,mixed>
 	 */
+	/**
+	 * The metadata of the media come as JSON text from the client. Only values of one kind are taken (text, number,
+	 * yes/no), no lists or objects, and the description is a text.
+	 *
+	 * @return array<string,string|int|float|bool>
+	 */
 	private function decodeMetadata(): array
 	{
-		$metadata = json_decode((string) ($this->input['metadata'] ?? '[]'), true);
+		$decoded = json_decode($this->text('metadata') ?: '[]', true);
+		if (!is_array($decoded))
+			return [];
 
-		return is_array($metadata) ? $metadata : [];
+		$metadata = [];
+		foreach ($decoded as $key => $value)
+		{
+			if (is_string($key) && is_scalar($value))
+				$metadata[$key] = $key === 'description' ? (string) $value : $value;
+		}
+
+		return $metadata;
 	}
 
 	private function validateNode(ResponseInterface $response): ?ResponseInterface
 	{
-		$this->nodeId = (int) ($this->input['node_id'] ?? 0);
+		$this->nodeId = $this->id('node_id');
 		if ($this->nodeId === 0)
 			return $this->responseBuilder->missingNode($response);
 
@@ -184,7 +218,7 @@ class Orchestrator
 	 */
 	private function validateToken(ResponseInterface $response): ?ResponseInterface
 	{
-		if (!$this->validator->validateCsrfToken($this->input['csrf_token'] ?? ''))
+		if (!$this->validator->validateCsrfToken($this->text('csrf_token')))
 			return $this->responseBuilder->csrfTokenMismatch($response);
 
 		return null;
