@@ -36,7 +36,7 @@ use App\Framework\Utils\Html\TextField;
 use Defuse\Crypto\Key;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-use Tests\Unit\Framework\Security\MemorySession;
+use Tests\Support\MemorySession;
 
 /**
  * BuildService with the real form builder and the real builders for the pager and the table.

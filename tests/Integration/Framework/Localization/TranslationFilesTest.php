@@ -36,18 +36,6 @@ class TranslationFilesTest extends TestCase
 {
 	private const string DIRECTORY = __DIR__ . '/../../../../translations';
 
-	/**
-	 * Texts which a language misses today (language => file => keys). The test fails when the list is
-	 * not exact: a new gap must not appear, a repaired one has to be removed from here.
-	 */
-	private const array KNOWN_GAPS = [
-		'de' => ['player.ini' => ['player_settings'], 'main.ini' => ['UID.']],
-		'el' => ['main.ini' => ['unexpected_error']],
-		'es' => ['main.ini' => ['unexpected_error']],
-		'fr' => ['main.ini' => ['unexpected_error']],
-		'ru' => ['templates.ini' => ['replace_image'], 'main.ini' => ['unexpected_error']],
-	];
-
 	#[DataProvider('languageProvider')]
 	public function testEveryFileOfTheLanguageCanBeRead(string $language): void
 	{
@@ -58,7 +46,7 @@ class TranslationFilesTest extends TestCase
 	}
 
 	#[DataProvider('languageProvider')]
-	public function testALanguageMissesExactlyTheKnownTexts(string $language): void
+	public function testALanguageMissesNoText(string $language): void
 	{
 		$missing = [];
 		foreach ($this->files('en') as $file)
@@ -70,10 +58,7 @@ class TranslationFilesTest extends TestCase
 				$missing[$file] = $gap;
 		}
 
-		if ($language === 'en')
-			static::assertSame([], $missing);
-		else
-			static::assertEqualsCanonicalizing(self::KNOWN_GAPS[$language] ?? [], $missing, "Texts of $language which English has but $language misses.");
+		static::assertSame([], $missing, "Texts of $language which English has but $language misses.");
 	}
 
 	#[DataProvider('languageProvider')]

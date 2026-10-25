@@ -97,7 +97,6 @@ readonly class Crypt
 
 	public function checkPassword(string $clearText, string $hash): bool
 	{
-		// todo: implement password_needs_rehash and update this to userMain DB
 		return password_verify($clearText, $hash);
 	}
 

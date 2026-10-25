@@ -40,10 +40,10 @@ use DOMXPath;
 use PHPUnit\Framework\Attributes\Group;
 use Psr\Log\NullLogger;
 use Tests\Integration\Support\RepositoryTestCase;
-use Tests\Unit\Framework\Config\RecordingConfigLoader;
-use Tests\Unit\Framework\Localization\Translate\MemoryCache;
-use Tests\Unit\Framework\Localization\Translate\RecordingTranslationLoader;
-use Tests\Unit\Framework\Security\MemorySession;
+use Tests\Support\RecordingConfigLoader;
+use Tests\Support\MemoryCache;
+use Tests\Support\RecordingTranslationLoader;
+use Tests\Support\MemorySession;
 use Tests\Unit\Framework\Utils\Datatable\DatatableTestBuilder;
 use Tests\Unit\Framework\Utils\Datatable\DatatableTestFactory;
 use Tests\Unit\Framework\Utils\Datatable\DatatableTestOrchestrator;
@@ -209,6 +209,17 @@ class DatatableTest extends RepositoryTestCase
 		static::assertCount(20, $this->names());
 		static::assertSame('20', $this->attribute('//select[@id="elements_per_page"]/option[@selected]', 'value'));
 		static::assertSame(10, (int) $this->xpath->evaluate('count(//select[@id="elements_per_page"]/option)'));
+	}
+
+	public function testNoIdOccursTwice(): void
+	{
+		$this->render([]);
+
+		$ids = [];
+		foreach ($this->xpath->query('//*[@id]') ?: [] as $node)
+			$ids[] = $node instanceof \DOMElement ? $node->getAttribute('id') : '';
+
+		static::assertSame([], array_keys(array_filter(array_count_values($ids), static fn(int $count): bool => $count > 1)));
 	}
 
 	/**

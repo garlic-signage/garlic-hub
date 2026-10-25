@@ -64,6 +64,7 @@ readonly class LayoutDataProvider implements LayoutDataProviderInterface
 			'CSRF_TOKEN'           => $this->csrfToken->getToken(),
 			'CURRENT_LOCALE_LOWER' => strtolower($locale),
 			'CURRENT_LOCALE_UPPER' => strtoupper($locale),
+            'CURRENT_TEXT_DIRECTION' =>  $this->locales->getTextDirection(),
 			'APP_NAME'             => $this->config->getEnv('APP_NAME'),
 			'LANG_LEGAL_NOTICE'    => $this->translator->translate('legal_notice', 'menu'),
 			'LANG_PRIVACY'         => $this->translator->translate('privacy', 'menu'),

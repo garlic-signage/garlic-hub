@@ -30,6 +30,8 @@ use App\Framework\Localization\Translate\Translator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\MemoryCache;
+use Tests\Support\RecordingTranslationLoader;
 
 /**
  * Translator with a real MessageFormatter (the plural rules are the point of it), an in-memory loader

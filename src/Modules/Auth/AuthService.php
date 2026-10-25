@@ -88,6 +88,7 @@ class AuthService
 			return null;
 
 		$this->loginThrottle->reset($identifier, $ip);
+		$this->rehashPasswordIfOutdated($userData['UID'], $password, $userData['password']);
 		$this->userService->invalidateCache($userData['UID']);
 		$this->logger->info('Invalidate user cache for: '. $identifier. ' with id:'. $userData['UID']);
 
@@ -96,6 +97,25 @@ class AuthService
 		$this->logger->info('Entity created for: '. implode('|', $entity->getMain()));
 
 		return $entity;
+	}
+
+	/**
+	 * A user with a hash of an outdated algorithm or cost gets a new one with the login,
+	 * the only moment where the clear text password is known. A failure must not prevent the login.
+	 */
+	private function rehashPasswordIfOutdated(int $UID, string $password, string $hash): void
+	{
+		if (!password_needs_rehash($hash, PASSWORD_DEFAULT))
+			return;
+
+		try
+		{
+			$this->userService->updatePasswordHash($UID, password_hash($password, PASSWORD_DEFAULT));
+		}
+		catch (Exception $e)
+		{
+			$this->logger->warning('Password hash could not be renewed for UID ' . $UID . ': ' . $e->getMessage());
+		}
 	}
 
 	/**

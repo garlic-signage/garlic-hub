@@ -31,8 +31,8 @@ use DateTime;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-use Tests\Unit\Framework\Localization\Translate\MemoryCache;
-use Tests\Unit\Framework\Localization\Translate\RecordingTranslationLoader;
+use Tests\Support\MemoryCache;
+use Tests\Support\RecordingTranslationLoader;
 
 /**
  * "x ago" with the real Translator and MessageFormatter. The texts are those of translations/<language>/main.ini,

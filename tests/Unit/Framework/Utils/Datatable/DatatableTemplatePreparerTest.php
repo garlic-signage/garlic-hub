@@ -30,8 +30,8 @@ use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-use Tests\Unit\Framework\Localization\Translate\MemoryCache;
-use Tests\Unit\Framework\Localization\Translate\RecordingTranslationLoader;
+use Tests\Support\MemoryCache;
+use Tests\Support\RecordingTranslationLoader;
 
 /**
  * The page of a datatable for the template, with the real Translator and plural formatter.

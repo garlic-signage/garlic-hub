@@ -32,8 +32,8 @@ use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-use Tests\Unit\Framework\Config\RecordingConfigLoader;
-use Tests\Unit\Framework\Security\MemorySession;
+use Tests\Support\RecordingConfigLoader;
+use Tests\Support\MemorySession;
 
 /**
  * The orchestrator of a datatable with the real builder, preparer, parameters and the real services below them.

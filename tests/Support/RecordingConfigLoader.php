@@ -19,30 +19,30 @@
 */
 declare(strict_types=1);
 
-namespace Tests\Unit\Framework\Localization\Translate;
+namespace Tests\Support;
 
+use App\Framework\Config\ConfigLoaderInterface;
 use App\Framework\Exceptions\CoreException;
-use App\Framework\Localization\Translate\TranslationLoaderInterface;
 
 /**
- * In-memory loader for tests: returns the given translations and remembers what was loaded.
+ * In-memory loader for tests: returns the given data per module and remembers which modules were loaded.
  */
-class RecordingTranslationLoader implements TranslationLoaderInterface
+class RecordingConfigLoader implements ConfigLoaderInterface
 {
-	/** @var list<array{string,string}> language code and module in the order they were loaded */
+	/** @var list<string> modules in the order they were loaded */
 	public array $loaded = [];
 
 	/**
-	 * @param array<string,array<string,array<string,mixed>>> $data language code => module => translations
+	 * @param array<string,array<string,string|array<string,string>>> $data
 	 */
 	public function __construct(private readonly array $data) {}
 
-	public function load(string $languageCode, string $module): array
+	public function load(string $module): array
 	{
-		$this->loaded[] = [$languageCode, $module];
-		if (!isset($this->data[$languageCode][$module]))
-			throw new CoreException("Translation file not found: $languageCode/$module.ini");
+		$this->loaded[] = $module;
+		if (!array_key_exists($module, $this->data))
+			throw new CoreException('Unable to access configuration file for ' . $module);
 
-		return $this->data[$languageCode][$module];
+		return $this->data[$module];
 	}
 }

@@ -32,7 +32,7 @@ use League\Flysystem\FilesystemException;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-use Tests\Unit\Framework\Config\RecordingConfigLoader;
+use Tests\Support\RecordingConfigLoader;
 
 /**
  * Ffmpeg with the real ffmpeg and ffprobe on a video which is made for the test. Skipped where they are not installed.

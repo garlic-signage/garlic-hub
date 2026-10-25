@@ -19,7 +19,7 @@
 */
 declare(strict_types=1);
 
-namespace Tests\Unit\Modules\Mediapool\Utils;
+namespace Tests\Unit\Framework\Media;
 
 use App\Framework\Media\FileInfoWrapper;
 use phpmock\phpunit\PHPMock;

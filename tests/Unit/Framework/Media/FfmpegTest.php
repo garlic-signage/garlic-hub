@@ -31,7 +31,8 @@ use League\Flysystem\FilesystemException;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-use Tests\Unit\Framework\Config\RecordingConfigLoader;
+use Tests\Support\RecordingConfigLoader;
+use Tests\Support\RecordingShellExecutor;
 
 /**
  * Ffmpeg with real MediaProperties, Config and a real directory. Only the shell is replaced: the test

@@ -95,14 +95,13 @@ class TimeUnitsTranslationTest extends TestCase
 	 */
 	public function testTheEnglishTextsUseThePluralForMoreThanOne(): void
 	{
-		$knownWrong = ['hours' => '5 hour ago'];
 		$section    = $this->section('en');
 
 		foreach (self::UNITS as $unit)
 		{
 			$text = (string) MessageFormatter::create('en', (string) $section[$unit])->format(['count' => 5]);
 
-			static::assertSame($knownWrong[$unit] ?? '5 ' . $unit . ' ago', $text, "English text of $unit.");
+			static::assertSame('5 ' . $unit . ' ago', $text, "English text of $unit.");
 		}
 	}
 }

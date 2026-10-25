@@ -30,7 +30,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use Tests\Unit\Framework\Config\RecordingConfigLoader;
+use Tests\Support\RecordingConfigLoader;
 
 class LocalesTest extends TestCase
 {

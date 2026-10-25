@@ -28,6 +28,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\ScriptedShellExecutor;
 
 /**
  * SystemStats parses what free and df answer. The shell is replaced by answers of real machines.

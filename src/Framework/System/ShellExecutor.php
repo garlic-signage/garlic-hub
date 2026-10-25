@@ -57,16 +57,15 @@ class ShellExecutor
 	}
 
 	/**
-	 * @throws CoreException
+	 * Returns the output of the command, which may be empty.
+	 *
+	 * @throws CoreException when the command can not be started or exits with a code other than 0
 	 */
 	public function executeSimple(): string
 	{
-		$this->checkCommand();
-		$response = shell_exec($this->command . ' 2>&1');
-		if ($response === false || $response === null)
-			throw new CoreException("Command failed: $this->command");
+		$result = $this->execute();
 
-		return $response;
+		return implode("\n", $result['output']) . ($result['output'] === [] ? '' : "\n");
 	}
 
 	/**

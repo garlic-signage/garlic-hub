@@ -24,7 +24,7 @@ namespace Tests\Unit\Framework\Utils\Datatable;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\FormParameters\BaseFilterParameters;
 use App\Framework\Validation\Sanitizer;
-use Tests\Unit\Framework\Security\MemorySession;
+use Tests\Support\MemorySession;
 
 /**
  * Real filter parameters (page, per page, sort) for the tests of the datatable, parsed from the given input.

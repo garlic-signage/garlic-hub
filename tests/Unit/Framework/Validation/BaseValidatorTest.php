@@ -36,7 +36,7 @@ use ErrorException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-use Tests\Unit\Framework\Security\MemorySession;
+use Tests\Support\MemorySession;
 
 class BaseValidatorTest extends TestCase
 {

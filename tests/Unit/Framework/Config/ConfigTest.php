@@ -27,6 +27,7 @@ use Monolog\Level;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\RecordingConfigLoader;
 
 class ConfigTest extends TestCase
 {

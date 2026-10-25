@@ -75,12 +75,18 @@ class PreparerTest extends TestCase
 				'ELEMENTS_PAGELINK'    => '/playlists?elements_page=1&sort_column=created&sort_order=DESC&elements_per_page=10',
 				'ELEMENTS_PAGENAME'    => '«',
 				'ELEMENTS_PAGENUMBER'  => 1,
+				'ELEMENTS_PAGE_ID'     => 'page_nav_0',
 				'ELEMENTS_ACTIVE_PAGE' => '',
 			],
 			$links[0]
 		);
 		static::assertSame(['«', '‹', '1', '2', '3', '›', '»'], array_column($links, 'ELEMENTS_PAGENAME'));
 		static::assertSame([1, 1, 1, 2, 3, 3, 3], array_column($links, 'ELEMENTS_PAGENUMBER'));
+		static::assertSame(
+			['page_nav_0', 'page_nav_1', 'page_number_1', 'page_number_2', 'page_number_3', 'page_nav_5', 'page_nav_6'],
+			array_column($links, 'ELEMENTS_PAGE_ID'),
+			'Arrows and number links must not share an id.'
+		);
 	}
 
 	/**

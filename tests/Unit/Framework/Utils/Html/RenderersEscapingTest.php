@@ -54,7 +54,7 @@ use DOMDocument;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-use Tests\Unit\Framework\Security\MemorySession;
+use Tests\Support\MemorySession;
 
 /**
  * What a user typed or what comes from the database must never become markup of the form. Every renderer

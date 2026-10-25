@@ -4,7 +4,6 @@
 				<input type="hidden" name="sort_column" id="sort_column" value="{{SORT_COLUMN}}">
 				<input type="hidden" name="sort_order" id="sort_order" value="{{SORT_ORDER}}">
 				<input type="hidden" name="elements_page" id="elements_page" value="{{ELEMENTS_PAGE}}">
-				<input type="hidden" name="elements_per_page" id="elements_per_page" value="{{ELEMENTS_PER_PAGE}}">
 		{{#element_hidden}}
 			{{{HIDDEN_HTML_ELEMENT}}}
 		{{/element_hidden}}
@@ -37,7 +36,7 @@
 			</div>
 			<div>
 				{{#elements_pager}}
-					<a href="{{ELEMENTS_PAGELINK}}" class="page_numbers {{ELEMENTS_ACTIVE_PAGE}}" id="page_number_{{ELEMENTS_PAGENUMBER}}">{{ELEMENTS_PAGENAME}}</a>&nbsp;
+					<a href="{{ELEMENTS_PAGELINK}}" class="page_numbers {{ELEMENTS_ACTIVE_PAGE}}" id="{{ELEMENTS_PAGE_ID}}">{{ELEMENTS_PAGENAME}}</a>&nbsp;
 				{{/elements_pager}}
 			</div>
 			<div class="export_csv"></div>

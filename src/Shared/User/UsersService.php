@@ -83,6 +83,16 @@ class UsersService extends AbstractBaseService
 	}
 
 	/**
+	 * Replaces the stored hash, e.g. after the hashing algorithm of PHP has changed.
+	 *
+	 * @throws Exception
+	 */
+	public function updatePasswordHash(int $UID, string $hash): int
+	{
+		return $this->userRepositories['main']->update($UID, ['password' => $hash]);
+	}
+
+	/**
 	 * @return array<string,mixed>|array<empty,empty>
 	 * @throws Exception
 	 */

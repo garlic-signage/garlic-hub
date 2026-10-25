@@ -29,7 +29,7 @@ use Defuse\Crypto\Exception\EnvironmentIsBrokenException;
 use Defuse\Crypto\Key;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-use Tests\Unit\Framework\Security\MemorySession;
+use Tests\Support\MemorySession;
 
 class CsrfTokenFieldTest extends TestCase
 {

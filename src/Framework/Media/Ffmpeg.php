@@ -190,7 +190,6 @@ class Ffmpeg
 	 *
 	 * @param string $filePath Absolute path to the file
 	 * @throws FrameworkException
-	 * @throws CoreException
 	 */
 	private function probeFile(string $filePath): void
 	{
@@ -200,8 +199,15 @@ class Ffmpeg
 			escapeshellarg($filePath)
 		);
 
-		$this->shellExecutor->setCommand($command);
-		$result = $this->shellExecutor->executeSimple();
+		try
+		{
+			$result = $this->shellExecutor->setCommand($command)->executeSimple();
+		}
+		catch (CoreException)
+		{
+			// ffprobe exits with a code other than 0 for a file it can not read
+			throw new FrameworkException('Probing media file failed. Unsupported file type for file ' . $filePath . '. Using command: ' . $command);
+		}
 
 		$metadata = json_decode($result);
 		if (!($metadata instanceof stdClass) || !isset($metadata->format))

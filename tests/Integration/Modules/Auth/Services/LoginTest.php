@@ -171,4 +171,59 @@ class LoginTest extends ContainerTestCase
 		static::assertNull($this->login("regular' OR '1'='1", self::PASSWORD));
 		static::assertNull($this->login("' OR 1=1 --", 'x'));
 	}
+
+	private function storedHash(int $UID): string
+	{
+		return (string) $this->connection->fetchOne('SELECT password FROM user_main WHERE UID = ' . $UID);
+	}
+
+	/**
+	 * The hashes of the fixtures have a lower cost than PHP uses today.
+	 */
+	public function testAnOutdatedHashIsRenewedWithTheLogin(): void
+	{
+		$old = $this->storedHash(10);
+		static::assertTrue(password_needs_rehash($old, PASSWORD_DEFAULT));
+
+		static::assertNotNull($this->login('regular', self::PASSWORD));
+
+		$new = $this->storedHash(10);
+		static::assertNotSame($old, $new);
+		static::assertFalse(password_needs_rehash($new, PASSWORD_DEFAULT));
+		static::assertNotNull($this->login('regular', self::PASSWORD), 'The password still works with the new hash.');
+		static::assertNull($this->login('regular', 'wrong'));
+	}
+
+	public function testACurrentHashStaysAsItIs(): void
+	{
+		$current = password_hash(self::PASSWORD, PASSWORD_DEFAULT);
+		$this->connection->executeStatement('UPDATE user_main SET password = ? WHERE UID = 10', [$current]);
+
+		static::assertNotNull($this->login('regular', self::PASSWORD));
+
+		static::assertSame($current, $this->storedHash(10));
+	}
+
+	/**
+	 * @return array<string,array{string,string}>
+	 */
+	public static function noRenewalProvider(): array
+	{
+		return [
+			'wrong password'   => ['regular', 'wrong'],
+			'blocked user'     => ['blocked', self::PASSWORD],
+			'unverified user'  => ['unverified', self::PASSWORD],
+		];
+	}
+
+	#[DataProvider('noRenewalProvider')]
+	public function testTheHashIsNotTouchedWithoutASuccessfulLogin(string $username, string $password): void
+	{
+		$UID = (int) $this->connection->fetchOne('SELECT UID FROM user_main WHERE username = ?', [$username]);
+		$old = $this->storedHash($UID);
+
+		static::assertNull($this->login($username, $password));
+
+		static::assertSame($old, $this->storedHash($UID));
+	}
 }

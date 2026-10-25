@@ -19,47 +19,40 @@
 */
 declare(strict_types=1);
 
-namespace Tests\Unit\Framework\Security;
+namespace Tests\Support;
 
-use App\Framework\Http\Session;
+use Phpfastcache\Exceptions\PhpfastcacheSimpleCacheException;
+use Phpfastcache\Helper\Psr16Adapter;
 
 /**
- * A session which lives in an array: no PHP session, no cookie, nothing shared with other tests.
+ * In-memory replacement of the cache. It shares nothing between tests and can be switched to fail like a cache which is down.
  */
-class MemorySession extends Session
+class MemoryCache extends Psr16Adapter
 {
 	/** @var array<string,mixed> */
-	public array $data = [];
+	public array $store = [];
+	public bool $down = false;
 
-	public function get(string $key): null|string|array
+	public function __construct()
 	{
-		$value = $this->data[$key] ?? null;
-
-		return is_string($value) || is_array($value) ? $value : null;
+		parent::__construct('Devnull');
 	}
 
-	public function set(string $key, string|array $value): void
+	public function get(string $key, mixed $default = null): mixed
 	{
-		$this->data[$key] = $value;
+		if ($this->down)
+			throw new PhpfastcacheSimpleCacheException('cache down');
+
+		return $this->store[$key] ?? $default;
 	}
 
-	public function delete(string $key): void
+	public function set(string $key, mixed $value, null|int|\DateInterval $ttl = null): bool
 	{
-		unset($this->data[$key]);
-	}
+		if ($this->down)
+			throw new PhpfastcacheSimpleCacheException('cache down');
 
-	public function exists(string $key): bool
-	{
-		return array_key_exists($key, $this->data);
-	}
+		$this->store[$key] = $value;
 
-	public function getSession(): array
-	{
-		return $this->data;
-	}
-
-	public function clear(): void
-	{
-		$this->data = [];
+		return true;
 	}
 }

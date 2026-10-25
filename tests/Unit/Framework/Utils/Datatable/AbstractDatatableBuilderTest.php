@@ -31,8 +31,8 @@ use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-use Tests\Unit\Framework\Config\RecordingConfigLoader;
-use Tests\Unit\Framework\Security\MemorySession;
+use Tests\Support\RecordingConfigLoader;
+use Tests\Support\MemorySession;
 
 /**
  * The builder of a module with the real BuildService and real filter parameters. The ACL validator is a stub:

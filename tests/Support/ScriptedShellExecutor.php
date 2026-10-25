@@ -19,7 +19,7 @@
 */
 declare(strict_types=1);
 
-namespace Tests\Unit\Framework\System;
+namespace Tests\Support;
 
 use App\Framework\Exceptions\CoreException;
 use App\Framework\System\ShellExecutor;

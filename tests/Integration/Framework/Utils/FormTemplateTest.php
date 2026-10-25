@@ -38,7 +38,7 @@ use DOMElement;
 use DOMXPath;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-use Tests\Unit\Framework\Security\MemorySession;
+use Tests\Support\MemorySession;
 
 /**
  * The chain of a form page: fields -> FormBuilder -> FormTemplatePreparer -> PageResponse -> template generic/edit.

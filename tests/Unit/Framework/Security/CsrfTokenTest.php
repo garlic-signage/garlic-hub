@@ -29,6 +29,7 @@ use Exception;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\MemorySession;
 
 /**
  * CsrfToken with the real Crypt and a session in memory: what counts is which token the visitor gets

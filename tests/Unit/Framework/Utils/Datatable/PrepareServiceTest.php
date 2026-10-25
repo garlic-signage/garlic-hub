@@ -42,7 +42,7 @@ use App\Framework\Utils\Html\FormBuilder;
 use Defuse\Crypto\Key;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-use Tests\Unit\Framework\Security\MemorySession;
+use Tests\Support\MemorySession;
 
 /**
  * PrepareService with the real preparers for form, pager, header and body. Only the Translator is a stub.

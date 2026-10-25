@@ -118,26 +118,27 @@ class ShellExecutorTest extends TestCase
 		static::assertSame("out\nerr\n", $this->executor->setCommand("sh -c 'echo out; echo err 1>&2'")->executeSimple());
 	}
 
-	/**
-	 * The exit code is not looked at: the error text of a failing command is returned as output.
-	 *
-	 * @throws CoreException
-	 */
-	public function testExecuteSimpleReturnsTheErrorTextOfAFailingCommand(): void
+	public function testExecuteSimpleFailsForAFailingCommandAndNamesItsOutput(): void
 	{
-		static::assertSame("oops\n", $this->executor->setCommand("sh -c 'echo oops; exit 3'")->executeSimple());
-		static::assertStringContainsString('hurz', $this->executor->setCommand('hurz')->executeSimple());
+		$this->expectException(CoreException::class);
+		$this->expectExceptionMessage('output: oops');
+
+		$this->executor->setCommand("sh -c 'echo oops; exit 3'")->executeSimple();
+	}
+
+	public function testExecuteSimpleFailsForAnUnknownCommand(): void
+	{
+		$this->expectException(CoreException::class);
+
+		$this->executor->setCommand('hurz')->executeSimple();
 	}
 
 	/**
-	 * shell_exec() gives null for a command without output, which is reported as failure.
+	 * @throws CoreException
 	 */
-	public function testExecuteSimpleFailsForACommandWithoutOutput(): void
+	public function testExecuteSimpleAllowsACommandWithoutOutput(): void
 	{
-		$this->expectException(CoreException::class);
-		$this->expectExceptionMessage('Command failed: true');
-
-		$this->executor->setCommand('true')->executeSimple();
+		static::assertSame('', $this->executor->setCommand('true')->executeSimple());
 	}
 
 	public function testExecuteSimpleWithoutACommandThrows(): void

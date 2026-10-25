@@ -32,7 +32,7 @@ use App\Framework\Localization\Translate\MessageFormatterFactory;
 use App\Framework\Localization\Translate\Translator;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-use Tests\Unit\Framework\Localization\Translate\MemoryCache;
+use Tests\Support\MemoryCache;
 
 /**
  * The chain locale -> language code -> translation file -> text, with real config and translation files.

@@ -71,7 +71,7 @@ class Preparer
 		;
 
 		$data = [];
-		foreach($pageLinks as $values)
+		foreach($pageLinks as $index => $values)
 		{
 			$this->urlBuilder->setPage($values['page']);
 
@@ -79,6 +79,8 @@ class Preparer
 				'ELEMENTS_PAGELINK'   => $this->urlBuilder->buildFilterUrl(),
 				'ELEMENTS_PAGENAME'   => $values['name'],
 				'ELEMENTS_PAGENUMBER' => $values['page'],
+				// first, previous, next and last point to a page which has a number link as well
+				'ELEMENTS_PAGE_ID'    => $values['name'] === (string) $values['page'] ? 'page_number_' . $values['page'] : 'page_nav_' . $index,
 				'ELEMENTS_ACTIVE_PAGE' => ($values['active'] ?? false) === true ? 'active_page' : ''
 			];
 		}
