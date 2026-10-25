@@ -131,13 +131,23 @@ class PlaylistContentTest extends TestCase
 	#[Group('units')]
 	public function testTheAddressOfAnExternalFileKeepsItsQueryString(): void
 	{
-		static::markTestSkipped('Known bug: the & of the address is written as &amp; twice (PlaylistContent and the item), the player gets a=1&amp;b=2 as address. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$item = self::video(['item_type' => ItemType::MEDIA_EXTERN->value, 'file_resource' => '', 'content_data' => serialize(['url' => 'https://acme.com/video.mp4?a=1&b=2'])]);
 
 		$content = $this->build([$item]);
 
 		static::assertStringContainsString('src="https://acme.com/video.mp4?a=1&amp;b=2"', $content->getContentElements());
+		static::assertStringContainsString('<prefetch src="https://acme.com/video.mp4?a=1&amp;b=2" />', $content->getContentPrefetch());
+	}
+
+	#[Group('units')]
+	public function testTheAddressOfAnExternalFileCanNotLeaveTheAttribute(): void
+	{
+		$item = self::video(['item_type' => ItemType::MEDIA_EXTERN->value, 'file_resource' => '', 'content_data' => serialize(['url' => 'https://acme.com/v.mp4?a="x" onload="y"&b=<c>'])]);
+
+		$content = $this->build([$item]);
+
+		static::assertStringContainsString('src="https://acme.com/v.mp4?a=&quot;x&quot; onload=&quot;y&quot;&amp;b=&lt;c&gt;"', $content->getContentElements());
+		static::assertStringNotContainsString('onload="', $content->getContentElements() . $content->getContentPrefetch());
 	}
 
 	#[Group('units')]

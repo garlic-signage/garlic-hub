@@ -177,7 +177,7 @@ class PlaylistContent
 		$item->setBelongsToMasterPlaylist($this->playlist['playlist_mode'] === PlaylistMode::MASTER->value);
 		$item->setTouches($this->touchTrigger);
 		$contentData = Serialization::unserializeSecure($itemData['content_data']);
-		$item->setLink(str_replace('&', '&amp;', (string) ($contentData['url'] ?? '')));
+		$item->setLink((string) ($contentData['url'] ?? ''));
 
 		$this->addContentParts($itemData, $item->getSmilElementTag(), $item->getPrefetchTag(), $item->getExclusive());
 	}
