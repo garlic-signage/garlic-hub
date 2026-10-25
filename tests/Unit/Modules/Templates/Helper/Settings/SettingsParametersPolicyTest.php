@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -21,45 +21,46 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Templates\Helper\Settings;
 
+use App\Framework\Validation\Sanitizer;
 use App\Modules\Templates\Helper\Settings\Parameters;
 use App\Modules\Templates\Helper\Settings\SettingsParametersPolicy;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\MemorySession;
 
 class SettingsParametersPolicyTest extends TestCase
 {
-	private Parameters&MockObject $parametersMock;
+	private Parameters $parameters;
 	private SettingsParametersPolicy $policy;
 
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->parametersMock = $this->createMock(Parameters::class);
-		$this->policy         = new SettingsParametersPolicy($this->parametersMock);
+		$this->parameters = new Parameters(new Sanitizer(), new MemorySession());
+		$this->policy     = new SettingsParametersPolicy($this->parameters);
+	}
+
+	/**
+	 * @return list<string>
+	 */
+	private function added(): array
+	{
+		return array_values(array_filter(['UID', 'visibility', 'type'], fn(string $name): bool => $this->parameters->hasParameter($name)));
 	}
 
 	#[Group('units')]
-	public function testAddEditFormElements(): void
+	public function testTheEditFormHasTheOwnerAndTheVisibility(): void
 	{
-		$this->parametersMock->expects($this->once())->method('addOwner');
-		$this->parametersMock->expects($this->once())->method('addVisibility');
-		$this->parametersMock->expects($this->never())->method('addType');
-
 		$this->policy->addEditFormElements();
+
+		static::assertSame(['UID', 'visibility'], $this->added());
 	}
 
 	#[Group('units')]
-	public function testAddCreateFormElements(): void
+	public function testTheCreateFormHasTheTypeToo(): void
 	{
-		$this->parametersMock->expects($this->once())->method('addOwner');
-		$this->parametersMock->expects($this->once())->method('addVisibility');
-		$this->parametersMock->expects($this->once())->method('addType');
-
 		$this->policy->addCreateFormElements();
+
+		static::assertSame(['UID', 'visibility', 'type'], $this->added());
 	}
 }

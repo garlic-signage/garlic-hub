@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -22,127 +22,128 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Templates\Helper\Settings;
 
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Security\Crypt;
+use App\Framework\Security\CsrfToken;
 use App\Framework\Utils\Html\FieldInterface;
+use App\Framework\Utils\Html\FieldsFactory;
+use App\Framework\Utils\Html\FieldsRenderFactory;
 use App\Framework\Utils\Html\FieldType;
 use App\Framework\Utils\Html\FormBuilder;
 use App\Modules\Templates\Helper\Settings\FormElementsCreator;
+use Defuse\Crypto\Key;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\HtmlFields;
+use Tests\Support\MemorySession;
 
+/**
+ * The creator and the FormBuilder are the real ones: the result is the html of the field.
+ */
 class FormElementsCreatorTest extends TestCase
 {
-	private FormBuilder&MockObject $formBuilderMock;
-	private FieldInterface $field;
+	private FormBuilder $formBuilder;
 	private FormElementsCreator $creator;
 
 	/**
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->formBuilderMock = $this->createMock(FormBuilder::class);
-		$this->field           = $this->createStub(FieldInterface::class);
-		$translatorStub        = $this->createStub(Translator::class);
-		$translatorStub->method('translate')
-			->willReturnCallback(fn(string $key, string $module): string => $module . '.' . $key);
-		$translatorStub->method('translateArrayForOptions')->willReturn(['public' => 'Public', 'private' => 'Private']);
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
+		$translator->method('translateArrayForOptions')->willReturn(['public' => 'Public', 'private' => 'Private']);
+		$csrfToken = new CsrfToken(new Crypt(Key::createNewRandomKey()), new MemorySession());
 
-		$this->creator = new FormElementsCreator($this->formBuilderMock, $translatorStub);
+		$this->formBuilder = new FormBuilder(new FieldsFactory(), new FieldsRenderFactory(), $csrfToken);
+		$this->creator     = new FormElementsCreator($this->formBuilder, $translator);
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
+	 * @return array<string,string> the attributes of the input of the field
 	 */
+	private function attributesOf(FieldInterface $field): array
+	{
+		$attributes = HtmlFields::attributesOf($this->formBuilder, ['field' => $field]);
+		static::assertCount(1, $attributes);
+
+		return array_values($attributes)[0];
+	}
+
 	#[Group('units')]
-	public function testCreateNameField(): void
+	public function testTheNameIsATextWithTheLabelOfTheTemplates(): void
 	{
-		$this->expectField([
-			'type'  => FieldType::TEXT,
-			'id'    => 'name',
-			'name'  => 'name',
-			'title' => 'templates.name',
-			'label' => 'templates.name',
-			'value' => 'My Template'
-		]);
+		$field = $this->creator->createNameField('Lobby');
 
-		static::assertSame($this->field, $this->creator->createNameField('My Template'));
+		static::assertSame(FieldType::TEXT, $field->getType());
+		static::assertSame('templates.name', $field->getLabel());
+		static::assertSame('Lobby', $this->attributesOf($field)['value']);
+		static::assertSame('name', $this->attributesOf($field)['name']);
 	}
 
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
 	#[Group('units')]
-	public function testCreateUIDField(): void
+	public function testAValueWithQuotesCanNotLeaveTheAttribute(): void
 	{
-		$this->expectField([
-			'type'          => FieldType::AUTOCOMPLETE,
-			'id'            => 'UID',
-			'name'          => 'UID',
-			'title'         => 'main.owner',
-			'label'         => 'main.owner',
-			'value'         => 8,
-			'data-label'    => 'other',
-			'default_value' => 5
-		]);
+		$attributes = $this->attributesOf($this->creator->createNameField('x" onfocus="alert(1)'));
 
-		static::assertSame($this->field, $this->creator->createUIDField(8, 'other', 5));
+		static::assertSame('x" onfocus="alert(1)', $attributes['value']);
+		static::assertArrayNotHasKey('onfocus', $attributes);
 	}
 
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
 	#[Group('units')]
-	public function testCreateVisibilityField(): void
+	public function testTheOwnerIsAnAutocompleteWithTheNameOfTheUser(): void
 	{
-		$this->expectField([
-			'type'          => FieldType::DROPDOWN,
-			'id'            => 'visibility',
-			'name'          => 'visibility',
-			'title'         => 'main.visibility',
-			'label'         => 'main.visibility',
-			'value'         => 'private',
-			'options'       => ['public' => 'Public', 'private' => 'Private'],
-			'default_value' => 'public'
-		]);
+		$field = $this->creator->createUIDField(3, 'bernd', 7);
 
-		static::assertSame($this->field, $this->creator->createVisibilityField('private'));
+		static::assertSame(FieldType::AUTOCOMPLETE, $field->getType());
+		static::assertSame('UID', $field->getName());
+		static::assertSame('main.owner', $field->getLabel());
+		$all = json_encode($this->formBuilder->prepareForm(['UID' => $field]), JSON_THROW_ON_ERROR);
+		static::assertStringContainsString('bernd', $all);
+		static::assertMatchesRegularExpression('/value=.{0,2}3\b/', $all);
 	}
 
-	/**
-	 * @throws FrameworkException
-	 */
 	#[Group('units')]
-	public function testCreateHiddenTypeField(): void
+	public function testTheVisibilityIsADropdownWithTheOptionsOfTheMainTranslation(): void
 	{
-		$this->expectField(['type' => FieldType::HIDDEN, 'id' => 'type', 'name' => 'type', 'value' => 'canvas']);
+		$field = $this->creator->createVisibilityField('public');
 
-		static::assertSame($this->field, $this->creator->createHiddenTypeField('canvas'));
+		static::assertSame(FieldType::DROPDOWN, $field->getType());
+		static::assertSame('visibility', $field->getName());
+		static::assertSame('main.visibility', $field->getLabel());
+		$all = json_encode($this->formBuilder->prepareForm(['visibility' => $field]), JSON_THROW_ON_ERROR);
+		static::assertStringContainsString('Public', $all);
+		static::assertStringContainsString('Private', $all);
 	}
 
-	/**
-	 * @throws FrameworkException
-	 */
 	#[Group('units')]
-	public function testCreateHiddenTemplateIdField(): void
+	public function testTheTypeAndTheIdAreHiddenFields(): void
 	{
-		$this->expectField(['type' => FieldType::HIDDEN, 'id' => 'template_id', 'name' => 'template_id', 'value' => 12]);
+		$type = $this->creator->createHiddenTypeField('canvas');
+		$id   = $this->creator->createHiddenTemplateIdField(12);
 
-		static::assertSame($this->field, $this->creator->createHiddenTemplateIdField(12));
+		static::assertSame(['hidden', 'type', 'canvas'], array_values(array_intersect_key($this->attributesOf($type), array_flip(['type', 'name', 'value']))));
+		static::assertSame(['hidden', 'template_id', '12'], array_values(array_intersect_key($this->attributesOf($id), array_flip(['type', 'name', 'value']))));
 	}
 
-	/**
-	 * @param array<string,mixed> $attributes
-	 */
-	private function expectField(array $attributes): void
+	#[Group('units')]
+	public function testTheTokenFieldHasTheTokenOfTheSession(): void
 	{
-		$this->formBuilderMock->expects($this->once())->method('createField')->with($attributes)->willReturn($this->field);
+		$field = $this->creator->createCSRFTokenField();
+
+		static::assertSame(FieldType::CSRF, $field->getType());
+		$attributes = $this->attributesOf($field);
+		static::assertSame('csrf_token', $attributes['name']);
+		static::assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $attributes['value']);
+	}
+
+	#[Group('units')]
+	public function testTheFormIsSplitInHiddenAndVisibleFields(): void
+	{
+		$form = $this->creator->prepareForm(['template_id' => $this->creator->createHiddenTemplateIdField(5), 'name' => $this->creator->createNameField('Lobby')]);
+
+		static::assertCount(1, $form['hidden']);
+		static::assertCount(1, $form['visible']);
+		static::assertSame('templates.name', $form['visible'][0]['LANG_ELEMENT_LABEL']);
 	}
 }

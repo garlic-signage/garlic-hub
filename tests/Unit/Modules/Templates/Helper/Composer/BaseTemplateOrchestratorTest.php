@@ -26,7 +26,6 @@ use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Templates\Helper\Composer\BaseTemplateOrchestrator;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
@@ -61,7 +60,7 @@ class TestableTemplateOrchestrator extends BaseTemplateOrchestrator
 class BaseTemplateOrchestratorTest extends TestCase
 {
 	private Config&Stub $configStub;
-	private MediaUrlSigner&MockObject $signerMock;
+	private MediaUrlSigner $signer;
 	/** @var array<string,mixed> */
 	private array $server;
 
@@ -73,7 +72,7 @@ class BaseTemplateOrchestratorTest extends TestCase
 		parent::setUp();
 		$this->server     = $_SERVER;
 		$this->configStub = $this->createStub(Config::class);
-		$this->signerMock = $this->createMock(MediaUrlSigner::class);
+		$this->signer     = new MediaUrlSigner('unit-test-secret');
 	}
 
 	protected function tearDown(): void
@@ -85,7 +84,6 @@ class BaseTemplateOrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testBaseUrlFromConfig(): void
 	{
-		$this->signerMock->expects($this->never())->method($this->anything());
 
 		static::assertSame('https://cdn.example.com', $this->createOrchestrator('https://cdn.example.com/')->getBaseUrl());
 	}
@@ -93,7 +91,6 @@ class BaseTemplateOrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testBaseUrlFromHttpsRequest(): void
 	{
-		$this->signerMock->expects($this->never())->method($this->anything());
 		$_SERVER['HTTPS']     = 'on';
 		$_SERVER['HTTP_HOST'] = 'hub.example.com';
 		unset($_SERVER['HTTP_X_FORWARDED_HOST'], $_SERVER['HTTP_X_FORWARDED_PROTO'], $_SERVER['HTTP_X_FORWARDED_SSL']);
@@ -104,7 +101,6 @@ class BaseTemplateOrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testBaseUrlBehindProxy(): void
 	{
-		$this->signerMock->expects($this->never())->method($this->anything());
 		unset($_SERVER['HTTPS'], $_SERVER['HTTP_X_FORWARDED_SSL']);
 		$_SERVER['HTTP_HOST']              = 'internal:8080';
 		$_SERVER['HTTP_X_FORWARDED_HOST']  = 'hub.example.com';
@@ -116,7 +112,6 @@ class BaseTemplateOrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testBaseUrlFromHttpRequest(): void
 	{
-		$this->signerMock->expects($this->never())->method($this->anything());
 		unset($_SERVER['HTTPS'], $_SERVER['HTTP_X_FORWARDED_HOST'], $_SERVER['HTTP_X_FORWARDED_PROTO'], $_SERVER['HTTP_X_FORWARDED_SSL']);
 		$_SERVER['HTTP_HOST'] = 'localhost';
 
@@ -126,15 +121,15 @@ class BaseTemplateOrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testBuildMediaUrl(): void
 	{
-		$this->signerMock->expects($this->once())->method('originalUrl')->with('abc123', 'jpg')->willReturn('/media/abc123.jpg?sig=1');
+		$url = $this->createOrchestrator('https://cdn.example.com')->callBuildMediaUrl('abc123.jpg');
 
-		static::assertSame('https://cdn.example.com/media/abc123.jpg?sig=1', $this->createOrchestrator('https://cdn.example.com')->callBuildMediaUrl('abc123.jpg'));
+		// the address of the content server and the signed path of the original
+		static::assertMatchesRegularExpression('#^https://cdn\.example\.com/media\.php/orig/abc123\.jpg\?exp=\d+&sig=[0-9a-f]{64}$#', $url);
 	}
 
 	#[Group('units')]
 	public function testBuildMediaUrlWithoutExtension(): void
 	{
-		$this->signerMock->expects($this->never())->method('originalUrl');
 
 		static::assertSame('', $this->createOrchestrator('https://cdn.example.com')->callBuildMediaUrl('abc123'));
 	}
@@ -142,26 +137,23 @@ class BaseTemplateOrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testRestoreSrcInNestedGroups(): void
 	{
-		$this->signerMock->expects($this->exactly(2))->method('originalUrl')
-			->willReturnCallback(fn(string $checksum, string $extension): string => '/m/' . $checksum . '.' . $extension);
-
 		$objects = [
 			['type' => 'image', 'fileName' => 'a.png'],
 			['type' => 'text'],
 			['type' => 'group', 'objects' => [['type' => 'image', 'fileName' => 'b.jpg']]],
 		];
 
-		static::assertSame([
-			['type' => 'image', 'fileName' => 'a.png', 'src' => 'https://cdn/m/a.png'],
-			['type' => 'text'],
-			['type' => 'group', 'objects' => [['type' => 'image', 'fileName' => 'b.jpg', 'src' => 'https://cdn/m/b.jpg']]],
-		], $this->createOrchestrator('https://cdn')->callRestoreSrc($objects));
+		$restored = $this->createOrchestrator('https://cdn')->callRestoreSrc($objects);
+
+		static::assertMatchesRegularExpression('#^https://cdn/media\.php/orig/a\.png\?exp=\d+&sig=[0-9a-f]{64}$#', $restored[0]['src']);
+		static::assertArrayNotHasKey('src', $restored[1]);
+		static::assertMatchesRegularExpression('#^https://cdn/media\.php/orig/b\.jpg\?exp=\d+&sig=[0-9a-f]{64}$#', $restored[2]['objects'][0]['src']);
+		static::assertSame('a.png', $restored[0]['fileName']);
 	}
 
 	#[Group('units')]
 	public function testValidateRemovesSrcRecursively(): void
 	{
-		$this->signerMock->expects($this->never())->method($this->anything());
 		$content = (string) json_encode([
 			'version' => '6',
 			'objects' => [
@@ -182,7 +174,6 @@ class BaseTemplateOrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testValidateRejectsInvalidContent(): void
 	{
-		$this->signerMock->expects($this->never())->method($this->anything());
 		$orchestrator = $this->createOrchestrator('https://cdn');
 
 		static::assertSame('', $orchestrator->callValidate('no json'));
@@ -194,7 +185,6 @@ class BaseTemplateOrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testValidateAcceptsMaximumObjects(): void
 	{
-		$this->signerMock->expects($this->never())->method($this->anything());
 		$content = (string) json_encode(['objects' => array_fill(0, 1000, ['type' => 'text'])]);
 
 		static::assertSame($content, $this->createOrchestrator('https://cdn')->callValidate($content));
@@ -204,6 +194,6 @@ class BaseTemplateOrchestratorTest extends TestCase
 	{
 		$this->configStub->method('getConfigValue')->willReturnMap([['url', 'mediapool', 'content_server', $configuredUrl]]);
 
-		return new TestableTemplateOrchestrator($this->configStub, $this->signerMock);
+		return new TestableTemplateOrchestrator($this->configStub, $this->signer);
 	}
 }

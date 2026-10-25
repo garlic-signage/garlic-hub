@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -21,117 +21,89 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Templates\Helper\Settings;
 
-use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Utils\FormParameters\BaseParameters;
-use App\Framework\Utils\Html\FieldInterface;
+use App\Framework\Localization\Translate\Translator;
+use App\Framework\Security\Crypt;
+use App\Framework\Security\CsrfToken;
+use App\Framework\Utils\Html\FieldsFactory;
+use App\Framework\Utils\Html\FieldsRenderFactory;
+use App\Framework\Utils\Html\FormBuilder;
+use App\Framework\Validation\Sanitizer;
 use App\Modules\Auth\UserSession;
 use App\Modules\Templates\Helper\Settings\FormElementsCreator;
 use App\Modules\Templates\Helper\Settings\Parameters;
 use App\Modules\Templates\Helper\Settings\SettingsFormBuilder;
+use App\Modules\Templates\Helper\Settings\SettingsParametersPolicy;
+use Defuse\Crypto\Key;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\HtmlFields;
+use Tests\Support\MemorySession;
 
+/**
+ * The form of the template settings with the real parameters, creator and FormBuilder: the result is the html of the fields.
+ */
 class SettingsFormBuilderTest extends TestCase
 {
-	private Parameters&Stub $parametersStub;
-	private FormElementsCreator&MockObject $creatorMock;
-	private FieldInterface $field;
+	private SettingsParametersPolicy $policy;
 	private SettingsFormBuilder $builder;
 
-	/** @var array{hidden: list<array<string,string>>, visible: list<array<string,string>>} */
-	private array $prepared = ['hidden' => [], 'visible' => [['name' => 'x']]];
-
 	/**
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->parametersStub = $this->createStub(Parameters::class);
-		$this->creatorMock    = $this->createMock(FormElementsCreator::class);
-		$this->field          = $this->createStub(FieldInterface::class);
-		$userSessionStub      = $this->createStub(UserSession::class);
-		$userSessionStub->method('getUID')->willReturn(5);
-		$userSessionStub->method('getUsername')->willReturn('admin');
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
+		$translator->method('translateArrayForOptions')->willReturn(['public' => 'Public', 'private' => 'Private']);
+		$userSession = $this->createStub(UserSession::class);
+		$userSession->method('getUID')->willReturn(7);
+		$userSession->method('getUsername')->willReturn('heidi');
+		$session = new MemorySession();
 
-		$this->builder = new SettingsFormBuilder($this->parametersStub, $userSessionStub, $this->creatorMock);
+		$formBuilder  = new FormBuilder(new FieldsFactory(), new FieldsRenderFactory(), new CsrfToken(new Crypt(Key::createNewRandomKey()), $session));
+		$parameters   = new Parameters(new Sanitizer(), $session);
+		$this->policy  = new SettingsParametersPolicy($parameters);
+		$this->builder = new SettingsFormBuilder($parameters, $userSession, new FormElementsCreator($formBuilder, $translator));
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
+	 * @param array<string,mixed> $values
+	 * @return array<string,array<string,string>> the attributes of the fields by name
 	 */
+	private function build(array $values): array
+	{
+		return HtmlFields::fromPrepared($this->builder->buildForm($values));
+	}
+
 	#[Group('units')]
-	public function testBuildCreateForm(): void
+	public function testTheFormOfANewTemplateIsACanvasOwnedByTheLoggedInUser(): void
 	{
-		$this->mockParameters(true);
-		$this->creatorMock->expects($this->once())->method('createNameField')->with('')->willReturn($this->field);
-		$this->creatorMock->expects($this->once())->method('createUIDField')->with(5, 'admin', 5)->willReturn($this->field);
-		$this->creatorMock->expects($this->once())->method('createVisibilityField')->with('')->willReturn($this->field);
-		$this->creatorMock->expects($this->once())->method('createHiddenTypeField')->with('canvas')->willReturn($this->field);
-		$this->creatorMock->expects($this->never())->method('createHiddenTemplateIdField');
-		$this->expectPreparedForm(['name', 'UID', 'visibility', 'type', 'csrf_token']);
+		$this->policy->addCreateFormElements();
 
-		static::assertSame($this->prepared, $this->builder->buildForm([]));
+		$fields = $this->build([]);
+
+		static::assertSame(['name', 'UID_search', 'visibility', 'type', 'csrf_token'], array_keys($fields));
+		static::assertSame(['', 'canvas'], [$fields['name']['value'], $fields['type']['value']]);
+		static::assertStringContainsString('heidi', json_encode($this->builder->buildForm([]), JSON_THROW_ON_ERROR));
 	}
 
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
 	#[Group('units')]
-	public function testBuildEditForm(): void
+	public function testTheFormOfAnExistingTemplateHasItsValuesAndItsId(): void
 	{
-		$template = ['template_id' => '12', 'name' => 'Tpl', 'UID' => 8, 'username' => 'other', 'visibility' => 'public'];
+		$this->policy->addEditFormElements();
+		$template = ['template_id' => 12, 'name' => 'Lobby', 'UID' => 3, 'username' => 'owner', 'visibility' => 'public'];
 
-		$this->mockParameters(true);
-		$this->creatorMock->expects($this->once())->method('createNameField')->with('Tpl')->willReturn($this->field);
-		$this->creatorMock->expects($this->once())->method('createUIDField')->with(8, 'other', 5)->willReturn($this->field);
-		$this->creatorMock->expects($this->once())->method('createVisibilityField')->with('public')->willReturn($this->field);
-		$this->creatorMock->expects($this->once())->method('createHiddenTemplateIdField')->with(12)->willReturn($this->field);
-		$this->creatorMock->expects($this->never())->method('createHiddenTypeField');
-		$this->expectPreparedForm(['name', 'UID', 'visibility', 'template_id', 'csrf_token']);
+		$fields = $this->build($template);
 
-		static::assertSame($this->prepared, $this->builder->buildForm($template));
+		static::assertSame(['name', 'UID_search', 'visibility', 'template_id', 'csrf_token'], array_keys($fields));
+		static::assertSame(['Lobby', '12'], [$fields['name']['value'], $fields['template_id']['value']]);
+		static::assertStringContainsString('owner', json_encode($this->builder->buildForm($template), JSON_THROW_ON_ERROR));
 	}
 
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
 	#[Group('units')]
-	public function testBuildFormWithoutOwnerAndVisibility(): void
+	public function testWithoutOwnerAndVisibilityThereAreNoSuchFields(): void
 	{
-		$this->mockParameters(false);
-		$this->creatorMock->expects($this->once())->method('createNameField')->willReturn($this->field);
-		$this->creatorMock->expects($this->never())->method('createUIDField');
-		$this->creatorMock->expects($this->never())->method('createVisibilityField');
-		$this->creatorMock->expects($this->once())->method('createHiddenTypeField')->willReturn($this->field);
-		$this->expectPreparedForm(['name', 'type', 'csrf_token']);
-
-		static::assertSame($this->prepared, $this->builder->buildForm([]));
-	}
-
-	private function mockParameters(bool $hasOptionalFields): void
-	{
-		$this->parametersStub->method('hasParameter')->willReturnMap([
-			[BaseParameters::PARAMETER_UID, $hasOptionalFields],
-			[Parameters::PARAMETER_VISIBILITY, $hasOptionalFields],
-		]);
-	}
-
-	/**
-	 * @param list<string> $expectedKeys
-	 */
-	private function expectPreparedForm(array $expectedKeys): void
-	{
-		$this->creatorMock->expects($this->once())->method('createCSRFTokenField')->willReturn($this->field);
-		$this->creatorMock->expects($this->once())->method('prepareForm')
-			->with($this->callback(fn(array $form): bool => array_keys($form) === $expectedKeys))
-			->willReturn($this->prepared);
+		static::assertSame(['name', 'type', 'csrf_token'], array_keys($this->build([])));
 	}
 }

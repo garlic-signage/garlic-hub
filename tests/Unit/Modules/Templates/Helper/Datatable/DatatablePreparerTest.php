@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -22,152 +22,60 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Templates\Helper\Datatable;
 
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Security\Crypt;
+use App\Framework\Security\CsrfToken;
+use App\Framework\Utils\Datatable\Paginator\Preparer;
 use App\Framework\Utils\Datatable\PrepareService;
 use App\Framework\Utils\Datatable\Results\BodyPreparer;
 use App\Framework\Utils\Datatable\Results\HeaderField;
+use App\Framework\Utils\Datatable\Results\HeaderPreparer;
+use App\Framework\Utils\Datatable\Results\TranslatorManager;
+use App\Framework\Utils\Datatable\UrlBuilder;
+use App\Framework\Utils\Html\FieldsFactory;
+use App\Framework\Utils\Html\FieldsRenderFactory;
+use App\Framework\Utils\Html\FormBuilder;
+use App\Framework\Validation\Sanitizer;
 use App\Modules\Templates\Helper\Datatable\DatatablePreparer;
 use App\Modules\Templates\Helper\Datatable\Parameters;
 use App\Modules\Templates\Services\AclValidator;
-use Doctrine\DBAL\Exception;
+use Defuse\Crypto\Key;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\MemorySession;
 
+/**
+ * The rows of the template list with the real services of the datatable.
+ */
 class DatatablePreparerTest extends TestCase
 {
-	private BodyPreparer&MockObject $bodyPreparerMock;
-	private AclValidator&MockObject $aclValidatorMock;
+	private AclValidator&Stub $aclValidatorStub;
 	private DatatablePreparer $preparer;
 
-	/** @var array{UID: int, company_id: int, template_id: int, type: string, name: string, username: string, visibility: string} */
-	private array $template = [
-		'UID' => 5, 'company_id' => 1, 'template_id' => 12, 'type' => 'canvas',
-		'name' => 'Tpl', 'username' => 'admin', 'visibility' => 'public'
-	];
-
 	/**
-	 * @throws \PHPUnit\Framework\MockObject\Exception
+	 * @throws \Exception
 	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->bodyPreparerMock = $this->createMock(BodyPreparer::class);
-		$this->aclValidatorMock = $this->createMock(AclValidator::class);
-		$prepareServiceStub     = $this->createStub(PrepareService::class);
-		$prepareServiceStub->method('getBodyPreparer')->willReturn($this->bodyPreparerMock);
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
+		$translator->method('translateArrayForOptions')->willReturn(['canvas' => 'Canvas']);
+		$session   = new MemorySession();
+		$urlBuilder = new UrlBuilder();
 
-		$translatorStub = $this->createStub(Translator::class);
-		$translatorStub->method('translate')
-			->willReturnCallback(fn(string $key, string $module): string => $module . '.' . $key);
-		$translatorStub->method('translateArrayForOptions')->willReturn(['canvas' => 'Canvas']);
-
-		$this->preparer = new DatatablePreparer($prepareServiceStub, $this->aclValidatorMock, $this->createStub(Parameters::class), $translatorStub);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testPrepareTableBodyForOwner(): void
-	{
-		$this->preparer->setUsedTemplates([12 => 3]);
-		$this->aclValidatorMock->expects($this->never())->method('isTemplateEditable');
-
-		$this->bodyPreparerMock->expects($this->once())->method('formatUID')->with(5, 'admin')->willReturn(['uid']);
-		$this->bodyPreparerMock->expects($this->once())->method('formatLink')
-			->with('Tpl', 'templates.composer: Tpl', '/templates/composer/12', '12')
-			->willReturn(['link']);
-		$this->bodyPreparerMock->expects($this->exactly(3))->method('formatText')
-			->willReturnCallback(fn(string $text): array => ['text' => $text]);
-		$this->bodyPreparerMock->expects($this->once())->method('formatAction')
-			->with('templates.actions', 'template-contextmenu', '12', 'three-dots template-contextmenu')
-			->willReturn(['action']);
-
-		$result = $this->preparer->prepareTableBody([$this->template], $this->fields(['name', 'type', 'UID', 'used', 'visibility']), 5);
-
-		static::assertSame([[
-			'UNIT_ID' => 12,
-			'elements_result_element' => [
-				['CONTROL_NAME_BODY' => 'name', 'is_link' => ['link']],
-				['CONTROL_NAME_BODY' => 'type', 'is_text' => ['text' => 'Canvas']],
-				['CONTROL_NAME_BODY' => 'UID', 'is_UID' => ['uid']],
-				['CONTROL_NAME_BODY' => 'used', 'is_text' => ['text' => '3']],
-				['CONTROL_NAME_BODY' => 'visibility', 'is_text' => ['text' => 'public']],
-			],
-			'has_action' => [['action']]
-		]], $result);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testPrepareTableBodyUnusedTemplateWithoutRights(): void
-	{
-		$this->aclValidatorMock->expects($this->once())->method('isTemplateEditable')
-			->with(9, $this->template)
-			->willReturn(false);
-		$this->bodyPreparerMock->expects($this->once())->method('formatText')->with('0')->willReturn(['0']);
-		$this->bodyPreparerMock->expects($this->never())->method('formatAction');
-
-		$result = $this->preparer->prepareTableBody([$this->template], $this->fields(['used']), 9);
-
-		static::assertArrayNotHasKey('has_action', $result[0]);
-		static::assertSame([['CONTROL_NAME_BODY' => 'used', 'is_text' => ['0']]], $result[0]['elements_result_element']);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testPrepareTableBodyForEditor(): void
-	{
-		$this->aclValidatorMock->expects($this->once())->method('isTemplateEditable')->with(9, $this->template)->willReturn(true);
-		$this->bodyPreparerMock->expects($this->once())->method('formatAction')->willReturn(['action']);
-
-		$result = $this->preparer->prepareTableBody([$this->template], [], 9);
-
-		static::assertSame([['action']], $result[0]['has_action']);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testPrepareTableBodyWithoutResults(): void
-	{
-		$this->aclValidatorMock->expects($this->never())->method($this->anything());
-		$this->bodyPreparerMock->expects($this->never())->method($this->anything());
-
-		static::assertSame([], $this->preparer->prepareTableBody([], $this->fields(['name']), 5));
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testFormatContextMenu(): void
-	{
-		$this->aclValidatorMock->expects($this->never())->method($this->anything());
-		$this->bodyPreparerMock->expects($this->never())->method($this->anything());
-
-		static::assertSame([
-			'LANG_COMPOSE' => 'templates.composer',
-			'LANG_SETTINGS' => 'main.settings',
-			'LANG_TEMPLATE_DELETE' => 'main.delete',
-			'LANG_TEMPLATE_DELETE_CONFIRM' => 'templates.confirm_delete'
-		], $this->preparer->formatContextMenu());
+		$this->aclValidatorStub = $this->createStub(AclValidator::class);
+		$this->preparer = new DatatablePreparer(
+			new PrepareService(
+				new FormBuilder(new FieldsFactory(), new FieldsRenderFactory(), new CsrfToken(new Crypt(Key::createNewRandomKey()), $session)),
+				new Preparer($urlBuilder),
+				new HeaderPreparer(new TranslatorManager($translator), $urlBuilder),
+				new BodyPreparer()
+			),
+			$this->aclValidatorStub,
+			new Parameters(new Sanitizer(), $session),
+			$translator
+		);
 	}
 
 	/**
@@ -176,14 +84,103 @@ class DatatablePreparerTest extends TestCase
 	 */
 	private function fields(array $names): array
 	{
-		$fields = [];
-		foreach ($names as $name)
-		{
-			$field = $this->createStub(HeaderField::class);
-			$field->method('getName')->willReturn($name);
-			$fields[] = $field;
-		}
+		return array_map(static fn(string $name): HeaderField => new HeaderField()->setName($name), $names);
+	}
 
-		return $fields;
+	/**
+	 * @return array{UID: int, company_id: int, template_id: int, type: string, name: string, username: string}
+	 */
+	private static function template(int $id = 5, int $owner = 2, string $type = 'canvas'): array
+	{
+		return ['UID' => $owner, 'company_id' => 1, 'template_id' => $id, 'type' => $type, 'name' => 'Lobby', 'username' => 'anna'];
+	}
+
+	#[Group('units')]
+	public function testWithoutTemplatesTheBodyIsEmpty(): void
+	{
+		static::assertSame([], $this->preparer->prepareTableBody([], $this->fields(['name']), 2));
+	}
+
+	#[Group('units')]
+	public function testTheCellsOfARow(): void
+	{
+		$this->aclValidatorStub->method('isTemplateEditable')->willReturn(false);
+
+		$body = $this->preparer->setUsedTemplates([5 => 3])->prepareTableBody([self::template()], $this->fields(['name', 'type', 'UID', 'used']), 3);
+
+		static::assertSame(5, $body[0]['UNIT_ID']);
+		static::assertSame(
+			[
+				['CONTROL_NAME_BODY' => 'name', 'is_link' => ['CONTROL_ELEMENT_VALUE_NAME' => 'Lobby', 'CONTROL_ELEMENT_VALUE_TITLE' => 'templates.composer: Lobby', 'CONTROL_ELEMENT_VALUE_LINK' => '/templates/composer/5', 'CONTROL_ELEMENT_VALUE_ID' => '5', 'CONTROL_ELEMENT_VALUE_CLASS' => '', 'CONTROL_ELEMENT_ADDITIONAL_TEXT' => '']],
+				['CONTROL_NAME_BODY' => 'type', 'is_text' => ['CONTROL_ELEMENT_VALUE_TEXT' => 'Canvas']],
+				['CONTROL_NAME_BODY' => 'UID', 'is_UID' => ['OWNER_UID' => 2, 'OWNER_NAME' => 'anna']],
+				['CONTROL_NAME_BODY' => 'used', 'is_text' => ['CONTROL_ELEMENT_VALUE_TEXT' => '3']],
+			],
+			$body[0]['elements_result_element']
+		);
+	}
+
+	#[Group('units')]
+	public function testATemplateWhichIsNotUsedIsUsedZeroTimes(): void
+	{
+		$this->aclValidatorStub->method('isTemplateEditable')->willReturn(false);
+
+		$body = $this->preparer->setUsedTemplates([6 => 2])->prepareTableBody([self::template()], $this->fields(['used']), 3);
+
+		static::assertSame('0', $body[0]['elements_result_element'][0]['is_text']['CONTROL_ELEMENT_VALUE_TEXT']);
+	}
+
+	#[Group('units')]
+	public function testAnUnknownColumnIsShownAsText(): void
+	{
+		$this->aclValidatorStub->method('isTemplateEditable')->willReturn(false);
+
+		$body = $this->preparer->prepareTableBody([self::template()], $this->fields(['company_id']), 3);
+
+		static::assertSame('1', $body[0]['elements_result_element'][0]['is_text']['CONTROL_ELEMENT_VALUE_TEXT']);
+	}
+
+	#[Group('units')]
+	public function testATypeWithoutANameIsShownAsItIs(): void
+	{
+		$this->aclValidatorStub->method('isTemplateEditable')->willReturn(false);
+
+		$body = $this->preparer->prepareTableBody([self::template(type: 'fabric.js')], $this->fields(['type']), 3);
+
+		static::assertSame('fabric.js', $body[0]['elements_result_element'][0]['is_text']['CONTROL_ELEMENT_VALUE_TEXT']);
+	}
+
+	#[Group('units')]
+	public function testTheOwnerAndWhoMayEditGetTheContextMenu(): void
+	{
+		$this->aclValidatorStub->method('isTemplateEditable')->willReturn(false);
+		$row = $this->preparer->prepareTableBody([self::template()], $this->fields(['name']), 2)[0];
+
+		static::assertSame([['LANG_ACTION' => 'templates.actions', 'ACTION_ID' => '5', 'ACTION_NAME' => 'template-contextmenu', 'ACTION_ICON_CLASS' => 'three-dots template-contextmenu']], $row['has_action']);
+	}
+
+	#[Group('units')]
+	public function testWhoMayEditATemplateOfAnotherUserGetsTheContextMenuToo(): void
+	{
+		$this->aclValidatorStub->method('isTemplateEditable')->willReturn(true);
+
+		static::assertArrayHasKey('has_action', $this->preparer->prepareTableBody([self::template(owner: 2)], $this->fields(['name']), 1)[0]);
+	}
+
+	#[Group('units')]
+	public function testOthersGetNoContextMenu(): void
+	{
+		$this->aclValidatorStub->method('isTemplateEditable')->willReturn(false);
+
+		static::assertArrayNotHasKey('has_action', $this->preparer->prepareTableBody([self::template(owner: 2)], $this->fields(['name']), 3)[0]);
+	}
+
+	#[Group('units')]
+	public function testTheContextMenuTexts(): void
+	{
+		static::assertSame(
+			['LANG_COMPOSE' => 'templates.composer', 'LANG_SETTINGS' => 'main.settings', 'LANG_TEMPLATE_DELETE' => 'main.delete', 'LANG_TEMPLATE_DELETE_CONFIRM' => 'templates.confirm_delete'],
+			$this->preparer->formatContextMenu()
+		);
 	}
 }

@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -21,175 +21,187 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Templates\Helper\Datatable;
 
+use App\Framework\Config\Config;
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Exceptions\ModuleException;
+use App\Framework\Security\Crypt;
+use App\Framework\Security\CsrfToken;
 use App\Framework\Utils\Datatable\BuildService;
-use App\Framework\Utils\Datatable\Results\HeaderField;
-use App\Framework\Utils\FormParameters\BaseParameters;
-use App\Framework\Utils\Html\FieldInterface;
+use App\Framework\Utils\Datatable\Paginator\Builder as PaginatorBuilder;
+use App\Framework\Utils\Datatable\Results\Builder as ResultsBuilder;
+use App\Framework\Utils\Html\DropdownField;
+use App\Framework\Utils\Html\FieldsFactory;
+use App\Framework\Utils\Html\FieldsRenderFactory;
 use App\Framework\Utils\Html\FieldType;
+use App\Framework\Utils\Html\FormBuilder;
+use App\Framework\Validation\Sanitizer;
 use App\Modules\Templates\Helper\Datatable\DatatableBuilder;
 use App\Modules\Templates\Helper\Datatable\Parameters;
 use App\Modules\Templates\Services\AclValidator;
+use Defuse\Crypto\Key;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\MemorySession;
 
+/**
+ * The builder of the template list with the real parameters and the real services of the datatable.
+ */
 class DatatableBuilderTest extends TestCase
 {
-	private BuildService&MockObject $buildServiceMock;
-	private Parameters&Stub $parametersStub;
+	private Parameters $parameters;
+	private AclValidator&Stub $aclValidatorStub;
+	private BuildService $buildService;
 	private DatatableBuilder $builder;
 
 	/**
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->buildServiceMock = $this->createMock(BuildService::class);
-		$this->parametersStub   = $this->createStub(Parameters::class);
-		$translatorStub         = $this->createStub(Translator::class);
-		$translatorStub->method('translate')
-			->willReturnCallback(fn(string $key, string $module): string => $module . '.' . $key);
-		$translatorStub->method('translateArrayForOptions')->willReturn(['canvas' => 'Canvas']);
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
+		$translator->method('translateArrayForOptions')->willReturn(['canvas' => 'Canvas']);
+		$session = new MemorySession();
 
-		$this->builder = new DatatableBuilder($this->buildServiceMock, $this->parametersStub, $this->createStub(AclValidator::class), $translatorStub);
+		$this->parameters       = new Parameters(new Sanitizer(), $session);
+		$this->aclValidatorStub = $this->createStub(AclValidator::class);
+		$this->buildService     = new BuildService(
+			new FormBuilder(new FieldsFactory(), new FieldsRenderFactory(), new CsrfToken(new Crypt(Key::createNewRandomKey()), $session)),
+			new PaginatorBuilder(),
+			new ResultsBuilder()
+		);
+		$this->builder = new DatatableBuilder($this->buildService, $this->parameters, $this->aclValidatorStub, $translator);
+	}
+
+	private function edition(string $edition): void
+	{
+		$config = $this->createStub(Config::class);
+		$config->method('getEdition')->willReturn($edition);
+		$this->aclValidatorStub->method('getConfig')->willReturn($config);
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
+	 * The form shows the values of the request, which are parsed before.
 	 */
-	#[Group('units')]
-	public function testBuildTitle(): void
+	private function parseRequest(): void
 	{
-		$this->buildServiceMock->expects($this->never())->method($this->anything());
+		$this->parameters->setUserInputs([]);
+		$this->parameters->parseInputFilterAllUsers(['name']);
+	}
 
+	#[Group('units')]
+	public function testTheEdgeEditionAddsNoParameters(): void
+	{
+		$this->edition(Config::PLATFORM_EDITION_EDGE);
+		$this->aclValidatorStub->method('isModuleAdmin')->willReturn(true);
+
+		$this->builder->configureParameters(1);
+
+		static::assertFalse($this->parameters->hasParameter('UID'));
+		static::assertFalse($this->parameters->hasParameter('company_id'));
+	}
+
+	#[Group('units')]
+	public function testTheAdminOfAnotherEditionFiltersByOwnerAndCompany(): void
+	{
+		$this->edition(Config::PLATFORM_EDITION_CORE);
+		$this->aclValidatorStub->method('isModuleAdmin')->willReturnMap([[1, true]]);
+		$this->aclValidatorStub->method('isSubAdmin')->willReturn(false);
+
+		$this->builder->configureParameters(1);
+
+		static::assertTrue($this->parameters->hasParameter('UID'));
+		static::assertTrue($this->parameters->hasParameter('company_id'));
+	}
+
+	#[Group('units')]
+	public function testTheSubAdminFiltersByOwnerAndCompany(): void
+	{
+		$this->edition(Config::PLATFORM_EDITION_CORE);
+		$this->aclValidatorStub->method('isModuleAdmin')->willReturn(false);
+		$this->aclValidatorStub->method('isSubAdmin')->willReturnMap([[4, true]]);
+
+		$this->builder->configureParameters(4);
+
+		static::assertTrue($this->parameters->hasParameter('UID'));
+		static::assertTrue($this->parameters->hasParameter('company_id'));
+	}
+
+	#[Group('units')]
+	public function testAUserFiltersNotByOwner(): void
+	{
+		$this->edition(Config::PLATFORM_EDITION_CORE);
+		$this->aclValidatorStub->method('isModuleAdmin')->willReturn(false);
+		$this->aclValidatorStub->method('isSubAdmin')->willReturn(false);
+
+		$this->builder->configureParameters(9);
+
+		static::assertFalse($this->parameters->hasParameter('UID'));
+	}
+
+	#[Group('units')]
+	public function testTheQueryIsParsedAndOnlyTheNameCanBeSorted(): void
+	{
+		$this->builder->determineParameters(['name' => 'Lobby', 'sort_column' => 'type', 'elements_per_page' => '20']);
+
+		static::assertSame('Lobby', $this->parameters->getValueOfParameter('name'));
+		static::assertSame(['name'], array_map(static fn($field): string => $field->getName(), array_values(array_filter($this->buildService->getDatatableFields(), static fn($field): bool => $field->isSortable()))));
+		static::assertSame('template_id', $this->parameters->getValueOfParameter('sort_column'));
+		static::assertSame(20, $this->parameters->getValueOfParameter('elements_per_page'));
+	}
+
+	#[Group('units')]
+	public function testTheTitle(): void
+	{
 		$this->builder->buildTitle();
 
 		static::assertSame('templates.overview', $this->builder->getDatatableStructure()['title']);
 	}
 
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws ModuleException
-	 */
 	#[Group('units')]
-	public function testCollectFormElementsWithoutOwner(): void
+	public function testTheFormHasTheNameTheTypeAndForAnAdminTheOwner(): void
 	{
-		$this->mockParameters(false);
-		$attributes = $this->captureFormFields(2);
+		$this->parameters->addOwner();
+		$this->parseRequest();
 
 		$this->builder->collectFormElements();
 
-		static::assertSame([Parameters::PARAMETER_TEMPLATE_NAME, Parameters::PARAMETER_TYPE], array_keys($this->builder->getDatatableStructure()['form']));
-		static::assertSame([
-			'type' => FieldType::TEXT,
-			'id' => 'name',
-			'name' => 'name',
-			'title' => 'templates.name',
-			'label' => 'templates.name',
-			'value' => 'my'
-		], $attributes[0]);
-		static::assertSame([
-			'type' => FieldType::DROPDOWN,
-			'id' => 'type',
-			'name' => 'type',
-			'title' => 'templates.type',
-			'label' => 'templates.type',
-			'value' => 'canvas',
-			'options' => ['canvas' => 'Canvas']
-		], $attributes[1]);
+		$form = $this->builder->getDatatableStructure()['form'];
+		static::assertSame(['name', 'type', 'UID'], array_keys($form));
+		static::assertSame([FieldType::TEXT, FieldType::DROPDOWN, FieldType::AUTOCOMPLETE], array_map(static fn($field): FieldType => $field->getType(), array_values($form)));
+		static::assertSame('templates.name', $form['name']->getLabel());
+		static::assertInstanceOf(DropdownField::class, $form['type']);
+		static::assertSame(['canvas' => 'Canvas'], $form['type']->getOptions());
 	}
 
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws ModuleException
-	 */
 	#[Group('units')]
-	public function testCollectFormElementsWithOwner(): void
+	public function testTheFormOfAUserHasNoOwner(): void
 	{
-		$this->mockParameters(true);
-		$attributes = $this->captureFormFields(3);
+		$this->parseRequest();
 
 		$this->builder->collectFormElements();
 
-		static::assertSame(['name', 'type', 'UID'], array_keys($this->builder->getDatatableStructure()['form']));
-		$owner = $attributes->getArrayCopy()[2];
-		static::assertSame(FieldType::AUTOCOMPLETE, $owner['type']);
-		static::assertSame('main.owner', $owner['label']);
-		static::assertSame(8, $owner['value']);
+		static::assertSame(['name', 'type'], array_keys($this->builder->getDatatableStructure()['form']));
 	}
 
 	#[Group('units')]
-	public function testCreateTableFieldsWithoutOwner(): void
+	public function testTheTableHasTheNameTheTypeAndHowOftenItIsUsed(): void
 	{
-		$this->mockParameters(false);
-		$fields = $this->captureTableFields();
+		$this->builder->createTableFields();
+
+		static::assertSame(['name', 'type', 'used'], array_map(static fn($field): string => $field->getName(), $this->buildService->getDatatableFields()));
+		static::assertSame([true, false, false], array_map(static fn($field): bool => $field->isSortable(), $this->buildService->getDatatableFields()));
+	}
+
+	#[Group('units')]
+	public function testTheTableOfAnAdminHasTheOwner(): void
+	{
+		$this->parameters->addOwner();
 
 		$this->builder->createTableFields();
 
-		static::assertSame([['name', true], ['type', false], ['used', false]], $fields->getArrayCopy());
-	}
-
-	#[Group('units')]
-	public function testCreateTableFieldsWithOwner(): void
-	{
-		$this->mockParameters(true);
-		$fields = $this->captureTableFields();
-
-		$result = $this->builder->createTableFields();
-
-		static::assertSame($this->builder, $result);
-		static::assertSame([['name', true], ['type', false], ['UID', true], ['used', false]], $fields->getArrayCopy());
-		static::assertCount(1, $this->builder->getDatatableStructure()['header']);
-	}
-
-	private function mockParameters(bool $hasOwner): void
-	{
-		$this->parametersStub->method('hasParameter')->willReturnMap([[BaseParameters::PARAMETER_UID, $hasOwner]]);
-		$this->parametersStub->method('getValueOfParameter')->willReturnMap([
-			[Parameters::PARAMETER_TEMPLATE_NAME, 'my'],
-			[Parameters::PARAMETER_TYPE, 'canvas'],
-			[BaseParameters::PARAMETER_UID, 8],
-		]);
-	}
-
-	/**
-	 * @return \ArrayObject<int, array<string,mixed>>
-	 */
-	private function captureFormFields(int $count): \ArrayObject
-	{
-		$attributes = new \ArrayObject();
-		$this->buildServiceMock->expects($this->exactly($count))->method('buildFormField')
-			->willReturnCallback(function (array $field) use ($attributes): FieldInterface {
-				$attributes->append($field);
-				return $this->createStub(FieldInterface::class);
-			});
-
-		return $attributes;
-	}
-
-	/**
-	 * @return \ArrayObject<int, array{string, bool}>
-	 */
-	private function captureTableFields(): \ArrayObject
-	{
-		$fields = new \ArrayObject();
-		$this->buildServiceMock->method('createDatatableField')
-			->willReturnCallback(function (string $name, bool $sortable) use ($fields): void {
-				$fields->append([$name, $sortable]);
-			});
-		$this->buildServiceMock->expects($this->once())->method('getDatatableFields')
-			->willReturn([$this->createStub(HeaderField::class)]);
-
-		return $fields;
+		static::assertSame(['name', 'type', 'UID', 'used'], array_map(static fn($field): string => $field->getName(), $this->buildService->getDatatableFields()));
+		static::assertCount(4, $this->builder->getDatatableStructure()['header']);
 	}
 }
