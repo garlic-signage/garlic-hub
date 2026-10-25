@@ -26,12 +26,12 @@ use App\Framework\Exceptions\CoreException;
 use App\Modules\Playlists\Helper\ExportSmil\Utils\Properties;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class PropertiesTest extends TestCase
 {
-	private Config&MockObject $configMock;
+	private Config&Stub $configStub;
 
 	/**
 	 * @throws Exception
@@ -39,7 +39,13 @@ class PropertiesTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->configMock = $this->createMock(Config::class);
+		$this->configStub = $this->createStub(Config::class);
+		// the defaults of the configuration, which must not win against a value of the item
+		$this->configStub->method('getConfigValue')->willReturnMap([
+			['fit', 'playlists', 'Defaults', 'meetBest'],
+			['media_align', 'playlists', 'Defaults', 'center'],
+			['volume', 'playlists', 'Defaults', '100']
+		]);
 	}
 
 	/**
@@ -48,14 +54,7 @@ class PropertiesTest extends TestCase
 	#[Group('units')]
 	public function testDefaultValues(): void
 	{
-		$this->configMock->expects($this->exactly(3))->method('getConfigValue')
-			->willReturnMap([
-				['fit', 'playlists', 'Defaults', 'meetBest'],
-				['media_align', 'playlists', 'Defaults', 'center'],
-				['volume', 'playlists', 'Defaults', '100']
-			]);
-
-		$properties = new Properties($this->configMock, []);
+		$properties = new Properties($this->configStub, []);
 
 		static::assertSame('fit="meetBest" ', $properties->getFit());
 		static::assertSame('mediaAlign="center" ', $properties->getMediaAlign());
@@ -68,8 +67,7 @@ class PropertiesTest extends TestCase
 	#[Group('units')]
 	public function testParameterValues(): void
 	{
-		$this->configMock->expects($this->never())->method($this->anything());
-		$properties = new Properties($this->configMock, ['fit' => 'slice', 'media_align' => 'midRight', 'volume' => '56']);
+		$properties = new Properties($this->configStub, ['fit' => 'slice', 'media_align' => 'midRight', 'volume' => '56']);
 
 		static::assertSame('fit="slice" ', $properties->getFit());
 		static::assertSame('mediaAlign="midRight" ', $properties->getMediaAlign());
@@ -82,10 +80,7 @@ class PropertiesTest extends TestCase
 	#[Group('units')]
 	public function testNonsenseValues(): void
 	{
-		$this->configMock->expects($this->once())->method('getConfigValue')
-			->with('volume', 'playlists', 'Defaults')
-			->willReturn('100');
-		$properties = new Properties($this->configMock, ['fit' => 'Bämm', 'media_align' => 'Bämm']);
+		$properties = new Properties($this->configStub, ['fit' => 'Bämm', 'media_align' => 'Bämm']);
 
 		static::assertEmpty($properties->getFit());
 		static::assertEmpty($properties->getMediaAlign());

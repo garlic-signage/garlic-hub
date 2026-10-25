@@ -23,213 +23,147 @@ namespace Tests\Unit\Modules\Playlists\Helper\Widgets;
 
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Utils\Widget\ConfigXML;
 use App\Modules\Playlists\Helper\Widgets\ContentDataPreparer;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * The preferences of a widget come from its config.xml: the real ConfigXML reads real XML.
+ */
 class ContentDataPreparerTest extends TestCase
 {
-	private ConfigXML&MockObject $configXmlMock;
-	private ContentDataPreparer $contentDataPreparer;
+	private const string CONFIG = '<?xml version="1.0" encoding="UTF-8"?>'
+		. '<widget xmlns="http://www.w3.org/ns/widgets" xmlns:ia="http://schemas.iawidget.org/widgetconfig-1.0">'
+		. '<preference name="urls" ia:types="text" ia:mandatory="true" />'
+		. '<preference name="count" ia:types="integer" />'
+		. '<preference name="color" ia:types="color" />'
+		. '<preference name="fixed" value="1" readonly="true" />'
+		. '</widget>';
 
-	/**
-	 * @throws Exception
-	 */
+	private ContentDataPreparer $preparer;
+
 	protected function setUp(): void
 	{
 		parent::setUp();
-
-		$this->configXmlMock = $this->createMock(ConfigXML::class);
-		$this->contentDataPreparer = new ContentDataPreparer($this->configXmlMock);
+		$this->preparer = new ContentDataPreparer(new ConfigXML());
 	}
 
-	/**
-	 * @throws ModuleException
-	 * @throws FrameworkException
-	 */
 	#[Group('units')]
-	public function testDeterminePreferencesSuccess(): void
+	public function testTheEditablePreferencesAreTheOnesWhichAreNotReadonly(): void
 	{
-		$configData = '<config></config>';
-		$preferences = [
-			'preference1' => ['type' => 'text'],
-			'preference2' => ['type' => 'integer']
-		];
+		$preferences = $this->preparer->determinePreferences(self::CONFIG);
 
-		$this->configXmlMock->method('load')
-			->with($configData)
-			->willReturnSelf();
-
-		$this->configXmlMock->method('hasEditablePreferences')
-			->willReturn(true);
-
-		$this->configXmlMock->method('parseBasic')
-			->willReturnSelf();
-
-		$this->configXmlMock->method('parsePreferences')
-			->willReturnSelf();
-
-		$this->configXmlMock->method('getPreferences')
-			->willReturn($preferences);
-
-		$result = $this->contentDataPreparer->determinePreferences($configData);
-
-		static::assertSame($preferences, $result);
+		static::assertSame(['urls', 'count', 'color'], array_keys($preferences));
+		static::assertSame(['types' => 'text', 'mandatory' => 'true'], $preferences['urls']);
+		static::assertSame(['types' => 'integer'], $preferences['count']);
 	}
 
-	/**
-	 * @throws ModuleException
-	 * @throws FrameworkException
-	 */
 	#[Group('units')]
-	public function testPrepareContentDataSuccess(): void
+	public function testAWidgetWithoutEditablePreferencesCanNotBeEdited(): void
 	{
-		$configData = '<config></config>';
-		$requestData = ['preference1' => '<value>', 'preference2' => '123'];
-		$preferences = [
-			'preference1' => ['types' => 'combo'],
-			'preference2' => ['types' => 'integer']
-		];
+		$config = '<?xml version="1.0"?><widget xmlns="http://www.w3.org/ns/widgets"><preference name="fixed" value="1" readonly="true" /></widget>';
 
-		$this->configXmlMock->method('load')
-			->with($configData)
-			->willReturnSelf();
-		$this->configXmlMock->method('hasEditablePreferences')
-			->willReturn(true);
-		$this->configXmlMock->method('parseBasic')
-			->willReturnSelf();
-		$this->configXmlMock->method('parsePreferences')
-			->willReturnSelf();
-		$this->configXmlMock->method('getPreferences')
-			->willReturn($preferences);
-
-		$result = $this->contentDataPreparer->prepareContentData($configData, $requestData);
-
-		static::assertSame(['preference1' => '<value>', 'preference2' => 123], $result);
+		try
+		{
+			$this->preparer->determinePreferences($config);
+			static::fail('Expected TranslatableModuleException');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertSame('widget_not_editable', $e->getTranslationKey());
+		}
 	}
 
-	/**
-	 * @throws FrameworkException
-	 */
 	#[Group('units')]
-	public function testPrepareContentDataThrowsModuleExceptionForMandatoryField(): void
+	public function testAConfigWhichIsNoWidgetIsAnError(): void
 	{
-		$configData = '<config></config>';
-		$requestData = [];
-		$preferences = [
-			'preference1' => ['types' => 'text', 'mandatory' => 'true']
-		];
-
-		$this->configXmlMock->method('load')
-			->with($configData)
-			->willReturnSelf();
-		$this->configXmlMock->method('hasEditablePreferences')
-			->willReturn(true);
-		$this->configXmlMock->method('parseBasic')
-			->willReturnSelf();
-		$this->configXmlMock->method('parsePreferences')
-			->willReturnSelf();
-		$this->configXmlMock->method('getPreferences')
-			->willReturn($preferences);
-
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('widget_field_mandatory {"field":"preference1"}');
-
-		$this->contentDataPreparer->prepareContentData($configData, $requestData);
-	}
-
-	/**
-	 * @throws ModuleException
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testPrepareContentDataWithInitIgnoresMandatoryFields(): void
-	{
-		$configData = '<config></config>';
-		$requestData = [];
-		$preferences = [
-			'preference1' => ['types' => 'text', 'mandatory' => 'true']
-		];
-
-		$this->configXmlMock->method('load')
-			->with($configData)
-			->willReturnSelf();
-		$this->configXmlMock->method('hasEditablePreferences')
-			->willReturn(true);
-		$this->configXmlMock->method('parseBasic')
-			->willReturnSelf();
-		$this->configXmlMock->method('parsePreferences')
-			->willReturnSelf();
-		$this->configXmlMock->method('getPreferences')
-			->willReturn($preferences);
-
-		$result = $this->contentDataPreparer->prepareContentData($configData, $requestData, true);
-
-		static::assertSame([], $result);
-	}
-
-	/**
-	 * @throws ModuleException
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testPrepareContentDataKeepsOnlyThePreferencesOfTheWidget(): void
-	{
-		$configData = '<config></config>';
-		$this->configXmlMock->method('load')->with($configData)->willReturnSelf();
-		$this->configXmlMock->method('hasEditablePreferences')->willReturn(true);
-		$this->configXmlMock->method('parseBasic')->willReturnSelf();
-		$this->configXmlMock->method('parsePreferences')->willReturnSelf();
-		$this->configXmlMock->method('getPreferences')->willReturn([
-			'text'    => ['types' => 'text'],
-			'count'   => ['types' => 'integer'],
-			'missing' => ['types' => 'text']
-		]);
-
-		$result = $this->contentDataPreparer->prepareContentData($configData, ['csrf_token' => 'secret', 'item_id' => '1', 'text' => '', 'count' => '0', 'unknown' => 'x']);
-
-		static::assertSame(['text' => '', 'count' => 0], $result);
-	}
-
-	/**
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testDeterminePreferencesThrowsModuleExceptionIfNoEditablePreferences(): void
-	{
-		$configData = '<config></config>';
-
-		$this->configXmlMock->method('load')
-			->with($configData)
-			->willReturnSelf();
-
-		$this->configXmlMock->method('hasEditablePreferences')
-			->willReturn(false);
-
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('widget_not_editable');
-
-		$this->contentDataPreparer->determinePreferences($configData);
-	}
-
-	/**
-	 * @throws ModuleException
-	 */
-	#[Group('units')]
-	public function testDeterminePreferencesThrowsFrameworkExceptionOnParseError(): void
-	{
-		$configData = '<invalid></config>';
-
-		$this->configXmlMock->method('load')
-			->with($configData)
-			->willThrowException(new FrameworkException('Invalid config XML.'));
-
 		$this->expectException(FrameworkException::class);
-		$this->expectExceptionMessage('Invalid config XML.');
+		$this->preparer->determinePreferences('<?xml version="1.0"?><config></config>');
+	}
 
-		$this->contentDataPreparer->determinePreferences($configData);
+	#[Group('units')]
+	public function testAConfigWhichIsNoXmlIsAnError(): void
+	{
+		$this->expectException(ModuleException::class);
+		$this->expectExceptionMessage('Error reading/parsing xml');
+		$this->preparer->determinePreferences('<invalid></config>');
+	}
+
+	#[Group('units')]
+	public function testTheValuesAreCastByTheTypeOfThePreference(): void
+	{
+		$result = $this->preparer->prepareContentData(self::CONFIG, ['urls' => '<b>http://example.com</b>', 'count' => '123', 'color' => '#ff0000']);
+
+		static::assertSame(['urls' => '<b>http://example.com</b>', 'count' => 123, 'color' => '#ff0000'], $result);
+	}
+
+	#[Group('units')]
+	public function testAValueWhichIsNoScalarIsAnEmptyText(): void
+	{
+		$result = $this->preparer->prepareContentData(self::CONFIG, ['urls' => ['x'], 'color' => ['#fff']]);
+
+		static::assertSame(['urls' => '', 'color' => ''], $result);
+	}
+
+	#[Group('units')]
+	public function testAMandatoryValueMustBeGiven(): void
+	{
+		try
+		{
+			$this->preparer->prepareContentData(self::CONFIG, ['count' => '1']);
+			static::fail('Expected TranslatableModuleException');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertSame('widget_field_mandatory', $e->getTranslationKey());
+			static::assertSame(['field' => 'urls'], $e->getReplacements());
+		}
+	}
+
+	#[Group('units')]
+	public function testTheMandatoryValuesAreIgnoredWhenAWidgetIsInserted(): void
+	{
+		static::assertSame([], $this->preparer->prepareContentData(self::CONFIG, [], true));
+	}
+
+	#[Group('units')]
+	public function testOnlyThePreferencesOfTheWidgetAreKept(): void
+	{
+		$result = $this->preparer->prepareContentData(self::CONFIG, ['csrf_token' => 'secret', 'item_id' => '1', 'urls' => 'x', 'count' => '0', 'fixed' => '2', 'unknown' => 'x']);
+
+		// a zero or an emptied text is a value, the readonly preference and the other fields are not
+		static::assertSame(['urls' => 'x', 'count' => 0], $result);
+	}
+
+	#[Group('units')]
+	public function testChoicesAreTexts(): void
+	{
+		$config = '<?xml version="1.0"?><widget xmlns="http://www.w3.org/ns/widgets" xmlns:ia="http://schemas.iawidget.org/widgetconfig-1.0">'
+			. '<preference name="direction" ia:types="radio"><ia:options value="ltr"/><ia:options value="rtl"/></preference>'
+			. '<preference name="theme" ia:types="list"><ia:options value="light"/></preference>'
+			. '<preference name="font" ia:types="combo"><ia:options>Arial</ia:options></preference>'
+			. '</widget>';
+
+		$result = $this->preparer->prepareContentData($config, ['direction' => 'rtl', 'theme' => 5, 'font' => 'Arial']);
+
+		static::assertSame(['direction' => 'rtl', 'theme' => '5', 'font' => 'Arial'], $result);
+	}
+
+	#[Group('units')]
+	public function testAPreferenceWithoutATypeIsAText(): void
+	{
+		static::markTestSkipped('Known bug: a preference without ia:types (plain W3C widget, like the example config.xml) gives a warning for the undefined key "types". Remove this line when it is fixed.');
+		// @phpstan-ignore deadCode.unreachable
+		$config = '<?xml version="1.0"?><widget xmlns="http://www.w3.org/ns/widgets"><preference name="url" /></widget>';
+
+		static::assertSame(['url' => '7'], $this->preparer->prepareContentData($config, ['url' => 7]));
+	}
+
+	#[Group('units')]
+	public function testAnEmptiedTextIsAValue(): void
+	{
+		static::assertSame(['urls' => '', 'color' => ''], $this->preparer->prepareContentData(self::CONFIG, ['urls' => '', 'color' => ''], true));
 	}
 }

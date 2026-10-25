@@ -25,6 +25,7 @@ use App\Framework\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
+use App\Framework\Validation\Sanitizer;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\Settings\Parameters;
 use App\Modules\Playlists\Helper\Settings\SettingsParametersPolicy;
@@ -32,13 +33,14 @@ use App\Modules\Playlists\Services\AclValidator;
 use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\MemorySession;
 
 class SettingsParametersPolicyTest extends TestCase
 {
-	private Parameters&MockObject $parametersMock;
-	private AclValidator&MockObject $aclValidatorMock;
+	private Parameters $parameters;
+	private AclValidator&Stub $aclValidatorStub;
 	private SettingsParametersPolicy $policy;
 
 	/**
@@ -47,12 +49,12 @@ class SettingsParametersPolicyTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->parametersMock   = $this->createMock(Parameters::class);
-		$this->aclValidatorMock = $this->createMock(AclValidator::class);
+		$this->parameters       = new Parameters(new Sanitizer(), new MemorySession());
+		$this->aclValidatorStub = $this->createStub(AclValidator::class);
 		$userSessionStub        = $this->createStub(UserSession::class);
 		$userSessionStub->method('getUID')->willReturn(7);
 
-		$this->policy = new SettingsParametersPolicy($this->parametersMock, $this->aclValidatorMock, $userSessionStub);
+		$this->policy = new SettingsParametersPolicy($this->parameters, $this->aclValidatorStub, $userSessionStub);
 	}
 
 	/**
@@ -71,6 +73,35 @@ class SettingsParametersPolicyTest extends TestCase
 	}
 
 	/**
+	 * @return list<string> the names of the parameters which were added to the default ones of the form
+	 */
+	private function addedParameters(): array
+	{
+		$added = [];
+		foreach (['playlist_mode', 'playlist_id', 'screen_width', 'screen_height', 'UID', 'time_limit'] as $name)
+		{
+			if ($this->parameters->hasParameter($name))
+				$added[] = $name;
+		}
+
+		return $added;
+	}
+
+	/**
+	 * @return list<string>
+	 */
+	private static function expected(bool $resolution, bool $owner, bool $timeLimit, string $idOrMode): array
+	{
+		return array_values(array_filter([
+			$idOrMode,
+			$resolution ? 'screen_width' : null,
+			$resolution ? 'screen_height' : null,
+			$owner ? 'UID' : null,
+			$timeLimit ? 'time_limit' : null,
+		]));
+	}
+
+	/**
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws UserException
@@ -79,15 +110,12 @@ class SettingsParametersPolicyTest extends TestCase
 	#[DataProvider('provideAdminCases')] #[Group('units')]
 	public function testAddCreateFormElementsForSimpleAdmin(string $mode, string $edition, bool $resolution, bool $timeLimit): void
 	{
-		$this->aclValidatorMock->expects($this->once())->method('isSimpleAdmin')->with(7)->willReturn(true);
+		$this->aclValidatorStub->method('isSimpleAdmin')->willReturnMap([[7, true]]);
 		$this->expectEdition($edition);
-		$this->parametersMock->expects($this->once())->method('addPlaylistMode');
-		$this->parametersMock->expects($this->never())->method('addPlaylistId');
-		$this->parametersMock->expects($resolution ? $this->once() : $this->never())->method('addResolution');
-		$this->parametersMock->expects($this->once())->method('addOwner');
-		$this->parametersMock->expects($timeLimit ? $this->once() : $this->never())->method('addTimeLimit');
 
 		$this->policy->addCreateFormElements($mode);
+
+		static::assertEqualsCanonicalizing(self::expected($resolution, true, $timeLimit, 'playlist_mode'), $this->addedParameters());
 	}
 
 	/**
@@ -98,14 +126,11 @@ class SettingsParametersPolicyTest extends TestCase
 	#[Group('units')]
 	public function testAddCreateFormElementsWithoutAdminRights(): void
 	{
-		$this->aclValidatorMock->expects($this->once())->method('isSimpleAdmin')->with(7)->willReturn(false);
-		$this->aclValidatorMock->expects($this->never())->method('getConfig');
-		$this->parametersMock->expects($this->once())->method('addPlaylistMode');
-		$this->parametersMock->expects($this->once())->method('addResolution');
-		$this->parametersMock->expects($this->never())->method('addOwner');
-		$this->parametersMock->expects($this->never())->method('addTimeLimit');
+		$this->aclValidatorStub->method('isSimpleAdmin')->willReturnMap([[7, false]]);
 
 		$this->policy->addCreateFormElements('master');
+
+		static::assertEqualsCanonicalizing(['playlist_mode', 'screen_width', 'screen_height'], $this->addedParameters());
 	}
 
 	/**
@@ -119,15 +144,12 @@ class SettingsParametersPolicyTest extends TestCase
 	public function testAddEditFormElementsForAdmin(string $mode, string $edition, bool $resolution, bool $timeLimit): void
 	{
 		$playlist = ['UID' => 3, 'company_id' => 1, 'playlist_mode' => $mode];
-		$this->aclValidatorMock->expects($this->once())->method('isAdmin')->with(7, $playlist)->willReturn(true);
+		$this->aclValidatorStub->method('isAdmin')->willReturnMap([[7, $playlist, true]]);
 		$this->expectEdition($edition);
-		$this->parametersMock->expects($this->never())->method('addPlaylistMode');
-		$this->parametersMock->expects($this->once())->method('addPlaylistId');
-		$this->parametersMock->expects($resolution ? $this->once() : $this->never())->method('addResolution');
-		$this->parametersMock->expects($this->once())->method('addOwner');
-		$this->parametersMock->expects($timeLimit ? $this->once() : $this->never())->method('addTimeLimit');
 
 		$this->policy->addEditFormElements($playlist);
+
+		static::assertEqualsCanonicalizing(self::expected($resolution, true, $timeLimit, 'playlist_id'), $this->addedParameters());
 	}
 
 	/**
@@ -139,14 +161,11 @@ class SettingsParametersPolicyTest extends TestCase
 	#[Group('units')]
 	public function testAddEditFormElementsWithoutAdminRights(): void
 	{
-		$this->aclValidatorMock->expects($this->once())->method('isAdmin')->willReturn(false);
-		$this->aclValidatorMock->expects($this->never())->method('getConfig');
-		$this->parametersMock->expects($this->once())->method('addPlaylistId');
-		$this->parametersMock->expects($this->never())->method('addResolution');
-		$this->parametersMock->expects($this->never())->method('addOwner');
-		$this->parametersMock->expects($this->never())->method('addTimeLimit');
+		$this->aclValidatorStub->method('isAdmin')->willReturn(false);
 
 		$this->policy->addEditFormElements(['UID' => 3, 'company_id' => 1, 'playlist_mode' => 'internal']);
+
+		static::assertSame(['playlist_id'], $this->addedParameters());
 	}
 
 	/**
@@ -156,6 +175,6 @@ class SettingsParametersPolicyTest extends TestCase
 	{
 		$configStub = $this->createStub(Config::class);
 		$configStub->method('getEdition')->willReturn($edition);
-		$this->aclValidatorMock->method('getConfig')->willReturn($configStub);
+		$this->aclValidatorStub->method('getConfig')->willReturn($configStub);
 	}
 }

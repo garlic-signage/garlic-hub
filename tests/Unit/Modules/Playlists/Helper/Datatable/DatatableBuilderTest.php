@@ -23,331 +23,211 @@ namespace Tests\Unit\Modules\Playlists\Helper\Datatable;
 
 use App\Framework\Config\Config;
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Exceptions\ModuleException;
+use App\Framework\Security\Crypt;
+use App\Framework\Security\CsrfToken;
 use App\Framework\Utils\Datatable\BuildService;
-use App\Framework\Utils\FormParameters\BaseParameters;
-use App\Framework\Utils\Html\AutocompleteField;
+use App\Framework\Utils\Datatable\Paginator\Builder as PaginatorBuilder;
+use App\Framework\Utils\Datatable\Results\Builder as ResultsBuilder;
 use App\Framework\Utils\Html\DropdownField;
+use App\Framework\Utils\Html\FieldsFactory;
+use App\Framework\Utils\Html\FieldsRenderFactory;
 use App\Framework\Utils\Html\FieldType;
-use App\Framework\Utils\Html\TextField;
+use App\Framework\Utils\Html\FormBuilder;
+use App\Framework\Validation\Sanitizer;
 use App\Modules\Playlists\Helper\Datatable\DatatableBuilder;
 use App\Modules\Playlists\Helper\Datatable\Parameters;
-use App\Modules\Playlists\Helper\PlaylistMode;
 use App\Modules\Playlists\Services\AclValidator;
-use App\Framework\Utils\Datatable\Results\HeaderField;
+use Defuse\Crypto\Key;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\MemorySession;
 
+/**
+ * The builder of the playlist list with the real parameters and the real services of the datatable.
+ * The container of the integration tests knows only the edge edition: the editions are tested here.
+ */
 class DatatableBuilderTest extends TestCase
 {
-	private BuildService&MockObject $buildServiceMock;
-	private Parameters&MockObject $parametersMock;
-	private AclValidator&MockObject $aclValidatorMock;
-	private Translator&Stub $translatorStub;
+	private Parameters $parameters;
+	private AclValidator&Stub $aclValidatorStub;
 	private DatatableBuilder $builder;
+	private BuildService $buildService;
 
 	/**
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->buildServiceMock = $this->createMock(BuildService::class);
-		$this->parametersMock   = $this->createMock(Parameters::class);
-		$this->aclValidatorMock = $this->createMock(AclValidator::class);
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
+		$translator->method('translateArrayForOptions')->willReturn(['master' => 'Master', 'internal' => 'Internal', 'external' => 'External', 'channel' => 'Channel']);
+		$session = new MemorySession();
 
-		$this->translatorStub   = $this->createStub(Translator::class);
-
-		$this->builder = new DatatableBuilder($this->buildServiceMock, $this->parametersMock, $this->aclValidatorMock, $this->translatorStub);
+		$this->parameters       = new Parameters(new Sanitizer(), $session);
+		$this->aclValidatorStub = $this->createStub(AclValidator::class);
+		$this->buildService     = new BuildService(
+			new FormBuilder(new FieldsFactory(), new FieldsRenderFactory(), new CsrfToken(new Crypt(Key::createNewRandomKey()), $session)),
+			new PaginatorBuilder(),
+			new ResultsBuilder()
+		);
+		$this->builder = new DatatableBuilder($this->buildService, $this->parameters, $this->aclValidatorStub, $translator);
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws \Doctrine\DBAL\Exception
+	 * The form shows the values of the request, which are parsed before.
 	 */
-	#[Group('units')]
-	public function testConfigureParametersDoesNothingForEdgeEdition(): void
+	private function parseRequest(): void
 	{
-		$this->buildServiceMock->expects($this->never())->method($this->anything());
-		$this->aclValidatorMock
-			->expects($this->atLeastOnce())->method('getConfig')
-			->willReturn($this->createConfiguredStub(Config::class, ['getEdition' => Config::PLATFORM_EDITION_EDGE]));
+		$this->parameters->setUserInputs([]);
+		$this->parameters->parseInputFilterAllUsers(['playlist_name']);
+	}
 
-		$this->parametersMock->expects($this->never())->method('addOwner');
-		$this->parametersMock->expects($this->never())->method('addCompany');
+	private function edition(string $edition): void
+	{
+		$config = $this->createStub(Config::class);
+		$config->method('getEdition')->willReturn($edition);
+		$this->aclValidatorStub->method('getConfig')->willReturn($config);
+	}
+
+	#[Group('units')]
+	public function testTheEdgeEditionAddsNoParameters(): void
+	{
+		$this->edition(Config::PLATFORM_EDITION_EDGE);
+		$this->aclValidatorStub->method('isModuleAdmin')->willReturn(true);
 
 		$this->builder->configureParameters(123);
+
+		static::assertFalse($this->parameters->hasParameter('UID'));
+		static::assertFalse($this->parameters->hasParameter('company_id'));
 	}
 
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws \Doctrine\DBAL\Exception
-	 */
 	#[Group('units')]
-	public function testConfigureParametersCallsAddOwnerAndCompanyForModuleAdmin(): void
+	public function testTheModuleAdminFiltersByOwnerAndCompany(): void
 	{
-		$this->buildServiceMock->expects($this->never())->method($this->anything());
-		$this->aclValidatorMock
-			->method('getConfig')
-			->willReturn($this->createConfiguredStub(Config::class, ['getEdition' => 'some_other_edition']));
-
-		$this->aclValidatorMock
-			->method('isModuleAdmin')
-			->with(123)
-			->willReturn(true);
-
-		$this->aclValidatorMock
-			->method('isSubAdmin')
-			->willReturn(false);
-
-		$this->parametersMock->expects($this->once())->method('addOwner');
-		$this->parametersMock->expects($this->once())->method('addCompany');
+		$this->edition('some_other_edition');
+		$this->aclValidatorStub->method('isModuleAdmin')->willReturnMap([[123, true]]);
+		$this->aclValidatorStub->method('isSubAdmin')->willReturn(false);
 
 		$this->builder->configureParameters(123);
+
+		static::assertTrue($this->parameters->hasParameter('UID'));
+		static::assertTrue($this->parameters->hasParameter('company_id'));
 	}
 
-	/**
-	 * @throws Exception
-	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
-	 */
 	#[Group('units')]
-	public function testConfigureParametersCallsAddOwnerAndCompanyForSubAdmin(): void
+	public function testTheSubAdminFiltersByOwnerAndCompany(): void
 	{
-		$this->buildServiceMock->expects($this->never())->method($this->anything());
-		$this->aclValidatorMock
-			->method('getConfig')
-			->willReturn($this->createConfiguredStub(Config::class, ['getEdition' => 'some_other_edition']));
-
-		$this->aclValidatorMock
-			->method('isModuleAdmin')
-			->willReturn(false);
-
-		$this->aclValidatorMock
-			->method('isSubAdmin')
-			->with(456)
-			->willReturn(true);
-
-		$this->parametersMock->expects($this->once())->method('addOwner');
-		$this->parametersMock->expects($this->once())->method('addCompany');
+		$this->edition('some_other_edition');
+		$this->aclValidatorStub->method('isModuleAdmin')->willReturn(false);
+		$this->aclValidatorStub->method('isSubAdmin')->willReturnMap([[456, true]]);
 
 		$this->builder->configureParameters(456);
+
+		static::assertTrue($this->parameters->hasParameter('UID'));
+		static::assertTrue($this->parameters->hasParameter('company_id'));
 	}
 
 	#[Group('units')]
-	public function testDetermineParametersSetsUserInputsAndParsesFilterAllUsers(): void
+	public function testAUserWithoutRightsFiltersOnlyByTheModuleParameters(): void
 	{
-		$this->aclValidatorMock->expects($this->never())->method($this->anything());
-		$queryParams = ['test_key' => 'test_value'];
+		$this->edition('some_other_edition');
+		$this->aclValidatorStub->method('isModuleAdmin')->willReturn(false);
+		$this->aclValidatorStub->method('isSubAdmin')->willReturn(false);
 
-		$this->buildServiceMock->expects($this->atLeastOnce())->method('createDatatableField');
-		$this->buildServiceMock->expects($this->exactly(2))->method('getDatatableFields')->willReturn([
-			new HeaderField()->setName('playlist_name')->sortable(true),
-			new HeaderField()->setName('other')->sortable(false)
-		]);
-		$this->parametersMock->method('hasParameter')->willReturn(false);
+		$this->builder->configureParameters(789);
 
-		$this->parametersMock->expects($this->once())
-			->method('setUserInputs')
-			->with($queryParams);
-
-		$this->parametersMock->expects($this->once())
-			->method('parseInputFilterAllUsers')
-			->with(['playlist_name']);
-
-		$this->builder->determineParameters($queryParams);
+		static::assertFalse($this->parameters->hasParameter('UID'));
+		static::assertTrue($this->parameters->hasParameter('playlist_name'));
 	}
 
-	/**
-	 * @throws Exception
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
 	#[Group('units')]
-	public function testBuildTitleSetsCorrectTitle(): void
+	public function testTheQueryIsParsedAndOnlySortableColumnsCanBeSorted(): void
 	{
-		$this->expectUntouched($this->buildServiceMock, $this->parametersMock, $this->aclValidatorMock);
-		$expectedTitle = 'Translated Title';
+		$this->builder->determineParameters(['playlist_name' => 'Lobby', 'sort_column' => 'duration', 'elements_per_page' => '20']);
 
-		$this->translatorStub->method('translate')
-			->willReturnMap([['overview', 'playlists', [], $expectedTitle]]);
+		static::assertSame('Lobby', $this->parameters->getValueOfParameter('playlist_name'));
+		static::assertSame(['playlist_name', 'playlist_mode'], array_map(static fn($field): string => $field->getName(), array_filter($this->buildService->getDatatableFields(), static fn($field): bool => $field->isSortable())));
+		// duration is not sortable: the default order stays
+		static::assertSame('playlist_id', $this->parameters->getValueOfParameter('sort_column'));
+		static::assertSame(20, $this->parameters->getValueOfParameter('elements_per_page'));
+	}
 
+	#[Group('units')]
+	public function testTheTitle(): void
+	{
 		$this->builder->buildTitle();
 
-		static::assertSame($expectedTitle, $this->builder->getDatatableStructure()['title']);
+		static::assertSame('playlists.overview', $this->builder->getDatatableStructure()['title']);
 	}
 
-	/**
-	 * @throws FrameworkException
-	 * @throws CoreException
-	 * @throws Exception|ModuleException
-	 */
 	#[Group('units')]
-	public function testCollectFormElements(): void
+	public function testTheFormHasTheNameTheModeAndForAnAdminTheOwner(): void
 	{
-		// the allowed playlist modes depend on the edition
-		$this->aclValidatorMock->expects($this->once())->method('getConfig')->willReturn($this->createStub(\App\Framework\Config\Config::class));
-
-		$this->parametersMock->expects($this->atLeastOnce())->method('hasParameter')
-		->willReturnMap([
-			[BaseParameters::PARAMETER_UID, true]
-		]);
-
-
-		$this->parametersMock->expects($this->atLeastOnce())->method('getValueOfParameter')
-			->willReturnMap([
-				[Parameters::PARAMETER_PLAYLIST_NAME, 'playlist_name'],
-				[BaseParameters::PARAMETER_UID, 56],
-				[Parameters::PARAMETER_PLAYLIST_MODE, '']
-			]);
-
-		$mode = [];
-		$this->translatorStub->method('translateArrayForOptions')
-			->willReturn($mode);
-
-		$this->translatorStub->method('translate')->willReturnMap([
-			[Parameters::PARAMETER_PLAYLIST_NAME, 'playlists', [], 'Playlist name'],
-			['owner', 'main', [], 'Owner'],
-			[Parameters::PARAMETER_PLAYLIST_MODE, 'playlists', 'Playlist mode']
-		]);
-
-
-		$playlistNameFieldStub = $this->createStub(TextField::class);
-		$ownerFieldStub        = $this->createStub(AutocompleteField::class);
-		$playlistModeFieldStub = $this->createStub(DropdownField::class);
-
-		$this->buildServiceMock->expects($this->atLeastOnce())->method('buildFormField')->willReturnMap([
-			[['type' => FieldType::TEXT, 'id' => Parameters::PARAMETER_PLAYLIST_NAME, 'name' => Parameters::PARAMETER_PLAYLIST_NAME, 'title' => 'Playlist name', 'label' => 'Playlist name', 'value' => 'playlist_name'], $playlistNameFieldStub],
-			[['type' => FieldType::AUTOCOMPLETE, 'id' => BaseParameters::PARAMETER_UID, 'name' => BaseParameters::PARAMETER_UID, 'title' => 'Owner', 'label' => 'Owner', 'value' => 56, 'data-label' => ''], $ownerFieldStub],
-			[['type' => FieldType::DROPDOWN, 'id' => Parameters::PARAMETER_PLAYLIST_MODE, 'name' => Parameters::PARAMETER_PLAYLIST_MODE, 'title' => 'Playlist mode', 'label' => 'Playlist mode', 'value' => '','options' => []], $playlistModeFieldStub]
-		]);
-
+		$this->edition(Config::PLATFORM_EDITION_CORE);
+		$this->parameters->addOwner();
+		$this->parseRequest();
 
 		$this->builder->collectFormElements();
 
 		$form = $this->builder->getDatatableStructure()['form'];
-
-		static::assertArrayHasKey(Parameters::PARAMETER_PLAYLIST_NAME, $form);
-		static::assertArrayHasKey(BaseParameters::PARAMETER_UID, $form);
-		static::assertArrayHasKey(Parameters::PARAMETER_PLAYLIST_MODE, $form);
-
-		static::assertEquals($playlistNameFieldStub, $form[Parameters::PARAMETER_PLAYLIST_NAME]);
-		static::assertEquals($ownerFieldStub, $form[BaseParameters::PARAMETER_UID]);
-		static::assertEquals($playlistModeFieldStub, $form[Parameters::PARAMETER_PLAYLIST_MODE]);
+		static::assertSame(['playlist_name', 'UID', 'playlist_mode'], array_keys($form));
+		static::assertSame([FieldType::TEXT, FieldType::AUTOCOMPLETE, FieldType::DROPDOWN], array_map(static fn($field): FieldType => $field->getType(), array_values($form)));
+		static::assertSame('playlists.playlist_name', $form['playlist_name']->getLabel());
+		static::assertSame('main.owner', $form['UID']->getLabel());
 	}
 
-	/**
-	 * @throws FrameworkException
-	 * @throws CoreException
-	 * @throws Exception|ModuleException
-	 */
 	#[Group('units')]
-	public function testCollectFormElementsMinimum(): void
+	public function testTheFormOfAUserHasNoOwner(): void
 	{
-		// the allowed playlist modes depend on the edition
-		$this->aclValidatorMock->expects($this->once())->method('getConfig')->willReturn($this->createStub(\App\Framework\Config\Config::class));
-
-		$this->parametersMock->expects($this->atLeastOnce())->method('hasParameter')
-			->willReturnMap([
-				[BaseParameters::PARAMETER_UID, false]
-			]);
-
-
-		$this->parametersMock->expects($this->atLeastOnce())->method('getValueOfParameter')
-			->willReturnMap([
-				[Parameters::PARAMETER_PLAYLIST_NAME, 'playlist_name'],
-				[Parameters::PARAMETER_PLAYLIST_MODE, '']
-			]);
-
-		$mode = [];
-		$this->translatorStub->method('translateArrayForOptions')
-			->willReturn($mode);
-
-		$this->translatorStub->method('translate')->willReturnMap([
-			[Parameters::PARAMETER_PLAYLIST_NAME, 'playlists', [], 'Playlist name'],
-			[Parameters::PARAMETER_PLAYLIST_MODE, 'playlists', 'Playlist mode']
-		]);
-
-
-		$playlistNameFieldStub = $this->createStub(TextField::class);
-		$playlistModeFieldStub = $this->createStub(DropdownField::class);
-
-		$this->buildServiceMock->expects($this->atLeastOnce())->method('buildFormField')->willReturnMap([
-			[['type' => FieldType::TEXT, 'id' => Parameters::PARAMETER_PLAYLIST_NAME, 'name' => Parameters::PARAMETER_PLAYLIST_NAME, 'title' => 'Playlist name', 'label' => 'Playlist name', 'value' => 'playlist_name'], $playlistNameFieldStub],
-			[['type' => FieldType::DROPDOWN, 'id' => Parameters::PARAMETER_PLAYLIST_MODE, 'name' => Parameters::PARAMETER_PLAYLIST_MODE, 'title' => 'Playlist mode', 'label' => 'Playlist mode', 'value' => '','options' => []], $playlistModeFieldStub]
-		]);
-
+		$this->edition(Config::PLATFORM_EDITION_EDGE);
+		$this->parseRequest();
 
 		$this->builder->collectFormElements();
 
-		$form = $this->builder->getDatatableStructure()['form'];
-
-		static::assertArrayHasKey(Parameters::PARAMETER_PLAYLIST_NAME, $form);
-		static::assertArrayHasKey(Parameters::PARAMETER_PLAYLIST_MODE, $form);
-
-		static::assertEquals($playlistNameFieldStub, $form[Parameters::PARAMETER_PLAYLIST_NAME]);
-		static::assertEquals($playlistModeFieldStub, $form[Parameters::PARAMETER_PLAYLIST_MODE]);
+		static::assertSame(['playlist_name', 'playlist_mode'], array_keys($this->builder->getDatatableStructure()['form']));
 	}
 
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws \Doctrine\DBAL\Exception
-	 */
 	#[Group('units')]
-	public function testCreateTableFieldsAddsLimitedFieldsForEdgeEdition(): void
+	public function testTheEdgeEditionKnowsNoExternalAndNoChannelPlaylists(): void
 	{
-		$this->aclValidatorMock->expects($this->never())->method($this->anything());
-		$this->parametersMock->expects($this->atLeastOnce())->method('hasParameter')
-			->willReturn(true);
+		$this->edition(Config::PLATFORM_EDITION_EDGE);
 
-		$this->buildServiceMock->method('getDatatableFields')->willReturn([]);
+		static::assertSame(['master' => 'Master', 'internal' => 'Internal'], $this->builder->determineAllowedPlaylistModes());
 
-		$this->buildServiceMock->expects($this->exactly(4))
-			->method('createDatatableField')
-			->willReturnMap([
-				['playlist', true],
-				['UID', true],
-				['playlist_mode', true],
-				['duration', false]
-			]);
+		$this->parseRequest();
+		$this->builder->collectFormElements();
+		$mode = $this->builder->getDatatableStructure()['form']['playlist_mode'];
+		static::assertInstanceOf(DropdownField::class, $mode);
+		static::assertSame(['master' => 'Master', 'internal' => 'Internal'], $mode->getOptions());
+	}
+
+	#[Group('units')]
+	public function testTheOtherEditionsKnowAllPlaylistModes(): void
+	{
+		$this->edition(Config::PLATFORM_EDITION_CORE);
+
+		static::assertSame(['master', 'internal', 'external', 'channel'], array_keys($this->builder->determineAllowedPlaylistModes()));
+	}
+
+	#[Group('units')]
+	public function testTheTableHasTheNameTheModeAndTheDurationAndForAnAdminTheOwner(): void
+	{
+		$this->builder->createTableFields();
+
+		static::assertSame(['playlist_name', 'playlist_mode', 'duration'], array_map(static fn($field): string => $field->getName(), $this->buildService->getDatatableFields()));
+	}
+
+	#[Group('units')]
+	public function testTheTableOfAnAdminHasTheOwner(): void
+	{
+		$this->parameters->addOwner();
 
 		$this->builder->createTableFields();
-	}
 
-	/**
-	 * @throws Exception
-	 * @throws CoreException
-	 */
-	#[Group('units')]
-	public function testDetermineAllowedPlayerModesForEdgeEdition(): void
-	{
-		$this->buildServiceMock->expects($this->never())->method($this->anything());
-		$this->parametersMock->expects($this->never())->method($this->anything());
-		$configStub = $this->createStub(Config::class);
-		$this->aclValidatorMock->expects($this->atLeastOnce())->method('getConfig')->willReturn($configStub);
-		$configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
-
-		$this->translatorStub->method('translateArrayForOptions')
-			->willReturnMap([['playlist_mode_selects', 'playlists', [PlaylistMode::MASTER->value => 'Master', PlaylistMode::CHANNEL->value => 'Channel', PlaylistMode::EXTERNAL->value => 'External']]]);
-
-		$result = $this->builder->determineAllowedPlaylistModes();
-		static::assertSame([PlaylistMode::MASTER->value => 'Master'], $result);
-
-	}
-
-	private function expectUntouched(MockObject ...$mocks): void
-	{
-		foreach ($mocks as $mock)
-		{
-			$mock->expects($this->never())->method($this->anything());
-		}
+		static::assertSame(['playlist_name', 'UID', 'playlist_mode', 'duration'], array_map(static fn($field): string => $field->getName(), $this->buildService->getDatatableFields()));
+		static::assertSame([true, true, true, false], array_map(static fn($field): bool => $field->isSortable(), $this->buildService->getDatatableFields()));
+		static::assertCount(4, $this->builder->getDatatableStructure()['header']);
 	}
 }

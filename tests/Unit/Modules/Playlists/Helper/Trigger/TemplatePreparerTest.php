@@ -19,57 +19,32 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Modules\Playlists\Helper\Trigger;
 
-use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
-use App\Framework\TemplateEngine\AdapterInterface;
+use App\Framework\Localization\Translate\Translator;
 use App\Modules\Playlists\Helper\Trigger\TemplatePreparer;
 use App\Modules\Playlists\Helper\Trigger\TriggerPreparer;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\RecordingTemplateAdapter;
 
 class TemplatePreparerTest extends TestCase
 {
-	private AdapterInterface&MockObject $templateMock;
-	private TriggerPreparer&MockObject $triggerPreparerMock;
-	private TemplatePreparer $templatePreparer;
-
-	/**
-	 * @throws Exception
-	 */
-	protected function setUp(): void
-	{
-		parent::setUp();
-		$this->templateMock        = $this->createMock(AdapterInterface::class);
-		$this->triggerPreparerMock = $this->createMock(TriggerPreparer::class);
-		$this->templatePreparer    = new TemplatePreparer($this->templateMock, $this->triggerPreparerMock);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
 	#[Group('units')]
-	public function testPrepare(): void
+	public function testTheTriggerFormIsRenderedForTheItem(): void
 	{
-		$this->templateMock->expects($this->never())->method($this->anything());
-		$itemId = 12;
-		$this->triggerPreparerMock->expects($this->once())->method('generate')->with($itemId);
-		$this->templatePreparer->prepare($itemId);
-	}
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
+		$translator->method('translateArrayForOptions')->willReturn([1 => 'Monday', 2 => 'Tuesday']);
+		$template = new RecordingTemplateAdapter();
+		$preparer = new TemplatePreparer($template, new TriggerPreparer($translator));
 
-	#[Group('units')]
-	public function testRender(): void
-	{
-		$this->triggerPreparerMock->expects($this->once())->method('getTemplateData')
-			->willReturn([]);
-		$this->templateMock->expects($this->once())->method('render')
-			->with('playlists/trigger', []);
-		$this->templatePreparer->render();
-	}
+		$preparer->prepare(12);
 
+		static::assertSame('rendered playlists/trigger', $preparer->render());
+		static::assertSame('playlists/trigger', $template->rendered[0]['template']);
+		static::assertSame(12, $template->rendered[0]['data']['TRIGGER_ITEM_ID']);
+		static::assertSame('playlists.wallclock', $template->rendered[0]['data']['LANG_WALLCLOCK']);
+		static::assertSame([['WEEKDAY_NUMBER' => 1, 'LANG_WEEKDAY_NAME' => 'Monday'], ['WEEKDAY_NUMBER' => 2, 'LANG_WEEKDAY_NAME' => 'Tuesday']], $template->rendered[0]['data']['wallclock_weekdays']);
+	}
 }

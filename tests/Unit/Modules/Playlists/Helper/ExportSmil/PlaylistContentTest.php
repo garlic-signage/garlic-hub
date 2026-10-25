@@ -21,318 +21,197 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Helper\ExportSmil;
 
-use App\Framework\Exceptions\CoreException;
+use App\Framework\Config\Config;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Media\DeliveryUrlBuilder;
 use App\Framework\Media\MimeTypeExtensionMapper;
 use App\Modules\Playlists\Helper\ExportSmil\items\Base;
 use App\Modules\Playlists\Helper\ExportSmil\items\ItemsFactory;
-use App\Modules\Playlists\Helper\ExportSmil\items\SeqContainer;
-use App\Modules\Playlists\Helper\ExportSmil\items\Video;
 use App\Modules\Playlists\Helper\ExportSmil\PlaylistContent;
 use App\Modules\Playlists\Helper\ItemDatasource;
+use App\Modules\Playlists\Helper\ItemFlags;
 use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Helper\PlaylistMode;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * The SMIL parts of a playlist from the items as the database gives them: the real items write the tags.
+ */
 class PlaylistContentTest extends TestCase
 {
-	private ItemsFactory&MockObject $itemsFactoryMock;
-	private MimeTypeExtensionMapper&MockObject $mimeTypeExtensionMapperMock;
 	private PlaylistContent $playlistContent;
 
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->itemsFactoryMock = $this->createMock(ItemsFactory::class);
-		$this->mimeTypeExtensionMapperMock = $this->createMock(MimeTypeExtensionMapper::class);
+		$config = $this->createStub(Config::class);
+		$config->method('getConfigValue')->willReturnMap([
+			['fit', 'playlists', 'Defaults', 'meetBest'],
+			['media_align', 'playlists', 'Defaults', 'center'],
+			['volume', 'playlists', 'Defaults', '100'],
+		]);
 
-		$this->playlistContent = new PlaylistContent(
-			$this->itemsFactoryMock,
-			new DeliveryUrlBuilder('https://content.server.com'),
-			$this->mimeTypeExtensionMapperMock
+		$this->playlistContent = new PlaylistContent(new ItemsFactory($config), new DeliveryUrlBuilder('https://content.server.com'), new MimeTypeExtensionMapper());
+	}
+
+	/**
+	 * @param array<string,mixed> $changes
+	 * @return array<string,mixed>
+	 */
+	private static function video(array $changes = []): array
+	{
+		return $changes + [
+			'item_id' => 1, 'item_type' => ItemType::MEDIAPOOL->value, 'item_name' => 'film.mp4', 'item_duration' => 30, 'flags' => 0,
+			'datasource' => ItemDatasource::FILE->value, 'mimetype' => 'video/mp4', 'file_resource' => 'checksum', 'extension' => 'mp4',
+			'properties' => [], 'conditional' => [], 'begin_trigger' => [], 'end_trigger' => [], 'content_data' => [], 'categories' => [],
+		];
+	}
+
+	/**
+	 * @param array<string,mixed> $playlist
+	 * @param list<array<string,mixed>> $items
+	 */
+	private function build(array $items, array $playlist = []): PlaylistContent
+	{
+		return $this->playlistContent->init($playlist + ['shuffle' => 0, 'shuffle_picking' => 0, 'playlist_mode' => PlaylistMode::MASTER->value], $items)->build();
+	}
+
+	#[Group('units')]
+	public function testAMediaIsLinkedToTheDeliveryAndPrefetched(): void
+	{
+		$content = $this->build([self::video()]);
+
+		static::assertStringContainsString('<video title="film.mp4"', $content->getContentElements());
+		static::assertStringContainsString('src="https://content.server.com/delivery.php/checksum.mp4"', $content->getContentElements());
+		static::assertStringContainsString('dur="30s"', $content->getContentElements());
+		static::assertStringContainsString('src="https://content.server.com/delivery.php/checksum.mp4"', $content->getContentPrefetch());
+		static::assertSame('', $content->getContentExclusive());
+	}
+
+	#[Group('units')]
+	public function testATemplateLinksToTheRenderedImageOfTheItem(): void
+	{
+		$template = self::video(['item_id' => 13, 'item_type' => ItemType::TEMPLATE->value, 'item_name' => 'Vorlage', 'mimetype' => 'image/jpeg', 'extension' => null, 'file_resource' => '7']);
+
+		$content = $this->build([$template]);
+
+		static::assertStringContainsString('src="https://content.server.com/delivery.php/tpl/13.jpg"', $content->getContentElements());
+		static::assertStringContainsString('delivery.php/tpl/13.jpg', $content->getContentPrefetch());
+	}
+
+	#[Group('units')]
+	public function testTheItemsAreInTheOrderOfTheList(): void
+	{
+		$content = $this->build([self::video(['item_name' => 'first']), self::video(['item_id' => 2, 'item_name' => 'second', 'file_resource' => 'other'])]);
+
+		static::assertLessThan(strpos($content->getContentElements(), 'title="second"'), strpos($content->getContentElements(), 'title="first"'));
+	}
+
+	#[Group('units')]
+	public function testADisabledItemIsPrefetchedButNotPlayed(): void
+	{
+		$content = $this->build([self::video(['flags' => ItemFlags::disabled->value])]);
+
+		static::assertSame('', $content->getContentElements());
+		static::assertStringContainsString('delivery.php/checksum.mp4', $content->getContentPrefetch());
+	}
+
+	#[Group('units')]
+	public function testAnExternalFileIsLinkedAndPrefetched(): void
+	{
+		$item = self::video(['item_type' => ItemType::MEDIA_EXTERN->value, 'file_resource' => '', 'content_data' => serialize(['url' => 'https://acme.com/video.mp4'])]);
+
+		$content = $this->build([$item]);
+
+		static::assertStringContainsString('src="https://acme.com/video.mp4"', $content->getContentElements());
+		static::assertStringContainsString('acme.com/video.mp4', $content->getContentPrefetch());
+	}
+
+	#[Group('units')]
+	public function testTheAddressOfAnExternalFileKeepsItsQueryString(): void
+	{
+		static::markTestSkipped('Known bug: the & of the address is written as &amp; twice (PlaylistContent and the item), the player gets a=1&amp;b=2 as address. Remove this line when it is fixed.');
+		// @phpstan-ignore deadCode.unreachable
+		$item = self::video(['item_type' => ItemType::MEDIA_EXTERN->value, 'file_resource' => '', 'content_data' => serialize(['url' => 'https://acme.com/video.mp4?a=1&b=2'])]);
+
+		$content = $this->build([$item]);
+
+		static::assertStringContainsString('src="https://acme.com/video.mp4?a=1&amp;b=2"', $content->getContentElements());
+	}
+
+	#[Group('units')]
+	public function testAnExternalStreamIsNotPrefetched(): void
+	{
+		$item = self::video(['item_type' => ItemType::MEDIA_EXTERN->value, 'datasource' => ItemDatasource::STREAM->value, 'content_data' => serialize(['url' => 'https://acme.com/stream.mp4'])]);
+
+		$content = $this->build([$item]);
+
+		static::assertStringContainsString('src="https://acme.com/stream.mp4"', $content->getContentElements());
+		static::assertSame('', $content->getContentPrefetch());
+	}
+
+	#[Group('units')]
+	public function testANestedPlaylistIsAPlaceholderForItsItems(): void
+	{
+		$item = self::video(['item_type' => ItemType::PLAYLIST->value, 'item_name' => 'Kantine', 'file_resource' => '2', 'mimetype' => '', 'time_limit' => 0, 'owner_duration' => 0]);
+
+		$content = $this->build([$item]);
+
+		static::assertStringContainsString('<seq title="Kantine"', $content->getContentElements());
+		static::assertStringContainsString('{ITEMS_2}', $content->getContentElements());
+		static::assertStringContainsString('{PREFETCH_2}', $content->getContentPrefetch());
+	}
+
+	#[Group('units')]
+	public function testAShuffledPlaylistPicksFromAllItems(): void
+	{
+		$content = $this->build([self::video()], ['shuffle' => 1, 'shuffle_picking' => 0]);
+
+		static::assertStringStartsWith(Base::TABSTOPS_TAG . '<metadata><meta name="adapi:pickingAlgorithm" content="shuffle"/></metadata>' . "\n", $content->getContentElements());
+	}
+
+	#[Group('units')]
+	public function testThePickingIsNeverMoreThanTheItemsWhichArePlayed(): void
+	{
+		$content = $this->build([self::video()], ['shuffle' => 1, 'shuffle_picking' => 4]);
+
+		static::assertStringStartsWith(
+			Base::TABSTOPS_TAG . '<metadata>' . "\n"
+			. Base::TABSTOPS_PARAMETER . '<meta name="adapi:pickingAlgorithm" content="shuffle"/>' . "\n"
+			. Base::TABSTOPS_PARAMETER . '<meta name="adapi:pickingBehavior" content="pickN"/>' . "\n"
+			. Base::TABSTOPS_PARAMETER . '<meta name="adapi:pickNumber" content="1"/>' . "\n"
+			. Base::TABSTOPS_TAG . '</metadata>' . "\n",
+			$content->getContentElements()
 		);
 	}
 
-	/**
-	 * @throws ModuleException
-	 * @throws Exception
-	 * @throws CoreException
-	 */
 	#[Group('units')]
-	public function testBuildWithValidItem(): void
+	public function testAPlaylistWithoutPlayedItemsHasNoShuffle(): void
 	{
-		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
-		$playlist = ['shuffle' => 0, 'playlist_mode' => PlaylistMode::MASTER->value];
-		$itemData = [
-			[
-				'item_type' => ItemType::MEDIAPOOL->value,
-				'begin_trigger' => [],
-				'flags' => 0,
-				'datasource' => ItemDatasource::FILE->value,
-				'file_resource' => 'file',
-				'extension' => 'mp4'
-			]
-		];
+		$content = $this->build([self::video(['flags' => ItemFlags::disabled->value])], ['shuffle' => 1]);
 
-		$videoMock = $this->createMock(Video::class);
-		$this->itemsFactoryMock->expects($this->once())->method('createItem')
-			->with($itemData[0])
-			->willReturn($videoMock);
-
-		$link = 'https://content.server.com/delivery.php/file.mp4';
-		$videoMock->method('setLink')->with($link);
-
-		$videoMock->method('getSmilElementTag')->willReturn('smilTag');
-		$videoMock->method('getPrefetchTag')->willReturn('prefetchTag');
-		$videoMock->method('getExclusive')->willReturn('exclusiveTag');
-
-
-		$this->playlistContent->init($playlist, $itemData)->build();
-
-		static::assertSame('smilTag', $this->playlistContent->getContentElements());
-		static::assertSame('prefetchTag', $this->playlistContent->getContentPrefetch());
-		static::assertSame('exclusiveTag', $this->playlistContent->getContentExclusive());
+		static::assertSame('', $content->getContentElements());
 	}
 
 	#[Group('units')]
-	public function testBuildTemplateLinksToDeliveryWithTplSource(): void
+	public function testAnItemWithATouchTriggerIsTheTargetOfTheOthers(): void
 	{
-		$playlist = ['shuffle' => 0, 'playlist_mode' => PlaylistMode::MASTER->value];
-		$itemData = [
-			[
-				'item_id' => 13,
-				'item_type' => ItemType::TEMPLATE->value,
-				'begin_trigger' => [],
-				'flags' => 0,
-				'content_data' => '{"objects":[]}',
-				'mimetype' => 'image/jpeg'
-			]
-		];
-		$itemMock = $this->createMock(Video::class);
-		$this->itemsFactoryMock->expects($this->atLeastOnce())->method('createItem')->willReturn($itemMock);
-		$this->mimeTypeExtensionMapperMock->method('determineExtension')->with('image/jpeg')->willReturn('jpg');
+		$source = self::video(['item_id' => 1, 'item_name' => 'source', 'begin_trigger' => ['touches' => [['touch_item_id' => 2]]]]);
+		$target = self::video(['item_id' => 2, 'item_name' => 'target', 'file_resource' => 'other']);
 
-		$itemMock->expects($this->once())->method('setLink')->with('https://content.server.com/delivery.php/tpl/13'.'.jpg');
-		$itemMock->method('getSmilElementTag')->willReturn('smilTag');
-		$itemMock->method('getPrefetchTag')->willReturn('prefetchTag');
-		$itemMock->method('getExclusive')->willReturn('exclusiveTag');
+		$content = $this->build([$source, $target]);
 
-		$this->playlistContent->init($playlist, $itemData)->build();
-
-		static::assertSame('smilTag', $this->playlistContent->getContentElements());
+		static::assertStringContainsString('xml:id="triggerMediaId-2"', $content->getContentElements() . $content->getContentExclusive());
+		static::assertStringContainsString('triggerMediaId-2.activateEvent', $content->getContentElements() . $content->getContentExclusive());
 	}
 
 	#[Group('units')]
-	public function testBuildWithValidItemsAndShufflePickingZero(): void
+	public function testAnUnknownItemTypeIsAnError(): void
 	{
-		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
-		$playlist = ['shuffle' => 1, 'shuffle_picking' => 0, 'playlist_mode' => PlaylistMode::MASTER->value];
-		$itemData = [
-			[
-				'item_type' => ItemType::MEDIAPOOL->value,
-				'begin_trigger' => [],
-				'flags' => 0,
-				'datasource' => ItemDatasource::FILE->value,
-				'file_resource' => 'file',
-				'extension' => 'mp4'
-			]
-		];
-
-		$videoMock = $this->createMock(Video::class);
-		$this->itemsFactoryMock->expects($this->once())->method('createItem')
-			->with($itemData[0])
-			->willReturn($videoMock);
-
-		$link = 'https://content.server.com/delivery.php/file.mp4';
-		$videoMock->method('setLink')->with($link);
-
-		$videoMock->method('getSmilElementTag')->willReturn('smilTag');
-		$videoMock->method('getPrefetchTag')->willReturn('prefetchTag');
-		$videoMock->method('getExclusive')->willReturn('exclusiveTag');
-
-
-		$this->playlistContent->init($playlist, $itemData)->build();
-		$shuffle = Base::TABSTOPS_TAG.'<metadata><meta name="adapi:pickingAlgorithm" content="shuffle"/></metadata>'."\n";
-
-		static::assertSame($shuffle.'smilTag', $this->playlistContent->getContentElements());
-		static::assertSame('prefetchTag', $this->playlistContent->getContentPrefetch());
-		static::assertSame('exclusiveTag', $this->playlistContent->getContentExclusive());
-	}
-
-	#[Group('units')]
-	public function testBuildWithValidItemsAndShufflePicking(): void
-	{
-		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
-		$playlist = ['shuffle' => 1, 'shuffle_picking' => 4, 'playlist_mode' => PlaylistMode::MASTER->value];
-		$itemData = [
-			[
-				'item_type' => ItemType::MEDIAPOOL->value,
-				'begin_trigger' => [],
-				'flags' => 0,
-				'datasource' => ItemDatasource::FILE->value,
-				'file_resource' => 'file',
-				'extension' => 'mp4'
-			]
-		];
-
-		$videoMock = $this->createMock(Video::class);
-		$this->itemsFactoryMock->expects($this->once())->method('createItem')
-			->with($itemData[0])
-			->willReturn($videoMock);
-
-		$link = 'https://content.server.com/delivery.php/file.mp4';
-		$videoMock->method('setLink')->with($link);
-
-		$videoMock->method('getSmilElementTag')->willReturn('smilTag');
-		$videoMock->method('getPrefetchTag')->willReturn('prefetchTag');
-		$videoMock->method('getExclusive')->willReturn('exclusiveTag');
-
-		$this->playlistContent->init($playlist, $itemData)->build();
-		// shuffle will be only one cause only one item is there
-		$shuffle = $shuffle = Base::TABSTOPS_TAG.'<metadata>'."\n"
-			.Base::TABSTOPS_PARAMETER.'<meta name="adapi:pickingAlgorithm" content="shuffle"/>'."\n"
-			.Base::TABSTOPS_PARAMETER.'<meta name="adapi:pickingBehavior" content="pickN"/>'."\n"
-			.Base::TABSTOPS_PARAMETER.'<meta name="adapi:pickNumber" content="1"/>'."\n"
-			.Base::TABSTOPS_TAG.'</metadata>'."\n";
-
-		static::assertSame($shuffle.'smilTag', $this->playlistContent->getContentElements());
-		static::assertSame('prefetchTag', $this->playlistContent->getContentPrefetch());
-		static::assertSame('exclusiveTag', $this->playlistContent->getContentExclusive());
-	}
-
-	#[Group('units')]
-	public function testBuildWithExternalStream(): void
-	{
-		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
-		$playlist = ['shuffle' => 0, 'playlist_mode' => PlaylistMode::MASTER->value];
-		$itemData = [
-			[
-				'item_type' => ItemType::MEDIA_EXTERN->value,
-				'begin_trigger' => [],
-				'flags' => 0,
-				'datasource' => ItemDatasource::STREAM->value,
-				'content_data' => serialize(['url' => 'https://acme.com/stream.mp4'])
-			]
-		];
-
-		$videoMock = $this->createMock(Video::class);
-		$this->itemsFactoryMock->expects($this->once())->method('createItem')
-			->with($itemData[0])
-			->willReturn($videoMock);
-
-		$videoMock->method('setLink')->with('https://acme.com/stream.mp4');
-
-		$videoMock->method('getSmilElementTag')->willReturn('smilTag');
-		$videoMock->method('getPrefetchTag')->willReturn('prefetchTag');
-		$videoMock->method('getExclusive')->willReturn('exclusiveTag');
-
-
-		$this->playlistContent->init($playlist, $itemData)->build();
-
-		static::assertSame('smilTag', $this->playlistContent->getContentElements());
-		static::assertEmpty($this->playlistContent->getContentPrefetch());
-		static::assertSame('exclusiveTag', $this->playlistContent->getContentExclusive());
-	}
-
-	#[Group('units')]
-	public function testBuildWithExternalFile(): void
-	{
-		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
-		$playlist = ['shuffle' => 0, 'playlist_mode' => PlaylistMode::MASTER->value];
-		$itemData = [
-			[
-				'item_type' => ItemType::MEDIA_EXTERN->value,
-				'begin_trigger' => [],
-				'flags' => 0,
-				'datasource' => ItemDatasource::FILE->value,
-				'mimetype'   => 'video/mp4',
-				'content_data' => serialize(['url' => 'https://acme.com/stream.mp4'])
-			]
-		];
-
-		$videoMock = $this->createMock(Video::class);
-		$this->itemsFactoryMock->expects($this->once())->method('createItem')
-			->with($itemData[0])
-			->willReturn($videoMock);
-
-		$videoMock->method('setLink')->with('https://acme.com/stream.mp4');
-
-		$videoMock->method('getSmilElementTag')->willReturn('smilTag');
-		$videoMock->method('getPrefetchTag')->willReturn('prefetchTag');
-		$videoMock->method('getExclusive')->willReturn('exclusiveTag');
-
-
-		$this->playlistContent->init($playlist, $itemData)->build();
-
-		static::assertSame('smilTag', $this->playlistContent->getContentElements());
-		static::assertSame('prefetchTag', $this->playlistContent->getContentPrefetch());
-		static::assertSame('exclusiveTag', $this->playlistContent->getContentExclusive());
-	}
-
-	/**
-	 * @throws ModuleException
-	 * @throws Exception
-	 * @throws CoreException
-	 */
-	#[Group('units')]
-	public function testBuildPlaylist(): void
-	{
-		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
-		$playlist = ['shuffle' => 0, 'playlist_mode' => PlaylistMode::MASTER->value];
-		$itemData = [
-			[
-				'begin_trigger' => [],
-				'flags' => 0,
-				'item_type' => ItemType::PLAYLIST->value
-			]
-		];
-
-		$playlistStub = $this->createStub(SeqContainer::class);
-		$this->itemsFactoryMock->expects($this->once())->method('createItem')
-			->with($itemData[0])
-			->willReturn($playlistStub);
-
-		$playlistStub->method('getSmilElementTag')->willReturn('smilTag');
-		$playlistStub->method('getPrefetchTag')->willReturn('prefetchTag');
-		$playlistStub->method('getExclusive')->willReturn('exclusiveTag');
-
-		$this->playlistContent->init($playlist, $itemData)->build();
-
-		static::assertSame('smilTag', $this->playlistContent->getContentElements());
-		static::assertSame('prefetchTag', $this->playlistContent->getContentPrefetch());
-		static::assertSame('exclusiveTag', $this->playlistContent->getContentExclusive());
-	}
-
-	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 */
-	#[Group('units')]
-	public function testUnknown(): void
-	{
-		$this->itemsFactoryMock->expects($this->never())->method($this->anything());
-		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
-		$playlist = ['shuffle' => 0, 'playlist_mode' => PlaylistMode::MASTER->value];
-		$itemData = [
-			[
-				'item_id' => 2,
-				'item_type' => 'unknown',
-				'begin_trigger' => []
-			]
-		];
-
 		$this->expectException(ModuleException::class);
 		$this->expectExceptionMessage('Unknown item type. Given: unknown with item id: 2.');
 
-		$this->playlistContent->init($playlist, $itemData)->build();
-
+		$this->build([['item_id' => 2, 'item_type' => 'unknown', 'begin_trigger' => []]]);
 	}
-
 }

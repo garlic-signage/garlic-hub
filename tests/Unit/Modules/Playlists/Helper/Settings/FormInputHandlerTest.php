@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -21,65 +21,100 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Helper\Settings;
 
-use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Exceptions\ModuleException;
+use App\Framework\Localization\Translate\Translator;
+use App\Framework\Security\CsrfToken;
+use App\Framework\Validation\Sanitizer;
 use App\Modules\Playlists\Helper\Settings\FormInputHandler;
 use App\Modules\Playlists\Helper\Settings\Parameters;
 use App\Modules\Playlists\Helper\Settings\Validator;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\MemorySession;
 
+/**
+ * The input of the playlist settings form: parsed by the real parameters and checked by the real validator.
+ */
 class FormInputHandlerTest extends TestCase
 {
-	private Parameters&MockObject $parametersMock;
-	private Validator&MockObject $validatorMock;
+	private Parameters $parameters;
 	private FormInputHandler $handler;
 
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->parametersMock = $this->createMock(Parameters::class);
-		$this->validatorMock  = $this->createMock(Validator::class);
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $key === 'playlist_mode_unsupported' ? 'Unsupported: %s' : $module . '.' . $key);
+		$csrfToken = $this->createStub(CsrfToken::class);
+		$csrfToken->method('validateToken')->willReturnCallback(static fn(string $token): bool => $token === 'good');
 
-		$this->handler = new FormInputHandler($this->parametersMock, $this->validatorMock);
+		$this->parameters = new Parameters(new Sanitizer(), new MemorySession());
+		$this->handler    = new FormInputHandler($this->parameters, new Validator($translator, $this->parameters, $csrfToken));
+	}
+
+	#[Group('units')]
+	public function testAValidNewPlaylistHasNoErrorsAndIsParsed(): void
+	{
+		$this->parameters->addPlaylistMode();
+		$this->parameters->addResolution();
+
+		$errors = $this->handler->validate(['csrf_token' => 'good', 'playlist_name' => 'Lobby', 'playlist_mode' => 'master', 'screen_width' => '1280', 'screen_height' => '720']);
+
+		static::assertSame([], $errors);
+		static::assertSame(
+			['csrf_token' => 'good', 'playlist_name' => 'Lobby', 'playlist_mode' => 'master', 'screen_width' => 1280, 'screen_height' => 720],
+			$this->handler->getParsed()
+		);
+	}
+
+	#[Group('units')]
+	public function testAValidExistingPlaylistNeedsItsId(): void
+	{
+		$this->parameters->addPlaylistId();
+
+		static::assertSame([], $this->handler->validate(['csrf_token' => 'good', 'playlist_name' => 'Lobby', 'playlist_id' => '12']));
+		static::assertSame(12, $this->handler->getParsed()['playlist_id'] ?? null);
+	}
+
+	#[Group('units')]
+	public function testAWrongTokenAMissingNameAndNoModeOrIdAreErrors(): void
+	{
+		$this->parameters->addPlaylistMode();
+
+		$errors = $this->handler->validate(['csrf_token' => 'wrong', 'playlist_name' => '']);
+
+		static::assertSame(['security.csrf_token_mismatch', 'playlists.no_playlist_name', 'playlists.parameters_missing'], $errors);
+	}
+
+	#[Group('units')]
+	public function testAnUnsupportedModeIsAnError(): void
+	{
+		$this->parameters->addPlaylistMode();
+
+		$errors = $this->handler->validate(['csrf_token' => 'good', 'playlist_name' => 'Lobby', 'playlist_mode' => 'evil']);
+
+		static::assertSame(['Unsupported: evil'], $errors);
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws ModuleException
+	 * A mode as array is no mode and no id either, so the form gets both messages and no exception.
 	 */
 	#[Group('units')]
-	public function testValidateParsesBeforeValidating(): void
+	public function testAModeOfTheWrongTypeIsAnError(): void
 	{
-		$post  = ['username' => 'admin', 'password' => 'secret'];
-		$calls = [];
-		$this->parametersMock->expects($this->once())->method('setUserInputs')->with($post)
-			->willReturnCallback(function () use (&$calls) { $calls[] = 'set'; return $this->parametersMock; });
-		$this->parametersMock->expects($this->once())->method('parseInputAllParameters')
-			->willReturnCallback(function () use (&$calls) { $calls[] = 'parse'; return $this->parametersMock; });
-		$this->validatorMock->expects($this->once())->method('validateUserInput')->with($post)
-			->willReturnCallback(function () use (&$calls) { $calls[] = 'validate'; return ['No email.']; });
+		$this->parameters->addPlaylistMode();
 
-		static::assertSame(['No email.'], $this->handler->validate($post));
-		static::assertSame(['set', 'parse', 'validate'], $calls);
+		$errors = $this->handler->validate(['csrf_token' => 'good', 'playlist_name' => 'Lobby', 'playlist_mode' => ['master']]);
+
+		static::assertSame(['playlists.parameters_missing', 'Unsupported: '], $errors);
 	}
 
 	#[Group('units')]
-	public function testGetParsed(): void
+	public function testAnIdOfTheWrongTypeIsNoId(): void
 	{
-		$this->parametersMock->expects($this->once())->method('getInputParametersKeys')
-			->willReturn(['username', 'email']);
-		$this->parametersMock->expects($this->once())->method('getInputValuesArray')
-			->willReturn(['admin', 'admin@example.com']);
-		$this->validatorMock->expects($this->never())->method($this->anything());
+		$this->parameters->addPlaylistId();
 
-		static::assertSame(['username' => 'admin', 'email' => 'admin@example.com'], $this->handler->getParsed());
+		$errors = $this->handler->validate(['csrf_token' => 'good', 'playlist_name' => 'Lobby', 'playlist_id' => ['12']]);
+
+		static::assertSame(['playlists.parameters_missing'], $errors);
 	}
 }

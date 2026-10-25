@@ -109,7 +109,6 @@ $app->group('', function (RouteCollectorProxy $group) use ($container)
 	$group->get('/playlists', resolve([ShowDatatableController::class, 'show'], $container));
 	$group->get('/playlists/settings/{playlist_mode:master|internal|external|multizone|channel}', resolve([ShowSettingsController::class, 'newPlaylistForm'], $container));
 	$group->get('/playlists/settings/{playlist_id:\d+}', resolve([ShowSettingsController::class, 'editPlaylistForm'], $container));
-	$group->delete('/playlists/settings/{playlist_id:\d+}', resolve([ShowSettingsController::class, 'delete'], $container));
 	$group->post('/playlists/settings', resolve([ShowSettingsController::class, 'store'], $container));
 	$group->get('/playlists/compose/{playlist_id}', resolve([ShowComposeController::class, 'show'], $container));
 	$group->get('/playlist-item/composer/{item_id}', resolve([ShowTemplateComposer::class, 'show'], $container));
@@ -147,7 +146,6 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 	$group->post('/mediapool/searchStockImages', resolve([UploadController::class, 'searchStockImages'], $container));
 	$group->get('/mediapool/media/list/{node_id:\d+}',resolve( [MediaController::class, 'list'], $container));
 	$group->get('/mediapool/media/{media_id}', resolve([MediaController::class, 'getInfo'], $container));
-	$group->post('/mediapool/media', resolve([MediaController::class, 'add'], $container));
 	$group->delete('/mediapool/media', resolve([MediaController::class, 'delete'], $container));
 	$group->post('/mediapool/media/edit', resolve([MediaController::class, 'edit'], $container));
 	$group->post('/mediapool/media/move', resolve([MediaController::class, 'move'], $container));
@@ -174,7 +172,6 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 	$group->patch('/playlists/widget/save', resolve([WidgetsController::class, 'save'], $container));
 	$group->get('/playlists/item/conditional-play/{item_id:\d+}', resolve([ConditionalPlayController::class, 'fetch'], $container));
 	$group->patch('/playlists/item/conditional-play', resolve([ConditionalPlayController::class, 'save'], $container));
-	$group->get('/playlists/item/touch-media/{item_id:\d+}', resolve([TriggerController::class, 'fetchMedia'], $container));
 	$group->get('/playlists/item/begin-trigger/{item_id:\d+}', resolve([TriggerController::class, 'fetchTrigger'], $container));
 	$group->patch('/playlists/item/begin-trigger', resolve([TriggerController::class, 'save'], $container));
 	$group->get('/playlist-item/composer/load/{item_id}', resolve([ShowTemplateComposer::class, 'load'], $container));

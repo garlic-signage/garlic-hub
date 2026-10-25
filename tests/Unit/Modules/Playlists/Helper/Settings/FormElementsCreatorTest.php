@@ -22,254 +22,135 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Playlists\Helper\Settings;
 
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Utils\FormParameters\BaseEditParameters;
-use App\Framework\Utils\Html\FieldInterface;
+use App\Framework\Security\Crypt;
+use App\Framework\Security\CsrfToken;
+use App\Framework\Utils\Html\FieldsFactory;
+use App\Framework\Utils\Html\FieldsRenderFactory;
 use App\Framework\Utils\Html\FieldType;
 use App\Framework\Utils\Html\FormBuilder;
 use App\Modules\Playlists\Helper\Settings\FormElementsCreator;
+use Defuse\Crypto\Key;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\HtmlFields;
+use Tests\Support\MemorySession;
 
+/**
+ * The creator and the FormBuilder are the real ones: the result is the html of the field.
+ */
 class FormElementsCreatorTest extends TestCase
 {
-	private FormBuilder&MockObject $formBuilderMock;
-	private Translator&MockObject $translatorMock;
-	private FormElementsCreator $collector;
+	private FormBuilder $formBuilder;
+	private FormElementsCreator $creator;
 
 	/**
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->formBuilderMock = $this->createMock(FormBuilder::class);
-		$this->translatorMock  = $this->createMock(Translator::class);
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
+		$csrfToken = new CsrfToken(new Crypt(Key::createNewRandomKey()), new MemorySession());
 
-		$this->collector = new FormElementsCreator($this->formBuilderMock, $this->translatorMock);
+		$this->formBuilder = new FormBuilder(new FieldsFactory(), new FieldsRenderFactory(), $csrfToken);
+		$this->creator     = new FormElementsCreator($this->formBuilder, $translator);
 	}
 
 	/**
-	 * @throws Exception
+	 * @return array<string,string> the attributes of the input of the field
 	 */
-	#[Group('units')]
-	public function testPrepareForm(): void
+	private function attributesOf(\App\Framework\Utils\Html\FieldInterface $field): array
 	{
-		$this->translatorMock->expects($this->never())->method($this->anything());
-		$fieldInterfaceMock1 = $this->createStub(FieldInterface::class);
-		$fieldInterfaceMock2 = $this->createStub(FieldInterface::class);
+		$attributes = HtmlFields::attributesOf($this->formBuilder, ['field' => $field]);
+		static::assertCount(1, $attributes);
 
-		$formData = ['field1' => $fieldInterfaceMock1, 'field2' => $fieldInterfaceMock2];
-		$preparedForm = [
-			'hidden' => [
-				['type' => 'hidden', 'id' => 'field1', 'name' => 'field1'],
-				['type' => 'hidden', 'id' => 'field2', 'name' => 'field2']
-			],
-			'visible' => [
-				['type' => 'text', 'id' => 'field3', 'name' => 'field3'],
-				['type' => 'number', 'id' => 'field4', 'name' => 'field4']
-			]
-		];
-
-		$this->formBuilderMock
-			->expects($this->once())
-			->method('prepareForm')
-			->with($formData)
-			->willReturn($preparedForm);
-
-		$result = $this->collector->prepareForm($formData);
-
-		static::assertSame($preparedForm, $result);
+		return array_values($attributes)[0];
 	}
 
-
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
 	#[Group('units')]
-	public function testCreatePlaylistNameField(): void
+	public function testThePlaylistNameIsRequiredAndHasAMinimalLength(): void
 	{
-		$value = 'My Playlist';
-		$expectedField = $this->createStub(FieldInterface::class);
+		$field = $this->creator->createPlaylistNameField('Lobby');
 
-		$this->translatorMock->expects($this->exactly(2))->method('translate')
-			->with('playlist_name', 'playlists')
-			->willReturn('Playlist name');
-
-		$this->formBuilderMock
-			->expects($this->once())
-			->method('createField')
-			->with([
-				'type' => FieldType::TEXT,
-				'id' => 'playlist_name',
-				'name' => 'playlist_name',
-				'title' => 'Playlist name',
-				'label' => 'Playlist name',
-				'value' => $value,
-				'rules' => ['required' => true, 'minlength' => 2],
-				'default_value' => ''
-			])
-			->willReturn($expectedField);
-
-		$result = $this->collector->createPlaylistNameField($value);
-
-		static::assertSame($expectedField, $result);
+		static::assertSame(FieldType::TEXT, $field->getType());
+		static::assertSame(
+			['type' => 'text', 'name' => 'playlist_name', 'id' => 'playlist_name', 'value' => 'Lobby', 'title' => 'playlists.playlist_name', 'label' => 'playlists.playlist_name', 'required' => 'required', 'minlength' => '2', 'aria-describedby' => 'error_playlist_name'],
+			$this->attributesOf($field)
+		);
 	}
 
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
 	#[Group('units')]
-	public function testCreateUIDField(): void
+	public function testAValueWithQuotesCanNotLeaveTheAttribute(): void
 	{
-		$value = '12345';
-		$username = 'user1';
-		$UID = 99;
-		$expectedField = $this->createStub(FieldInterface::class);
+		$attributes = $this->attributesOf($this->creator->createPlaylistNameField('x" onfocus="alert(1)'));
 
-		$this->translatorMock->expects($this->exactly(2))
-			->method('translate')
-			->with('owner', 'main')
-			->willReturn('Owner');
-
-		$this->formBuilderMock
-			->expects($this->once())
-			->method('createField')
-			->with([
-				'type' => FieldType::AUTOCOMPLETE,
-				'id' => 'UID',
-				'name' => 'UID',
-				'title' => 'Owner',
-				'label' => 'Owner',
-				'value' => $value,
-				'data-label' => $username,
-				'default_value' => $UID,
-			])
-			->willReturn($expectedField);
-
-		$result = $this->collector->createUIDField($value, $username, $UID);
-
-		static::assertSame($expectedField, $result);
+		static::assertSame('x" onfocus="alert(1)', $attributes['value']);
+		static::assertArrayNotHasKey('onfocus', $attributes);
 	}
 
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
 	#[Group('units')]
-	public function testCreateTimeLimitField(): void
+	public function testTheOwnerIsAnAutocompleteWithTheNameOfTheUser(): void
 	{
-		$value = 120;
-		$defaultValue = 60;
-		$expectedField = $this->createStub(FieldInterface::class);
+		$field = $this->creator->createUIDField(3, 'bernd', 7);
 
-		$this->translatorMock->expects($this->exactly(2))->method('translate')
-			->willReturnMap([
-				['time_limit_explanation', 'playlists', [], 'Explanation for time limit'],
-				['time_limit', 'playlists', [], 'Time Limit']
-			]);
-
-		$this->formBuilderMock
-			->expects($this->once())
-			->method('createField')
-			->with([
-				'type' => FieldType::NUMBER,
-				'id' => 'time_limit',
-				'name' => 'time_limit',
-				'title' => 'Explanation for time limit',
-				'label' => 'Time Limit',
-				'value' => $value,
-				'min' => 0,
-				'default_value' => $defaultValue
-			])
-			->willReturn($expectedField);
-
-		$this->collector->createTimeLimitField($value, $defaultValue);
+		static::assertSame(FieldType::AUTOCOMPLETE, $field->getType());
+		static::assertSame('UID', $field->getName());
+		static::assertSame('main.owner', $field->getLabel());
+		$html = $this->formBuilder->prepareForm(['UID' => $field]);
+		$all  = json_encode($html, JSON_THROW_ON_ERROR);
+		static::assertStringContainsString('bernd', $all);
+		static::assertMatchesRegularExpression('/value=.{0,2}3\b/', $all);
 	}
 
-	/**
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
 	#[Group('units')]
-	public function testCreateHiddenPlaylistIdField(): void
+	public function testTheResolutionAndTheTimeLimitAreNumbersFromZero(): void
 	{
-		$this->translatorMock->expects($this->never())->method($this->anything());
-		$value = 101;
-		$expectedField = $this->createStub(FieldInterface::class);
-
-		$this->formBuilderMock
-			->expects($this->once())
-			->method('createField')
-			->with([
-				'type' => FieldType::HIDDEN,
-				'id' => 'playlist_id',
-				'name' => 'playlist_id',
-				'value' => $value,
-			])
-			->willReturn($expectedField);
-
-		$result = $this->collector->createHiddenPlaylistIdField($value);
-
-		static::assertSame($expectedField, $result);
+		foreach ([
+			'screen_width'  => $this->creator->createScreenWidthField(1920),
+			'screen_height' => $this->creator->createScreenHeightField(1080),
+			'time_limit'    => $this->creator->createTimeLimitField(600, 0),
+		] as $name => $field)
+		{
+			static::assertSame(FieldType::NUMBER, $field->getType(), $name);
+			$attributes = $this->attributesOf($field);
+			static::assertSame(['number', $name, '0'], [$attributes['type'], $attributes['name'], $attributes['min']], $name);
+		}
+		static::assertSame('1920', $this->attributesOf($this->creator->createScreenWidthField(1920))['value']);
+		static::assertSame('600', $this->attributesOf($this->creator->createTimeLimitField(600, 0))['value']);
+		static::assertSame('playlists.time_limit_explanation', $this->attributesOf($this->creator->createTimeLimitField(600, 0))['title']);
 	}
 
-	/**
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
 	#[Group('units')]
-	public function testCreatePlaylistModeField(): void
+	public function testThePlaylistIdAndTheModeAreHiddenFields(): void
 	{
-		$this->translatorMock->expects($this->never())->method($this->anything());
-		$value = '2';
-		$expectedField = $this->createStub(FieldInterface::class);
+		$id   = $this->creator->createHiddenPlaylistIdField(456);
+		$mode = $this->creator->createPlaylistModeField('multizone');
 
-		$this->formBuilderMock
-			->expects($this->once())
-			->method('createField')
-			->with([
-				'type' => FieldType::HIDDEN,
-				'id' => 'playlist_mode',
-				'name' => 'playlist_mode',
-				'value' => $value,
-			])
-			->willReturn($expectedField);
-
-		$result = $this->collector->createPlaylistModeField($value);
-		static::assertSame($expectedField, $result);
+		static::assertSame(FieldType::HIDDEN, $id->getType());
+		static::assertSame(FieldType::HIDDEN, $mode->getType());
+		static::assertSame(['hidden', 'playlist_id', '456'], array_values(array_intersect_key($this->attributesOf($id), array_flip(['type', 'name', 'value']))));
+		static::assertSame(['hidden', 'playlist_mode', 'multizone'], array_values(array_intersect_key($this->attributesOf($mode), array_flip(['type', 'name', 'value']))));
 	}
 
-	/**
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
 	#[Group('units')]
-	public function testCreateCSRFTokenField(): void
+	public function testTheTokenFieldHasTheTokenOfTheSession(): void
 	{
-		$this->translatorMock->expects($this->never())->method($this->anything());
-		$expectedField = $this->createStub(FieldInterface::class);
+		$field = $this->creator->createCSRFTokenField();
 
-		$this->formBuilderMock
-			->expects($this->once())
-			->method('createField')
-			->with([
-				'type' => FieldType::CSRF,
-				'id' => BaseEditParameters::PARAMETER_CSRF_TOKEN,
-				'name' => BaseEditParameters::PARAMETER_CSRF_TOKEN,
-			])
-			->willReturn($expectedField);
+		static::assertSame(FieldType::CSRF, $field->getType());
+		$attributes = $this->attributesOf($field);
+		static::assertSame('csrf_token', $attributes['name']);
+		static::assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $attributes['value']);
+	}
 
-		$result = $this->collector->createCSRFTokenField();
+	#[Group('units')]
+	public function testTheFormIsSplitInHiddenAndVisibleFields(): void
+	{
+		$form = $this->creator->prepareForm(['playlist_id' => $this->creator->createHiddenPlaylistIdField(5), 'playlist_name' => $this->creator->createPlaylistNameField('Lobby')]);
 
-		static::assertSame($expectedField, $result);
+		static::assertCount(1, $form['hidden']);
+		static::assertCount(1, $form['visible']);
+		static::assertSame('playlists.playlist_name', $form['visible'][0]['LANG_ELEMENT_LABEL']);
 	}
 }

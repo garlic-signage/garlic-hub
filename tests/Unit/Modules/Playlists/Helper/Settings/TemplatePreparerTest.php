@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -22,76 +22,53 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Playlists\Helper\Settings;
 
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Utils\Forms\FormTemplatePreparer;
 use App\Modules\Playlists\Helper\Settings\TemplatePreparer;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 class TemplatePreparerTest extends TestCase
 {
-	private FormTemplatePreparer&MockObject $formTemplatePreparerMock;
 	private TemplatePreparer $preparer;
 
-	/** @var array<string,array<string,string>> */
-	private array $result = ['main_layout' => ['title' => 'x'], 'this_layout' => ['template' => 'y']];
-
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$translatorStub = $this->createStub(Translator::class);
-		$translatorStub->method('translate')
-			->willReturnCallback(fn(string $key, string $module): string => $module . '.' . $key);
-		$translatorStub->method('translateArrayForOptions')
-			->willReturn(['master' => 'Master', 'multizone' => 'Multizone']);
-		$this->formTemplatePreparerMock = $this->createMock(FormTemplatePreparer::class);
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
+		$translator->method('translateArrayForOptions')->willReturn(['master' => 'Master', 'multizone' => 'Multizone']);
+		// the form preparer gives back what it gets: the test sees what the playlist settings hand over
+		$formPreparer = $this->createStub(FormTemplatePreparer::class);
+		$formPreparer->method('prepareUITemplate')->willReturnCallback(static fn(array $sections): array => $sections);
 
-		$this->preparer = new TemplatePreparer($translatorStub, $this->formTemplatePreparerMock);
+		$this->preparer = new TemplatePreparer($translator, $formPreparer);
 	}
 
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
 	#[Group('units')]
-	public function testPrepare(): void
+	public function testTheSettingsPageHasTheNameOfTheMode(): void
 	{
-		$this->expectPrepared('playlists.settings - Multizone');
+		$result = $this->preparer->prepare(['hidden' => [], 'visible' => []], 'Multizone');
 
-		static::assertSame($this->result, $this->preparer->prepare(['hidden' => [], 'visible' => []], 'MultiZone'));
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testPrepareWithUnknownModeUsesModeAsName(): void
-	{
-		$this->expectPrepared('playlists.settings - unknown');
-
-		$this->preparer->prepare(['hidden' => [], 'visible' => []], 'unknown');
-	}
-
-	private function expectPrepared(string $title): void
-	{
-		$this->formTemplatePreparerMock->expects($this->once())->method('prepareUITemplate')
-			->with([
+		static::assertSame(
+			[
 				'hidden'            => [],
 				'visible'           => [],
-				'title'             => $title,
+				'title'             => 'playlists.settings - Multizone',
 				'additional_css'    => ['/css/playlists/settings.css'],
 				'footer_modules'    => ['/js/playlists/settings/init.js'],
 				'template_name'     => 'playlists/edit',
 				'form_action'       => '/playlists/settings',
-				'save_button_label' => 'main.save'
-			])
-			->willReturn($this->result);
+				'save_button_label' => 'main.save',
+			],
+			$result
+		);
+	}
+
+	#[Group('units')]
+	public function testAModeWithoutANameIsShownAsItIs(): void
+	{
+		$result = $this->preparer->prepare([], 'unknown');
+
+		static::assertSame('playlists.settings - unknown', $result['title']);
 	}
 }

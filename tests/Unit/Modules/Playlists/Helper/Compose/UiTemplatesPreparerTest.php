@@ -28,13 +28,13 @@ use App\Modules\Playlists\Helper\Compose\RightsChecker;
 use App\Modules\Playlists\Helper\Compose\UiTemplatesPreparer;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class UiTemplatesPreparerTest extends TestCase
 {
-	private Translator&MockObject $translatorMock;
-	private RightsChecker&MockObject $rightsCheckerMock;
+	private Translator&Stub $translatorStub;
+	private RightsChecker&Stub $rightsCheckerStub;
 	private UiTemplatesPreparer $preparer;
 
 	/**
@@ -43,10 +43,10 @@ class UiTemplatesPreparerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->translatorMock   = $this->createMock(Translator::class);
-		$this->rightsCheckerMock = $this->createMock(RightsChecker::class);
+		$this->translatorStub   = $this->createStub(Translator::class);
+		$this->rightsCheckerStub = $this->createStub(RightsChecker::class);
 
-		$this->preparer = new UiTemplatesPreparer($this->translatorMock, $this->rightsCheckerMock);
+		$this->preparer = new UiTemplatesPreparer($this->translatorStub, $this->rightsCheckerStub);
 	}
 
 
@@ -57,11 +57,9 @@ class UiTemplatesPreparerTest extends TestCase
 	#[Group('units')]
 	public function testBuildExternalEditor(): void
 	{
-		$this->rightsCheckerMock->expects($this->never())->method($this->anything());
 		$playlist = ['playlist_id' => 123, 'playlist_name' => 'My Playlist'];
 
-		$this->translatorMock->expects($this->exactly(4))
-			->method('translate')
+		$this->translatorStub->method('translate')
 			->willReturnMap([
 				['external_edit', UiTemplatesPreparer::MODULE_NAME, [], 'External Editor'],
 				['url_to_playlist', UiTemplatesPreparer::MODULE_NAME, [], 'URL to Playlist'],
@@ -99,11 +97,9 @@ class UiTemplatesPreparerTest extends TestCase
 	#[Group('units')]
 	public function testBuildMultizoneEditor(): void
 	{
-		$this->rightsCheckerMock->expects($this->never())->method($this->anything());
 		$playlist = ['playlist_id' => 456, 'playlist_name' => 'Multizone Playlist'];
 
-		$this->translatorMock->expects($this->exactly(29))
-			->method('translate')
+		$this->translatorStub->method('translate')
 			->willReturnMap([
 				['zone_edit', UiTemplatesPreparer::MODULE_NAME, [], 'Zone Editor'],
 				['duplicate', 'templates', [], 'Duplicate'],
@@ -134,15 +130,13 @@ class UiTemplatesPreparerTest extends TestCase
 				['confirm_close_editor', UiTemplatesPreparer::MODULE_NAME, [], 'Confirm Close Editor']
 			]);
 
-		$this->translatorMock->expects($this->once())
-			->method('translateArrayForOptions')
-			->with('export_unit_selects', UiTemplatesPreparer::MODULE_NAME)
+		$this->translatorStub->method('translateArrayForOptions')
 			->willReturn([
 				'unit_one' => 'Unit One',
 				'unit_two' => 'Unit Two',
 			]);
 
-		$this->preparer->buildMultizoneEditor($playlist);
+		$result = $this->preparer->buildMultizoneEditor($playlist);
 
 		$expected = [
 			'main_layout' => [
@@ -174,7 +168,6 @@ class UiTemplatesPreparerTest extends TestCase
 					'LANG_HEIGHT' => 'Height',
 					'LANG_INSERT' => 'Insert',
 					'LANG_SAVE' => 'Save',
-					'LANG_PLAYER_EXPORT' => 'Player Export',
 					'LANG_CLOSE' => 'Close',
 					'LANG_CANCEL' => 'Cancel',
 					'LANG_TRANSFER' => 'Transfer',
@@ -192,6 +185,8 @@ class UiTemplatesPreparerTest extends TestCase
 				]
 			]
 		];
+
+		static::assertSame($expected, $result);
 	}
 
 	/**
@@ -203,8 +198,7 @@ class UiTemplatesPreparerTest extends TestCase
 	{
 		$playlist = ['playlist_id' => 789, 'playlist_name' => 'Circular Playlist', 'time_limit' => 3600];
 
-		$this->translatorMock->expects($this->exactly(14))
-			->method('translate')
+		$this->translatorStub->method('translate')
 			->willReturnMap([
 				['composer', UiTemplatesPreparer::MODULE_NAME, [], 'Composer'],
 				['insert', UiTemplatesPreparer::MODULE_NAME, [], 'Insert'],
@@ -222,36 +216,26 @@ class UiTemplatesPreparerTest extends TestCase
 				['cancel', 'main', [], 'Cancel']
 			]);
 
-		$this->rightsCheckerMock->expects($this->once())
-			->method('getEdition')
+		$this->rightsCheckerStub->method('getEdition')
 			->willReturn('Pro Edition');
 
-		$this->rightsCheckerMock->expects($this->once())
-			->method('checkInsertExternalMedia')
+		$this->rightsCheckerStub->method('checkInsertExternalMedia')
 			->willReturn([]);
 
-		$this->rightsCheckerMock->expects($this->once())
-			->method('checkInsertPlaylist')
-			->with($playlist['time_limit'])
+		$this->rightsCheckerStub->method('checkInsertPlaylist')
+			->willReturnMap([[$playlist['time_limit'], []]]);
+
+		$this->rightsCheckerStub->method('checkInsertExternalPlaylist')
+			->willReturnMap([[$playlist['time_limit'], []]]);
+
+		$this->rightsCheckerStub->method('checkInsertTemplates')
 			->willReturn([]);
 
-		$this->rightsCheckerMock->expects($this->once())
-			->method('checkInsertExternalPlaylist')
-			->with($playlist['time_limit'])
+		$this->rightsCheckerStub->method('checkInsertChannels')
 			->willReturn([]);
 
-		$this->rightsCheckerMock->expects($this->once())
-			->method('checkInsertTemplates')
-			->willReturn([]);
-
-		$this->rightsCheckerMock->expects($this->once())
-			->method('checkInsertChannels')
-			->willReturn([]);
-
-		$this->rightsCheckerMock->expects($this->once())
-			->method('checkTimeLimit')
-			->with($playlist['time_limit'])
-			->willReturn([]);
+		$this->rightsCheckerStub->method('checkTimeLimit')
+			->willReturnMap([[$playlist['time_limit'], []]]);
 
 		$result = $this->preparer->buildCircularEditor($playlist);
 

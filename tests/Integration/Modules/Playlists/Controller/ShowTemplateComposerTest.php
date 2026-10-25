@@ -183,6 +183,28 @@ class ShowTemplateComposerTest extends PlaylistsControllerTestCase
 		static::assertSame('', $this->databaseValue('SELECT content_data FROM playlists_items WHERE item_id = 7'));
 	}
 
+	public function testAFileWhichIsNoImageIsNotSaved(): void
+	{
+		$this->actingAs(2);
+
+		$this->assertError($this->save(['item_id' => '5', 'content' => '{"objects":[]}', 'image' => 'data:image/png;base64,' . base64_encode('this is not an image')]), 'Save failed');
+
+		static::assertSame('', $this->databaseValue('SELECT content_data FROM playlists_items WHERE item_id = 5'));
+		static::assertSame([], (array) glob($this->workspace->dir . '/var/storage/playlists/items/originals/*'));
+	}
+
+	public function testAContentWhichIsNoDesignLoadsAsEmpty(): void
+	{
+		$this->actingAs(2);
+
+		foreach (['not json', '{"foo":1}', '{"objects":"x"}'] as $content)
+		{
+			$this->connection->executeStatement('UPDATE playlists_items SET content_data = ? WHERE item_id = 5', [$content]);
+
+			static::assertSame('', $this->json($this->controller->load($this->request('GET'), $this->newResponse(), ['item_id' => '5']))['content'], $content);
+		}
+	}
+
 	public function testAContentWithoutObjectsOrWithoutAnImageIsNotSaved(): void
 	{
 		$this->actingAs(2);

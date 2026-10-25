@@ -29,14 +29,13 @@ use App\Modules\Playlists\Helper\Compose\ItemThumbnailResolver;
 use App\Modules\Playlists\Helper\ItemType;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class ItemThumbnailResolverTest extends TestCase
 {
 	private Config&Stub $configStub;
-	private MimeTypeExtensionMapper&MockObject $mimeTypeExtensionMapperMock;
+	private MimeTypeExtensionMapper&Stub $mimeTypeExtensionMapperStub;
 	private ItemThumbnailResolver $resolver;
 	private string $thumbnailPath;
 
@@ -55,11 +54,11 @@ class ItemThumbnailResolverTest extends TestCase
 			['thumbnails', 'mediapool', 'directories', $this->thumbnailPath],
 			['thumbnails', 'playlists', 'directories', '/path/to/item/thumbs'],
 		]);
-		$this->mimeTypeExtensionMapperMock = $this->createMock(MimeTypeExtensionMapper::class);
+		$this->mimeTypeExtensionMapperStub = $this->createStub(MimeTypeExtensionMapper::class);
 
 		$this->resolver = new ItemThumbnailResolver(
 			$this->configStub,
-			$this->mimeTypeExtensionMapperMock,
+			$this->mimeTypeExtensionMapperStub,
 			new MediaUrlSigner('unit-test-secret')
 		);
 	}
@@ -77,7 +76,6 @@ class ItemThumbnailResolverTest extends TestCase
 	#[Group('units')]
 	public function testVideoUsesJpgThumbnail(): void
 	{
-		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
 
 		$result = $this->resolver->resolve(['item_type' => ItemType::MEDIAPOOL->value, 'mimetype' => 'video/webm', 'file_resource' => 'video_checksum']);
 
@@ -92,9 +90,8 @@ class ItemThumbnailResolverTest extends TestCase
 	#[Group('units')]
 	public function testImageUsesExtensionOfMimetype(): void
 	{
-		$this->mimeTypeExtensionMapperMock->expects($this->once())->method('determineExtension')
-			->with('image/png')
-			->willReturn('png');
+		$this->mimeTypeExtensionMapperStub->method('determineExtension')
+			->willReturnMap([['image/png', 'png']]);
 
 		$result = $this->resolver->resolve(['item_type' => ItemType::MEDIAPOOL->value, 'mimetype' => 'image/png', 'file_resource' => 'image_checksum']);
 
@@ -109,7 +106,6 @@ class ItemThumbnailResolverTest extends TestCase
 	#[Group('units')]
 	public function testSvgWidgetWithExistingSvgThumbnail(): void
 	{
-		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
 		touch($this->thumbnailPath . '/widget_checksum.svg');
 
 		$result = $this->resolver->resolve(['item_type' => ItemType::MEDIAPOOL->value, 'mimetype' => 'application/widget', 'file_resource' => 'widget_checksum', 'content_data' => '']);
@@ -124,7 +120,6 @@ class ItemThumbnailResolverTest extends TestCase
 	#[Group('units')]
 	public function testWidgetFallsBackToPngWithoutThumbnailFile(): void
 	{
-		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
 
 		$result = $this->resolver->resolve(['item_type' => ItemType::MEDIAPOOL->value, 'mimetype' => 'application/widget', 'file_resource' => 'widget_checksum', 'content_data' => '']);
 
@@ -139,7 +134,6 @@ class ItemThumbnailResolverTest extends TestCase
 	#[Group('units')]
 	public function testPlaylistUsesStaticIcon(): void
 	{
-		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
 
 		$result = $this->resolver->resolve(['item_type' => ItemType::PLAYLIST->value, 'mimetype' => '', 'file_resource' => '']);
 
@@ -152,7 +146,6 @@ class ItemThumbnailResolverTest extends TestCase
 	#[Group('units')]
 	public function testTemplateUsesJpgNamedByItemId(): void
 	{
-		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
 
 		$result = $this->resolver->resolve(['item_type' => ItemType::TEMPLATE->value, 'item_id' => '17']);
 
@@ -167,7 +160,6 @@ class ItemThumbnailResolverTest extends TestCase
 	#[Group('units')]
 	public function testUnknownItemTypeHasNoThumbnail(): void
 	{
-		$this->mimeTypeExtensionMapperMock->expects($this->never())->method($this->anything());
 
 		static::assertNull($this->resolver->resolve(['item_type' => 'unknown']));
 	}

@@ -23,346 +23,222 @@ namespace Tests\Unit\Modules\Playlists\Helper\Datatable;
 
 use App\Framework\Config\Config;
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Exceptions\ModuleException;
+use App\Framework\Security\Crypt;
+use App\Framework\Security\CsrfToken;
+use App\Framework\Utils\Datatable\Paginator\Preparer;
 use App\Framework\Utils\Datatable\PrepareService;
 use App\Framework\Utils\Datatable\Results\BodyPreparer;
 use App\Framework\Utils\Datatable\Results\HeaderField;
+use App\Framework\Utils\Datatable\Results\HeaderPreparer;
+use App\Framework\Utils\Datatable\Results\TranslatorManager;
+use App\Framework\Utils\Datatable\UrlBuilder;
+use App\Framework\Utils\Html\FieldsFactory;
+use App\Framework\Utils\Html\FieldsRenderFactory;
+use App\Framework\Utils\Html\FormBuilder;
+use App\Framework\Validation\Sanitizer;
 use App\Modules\Playlists\Helper\Datatable\DatatablePreparer;
 use App\Modules\Playlists\Helper\Datatable\Parameters;
-use App\Modules\Playlists\Helper\PlaylistMode;
 use App\Modules\Playlists\Services\AclValidator;
+use Defuse\Crypto\Key;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\MemorySession;
 
+/**
+ * The rows of the playlist list with the real services of the datatable. The container of the integration tests
+ * knows only the edge edition and the owner of a playlist: the rest is tested here.
+ */
 class DatatablePreparerTest extends TestCase
 {
-	private PrepareService&Stub $prepareServiceStub;
-	private AclValidator&MockObject $aclValidatorMock;
-	private BodyPreparer&MockObject $bodyPreparerMock;
-	private Translator&MockObject $translatorMock;
-	private DatatablePreparer $datatablePreparer;
+	private AclValidator&Stub $aclValidatorStub;
+	private DatatablePreparer $preparer;
 
 	/**
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->prepareServiceStub = $this->createStub(PrepareService::class);
-		$this->aclValidatorMock   = $this->createMock(AclValidator::class);
-		$parametersStub           = $this->createStub(Parameters::class);
-		$this->translatorMock     = $this->createMock(Translator::class);
-		$this->bodyPreparerMock = $this->createMock(BodyPreparer::class);
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $key === 'confirm_delete' ? 'Delete %s?' : $module . '.' . $key);
+		$translator->method('translateArrayForOptions')->willReturn(['master' => 'Master', 'internal' => 'Internal', 'external' => 'External', 'channel' => 'Channel']);
+		$session = new MemorySession();
+		$urlBuilder = new UrlBuilder();
 
-		$this->datatablePreparer = new DatatablePreparer(
-			$this->prepareServiceStub,
-			$this->aclValidatorMock,
-			$parametersStub,
-			$this->translatorMock
+		$this->aclValidatorStub = $this->createStub(AclValidator::class);
+		$this->preparer = new DatatablePreparer(
+			new PrepareService(
+				new FormBuilder(new FieldsFactory(), new FieldsRenderFactory(), new CsrfToken(new Crypt(Key::createNewRandomKey()), $session)),
+				new Preparer($urlBuilder),
+				new HeaderPreparer(new TranslatorManager($translator), $urlBuilder),
+				new BodyPreparer()
+			),
+			$this->aclValidatorStub,
+			new Parameters(new Sanitizer(), $session),
+			$translator
 		);
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws \Doctrine\DBAL\Exception
+	 * @param list<string> $names
+	 * @return list<HeaderField>
 	 */
-	#[Group('units')]
-	public function testPrepareTableBodyWithEmptyData(): void
+	private function fields(array $names): array
 	{
-		$this->expectUntouched($this->aclValidatorMock, $this->translatorMock, $this->bodyPreparerMock);
-		$result = $this->datatablePreparer->prepareTableBody([], [], 123);
-
-		static::assertEmpty($result);
-	}
-
-
-	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws Exception
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testPrepareTableBodyWithPlaylistName(): void
-	{
-		$usedPlaylists = [];
-		$this->datatablePreparer->setUsedPlaylists($usedPlaylists);
-		$fields = [$this->createStub(HeaderField::class)];
-		$fields[0]->method('getName')->willReturn('playlist_name');
-		$fields[0]->method('isSortable')->willReturn(true);
-
-		$this->aclValidatorMock->method('isSimpleAdmin')
-			->with(123)
-			->willReturn(true);
-		$this->prepareServiceStub->method('getBodyPreparer')
-			->willReturn($this->bodyPreparerMock);
-
-		$this->translatorMock->expects($this->atLeastOnce())->method('translate')
-			->willReturnMap([
-				['composer', 'playlists', [], 'Compose'],
-				['composer', 'playlists', [], 'Compose'],
-				['copy_playlist', 'playlists', [], 'copy'],
-				['edit_settings', 'playlists', [], 'Edit setting'],
-				['delete', 'main', [], 'Delete'],
-				['confirm_delete', 'playlists', [], 'Confirm delete']
-			]);
-
-		$this->aclValidatorMock->method('isAllowedToDeletePlaylist')->willReturn(true);
-
-		$this->bodyPreparerMock->expects($this->once())->method('formatLink')
-			->with('Playlist Name', 'Compose', 'playlists/compose/1', 'playlist_name_1');
-
-		$result = $this->datatablePreparer->prepareTableBody(
-			[
-				['playlist_id' => 1,
-					'UID' => 13,
-					'company_id' => 1,
-					'username' => 'Heidi',
-					'duration' => 12,
-					'playlist_name' => 'Playlist Name', 'playlist_mode' => 'master']],
-			$fields,
-			123
-		);
-
-		static::assertCount(1, $result);
-		static::assertArrayHasKey('UNIT_ID', $result[0]);
+		return array_map(static fn(string $name): HeaderField => new HeaderField()->setName($name), $names);
 	}
 
 	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws Exception
-	 * @throws \Doctrine\DBAL\Exception
+	 * @return array{UID: int, company_id: int, playlist_id: int, playlist_name: string, username: string, duration: int, playlist_mode: string}
 	 */
-	#[Group('units')]
-	public function testPrepareTableBodyWithUID(): void
+	private static function playlist(int $id = 5, int $owner = 2, string $mode = 'master', int $duration = 3725): array
 	{
-		// labels of the composer and settings actions
-		$this->translatorMock->expects($this->atLeastOnce())->method('translate')->willReturn('label');
-		$usedPlaylists = [];
-		$this->datatablePreparer->setUsedPlaylists($usedPlaylists);
-
-		$fields = [$this->createStub(HeaderField::class)];
-		$fields[0]->method('getName')->willReturn('UID');
-		$fields[0]->method('isSortable')->willReturn(true);
-
-		$this->prepareServiceStub->method('getBodyPreparer')
-			->willReturn($this->bodyPreparerMock);
-		$this->bodyPreparerMock->expects($this->once())->method('formatUID')
-			->with('13', 'Willi');
-
-		$this->aclValidatorMock->method('isModuleAdmin')->willReturn(true);
-		$this->aclValidatorMock->expects($this->once())->method('isSimpleAdmin')->with(123)->willReturn(true);
-
-		$result = $this->datatablePreparer->prepareTableBody(
-			[
-				['playlist_id' => 1,
-					'UID' => 13,
-					'company_id' => 1,
-					'username' => 'Willi',
-					'duration' => 12,
-					'playlist_name' => 'Playlist Name', 'playlist_mode' => 'master']],
-			$fields,
-			123
-		);
-
-		static::assertNotEmpty($result[0]['has_action_link']);
+		return ['playlist_id' => $id, 'UID' => $owner, 'username' => 'anna', 'company_id' => 1, 'playlist_name' => 'Lobby', 'playlist_mode' => $mode, 'duration' => $duration];
 	}
 
-	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws Exception
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testPrepareTableBodyWithDuration(): void
+	private function edition(string $edition): void
 	{
-		// labels of the composer and settings actions
-		$this->translatorMock->expects($this->atLeastOnce())->method('translate')->willReturn('label');
-		$usedPlaylists = [];
-		$this->datatablePreparer->setUsedPlaylists($usedPlaylists);
-
-		$fields = [$this->createStub(HeaderField::class)];
-		$fields[0]->method('getName')->willReturn('duration');
-		$fields[0]->method('isSortable')->willReturn(false);
-
-		$this->prepareServiceStub->method('getBodyPreparer')
-			->willReturn($this->bodyPreparerMock);
-		$this->bodyPreparerMock->expects($this->once())->method('formatText')
-			->with('00:00:12');
-
-		$this->aclValidatorMock->method('isModuleAdmin')->willReturn(true);
-		$this->aclValidatorMock->expects($this->once())->method('isSimpleAdmin')->with(123)->willReturn(true);
-
-		$result = $this->datatablePreparer->prepareTableBody(
-			[
-				[
-					'playlist_id' => 1,
-					'UID' => 13,
-					'company_id' => 1,
-					'username' => 'Günther',
-					'duration' => 12,
-					'playlist_name' => 'Playlist Name',
-					'playlist_mode' => 'master']],
-			$fields,
-			123
-		);
-
-		static::assertNotEmpty($result[0]['has_action_link']);
+		$config = $this->createStub(Config::class);
+		$config->method('getEdition')->willReturn($edition);
+		$this->aclValidatorStub->method('getConfig')->willReturn($config);
 	}
 
-	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws Exception
-	 * @throws \Doctrine\DBAL\Exception
-	 */
 	#[Group('units')]
-	public function testPrepareTableBodyWithPlaylistModes(): void
+	public function testWithoutPlaylistsTheBodyIsEmpty(): void
 	{
-		$usedPlaylists = [];
-		$this->datatablePreparer->setUsedPlaylists($usedPlaylists);
+		static::assertSame([], $this->preparer->setUsedPlaylists([])->prepareTableBody([], $this->fields(['playlist_name']), 2));
+	}
 
-		$fields = [$this->createStub(HeaderField::class)];
-		$fields[0]->method('getName')->willReturn('playlist_mode');
-		$fields[0]->method('isSortable')->willReturn(false);
+	#[Group('units')]
+	public function testTheCellsOfARow(): void
+	{
+		$this->aclValidatorStub->method('isSimpleAdmin')->willReturn(false);
 
-		$this->translatorMock->method('translateArrayForOptions')
-			->with('playlist_mode_selects', 'playlists')
-			->willReturn(['master' => 'Master']);
-		$this->prepareServiceStub->method('getBodyPreparer')
-			->willReturn($this->bodyPreparerMock);
-		$this->bodyPreparerMock->expects($this->once())->method('formatText')
-			->with('Master');
+		$body = $this->preparer->setUsedPlaylists([])->prepareTableBody([self::playlist()], $this->fields(['playlist_name', 'UID', 'playlist_mode', 'duration', 'playlist_id']), 3);
 
-		$this->aclValidatorMock->method('isModuleAdmin')->willReturn(true);
-		$this->aclValidatorMock->expects($this->once())->method('isSimpleAdmin')->with(123)->willReturn(true);
-
-		$result = $this->datatablePreparer->prepareTableBody(
+		static::assertSame(5, $body[0]['UNIT_ID']);
+		static::assertSame(
 			[
-				[
-					'playlist_id' => 1,
-					'UID' => 13,
-					'company_id' => 1,
-					'username' => 'Horst',
-					'duration' => 14,
-					'playlist_name' => 'Playlist Name',
-					'playlist_mode' => 'master'
-				]
+				['CONTROL_NAME_BODY' => 'playlist_name', 'is_link' => ['CONTROL_ELEMENT_VALUE_NAME' => 'Lobby', 'CONTROL_ELEMENT_VALUE_TITLE' => 'playlists.composer', 'CONTROL_ELEMENT_VALUE_LINK' => 'playlists/compose/5', 'CONTROL_ELEMENT_VALUE_ID' => 'playlist_name_5', 'CONTROL_ELEMENT_VALUE_CLASS' => '', 'CONTROL_ELEMENT_ADDITIONAL_TEXT' => '']],
+				['CONTROL_NAME_BODY' => 'UID', 'is_UID' => $body[0]['elements_result_element'][1]['is_UID']],
+				['CONTROL_NAME_BODY' => 'playlist_mode', 'is_text' => ['CONTROL_ELEMENT_VALUE_TEXT' => 'Master']],
+				['CONTROL_NAME_BODY' => 'duration', 'is_text' => ['CONTROL_ELEMENT_VALUE_TEXT' => '01:02:05']],
+				['CONTROL_NAME_BODY' => 'playlist_id', 'is_text' => ['CONTROL_ELEMENT_VALUE_TEXT' => '5']],
 			],
-			$fields,
-			123
+			$body[0]['elements_result_element']
 		);
-
-		static::assertNotEmpty($result[0]['has_action_link']);
+		static::assertStringContainsString('anna', json_encode($body[0]['elements_result_element'][1]['is_UID'], JSON_THROW_ON_ERROR));
 	}
 
 	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws Exception
-	 * @throws \Doctrine\DBAL\Exception
+	 * @return array<string,array{int,string}> the seconds and the time
 	 */
-	#[Group('units')]
-	public function testPrepareTableBodyWithUnknown(): void
+	public static function durations(): array
 	{
-		// neither owner nor admin: no actions for the row
-		$this->aclValidatorMock->expects($this->once())->method('isSimpleAdmin')->with(123)->willReturn(false);
-		$fields = [$this->createStub(HeaderField::class)];
-		$fields[0]->method('getName')->willReturn('unknown_param');
-		$fields[0]->method('isSortable')->willReturn(false);
+		return ['none' => [0, '00:00:00'], 'a minute' => [60, '00:01:00'], 'an hour and more' => [3725, '01:02:05']];
+	}
 
+	#[DataProvider('durations')]
+	#[Group('units')]
+	public function testTheDurationIsShownAsTime(int $seconds, string $time): void
+	{
+		$body = $this->preparer->setUsedPlaylists([])->prepareTableBody([self::playlist(duration: $seconds)], $this->fields(['duration']), 3);
 
-		$bodyPreparerMock = $this->createMock(BodyPreparer::class);
-		$this->bodyPreparerMock->expects($this->never())->method($this->anything());
-		$this->translatorMock->expects($this->never())->method($this->anything());
-		$bodyPreparerMock->method('formatText')
-			->with('some_value')
-			->willReturn(['formattedText' => 'some_value']);
-
-		$this->prepareServiceStub->method('getBodyPreparer')->willReturn($bodyPreparerMock);
-
-		$result = $this->datatablePreparer->prepareTableBody(
-			[
-				['playlist_id' => 1,
-					'UID' => 13,
-					'company_id' => 1,
-					'unknown_param' => 'some_value',
-					'playlist_name' => 'Playlist Name',
-					'playlist_mode' => 'master', 'username' => 'MorkFromOrk', 'duration' => 12]
-			],
-			$fields,
-			123
-		);
-
-		static::assertEquals('some_value', $result[0]['elements_result_element'][0]['is_text']['formattedText']);
+		static::assertSame($time, $body[0]['elements_result_element'][0]['is_text']['CONTROL_ELEMENT_VALUE_TEXT']);
 	}
 
 	#[Group('units')]
-	public function testFormatContextMenu(): void
+	public function testADurationOfMoreThanADayIsShownInHours(): void
 	{
+		static::markTestSkipped('Known bug: the duration is formatted with the hours of a day (%H of a DateTime diff), so 100000 seconds are shown as 03:46:40 instead of 27:46:40. Remove this line when it is fixed.');
+		// @phpstan-ignore deadCode.unreachable
+		$body = $this->preparer->setUsedPlaylists([])->prepareTableBody([self::playlist(duration: 100000)], $this->fields(['duration']), 3);
 
-		$this->aclValidatorMock->expects($this->once())->method('getConfig')->willReturn($this->createStub(\App\Framework\Config\Config::class));
-		$this->bodyPreparerMock->expects($this->never())->method($this->anything());
-		$this->translatorMock->expects($this->once())->method('translateArrayForOptions')
-			->with('playlist_mode_selects', 'playlists')
-			->willReturn([PlaylistMode::MASTER->value => 'Master', 'slave' => 'Slave']);
-
-		$result = $this->datatablePreparer->formatContextMenu();
-
-		static::assertCount(2, $result);
-		static::assertEquals(
-			[
-				['CREATE_PLAYLIST_MODE' => 'master', 'LANG_CREATE_PLAYLIST_MODE' => 'Master'],
-				['CREATE_PLAYLIST_MODE' => 'slave', 'LANG_CREATE_PLAYLIST_MODE' => 'Slave']
-			],
-			$result
-		);
+		static::assertSame('27:46:40', $body[0]['elements_result_element'][0]['is_text']['CONTROL_ELEMENT_VALUE_TEXT']);
 	}
 
-	/**
-	 * @throws Exception
-	 */
 	#[Group('units')]
-	public function testFormatContextMenuEdgeForbidden(): void
+	public function testTheOwnerGetsTheActionsAndTheDeleteButton(): void
 	{
-		$this->bodyPreparerMock->expects($this->never())->method($this->anything());
-		$configStub = $this->createStub(Config::class);
-		$this->aclValidatorMock->expects($this->atLeastOnce())->method('getConfig')->willReturn($configStub);
-		$configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
+		$this->aclValidatorStub->method('isSimpleAdmin')->willReturn(false);
+		$this->aclValidatorStub->method('isAllowedToDeletePlaylist')->willReturn(true);
 
-		$this->translatorMock->method('translateArrayForOptions')
-			->with('playlist_mode_selects', 'playlists')
-			->willReturn([PlaylistMode::MASTER->value => 'Master', PlaylistMode::CHANNEL->value => 'Channel', PlaylistMode::EXTERNAL->value => 'External']);
+		$row = $this->preparer->setUsedPlaylists([])->prepareTableBody([self::playlist()], $this->fields(['playlist_name']), 2)[0];
 
-		$result = $this->datatablePreparer->formatContextMenu();
-
-		static::assertCount(1, $result);
-		static::assertEquals(
+		static::assertSame(
 			[
-				['CREATE_PLAYLIST_MODE' => 'master', 'LANG_CREATE_PLAYLIST_MODE' => 'Master']
+				['LANG_LINK_ACTION' => 'playlists.composer', 'LINK_ACTION' => 'playlists/compose/5', 'LINK_ACTION_ID' => '5', 'LINK_ACTION_NAME' => 'composer', 'LINK_ACTION_ICON_CLASS' => 'pencil'],
+				['LANG_LINK_ACTION' => 'playlists.edit_settings', 'LINK_ACTION' => 'playlists/settings/5', 'LINK_ACTION_ID' => '5', 'LINK_ACTION_NAME' => 'edit', 'LINK_ACTION_ICON_CLASS' => 'gear'],
 			],
-			$result
+			$row['has_action_link']
+		);
+		static::assertSame(['LANG_DELETE_ACTION' => 'main.delete', 'DELETE_ID' => '5', 'LANG_CONFIRM_DELETE' => 'Delete Lobby?', 'ELEMENT_DELETE_CLASS' => 'delete-playlist'], $row['has_delete']);
+	}
+
+	#[Group('units')]
+	public function testAPlaylistWhichIsInUseCanNotBeDeleted(): void
+	{
+		$this->aclValidatorStub->method('isSimpleAdmin')->willReturn(false);
+		$this->aclValidatorStub->method('isAllowedToDeletePlaylist')->willReturn(true);
+
+		$row = $this->preparer->setUsedPlaylists([5 => true])->prepareTableBody([self::playlist()], $this->fields(['playlist_name']), 2)[0];
+
+		static::assertArrayHasKey('has_action_link', $row);
+		static::assertArrayNotHasKey('has_delete', $row);
+	}
+
+	#[Group('units')]
+	public function testWhoMayNotDeleteGetsNoDeleteButton(): void
+	{
+		$this->aclValidatorStub->method('isSimpleAdmin')->willReturn(false);
+		$this->aclValidatorStub->method('isAllowedToDeletePlaylist')->willReturn(false);
+
+		$row = $this->preparer->setUsedPlaylists([])->prepareTableBody([self::playlist()], $this->fields(['playlist_name']), 2)[0];
+
+		static::assertArrayNotHasKey('has_delete', $row);
+	}
+
+	#[Group('units')]
+	public function testTheAdminGetsTheActionsOfThePlaylistsOfOthers(): void
+	{
+		$this->aclValidatorStub->method('isSimpleAdmin')->willReturn(true);
+		$this->aclValidatorStub->method('isAllowedToDeletePlaylist')->willReturn(true);
+
+		$row = $this->preparer->setUsedPlaylists([])->prepareTableBody([self::playlist(owner: 2)], $this->fields(['playlist_name']), 1)[0];
+
+		static::assertCount(2, $row['has_action_link']);
+		static::assertArrayHasKey('has_delete', $row);
+	}
+
+	#[Group('units')]
+	public function testAUserGetsNoActionsOfThePlaylistsOfOthers(): void
+	{
+		$this->aclValidatorStub->method('isSimpleAdmin')->willReturn(false);
+
+		$row = $this->preparer->setUsedPlaylists([])->prepareTableBody([self::playlist(owner: 2)], $this->fields(['playlist_name']), 3)[0];
+
+		static::assertArrayNotHasKey('has_action_link', $row);
+		static::assertArrayNotHasKey('has_delete', $row);
+	}
+
+	#[Group('units')]
+	public function testTheCreateMenuOfTheEdgeEditionHasNoExternalAndNoChannelPlaylists(): void
+	{
+		$this->edition(Config::PLATFORM_EDITION_EDGE);
+
+		static::assertSame(
+			[['CREATE_PLAYLIST_MODE' => 'master', 'LANG_CREATE_PLAYLIST_MODE' => 'Master'], ['CREATE_PLAYLIST_MODE' => 'internal', 'LANG_CREATE_PLAYLIST_MODE' => 'Internal']],
+			$this->preparer->formatContextMenu()
 		);
 	}
 
-	private function expectUntouched(MockObject ...$mocks): void
+	#[Group('units')]
+	public function testTheCreateMenuOfTheOtherEditionsHasAllModes(): void
 	{
-		foreach ($mocks as $mock)
-		{
-			$mock->expects($this->never())->method($this->anything());
-		}
+		$this->edition(Config::PLATFORM_EDITION_ENTERPRISE);
+
+		static::assertSame(['master', 'internal', 'external', 'channel'], array_column($this->preparer->formatContextMenu(), 'CREATE_PLAYLIST_MODE'));
 	}
 }

@@ -19,167 +19,104 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Modules\Playlists\Helper\ConditionalPlay;
 
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
-use App\Framework\TemplateEngine\AdapterInterface;
 use App\Modules\Playlists\Helper\ConditionalPlay\TemplatePreparer;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\RecordingTemplateAdapter;
 
 class TemplatePreparerTest extends TestCase
 {
-	private AdapterInterface&MockObject $templateMock;
-	private Translator&MockObject $translatorMock;
-	private TemplatePreparer $templatePreparer;
+	private RecordingTemplateAdapter $template;
+	private TemplatePreparer $preparer;
 
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->templateMock     = $this->createMock(AdapterInterface::class);
-		$this->translatorMock   = $this->createMock(Translator::class);
-		$this->templatePreparer = new TemplatePreparer($this->translatorMock, $this->templateMock);
+		/** @var Translator&Stub $translator */
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
+		$translator->method('translateArrayForOptions')->willReturn([1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday']);
+
+		$this->template = new RecordingTemplateAdapter();
+		$this->preparer = new TemplatePreparer($translator, $this->template);
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
+	 * @return array<string,mixed>
 	 */
-	#[Group('units')]
-	public function testPrepareWithFullData(): void
+	private function rendered(): array
 	{
-		$this->templateMock->expects($this->never())->method($this->anything());
-		$conditionalPlayData = [
-			'date' => ['from' => '2025-08-01', 'until' => '2025-08-31'],
-			'time' => ['from' => '08:00', 'until' => '18:00'],
-			'weekdays' => [1 => true, 2 => true]
-		];
+		static::assertSame('rendered playlists/conditional-play', $this->preparer->render());
+		static::assertCount(1, $this->template->rendered);
+		static::assertSame('playlists/conditional-play', $this->template->rendered[0]['template']);
 
-		$this->translatorMock->expects($this->exactly(6))->method('translate')
-			->willReturnMap([
-				['conditional_play', 'playlists', [], 'Translated Conditional Play'],
-				['validity_period', 'playlists', [], 'Translated Validity Period'],
-				['daily', 'main', [], 'Translated Daily'],
-				['weekdays', 'main', [], 'Translated Weekdays'],
-				['from', 'main', [], 'Translated From'],
-				['until', 'main', [], 'Translated Until']
-			]);
-
-		$this->translatorMock->expects($this->once())->method('translateArrayForOptions')
-			->with('weekday_selects', 'main')
-			->willReturn([1 => 'Monday', 2 => 'Tuesday']);
-
-		$this->templatePreparer->prepare(123, $conditionalPlayData);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testPrepareWithPartialData(): void
-	{
-		$this->templateMock->expects($this->never())->method($this->anything());
-		$conditionalPlayData = [
-			'date' => ['from' => '2025-08-01'],
-			'time' => [],
-			'weekdays' => []
-		];
-
-		$this->translatorMock->expects($this->exactly(6))->method('translate')
-			->willReturnMap([
-				['conditional_play', 'playlists', [], 'Translated Conditional Play'],
-				['validity_period', 'playlists', [], 'Translated Validity Period'],
-				['daily', 'main', [], 'Translated Daily'],
-				['weekdays', 'main', [], 'Translated Weekdays'],
-				['from', 'main', [], 'Translated From'],
-				['until', 'main', [], 'Translated Until']
-			]);
-
-		$this->translatorMock->expects($this->once())->method('translateArrayForOptions')
-			->with('weekday_selects', 'main')
-			->willReturn([1 => 'Monday', 2 => 'Tuesday']);
-
-		$this->templatePreparer->prepare(456, $conditionalPlayData);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testPrepareWithEmptyData(): void
-	{
-		$this->templateMock->expects($this->never())->method($this->anything());
-		$conditionalPlayData = [];
-
-		$this->translatorMock->expects($this->exactly(6))->method('translate')
-			->willReturnMap([
-				['conditional_play', 'playlists', [], 'Translated Conditional Play'],
-				['validity_period', 'playlists', [], 'Translated Validity Period'],
-				['daily', 'main', [], 'Translated Daily'],
-				['weekdays', 'main', [], 'Translated Weekdays'],
-				['from', 'main', [], 'Translated From'],
-				['until', 'main', [], 'Translated Until']
-			]);
-
-		$this->translatorMock->expects($this->once())->method('translateArrayForOptions')
-			->with('weekday_selects', 'main')
-			->willReturn([1 => 'Monday', 2 => 'Tuesday']);
-
-		$this->templatePreparer->prepare(789, $conditionalPlayData);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testPrepareWithWeekdays(): void
-	{
-		$this->templateMock->expects($this->never())->method($this->anything());
-		$conditionalPlayData = [
-			'date' => [],
-			'time' => [],
-			'weekdays' => [4 => true]
-		];
-
-		$this->translatorMock->expects($this->exactly(6))->method('translate')
-			->willReturnMap([
-				['conditional_play', 'playlists', [], 'Translated Conditional Play'],
-				['validity_period', 'playlists', [], 'Translated Validity Period'],
-				['daily', 'main', [], 'Translated Daily'],
-				['weekdays', 'main', [], 'Translated Weekdays'],
-				['from', 'main', [], 'Translated From'],
-				['until', 'main', [], 'Translated Until']
-			]);
-
-		$this->translatorMock->expects($this->once())->method('translateArrayForOptions')
-			->with('weekday_selects', 'main')
-			->willReturn([1 => 'Monday', 4 => 'Thursday']);
-
-		$this->templatePreparer->prepare(101, $conditionalPlayData);
+		return $this->template->rendered[0]['data'];
 	}
 
 	#[Group('units')]
-	public function testRenderFullData(): void
+	public function testTheTextsAndTheValuesOfTheItem(): void
 	{
-		$this->translatorMock->expects($this->never())->method($this->anything());
+		$this->preparer->prepare(123, ['date' => ['from' => '2025-08-01', 'until' => '2025-08-31'], 'time' => ['from' => '08:00', 'until' => '18:00'], 'weekdays' => [1 => ['from' => 0, 'until' => 8], 4 => ['from' => 0, 'until' => 8]]]);
 
-		$this->templateMock->expects($this->once())->method('render')
-			->with('playlists/conditional-play', [])
-			->willReturn('Rendered Template');
+		$data = $this->rendered();
 
-		$result = $this->templatePreparer->render();
+		static::assertSame('playlists.conditional_play', $data['LANG_CONDITIONAL_PLAY']);
+		static::assertSame('playlists.validity_period', $data['LANG_DATE_PERIOD']);
+		static::assertSame(['main.daily', 'main.weekdays', 'main.from', 'main.until'], [$data['LANG_DAILY'], $data['LANG_WEEKDAYS'], $data['LANG_FROM'], $data['LANG_UNTIL']]);
+		static::assertSame(123, $data['CONDITIONAL_PLAY_ITEM_ID']);
+		static::assertSame(['2025-08-01', '2025-08-31', '08:00', '18:00'], [$data['DATE_FROM'], $data['DATE_UNTIL'], $data['TIME_FROM'], $data['TIME_UNTIL']]);
+		static::assertSame('checked', $data['DATE_PERIOD_CHECKED']);
+		static::assertSame('checked', $data['TIME_PERIOD_CHECKED']);
+		static::assertSame('checked', $data['CONDITIONAL_PLAY_CHECKED']);
+	}
 
-		self::assertSame('Rendered Template', $result);
+	#[Group('units')]
+	public function testTheWeekdaysAreBitsAndTheChosenOnesAreChecked(): void
+	{
+		$this->preparer->prepare(1, ['weekdays' => [1 => ['from' => 0, 'until' => 8], 4 => ['from' => 0, 'until' => 8]]]);
+
+		$data = $this->rendered();
+
+		static::assertSame(
+			[
+				['WEEKDAY_NUMBER' => 1, 'WEEKDAY' => 'Monday', 'WEEK_DAY_CHECKED' => 'checked'],
+				['WEEKDAY_NUMBER' => 2, 'WEEKDAY' => 'Tuesday'],
+				['WEEKDAY_NUMBER' => 4, 'WEEKDAY' => 'Wednesday', 'WEEK_DAY_CHECKED' => 'checked'],
+			],
+			$data['list_weekdays']
+		);
+		static::assertSame('checked', $data['CONDITIONAL_PLAY_CHECKED']);
+		static::assertArrayNotHasKey('DATE_PERIOD_CHECKED', $data);
+	}
+
+	#[Group('units')]
+	public function testOnlyTheDateIsChecked(): void
+	{
+		$this->preparer->prepare(1, ['date' => ['from' => '2025-08-01', 'until' => '']]);
+
+		$data = $this->rendered();
+
+		static::assertSame('checked', $data['DATE_PERIOD_CHECKED']);
+		static::assertArrayNotHasKey('TIME_PERIOD_CHECKED', $data);
+		static::assertSame('checked', $data['CONDITIONAL_PLAY_CHECKED']);
+	}
+
+	#[Group('units')]
+	public function testAnItemWithoutConditionsIsNotChecked(): void
+	{
+		$this->preparer->prepare(1, []);
+
+		$data = $this->rendered();
+
+		static::assertSame(['', '', '', ''], [$data['DATE_FROM'], $data['DATE_UNTIL'], $data['TIME_FROM'], $data['TIME_UNTIL']]);
+		static::assertArrayNotHasKey('DATE_PERIOD_CHECKED', $data);
+		static::assertArrayNotHasKey('TIME_PERIOD_CHECKED', $data);
+		static::assertArrayNotHasKey('CONDITIONAL_PLAY_CHECKED', $data);
+		static::assertCount(3, $data['list_weekdays']);
+		static::assertArrayNotHasKey('WEEK_DAY_CHECKED', $data['list_weekdays'][0]);
 	}
 }

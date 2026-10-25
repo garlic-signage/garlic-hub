@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -21,155 +21,120 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Helper\Settings;
 
-use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Exceptions\ModuleException;
-use App\Framework\Exceptions\UserException;
-use App\Framework\Utils\Html\FieldInterface;
+use App\Framework\Localization\Translate\Translator;
+use App\Framework\Security\Crypt;
+use App\Framework\Security\CsrfToken;
+use App\Framework\Utils\Html\FieldsFactory;
+use App\Framework\Utils\Html\FieldsRenderFactory;
+use App\Framework\Utils\Html\FormBuilder;
+use App\Framework\Validation\Sanitizer;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\Settings\FormElementsCreator;
 use App\Modules\Playlists\Helper\Settings\Parameters;
 use App\Modules\Playlists\Helper\Settings\SettingsFormBuilder;
+use Defuse\Crypto\Key;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\HtmlFields;
+use Tests\Support\MemorySession;
 
+/**
+ * The form of the playlist settings with the real parameters, creator and FormBuilder: the result is the html of the fields.
+ */
 class SettingsFormBuilderTest extends TestCase
 {
-	private Parameters&MockObject $parametersMock;
-	private UserSession&MockObject $userSessionMock;
-	private FormElementsCreator&MockObject $formElementsCreatorMock;
+	private Parameters $parameters;
 	private SettingsFormBuilder $builder;
-	private FieldInterface $field;
 
 	/**
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->parametersMock          = $this->createMock(Parameters::class);
-		$this->userSessionMock         = $this->createMock(UserSession::class);
-		$this->formElementsCreatorMock = $this->createMock(FormElementsCreator::class);
-		$this->field                   = $this->createStub(FieldInterface::class);
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
+		$userSession = $this->createStub(UserSession::class);
+		$userSession->method('getUID')->willReturn(7);
+		$userSession->method('getUsername')->willReturn('heidi');
+		$session = new MemorySession();
 
-		$this->builder = new SettingsFormBuilder($this->parametersMock, $this->userSessionMock, $this->formElementsCreatorMock);
+		$formBuilder     = new FormBuilder(new FieldsFactory(), new FieldsRenderFactory(), new CsrfToken(new Crypt(Key::createNewRandomKey()), $session));
+		$this->parameters = new Parameters(new Sanitizer(), $session);
+		$this->builder    = new SettingsFormBuilder($this->parameters, $userSession, new FormElementsCreator($formBuilder, $translator));
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws ModuleException
-	 * @throws UserException
+	 * @param array<string,mixed> $values
+	 * @return array<string,array<string,string>> the attributes of the fields by name
 	 */
-	#[Group('units')]
-	public function testBuildFormForSimpleUser(): void
+	private function build(array $values): array
 	{
-		$this->parametersMock->expects($this->exactly(4))->method('hasParameter')->willReturnMap([
-			['UID', false],
-			[Parameters::PARAMETER_TIME_LIMIT, false],
-			[Parameters::PARAMETER_PLAYLIST_ID, false],
-			[Parameters::PARAMETER_PLAYLIST_MODE, true]
-		]);
-		$this->userSessionMock->expects($this->never())->method($this->anything());
-		$this->formElementsCreatorMock->expects($this->once())->method('createPlaylistNameField')->with('')->willReturn($this->field);
-		$this->formElementsCreatorMock->expects($this->never())->method('createUIDField');
-		$this->formElementsCreatorMock->expects($this->never())->method('createScreenWidthField');
-		$this->formElementsCreatorMock->expects($this->once())->method('createPlaylistModeField')->with('internal')->willReturn($this->field);
-		$this->formElementsCreatorMock->expects($this->once())->method('createCSRFTokenField')->willReturn($this->field);
-		$this->formElementsCreatorMock->expects($this->once())->method('prepareForm')
-			->with(['playlist_name' => $this->field, 'playlist_mode' => $this->field, 'csrf_token' => $this->field])
-			->willReturn(['hidden' => [], 'visible' => []]);
+		return HtmlFields::fromPrepared($this->builder->buildForm($values));
+	}
 
-		static::assertSame(['hidden' => [], 'visible' => []], $this->builder->buildForm(['playlist_mode' => 'internal']));
+	#[Group('units')]
+	public function testTheFormOfASimpleUserHasTheNameTheModeAndTheToken(): void
+	{
+		$this->parameters->addPlaylistMode();
+
+		$fields = $this->build(['playlist_mode' => 'internal']);
+
+		static::assertSame(['playlist_name', 'playlist_mode', 'csrf_token'], array_keys($fields));
+		static::assertSame('', $fields['playlist_name']['value']);
+		static::assertSame('internal', $fields['playlist_mode']['value']);
+	}
+
+	#[Group('units')]
+	public function testAnAdminWhoCreatesAPlaylistIsTheOwnerWithTheResolutionOfAFullHd(): void
+	{
+		$this->parameters->addPlaylistMode();
+		$this->parameters->addResolution();
+		$this->parameters->addOwner();
+
+		$fields = $this->build(['playlist_mode' => 'master']);
+
+		static::assertSame(['playlist_name', 'UID_search', 'screen_width', 'screen_height', 'playlist_mode', 'csrf_token'], array_keys($fields));
+		static::assertSame(['1920', '1080'], [$fields['screen_width']['value'], $fields['screen_height']['value']]);
+		static::assertStringContainsString('heidi', json_encode($this->builder->buildForm(['playlist_mode' => 'master']), JSON_THROW_ON_ERROR));
+	}
+
+	#[Group('units')]
+	public function testTheFormOfAnExistingPlaylistHasItsValues(): void
+	{
+		$this->parameters->addPlaylistId();
+		$this->parameters->addResolution();
+		$this->parameters->addOwner();
+		$this->parameters->addTimeLimit();
+
+		$fields = $this->build([
+			'UID' => 3, 'username' => 'owner', 'playlist_id' => 456, 'playlist_name' => 'Lobby', 'playlist_mode' => 'multizone',
+			'screen_width' => 1080, 'screen_height' => 1920, 'time_limit' => 600,
+		]);
+
+		static::assertSame(['playlist_name', 'UID_search', 'screen_width', 'screen_height', 'time_limit', 'playlist_id', 'csrf_token'], array_keys($fields));
+		static::assertSame(['Lobby', '1080', '1920', '600', '456'], [$fields['playlist_name']['value'], $fields['screen_width']['value'], $fields['screen_height']['value'], $fields['time_limit']['value'], $fields['playlist_id']['value']]);
+		static::assertStringContainsString('owner', json_encode($this->builder->buildForm(['UID' => 3, 'username' => 'owner', 'playlist_mode' => 'multizone']), JSON_THROW_ON_ERROR));
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws ModuleException
-	 * @throws UserException
+	 * The values come from the request of the user: only values of the right kind are shown.
 	 */
 	#[Group('units')]
-	public function testBuildFormForAdminWithNewPlaylistUsesCurrentUserAsOwner(): void
+	public function testValuesOfTheWrongTypeAreNotShown(): void
 	{
-		$this->parametersMock->expects($this->exactly(4))->method('hasParameter')->willReturnMap([
-			['UID', true],
-			[Parameters::PARAMETER_TIME_LIMIT, false],
-			[Parameters::PARAMETER_PLAYLIST_ID, false],
-			[Parameters::PARAMETER_PLAYLIST_MODE, true]
+		$this->parameters->addPlaylistId();
+		$this->parameters->addResolution();
+		$this->parameters->addTimeLimit();
+
+		$fields = $this->build([
+			'playlist_id' => ['1'], 'playlist_name' => ['Lobby'], 'playlist_mode' => 'master',
+			'screen_width' => 'wide', 'screen_height' => ['1080'], 'time_limit' => 'long',
 		]);
-		$this->userSessionMock->method('getUID')->willReturn(7);
-		$this->userSessionMock->expects($this->once())->method('getUsername')->willReturn('heidi');
-		$this->formElementsCreatorMock->method('createPlaylistNameField')->willReturn($this->field);
-		$this->formElementsCreatorMock->expects($this->once())->method('createUIDField')->with(7, 'heidi', 7)->willReturn($this->field);
-		$this->formElementsCreatorMock->expects($this->once())->method('createScreenWidthField')->with(1920)->willReturn($this->field);
-		$this->formElementsCreatorMock->expects($this->once())->method('createScreenHeightField')->with(1080)->willReturn($this->field);
-		$this->formElementsCreatorMock->method('createPlaylistModeField')->willReturn($this->field);
-		$this->formElementsCreatorMock->method('createCSRFTokenField')->willReturn($this->field);
-		$this->formElementsCreatorMock->expects($this->once())->method('prepareForm')
-			->with([
-				'playlist_name' => $this->field,
-				'UID'           => $this->field,
-				'screen_width'  => $this->field,
-				'screen_height' => $this->field,
-				'playlist_mode' => $this->field,
-				'csrf_token'    => $this->field
-			])
-			->willReturn([]);
 
-		$this->builder->buildForm(['playlist_mode' => 'master']);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws ModuleException
-	 * @throws UserException
-	 */
-	#[Group('units')]
-	public function testBuildFormForAdminWithExistingPlaylist(): void
-	{
-		$playlist = [
-			'UID'           => 3,
-			'username'      => 'owner',
-			'playlist_id'   => 456,
-			'playlist_name' => 'Lobby',
-			'playlist_mode' => 'multizone',
-			'screen_width'  => 1080,
-			'screen_height' => 1920,
-			'time_limit'    => 600
-		];
-		$this->parametersMock->method('hasParameter')->willReturnMap([
-			['UID', true],
-			[Parameters::PARAMETER_TIME_LIMIT, true],
-			[Parameters::PARAMETER_PLAYLIST_ID, true],
-			[Parameters::PARAMETER_PLAYLIST_MODE, false]
-		]);
-		$this->parametersMock->method('getDefaultValueOfParameter')->with(Parameters::PARAMETER_TIME_LIMIT)->willReturn(500);
-		$this->userSessionMock->method('getUID')->willReturn(7);
-		$this->userSessionMock->expects($this->never())->method('getUsername');
-		$this->formElementsCreatorMock->expects($this->once())->method('createPlaylistNameField')->with('Lobby')->willReturn($this->field);
-		$this->formElementsCreatorMock->expects($this->once())->method('createUIDField')->with(3, 'owner', 7)->willReturn($this->field);
-		$this->formElementsCreatorMock->expects($this->once())->method('createScreenWidthField')->with(1080)->willReturn($this->field);
-		$this->formElementsCreatorMock->expects($this->once())->method('createScreenHeightField')->with(1920)->willReturn($this->field);
-		$this->formElementsCreatorMock->expects($this->once())->method('createTimeLimitField')->with(600, 500)->willReturn($this->field);
-		$this->formElementsCreatorMock->expects($this->once())->method('createHiddenPlaylistIdField')->with(456)->willReturn($this->field);
-		$this->formElementsCreatorMock->expects($this->never())->method('createPlaylistModeField');
-		$this->formElementsCreatorMock->method('createCSRFTokenField')->willReturn($this->field);
-		$this->formElementsCreatorMock->expects($this->once())->method('prepareForm')
-			->with([
-				'playlist_name' => $this->field,
-				'UID'           => $this->field,
-				'screen_width'  => $this->field,
-				'screen_height' => $this->field,
-				'time_limit'    => $this->field,
-				'playlist_id'   => $this->field,
-				'csrf_token'    => $this->field
-			])
-			->willReturn([]);
-
-		$this->builder->buildForm($playlist);
+		static::assertSame('', $fields['playlist_name']['value']);
+		static::assertSame(['1920', '1080'], [$fields['screen_width']['value'], $fields['screen_height']['value']]);
+		static::assertSame('0', $fields['playlist_id']['value']);
+		static::assertArrayHasKey('time_limit', $fields);
 	}
 }

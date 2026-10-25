@@ -28,12 +28,12 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Modules\Playlists\Helper\Trigger\TriggerPreparer;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class TriggerPreparerTest extends TestCase
 {
-	private Translator&MockObject $translatorMock;
+	private Translator&Stub $translatorStub;
 	private TriggerPreparer $triggerPreparer;
 
 	/**
@@ -42,8 +42,8 @@ class TriggerPreparerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->translatorMock = $this->createMock(Translator::class);
-		$this->triggerPreparer = new TriggerPreparer($this->translatorMock);
+		$this->translatorStub = $this->createStub(Translator::class);
+		$this->triggerPreparer = new TriggerPreparer($this->translatorStub);
 	}
 
 	/**
@@ -84,13 +84,12 @@ class TriggerPreparerTest extends TestCase
 			['only_alphanumeric', 'playlists', 'translated_only_alphanumeric'],
 		];
 
-		$this->translatorMock
+		$this->translatorStub
 			->method('translate')
 			->willReturnMap($translationsMap);
 
-		$this->translatorMock
+		$this->translatorStub
 			->method('translateArrayForOptions')
-			->with('weekday_selects', 'main')
 			->willReturn([
 				1 => 'Monday',
 				2 => 'Tuesday',

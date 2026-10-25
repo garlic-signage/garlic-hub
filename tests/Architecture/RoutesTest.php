@@ -30,15 +30,6 @@ use PHPUnit\Framework\TestCase;
 class RoutesTest extends TestCase
 {
 	/**
-	 * Routes to methods which do not exist (yet). Remove the route from config/route.php and the entry from here.
-	 */
-	private const array KNOWN_MISSING = [
-		'App\\Modules\\Playlists\\Controller\\ShowSettingsController::delete',
-		'App\\Modules\\Mediapool\\Controller\\MediaController::add',
-		'App\\Modules\\Playlists\\Controller\\TriggerController::fetchMedia',
-	];
-
-	/**
 	 * @return list<array{string,string,int}> class, method and line of every route
 	 */
 	private function routes(): array
@@ -75,9 +66,6 @@ class RoutesTest extends TestCase
 		$missing = [];
 		foreach ($this->routes() as [$class, $method, $line])
 		{
-			if (in_array($class . '::' . $method, self::KNOWN_MISSING, true))
-				continue;
-
 			if (!class_exists($class))
 				$missing[] = 'line ' . $line . ': the class ' . $class . ' does not exist';
 			elseif (!method_exists($class, $method))
@@ -85,11 +73,5 @@ class RoutesTest extends TestCase
 		}
 
 		static::assertSame([], $missing);
-	}
-
-	public function testTheKnownMissingMethodsAreStillMissing(): void
-	{
-		foreach (self::KNOWN_MISSING as $route)
-			static::assertFalse(method_exists(...explode('::', $route)), $route . ' exists now: remove it from KNOWN_MISSING.');
 	}
 }
