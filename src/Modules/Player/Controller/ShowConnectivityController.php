@@ -23,12 +23,12 @@ declare(strict_types=1);
 namespace App\Modules\Player\Controller;
 
 use App\Framework\TemplateEngine\PageResponse;
+use App\Framework\Controller\RequestInput;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Player\Helper\NetworkSettings\Orchestrator;
-use App\Modules\Player\Helper\ReadsInput;
 use App\Modules\Player\Helper\NetworkSettings\TemplatePreparer;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
@@ -37,8 +37,6 @@ use Slim\Flash\Messages;
 
 class ShowConnectivityController
 {
-	use ReadsInput;
-
 	public function __construct(private readonly Orchestrator $orchestrator,
 								private readonly TemplatePreparer $templatePreparer,
 								private readonly Messages $flash)
@@ -73,9 +71,9 @@ class ShowConnectivityController
 	 */
 	public function store(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array<string,mixed> $post */
-		$post   = $this->bodyOf($request->getParsedBody());
-		$player = $this->orchestrator->loadPlayer($this->idOf($post, 'player_id'));
+		$input  = RequestInput::of($request->getParsedBody());
+		$post   = $input->all();
+		$player = $this->orchestrator->loadPlayer($input->id('player_id'));
 		if ($player === [])
 			return $this->redirectWithError($response, 'Player ID not accessible.');
 

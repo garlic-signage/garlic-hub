@@ -19,12 +19,11 @@
 */
 declare(strict_types=1);
 
-namespace App\Modules\Mediapool\Helper;
+namespace App\Framework\Controller;
 
 /**
- * Reads the input of a request for the orchestrators. The input comes from the outside (a form, JSON, the
- * address) and has any shape: a value which is not of the expected kind counts as missing, so a request
- * with `name[]=x` gets the answer for a missing name and no error of the server.
+ * For the orchestrators, which get the input of a request with setInput() and read it with text(), id() and the other
+ * methods of RequestInput: a value which is not of the expected kind counts as missing.
  */
 trait ReadsInput
 {
@@ -41,42 +40,41 @@ trait ReadsInput
 		return $this;
 	}
 
-	/**
-	 * The text of a field, '' when it is missing or no text.
-	 */
 	private function text(string $key): string
 	{
-		$value = $this->input[$key] ?? '';
-
-		return is_string($value) ? $value : '';
+		return new RequestInput($this->input)->text($key);
 	}
 
-	/**
-	 * A number from JSON (5) or from a form or an address ("5"). Everything else is no id.
-	 */
+	private function scalarText(string $key): string
+	{
+		return new RequestInput($this->input)->scalarText($key);
+	}
+
 	private function hasId(string $key): bool
 	{
-		$value = $this->input[$key] ?? null;
-
-		return is_int($value) ? $value >= 0 : (is_string($value) && ctype_digit($value));
+		return new RequestInput($this->input)->hasId($key);
 	}
 
-	/**
-	 * The id of a field, 0 when it is missing or no id.
-	 */
 	private function id(string $key): int
 	{
-		if (!$this->hasId($key))
-			return 0;
+		return new RequestInput($this->input)->id($key);
+	}
 
-		return (int) $this->input[$key];
+	private function optionalInt(string $key): ?int
+	{
+		return new RequestInput($this->input)->optionalInt($key);
 	}
 
 	/**
-	 * A number or null when the field is missing or no number.
+	 * @return list<int>|null
 	 */
-	private function optionalInt(string $key): ?int
+	private function idList(string $key): ?array
 	{
-		return $this->hasId($key) ? $this->id($key) : null;
+		return new RequestInput($this->input)->idList($key);
+	}
+
+	private function number(string $key): ?float
+	{
+		return new RequestInput($this->input)->number($key);
 	}
 }

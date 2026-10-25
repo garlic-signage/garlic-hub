@@ -29,7 +29,7 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
-use App\Modules\Player\Helper\ReadsInput;
+use App\Framework\Controller\ReadsInput;
 use App\Modules\Player\Services\PlayerRestAPIService;
 use App\Modules\Player\Services\PlayerService;
 use Doctrine\DBAL\Exception;
@@ -46,8 +46,6 @@ class Orchestrator
 {
 	use ReadsInput;
 
-	/** @var array<string,mixed>  */
-	private array $input = [];
 	private int $playerId;
 	private int $playlistId;
 	/** @var array{is_intranet:int, playlist_id:int, api_endpoint:string, player_name:string, ...}  */
@@ -61,15 +59,6 @@ class Orchestrator
 	) {}
 
 	/**
-	 * @param array<string,mixed> $input
-	 */
-	public function setInput(array $input): static
-	{
-		$this->input = $input;
-		return $this;
-	}
-
-	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
@@ -80,10 +69,10 @@ class Orchestrator
 			return $common;
 
 		// the id 0 takes the playlist off; nothing, or a value which is no number, is not asked for that
-		if (!$this->hasIdIn($this->input, 'playlist_id'))
+		if (!$this->hasId('playlist_id'))
 			return $this->responseBuilder->invalidPlaylistId($response);
 
-		$this->playlistId = $this->idOf($this->input, 'playlist_id');
+		$this->playlistId = $this->id('playlist_id');
 	//	if ($this->playlistId === 0)
 	//		return $this->responseBuilder->invalidPlaylistId($response);
 
@@ -96,10 +85,10 @@ class Orchestrator
 	 */
 	public function validateStandardInput(ResponseInterface $response): ?ResponseInterface
 	{
-		if (!$this->validator->validateCsrfToken($this->textOf($this->input, BaseEditParameters::PARAMETER_CSRF_TOKEN)))
+		if (!$this->validator->validateCsrfToken($this->text(BaseEditParameters::PARAMETER_CSRF_TOKEN)))
 			return $this->responseBuilder->csrfTokenMismatch($response);
 
-		$this->playerId = $this->idOf($this->input, 'player_id');
+		$this->playerId = $this->id('player_id');
 		if ($this->playerId === 0)
 			return $this->responseBuilder->invalidPlayerId($response);
 

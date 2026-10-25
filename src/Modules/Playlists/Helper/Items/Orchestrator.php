@@ -26,7 +26,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Playlists\Helper\ReadsInput;
+use App\Framework\Controller\ReadsInput;
 use App\Modules\Playlists\Services\InsertItems\InsertItemFactory;
 use App\Modules\Playlists\Services\ItemsService;
 use Doctrine\DBAL\Exception;

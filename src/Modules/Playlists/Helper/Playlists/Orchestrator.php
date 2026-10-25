@@ -27,7 +27,7 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
-use App\Modules\Playlists\Helper\ReadsInput;
+use App\Framework\Controller\ReadsInput;
 use App\Modules\Playlists\Helper\Datatable\Parameters;
 use App\Modules\Playlists\Services\PlaylistsDatatableService;
 use App\Modules\Playlists\Services\PlaylistsService;

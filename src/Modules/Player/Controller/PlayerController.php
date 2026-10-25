@@ -24,13 +24,13 @@ namespace App\Modules\Player\Controller;
 
 use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Security\CsrfToken;
+use App\Framework\Controller\RequestInput;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Player\Enums\PlayerStatus;
-use App\Modules\Player\Helper\ReadsInput;
 use App\Modules\Player\Services\PlayerService;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
@@ -38,8 +38,6 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class PlayerController
 {
-	use ReadsInput;
-
 	/**
 	 * @var array<string,mixed>|array<empty,empty>
 	 */
@@ -113,13 +111,12 @@ class PlayerController
 	 */
 	public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array<string,string> $requestData */
-		$requestData = $this->bodyOf($request->getParsedBody());
+		$requestData = RequestInput::of($request->getParsedBody());
 
-		if (!$this->csrfToken->validateToken($this->textOf($requestData, 'csrf_token')))
+		if (!$this->csrfToken->validateToken($requestData->text('csrf_token')))
 			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.');
 
-		$playerId = $this->idOf($requestData, 'player_id');
+		$playerId = $requestData->id('player_id');
 		if ($playerId === 0)
 			return $this->responseHandler->jsonError($response, 'No playerId');
 

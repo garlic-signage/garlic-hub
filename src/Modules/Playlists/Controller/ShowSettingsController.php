@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace App\Modules\Playlists\Controller;
 
 use App\Framework\TemplateEngine\PageResponse;
+use App\Framework\Controller\RequestInput;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -86,11 +87,9 @@ class ShowSettingsController
 	 */
 	public function store(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		$parsedBody = $request->getParsedBody();
-		// no body, or one which could not be read: nothing was sent
-		/** @var array<string,mixed> $post */
-		$post       = is_array($parsedBody) ? $parsedBody : [];
-		$playlistId = $this->idOf($post, 'playlist_id');
+		$input      = RequestInput::of($request->getParsedBody());
+		$post       = $input->all();
+		$playlistId = $input->id('playlist_id');
 
 		if ($playlistId === 0)
 			return $this->insert($response, $post);
@@ -194,18 +193,6 @@ class ShowSettingsController
 		$playlistName = $post['playlist_name'] ?? '';
 		$this->flash->addMessage('success', 'Playlist “' . (is_string($playlistName) ? $playlistName : '') . '“ successfully stored.');
 		return $response->withHeader('Location', '/playlists')->withStatus(302);
-	}
-
-	/**
-	 * The id of a field of the request, 0 when it is missing or no id (an array is not the playlist 1).
-	 *
-	 * @param array<string,mixed> $post
-	 */
-	private function idOf(array $post, string $key): int
-	{
-		$value = $post[$key] ?? null;
-
-		return is_int($value) && $value > 0 || (is_string($value) && ctype_digit($value)) ? (int) $value : 0;
 	}
 
 	private function redirectWithError(ResponseInterface $response, string $message): ResponseInterface

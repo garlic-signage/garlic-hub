@@ -27,7 +27,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Playlists\Helper\ReadsInput;
+use App\Framework\Controller\ReadsInput;
 use App\Modules\Playlists\Helper\ConditionalPlay\ResponseBuilder;
 use App\Modules\Playlists\Services\TriggerService;
 use Doctrine\DBAL\Exception;

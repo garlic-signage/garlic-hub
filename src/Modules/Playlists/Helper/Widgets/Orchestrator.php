@@ -25,7 +25,7 @@ use App\Framework\Validation\BaseValidator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Playlists\Helper\ReadsInput;
+use App\Framework\Controller\ReadsInput;
 use App\Modules\Playlists\Services\WidgetsService;
 use Psr\Http\Message\ResponseInterface;
 

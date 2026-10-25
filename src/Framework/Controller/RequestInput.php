@@ -19,34 +19,47 @@
 */
 declare(strict_types=1);
 
-namespace App\Modules\Playlists\Helper;
+namespace App\Framework\Controller;
 
 /**
- * Reads the input of a request for the orchestrators. The input comes from the outside (a form, JSON, the
- * address) and has any shape: a value which is not of the expected kind counts as missing, so a request
- * with `playlist_id[]=1` gets the answer for a missing playlist and is not taken for the playlist 1.
+ * The input of a request (a form, JSON, the address). It comes from the outside and has any shape: a value which is
+ * not of the expected kind counts as missing, so a request with `playlist_id[]=1` gets the answer for a missing
+ * playlist and is not taken for the playlist 1, and no value causes an error of the server.
  */
-trait ReadsInput
+final readonly class RequestInput
 {
-	/** @var array<string,mixed> */
-	private array $input = [];
+	/**
+	 * @param array<string,mixed> $values
+	 */
+	public function __construct(private array $values = [])
+	{
+	}
 
 	/**
-	 * @param array<string,mixed> $input
+	 * What the parser gave for the body: an array, or nothing when no body was sent or it could not be read.
 	 */
-	public function setInput(array $input): static
+	public static function of(mixed $parsedBody): self
 	{
-		$this->input = $input;
+		/** @var array<string,mixed> $values */
+		$values = is_array($parsedBody) ? $parsedBody : [];
 
-		return $this;
+		return new self($values);
+	}
+
+	/**
+	 * @return array<string,mixed>
+	 */
+	public function all(): array
+	{
+		return $this->values;
 	}
 
 	/**
 	 * The text of a field, '' when it is missing or no text.
 	 */
-	private function text(string $key): string
+	public function text(string $key): string
 	{
-		$value = $this->input[$key] ?? '';
+		$value = $this->values[$key] ?? '';
 
 		return is_string($value) ? $value : '';
 	}
@@ -55,9 +68,9 @@ trait ReadsInput
 	 * Text or number as text: an id of a media is text, the id of a playlist or template is a number in JSON ("3" in a form).
 	 * '' when it is missing or something else.
 	 */
-	private function scalarText(string $key): string
+	public function scalarText(string $key): string
 	{
-		$value = $this->input[$key] ?? '';
+		$value = $this->values[$key] ?? '';
 
 		return is_int($value) ? (string) $value : (is_string($value) ? $value : '');
 	}
@@ -65,17 +78,25 @@ trait ReadsInput
 	/**
 	 * A number from JSON (5) or from a form or an address ("5"). Everything else is no id.
 	 */
-	private function hasId(string $key): bool
+	public function hasId(string $key): bool
 	{
-		return $this->isId($this->input[$key] ?? null);
+		return self::isId($this->values[$key] ?? null);
 	}
 
 	/**
 	 * The id of a field, 0 when it is missing or no id.
 	 */
-	private function id(string $key): int
+	public function id(string $key): int
 	{
-		return $this->hasId($key) ? (int) $this->input[$key] : 0;
+		return $this->hasId($key) ? (int) $this->values[$key] : 0;
+	}
+
+	/**
+	 * A number or null when the field is missing or no number.
+	 */
+	public function optionalInt(string $key): ?int
+	{
+		return $this->hasId($key) ? $this->id($key) : null;
 	}
 
 	/**
@@ -83,16 +104,16 @@ trait ReadsInput
 	 *
 	 * @return list<int>|null
 	 */
-	private function idList(string $key): ?array
+	public function idList(string $key): ?array
 	{
-		$value = $this->input[$key] ?? null;
+		$value = $this->values[$key] ?? null;
 		if (!is_array($value))
 			return null;
 
 		$ids = [];
 		foreach ($value as $id)
 		{
-			if (!$this->isId($id))
+			if (!self::isId($id))
 				return null;
 
 			$ids[] = (int) $id;
@@ -104,14 +125,14 @@ trait ReadsInput
 	/**
 	 * A number (also as text) which is not negative, null when the field is missing or no such number.
 	 */
-	private function number(string $key): ?float
+	public function number(string $key): ?float
 	{
-		$value = $this->input[$key] ?? null;
+		$value = $this->values[$key] ?? null;
 
 		return (is_int($value) || is_float($value) || (is_string($value) && is_numeric($value))) && $value >= 0 ? (float) $value : null;
 	}
 
-	private function isId(mixed $value): bool
+	private static function isId(mixed $value): bool
 	{
 		return is_int($value) ? $value >= 0 : (is_string($value) && ctype_digit($value));
 	}

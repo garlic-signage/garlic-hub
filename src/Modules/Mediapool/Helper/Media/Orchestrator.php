@@ -26,7 +26,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\DatabaseException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Mediapool\Helper\ReadsInput;
+use App\Framework\Controller\ReadsInput;
 use App\Modules\Mediapool\Services\MediaService;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
