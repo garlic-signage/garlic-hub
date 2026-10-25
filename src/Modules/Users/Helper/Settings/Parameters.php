@@ -25,6 +25,7 @@ use App\Framework\Validation\Sanitizer;
 use App\Framework\Http\Session;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Framework\Utils\FormParameters\ScalarType;
+use App\Modules\Users\UserStatus;
 
 /**
  * Represents a class for managing user-related parameters in a module.
@@ -38,6 +39,9 @@ class Parameters extends BaseEditParameters
 	const string PARAMETER_USER_ID  = 'UID'; // the UID of the edited user
 	const string PARAMETER_USER_STATUS  = 'status'; // the UID of the edited user
 	const string PARAMETER_USER_LOCALE  = 'locale'; // the locale of the edited user
+
+	/** The statuses of the form: Deleted is no status to choose, a user is deleted with the delete button. */
+	public const array STATUSES = [UserStatus::BLOCKED->value, UserStatus::NOT_VERIFIED->value, UserStatus::REGISTERED->value, UserStatus::ADMIN->value];
 
 	/**
 	 * @var array<string, array{scalar_type: ScalarType, default_value: string|int, parsed: bool}>

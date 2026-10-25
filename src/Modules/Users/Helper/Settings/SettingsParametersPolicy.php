@@ -68,7 +68,7 @@ readonly class SettingsParametersPolicy
 		if (!$this->mayCreate())
 			return;
 
-		$this->addUserFormElements();
+		$this->addUserFormElements(true);
 	}
 
     /**
@@ -83,14 +83,16 @@ readonly class SettingsParametersPolicy
 		if (!$this->mayEdit($user))
 			return;
 
-		$this->addUserFormElements();
+		// who blocks or demotes himself, is locked out
+		$this->addUserFormElements($user['UID'] !== $this->userSession->getUID());
 	}
 
-	private function addUserFormElements(): void
+	private function addUserFormElements(bool $withStatus): void
 	{
 		$this->parameters->addUserName();
 		$this->parameters->addUserEmail();
-		$this->parameters->addUserStatus();
+		if ($withStatus)
+			$this->parameters->addUserStatus();
 		$this->parameters->addUserLocale();
 	}
 }

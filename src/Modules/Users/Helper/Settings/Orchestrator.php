@@ -28,6 +28,7 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
+use App\Modules\Users\UserStatus;
 use App\Shared\User\TokenPurposes;
 use App\Modules\Users\Services\UsersAdminService;
 use Doctrine\DBAL\Exception;
@@ -157,7 +158,7 @@ class Orchestrator
 			return ['success' => false, 'errors' => $errors];
 
 		/** @var array{username:string, email:string, locale?: string, status?: int} $saveData */
-		$saveData = $this->formInputHandler->getParsed();
+		$saveData = $this->sanitizeStatus($this->formInputHandler->getParsed(), UserStatus::NOT_VERIFIED->value);
 		try
 		{
 			$this->usersAdminService->insertNewUser($saveData);
@@ -191,7 +192,7 @@ class Orchestrator
 			return ['success' => false, 'errors' => $errors];
 
 		/** @var array{username:string, email:string, locale?: string, status?: int} $saveData */
-		$saveData = $this->formInputHandler->getParsed();
+		$saveData = $this->sanitizeStatus($this->formInputHandler->getParsed(), null);
 		// a save without changes affects no rows but is not a failure
 		try
 		{
@@ -235,6 +236,25 @@ class Orchestrator
 		$this->session->set(TokenPurposes::PASSWORD_RESET->value.'_token', bin2hex($token));
 
 		return ['success' => true];
+	}
+
+	/**
+	 * What the form can not bring is no status: a missing or unknown status is the default for a new user and leaves the
+	 * status as it is for an existing user. The column would make a new user deleted.
+	 *
+	 * @param array<string,mixed> $saveData
+	 * @return array<string,mixed>
+	 */
+	private function sanitizeStatus(array $saveData, ?int $default): array
+	{
+		if (in_array($saveData[Parameters::PARAMETER_USER_STATUS] ?? null, Parameters::STATUSES, true))
+			return $saveData;
+
+		unset($saveData[Parameters::PARAMETER_USER_STATUS]);
+		if ($default !== null)
+			$saveData[Parameters::PARAMETER_USER_STATUS] = $default;
+
+		return $saveData;
 	}
 
 	/**

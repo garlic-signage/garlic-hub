@@ -79,7 +79,8 @@ class UsersAdminService
 	public function loadForAdminEdit(int $UID): array
 	{
 		$user = $this->userMainRepository->findByIdSecured($UID);
-		if (empty($user))
+		// a deleted user is anonymized and stays deleted
+		if (empty($user) || (int) $user['status'] === UserStatus::DELETED->value)
 			return [];
 
 		$user['tokens'] = $this->loadUserTokensForAdminEdit($UID);

@@ -59,6 +59,13 @@ class UsersAdminServiceTest extends ContainerTestCase
 		static::assertSame([], $this->service->loadForAdminEdit(99));
 	}
 
+	public function testADeletedUserCanNotBeLoadedForEditing(): void
+	{
+		$this->connection->executeStatement('UPDATE user_main SET status = 0 WHERE UID = 3');
+
+		static::assertSame([], $this->service->loadForAdminEdit(3));
+	}
+
 	public function testAUserIsLoadedWithHisTokensButWithoutPassword(): void
 	{
 		$token = $this->container->get(UserTokenService::class)->generateToken();

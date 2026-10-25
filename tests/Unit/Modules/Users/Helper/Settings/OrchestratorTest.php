@@ -202,7 +202,7 @@ class OrchestratorTest extends TestCase
 		$this->expectUntouched($this->sessionMock, $this->formBuilderMock);
 		$this->policyMock->expects($this->once())->method('addCreateFormElements');
 		$this->expectValidInput();
-		$this->serviceMock->expects($this->once())->method('insertNewUser')->with(['username' => 'heidi'])
+		$this->serviceMock->expects($this->once())->method('insertNewUser')->with(['username' => 'heidi', 'status' => 2])
 			->willThrowException($this->expectTranslatedServiceError('username_exists'));
 
 		static::assertSame(

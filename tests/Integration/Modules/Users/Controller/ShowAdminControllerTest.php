@@ -22,6 +22,8 @@ declare(strict_types=1);
 namespace Tests\Integration\Modules\Users\Controller;
 
 use App\Framework\Http\Session;
+use App\Framework\Localization\Translate\Translator;
+use App\Modules\Users\Helper\Settings\Parameters;
 use App\Modules\Users\Controller\ShowAdminController;
 use App\Shared\User\TokenPurposes;
 use App\Shared\User\UserTokenService;
@@ -380,22 +382,119 @@ class ShowAdminControllerTest extends UsersControllerTestCase
 	}
 
 	/**
-	 * @return array<string,array{mixed}>
+	 * @return array<string,array{mixed}> a status which the form does not bring (0 is no status to choose)
 	 */
 	public static function statusWhichIsNoStatus(): array
 	{
-		return ['unknown' => ['99'], 'negative' => ['-1'], 'text' => ['abc'], 'a list' => [['2']]];
+		return ['unknown' => ['99'], 'negative' => ['-1'], 'text' => ['abc'], 'a list' => [['2']], 'empty' => [''], 'deleted' => ['0'], 'not offered' => ['5']];
 	}
 
 	#[DataProvider('statusWhichIsNoStatus')]
-	public function testTheStatusIsOneOfTheKnown(mixed $status): void
+	public function testTheStatusOfAUserStaysWhenTheFormBringsNoStatus(mixed $status): void
 	{
-		static::markTestSkipped('Known bug: the status of the form is not checked against UserStatus. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(1);
 
-		$this->store(['UID' => '3', 'username' => 'bernd', 'email' => 'bernd@example.com', 'status' => $status, 'locale' => 'en_US']);
+		$this->assertRedirect($this->store(['UID' => '3', 'username' => 'bernd2', 'email' => 'bernd@example.com', 'status' => $status, 'locale' => 'en_US']), '/users');
+
+		static::assertSame(['bernd2', 3], [$this->userRow(3)['username'], (int) $this->userRow(3)['status']]);
+	}
+
+	public function testTheStatusOfAUserStaysWhenTheFormIsSentWithoutStatus(): void
+	{
+		$this->actingAs(1);
+
+		$this->assertRedirect($this->store(['UID' => '3', 'username' => 'bernd2', 'email' => 'bernd@example.com']), '/users');
 
 		static::assertSame(3, (int) $this->userRow(3)['status']);
+	}
+
+	#[DataProvider('statusWhichIsNoStatus')]
+	public function testANewUserWithoutAStatusIsNotVerified(mixed $status): void
+	{
+		$this->actingAs(1);
+
+		$this->assertRedirect($this->store(['UID' => '0', 'username' => 'carla', 'email' => 'carla@example.com', 'status' => $status]), '/users');
+
+		static::assertSame(2, (int) $this->databaseValue("SELECT status FROM user_main WHERE username = 'carla'"));
+	}
+
+	/**
+	 * @return array<string,array{string,int}> the status of the form and the one which is stored
+	 */
+	public static function statusOfTheForm(): array
+	{
+		return ['blocked' => ['1', 1], 'not verified' => ['2', 2], 'registered' => ['3', 3], 'admin' => ['9', 9]];
+	}
+
+	#[DataProvider('statusOfTheForm')]
+	public function testTheStatusOfTheFormIsStored(string $status, int $stored): void
+	{
+		$this->actingAs(1);
+
+		$this->store(['UID' => '3', 'username' => 'bernd', 'email' => 'bernd@example.com', 'status' => $status]);
+		$this->store(['UID' => '0', 'username' => 'carla', 'email' => 'carla@example.com', 'status' => $status]);
+
+		static::assertSame([$stored, $stored], [(int) $this->userRow(3)['status'], (int) $this->databaseValue("SELECT status FROM user_main WHERE username = 'carla'")]);
+	}
+
+	public function testTheStatusesOfTheFormAreTheOnesTheSelectOffers(): void
+	{
+		$this->actingAs(1);
+		$options = $this->container->get(Translator::class)->translateArrayForOptions('status_selects', 'users');
+		unset($options[0]);
+
+		static::assertSame(Parameters::STATUSES, array_keys($options));
+		$select = $this->page($this->edit('3'))->getTemplateData()['form_element'][2]['HTML_ELEMENT'];
+		static::assertStringNotContainsString('>Deleted<', $select);
+		static::assertStringContainsString('>Blocked<', $select);
+	}
+
+	public function testTheAdminHasNoStatusInHisOwnForm(): void
+	{
+		$this->actingAs(1);
+
+		static::assertSame(['username', 'email', 'locale', 'UID', 'csrf_token'], array_keys($this->fields($this->page($this->edit('1')))));
+	}
+
+	public function testTheAdminCanNotChangeHisOwnStatus(): void
+	{
+		$this->actingAs(1);
+
+		$this->assertRedirect($this->store(['UID' => '1', 'username' => 'admin', 'email' => 'admin@example.com', 'status' => '1', 'locale' => 'de_DE']), '/users');
+
+		static::assertSame([3, 'de_DE'], [(int) $this->userRow(1)['status'], $this->userRow(1)['locale']]);
+	}
+
+	public function testADeletedUserIsNotEdited(): void
+	{
+		$this->actingAs(1);
+		$this->connection->executeStatement("UPDATE user_main SET status = 0, email = 'deleted-3@garlic-hub.com', password = '' WHERE UID = 3");
+
+		$this->assertRedirect($this->edit('3'), '/users', 'User not found.');
+	}
+
+	/**
+	 * @param array<string,mixed> $body
+	 */
+	#[DataProvider('requestsForADeletedUser')]
+	public function testADeletedUserIsNotChangedAndGetsNoPasswordReset(array $body): void
+	{
+		$this->actingAs(1);
+		$this->connection->executeStatement("UPDATE user_main SET status = 0, email = 'deleted-3@garlic-hub.com', password = '' WHERE UID = 3");
+
+		$this->assertRedirect($this->store($body), '/users', 'User not found.');
+
+		static::assertSame([0, 'deleted-3@garlic-hub.com', 0], [(int) $this->userRow(3)['status'], $this->userRow(3)['email'], $this->countTokens(3)]);
+	}
+
+	/**
+	 * @return array<string,array{array<string,mixed>}>
+	 */
+	public static function requestsForADeletedUser(): array
+	{
+		return [
+			'revive' => [['UID' => '3', 'username' => 'bernd', 'email' => 'bernd@example.com', 'status' => '3']],
+			'reset'  => [['UID' => '3', 'resetPassword' => '1', 'username' => 'bernd', 'email' => 'bernd@example.com']],
+		];
 	}
 }

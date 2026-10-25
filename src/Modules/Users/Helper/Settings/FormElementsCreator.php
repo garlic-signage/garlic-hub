@@ -27,6 +27,7 @@ use App\Framework\Utils\Forms\AbstractBaseFormElementsCreator;
 use App\Framework\Utils\Html\ClipboardTextField;
 use App\Framework\Utils\Html\FieldInterface;
 use App\Framework\Utils\Html\FieldType;
+use App\Modules\Users\UserStatus;
 
 /**
  * This class is responsible for creating and managing form elements.
@@ -65,7 +66,8 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 			'title' => $this->translator->translate(Parameters::PARAMETER_USER_STATUS, 'users'),
 			'label' => $this->translator->translate(Parameters::PARAMETER_USER_STATUS, 'users'),
 			'value' => $value,
-			'options' => $this->translator->translateArrayForOptions(Parameters::PARAMETER_USER_STATUS.'_selects', 'users'),
+			// a user is deleted with the delete button
+			'options' => array_diff_key($this->translator->translateArrayForOptions(Parameters::PARAMETER_USER_STATUS.'_selects', 'users'), [UserStatus::DELETED->value => true]),
 			'options_zero' => false
 		]);
 	}
