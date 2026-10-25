@@ -75,13 +75,6 @@ class ShowAdminControllerTest extends UsersControllerTestCase
 		static::assertSame(['', ''], [$fields['username']['value'], $fields['email']['value']]);
 	}
 
-	public function testAUserGetsAFormWithoutFieldsOfANewUser(): void
-	{
-		$this->actingAs(2);
-
-		static::assertSame(['csrf_token'], array_keys($this->fields($this->page($this->create()))));
-	}
-
 	public function testTheFormOfAUserHasHisValues(): void
 	{
 		$this->actingAs(1);
@@ -316,23 +309,33 @@ class ShowAdminControllerTest extends UsersControllerTestCase
 	#[DataProvider('requestsOfAUser')]
 	public function testAUserGetsNoRightsForTheRequestsOfTheAdmin(array $body): void
 	{
-		static::markTestSkipped('Known bug: the request ends in a ModuleException ("A parameter with name: username is not found") instead of the answer "No rights". Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(2);
 
 		$this->assertRedirect($this->store($body), '/users', 'No rights');
 	}
 
 	/**
-	 * Known bug: a user who opens the form of another user sees his name.
+	 * @return array<string,array{string}> the forms of a user: of another, of herself and of nobody
 	 */
-	public function testAUserDoesNotGetTheFormOfAnotherUser(): void
+	public static function formsOfAUser(): array
 	{
-		static::markTestSkipped('Known bug: the form of another user, with the name in the header and the reset button, is shown to every user. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
+		return ['another user' => ['1'], 'herself' => ['2'], 'unknown user' => ['99'], 'no user' => ['abc']];
+	}
+
+	#[DataProvider('formsOfAUser')]
+	public function testAUserGetsNoFormOfAUser(string $UID): void
+	{
 		$this->actingAs(2);
 
-		$this->assertRedirect($this->edit('1'), '/users', 'No rights');
+		// the same answer for every UID, so the user does not learn which users exist
+		$this->assertRedirect($this->edit($UID), '/users', 'No rights');
+	}
+
+	public function testAUserGetsNoFormOfANewUser(): void
+	{
+		$this->actingAs(2);
+
+		$this->assertRedirect($this->create(), '/users', 'No rights');
 	}
 
 	/**

@@ -58,6 +58,31 @@ class Orchestrator
 	) {}
 
 	/**
+	 * Whether the current user may create users. Everybody who may change users at all is asked first: for the others
+	 * it makes no difference whether a user exists.
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 */
+	public function checkCreateRights(): bool
+	{
+		return $this->settingsParametersPolicy->mayCreate();
+	}
+
+	/**
+	 * The user must be loaded with loadUserForEdit() before.
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 */
+	public function checkEditRights(): bool
+	{
+		return $this->settingsParametersPolicy->mayEdit($this->getLoadedUser());
+	}
+
+	/**
 	 * Returns an empty array when the user does not exist.
 	 *
 	 * @return array{UID: int,

@@ -41,11 +41,31 @@ readonly class SettingsParametersPolicy
 	/**
 	 * @throws CoreException
 	 * @throws Exception
+	 */
+	public function mayCreate(): bool
+	{
+		return $this->aclValidator->isSimpleAdmin($this->userSession->getUID());
+	}
+
+	/**
+	 * @param array{UID: int, company_id: int, ...} $user
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 */
+	public function mayEdit(array $user): bool
+	{
+		return $this->aclValidator->isAdmin($this->userSession->getUID(), $user);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws Exception
 	 * @throws UserException
 	 */
 	public function addCreateFormElements(): void
 	{
-		if (!$this->aclValidator->isSimpleAdmin($this->userSession->getUID()))
+		if (!$this->mayCreate())
 			return;
 
 		$this->addUserFormElements();
@@ -60,7 +80,7 @@ readonly class SettingsParametersPolicy
      */
 	public function addEditFormElements(array $user): void
 	{
-		if (!$this->aclValidator->isAdmin($this->userSession->getUID(), $user))
+		if (!$this->mayEdit($user))
 			return;
 
 		$this->addUserFormElements();

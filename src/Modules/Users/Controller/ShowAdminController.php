@@ -53,6 +53,9 @@ readonly class ShowAdminController
 	 */
 	public function newUserForm(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
+		if (!$this->orchestrator->checkCreateRights())
+			return $this->redirectWithError($response, 'No rights');
+
 		return $this->outputRenderedCreateForm([]);
 	}
 
@@ -66,6 +69,10 @@ readonly class ShowAdminController
 	 */
 	public function editUserForm(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
+		// who may not change users does not learn which users exist
+		if (!$this->orchestrator->checkCreateRights())
+			return $this->redirectWithError($response, 'No rights');
+
 		$UID = (int) ($args['UID'] ?? 0);
 		if ($UID === 0)
 			return $this->redirectWithError($response, 'UID not valid.');
@@ -73,6 +80,9 @@ readonly class ShowAdminController
 		$user = $this->orchestrator->loadUserForEdit($UID);
 		if ($user === [])
 			return $this->redirectWithError($response, 'User not found.');
+
+		if (!$this->orchestrator->checkEditRights())
+			return $this->redirectWithError($response, 'No rights');
 
 		return $this->outputRenderedEditForm($user['username'], []);
 	}
@@ -86,6 +96,9 @@ readonly class ShowAdminController
 	 */
 	public function store(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
+		if (!$this->orchestrator->checkCreateRights())
+			return $this->redirectWithError($response, 'No rights');
+
 		$input = RequestInput::of($request->getParsedBody());
 		$post  = $input->texts(['UID', 'username', 'email', 'status', 'locale', 'csrf_token']);
 
@@ -102,6 +115,9 @@ readonly class ShowAdminController
 		$user = $this->orchestrator->loadUserForEdit($UID);
 		if ($user === [])
 			return $this->redirectWithError($response, 'User not found.');
+
+		if (!$this->orchestrator->checkEditRights())
+			return $this->redirectWithError($response, 'No rights');
 
 		if (isset($input->all()['resetPassword']))
 			return $this->resetPassword($response, $UID, $post);
