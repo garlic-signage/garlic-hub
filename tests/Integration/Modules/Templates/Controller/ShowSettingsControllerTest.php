@@ -229,17 +229,39 @@ class ShowSettingsControllerTest extends TemplatesControllerTestCase
 	}
 
 	/**
-	 * What the browser can not send but a script can: values of the wrong type are no valid values.
+	 * What the browser can not send but a script can: an id which is no id is neither the template 1 nor a new template.
 	 */
-	public function testValuesOfTheWrongTypeAreShownAsErrors(): void
+	public function testAnIdOfTheWrongTypeIsNoTemplate(): void
 	{
-		static::markTestSkipped('Known bug: an array as template_id is taken for the template 1 and an empty body throws a TypeError. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(1);
 
-		$this->store(['template_id' => ['2'], 'name' => 'Hack']);
-		static::assertSame('Admin Vorlage', $this->databaseValue('SELECT name FROM templates WHERE template_id = 1'));
-		$this->controller->store($this->request()->withParsedBody(null), $this->newResponse());
+		foreach (['2' => ['2'], 'text' => 'abc', 'negative' => '-1', 'decimal' => '1.5'] as $id)
+		{
+			$this->assertRedirect($this->store(['template_id' => $id, 'name' => 'Hack']), '/templates');
+			static::assertSame(['Template ID not valid.'], $this->flash('error'));
+			unset($_SESSION['slimFlash']);
+		}
+		static::assertSame(['Admin Vorlage', 'Annas Vorlage', 'Bernds Vorlage'], $this->connection->fetchFirstColumn('SELECT name FROM templates ORDER BY template_id'));
+	}
+
+	public function testNoIdOrZeroIsANewTemplate(): void
+	{
+		$this->actingAs(1);
+
+		foreach (['', '0', 0] as $n => $id)
+			$this->store(['template_id' => $id, 'name' => 'Neu ' . $n]);
+
+		static::assertSame(6, $this->countTemplates());
+	}
+
+	public function testWithoutABodyTheFormOfANewTemplateIsShownWithErrors(): void
+	{
+		$this->actingAs(1);
+
+		$page = $this->page($this->controller->store($this->request()->withParsedBody(null), $this->newResponse()));
+
+		static::assertSame('templates/edit', $page->getTemplate());
+		static::assertNotSame([], $this->flash('error'));
 		static::assertSame(3, $this->countTemplates());
 	}
 }

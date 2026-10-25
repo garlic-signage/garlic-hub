@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace App\Modules\Templates\Controller;
 
 use App\Framework\Controller\JsonResponseHandler;
+use App\Framework\Controller\RequestInput;
 use App\Framework\Security\CsrfToken;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -51,13 +52,12 @@ readonly class TemplatesController
      */
     public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array{template_id?: int, csrf_token?: string} $requestData */
-		$requestData = $request->getParsedBody();
+		$input = RequestInput::of($request->getParsedBody());
 
-		if (!$this->csrfToken->validateToken($requestData['csrf_token'] ?? ''))
+		if (!$this->csrfToken->validateToken($input->text('csrf_token')))
 			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.');
 
-		$templateId = (int) ($requestData['template_id'] ?? 0);
+		$templateId = $input->id('template_id');
 		if ($templateId === 0)
 			return $this->responseHandler->jsonError($response, 'No template Id');
 
@@ -152,13 +152,11 @@ readonly class TemplatesController
 	 */
 	public function save(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array{template_id?: int, content?: string, image?: string, csrf_token?: string} $requestData */
-		$requestData = $request->getParsedBody();
+		$input = RequestInput::of($request->getParsedBody());
 
-		$templateId = (int) ($requestData['template_id'] ?? 0);
-		$image      = $requestData['image'] ?? '';
+		$templateId = $input->id('template_id');
 
-		if (!$this->csrfToken->validateToken($requestData['csrf_token'] ?? ''))
+		if (!$this->csrfToken->validateToken($input->text('csrf_token')))
 			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.');
 
 		if ($templateId === 0)
@@ -167,7 +165,7 @@ readonly class TemplatesController
 		if (!$this->orchestrator->checkEditRights($templateId))
 			return $this->responseHandler->jsonError($response, 'No rights');
 
-		if ($this->orchestrator->saveTemplate($templateId, $requestData['content'] ?? '', $image) === 0)
+		if ($this->orchestrator->saveTemplate($templateId, $input->text('content'), $input->text('image')) === 0)
 			return $this->responseHandler->jsonError($response, 'Save failed');
 
 		return $this->responseHandler->jsonSuccess($response);

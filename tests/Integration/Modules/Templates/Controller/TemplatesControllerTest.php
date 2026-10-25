@@ -320,6 +320,7 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 		$this->actingAs(1);
 
 		$this->assertError($this->save(['template_id' => '3', 'content' => '{"objects":[]}', 'image' => 'no image']), 'Save failed');
+		$this->assertError($this->save(['template_id' => '3', 'content' => '{"objects":[]}', 'image' => ['x']]), 'Save failed');
 	}
 
 	/**
@@ -327,16 +328,17 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 	 */
 	public function testValuesOfTheWrongTypeAreRejectedLikeMissingValues(): void
 	{
-		static::markTestSkipped('Known bug: an array as template id is taken for the template 1 (also when deleting), an array as token or content throws a TypeError. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(1);
 		$cases = [
 			[fn() => $this->controller->delete($this->request('DELETE', body: $this->withToken(['template_id' => ['3']])), $this->newResponse()), 'No template Id'],
+			[fn() => $this->controller->delete($this->request('DELETE', body: $this->withToken(['template_id' => '3abc'])), $this->newResponse()), 'No template Id'],
 			[fn() => $this->controller->delete($this->request('DELETE', body: ['csrf_token' => ['x'], 'template_id' => '3']), $this->newResponse()), 'CSRF token mismatch.'],
+			[fn() => $this->controller->delete($this->request('DELETE')->withParsedBody(null), $this->newResponse()), 'CSRF token mismatch.'],
 			[fn() => $this->save(['template_id' => ['3'], 'content' => '{"objects":[]}', 'image' => self::PNG]), 'No template Id'],
+			[fn() => $this->save(['csrf_token' => ['x'], 'template_id' => '3'], withToken: false), 'CSRF token mismatch.'],
 			[fn() => $this->save(['template_id' => '3', 'content' => ['x'], 'image' => self::PNG]), 'Save failed'],
 		];
-		foreach ($cases as [$call, $message])
+		foreach ($cases as $n => [$call, $message])
 		{
 			try
 			{
@@ -344,9 +346,10 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 			}
 			catch (Throwable $e)
 			{
-				static::fail($e::class . ': ' . $e->getMessage());
+				static::fail('case ' . $n . ': ' . $e::class . ': ' . $e->getMessage());
 			}
 		}
 		static::assertSame(3, $this->countTemplates());
+		static::assertNull($this->databaseValue('SELECT content FROM templates WHERE template_id = 3'));
 	}
 }

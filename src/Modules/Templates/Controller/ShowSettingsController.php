@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Controller;
 
+use App\Framework\Controller\RequestInput;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -92,12 +93,21 @@ readonly class ShowSettingsController
 	 */
 	public function store(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array<string,mixed> $post */
-		$post       = $request->getParsedBody();
-		$templateId = (int) ($post['template_id'] ?? 0);
+		$input = RequestInput::of($request->getParsedBody());
+		$post  = $input->all();
 
-		if ($templateId === 0)
+		// the form of a new template has no template id, the one of an existing template has the id
+		$sent = $post['template_id'] ?? null;
+		if ($sent === null || $sent === '' || $sent === '0' || $sent === 0)
 			return $this->insert($response, $post);
+
+		// an id which is no id (an array, text) is not the template 1 and not a new template
+		$templateId = $input->id('template_id');
+		if ($templateId === 0)
+		{
+			$this->flash->addMessage('error', 'Template ID not valid.');
+			return $response->withHeader('Location', '/templates')->withStatus(302);
+		}
 
 		return $this->update($response, $templateId, $post);
 	}
