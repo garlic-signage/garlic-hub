@@ -21,22 +21,15 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Modules\Playlists\Services;
 
-use App\Framework\Config\Config;
-use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\AccessDeniedException;
-use App\Framework\Media\DeliveryUrlBuilder;
-use App\Framework\Media\MimeTypeExtensionMapper;
-use App\Modules\Playlists\Helper\ExportSmil\items\ItemsFactory;
-use App\Modules\Playlists\Helper\ExportSmil\LocalWriter;
-use App\Modules\Playlists\Helper\ExportSmil\PlaylistContent;
-use App\Modules\Playlists\Repositories\ItemsRepository;
-use App\Modules\Playlists\Services\ExportItemsLoader;
+use App\Modules\Playlists\Collector\Builder\BuildHelper;
+use App\Modules\Playlists\Collector\ContentReader;
+use App\Modules\Playlists\Collector\ExternalContentReader;
+use GuzzleHttp\Client;
 use App\Modules\Playlists\Services\ExportService;
-use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
-use App\Modules\Playlists\Services\PlaylistMetricsUpdater;
-use App\Modules\Playlists\Services\PlaylistsService;
 use PHPUnit\Framework\Attributes\Group;
 use Psr\Log\NullLogger;
+use Tests\Integration\Modules\Playlists\BuildsExportService;
 use Tests\Integration\Support\ContainerTestCase;
 use Tests\Integration\Support\MediaWorkspace;
 use Throwable;
@@ -49,6 +42,8 @@ use Throwable;
 #[Group('acl')]
 class ExportServiceTest extends ContainerTestCase
 {
+	use BuildsExportService;
+
 	private MediaWorkspace $workspace;
 	private ExportService $exportService;
 
@@ -90,6 +85,27 @@ class ExportServiceTest extends ContainerTestCase
 		// item 3 of the playlist 1 stands for 2: the 3 and 8 seconds of the items 6 and 7
 		static::assertSame(11, (int) $this->connection->fetchOne('SELECT item_duration FROM playlists_items WHERE item_id = 3'));
 		static::assertSame(74, (int) $this->connection->fetchOne('SELECT duration FROM playlists WHERE playlist_id = 1'));
+	}
+
+	public function testTheExportedFilesOfNestedPlaylistsAreCollectedToOne(): void
+	{
+		$this->actingAs(1);
+		foreach ([3, 2, 1] as $playlistId)
+			$this->exportService->exportToSmil($playlistId);
+		$reader = new ContentReader($this->workspace->config, $this->workspace->filesystem);
+
+		$items = (new BuildHelper($reader, new ExternalContentReader($this->workspace->filesystem, new Client(), 'var/smil/playlists'), new NullLogger()))->collectItems(1);
+		static::assertStringNotContainsString('{ITEMS_', $items);
+		// the items of the playlist 1 in their order, the playlist 2 and the empty playlist 3 nested at the place of the item 3
+		$titles = ['title="bild.jpg"', 'title="film.mp4"', '<seq title="Bernds Kantine"', '<seq title="Annas leere Liste"', 'delivery.php/tpl/7.png', 'title="doc.pdf"', 'delivery.php/tpl/5.png'];
+		$last   = -1;
+		foreach ($titles as $title)
+		{
+			$position = strpos($items, $title);
+			static::assertNotFalse($position, $title . ' is missing');
+			static::assertGreaterThan($last, $position, $title . ' is in the wrong place');
+			$last = $position;
+		}
 	}
 
 	public function testAUserMayNotExportAForeignPlaylist(): void
@@ -138,31 +154,5 @@ class ExportServiceTest extends ContainerTestCase
 
 		static::assertSame(1, $this->exportService->exportToSmil(3)); // one zone
 		static::assertFileExists($this->workspace->absolute('/var/smil/playlists/1/items.smil'));
-	}
-
-	/**
-	 * Like config/services/playlists.php, but the files go into the workspace.
-	 */
-	private function buildExportService(MediaWorkspace $workspace): ExportService
-	{
-		$itemsRepository   = $this->container->get(ItemsRepository::class);
-		$playlistsService  = $this->container->get(PlaylistsService::class);
-		$calculator        = $this->container->get(PlaylistMetricsCalculator::class);
-		$config            = $this->container->get(Config::class);
-
-		return new ExportService(
-			$workspace->config,
-			$playlistsService,
-			new ExportItemsLoader($itemsRepository, $calculator),
-			new PlaylistMetricsUpdater($itemsRepository, $playlistsService, $calculator, new NullLogger()),
-			$this->container->get(Transactions::class),
-			new LocalWriter($workspace->config, $workspace->filesystem),
-			new PlaylistContent(
-				new ItemsFactory($config),
-				new DeliveryUrlBuilder($config->getConfigValue('url', 'mediapool', 'content_server')),
-				$this->container->get(MimeTypeExtensionMapper::class)
-			),
-			new NullLogger()
-		);
 	}
 }
