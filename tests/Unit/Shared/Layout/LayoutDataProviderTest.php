@@ -50,6 +50,16 @@ class LayoutDataProviderTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
+		$this->configStub  = $this->createStub(Config::class);
+		$this->requestStub = $this->createStub(ServerRequestInterface::class);
+		$this->provider    = $this->createProvider('ltr');
+	}
+
+	/**
+	 * @throws \PHPUnit\Framework\MockObject\Exception
+	 */
+	private function createProvider(string $textDirection): LayoutDataProvider
+	{
 		$mainMenuStub = $this->createStub(MainMenuBuilder::class);
 		$mainMenuStub->method('build')->willReturn([['URL' => '/login', 'LANG_MENU_POINT' => 'Login']]);
 		$userMenuStub = $this->createStub(UserMenuBuilder::class);
@@ -62,12 +72,11 @@ class LayoutDataProviderTest extends TestCase
 		$csrfTokenStub->method('getToken')->willReturn('csrf');
 		$localesStub = $this->createStub(Locales::class);
 		$localesStub->method('getLanguageCode')->willReturn('de');
+		$localesStub->method('getTextDirection')->willReturn($textDirection);
 		$translatorStub = $this->createStub(Translator::class);
 		$translatorStub->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
-		$this->configStub  = $this->createStub(Config::class);
-		$this->requestStub = $this->createStub(ServerRequestInterface::class);
 
-		$this->provider = new LayoutDataProvider($mainMenuStub, $userMenuStub, $languageSelectStub, $flashStub,
+		return new LayoutDataProvider($mainMenuStub, $userMenuStub, $languageSelectStub, $flashStub,
 			$csrfTokenStub, $localesStub, $translatorStub, $this->configStub);
 	}
 
@@ -89,11 +98,27 @@ class LayoutDataProviderTest extends TestCase
 			'CSRF_TOKEN'           => 'csrf',
 			'CURRENT_LOCALE_LOWER' => 'de',
 			'CURRENT_LOCALE_UPPER' => 'DE',
+			'CURRENT_TEXT_DIRECTION' => 'ltr',
 			'APP_NAME'             => 'Garlic Hub',
 			'LANG_LEGAL_NOTICE'    => 'menu.legal_notice',
 			'LANG_PRIVACY'         => 'menu.privacy',
 			'LANG_TERMS'           => 'menu.terms'
 		], $this->provider->collect($this->requestStub));
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws Exception
+	 */
+	#[Group('units')]
+	public function testCollectPassesTheTextDirectionOfTheLocale(): void
+	{
+		$this->configStub->method('getEnv')->willReturnMap([['APP_NAME', 'Garlic Hub'], ['APP_DEBUG', 'false']]);
+
+		$data = $this->createProvider('rtl')->collect($this->requestStub);
+
+		static::assertSame('rtl', $data['CURRENT_TEXT_DIRECTION']);
 	}
 
 	/**
