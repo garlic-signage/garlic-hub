@@ -110,6 +110,20 @@ class WidgetsControllerTest extends PlaylistsControllerTestCase
 		static::assertSame(['urls' => 'http://example.com/feed', 'count' => 0], unserialize((string) $this->databaseValue('SELECT content_data FROM playlists_items WHERE item_id = 1')));
 	}
 
+	public function testAPreferenceWithoutATypeIsSavedAndLoadedAsText(): void
+	{
+		$this->actingAs(2);
+		$plain = '<?xml version="1.0" encoding="UTF-8"?><widget xmlns="http://www.w3.org/ns/widgets"><preference name="url" /></widget>';
+		$this->connection->executeStatement("UPDATE mediapool_files SET config_data = ? WHERE checksum = 'checksum-image'", [$plain]);
+
+		$saved = $this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '1', 'url' => 'http://example.com'])), $this->newResponse());
+		$loaded = $this->controller->fetch($this->request('GET'), $this->newResponse(), ['item_id' => '1']);
+
+		$this->assertSuccess($saved);
+		static::assertSame(['url' => 'http://example.com'], $this->json($loaded)['data']['values']);
+		static::assertSame(['url'], array_keys($this->json($loaded)['data']['preferences']));
+	}
+
 	public function testWithoutAnItemOrAValidTokenNothingIsLoadedOrSaved(): void
 	{
 		$this->actingAs(2);

@@ -63,7 +63,8 @@ readonly class ContentDataPreparer
 			if (!array_key_exists($key, $requestData))
 				continue;
 
-			switch ($value['types'])
+			// a preference of a plain widget has no type: it is a text, like in the editor
+			switch ($value['types'] ?? 'text')
 			{
 				case 'colorOpacity':
 				case 'integer':

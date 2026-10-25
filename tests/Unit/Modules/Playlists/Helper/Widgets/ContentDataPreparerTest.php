@@ -154,11 +154,19 @@ class ContentDataPreparerTest extends TestCase
 	#[Group('units')]
 	public function testAPreferenceWithoutATypeIsAText(): void
 	{
-		static::markTestSkipped('Known bug: a preference without ia:types (plain W3C widget, like the example config.xml) gives a warning for the undefined key "types". Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$config = '<?xml version="1.0"?><widget xmlns="http://www.w3.org/ns/widgets"><preference name="url" /></widget>';
 
 		static::assertSame(['url' => '7'], $this->preparer->prepareContentData($config, ['url' => 7]));
+	}
+
+	#[Group('units')]
+	public function testAPreferenceWithoutATypeCanBeMandatory(): void
+	{
+		$config = '<?xml version="1.0"?><widget xmlns="http://www.w3.org/ns/widgets" xmlns:ia="http://schemas.iawidget.org/widgetconfig-1.0"><preference name="url" ia:mandatory="true" /></widget>';
+
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('widget_field_mandatory');
+		$this->preparer->prepareContentData($config, []);
 	}
 
 	#[Group('units')]
