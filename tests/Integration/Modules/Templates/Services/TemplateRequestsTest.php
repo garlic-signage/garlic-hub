@@ -74,7 +74,7 @@ class TemplateRequestsTest extends ContainerTestCase
 	{
 		$this->actingAs(2);
 
-		$this->store(['template_id' => 3, 'name' => 'gehackt', 'visibility' => 'public', 'UID' => 2]);
+		$this->store(['template_id' => 3, 'name' => 'gehackt', 'visibility' => 'global', 'UID' => 2]);
 
 		$template = $this->template(3);
 		static::assertSame('Bernds Vorlage', $template['name']);
@@ -86,7 +86,7 @@ class TemplateRequestsTest extends ContainerTestCase
 	{
 		$this->actingAs(2);
 
-		$this->store(['template_id' => 2, 'name' => 'gehackt', 'visibility' => 'public']);
+		$this->store(['template_id' => 2, 'name' => 'gehackt', 'visibility' => 'global']);
 
 		static::assertSame('Annas Vorlage', $this->template(2)['name']);
 	}
@@ -95,11 +95,11 @@ class TemplateRequestsTest extends ContainerTestCase
 	{
 		$this->actingAs(1);
 
-		$this->store(['template_id' => 3, 'name' => 'Umbenannt', 'visibility' => 'public', 'type' => 'html']);
+		$this->store(['template_id' => 3, 'name' => 'Umbenannt', 'visibility' => 'global', 'type' => 'html']);
 
 		$template = $this->template(3);
 		static::assertSame('Umbenannt', $template['name']);
-		static::assertSame('public', $template['visibility']);
+		static::assertSame('global', $template['visibility']);
 		static::assertSame('fabric.js', $template['type']);
 	}
 

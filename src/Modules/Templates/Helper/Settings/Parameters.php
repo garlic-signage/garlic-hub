@@ -31,6 +31,8 @@ class Parameters extends BaseEditParameters
 	public const string PARAMETER_NAME = 'name';
 	public const string PARAMETER_VISIBILITY = 'visibility';
 	public const string PARAMETER_TYPE = 'type';
+	/** the keys of visibility_selects in translations/main.ini: private is the default */
+	public const array VISIBILITIES = ['private', 'global'];
 
 	/**
 	 * @var array<string, array{scalar_type: ScalarType, default_value: mixed, parsed: bool}>

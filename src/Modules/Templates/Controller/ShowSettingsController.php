@@ -135,7 +135,7 @@ readonly class ShowSettingsController
 				$this->flash->addMessageNow('error', $errorText);
 			}
 
-			$formData = $this->orchestrator->buildCreateForm();
+			$formData = $this->orchestrator->buildCreateForm($post);
 			$prepared = $this->templatePreparer->prepareCreateSettings($formData);
 
 			return new PageResponse($prepared);
@@ -171,7 +171,7 @@ readonly class ShowSettingsController
 				$this->flash->addMessageNow('error', $errorText);
 			}
 
-			$formData = $this->orchestrator->buildEditForm();
+			$formData = $this->orchestrator->buildEditForm($post);
 			$prepared = $this->templatePreparer->prepareEditSettings($formData);
 
 			return new PageResponse($prepared);

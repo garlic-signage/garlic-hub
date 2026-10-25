@@ -67,7 +67,8 @@ readonly class SettingsFormBuilder
 				$settingsData[Parameters::PARAMETER_VISIBILITY] ?? '');
 		}
 
-		if ($settingsData !== [])
+		// a template which exists has its id; the input of a new template after an error has none
+		if (array_key_exists('template_id', $settingsData))
 			$form['template_id'] = $this->formElementsCreator->createHiddenTemplateIdField((int) $settingsData['template_id']);
 		else
 			$form['type'] = $this->formElementsCreator->createHiddenTypeField('canvas');

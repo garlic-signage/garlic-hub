@@ -27,6 +27,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Utils\FormParameters\BaseParameters;
 use App\Modules\Templates\Services\TemplatesService;
 use Doctrine\DBAL\Exception;
 
@@ -83,18 +84,25 @@ class Orchestrator
 	public function buildCreateForm(array $post = []): array
 	{
 		$this->settingsParametersPolicy->addCreateFormElements();
+		// the name of the owner belongs to the owner of the form, a changed owner is not shown again
+		unset($post[BaseParameters::PARAMETER_UID]);
+
 		return $this->settingsFormBuilder->buildForm($post);
 	}
 
 	/**
+	 * @param array<string,mixed> $post the input of the user after an error
 	 * @return array{hidden:list<array<string,string>>, visible: list<array<string,string>>}
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
-	public function buildEditForm(): array
+	public function buildEditForm(array $post = []): array
 	{
 		$this->settingsParametersPolicy->addEditFormElements();
-		return $this->settingsFormBuilder->buildForm($this->template);
+		// the input of the user first, what the request does not bring (template id, owner) comes from the template
+		unset($post[BaseParameters::PARAMETER_UID]);
+
+		return $this->settingsFormBuilder->buildForm($post + $this->template);
 	}
 
 
@@ -114,7 +122,7 @@ class Orchestrator
 		if ($errors !== [])
 			return ['success' => false, 'errors' => $errors];
 
-		$saveData = $this->formInputHandler->getParsed();
+		$saveData = $this->sanitizeSaveData($this->formInputHandler->getParsed());
 
 		if ($this->templateService->insert($saveData) === 0)
 			return ['success' => false, 'errors' => ['No save possible']];
@@ -137,10 +145,28 @@ class Orchestrator
 		if ($errors !== [])
 			return ['success' => false, 'errors' => $errors];
 
-		$saveData = $this->formInputHandler->getParsed();
+		$saveData = $this->sanitizeSaveData($this->formInputHandler->getParsed());
 		if ($this->templateService->update($templateId, $saveData) === 0)
 			return ['success' => false, 'errors' => ['No save possible']];
 
 		return ['success' => true];
+	}
+
+	/**
+	 * What the form can not bring is no value: an owner which is no user id leaves the owner as it is (the logged in
+	 * user for a new template, the old one for an existing), a visibility which is not in the list is private.
+	 *
+	 * @param array<string,mixed> $saveData
+	 * @return array<string,mixed>
+	 */
+	private function sanitizeSaveData(array $saveData): array
+	{
+		if ((int) ($saveData[BaseParameters::PARAMETER_UID] ?? 0) <= 0)
+			unset($saveData[BaseParameters::PARAMETER_UID]);
+
+		if (array_key_exists(Parameters::PARAMETER_VISIBILITY, $saveData) && !in_array($saveData[Parameters::PARAMETER_VISIBILITY], Parameters::VISIBILITIES, true))
+			$saveData[Parameters::PARAMETER_VISIBILITY] = 'private';
+
+		return $saveData;
 	}
 }

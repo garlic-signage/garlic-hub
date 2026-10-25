@@ -82,7 +82,7 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 			'label'         => $this->translator->translate('visibility', 'main'),
 			'value'         => $value,
 			'options' => $this->translator->translateArrayForOptions(Parameters::PARAMETER_VISIBILITY.'_selects', 'main'),
-			'default_value' => 'public'
+			'default_value' => 'private'
 		]);
 	}
 

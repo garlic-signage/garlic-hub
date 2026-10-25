@@ -117,13 +117,13 @@ class ShowSettingsControllerTest extends TemplatesControllerTestCase
 	{
 		$this->actingAs(1);
 
-		$response = $this->store(['name' => 'Neu', 'visibility' => 'public', 'type' => 'canvas', 'UID' => '3']);
+		$response = $this->store(['name' => 'Neu', 'visibility' => 'global', 'type' => 'canvas', 'UID' => '3']);
 
 		$this->assertRedirect($response, '/templates');
 		static::assertSame(['Templated saved successfully'], $this->flash('success'));
 		$row = $this->connection->fetchAssociative("SELECT UID, visibility, type FROM templates WHERE name = 'Neu'");
 		static::assertIsArray($row);
-		static::assertSame([3, 'public', 'canvas'], [(int) $row['UID'], $row['visibility'], $row['type']]);
+		static::assertSame([3, 'global', 'canvas'], [(int) $row['UID'], $row['visibility'], $row['type']]);
 	}
 
 	public function testANewTemplateWithoutATypeIsACanvasTemplate(): void
@@ -159,7 +159,7 @@ class ShowSettingsControllerTest extends TemplatesControllerTestCase
 	{
 		$this->actingAs(1);
 
-		$page = $this->page($this->store(['name' => '', 'visibility' => 'public']));
+		$page = $this->page($this->store(['name' => '', 'visibility' => 'global']));
 
 		static::assertSame('templates/edit', $page->getTemplate());
 		static::assertSame([$this->text('name_noexists')], $this->flash('error'));
@@ -181,20 +181,20 @@ class ShowSettingsControllerTest extends TemplatesControllerTestCase
 	{
 		$this->actingAs(1);
 
-		$response = $this->store(['template_id' => '2', 'name' => 'Umbenannt', 'visibility' => 'public', 'UID' => '3', 'type' => 'svg']);
+		$response = $this->store(['template_id' => '2', 'name' => 'Umbenannt', 'visibility' => 'global', 'UID' => '3', 'type' => 'svg']);
 
 		$this->assertRedirect($response, '/templates');
 		$row = $this->connection->fetchAssociative('SELECT UID, visibility, type, name FROM templates WHERE template_id = 2');
 		static::assertIsArray($row);
 		// the type is the one of the creation
-		static::assertSame([3, 'public', 'fabric.js', 'Umbenannt'], [(int) $row['UID'], $row['visibility'], $row['type'], $row['name']]);
+		static::assertSame([3, 'global', 'fabric.js', 'Umbenannt'], [(int) $row['UID'], $row['visibility'], $row['type'], $row['name']]);
 	}
 
 	public function testChangingAFormWithoutChangesIsNoError(): void
 	{
 		$this->actingAs(1);
 
-		$this->assertRedirect($this->store(['template_id' => '1', 'name' => 'Admin Vorlage', 'visibility' => 'public', 'UID' => '1']), '/templates');
+		$this->assertRedirect($this->store(['template_id' => '1', 'name' => 'Admin Vorlage', 'visibility' => 'global', 'UID' => '1']), '/templates');
 		static::assertSame([], $this->flash('error'));
 	}
 
@@ -217,15 +217,95 @@ class ShowSettingsControllerTest extends TemplatesControllerTestCase
 		static::assertSame('Bernds Vorlage', $this->databaseValue('SELECT name FROM templates WHERE template_id = 3'));
 	}
 
-	public function testTheValuesOfTheUserStayInTheFormAfterAnError(): void
+	public function testTheValuesOfTheUserStayInTheFormOfANewTemplateAfterAnError(): void
 	{
-		static::markTestSkipped('Known bug: after an error the form is built again without the input of the user (buildCreateForm() gets no post), the typed name is gone. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(1);
 
-		$page = $this->page($this->store(['name' => 'Neu', 'visibility' => 'public'], withToken: false));
+		$page = $this->page($this->store(['name' => 'Neu', 'visibility' => 'global', 'UID' => '3'], withToken: false));
 
-		static::assertSame('Neu', $this->fields($page)['name']['value']);
+		$fields = $this->fields($page);
+		static::assertSame('Neu', $fields['name']['value']);
+		// a form of a new template: the type, no id; the owner is the one of the form, the name of a changed owner is not known
+		static::assertSame('canvas', $fields['type']['value']);
+		static::assertArrayNotHasKey('template_id', $fields);
+		static::assertStringContainsString('admin', json_encode($page->getTemplateData(), JSON_THROW_ON_ERROR));
+		static::assertStringContainsString('global', json_encode($page->getTemplateData(), JSON_THROW_ON_ERROR));
+	}
+
+	public function testTheValuesOfTheUserStayInTheFormOfAnExistingTemplateAfterAnError(): void
+	{
+		$this->actingAs(1);
+
+		$page = $this->page($this->store(['template_id' => '2', 'name' => '', 'visibility' => 'global', 'UID' => '3']));
+
+		$fields = $this->fields($page);
+		static::assertSame(['', '2'], [$fields['name']['value'], $fields['template_id']['value']]);
+		// the owner of the template stays anna
+		static::assertStringContainsString('anna', json_encode($page->getTemplateData(), JSON_THROW_ON_ERROR));
+		static::assertStringNotContainsString('bernd', json_encode($page->getTemplateData(), JSON_THROW_ON_ERROR));
+		static::assertSame('Annas Vorlage', $this->databaseValue('SELECT name FROM templates WHERE template_id = 2'));
+	}
+
+	/**
+	 * @return array<string,array{array<string,mixed>}> the owner which is no user: it leaves the owner as it is
+	 */
+	public static function ownersWhichAreNoUsers(): array
+	{
+		return ['none' => [[]], 'text' => [['UID' => 'abc']], 'an array' => [['UID' => ['3']]], 'zero' => [['UID' => '0']], 'negative' => [['UID' => '-3']]];
+	}
+
+	/**
+	 * @param array<string,mixed> $owner
+	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider('ownersWhichAreNoUsers')]
+	public function testANewTemplateWithoutAValidOwnerBelongsToTheLoggedInUser(array $owner): void
+	{
+		$this->actingAs(1);
+
+		$this->store(['name' => 'Neu', 'visibility' => 'private'] + $owner);
+
+		static::assertSame(1, (int) $this->databaseValue("SELECT UID FROM templates WHERE name = 'Neu'"));
+	}
+
+	/**
+	 * @param array<string,mixed> $owner
+	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider('ownersWhichAreNoUsers')]
+	public function testATemplateWithoutAValidOwnerKeepsItsOwner(array $owner): void
+	{
+		$this->actingAs(1);
+
+		$this->store(['template_id' => '2', 'name' => 'Umbenannt', 'visibility' => 'private'] + $owner);
+
+		static::assertSame(['Umbenannt', 2], [$this->databaseValue('SELECT name FROM templates WHERE template_id = 2'), (int) $this->databaseValue('SELECT UID FROM templates WHERE template_id = 2')]);
+	}
+
+	/**
+	 * @return array<string,array{mixed,string}> the visibility of the request and the one which is stored
+	 */
+	public static function visibilities(): array
+	{
+		return ['private' => ['private', 'private'], 'global' => ['global', 'global'], 'unknown' => ['evil', 'private'], 'public' => ['public', 'private'], 'an array' => [['global'], 'private'], 'empty' => ['', 'private']];
+	}
+
+	#[\PHPUnit\Framework\Attributes\DataProvider('visibilities')]
+	public function testANewTemplateIsOnlyGlobalOrPrivate(mixed $sent, string $stored): void
+	{
+		$this->actingAs(1);
+
+		$this->store(['name' => 'Neu', 'visibility' => $sent]);
+
+		static::assertSame($stored, $this->databaseValue("SELECT visibility FROM templates WHERE name = 'Neu'"));
+	}
+
+	#[\PHPUnit\Framework\Attributes\DataProvider('visibilities')]
+	public function testAnExistingTemplateIsOnlyGlobalOrPrivate(mixed $sent, string $stored): void
+	{
+		$this->actingAs(1);
+
+		$this->store(['template_id' => '3', 'name' => 'Bernds Vorlage', 'visibility' => $sent]);
+
+		static::assertSame($stored, $this->databaseValue('SELECT visibility FROM templates WHERE template_id = 3'));
 	}
 
 	/**

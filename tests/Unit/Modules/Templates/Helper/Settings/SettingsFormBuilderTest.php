@@ -102,6 +102,17 @@ class SettingsFormBuilderTest extends TestCase
 	}
 
 	#[Group('units')]
+	public function testTheInputOfANewTemplateAfterAnErrorIsStillTheFormOfANewTemplate(): void
+	{
+		$this->policy->addCreateFormElements();
+
+		$fields = $this->build(['name' => 'Lobby', 'visibility' => 'global']);
+
+		static::assertSame(['name', 'UID_search', 'visibility', 'type', 'csrf_token'], array_keys($fields));
+		static::assertSame(['Lobby', 'canvas'], [$fields['name']['value'], $fields['type']['value']]);
+	}
+
+	#[Group('units')]
 	public function testWithoutOwnerAndVisibilityThereAreNoSuchFields(): void
 	{
 		static::assertSame(['name', 'type', 'csrf_token'], array_keys($this->build([])));
