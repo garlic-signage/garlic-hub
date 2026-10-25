@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Framework\Utils\Datatable\Paginator;
 
+use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\Datatable\Paginator\Builder;
 use App\Framework\Utils\Datatable\Paginator\Preparer;
@@ -207,5 +208,25 @@ class PreparerTest extends TestCase
 	{
 		static::assertSame($this->preparer, $this->preparer->setSite('/x'));
 		static::assertSame($this->preparer, $this->preparer->setBaseFilter(new FilterParametersFake([])));
+	}
+
+	#[Group('units')]
+	public function testLinksAndDropdownNeedTheFilterFirst(): void
+	{
+		$this->preparer->setSite('/playlists');
+
+		try
+		{
+			$this->preparer->prepareLinks($this->links(1, 10, 30));
+			static::fail('Expected a FrameworkException.');
+		}
+		catch (FrameworkException $e)
+		{
+			static::assertStringContainsString('Preparer::setBaseFilter() has to be called', $e->getMessage());
+		}
+
+		$this->expectException(FrameworkException::class);
+
+		$this->preparer->prepareDropdown(['min' => 10, 'max' => 20, 'steps' => 10]);
 	}
 }

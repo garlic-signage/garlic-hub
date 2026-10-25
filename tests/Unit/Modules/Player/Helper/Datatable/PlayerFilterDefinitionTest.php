@@ -75,7 +75,7 @@ class PlayerFilterDefinitionTest extends TestCase
 		$expected = [
 			'player.last_access' => ['expression' => "player.last_access >= DATETIME('now', '-' || (2 * player.refresh) || ' seconds')"],
 			'player.playlist_id' => $this->conditions->whereClause(12),
-			'player.player_name' => $this->conditions->whereClause('%name%', 'LIKE')
+			'player.player_name' => $this->conditions->likeClause('name')
 		];
 		static::assertSame($expected, $this->definition->whereForFiltering($fields));
 	}

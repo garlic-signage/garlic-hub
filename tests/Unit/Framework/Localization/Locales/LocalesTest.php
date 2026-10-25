@@ -204,26 +204,46 @@ class LocalesTest extends TestCase
 	}
 
 	/**
-	 * A default which is no configured locale is not noticed when the locale is created. Reading
-	 * its values fails, when the visitor has no valid locale of its own.
+	 * A default locale which is not configured would fail later on the first page of a new visitor,
+	 * so the system refuses to start with it.
 	 *
-	 * @throws CoreException
-	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testADefaultLocaleWhichIsNotConfiguredFailsWhenItsValuesAreRead(): void
+	#[DataProvider('invalidDefaultProvider')]
+	public function testADefaultLocaleWhichIsNotConfiguredThrows(string $default, string $expectedMessage): void
 	{
 		$data = $this->localesData();
-		$data['general']['default_locale'] = 'fr_FR';
-		$this->extractorStub->method('extractLocale')->willReturn('xx_XX');
-		$locales = $this->locales($data);
-		$locales->determineCurrentLocale();
+		$data['general']['default_locale'] = $default;
 
-		static::assertSame('fr_FR', $locales->getCurrentLocale());
 		$this->expectException(FrameworkException::class);
-		$this->expectExceptionMessage('Missing configuration for language_code in locale fr_FR.');
+		$this->expectExceptionMessage($expectedMessage);
 
-		$locales->getLanguageCode();
+		$this->locales($data);
+	}
+
+	/**
+	 * @return array<string, array{string, string}>
+	 */
+	public static function invalidDefaultProvider(): array
+	{
+		return [
+			'not configured' => ['fr_FR', "The default locale 'fr_FR' is not one of the configured locales: en_US, de_DE."],
+			'wrong case'     => ['de_de', "The default locale 'de_de' is not one of the configured locales: en_US, de_DE."],
+			'empty'          => ['', "The default locale '' is not one of the configured locales: en_US, de_DE."],
+			'the section name' => ['general', "The default locale 'general' is not one of the configured locales: en_US, de_DE."],
+		];
+	}
+
+	#[Group('units')]
+	public function testWithoutAGeneralSectionTheDefaultIsMissing(): void
+	{
+		$data = $this->localesData();
+		unset($data['general']);
+
+		$this->expectException(FrameworkException::class);
+		$this->expectExceptionMessage("The default locale ''");
+
+		$this->locales($data);
 	}
 
 	#[Group('units')]

@@ -49,4 +49,13 @@ class UrlFieldTest extends TestCase
 
 		static::assertSame('', $field->getPattern());
 	}
+
+	#[Group('units')]
+	public function testPlaceholderAndPatternAreEmptyByDefault(): void
+	{
+		$field = new UrlField(['id' => 'homepage', 'type' => FieldType::URL]);
+
+		static::assertSame('', $field->getPlaceholder());
+		static::assertSame('', $field->getPattern());
+	}
 }

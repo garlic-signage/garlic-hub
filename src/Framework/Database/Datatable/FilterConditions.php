@@ -30,11 +30,40 @@ use Doctrine\DBAL\ArrayParameterType;
 readonly class FilterConditions
 {
 	/**
+	 * Escape character of a search term in LIKE. A backslash would have to be written differently in MySQL and
+	 * SQLite, this sign is the same in both.
+	 */
+	public const string LIKE_ESCAPE = '!';
+
+	/**
 	 * @return array{value: int|string, compare: string, logic: string, type: ArrayParameterType}
 	 */
 	public function whereClause(int|string $value, string $compare = '=', string $logic = 'AND', ArrayParameterType $type = ArrayParameterType::INTEGER): array
 	{
 		return ['value' => $value, 'compare' => $compare, 'logic' => $logic, 'type' => $type];
+	}
+
+	/**
+	 * A search term of a visitor for LIKE: the signs % and _ (and the escape sign) are searched as they are,
+	 * only the * is a wildcard. The term is searched anywhere in the value.
+	 *
+	 * @return array{value: string, compare: string, logic: string, type: ArrayParameterType, escape: string}
+	 */
+	public function likeClause(string $searchTerm, string $logic = 'AND'): array
+	{
+		$escaped = str_replace(
+			[self::LIKE_ESCAPE, '%', '_'],
+			[self::LIKE_ESCAPE . self::LIKE_ESCAPE, self::LIKE_ESCAPE . '%', self::LIKE_ESCAPE . '_'],
+			$searchTerm
+		);
+
+		return [
+			'value'   => '%' . str_replace('*', '%', $escaped) . '%',
+			'compare' => 'LIKE',
+			'logic'   => $logic,
+			'type'    => ArrayParameterType::STRING,
+			'escape'  => self::LIKE_ESCAPE,
+		];
 	}
 
 	/**
@@ -71,8 +100,7 @@ readonly class FilterConditions
 				if ($this->isEmpty($parameter))
 					break;
 
-				$value = '%'.str_replace('*', '%', (string) $parameter['value']).'%';
-				$where['user_main.username'] = $this->whereClause($value, 'LIKE');
+				$where['user_main.username'] = $this->likeClause((string) $parameter['value']);
 				break;
 
 			case 'company_id':
@@ -83,8 +111,7 @@ readonly class FilterConditions
 			default:
 				if ($this->isEmpty($parameter))
 					break;
-				$value = '%'.str_replace('*', '%', (string) $parameter['value']).'%';
-				$where[$table.'.'.$key] = $this->whereClause($value, 'LIKE');
+				$where[$table.'.'.$key] = $this->likeClause((string) $parameter['value']);
 		}
 		return $where;
 	}

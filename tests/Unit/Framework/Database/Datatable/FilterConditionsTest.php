@@ -170,10 +170,49 @@ class FilterConditionsTest extends TestCase
 	}
 
 	/**
-	 * @return array{value: string, compare: string, logic: string, type: ArrayParameterType}
+	 * @return array{value: string, compare: string, logic: string, type: ArrayParameterType, escape: string}
 	 */
 	private function like(string $value): array
 	{
-		return ['value' => $value, 'compare' => 'LIKE', 'logic' => 'AND', 'type' => ArrayParameterType::INTEGER];
+		return ['value' => $value, 'compare' => 'LIKE', 'logic' => 'AND', 'type' => ArrayParameterType::STRING, 'escape' => '!'];
+	}
+
+	/**
+	 * The signs of LIKE in a search term are searched as they are, only * is a wildcard.
+	 *
+	 * @return array<string, array{string, string}> search term, pattern
+	 */
+	public static function searchTermProvider(): array
+	{
+		return [
+			'plain'                  => ['anna', '%anna%'],
+			'wildcard'               => ['an*a', '%an%a%'],
+			'percent'                => ['50%', '%50!%%'],
+			'underscore'             => ['a_b', '%a!_b%'],
+			'the escape sign itself' => ['wow!', '%wow!!%'],
+			'all of them'            => ['!%_*', '%!!!%!_%%'],
+			'a backslash is a sign'  => ['a\\b', '%a\\b%'],
+			'quotes'                 => ["it's \"x\"", "%it's \"x\"%"],
+		];
+	}
+
+	#[Group('units')]
+	#[DataProvider('searchTermProvider')]
+	public function testLikeClauseEscapesTheSignsOfLike(string $term, string $pattern): void
+	{
+		static::assertSame($this->like($pattern), $this->conditions->likeClause($term));
+	}
+
+	#[Group('units')]
+	public function testLikeClauseTakesTheLogic(): void
+	{
+		static::assertSame('OR', $this->conditions->likeClause('a', 'OR')['logic']);
+	}
+
+	#[Group('units')]
+	public function testTheFilterFieldsEscapeTheSearchTerm(): void
+	{
+		static::assertSame(['user_main.username' => $this->like('%50!%%')], $this->conditions->forField('table', 'username', ['value' => '50%']));
+		static::assertSame(['table.name' => $this->like('%a!_b%')], $this->conditions->forField('table', 'name', ['value' => 'a_b']));
 	}
 }

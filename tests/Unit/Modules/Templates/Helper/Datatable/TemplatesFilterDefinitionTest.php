@@ -60,8 +60,8 @@ class TemplatesFilterDefinitionTest extends TestCase
 		];
 
 		$expected = [
-			'templates.name' => $this->conditions->whereClause('%my%%', 'LIKE'),
-			'templates.type' => $this->conditions->whereClause('%canvas%', 'LIKE')
+			'templates.name' => $this->conditions->likeClause('my*'),
+			'templates.type' => $this->conditions->likeClause('canvas')
 		];
 		static::assertSame($expected, $this->definition->whereForFiltering($fields));
 	}

@@ -29,12 +29,13 @@ class UrlBuilder
 {
 	private string $site = '';
 
-	private int $page;
-	private int $elementsPerPage;
-	private string $sortColumn;
-	private string $sortOrder;
+	// the defaults of the filter parameters, so a link can be built with what is set only
+	private int $page = 1;
+	private int $elementsPerPage = 10;
+	private string $sortColumn = '';
+	private string $sortOrder = 'ASC';
 	/** @var array<string,mixed>  */
-	private array $additionalUrlParameters;
+	private array $additionalUrlParameters = [];
 
 	public function setSite(string $site): static
 	{

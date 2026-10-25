@@ -225,10 +225,15 @@ readonly class DatatableQuery
 			$parameterName = str_replace('.', '', $field); // because DBAL do not accept SQL dots like table.field
 			$placeholder   = ($compare === 'IN') ? "(:$parameterName)" : ":$parameterName";
 
+			// only the one escape sign of FilterConditions::likeClause() is written into the SQL, never a given text
+			$escape = (is_array($parameter) && ($parameter['escape'] ?? null) === FilterConditions::LIKE_ESCAPE)
+				? " ESCAPE '" . FilterConditions::LIKE_ESCAPE . "'"
+				: '';
+
 			if ($logic === 'OR')
-				$queryBuilder->orWhere("$field $compare $placeholder");
+				$queryBuilder->orWhere("$field $compare $placeholder$escape");
 			else
-				$queryBuilder->andWhere("$field $compare $placeholder");
+				$queryBuilder->andWhere("$field $compare $placeholder$escape");
 
 			if ($compare === 'IN')
 				$queryBuilder->setParameter($parameterName, explode(',', $value), $parameter['type']);

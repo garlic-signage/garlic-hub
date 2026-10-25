@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Framework\Utils\Datatable\Paginator;
 
+use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\Datatable\UrlBuilder;
 use App\Framework\Utils\FormParameters\BaseFilterParameters;
@@ -62,10 +63,11 @@ class Preparer
 	 */
 	public function prepareLinks(array $pageLinks): array
 	{
+		$filter = $this->baseFilter();
 		$this->urlBuilder
-			->setSortColumn($this->baseFilter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_SORT_COLUMN))
-			->setSortOrder($this->baseFilter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_SORT_ORDER))
-			->setElementsPerPage($this->baseFilter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE))
+			->setSortColumn($filter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_SORT_COLUMN))
+			->setSortOrder($filter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_SORT_ORDER))
+			->setElementsPerPage($filter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE))
 		;
 
 		$data = [];
@@ -91,14 +93,15 @@ class Preparer
 	 */
 	public function prepareDropdown(array $dropDownSettings): array
 	{
+		$filter = $this->baseFilter();
 		$this->urlBuilder
-			->setSortColumn($this->baseFilter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_SORT_COLUMN))
-			->setSortOrder($this->baseFilter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_SORT_ORDER))
-			->setPage($this->baseFilter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE))
+			->setSortColumn($filter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_SORT_COLUMN))
+			->setSortOrder($filter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_SORT_ORDER))
+			->setPage($filter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE))
 		;
 
 		$data = [];
-		$currentElementsPerPage = (int) $this->baseFilter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE);
+		$currentElementsPerPage = (int) $filter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE);
 		// a step of 0 would never end
 		$steps = max(1, $dropDownSettings['steps']);
 		for ($i = $dropDownSettings['min']; $i <= $dropDownSettings['max']; $i += $steps)
@@ -114,5 +117,16 @@ class Preparer
 			];
 		}
 		return $data;
+	}
+
+	/**
+	 * @throws FrameworkException
+	 */
+	private function baseFilter(): BaseFilterParameters
+	{
+		if (!isset($this->baseFilter))
+			throw new FrameworkException('Preparer::setBaseFilter() has to be called before links or dropdown are prepared.');
+
+		return $this->baseFilter;
 	}
 }

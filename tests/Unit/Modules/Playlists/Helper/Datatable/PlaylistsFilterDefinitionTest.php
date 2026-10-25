@@ -84,8 +84,8 @@ class PlaylistsFilterDefinitionTest extends TestCase
 
 		$expected = [
 			'playlist_mode'          => $this->conditions->whereClause('multizone'),
-			'playlists.playlist_name' => $this->conditions->whereClause('%name%', 'LIKE'),
-			'user_main.username'     => $this->conditions->whereClause('%john%', 'LIKE')
+			'playlists.playlist_name' => $this->conditions->likeClause('name'),
+			'user_main.username'     => $this->conditions->likeClause('john')
 		];
 		static::assertSame($expected, $this->definition->whereForFiltering($fields));
 	}

@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Framework\Utils\Datatable\Paginator;
 
 use App\Framework\Utils\Datatable\Paginator\Builder;
-use Error;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
@@ -150,21 +149,20 @@ class BuilderTest extends TestCase
 	}
 
 	/**
-	 * Nothing is built before configure() and buildPagerLinks().
+	 * Before anything is configured or built, there is one page and no link list yet.
 	 */
 	#[Group('units')]
-	public function testTheLinksAreNotThereBeforeTheyAreBuilt(): void
+	public function testTheLinksAreEmptyBeforeTheyAreBuilt(): void
 	{
-		$this->expectException(Error::class);
-
-		$this->builder->getPagerLinks();
+		static::assertSame([], $this->builder->getPagerLinks());
+		static::assertSame(['min' => 10, 'max' => 100, 'steps' => 10], $this->builder->getDropDownSettings());
 	}
 
 	#[Group('units')]
-	public function testTheListCanNotBeBuiltWithoutConfiguration(): void
+	public function testWithoutConfigurationThereIsOnePage(): void
 	{
-		$this->expectException(Error::class);
-
 		$this->builder->buildPagerLinks();
+
+		static::assertSame(['1:1*'], $this->links());
 	}
 }

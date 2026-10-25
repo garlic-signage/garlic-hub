@@ -33,7 +33,7 @@ class AutocompleteField extends AbstractInputField
 	{
 		parent::__construct($attributes);
 
-		$this->dataLabel = $attributes['data-label'];
+		$this->dataLabel = (string) ($attributes['data-label'] ?? '');
 	}
 
 	public function getDataLabel(): string

@@ -28,7 +28,6 @@ use App\Framework\Localization\Translate\MessageFormatterFactory;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Utils\Datatable\TimeUnitsCalculator;
 use DateTime;
-use Error;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
@@ -173,7 +172,8 @@ class TimeUnitsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testThereIsNoDistanceBeforeItIsCalculated(): void
 	{
-		$this->expectException(Error::class);
+		$this->expectException(FrameworkException::class);
+		$this->expectExceptionMessage('The last access has to be calculated before the distance is printed.');
 
 		$this->calculator->printDistance();
 	}

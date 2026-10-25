@@ -42,7 +42,11 @@ class UrlRenderer extends AbstractInputFieldRenderer implements FieldRenderInter
 		if (!($this->field instanceof UrlField))
 			return '';
 
-		return '<input type="text" '.$this->buildAttributes().' pattern="'.$this->escape($this->field->getPattern()).'" placeholder="'.$this->escape($this->field->getPlaceholder()).'" aria-describedby="error_'.$this->escape($this->field->getId()).'">';
+		// an empty pattern="" would only let an empty value pass the check of the browser
+		$pattern     = $this->field->getPattern() === '' ? '' : ' pattern="' . $this->escape($this->field->getPattern()) . '"';
+		$placeholder = $this->field->getPlaceholder() === '' ? '' : ' placeholder="' . $this->escape($this->field->getPlaceholder()) . '"';
+
+		return '<input type="text" '.$this->buildAttributes().$pattern.$placeholder.' aria-describedby="error_'.$this->escape($this->field->getId()).'">';
 
 	}
 }

@@ -99,11 +99,12 @@ class HeaderPreparer
 	protected function prepareSortableHeaderField(HeaderField $headerField):array
 	{
 		$sortableData = [];
+		$filter       = $this->filterParameter();
 
-		if ($this->filterParameter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_SORT_COLUMN) == $headerField->getName())
+		if ($filter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_SORT_COLUMN) == $headerField->getName())
 		{
 			// the order is normalized to ASC/DESC by the filter parameters, so the case must not matter
-			if (strtolower((string) $this->filterParameter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_SORT_ORDER)) === 'asc')
+			if (strtolower((string) $filter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_SORT_ORDER)) === 'asc')
 			{
 				$sort_order_tmp = 'desc';
 				$sortableData['SORTABLE_ORDER']    = '▼';
@@ -120,10 +121,10 @@ class HeaderPreparer
 			$sortableData['SORTABLE_ORDER'] = '◆';
 		}
 		$this->urlBuilder
-			->setPage($this->filterParameter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE))
+			->setPage($filter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE))
 			->setSortColumn($headerField->getName())
 			->setSortOrder($sort_order_tmp)
-			->setElementsPerPage($this->filterParameter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE))
+			->setElementsPerPage($filter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE))
 		;
 
 		$sortableData['SORT_CONTROL_NAME']       = $headerField->getName();
@@ -131,6 +132,17 @@ class HeaderPreparer
 		$sortableData['LANG_CONTROL_NAME']       = $this->translatorManager->translate($headerField);
 
 		return $sortableData;
+	}
+
+	/**
+	 * @throws FrameworkException
+	 */
+	private function filterParameter(): BaseFilterParameters
+	{
+		if (!isset($this->filterParameter))
+			throw new FrameworkException('HeaderPreparer::configure() has to be called before the sortable header is prepared.');
+
+		return $this->filterParameter;
 	}
 
 }

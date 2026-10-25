@@ -23,7 +23,7 @@ namespace Tests\Unit\Framework\Utils;
 
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\BaseSimpleXml;
-use Error;
+use ErrorException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
@@ -99,9 +99,19 @@ class BaseSimpleXmlTest extends TestCase
 	#[Group('units')]
 	public function testTheObjectIsNotThereBeforeSomethingIsLoaded(): void
 	{
-		$this->expectException(Error::class);
+		try
+		{
+			$this->xml->getXmlObj();
+		}
+		catch (ModuleException $e)
+		{
+			static::assertSame('No xml loaded.', $e->getMessage());
+			static::assertSame('TestModule', $e->getModuleName());
 
-		$this->xml->getXmlObj();
+			return;
+		}
+
+		static::fail('Expected a ModuleException.');
 	}
 
 	/**
@@ -311,5 +321,94 @@ class BaseSimpleXmlTest extends TestCase
 		$this->expectException(ModuleException::class);
 
 		$this->xml->loadXmlFromStringPublic($xml);
+	}
+
+	/**
+	 * The errors belong to the object which loaded: another object does not see them, and
+	 * a new one has none.
+	 */
+	#[Group('units')]
+	public function testTheErrorsBelongToTheObjectWhichLoaded(): void
+	{
+		$other = new ConcreteBaseSimpleXml();
+		try
+		{
+			$other->loadXmlFromStringPublic('<root>');
+		}
+		catch (ModuleException)
+		{
+			// the errors are read below
+		}
+
+		static::assertNotSame([], $other->getXmlErrorArray());
+		static::assertSame([], $this->xml->getXmlErrorArray());
+		static::assertSame('', $this->xml->getXmlErrorsAsString());
+		static::assertSame([], (new ConcreteBaseSimpleXml())->getXmlErrorArray());
+	}
+
+	/**
+	 * A load must not change how libxml works for the rest of the application, and it leaves no errors behind.
+	 *
+	 * @return array<string, array{bool}>
+	 */
+	public static function libxmlSettingProvider(): array
+	{
+		return ['internal errors off' => [false], 'internal errors on' => [true]];
+	}
+
+	#[Group('units')]
+	#[DataProvider('libxmlSettingProvider')]
+	public function testTheSettingOfLibxmlIsGivenBack(bool $setting): void
+	{
+		$before = libxml_use_internal_errors($setting);
+
+		try
+		{
+			$this->xml->loadXmlFromStringPublic(self::VALID);
+			$this->xml->loadXmlFromFilePublic($this->file(self::VALID));
+			try
+			{
+				$this->xml->loadXmlFromStringPublic('<root>');
+			}
+			catch (ModuleException)
+			{
+				// expected
+			}
+
+			static::assertSame([], libxml_get_errors(), 'The errors of the parser must not stay in libxml.');
+			static::assertSame($setting, libxml_use_internal_errors($setting), 'The setting was changed.');
+		}
+		finally
+		{
+			libxml_clear_errors();
+			libxml_use_internal_errors($before);
+		}
+	}
+
+	/**
+	 * A directory is no document: a ModuleException like for any other file which can not be read, and no
+	 * notice of the parser (the error handler of the application turns a notice into an exception).
+	 */
+	#[Group('units')]
+	public function testADirectoryThrowsAModuleExceptionWithoutANotice(): void
+	{
+		set_error_handler(static function (int $no, string $message): never
+		{
+			throw new ErrorException($message, 0, $no);
+		});
+
+		try
+		{
+			$this->xml->loadXmlFromFilePublic(sys_get_temp_dir());
+			static::fail('Expected a ModuleException.');
+		}
+		catch (ModuleException $e)
+		{
+			static::assertSame('Error reading/parsing xml', $e->getMessage());
+		}
+		finally
+		{
+			restore_error_handler();
+		}
 	}
 }

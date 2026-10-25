@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Framework\Utils\Datatable;
 
 use App\Framework\Utils\Datatable\UrlBuilder;
-use Error;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
@@ -121,13 +120,13 @@ class UrlBuilderTest extends TestCase
 	}
 
 	/**
-	 * Every part of the URL has to be set before: there is no default.
+	 * What is not set has the default of the filter parameters.
 	 */
 	#[Group('units')]
-	public function testWithoutThePartsTheUrlCanNotBeBuilt(): void
+	public function testWhatIsNotSetHasTheDefaultOfTheFilter(): void
 	{
-		$this->expectException(Error::class);
-
-		(new UrlBuilder())->setSite('/x')->buildFilterUrl();
+		static::assertSame('?elements_page=1&sort_column=&sort_order=ASC&elements_per_page=10', (new UrlBuilder())->buildFilterUrl());
+		static::assertSame('/x?elements_page=1&sort_column=&sort_order=ASC&elements_per_page=10', (new UrlBuilder())->setSite('/x')->buildFilterUrl());
+		static::assertSame('/x?elements_page=3&sort_column=&sort_order=ASC&elements_per_page=10', (new UrlBuilder())->setSite('/x')->setPage(3)->buildFilterUrl());
 	}
 }

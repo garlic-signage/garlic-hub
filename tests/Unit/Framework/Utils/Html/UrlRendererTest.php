@@ -47,4 +47,30 @@ class UrlRendererTest extends TestCase
 	{
 		static::assertSame('', (new UrlRenderer())->render(new TextField(['id' => 'a', 'type' => FieldType::TEXT])));
 	}
+
+	/**
+	 * An empty pattern="" would let only an empty value pass the check of the browser: it is left out.
+	 */
+	#[Group('units')]
+	public function testWithoutPatternAndPlaceholderThereAreNoEmptyAttributes(): void
+	{
+		$field = new UrlField(['id' => 'homepage', 'type' => FieldType::URL, 'name' => 'url', 'value' => 'https://example.com']);
+
+		static::assertSame(
+			'<input type="text" name="url" id="homepage" value="https://example.com" aria-describedby="error_homepage">',
+			(new UrlRenderer())->render($field)
+		);
+	}
+
+	#[Group('units')]
+	public function testOnlyThePatternOrOnlyThePlaceholder(): void
+	{
+		$withPattern = new UrlField(['id' => 'a', 'type' => FieldType::URL]);
+		$withPattern->setPattern('https?://.+');
+		$withPlaceholder = new UrlField(['id' => 'b', 'type' => FieldType::URL]);
+		$withPlaceholder->setPlaceholder('https://');
+
+		static::assertSame('<input type="text" name="a" id="a" value="" pattern="https?://.+" aria-describedby="error_a">', (new UrlRenderer())->render($withPattern));
+		static::assertSame('<input type="text" name="b" id="b" value="" placeholder="https://" aria-describedby="error_b">', (new UrlRenderer())->render($withPlaceholder));
+	}
 }

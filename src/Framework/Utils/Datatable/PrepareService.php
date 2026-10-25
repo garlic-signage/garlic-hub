@@ -103,6 +103,9 @@ class PrepareService
 	 */
 	public function prepareDatatableHeader(array $fields, array $langModules):  array
 	{
+		if (!isset($this->parameters))
+			throw new FrameworkException('PrepareService::configure() has to be called before the header is prepared.');
+
 		$this->headerPreparer->configure($this->parameters, $this->moduleName, $langModules);
 		return $this->headerPreparer->prepareTableHeader($fields);
 	}

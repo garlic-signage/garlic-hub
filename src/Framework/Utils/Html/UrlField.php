@@ -27,8 +27,8 @@ namespace App\Framework\Utils\Html;
  */
 class UrlField extends AbstractInputField
 {
-	private string $placeholder;
-	private string $pattern;
+	private string $placeholder = '';
+	private string $pattern = '';
 
 	public function setPlaceholder(string $placeholder): UrlField
 	{

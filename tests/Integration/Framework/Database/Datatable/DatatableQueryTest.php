@@ -301,4 +301,81 @@ class DatatableQueryTest extends RepositoryTestCase
 
 		static::assertSame([1], $this->ids($this->query->findForModuleAdmin($definition, [])));
 	}
+
+	/**
+	 * @return array<string, array{string, list<string>}> search term, names of the rows which are found
+	 */
+	public static function searchTermProvider(): array
+	{
+		return [
+			'a percent sign is a sign'     => ['50%', ['Rabatt 50% Aktion']],
+			'without it both are found'    => ['50', ['Rabatt 50% Aktion', 'Rabatt 500 Aktion']],
+			'an underscore is a sign'      => ['a_b', ['a_b']],
+			'a part of a word'             => ['abatt 5', ['Rabatt 50% Aktion', 'Rabatt 500 Aktion']],
+			'the escape sign is a sign'    => ['Hallo!', ['Hallo!']],
+			'the escape sign before a percent' => ['!%', []],
+			'a star is a wildcard'         => ['Ra*Akt', ['Rabatt 50% Aktion', 'Rabatt 500 Aktion']],
+			'a star in the middle'         => ['Rabatt*00', ['Rabatt 500 Aktion']],
+			'only wildcards find all'      => ['*', ['Rabatt 50% Aktion', 'Rabatt 500 Aktion', 'a_b', 'axb', 'Hallo!', 'Hallo', 'Admin Vorlage', 'Annas Vorlage', 'Bernds Vorlage', 'Annas zweite', 'Carlas Vorlage', "O'Brien"]],
+			'a quote is a sign'            => ["O'Brien", ["O'Brien"]],
+		];
+	}
+
+	/**
+	 * What a visitor types in the filter is searched as it is: % and _ of LIKE are no wildcards.
+	 *
+	 * @param list<string> $expected
+	 * @throws Exception
+	 */
+	#[DataProvider('searchTermProvider')]
+	public function testTheSearchTermOfTheVisitorIsNoPatternOfLike(string $term, array $expected): void
+	{
+		$this->connection->executeStatement(
+			"INSERT INTO templates (UID, visibility, name) VALUES (1, 'private', 'Rabatt 50% Aktion'), (1, 'private', 'Rabatt 500 Aktion'), (1, 'private', 'a_b'), (1, 'private', 'axb'), (1, 'private', 'Hallo!'), (1, 'private', 'Hallo'), (1, 'private', \"O'Brien\")"
+		);
+
+		$rows  = $this->query->findForModuleAdmin($this->definition, $this->fields(['name' => $term]));
+		$names = array_column($rows, 'name');
+		sort($names);
+		sort($expected);
+
+		static::assertSame($expected, $names);
+		static::assertSame(count($expected), $this->query->countForModuleAdmin($this->definition, $this->fields(['name' => $term])));
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function testTheEscapeAlsoHoldsForTheRowsOfAUser(): void
+	{
+		$this->connection->executeStatement("INSERT INTO templates (UID, visibility, name) VALUES (2, 'private', 'Rabatt 50% Aktion'), (2, 'private', 'Rabatt 500 Aktion')");
+
+		$rows = $this->query->findForUser($this->definition, $this->fields(['name' => '50%']), 2);
+
+		static::assertSame(['Rabatt 50% Aktion'], array_column($rows, 'name'));
+	}
+
+	/**
+	 * The escape sign is written into the SQL only when the condition comes from likeClause().
+	 * A text in the key of the condition can not bring something else into it.
+	 *
+	 * @throws Exception
+	 */
+	public function testOnlyTheKnownEscapeSignIsWrittenIntoTheQuery(): void
+	{
+		$definition = new class() implements FilterDefinition {
+			public function table(): string { return 'templates'; }
+			public function joins(): array { return []; }
+			public function userJoins(): array { return []; }
+			public function selects(): array { return ['templates.*']; }
+			public function selectsWithUser(): array { return $this->selects(); }
+			public function whereForFiltering(array $fields): array
+			{
+				return ['templates.name' => ['value' => '%Admin%', 'compare' => 'LIKE', 'logic' => 'AND', 'escape' => "' OR '1'='1"]];
+			}
+		};
+
+		// no escape sign is written, the condition is a normal LIKE
+		static::assertSame([1], $this->ids($this->query->findForModuleAdmin($definition, [])));
+	}
 }

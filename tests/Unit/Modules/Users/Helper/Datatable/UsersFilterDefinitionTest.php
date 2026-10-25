@@ -63,7 +63,7 @@ class UsersFilterDefinitionTest extends TestCase
 		];
 
 		$expected = [
-			'user_main.username' => $this->conditions->whereClause('%johndoe%', 'LIKE'),
+			'user_main.username' => $this->conditions->likeClause('johndoe'),
 			'user_main.status'   => $this->conditions->whereClause(3, '>=')
 		];
 		static::assertSame($expected, $this->definition->whereForFiltering($fields));
@@ -74,6 +74,6 @@ class UsersFilterDefinitionTest extends TestCase
 	{
 		$where = $this->definition->whereForFiltering(['email' => ['value' => 'doe*.de'], 'status' => ['value' => 0]]);
 
-		static::assertSame(['user_main.email' => $this->conditions->whereClause('%doe%.de%', 'LIKE')], $where);
+		static::assertSame(['user_main.email' => $this->conditions->likeClause('doe*.de')], $where);
 	}
 }

@@ -258,4 +258,35 @@ class HeaderPreparerTest extends TestCase
 
 		static::assertSame('/users?elements_page=1&sort_column=created&sort_order=asc&elements_per_page=50', $header[1]['if_sortable']['LINK_CONTROL_SORT_ORDER']);
 	}
+
+	/**
+	 * A sortable field needs the parameters, so configure() has to come first.
+	 *
+	 * @throws CoreException
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testASortableHeaderCanNotBePreparedBeforeConfigure(): void
+	{
+		$this->expectException(FrameworkException::class);
+		$this->expectExceptionMessage('HeaderPreparer::configure() has to be called before the sortable header is prepared.');
+
+		$this->headerPreparer->prepareTableHeader($this->fields());
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testFieldsWhichAreNotSortableNeedNoParameters(): void
+	{
+		$builder = new Builder();
+		$builder->createField('actions', false);
+
+		$header = $this->headerPreparer->prepareTableHeader($builder->getHeaderFields());
+
+		static::assertSame('actions', $header[0]['CONTROL_NAME']);
+	}
 }

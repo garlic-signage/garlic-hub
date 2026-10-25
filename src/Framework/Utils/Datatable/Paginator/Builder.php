@@ -26,15 +26,15 @@ namespace App\Framework\Utils\Datatable\Paginator;
  */
 class Builder
 {
-	private int $currentPage;
-	private int $itemsPerPage;
-	private int $totalItems;
-	private bool $usePager;
-	private bool $shortened;
+	private int $currentPage = 1;
+	private int $itemsPerPage = 10;
+	private int $totalItems = 0;
+	private bool $usePager = false;
+	private bool $shortened = true;
 	/** @var list<array{name: string, page: int}>  */
-	private array $pagerLinks;
+	private array $pagerLinks = [];
 	/** @var array{min: int, max: int, steps: int} */
-	private array $dropDownSettings;
+	private array $dropDownSettings = ['min' => 10, 'max' => 100, 'steps' => 10];
 
 	public function configure(int $currentPage, int $itemsPerPage, int $totalItems, bool $usePager, bool $shortened): static
 	{

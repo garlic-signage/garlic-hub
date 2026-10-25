@@ -66,6 +66,9 @@ class TimeUnitsCalculator
 	 */
 	public function printDistance(): string
 	{
+		if (!isset($this->interval))
+			throw new FrameworkException('The last access has to be calculated before the distance is printed.');
+
 		if ($this->interval->y > 0)
 		{
 			$number = $this->interval->y;

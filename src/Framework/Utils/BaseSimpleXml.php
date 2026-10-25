@@ -41,15 +41,21 @@ use SimpleXMLElement;
  */
 abstract class BaseSimpleXml
 {
-	/** @var LibXMLError[] */
-	protected array $xmlErrors;
+	/** @var LibXMLError[] the errors of the last load, of this object only */
+	protected array $xmlErrors = [];
 
 	protected SimpleXMLElement $xmlObj;
 
 	abstract protected function getModuleName(): string;
 
+	/**
+	 * @throws ModuleException
+	 */
 	public function getXmlObj(): SimpleXMLElement
 	{
+		if (!isset($this->xmlObj))
+			throw new ModuleException($this->getModuleName(), 'No xml loaded.');
+
 		return $this->xmlObj;
 	}
 
@@ -79,20 +85,7 @@ abstract class BaseSimpleXml
 	 */
 	protected function loadXmlFromString(string $xml_input): static
 	{
-		libxml_use_internal_errors(true);
-
-		// clear possible previously stored errors
-		$this->xmlErrors = [];
-		libxml_clear_errors();
-
-		$simple_xml = simplexml_load_string($xml_input);
-
-		if ($simple_xml === false)
-		{
-			throw new ModuleException($this->getModuleName(), 'Error reading/parsing xml');
-		}
-		$this->setXmlObj($simple_xml);
-		return $this;
+		return $this->parse(static fn(): SimpleXMLElement|false => simplexml_load_string($xml_input));
 	}
 
 	/**
@@ -100,19 +93,14 @@ abstract class BaseSimpleXml
 	 */
 	protected function loadXMlFromFile(string $file_name): static
 	{
-		libxml_use_internal_errors(true);
-
-		// clear possible previously stored errors
-		$this->xmlErrors = [];
-		libxml_clear_errors();
-
-		$simple_xml = simplexml_load_file($file_name);
-
-		if ($simple_xml === false)
+		// a directory can be opened, but is no document: no notice of the parser
+		if (is_dir($file_name))
+		{
+			$this->xmlErrors = [];
 			throw new ModuleException($this->getModuleName(), 'Error reading/parsing xml');
+		}
 
-		$this->setXmlObj($simple_xml);
-		return $this;
+		return $this->parse(static fn(): SimpleXMLElement|false => simplexml_load_file($file_name));
 	}
 
 	/**
@@ -120,18 +108,14 @@ abstract class BaseSimpleXml
 	 */
 	public function getXmlErrorArray(): array
 	{
-		$this->buildXmlErrors();
 		return $this->getXmlErrors();
 	}
 
 	public function getXmlErrorsAsString(): string
 	{
-		$this->buildXmlErrors();
-
 		if (array_key_exists(0, $this->xmlErrors))
 		{
 			$last_error = $this->xmlErrors[0];
-			/* @var $last_error LibXMLError */
 
 			return sprintf('%s: %s Line: %s, Column: %s',
 				$this->getNamedErrorLevel($last_error->level),
@@ -144,22 +128,40 @@ abstract class BaseSimpleXml
 	}
 
 	/**
-	 * reads the internal libxml_error api and returns
-	 * the errors as a string (concatenated by line breaks)
+	 * The errors of the parser are libxml state for the whole process. They are taken into this object
+	 * and the setting of libxml is given back, so other code is not changed by a load.
 	 *
-	 * since this clears the libxml error, it should not
-	 * be called from outside
+	 * @param callable(): (SimpleXMLElement|false) $load
+	 * @throws ModuleException
 	 */
-	private function buildXmlErrors(): void
+	private function parse(callable $load): static
 	{
-		$ar_error_lines = [];
+		$previous = libxml_use_internal_errors(true);
+		libxml_clear_errors();
 
-		foreach(libxml_get_errors() as $error)
+		try
 		{
-			$ar_error_lines[] = $error;
+			$simple_xml = $load();
+
+			$errors = [];
+			foreach (libxml_get_errors() as $error)
+			{
+				$errors[] = $error;
+			}
+			$this->xmlErrors = $errors;
+		}
+		finally
+		{
+			libxml_clear_errors();
+			libxml_use_internal_errors($previous);
 		}
 
-		$this->setXmlErrors($ar_error_lines);
+		if ($simple_xml === false)
+			throw new ModuleException($this->getModuleName(), 'Error reading/parsing xml');
+
+		$this->setXmlObj($simple_xml);
+
+		return $this;
 	}
 
 	private function getNamedErrorLevel(int $error_level): string

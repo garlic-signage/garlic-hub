@@ -36,4 +36,12 @@ class AutocompleteFieldTest extends TestCase
 		static::assertSame('Anna', $field->getDataLabel());
 		static::assertSame('5', $field->getValue());
 	}
+
+	#[Group('units')]
+	public function testWithoutALabelItIsEmpty(): void
+	{
+		$field = new AutocompleteField(['id' => 'UID', 'type' => FieldType::AUTOCOMPLETE]);
+
+		static::assertSame('', $field->getDataLabel());
+	}
 }

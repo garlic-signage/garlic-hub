@@ -40,7 +40,6 @@ use App\Framework\Utils\Html\FieldsRenderFactory;
 use App\Framework\Utils\Html\FieldType;
 use App\Framework\Utils\Html\FormBuilder;
 use Defuse\Crypto\Key;
-use Error;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Tests\Unit\Framework\Security\MemorySession;
@@ -163,8 +162,18 @@ class PrepareServiceTest extends TestCase
 	#[Group('units')]
 	public function testTheHeaderCanNotBePreparedBeforeConfigure(): void
 	{
-		$this->expectException(Error::class);
+		$this->expectException(FrameworkException::class);
+		$this->expectExceptionMessage('PrepareService::configure() has to be called before the header is prepared.');
 
 		$this->prepareService->prepareDatatableHeader([], ['main']);
+	}
+
+	#[Group('units')]
+	public function testThePaginationCanNotBePreparedBeforeConfigure(): void
+	{
+		$this->expectException(FrameworkException::class);
+		$this->expectExceptionMessage('Preparer::setBaseFilter() has to be called');
+
+		$this->prepareService->preparePagination([['name' => '1', 'page' => 1]], ['min' => 10, 'max' => 20, 'steps' => 10]);
 	}
 }
