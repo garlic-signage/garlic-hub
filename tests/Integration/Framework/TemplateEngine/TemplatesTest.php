@@ -45,12 +45,6 @@ class TemplatesTest extends TestCase
 		return (string) realpath(self::DIRECTORY);
 	}
 
-	/**
-	 * Templates which do not compile today. The test fails when the list is not exact: a new broken template
-	 * must not appear, a repaired one has to be removed from here.
-	 */
-	private const array KNOWN_BROKEN = ['player/configs/task_schedule.xml'];
-
 	private MustacheAdapter $adapter;
 
 	protected function setUp(): void
@@ -90,21 +84,6 @@ class TemplatesTest extends TestCase
 	#[DataProvider('templateProvider')]
 	public function testTheTemplateRenders(string $name): void
 	{
-		if (in_array($name, self::KNOWN_BROKEN, true))
-		{
-			try
-			{
-				$this->adapter->render($name);
-			}
-			catch (Throwable)
-			{
-				$this->addToAssertionCount(1);
-				return;
-			}
-
-			static::fail("$name renders now, remove it from KNOWN_BROKEN.");
-		}
-
 		static::assertIsString($this->adapter->render($name));
 	}
 
