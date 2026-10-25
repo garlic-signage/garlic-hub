@@ -23,6 +23,7 @@ namespace Tests\Integration\Modules\Auth\Services;
 
 use App\Framework\Http\Cookie;
 use App\Framework\Http\Session;
+use Tests\Integration\Support\ArraySession;
 use App\Modules\Auth\AuthMiddleware;
 use App\Modules\Auth\AuthService;
 use App\Modules\Auth\AutoLoginService;
@@ -168,6 +169,41 @@ class AuthMiddlewareTest extends ContainerTestCase
 		static::assertIsArray($user);
 		static::assertSame(10, $user['UID']);
 		static::assertSame('de_DE', $this->container->get(Session::class)->get('locale'));
+	}
+
+	/**
+	 * Like the login by password: whoever knew the session id before must not know it now.
+	 */
+	public function testTheLoginByCookieGetsANewSessionId(): void
+	{
+		$this->container->get(AutoLoginService::class)->createAutologinCookie(10);
+		$session = $this->container->get(Session::class);
+		static::assertInstanceOf(ArraySession::class, $session);
+
+		$this->process('GET', '/player');
+
+		static::assertSame(1, $session->regenerations);
+	}
+
+	public function testALoggedInUserKeepsTheSessionIdEvenWithACookie(): void
+	{
+		$this->container->get(AutoLoginService::class)->createAutologinCookie(10);
+		$this->actingAs(10);
+		$session = $this->container->get(Session::class);
+		static::assertInstanceOf(ArraySession::class, $session);
+
+		$this->process('GET', '/player');
+
+		static::assertSame(0, $session->regenerations);
+	}
+
+	public function testAnOutdatedCookieDoesNotKeepAGuestFromTheLoginPage(): void
+	{
+		$this->container->get(AutoLoginService::class)->createAutologinCookie(10);
+		$this->connection->executeStatement("UPDATE user_tokens SET expires_at = '2000-01-01 00:00:00'");
+
+		static::assertSame(200, $this->process('POST', '/login')->getStatusCode());
+		static::assertFalse($this->container->get(Session::class)->exists('user'));
 	}
 
 	public function testRememberMeCookieOfABlockedUserIsNoLogin(): void

@@ -30,6 +30,13 @@ class MemorySession extends Session
 {
 	/** @var array<string,mixed> */
 	public array $data = [];
+	/** how often a new session id was requested: the real one needs a PHP session */
+	public int $regenerations = 0;
+
+	public function regenerateID(): void
+	{
+		$this->regenerations++;
+	}
 
 	public function get(string $key): null|string|array
 	{

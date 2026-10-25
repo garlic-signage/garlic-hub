@@ -56,6 +56,8 @@ class AuthService
 	 */
 	public function login(string $identifier, string $password): ?UserEntity
 	{
+		// the service lives for the whole request: a failed login by cookie before must not stop this one
+		$this->errorMessage = '';
 		$ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 		$this->logger->info('Login attempt from: '. $identifier);
 		if ($this->loginThrottle->isBlocked($identifier, $ip))
@@ -126,6 +128,7 @@ class AuthService
 	 */
 	public function loginByCookie(): ?UserEntity
 	{
+		$this->errorMessage = '';
 		try
 		{
 			$cookieToken = $this->autoLoginService->loadTokenFromCookie();

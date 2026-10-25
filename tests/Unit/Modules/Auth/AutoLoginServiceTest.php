@@ -22,53 +22,44 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Auth;
 
-use App\Framework\Http\Cookie;
 use App\Framework\Exceptions\AuthException;
-use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Http\Cookie;
 use App\Modules\Auth\AutoLoginService;
-use App\Shared\User\TokenPurposes;
 use App\Shared\User\UserTokenService;
-use DateMalformedStringException;
-use DateTime;
-use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
+/**
+ * The cookie is the only border here. Everything which works with the tokens in the database is tested
+ * with the real database in tests/Integration/Modules/Auth/Services/AutoLoginTest.
+ */
 class AutoLoginServiceTest extends TestCase
 {
-	private  Cookie&Stub $cookieStub;
-	private LoggerInterface&Stub $loggerStub;
+	private Cookie&Stub $cookie;
 	private AutoLoginService $autoLoginService;
 
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$userTokenServiceStub = static::createStub(UserTokenService::class);
-		$this->cookieStub = static::createStub(Cookie::class);
-		$this->loggerStub = static::createStub(LoggerInterface::class);
-		$this->autoLoginService = new AutoLoginService(
-			$userTokenServiceStub,
-			$this->cookieStub,
-			$this->loggerStub
-		);
+		$this->cookie           = $this->createStub(Cookie::class);
+		$this->autoLoginService = new AutoLoginService($this->createStub(UserTokenService::class), $this->cookie, new NullLogger());
 	}
 
 	#[Group('units')]
-	public function testLoadTokenFromCookie(): void
+	public function testTheTokenIsTheValueOfTheCookie(): void
 	{
-		$token = 'valid_token';
-		$this->cookieStub->method('hasCookie')->willReturn(true);
-		$this->cookieStub->method('getCookie')->willReturn($token);
+		$this->cookie->method('hasCookie')->willReturnCallback(static fn(string $name): bool => $name === 'UserLogin');
+		$this->cookie->method('getCookie')->willReturnCallback(static fn(string $name): ?string => $name === 'UserLogin' ? 'valid_token' : null);
 
-		static::assertSame($token, $this->autoLoginService->loadTokenFromCookie());
+		static::assertSame('valid_token', $this->autoLoginService->loadTokenFromCookie());
 	}
 
 	#[Group('units')]
-	public function testLoadTokenFromCookieHasNoCookie(): void
+	public function testWithoutACookieThereIsNoToken(): void
 	{
-		$this->cookieStub->method('hasCookie')->willReturn(false);
+		$this->cookie->method('hasCookie')->willReturn(false);
 
 		$this->expectException(AuthException::class);
 		$this->expectExceptionMessage('No cookie for autologin was found.');
@@ -77,212 +68,14 @@ class AutoLoginServiceTest extends TestCase
 	}
 
 	#[Group('units')]
-	public function testLoadTokenFromCookieHasInvalidCookie(): void
+	public function testACookieWithoutAValueIsNoToken(): void
 	{
-		$this->cookieStub->method('hasCookie')->willReturn(true);
-		$this->cookieStub->method('getCookie')->willReturn(null);
+		$this->cookie->method('hasCookie')->willReturn(true);
+		$this->cookie->method('getCookie')->willReturn(null);
 
 		$this->expectException(AuthException::class);
 		$this->expectExceptionMessage('No token in cookie cookie found.');
 
 		$this->autoLoginService->loadTokenFromCookie();
 	}
-
-	/**
-	 * @throws DateMalformedStringException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testLoginSilentTokenNotFound(): void
-	{
-		$userTokenServiceMock = $this->createMock(UserTokenService::class);
-		$userTokenServiceMock->expects($this->once())->method('findByTokenForAction')->willReturn(null);
-		$userTokenServiceMock->expects($this->never())->method('deleteExpiredToken');
-
-		$service = $this->buildService($userTokenServiceMock, $this->cookieStub);
-
-		$this->expectException(AuthException::class);
-		$this->expectExceptionMessage('Autologin token not found.');
-
-		$service->loginSilent('some_token');
-	}
-
-	/**
-	 * @throws DateMalformedStringException
-	 * @throws FrameworkException
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testLoginSilentRejectsATokenOfAnotherPurpose(): void
-	{
-		$dbToken = ['UID' => 1, 'purpose' => 'password_reset', 'expires_at' => '2999-01-01 00:00:00', 'used_at' => null];
-
-		$userTokenServiceMock = $this->createMock(UserTokenService::class);
-		$userTokenServiceMock->method('findByTokenForAction')->willReturn($dbToken);
-		$userTokenServiceMock->expects($this->never())->method('useToken');
-		$userTokenServiceMock->expects($this->never())->method('insertToken');
-
-		$service = $this->buildService($userTokenServiceMock, $this->cookieStub);
-
-		$this->expectException(AuthException::class);
-		$this->expectExceptionMessage('Token is no autologin token.');
-
-		$service->loginSilent('reset_token');
-	}
-
-	/**
-	 * @throws DateMalformedStringException
-	 * @throws FrameworkException
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testLoginSilentTokenExpired(): void
-	{
-		$dbToken = ['UID' => 1, 'purpose' => 'autologin', 'expires_at' => '2000-01-01 00:00:00', 'used_at' => null];
-
-		$userTokenServiceMock = $this->createMock(UserTokenService::class);
-		$userTokenServiceMock->method('findByTokenForAction')->willReturn($dbToken);
-		$userTokenServiceMock->expects($this->once())->method('deleteExpiredToken');
-
-		$service = $this->buildService($userTokenServiceMock, $this->cookieStub);
-
-		$this->expectException(AuthException::class);
-		$this->expectExceptionMessage('Autologin expired.');
-
-		$service->loginSilent('expired_token');
-	}
-
-	/**
-	 * @throws DateMalformedStringException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testLoginSilentTokenAlreadyUsed(): void
-	{
-		$dbToken = ['UID' => 5, 'purpose' => 'autologin', 'expires_at' => '2999-01-01 00:00:00', 'used_at' => '2026-01-01 00:00:00'];
-
-		$userTokenServiceMock = $this->createMock(UserTokenService::class);
-		$userTokenServiceMock->method('findByTokenForAction')->willReturn($dbToken);
-		$userTokenServiceMock->expects($this->once())
-			->method('deleteAllUserTokens')
-			->with(5);
-
-		$service = $this->buildService($userTokenServiceMock, $this->cookieStub);
-
-		$this->expectException(AuthException::class);
-		$this->expectExceptionMessage('Cookie manipulation. Contact administrator.');
-
-		$service->loginSilent('used_token');
-	}
-
-	/**
-	 * @throws DateMalformedStringException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testLoginSilentSucceeds(): void
-	{
-		$dbToken = ['UID' => 42, 'purpose' => 'autologin', 'expires_at' => '2999-01-01 00:00:00', 'used_at' => null];
-
-		$userTokenServiceMock = $this->createMock(UserTokenService::class);
-		$userTokenServiceMock->method('findByTokenForAction')->willReturn($dbToken);
-		$userTokenServiceMock->expects($this->once())
-			->method('useToken')
-			->with('valid_token');
-		$userTokenServiceMock->method('generateToken')->willReturn('rotated_token');
-		$userTokenServiceMock->expects($this->once())
-			->method('insertToken')
-			->with(42, 'rotated_token', TokenPurposes::AUTOLOGIN);
-
-		$cookieMock = $this->createMock(Cookie::class);
-		$cookieMock->expects($this->once())
-			->method('createCookie')
-			->with(
-				AutoLoginService::COOKIE_NAME_AUTO_LOGIN,
-				'rotated_token',
-				static::isInstanceOf(DateTime::class)
-			);
-
-		$service = $this->buildService($userTokenServiceMock, $cookieMock);
-
-		static::assertSame(42, $service->loginSilent('valid_token'));
-	}
-
-	/**
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testCreateAutologinCookie(): void
-	{
-		$userTokenServiceMock = $this->createMock(UserTokenService::class);
-		$userTokenServiceMock->method('generateToken')->willReturn('new_token');
-		$userTokenServiceMock->expects($this->once())
-			->method('insertToken')
-			->with(7, 'new_token', TokenPurposes::AUTOLOGIN);
-
-		$cookieMock = $this->createMock(Cookie::class);
-		$cookieMock->expects($this->once())
-			->method('createCookie')
-			->with(
-				AutoLoginService::COOKIE_NAME_AUTO_LOGIN,
-				'new_token',
-				static::isInstanceOf(DateTime::class)
-			);
-
-		$service = $this->buildService($userTokenServiceMock, $cookieMock);
-
-		$service->createAutologinCookie(7);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testRemoveAutoLoginWithToken(): void
-	{
-		$userTokenServiceMock = $this->createMock(UserTokenService::class);
-		$userTokenServiceMock->expects($this->once())
-			->method('deleteByToken')
-			->with('some_token');
-
-		$cookieMock = $this->createMock(Cookie::class);
-		$cookieMock->method('getCookie')->willReturn('some_token');
-		$cookieMock->expects($this->once())
-			->method('deleteCookie')
-			->with(AutoLoginService::COOKIE_NAME_AUTO_LOGIN);
-
-		$service = $this->buildService($userTokenServiceMock, $cookieMock);
-
-		$service->removeAutoLogin();
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testRemoveAutoLoginWithoutToken(): void
-	{
-		$userTokenServiceMock = $this->createMock(UserTokenService::class);
-		$userTokenServiceMock->expects($this->never())->method('deleteByToken');
-
-		$cookieMock = $this->createMock(Cookie::class);
-		$cookieMock->method('getCookie')->willReturn(null);
-		$cookieMock->expects($this->once())
-			->method('deleteCookie')
-			->with(AutoLoginService::COOKIE_NAME_AUTO_LOGIN);
-
-		$service = $this->buildService($userTokenServiceMock, $cookieMock);
-
-		$service->removeAutoLogin();
-	}
-
-	private function buildService(UserTokenService&Stub $userTokenService, Cookie&Stub $cookie): AutoLoginService
-	{
-		return new AutoLoginService($userTokenService, $cookie, $this->loggerStub);
-	}
-
 }

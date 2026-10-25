@@ -29,6 +29,14 @@ use App\Framework\Http\Session;
  */
 class ArraySession extends Session
 {
+	/** how often a new session id was requested: the real one needs a PHP session */
+	public int $regenerations = 0;
+
+	public function regenerateID(): void
+	{
+		$this->regenerations++;
+	}
+
 	public function start(array $options = []): void
 	{
 	}

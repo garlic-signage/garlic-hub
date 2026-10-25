@@ -109,6 +109,8 @@ readonly class AuthMiddleware implements MiddlewareInterface
 		$user = $userEntity->getMain();
 		$this->session->set('user', $user);
 		$this->session->set('locale', $user['locale']);
+		// like the login by password: whoever knew the session id before must not know it now
+		$this->session->regenerateID();
 
 		return true;
 	}

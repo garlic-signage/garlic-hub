@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2024 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -21,321 +21,276 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Auth;
 
-use App\Framework\TemplateEngine\PageResponse;
-use App\Framework\Http\Cookie;
-use App\Framework\Security\CsrfToken;
-use App\Framework\Http\Session;
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Exceptions\UserException;
+use App\Framework\Security\Crypt;
+use App\Framework\Security\CsrfToken;
+use App\Framework\TemplateEngine\PageResponse;
 use App\Modules\Auth\AuthService;
 use App\Modules\Auth\LoginController;
 use App\Shared\User\UserEntity;
+use Defuse\Crypto\Key;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
 use Slim\Flash\Messages;
+use Slim\Psr7\Factory\ServerRequestFactory;
+use Slim\Psr7\Response;
+use Tests\Support\MemorySession;
 
+/**
+ * Session, CSRF token and flash messages are the real ones. The AuthService is a stub which knows one
+ * user (anna / secret). The login with the database is tested in tests/Integration/Modules/Auth.
+ */
 class LoginControllerTest extends TestCase
 {
-	private ServerRequestInterface&Stub $requestStub;
-	private ResponseInterface&MockObject $responseMock;
-	private Session&MockObject $sessionMock;
-	private AuthService&MockObject $authServiceMock;
-	private CsrfToken&Stub $csrfTokenStub;
+	private MemorySession $session;
+	private CsrfToken $csrfToken;
+	private AuthService&Stub $authService;
+	private LoginController $controller;
+	/** @var array<mixed>|\ArrayAccess<string,mixed>|null the session array of the flash messages */
+	private array|\ArrayAccess|null $flashStorage = [];
 
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->requestStub     = $this->createStub(ServerRequestInterface::class);
-		$this->responseMock    = $this->createMock(ResponseInterface::class);
-		$this->sessionMock     = $this->createMock(Session::class);
-		$this->authServiceMock = $this->createMock(AuthService::class);
-		$this->csrfTokenStub   = $this->createStub(CsrfToken::class);
+		$this->session   = new MemorySession();
+		$this->csrfToken = new CsrfToken(new Crypt(Key::createNewRandomKey()), $this->session);
+
+		$this->authService = $this->createStub(AuthService::class);
+		$this->authService->method('login')->willReturnCallback(
+			static fn(string $username, string $password): ?UserEntity => $username === 'anna' && $password === 'secret'
+				? new UserEntity(['UID' => 2, 'username' => 'anna', 'locale' => 'de_DE'], [], [], [], [], [])
+				: null
+		);
+		$this->authService->method('getErrorMessage')->willReturn('Invalid credentials.');
+
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
+
+		$this->controller = new LoginController($this->authService, $this->csrfToken, $this->session, new Messages($this->flashStorage), $translator);
 	}
 
 	/**
-	 * @throws Exception
+	 * @param array<string,mixed> $changes replaces or (null) removes entries of a correct post
 	 */
-	#[Group('units')]
-	public function testShowLoginRendersForm(): void
+	private function login(array $changes = []): ResponseInterface
 	{
-		$translatorMock = $this->createMock(Translator::class);
-		$this->sessionMock->expects($this->never())->method($this->anything());
-
-		$translatorMock->expects($this->exactly(5))->method('translate');
-		$this->authServiceMock->expects($this->never())->method($this->anything());
-
-		$this->responseMock->expects($this->never())->method($this->anything());
-
-		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $this->createStub(Messages::class), $translatorMock);
-		$result = $controller->showLogin($this->requestStub, $this->responseMock);
-
-		static::assertInstanceOf(PageResponse::class, $result);
-		static::assertSame('auth/login', $result->getTemplate());
-	}
-
-	/**
-	 * @throws Exception
-	 * @throws FrameworkException
-	 * @throws \Doctrine\DBAL\Exception|UserException
-	 */
-	#[Group('units')]
-	public function testLoginSuccessfulLogin(): void
-	{
-		$flash = $this->createMock(Messages::class);
-		$userEntity = $this->createStub(UserEntity::class);
-
-		$this->requestStub->method('getParsedBody')->willReturn(['username' => 'testuser', 'password' => 'password', 'csrf_token' => 'token']);
-		$this->authServiceMock->expects($this->once())->method('login')->with('testuser', 'password')->willReturn($userEntity);
-		$flash->expects($this->never())->method('addMessage');
-		$this->sessionMock->expects($this->exactly(2))->method('exists')->willReturnCallback(function ($attribute)
+		$post = ['username' => 'anna', 'password' => 'secret', 'csrf_token' => $this->csrfToken->getToken()];
+		foreach ($changes as $key => $value)
 		{
-			if ($attribute === 'csrf_token')
-				return true;
-			elseif ($attribute === 'oauth_redirect_params')
-				return false;
-			return null;
-		});
-		$this->sessionMock->expects($this->once())->method('get')->with('csrf_token')->willReturn('token');
-		$this->sessionMock->expects($this->exactly(2))->method('set');
+			if ($value === null)
+				unset($post[$key]);
+			else
+				$post[$key] = $value;
+		}
 
-		$main_data = ['locale' => 'kl_KL'];
-		$userEntity->method('getMain')->willReturn($main_data);
-		$this->authServiceMock->expects($this->never())->method('createAutologin');
-
-
-		$this->responseMock->expects($this->once())->method('withHeader')->with('Location', '/')->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')->with(302)->willReturnSelf();
-
-		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $flash, $this->createStub(Translator::class));
-		$result = $controller->login($this->requestStub, $this->responseMock);
-
-		static::assertSame($this->responseMock, $result);
+		return $this->controller->login(new ServerRequestFactory()->createServerRequest('POST', '/login')->withParsedBody($post), new Response());
 	}
 
 	/**
-	 * @throws Exception
-	 * @throws FrameworkException
-	 * @throws \Doctrine\DBAL\Exception|UserException
+	 * @return list<string>
 	 */
-	#[Group('units')]
-	public function testLoginCreateAutologin(): void
+	private function flashErrors(): array
 	{
-		$flash = $this->createMock(Messages::class);
-		$userEntity = $this->createStub(UserEntity::class);
+		/** @var array<string,list<string>> $flash */
+		$flash = is_array($this->flashStorage) ? ($this->flashStorage['slimFlash'] ?? []) : [];
 
-		$this->requestStub->method('getParsedBody')->willReturn([
-			'username' => 'testuser',
-			'password' => 'password',
-			'autologin' => '1',
-			'csrf_token' => 'token'
-		]);
-		$this->authServiceMock->expects($this->once())->method('login')->with('testuser', 'password')->willReturn($userEntity);
-		$flash->expects($this->never())->method('addMessage');
-		$this->sessionMock->expects($this->exactly(2))->method('exists')->willReturnCallback(function ($attribute)
-		{
-			if ($attribute === 'csrf_token')
-				return true;
-			elseif ($attribute === 'oauth_redirect_params')
-				return false;
-			return null;
-		});
-		$this->sessionMock->expects($this->once())->method('get')->with('csrf_token')->willReturn('token');
-		$this->sessionMock->expects($this->exactly(2))->method('set');
+		return $flash['error'] ?? [];
+	}
 
-		$this->authServiceMock->expects($this->once())->method('createAutologin');
-		$main_data = ['locale' => 'kl_KL', 'UID' => 1];
-		$userEntity->method('getMain')->willReturn($main_data);
-
-		$this->responseMock->expects($this->once())->method('withHeader')->with('Location', '/')->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')->with(302)->willReturnSelf();
-
-		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $flash, $this->createStub(Translator::class));
-		$result = $controller->login($this->requestStub, $this->responseMock);
-
-		static::assertSame($this->responseMock, $result);
+	private function assertRedirect(ResponseInterface $response, string $location): void
+	{
+		static::assertSame(302, $response->getStatusCode());
+		static::assertSame($location, $response->getHeaderLine('Location'));
 	}
 
 	/**
-	 * @throws Exception
-	 * @throws FrameworkException
-	 * @throws \Doctrine\DBAL\Exception
-	 * @throws UserException
+	 * @throws \Exception
 	 */
 	#[Group('units')]
-	public function testLoginRedirectsToApiOnSuccessfulLogin(): void
+	public function testTheLoginPageCarriesTheCsrfTokenOfTheSession(): void
 	{
-		$flash = $this->createMock(Messages::class);
-		$userEntity = $this->createStub(UserEntity::class);
+		$response = $this->controller->showLogin(new ServerRequestFactory()->createServerRequest('GET', '/login'), new Response());
 
-		$this->requestStub->method('getParsedBody')->willReturn(['username' => 'testuser', 'password' => 'password', 'csrf_token' => 'token']);
-		$this->authServiceMock->expects($this->once())->method('login')->with('testuser', 'password')->willReturn($userEntity);
-		$flash->expects($this->never())->method('addMessage');
+		static::assertInstanceOf(PageResponse::class, $response);
+		static::assertSame('auth/login', $response->getTemplate());
+		$data = $response->getTemplateData();
+		static::assertSame($this->session->get('csrf_token'), $data['CSRF_TOKEN']);
+		static::assertNotSame('', $data['CSRF_TOKEN']);
+		static::assertSame('login.login', $data['LANG_PAGE_HEADER']);
+		static::assertSame('main.username / main.email', $data['LANG_USERNAME']);
+		static::assertSame('login.password', $data['LANG_PASSWORD']);
+		static::assertSame('login.autologin', $data['LANG_AUTOLOGIN']);
+	}
 
-		$this->sessionMock->expects($this->exactly(2))->method('exists')->willReturnCallback(function ($attribute)
-		{
-			if ($attribute === 'csrf_token')
-				return true;
-			elseif ($attribute === 'oauth_redirect_params')
-				return true;
-			return null;
-		});
+	#[Group('units')]
+	public function testALoginPutsTheUserIntoTheSessionWithANewSessionId(): void
+	{
+		$tokenBefore = $this->csrfToken->getToken();
 
-		$this->sessionMock->expects($this->exactly(2))->method('get')->willReturnCallback(function ($attribute)
-		{
-			if ($attribute === 'csrf_token')
-				return 'token';
-			elseif ($attribute === 'oauth_redirect_params')
-				return ['some' => 'stuff'];
-			return null;
-		});
-		$this->sessionMock->expects($this->once())->method('delete')->with('oauth_redirect_params');
+		$response = $this->login();
 
-		$main_data = ['locale' => 'kl_KL'];
-		$userEntity->method('getMain')->willReturn($main_data);
+		$this->assertRedirect($response, '/');
+		static::assertSame(['UID' => 2, 'username' => 'anna', 'locale' => 'de_DE'], $this->session->get('user'));
+		static::assertSame('de_DE', $this->session->get('locale'));
+		static::assertSame(1, $this->session->regenerations);
+		static::assertNotSame($tokenBefore, $this->session->get('csrf_token'), 'The token of the login page is used up.');
+		static::assertSame([], $this->flashErrors());
+	}
 
-
-		$this->responseMock->expects($this->once())->method('withHeader')->with('Location', '/api/authorize?some=stuff')->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')->with(302)->willReturnSelf();
-
-		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $flash, $this->createStub(Translator::class));
-		$result = $controller->login($this->requestStub, $this->responseMock);
-
-		static::assertSame($this->responseMock, $result);
+	#[Group('units')]
+	public function testALoginWithTheRememberMeBoxWorksAsWell(): void
+	{
+		$this->assertRedirect($this->login(['autologin' => 'on']), '/');
+		static::assertSame(2, $this->session->get('user')['UID'] ?? null);
 	}
 
 	/**
-	 * @throws Exception
-	 * @throws FrameworkException
-	 * @throws \Doctrine\DBAL\Exception
-	 * @throws UserException
+	 * @return array<string,array{array<string,mixed>}>
 	 */
-	#[Group('units')]
-	public function testLoginRedirectsToApiOnFailedLogin(): void
+	public static function wrongCredentials(): array
 	{
-		$flash = $this->createMock(Messages::class);
-		$userEntity = $this->createStub(UserEntity::class);
-
-		$main_data = ['locale' => 'kl_KL'];
-		$userEntity->method('getMain')->willReturn($main_data);
-
-		$this->requestStub->method('getParsedBody')->willReturn(['username' => 'testuser', 'password' => 'password', 'csrf_token' => 'token']);
-		$this->authServiceMock->expects($this->once())->method('login')->with('testuser', 'password')->willReturn($userEntity);
-		$flash->expects($this->never())->method('addMessage');
-
-		$this->sessionMock->expects($this->exactly(2))->method('exists')->willReturnCallback(function ($attribute)
-		{
-			if ($attribute === 'csrf_token')
-				return true;
-			elseif ($attribute === 'oauth_redirect_params')
-				return true;
-			return null;
-		});
-
-		$this->sessionMock->expects($this->exactly(2))->method('get')->willReturnCallback(function ($attribute)
-		{
-			if ($attribute === 'csrf_token')
-				return 'token';
-			elseif ($attribute === 'oauth_redirect_params')
-				return '';
-			return null;
-		});
-		$this->sessionMock->expects($this->never())->method('delete');
-
-		$this->responseMock->expects($this->once())->method('withHeader')->with('Location', '/')->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')->with(302)->willReturnSelf();
-
-		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $flash, $this->createStub(Translator::class));
-		$result = $controller->login($this->requestStub, $this->responseMock);
-
-		static::assertSame($this->responseMock, $result);
-	}
-
-
-	/**
-	 * @throws Exception
-	 * @throws FrameworkException
-	 * @throws \Doctrine\DBAL\Exception|UserException
-	 */
-	#[Group('units')]
-	public function testLoginRedirectsToLoginOnInvalidCredentials(): void
-	{
-		$flash      = $this->createMock(Messages::class);
-
-		$this->requestStub->method('getParsedBody')->willReturn(['username' => 'testuser', 'password' => 'wrong_password', 'csrf_token' => 'token']);
-		$this->sessionMock->expects($this->once())->method('exists')->with('csrf_token')->willReturn(true);
-		$this->sessionMock->expects($this->once())->method('get')->with('csrf_token')->willReturn('token');
-
-		$this->authServiceMock->expects($this->once())->method('login')
-			->with('testuser', 'wrong_password')
-			->willReturn(null);
-		$this->authServiceMock->expects($this->once())->method('getErrorMessage')->willReturn('Invalid credentials.');
-
-		$flash->expects($this->once())->method('addMessage')->with('error', 'Invalid credentials.');
-
-		$this->responseMock->expects($this->once())->method('withHeader')->with('Location', '/login')->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')->with(302)->willReturnSelf();
-
-		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $flash, $this->createStub(Translator::class));
-		$result = $controller->login($this->requestStub, $this->responseMock);
-
-		static::assertSame($this->responseMock, $result);
+		return [
+			'wrong password'     => [['password' => 'wrong']],
+			'unknown user'       => [['username' => 'nobody']],
+			'password missing'   => [['password' => null]],
+			'user missing'       => [['username' => null]],
+			'both missing'       => [['username' => null, 'password' => null]],
+			'user is an array'   => [['username' => ['anna']]],
+			'password is array'  => [['password' => ['secret']]],
+			'user is a number'   => [['username' => 5]],
+		];
 	}
 
 	/**
-	 * @throws Exception
-	 * @throws FrameworkException
-	 * @throws \Doctrine\DBAL\Exception|UserException
+	 * A credential which is missing or has the wrong shape is a wrong credential, not an error of the page.
+	 *
+	 * @param array<string,mixed> $changes
 	 */
 	#[Group('units')]
-	public function testLoginRedirectsToLoginOnTokenMismatch(): void
+	#[DataProvider('wrongCredentials')]
+	public function testWrongCredentialsLeadBackToTheLoginWithTheMessage(array $changes): void
 	{
-		$flash      = $this->createMock(Messages::class);
+		$response = $this->login($changes);
 
-		$this->requestStub->method('getParsedBody')->willReturn(['username' => 'testuser', 'password' => 'wrong_password', 'csrf_token' => 'token1']);
-		$this->sessionMock->expects($this->once())->method('exists')->with('csrf_token')->willReturn(true);
-		$this->sessionMock->expects($this->once())->method('get')->with('csrf_token')->willReturn('token');
-
-		$flash->expects($this->once())->method('addMessage')->with('error', 'Invalid CSRF token');
-		$this->authServiceMock->expects($this->never())->method('login');
-
-		$this->responseMock->expects($this->once())->method('withHeader')->with('Location', '/login')->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')->with(302)->willReturnSelf();
-
-		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $flash, $this->createStub(Translator::class));
-		$result = $controller->login($this->requestStub, $this->responseMock);
-
-		static::assertSame($this->responseMock, $result);
+		$this->assertRedirect($response, '/login');
+		static::assertSame(['Invalid credentials.'], $this->flashErrors());
+		static::assertNull($this->session->get('user'));
+		static::assertSame(0, $this->session->regenerations);
 	}
 
+	/**
+	 * @return array<string,array{array<string,mixed>}>
+	 */
+	public static function wrongCsrfTokens(): array
+	{
+		return [
+			'wrong'    => [['csrf_token' => 'forged']],
+			'empty'    => [['csrf_token' => '']],
+			'missing'  => [['csrf_token' => null]],
+			'an array' => [['csrf_token' => ['x']]],
+		];
+	}
 
 	/**
-	 * @return void
-	 * @throws FrameworkException
-	 * @throws Exception
+	 * With the right password: without the token of the page nobody is logged in.
+	 *
+	 * @param array<string,mixed> $changes
 	 */
 	#[Group('units')]
-	public function testLogoutRedirectsToLogin(): void
+	#[DataProvider('wrongCsrfTokens')]
+	public function testAWrongCsrfTokenIsRefusedEvenWithTheRightPassword(array $changes): void
 	{
-		$this->sessionMock->expects($this->once())->method('get')->with('user')->willReturn(['UID' => 88]);
-		$this->sessionMock->expects($this->once())->method('clear');
-		$this->responseMock->expects($this->once())->method('withHeader')->with('Location', '/login')->willReturnSelf();
-		$this->responseMock->expects($this->once())->method('withStatus')->with(302)->willReturnSelf();
+		$this->csrfToken->getToken();
 
-		$this->authServiceMock->expects($this->once())->method('logout');
-		$this->sessionMock->expects($this->once())->method('regenerateID');
+		$response = $this->login($changes);
 
-		$controller = new LoginController($this->authServiceMock, $this->csrfTokenStub, $this->sessionMock, $this->createStub(Messages::class), $this->createStub(Translator::class));
-		$result = $controller->logout($this->requestStub, $this->responseMock);
+		$this->assertRedirect($response, '/login');
+		static::assertSame(['Invalid CSRF token'], $this->flashErrors());
+		static::assertNull($this->session->get('user'));
+	}
 
-		static::assertSame($this->responseMock, $result);
+	/**
+	 * No token in the session (e.g. the session ran out): an empty token in the post must not match it.
+	 */
+	#[Group('units')]
+	public function testWithoutATokenInTheSessionNothingMatches(): void
+	{
+		$post = ['username' => 'anna', 'password' => 'secret', 'csrf_token' => ''];
+
+		$response = $this->controller->login(new ServerRequestFactory()->createServerRequest('POST', '/login')->withParsedBody($post), new Response());
+
+		$this->assertRedirect($response, '/login');
+		static::assertSame(['Invalid CSRF token'], $this->flashErrors());
+	}
+
+	#[Group('units')]
+	public function testAnEmptyTokenInTheSessionMatchesNothing(): void
+	{
+		$this->session->set('csrf_token', '');
+		$post = ['username' => 'anna', 'password' => 'secret', 'csrf_token' => ''];
+
+		$response = $this->controller->login(new ServerRequestFactory()->createServerRequest('POST', '/login')->withParsedBody($post), new Response());
+
+		$this->assertRedirect($response, '/login');
+		static::assertNull($this->session->get('user'));
+	}
+
+	#[Group('units')]
+	public function testAPostWithoutAnyBodyIsRefused(): void
+	{
+		$response = $this->controller->login(new ServerRequestFactory()->createServerRequest('POST', '/login'), new Response());
+
+		$this->assertRedirect($response, '/login');
+		static::assertSame(['Invalid CSRF token'], $this->flashErrors());
+	}
+
+	/**
+	 * The page which started the OAuth login is continued after it, with the parameters it had.
+	 */
+	#[Group('units')]
+	public function testALoginContinuesTheOauthRequest(): void
+	{
+		$this->session->set('oauth_redirect_params', ['client_id' => 'abc', 'state' => 'x y&z=1']);
+
+		$response = $this->login();
+
+		$this->assertRedirect($response, '/api/authorize?client_id=abc&state=x+y%26z%3D1');
+		static::assertFalse($this->session->exists('oauth_redirect_params'), 'The request is continued once.');
+	}
+
+	#[Group('units')]
+	public function testUnreadableOauthParametersAreIgnored(): void
+	{
+		$this->session->set('oauth_redirect_params', 'broken');
+
+		$this->assertRedirect($this->login(), '/');
+	}
+
+	#[Group('units')]
+	public function testALogoutEndsTheSessionAndGivesANewToken(): void
+	{
+		$this->session->set('user', ['UID' => 2, 'username' => 'anna', 'locale' => 'de_DE']);
+		$this->session->set('locale', 'de_DE');
+		$tokenBefore = $this->csrfToken->getToken();
+
+		$response = $this->controller->logout(new ServerRequestFactory()->createServerRequest('GET', '/logout'), new Response());
+
+		$this->assertRedirect($response, '/login');
+		static::assertNull($this->session->get('user'));
+		static::assertNull($this->session->get('locale'));
+		static::assertSame(1, $this->session->regenerations);
+		static::assertNotSame('', $this->session->get('csrf_token'));
+		static::assertNotSame($tokenBefore, $this->session->get('csrf_token'));
+	}
+
+	#[Group('units')]
+	public function testALogoutWithoutALoginWorks(): void
+	{
+		$response = $this->controller->logout(new ServerRequestFactory()->createServerRequest('GET', '/logout'), new Response());
+
+		$this->assertRedirect($response, '/login');
 	}
 }

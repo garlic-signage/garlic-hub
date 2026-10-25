@@ -24,31 +24,18 @@ namespace Tests\Unit\Modules\Auth;
 use App\Modules\Auth\LoginThrottle;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\CacheInterface;
 use Psr\SimpleCache\InvalidArgumentException;
+use Tests\Support\ArrayCache;
 
 class LoginThrottleTest extends TestCase
 {
+	private ArrayCache $cache;
 	private LoginThrottle $throttle;
 
 	protected function setUp(): void
 	{
-		$this->throttle = new LoginThrottle(new class implements CacheInterface {
-			/** @var array<string,mixed> */
-			private array $store = [];
-
-			public function get(string $key, mixed $default = null): mixed { return $this->store[$key] ?? $default; }
-			public function set(string $key, mixed $value, \DateInterval|int|null $ttl = null): bool { $this->store[$key] = $value; return true; }
-			public function delete(string $key): bool { unset($this->store[$key]); return true; }
-			public function clear(): bool { $this->store = []; return true; }
-			/** @param iterable<string> $keys @return iterable<string,mixed> */
-			public function getMultiple(iterable $keys, mixed $default = null): iterable { return []; }
-			/** @param iterable<string,mixed> $values */
-			public function setMultiple(iterable $values, \DateInterval|int|null $ttl = null): bool { return true; }
-			/** @param iterable<string> $keys */
-			public function deleteMultiple(iterable $keys): bool { return true; }
-			public function has(string $key): bool { return isset($this->store[$key]); }
-		});
+		$this->cache    = new ArrayCache();
+		$this->throttle = new LoginThrottle($this->cache);
 	}
 
 	/**
@@ -123,5 +110,56 @@ class LoginThrottleTest extends TestCase
 		$this->throttle->reset('admin', '10.0.0.1');
 
 		static::assertFalse($this->throttle->isBlocked('admin', '10.0.0.1'));
+	}
+
+	/**
+	 * @throws InvalidArgumentException
+	 */
+	#[Group('units')]
+	public function testTheLockEndsAfterTheWindow(): void
+	{
+		for ($i = 0; $i < LoginThrottle::MAX_FAILURES_PER_USER_AND_IP; $i++)
+			$this->throttle->registerFailure('admin', '10.0.0.1');
+
+		$this->cache->advance(LoginThrottle::LOCK_WINDOW_SECONDS - 1);
+		static::assertTrue($this->throttle->isBlocked('admin', '10.0.0.1'));
+
+		$this->cache->advance(2);
+		static::assertFalse($this->throttle->isBlocked('admin', '10.0.0.1'));
+	}
+
+	/**
+	 * Every failure restarts the window: whoever keeps guessing stays locked.
+	 *
+	 * @throws InvalidArgumentException
+	 */
+	#[Group('units')]
+	public function testAFurtherFailureRestartsTheWindow(): void
+	{
+		for ($i = 0; $i < LoginThrottle::MAX_FAILURES_PER_USER_AND_IP; $i++)
+			$this->throttle->registerFailure('admin', '10.0.0.1');
+		$this->cache->advance(LoginThrottle::LOCK_WINDOW_SECONDS - 10);
+
+		$this->throttle->registerFailure('admin', '10.0.0.1');
+		$this->cache->advance(LoginThrottle::LOCK_WINDOW_SECONDS - 10);
+
+		static::assertTrue($this->throttle->isBlocked('admin', '10.0.0.1'));
+	}
+
+	/**
+	 * A right password frees the user, but not the address: a guesser who knows one password
+	 * must not reset the counter of the address with it.
+	 *
+	 * @throws InvalidArgumentException
+	 */
+	#[Group('units')]
+	public function testResetKeepsTheCounterOfTheAddress(): void
+	{
+		for ($i = 0; $i < LoginThrottle::MAX_FAILURES_PER_IP; $i++)
+			$this->throttle->registerFailure('user' . $i, '10.0.0.1');
+
+		$this->throttle->reset('user0', '10.0.0.1');
+
+		static::assertTrue($this->throttle->isBlocked('user0', '10.0.0.1'));
 	}
 }

@@ -192,6 +192,72 @@ class AutoLoginTest extends ContainerTestCase
 		static::assertNull($this->loginByCookie());
 	}
 
+	/**
+	 * The rejection of an expired token cleans up: no expired token stays in the table, the valid ones do.
+	 */
+	public function testRejectingAnExpiredTokenDeletesTheExpiredTokens(): void
+	{
+		$this->autoLoginFor(10)->createAutologinCookie(10);
+		$this->connection->executeStatement("UPDATE user_tokens SET expires_at = '2000-01-01 00:00:00'");
+		$expired = (string) $this->cookie->getCookie(AutoLoginService::COOKIE_NAME_AUTO_LOGIN);
+		$this->autoLoginFor(14)->createAutologinCookie(14);
+		$valid = (string) $this->cookie->getCookie(AutoLoginService::COOKIE_NAME_AUTO_LOGIN);
+		$_COOKIE[AutoLoginService::COOKIE_NAME_AUTO_LOGIN] = $expired;
+
+		static::assertNull($this->loginByCookie());
+
+		static::assertSame([14], array_map('intval', $this->connection->fetchFirstColumn('SELECT UID FROM user_tokens')));
+		$_COOKIE[AutoLoginService::COOKIE_NAME_AUTO_LOGIN] = $valid;
+		static::assertSame(14, $this->loginByCookie()?->getMain()['UID']);
+	}
+
+	/**
+	 * The attempt with a cookie which holds the token of an email link must not use up the link.
+	 */
+	#[DataProvider('otherPurposes')]
+	public function testTheTokenOfAnotherPurposeStaysUsable(TokenPurposes $purpose): void
+	{
+		$token = $this->tokenService->generateToken();
+		$this->tokenService->insertToken(10, $token, $purpose);
+		$_COOKIE[AutoLoginService::COOKIE_NAME_AUTO_LOGIN] = $token;
+
+		$this->loginByCookie();
+
+		static::assertNotNull($this->tokenService->findByToken($token));
+	}
+
+	/**
+	 * @return array<string,array{int}>
+	 */
+	public static function usersWhoMayNotLogin(): array
+	{
+		return ['deleted' => [11], 'blocked' => [12], 'not verified' => [13]];
+	}
+
+	/**
+	 * A user who may not log in loses the cookie and its token: it would be tried at every request.
+	 */
+	#[DataProvider('usersWhoMayNotLogin')]
+	public function testTheCookieOfAUserWhoMayNotLoginIsTakenAway(int $UID): void
+	{
+		$this->autoLoginFor($UID)->createAutologinCookie($UID);
+
+		static::assertNull($this->loginByCookie());
+
+		static::assertFalse($this->cookie->hasCookie(AutoLoginService::COOKIE_NAME_AUTO_LOGIN));
+		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_tokens WHERE UID = ? AND purpose = ? AND used_at IS NULL', [$UID, TokenPurposes::AUTOLOGIN->value]));
+	}
+
+	public function testALogoutWithoutACookieTouchesNoTokens(): void
+	{
+		$this->autoLoginFor(14)->createAutologinCookie(14);
+		$this->cookie->deleteCookie(AutoLoginService::COOKIE_NAME_AUTO_LOGIN);
+
+		$this->newAuthService()->logout(['UID' => 10, 'username' => 'regular']);
+
+		static::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_tokens'));
+	}
+
 	public function testLoginByCookieCountsTheLogin(): void
 	{
 		$this->autoLoginFor(10)->createAutologinCookie(10);

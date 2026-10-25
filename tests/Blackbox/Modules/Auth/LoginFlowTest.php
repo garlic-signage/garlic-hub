@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Blackbox\Modules\Auth;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Blackbox\Support\BlackboxTestCase;
 
@@ -221,5 +222,89 @@ class LoginFlowTest extends BlackboxTestCase
 		$response = $thief->request('GET', '/player', ['headers' => ['Cookie' => 'UserLogin=' . $stolen]]);
 
 		static::assertSame('/login', $response->getHeaderLine('Location'));
+	}
+
+	/**
+	 * @return array<string,array{array<string,mixed>}>
+	 */
+	public static function brokenLoginPosts(): array
+	{
+		return [
+			'no password'       => [['username' => 'anna']],
+			'no user'           => [['password' => self::PASSWORD]],
+			'nothing'           => [[]],
+			'user is an array'  => [['username' => ['anna'], 'password' => self::PASSWORD]],
+			'password is array' => [['username' => 'anna', 'password' => [self::PASSWORD]]],
+		];
+	}
+
+	/**
+	 * A post a browser form never sends is a wrong login, not an error of the server.
+	 *
+	 * @param array<string,mixed> $fields
+	 */
+	#[DataProvider('brokenLoginPosts')]
+	public function testAPostWithMissingOrBrokenFieldsIsAWrongLogin(array $fields): void
+	{
+		$browser = $this->browser();
+		$token   = $browser->csrfToken('/login');
+
+		$response = $browser->post('/login', $fields + ['csrf_token' => $token]);
+
+		static::assertSame(302, $response->getStatusCode());
+		static::assertSame('/login', $response->getHeaderLine('Location'));
+		static::assertStringContainsString('Invalid credentials.', (string) $browser->get('/login')->getBody());
+		static::assertSame('/login', $browser->get('/player')->getHeaderLine('Location'));
+	}
+
+	/**
+	 * The remember me cookie of an earlier visit does not work any more, but it is still in the browser:
+	 * the login with the password has to work anyway.
+	 */
+	public function testAnOutdatedRememberMeCookieDoesNotKeepTheUserFromLoggingIn(): void
+	{
+		$browser = $this->browser();
+		$browser->login('anna', self::PASSWORD, true);
+		$browser->forgetCookie('GhSid');
+		$this->connection->executeStatement("UPDATE user_tokens SET expires_at = '2000-01-01 00:00:00'");
+
+		$response = $browser->login('anna', self::PASSWORD);
+
+		static::assertSame('/', $response->getHeaderLine('Location'));
+		static::assertSame(200, $browser->get('/player')->getStatusCode());
+	}
+
+	public function testWithoutTheBoxNoRememberMeCookieIsSet(): void
+	{
+		$browser = $this->browser();
+
+		$response = $browser->login('anna', self::PASSWORD);
+
+		static::assertStringNotContainsString('UserLogin=', implode(' ', $response->getHeader('Set-Cookie')));
+		static::assertNull($browser->cookie('UserLogin'));
+		static::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM user_tokens WHERE purpose = 'autologin'"));
+	}
+
+	/**
+	 * The login by cookie gets a new session id, like the login by password: a session id which somebody
+	 * has planted before must not be the one of the logged in user.
+	 */
+	public function testTheLoginByCookieChangesTheSessionId(): void
+	{
+		$victim = $this->browser();
+		$victim->login('anna', self::PASSWORD, true);
+		$remember = (string) $victim->cookie('UserLogin')?->getValue();
+
+		$planting = $this->browser();
+		$planting->get('/login');
+		$planted = (string) $planting->cookie('GhSid')?->getValue();
+		static::assertNotSame('', $planted);
+
+		$response = $this->browser()->request('GET', '/player', ['headers' => ['Cookie' => 'GhSid=' . $planted . '; UserLogin=' . $remember]]);
+
+		static::assertSame(200, $response->getStatusCode());
+		$cookies = implode(' ', $response->getHeader('Set-Cookie'));
+		static::assertStringContainsString('GhSid=', $cookies);
+		static::assertStringNotContainsString('GhSid=' . $planted, $cookies);
 	}
 }

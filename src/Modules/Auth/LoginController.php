@@ -95,13 +95,13 @@ readonly class LoginController
 	public function login(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
 		$params   = (array) $request->getParsedBody();
-		// no need to sanitize here, as we are executing prepared statements in DB
-		$username = $params['username'] ?? null;
-		$password = $params['password'] ?? null;
+		// no need to sanitize here, as we are executing prepared statements in DB.
+		// A field which is missing or sent as array (username[]=x) is no valid credential, not an error of the page.
+		$username  = $this->textOf($params, 'username');
+		$password  = $this->textOf($params, 'password');
+		$csrfToken = $this->textOf($params, 'csrf_token');
 
-		$csrfToken = $params['csrf_token'] ?? null;
-
-		if(!$this->session->exists('csrf_token') || $this->session->get('csrf_token') !== $csrfToken)
+		if (!$this->csrfToken->validateToken($csrfToken))
 		{
 			$this->flash->addMessage('error', 'Invalid CSRF token');
 			return $this->redirect($response, '/login');
@@ -156,6 +156,14 @@ readonly class LoginController
 		$this->csrfToken->generateToken();
 
 		return $this->redirect($response, '/login');
+	}
+
+	/**
+	 * @param array<mixed> $params
+	 */
+	private function textOf(array $params, string $name): string
+	{
+		return is_string($params[$name] ?? null) ? $params[$name] : '';
 	}
 
 	private function redirect(ResponseInterface $response, string $route = '/'): ResponseInterface

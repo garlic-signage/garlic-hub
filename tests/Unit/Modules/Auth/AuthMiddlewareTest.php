@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -21,250 +21,271 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Auth;
 
-use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Http\Cookie;
-use App\Framework\Http\Session;
 use App\Modules\Auth\AuthMiddleware;
 use App\Modules\Auth\AuthService;
 use App\Modules\Auth\AutoLoginService;
 use App\Shared\User\UserEntity;
-use DateMalformedStringException;
-use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Slim\Psr7\Factory\ServerRequestFactory;
 use Slim\Psr7\Response;
+use Tests\Support\MemorySession;
 
+/**
+ * Which paths a guest may open, what he gets instead, and the login by the remember me cookie.
+ * The session and the cookie are the real ones, the AuthService is a stub with the answer of the login by cookie.
+ * With the real service and the database the same is tested in tests/Integration/Modules/Auth.
+ */
 class AuthMiddlewareTest extends TestCase
 {
-	private AuthService&MockObject $authServiceMock;
-	private Session&MockObject $sessionMock;
-	private Cookie&Stub $cookieStub;
-	private RequestHandlerInterface&MockObject $handlerMock;
-	private ResponseInterface $handledResponse;
+	private AuthService&Stub $authService;
+	private MemorySession $session;
 	private AuthMiddleware $middleware;
+	private RequestHandlerInterface $handler;
 
-	/**
-	 * @throws \PHPUnit\Framework\MockObject\Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->authServiceMock = $this->createMock(AuthService::class);
-		$this->sessionMock     = $this->createMock(Session::class);
-		$this->cookieStub      = $this->createStub(Cookie::class);
-		$this->handlerMock     = $this->createMock(RequestHandlerInterface::class);
-		$this->handledResponse = new Response();
-
-		$this->middleware = new AuthMiddleware($this->authServiceMock, $this->sessionMock, $this->cookieStub);
+		$_COOKIE = [];
+		$this->authService = $this->createStub(AuthService::class);
+		$this->session     = new MemorySession();
+		$this->handler     = new class implements RequestHandlerInterface {
+			public function handle(ServerRequestInterface $request): ResponseInterface
+			{
+				return new Response(200)->withHeader('X-Handled', $request->getUri()->getPath());
+			}
+		};
+		$this->middleware = new AuthMiddleware($this->authService, $this->session, new Cookie());
 	}
 
-	/**
-	 * @return list<array{string}>
-	 */
-	public static function providePublicPaths(): array
+	protected function tearDown(): void
 	{
-		return [['/create-initial'], ['/set-locales/de_DE'], ['/smil-index'], ['/force-password'], ['/legals']];
-	}
-
-	/**
-	 * @throws FrameworkException
-	 * @throws Exception
-	 * @throws DateMalformedStringException
-	 */
-	#[DataProvider('providePublicPaths')] #[Group('units')]
-	public function testPublicSectionsNeedNoLogin(string $path): void
-	{
-		$this->sessionMock->expects($this->never())->method($this->anything());
-		$this->authServiceMock->expects($this->never())->method($this->anything());
-		$this->expectHandled();
-
-		static::assertSame($this->handledResponse, $this->process($path));
-	}
-
-	/**
-	 * @throws FrameworkException
-	 * @throws Exception
-	 * @throws DateMalformedStringException
-	 */
-	#[Group('units')]
-	public function testLoggedInUserPasses(): void
-	{
-		$this->sessionMock->expects($this->once())->method('exists')->with('user')->willReturn(true);
-		$this->authServiceMock->expects($this->never())->method('loginByCookie');
-		$this->expectHandled();
-
-		static::assertSame($this->handledResponse, $this->process('/playlists'));
-	}
-
-	/**
-	 * @throws FrameworkException
-	 * @throws Exception
-	 * @throws DateMalformedStringException
-	 */
-	#[Group('units')]
-	public function testGuestIsRedirectedToLogin(): void
-	{
-		$this->expectGuestWithoutCookie();
-		$this->handlerMock->expects($this->never())->method('handle');
-
-		$response = $this->process('/playlists');
-
-		static::assertSame(302, $response->getStatusCode());
-		static::assertSame('/login', $response->getHeaderLine('Location'));
-	}
-
-	/**
-	 * @throws FrameworkException
-	 * @throws Exception
-	 * @throws DateMalformedStringException
-	 */
-	#[Group('units')]
-	public function testGuestGetsUnauthorizedJsonForAsync(): void
-	{
-		$this->expectGuestWithoutCookie();
-		$this->handlerMock->expects($this->never())->method('handle');
-
-		$response = $this->process('/async/playlists');
-
-		static::assertSame(401, $response->getStatusCode());
-		static::assertSame('application/json', $response->getHeaderLine('Content-Type'));
-		static::assertSame(['success' => false, 'message' => 'Unauthorized access. Please log in first.'],
-			json_decode((string) $response->getBody(), true));
-	}
-
-	/**
-	 * @throws FrameworkException
-	 * @throws Exception
-	 * @throws DateMalformedStringException
-	 */
-	#[Group('units')]
-	public function testGuestGetsUnauthorizedForJsonAcceptHeader(): void
-	{
-		$this->expectGuestWithoutCookie();
-		$this->handlerMock->expects($this->never())->method('handle');
-
-		$response = $this->process('/playlists', ['Accept' => 'application/json']);
-
-		static::assertSame(401, $response->getStatusCode());
-	}
-
-	/**
-	 * @throws FrameworkException
-	 * @throws Exception
-	 * @throws DateMalformedStringException
-	 */
-	#[Group('units')]
-	public function testAutoLoginCookieLogsInAndFillsSession(): void
-	{
-		$this->sessionMock->method('exists')->willReturn(false);
-		$this->expectCookieLogin();
-		$this->expectHandled();
-
-		static::assertSame($this->handledResponse, $this->process('/playlists'));
-	}
-
-	/**
-	 * @throws FrameworkException
-	 * @throws Exception
-	 * @throws DateMalformedStringException
-	 */
-	#[Group('units')]
-	public function testInvalidAutoLoginCookieRedirectsToLogin(): void
-	{
-		$this->sessionMock->method('exists')->willReturn(false);
-		$this->sessionMock->expects($this->never())->method('set');
-		$this->cookieStub->method('hasCookie')
-			->willReturnCallback(static fn(string $name): bool => $name === AutoLoginService::COOKIE_NAME_AUTO_LOGIN);
-		$this->authServiceMock->expects($this->once())->method('loginByCookie')->willReturn(null);
-		$this->handlerMock->expects($this->never())->method('handle');
-
-		static::assertSame('/login', $this->process('/playlists')->getHeaderLine('Location'));
-	}
-
-	/**
-	 * @throws FrameworkException
-	 * @throws Exception
-	 * @throws DateMalformedStringException
-	 */
-	#[Group('units')]
-	public function testLoginPageIsShownToGuests(): void
-	{
-		$this->expectGuestWithoutCookie();
-		$this->expectHandled();
-
-		static::assertSame($this->handledResponse, $this->process('/login'));
-	}
-
-	/**
-	 * @throws FrameworkException
-	 * @throws Exception
-	 * @throws DateMalformedStringException
-	 */
-	#[Group('units')]
-	public function testLoginPageRedirectsLoggedInUsersHome(): void
-	{
-		$this->sessionMock->method('exists')->willReturn(false);
-		$this->expectCookieLogin();
-		$this->handlerMock->expects($this->never())->method('handle');
-
-		$response = $this->process('/login');
-
-		static::assertSame(302, $response->getStatusCode());
-		static::assertSame('/', $response->getHeaderLine('Location'));
+		$_COOKIE = [];
+		parent::tearDown();
 	}
 
 	/**
 	 * @param array<string,string> $headers
-	 * @throws FrameworkException
-	 * @throws Exception
-	 * @throws DateMalformedStringException
 	 */
-	private function process(string $path, array $headers = []): ResponseInterface
+	private function process(string $path, array $headers = [], string $method = 'GET'): ResponseInterface
 	{
-		$request = new ServerRequestFactory()->createServerRequest('GET', $path);
+		$request = new ServerRequestFactory()->createServerRequest($method, $path);
 		foreach ($headers as $name => $value)
-		{
 			$request = $request->withHeader($name, $value);
-		}
 
-		return $this->middleware->process($request, $this->handlerMock);
+		return $this->middleware->process($request, $this->handler);
 	}
 
-	private function expectGuestWithoutCookie(): void
+	private function assertHandled(ResponseInterface $response, string $path): void
 	{
-		$this->sessionMock->expects($this->once())->method('exists')->with('user')->willReturn(false);
-		$this->cookieStub->method('hasCookie')->willReturn(false);
-		$this->authServiceMock->expects($this->never())->method('loginByCookie');
+		static::assertSame(200, $response->getStatusCode());
+		static::assertSame($path, $response->getHeaderLine('X-Handled'));
 	}
 
-	private function expectHandled(): void
+	private function assertRedirect(ResponseInterface $response, string $location): void
 	{
-		$this->handlerMock->expects($this->once())->method('handle')->willReturn($this->handledResponse);
+		static::assertSame(302, $response->getStatusCode());
+		static::assertSame($location, $response->getHeaderLine('Location'));
+		static::assertFalse($response->hasHeader('X-Handled'));
 	}
 
-	private function expectCookieLogin(): void
+	/**
+	 * The cookie of a user who is known: the login by cookie answers with him.
+	 */
+	private function rememberMeCookieOf(int $UID, string $locale = 'en_US'): void
 	{
-		$userEntityStub = $this->createStub(UserEntity::class);
-		$userEntityStub->method('getMain')->willReturn(['UID' => 1, 'locale' => 'en_US']);
-		$this->cookieStub->method('hasCookie')
-			->willReturnCallback(static fn(string $name): bool => $name === AutoLoginService::COOKIE_NAME_AUTO_LOGIN);
-		$this->authServiceMock->expects($this->once())->method('loginByCookie')->willReturn($userEntityStub);
+		$_COOKIE[AutoLoginService::COOKIE_NAME_AUTO_LOGIN] = 'cookie-token';
+		$this->authService->method('loginByCookie')->willReturn(
+			new UserEntity(['UID' => $UID, 'username' => 'user', 'locale' => $locale], [], [], [], [], [])
+		);
+	}
 
-		$this->sessionMock->expects($this->exactly(2))->method('set')
-			->willReturnCallback(function (string $key, string|array $value): void
-			{
-				match ($key)
-				{
-					'user'   => static::assertSame(['UID' => 1, 'locale' => 'en_US'], $value),
-					'locale' => static::assertSame('en_US', $value),
-					default  => static::fail('unexpected session key ' . $key)
-				};
-			});
+	/**
+	 * @return array<string,array{string}>
+	 */
+	public static function publicPaths(): array
+	{
+		return [
+			'initial setup'  => ['/create-initial'],
+			'languages'      => ['/set-locales/de_DE'],
+			'player index'   => ['/smil-index'],
+			'player index 2' => ['/smil-index/abc'],
+			'force password' => ['/force-password'],
+			'reset password' => ['/reset-password'],
+			'register'       => ['/register'],
+			'legals'         => ['/legals'],
+			'privacy'        => ['/privacy'],
+			'terms'          => ['/terms'],
+			'cms'            => ['/cms/page'],
+		];
+	}
+
+	#[Group('units')]
+	#[DataProvider('publicPaths')]
+	public function testPublicPathsNeedNoLogin(string $path): void
+	{
+		$this->assertHandled($this->process($path), $path);
+	}
+
+	/**
+	 * @return array<string,array{string}>
+	 */
+	public static function protectedPaths(): array
+	{
+		return [
+			'start page'                => ['/'],
+			'player'                    => ['/player'],
+			'an unknown route'          => ['/anything-new'],
+			'longer than a public name' => ['/set-localesX'],
+			'public name as prefix'     => ['/smil-index.php'],
+			'public name as suffix'     => ['/x/smil-index'],
+			'public name in the path'   => ['/player/force-password'],
+			'upper case'                => ['/SMIL-INDEX'],
+			'double slash'              => ['//player'],
+			'login as prefix'           => ['/logins'],
+			'login upper case'          => ['/Login'],
+			'encoded name'              => ['/%73mil-index'],
+		];
+	}
+
+	#[Group('units')]
+	#[DataProvider('protectedPaths')]
+	public function testAGuestIsSentToTheLoginFromEveryOtherPath(string $path): void
+	{
+		$this->assertRedirect($this->process($path), '/login');
+	}
+
+	/**
+	 * @return array<string,array{string,array<string,string>}>
+	 */
+	public static function jsonRequests(): array
+	{
+		return [
+			'api'       => ['/api/authorize', []],
+			'async'     => ['/async/player/push', []],
+			'json only' => ['/player', ['Accept' => 'application/json']],
+		];
+	}
+
+	/**
+	 * @param array<string,string> $headers
+	 */
+	#[Group('units')]
+	#[DataProvider('jsonRequests')]
+	public function testAGuestGetsAJsonErrorWhereTheCallerExpectsJson(string $path, array $headers): void
+	{
+		$response = $this->process($path, $headers);
+
+		static::assertSame(401, $response->getStatusCode());
+		static::assertSame('application/json', $response->getHeaderLine('Content-Type'));
+		static::assertSame(['success' => false, 'message' => 'Unauthorized access. Please log in first.'], json_decode((string) $response->getBody(), true));
+	}
+
+	#[Group('units')]
+	public function testAGuestMayOpenTheLoginPage(): void
+	{
+		$this->assertHandled($this->process('/login'), '/login');
+		$this->assertHandled($this->process('/login', [], 'POST'), '/login');
+	}
+
+	#[Group('units')]
+	public function testALoggedInUserPassesAndGetsNoNewSession(): void
+	{
+		$this->session->set('user', ['UID' => 1]);
+
+		$this->assertHandled($this->process('/playlists'), '/playlists');
+		static::assertSame(0, $this->session->regenerations);
+	}
+
+	#[Group('units')]
+	public function testALoggedInUserIsSentAwayFromTheLoginPage(): void
+	{
+		$this->session->set('user', ['UID' => 1]);
+
+		$this->assertRedirect($this->process('/login'), '/');
+	}
+
+	#[Group('units')]
+	public function testTheRememberMeCookieLogsTheUserInAndFillsTheSession(): void
+	{
+		$this->rememberMeCookieOf(7, 'de_DE');
+
+		$this->assertHandled($this->process('/playlists'), '/playlists');
+
+		static::assertSame(['UID' => 7, 'username' => 'user', 'locale' => 'de_DE'], $this->session->get('user'));
+		static::assertSame('de_DE', $this->session->get('locale'));
+	}
+
+	/**
+	 * Like the login by password: whoever knew the session id before must not know it now.
+	 */
+	#[Group('units')]
+	public function testTheLoginByCookieGetsANewSessionId(): void
+	{
+		$this->rememberMeCookieOf(7);
+
+		$this->process('/playlists');
+
+		static::assertSame(1, $this->session->regenerations);
+	}
+
+	#[Group('units')]
+	public function testALoggedInUserWithACookieIsNotLoggedInAgain(): void
+	{
+		$this->rememberMeCookieOf(7);
+		$this->session->set('user', ['UID' => 1]);
+
+		$this->process('/playlists');
+
+		static::assertSame(['UID' => 1], $this->session->get('user'));
+		static::assertSame(0, $this->session->regenerations);
+	}
+
+	#[Group('units')]
+	public function testAnInvalidCookieLeadsToTheLoginAndTheSessionStaysEmpty(): void
+	{
+		$_COOKIE[AutoLoginService::COOKIE_NAME_AUTO_LOGIN] = 'stale';
+		$this->authService->method('loginByCookie')->willReturn(null);
+
+		$this->assertRedirect($this->process('/playlists'), '/login');
+
+		static::assertSame([], $this->session->data);
+		static::assertSame(0, $this->session->regenerations);
+	}
+
+	/**
+	 * Without a cookie the AuthService is not asked: even a service which would let anybody in does not.
+	 */
+	#[Group('units')]
+	public function testWithoutACookieNobodyIsLoggedIn(): void
+	{
+		$this->authService->method('loginByCookie')->willReturn(new UserEntity(['UID' => 1, 'locale' => 'en_US'], [], [], [], [], []));
+
+		$this->assertRedirect($this->process('/playlists'), '/login');
+		static::assertSame([], $this->session->data);
+	}
+
+	#[Group('units')]
+	public function testAGuestWithAValidCookieIsSentAwayFromTheLoginPage(): void
+	{
+		$this->rememberMeCookieOf(7);
+
+		$this->assertRedirect($this->process('/login'), '/');
+		static::assertSame(7, $this->session->get('user')['UID'] ?? null);
+	}
+
+	#[Group('units')]
+	public function testAGuestWithAnInvalidCookieMayStillOpenTheLoginPage(): void
+	{
+		$_COOKIE[AutoLoginService::COOKIE_NAME_AUTO_LOGIN] = 'stale';
+		$this->authService->method('loginByCookie')->willReturn(null);
+
+		$this->assertHandled($this->process('/login'), '/login');
 	}
 }
