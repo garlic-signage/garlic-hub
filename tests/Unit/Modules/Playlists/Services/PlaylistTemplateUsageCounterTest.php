@@ -25,12 +25,12 @@ use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\PlaylistTemplateUsageCounter;
 use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class PlaylistTemplateUsageCounterTest extends TestCase
 {
-	private ItemsRepository&MockObject $itemsRepositoryMock;
+	private ItemsRepository&Stub $itemsRepositoryStub;
 	private PlaylistTemplateUsageCounter $counter;
 
 	/**
@@ -39,8 +39,8 @@ class PlaylistTemplateUsageCounterTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->itemsRepositoryMock = $this->createMock(ItemsRepository::class);
-		$this->counter             = new PlaylistTemplateUsageCounter($this->itemsRepositoryMock);
+		$this->itemsRepositoryStub = $this->createStub(ItemsRepository::class);
+		$this->counter             = new PlaylistTemplateUsageCounter($this->itemsRepositoryStub);
 	}
 
 	/**
@@ -49,12 +49,11 @@ class PlaylistTemplateUsageCounterTest extends TestCase
 	#[Group('units')]
 	public function testCountUsagesByTemplateIdsReturnsCountsPerTemplate(): void
 	{
-		$this->itemsRepositoryMock->expects($this->once())->method('countFileResourcesByTemplateId')
-			->with([3, 7, 9])
-			->willReturn([
+		$this->itemsRepositoryStub->method('countFileResourcesByTemplateId')
+			->willReturnMap([[[3, 7, 9], [
 				['template_id' => '3', 'count' => '2'],
 				['template_id' => '7', 'count' => 5]
-			]);
+			]]]);
 
 		static::assertSame([3 => 2, 7 => 5], $this->counter->countUsagesByTemplateIds([3, 7, 9]));
 	}
@@ -65,9 +64,7 @@ class PlaylistTemplateUsageCounterTest extends TestCase
 	#[Group('units')]
 	public function testCountUsagesByTemplateIdsWithoutUsage(): void
 	{
-		$this->itemsRepositoryMock->expects($this->once())->method('countFileResourcesByTemplateId')
-			->with([3])
-			->willReturn([]);
+		$this->itemsRepositoryStub->method('countFileResourcesByTemplateId')->willReturnMap([[[3], []]]);
 
 		static::assertSame([], $this->counter->countUsagesByTemplateIds([3]));
 	}

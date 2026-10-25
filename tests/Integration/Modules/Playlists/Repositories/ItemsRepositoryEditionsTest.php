@@ -63,6 +63,18 @@ class ItemsRepositoryEditionsTest extends RepositoryTestCase
 	/**
 	 * @throws Exception
 	 */
+	public function testAnUnknownEditionGetsTheColumnsOfEdge(): void
+	{
+		$items = $this->repository->findAllByPlaylistIdWithJoins(1, 'undefined_edition');
+
+		static::assertCount(5, $items);
+		static::assertArrayNotHasKey('filetype', $items[0]);
+		static::assertArrayNotHasKey('channel_type', $items[0]);
+	}
+
+	/**
+	 * @throws Exception
+	 */
 	public function testCoreAddsTheTemplateContent(): void
 	{
 		static::markTestSkipped('Known bug: the joins of the Core and Enterprise edition get the same empty alias, Doctrine throws NonUniqueAlias. Remove this line when it is fixed.');

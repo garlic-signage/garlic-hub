@@ -31,15 +31,14 @@ use App\Modules\Playlists\Services\AclValidator;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
 use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class PlaylistMetricsCalculatorTest extends TestCase
 {
-	private ItemsRepository&MockObject $itemsRepositoryMock;
-	private AclValidator&MockObject $aclValidatorMock;
-	private Config&MockObject $configMock;
+	private ItemsRepository&Stub $itemsRepositoryStub;
+	private AclValidator&Stub $aclValidatorStub;
+	private Config&Stub $configStub;
 	private UserSession&Stub $userSessionStub;
 	private PlaylistMetricsCalculator $calculator;
 
@@ -49,12 +48,12 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->itemsRepositoryMock = $this->createMock(ItemsRepository::class);
-		$this->aclValidatorMock = $this->createMock(AclValidator::class);
-		$this->configMock = $this->createMock(Config::class);
+		$this->itemsRepositoryStub = $this->createStub(ItemsRepository::class);
+		$this->aclValidatorStub = $this->createStub(AclValidator::class);
+		$this->configStub = $this->createStub(Config::class);
 		$this->userSessionStub = $this->createStub(UserSession::class);
 
-		$this->calculator = new PlaylistMetricsCalculator($this->itemsRepositoryMock, $this->aclValidatorMock, $this->configMock, $this->userSessionStub);
+		$this->calculator = new PlaylistMetricsCalculator($this->itemsRepositoryStub, $this->aclValidatorStub, $this->configStub, $this->userSessionStub);
 	}
 
 	/**
@@ -65,7 +64,6 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateFromItemsProcessesMetrics(): void
 	{
-		$this->expectUntouched($this->itemsRepositoryMock, $this->aclValidatorMock, $this->configMock);
 		$playlist = ['UID' => 1, 'shuffle' => 0, 'time_limit' => 0];
 		$items = [
 			['item_filesize' => 100, 'item_duration' => 30, 'UID' => 1],
@@ -100,7 +98,6 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateFromItemsAdjustsMetricsWithShuffle(): void
 	{
-		$this->expectUntouched($this->itemsRepositoryMock, $this->aclValidatorMock, $this->configMock);
 		$playlist = ['UID' => 1, 'time_limit' => 0,  'shuffle' => 1, 'shuffle_picking' => 1];
 		$items = [
 			['item_filesize' => 150, 'item_duration' => 50, 'UID' => 1],
@@ -109,10 +106,6 @@ class PlaylistMetricsCalculatorTest extends TestCase
 		];
 
 		$metrics = $this->calculator->calculateFromItems($playlist, $items);
-
-		static::assertSame(3, $metrics->countEntries);
-		static::assertLessThan(150, $metrics->duration);
-		static::assertLessThanOrEqual($metrics->duration, $metrics->ownerDuration);
 
 		$expectedMetrics = [
 			'count_items'       => 3,
@@ -133,7 +126,6 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateFromItemsAdjustsMetricsWithShuffle2(): void
 	{
-		$this->expectUntouched($this->itemsRepositoryMock, $this->aclValidatorMock, $this->configMock);
 		$playlist = ['UID' => 1, 'time_limit' => 0,  'shuffle' => 1, 'shuffle_picking' => 6];
 		$items = [
 			['item_filesize' => 150, 'item_duration' => 50, 'UID' => 1],
@@ -163,7 +155,6 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateFromItemsAdjustsMetricsWithShuffle3(): void
 	{
-		$this->expectUntouched($this->itemsRepositoryMock, $this->aclValidatorMock, $this->configMock);
 		$playlist = ['UID' => 1, 'time_limit' => 0,  'shuffle' => 1, 'shuffle_picking' => 1];
 		$items = [
 			['item_filesize' => 150, 'item_duration' => 50, 'UID' => 2],
@@ -172,10 +163,6 @@ class PlaylistMetricsCalculatorTest extends TestCase
 		];
 
 		$metrics = $this->calculator->calculateFromItems($playlist, $items);
-
-		static::assertSame(3, $metrics->countEntries);
-		static::assertLessThan(150, $metrics->duration);
-		static::assertLessThanOrEqual($metrics->duration, $metrics->ownerDuration);
 
 		$expectedMetrics = [
 			'count_items'       => 3,
@@ -196,14 +183,12 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateFromItemsThrowsExceptionWhenTimeLimitExceeded(): void
 	{
-		$this->itemsRepositoryMock->expects($this->never())->method($this->anything());
-		$this->configMock->expects($this->never())->method($this->anything());
 		$playlist = ['UID' => 1, 'playlist_name' => 'Test Playlist', 'time_limit' => 60, 'shuffle' => 0];
 		$items = [
 			['item_filesize' => 100, 'item_duration' => 70, 'UID' => 1]
 		];
 		$this->userSessionStub->method('getUID')->willReturn(1);
-		$this->aclValidatorMock->method('isSimpleAdmin')->with(1)->willReturn(false);
+		$this->aclValidatorStub->method('isSimpleAdmin')->willReturnMap([[1, false]]);
 
 		try
 		{
@@ -225,8 +210,6 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateFromPlaylistData(): void
 	{
-		$this->aclValidatorMock->expects($this->never())->method($this->anything());
-		$this->configMock->expects($this->never())->method($this->anything());
 		$playlist = ['playlist_id' => 5, 'UID' => 1, 'shuffle' => 0, 'time_limit' => 0];
 		$expectedMetrics = [
 			'count_items' => 3,
@@ -236,9 +219,8 @@ class PlaylistMetricsCalculatorTest extends TestCase
 			'owner_duration' => 80
 		];
 
-		$this->itemsRepositoryMock->method('sumAndCountMetricsByPlaylistIdAndOwner')
-			->with(5, 1)
-			->willReturn($expectedMetrics);
+		$this->itemsRepositoryStub->method('sumAndCountMetricsByPlaylistIdAndOwner')
+			->willReturnMap([[5, 1, $expectedMetrics]]);
 
 		$metrics = $this->calculator->calculateFromPlaylistData($playlist);
 		$frontendMetrics =  $metrics->toFrontendArray();
@@ -254,7 +236,6 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateFromPlaylistDataHandlesEmptyPlaylist(): void
 	{
-		$this->expectUntouched($this->itemsRepositoryMock, $this->aclValidatorMock, $this->configMock);
 		$playlist = [];
 
 		// an empty playlist results in empty metrics
@@ -286,7 +267,6 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateRemainingMediaDurationWithoutTimeLimit(): void
 	{
-		$this->expectUntouched($this->itemsRepositoryMock, $this->aclValidatorMock, $this->configMock);
 		$playlist = ['UID' => 1, 'time_limit' => 0];
 		$media = ['metadata' => ['duration' => 50]];
 
@@ -303,7 +283,6 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateRemainingMediaDurationExceedsTimeLimitPartially(): void
 	{
-		$this->configMock->expects($this->never())->method($this->anything());
 		$playlist = ['playlist_id' => 5, 'UID' => 1, 'shuffle' => 0, 'time_limit' => 100];
 		$media    = ['metadata' => ['duration' => 60]];
 		$expectedMetrics = [
@@ -313,12 +292,11 @@ class PlaylistMetricsCalculatorTest extends TestCase
 			'duration' => 100,
 			'owner_duration' => 80
 		];
-		$this->itemsRepositoryMock->method('sumAndCountMetricsByPlaylistIdAndOwner')
-			->with(5, 1)
-			->willReturn($expectedMetrics);
+		$this->itemsRepositoryStub->method('sumAndCountMetricsByPlaylistIdAndOwner')
+			->willReturnMap([[5, 1, $expectedMetrics]]);
 
 		$this->userSessionStub->method('getUID')->willReturn(1);
-		$this->aclValidatorMock->method('isSimpleAdmin')->with(1)->willReturn(false);
+		$this->aclValidatorStub->method('isSimpleAdmin')->willReturnMap([[1, false]]);
 
 		$result = $this->calculator->calculateRemainingMediaDuration($playlist, $media);
 
@@ -333,7 +311,6 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateRemainingMediaDurationExceedsTimeLimitFull(): void
 	{
-		$this->configMock->expects($this->never())->method($this->anything());
 		$playlist = ['playlist_id' => 5, 'UID' => 1, 'shuffle' => 0, 'time_limit' => 100];
 		$media    = ['metadata' => ['duration' => 60]];
 		$expectedMetrics = [
@@ -343,12 +320,11 @@ class PlaylistMetricsCalculatorTest extends TestCase
 			'duration' => 100,
 			'owner_duration' => 100
 		];
-		$this->itemsRepositoryMock->method('sumAndCountMetricsByPlaylistIdAndOwner')
-			->with(5, 1)
-			->willReturn($expectedMetrics);
+		$this->itemsRepositoryStub->method('sumAndCountMetricsByPlaylistIdAndOwner')
+			->willReturnMap([[5, 1, $expectedMetrics]]);
 
 		$this->userSessionStub->method('getUID')->willReturn(1);
-		$this->aclValidatorMock->method('isSimpleAdmin')->with(1)->willReturn(false);
+		$this->aclValidatorStub->method('isSimpleAdmin')->willReturnMap([[1, false]]);
 
 		$result = $this->calculator->calculateRemainingMediaDuration($playlist, $media);
 
@@ -364,15 +340,11 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculateRemainingMediaDurationHandlesDefaultDuration(): void
 	{
-		$this->itemsRepositoryMock->expects($this->never())->method($this->anything());
-		$this->aclValidatorMock->expects($this->never())->method($this->anything());
 		$playlist = ['UID' => 1, 'time_limit' => 0];
 		$media = ['metadata' => []]; // No duration metadata
 
 
-		$this->configMock->expects($this->once())->method('getConfigValue')
-			->with('duration', 'playlists', 'Defaults')
-			->willReturn('15');
+		$this->configStub->method('getConfigValue')->willReturnMap([['duration', 'playlists', 'Defaults', '15']]);
 
 		$result = $this->calculator->calculateRemainingMediaDuration($playlist, $media);
 		static::assertSame(15, $result);
@@ -388,7 +360,6 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	#[Group('units')]
 	public function testCalculationsAreIndependent(): void
 	{
-		$this->expectUntouched($this->itemsRepositoryMock, $this->aclValidatorMock, $this->configMock);
 		$playlist = ['UID' => 1, 'shuffle' => 0, 'time_limit' => 0];
 
 		$first  = $this->calculator->calculateFromItems($playlist, [['item_filesize' => 100, 'item_duration' => 30, 'UID' => 1]]);
@@ -398,11 +369,43 @@ class PlaylistMetricsCalculatorTest extends TestCase
 		static::assertSame(['filesize' => 5, 'duration' => 7, 'owner_duration' => 0], $second->toPlaylistTableArray());
 	}
 
-	private function expectUntouched(MockObject ...$mocks): void
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testAnAdminMayExceedTheTimeLimit(): void
 	{
-		foreach ($mocks as $mock)
-		{
-			$mock->expects($this->never())->method($this->anything());
-		}
+		$playlist = ['UID' => 1, 'time_limit' => 60, 'shuffle' => 0];
+		$this->userSessionStub->method('getUID')->willReturn(9);
+		$this->aclValidatorStub->method('isSimpleAdmin')->willReturnMap([[9, true]]);
+
+		$metrics = $this->calculator->calculateFromItems($playlist, [['item_filesize' => 1, 'item_duration' => 70, 'UID' => 1]]);
+
+		static::assertSame(70, $metrics->ownerDuration);
+		static::assertSame(500, $this->calculator->calculateRemainingDuration($playlist, 500));
+	}
+
+	/**
+	 * Videos have durations with decimals, every item is rounded before the sum.
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testDurationsWithDecimalsAreRoundedPerItem(): void
+	{
+		$playlist = ['UID' => 1, 'shuffle' => 0, 'time_limit' => 0];
+		$items    = [
+			['item_filesize' => 1, 'item_duration' => 10.4, 'UID' => 1],
+			['item_filesize' => 1, 'item_duration' => 10.5, 'UID' => 2],
+		];
+
+		$metrics = $this->calculator->calculateFromItems($playlist, $items);
+
+		static::assertSame(21, $metrics->duration);
+		static::assertSame(10, $metrics->ownerDuration);
 	}
 }

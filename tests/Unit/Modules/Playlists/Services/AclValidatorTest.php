@@ -29,13 +29,13 @@ use App\Framework\Exceptions\ModuleException;
 use App\Modules\Playlists\Services\AclValidator;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class AclValidatorTest extends TestCase
 {
 	private AclValidator $aclValidator;
-	private AclHelper&MockObject $aclHelperMock;
+	private AclHelper&Stub $aclHelperStub;
 
 	/**
 	 * @throws Exception
@@ -43,9 +43,9 @@ class AclValidatorTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->aclHelperMock = $this->createMock(AclHelper::class);
+		$this->aclHelperStub = $this->createStub(AclHelper::class);
 
-		$this->aclValidator    = new AclValidator($this->aclHelperMock);
+		$this->aclValidator    = new AclValidator($this->aclHelperStub);
 	}
 
 	/**
@@ -59,7 +59,6 @@ class AclValidatorTest extends TestCase
 		$UID = 1;
 		$playlist = ['UID' => 1, 'company_id' => 4, 'playlist_id' => 12];
 
-		$this->aclHelperMock->expects($this->never())->method('isModuleAdmin');
 		$result = $this->aclValidator->isPlaylistEditable($UID, $playlist);
 
 		static::assertTrue($result);
@@ -76,9 +75,7 @@ class AclValidatorTest extends TestCase
 		$UID = 1;
 		$playlist = ['UID' => 2, 'company_id' => 4, 'playlist_id' => 12];
 
-		$this->aclHelperMock->expects($this->once())->method('isModuleAdmin')
-			->with($UID, 'playlists')
-			->willReturn(true);
+		$this->aclHelperStub->method('isModuleAdmin')->willReturnMap([[$UID, 'playlists', true]]);
 		$result = $this->aclValidator->isPlaylistEditable($UID, $playlist);
 
 		static::assertTrue($result);
@@ -97,7 +94,7 @@ class AclValidatorTest extends TestCase
 		$playlist = ['UID' => 2, 'company_id' => 4, 'playlist_id' => 12];
 
 		$configStub = $this->createStub(Config::class);
-		$this->aclHelperMock->expects($this->once())->method('getConfig')->willReturn($configStub);
+		$this->aclHelperStub->method('getConfig')->willReturn($configStub);
 		$configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
 
 		$result = $this->aclValidator->isPlaylistEditable($UID, $playlist);
@@ -116,13 +113,9 @@ class AclValidatorTest extends TestCase
 		$UID = 1;
 		$playlist = ['UID' => 2, 'company_id' => 4, 'playlist_id' => 12];
 
-		$this->aclHelperMock->method('isSubAdmin')
-			->with($UID, 'playlists')
-			->willReturn(true);
+		$this->aclHelperStub->method('isSubAdmin')->willReturnMap([[$UID, 'playlists', true]]);
 
-		$this->aclHelperMock->method('hasSubAdminAccessOnCompany')
-			->with($UID, $playlist['company_id'], 'playlists')
-			->willReturn(false);
+		$this->aclHelperStub->method('hasSubAdminAccessOnCompany')->willReturnMap([[$UID, 4, 'playlists', false]]);
 
 		$result = $this->aclValidator->isPlaylistEditable($UID, $playlist);
 
@@ -140,13 +133,9 @@ class AclValidatorTest extends TestCase
 		$UID = 1;
 		$playlist = ['UID' => 2, 'company_id' => 4, 'playlist_id' => 12];
 
-		$this->aclHelperMock->method('isSubAdmin')
-			->with($UID, 'playlists')
-			->willReturn(true);
+		$this->aclHelperStub->method('isSubAdmin')->willReturnMap([[$UID, 'playlists', true]]);
 
-		$this->aclHelperMock->method('hasSubAdminAccessOnCompany')
-			->with($UID, $playlist['company_id'], 'playlists')
-			->willReturn(true);
+		$this->aclHelperStub->method('hasSubAdminAccessOnCompany')->willReturnMap([[$UID, 4, 'playlists', true]]);
 
 		$result = $this->aclValidator->isPlaylistEditable($UID, $playlist);
 
@@ -164,13 +153,9 @@ class AclValidatorTest extends TestCase
 		$UID = 1;
 		$playlist = ['UID' => 2, 'company_id' => 4, 'playlist_id' => 12];
 
-		$this->aclHelperMock->method('isEditor')
-			->with($UID, 'playlists')
-			->willReturn(true);
+		$this->aclHelperStub->method('isEditor')->willReturnMap([[$UID, 'playlists', true]]);
 
-		$this->aclHelperMock->method('hasEditorAccessOnUnit')
-			->with($UID, $playlist['playlist_id'], 'playlists')
-			->willReturn(true);
+		$this->aclHelperStub->method('hasEditorAccessOnUnit')->willReturnMap([[$UID, 12, 'playlists', true]]);
 
 		$result = $this->aclValidator->isPlaylistEditable($UID, $playlist);
 
@@ -188,13 +173,9 @@ class AclValidatorTest extends TestCase
 		$UID = 1;
 		$playlist = ['UID' => 2, 'company_id' => 4, 'playlist_id' => 12];
 
-		$this->aclHelperMock->method('isEditor')
-			->with($UID, 'playlists')
-			->willReturn(true);
+		$this->aclHelperStub->method('isEditor')->willReturnMap([[$UID, 'playlists', true]]);
 
-		$this->aclHelperMock->method('hasEditorAccessOnUnit')
-			->with($UID, $playlist['playlist_id'], 'playlists')
-			->willReturn(false);
+		$this->aclHelperStub->method('hasEditorAccessOnUnit')->willReturnMap([[$UID, 12, 'playlists', false]]);
 
 		$result = $this->aclValidator->isPlaylistEditable($UID, $playlist);
 

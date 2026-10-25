@@ -30,6 +30,7 @@ use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\InsertItems\InsertItemFactory;
 use App\Modules\Playlists\Services\InsertItems\Media;
 use App\Modules\Playlists\Services\InsertItems\Playlist;
+use App\Modules\Playlists\Services\InsertItems\Template;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
 use App\Modules\Playlists\Services\PlaylistsService;
 use App\Modules\Playlists\Services\WidgetsService;
@@ -91,6 +92,12 @@ class InsertItemFactoryTest extends TestCase
 		$result = $this->factory->create('playlist');
 
 		static::assertInstanceOf(Playlist::class, $result);
+	}
+
+	#[Group('units')]
+	public function testCreateReturnsTemplateInstanceForTemplateSource(): void
+	{
+		static::assertInstanceOf(Template::class, $this->factory->create('template'));
 	}
 
 	#[Group('units')]
