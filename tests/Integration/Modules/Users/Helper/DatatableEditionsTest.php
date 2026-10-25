@@ -136,8 +136,6 @@ class DatatableEditionsTest extends ContainerTestCase
 	#[DataProvider('editions')]
 	public function testTheNameLinksToTheFormOfTheUser(string $edition): void
 	{
-		static::markTestSkipped('Known bug: the link is user/3, the form is users/edit/3. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$link = $this->body($edition)[0]['elements_result_element'][0]['is_link'];
 
 		static::assertStringEndsWith('users/edit/3', $link['CONTROL_ELEMENT_VALUE_LINK']);
@@ -146,11 +144,11 @@ class DatatableEditionsTest extends ContainerTestCase
 	#[DataProvider('editions')]
 	public function testTheColumnsOfTheEditionAreInTheRows(string $edition): void
 	{
-		static::markTestSkipped('Known bug: firstname, surname and company_name are columns of the list but not selected by the filter definition. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$cells = $this->body($edition, false)[0]['elements_result_element'];
 
 		static::assertSame(['username', 'created_at', 'status', 'firstname', 'surname', 'company_name'], array_column($cells, 'CONTROL_NAME_BODY'));
+		// the query does not deliver them yet: empty cells
+		static::assertSame(['', '', ''], array_map(static fn(array $cell): string => $cell['is_text']['CONTROL_ELEMENT_VALUE_TEXT'], array_slice($cells, 3)));
 	}
 
 	public function testTheFilterOffersTheNamesWhenTheParametersExist(): void
