@@ -24,40 +24,22 @@ namespace Tests\Unit\Modules\Account\Controller;
 
 use App\Modules\Account\Controller\ShowSettingsController;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
+use Slim\Psr7\Factory\ServerRequestFactory;
+use Slim\Psr7\Response;
 
 class ShowSettingsControllerTest extends TestCase
 {
-	private ShowSettingsController $showSettingsController;
-	private ServerRequestInterface&Stub $requestStub;
-	private ResponseInterface&MockObject $responseMock;
-
-	protected function setUp(): void
-	{
-		parent::setUp();
-
-		$this->requestStub = $this->createStub(ServerRequestInterface::class);
-		$this->responseMock = $this->createMock(ResponseInterface::class);
-		$this->showSettingsController = new ShowSettingsController();
-	}
-
+	/**
+	 * In the edge version the settings are the password only.
+	 */
 	#[Group('units')]
-	public function testShowMethodRedirectsToPasswordPage(): void
+	public function testTheSettingsPageLeadsToThePasswordPage(): void
 	{
-		$this->responseMock->expects($this->once())->method('withHeader')
-			->with('Location', '/account/password')
-			->willReturnSelf();
+		$request  = new ServerRequestFactory()->createServerRequest('GET', '/account/settings');
+		$response = new ShowSettingsController()->show($request, new Response());
 
-		$this->responseMock->expects($this->once())->method('withStatus')
-			->with(302)
-			->willReturnSelf();
-
-		$result = $this->showSettingsController->show($this->requestStub, $this->responseMock);
-
-		self::assertSame($this->responseMock, $result);
+		static::assertSame(302, $response->getStatusCode());
+		static::assertSame('/account/password', $response->getHeaderLine('Location'));
 	}
 }

@@ -60,11 +60,8 @@ readonly class Orchestrator
 	 */
 	public function loadTokenUser(string $passwordToken): array
 	{
-		if (!ctype_xdigit($passwordToken) || strlen($passwordToken) % 2 !== 0)
-			return [];
-
-		$binToken = hex2bin($passwordToken);
-		if ($binToken === false)
+		$binToken = $this->decodeToken($passwordToken);
+		if ($binToken === null)
 			return [];
 
 		$user = $this->userTokenService->findByToken($binToken);
@@ -126,8 +123,8 @@ readonly class Orchestrator
 		if ($errors !== [])
 			return ['success' => false, 'errors' => $errors];
 
-		$binToken = hex2bin($passwordToken);
-		if ($binToken === false)
+		$binToken = $this->decodeToken($passwordToken);
+		if ($binToken === null)
 			return ['success' => false, 'errors' => [$this->translator->translate('token_error', 'account')]];
 
 		try
@@ -141,6 +138,19 @@ readonly class Orchestrator
 		}
 
 		return ['success' => true];
+	}
+
+	/**
+	 * The token of a link is a hex string, anything else (or an odd length) is no token.
+	 */
+	private function decodeToken(string $passwordToken): ?string
+	{
+		if (!ctype_xdigit($passwordToken) || strlen($passwordToken) % 2 !== 0)
+			return null;
+
+		$binToken = hex2bin($passwordToken);
+
+		return $binToken === false ? null : $binToken;
 	}
 
 	private function getPasswordPattern(): string

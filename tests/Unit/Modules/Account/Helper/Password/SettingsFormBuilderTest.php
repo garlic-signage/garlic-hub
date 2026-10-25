@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -23,87 +23,97 @@ namespace Tests\Unit\Modules\Account\Helper\Password;
 
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Utils\FormParameters\BaseEditParameters;
-use App\Framework\Utils\Html\FieldInterface;
+use App\Framework\Localization\Translate\Translator;
 use App\Modules\Account\Helper\Password\FormElementsCreator;
-use App\Modules\Account\Helper\Password\Parameters;
 use App\Modules\Account\Helper\Password\SettingsFormBuilder;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 class SettingsFormBuilderTest extends TestCase
 {
-	private FormElementsCreator&MockObject $formElementsCreatorMock;
+	private PasswordFixture $fixture;
 	private SettingsFormBuilder $builder;
 
 	/**
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->formElementsCreatorMock = $this->createMock(FormElementsCreator::class);
-		$this->builder = new SettingsFormBuilder($this->formElementsCreatorMock);
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(PasswordFixture::translation());
+		$this->fixture = new PasswordFixture($translator);
+		$this->builder = new SettingsFormBuilder(new FormElementsCreator($this->fixture->formBuilder, $translator));
+	}
+
+	/**
+	 * @param list<array<string,string>> $fields
+	 * @return list<string> the names of the inputs
+	 */
+	private function namesOf(array $fields, string $htmlKey): array
+	{
+		$names = [];
+		foreach ($fields as $field)
+			$names[] = PasswordFixture::element($field[$htmlKey])?->getAttribute('name') ?? '';
+
+		return $names;
 	}
 
 	/**
 	 * @throws CoreException
-	 * @throws Exception
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testBuildFormWithoutToken(): void
+	public function testTheFormHasBothPasswordsAndTheCsrfToken(): void
 	{
-		$form = $this->expectPasswordFields();
-		$this->formElementsCreatorMock->expects($this->never())->method('createPasswordTokenField');
-		$this->formElementsCreatorMock->expects($this->once())->method('prepareForm')
-			->with($form)->willReturn(['hidden' => [], 'visible' => []]);
+		$form = $this->builder->buildForm('.{8,}');
 
-		static::assertSame(['hidden' => [], 'visible' => []], $this->builder->buildForm('pattern'));
+		static::assertSame(['password', 'password_confirm'], $this->namesOf($form['visible'], 'HTML_ELEMENT'));
+		static::assertSame(['csrf_token'], $this->namesOf($form['hidden'], 'HIDDEN_HTML_ELEMENT'));
+		static::assertSame(['password', 'password_confirm'], array_column($form['visible'], 'LANG_ELEMENT_NAME'));
+	}
+
+	/**
+	 * The CSRF token in the form is the one the validator accepts.
+	 *
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testTheCsrfFieldCarriesTheTokenOfTheSession(): void
+	{
+		$form = $this->builder->buildForm('.{8,}');
+
+		$value = PasswordFixture::element($form['hidden'][0]['HIDDEN_HTML_ELEMENT'])?->getAttribute('value') ?? '';
+		static::assertTrue($this->fixture->csrfToken->validateToken($value));
+		static::assertNotSame('', $value);
 	}
 
 	/**
 	 * @throws CoreException
-	 * @throws Exception
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testBuildFormWithToken(): void
+	public function testTheLinkTokenIsOnlyInTheFormWhenGiven(): void
 	{
-		$form       = $this->expectPasswordFields();
-		$tokenField = $this->createStub(FieldInterface::class);
-		$form[Parameters::PARAMETER_PASSWORD_TOKEN] = $tokenField;
-		$this->formElementsCreatorMock->expects($this->once())->method('createPasswordTokenField')
-			->with('abcd')->willReturn($tokenField);
-		$this->formElementsCreatorMock->expects($this->once())->method('prepareForm')
-			->with($form)->willReturn(['hidden' => [], 'visible' => []]);
+		$with    = $this->builder->buildForm('.{8,}', 'abcd');
+		$without = $this->builder->buildForm('.{8,}');
 
-		$this->builder->buildForm('pattern', 'abcd');
+		static::assertSame(['csrf_token', 'token'], $this->namesOf($with['hidden'], 'HIDDEN_HTML_ELEMENT'));
+		static::assertSame('abcd', PasswordFixture::element($with['hidden'][1]['HIDDEN_HTML_ELEMENT'])?->getAttribute('value'));
+		static::assertSame(['csrf_token'], $this->namesOf($without['hidden'], 'HIDDEN_HTML_ELEMENT'));
 	}
 
 	/**
-	 * @return array<string,FieldInterface>
-	 * @throws Exception
+	 * @throws CoreException
+	 * @throws FrameworkException
 	 */
-	private function expectPasswordFields(): array
+	#[Group('units')]
+	public function testThePatternIsOnlyForTheFirstPasswordField(): void
 	{
-		$passwordField        = $this->createStub(FieldInterface::class);
-		$passwordConfirmField = $this->createStub(FieldInterface::class);
-		$csrfTokenField       = $this->createStub(FieldInterface::class);
+		$form = $this->builder->buildForm('(?=.*\d).{8,}');
 
-		$this->formElementsCreatorMock->expects($this->once())->method('createPasswordField')
-			->with('', 'pattern')->willReturn($passwordField);
-		$this->formElementsCreatorMock->expects($this->once())->method('createPasswordConfirmField')
-			->with('')->willReturn($passwordConfirmField);
-		$this->formElementsCreatorMock->expects($this->once())->method('createCSRFTokenField')
-			->willReturn($csrfTokenField);
-
-		return [
-			Parameters::PARAMETER_PASSWORD           => $passwordField,
-			Parameters::PARAMETER_PASSWORD_CONFIRM   => $passwordConfirmField,
-			BaseEditParameters::PARAMETER_CSRF_TOKEN => $csrfTokenField,
-		];
+		static::assertSame('(?=.*\d).{8,}', PasswordFixture::element($form['visible'][0]['HTML_ELEMENT'])?->getAttribute('pattern'));
+		static::assertFalse(PasswordFixture::element($form['visible'][1]['HTML_ELEMENT'])?->hasAttribute('pattern'));
 	}
 }

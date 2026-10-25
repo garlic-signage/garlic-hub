@@ -60,23 +60,53 @@ class EditLocalesController
 
 			if ($this->session->exists('user'))
 			{
-				/** @var array<string,mixed> $user */
 				$user = $this->session->get('user');
-				$user['locale'] = $locale;
-				$this->session->set('user', $user);
-				$this->accountService->updateLocale($user['UID'], $locale);
+				if (is_array($user))
+				{
+					$user['locale'] = $locale;
+					$this->session->set('user', $user);
+					$this->accountService->updateLocale((int) $user['UID'], $locale);
+				}
 			}
 		}
 
 		// determine current locale secure because it checks a whitelist
 		// of available locales
 		$this->locales->determineCurrentLocale();
-		$previousUrl = $request->getHeaderLine('Referer') ?: '/';
 
 		return $response
-			->withHeader('Location', $previousUrl)
+			->withHeader('Location', $this->determineReturnPath($request))
 			->withStatus(302); // 302: forwarding
 
 	}
 
+
+	/**
+	 * Back to the page the user came from. The Referer is only taken for a page of this site,
+	 * otherwise a link on any other site could send the user back to itself.
+	 * Only the path and query are returned.
+	 */
+	private function determineReturnPath(ServerRequestInterface $request): string
+	{
+		$referer = $request->getHeaderLine('Referer');
+		$parts   = parse_url($referer);
+		if ($parts === false)
+			return '/';
+
+		if (isset($parts['host']))
+		{
+			$host = $request->getHeaderLine('Host') ?: $request->getUri()->getHost();
+			if (!in_array($parts['scheme'] ?? '', ['http', 'https'], true) || strcasecmp($parts['host'] . (isset($parts['port']) ? ':' . $parts['port'] : ''), $host) !== 0)
+				return '/';
+			$path = $parts['path'] ?? '/';
+		}
+		else
+			$path = $parts['path'] ?? '';
+
+		// a path of this site: "//host" and "/\host" are addresses of other sites for a browser
+		if (!str_starts_with($path, '/') || str_starts_with($path, '//') || str_starts_with($path, '/\\'))
+			return '/';
+
+		return $path . (isset($parts['query']) ? '?' . $parts['query'] : '');
+	}
 }

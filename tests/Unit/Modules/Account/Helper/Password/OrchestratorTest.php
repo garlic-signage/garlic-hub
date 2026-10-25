@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -22,293 +22,320 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Account\Helper\Password;
 
 use App\Framework\Config\Config;
-use App\Framework\Localization\Translate\Translator;
-use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Modules\Auth\UserSession;
-use App\Shared\User\TokenPurposes;
+use App\Framework\Localization\Translate\Translator;
+use App\Modules\Account\Helper\Password\FormElementsCreator;
 use App\Modules\Account\Helper\Password\FormInputHandler;
 use App\Modules\Account\Helper\Password\Orchestrator;
 use App\Modules\Account\Helper\Password\SettingsFormBuilder;
 use App\Modules\Account\Services\AccountService;
+use App\Modules\Auth\UserSession;
+use App\Shared\User\TokenPurposes;
 use App\Shared\User\UserTokenService;
-use DateMalformedStringException;
-use Doctrine\DBAL\Exception;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\RecordingConfigLoader;
 
+/**
+ * Input handling, validation and form are the real ones (see PasswordFixture). The stubs are the borders:
+ * the database (AccountService, UserTokenService) and the translations.
+ * The whole chain with the database is in tests/Integration/Modules/Account.
+ */
 class OrchestratorTest extends TestCase
 {
-	private UserSession&MockObject $userSessionMock;
-	private AccountService&MockObject $accountServiceMock;
-	private UserTokenService&MockObject $userTokenServiceMock;
-	private FormInputHandler&MockObject $inputHandlerMock;
-	private SettingsFormBuilder&MockObject $formBuilderMock;
-	private Config&MockObject $configMock;
-	private Translator&MockObject $translatorMock;
+	private PasswordFixture $fixture;
+	private AccountService&Stub $accountService;
+	private UserTokenService&Stub $userTokenService;
 	private Orchestrator $orchestrator;
 
+	/** @var array{UID:int, company_id:int, username:string, status:int, expires_at:string, used_at:null, purpose:string} */
+	private array $tokenUser = ['UID' => 9, 'company_id' => 1, 'username' => 'heidi', 'status' => 2, 'expires_at' => '2999-01-01 00:00:00', 'used_at' => null, 'purpose' => 'initial_password'];
+
 	/**
-	 * @throws \PHPUnit\Framework\MockObject\Exception
+	 * @throws \Exception
 	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->userSessionMock      = $this->createMock(UserSession::class);
-		$this->accountServiceMock   = $this->createMock(AccountService::class);
-		$this->userTokenServiceMock = $this->createMock(UserTokenService::class);
-		$this->inputHandlerMock     = $this->createMock(FormInputHandler::class);
-		$this->formBuilderMock      = $this->createMock(SettingsFormBuilder::class);
-		$this->configMock           = $this->createMock(Config::class);
-		$this->translatorMock       = $this->createMock(Translator::class);
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(PasswordFixture::translation());
+		$translator->method('translateException')->willReturnCallback(
+			static fn(TranslatableModuleException $e): string => $e->getModuleName() . '.' . $e->getTranslationKey()
+		);
+		$this->fixture = new PasswordFixture($translator);
+
+		// a stub which answers every token with a valid user: only a token which is checked before gets no user
+		$this->userTokenService = $this->createStub(UserTokenService::class);
+		$this->userTokenService->method('findByToken')->willReturn($this->tokenUser);
+		$this->accountService = $this->createStub(AccountService::class);
+		$this->accountService->method('updatePassword')->willReturn(1);
+
+		$this->fixture->session->set('user', ['UID' => 7, 'username' => 'regular', 'locale' => 'de_DE']);
+		$config = new Config(new RecordingConfigLoader(['main' => ['password_pattern' => PasswordFixture::PATTERN]]));
 
 		$this->orchestrator = new Orchestrator(
-			$this->userSessionMock,
-			$this->accountServiceMock,
-			$this->userTokenServiceMock,
-			$this->inputHandlerMock,
-			$this->formBuilderMock,
-			$this->configMock,
-			$this->translatorMock
+			new UserSession($this->fixture->session),
+			$this->accountService,
+			$this->userTokenService,
+			new FormInputHandler($this->fixture->parameters, $this->fixture->validator),
+			new SettingsFormBuilder(new FormElementsCreator($this->fixture->formBuilder, $translator)),
+			$config,
+			$translator
 		);
 	}
 
 	/**
-	 * @throws DateMalformedStringException
-	 * @throws Exception
+	 * @return array<string,array{string}>
 	 */
-	#[Group('units')]
-	public function testLoadTokenUserWithInvalidTokenTouchesNothing(): void
+	public static function unusableLinkTokens(): array
 	{
-		$this->expectUntouched($this->userSessionMock, $this->accountServiceMock, $this->userTokenServiceMock,
-			$this->inputHandlerMock, $this->formBuilderMock, $this->configMock, $this->translatorMock);
-
-		static::assertSame([], $this->orchestrator->loadTokenUser('xyz'));
-		static::assertSame([], $this->orchestrator->loadTokenUser('abc'));
+		return [
+			'empty'         => [''],
+			'not hex'       => ['xyz'],
+			'odd length'    => ['abc'],
+			'sql'           => ["ab' OR '1'='1"],
+			'with spaces'   => ['ab cd'],
+			'array syntax'  => ['ab[]'],
+		];
 	}
 
 	/**
-	 * @throws DateMalformedStringException
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	#[Group('units')]
-	public function testLoadTokenUserNotFound(): void
+	#[DataProvider('unusableLinkTokens')]
+	public function testATokenWhichIsNoHexStringIsRejected(string $token): void
 	{
-		$this->expectUntouched($this->userSessionMock, $this->accountServiceMock, $this->inputHandlerMock,
-			$this->formBuilderMock, $this->configMock, $this->translatorMock);
-		$this->userTokenServiceMock->expects($this->once())->method('findByToken')
-			->with(hex2bin('abcd'))->willReturn(null);
-
-		static::assertSame([], $this->orchestrator->loadTokenUser('abcd'));
+		static::assertSame([], $this->orchestrator->loadTokenUser($token));
 	}
 
 	/**
-	 * @throws DateMalformedStringException
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	#[Group('units')]
-	public function testLoadTokenUserWithWrongPurpose(): void
+	public function testAKnownTokenGivesTheUser(): void
 	{
-		$this->expectUntouched($this->userSessionMock, $this->accountServiceMock, $this->inputHandlerMock,
-			$this->formBuilderMock, $this->configMock, $this->translatorMock);
-		$this->userTokenServiceMock->expects($this->once())->method('findByToken')
-			->willReturn($this->tokenUser(TokenPurposes::AUTOLOGIN->value));
-
-		static::assertSame([], $this->orchestrator->loadTokenUser('abcd'));
+		static::assertSame($this->tokenUser, $this->orchestrator->loadTokenUser('abcd'));
+		static::assertSame($this->tokenUser, $this->orchestrator->loadTokenUser('ABCD'));
 	}
 
 	/**
-	 * @throws DateMalformedStringException
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	#[Group('units')]
-	public function testLoadTokenUser(): void
+	public function testAnUnknownUsedOrExpiredTokenIsRejected(): void
 	{
-		$this->expectUntouched($this->userSessionMock, $this->accountServiceMock, $this->inputHandlerMock,
-			$this->formBuilderMock, $this->configMock, $this->translatorMock);
-		$user = $this->tokenUser(TokenPurposes::PASSWORD_RESET->value);
-		$this->userTokenServiceMock->expects($this->once())->method('findByToken')->willReturn($user);
+		$service = $this->createStub(UserTokenService::class);
+		$service->method('findByToken')->willReturn(null);
 
-		static::assertSame($user, $this->orchestrator->loadTokenUser('abcd'));
+		static::assertSame([], $this->orchestratorWith($service)->loadTokenUser('abcd'));
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
+	 * @return array<string,array{string,bool}>
 	 */
-	#[Group('units')]
-	public function testBuildForm(): void
+	public static function purposeProvider(): array
 	{
-		$this->expectUntouched($this->userSessionMock, $this->accountServiceMock, $this->inputHandlerMock,
-			$this->userTokenServiceMock, $this->translatorMock);
-		$form = ['hidden' => [], 'visible' => []];
-		$this->expectPasswordPattern();
-		$this->formBuilderMock->expects($this->once())->method('buildForm')
-			->with('pattern', 'abcd')->willReturn($form);
-
-		static::assertSame($form, $this->orchestrator->buildForm('abcd'));
+		return [
+			'initial password' => [TokenPurposes::INITIAL_PASSWORD->value, true],
+			'password reset'   => [TokenPurposes::PASSWORD_RESET->value, true],
+			'autologin'        => [TokenPurposes::AUTOLOGIN->value, false],
+			'verification'     => [TokenPurposes::EMAIL_VERIFICATION->value, false],
+			'unknown'          => ['anything', false],
+		];
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 * @throws ModuleException
-	 * @throws UserException
-	 */
-	#[Group('units')]
-	public function testStorePasswordReturnsValidationErrors(): void
-	{
-		$this->expectUntouched($this->userSessionMock, $this->accountServiceMock, $this->formBuilderMock,
-			$this->userTokenServiceMock, $this->translatorMock);
-		$this->expectPasswordPattern();
-		$this->inputHandlerMock->expects($this->once())->method('validate')
-			->with(['password' => ''], 'pattern')->willReturn(['No password.']);
-		$this->inputHandlerMock->expects($this->never())->method('getParsed');
-
-		static::assertSame(
-			['success' => false, 'errors' => ['No password.']],
-			$this->orchestrator->storePassword(['password' => ''])
-		);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 * @throws ModuleException
-	 * @throws UserException
-	 */
-	#[Group('units')]
-	public function testStorePasswordReturnsTranslatedServiceErrors(): void
-	{
-		$this->expectValidInput();
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(7);
-		$this->accountServiceMock->expects($this->once())->method('updatePassword')->with(7, 'secret')->willReturn(0);
-		$this->translatorMock->expects($this->once())->method('translate')
-			->with('password_update_failed', 'account')->willReturn('Something failed.');
-
-		static::assertSame(
-			['success' => false, 'errors' => ['Something failed.']],
-			$this->orchestrator->storePassword(['password' => 'secret'])
-		);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 * @throws ModuleException
-	 * @throws UserException
-	 */
-	#[Group('units')]
-	public function testStorePassword(): void
-	{
-		$this->expectValidInput();
-		$this->userSessionMock->expects($this->once())->method('getUID')->willReturn(7);
-		$this->accountServiceMock->expects($this->once())->method('updatePassword')->with(7, 'secret')->willReturn(1);
-		$this->translatorMock->expects($this->never())->method('translate');
-
-		static::assertSame(['success' => true], $this->orchestrator->storePassword(['password' => 'secret']));
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 * @throws ModuleException
-	 */
-	#[Group('units')]
-	public function testStoreForcedPasswordReturnsValidationErrors(): void
-	{
-		$this->expectUntouched($this->userSessionMock, $this->accountServiceMock, $this->formBuilderMock,
-			$this->userTokenServiceMock, $this->translatorMock);
-		$this->expectPasswordPattern();
-		$this->inputHandlerMock->expects($this->once())->method('validate')->willReturn(['No password.']);
-
-		static::assertSame(
-			['success' => false, 'errors' => ['No password.']],
-			$this->orchestrator->storeForcedPassword(9, 'abcd', [])
-		);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 * @throws ModuleException
-	 */
-	#[Group('units')]
-	public function testStoreForcedPasswordReturnsTranslatedServiceErrors(): void
-	{
-		$this->expectValidInput();
-		$this->userSessionMock->expects($this->never())->method($this->anything());
-		$exception = new TranslatableModuleException('account', 'token_update_failed');
-		$this->accountServiceMock->expects($this->once())->method('storeNewForcedPassword')
-			->with(9, hex2bin('abcd'), 'secret')->willThrowException($exception);
-		$this->translatorMock->expects($this->once())->method('translateException')
-			->with($exception)->willReturn('Something failed.');
-
-		static::assertSame(
-			['success' => false, 'errors' => ['Something failed.']],
-			$this->orchestrator->storeForcedPassword(9, 'abcd', ['password' => 'secret'])
-		);
-	}
-
-	/**
-	 * The forced password change works without a logged-in user.
+	 * A token from a cookie or a verification mail must not allow to set a password.
 	 *
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 * @throws ModuleException
+	 * @throws \Exception
 	 */
 	#[Group('units')]
-	public function testStoreForcedPasswordWithoutUserSession(): void
+	#[DataProvider('purposeProvider')]
+	public function testOnlyTheTokensOfAPasswordLinkAreAccepted(string $purpose, bool $accepted): void
 	{
-		$this->expectValidInput();
-		$this->userSessionMock->expects($this->never())->method($this->anything());
-		$this->accountServiceMock->expects($this->once())->method('storeNewForcedPassword')
-			->with(9, hex2bin('abcd'), 'secret');
-		$this->translatorMock->expects($this->never())->method('translate');
+		$service = $this->createStub(UserTokenService::class);
+		$service->method('findByToken')->willReturn(['purpose' => $purpose] + $this->tokenUser);
 
-		static::assertSame(['success' => true], $this->orchestrator->storeForcedPassword(9, 'abcd', ['password' => 'secret']));
+		$user = $this->orchestratorWith($service)->loadTokenUser('abcd');
+
+		static::assertSame($accepted, $user !== []);
 	}
 
 	/**
-	 * @return array{UID:int, company_id:int, username:string, status:int, expires_at:string, used_at:null, purpose:string}
+	 * @throws \Exception
 	 */
-	private function tokenUser(string $purpose): array
+	#[Group('units')]
+	public function testTheFormGetsThePatternOfTheConfiguration(): void
 	{
-		return ['UID' => 9, 'company_id' => 1, 'username' => 'heidi', 'status' => 1,
-			'expires_at' => '2026-10-21 00:00:00', 'used_at' => null, 'purpose' => $purpose];
+		$form = $this->orchestrator->buildForm();
+
+		static::assertSame(PasswordFixture::PATTERN, PasswordFixture::element($form['visible'][0]['HTML_ELEMENT'])?->getAttribute('pattern'));
+		static::assertCount(1, $form['hidden']);
 	}
 
-	private function expectPasswordPattern(): void
+	/**
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testTheFormOfALinkCarriesTheToken(): void
 	{
-		$this->configMock->expects($this->once())->method('getConfigValue')
-			->with('password_pattern', 'main')->willReturn('pattern');
+		$form = $this->orchestrator->buildForm('abcd');
+
+		static::assertCount(2, $form['hidden']);
+		static::assertSame('abcd', PasswordFixture::element($form['hidden'][1]['HIDDEN_HTML_ELEMENT'])?->getAttribute('value'));
 	}
 
-	private function expectValidInput(): void
+	/**
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testStorePasswordSucceedsForValidInput(): void
 	{
-		$this->formBuilderMock->expects($this->never())->method($this->anything());
-		$this->userTokenServiceMock->expects($this->never())->method($this->anything());
-		$this->expectPasswordPattern();
-		$this->inputHandlerMock->expects($this->once())->method('validate')->willReturn([]);
-		$this->inputHandlerMock->expects($this->once())->method('getParsed')
-			->willReturn(['password' => 'secret', 'password_confirm' => 'secret']);
+		static::assertSame(['success' => true], $this->orchestrator->storePassword($this->fixture->post()));
 	}
 
-	private function expectUntouched(MockObject ...$mocks): void
+	/**
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testStorePasswordReturnsTheErrorsOfTheValidation(): void
 	{
-		foreach ($mocks as $mock)
-		{
-			$mock->expects($this->never())->method($this->anything());
-		}
+		$result = $this->orchestrator->storePassword($this->fixture->post(['password' => 'weak', 'password_confirm' => 'weak']));
+
+		static::assertSame(['success' => false, 'errors' => ['account.password_explanation']], $result);
+	}
+
+	/**
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testStorePasswordReportsAChangeWhichChangedNothing(): void
+	{
+		$accountService = $this->createStub(AccountService::class);
+		$accountService->method('updatePassword')->willReturn(0);
+
+		$result = $this->orchestratorWith($this->userTokenService, $accountService)->storePassword($this->fixture->post());
+
+		static::assertSame(['success' => false, 'errors' => ['account.password_update_failed']], $result);
+	}
+
+	/**
+	 * Whoever is not logged in can not change a password, the input does not matter.
+	 *
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testStorePasswordNeedsALoggedInUser(): void
+	{
+		$this->fixture->session->clear();
+		$this->expectException(UserException::class);
+
+		$this->orchestrator->storePassword($this->fixture->post());
+	}
+
+	/**
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testStoreForcedPasswordSucceedsWithoutALoggedInUser(): void
+	{
+		$this->fixture->session->clear();
+		$post = $this->fixture->post();
+
+		static::assertSame(['success' => true], $this->orchestrator->storeForcedPassword(9, 'abcd', $post));
+	}
+
+	/**
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testStoreForcedPasswordReturnsTheErrorsOfTheValidation(): void
+	{
+		$result = $this->orchestrator->storeForcedPassword(9, 'abcd', $this->fixture->post(['password_confirm' => 'Other1234']));
+
+		static::assertSame(['success' => false, 'errors' => ['account.no_passwords_match']], $result);
+	}
+
+	/**
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	#[DataProvider('unusableLinkTokens')]
+	public function testStoreForcedPasswordRejectsATokenWhichIsNoHex(string $token): void
+	{
+		$result = $this->orchestrator->storeForcedPassword(9, $token, $this->fixture->post());
+
+		static::assertSame(['success' => false, 'errors' => ['account.token_error']], $result);
+	}
+
+	/**
+	 * The form is shown again with the error text instead of the standard error page.
+	 *
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testStoreForcedPasswordShowsAnErrorOfTheServiceInTheForm(): void
+	{
+		$accountService = $this->createStub(AccountService::class);
+		$accountService->method('storeNewForcedPassword')->willThrowException(new TranslatableModuleException('account', 'token_update_failed'));
+
+		$result = $this->orchestratorWith($this->userTokenService, $accountService)->storeForcedPassword(9, 'abcd', $this->fixture->post());
+
+		static::assertSame(['success' => false, 'errors' => ['account.token_update_failed']], $result);
+	}
+
+	/**
+	 * A user who is gone meanwhile is shown in the form as well, the NotFoundException is a translatable one.
+	 *
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testStoreForcedPasswordShowsAnErrorOfTheServiceAlsoForAMissingUser(): void
+	{
+		$accountService = $this->createStub(AccountService::class);
+		$accountService->method('storeNewForcedPassword')->willThrowException(new NotFoundException('users', 'user_not_found'));
+
+		$result = $this->orchestratorWith($this->userTokenService, $accountService)->storeForcedPassword(9, 'abcd', $this->fixture->post());
+
+		static::assertSame(['success' => false, 'errors' => ['users.user_not_found']], $result);
+	}
+
+	/**
+	 * A technical error is not for the user: it ends in the error page and in the log.
+	 *
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testAnUnexpectedErrorOfTheServiceIsNotHidden(): void
+	{
+		$accountService = $this->createStub(AccountService::class);
+		$accountService->method('storeNewForcedPassword')->willThrowException(new \RuntimeException('connection lost'));
+		$this->expectException(\RuntimeException::class);
+
+		$this->orchestratorWith($this->userTokenService, $accountService)->storeForcedPassword(9, 'abcd', $this->fixture->post());
+	}
+
+	private function orchestratorWith(UserTokenService $tokenService, ?AccountService $accountService = null): Orchestrator
+	{
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(PasswordFixture::translation());
+		$translator->method('translateException')->willReturnCallback(
+			static fn(TranslatableModuleException $e): string => $e->getModuleName() . '.' . $e->getTranslationKey()
+		);
+
+		return new Orchestrator(
+			new UserSession($this->fixture->session),
+			$accountService ?? $this->accountService,
+			$tokenService,
+			new FormInputHandler($this->fixture->parameters, $this->fixture->validator),
+			new SettingsFormBuilder(new FormElementsCreator($this->fixture->formBuilder, $translator)),
+			new Config(new RecordingConfigLoader(['main' => ['password_pattern' => PasswordFixture::PATTERN]])),
+			$translator
+		);
 	}
 }

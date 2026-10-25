@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -21,37 +21,51 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Account\Helper\Password;
 
-use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Utils\Forms\FormTemplatePreparer;
-use App\Shared\User\TokenPurposes;
 use App\Modules\Account\Helper\Password\TemplatePreparer;
+use App\Shared\User\TokenPurposes;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * The FormTemplatePreparer is the real one: the result is the data of the page.
+ */
 class TemplatePreparerTest extends TestCase
 {
-	private FormTemplatePreparer&MockObject $formTemplatePreparerMock;
 	private TemplatePreparer $preparer;
 
-	/** @var array<string,array<string,string>> */
-	private array $result = ['main_layout' => ['title' => 'x'], 'this_layout' => ['template' => 'y']];
+	/** @var array{hidden: list<array<string,string>>, visible: list<array<string,string>>} */
+	private array $form = [
+		'hidden'  => [['HIDDEN_HTML_ELEMENT' => '<input type="hidden" name="csrf_token">']],
+		'visible' => [['HTML_ELEMENT_ID' => 'password']],
+	];
 
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$translatorStub = $this->createStub(Translator::class);
-		$translatorStub->method('translate')
-			->willReturnCallback(fn(string $key, string $module): string => $module . '.' . $key . ' %s');
-		$this->formTemplatePreparerMock = $this->createMock(FormTemplatePreparer::class);
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')
+			->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key . ($key === 'initial_password_for' || $key === 'edit_password_for' ? ' %s' : ''));
 
-		$this->preparer = new TemplatePreparer($translatorStub, $this->formTemplatePreparerMock);
+		$this->preparer = new TemplatePreparer($translator, new FormTemplatePreparer());
+	}
+
+	/**
+	 * @param array<string,mixed> $page
+	 * @return array<string,mixed>
+	 */
+	private function data(array $page): array
+	{
+		$layout = $page['this_layout'];
+		static::assertIsArray($layout);
+		static::assertSame('account/edit', $layout['template']);
+		static::assertIsArray($layout['data']);
+
+		return $layout['data'];
 	}
 
 	/**
@@ -59,57 +73,64 @@ class TemplatePreparerTest extends TestCase
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testPreparePasswordForm(): void
+	public function testThePageToChangeTheOwnPassword(): void
 	{
-		$this->expectPrepared('account.edit_password %s', '/account/password');
+		$page = $this->preparer->preparePasswordForm($this->form);
+		$data = $this->data($page);
 
-		static::assertSame($this->result, $this->preparer->preparePasswordForm(['hidden' => [], 'visible' => []]));
+		static::assertSame('account.edit_password', $page['main_layout']['LANG_PAGE_TITLE']);
+		static::assertSame(['/css/account/password.css'], $page['main_layout']['additional_css']);
+		static::assertSame(['/js/account/password/init.js'], $page['main_layout']['footer_modules']);
+		static::assertSame('account.edit_password', $data['LANG_PAGE_HEADER']);
+		static::assertSame('/account/password', $data['FORM_ACTION']);
+		static::assertSame('account.password_explanation', $data['LANG_FORM_EXPLANATION']);
+		static::assertSame($this->form['hidden'], $data['element_hidden']);
+		static::assertSame($this->form['visible'], $data['form_element']);
+		static::assertSame('main.save', $data['form_button'][0]['LANG_ELEMENT_BUTTON']);
 	}
 
 	/**
+	 * @return array<string,array{string,string}>
+	 */
+	public static function purposeProvider(): array
+	{
+		return [
+			'first password'  => [TokenPurposes::INITIAL_PASSWORD->value, 'account.initial_password_for heidi'],
+			'password reset'  => [TokenPurposes::PASSWORD_RESET->value, 'account.edit_password_for heidi'],
+			'any other token' => [TokenPurposes::EMAIL_VERIFICATION->value, 'account.edit_password_for heidi'],
+		];
+	}
+
+	/**
+	 * The form of a link posts to the route which works without a login and names the user.
+	 *
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testPrepareForcedPasswordFormForInitialPassword(): void
+	#[DataProvider('purposeProvider')]
+	public function testThePageOfALinkNamesTheUser(string $purpose, string $title): void
 	{
-		$this->expectPrepared('account.initial_password_for heidi', '/force-password');
+		$page = $this->preparer->prepareForcedPasswordForm($this->form, ['username' => 'heidi', 'purpose' => $purpose]);
+		$data = $this->data($page);
 
-		$this->preparer->prepareForcedPasswordForm(
-			['hidden' => [], 'visible' => []],
-			['username' => 'heidi', 'purpose' => TokenPurposes::INITIAL_PASSWORD->value]
-		);
+		static::assertSame($title, $page['main_layout']['LANG_PAGE_TITLE']);
+		static::assertSame($title, $data['LANG_PAGE_HEADER']);
+		static::assertSame('/force-password', $data['FORM_ACTION']);
+		static::assertSame($this->form['hidden'], $data['element_hidden']);
 	}
 
 	/**
+	 * A name with signs of sprintf must come out as it is: it is an argument, not part of the format.
+	 *
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testPrepareForcedPasswordFormForPasswordReset(): void
+	public function testTheNameOfTheUserIsNoFormat(): void
 	{
-		$this->expectPrepared('account.edit_password_for heidi', '/force-password');
+		$page = $this->preparer->prepareForcedPasswordForm($this->form, ['username' => '%s%d<b>', 'purpose' => TokenPurposes::PASSWORD_RESET->value]);
 
-		$this->preparer->prepareForcedPasswordForm(
-			['hidden' => [], 'visible' => []],
-			['username' => 'heidi', 'purpose' => TokenPurposes::PASSWORD_RESET->value]
-		);
-	}
-
-	private function expectPrepared(string $title, string $formAction): void
-	{
-		$this->formTemplatePreparerMock->expects($this->once())->method('prepareUITemplate')
-			->with([
-				'hidden'            => [],
-				'visible'           => [],
-				'title'             => $title,
-				'form_action'       => $formAction,
-				'explanations'      => 'account.password_explanation %s',
-				'additional_css'    => ['/css/account/password.css'],
-				'footer_modules'    => ['/js/account/password/init.js'],
-				'template_name'     => 'account/edit',
-				'save_button_label' => 'main.save %s'
-			])
-			->willReturn($this->result);
+		static::assertSame('account.edit_password_for %s%d<b>', $page['main_layout']['LANG_PAGE_TITLE']);
 	}
 }

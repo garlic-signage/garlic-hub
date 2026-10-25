@@ -19,130 +19,137 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Modules\Account\Helper\Password;
 
-use App\Framework\Security\CsrfToken;
+use PHPUnit\Framework\Attributes\DataProvider;
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Exceptions\ModuleException;
-use App\Modules\Account\Helper\Password\Parameters;
-use App\Modules\Account\Helper\Password\Validator;
-use Exception;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Parameters, CSRF token and validator are the real ones, see PasswordFixture.
+ */
 class ValidatorTest extends TestCase
 {
-	private Translator&MockObject $translatorMock;
-	private Parameters&MockObject $parametersMock;
-	private CsrfToken&MockObject $csrfTokenMock;
-	private Validator $validator;
+	private PasswordFixture $fixture;
+
+	private function translator(): Translator
+	{
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(PasswordFixture::translation());
+
+		return $translator;
+	}
 
 	/**
-	 * @throws Exception
-	 * @throws \PHPUnit\Framework\MockObject\Exception
+	 * @throws \Exception
 	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->translatorMock = $this->createMock(Translator::class);
-		$this->parametersMock = $this->createMock(Parameters::class);
-		$this->csrfTokenMock  = $this->createMock(CsrfToken::class);
-
-		$this->validator = new Validator($this->translatorMock, $this->parametersMock, $this->csrfTokenMock);
-	}
-
-
-	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testValidateUserInputWithMissingPasswordAndConfirm(): void
-	{
-		$passwordPattern = '(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}';
-		$this->checkCsrfTokenTrue();
-
-		$this->parametersMock->method('getValueOfParameter')->willReturnMap([
-			[Parameters::PARAMETER_PASSWORD, ''],
-			[Parameters::PARAMETER_PASSWORD_CONFIRM, ''],
-		]);
-
-		$this->translatorMock->expects($this->exactly(3))->method('translate')
-			->willReturnMap([
-				['no_password', 'account', [], 'No password.'],
-				['no_password_confirm', 'account', [], 'No confirm.'],
-				['password_explanation', 'account', [], 'Explain.']
-			]);
-
-		$errors = $this->validator->validateUserInput($passwordPattern);
-
-		static::assertCount(3, $errors);
-		static::assertSame(['No password.', 'No confirm.',  'Explain.'], $errors);
+		$this->fixture = new PasswordFixture($this->translator());
 	}
 
 	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws FrameworkException
+	 * @param array<string,mixed> $post
+	 * @return string[]
+	 * @throws \Exception
 	 */
-	#[Group('units')]
-	public function testValidateUserInputWithInvalidPasswordPattern(): void
+	private function validate(array $post): array
 	{
-		$passwordPattern = '(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}';
-		$this->checkCsrfTokenTrue();
+		$this->fixture->parameters->setUserInputs($post);
+		$this->fixture->parameters->parseInputAllParameters();
 
-		$this->parametersMock->method('getValueOfParameter')->willReturnMap([
-			[Parameters::PARAMETER_PASSWORD, 'short'],
-			[Parameters::PARAMETER_PASSWORD_CONFIRM, 'short'],
-		]);
-
-		$this->translatorMock->expects($this->once())->method('translate')
-			->with('password_explanation', 'account')
-			->willReturn('Invalid password.');
-
-		$errors = $this->validator->validateUserInput($passwordPattern);
-
-		static::assertCount(1, $errors);
-		static::assertSame(['Invalid password.'], $errors);
+		return $this->fixture->validator->validateUserInput(PasswordFixture::PATTERN);
 	}
 
 	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws FrameworkException
+	 * @throws \Exception
 	 */
 	#[Group('units')]
-	public function testValidateNoMatch(): void
+	public function testAValidPostHasNoErrors(): void
 	{
-		$passwordPattern = '(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}';
-		$this->checkCsrfTokenTrue();
-
-		$this->parametersMock->method('getValueOfParameter')->willReturnMap([
-			[Parameters::PARAMETER_PASSWORD, 'securePAASword123'],
-			[Parameters::PARAMETER_PASSWORD_CONFIRM, 'short'],
-		]);
-
-		$this->translatorMock->expects($this->once())->method('translate')
-			->with('no_passwords_match', 'account')
-			->willReturn('No match.');
-
-		$errors = $this->validator->validateUserInput($passwordPattern);
-
-		static::assertCount(1, $errors);
-		static::assertSame(['No match.'], $errors);
+		static::assertSame([], $this->validate($this->fixture->post()));
 	}
 
-	private function checkCsrfTokenTrue(): void
+	/**
+	 * @return array<string,array{array<string,mixed>,list<string>}>
+	 */
+	public static function invalidProvider(): array
 	{
-		$this->parametersMock->expects($this->once())->method('getCsrfToken')
-			->willReturn('test');
-		$this->csrfTokenMock->expects($this->once())->method('validateToken')
-			->with('test')
-			->willReturn(true);
+		return [
+			'both missing'          => [['password' => '', 'password_confirm' => ''], ['account.no_password', 'account.no_password_confirm', 'account.password_explanation']],
+			'both not sent'         => [['password' => null, 'password_confirm' => null], ['account.no_password', 'account.no_password_confirm', 'account.password_explanation']],
+			'confirm missing'       => [['password_confirm' => ''], ['account.no_password_confirm', 'account.no_passwords_match']],
+			'password missing'      => [['password' => ''], ['account.no_password', 'account.no_passwords_match', 'account.password_explanation']],
+			'do not match'          => [['password_confirm' => 'Secret124'], ['account.no_passwords_match']],
+			'too short'             => [['password' => 'Se1', 'password_confirm' => 'Se1'], ['account.password_explanation']],
+			'no digit'              => [['password' => 'SecretOnly', 'password_confirm' => 'SecretOnly'], ['account.password_explanation']],
+			'no capital'            => [['password' => 'secret123', 'password_confirm' => 'secret123'], ['account.password_explanation']],
+			'only spaces'           => [['password' => '        ', 'password_confirm' => '        '], ['account.password_explanation']],
+			// a line break at the end is no part of a password, the pattern must not accept it
+			'line break at the end' => [['password' => "Secret123\n", 'password_confirm' => "Secret123\n"], ['account.password_explanation']],
+			'weak and different'    => [['password' => 'short', 'password_confirm' => 'other'], ['account.no_passwords_match', 'account.password_explanation']],
+			'array as password'     => [['password' => ['Secret123'], 'password_confirm' => ['Secret123']], ['account.no_password', 'account.no_password_confirm', 'account.password_explanation']],
+		];
+	}
+
+	/**
+	 * @param array<string,mixed> $changes
+	 * @param list<string> $expected
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	#[DataProvider('invalidProvider')]
+	public function testAnInvalidPasswordIsReported(array $changes, array $expected): void
+	{
+		static::assertSame($expected, $this->validate($this->fixture->post($changes)));
+	}
+
+	/**
+	 * @return array<string,array{array<string,mixed>}>
+	 */
+	public static function wrongCsrfProvider(): array
+	{
+		return [
+			'not sent'  => [['csrf_token' => null]],
+			'empty'     => [['csrf_token' => '']],
+			'wrong'     => [['csrf_token' => 'not-the-token']],
+			'an array'  => [['csrf_token' => ['x']]],
+		];
+	}
+
+	/**
+	 * @param array<string,mixed> $changes
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	#[DataProvider('wrongCsrfProvider')]
+	public function testAWrongCsrfTokenIsReported(array $changes): void
+	{
+		static::assertSame(['security.csrf_token_mismatch'], $this->validate($this->fixture->post($changes)));
+	}
+
+	/**
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testWithoutATokenInTheSessionNothingIsAccepted(): void
+	{
+		$post = $this->fixture->post();
+		$this->fixture->session->clear();
+
+		static::assertSame(['security.csrf_token_mismatch'], $this->validate($post));
+	}
+
+	/**
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testAllErrorsAreReportedTogether(): void
+	{
+		$errors = $this->validate($this->fixture->post(['csrf_token' => 'x', 'password' => 'a', 'password_confirm' => 'b']));
+
+		static::assertSame(['security.csrf_token_mismatch', 'account.no_passwords_match', 'account.password_explanation'], $errors);
 	}
 }

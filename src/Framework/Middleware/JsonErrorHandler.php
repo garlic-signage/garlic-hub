@@ -24,6 +24,7 @@ namespace App\Framework\Middleware;
 use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\AccessDeniedException;
+use App\Framework\Exceptions\AuthException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\TranslatableModuleException;
@@ -69,6 +70,8 @@ readonly class JsonErrorHandler
 	{
 		return match (true)
 		{
+			// the message names the reason (e.g. cookie manipulation) and stays in the log
+			$exception instanceof AuthException                 => [401, 'Authentication required'],
 			$exception instanceof NotFoundException             => [404, $this->translateException($exception)],
 			$exception instanceof AccessDeniedException         => [403, $this->translateException($exception)],
 			$exception instanceof TranslatableModuleException   => [400, $this->translateException($exception)],

@@ -168,14 +168,15 @@ class JsonErrorHandlerTest extends TestCase
 	}
 
 	/**
-	 * A login error is no module error, it is treated like every unexpected one.
+	 * Not logged in is the fault of the caller, not of the server. The reason stays in the log.
 	 */
 	#[Group('units')]
-	public function testAnAuthExceptionIsAnUnexpectedError(): void
+	public function testAnAuthExceptionIsUnauthorizedAndHidesItsReason(): void
 	{
-		$response = ($this->handler)($this->request, new AuthException('Login failed'), false);
+		$response = ($this->handler)($this->request, new AuthException('Cookie manipulation. Contact administrator.'), false);
 
-		$this->assertJsonError($response, 500, 'Ein unerwarteter Fehler ist aufgetreten.');
+		$this->assertJsonError($response, 401, 'Authentication required');
+		static::assertStringNotContainsString('Cookie', (string) $response->getBody());
 	}
 
 	#[Group('units')]
@@ -242,6 +243,7 @@ class JsonErrorHandlerTest extends TestCase
 			'access denied' => [new AccessDeniedException('playlists', 'no_rights'), Level::Notice, 403, false],
 			'legacy module' => [new ModuleException('playlists', 'Not accessible'), Level::Notice, 400, false],
 			'domain'        => [new DomainException('anything'), Level::Notice, 400, false],
+			'not logged in' => [new AuthException('Autologin expired.'), Level::Notice, 401, false],
 			'unexpected'    => [new RuntimeException('SQLSTATE[HY000] connection refused'), Level::Error, 500, true],
 		];
 	}

@@ -123,6 +123,42 @@ class PasswordTest extends ContainerTestCase
 		}
 	}
 
+	public function testForcedPasswordForAnUnknownUserLeavesTheTokenUnused(): void
+	{
+		$token = $this->createToken(13, TokenPurposes::INITIAL_PASSWORD);
+
+		try
+		{
+			$this->accountService->storeNewForcedPassword(999, $token, 'New-Pass1!');
+			static::fail('Expected a TranslatableModuleException');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertSame('password_update_failed', $e->getTranslationKey());
+		}
+
+		static::assertNotNull($this->tokenService->findByToken($token), 'The token can still be used.');
+	}
+
+	/**
+	 * Password, token and status are one step: when the token fails the user is as before.
+	 */
+	public function testAFailedForcedPasswordKeepsPasswordAndStatusOfTheUser(): void
+	{
+		$before = $this->passwordOf(13);
+
+		try
+		{
+			$this->accountService->storeNewForcedPassword(13, 'unknown-token', 'New-Pass1!');
+			static::fail('Expected a TranslatableModuleException');
+		}
+		catch (TranslatableModuleException)
+		{
+			static::assertSame($before, $this->passwordOf(13));
+			static::assertSame(2, (int) $this->connection->fetchOne('SELECT status FROM user_main WHERE UID = 13'));
+		}
+	}
+
 	public function testChangingThePasswordEndsAllRememberMeLoginsOfTheUser(): void
 	{
 		$this->createToken(10, TokenPurposes::AUTOLOGIN);

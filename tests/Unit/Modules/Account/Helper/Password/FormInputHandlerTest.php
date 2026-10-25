@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -21,65 +21,79 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Account\Helper\Password;
 
-use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Exceptions\ModuleException;
 use App\Modules\Account\Helper\Password\FormInputHandler;
-use App\Modules\Account\Helper\Password\Parameters;
-use App\Modules\Account\Helper\Password\Validator;
+use App\Framework\Localization\Translate\Translator;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 class FormInputHandlerTest extends TestCase
 {
-	private Parameters&MockObject $parametersMock;
-	private Validator&MockObject $validatorMock;
+	private PasswordFixture $fixture;
 	private FormInputHandler $handler;
 
+	private function translator(): Translator
+	{
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(PasswordFixture::translation());
+
+		return $translator;
+	}
+
 	/**
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->parametersMock = $this->createMock(Parameters::class);
-		$this->validatorMock  = $this->createMock(Validator::class);
-
-		$this->handler = new FormInputHandler($this->parametersMock, $this->validatorMock);
+		$this->fixture = new PasswordFixture($this->translator());
+		$this->handler = new FormInputHandler($this->fixture->parameters, $this->fixture->validator);
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws ModuleException
+	 * @throws \Exception
 	 */
 	#[Group('units')]
-	public function testValidateParsesBeforeValidating(): void
+	public function testAValidPostHasNoErrorsAndIsParsed(): void
 	{
-		$post  = ['password' => 'secret', 'password_confirm' => 'secret'];
-		$calls = [];
-		$this->parametersMock->expects($this->once())->method('setUserInputs')->with($post)
-			->willReturnCallback(function () use (&$calls) { $calls[] = 'set'; return $this->parametersMock; });
-		$this->parametersMock->expects($this->once())->method('parseInputAllParameters')
-			->willReturnCallback(function () use (&$calls) { $calls[] = 'parse'; return $this->parametersMock; });
-		$this->validatorMock->expects($this->once())->method('validateUserInput')->with('pattern')
-			->willReturnCallback(function () use (&$calls) { $calls[] = 'validate'; return ['No password.']; });
+		$post = $this->fixture->post();
 
-		static::assertSame(['No password.'], $this->handler->validate($post, 'pattern'));
-		static::assertSame(['set', 'parse', 'validate'], $calls);
+		static::assertSame([], $this->handler->validate($post, PasswordFixture::PATTERN));
+		static::assertSame(['csrf_token' => $post['csrf_token'], 'password' => 'Secret123', 'password_confirm' => 'Secret123'], $this->handler->getParsed());
 	}
 
+	/**
+	 * @throws \Exception
+	 */
 	#[Group('units')]
-	public function testGetParsed(): void
+	public function testAnInvalidPostReturnsTheErrors(): void
 	{
-		$this->parametersMock->expects($this->once())->method('getInputParametersKeys')
-			->willReturn(['password', 'password_confirm']);
-		$this->parametersMock->expects($this->once())->method('getInputValuesArray')
-			->willReturn(['secret', 'secret']);
-		$this->validatorMock->expects($this->never())->method($this->anything());
+		$errors = $this->handler->validate($this->fixture->post(['password' => 'weak', 'password_confirm' => 'weak']), PasswordFixture::PATTERN);
 
-		static::assertSame(['password' => 'secret', 'password_confirm' => 'secret'], $this->handler->getParsed());
+		static::assertSame(['account.password_explanation'], $errors);
+	}
+
+	/**
+	 * The pattern comes with the call: the same input is valid for a weaker pattern.
+	 *
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testThePatternOfTheCallDecides(): void
+	{
+		$post = $this->fixture->post(['password' => 'weak', 'password_confirm' => 'weak']);
+
+		static::assertSame([], $this->handler->validate($post, '.{4,}'));
+	}
+
+	/**
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testTheSecondPostReplacesTheFirst(): void
+	{
+		$this->handler->validate($this->fixture->post(['password' => 'First1234', 'password_confirm' => 'First1234']), PasswordFixture::PATTERN);
+		$this->handler->validate($this->fixture->post(['password' => 'Second1234', 'password_confirm' => 'Second1234']), PasswordFixture::PATTERN);
+
+		static::assertSame('Second1234', $this->handler->getParsed()['password']);
 	}
 }

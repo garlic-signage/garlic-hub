@@ -21,247 +21,140 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Account\Services;
 
-use App\Framework\Security\Crypt;
 use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\TranslatableModuleException;
+use App\Framework\Security\Crypt;
 use App\Modules\Account\Services\AccountService;
-use App\Shared\User\UserTokenService;
-use App\Shared\User\Repositories\Edge\UserMainRepository;
 use App\Modules\Users\UserStatus;
+use App\Shared\User\Repositories\Edge\UserMainRepository;
+use App\Shared\User\UserTokenService;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DriverManager;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * The service with a real database is tested in tests/Integration/Modules/Account/Services/PasswordTest.
+ * Here are the two ways out of the forced password change which a real database does not produce:
+ * the user is gone after the password was set, and the status can not be changed.
+ *
+ * The stubs write a row into a real transaction for the steps they stand for. The service has to take
+ * these rows back when a later step fails.
+ */
 class AccountServiceTest extends TestCase
 {
-	private UserMainRepository&MockObject $userMainRepositoryMock;
-	private UserTokenService&MockObject $userTokenServiceMock;
-	private Crypt&MockObject $cryptMock;
-	private Transactions&MockObject $transactionsMock;
+	private Connection $connection;
+	private UserMainRepository&Stub $userMainRepository;
+	private UserTokenService&Stub $userTokenService;
 	private AccountService $accountService;
 
 	/**
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->userMainRepositoryMock = $this->createMock(UserMainRepository::class);
-		$this->userTokenServiceMock   = $this->createMock(UserTokenService::class);
-		$this->cryptMock              = $this->createMock(Crypt::class);
-		$this->transactionsMock       = $this->createMock(Transactions::class);
+		$this->connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+		$this->connection->executeStatement('CREATE TABLE steps (name TEXT)');
 
-		$this->accountService = new AccountService(
-			$this->userMainRepositoryMock,
-			$this->userTokenServiceMock,
-			$this->cryptMock,
-			$this->transactionsMock
+		$crypt = $this->createStub(Crypt::class);
+		$crypt->method('createPasswordHash')->willReturn('hashed');
+
+		$this->userMainRepository = $this->createStub(UserMainRepository::class);
+		$this->userTokenService   = $this->createStub(UserTokenService::class);
+		$this->userTokenService->method('useToken')->willReturnCallback(fn(): int => $this->step('token'));
+
+		$this->accountService = new AccountService($this->userMainRepository, $this->userTokenService, $crypt, new Transactions($this->connection));
+	}
+
+	/**
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	private function step(string $name): int
+	{
+		return (int) $this->connection->executeStatement('INSERT INTO steps (name) VALUES (?)', [$name]);
+	}
+
+	/**
+	 * @return list<string>
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	private function steps(): array
+	{
+		return $this->connection->fetchFirstColumn('SELECT name FROM steps ORDER BY rowid');
+	}
+
+	/**
+	 * @param array<string,mixed> $user the user the repository finds, [] for none
+	 * @param int $statusUpdate result of the update of the status
+	 */
+	private function prepareRepository(array $user, int $statusUpdate): void
+	{
+		$this->userMainRepository->method('update')->willReturnCallback(
+			fn(int $UID, array $data): int => isset($data['password']) ? $this->step('password') : $statusUpdate
 		);
+		$this->userMainRepository->method('findByIdSecured')->willReturn($user);
 	}
 
 	/**
-	 * @throws \Doctrine\DBAL\Exception
+	 * @throws \Throwable
 	 */
 	#[Group('units')]
-	public function testStoreNewForcedPasswordSuccess(): void
+	public function testAUserWhoIsGoneAfterTheNewPasswordTakesBackAllSteps(): void
 	{
-		$UID = 34;
-		$passwordToken = 'valid-token';
-		$password = 'new-password';
-		$hashedPassword = 'hashed-password';
-		$this->cryptMock->expects($this->once())->method('createPasswordHash')
-			->with($password)
-			->willReturn($hashedPassword);
-		$this->transactionsMock->expects($this->once())->method('begin');
-		$this->userMainRepositoryMock->expects($this->exactly(2))
-			->method('update')
-			->willReturnMap([
-				[$UID, ['password' => $hashedPassword], 1],
-				[$UID, ['status' => UserStatus::REGISTERED->value], 1],
-			]);
-		$this->userTokenServiceMock->expects($this->once())->method('useToken')
-			->with($passwordToken)
-			->willReturn(1);
-		$this->userMainRepositoryMock->expects($this->once())->method('findByIdSecured')
-			->with($UID)
-			->willReturn(['status' => UserStatus::NOT_VERIFIED->value]);
-		$this->transactionsMock->expects($this->once())->method('commit');
-		$this->transactionsMock->expects($this->never())->method('rollBack');
+		$this->prepareRepository([], 1);
 
-		$this->accountService->storeNewForcedPassword($UID, $passwordToken, $password);
-	}
-
-	/**
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testStoreNewForcedPasswordThrowsWhenPasswordUpdateThrows(): void
-	{
-		$UID = 1;
-		$passwordToken = 'valid-token';
-		$password = 'new-password';
-
-		$this->transactionsMock->expects($this->once())->method('begin');
-		$this->cryptMock->expects($this->once())->method('createPasswordHash')->with($password)->willReturn('hashed');
-		$this->userMainRepositoryMock->expects($this->once())
-			->method('update')
-			->with($UID, ['password' => 'hashed'])
-			->willReturn(0);
-		$this->transactionsMock->expects($this->once())->method('rollBack');
-
-		$this->userTokenServiceMock->expects($this->never())->method('useToken');
-
-		$this->transactionsMock->expects($this->never())->method('commit');
-
-		$this->expectException(TranslatableModuleException::class);
-		$this->expectExceptionMessage('password_update_failed');
-		$this->accountService->storeNewForcedPassword($UID, $passwordToken, $password);
-	}
-
-	/**
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testStoreNewForcedPasswordThrowsWhenTokenUpdateThrows(): void
-	{
-		$UID = 1;
-		$passwordToken = 'valid-token';
-		$password = 'new-password';
-		$hashedPassword = 'hashed-password';
-		$this->cryptMock->expects($this->once())->method('createPasswordHash')
-			->with($password)
-			->willReturn($hashedPassword);
-
-		$this->transactionsMock->expects($this->once())->method('begin');
-		$this->userMainRepositoryMock->expects($this->once())
-			->method('update')
-			->with($UID, ['password' => $hashedPassword])
-			->willReturn(1);
-		$this->userTokenServiceMock->expects($this->once())->method('useToken')
-			->with($passwordToken)
-			->willReturn(0);
-		$this->transactionsMock->expects($this->once())->method('rollBack');
-
-		$this->transactionsMock->expects($this->never())->method('commit');
-
-		$this->expectException(TranslatableModuleException::class);
-		$this->expectExceptionMessage('token_update_failed');
-		$this->accountService->storeNewForcedPassword($UID, $passwordToken, $password);
-	}
-
-	/**
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testStoreNewForcedPasswordThrowsWhenUserNotFound(): void
-	{
-		$UID = 1;
-		$passwordToken = 'valid-token';
-		$password = 'new-password';
-		$hashedPassword = 'hashed-password';
-		$this->cryptMock->expects($this->once())->method('createPasswordHash')
-			->with($password)
-			->willReturn($hashedPassword);
-
-		$this->transactionsMock->expects($this->once())->method('begin');
-		$this->userMainRepositoryMock->expects($this->once())
-			->method('update')
-			->with($UID, ['password' => $hashedPassword])
-			->willReturn(1);
-		$this->userTokenServiceMock->expects($this->once())->method('useToken')->with($passwordToken)->willReturn(1);
-		$this->userMainRepositoryMock->expects($this->once())->method('findByIdSecured')->with($UID)->willReturn([]);
-		$this->transactionsMock->expects($this->once())->method('rollBack');
-
-		$this->transactionsMock->expects($this->never())->method('commit');
-
-		$this->expectException(NotFoundException::class);
-		$this->expectExceptionMessage('user_not_found');
-		$this->accountService->storeNewForcedPassword($UID, $passwordToken, $password);
-	}
-
-	/**
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testStoreNewForcedPasswordThrowsWhenStatusUpdateThrows(): void
-	{
-		$UID = 1;
-		$passwordToken = 'valid-token';
-		$password = 'new-password';
-		$hashedPassword = 'hashed-password';
-		$this->cryptMock->expects($this->once())->method('createPasswordHash')
-			->with($password)
-			->willReturn($hashedPassword);
-
-		$this->transactionsMock->expects($this->once())->method('begin');
-		$this->userMainRepositoryMock->expects($this->exactly(2))
-			->method('update')
-			->willReturnMap([
-				[$UID, ['password' => $hashedPassword], 1],
-				[$UID, ['status' => UserStatus::REGISTERED->value], 0],
-			]);
-		$this->userTokenServiceMock->expects($this->once())->method('useToken')
-			->with($passwordToken)
-			->willReturn(1);
-		$this->userMainRepositoryMock->expects($this->once())->method('findByIdSecured')
-			->with($UID)
-			->willReturn(['status' => UserStatus::NOT_VERIFIED->value]);
-		$this->transactionsMock->expects($this->once())->method('rollBack');
-
-		$this->transactionsMock->expects($this->never())->method('commit');
-
-		$this->expectException(TranslatableModuleException::class);
-		$this->expectExceptionMessage('status_update_failed');
-		$this->accountService->storeNewForcedPassword($UID, $passwordToken, $password);
-	}
-
-	/**
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testUpdateLocaleSuccess(): void
-	{
-		$this->expectUntouched($this->userTokenServiceMock, $this->cryptMock, $this->transactionsMock);
-		$UID = 42;
-		$locale = 'en_US';
-
-		$this->userMainRepositoryMock->expects($this->once())
-			->method('update')
-			->with($UID, ['locale' => $locale])
-			->willReturn(1);
-
-		$result = $this->accountService->updateLocale($UID, $locale);
-
-		static::assertSame(1, $result);
-	}
-
-	/**
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testUpdateLocaleFails(): void
-	{
-		$this->expectUntouched($this->userTokenServiceMock, $this->cryptMock, $this->transactionsMock);
-		$UID = 42;
-		$locale = 'en_US';
-
-		$this->userMainRepositoryMock->expects($this->once())
-			->method('update')
-			->with($UID, ['locale' => $locale])
-			->willReturn(0);
-
-		$result = $this->accountService->updateLocale($UID, $locale);
-
-		static::assertSame(0, $result);
-	}
-
-	private function expectUntouched(MockObject ...$mocks): void
-	{
-		foreach ($mocks as $mock)
+		try
 		{
-			$mock->expects($this->never())->method($this->anything());
+			$this->accountService->storeNewForcedPassword(5, 'token', 'New-Pass1!');
+			static::fail('Expected a NotFoundException');
 		}
+		catch (NotFoundException $e)
+		{
+			static::assertSame('user_not_found', $e->getTranslationKey());
+		}
+
+		static::assertSame([], $this->steps());
+		static::assertFalse($this->connection->isTransactionActive());
+	}
+
+	/**
+	 * @throws \Throwable
+	 */
+	#[Group('units')]
+	public function testAStatusWhichCanNotBeChangedTakesBackPasswordAndToken(): void
+	{
+		$this->prepareRepository(['status' => UserStatus::NOT_VERIFIED->value], 0);
+
+		try
+		{
+			$this->accountService->storeNewForcedPassword(5, 'token', 'New-Pass1!');
+			static::fail('Expected a TranslatableModuleException');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertSame('status_update_failed', $e->getTranslationKey());
+		}
+
+		static::assertSame([], $this->steps());
+		static::assertFalse($this->connection->isTransactionActive());
+	}
+
+	/**
+	 * Control: the same steps are kept when everything works.
+	 *
+	 * @throws \Throwable
+	 */
+	#[Group('units')]
+	public function testAllStepsAreKeptWhenTheStatusIsChanged(): void
+	{
+		$this->prepareRepository(['status' => UserStatus::NOT_VERIFIED->value], 1);
+
+		$this->accountService->storeNewForcedPassword(5, 'token', 'New-Pass1!');
+
+		static::assertSame(['password', 'token'], $this->steps());
+		static::assertFalse($this->connection->isTransactionActive());
 	}
 }

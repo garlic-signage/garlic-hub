@@ -19,36 +19,84 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Modules\Account\Helper\Password;
 
-use App\Framework\Validation\Sanitizer;
-use App\Framework\Http\Session;
-use App\Modules\Account\Helper\Password\Parameters;
-use Exception;
+use App\Framework\Localization\Translate\Translator;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 class ParametersTest extends TestCase
 {
-	private Parameters $parameters;
+	private PasswordFixture $fixture;
+
+	private function translator(): Translator
+	{
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(PasswordFixture::translation());
+
+		return $translator;
+	}
 
 	/**
-	 * @throws Exception|\PHPUnit\Framework\MockObject\Exception
+	 * @throws \Exception
 	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$sanitizerStub = $this->createStub(Sanitizer::class);
-		$sessionStub = $this->createStub(Session::class);
-
-		$this->parameters = new Parameters($sanitizerStub, $sessionStub);
+		$this->fixture = new PasswordFixture($this->translator());
 	}
 
 	#[Group('units')]
-	public function testConstructor(): void
+	public function testTheParametersAreTheCsrfTokenAndBothPasswords(): void
 	{
-		static::assertCount(3, $this->parameters->getCurrentParameters());
-		static::assertSame('account', $this->parameters->getModuleName());
+		static::assertSame('account', $this->fixture->parameters->getModuleName());
+		static::assertEqualsCanonicalizing(['csrf_token', 'password', 'password_confirm'], array_keys($this->fixture->parameters->getCurrentParameters()));
+	}
+
+	/**
+	 * The link token is no parameter of the form: the controller reads it itself and checks it against the database.
+	 */
+	#[Group('units')]
+	public function testTheLinkTokenIsNoParameter(): void
+	{
+		static::assertFalse($this->fixture->parameters->hasParameter('token'));
+	}
+
+	/**
+	 * A password is taken as it is typed: spaces and signs which are markup in other fields belong to it.
+	 */
+	#[Group('units')]
+	public function testAPasswordIsNotChanged(): void
+	{
+		$password = ' <b>"Pa ss\'&word</b> ';
+		$this->fixture->parameters->setUserInputs($this->fixture->post(['password' => $password, 'password_confirm' => $password]));
+		$this->fixture->parameters->parseInputAllParameters();
+
+		static::assertSame($password, $this->fixture->parameters->getValueOfParameter('password'));
+		static::assertSame($password, $this->fixture->parameters->getValueOfParameter('password_confirm'));
+	}
+
+	#[Group('units')]
+	public function testMissingInputIsEmpty(): void
+	{
+		$this->fixture->parameters->setUserInputs([]);
+		$this->fixture->parameters->parseInputAllParameters();
+
+		static::assertSame('', $this->fixture->parameters->getValueOfParameter('password'));
+		static::assertSame('', $this->fixture->parameters->getValueOfParameter('password_confirm'));
+		static::assertSame('', $this->fixture->parameters->getCsrfToken());
+	}
+
+	/**
+	 * password[]=x in the post must not break the page.
+	 */
+	#[Group('units')]
+	public function testAnArrayInsteadOfAPasswordIsEmpty(): void
+	{
+		$this->fixture->parameters->setUserInputs($this->fixture->post(['password' => ['x'], 'password_confirm' => ['x']]));
+		$this->fixture->parameters->parseInputAllParameters();
+
+		static::assertSame('', $this->fixture->parameters->getValueOfParameter('password'));
+		static::assertSame('', $this->fixture->parameters->getValueOfParameter('password_confirm'));
 	}
 }

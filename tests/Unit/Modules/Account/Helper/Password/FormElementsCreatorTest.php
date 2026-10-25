@@ -19,141 +19,118 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Modules\Account\Helper\Password;
 
-use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Utils\Html\FieldInterface;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Utils\Html\FieldType;
-use App\Framework\Utils\Html\FormBuilder;
-use App\Framework\Utils\Html\PasswordField;
 use App\Modules\Account\Helper\Password\FormElementsCreator;
-use App\Modules\Account\Helper\Password\Parameters;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * The creator and the FormBuilder are the real ones: the result is the html of the field.
+ */
 class FormElementsCreatorTest extends TestCase
 {
-	private FormBuilder&MockObject $formBuilderMock;
-	private Translator&MockObject $translatorMock;
+	private PasswordFixture $fixture;
 	private FormElementsCreator $creator;
 
 	/**
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->formBuilderMock = $this->createMock(FormBuilder::class);
-		$this->translatorMock  = $this->createMock(Translator::class);
-
-		$this->creator = new FormElementsCreator($this->formBuilderMock, $this->translatorMock);
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(PasswordFixture::translation());
+		$this->fixture = new PasswordFixture($translator);
+		$this->creator = new FormElementsCreator($this->fixture->formBuilder, $translator);
 	}
 
 	/**
-	 * @throws Exception
-	 * @throws FrameworkException
-	 * @throws CoreException
-	 * @throws InvalidArgumentException
-	 * @throws \PHPUnit\Framework\MockObject\Exception
+	 * @return array<string,string> the attributes of the (only) input of the field
+	 * @throws \Exception
 	 */
-	#[Group('units')]
-	public function testCreatePasswordField(): void
+	private function attributesOf(\App\Framework\Utils\Html\FieldInterface $field): array
 	{
-		$value = 'securePassword123';
-		$pattern = '(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]).{8,}';
-		$expectedField = $this->createMock(PasswordField::class);
+		$html    = $this->fixture->formBuilder->prepareForm(['field' => $field]);
+		$element = PasswordFixture::element($html['visible'][0]['HTML_ELEMENT'] ?? $html['hidden'][0]['HIDDEN_HTML_ELEMENT']);
+		static::assertNotNull($element);
+		$attributes = [];
+		foreach ($element->attributes ?? [] as $attribute)
+			$attributes[$attribute->name] = $attribute->value;
 
-		$this->translatorMock->expects($this->exactly(2))->method('translate')
-			->willReturnMap([
-				['password_explanation', 'account', [], 'Please provide a secure password'],
-				[Parameters::PARAMETER_PASSWORD, 'account', [], 'Password']
-			]);
-
-		$this->formBuilderMock->expects($this->once())->method('createField')
-			->with([
-				'type' => FieldType::PASSWORD,
-				'id' => Parameters::PARAMETER_PASSWORD,
-				'name' => Parameters::PARAMETER_PASSWORD,
-				'title' => 'Please provide a secure password',
-				'label' => 'Password',
-				'value' => $value,
-				'rules' => ['required' => true, 'minlength' => 8],
-				'default_value' => ''
-			])
-			->willReturn($expectedField);
-
-		$expectedField->expects($this->once())->method('setPattern')
-			->with($pattern);
-
-		$result = $this->creator->createPasswordField($value, $pattern);
-
-		static::assertSame($expectedField, $result);
+		return $attributes;
 	}
 
 	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
-	 * @throws \PHPUnit\Framework\MockObject\Exception
+	 * @throws \Exception
 	 */
 	#[Group('units')]
-	public function testCreatePasswordConfirmField(): void
+	public function testThePasswordFieldIsRequiredHasTheMinimalLengthAndThePattern(): void
 	{
-		$value = 'securePassword123';
-		$expectedField = $this->createStub(PasswordField::class);
+		$field = $this->creator->createPasswordField('', '(?=.*\d).{8,}');
 
-		$this->translatorMock->expects($this->exactly(2))->method('translate')
-			->willReturnMap([
-				['password_explanation', 'account', [], 'Please provide a secure password'],
-				[Parameters::PARAMETER_PASSWORD_CONFIRM, 'account', [], 'Confirm Password']
-			]);
-
-		$this->formBuilderMock->expects($this->once())->method('createField')
-			->with([
-				'type' => FieldType::PASSWORD,
-				'id' => Parameters::PARAMETER_PASSWORD_CONFIRM,
-				'name' => Parameters::PARAMETER_PASSWORD_CONFIRM,
-				'title' => 'Please provide a secure password',
-				'label' => 'Confirm Password',
-				'value' => $value,
-				'rules' => ['required' => true, 'minlength' => 8],
-				'default_value' => ''
-			])
-			->willReturn($expectedField);
-
-		$result = $this->creator->createPasswordConfirmField($value);
-
-		static::assertSame($expectedField, $result);
+		static::assertSame(FieldType::PASSWORD, $field->getType());
+		static::assertSame('password', $field->getName());
+		static::assertSame('account.password', $field->getLabel());
+		static::assertSame(
+			['type' => 'password', 'name' => 'password', 'id' => 'password', 'value' => '', 'title' => 'account.password_explanation', 'label' => 'account.password',
+			 'pattern' => '(?=.*\d).{8,}', 'required' => 'required', 'minlength' => '8', 'aria-describedby' => 'error_password'],
+			$this->attributesOf($field)
+		);
 	}
 
 	/**
-	 * @throws Exception
+	 * @throws CoreException
 	 * @throws FrameworkException
+	 * @throws \Exception
 	 */
 	#[Group('units')]
-	public function testCreatePasswordTokenField(): void
+	public function testThePasswordConfirmFieldHasNoPattern(): void
 	{
-		$this->translatorMock->expects($this->never())->method($this->anything());
-		$value = 'sample_token';
-		$expectedField = $this->createStub(FieldInterface::class);
+		$field = $this->creator->createPasswordConfirmField('');
 
-		$this->formBuilderMock->expects($this->once())->method('createField')
-			->with([
-				'type' => FieldType::HIDDEN,
-				'id' => Parameters::PARAMETER_PASSWORD_TOKEN,
-				'name' => Parameters::PARAMETER_PASSWORD_TOKEN,
-				'value' => $value,
-			])
-			->willReturn($expectedField);
-
-		$result = $this->creator->createPasswordTokenField($value);
-
-		static::assertSame($expectedField, $result);
+		static::assertSame(FieldType::PASSWORD, $field->getType());
+		static::assertSame('password_confirm', $field->getName());
+		static::assertSame(
+			['type' => 'password', 'name' => 'password_confirm', 'id' => 'password_confirm', 'value' => '', 'title' => 'account.password_explanation', 'label' => 'account.password_confirm',
+			 'required' => 'required', 'minlength' => '8', 'aria-describedby' => 'error_password_confirm'],
+			$this->attributesOf($field)
+		);
 	}
 
+	/**
+	 * A value or a pattern with quotes must not leave the attribute.
+	 *
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testValueAndPatternAreEscaped(): void
+	{
+		$attributes = $this->attributesOf($this->creator->createPasswordField('"><script>alert(1)</script>', '.*"onfocus="alert(1)'));
+
+		static::assertSame('"><script>alert(1)</script>', $attributes['value']);
+		static::assertSame('.*"onfocus="alert(1)', $attributes['pattern']);
+		static::assertArrayNotHasKey('onfocus', $attributes);
+	}
+
+	/**
+	 * @throws FrameworkException
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testTheTokenFieldIsHiddenAndCarriesTheToken(): void
+	{
+		$field = $this->creator->createPasswordTokenField('abcd');
+
+		static::assertSame(FieldType::HIDDEN, $field->getType());
+		static::assertSame(['type' => 'hidden', 'name' => 'token', 'id' => 'token', 'value' => 'abcd'], $this->attributesOf($field));
+	}
 }
