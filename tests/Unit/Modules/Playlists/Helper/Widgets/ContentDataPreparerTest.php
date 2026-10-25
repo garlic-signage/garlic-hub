@@ -172,6 +172,29 @@ class ContentDataPreparerTest extends TestCase
 	}
 
 	/**
+	 * @throws ModuleException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testPrepareContentDataKeepsOnlyThePreferencesOfTheWidget(): void
+	{
+		$configData = '<config></config>';
+		$this->configXmlMock->method('load')->with($configData)->willReturnSelf();
+		$this->configXmlMock->method('hasEditablePreferences')->willReturn(true);
+		$this->configXmlMock->method('parseBasic')->willReturnSelf();
+		$this->configXmlMock->method('parsePreferences')->willReturnSelf();
+		$this->configXmlMock->method('getPreferences')->willReturn([
+			'text'    => ['types' => 'text'],
+			'count'   => ['types' => 'integer'],
+			'missing' => ['types' => 'text']
+		]);
+
+		$result = $this->contentDataPreparer->prepareContentData($configData, ['csrf_token' => 'secret', 'item_id' => '1', 'text' => '', 'count' => '0', 'unknown' => 'x']);
+
+		static::assertSame(['text' => '', 'count' => 0], $result);
+	}
+
+	/**
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]

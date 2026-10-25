@@ -91,13 +91,23 @@ class WidgetsControllerTest extends PlaylistsControllerTestCase
 
 	public function testOnlyTheValuesOfTheWidgetAreStored(): void
 	{
-		static::markTestSkipped('Known bug: the whole body is stored, with the csrf_token, the item_id and every other field. The values become params of the exported SMIL file, so the token of the user goes to the players. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(2);
 
 		$this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '1', 'urls' => 'http://example.com/feed', 'unknown' => 'x'])), $this->newResponse());
 
 		static::assertSame(['urls' => 'http://example.com/feed'], unserialize((string) $this->databaseValue('SELECT content_data FROM playlists_items WHERE item_id = 1')));
+	}
+
+	/**
+	 * A zero or an emptied text is a value of the user, it does not fall back to the default of the widget.
+	 */
+	public function testEmptyValuesAreStored(): void
+	{
+		$this->actingAs(2);
+
+		$this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '1', 'urls' => 'http://example.com/feed', 'count' => '0'])), $this->newResponse());
+
+		static::assertSame(['urls' => 'http://example.com/feed', 'count' => 0], unserialize((string) $this->databaseValue('SELECT content_data FROM playlists_items WHERE item_id = 1')));
 	}
 
 	public function testWithoutAnItemOrAValidTokenNothingIsLoadedOrSaved(): void

@@ -50,6 +50,8 @@ readonly class ContentDataPreparer
 	{
 		$preferencesData = $this->determinePreferences($configData);
 
+		// only the preferences of the widget are stored, never other fields of the request (csrf_token, item_id, ...)
+		$contentData = [];
 		foreach ($preferencesData as $key => $value)
 		{
 			$mandatory = (array_key_exists('mandatory', $value) && $value['mandatory'] === 'true');
@@ -57,14 +59,15 @@ readonly class ContentDataPreparer
 			if (!$init && !$has_key && $mandatory)
 				throw new TranslatableModuleException('playlists', 'widget_field_mandatory', ['field' => $key]);
 
-			if (!$has_key)
+			// an empty value (0, an emptied text) is a value of the user, only a missing one is left out
+			if (!array_key_exists($key, $requestData))
 				continue;
 
 			switch ($value['types'])
 			{
 				case 'colorOpacity':
 				case 'integer':
-					$requestData[$key] = (int)$requestData[$key];
+					$contentData[$key] = (int)$requestData[$key];
 					break;
 				default:
 				case 'text':
@@ -72,12 +75,12 @@ readonly class ContentDataPreparer
 				case 'color':
 				case 'list':
 				case 'combo':
-					$requestData[$key] = is_scalar($requestData[$key]) ? (string) $requestData[$key] : '';
+					$contentData[$key] = is_scalar($requestData[$key]) ? (string) $requestData[$key] : '';
 					break;
 			}
 		}
 
-		return $requestData;
+		return $contentData;
 	}
 
 	/**
