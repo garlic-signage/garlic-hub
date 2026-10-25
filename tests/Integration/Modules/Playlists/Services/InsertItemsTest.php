@@ -199,8 +199,6 @@ class InsertItemsTest extends ContainerTestCase
 	 */
 	public function testAPlaylistCanNotBeInsertedIntoAPlaylistWhichIsNestedInIt(): void
 	{
-		static::markTestSkipped('Known bug: the check for recursive inserts gets the file_resource of the nested playlists as string, but expects an int. Every playlist which contains a playlist throws a TypeError when it is inserted. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(1);
 
 		$this->expectInsertToFail(TranslatableModuleException::class, fn() => $this->inserter('playlist')->insert(3, 1, 1));

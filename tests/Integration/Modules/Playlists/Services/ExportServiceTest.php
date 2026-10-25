@@ -133,8 +133,6 @@ class ExportServiceTest extends ContainerTestCase
 
 	public function testTheZonesOfAMultizonePlaylistAreExported(): void
 	{
-		static::markTestSkipped('Known bug: ExportService reads the zones from the column multizone, which migration 003 renamed to layout, and expects a list of zones. The layout is [resolution, zones => [screen => [zone_playlist_id]]]. A multizone playlist exports no zone. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(2);
 		$this->connection->executeStatement("UPDATE playlists SET playlist_mode = 'multizone', layout = ? WHERE playlist_id = 3", [serialize(['resolution' => '1920x1080', 'zones' => ['screen1' => ['zone_playlist_id' => 1]]])]);
 

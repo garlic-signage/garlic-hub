@@ -116,7 +116,7 @@ class Playlist extends AbstractInsertItem
 
 		foreach ($this->itemsRepository->findAllPlaylistItemsByPlaylistId($insertId) as $value)
 		{
-			if (isset($value['file_resource']) && $this->checkForRecursiveInserts($targetId, $value['file_resource']) === true)
+			if (isset($value['file_resource']) && $this->checkForRecursiveInserts($targetId, (int) $value['file_resource']) === true)
 				return true;
 		}
 

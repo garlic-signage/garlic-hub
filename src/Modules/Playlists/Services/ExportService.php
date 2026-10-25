@@ -79,13 +79,18 @@ class ExportService extends AbstractBaseService
 			$playlist = $this->playlistsService->loadPureById($playlistId); // checks rights
 
 			$count = 0;
-			if ($playlist['playlist_mode'] === PlaylistMode::MULTIZONE->value && !empty($playlist['multizone']))
+			$layout = Serialization::unserializeSecure($playlist['layout'] ?? null);
+			if ($playlist['playlist_mode'] === PlaylistMode::MULTIZONE->value && !empty($layout['zones']))
 			{
-				$zones = Serialization::unserializeSecure($playlist['multizone']);
+				$zones = $layout['zones'];
 				$metrics = ['filesize' => 0, 'duration' => 0, 'owner_duration' => 0];
 				foreach ($zones as $zone)
 				{
-					$tmp = $this->export($this->playlistsService->loadPureById($zone['zones']['zone_playlist_id']));
+					// a zone without a playlist has nothing to export
+					if ((int) ($zone['zone_playlist_id'] ?? 0) === 0)
+						continue;
+
+					$tmp = $this->export($this->playlistsService->loadPureById((int) $zone['zone_playlist_id']));
 					$count++;
 					// use the highest values for the duration of multizone.
 					$metrics['filesize'] = max($metrics['filesize'], $tmp['filesize']);
