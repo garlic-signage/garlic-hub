@@ -146,4 +146,12 @@ class WidgetsControllerTest extends PlaylistsControllerTestCase
 		$this->expectException(AccessDeniedException::class);
 		$this->controller->fetch($this->request('GET'), $this->newResponse(), ['item_id' => '1']);
 	}
+
+	public function testWithoutABodyOrWithATokenOfTheWrongTypeNothingIsDone(): void
+	{
+		$this->actingAs(2);
+
+		$this->assertError($this->controller->save($this->request('PATCH')->withParsedBody(null), $this->newResponse()), 'CSRF token validation error.');
+		$this->assertError($this->controller->save($this->request('PATCH', body: ['csrf_token' => ['x'], 'item_id' => '1', 'playlist_id' => '1']), $this->newResponse()), 'CSRF token validation error.');
+	}
 }

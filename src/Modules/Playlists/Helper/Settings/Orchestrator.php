@@ -100,7 +100,8 @@ class Orchestrator
 	{
 		$this->settingsParametersPolicy->addEditFormElements($this->getLoadedPlaylist());
 
-		return $this->settingsFormBuilder->buildForm($userInput !== [] ? $userInput : $this->playlist);
+		// the values of the user first, what the request does not bring (mode, resolution, owner) comes from the playlist
+		return $this->settingsFormBuilder->buildForm($userInput + $this->playlist);
 	}
 
 	/**

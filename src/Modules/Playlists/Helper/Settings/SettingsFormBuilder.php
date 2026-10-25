@@ -48,15 +48,16 @@ readonly class SettingsFormBuilder
 	public function buildForm(array $playlist): array
 	{
 		$form = [];
+		// the values may come from the request of the user: only values of the right kind are shown
 		$form[Parameters::PARAMETER_PLAYLIST_NAME] = $this->formElementsCreator->createPlaylistNameField(
-			$playlist[Parameters::PARAMETER_PLAYLIST_NAME] ?? ''
+			$this->text($playlist, Parameters::PARAMETER_PLAYLIST_NAME)
 		);
 
 		if ($this->parameters->hasParameter(BaseParameters::PARAMETER_UID))
 		{
 			$form[BaseParameters::PARAMETER_UID] = $this->formElementsCreator->createUIDField(
-				$playlist[BaseParameters::PARAMETER_UID] ?? $this->userSession->getUID(),
-				$playlist['username'] ?? $this->userSession->getUsername(),
+				$this->number($playlist, BaseParameters::PARAMETER_UID) ?? $this->userSession->getUID(),
+				$this->text($playlist, 'username') ?: $this->userSession->getUsername(),
 				$this->userSession->getUID()
 			);
 		}
@@ -64,26 +65,48 @@ readonly class SettingsFormBuilder
 		if (array_key_exists(Parameters::PARAMETER_PLAYLIST_MODE, $playlist) &&
 			($playlist[Parameters::PARAMETER_PLAYLIST_MODE] === PlaylistMode::MASTER->value || $playlist[Parameters::PARAMETER_PLAYLIST_MODE] === PlaylistMode::MULTIZONE->value))
 		{
-			$form[Parameters::PARAMETER_SCREEN_WIDTH]  = $this->formElementsCreator->createScreenWidthField($playlist[Parameters::PARAMETER_SCREEN_WIDTH] ?? 1920);
-			$form[Parameters::PARAMETER_SCREEN_HEIGHT] = $this->formElementsCreator->createScreenHeightField($playlist[Parameters::PARAMETER_SCREEN_HEIGHT] ?? 1080);
+			$form[Parameters::PARAMETER_SCREEN_WIDTH]  = $this->formElementsCreator->createScreenWidthField($this->number($playlist, Parameters::PARAMETER_SCREEN_WIDTH) ?? 1920);
+			$form[Parameters::PARAMETER_SCREEN_HEIGHT] = $this->formElementsCreator->createScreenHeightField($this->number($playlist, Parameters::PARAMETER_SCREEN_HEIGHT) ?? 1080);
 		}
 
 		if ($this->parameters->hasParameter(Parameters::PARAMETER_TIME_LIMIT))
 		{
 			$form[Parameters::PARAMETER_TIME_LIMIT] = $this->formElementsCreator->createTimeLimitField(
-				$playlist[Parameters::PARAMETER_TIME_LIMIT] ?? $this->parameters->getDefaultValueOfParameter(Parameters::PARAMETER_TIME_LIMIT),
+				$this->number($playlist, Parameters::PARAMETER_TIME_LIMIT) ?? $this->parameters->getDefaultValueOfParameter(Parameters::PARAMETER_TIME_LIMIT),
 				$this->parameters->getDefaultValueOfParameter(Parameters::PARAMETER_TIME_LIMIT)
 			);
 		}
 
 		if ($this->parameters->hasParameter(Parameters::PARAMETER_PLAYLIST_ID))
-			$form[Parameters::PARAMETER_PLAYLIST_ID] = $this->formElementsCreator->createHiddenPlaylistIdField($playlist[Parameters::PARAMETER_PLAYLIST_ID]);
+			$form[Parameters::PARAMETER_PLAYLIST_ID] = $this->formElementsCreator->createHiddenPlaylistIdField($this->number($playlist, Parameters::PARAMETER_PLAYLIST_ID) ?? 0);
 
 		if ($this->parameters->hasParameter(Parameters::PARAMETER_PLAYLIST_MODE))
-			$form[Parameters::PARAMETER_PLAYLIST_MODE] = $this->formElementsCreator->createPlaylistModeField($playlist[Parameters::PARAMETER_PLAYLIST_MODE]);
+			$form[Parameters::PARAMETER_PLAYLIST_MODE] = $this->formElementsCreator->createPlaylistModeField($this->text($playlist, Parameters::PARAMETER_PLAYLIST_MODE));
 
 		$form[BaseEditParameters::PARAMETER_CSRF_TOKEN] = $this->formElementsCreator->createCSRFTokenField();
 
 		return $this->formElementsCreator->prepareForm($form);
+	}
+
+	/**
+	 * @param array<string,mixed> $values
+	 */
+	private function text(array $values, string $key): string
+	{
+		$value = $values[$key] ?? '';
+
+		return is_string($value) ? $value : '';
+	}
+
+	/**
+	 * A number from the database (5) or from a form ("5"), null when the value is missing or no number.
+	 *
+	 * @param array<string,mixed> $values
+	 */
+	private function number(array $values, string $key): ?int
+	{
+		$value = $values[$key] ?? null;
+
+		return is_int($value) || (is_string($value) && preg_match('/^-?\d{1,9}$/D', $value) === 1) ? (int) $value : null;
 	}
 }

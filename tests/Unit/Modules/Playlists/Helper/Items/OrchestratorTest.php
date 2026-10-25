@@ -338,7 +338,7 @@ class OrchestratorTest extends TestCase
 		$this->validatorStub->method('validateCsrfToken')->willReturn(true);
 		$this->expectValidationError('invalidPlaylistId');
 
-		$this->orchestrator->setInput(['items_positions' => [['id' => 1, 'position' => 2]]])
+		$this->orchestrator->setInput(['items_positions' => ['2', '1']])
 			->validateUpdateItemOrders($this->responseStub);
 	}
 
@@ -359,7 +359,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testUpdateItemOrders(): void
 	{
-		$positions = [['id' => 1, 'position' => 2], ['id' => 2, 'position' => 1]];
+		$positions = ['2', '1'];
 		$this->prepareValid(['playlist_id' => 1, 'items_positions' => $positions], 'validateUpdateItemOrders');
 
 		$this->itemsServiceMock->expects($this->once())->method('updateItemOrder')

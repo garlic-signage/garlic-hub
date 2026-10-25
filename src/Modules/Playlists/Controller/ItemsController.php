@@ -62,6 +62,8 @@ readonly class ItemsController
 	{
 		/** @var array<string,mixed> $input */
 		$input = $request->getParsedBody();
+		// no body, or one which could not be read: nothing was sent
+		$input = is_array($input) ? $input : [];
 		$answer = $this->orchestrator->setInput($input)->validateInsert($response);
 		if ($answer !== null)
 			return $answer;
@@ -80,6 +82,8 @@ readonly class ItemsController
 	{
 		/** @var array<string,mixed> $input */
 		$input = $request->getParsedBody();
+		// no body, or one which could not be read: nothing was sent
+		$input = is_array($input) ? $input : [];
 		$answer = $this->orchestrator->setInput($input)->validateEdit($response);
 		if ($answer !== null)
 			return $answer;
@@ -113,6 +117,8 @@ readonly class ItemsController
 	{
 		/** @var array<string,mixed> $input */
 		$input = $request->getParsedBody();
+		// no body, or one which could not be read: nothing was sent
+		$input = is_array($input) ? $input : [];
 		$answer = $this->orchestrator->setInput($input)->validateUpdateItemOrders($response);
 		if ($answer !== null)
 			return $answer;
@@ -128,6 +134,8 @@ readonly class ItemsController
 	{
 		/** @var array<string,mixed> $input */
 		$input = $request->getParsedBody();
+		// no body, or one which could not be read: nothing was sent
+		$input = is_array($input) ? $input : [];
 		$answer = $this->orchestrator->setInput($input)->validateDelete($response);
 		if ($answer !== null)
 			return $answer;

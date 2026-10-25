@@ -27,7 +27,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Framework\Utils\FormParameters\BaseEditParameters;
+use App\Modules\Playlists\Helper\ReadsInput;
 use App\Modules\Playlists\Services\ConditionalPlayService;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
@@ -40,8 +40,8 @@ use Psr\Http\Message\ResponseInterface;
  */
 class Orchestrator
 {
-	/** @var array<string,mixed>  */
-	private array $input;
+	use ReadsInput;
+
 	private int $itemId;
 	/** @var array<string,mixed> */
 	private array $conditional = [];
@@ -55,21 +55,12 @@ class Orchestrator
 	) {}
 
 	/**
-	 * @param array<string,mixed> $input
-	 */
-	public function setInput(array $input): static
-	{
-		$this->input = $input;
-		return $this;
-	}
-
-	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
 	public function validateSave(ResponseInterface $response): ?ResponseInterface
 	{
-		if (!$this->validator->validateCsrfToken($this->input[BaseEditParameters::PARAMETER_CSRF_TOKEN]))
+		if (!$this->validator->validateCsrfToken($this->text('csrf_token')))
 			return $this->responseBuilder->csrfTokenMismatch($response);
 
 		$answer = $this->validate($response);
@@ -91,7 +82,7 @@ class Orchestrator
 	 */
 	public function validate(ResponseInterface $response): ?ResponseInterface
 	{
-		$this->itemId = (int) ($this->input['item_id'] ?? 0);
+		$this->itemId = $this->id('item_id');
 		if ($this->itemId === 0)
 			return $this->responseBuilder->invalidItemId($response);
 

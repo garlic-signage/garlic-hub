@@ -104,4 +104,12 @@ class ExportControllerTest extends PlaylistsControllerTestCase
 		$this->expectException(NotFoundException::class);
 		$this->controller->export($this->request('PUT', body: $this->withToken(['playlist_id' => '999'])), $this->newResponse());
 	}
+
+	public function testWithoutABodyOrWithATokenOfTheWrongTypeNothingIsDone(): void
+	{
+		$this->actingAs(2);
+
+		$this->assertError($this->controller->export($this->request('PUT')->withParsedBody(null), $this->newResponse()), 'CSRF token validation error.');
+		$this->assertError($this->controller->export($this->request('PUT', body: ['csrf_token' => ['x'], 'item_id' => '1', 'playlist_id' => '1']), $this->newResponse()), 'CSRF token validation error.');
+	}
 }

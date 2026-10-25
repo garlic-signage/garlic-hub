@@ -27,6 +27,7 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
+use App\Modules\Playlists\Helper\ReadsInput;
 use App\Modules\Playlists\Helper\Datatable\Parameters;
 use App\Modules\Playlists\Services\PlaylistsDatatableService;
 use App\Modules\Playlists\Services\PlaylistsService;
@@ -40,8 +41,8 @@ use Psr\Http\Message\ResponseInterface;
  */
 class Orchestrator
 {
-	/** @var array<string,mixed> */
-	private array $input = [];
+	use ReadsInput;
+
 	private int $playlistId = 0;
 
 	public function __construct(
@@ -49,21 +50,13 @@ class Orchestrator
 		private readonly BaseValidator $validator,
 		private readonly PlaylistsService $playlistsService,
 		private readonly PlaylistsDatatableService $playlistsDatatableService,
-		private readonly Parameters $parameters
+		private readonly Parameters $parameters,
+		private readonly ZonesSchema $zonesSchema
 	) {}
-
-	/**
-	 * @param array<string,mixed> $input
-	 */
-	public function setInput(array $input): static
-	{
-		$this->input = $input;
-		return $this;
-	}
 
 	public function validate(ResponseInterface $response): ?ResponseInterface
 	{
-		$this->playlistId = (int) ($this->input['playlist_id'] ?? 0);
+		$this->playlistId = $this->id('playlist_id');
 		if ($this->playlistId === 0)
 			return $this->responseBuilder->invalidPlaylistId($response);
 
@@ -76,7 +69,7 @@ class Orchestrator
 	 */
 	public function validateWithToken(ResponseInterface $response): ?ResponseInterface
 	{
-		if (!$this->validator->validateCsrfToken($this->input['csrf_token'] ?? ''))
+		if (!$this->validator->validateCsrfToken($this->text('csrf_token')))
 			return $this->responseBuilder->csrfTokenMismatch($response);
 
 		return $this->validate($response);
@@ -92,7 +85,8 @@ class Orchestrator
 		if ($answer !== null)
 			return $answer;
 
-		if (empty($this->input['shuffle_picking']))
+		// the number of the items which are played: 1 or more
+		if ($this->id('shuffle_picking') === 0)
 			return $this->responseBuilder->missingPickingValue($response);
 
 		return null;
@@ -134,7 +128,7 @@ class Orchestrator
 	 */
 	public function shufflePicking(ResponseInterface $response): ResponseInterface
 	{
-		$data = $this->playlistsService->shufflePicking($this->playlistId, (int) $this->input['shuffle_picking']);
+		$data = $this->playlistsService->shufflePicking($this->playlistId, $this->id('shuffle_picking'));
 		if ($data['affected'] === 0)
 			return $this->responseBuilder->playlistNotFound($response);
 
@@ -156,9 +150,9 @@ class Orchestrator
 	 */
 	public function saveZone(ResponseInterface $response): ResponseInterface
 	{
-
-		$zones = $this->input;
-		unset($zones['csrf_token'], $zones['playlist_id']);
+		$zones = $this->zonesSchema->parse($this->input);
+		if ($zones === null)
+			return $this->responseBuilder->invalidZoneData($response);
 
 		if ($this->playlistsService->saveZones($this->playlistId, $zones) === 0)
 			return $this->responseBuilder->zoneSaveFailed($response);

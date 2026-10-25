@@ -160,13 +160,14 @@ class OrchestratorTest extends TestCase
 	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testBuildEditFormPrefersUserInput(): void
+	public function testBuildEditFormPrefersUserInputAndCompletesItWithThePlaylist(): void
 	{
 		$this->expectUntouched($this->inputHandlerMock);
 		$this->expectPlaylistLoaded();
 		$this->policyMock->expects($this->once())->method('addEditFormElements');
 		$this->formBuilderMock->expects($this->once())->method('buildForm')
-			->with(['playlist_id' => '5', 'playlist_name' => ''])->willReturn($this->form);
+			->with($this->callback(static fn(array $values): bool => $values['playlist_id'] === '5' && $values['playlist_name'] === '' && $values['playlist_mode'] === 'multizone' && $values['UID'] === 3))
+			->willReturn($this->form);
 
 		$this->orchestrator->loadPlaylistForEdit(5);
 		$this->orchestrator->buildEditForm(['playlist_id' => '5', 'playlist_name' => '']);

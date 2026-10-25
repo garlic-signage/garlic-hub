@@ -86,9 +86,11 @@ class ShowSettingsController
 	 */
 	public function store(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
+		$parsedBody = $request->getParsedBody();
+		// no body, or one which could not be read: nothing was sent
 		/** @var array<string,mixed> $post */
-		$post       = $request->getParsedBody();
-		$playlistId = (int) ($post['playlist_id'] ?? 0);
+		$post       = is_array($parsedBody) ? $parsedBody : [];
+		$playlistId = $this->idOf($post, 'playlist_id');
 
 		if ($playlistId === 0)
 			return $this->insert($response, $post);
@@ -192,6 +194,18 @@ class ShowSettingsController
 		$playlistName = $post['playlist_name'] ?? '';
 		$this->flash->addMessage('success', 'Playlist “' . (is_string($playlistName) ? $playlistName : '') . '“ successfully stored.');
 		return $response->withHeader('Location', '/playlists')->withStatus(302);
+	}
+
+	/**
+	 * The id of a field of the request, 0 when it is missing or no id (an array is not the playlist 1).
+	 *
+	 * @param array<string,mixed> $post
+	 */
+	private function idOf(array $post, string $key): int
+	{
+		$value = $post[$key] ?? null;
+
+		return is_int($value) && $value > 0 || (is_string($value) && ctype_digit($value)) ? (int) $value : 0;
 	}
 
 	private function redirectWithError(ResponseInterface $response, string $message): ResponseInterface

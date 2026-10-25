@@ -25,6 +25,7 @@ use App\Framework\Validation\BaseValidator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
+use App\Modules\Playlists\Helper\ReadsInput;
 use App\Modules\Playlists\Services\WidgetsService;
 use Psr\Http\Message\ResponseInterface;
 
@@ -35,8 +36,8 @@ use Psr\Http\Message\ResponseInterface;
  */
 class Orchestrator
 {
-	/** @var array<string,mixed> */
-	private array $input = [];
+	use ReadsInput;
+
 	private int $itemId = 0;
 
 	public function __construct(
@@ -45,18 +46,9 @@ class Orchestrator
 		private readonly WidgetsService $widgetsService
 	) {}
 
-	/**
-	 * @param array<string,mixed> $input
-	 */
-	public function setInput(array $input): static
-	{
-		$this->input = $input;
-		return $this;
-	}
-
 	public function validate(ResponseInterface $response): ?ResponseInterface
 	{
-		$this->itemId = (int) ($this->input['item_id'] ?? 0);
+		$this->itemId = $this->id('item_id');
 		if ($this->itemId === 0)
 			return $this->responseBuilder->invalidItemId($response);
 
@@ -69,7 +61,7 @@ class Orchestrator
 	 */
 	public function validateSave(ResponseInterface $response): ?ResponseInterface
 	{
-		if (!$this->validator->validateCsrfToken($this->input['csrf_token'] ?? ''))
+		if (!$this->validator->validateCsrfToken($this->text('csrf_token')))
 			return $this->responseBuilder->csrfTokenMismatch($response);
 
 		return $this->validate($response);

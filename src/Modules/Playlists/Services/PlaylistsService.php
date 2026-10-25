@@ -26,6 +26,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Helper\Serialization;
 use App\Framework\Services\AbstractBaseService;
@@ -254,6 +255,19 @@ class PlaylistsService extends AbstractBaseService
 		$playlist = $this->loadWithUserById($playlistId);
 		if ($zones === [])
 			return 0;
+
+		// the playlists of the zones are played on the players of this playlist: only playlists the user may edit
+		foreach ($zones['zones'] ?? [] as $zone)
+		{
+			$zonePlaylistId = (int) ($zone['zone_playlist_id'] ?? 0);
+			if ($zonePlaylistId === 0)
+				continue;
+
+			if ($zonePlaylistId === $playlistId)
+				throw new TranslatableModuleException('playlists', 'invalid_zone_data', ['playlist_id' => $playlistId]);
+
+			$this->loadPureById($zonePlaylistId);
+		}
 
 		return $this->playlistsRepository->update($playlist['playlist_id'], ['layout' => serialize($zones)]);
 	}

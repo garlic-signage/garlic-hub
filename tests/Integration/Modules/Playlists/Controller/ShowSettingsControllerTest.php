@@ -258,10 +258,46 @@ class ShowSettingsControllerTest extends PlaylistsControllerTestCase
 		static::assertSame('Bernds Kantine', $this->databaseValue('SELECT playlist_name FROM playlists WHERE playlist_id = 2'));
 	}
 
+	/**
+	 * An array as playlist id is not the playlist 1: the request is one for a new playlist.
+	 */
+	public function testAPlaylistIdOfTheWrongTypeIsNotAnExistingPlaylist(): void
+	{
+		$this->actingAs(2);
+
+		$page = $this->page($this->store(['playlist_id' => ['1'], 'playlist_name' => 'Hack']));
+
+		static::assertSame('playlists/edit', $page->getTemplate());
+		static::assertCount(1, $this->flash('error'));
+		static::assertSame('Annas Lobby', $this->databaseValue('SELECT playlist_name FROM playlists WHERE playlist_id = 1'));
+		static::assertSame(3, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists'));
+	}
+
+	public function testWithoutABodyTheFormOfANewPlaylistIsShownWithErrors(): void
+	{
+		$this->actingAs(2);
+
+		$page = $this->page($this->controller->store($this->request()->withParsedBody(null), $this->newResponse()));
+
+		static::assertSame('playlists/edit', $page->getTemplate());
+		static::assertNotSame([], $this->flash('error'));
+	}
+
+	public function testAFormWithErrorsKeepsTheValuesOfTheUser(): void
+	{
+		$this->actingAs(2);
+
+		$page = $this->page($this->store(['playlist_id' => '1', 'playlist_name' => '', 'screen_width' => '800', 'screen_height' => 'abc']));
+
+		$fields = implode('', array_column($page->getTemplateData()['form_element'], 'HTML_ELEMENT'));
+		static::assertMatchesRegularExpression('/name="screen_width"[^>]*value="800"/', $fields);
+		// the height is no number: the default stands
+		static::assertMatchesRegularExpression('/name="screen_height"[^>]*value="1080"/', $fields);
+		static::assertSame('Annas Lobby', $this->databaseValue('SELECT playlist_name FROM playlists WHERE playlist_id = 1'));
+	}
+
 	public function testAFormWithErrorsOfAnExistingPlaylistIsShownAgain(): void
 	{
-		static::markTestSkipped('Known bug: the form of an existing playlist can not be shown again after an error (no name, wrong token): the hidden playlist id is typed as int but gets the text of the request, which gives a TypeError. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(2);
 
 		$page = $this->page($this->store(['playlist_id' => '1']));
@@ -273,8 +309,6 @@ class ShowSettingsControllerTest extends PlaylistsControllerTestCase
 
 	public function testValuesOfTheWrongTypeAreShownAsErrors(): void
 	{
-		static::markTestSkipped('Known bug: an array as name or playlist id and an empty body throw a TypeError instead of a form with an error. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(2);
 
 		$page = $this->page($this->store(['playlist_mode' => 'master', 'playlist_name' => ['x']]));

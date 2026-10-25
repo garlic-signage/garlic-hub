@@ -143,10 +143,16 @@ class ConditionalPlayControllerTest extends PlaylistsControllerTestCase
 
 	public function testARequestWithoutATokenIsRejectedAsAnError(): void
 	{
-		static::markTestSkipped('Known bug: a request without csrf_token throws a TypeError (and a warning for the undefined key) instead of the answer for a wrong token. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(2);
 
 		$this->assertError($this->controller->save($this->request('PATCH', body: ['item_id' => '1']), $this->newResponse()), 'CSRF token validation error.');
+	}
+
+	public function testWithoutABodyOrWithATokenOfTheWrongTypeNothingIsDone(): void
+	{
+		$this->actingAs(2);
+
+		$this->assertError($this->controller->save($this->request('PATCH')->withParsedBody(null), $this->newResponse()), 'CSRF token validation error.');
+		$this->assertError($this->controller->save($this->request('PATCH', body: ['csrf_token' => ['x'], 'item_id' => '1', 'playlist_id' => '1']), $this->newResponse()), 'CSRF token validation error.');
 	}
 }

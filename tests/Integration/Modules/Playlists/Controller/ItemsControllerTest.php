@@ -282,13 +282,69 @@ class ItemsControllerTest extends PlaylistsControllerTestCase
 		$this->controller->delete($this->request(body: $this->withToken(['playlist_id' => '1', 'item_id' => '6'])), $this->newResponse());
 	}
 
+	public function testAnIdMustBeANumberNotOnlyStartWithOne(): void
+	{
+		$this->actingAs(2);
+
+		$this->assertError($this->controller->loadItems($this->request('GET'), $this->newResponse(), ['playlist_id' => '1abc']), 'Playlist ID not valid.');
+		$this->assertError($this->controller->fetch($this->request('GET'), $this->newResponse(), ['item_id' => '2 or 1']), 'Item ID not valid.');
+		$this->assertError($this->controller->delete($this->request(body: $this->withToken(['playlist_id' => '-1', 'item_id' => '1'])), $this->newResponse()), 'Playlist ID not valid.');
+		$this->assertError($this->controller->delete($this->request(body: $this->withToken(['playlist_id' => '1', 'item_id' => '1.0'])), $this->newResponse()), 'Item ID not valid.');
+		static::assertSame(7, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists_items'));
+	}
+
+	public function testANumberFromJsonIsAnId(): void
+	{
+		$this->actingAs(2);
+
+		$this->assertSuccess($this->controller->delete($this->request(body: $this->withToken(['playlist_id' => 1, 'item_id' => 1])), $this->newResponse()));
+		$this->assertSuccess($this->controller->insert($this->request(body: $this->withToken(['playlist_id' => 1, 'id' => 3, 'source' => 'playlist', 'position' => 1])), $this->newResponse()));
+	}
+
+	public function testWithoutABodyEverythingIsMissing(): void
+	{
+		$this->actingAs(2);
+		$request = $this->request()->withParsedBody(null);
+
+		foreach (['insert', 'edit', 'updateItemOrders', 'delete'] as $method)
+			static::assertSame(400, $this->controller->$method($request, $this->newResponse())->getStatusCode(), $method);
+		static::assertSame(7, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists_items'));
+	}
+
+	public function testANameOfZeroAndADurationOfZeroAreValues(): void
+	{
+		$this->actingAs(2);
+
+		$this->assertSuccess($this->controller->edit($this->request(body: $this->withToken(['item_id' => '1', 'name' => 'item_name', 'value' => '0'])), $this->newResponse()));
+		$this->assertSuccess($this->controller->edit($this->request(body: $this->withToken(['item_id' => '2', 'name' => 'item_duration', 'value' => '0'])), $this->newResponse()));
+
+		static::assertSame('0', $this->databaseValue('SELECT item_name FROM playlists_items WHERE item_id = 1'));
+		static::assertSame(0, (int) $this->databaseValue('SELECT item_duration FROM playlists_items WHERE item_id = 2'));
+	}
+
+	public function testADurationMustBeANumberWhichIsNotNegative(): void
+	{
+		$this->actingAs(2);
+
+		foreach (['-5', 'abc', '1e', ['1'], ''] as $value)
+			$this->assertError($this->controller->edit($this->request(body: $this->withToken(['item_id' => '1', 'name' => 'item_duration', 'value' => $value])), $this->newResponse()), 'No parameter value.');
+		static::assertSame(10, (int) $this->databaseValue('SELECT item_duration FROM playlists_items WHERE item_id = 1'));
+	}
+
+	public function testTheOrderNeedsAListOfIds(): void
+	{
+		$this->actingAs(2);
+
+		foreach (['abc', [['1'], '2'], ['1', 'x'], ['-1'], [1.5]] as $positions)
+			$this->assertError($this->controller->updateItemOrders($this->request(body: $this->withToken(['playlist_id' => '1', 'items_positions' => $positions])), $this->newResponse()), 'Items Position array is not valid.');
+		static::assertSame([1, 2, 3, 4, 5], array_map('intval', $this->connection->fetchFirstColumn('SELECT item_id FROM playlists_items WHERE playlist_id = 1 ORDER BY item_order')));
+	}
+
 	/**
 	 * What the browser can not send but a script can: values of the wrong type are no valid values.
 	 */
 	public function testValuesOfTheWrongTypeAreRejectedLikeMissingValues(): void
 	{
-		static::markTestSkipped('Known bug: arrays as id, source, value or items_positions (and an empty body) throw a TypeError, arrays as playlist_id or position are cast to 1, and a duration which is no number is stored as 0. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(2);
 		$insert = ['playlist_id' => '1', 'id' => 'media-id-0000003', 'source' => 'mediapool', 'position' => '1'];
 

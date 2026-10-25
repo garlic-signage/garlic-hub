@@ -26,6 +26,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
+use App\Modules\Playlists\Helper\ReadsInput;
 use App\Modules\Playlists\Services\InsertItems\InsertItemFactory;
 use App\Modules\Playlists\Services\ItemsService;
 use Doctrine\DBAL\Exception;
@@ -38,8 +39,8 @@ use Psr\Http\Message\ResponseInterface;
  */
 class Orchestrator
 {
-	/** @var array<string,mixed> */
-	private array $input = [];
+	use ReadsInput;
+
 	private int $playlistId = 0;
 	private int $itemId = 0;
 
@@ -49,15 +50,6 @@ class Orchestrator
 		private readonly ItemsService $itemsService,
 		private readonly InsertItemFactory $insertItemFactory
 	) {}
-
-	/**
-	 * @param array<string,mixed> $input
-	 */
-	public function setInput(array $input): static
-	{
-		$this->input = $input;
-		return $this;
-	}
 
 	public function validateLoadItems(ResponseInterface $response): ?ResponseInterface
 	{
@@ -84,13 +76,13 @@ class Orchestrator
 		if ($answer !== null)
 			return $answer;
 
-		if (empty($this->input['id'])) // more performant as isset and check for 0 or ''
+		if ($this->scalarText('id') === '')
 			return $this->responseBuilder->invalidContentId($response);
 
-		if (empty($this->input['source']))
+		if ($this->text('source') === '')
 			return $this->responseBuilder->invalidSource($response);
 
-		if (empty($this->input['position']))
+		if ($this->id('position') === 0)
 			return $this->responseBuilder->invalidPosition($response);
 
 		return null;
@@ -101,11 +93,11 @@ class Orchestrator
 	 */
 	public function insert(ResponseInterface $response): ResponseInterface
 	{
-		$insertItem = $this->insertItemFactory->create($this->input['source']);
+		$insertItem = $this->insertItemFactory->create($this->text('source'));
 		if ($insertItem === null)
 			return $this->responseBuilder->insertFailed($response);
 
-		$item = $insertItem->insert($this->playlistId, $this->input['id'], (int) $this->input['position']);
+		$item = $insertItem->insert($this->playlistId, $this->scalarText('id'), $this->id('position'));
 
 		return $this->responseBuilder->generalSuccess($response, ['data' => $item]);
 	}
@@ -116,10 +108,12 @@ class Orchestrator
 		if ($answer !== null)
 			return $answer;
 
-		if (empty($this->input['name']))
+		if ($this->text('name') === '')
 			return $this->responseBuilder->missingParameterName($response);
 
-		if (empty($this->input['value']))
+		// the duration is a number, the name and every other field a text. 0 is a value
+		$hasValue = $this->text('name') === 'item_duration' ? $this->number('value') !== null : $this->text('value') !== '';
+		if (!$hasValue)
 			return $this->responseBuilder->missingParameterValue($response);
 
 		return null;
@@ -135,15 +129,15 @@ class Orchestrator
 	public function edit(ResponseInterface $response): ResponseInterface
 	{
 
-		$name = $this->input['name'];
+		$name = $this->text('name');
 		$data = '';
 		switch ($name)
 		{
 			case 'item_name':
-				$affected = $this->itemsService->updateField($this->itemId, $name, $this->input['value']);
+				$affected = $this->itemsService->updateField($this->itemId, $name, $this->text('value'));
 				break;
 			case 'item_duration':
-				$round = (int) round((float) $this->input['value']);
+				$round = (int) round((float) $this->number('value'));
 				$data     = $this->itemsService->updateItemDuration($this->itemId, $round);
 				$affected = $data === null ? 0 : 1;
 				break;
@@ -182,7 +176,7 @@ class Orchestrator
 		if ($answer !== null)
 			return $answer;
 
-		if (($this->input['items_positions'] ?? []) === [])
+		if (($this->idList('items_positions') ?? []) === [])
 			return $this->responseBuilder->invalidItemsPositions($response);
 
 		return null;
@@ -195,7 +189,7 @@ class Orchestrator
 	 */
 	public function updateItemOrders(ResponseInterface $response): ResponseInterface
 	{
-		$this->itemsService->updateItemOrder($this->playlistId, $this->input['items_positions']);
+		$this->itemsService->updateItemOrder($this->playlistId, array_map('strval', $this->idList('items_positions') ?? []));
 
 		return $this->responseBuilder->itemsOrderUpdated($response);
 	}
@@ -224,7 +218,7 @@ class Orchestrator
      */
     private function validateToken(ResponseInterface $response): ?ResponseInterface
 	{
-		if (!$this->validator->validateCsrfToken($this->input['csrf_token'] ?? ''))
+		if (!$this->validator->validateCsrfToken($this->text('csrf_token')))
 			return $this->responseBuilder->csrfTokenMismatch($response);
 
 		return null;
@@ -232,7 +226,7 @@ class Orchestrator
 
 	private function validatePlaylistId(ResponseInterface $response): ?ResponseInterface
 	{
-		$this->playlistId = (int) ($this->input['playlist_id'] ?? 0);
+		$this->playlistId = $this->id('playlist_id');
 		if ($this->playlistId === 0)
 			return $this->responseBuilder->invalidPlaylistId($response);
 
@@ -241,7 +235,7 @@ class Orchestrator
 
 	private function validateItemId(ResponseInterface $response): ?ResponseInterface
 	{
-		$this->itemId = (int) ($this->input['item_id'] ?? 0);
+		$this->itemId = $this->id('item_id');
 		if ($this->itemId === 0)
 			return $this->responseBuilder->invalidItemId($response);
 

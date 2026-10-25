@@ -49,6 +49,11 @@ class ResponseBuilder extends BaseResponseBuilder
 		return $this->jsonResponseHandler->jsonError($response, 'Multizone could not be saved');
 	}
 
+	public function invalidZoneData(ResponseInterface $response): ResponseInterface
+	{
+		return $this->jsonResponseHandler->jsonError($response, 'Invalid zone data.');
+	}
+
 	/**
 	 * The find endpoints are used by autocomplete and the zone editor, which
 	 * expect the plain data without the success envelope.

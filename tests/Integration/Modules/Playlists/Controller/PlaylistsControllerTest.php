@@ -23,6 +23,7 @@ namespace Tests\Integration\Modules\Playlists\Controller;
 
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Playlists\Controller\PlaylistsController;
 use PHPUnit\Framework\Attributes\Group;
 
@@ -133,13 +134,45 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 		static::assertSame(0, (int) $this->databaseValue('SELECT shuffle_picking FROM playlists WHERE playlist_id = 1'));
 	}
 
+	public function testAPlaylistIdOfTheWrongTypeIsNoPlaylist(): void
+	{
+		$this->actingAs(2);
+
+		foreach (['delete', 'toggleShuffle'] as $method)
+		{
+			foreach (['1abc', ['1'], '-1'] as $playlistId)
+				$this->assertError($this->controller->$method($this->request('DELETE', body: $this->withToken(['playlist_id' => $playlistId])), $this->newResponse()), 'Playlist ID not valid.');
+			static::assertSame(0, (int) $this->databaseValue('SELECT shuffle FROM playlists WHERE playlist_id = 1'));
+		}
+		$this->assertError($this->controller->loadZone($this->request('GET'), $this->newResponse(), ['playlist_id' => ['1']]), 'Playlist ID not valid.');
+		$this->assertError($this->controller->findById($this->request('GET'), $this->newResponse(), ['playlist_id' => '1abc']), 'Playlist ID not valid.');
+		static::assertSame(4, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists'));
+	}
+
+	public function testWithoutABodyEverythingIsMissing(): void
+	{
+		$this->actingAs(2);
+		$request = $this->request('PATCH')->withParsedBody(null);
+
+		$this->assertError($this->controller->delete($request, $this->newResponse()), 'CSRF token validation error.');
+		$this->assertError($this->controller->toggleShuffle($request, $this->newResponse()), 'CSRF token validation error.');
+		$this->assertError($this->controller->shufflePicking($request, $this->newResponse()), 'CSRF token validation error.');
+		$this->assertError($this->controller->saveZone($request, $this->newResponse(), ['playlist_id' => '1']), 'CSRF token validation error.');
+	}
+
+	public function testATokenOfTheWrongTypeIsAWrongToken(): void
+	{
+		$this->actingAs(2);
+
+		$this->assertError($this->controller->delete($this->request('DELETE', body: ['csrf_token' => ['x'], 'playlist_id' => '4']), $this->newResponse()), 'CSRF token validation error.');
+		static::assertSame(4, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists'));
+	}
+
 	/**
 	 * The picking is the number of items a shuffled playlist plays: a negative number or text is no number of items.
 	 */
 	public function testThePickingMustBeAPositiveNumber(): void
 	{
-		static::markTestSkipped('Known bug: a negative or a text picking is stored (text as 0, negative as it is) and a negative picking gives a negative duration. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(2);
 		$this->controller->toggleShuffle($this->request('PATCH', body: $this->withToken(['playlist_id' => '1'])), $this->newResponse());
 
@@ -148,26 +181,107 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 		static::assertSame(0, (int) $this->databaseValue('SELECT shuffle_picking FROM playlists WHERE playlist_id = 1'));
 	}
 
+	/**
+	 * @return array<string,mixed> a zone as the editor sends it
+	 */
+	private function zone(int $playlistId, string $name = 'Haupt'): array
+	{
+		return ['zone_name' => $name, 'zone_left' => 0, 'zone_top' => 0, 'zone_width' => 1280, 'zone_height' => 720, 'zone_z-index' => 0, 'zone_bgcolor' => '#ff0000', 'zone_playlist_id' => $playlistId];
+	}
+
 	public function testTheZonesAreSavedAndLoaded(): void
 	{
 		$this->actingAs(2);
-		$zones = ['resolution' => '1920x1080', 'zones' => [1 => ['zone_playlist_id' => '3', 'name' => 'Haupt']]];
+		$layout = ['resolution' => '1920x1080', 'zoom' => 70, 'export_unit' => 'pixel', 'zones' => [$this->zone(3), $this->zone(0, 'Frei')]];
 
-		$saved = $this->controller->saveZone($this->request(body: $this->withToken($zones)), $this->newResponse(), ['playlist_id' => '1']);
+		$saved = $this->controller->saveZone($this->request(body: $this->withToken($layout)), $this->newResponse(), ['playlist_id' => '1']);
 		$loaded = $this->controller->loadZone($this->request('GET'), $this->newResponse(), ['playlist_id' => '1']);
 
 		$this->assertSuccess($saved);
-		static::assertSame($zones, $this->json($loaded)['zones']);
+		static::assertSame($layout, $this->json($loaded)['zones']);
 	}
 
-	public function testZonesCanNotBeSavedWithoutZonesOrToken(): void
+	public function testOnlyTheLayoutIsSaved(): void
 	{
 		$this->actingAs(2);
 
-		$this->assertError($this->controller->saveZone($this->request(body: $this->withToken([])), $this->newResponse(), ['playlist_id' => '1']), 'Multizone could not be saved');
+		$this->controller->saveZone($this->request(body: $this->withToken(['resolution' => '1280x720', 'unknown' => 'x', 'zones' => [['unknown' => 'y'] + $this->zone(0)]])), $this->newResponse(), ['playlist_id' => '1']);
+
+		static::assertSame(
+			['resolution' => '1280x720', 'zoom' => 70, 'export_unit' => 'pixel', 'zones' => [$this->zone(0)]],
+			unserialize((string) $this->databaseValue('SELECT layout FROM playlists WHERE playlist_id = 1'))
+		);
+	}
+
+	public function testAnInvalidLayoutIsRejectedAndNothingIsSaved(): void
+	{
+		$this->actingAs(2);
+		$invalid = [
+			'no resolution'            => ['zones' => []],
+			'a resolution as text'     => ['resolution' => 'big'],
+			'a resolution of zero'     => ['resolution' => '0x1080'],
+			'an unknown unit'          => ['resolution' => '1920x1080', 'export_unit' => 'inch'],
+			'zones as text'            => ['resolution' => '1920x1080', 'zones' => 'all'],
+			'a zone without a color'   => ['resolution' => '1920x1080', 'zones' => [['zone_bgcolor' => null] + $this->zone(0)]],
+			'a color with a quote'     => ['resolution' => '1920x1080', 'zones' => [['zone_bgcolor' => 'red" onload="x'] + $this->zone(0)]],
+			'a negative size'          => ['resolution' => '1920x1080', 'zones' => [['zone_width' => -1] + $this->zone(0)]],
+			'a playlist as array'      => ['resolution' => '1920x1080', 'zones' => [['zone_playlist_id' => [3]] + $this->zone(0)]],
+		];
+
+		foreach ($invalid as $label => $layout)
+			$this->assertError($this->controller->saveZone($this->request(body: $this->withToken($layout)), $this->newResponse(), ['playlist_id' => '1']), 'Invalid zone data.');
+		static::assertNull($this->databaseValue('SELECT layout FROM playlists WHERE playlist_id = 1'));
+	}
+
+	public function testZonesCanNotBeSavedWithoutAToken(): void
+	{
+		$this->actingAs(2);
+
 		$this->assertError($this->controller->saveZone($this->request(body: ['resolution' => '1x1']), $this->newResponse(), ['playlist_id' => '1']), 'CSRF token validation error.');
 		$this->assertError($this->controller->saveZone($this->request(body: $this->withToken(['resolution' => '1x1'])), $this->newResponse(), []), 'Playlist ID not valid.');
 		static::assertNull($this->databaseValue('SELECT layout FROM playlists WHERE playlist_id = 1'));
+	}
+
+	/**
+	 * The playlists of the zones are played on the players of this playlist: only playlists the user may edit.
+	 */
+	public function testAZoneCanNotPlayAForeignPlaylist(): void
+	{
+		$this->actingAs(2);
+		$layout = ['resolution' => '1920x1080', 'zones' => [$this->zone(3), $this->zone(2)]];
+
+		try
+		{
+			$this->controller->saveZone($this->request(body: $this->withToken($layout)), $this->newResponse(), ['playlist_id' => '1']);
+			static::fail('Expected AccessDeniedException');
+		}
+		catch (AccessDeniedException)
+		{
+			static::assertNull($this->databaseValue('SELECT layout FROM playlists WHERE playlist_id = 1'));
+		}
+	}
+
+	public function testTheAdminMayPlayEveryPlaylistInAZone(): void
+	{
+		$this->actingAs(1);
+
+		$this->assertSuccess($this->controller->saveZone($this->request(body: $this->withToken(['resolution' => '1920x1080', 'zones' => [$this->zone(2)]])), $this->newResponse(), ['playlist_id' => '1']));
+	}
+
+	public function testAZoneCanNotPlayAnUnknownPlaylist(): void
+	{
+		$this->actingAs(2);
+
+		$this->expectException(NotFoundException::class);
+		$this->controller->saveZone($this->request(body: $this->withToken(['resolution' => '1920x1080', 'zones' => [$this->zone(999)]])), $this->newResponse(), ['playlist_id' => '1']);
+	}
+
+	public function testAZoneCanNotPlayThePlaylistItself(): void
+	{
+		$this->actingAs(2);
+
+		$this->expectException(TranslatableModuleException::class);
+		$this->controller->saveZone($this->request(body: $this->withToken(['resolution' => '1920x1080', 'zones' => [$this->zone(1)]])), $this->newResponse(), ['playlist_id' => '1']);
 	}
 
 	/**

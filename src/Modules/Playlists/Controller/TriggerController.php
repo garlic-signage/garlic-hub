@@ -65,6 +65,8 @@ readonly class TriggerController
 	{
 		/** @var array<string,string> $inputValues */
 		$inputValues = $request->getParsedBody();
+		// no body, or one which could not be read: nothing was sent
+		$inputValues = is_array($inputValues) ? $inputValues : [];
 		$answer = $this->orchestrator->setInput($inputValues)->validateWithToken($response);
 		if ($answer !== null)
 			return $answer;

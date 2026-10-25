@@ -215,7 +215,8 @@ $dependencies[PlaylistsController::class] = DI\factory(function (ContainerInterf
 			$container->get(BaseValidator::class),
 			$container->get(PlaylistsService::class),
 			$container->get(PlaylistsDatatableService::class),
-			$container->get(\App\Modules\Playlists\Helper\Datatable\Parameters::class)
+			$container->get(\App\Modules\Playlists\Helper\Datatable\Parameters::class),
+			new \App\Modules\Playlists\Helper\Playlists\ZonesSchema()
 		)
 	);
 });

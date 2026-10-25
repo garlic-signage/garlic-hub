@@ -47,6 +47,8 @@ readonly class ExportController
 	{
 		/** @var array<string,mixed> $input */
 		$input = $request->getParsedBody();
+		// no body, or one which could not be read: nothing was sent
+		$input = is_array($input) ? $input : [];
 		$answer = $this->orchestrator->setInput($input)->validate($response);
 		if ($answer !== null)
 			return $answer;

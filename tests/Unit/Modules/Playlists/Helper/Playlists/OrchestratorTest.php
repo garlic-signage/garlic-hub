@@ -28,6 +28,7 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Playlists\Helper\Datatable\Parameters;
 use App\Modules\Playlists\Helper\Playlists\Orchestrator;
+use App\Modules\Playlists\Helper\Playlists\ZonesSchema;
 use App\Modules\Playlists\Helper\Playlists\ResponseBuilder;
 use App\Modules\Playlists\Services\PlaylistsDatatableService;
 use App\Modules\Playlists\Services\PlaylistsService;
@@ -67,7 +68,8 @@ class OrchestratorTest extends TestCase
 			$this->validatorStub,
 			$this->playlistsServiceMock,
 			$this->createStub(PlaylistsDatatableService::class),
-			$this->createStub(Parameters::class)
+			$this->createStub(Parameters::class),
+			new ZonesSchema()
 		);
 	}
 
@@ -275,11 +277,11 @@ class OrchestratorTest extends TestCase
 	 * @throws UserException
 	 */
 	#[Group('units')]
-	public function testSaveZoneRemovesTokenAndPlaylistId(): void
+	public function testSaveZoneSavesTheCheckedLayoutWithoutTheTokenAndThePlaylistId(): void
 	{
-		$this->prepareValid(['playlist_id' => 1, 'csrf_token' => 'token', 'zoom' => 1, 'zones' => ['zone1']]);
+		$this->prepareValid(['playlist_id' => 1, 'csrf_token' => 'token', 'resolution' => '1920x1080', 'unknown' => 'x', 'zones' => []]);
 		$this->playlistsServiceMock->expects($this->once())->method('saveZones')
-			->with(1, ['zoom' => 1, 'zones' => ['zone1']])
+			->with(1, ['resolution' => '1920x1080', 'zoom' => 70, 'export_unit' => 'pixel', 'zones' => []])
 			->willReturn(1);
 		$this->expectSuccess([]);
 
@@ -292,9 +294,22 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testSaveZoneFails(): void
 	{
-		$this->prepareValid(['playlist_id' => 1, 'csrf_token' => 'token']);
-		$this->playlistsServiceMock->expects($this->once())->method('saveZones')->with(1, [])->willReturn(0);
+		$this->prepareValid(['playlist_id' => 1, 'csrf_token' => 'token', 'resolution' => '1920x1080']);
+		$this->playlistsServiceMock->expects($this->once())->method('saveZones')->willReturn(0);
 		$this->expectError('zoneSaveFailed');
+
+		$this->orchestrator->saveZone($this->responseStub);
+	}
+
+	/**
+	 * @throws UserException
+	 */
+	#[Group('units')]
+	public function testSaveZoneRejectsAnInvalidLayout(): void
+	{
+		$this->prepareValid(['playlist_id' => 1, 'csrf_token' => 'token', 'zones' => ['zone1']]);
+		$this->playlistsServiceMock->expects($this->never())->method('saveZones');
+		$this->expectError('invalidZoneData');
 
 		$this->orchestrator->saveZone($this->responseStub);
 	}
@@ -372,7 +387,8 @@ class OrchestratorTest extends TestCase
 			$this->validatorStub,
 			$this->playlistsServiceMock,
 			$this->datatableServiceMock,
-			$this->parametersMock
+			$this->parametersMock,
+			new ZonesSchema()
 		);
 	}
 

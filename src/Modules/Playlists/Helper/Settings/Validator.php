@@ -61,11 +61,15 @@ class Validator extends BaseValidator
 			$errors[] = $this->translator->translate('no_playlist_name', 'playlists');
 
 		// we need userInput here as getValueOfParameter will throw an exception if not set
-		if (!isset($post[Parameters::PARAMETER_PLAYLIST_MODE]) && !isset($post[Parameters::PARAMETER_PLAYLIST_ID]))
+		// the values come from the request: a mode is a text, an id a number
+		$mode   = $post[Parameters::PARAMETER_PLAYLIST_MODE] ?? null;
+		$id     = $post[Parameters::PARAMETER_PLAYLIST_ID] ?? null;
+		$hasId  = (is_int($id) && $id > 0) || (is_string($id) && ctype_digit($id));
+		if (!is_string($mode) && !$hasId)
 			$errors[] = $this->translator->translate('parameters_missing', 'playlists');
 
 		if (isset($post[Parameters::PARAMETER_PLAYLIST_MODE]) && !$this->checkPlaylistMode($post))
-			$errors[] = sprintf($this->translator->translate('playlist_mode_unsupported', 'playlists'), $post['playlist_mode']);
+			$errors[] = sprintf($this->translator->translate('playlist_mode_unsupported', 'playlists'), is_string($mode) ? $mode : '');
 
 		return $errors;
 	}
@@ -75,7 +79,7 @@ class Validator extends BaseValidator
 	 */
 	private function checkPlaylistMode(array $userInputs): bool
 	{
-		return in_array($userInputs[Parameters::PARAMETER_PLAYLIST_MODE], array_column(PlaylistMode::cases(), 'value'), true);
+		return in_array($userInputs[Parameters::PARAMETER_PLAYLIST_MODE], array_column(PlaylistMode::cases(), 'value'), true); // an array or number is no mode
 	}
 
 }
