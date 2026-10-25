@@ -64,7 +64,14 @@ class PlayerService
 	{
 		$ret = $this->playerRepository->findAllForDashboard();
 		if (empty($ret))
-			$ret = ['active' => 0, 'inactive' => 0, 'pending' => 0];
+			return ['active' => 0, 'inactive' => 0, 'pending' => 0];
+
+		// the sums of a table without players are NULL, the dashboard shows 0
+		$ret = [
+			'active'   => (int) ($ret['active'] ?? 0),
+			'inactive' => (int) ($ret['inactive'] ?? 0),
+			'pending'  => (int) ($ret['pending'] ?? 0),
+		];
 
 		return $ret;
 	}

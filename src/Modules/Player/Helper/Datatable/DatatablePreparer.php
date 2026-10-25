@@ -31,6 +31,7 @@ use App\Framework\Utils\Datatable\TimeUnitsCalculator;
 use App\Modules\Player\Enums\PlayerStatus;
 use DateMalformedStringException;
 use DateTime;
+use DateTimeZone;
 
 /**
  * Class DatatablePreparer
@@ -43,7 +44,11 @@ class DatatablePreparer extends AbstractDatatablePreparer
 {
 	private TimeUnitsCalculator $timeUnitsCalculator;
 
-	public function __construct(PrepareService $prepareService, Parameters $parameters, TimeUnitsCalculator $timeUnitsCalculator, Translator $translator)
+	/**
+	 * @param DateTimeZone|null $databaseTimezone the zone of the times which the database writes itself (last_access):
+	 *                          SQLite writes UTC, MariaDB the zone of its server, which is that of PHP (null)
+	 */
+	public function __construct(PrepareService $prepareService, Parameters $parameters, TimeUnitsCalculator $timeUnitsCalculator, Translator $translator, private readonly ?DateTimeZone $databaseTimezone = null)
 	{
 		$this->timeUnitsCalculator = $timeUnitsCalculator;
 
@@ -79,7 +84,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 					case 'last_access':
 
 						$lastAccessSince = $this->timeUnitsCalculator->calculateLastAccess(
-							new DateTime('now'), new DateTime($player['last_access'])
+							new DateTime('now'), new DateTime($player['last_access'], $this->databaseTimezone)
 						)->getLastAccessTimeStamp();
 
 						$class = match (true) {

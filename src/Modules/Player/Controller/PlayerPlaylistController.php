@@ -26,6 +26,7 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Player\Helper\PlayerPlaylist\Orchestrator;
 use Doctrine\DBAL\Exception;
+use App\Modules\Player\Helper\ReadsInput;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -34,6 +35,8 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 readonly class PlayerPlaylistController
 {
+	use ReadsInput;
+
 	public function __construct(private Orchestrator $orchestrator)
 	{
 	}
@@ -46,7 +49,7 @@ readonly class PlayerPlaylistController
 	public function replacePlaylist(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
 		/** @var array<string,string> $input */
-		$input = $request->getParsedBody();
+		$input = $this->bodyOf($request->getParsedBody());
 
 		$answer = $this->orchestrator->setInput($input)->validateForReplacePlaylist($response);
 		if ($answer !== null)
@@ -64,7 +67,7 @@ readonly class PlayerPlaylistController
 	public function pushPlaylist(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
 		/** @var array<string,string> $input */
-		$input = $request->getParsedBody();
+		$input = $this->bodyOf($request->getParsedBody());
 
 		$answer = $this->orchestrator->setInput($input)->validateStandardInput($response);
 		if ($answer !== null)

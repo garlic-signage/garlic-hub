@@ -81,7 +81,7 @@ class Orchestrator
 	 * The player must be loaded with loadPlayer() before, so the ACL is checked.
 	 *
 	 * @param array<string,mixed> $post
-	 * @return array{success: bool, errors?: string[]}
+	 * @return array{success: bool, errors?: string[], values?: array<string,mixed>}
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
@@ -91,7 +91,7 @@ class Orchestrator
 	{
 		$errors = $this->formInputHandler->validate($post);
 		if ($errors !== [])
-			return ['success' => false, 'errors' => $errors];
+			return ['success' => false, 'errors' => $errors, 'values' => $this->formInputHandler->getParsed()];
 
 		/** @var array{api_endpoint:string, is_intranet: int} $saveData */
 		$saveData = $this->formInputHandler->getParsed();

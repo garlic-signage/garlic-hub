@@ -60,8 +60,35 @@ class Validator extends BaseValidator
 		if ($isIntranet === true && $apiEndpoint === '')
 			$errors[] = $this->translator->translate('no_api_endpoint', 'player');
 
+		if (is_string($apiEndpoint) && $apiEndpoint !== '' && !$this->isApiEndpoint($apiEndpoint))
+			$errors[] = $this->translator->translate('invalid_api_endpoint', 'player');
+
 		return $errors;
 	}
 
 
+
+	/**
+	 * The address is the base of the calls of the server to the player ('/oauth2/token' and more are appended): an
+	 * address of the web with a host, and nothing which would change the target of the appended part.
+	 * Players are in the network of the customer, so a private address is fine.
+	 */
+	private function isApiEndpoint(string $url): bool
+	{
+		if (strlen($url) > 255 || preg_match('/[\x00-\x20\x7F]/', $url) === 1)
+			return false;
+
+		$parts = parse_url($url);
+		if ($parts === false || !in_array(strtolower($parts['scheme'] ?? ''), ['http', 'https'], true))
+			return false;
+
+		if (isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment']))
+			return false;
+
+		$host = $parts['host'] ?? '';
+
+		return $host !== '' && (filter_var($host, FILTER_VALIDATE_IP) !== false
+			|| filter_var(trim($host, '[]'), FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false
+			|| filter_var($host, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) !== false);
+	}
 }

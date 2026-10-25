@@ -92,11 +92,27 @@ class FilterConditionsTest extends TestCase
 	}
 
 	#[Group('units')]
-	public function testForFieldUIDIsTreatedAsUsername(): void
+	public function testForFieldUIDWithAWordSearchesTheUsername(): void
 	{
 		$result = $this->conditions->forField('table', 'UID', ['value' => 'john']);
 
 		static::assertSame(['user_main.username' => $this->like('%john%')], $result);
+	}
+
+	#[Group('units')]
+	public function testForFieldUIDWithANumberFiltersTheOwner(): void
+	{
+		$result = $this->conditions->forField('table', 'UID', ['value' => 7]);
+
+		static::assertSame(['table.UID' => ['value' => 7, 'compare' => '=', 'logic' => 'AND', 'type' => ArrayParameterType::INTEGER]], $result);
+	}
+
+	#[Group('units')]
+	public function testForFieldUsernameWithANumberStaysASearch(): void
+	{
+		$result = $this->conditions->forField('table', 'username', ['value' => '7']);
+
+		static::assertSame(['user_main.username' => $this->like('%7%')], $result);
 	}
 
 	#[Group('units')]

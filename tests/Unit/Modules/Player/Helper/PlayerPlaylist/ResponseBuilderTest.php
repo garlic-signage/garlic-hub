@@ -19,109 +19,61 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Modules\Player\Helper\PlayerPlaylist;
 
 use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
 use App\Modules\Player\Helper\PlayerPlaylist\ResponseBuilder;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\ResponseInterface;
+use Slim\Psr7\Response;
 
+/**
+ * The answers are what the browser reads: JSON body and status of the real JsonResponseHandler. The texts come
+ * from the translator, which answers "module.key".
+ */
 class ResponseBuilderTest extends TestCase
 {
-	private JsonResponseHandler&MockObject $jsonResponseHandlerMock;
-	private ResponseInterface&Stub $responseStub;
-	private Translator&MockObject $translatorMock;
 	private ResponseBuilder $responseBuilder;
 
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
-		$this->jsonResponseHandlerMock = $this->createMock(JsonResponseHandler::class);
-		$this->translatorMock = $this->createMock(Translator::class);
-		$this->responseStub = $this->createStub(ResponseInterface::class);
-
-		$this->responseBuilder = new ResponseBuilder(
-			$this->jsonResponseHandlerMock,
-			$this->translatorMock
-		);
-	}
-
-	#[Group('units')]
-	public function testInvalidPlayerId(): void
-	{
-		$this->translatorMock->expects($this->once())->method('translate')
-			->with('invalid_player_id', 'player')
-			->willReturn('Translated Message');
-
-		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonError')
-			->with($this->responseStub, 'Translated Message')
-			->willReturn($this->responseStub);
-
-		$this->responseBuilder->invalidPlayerId($this->responseStub);
-	}
-
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testInvalidPlaylistId(): void
-	{
-		$this->translatorMock->expects($this->once())->method('translate')
-			->with('invalid_playlist_id', 'playlist')
-			->willReturn('Translated Message');
-
-		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonError')
-			->with($this->responseStub, 'Translated Message')
-			->willReturn($this->responseStub);
-
-		$this->responseBuilder->invalidPlaylistId($this->responseStub);
+		parent::setUp();
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
+		$this->responseBuilder = new ResponseBuilder(new JsonResponseHandler(), $translator);
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
+	 * @return array<string,array{string,string}>
 	 */
-	#[Group('units')]
-	public function testPlayerNotReachable(): void
+	public static function errors(): array
 	{
-		$this->translatorMock->expects($this->once())->method('translate')
-			->with('player_not_reachable', 'player')
-			->willReturn('Translated Message');
-
-		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonError')
-			->with($this->responseStub, 'Translated Message')
-			->willReturn($this->responseStub);
-
-		$this->responseBuilder->playerNotReachable($this->responseStub);
+		return [
+			'invalid player'       => ['invalidPlayerId', 'player.invalid_player_id'],
+			'invalid playlist'     => ['invalidPlaylistId', 'player.invalid_playlist_id'],
+			'player not reachable' => ['playerNotReachable', 'player.player_not_reachable'],
+			'no playlist'          => ['noPlaylistAssigned', 'player.no_playlist_assigned'],
+		];
 	}
 
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
 	#[Group('units')]
-	public function testNoPlaylistAssigned(): void
+	#[DataProvider('errors')]
+	public function testEveryErrorIsAJsonErrorWithTheTextOfTheLanguage(string $method, string $message): void
 	{
-		$this->translatorMock->expects($this->once())->method('translate')
-			->with('no_playlist_assigned', 'player')
-			->willReturn('Translated Message');
+		$response = $this->responseBuilder->$method(new Response());
 
-		$this->jsonResponseHandlerMock->expects($this->once())->method('jsonError')
-			->with($this->responseStub, 'Translated Message')
-			->willReturn($this->responseStub);
+		static::assertSame(400, $response->getStatusCode());
+		static::assertSame('application/json', $response->getHeaderLine('Content-Type'));
+		static::assertSame(['success' => false, 'error_message' => $message], json_decode((string) $response->getBody(), true));
+	}
 
-		$this->responseBuilder->noPlaylistAssigned($this->responseStub);
+	#[Group('units')]
+	public function testTheTokenErrorAndTheGeneralAnswers(): void
+	{
+		static::assertSame(['success' => false, 'error_message' => 'security.csrf_token_mismatch'], json_decode((string) $this->responseBuilder->csrfTokenMismatch(new Response())->getBody(), true));
+		static::assertSame(['success' => true, 'message' => 'ok'], json_decode((string) $this->responseBuilder->generalSuccess(new Response(), ['message' => 'ok'])->getBody(), true));
+		static::assertSame(['success' => false, 'error_message' => 'bad'], json_decode((string) $this->responseBuilder->generalError(new Response(), 'bad')->getBody(), true));
 	}
 }

@@ -78,6 +78,24 @@ class TranslationFilesTest extends TestCase
 	}
 
 	/**
+	 * The list of the players looks the text of a model and of a status up by the number: a number without a text
+	 * breaks the whole list. A new model or status needs its text in every language.
+	 */
+	#[DataProvider('languageProvider')]
+	public function testEveryModelAndStatusOfAPlayerHasItsText(string $language): void
+	{
+		$data = parse_ini_file($this->path($language, 'player.ini'), true, INI_SCANNER_RAW);
+		static::assertIsArray($data);
+
+		$models   = array_map('strval', array_column(\App\Modules\Player\Enums\PlayerModel::cases(), 'value'));
+		$statuses = array_map('strval', array_column(\App\Modules\Player\Enums\PlayerStatus::cases(), 'value'));
+		static::assertEqualsCanonicalizing($models, array_map('strval', array_keys($data['model_selects'])), "$language: model_selects");
+		static::assertEqualsCanonicalizing($statuses, array_map('strval', array_keys($data['status_selects'])), "$language: status_selects");
+		foreach (array_merge($data['model_selects'], $data['status_selects']) as $key => $text)
+			static::assertNotSame('', trim((string) $text, '"'), "$language: text $key is empty");
+	}
+
+	/**
 	 * @return array<string, array{string}>
 	 */
 	public static function languageProvider(): array

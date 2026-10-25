@@ -34,7 +34,7 @@ class ResponseBuilder extends BaseResponseBuilder
 	public function invalidPlaylistId(ResponseInterface $response): ResponseInterface
     {
 		return $this->jsonResponseHandler->jsonError(
-			$response, $this->translator->translate('invalid_playlist_id', 'playlist')
+			$response, $this->translator->translate('invalid_playlist_id', 'player')
 		);
     }
 

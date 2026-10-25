@@ -100,7 +100,11 @@ readonly class FilterConditions
 				if ($this->isEmpty($parameter))
 					break;
 
-				$where['user_main.username'] = $this->likeClause((string) $parameter['value']);
+				// The owner field of the lists is an autocomplete: it sends the number of the user. A name is searched in the names.
+				if ($key === 'UID' && ctype_digit((string) $parameter['value']) && (int) $parameter['value'] > 0)
+					$where[$table . '.UID'] = $this->whereClause((int) $parameter['value']);
+				else
+					$where['user_main.username'] = $this->likeClause((string) $parameter['value']);
 				break;
 
 			case 'company_id':

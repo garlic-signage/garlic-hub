@@ -28,6 +28,7 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Player\Helper\NetworkSettings\Orchestrator;
+use App\Modules\Player\Helper\ReadsInput;
 use App\Modules\Player\Helper\NetworkSettings\TemplatePreparer;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
@@ -36,6 +37,8 @@ use Slim\Flash\Messages;
 
 class ShowConnectivityController
 {
+	use ReadsInput;
+
 	public function __construct(private readonly Orchestrator $orchestrator,
 								private readonly TemplatePreparer $templatePreparer,
 								private readonly Messages $flash)
@@ -71,8 +74,8 @@ class ShowConnectivityController
 	public function store(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
 		/** @var array<string,mixed> $post */
-		$post   = $request->getParsedBody();
-		$player = $this->orchestrator->loadPlayer((int) ($post['player_id'] ?? 0));
+		$post   = $this->bodyOf($request->getParsedBody());
+		$player = $this->orchestrator->loadPlayer($this->idOf($post, 'player_id'));
 		if ($player === [])
 			return $this->redirectWithError($response, 'Player ID not accessible.');
 
@@ -84,7 +87,8 @@ class ShowConnectivityController
 				$this->flash->addMessageNow('error', $errorText);
 			}
 
-			return $this->outputRenderedForm($player['player_name'], $post);
+			// the form shows what was understood of the input, not the input
+			return $this->outputRenderedForm($player['player_name'], ($result['values'] ?? []) + ['player_id' => $player['player_id']]);
 		}
 
 		$this->flash->addMessage('success', 'Player connectivity data successfully stored.');

@@ -74,6 +74,7 @@ use App\Modules\Player\Services\PlayerTokenService;
 use App\Modules\Playlists\Collector\Builder\PlaylistBuilderFactory;
 use App\Modules\Playlists\Services\PlaylistsService;
 use GuzzleHttp\Client;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Psr\Container\ContainerInterface;
 
 $dependencies = [];
@@ -176,7 +177,9 @@ $dependencies[DatatablePreparer::class] = DI\factory(function (ContainerInterfac
 		$container->get(PrepareService::class),
 		$container->get(Parameters::class),
 		$container->get(TimeUnitsCalculator::class),
-		$container->get(Translator::class)
+		$container->get(Translator::class),
+		// SQLite writes the time of the last access in UTC, the other databases in the zone of the server
+		$container->get('SqlConnection')->getDatabasePlatform() instanceof SQLitePlatform ? new DateTimeZone('UTC') : null
 	);
 });
 $dependencies[\App\Modules\Player\Helper\Datatable\Orchestrator::class] = DI\factory(function (ContainerInterface $container)
