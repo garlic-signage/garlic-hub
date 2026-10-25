@@ -29,6 +29,7 @@ use App\Framework\Utils\Datatable\AbstractDatatablePreparer;
 use App\Framework\Utils\Datatable\PrepareService;
 use App\Framework\Utils\Datatable\Results\HeaderField;
 use App\Modules\Users\Services\AclValidator;
+use App\Modules\Users\UserStatus;
 use Doctrine\DBAL\Exception;
 
 /**
@@ -80,7 +81,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 							$resultElements['is_link'] = $this->prepareService->getBodyPreparer()->formatLink(
 								$user['username'],
 								$this->translator->translate('edit', 'main'),
-								'user/' . $user['UID'],
+								'users/edit/' . $user['UID'],
 								'username_' . $user['UID']
 							);
 
@@ -88,18 +89,19 @@ class DatatablePreparer extends AbstractDatatablePreparer
 						break;
 					case 'status':
 						$resultElements['is_text'] = $this->prepareService->getBodyPreparer()->formatText(
-							$this->translator->translateArrayForOptions('status_selects', 'users')[$user['status']]
+							$this->translator->translateArrayForOptions('status_selects', 'users')[$user['status']] ?? (string) $user['status']
 						);
 						break;
 					default:
-						$resultElements['is_text'] = $this->prepareService->getBodyPreparer()->formatText($user[$innerKey]);
+						// the columns of the editions are not selected yet
+						$resultElements['is_text'] = $this->prepareService->getBodyPreparer()->formatText($user[$innerKey] ?? '');
 						break;
 				}
 				$list['elements_result_element'][] = $resultElements;
 			}
 
-			if (
-				$user['UID'] == $currentUID ||	$this->aclValidator->isSimpleAdmin($currentUID))
+			// the form is for who may change the user, a deleted user is anonymized and can not be changed
+			if ((int) $user['status'] !== UserStatus::DELETED->value && $this->aclValidator->isAdmin($currentUID, ['UID' => (int) $user['UID'], 'company_id' => (int) $user['company_id']]))
 			{
 				$list['has_action_link'] = [
 					$this->prepareService->getBodyPreparer()->formatActionLink(
@@ -107,7 +109,8 @@ class DatatablePreparer extends AbstractDatatablePreparer
 						'users/edit/' . $user['UID'],
 						'edit', (string) $user['UID'], 'pencil')
 				];
-				if ($this->aclValidator->isModuleAdmin($currentUID) && $user['status'] == 0)
+				// nobody deletes himself, the installation would be without admin
+				if ($this->aclValidator->isModuleAdmin($currentUID) && (int) $user['UID'] !== $currentUID)
 				{
 					$list['has_delete'] = $this->prepareService->getBodyPreparer()->formatActionDelete(
 						$this->translator->translate('delete', 'main'),

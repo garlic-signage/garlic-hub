@@ -198,10 +198,27 @@ class UserAccessTest extends ContainerTestCase
 	public function testDeletedUserLosesTheRights(): void
 	{
 		$this->actingAs(1);
+		$this->connection->executeStatement("INSERT INTO user_acl (UID, acl, module) VALUES (3, 1, 'playlists')");
 
-		$this->container->get(UsersAdminService::class)->deleteUser(1);
+		$this->container->get(UsersAdminService::class)->deleteUser(3);
 
-		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_acl WHERE UID = 1'));
+		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_acl WHERE UID = 3'));
+	}
+
+	public function testTheAdminMayNotDeleteHimself(): void
+	{
+		$this->actingAs(1);
+
+		try
+		{
+			$this->container->get(UsersAdminService::class)->deleteUser(1);
+			static::fail('Without the admin nobody could create or change users anymore.');
+		}
+		catch (AccessDeniedException)
+		{
+			static::assertSame(3, (int) $this->connection->fetchOne('SELECT status FROM user_main WHERE UID = 1'));
+			static::assertGreaterThan(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_acl WHERE UID = 1'));
+		}
 	}
 
 	/**

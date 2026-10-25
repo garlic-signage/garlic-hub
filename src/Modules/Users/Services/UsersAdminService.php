@@ -152,6 +152,10 @@ class UsersAdminService
 			if (!$this->aclValidator->isModuleAdmin($this->userSession->getUID()))
 				throw new AccessDeniedException('users', 'user_not_deletable', ['UID' => $UID]);
 
+			// without the rights of the admin nobody can create or change users anymore
+			if ($UID === $this->userSession->getUID())
+				throw new AccessDeniedException('users', 'user_not_deletable', ['UID' => $UID]);
+
 			if ($this->userMainRepository->findByIdSecured($UID) === [])
 				throw new NotFoundException('users', 'user_not_found', ['UID' => $UID]);
 

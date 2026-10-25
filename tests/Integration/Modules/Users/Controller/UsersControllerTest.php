@@ -144,6 +144,23 @@ class UsersControllerTest extends UsersControllerTestCase
 		}
 	}
 
+	public function testTheAdminDoesNotDeleteHimself(): void
+	{
+		$this->actingAs(1);
+
+		$this->expectException(AccessDeniedException::class);
+		try
+		{
+			$this->delete(['UID' => '1']);
+		}
+		finally
+		{
+			// the rights stay, otherwise nobody could create or change users anymore
+			static::assertSame(['admin@example.com', 3], [$this->databaseValue('SELECT email FROM user_main WHERE UID = 1'), (int) $this->databaseValue('SELECT status FROM user_main WHERE UID = 1')]);
+			static::assertGreaterThan(0, (int) $this->databaseValue('SELECT COUNT(*) FROM user_acl WHERE UID = 1'));
+		}
+	}
+
 	public function testAnUnknownUserIsNotFound(): void
 	{
 		$this->actingAs(1);
