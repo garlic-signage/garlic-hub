@@ -129,7 +129,7 @@ class PlayerDataAssembler
 
 		$id = $this->playerRepository->insertPlayer($saveData);
 		if ($id === 0)
-			throw new ModuleException('player_index', 'Failed to insert local player');
+			throw new ModuleException('player_index', 'Failed to insert player');
 
 		return $this->playerEntityFactory->create($saveData, $this->userAgentHandler);
 	}

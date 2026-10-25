@@ -51,21 +51,22 @@ readonly class PlayerIndexController
 	public function index(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
 		$get        = $request->getQueryParams();
-		$ownerId    = $this->sanitizer->int($get['owner_id'] ?? 0);
+		// the address is public: owner_id[]=1 is no owner
+		$owner      = $get['owner_id'] ?? 0;
+		$ownerId    = (is_string($owner) || is_int($owner)) ? $this->sanitizer->int($owner) : 0;
 		$server     = $request->getServerParams();
 //		$this->indexResponseHandler->debugHeader($request->getHeaders());
 //		$this->indexResponseHandler->debugServer();
 
 		// because JavaScript player cannot send a User-Agent.
-		$userAgent = $server['HTTP_X_SIGNAGE_AGENT'] ?? $server['HTTP_USER_AGENT'];
+		// no agent at all is an unknown player
+		$userAgent = $server['HTTP_X_SIGNAGE_AGENT'] ?? $server['HTTP_USER_AGENT'] ?? '';
 
-		$serverName = $server['SERVER_NAME'];
+		$serverName = (string) ($server['SERVER_NAME'] ?? '');
 
 	//	$userAgent = 'GAPI/1.0 (UUID:3f0cd56c-d511-486a-a8e1-9d2cefd78b3f; NAME:9d2cefd78b3f) garlic-macOS/v0.6.0.679 (MODEL:Garlic)';
-		if (str_contains($serverName, 'localhost') || str_contains($serverName, 'ddev'))
-			$localPlayer = true;
-		else
-			$localPlayer = false;
+		// The name can come from the Host header of the request. A name which only contains 'localhost' is no local machine.
+		$localPlayer = preg_match('/^(localhost|[a-z0-9-]+\.ddev\.site)$/i', $serverName) === 1;
 
 		$filePath = $this->indexService->handleIndexRequest($ownerId, $userAgent, $server, $localPlayer);
 		if (empty($filePath))

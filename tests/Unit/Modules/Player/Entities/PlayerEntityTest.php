@@ -52,7 +52,7 @@ class PlayerEntityTest extends TestCase
 	 */
 	private function entity(array $data): PlayerEntity
 	{
-		$config = new Config(new RecordingConfigLoader(['player' => ['report_server' => 'https://reports.example.com', 'index_server_url' => 'https://hub.example.com/smil-index']]));
+		$config = new Config(new RecordingConfigLoader(['player' => ['report_server_url' => 'https://reports.example.com', 'index_server_url' => 'https://hub.example.com/smil-index']]));
 
 		return new PlayerEntity($config, $this->userAgent(), $data);
 	}

@@ -21,118 +21,48 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Player\IndexCreation;
 
-use App\Modules\Player\Entities\PlayerEntity;
-use App\Modules\Player\Enums\PlayerModel;
 use App\Modules\Player\Enums\TemplateIndexFiles;
 use App\Modules\Player\IndexCreation\IndexTemplateSelector;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\PlayerEntities;
 
 class IndexTemplateSelectorTest extends TestCase
 {
-	private IndexTemplateSelector $selector;
-	private PlayerEntity&Stub $playerEntityStub;
+	/**
+	 * @return array<string,array{string,string,TemplateIndexFiles}> the model, the firmware, the template
+	 */
+	public static function players(): array
+	{
+		return [
+			'iadea 2x00'               => ['XMP-6250', 'ADAPI/1.2.59.161', TemplateIndexFiles::XMP2XXX],
+			'qbic'                     => ['TD-1050', 'v1.0.16', TemplateIndexFiles::XMP2XXX],
+			'iadea 1x0'                => ['XDS-101', 'SK8855-ADAPI/2.0.5', TemplateIndexFiles::SIMPLE],
+			'iadea 3x0'                => ['XMP-330', 'SK8855-ADAPI/2.0.5', TemplateIndexFiles::SIMPLE],
+			'iadea 3x50'               => ['XMP-3250', 'x/1.0', TemplateIndexFiles::SIMPLE],
+			'ids'                      => ['IDS-App', 'Android/1.0.180vv', TemplateIndexFiles::SIMPLE],
+			'screenlite'               => ['ScreenliteWeb', 'screenlite-web/0.0.1', TemplateIndexFiles::SIMPLE],
+			'compatible'               => ['Kathrein', 'x/1.0', TemplateIndexFiles::SIMPLE],
+			'garlic, the build with the support' => ['Garlic', 'garlic-macOS/v0.6.0.566', TemplateIndexFiles::GARLIC],
+			'garlic, a newer build'    => ['Garlic', 'garlic-macOS/v0.6.0.679', TemplateIndexFiles::GARLIC],
+			'garlic, the build before' => ['Garlic', 'garlic-macOS/v0.6.0.565', TemplateIndexFiles::SIMPLE],
+			'garlic, an old build'     => ['Garlic', 'garlic-linux/v0.5.0.101', TemplateIndexFiles::SIMPLE],
+			'garlic with a suffix'     => ['Garlic', 'garlic-linux/v0.6.0.700L', TemplateIndexFiles::GARLIC],
+			'garlic without a build'   => ['Garlic', 'garlic', TemplateIndexFiles::SIMPLE],
+			'garlic with a big build'  => ['Garlic', 'garlic/v1.0.0.12000', TemplateIndexFiles::GARLIC],
+		];
+	}
 
 	/**
-	 * @throws Exception
+	 * The index of a player is made with the template that its software understands.
 	 */
-	protected function setUp(): void
-	{
-		parent::setUp();
-		$this->selector = new IndexTemplateSelector();
-		$this->playerEntityStub = $this->createStub(PlayerEntity::class);
-	}
-
 	#[Group('units')]
-	public function testSelectReturnsXmp2xxxForIadeaXmp2x00(): void
+	#[DataProvider('players')]
+	public function testEveryPlayerGetsTheTemplateItUnderstands(string $model, string $firmware, TemplateIndexFiles $expected): void
 	{
-		$this->playerEntityStub
-			->method('getModel')
-			->willReturn(PlayerModel::IADEA_XMP2X00);
+		$selector = new IndexTemplateSelector();
 
-		$result = $this->selector->select($this->playerEntityStub);
-
-		static::assertSame(TemplateIndexFiles::XMP2XXX, $result);
-	}
-
-	#[Group('units')]
-	public function testSelectReturnsXmp2xxxForQBic(): void
-	{
-		$this->playerEntityStub
-			->method('getModel')
-			->willReturn(PlayerModel::QBIC);
-
-		$result = $this->selector->select($this->playerEntityStub);
-
-		static::assertSame(TemplateIndexFiles::XMP2XXX, $result);
-	}
-
-	#[Group('units')]
-	public function testSelectReturnsGarlicForGarlicWithValidFirmware(): void
-	{
-		$this->playerEntityStub
-			->method('getModel')
-			->willReturn(PlayerModel::GARLIC);
-
-		$this->playerEntityStub
-			->method('getFirmwareVersion')
-			->willReturn('1.0.566');
-
-		$result = $this->selector->select($this->playerEntityStub);
-
-		static::assertSame(TemplateIndexFiles::GARLIC, $result);
-	}
-
-	#[Group('units')]
-	public function testSelectReturnsSimpleForGarlicWithInvalidFirmware(): void
-	{
-		$this->playerEntityStub
-			->method('getModel')
-			->willReturn(PlayerModel::GARLIC);
-
-		$this->playerEntityStub
-			->method('getFirmwareVersion')
-			->willReturn('1.0.565');
-
-		$result = $this->selector->select($this->playerEntityStub);
-
-		static::assertSame(TemplateIndexFiles::SIMPLE, $result);
-	}
-
-	#[Group('units')]
-	public function testSelectReturnsSimpleForIadeaXmp1x0(): void
-	{
-		$this->playerEntityStub
-			->method('getModel')
-			->willReturn(PlayerModel::IADEA_XMP1X0);
-
-		$result = $this->selector->select($this->playerEntityStub);
-
-		static::assertSame(TemplateIndexFiles::SIMPLE, $result);
-	}
-
-	#[Group('units')]
-	public function testSelectReturnsSimpleForScreenLite(): void
-	{
-		$this->playerEntityStub
-			->method('getModel')
-			->willReturn(PlayerModel::SCREENLITE);
-
-		$result = $this->selector->select($this->playerEntityStub);
-
-		static::assertSame(TemplateIndexFiles::SIMPLE, $result);
-	}
-	#[Group('units')]
-	public function testSelectReturnsSimpleForUnknownModel(): void
-	{
-		$this->playerEntityStub
-			->method('getModel')
-			->willReturn(PlayerModel::UNKNOWN);
-
-		$result = $this->selector->select($this->playerEntityStub);
-
-		static::assertSame(TemplateIndexFiles::SIMPLE, $result);
+		static::assertSame($expected, $selector->select(PlayerEntities::create([], $model, $firmware)));
 	}
 }

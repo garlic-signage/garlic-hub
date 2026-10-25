@@ -21,166 +21,82 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Player\IndexCreation\Builder;
 
-use App\Modules\Player\Entities\PlayerEntity;
-use App\Modules\Player\Enums\IndexSections;
 use App\Modules\Player\Enums\TemplateIndexFiles;
-use App\Modules\Player\IndexCreation\Builder\Preparers\LayoutPreparer;
-use App\Modules\Player\IndexCreation\Builder\Preparers\MetaPreparer;
-use App\Modules\Player\IndexCreation\Builder\Preparers\PlaylistPreparer;
 use App\Modules\Player\IndexCreation\Builder\Preparers\PreparerFactory;
-use App\Modules\Player\IndexCreation\Builder\Preparers\ScreenTimesPreparer;
-use App\Modules\Player\IndexCreation\Builder\Preparers\SubscriptionPreparer;
 use App\Modules\Player\IndexCreation\Builder\TemplatePreparer;
 use App\Modules\Playlists\Collector\Contracts\PlaylistStructureInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\PlayerEntities;
 
+/**
+ * The data for the template of an index: the sections which a template of a player knows. The preparers are the real ones.
+ */
 class TemplatePreparerTest extends TestCase
 {
-	private PlayerEntity&Stub $playerEntityStub;
-	private PlaylistStructureInterface&Stub $playlistStructureStub;
-	private PreparerFactory&MockObject $preparerFactoryMock;
-	private TemplatePreparer $templatePreparer;
-
-	/**
-	 * @throws Exception
-	 */
-	protected function setUp(): void
+	private function preparer(): TemplatePreparer
 	{
-		parent::setUp();
-		$this->playerEntityStub = $this->createStub(PlayerEntity::class);
-		$this->playlistStructureStub = $this->createStub(PlaylistStructureInterface::class);
-		$this->preparerFactoryMock = $this->createMock(PreparerFactory::class);
+		$structure = new class implements PlaylistStructureInterface {
+			public function getItems(): string { return '<items/>'; }
+			public function getPrefetch(): string { return '<prefetch/>'; }
+			public function getExclusive(): string { return '<exclusive/>'; }
+		};
 
-		$this->templatePreparer = new TemplatePreparer($this->preparerFactoryMock);
-		$this->templatePreparer->setPlayerEntity($this->playerEntityStub);
-		$this->templatePreparer->setPlaylistStructure($this->playlistStructureStub);
+		return (new TemplatePreparer(new PreparerFactory()))
+			->setPlayerEntity(PlayerEntities::create(['playlist_name' => 'Lobby', 'commands' => ['reboot'], 'playlist_mode' => 'master']))
+			->setPlaylistStructure($structure);
 	}
 
 	/**
-	 * @throws Exception
-	 * @throws \Exception
+	 * @return array<string,array{TemplateIndexFiles,list<string>}>
 	 */
-	#[Group('units')]
-	public function testPrepareForGarlic(): void
+	public static function templates(): array
 	{
-		parent::setUp();
-		$metaMock         = $this->createMock(MetaPreparer::class);
-		$subscriptionMock = $this->createMock(SubscriptionPreparer::class);
-		$layoutMock       = $this->createMock(LayoutPreparer::class);
-		$screenTimesMock  = $this->createMock(ScreenTimesPreparer::class);
-		$playlistMock     = $this->createMock(PlaylistPreparer::class);
-
-		$this->preparerFactoryMock->expects($this->atLeastOnce())
-			->method('create')
-			->willReturnMap([
-				[IndexSections::META, $this->playerEntityStub, $metaMock],
-				[IndexSections::SUBSCRIPTIONS, $this->playerEntityStub, $subscriptionMock],
-				[IndexSections::LAYOUT, $this->playerEntityStub, $layoutMock],
-				[IndexSections::STANDBY_TIMES, $this->playerEntityStub, $screenTimesMock],
-				[IndexSections::PLAYLIST, $this->playerEntityStub, $playlistMock],
-			]);
-		$metaMock->expects($this->once())->method('prepare')->willReturn(['meta']);
-		$subscriptionMock->expects($this->once())->method('prepare')->willReturn(['subscriptions']);
-		$layoutMock->expects($this->once())->method('prepare')->willReturn(['layout']);
-		$screenTimesMock->expects($this->once())->method('prepare')->willReturn(['standby']);
-		$playlistMock->expects($this->once())->method('setPlaylistStructure')
-			->with($this->playlistStructureStub)
-			->willReturnSelf();
-		$playlistMock->expects($this->once())->method('prepare')->willReturn(['playlist']);
-
-		$this->templatePreparer->prepare(TemplateIndexFiles::GARLIC);
-
-		$templateData = $this->templatePreparer->getTemplateData();
-		static::assertEquals([
-			'meta' => ['meta'],
-			'subscriptions' => ['subscriptions'],
-			'layout' => ['layout'],
-			'standby_times' => ['standby'],
-			'playlist' => ['playlist'],
-		], $templateData);
+		return [
+			'garlic'  => [TemplateIndexFiles::GARLIC, ['meta', 'subscriptions', 'layout', 'standby_times', 'playlist']],
+			'iadea'   => [TemplateIndexFiles::XMP2XXX, ['meta', 'subscriptions', 'layout', 'standby_times', 'playlist']],
+			'simple'  => [TemplateIndexFiles::SIMPLE, ['meta', 'layout', 'playlist']],
+		];
 	}
 
 	/**
-	 * @throws Exception
-	 * @throws \Exception
+	 * @param list<string> $sections
 	 */
 	#[Group('units')]
-	public function testPrepareForIAdea(): void
+	#[DataProvider('templates')]
+	public function testEveryTemplateGetsTheSectionsItKnows(TemplateIndexFiles $template, array $sections): void
 	{
-		$metaMock         = $this->createMock(MetaPreparer::class);
-		$subscriptionMock = $this->createMock(SubscriptionPreparer::class);
-		$layoutMock       = $this->createMock(LayoutPreparer::class);
-		$screenTimesMock  = $this->createMock(ScreenTimesPreparer::class);
-		$playlistMock     = $this->createMock(PlaylistPreparer::class);
+		$data = $this->preparer()->prepare($template)->getTemplateData();
 
-		$this->preparerFactoryMock->expects($this->atLeastOnce())
-			->method('create')
-			->willReturnMap([
-				[IndexSections::META, $this->playerEntityStub, $metaMock],
-				[IndexSections::SUBSCRIPTIONS, $this->playerEntityStub, $subscriptionMock],
-				[IndexSections::LAYOUT, $this->playerEntityStub, $layoutMock],
-				[IndexSections::STANDBY_TIMES, $this->playerEntityStub, $screenTimesMock],
-				[IndexSections::PLAYLIST, $this->playerEntityStub, $playlistMock],
-			]);
-		$metaMock->expects($this->once())->method('prepare')->willReturn(['meta']);
-		$subscriptionMock->expects($this->once())->method('prepare')->willReturn(['subscriptions']);
-		$layoutMock->expects($this->once())->method('prepare')->willReturn(['layout']);
-		$screenTimesMock->expects($this->once())->method('prepare')->willReturn(['standby']);
-		$playlistMock->expects($this->once())->method('setPlaylistStructure')
-			->with($this->playlistStructureStub)
-			->willReturnSelf();
-		$playlistMock->expects($this->once())->method('prepare')->willReturn(['playlist']);
-
-		$this->templatePreparer->prepare(TemplateIndexFiles::XMP2XXX);
-
-		$templateData = $this->templatePreparer->getTemplateData();
-		static::assertEquals([
-			'meta' => ['meta'],
-			'subscriptions' => ['subscriptions'],
-			'layout' => ['layout'],
-			'standby_times' => ['standby'],
-			'playlist' => ['playlist'],
-		], $templateData);
+		static::assertSame($sections, array_keys($data));
+		static::assertSame('Eingang - Lobby', $data['meta'][0]['TITLE']);
 	}
 
-	/**
-	 * @throws Exception
-	 * @throws \Exception
-	 */
 	#[Group('units')]
-	public function testPrepareForCompatible(): void
+	public function testTheSimpleTemplateGetsTheItemsOnly(): void
 	{
-		$metaMock         = $this->createMock(MetaPreparer::class);
-		$layoutMock       = $this->createMock(LayoutPreparer::class);
-		$playlistMock     = $this->createMock(PlaylistPreparer::class);
+		$data = $this->preparer()->prepare(TemplateIndexFiles::SIMPLE)->getTemplateData();
 
-		$this->preparerFactoryMock->expects($this->atLeastOnce())
-			->method('create')
-			->willReturnMap([
-				[IndexSections::META, $this->playerEntityStub, $metaMock],
-				[IndexSections::LAYOUT, $this->playerEntityStub, $layoutMock],
-				[IndexSections::PLAYLIST, $this->playerEntityStub, $playlistMock],
-			]);
-		$metaMock->expects($this->once())->method('prepare')->willReturn(['meta']);
-		$layoutMock->expects($this->once())->method('prepare')->willReturn(['layout']);
-		$playlistMock->expects($this->once())->method('setPlaylistStructure')
-			->with($this->playlistStructureStub)
-			->willReturnSelf();
-		$playlistMock->expects($this->once())->method('prepare')->willReturn(['playlist']);
-
-		$this->templatePreparer->prepare(TemplateIndexFiles::SIMPLE);
-
-		$templateData = $this->templatePreparer->getTemplateData();
-		static::assertEquals([
-			'meta' => ['meta'],
-			'layout' => ['layout'],
-			'playlist' => ['playlist'],
-		], $templateData);
+		static::assertSame([['INSERT_ELEMENTS' => '<items/>']], $data['playlist']);
 	}
 
+	#[Group('units')]
+	public function testTheOtherTemplatesGetItemsPrefetchAndPriorityClasses(): void
+	{
+		foreach ([TemplateIndexFiles::GARLIC, TemplateIndexFiles::XMP2XXX] as $template)
+		{
+			$playlist = $this->preparer()->prepare($template)->getTemplateData()['playlist'][0];
 
+			static::assertSame(['<exclusive/>', '<items/>', '<prefetch/>', 900], [$playlist['INSERT_PRIORITY_CLASSES'], $playlist['INSERT_ELEMENTS'], $playlist['INSERT_PREFETCH_ELEMENTS'], $playlist['PREFETCH_REFRESH_TIME']]);
+		}
+	}
+
+	#[Group('units')]
+	public function testTheCommandsOfThePlayerAreSubscribed(): void
+	{
+		$data = $this->preparer()->prepare(TemplateIndexFiles::GARLIC)->getTemplateData();
+
+		static::assertSame(['TaskSchedule'], array_column($data['subscriptions'], 'SUBSCRIPTION_TYPE'));
+	}
 }

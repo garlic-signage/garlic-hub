@@ -170,14 +170,17 @@ class IndexResponseHandler
 			return $this->clientHasNoneMatch === $this->etag;
 
 		if ($this->clientHasModifiedSince !== null)
-			return strtotime($this->clientHasModifiedSince) > $this->fileMTime;
+			// the client has the file when its date is the date of the file or newer
+			return strtotime($this->clientHasModifiedSince) >= $this->fileMTime;
 
 		return false; // if both are not present in request return always a 200.
 	}
 
 	private function addAccessControlHeader(ResponseInterface $response): ResponseInterface
 	{
-		return $response->withHeader('Access-Control-Allow-Origin', '*')
+		// the answer depends on who asks (the uuid is in the agent): a cache between must not give it to another player
+		return $response->withHeader('Vary', 'User-Agent, X-Signage-Agent')
+						->withHeader('Access-Control-Allow-Origin', '*')
 						->withHeader('Access-Control-Allow-Methods', 'HEAD, GET, OPTIONS')
 						->withHeader('Access-Control-Max-Age', '86400')
 						->withHeader('Access-Control-Allow-Headers', 'User-Agent, If-None-Match, If-Modified-Since, Authorization, X-Signage-Agent');

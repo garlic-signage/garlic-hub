@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\IndexCreation\Builder\Preparers;
 
+use App\Modules\Player\Enums\PlayerReports;
+
 use App\Framework\Exceptions\CoreException;
 
 /**
@@ -43,17 +45,17 @@ class SubscriptionPreparer extends AbstractPreparer implements PreparerInterface
 		if (count($this->playerEntity->getReports()) === 0)
 			return $subscriptions;
 
+		// the reports are a list of names: ['inventory', 'played', ...]
 		$reports = $this->playerEntity->getReports();
-
-		if (isset($reports['inventory']))
+		if (in_array(PlayerReports::INVENTORY->value, $reports, true))
 			$subscriptions[] = $this->replaceReportInventory();
-		if (isset($reports['play']))
+		if (in_array(PlayerReports::PLAYED->value, $reports, true))
 			$subscriptions[] = $this->replaceReportPlayed();
-		if (isset($reports['events']))
+		if (in_array(PlayerReports::EVENTS->value, $reports, true))
 			$subscriptions[] = $this->replaceReportEvents();
-		if (isset($reports['configuration']))
+		if (in_array(PlayerReports::SYSTEM_CONFIGURATION->value, $reports, true))
 			$subscriptions[] = $this->replaceSystemConfiguration();
-		if (isset($reports['executions']))
+		if (in_array(PlayerReports::TASKS_EXECUTIONS->value, $reports, true))
 			$subscriptions[] = $this->replaceTasksExecutions();
 
 		return $subscriptions;

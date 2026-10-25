@@ -323,7 +323,7 @@ class PlayerEntity implements PlaylistTargetInterface
 	 */
 	public function getReportServer(): string
 	{
-		return $this->config->getConfigValue('report_server', 'player');
+		return $this->config->getConfigValue('report_server_url', 'player');
 	}
 
 	/**

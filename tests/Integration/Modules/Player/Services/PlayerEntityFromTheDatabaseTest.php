@@ -45,7 +45,7 @@ class PlayerEntityFromTheDatabaseTest extends RepositoryTestCase
 		$this->loadFixture('player/playlists.sql');
 		$this->loadFixture('player/players.sql');
 		$this->repository = new PlayerIndexRepository($this->connection);
-		$this->factory    = new PlayerEntityFactory(new Config(new RecordingConfigLoader(['player' => ['report_server' => 'r', 'index_server_url' => 'https://hub/smil-index']])));
+		$this->factory    = new PlayerEntityFactory(new Config(new RecordingConfigLoader(['player' => ['report_server_url' => 'r', 'index_server_url' => 'https://hub/smil-index']])));
 	}
 
 	private function userAgent(string $uuid): UserAgentHandler
