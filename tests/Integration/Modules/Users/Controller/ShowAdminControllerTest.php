@@ -90,6 +90,17 @@ class ShowAdminControllerTest extends UsersControllerTestCase
 		static::assertSame('resetPassword', $page->getTemplateData()['additional_buttons'][0]['ADDITIONAL_BUTTON_NAME']);
 	}
 
+	public function testTheFormHasTheRulesOfTheFields(): void
+	{
+		$this->actingAs(1);
+
+		$fields = $this->fields($this->page($this->create()));
+
+		static::assertSame(['text', 'required', '2'], [$fields['username']['type'], $fields['username']['required'], $fields['username']['minlength']]);
+		static::assertSame(['email', 'required'], [$fields['email']['type'], $fields['email']['required']]);
+		static::assertSame('hidden', $fields['csrf_token']['type']);
+	}
+
 	/**
 	 * @return array<string,array{string,string}> the UID of the url and the answer
 	 */
@@ -241,6 +252,39 @@ class ShowAdminControllerTest extends UsersControllerTestCase
 		$this->assertRedirect($this->store(['UID' => '99', 'username' => 'ghost', 'email' => 'ghost@example.com']), '/users', 'User not found.');
 
 		static::assertSame(3, $this->countUsers());
+	}
+
+	public function testTheFormShowsTheLinkTokensOfTheUserButNotTheRememberMeLogins(): void
+	{
+		$this->actingAs(1);
+		$tokens = $this->container->get(UserTokenService::class);
+		$tokens->insertToken(3, $tokens->generateToken(), TokenPurposes::PASSWORD_RESET);
+		$tokens->insertToken(3, $tokens->generateToken(), TokenPurposes::AUTOLOGIN);
+
+		$page   = $this->page($this->edit('3'));
+		$fields = $this->fields($page);
+
+		static::assertSame(['username', 'email', 'status', 'locale', 'password_reset', 'UID', 'csrf_token'], array_keys($fields));
+		// without the token in the session the link has no token to show
+		static::assertSame('http://garlic-hub.test/force-password?token=', $fields['password_reset']['value']);
+		$html = json_encode($page->getTemplateData()['form_element'], JSON_THROW_ON_ERROR);
+		static::assertStringContainsString('Password reset', $html);
+		static::assertStringContainsString((string) $this->databaseValue("SELECT expires_at FROM user_tokens WHERE purpose = 'password_reset'"), $html);
+	}
+
+	public function testTheLinkOfANewPasswordIsShownOnceInTheFormAfterTheReset(): void
+	{
+		$this->actingAs(1);
+		$this->assertRedirect($this->store(['UID' => '3', 'resetPassword' => '1', 'username' => 'bernd', 'email' => 'bernd@example.com']), '/users/edit/3');
+		$token = $this->container->get(Session::class)->get(TokenPurposes::PASSWORD_RESET->value . '_token');
+		static::assertIsString($token);
+
+		$first = $this->fields($this->page($this->edit('3')));
+		$again = $this->fields($this->page($this->edit('3')));
+
+		static::assertSame('http://garlic-hub.test/force-password?token=' . $token, $first['password_reset']['value']);
+		static::assertNotNull($this->container->get(UserTokenService::class)->findByToken((string) hex2bin($token)));
+		static::assertSame('http://garlic-hub.test/force-password?token=', $again['password_reset']['value']);
 	}
 
 	public function testTheAdminResetsAPassword(): void

@@ -96,6 +96,18 @@ class ShowInitialAdminControllerTest extends UsersControllerTestCase
 		static::assertFileDoesNotExist($this->lockFile);
 	}
 
+	public function testTheFormHasTheRulesOfTheFields(): void
+	{
+		$fields = $this->fields($this->page($this->show()));
+
+		static::assertSame(['text', 'required', '2'], [$fields['username']['type'], $fields['username']['required'], $fields['username']['minlength']]);
+		static::assertSame(['email', 'required'], [$fields['email']['type'], $fields['email']['required']]);
+		// the browser checks the same pattern as the server
+		static::assertSame(['password', '(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{8,}', 'required'], [$fields['password']['type'], $fields['password']['pattern'], $fields['password']['required']]);
+		static::assertSame(['password', 'required'], [$fields['password_confirm']['type'], $fields['password_confirm']['required']]);
+		static::assertArrayNotHasKey('pattern', $fields['password_confirm']);
+	}
+
 	public function testTheFormIsNotShownAfterTheInstallation(): void
 	{
 		file_put_contents($this->lockFile, 'locked');

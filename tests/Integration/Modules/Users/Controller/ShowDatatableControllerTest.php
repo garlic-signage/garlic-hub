@@ -118,6 +118,16 @@ class ShowDatatableControllerTest extends UsersControllerTestCase
 		static::assertSame([1, 2], $this->idsOf(['status' => 3]));
 	}
 
+	public function testTheDeletedUsersCanBeFiltered(): void
+	{
+		static::markTestSkipped('Known bug: the status 0 is the default of the filter and means "all", so the deleted users can not be filtered and the select shows "Deleted" for "all". Remove this line when it is fixed.');
+		// @phpstan-ignore deadCode.unreachable
+		$this->actingAs(1);
+		$this->connection->executeStatement('UPDATE user_main SET status = 0 WHERE UID = 3');
+
+		static::assertSame([3], $this->idsOf(['status' => 0]));
+	}
+
 	public function testTheUsersAreSortedByTheChosenColumn(): void
 	{
 		$this->actingAs(1);
@@ -145,5 +155,43 @@ class ShowDatatableControllerTest extends UsersControllerTestCase
 		$this->actingAs(1);
 
 		static::assertSame([1, 2, 3], $this->idsOf(['username' => ['an'], 'status' => ['1']]));
+	}
+
+	public function testTheAdminGetsALinkToTheFormOfEveryUser(): void
+	{
+		$this->actingAs(1);
+
+		$links = array_map(static fn(array $row): string => $row['has_action_link'][0]['LINK_ACTION'], $this->list()->getTemplateData()['elements_results']);
+
+		static::assertSame(['users/edit/1', 'users/edit/2', 'users/edit/3'], $links);
+	}
+
+	public function testAUserGetsNoLinkToTheFormOfHerself(): void
+	{
+		static::markTestSkipped('Known bug: the row of the user has a link to the form, which the user can not open ("No rights"). Remove this line when it is fixed.');
+		// @phpstan-ignore deadCode.unreachable
+		$this->actingAs(2);
+
+		static::assertArrayNotHasKey('has_action_link', $this->list()->getTemplateData()['elements_results'][0]);
+	}
+
+	public function testTheAdminCanDeleteAnActiveUserButNotADeletedOne(): void
+	{
+		static::markTestSkipped('Known bug: the delete action is only offered for users with the status 0, so not for the users who can be deleted. Remove this line when it is fixed.');
+		// @phpstan-ignore deadCode.unreachable
+		$this->actingAs(1);
+		$this->connection->executeStatement('UPDATE user_main SET status = 0 WHERE UID = 3');
+
+		$rows = $this->list()->getTemplateData()['elements_results'];
+
+		static::assertArrayHasKey('has_delete', $rows[1]);
+		static::assertArrayNotHasKey('has_delete', $rows[2]);
+	}
+
+	public function testAUserDoesNotGetADeleteAction(): void
+	{
+		$this->actingAs(2);
+
+		static::assertArrayNotHasKey('has_delete', $this->list()->getTemplateData()['elements_results'][0]);
 	}
 }
