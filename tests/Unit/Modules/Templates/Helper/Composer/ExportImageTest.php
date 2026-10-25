@@ -104,6 +104,35 @@ class ExportImageTest extends TestCase
 	}
 
 	#[Group('units')]
+	public function testAnImageWhichIsNoDataUrlIsNotExported(): void
+	{
+		$this->dataUrlDecoderMock->expects($this->once())->method('decode')
+			->willThrowException(new FrameworkException('Data-URL not valid.'));
+		$this->mediaHandlerFactoryMock->expects($this->never())->method($this->anything());
+
+		$this->exportImage->decode('no image');
+
+		static::assertSame('Data-URL not valid.', $this->exportImage->getErrorText());
+		static::assertFalse($this->exportImage->exportBase64(12));
+		static::assertFalse($this->exportImage->exportPlaylistItem(12));
+		static::assertSame('Data-URL not valid.', $this->exportImage->getErrorText());
+	}
+
+	#[Group('units')]
+	public function testAFailedDecodeDoesNotExportTheImageOfAnEarlierOne(): void
+	{
+		$this->dataUrlDecoderMock->expects($this->exactly(2))->method('decode')
+			->willReturnCallback(static fn(string $url): DecodedDataUrlFile => str_contains($url, 'abc') ? new DecodedDataUrlFile('image/png', 'png', 'binary', 6) : throw new ModuleException('mediapool', 'Base64-Data are empty.'));
+		$this->mediaHandlerFactoryMock->expects($this->never())->method($this->anything());
+
+		$this->exportImage->decode('data:image/png;base64,abc');
+		$this->exportImage->decode('data:image/png;base64,');
+
+		static::assertFalse($this->exportImage->exportBase64(12));
+		static::assertStringContainsString('Base64-Data are empty.', $this->exportImage->getErrorText());
+	}
+
+	#[Group('units')]
 	public function testExportBase64WithoutDecodeFails(): void
 	{
 		$this->dataUrlDecoderMock->expects($this->never())->method('decode');

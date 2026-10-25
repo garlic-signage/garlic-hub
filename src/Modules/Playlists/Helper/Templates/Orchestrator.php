@@ -104,16 +104,8 @@ class Orchestrator extends BaseTemplateOrchestrator
 		if ($content === '')
 			return 0;
 
-		// an image which is no valid data url is a failed save, not an error of the server
-		try
-		{
-			$this->exportImage->decode($imageBase64);
-		}
-		catch (FrameworkException|ModuleException)
-		{
-			return 0;
-		}
-
+		// an image which is no valid data url is not exported
+		$this->exportImage->decode($imageBase64);
 		if ($this->exportImage->exportPlaylistItem($itemId) === false)
 			return 0;
 

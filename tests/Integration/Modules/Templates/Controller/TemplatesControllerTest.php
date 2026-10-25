@@ -315,8 +315,6 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 
 	public function testAnImageWhichIsNoDataUrlIsAnError(): void
 	{
-		static::markTestSkipped('Known bug: an image which is no valid data URL throws a FrameworkException instead of the answer "Save failed". Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(1);
 
 		$this->assertError($this->save(['template_id' => '3', 'content' => '{"objects":[]}', 'image' => 'no image']), 'Save failed');

@@ -37,17 +37,31 @@ class ExportImage
 	{}
 
     /**
-     * @throws ModuleException
-     * @throws FrameworkException
-     */
+	 * An image which is no valid data url is no error of the server: nothing is decoded, getErrorText() tells why
+	 * and the export methods return false.
+	 */
     public function decode(string $base64Encoded): static
 	{
-		$this->decodedDataUrlFile = $this->dataUrlDecoder->decode($base64Encoded);
+		// a failed decode must not export the image of an earlier one
+		unset($this->decodedDataUrlFile);
+		$this->errorText = '';
+		try
+		{
+			$this->decodedDataUrlFile = $this->dataUrlDecoder->decode($base64Encoded);
+		}
+		catch (FrameworkException|ModuleException $exception)
+		{
+			$this->errorText = $exception->getMessage();
+		}
+
 		return $this;
 	}
 
 	public function exportBase64(int $id): bool
 	{
+		if (!$this->hasDecodedImage())
+			return false;
+
 		try
 		{
 
@@ -68,6 +82,9 @@ class ExportImage
 
 	public function exportPlaylistItem(int $id): bool
 	{
+		if (!$this->hasDecodedImage())
+			return false;
+
 		try
 		{
 
@@ -84,6 +101,20 @@ class ExportImage
 			$this->errorText = $exception->getMessage();
 			return false;
 		}
+	}
+
+	/**
+	 * Without a decoded image the reason stays the one of decode(), or tells that decode() was not called.
+	 */
+	private function hasDecodedImage(): bool
+	{
+		if (isset($this->decodedDataUrlFile))
+			return true;
+
+		if ($this->errorText === '')
+			$this->errorText = 'No image decoded.';
+
+		return false;
 	}
 
 	public function getMimeType(): string
