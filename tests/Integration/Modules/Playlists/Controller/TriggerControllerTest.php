@@ -23,7 +23,9 @@ namespace Tests\Integration\Modules\Playlists\Controller;
 
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Playlists\Controller\TriggerController;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Integration\Modules\Playlists\BuildsExportService;
 use Tests\Integration\Support\MediaWorkspace;
@@ -123,22 +125,86 @@ class TriggerControllerTest extends PlaylistsControllerTestCase
 		$this->assertError($this->controller->save($this->request('PATCH', body: ['item_id' => '1']), $this->newResponse()), 'CSRF token validation error.');
 	}
 
+	public function testInvalidValuesAreRejectedAndNothingIsStored(): void
+	{
+		$this->actingAs(2);
+		$wallclock = ['iso_date' => '2030-01-01T10:00:00" evil="1', 'weekday' => 0, 'repeat_counts' => -1];
+
+		foreach ([['wallclocks' => [$wallclock]], ['notifies' => [['notify' => '']]], ['accesskeys' => [['accesskey' => 'ab']]], ['touches' => 'x'], ['touches' => [['touch_item_id' => 'abc']]]] as $trigger)
+			$this->assertError($this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '1'] + $trigger)), $this->newResponse()), 'Invalid trigger data.');
+
+		static::assertSame('', $this->databaseValue('SELECT begin_trigger FROM playlists_items WHERE item_id = 1'));
+	}
+
+	public function testAWallclockIsStoredWithIntegers(): void
+	{
+		$this->actingAs(2);
+		$wallclock = ['iso_date' => '2030-01-01T10:00:00', 'weekday' => '-2', 'repeat_counts' => '0', 'repeat_minutes' => '15', 'repeat_hours' => '', 'repeat_days' => '0', 'repeat_weeks' => '0', 'repeat_months' => '0', 'repeat_years' => '0'];
+
+		$this->assertSuccess($this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '1', 'wallclocks' => [$wallclock]])), $this->newResponse()));
+
+		static::assertSame(
+			['wallclocks' => [['iso_date' => '2030-01-01T10:00:00', 'weekday' => -2, 'repeat_counts' => 0, 'repeat_minutes' => 15, 'repeat_hours' => 0, 'repeat_days' => 0, 'repeat_weeks' => 0, 'repeat_months' => 0, 'repeat_years' => 0]]],
+			unserialize((string) $this->databaseValue('SELECT begin_trigger FROM playlists_items WHERE item_id = 1'))
+		);
+	}
+
+	public function testAnItemOfThePlaylistCanBeTouched(): void
+	{
+		$this->actingAs(2);
+
+		$this->assertSuccess($this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '1', 'touches' => [['touch_item_id' => '5']]])), $this->newResponse()));
+
+		static::assertSame(['touches' => [['touch_item_id' => 5]]], unserialize((string) $this->databaseValue('SELECT begin_trigger FROM playlists_items WHERE item_id = 1')));
+	}
+
 	/**
-	 * The values of a trigger go into an attribute of the exported SMIL file, a value can not leave the attribute.
+	 * @return array<string,array{string}> the item to touch: of another playlist, the item itself, a pdf which is no media to touch, unknown
+	 */
+	public static function itemsWhichCanNotBeTouched(): array
+	{
+		return [
+			'an item of another playlist' => ['7'],
+			'the item itself'             => ['1'],
+			'a pdf'                       => ['4'],
+			'a nested playlist'           => ['3'],
+			'an unknown item'             => ['999'],
+		];
+	}
+
+	#[DataProvider('itemsWhichCanNotBeTouched')]
+	public function testAnItemWhichIsNotInTheListOfTheTouchableMediaCanNotBeTouched(string $touchItemId): void
+	{
+		$this->actingAs(2);
+
+		try
+		{
+			$this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '1', 'touches' => [['touch_item_id' => $touchItemId]]])), $this->newResponse());
+			static::fail('Expected TranslatableModuleException');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertSame('invalid_trigger_data', $e->getTranslationKey());
+			static::assertSame('', $this->databaseValue('SELECT begin_trigger FROM playlists_items WHERE item_id = 1'));
+		}
+	}
+
+	/**
+	 * The values in the database are not trusted either: a value which was stored before the check can not leave the attribute.
 	 */
 	public function testTheValuesOfATriggerCanNotBreakTheExportedFile(): void
 	{
-		static::markTestSkipped('Known bug: the date, the repeats and the weekday of a wallclock and the id of a touch are written into the SMIL file without escaping and without checking. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(2);
-		$wallclock = ['iso_date' => '2030-01-01T10:00" evil="1', 'weekday' => 0, 'repeat_counts' => -1];
-		$this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '1', 'wallclocks' => [$wallclock]])), $this->newResponse());
+		$stored = ['wallclocks' => [['iso_date' => '2030-01-01T10:00" evil="1', 'weekday' => '0" x="1', 'repeat_counts' => '3" y="1', 'repeat_hours' => '1" z="1']], 'touches' => [['touch_item_id' => '2" w="1']]];
+		$this->connection->executeStatement('UPDATE playlists_items SET begin_trigger = ? WHERE item_id = 1', [serialize($stored)]);
 
 		$workspace = new MediaWorkspace();
 		try
 		{
 			$export = $this->exportInto($workspace);
-			static::assertStringNotContainsString('evil=', $export);
+			foreach (['evil="', 'x="1', 'y="1', 'z="1', 'w="1'] as $injected)
+				static::assertStringNotContainsString($injected, $export);
+			static::assertStringContainsString('begin="wallclock(', $export);
 		}
 		finally
 		{
@@ -146,7 +212,22 @@ class TriggerControllerTest extends PlaylistsControllerTestCase
 		}
 	}
 
-	// @phpstan-ignore method.unused
+	public function testAnExportWithATriggerOfAnOldFormatDoesNotFail(): void
+	{
+		$this->actingAs(2);
+		$this->connection->executeStatement('UPDATE playlists_items SET begin_trigger = ? WHERE item_id = 1', [serialize(['wallclocks' => [['iso_date' => '2030-01-01T10:00:00']]])]);
+
+		$workspace = new MediaWorkspace();
+		try
+		{
+			static::assertStringContainsString('begin="wallclock(2030-01-01T10:00:00)"', $this->exportInto($workspace));
+		}
+		finally
+		{
+			$workspace->remove();
+		}
+	}
+
 	private function exportInto(MediaWorkspace $workspace): string
 	{
 		$this->buildExportService($workspace)->exportToSmil(1);

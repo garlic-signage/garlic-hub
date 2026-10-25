@@ -31,6 +31,7 @@ use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Modules\Playlists\Helper\ConditionalPlay\ResponseBuilder;
 use App\Modules\Playlists\Helper\Trigger\TemplatePreparer;
 use App\Modules\Playlists\Helper\Trigger\Orchestrator;
+use App\Modules\Playlists\Helper\Trigger\Schema;
 use App\Modules\Playlists\Services\TriggerService;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
@@ -65,7 +66,8 @@ class OrchestratorTest extends TestCase
 			$this->responseBuilderMock,
 			$this->validatorMock,
 			$this->templatePreparerMock,
-			$this->triggerServiceMock
+			$this->triggerServiceMock,
+			new Schema()
 		);
 	}
 
@@ -175,11 +177,11 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testSaveSuccess(): void
 	{
-		// saving works on behalf of the session user, without form handling
-		$this->validatorMock->expects($this->never())->method($this->anything());
 		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->validatorMock->expects($this->once())->method('validateCsrfToken')->with('valid_csrf_token')->willReturn(true);
+		// only the checked triggers are saved, not the token, the item id or other fields
 		$this->triggerServiceMock->expects($this->once())->method('saveBeginTrigger')
-			->with(123, ['param1' => 'value1', 'param2' => 'value2']);
+			->with(123, ['notifies' => [['notify' => 'go']]]);
 
 		$this->responseBuilderMock->expects($this->once())->method('generalSuccess')
 			->with($this->responseStub, [])
@@ -188,14 +190,33 @@ class OrchestratorTest extends TestCase
 		$this->orchestrator->setInput([
 			'item_id' => '123',
 			'csrf_token' => 'valid_csrf_token',
-			'param1' => 'value1',
-			'param2' => 'value2'
+			'notifies' => [['notify' => 'go']],
+			'param1' => 'value1'
 		]);
 
-		$this->orchestrator->validate($this->responseStub);
+		static::assertNull($this->orchestrator->validateWithToken($this->responseStub));
 		$result = $this->orchestrator->save($this->responseStub);
 
 		static::assertInstanceOf(ResponseInterface::class, $result);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testInvalidTriggerDataIsRejected(): void
+	{
+		$this->templatePreparerMock->expects($this->never())->method($this->anything());
+		$this->triggerServiceMock->expects($this->never())->method($this->anything());
+		$this->validatorMock->expects($this->once())->method('validateCsrfToken')->with('valid_csrf_token')->willReturn(true);
+		$this->responseBuilderMock->expects($this->once())->method('invalidTriggerData')
+			->with($this->responseStub)
+			->willReturn($this->responseStub);
+
+		$this->orchestrator->setInput(['item_id' => '123', 'csrf_token' => 'valid_csrf_token', 'notifies' => [['notify' => '']]]);
+
+		static::assertSame($this->responseStub, $this->orchestrator->validateWithToken($this->responseStub));
 	}
 
 	/**

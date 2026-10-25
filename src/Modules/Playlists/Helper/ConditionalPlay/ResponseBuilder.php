@@ -61,4 +61,15 @@ class ResponseBuilder extends BaseResponseBuilder
 			$response, $this->translator->translate('invalid_conditional_data', 'playlists')
 		);
 	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	public function invalidTriggerData(ResponseInterface $response): ResponseInterface
+	{
+		return $this->jsonResponseHandler->jsonError(
+			$response, $this->translator->translate('invalid_trigger_data', 'playlists')
+		);
+	}
 }

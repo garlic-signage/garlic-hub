@@ -106,7 +106,7 @@ class Trigger
 		$determined = [];
 		foreach ($touches as $touch)
 		{
-			$determined[] = Base::ID_PREFIX.$touch['touch_item_id'].'.activateEvent';
+			$determined[] = Base::ID_PREFIX.(int) $touch['touch_item_id'].'.activateEvent';
 		}
 
 		return $determined;
@@ -132,30 +132,35 @@ class Trigger
 	 */
 	private function determineOneWallClock(array $wallclock): string
 	{
+		// the values come from the database: only numbers and an escaped date can reach the SMIL file
+		$counts  = (int) ($wallclock['repeat_counts'] ?? -1);
+		$weekday = (int) ($wallclock['weekday'] ?? 0);
+		$isoDate = Xml::escape((string) ($wallclock['iso_date'] ?? ''));
+
 		$repeats = $intervals = '';
-		if ($wallclock['repeat_counts'] != -1)
+		if ($counts != -1)
 		{
-			if ($wallclock['repeat_counts'] == 0)
+			if ($counts == 0)
 				$repeats = 'R/';
 			else
-				$repeats = 'R'.$wallclock['repeat_counts'].'/';
+				$repeats = 'R'.$counts.'/';
 
 			$intervals = '/P';
-			if ($wallclock['repeat_years'] > 0)
-				$intervals .= $wallclock['repeat_years'].'Y';
-			if ($wallclock['repeat_months'] > 0)
-				$intervals .= $wallclock['repeat_months'].'M';
-			if ($wallclock['repeat_weeks'] > 0)
-				$intervals .= $wallclock['repeat_weeks'].'W';
-			if ($wallclock['repeat_days'] > 0)
-				$intervals .= $wallclock['repeat_days'].'D';
-			if ($wallclock['repeat_hours'] > 0 OR $wallclock['repeat_minutes'] > 0)
+			if ((int) ($wallclock['repeat_years'] ?? 0) > 0)
+				$intervals .= (int) $wallclock['repeat_years'].'Y';
+			if ((int) ($wallclock['repeat_months'] ?? 0) > 0)
+				$intervals .= (int) $wallclock['repeat_months'].'M';
+			if ((int) ($wallclock['repeat_weeks'] ?? 0) > 0)
+				$intervals .= (int) $wallclock['repeat_weeks'].'W';
+			if ((int) ($wallclock['repeat_days'] ?? 0) > 0)
+				$intervals .= (int) $wallclock['repeat_days'].'D';
+			if ((int) ($wallclock['repeat_hours'] ?? 0) > 0 OR (int) ($wallclock['repeat_minutes'] ?? 0) > 0)
 			{
 				$intervals .= 'T';
-				if ($wallclock['repeat_hours'] > 0)
-					$intervals .= $wallclock['repeat_hours'].'H';
-				if ($wallclock['repeat_minutes'] > 0)
-					$intervals .= $wallclock['repeat_minutes'].'M';
+				if ((int) ($wallclock['repeat_hours'] ?? 0) > 0)
+					$intervals .= (int) $wallclock['repeat_hours'].'H';
+				if ((int) ($wallclock['repeat_minutes'] ?? 0) > 0)
+					$intervals .= (int) $wallclock['repeat_minutes'].'M';
 			}
 
 			if (strlen($intervals) == 2) // if repeat_counts are set, but interval selected
@@ -164,14 +169,13 @@ class Trigger
 				$repeats = '';
 			}
 		}
-		if ($wallclock['weekday'] != 0 && $wallclock['weekday'] >= -7 && $wallclock['weekday'] <= 7)
+		if ($weekday != 0 && $weekday >= -7 && $weekday <= 7)
 		{
-			$sign = $wallclock['weekday'] < 0 ? '-' : '+';
-			$weekday = $sign . 'w' . abs((int) $wallclock['weekday']);
-			$iso = str_replace('T', $weekday. 'T', $wallclock['iso_date']);
+			$sign = $weekday < 0 ? '-' : '+';
+			$iso = str_replace('T', $sign . 'w' . abs($weekday) . 'T', $isoDate);
 		}
 		else
-			$iso = $wallclock['iso_date'];
+			$iso = $isoDate;
 
 		return 'wallclock('.$repeats.$iso.$intervals.')';
 	}

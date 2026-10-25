@@ -38,19 +38,22 @@ use Psr\Http\Message\ResponseInterface;
  */
 class Orchestrator
 {
-	/** @var array<string,string>  */
+	/** @var array<mixed>  */
 	private array $input;
 	private int $itemId;
+	/** @var array<string,list<array<string,int|string>>> */
+	private array $trigger = [];
 
 	public function __construct(
 		private readonly ResponseBuilder  $responseBuilder,
 		private readonly BaseValidator    $validator,
 		private readonly TemplatePreparer $templatePreparer,
 		private readonly TriggerService   $triggerService,
+		private readonly Schema           $schema,
 	) {}
 
 	/**
-	 * @param array<string,string> $input
+	 * @param array<mixed> $input
 	 */
 	public function setInput(array $input): static
 	{
@@ -67,7 +70,17 @@ class Orchestrator
 		if (!$this->validator->validateCsrfToken($this->input[BaseEditParameters::PARAMETER_CSRF_TOKEN]))
 			return $this->responseBuilder->csrfTokenMismatch($response);
 
-		return $this->validate($response);
+		$answer = $this->validate($response);
+		if ($answer !== null)
+			return $answer;
+
+		$trigger = $this->schema->parse($this->input);
+		if ($trigger === null)
+			return $this->responseBuilder->invalidTriggerData($response);
+
+		$this->trigger = $trigger;
+
+		return null;
 	}
 
 	/**
@@ -115,11 +128,7 @@ class Orchestrator
 	 */
 	public function save(ResponseInterface $response): ?ResponseInterface
 	{
-
-		unset($this->input['csrf_token']);
-		unset($this->input['item_id']);
-
-		$this->triggerService->saveBeginTrigger($this->itemId, $this->input);
+		$this->triggerService->saveBeginTrigger($this->itemId, $this->trigger);
 
 		return $this->responseBuilder->generalSuccess($response, []);
 	}

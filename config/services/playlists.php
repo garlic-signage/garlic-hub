@@ -377,7 +377,8 @@ $dependencies[TriggerController::class] = DI\factory(function (ContainerInterfac
 			new ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
 			$container->get(BaseValidator::class),
 			new \App\Modules\Playlists\Helper\Trigger\TemplatePreparer($container->get(AdapterInterface::class), new TriggerPreparer($container->get(Translator::class))),
-			new TriggerService($container->get(ItemsService::class), $container->get('ModuleLogger'))
+			new TriggerService($container->get(ItemsService::class), $container->get('ModuleLogger')),
+			new \App\Modules\Playlists\Helper\Trigger\Schema()
 		)
 	);
 });

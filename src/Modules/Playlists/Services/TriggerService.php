@@ -26,6 +26,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Helper\Serialization;
 use App\Framework\Services\AbstractBaseService;
@@ -72,7 +73,16 @@ class TriggerService extends AbstractBaseService
 	 */
 	public function saveBeginTrigger(int $itemId, array $requestData): void
 	{
-		$this->itemService->fetchItemById($itemId); // check rights on playlists, too
+		$item = $this->itemService->fetchItemById($itemId); // check rights on playlists, too
+
+		// an item can only be touched in the playlist it is in
+		$touchableIds = array_column($this->findTouchableMedia($item['playlist_id'], $itemId), 'item_id');
+		foreach ($requestData['touches'] ?? [] as $touch)
+		{
+			if (!in_array((int) $touch['touch_item_id'], array_map('intval', $touchableIds), true))
+				throw new TranslatableModuleException('playlists', 'invalid_trigger_data', ['item_id' => $itemId]);
+		}
+
 		$this->itemService->updateField($itemId, 'begin_trigger', @serialize($requestData));
 	}
 
