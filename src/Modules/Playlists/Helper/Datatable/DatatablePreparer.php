@@ -30,7 +30,6 @@ use App\Framework\Utils\Datatable\PrepareService;
 use App\Framework\Utils\Datatable\Results\HeaderField;
 use App\Modules\Playlists\Helper\PlaylistMode;
 use App\Modules\Playlists\Services\AclValidator;
-use DateTime;
 use Doctrine\DBAL\Exception;
 
 /**
@@ -98,7 +97,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 						$resultElements['is_UID'] = $this->prepareService->getBodyPreparer()->formatUID($playlist['UID'], $playlist['username']);
 						break;
 					case 'duration':
-						$resultElements['is_text'] = $this->prepareService->getBodyPreparer()->formatText($this->convertSeconds((string) $playlist['duration']));
+						$resultElements['is_text'] = $this->prepareService->getBodyPreparer()->formatText($this->convertSeconds((int) $playlist['duration']));
 						break;
 					case 'playlist_mode':
 						$selectableModes = $this->translator->translateArrayForOptions('playlist_mode_selects', 'playlists');
@@ -180,9 +179,10 @@ class DatatablePreparer extends AbstractDatatablePreparer
 		return true;
 	}
 
-	private function convertSeconds(string $seconds): string
+	private function convertSeconds(int $seconds): string
 	{
-		$dtT = new DateTime("@$seconds");
-		return new DateTime('@0')->diff($dtT)->format('%H:%I:%S');
+		$seconds = max(0, $seconds);
+
+		return sprintf('%02d:%02d:%02d', intdiv($seconds, 3600), intdiv($seconds % 3600, 60), $seconds % 60);
 	}
 }

@@ -137,7 +137,7 @@ class DatatablePreparerTest extends TestCase
 	 */
 	public static function durations(): array
 	{
-		return ['none' => [0, '00:00:00'], 'a minute' => [60, '00:01:00'], 'an hour and more' => [3725, '01:02:05']];
+		return ['none' => [0, '00:00:00'], 'a minute' => [60, '00:01:00'], 'an hour and more' => [3725, '01:02:05'], 'exactly a day' => [86400, '24:00:00'], 'more than a day' => [100000, '27:46:40'], 'more than 99 hours' => [360000, '100:00:00'], 'a negative duration' => [-5, '00:00:00']];
 	}
 
 	#[DataProvider('durations')]
@@ -147,16 +147,6 @@ class DatatablePreparerTest extends TestCase
 		$body = $this->preparer->setUsedPlaylists([])->prepareTableBody([self::playlist(duration: $seconds)], $this->fields(['duration']), 3);
 
 		static::assertSame($time, $body[0]['elements_result_element'][0]['is_text']['CONTROL_ELEMENT_VALUE_TEXT']);
-	}
-
-	#[Group('units')]
-	public function testADurationOfMoreThanADayIsShownInHours(): void
-	{
-		static::markTestSkipped('Known bug: the duration is formatted with the hours of a day (%H of a DateTime diff), so 100000 seconds are shown as 03:46:40 instead of 27:46:40. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
-		$body = $this->preparer->setUsedPlaylists([])->prepareTableBody([self::playlist(duration: 100000)], $this->fields(['duration']), 3);
-
-		static::assertSame('27:46:40', $body[0]['elements_result_element'][0]['is_text']['CONTROL_ELEMENT_VALUE_TEXT']);
 	}
 
 	#[Group('units')]
