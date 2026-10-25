@@ -71,7 +71,8 @@ class Parameters extends BaseFilterParameters
 	protected array $moduleParameters = [
 		self::PARAMETER_USERNAME   => ['scalar_type'  => ScalarType::STRING, 'default_value' => '', 'parsed' => false],
 		self::PARAMETER_EMAIL      => ['scalar_type'  => ScalarType::STRING, 'default_value' => '', 'parsed' => false],
-		self::PARAMETER_STATUS     => ['scalar_type'  => ScalarType::INT,    'default_value' => 0,  'parsed' => false]
+		// text: '' is all users, '0' the deleted ones (the integer 0 would be no filter)
+		self::PARAMETER_STATUS     => ['scalar_type'  => ScalarType::STRING, 'default_value' => '', 'parsed' => false]
 	];
 
 	/**

@@ -104,6 +104,34 @@ class ShowDatatableControllerTest extends UsersControllerTestCase
 		static::assertSame(['Registered', '99'], [$rows[1]['elements_result_element'][2]['is_text']['CONTROL_ELEMENT_VALUE_TEXT'], $rows[2]['elements_result_element'][2]['is_text']['CONTROL_ELEMENT_VALUE_TEXT']]);
 	}
 
+	public function testTheStatusSelectMarksOnlyTheChosenStatus(): void
+	{
+		$this->actingAs(1);
+
+		// nothing is marked, the browser shows the first option
+		static::assertSame('', $this->selectedStatusOption($this->list()));
+		static::assertSame('Deleted', $this->selectedStatusOption($this->list(['status' => '0'])));
+		static::assertSame('Blocked', $this->selectedStatusOption($this->list(['status' => '1'])));
+	}
+
+	public function testAStatusWhichIsNoStatusFindsNoUsers(): void
+	{
+		$this->actingAs(1);
+
+		static::assertSame([], $this->idsOf(['status' => 'abc']));
+	}
+
+	private function selectedStatusOption(PageResponse $page): string
+	{
+		foreach ($page->getTemplateData()['form_element'] as $element)
+		{
+			if (str_contains($element['HTML_ELEMENT'], 'name= "status"') && preg_match('/<option value="[^"]*" selected>([^<]*)</', $element['HTML_ELEMENT'], $match) === 1)
+				return $match[1];
+		}
+
+		return '';
+	}
+
 	public function testTheUsersAreFilteredByTheStartOfTheName(): void
 	{
 		$this->actingAs(1);
@@ -130,12 +158,10 @@ class ShowDatatableControllerTest extends UsersControllerTestCase
 
 	public function testTheDeletedUsersCanBeFiltered(): void
 	{
-		static::markTestSkipped('Known bug: the status 0 is the default of the filter and means "all", so the deleted users can not be filtered and the select shows "Deleted" for "all". Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(1);
 		$this->connection->executeStatement('UPDATE user_main SET status = 0 WHERE UID = 3');
 
-		static::assertSame([3], $this->idsOf(['status' => 0]));
+		static::assertSame([3], $this->idsOf(['status' => '0']));
 	}
 
 	public function testTheUsersAreSortedByTheChosenColumn(): void
