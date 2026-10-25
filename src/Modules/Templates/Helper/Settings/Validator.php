@@ -46,7 +46,8 @@ class Validator extends BaseValidator
 	{
 		$errors = $this->validateEditInput();
 		$type  = $this->settingsParameters->getValueOfParameter(Parameters::PARAMETER_TYPE);
-		if ($type === '')
+		// only the types the templates are created for
+		if (!array_key_exists($type, $this->translator->translateArrayForOptions('types_selects', 'templates')))
 			$errors[] = $this->translator->translate('template_type_noexists', 'templates');
 
 		return $errors;

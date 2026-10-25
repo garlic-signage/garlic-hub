@@ -149,13 +149,15 @@ class ShowDatatableControllerTest extends TemplatesControllerTestCase
 		static::assertSame([3], $this->idsOf(['elements_per_page' => 1, 'elements_page' => 3]));
 	}
 
-	public function testATemplateOfAnUnknownTypeIsListed(): void
+	public function testATemplateOfAnUnknownTypeIsListedWithItsType(): void
 	{
-		static::markTestSkipped('Known bug: the list reads the name of the type from a list of types (canvas, svg, html); the type of the schema is fabric.js and any text can be stored, a template of another type gives a TypeError and the whole list is not shown. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(1);
 		$this->connection->executeStatement("UPDATE templates SET type = 'fabric.js' WHERE template_id = 2");
+		$this->connection->executeStatement("UPDATE templates SET type = '<b>x</b>' WHERE template_id = 3");
 
-		static::assertSame([1, 2, 3], $this->idsOf());
+		$rows = $this->list()->getTemplateData()['elements_results'];
+
+		static::assertSame([1, 2, 3], array_map(static fn(array $row): int => (int) $row['UNIT_ID'], $rows));
+		static::assertSame(['Canvas', 'fabric.js', '<b>x</b>'], array_map(static fn(array $row): string => $row['elements_result_element'][1]['is_text']['CONTROL_ELEMENT_VALUE_TEXT'], $rows));
 	}
 }

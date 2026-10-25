@@ -50,8 +50,9 @@ class ValidatorTest extends TestCase
 		$translatorStub->method('translate')->willReturnMap([
 			['csrf_token_mismatch', 'security', [], 'CSRF token mismatch.'],
 			['name_noexists', 'templates', [], 'Name is missing.'],
-			['template_type_noexists', 'templates', [], 'Type is missing.'],
+			['template_type_noexists', 'templates', [], 'Type is not valid.'],
 		]);
+		$translatorStub->method('translateArrayForOptions')->willReturnMap([['types_selects', 'templates', ['canvas' => 'Canvas']]]);
 		$this->parametersStub = $this->createStub(Parameters::class);
 		$this->csrfTokenMock  = $this->createMock(CsrfToken::class);
 
@@ -125,7 +126,21 @@ class ValidatorTest extends TestCase
 		$this->mockInput('token', '', '');
 		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
 
-		static::assertSame(['Name is missing.', 'Type is missing.'], $this->validator->validateCreateInput());
+		static::assertSame(['Name is missing.', 'Type is not valid.'], $this->validator->validateCreateInput());
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testValidateCreateInputWithATypeWhichIsNotInTheList(): void
+	{
+		$this->mockInput('token', 'My Template', 'fabric.js');
+		$this->csrfTokenMock->expects($this->once())->method('validateToken')->willReturn(true);
+
+		static::assertSame(['Type is not valid.'], $this->validator->validateCreateInput());
 	}
 
 	private function mockInput(string $csrfToken, string $name, string $type): void

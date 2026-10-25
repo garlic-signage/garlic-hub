@@ -136,6 +136,17 @@ class ShowSettingsControllerTest extends TemplatesControllerTestCase
 		static::assertSame('private', $this->databaseValue("SELECT visibility FROM templates WHERE name = 'Neu'"));
 	}
 
+	public function testATypeWhichIsNotInTheListIsRejected(): void
+	{
+		$this->actingAs(1);
+
+		$page = $this->page($this->store(['name' => 'Neu', 'type' => 'evil']));
+
+		static::assertSame('templates/edit', $page->getTemplate());
+		static::assertSame([$this->text('template_type_noexists')], $this->flash('error'));
+		static::assertSame(3, $this->countTemplates());
+	}
+
 	public function testAUserCanNotCreateATemplate(): void
 	{
 		$this->actingAs(2);
@@ -222,13 +233,13 @@ class ShowSettingsControllerTest extends TemplatesControllerTestCase
 	 */
 	public function testValuesOfTheWrongTypeAreShownAsErrors(): void
 	{
-		static::markTestSkipped('Known bug: an array as template_id is taken for the template 1, an empty body throws a TypeError, any text is accepted as type of a new template. Remove this line when it is fixed.');
+		static::markTestSkipped('Known bug: an array as template_id is taken for the template 1 and an empty body throws a TypeError. Remove this line when it is fixed.');
 		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(1);
 
 		$this->store(['template_id' => ['2'], 'name' => 'Hack']);
 		static::assertSame('Admin Vorlage', $this->databaseValue('SELECT name FROM templates WHERE template_id = 1'));
-		$this->store(['name' => 'Neu', 'type' => 'evil']);
+		$this->controller->store($this->request()->withParsedBody(null), $this->newResponse());
 		static::assertSame(3, $this->countTemplates());
 	}
 }

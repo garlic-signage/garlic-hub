@@ -77,7 +77,9 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	 */
 	public function prepareTableBody(array $currentFilterResults, array $fields, int $currentUID): array
 	{
-		$body = [];
+		$body      = [];
+		// a type without a name (the type of the schema is fabric.js) is shown as it is
+		$typeNames = $this->translator->translateArrayForOptions('types_selects', 'templates');
 		foreach($currentFilterResults as $template)
 		{
 			$list            = [];
@@ -94,7 +96,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 						$resultElements['is_UID'] = $this->prepareService->getBodyPreparer()->formatUID($template['UID'], $template['username']);
 						break;
 					case 'type':
-						$resultElements['is_text'] = $this->prepareService->getBodyPreparer()->formatText($this->translator->translateArrayForOptions('types_selects', 'templates')[$template['type']]);
+						$resultElements['is_text'] = $this->prepareService->getBodyPreparer()->formatText($typeNames[$template['type']] ?? (string) $template['type']);
 						break;
 					case 'used':
 						$count = 0;
