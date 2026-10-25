@@ -70,11 +70,14 @@ class PlayerService
 	}
 
 	/**
-	 * @param array{api_endpoint:string, is_intranet: int} $saveData
+	 * @param array{api_endpoint?: string, is_intranet?: int, ...} $saveData
 	 * @throws Exception
 	 */
 	public function updatePlayer(int $playerId, array $saveData): int
 	{
+		// the caller may have checked the rights already, a method which writes does not rely on that
+		$this->fetchAclCheckedPlayerData($playerId);
+
 		return $this->playerRepository->update($playerId, $this->collectData($saveData));
 	}
 

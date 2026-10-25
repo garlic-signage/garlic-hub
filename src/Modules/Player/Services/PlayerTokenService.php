@@ -88,7 +88,8 @@ readonly class PlayerTokenService
 			$expiresAt = new DateTime($tokenData['expires_at']);
 			if ($expiresAt <= new DateTime())
 			{
-				$this->playerTokenRepository->delete($playerId);
+				// by the player: the id of the player is not the id of the token
+				$this->playerTokenRepository->deleteByField('player_id', $playerId);
 				return [];
 			}
 		}
@@ -125,7 +126,7 @@ readonly class PlayerTokenService
 	 */
 	public function cleanupExpiredTokens(): int
 	{
-		return $this->playerTokenRepository->deleteBy(['expires_at <=' => date('Y-m-d H:i:s')]);
+		return $this->playerTokenRepository->deleteBy(['expires_at' => ['value' => date('Y-m-d H:i:s'), 'compare' => '<=']]);
 	}
 
 	/**

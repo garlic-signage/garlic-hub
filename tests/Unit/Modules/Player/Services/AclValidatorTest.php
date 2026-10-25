@@ -21,173 +21,176 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Player\Services;
 
-use App\Shared\Acl\AclHelper;
 use App\Framework\Config\Config;
-use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Exceptions\ModuleException;
 use App\Modules\Player\Services\AclValidator;
+use App\Shared\Acl\AclHelper;
+use App\Shared\User\UserEntity;
+use App\Shared\User\UsersService;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\RecordingConfigLoader;
 
+/**
+ * Who may change or delete a player. The AclHelper and the Config are the real ones, the user is a stub with
+ * the global rights (acl) and the rights on single players or companies (vip) as the database holds them.
+ */
 class AclValidatorTest extends TestCase
 {
-	private AclValidator $aclValidator;
-	private AclHelper&MockObject $aclHelperMock;
+	private const int VIEWER = 1;
+	private const int EDITOR = 2;
+	private const int SUBADMIN = 4;
+	private const int MODULEADMIN = 8;
+	private const int ME = 5;
 
-	/**
-	 * @throws Exception
-	 */
+	private UsersService&Stub $userService;
+	/** @var list<array{module:string, acl:int}> */
+	private array $acl = [];
+	/** @var list<array<string,int>> */
+	private array $vip = [];
+
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->aclHelperMock = $this->createMock(AclHelper::class);
+		$this->userService = $this->createStub(UsersService::class);
+		$this->userService->method('getUserById')->willReturnCallback(fn(int $UID): UserEntity => $this->user($UID));
+	}
 
-		$this->aclValidator  = new AclValidator($this->aclHelperMock);
+	private function user(int $UID): UserEntity
+	{
+		// the database gives the rights as lists, the declaration of the entity says array<string,mixed>
+		// @phpstan-ignore argument.type, argument.type
+		return new UserEntity(['UID' => $UID], [], [], [], $this->acl, $this->vip);
+	}
+
+	private function validator(string $edition = Config::PLATFORM_EDITION_EDGE): AclValidator
+	{
+		$config = new Config(
+			new RecordingConfigLoader(['player' => ['GlobalACLs' => ['viewer' => (string) self::VIEWER, 'editor' => (string) self::EDITOR, 'subadmin' => (string) self::SUBADMIN, 'moduleadmin' => (string) self::MODULEADMIN]]]),
+			[],
+			['APP_PLATFORM_EDITION' => $edition]
+		);
+
+		return new AclValidator(new AclHelper($this->userService, $config));
 	}
 
 	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
-	 * @throws FrameworkException
+	 * @param array<string,int> $changes
+	 * @return array{UID: int, company_id: int, player_id: int}
 	 */
-	#[Group('units')]
-	public function testIsPlaylistEditableModuleAdmin(): void
+	private function player(array $changes = []): array
 	{
-		$UID = 1;
-		$player = ['UID' => 2, 'company_id' => 4, 'player_id' => 12];
+		/** @var array{UID: int, company_id: int, player_id: int} $player */
+		$player = ['player_id' => 20, 'UID' => 9, 'company_id' => 4, ...$changes];
 
-		$this->aclHelperMock->expects($this->once())->method('isModuleAdmin')
-			->with($UID, 'player')
-			->willReturn(true);
-		$result = $this->aclValidator->isPlayerEditable($UID, $player);
+		return $player;
+	}
 
-		static::assertTrue($result);
+	#[Group('units')]
+	public function testTheModuleIsPlayer(): void
+	{
+		static::assertSame('player', $this->validator()->getModuleName());
+	}
+
+	#[Group('units')]
+	public function testAUserWithoutAnyRightMayNothing(): void
+	{
+		static::assertFalse($this->validator()->isPlayerEditable(self::ME, $this->player()));
+		static::assertFalse($this->validator()->isAllowedToDeletePlayer(self::ME, $this->player()));
 	}
 
 	/**
-	 * @throws ModuleException
-	 * @throws Exception
-	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
-	 * @throws FrameworkException
+	 * The owner has no right because of owning: in the edge edition only the module admin changes players.
 	 */
 	#[Group('units')]
-	public function testIsPlaylistEditableEdgeEdition(): void
+	public function testTheOwnerOfAPlayerHasNoRightBecauseOfOwningIt(): void
 	{
-		$UID = 1;
-		$player = ['UID' => 2, 'company_id' => 4, 'player_id' => 12];
+		static::assertFalse($this->validator()->isPlayerEditable(self::ME, $this->player(['UID' => self::ME])));
+	}
 
-		$configStub = $this->createStub(Config::class);
-		$this->aclHelperMock->expects($this->once())->method('getConfig')->willReturn($configStub);
-		$configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
+	#[Group('units')]
+	public function testTheModuleAdminMayChangeAndDeleteEveryPlayer(): void
+	{
+		$this->acl = [['module' => 'player', 'acl' => self::MODULEADMIN]];
 
-		$result = $this->aclValidator->isPlayerEditable($UID, $player);
+		static::assertTrue($this->validator()->isPlayerEditable(self::ME, $this->player()));
+		static::assertTrue($this->validator()->isAllowedToDeletePlayer(self::ME, $this->player()));
+		static::assertTrue($this->validator(Config::PLATFORM_EDITION_ENTERPRISE)->isAllowedToDeletePlayer(self::ME, $this->player(['company_id' => 99])));
+	}
 
-		static::assertFalse($result);
+	#[Group('units')]
+	public function testTheAdminOfAnotherModuleIsNoAdminHere(): void
+	{
+		$this->acl = [['module' => 'playlists', 'acl' => self::MODULEADMIN]];
+
+		static::assertFalse($this->validator()->isPlayerEditable(self::ME, $this->player()));
 	}
 
 	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
-	 * @throws FrameworkException
+	 * @return array<string,array{string,int,bool}> the edition, the company of the right, the result
 	 */
-	#[Group('units')]
-	public function testIsPlaylistEditableSubAdminAccessFailed(): void
+	public static function subAdmins(): array
 	{
-		$UID = 1;
-		$player = ['UID' => 2, 'company_id' => 4, 'player_id' => 12];
-
-		$this->aclHelperMock->method('isSubAdmin')
-			->with($UID, 'player')
-			->willReturn(true);
-
-		$this->aclHelperMock->method('hasSubAdminAccessOnCompany')
-			->with($UID, $player['company_id'], 'player')
-			->willReturn(false);
-
-		$result = $this->aclValidator->isPlayerEditable($UID, $player);
-
-		static::assertFalse($result);
+		return [
+			'edge, own company'          => [Config::PLATFORM_EDITION_EDGE, 4, false],
+			'enterprise, own company'    => [Config::PLATFORM_EDITION_ENTERPRISE, 4, true],
+			'enterprise, other company'  => [Config::PLATFORM_EDITION_ENTERPRISE, 5, false],
+		];
 	}
 
 	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
-	 * @throws FrameworkException
+	 * The edge edition has no sub admins, in the enterprise edition one is admin of the players of his company.
 	 */
 	#[Group('units')]
-	public function testIsPlaylistEditableSubAdminAccessSucceed(): void
+	#[DataProvider('subAdmins')]
+	public function testTheSubAdminIsAdminOfHisCompanyInTheEnterpriseEditionOnly(string $edition, int $company, bool $expected): void
 	{
-		$UID = 1;
-		$player = ['UID' => 2, 'company_id' => 4, 'player_id' => 12];
+		$this->acl = [['module' => 'player', 'acl' => self::SUBADMIN]];
+		$this->vip = [['player_subadmin' => $company]];
 
-		$this->aclHelperMock->method('isSubAdmin')
-			->with($UID, 'player')
-			->willReturn(true);
+		static::assertSame($expected, $this->validator($edition)->isPlayerEditable(self::ME, $this->player()));
+		static::assertSame($expected, $this->validator($edition)->isAllowedToDeletePlayer(self::ME, $this->player()));
+	}
 
-		$this->aclHelperMock->method('hasSubAdminAccessOnCompany')
-			->with($UID, $player['company_id'], 'player')
-			->willReturn(true);
+	#[Group('units')]
+	public function testAPlayerWithoutCompanyOrOwnerCanNotBeJudgedInTheEnterpriseEdition(): void
+	{
+		$this->expectException(FrameworkException::class);
 
-		$result = $this->aclValidator->isPlayerEditable($UID, $player);
-
-		static::assertTrue($result);
+		// @phpstan-ignore argument.type
+		$this->validator(Config::PLATFORM_EDITION_ENTERPRISE)->isPlayerEditable(self::ME, ['player_id' => 20]);
 	}
 
 	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
-	 * @throws FrameworkException
+	 * @return array<string,array{list<array{module:string,acl:int}>,list<array<string,int>>,bool,bool}> the rights, the result for editing and for deleting
 	 */
-	#[Group('units')]
-	public function testIsPlaylistEditableEditorAccess(): void
+	public static function editors(): array
 	{
-		$UID = 1;
-		$player = ['UID' => 2, 'company_id' => 4, 'player_id' => 12];
-
-		$this->aclHelperMock->method('isEditor')
-			->with($UID, 'player')
-			->willReturn(true);
-
-		$this->aclHelperMock->method('hasEditorAccessOnUnit')
-			->with($UID, $player['player_id'], 'player')
-			->willReturn(true);
-
-		$result = $this->aclValidator->isPlayerEditable($UID, $player);
-
-		static::assertTrue($result);
+		return [
+			'editor of the player'          => [[['module' => 'player', 'acl' => self::EDITOR]], [['player_editor' => 20]], true, false],
+			'editor of another player'      => [[['module' => 'player', 'acl' => self::EDITOR]], [['player_editor' => 21]], false, false],
+			'editor right on no player'     => [[['module' => 'player', 'acl' => self::EDITOR]], [], false, false],
+			'right on the player, no editor' => [[], [['player_editor' => 20]], false, false],
+			'viewer of the player'          => [[['module' => 'player', 'acl' => self::VIEWER]], [['player_viewer' => 20]], false, false],
+		];
 	}
 
 	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
-	 * @throws FrameworkException
+	 * An editor of a player changes it, but does not delete it.
+	 *
+	 * @param list<array{module:string,acl:int}> $acl
+	 * @param list<array<string,int>> $vip
 	 */
 	#[Group('units')]
-	public function testIsPlaylistEditableNoAccess(): void
+	#[DataProvider('editors')]
+	public function testAnEditorChangesHisPlayerButDoesNotDeleteIt(array $acl, array $vip, bool $editable, bool $deletable): void
 	{
-		$UID = 1;
-		$player = ['UID' => 2, 'company_id' => 4, 'player_id' => 12];
+		$this->acl = $acl;
+		$this->vip = $vip;
 
-		$this->aclHelperMock->method('isEditor')
-			->with($UID, 'player')
-			->willReturn(true);
-
-		$this->aclHelperMock->method('hasEditorAccessOnUnit')
-			->with($UID, $player['player_id'], 'player')
-			->willReturn(false);
-
-		$result = $this->aclValidator->isPlayerEditable($UID, $player);
-
-		static::assertFalse($result);
+		static::assertSame($editable, $this->validator()->isPlayerEditable(self::ME, $this->player()));
+		static::assertSame($deletable, $this->validator()->isAllowedToDeletePlayer(self::ME, $this->player()));
 	}
-
 }

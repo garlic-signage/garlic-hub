@@ -50,6 +50,8 @@ use DateTime;
 class PlayerEntity implements PlaylistTargetInterface
 {
 	const int DEFAULT_PLAYER_REFRESH = 300;
+	private const string DATE_FORMAT   = 'Y-m-d H:i:s';
+	private const string DEFAULT_DATE  = '2025-01-01 00:00:00';
 	private readonly Config $config;
 	private int $playerId;
 	private int $playlistId;
@@ -109,23 +111,14 @@ class PlayerEntity implements PlaylistTargetInterface
 	 */
 	public function __construct(Config $config, UserAgentHandler $userAgentHandler, array $data)
 	{
-		$format = 'Y-m-d H:i:s';
-		$default = '2025-01-01 00:00:00';
-
 		$this->config = $config;
 		$this->playerId             = $data['player_id'] ?? 1;
 		$this->playlistId           = $data['playlist_id'] ?? 0;
 		$this->UID                  = $data['UID'] ?? 1;
 
-		$check = DateTime::createFromFormat($format,$data['last_access'] ?? $default);
-		if ($check !== false)
-			$this->lastAccess           = $check;
-		$check = DateTime::createFromFormat($format,$data['last_update'] ?? $default);
-		if ($check !== false)
-			$this->lastUpdate           = $check;
-		$check = DateTime::createFromFormat($format,$data['last_update_playlist'] ?? $default);
-		if ($check !== false)
-			$this->lastUpdatePlaylist   = $check;
+		$this->lastAccess           = $this->parseDate($data['last_access'] ?? null);
+		$this->lastUpdate           = $this->parseDate($data['last_update'] ?? null);
+		$this->lastUpdatePlaylist   = $this->parseDate($data['last_update_playlist'] ?? null);
 		$this->duration             = $data['duration'] ?? 0;
 		$this->status               = $data['status'] ?? 0;
 		$this->refresh              = $data['refresh'] ?? self::DEFAULT_PLAYER_REFRESH;
@@ -148,6 +141,17 @@ class PlayerEntity implements PlaylistTargetInterface
 		$this->properties           = $data['properties'] ?? [];
 		$this->remoteAdministration = $data['remote_administration'] ?? [];
 		$this->screenTimes          = $data['screen_times'] ?? [];
+	}
+
+	/**
+	 * A date which is missing or has not the format of the database counts as the default date: a date that
+	 * can not be read must not leave the entity half built.
+	 */
+	private function parseDate(mixed $value): DateTime
+	{
+		$date = is_string($value) ? DateTime::createFromFormat(self::DATE_FORMAT, $value) : false;
+
+		return $date !== false ? $date : new DateTime(self::DEFAULT_DATE);
 	}
 
 	public function getPlayerId(): int

@@ -22,140 +22,139 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Player\Entities;
 
 use App\Framework\Config\Config;
-use App\Framework\Exceptions\CoreException;
 use App\Modules\Player\Entities\PlayerEntity;
 use App\Modules\Player\Enums\PlayerModel;
 use App\Modules\Player\IndexCreation\UserAgentHandler;
-use DateTime;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\RecordingConfigLoader;
 
+/**
+ * The entity holds what the database and the user agent of the player know. The user agent handler is a stub
+ * (the user agent is the border), the configuration is the real class.
+ */
 class PlayerEntityTest extends TestCase
 {
-	private Config&MockObject $configMock;
-	private UserAgentHandler&Stub $userAgentHandlerStub;
-	private PlayerEntity $playerEntity;
-
-	/**
-	 * @throws Exception
-	 */
-	protected function setUp(): void
+	private function userAgent(): UserAgentHandler
 	{
-		parent::setUp();
-		$this->configMock = $this->createMock(Config::class);
-		$this->userAgentHandlerStub = $this->createStub(UserAgentHandler::class);
+		$handler = $this->createStub(UserAgentHandler::class);
+		$handler->method('getModel')->willReturn(PlayerModel::GARLIC);
+		$handler->method('getUuid')->willReturn('11111111-1111-4111-8111-111111111111');
+		$handler->method('getFirmware')->willReturn('2.4.1');
+		$handler->method('getName')->willReturn('Eingang');
+
+		return $handler;
 	}
 
 	/**
-	 * @throws CoreException
+	 * @param array<string,mixed> $data
 	 */
-	#[Group('units')]
-	public function testConstructorWithValidData(): void
+	private function entity(array $data): PlayerEntity
 	{
-		$screenTimes = [
-			'screen1' => ['monday' => 'some time'],
-			'screen2' => ['tuesday' => 'some time']
-		];
-		$data = [
-			'player_id' => 10,
-			'playlist_id' => 20,
-			'UID' => 12345,
-			'last_access' => '2023-10-10 12:00:00',
-			'last_update' => '2023-10-15 12:00:00',
-			'last_update_playlist' => '2023-10-18 08:00:00',
-			'duration' => 3600,
-			'status' => 1,
-			'refresh' => 120,
-			'licence_id' => 56789,
-			'playlist_name' => 'Example Playlist',
-			'playlist_mode' => 'loop',
-			'layout' => ['zone1' => [], 'zone2' => []],
-			'location_data' => ['city' => 'New York'],
-			'location_longitude' => '-74.0060',
-			'location_latitude' => '40.7128',
-			'categories' => ['category1' => [], 'category2' => []],
-			'properties' => ['width' => 1920, 'height' => 1080],
-			'remote_administration' => ['enabled' => true],
-			'screen_times' => $screenTimes
-		];
+		$config = new Config(new RecordingConfigLoader(['player' => ['report_server' => 'https://reports.example.com', 'index_server_url' => 'https://hub.example.com/smil-index']]));
 
-		$this->userAgentHandlerStub->method('getModel')->willReturn(PlayerModel::COMPATIBLE);
-		$this->userAgentHandlerStub->method('getUuid')->willReturn('123e4567-e89b-12d3-a456-426614174000');
-		$this->userAgentHandlerStub->method('getFirmware')->willReturn('1.0.0');
-		$this->userAgentHandlerStub->method('getName')->willReturn('Player One');
-
-		$this->playerEntity = new PlayerEntity($this->configMock, $this->userAgentHandlerStub, $data);
-
-		static::assertFalse($this->playerEntity->isIntranet());
-		static::assertEmpty($this->playerEntity->getApiEndpoint());
-		static::assertSame(10, $this->playerEntity->getPlayerId());
-		static::assertSame(20, $this->playerEntity->getPlaylistId());
-		static::assertSame(12345, $this->playerEntity->getUID());
-		static::assertEquals(new DateTime('2023-10-10 12:00:00'), $this->playerEntity->getLastAccess());
-		static::assertEquals(new DateTime('2023-10-15 12:00:00'), $this->playerEntity->getLastUpdate());
-		static::assertEquals(new DateTime('2023-10-18 08:00:00'), $this->playerEntity->getLastUpdatePlaylist());
-		static::assertSame(3600, $this->playerEntity->getDuration());
-		static::assertSame(1, $this->playerEntity->getStatus());
-		static::assertSame(120, $this->playerEntity->getRefresh());
-		static::assertSame(56789, $this->playerEntity->getLicenceId());
-		static::assertSame(PlayerModel::COMPATIBLE, $this->playerEntity->getModel());
-		static::assertSame('123e4567-e89b-12d3-a456-426614174000', $this->playerEntity->getUuid());
-		static::assertSame('Example Playlist', $this->playerEntity->getPlaylistName());
-		static::assertSame('loop', $this->playerEntity->getPlaylistMode());
-		static::assertEmpty($this->playerEntity->getCommands());
-		static::assertEmpty($this->playerEntity->getReports());
-		static::assertSame('1.0.0', $this->playerEntity->getFirmwareVersion());
-		static::assertSame('Player One', $this->playerEntity->getPlayerName());
-		static::assertSame(['zone1' => [], 'zone2' => []], $this->playerEntity->getLayout());
-		static::assertSame(['city' => 'New York'], $this->playerEntity->getLocationData());
-		static::assertSame('-74.0060', $this->playerEntity->getLocationLongitude());
-		static::assertSame('40.7128', $this->playerEntity->getLocationLatitude());
-		static::assertSame(['category1' => [], 'category2' => []], $this->playerEntity->getCategories());
-		static::assertSame(['width' => 1920, 'height' => 1080], $this->playerEntity->getProperties());
-		static::assertSame(['enabled' => true], $this->playerEntity->getRemoteAdministration());
-		static::assertSame($screenTimes, $this->playerEntity->getScreenTimes());
-		$this->configMock->expects($this->exactly(2))->method('getConfigValue')
-			->willReturnMap([
-				['report_server', 'player', 'https://reports.lan'],
-				['index_server_url', 'player', 'https://index.lan']
-			]);
-		static::assertSame('https://reports.lan', $this->playerEntity->getReportServer());
-		static::assertSame('https://index.lan/123e4567-e89b-12d3-a456-426614174000', $this->playerEntity->getIndexPath());
+		return new PlayerEntity($config, $this->userAgent(), $data);
 	}
 
 	#[Group('units')]
-	public function testConstructorWithDefaultData(): void
+	public function testEveryValueOfARowIsAvailable(): void
 	{
-		$this->configMock->expects($this->never())->method($this->anything());
-		$this->userAgentHandlerStub->method('getModel')->willReturn(PlayerModel::COMPATIBLE);
-		$this->userAgentHandlerStub->method('getUuid')->willReturn('123e4567-e89b-12d3-a456-426614174000');
-		$this->userAgentHandlerStub->method('getFirmware')->willReturn('1.0.0');
-		$this->userAgentHandlerStub->method('getName')->willReturn('Player One');
+		$entity = $this->entity([
+			'player_id' => 7, 'playlist_id' => 3, 'UID' => 2, 'last_access' => '2025-05-06 07:08:09', 'last_update' => '2025-04-01 10:00:00',
+			'last_update_playlist' => '2025-03-02 11:00:00', 'duration' => 120, 'status' => 2, 'refresh' => 600, 'licence_id' => 9,
+			'is_intranet' => true, 'api_endpoint' => 'http://10.0.0.7:8080/api', 'commands' => ['reboot'], 'reports' => ['played'],
+			'playlist_name' => 'Lobby', 'playlist_mode' => 'master', 'layout' => ['zone' => '1'], 'location_data' => ['city' => 'Berlin'],
+			'location_longitude' => '13.4', 'location_latitude' => '52.5', 'categories' => ['a'], 'properties' => ['width' => 1920],
+			'remote_administration' => ['port' => 22], 'screen_times' => ['mo' => '8-18'],
+		]);
 
-		$this->playerEntity = new PlayerEntity($this->configMock, $this->userAgentHandlerStub, []);
+		static::assertSame(7, $entity->getPlayerId());
+		static::assertSame(3, $entity->getPlaylistId());
+		static::assertSame(2, $entity->getUID());
+		static::assertSame('2025-05-06 07:08:09', $entity->getLastAccess()->format('Y-m-d H:i:s'));
+		static::assertSame('2025-04-01 10:00:00', $entity->getLastUpdate()->format('Y-m-d H:i:s'));
+		static::assertSame('2025-03-02 11:00:00', $entity->getLastUpdatePlaylist()->format('Y-m-d H:i:s'));
+		static::assertSame(120, $entity->getDuration());
+		static::assertSame(2, $entity->getStatus());
+		static::assertSame(600, $entity->getRefresh());
+		static::assertSame(9, $entity->getLicenceId());
+		static::assertTrue($entity->isIntranet());
+		static::assertSame('http://10.0.0.7:8080/api', $entity->getApiEndpoint());
+		static::assertSame(['reboot'], $entity->getCommands());
+		static::assertSame(['played'], $entity->getReports());
+		static::assertSame('Lobby', $entity->getPlaylistName());
+		static::assertSame('master', $entity->getPlaylistMode());
+		static::assertSame(['zone' => '1'], $entity->getLayout());
+		static::assertSame(['city' => 'Berlin'], $entity->getLocationData());
+		static::assertSame('13.4', $entity->getLocationLongitude());
+		static::assertSame('52.5', $entity->getLocationLatitude());
+		static::assertSame(['a'], $entity->getCategories());
+		static::assertSame(['width' => 1920], $entity->getProperties());
+		static::assertSame(['port' => 22], $entity->getRemoteAdministration());
+		static::assertSame(['mo' => '8-18'], $entity->getScreenTimes());
+	}
 
-		static::assertSame(1, $this->playerEntity->getPlayerId());
-		static::assertSame(0, $this->playerEntity->getPlaylistId());
-		static::assertSame(1, $this->playerEntity->getUID());
-		static::assertEquals(new DateTime('2025-01-01 00:00:00'), $this->playerEntity->getLastAccess());
-		static::assertEquals(new DateTime('2025-01-01 00:00:00'), $this->playerEntity->getLastUpdate());
-		static::assertEquals(new DateTime('2025-01-01 00:00:00'), $this->playerEntity->getLastUpdatePlaylist());
-		static::assertSame(0, $this->playerEntity->getDuration());
-		static::assertSame(0, $this->playerEntity->getStatus());
-		static::assertSame(PlayerEntity::DEFAULT_PLAYER_REFRESH, $this->playerEntity->getRefresh());
-		static::assertSame(0, $this->playerEntity->getLicenceId());
-		static::assertSame('', $this->playerEntity->getPlaylistName());
-		static::assertSame('', $this->playerEntity->getPlaylistMode());
-		static::assertSame([], $this->playerEntity->getLayout());
-		static::assertSame([], $this->playerEntity->getLocationData());
-		static::assertSame('', $this->playerEntity->getLocationLongitude());
-		static::assertSame('', $this->playerEntity->getLocationLatitude());
-		static::assertSame([], $this->playerEntity->getCategories());
-		static::assertSame([], $this->playerEntity->getProperties());
-		static::assertSame([], $this->playerEntity->getRemoteAdministration());
-		static::assertSame([], $this->playerEntity->getScreenTimes());
+	#[Group('units')]
+	public function testWhatThePlayerSaysAboutItselfComesFromTheUserAgent(): void
+	{
+		$entity = $this->entity(['uuid' => 'from-the-database', 'player_name' => 'from the database']);
+
+		static::assertSame(PlayerModel::GARLIC, $entity->getModel());
+		static::assertSame('11111111-1111-4111-8111-111111111111', $entity->getUuid());
+		static::assertSame('2.4.1', $entity->getFirmwareVersion());
+		static::assertSame('Eingang', $entity->getPlayerName());
+	}
+
+	#[Group('units')]
+	public function testAnEmptyRowHasTheDefaults(): void
+	{
+		$entity = $this->entity([]);
+
+		static::assertSame([1, 0, 1, 0, PlayerEntity::DEFAULT_PLAYER_REFRESH, 0, 0], [$entity->getPlayerId(), $entity->getPlaylistId(), $entity->getUID(), $entity->getStatus(), $entity->getRefresh(), $entity->getLicenceId(), $entity->getDuration()]);
+		static::assertFalse($entity->isIntranet());
+		static::assertSame(['', '', '', '', ''], [$entity->getApiEndpoint(), $entity->getPlaylistName(), $entity->getPlaylistMode(), $entity->getLocationLongitude(), $entity->getLocationLatitude()]);
+		static::assertSame([[], [], [], [], [], [], [], []], [$entity->getCommands(), $entity->getReports(), $entity->getLayout(), $entity->getLocationData(), $entity->getCategories(), $entity->getProperties(), $entity->getRemoteAdministration(), $entity->getScreenTimes()]);
+		foreach ([$entity->getLastAccess(), $entity->getLastUpdate(), $entity->getLastUpdatePlaylist()] as $date)
+			static::assertSame('2025-01-01 00:00:00', $date->format('Y-m-d H:i:s'));
+	}
+
+	/**
+	 * @return array<string,array{mixed}>
+	 */
+	public static function dates(): array
+	{
+		return [
+			'not a date'         => ['yesterday'],
+			'empty'              => [''],
+			'database default'   => ['0000-00-00 00:00:00x'],
+			'other format'       => ['06.05.2025 07:08'],
+			'null'               => [null],
+			'a number'           => [1746515289],
+			'a list'             => [['2025-05-06 07:08:09']],
+		];
+	}
+
+	/**
+	 * A date which can not be read is the default date: the entity is complete and the getters work.
+	 */
+	#[Group('units')]
+	#[DataProvider('dates')]
+	public function testADateWhichCanNotBeReadIsTheDefaultDate(mixed $value): void
+	{
+		$entity = $this->entity(['last_access' => $value, 'last_update' => $value, 'last_update_playlist' => $value]);
+
+		static::assertSame('2025-01-01 00:00:00', $entity->getLastAccess()->format('Y-m-d H:i:s'));
+		static::assertSame('2025-01-01 00:00:00', $entity->getLastUpdate()->format('Y-m-d H:i:s'));
+		static::assertSame('2025-01-01 00:00:00', $entity->getLastUpdatePlaylist()->format('Y-m-d H:i:s'));
+	}
+
+	#[Group('units')]
+	public function testTheServersComeFromTheConfiguration(): void
+	{
+		$entity = $this->entity([]);
+
+		static::assertSame('https://reports.example.com', $entity->getReportServer());
+		static::assertSame('https://hub.example.com/smil-index/11111111-1111-4111-8111-111111111111', $entity->getIndexPath());
 	}
 }
