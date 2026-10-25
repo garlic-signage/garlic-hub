@@ -55,6 +55,11 @@ class Video extends AbstractMediaHandler
 		$this->maxVideoSize = (int) $this->config->getConfigValue('videos', 'mediapool', 'max_file_sizes');
 	}
 
+	public function getMaxFileSize(): int
+	{
+		return $this->maxVideoSize;
+	}
+
 	/**
 	 * @throws ModuleException
 	 */

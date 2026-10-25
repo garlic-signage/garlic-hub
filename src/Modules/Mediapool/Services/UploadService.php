@@ -23,6 +23,7 @@ namespace App\Modules\Mediapool\Services;
 
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Media\MimeTypeService;
@@ -34,9 +35,14 @@ use Doctrine\DBAL\Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\TransferException;
+use ImagickException;
 use League\Flysystem\FilesystemException;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\UriInterface;
 use Ramsey\Uuid\Uuid;
 use Slim\Psr7\UploadedFile;
+use Throwable;
 
 /**
  * UploadService class provides functionality for managing media uploads, including file uploads, external media handling,
@@ -45,6 +51,8 @@ use Slim\Psr7\UploadedFile;
  */
 readonly class UploadService
 {
+	private const int MAX_REDIRECTS = 3;
+
 	public function __construct(
 		private MediaHandlerFactory $mediaHandlerFactory,
 		private NodesService        $nodeService,
@@ -68,7 +76,9 @@ readonly class UploadService
 
 		$response = $this->client->request('GET', $apiUrl, $options);
 
-		return (array) json_decode($response->getBody()->getContents(), true);
+		$decoded  = json_decode($response->getBody()->getContents(), true);
+
+		return is_array($decoded) ? $decoded : [];
 	}
 
 	/**
@@ -121,7 +131,18 @@ readonly class UploadService
 	{
 		$this->checkNodeUploadable($nodeId);
 		$resolved = $this->ssrfValidator->validateAndResolveUrl($externalLink);
-		$curlOpts = ['curl' => [CURLOPT_RESOLVE => ["{$resolved['host']}:{$resolved['port']}:{$resolved['ip']}"]]];
+		// The host is pinned to the checked IP. A redirect leads to another address, which is checked the same way:
+		// otherwise a page of the user could send the server to its own network.
+		$curlOpts = [
+			'curl'            => [CURLOPT_RESOLVE => ["{$resolved['host']}:{$resolved['port']}:{$resolved['ip']}"]],
+			'allow_redirects' => [
+				'max'         => self::MAX_REDIRECTS,
+				'on_redirect' => function (RequestInterface $request, ResponseInterface $response, UriInterface $uri): void
+				{
+					$this->ssrfValidator->validateAndResolveUrl((string) $uri);
+				}
+			]
+		];
 
 		try
 		{
@@ -162,27 +183,37 @@ readonly class UploadService
 
 		if (empty($dataSet))
 		{
-			$mimetype    = $this->mimeTypeDetector->detectFromFile($mediaHandler->getAbsolutePath($uploadedPath));
-			// extensions can be wrong we get from mimetype
-			$ext         = $this->mimeTypeDetector->determineExtensionByMimeType($mimetype);
-			$newFilePath = $mediaHandler->determineNewFilePath($uploadedPath, $fileHash, $ext);
-			$mediaHandler->rename($uploadedPath, $newFilePath);
-			$mediaHandler->validateStoredFile($newFilePath);
-			$mediaHandler->createThumbnail($newFilePath);
-			$configData  = $mediaHandler->getConfigData();
-			$metadata    =  $this->combineMetaData($mediaHandler, $extMetadata);
-			$description = '';
+			$newFilePath = null;
+			try
+			{
+				$mimetype    = $this->mimeTypeDetector->detectFromFile($mediaHandler->getAbsolutePath($uploadedPath));
+				// extensions can be wrong we get from mimetype
+				$ext         = $this->mimeTypeDetector->determineExtensionByMimeType($mimetype);
+				$newFilePath = $mediaHandler->determineNewFilePath($uploadedPath, $fileHash, $ext);
+				$mediaHandler->rename($uploadedPath, $newFilePath);
+				$mediaHandler->validateStoredFile($newFilePath);
+				$mediaHandler->createThumbnail($newFilePath);
+				$configData  = $mediaHandler->getConfigData();
+				$metadata    =  $this->combineMetaData($mediaHandler, $extMetadata);
+				$description = '';
+				if (array_key_exists('description', $metadata))
+					$description = $metadata['description'];
+				$metadata  = json_encode($metadata);
+				$extension = pathinfo($newFilePath, PATHINFO_EXTENSION);
+				$thumbExtension = $mediaHandler->getThumbExtension();
+			}
+			catch (Throwable $e)
+			{
+				// a file which did not pass the checks must not stay in the storage
+				if ($newFilePath !== null)
+					$mediaHandler->removeUploadedFile($newFilePath);
+				$mediaHandler->removeUploadedFile($uploadedPath);
 
-			if (array_key_exists('description', $metadata))
-				$description = $metadata['description'];
-
-			$metadata  = json_encode($metadata);
-			$extension = pathinfo($newFilePath, PATHINFO_EXTENSION);
-			$thumbExtension = $mediaHandler->getThumbExtension();
+				throw $this->explainFailure($e);
+			}
 		}
 		else
 		{
-			$mediaHandler->removeUploadedFile($uploadedPath);
 			$mimetype       = $dataSet['mimetype'];
 			$configData     = $dataSet['config_data'];
 			$metadata       = $dataSet['metadata'];
@@ -190,6 +221,8 @@ readonly class UploadService
 			$description    = $dataSet['media_description'];
 			$thumbExtension = $dataSet['thumb_extension'];
 		}
+		// the upload has its place in the storage now (or was there already), the directory of the upload is not needed
+		$mediaHandler->removeUploadedFile($uploadedPath);
 
 		$fileData = [
 			'media_id'  => Uuid::uuid4()->toString(),
@@ -207,6 +240,18 @@ readonly class UploadService
 		$this->mediaRepository->insert($fileData);
 
 		return ['success' => true, 'message' => $pathInfo['basename'].' successful uploaded'];
+	}
+
+	/**
+	 * A file which the libraries can not read is the problem of the file, not of the server: the user gets a text.
+	 * The checks of the sizes and the resolution have their own texts already.
+	 */
+	private function explainFailure(Throwable $e): Throwable
+	{
+		if ($e instanceof ImagickException || $e instanceof FrameworkException || $e instanceof CoreException)
+			return new TranslatableModuleException('mediapool', 'file_not_readable', [], $e);
+
+		return $e;
 	}
 
 	/**

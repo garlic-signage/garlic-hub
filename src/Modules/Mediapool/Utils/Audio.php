@@ -51,6 +51,11 @@ class Audio extends AbstractMediaHandler
 		$this->maxAudioSize = (int) $this->config->getConfigValue('audios', 'mediapool', 'max_file_sizes');
 	}
 
+	public function getMaxFileSize(): int
+	{
+		return $this->maxAudioSize;
+	}
+
 	/**
 	 * @throws ModuleException
 	 */

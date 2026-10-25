@@ -55,6 +55,11 @@ class Image extends AbstractMediaHandler
 		$this->maxImageSize = (int) $this->config->getConfigValue('images', 'mediapool', 'max_file_sizes');
 	}
 
+	public function getMaxFileSize(): int
+	{
+		return $this->maxImageSize;
+	}
+
 	/**
 	 * @throws ModuleException
 	 */

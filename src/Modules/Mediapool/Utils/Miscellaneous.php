@@ -47,6 +47,11 @@ class Miscellaneous extends AbstractMediaHandler
 		$this->maxSize = (int) $this->config->getConfigValue('downloads', 'mediapool', 'max_file_sizes');
 	}
 
+	public function getMaxFileSize(): int
+	{
+		return $this->maxSize;
+	}
+
 	/**
 	 * @throws ModuleException
 	 */

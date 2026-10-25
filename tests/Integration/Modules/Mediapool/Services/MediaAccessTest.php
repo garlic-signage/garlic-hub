@@ -275,6 +275,32 @@ class MediaAccessTest extends ContainerTestCase
 		static::assertSame($before, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM mediapool_files'));
 	}
 
+	public function testTheStoragePathsComeFromTheConfiguration(): void
+	{
+		static::assertSame('var/storage/mediapool/originals', $this->mediaService->getPathOriginals());
+		static::assertSame('var/storage/mediapool/thumbs', $this->mediaService->getPathThumbnails());
+	}
+
+	/**
+	 * A deleted directory takes its media with it, the media of other directories stay.
+	 */
+	public function testMarkingTheMediaOfADirectoryAsDeletedTouchesOnlyThisDirectory(): void
+	{
+		$this->mediaService->markDeleteMediaByNodeId(8);
+
+		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM mediapool_files WHERE node_id = 8 AND deleted = 0'));
+		static::assertSame(3, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM mediapool_files WHERE deleted = 0'));
+	}
+
+	public function testMarkingTheMediaOfADirectoryWithoutMediaChangesNothing(): void
+	{
+		$before = $this->connection->fetchAllAssociative('SELECT media_id, deleted FROM mediapool_files ORDER BY media_id');
+
+		$this->mediaService->markDeleteMediaByNodeId(9);
+
+		static::assertSame($before, $this->connection->fetchAllAssociative('SELECT media_id, deleted FROM mediapool_files ORDER BY media_id'));
+	}
+
 	public function testFetchByChecksumIsOnlyForTheInternalLookupOfPlaylistItems(): void
 	{
 		// used by the playlist items: it gives the data of a media by its content hash and does

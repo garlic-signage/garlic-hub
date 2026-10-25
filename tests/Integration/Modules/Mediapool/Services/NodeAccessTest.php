@@ -46,7 +46,7 @@ class NodeAccessTest extends ContainerTestCase
 		$this->nodesService = $this->container->get(NodesService::class);
 	}
 
-	public function testTheTreeShowsTheRightsOfEveryDirectory(): void
+	public function testTheTreeShowsTheRightsOfTheDirectoriesTheUserMayRead(): void
 	{
 		$this->actingAs(2);
 
@@ -60,8 +60,18 @@ class NodeAccessTest extends ContainerTestCase
 		static::assertFalse($rights[1]['create']);
 		static::assertFalse($rights[1]['edit']);
 		static::assertFalse($rights[1]['delete']);
-		// the folder of another user gives no right at all
-		static::assertSame(['create' => false, 'edit' => false, 'delete' => false, 'share' => ''], $rights[10]);
+	}
+
+	/**
+	 * The folder of another user is not shown: its name is the name of the user.
+	 */
+	public function testTheTreeDoesNotShowTheFolderOfAnotherUser(): void
+	{
+		$this->actingAs(2);
+		static::assertSame([1, 7], array_column($this->nodesService->getNodes(0), 'key'));
+
+		$this->actingAs(3);
+		static::assertSame([1, 10], array_column($this->nodesService->getNodes(0), 'key'));
 	}
 
 	public function testAdminMayDoEverythingInTheTree(): void
@@ -70,6 +80,7 @@ class NodeAccessTest extends ContainerTestCase
 
 		$rights = array_column($this->nodesService->getNodes(0), 'rights', 'key');
 
+		static::assertSame([1, 7, 10], array_column($this->nodesService->getNodes(0), 'key'));
 		foreach ([1, 7, 10] as $nodeId)
 		{
 			static::assertTrue($rights[$nodeId]['create']);
@@ -78,17 +89,24 @@ class NodeAccessTest extends ContainerTestCase
 		}
 	}
 
-	public function testTheChildrenOfAForeignDirectoryHaveNoRights(): void
+	/**
+	 * Of the directories of another user only the public one is shown, and it can not be changed.
+	 */
+	public function testOfAForeignDirectoryOnlyThePublicChildrenAreShown(): void
 	{
 		$this->actingAs(2);
 
-		$rights = array_column($this->nodesService->getNodes(10), 'rights', 'key');
+		$nodes = $this->nodesService->getNodes(10);
 
-		static::assertSame(['create' => false, 'edit' => false, 'delete' => false, 'share' => ''], $rights[11]);
-		// readable, because it is public, but not changeable
-		static::assertFalse($rights[12]['create']);
-		static::assertFalse($rights[12]['edit']);
-		static::assertFalse($rights[12]['delete']);
+		static::assertSame([12], array_column($nodes, 'key'));
+		static::assertSame(['create' => false, 'edit' => false, 'delete' => false, 'share' => ''], $nodes[0]['rights']);
+	}
+
+	public function testThePrivateDirectoriesOfOthersAreNotShownAtAnyLevel(): void
+	{
+		$this->actingAs(3);
+
+		static::assertSame([], $this->nodesService->getNodes(7));
 	}
 
 	/**

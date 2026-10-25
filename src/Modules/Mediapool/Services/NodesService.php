@@ -102,7 +102,11 @@ class NodesService
 		 * } $node */
 		foreach ($nodes as $node)
 		{
-			$rights = $this->determineRights($node);
+			// a directory which the user may not read is not shown: its name would tell about other users
+			$rights = $this->determineReadableRights($node);
+			if ($rights === null)
+				continue;
+
 			$tree[] = $this->prepareForWunderbaum($node, $rights);
 		}
 
@@ -260,6 +264,11 @@ class NodesService
 		// get all node_id of the partial tree
 		$deleted_nodes = $this->nestedSetsService->findAllSubNodeIdsByRootIdsAndPosition($node['root_id'], $node['rgt'], $node['lft']);
 
+		// the media of a directory are not readable without it: they go with it
+		foreach ($deleted_nodes as $deletedNode)
+			$this->mediaService->markDeleteMediaByNodeId((int) $deletedNode['node_id']);
+
+
 		if ($node['children'] == 0)
 			$this->nestedSetsService->deleteSingleNode($node);
 		elseif ($node['children'] > 0)
@@ -340,15 +349,30 @@ class NodesService
 	 */
 	private function determineRights(array $node): array
 	{
+		return $this->determineReadableRights($node) ?? ['create' => false, 'edit' => false, 'delete' => false, 'share' => ''];
+	}
+
+	/**
+	 * The rights of the user on the directory, null when the user may not even read it.
+	 *
+	 * @param array{UID:int, node_id:int, parent_id:int, name:string, company_id:int, visibility:int, ...} $node
+	 * @return array{create:bool, edit:bool, delete:bool, share:string}|null
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws ModuleException
+	 * @throws UserException
+	 */
+	private function determineReadableRights(array $node): ?array
+	{
 		$UID        = $this->userSession->getUID();
 		$rights     = $this->aclValidator->checkDirectoryPermissions($UID, $node);
-
-		if(!$rights['read'])
-			return ['create' => false, 'edit' => false, 'delete' => false, 'share' => ''];
+		if (!$rights['read'])
+			return null;
 
 		$create = false;
 		$edit = false;
 		$delete = false;
+
 		// only admin can edit and delete and root nodes
 		if ($node['parent_id'] === 0)
 		{

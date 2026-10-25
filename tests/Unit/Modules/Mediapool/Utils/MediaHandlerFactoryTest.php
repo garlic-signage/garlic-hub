@@ -22,9 +22,13 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Mediapool\Utils;
 
 use App\Framework\Config\Config;
-use App\Framework\Exceptions\CoreException;
+use App\Framework\Config\IniConfigLoader;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Media\Ffmpeg;
+use App\Framework\Media\MediaProperties;
+use App\Framework\System\ShellExecutor;
+use App\Modules\Mediapool\Utils\AbstractMediaHandler;
+use App\Modules\Mediapool\Utils\Audio;
 use App\Modules\Mediapool\Utils\Image;
 use App\Modules\Mediapool\Utils\ImagickFactory;
 use App\Modules\Mediapool\Utils\MediaHandlerFactory;
@@ -33,169 +37,130 @@ use App\Modules\Mediapool\Utils\Pdf;
 use App\Modules\Mediapool\Utils\Video;
 use App\Modules\Mediapool\Utils\Widget;
 use App\Modules\Mediapool\Utils\ZipFilesystemFactory;
-use Imagick;
 use League\Flysystem\Filesystem;
+use League\Flysystem\Local\LocalFilesystemAdapter;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * The factory is the one place which decides what is done with a type of media. The handlers are the real ones
+ * with the real configuration of the application, nothing is touched on the disk when they are created.
+ */
 class MediaHandlerFactoryTest extends TestCase
 {
-	private Config&Stub $configStub;
-	private ImagickFactory&Stub $imagickFactoryStub;
-	private MediaHandlerFactory $mediaHandlerFactory;
+	private MediaHandlerFactory $factory;
 
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->configStub         = $this->createStub(Config::class);
-		$filesystemStub           = $this->createStub(Filesystem::class);
-		$zipFilesystemFactoryStub = $this->createStub(ZipFilesystemFactory::class);
-		$this->imagickFactoryStub = $this->createStub(ImagickFactory::class);
-		$ffmpegStub = $this->createStub(Ffmpeg::class);
+		$config     = new Config(new IniConfigLoader(__DIR__ . '/../../../../../config/settings'), ['systemDir' => '/tmp/garlic-hub-not-used'], []);
+		$filesystem = new Filesystem(new LocalFilesystemAdapter(sys_get_temp_dir()));
 
-		$this->mediaHandlerFactory = new MediaHandlerFactory(
-			$this->configStub,
-			$filesystemStub,
-			$zipFilesystemFactoryStub,
-			$this->imagickFactoryStub,
-			$ffmpegStub
+		$this->factory = new MediaHandlerFactory(
+			$config,
+			$filesystem,
+			new ZipFilesystemFactory(),
+			new ImagickFactory(),
+			new Ffmpeg($config, $filesystem, new MediaProperties(), new ShellExecutor())
 		);
 	}
 
 	/**
-	 * @throws CoreException
+	 * @return array<string,array{string,class-string<AbstractMediaHandler>}>
 	 */
-	#[Group('units')]
-	public function testCreateHandlerReturnsImageForImageMimeType(): void
+	public static function handlers(): array
 	{
-		$this->configStub->method('getConfigValue')
-			->willReturnMap([
-				['width', 'mediapool', 'max_resolution', '3840'],
-				['height', 'mediapool', 'max_resolution', '3840'],
-				['thumb_width', 'mediapool', 'dimensions', '150'],
-				['thumb_height', 'mediapool', 'dimensions', '150'],
-				['uploads', 'mediapool', 'directories', '/uploads'],
-				['thumbnails', 'mediapool', 'directories', '/thumbnails'],
-				['originals', 'mediapool', 'directories', '/originals'],
-				['previews', 'mediapool', 'directories', '/previews'],
-				['icons', 'mediapool', 'directories', '/icons'],
-				['images', 'mediapool', 'max_file_sizes', '20971520']
-			]);
-
-		$this->imagickFactoryStub->method('createImagick')->willReturn(new Imagick());
-		$handler = $this->mediaHandlerFactory->createMediaHandler('image/jpeg');
-		static::assertInstanceOf(Image::class, $handler);
+		return [
+			'png'                => ['image/png', Image::class],
+			'jpeg'               => ['image/jpeg', Image::class],
+			'svg'                => ['image/svg+xml', Image::class],
+			'gif'                => ['image/gif', Image::class],
+			'webp'               => ['image/webp', Image::class],
+			'mp3'                => ['audio/mpeg', Audio::class],
+			'wav'                => ['audio/wav', Audio::class],
+			'mp4'                => ['video/mp4', Video::class],
+			'webm'               => ['video/webm', Video::class],
+			'pdf'                => ['application/pdf', Pdf::class],
+			'widget'             => ['application/widget', Widget::class],
+			'octet-stream'       => ['application/octet-stream', Widget::class],
+			'zip'                => ['application/zip', Miscellaneous::class],
+			'json'               => ['application/json', Miscellaneous::class],
+			'csv'                => ['text/csv', Miscellaneous::class],
+			'xml'                => ['application/xml', Miscellaneous::class],
+			'text xml'           => ['text/xml', Miscellaneous::class],
+			'rss'                => ['application/rss+xml', Miscellaneous::class],
+			'atom'               => ['application/atom+xml', Miscellaneous::class],
+			'apk'                => ['application/vnd.android.package-archive', Miscellaneous::class],
+			'smil'               => ['application/smil', Miscellaneous::class],
+		];
 	}
 
 	/**
-	 * @throws CoreException
+	 * @param class-string<AbstractMediaHandler> $class
 	 */
 	#[Group('units')]
-	public function testCreateHandlerReturnsVideoForVideoMimeType(): void
+	#[DataProvider('handlers')]
+	public function testEveryTypeGetsItsHandler(string $mimeType, string $class): void
 	{
-		$this->configStub->method('getConfigValue')
-			->willReturnMap([
-				['width', 'mediapool', 'max_resolution', '3840'],
-				['height', 'mediapool', 'max_resolution', '3840'],
-				['thumb_width', 'mediapool', 'dimensions', '150'],
-				['thumb_height', 'mediapool', 'dimensions', '150'],
-				['uploads', 'mediapool', 'directories', '/uploads'],
-				['thumbnails', 'mediapool', 'directories', '/thumbnails'],
-				['originals', 'mediapool', 'directories', '/originals'],
-				['previews', 'mediapool', 'directories', '/previews'],
-				['icons', 'mediapool', 'directories', '/icons'],
-				['videos', 'mediapool', 'max_file_sizes', '1073741824']
-			]);
-
-		$this->imagickFactoryStub->method('createImagick')->willReturn(new Imagick());
-		$handler = $this->mediaHandlerFactory->createMediaHandler('video/mp4');
-		static::assertInstanceOf(Video::class, $handler);
+		static::assertSame($class, $this->factory->createMediaHandler($mimeType)::class);
+		static::assertSame($class, $this->factory->createTemplatesHandler($mimeType)::class);
+		static::assertSame($class, $this->factory->createPlaylistsHandler($mimeType)::class);
 	}
 
 	/**
-	 * @throws CoreException
+	 * @return array<string,array{string}>
 	 */
-	#[Group('units')]
-	public function testCreateHandlerReturnsPdfForPdfMimeType(): void
+	public static function unsupportedTypes(): array
 	{
-		$this->configStub->method('getConfigValue')
-			->willReturnMap([
-				['width', 'mediapool', 'max_resolution', '3840'],
-				['height', 'mediapool', 'max_resolution', '3840'],
-				['thumb_width', 'mediapool', 'dimensions', '150'],
-				['thumb_height', 'mediapool', 'dimensions', '150'],
-				['uploads', 'mediapool', 'directories', '/uploads'],
-				['thumbnails', 'mediapool', 'directories', '/thumbnails'],
-				['originals', 'mediapool', 'directories', '/originals'],
-				['previews', 'mediapool', 'directories', '/previews'],
-				['icons', 'mediapool', 'directories', '/icons'],
-				['documents', 'mediapool', 'max_file_sizes', '20971520']
-			]);
+		return [
+			'php'        => ['application/x-httpd-php'],
+			'html'       => ['text/html'],
+			'javascript' => ['application/javascript'],
+			'plain text' => ['text/plain'],
+			'executable' => ['application/x-msdownload'],
+			'empty'      => [''],
+			'upper case' => ['IMAGE/PNG'],
+			'prefix'     => ['imagex/png'],
+			'no slash'   => ['image'],
+		];
+	}
 
-		$this->imagickFactoryStub->method('createImagick')->willReturn(new Imagick());
-		$handler = $this->mediaHandlerFactory->createMediaHandler('application/pdf');
-		static::assertInstanceOf(Pdf::class, $handler);
+	#[Group('units')]
+	#[DataProvider('unsupportedTypes')]
+	public function testAnUnsupportedTypeIsRefusedForEveryPlace(string $mimeType): void
+	{
+		foreach (['createMediaHandler', 'createTemplatesHandler', 'createPlaylistsHandler'] as $method)
+		{
+			try
+			{
+				$this->factory->$method($mimeType);
+				static::fail($method . ' has to refuse ' . $mimeType);
+			}
+			catch (TranslatableModuleException $e)
+			{
+				static::assertSame('unsupported_mimetype', $e->getTranslationKey());
+				static::assertSame(['mimetype' => $mimeType], $e->getReplacements());
+			}
+		}
 	}
 
 	/**
-	 * @throws CoreException
+	 * @return array<string,array{string,string}> the method of the factory and the storage it uses
 	 */
-	#[Group('units')]
-	public function testCreateHandlerReturnsWidgetForWidgetMimeType(): void
+	public static function places(): array
 	{
-		$this->configStub->method('getConfigValue')
-			->willReturnMap([
-				['width', 'mediapool', 'max_resolution', '3840'],
-				['height', 'mediapool', 'max_resolution', '3840'],
-				['thumb_width', 'mediapool', 'dimensions', '150'],
-				['thumb_height', 'mediapool', 'dimensions', '150'],
-				['uploads', 'mediapool', 'directories', '/uploads'],
-				['thumbnails', 'mediapool', 'directories', '/thumbnails'],
-				['originals', 'mediapool', 'directories', '/originals'],
-				['previews', 'mediapool', 'directories', '/previews'],
-				['icons', 'mediapool', 'directories', '/icons'],
-				['downloads', 'mediapool', 'max_file_sizes', '1073741824']
-			]);
-
-		$this->imagickFactoryStub->method('createImagick')->willReturn(new Imagick());
-		$handler = $this->mediaHandlerFactory->createMediaHandler('application/widget');
-		static::assertInstanceOf(Widget::class, $handler);
-	}
-
-	/**
-	 * @throws CoreException
-	 */
-	#[Group('units')]
-	public function testCreateHandlerReturnsMiscellaneousForMiscellaneousMimeType(): void
-	{
-		$this->configStub->method('getConfigValue')
-			->willReturnMap([
-				['width', 'mediapool', 'max_resolution', '3840'],
-				['height', 'mediapool', 'max_resolution', '3840'],
-				['thumb_width', 'mediapool', 'dimensions', '150'],
-				['thumb_height', 'mediapool', 'dimensions', '150'],
-				['uploads', 'mediapool', 'directories', '/uploads'],
-				['thumbnails', 'mediapool', 'directories', '/thumbnails'],
-				['originals', 'mediapool', 'directories', '/originals'],
-				['previews', 'mediapool', 'directories', '/previews'],
-				['icons', 'mediapool', 'directories', '/icons'],
-				['downloads', 'mediapool', 'max_file_sizes', '1073741824']
-			]);
-
-		$handler = $this->mediaHandlerFactory->createMediaHandler('application/zip');
-		static::assertInstanceOf(Miscellaneous::class, $handler);
+		return [
+			'mediapool' => ['createMediaHandler', 'var/storage/mediapool/originals'],
+			'templates' => ['createTemplatesHandler', 'var/storage/templates/originals'],
+			'playlists' => ['createPlaylistsHandler', 'var/storage/playlists/items/originals'],
+		];
 	}
 
 	#[Group('units')]
-	public function testCreateHandlerThrowsExceptionForUnsupportedMimeType(): void
+	#[DataProvider('places')]
+	public function testTheHandlerWorksInTheStorageOfItsPlace(string $method, string $originals): void
 	{
-		$this->expectException(TranslatableModuleException::class);
-		$this->expectExceptionMessage('unsupported_mimetype {"mimetype":"unsupported\\/mime"}');
-		$this->mediaHandlerFactory->createMediaHandler('unsupported/mime');
+		static::assertSame($originals, $this->factory->$method('image/png')->getOriginalPath());
 	}
 }

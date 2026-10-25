@@ -21,276 +21,270 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Mediapool\Services;
 
-use App\Shared\Acl\AclHelper;
-use App\Framework\Exceptions\CoreException;
+use App\Framework\Config\Config;
 use App\Framework\Exceptions\ModuleException;
 use App\Modules\Mediapool\Services\AclValidator;
+use App\Shared\Acl\AclHelper;
+use App\Shared\User\UserEntity;
+use App\Shared\User\UsersService;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\RecordingConfigLoader;
 
+/**
+ * The rights of a user on a directory. The AclHelper and the Config are the real ones: the user is a stub
+ * with the global rights (acl) and the rights on single directories or companies (vip) as the database holds them.
+ * The same through the whole application is tested in tests/Integration/Modules/Mediapool/Services/NodeAccessTest.
+ */
 class AclValidatorTest extends TestCase
 {
-	private AclValidator $aclValidator;
-	private AclHelper&MockObject $aclHelperMock;
+	private const int VIEWER = 1;
+	private const int EDITOR = 2;
+	private const int SUBADMIN = 4;
+	private const int MODULEADMIN = 8;
 
-	/**
-	 * @throws Exception
-	 */
+	private const int ME = 5;
+
+	private UsersService&Stub $userService;
+	private AclValidator $validator;
+	/** @var list<array{module:string, acl:int}> */
+	private array $acl = [];
+	/** @var list<array<string,int>> */
+	private array $vip = [];
+
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->aclHelperMock = $this->createMock(AclHelper::class);
-
-		$this->aclValidator    = new AclValidator($this->aclHelperMock);
+		$config = new Config(new RecordingConfigLoader([
+			'mediapool' => ['GlobalACLs' => ['viewer' => (string) self::VIEWER, 'editor' => (string) self::EDITOR, 'subadmin' => (string) self::SUBADMIN, 'moduleadmin' => (string) self::MODULEADMIN]]
+		]));
+		$this->userService = $this->createStub(UsersService::class);
+		$this->userService->method('getUserById')->willReturnCallback(
+			fn(int $UID): UserEntity => $this->user($UID)
+		);
+		$this->validator = new AclValidator(new AclHelper($this->userService, $config));
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
+	 * The database gives the rights as lists, the declaration of the entity says array<string,mixed>.
+	 */
+	private function user(int $UID): UserEntity
+	{
+		// @phpstan-ignore argument.type, argument.type
+		return new UserEntity(['UID' => $UID], [], [], [], $this->acl, $this->vip);
+	}
+
+	/**
+	 * @param array<string,mixed> $changes
+	 * @return array{UID:int, company_id:int, node_id:int, visibility:int, parent_id:int}
+	 */
+	private function directory(array $changes = []): array
+	{
+		/** @var array{UID:int, company_id:int, node_id:int, visibility:int, parent_id:int} $directory */
+		$directory = array_merge(['UID' => 9, 'company_id' => 4, 'node_id' => 20, 'visibility' => 0, 'parent_id' => 12], $changes);
+
+		return $directory;
+	}
+
+	/**
+	 * @param array{create:bool, read:bool, edit:bool, share:string} $expected
+	 * @param array<string,mixed> $directory
+	 */
+	private function assertPermissions(array $expected, array $directory): void
+	{
+		static::assertSame($expected, $this->validator->checkDirectoryPermissions(self::ME, $directory));
+	}
+
+	#[Group('units')]
+	public function testTheModuleIsMediapool(): void
+	{
+		static::assertSame('mediapool', $this->validator->getModuleName());
+	}
+
+	/**
+	 * @return array<string,array{array<string,mixed>}>
+	 */
+	public static function incompleteDirectories(): array
+	{
+		return [
+			'UID'        => [['UID' => null]],
+			'company'    => [['company_id' => null]],
+			'node'       => [['node_id' => null]],
+			'parent'     => [['parent_id' => null]],
+			'visibility' => [['visibility' => null]],
+		];
+	}
+
+	/**
+	 * A directory without one of these values can not be judged: no right is better than a wrong one.
+	 *
+	 * @param array<string,mixed> $remove
 	 */
 	#[Group('units')]
-	public function testCheckDirectoryPermissionsFailsNoUID(): void
+	#[DataProvider('incompleteDirectories')]
+	public function testADirectoryWithMissingValuesIsAnError(array $remove): void
 	{
-		$this->aclHelperMock->expects($this->never())->method($this->anything());
-		$UID       = 1;
-		$directory = ['foo' => 'bar'];
+		$directory = $this->directory();
+		foreach (array_keys($remove) as $key)
+			unset($directory[$key]);
+		$this->acl = [['module' => 'mediapool', 'acl' => self::MODULEADMIN]];
+
 		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('Missing important values in media directory data struct.');
+		$this->expectExceptionMessage('Missing important values');
 
-		$this->aclValidator->checkDirectoryPermissions($UID, $directory);
+		$this->validator->checkDirectoryPermissions(self::ME, $directory);
+	}
 
+	#[Group('units')]
+	public function testAUserWithoutAnyRightHasNone(): void
+	{
+		$this->assertPermissions(['create' => false, 'read' => false, 'edit' => false, 'share' => ''], $this->directory());
+	}
+
+	#[Group('units')]
+	public function testTheModuleAdminMayDoEverythingEverywhere(): void
+	{
+		$this->acl = [['module' => 'mediapool', 'acl' => self::MODULEADMIN]];
+
+		$all = ['create' => true, 'read' => true, 'edit' => true, 'share' => 'global'];
+		$this->assertPermissions($all, $this->directory());
+		$this->assertPermissions($all, $this->directory(['parent_id' => 0]));
+		$this->assertPermissions($all, $this->directory(['visibility' => 0, 'UID' => 99, 'company_id' => 99]));
 	}
 
 	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
+	 * The admin of another module has nothing to say here.
 	 */
 	#[Group('units')]
-	public function testCheckDirectoryPermissionsOwnerIsSame(): void
+	public function testTheAdminOfAnotherModuleIsNoAdminHere(): void
 	{
-		$UID = 1;
-		$directory = ['UID' => $UID, 'company_id' => 1, 'node_id' => 1, 'visibility' => 0, 'parent_id' => 0];
+		$this->acl = [['module' => 'playlists', 'acl' => self::MODULEADMIN]];
 
-		// the owner gets full rights, no further role checks
-		$this->aclHelperMock->expects($this->once())->method('isModuleAdmin')->with($UID, 'mediapool')->willReturn(false);
-		$this->aclHelperMock->expects($this->never())->method('isSubAdmin');
-		$this->aclHelperMock->expects($this->never())->method('isEditor');
+		$this->assertPermissions(['create' => false, 'read' => false, 'edit' => false, 'share' => ''], $this->directory());
+	}
 
-		$permissions = $this->aclValidator->checkDirectoryPermissions($UID, $directory);
+	#[Group('units')]
+	public function testTheOwnerMayDoEverythingInHisDirectoryAlsoOnTheRootLevel(): void
+	{
+		$all = ['create' => true, 'read' => true, 'edit' => true, 'share' => 'global'];
 
-		static::assertEquals(['create' => true, 'read' => true, 'edit' => true, 'share' => 'global'], $permissions);
+		$this->assertPermissions($all, $this->directory(['UID' => self::ME]));
+		$this->assertPermissions($all, $this->directory(['UID' => self::ME, 'parent_id' => 0]));
 	}
 
 	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
+	 * @return array<string,array{list<array{module:string,acl:int}>,list<array<string,int>>,array<string,mixed>,array{create:bool,read:bool,edit:bool,share:string}}>
 	 */
-	#[Group('units')]
-	public function testCheckDirectoryPermissionsIsModuleAdmin(): void
+	public static function roleProvider(): array
 	{
-		$UID = 1;
-		$directory = ['UID' => 2, 'company_id' => 1, 'node_id' => 1, 'visibility' => 0, 'parent_id' => 0];
-
-		$this->aclHelperMock->method('isModuleAdmin')
-			->with($UID, 'mediapool')
-			->willReturn(true);
-
-		$permissions = $this->aclValidator->checkDirectoryPermissions($UID, $directory);
-
-		static::assertEquals(['create' => true, 'read' => true, 'edit' => true, 'share' => 'global'], $permissions);
+		return [
+			'subadmin of the company' => [
+				[['module' => 'mediapool', 'acl' => self::SUBADMIN]], [['mediapool_subadmin' => 4]], [],
+				['create' => true, 'read' => true, 'edit' => true, 'share' => 'company'],
+			],
+			'subadmin of another company' => [
+				[['module' => 'mediapool', 'acl' => self::SUBADMIN]], [['mediapool_subadmin' => 5]], [],
+				['create' => false, 'read' => false, 'edit' => false, 'share' => ''],
+			],
+			'subadmin of the company, on the root level' => [
+				[['module' => 'mediapool', 'acl' => self::SUBADMIN]], [['mediapool_subadmin' => 4]], ['parent_id' => 0],
+				['create' => true, 'read' => true, 'edit' => false, 'share' => 'company'],
+			],
+			'right as subadmin without the right on a company' => [
+				[['module' => 'mediapool', 'acl' => self::SUBADMIN]], [], [],
+				['create' => false, 'read' => false, 'edit' => false, 'share' => ''],
+			],
+			'company right without the global right' => [
+				[], [['mediapool_subadmin' => 4]], [],
+				['create' => false, 'read' => false, 'edit' => false, 'share' => ''],
+			],
+			'editor of the directory' => [
+				[['module' => 'mediapool', 'acl' => self::EDITOR]], [['mediapool_editor' => 20]], [],
+				['create' => true, 'read' => true, 'edit' => false, 'share' => ''],
+			],
+			'editor of another directory' => [
+				[['module' => 'mediapool', 'acl' => self::EDITOR]], [['mediapool_editor' => 21]], [],
+				['create' => false, 'read' => false, 'edit' => false, 'share' => ''],
+			],
+			'viewer of the directory' => [
+				[['module' => 'mediapool', 'acl' => self::VIEWER]], [['mediapool_viewer' => 20]], [],
+				['create' => false, 'read' => true, 'edit' => false, 'share' => ''],
+			],
+			'viewer of another directory' => [
+				[['module' => 'mediapool', 'acl' => self::VIEWER]], [['mediapool_viewer' => 21]], [],
+				['create' => false, 'read' => false, 'edit' => false, 'share' => ''],
+			],
+			'viewer right without the right on a directory' => [
+				[['module' => 'mediapool', 'acl' => self::VIEWER]], [], [],
+				['create' => false, 'read' => false, 'edit' => false, 'share' => ''],
+			],
+			'editor and viewer of the directory' => [
+				[['module' => 'mediapool', 'acl' => self::EDITOR | self::VIEWER]], [['mediapool_editor' => 20], ['mediapool_viewer' => 20]], [],
+				['create' => true, 'read' => true, 'edit' => false, 'share' => ''],
+			],
+			'subadmin who is editor of the directory loses the edit right' => [
+				[['module' => 'mediapool', 'acl' => self::SUBADMIN | self::EDITOR]], [['mediapool_subadmin' => 4], ['mediapool_editor' => 20]], [],
+				['create' => true, 'read' => true, 'edit' => false, 'share' => ''],
+			],
+		];
 	}
 
 	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
+	 * @param list<array{module:string,acl:int}> $acl
+	 * @param list<array<string,int>> $vip
+	 * @param array<string,mixed> $directoryChanges
+	 * @param array{create:bool,read:bool,edit:bool,share:string} $expected
 	 */
 	#[Group('units')]
-	public function testCheckDirectoryPermissionsIsSubAdminWrongAccess(): void
+	#[DataProvider('roleProvider')]
+	public function testTheRightsOfTheRoles(array $acl, array $vip, array $directoryChanges, array $expected): void
 	{
-		$UID = 1;
-		$directory = ['UID' => 2, 'company_id' => 1, 'node_id' => 1, 'visibility' => 0, 'parent_id' => 0];
+		$this->acl = $acl;
+		$this->vip = $vip;
 
-		$this->aclHelperMock->method('isSubAdmin')
-			->with($UID, 'mediapool')
-			->willReturn(true);
-
-		$this->aclHelperMock->method('hasSubAdminAccessOnCompany')
-			->with($UID, $directory['company_id'], 'mediapool')
-			->willReturn(false);
-
-		$permissions = $this->aclValidator->checkDirectoryPermissions($UID, $directory);
-
-		static::assertEquals(['create' => false, 'read' => false, 'edit' => false, 'share' => ''], $permissions);
+		$this->assertPermissions($expected, $this->directory($directoryChanges));
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws ModuleException
-	 * @throws \Doctrine\DBAL\Exception
+	 * @return array<string,array{int,int,bool}>
 	 */
-	#[Group('units')]
-	public function testCheckDirectoryPermissionsIsSubAdminSucceedRootDir(): void
+	public static function visibilityProvider(): array
 	{
-		$UID = 1;
-		$directory = ['UID' => 2, 'company_id' => 4, 'node_id' => 1, 'visibility' => 0, 'parent_id' => 0];
-
-		$this->aclHelperMock->method('isSubAdmin')
-			->with($UID, 'mediapool')
-			->willReturn(true);
-
-		$this->aclHelperMock->method('hasSubAdminAccessOnCompany')
-			->with($UID, $directory['company_id'], 'mediapool')
-			->willReturn(true);
-
-		$permissions = $this->aclValidator->checkDirectoryPermissions($UID, $directory);
-
-		static::assertEquals(['create' => true, 'read' => true, 'edit' => false, 'share' => 'company'], $permissions);
+		return [
+			'private'        => [0, 12, false],
+			'bit 1 only'     => [1, 12, false],
+			'public'         => [AclValidator::VISIBILITY_PUBLIC, 12, true],
+			'public + bit 1' => [AclValidator::VISIBILITY_PUBLIC | 1, 12, true],
+			'public root'    => [AclValidator::VISIBILITY_PUBLIC, 0, true],
+		];
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws ModuleException
-	 * @throws \Doctrine\DBAL\Exception
+	 * A public directory can be read by everybody, but nobody gets more than that from it.
 	 */
 	#[Group('units')]
-	public function testCheckDirectoryPermissionsIsEditorWrongAccess(): void
+	#[DataProvider('visibilityProvider')]
+	public function testOnlyThePublicBitMakesADirectoryReadable(int $visibility, int $parent, bool $readable): void
 	{
-		$UID = 1;
-		$directory = ['UID' => 2, 'company_id' => 4, 'node_id' => 1, 'visibility' => 0, 'parent_id' => 12];
-
-		$this->aclHelperMock->method('isEditor')
-			->with($UID, 'mediapool')
-			->willReturn(true);
-
-		$this->aclHelperMock->method('hasEditorAccessOnUnit')
-			->with($UID, $directory['node_id'], 'mediapool')
-			->willReturn(false);
-
-		$permissions = $this->aclValidator->checkDirectoryPermissions($UID, $directory);
-
-		static::assertEquals(['create' => false, 'read' => false, 'edit' => false, 'share' => ''], $permissions);
+		$this->assertPermissions(
+			['create' => false, 'read' => $readable, 'edit' => false, 'share' => ''],
+			$this->directory(['visibility' => $visibility, 'parent_id' => $parent])
+		);
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws ModuleException
-	 * @throws \Doctrine\DBAL\Exception
+	 * The root directories can be changed by the module admin only, whatever the role on them is.
 	 */
 	#[Group('units')]
-	public function testCheckDirectoryPermissionsIsSubAdminSucceedNormalDir(): void
+	public function testNobodyButTheAdminEditsARootDirectory(): void
 	{
-		$UID = 1;
-		$directory = ['UID' => 2, 'company_id' => 4, 'node_id' => 1, 'visibility' => 0, 'parent_id' => 12];
+		$this->acl = [['module' => 'mediapool', 'acl' => self::SUBADMIN | self::EDITOR | self::VIEWER]];
+		$this->vip = [['mediapool_subadmin' => 4], ['mediapool_editor' => 20], ['mediapool_viewer' => 20]];
 
-		$this->aclHelperMock->method('isSubAdmin')
-			->with($UID, 'mediapool')
-			->willReturn(true);
+		$permissions = $this->validator->checkDirectoryPermissions(self::ME, $this->directory(['parent_id' => 0]));
 
-		$this->aclHelperMock->method('hasSubAdminAccessOnCompany')
-			->with($UID, $directory['company_id'], 'mediapool')
-			->willReturn(true);
-
-		$permissions = $this->aclValidator->checkDirectoryPermissions($UID, $directory);
-
-		static::assertEquals(['create' => true, 'read' => true, 'edit' => true, 'share' => 'company'], $permissions);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws ModuleException
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testCheckDirectoryPermissionsIsEditorSucceed(): void
-	{
-		$UID = 1;
-		$directory = ['UID' => 2, 'company_id' => 4, 'node_id' => 1, 'visibility' => 0, 'parent_id' => 12];
-
-		$this->aclHelperMock->method('isEditor')
-			->with($UID, 'mediapool')
-			->willReturn(true);
-
-		$this->aclHelperMock->method('hasEditorAccessOnUnit')
-			->with($UID, $directory['node_id'], 'mediapool')
-			->willReturn(true);
-
-		$permissions = $this->aclValidator->checkDirectoryPermissions($UID, $directory);
-
-		static::assertEquals(['create' => true, 'read' => true, 'edit' => false, 'share' => ''], $permissions);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws ModuleException
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testCheckDirectoryPermissionsIsViewerWrongNode(): void
-	{
-		$UID = 1;
-		$directory = ['UID' => 2, 'company_id' => 4, 'node_id' => 1, 'visibility' => 0, 'parent_id' => 12];
-
-		$this->aclHelperMock->method('isViewer')
-			->with($UID, 'mediapool')
-			->willReturn(true);
-
-		$this->aclHelperMock->method('hasViewerAccessOnUnit')
-			->with($UID, $directory['node_id'], 'mediapool')
-			->willReturn(false);
-
-		$permissions = $this->aclValidator->checkDirectoryPermissions($UID, $directory);
-
-		static::assertEquals(['create' => false, 'read' => false, 'edit' => false, 'share' => ''], $permissions);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws ModuleException
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testCheckDirectoryPermissionsIsViewerSucceed(): void
-	{
-		$UID = 1;
-		$directory = ['UID' => 2, 'company_id' => 4, 'node_id' => 1, 'visibility' => 0, 'parent_id' => 12];
-
-		$this->aclHelperMock->method('isViewer')
-			->with($UID, 'mediapool')
-			->willReturn(true);
-
-		$this->aclHelperMock->method('hasViewerAccessOnUnit')
-			->with($UID, $directory['node_id'], 'mediapool')
-			->willReturn(true);
-
-		$permissions = $this->aclValidator->checkDirectoryPermissions($UID, $directory);
-
-		static::assertEquals(['create' => false, 'read' => true, 'edit' => false, 'share' => ''], $permissions);
-	}
-
-	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testCheckDirectoryPermissionsIsPublic(): void
-	{
-		$UID = 1;
-		$directory = ['UID' => 2, 'company_id' => 4, 'node_id' => 1, 'visibility' => AclValidator::VISIBILITY_PUBLIC, 'parent_id' => 0];
-
-		// no role at all, only the public visibility grants reading
-		$this->aclHelperMock->expects($this->once())->method('isModuleAdmin')->with($UID, 'mediapool')->willReturn(false);
-		$this->aclHelperMock->expects($this->once())->method('isSubAdmin')->with($UID, 'mediapool')->willReturn(false);
-		$this->aclHelperMock->expects($this->once())->method('isEditor')->with($UID, 'mediapool')->willReturn(false);
-		$this->aclHelperMock->expects($this->once())->method('isViewer')->with($UID, 'mediapool')->willReturn(false);
-
-		$permissions = $this->aclValidator->checkDirectoryPermissions($UID, $directory);
-
-		static::assertEquals(['create' => false, 'read' => true, 'edit' => false, 'share' => ''], $permissions);
+		static::assertFalse($permissions['edit']);
 	}
 }

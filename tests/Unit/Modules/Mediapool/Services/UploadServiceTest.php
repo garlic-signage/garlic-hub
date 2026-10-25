@@ -32,541 +32,412 @@ use App\Modules\Mediapool\Utils\AbstractMediaHandler;
 use App\Modules\Mediapool\Utils\MediaHandlerFactory;
 use App\Modules\Mediapool\Utils\SsrfValidator;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Psr7\Stream;
-use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\MockObject\Stub;
-use PHPUnit\Framework\TestCase;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\TestCase;
 use Slim\Psr7\UploadedFile;
 
+/**
+ * The checks before a file is touched and the address handling of the external upload. The client is a real
+ * Guzzle client with a prepared answer, so the requests can be looked at. The whole upload with real files and
+ * handlers is tested in tests/Integration/Modules/Mediapool/Services/UploadTest.
+ */
 class UploadServiceTest extends TestCase
 {
-	private UploadService $uploadService;
-	private MediaHandlerFactory&MockObject $mediaHandlerFactoryMock;
-	private NodesService&Stub $nodeServiceStub;
-	private Client&MockObject $clientMock;
-	private FilesRepository&Stub $mediaRepositoryStub;
-	private MimeTypeService&Stub $mimeTypeService;
-	private SsrfValidator&Stub $ssrfValidatorStub;
+	/** @var array<string,string> */
+	private const array DNS = [
+		'media.example.com' => '93.184.216.34',
+		'cdn.example.com'   => '93.184.216.35',
+		'internal.example'  => '10.0.0.5',
+		'metadata.example'  => '169.254.169.254',
+		'loopback.example'  => '127.0.0.1',
+	];
 
-	/**
-	 * @throws Exception
-	 */
+	/** @var list<array{request:RequestInterface,options:array<string,mixed>}> every request which was sent */
+	private array $sent = [];
+	private bool $uploadable = true;
+	/** @var list<string> the types for which a handler was asked */
+	private array $askedTypes = [];
+	private bool $factoryGivesAHandler = false;
+
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->mediaHandlerFactoryMock = $this->createMock(MediaHandlerFactory::class);
-		$this->nodeServiceStub = $this->createStub(NodesService::class);
-		$this->clientMock = $this->createMock(Client::class);
-		$this->mediaRepositoryStub = $this->createStub(FilesRepository::class);
-		$this->mimeTypeService = $this->createStub(MimeTypeService::class);
-		$this->ssrfValidatorStub = $this->createStub(SsrfValidator::class);
+		$this->sent       = [];
+		$this->uploadable = true;
+		$this->askedTypes = [];
+		$this->factoryGivesAHandler = false;
+	}
 
-		$this->uploadService = new UploadService(
-			$this->mediaHandlerFactoryMock,
-			$this->nodeServiceStub,
-			$this->clientMock,
-			$this->mediaRepositoryStub,
-			$this->mimeTypeService,
-			$this->ssrfValidatorStub
+	/**
+	 * @param list<Response|\Throwable> $answers
+	 */
+	private function service(array $answers = []): UploadService
+	{
+		// the stack hands over the request with its options: the tests look at both
+		$capture = new MockHandler($answers);
+		$stack   = HandlerStack::create(function ($request, array $options) use ($capture)
+		{
+			$this->sent[] = ['request' => $request, 'options' => $options];
+
+			return $capture($request, $options);
+		});
+
+		$nodes = $this->createStub(NodesService::class);
+		$nodes->method('isNodeUploadable')->willReturnCallback(fn(): bool => $this->uploadable);
+
+		// the factory notes the type it is asked for and stops the upload there
+		$factory = $this->createStub(MediaHandlerFactory::class);
+		$factory->method('createMediaHandler')->willReturnCallback(function (string $mimeType): AbstractMediaHandler
+		{
+			$this->askedTypes[] = $mimeType;
+			if ($this->factoryGivesAHandler)
+				return $this->createStub(AbstractMediaHandler::class);
+
+			throw new TranslatableModuleException('mediapool', 'handler_asked');
+		});
+
+		return new UploadService(
+			$factory,
+			$nodes,
+			new Client(['handler' => $stack]),
+			$this->createStub(FilesRepository::class),
+			$this->createStub(MimeTypeService::class),
+			new SsrfValidator(static fn(string $host): string => self::DNS[$host] ?? $host)
 		);
 	}
 
 	/**
-	 * @throws GuzzleException
-	 * @throws Exception
+	 * @throws \GuzzleHttp\Exception\GuzzleException
 	 */
 	#[Group('units')]
-	public function testRequestApiSuccess(): void
+	public function testTheApiAnswerIsDecoded(): void
 	{
-		$this->mediaHandlerFactoryMock->expects($this->never())->method($this->anything());
-		$expectedData = ['key' => 'value'];
-		$responseStub = $this->createStub(ResponseInterface::class);
+		$service = $this->service([new Response(200, [], '{"items":[{"id":1}],"total":1}')]);
 
-		$this->clientMock
-			->method('request')
-			->with('GET', 'https://api.example.com')
-			->willReturn($responseStub);
-
-		$resource = fopen('php://temp', 'r+');
-		static::assertNotFalse($resource, 'Failed to resource for testing.');
-		$str = json_encode($expectedData);
-		static::assertNotFalse($str, 'Failed to json for testing.');
-		$i = fwrite($resource, $str);
-		static::assertNotFalse($i, 'Failed to resource for testing.');
-
-		rewind($resource);
-
-		$stream = new Stream($resource);
-		$responseStub->method('getBody')->willReturn($stream);
-
-		$result = $this->uploadService->requestApi('https://api.example.com');
-		static::assertEquals($expectedData, $result);
+		static::assertSame(['items' => [['id' => 1]], 'total' => 1], $service->requestApi('https://api.example.com/search?q=cat'));
+		static::assertSame('GET', $this->sent[0]['request']->getMethod());
+		static::assertSame('https://api.example.com/search?q=cat', (string) $this->sent[0]['request']->getUri());
+		static::assertFalse($this->sent[0]['request']->hasHeader('Authorization'));
 	}
 
 	/**
-	 * @throws GuzzleException
-	 * @throws Exception
+	 * @throws \GuzzleHttp\Exception\GuzzleException
 	 */
 	#[Group('units')]
-	public function testRequestApiSuccessWithHeaders(): void
+	public function testTheHeadersForTheApiAreSent(): void
 	{
-		$this->mediaHandlerFactoryMock->expects($this->never())->method($this->anything());
-		$expectedData = ['key' => 'value'];
-		$responseStub = $this->createStub(ResponseInterface::class);
+		$service = $this->service([new Response(200, [], '[]')]);
 
-		$options = ['headers' => ['Auth' => 'Authorization: Bearer']];
-		$this->clientMock
-			->method('request')
-			->with('GET', 'https://api.example.com', $options)
-			->willReturn($responseStub);
+		$service->requestApi('https://api.example.com/search', ['Authorization' => 'Bearer abc', 'Accept' => 'application/json']);
 
-		$resource = fopen('php://temp', 'r+');
-		static::assertNotFalse($resource, 'Failed to resource for testing.');
-
-		$str = json_encode($expectedData);
-		static::assertNotFalse($str, 'Failed to json for testing.');
-		$i = fwrite($resource, $str);
-		static::assertNotFalse($i, 'Failed to resource for testing.');
-		rewind($resource);
-
-		$stream = new Stream($resource);
-		$responseStub->method('getBody')->willReturn($stream);
-
-		$result = $this->uploadService->requestApi('https://api.example.com', ['Auth' => 'Authorization: Bearer']);
-		static::assertEquals($expectedData, $result);
+		static::assertSame('Bearer abc', $this->sent[0]['request']->getHeaderLine('Authorization'));
+		static::assertSame('application/json', $this->sent[0]['request']->getHeaderLine('Accept'));
 	}
 
 	/**
-	 * @throws Exception
+	 * @return array<string,array{string}>
 	 */
-	#[Group('units')]
-	public function testUploadMediaFileSuccess(): void
+	public static function noJsonProvider(): array
 	{
-		$this->clientMock->expects($this->never())->method($this->anything());
-		$nodeId = 1;
-		$uid = 1;
-		$metadata = ['description' => 'Test file'];
-
-		$uploadedFile = $this->createStub(UploadedFile::class);
-		$mediaHandler = $this->createMock(AbstractMediaHandler::class);
-		$this->nodeServiceStub->method('isNodeUploadable')->willReturn(true);
-
-		// Mock uploaded file methods
-		$uploadedFile->method('getError')
-			->willReturn(UPLOAD_ERR_OK);
-		$uploadedFile->method('getClientMediaType')
-			->willReturn('image/jpeg');
-		$uploadedFile->method('getSize')
-			->willReturn(1024);
-
-		// Mock media handler
-		$this->mediaHandlerFactoryMock->expects($this->once())->method('createMediaHandler')
-			->with('image/jpeg')
-			->willReturn($mediaHandler);
-
-		$mediaHandler->expects($this->once())->method('uploadFromLocal')
-			->willReturn('/tmp/test.jpg');
-
-		$mediaHandler->method('determineNewFilename')
-			->willReturn('abc123');
-
-		$mediaHandler->method('getMetadata')
-			->willReturn([]);
-
-		$this->mediaRepositoryStub->method('findFirstBy')
-			->willReturn([]);
-
-		$this->mimeTypeService
-			->method('detectFromFile')
-			->willReturn('image/jpeg');
-
-		$result = $this->uploadService->uploadMediaFile($nodeId, $uid, $uploadedFile, $metadata);
-
-		static::assertTrue($result['success']);
+		return ['empty' => [''], 'text' => ['Service unavailable'], 'a number' => ['5'], 'null' => ['null']];
 	}
 
 	/**
-	 * @throws Exception
+	 * @throws \GuzzleHttp\Exception\GuzzleException
 	 */
 	#[Group('units')]
-	public function testUploadMediaFileSuccessWithMetaDataDuration(): void
+	#[DataProvider('noJsonProvider')]
+	public function testAnAnswerWhichIsNoListIsAnEmptyResult(string $body): void
 	{
-		$this->clientMock->expects($this->never())->method($this->anything());
-		$nodeId = 1;
-		$uid = 1;
+		static::assertSame([], $this->service([new Response(200, [], $body)])->requestApi('https://api.example.com/search'));
+	}
 
-		$uploadedFileStub = $this->createStub(UploadedFile::class);
-		$mediaHandlerMock = $this->createMock(AbstractMediaHandler::class);
-		$this->nodeServiceStub->method('isNodeUploadable')->willReturn(true);
+	#[Group('units')]
+	public function testWithoutTheRightToUploadNothingHappens(): void
+	{
+		$this->uploadable = false;
+		$service = $this->service();
 
-		// Mock uploaded file methods
-		$uploadedFileStub->method('getError')->willReturn(UPLOAD_ERR_OK);
-		$uploadedFileStub->method('getClientMediaType')->willReturn('video/mp4');
-		$uploadedFileStub->method('getSize')->willReturn(1024);
-
-		// Mock media handler
-		$this->mediaHandlerFactoryMock->expects($this->once())->method('createMediaHandler')
-			->with('video/mp4')
-			->willReturn($mediaHandlerMock);
-
-		$mediaHandlerMock->expects($this->once())->method('uploadFromLocal')
-			->willReturn('/tmp/video.mp4');
-
-		$mediaHandlerMock->method('determineNewFilename')->willReturn('abc123');
-
-		$mediaHandlerMock->method('getMetadata')->willReturn(['title' => 'Test video']);
-
-		$this->mediaRepositoryStub->method('findFirstBy')->willReturn([]);
-
-		$this->mimeTypeService->method('detectFromFile')->willReturn('video/mp4');
-
-		$extMetadata = ['duration' => 4050, 'description' => 'Test file'];
-		$result = $this->uploadService->uploadMediaFile($nodeId, $uid, $uploadedFileStub, $extMetadata);
-
-		static::assertTrue($result['success']);
+		foreach ([
+			fn() => $service->uploadMediaFile(7, 1, new UploadedFile('/tmp/x', 'x.png', 'image/png', 10), []),
+			fn() => $service->uploadExternalMedia(7, 1, 'https://media.example.com/a.png', []),
+		] as $call)
+		{
+			try
+			{
+				$call();
+				static::fail('Expected an AccessDeniedException');
+			}
+			catch (AccessDeniedException $e)
+			{
+				static::assertSame('node_not_uploadable', $e->getTranslationKey());
+			}
+		}
+		static::assertSame([], $this->sent, 'No request is sent for a directory where the user may not upload.');
 	}
 
 	/**
-	 * @throws Exception
+	 * @return array<string,array{int,string,string}> the PHP upload error, the class of the error, the key or text
 	 */
-	#[Group('units')]
-	public function testUploadMediaFileWithoutUploadRights(): void
+	public static function uploadErrors(): array
 	{
-		$this->mediaHandlerFactoryMock->expects($this->never())->method($this->anything());
-		$this->clientMock->expects($this->never())->method($this->anything());
-		$this->nodeServiceStub->method('isNodeUploadable')->willReturn(false);
-
-		$this->expectException(AccessDeniedException::class);
-		$this->expectExceptionMessage('node_not_uploadable {"node_id":7}');
-		$this->uploadService->uploadMediaFile(7, 1, $this->createStub(UploadedFile::class), []);
+		return [
+			'ini size'      => [UPLOAD_ERR_INI_SIZE, TranslatableModuleException::class, 'upload_file_too_big'],
+			'form size'     => [UPLOAD_ERR_FORM_SIZE, TranslatableModuleException::class, 'upload_file_too_big'],
+			'partial'       => [UPLOAD_ERR_PARTIAL, TranslatableModuleException::class, 'upload_partial'],
+			'no file'       => [UPLOAD_ERR_NO_FILE, TranslatableModuleException::class, 'upload_no_file'],
+			'no tmp dir'    => [UPLOAD_ERR_NO_TMP_DIR, ModuleException::class, 'Missing a temporary folder'],
+			'cant write'    => [UPLOAD_ERR_CANT_WRITE, ModuleException::class, 'Failed to write file to disk'],
+			'by extension'  => [UPLOAD_ERR_EXTENSION, ModuleException::class, 'File upload stopped by extension'],
+			'unknown code'  => [99, ModuleException::class, 'Unknown upload error'],
+		];
 	}
 
 	/**
-	 * @throws Exception
+	 * What the user can fix gets a text for the user, the problems of the server stay technical.
+	 *
+	 * @param class-string<ModuleException> $class
 	 */
 	#[Group('units')]
-	public function testUploadMediaFileWithErrorNull(): void
+	#[DataProvider('uploadErrors')]
+	public function testAnUploadErrorOfPhpIsReported(int $code, string $class, string $messageOrKey): void
 	{
-		$this->mediaHandlerFactoryMock->expects($this->never())->method($this->anything());
-		$this->clientMock->expects($this->never())->method($this->anything());
-		$uploadedFile = $this->createStub(UploadedFile::class);
-		$this->nodeServiceStub->method('isNodeUploadable')->willReturn(true);
-		$uploadedFile->method('getClientMediaType')->willReturn(null);
+		$file = new UploadedFile('/tmp/x', 'x.png', 'image/png', 10, $code);
+
+		try
+		{
+			$this->service()->uploadMediaFile(7, 1, $file, []);
+			static::fail('Expected ' . $class);
+		}
+		catch (ModuleException $e)
+		{
+			static::assertSame($class, $e::class);
+			static::assertStringContainsString($messageOrKey, $e->getMessage());
+		}
+	}
+
+	#[Group('units')]
+	public function testAFileWithoutATypeIsRefused(): void
+	{
 		$this->expectException(ModuleException::class);
 		$this->expectExceptionMessage('Not able to detect mime type.');
-		$this->uploadService->uploadMediaFile(1, 1, $uploadedFile, []);
+
+		$this->service()->uploadMediaFile(7, 1, new UploadedFile('/tmp/x', 'x.png', null, 10), []);
 	}
 
-	/**
-	 * @throws Exception
-	 */
 	#[Group('units')]
-	public function testUploadMediaFileWithErrorIniSize(): void
+	public function testAFileWithoutASizeIsRefused(): void
 	{
-		$this->mediaHandlerFactoryMock->expects($this->never())->method($this->anything());
-		$this->clientMock->expects($this->never())->method($this->anything());
-		$uploadedFile = $this->createStub(UploadedFile::class);
-		$uploadedFile->method('getError')->willReturn(UPLOAD_ERR_INI_SIZE);
-		$uploadedFile->method('getClientMediaType')->willReturn('image/jpeg');
-		$this->nodeServiceStub->method('isNodeUploadable')->willReturn(true);
-		$this->expectException(TranslatableModuleException::class);
-		$this->expectExceptionMessage('upload_file_too_big');
-		$this->uploadService->uploadMediaFile(1, 1, $uploadedFile, []);
-	}
+		$this->factoryGivesAHandler = true;
+		$service = $this->service();
 
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testUploadMediaFileWithErrorFormSize(): void
-	{
-		$this->mediaHandlerFactoryMock->expects($this->never())->method($this->anything());
-		$this->clientMock->expects($this->never())->method($this->anything());
-		$uploadedFile = $this->createStub(UploadedFile::class);
-		$uploadedFile->method('getError')->willReturn(UPLOAD_ERR_FORM_SIZE);
-		$uploadedFile->method('getClientMediaType')->willReturn('image/jpeg');
-		$this->nodeServiceStub->method('isNodeUploadable')->willReturn(true);
-		$this->expectException(TranslatableModuleException::class);
-		$this->expectExceptionMessage('upload_file_too_big');
-		$this->uploadService->uploadMediaFile(1, 1, $uploadedFile, []);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testUploadMediaFileWithErrorPartial(): void
-	{
-		$this->mediaHandlerFactoryMock->expects($this->never())->method($this->anything());
-		$this->clientMock->expects($this->never())->method($this->anything());
-		$uploadedFile = $this->createStub(UploadedFile::class);
-		$uploadedFile->method('getError')->willReturn(UPLOAD_ERR_PARTIAL);
-		$uploadedFile->method('getClientMediaType')->willReturn('image/jpeg');
-		$this->nodeServiceStub->method('isNodeUploadable')->willReturn(true);
-		$this->expectException(TranslatableModuleException::class);
-		$this->expectExceptionMessage('upload_partial');
-		$this->uploadService->uploadMediaFile(1, 1, $uploadedFile, []);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testUploadMediaFileWithErrorNoFile(): void
-	{
-		$this->mediaHandlerFactoryMock->expects($this->never())->method($this->anything());
-		$this->clientMock->expects($this->never())->method($this->anything());
-		$uploadedFile = $this->createStub(UploadedFile::class);
-		$uploadedFile->method('getError')->willReturn(UPLOAD_ERR_NO_FILE);
-		$uploadedFile->method('getClientMediaType')->willReturn('image/jpeg');
-		$this->nodeServiceStub->method('isNodeUploadable')->willReturn(true);
-		$this->expectException(TranslatableModuleException::class);
-		$this->expectExceptionMessage('upload_no_file');
-		$this->uploadService->uploadMediaFile(1, 1, $uploadedFile, []);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testUploadMediaFileWithErrorNoFTmpDir(): void
-	{
-		$this->mediaHandlerFactoryMock->expects($this->never())->method($this->anything());
-		$this->clientMock->expects($this->never())->method($this->anything());
-		$uploadedFile = $this->createStub(UploadedFile::class);
-		$uploadedFile->method('getError')->willReturn(UPLOAD_ERR_NO_TMP_DIR);
-		$uploadedFile->method('getClientMediaType')->willReturn('image/jpeg');
-		$this->nodeServiceStub->method('isNodeUploadable')->willReturn(true);
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('Missing a temporary folder');
-		$this->uploadService->uploadMediaFile(1, 1, $uploadedFile, []);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testUploadMediaFileWithErrorCantWrite(): void
-	{
-		$this->mediaHandlerFactoryMock->expects($this->never())->method($this->anything());
-		$this->clientMock->expects($this->never())->method($this->anything());
-		$uploadedFile = $this->createStub(UploadedFile::class);
-		$uploadedFile->method('getError')->willReturn(UPLOAD_ERR_CANT_WRITE);
-		$uploadedFile->method('getClientMediaType')->willReturn('image/jpeg');
-		$this->nodeServiceStub->method('isNodeUploadable')->willReturn(true);
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('Failed to write file to disk');
-		$this->uploadService->uploadMediaFile(1, 1, $uploadedFile, []);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testUploadMediaFileWithErrorByExtension(): void
-	{
-		$this->mediaHandlerFactoryMock->expects($this->never())->method($this->anything());
-		$this->clientMock->expects($this->never())->method($this->anything());
-		$uploadedFile = $this->createStub(UploadedFile::class);
-		$uploadedFile->method('getError')->willReturn(UPLOAD_ERR_EXTENSION);
-		$uploadedFile->method('getClientMediaType')->willReturn('image/jpeg');
-		$this->nodeServiceStub->method('isNodeUploadable')->willReturn(true);
-		$this->expectException(ModuleException::class);
-		$this->expectExceptionMessage('File upload stopped by extension');
-		$this->uploadService->uploadMediaFile(1, 1, $uploadedFile, []);
-	}
-
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testUploadMediaFileWithErrorGetSizeNull(): void
-	{
-		$this->clientMock->expects($this->never())->method($this->anything());
-		$uploadedFileStub = $this->createStub(UploadedFile::class);
-		$this->nodeServiceStub->method('isNodeUploadable')->willReturn(true);
-		$uploadedFileStub->method('getClientMediaType')->willReturn('video/mp4');
-		$uploadedFileStub->method('getError')->willReturn(UPLOAD_ERR_OK);
-
-		$mediaHandlerMock = $this->createStub(AbstractMediaHandler::class);
-		$this->mediaHandlerFactoryMock->expects($this->once())->method('createMediaHandler')
-			->with('video/mp4')
-			->willReturn($mediaHandlerMock);
-
-		$uploadedFileStub->method('getSize')->willReturn(null);
 		$this->expectException(ModuleException::class);
 		$this->expectExceptionMessage('Not able to detect size.');
 
-		$this->uploadService->uploadMediaFile(1, 1, $uploadedFileStub, []);
-	}
-
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testUploadExternalMediaSuccess(): void
-	{
-		$nodeId = 1;
-		$uid = 1;
-		$externalLink = 'https://example.com/image.jpg';
-		$extMetadata = [];
-
-		$responseStub = $this->createStub(ResponseInterface::class);
-		$mediaHandler = $this->createStub(AbstractMediaHandler::class);
-		$this->nodeServiceStub->method('isNodeUploadable')->willReturn(true);
-		$resolved = ['host' => 'example.com', 'port' => 80, 'ip' => '127.0.0.1',];
-		$this->ssrfValidatorStub->method('validateAndResolveUrl')->willReturn($resolved);
-
-		$responseStub->method('getHeaderLine')
-			->willReturnOnConsecutiveCalls('image/jpeg', '1234');
-
-		$this->clientMock->expects($this->atLeastOnce())->method('head')->willReturn($responseStub);
-		$this->mediaHandlerFactoryMock->expects($this->atLeastOnce())->method('createMediaHandler')->willReturn($mediaHandler);
-		$mediaHandler->method('uploadFromExternal')->willReturn('/tmp/test.jpg');
-		$mediaHandler->method('determineNewFilename')->willReturn('abc123');
-
-		$this->mediaRepositoryStub->method('findFirstBy')->willReturn([]);
-
-		$result = $this->uploadService->uploadExternalMedia($nodeId, $uid, $externalLink, $extMetadata);
-
-		static::assertTrue($result['success']);
+		$service->uploadMediaFile(7, 1, new UploadedFile('/tmp/x', 'x.png', 'image/png', null), []);
 	}
 
 	/**
-	 * @throws Exception
+	 * @return array<string,array{string,string,string}> the address, the Content-Type of the answer, the type of the handler
 	 */
-	#[Group('units')]
-	public function testUploadExternalMediaSuccessWithMetadata(): void
+	public static function typesOfExternalFiles(): array
 	{
-		$nodeId = 1;
-		$uid = 1;
-		$externalLink = 'https://example.com/image.jpg';
-		$extMetadata = ['title' => 'a title', 'description' => 'Test file'];
-		$this->nodeServiceStub->method('isNodeUploadable')->willReturn(true);
-		$resolved = ['host' => 'example.com', 'port' => 80, 'ip' => '127.0.0.1',];
-		$this->ssrfValidatorStub->method('validateAndResolveUrl')->willReturn($resolved);
-
-		$responseStub = $this->createStub(ResponseInterface::class);
-		$mediaHandler = $this->createStub(AbstractMediaHandler::class);
-
-		$responseStub->method('getHeaderLine')
-			->willReturnOnConsecutiveCalls('image/jpeg', '1234');
-
-		$this->clientMock->expects($this->atLeastOnce())->method('head')->willReturn($responseStub);
-		$this->mediaHandlerFactoryMock->expects($this->atLeastOnce())->method('createMediaHandler')->willReturn($mediaHandler);
-		$mediaHandler->method('uploadFromExternal')->willReturn('/tmp/test.jpg');
-		$mediaHandler->method('determineNewFilename')->willReturn('abc123');
-
-		$this->mediaRepositoryStub->method('findFirstBy')->willReturn([]);
-
-		$result = $this->uploadService->uploadExternalMedia($nodeId, $uid, $externalLink, $extMetadata);
-
-		static::assertTrue($result['success']);
-	}
-
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testUploadExternalMediaSuccessWithNoMimetype(): void
-	{
-		$nodeId = 1;
-		$uid = 1;
-		$externalLink = 'https://example.com/video.webm';
-		$extMetadata = [];
-		$this->nodeServiceStub->method('isNodeUploadable')->willReturn(true);
-		$resolved = ['host' => $externalLink, 'port' => 80, 'ip' => '127.0.0.1',];
-		$this->ssrfValidatorStub->method('validateAndResolveUrl')->willReturn($resolved);
-
-		$responseStub = $this->createStub(ResponseInterface::class);
-		$mediaHandler = $this->createStub(AbstractMediaHandler::class);
-
-		$responseStub->method('getHeaderLine')
-			->willReturnOnConsecutiveCalls('', '1234');
-
-		$this->clientMock->expects($this->atLeastOnce())->method('head')->willReturn($responseStub);
-		$this->mediaHandlerFactoryMock->expects($this->atLeastOnce())->method('createMediaHandler')->willReturn($mediaHandler);
-		$mediaHandler->method('uploadFromExternal')->willReturn('/tmp/video.webm');
-		$mediaHandler->method('determineNewFilename')->willReturn('abc123');
-
-		$this->mediaRepositoryStub->method('findFirstBy')->willReturn([]);
-
-		$result = $this->uploadService->uploadExternalMedia($nodeId, $uid, $externalLink, $extMetadata);
-
-		static::assertTrue($result['success']);
+		return [
+			'the type of the server'               => ['https://media.example.com/photo.png', 'image/png', 'image/png'],
+			'the type wins over the name'          => ['https://media.example.com/video/photo.png', 'image/png', 'image/png'],
+			'no type, mp4 in the address'          => ['https://media.example.com/clip.mp4', '', 'video/mp4'],
+			'no type, webm in the address'         => ['https://media.example.com/clip.webm', '', 'video/mp4'],
+			'no type, video in the address'        => ['https://media.example.com/video/123', '', 'video/mp4'],
+			'no type, nothing which tells'         => ['https://media.example.com/photo.png', '', ''],
+		];
 	}
 
 	/**
-	 * @throws Exception
+	 * Servers of streams do not always send a type. A video is recognized by its address then.
 	 */
 	#[Group('units')]
-	public function testUploadExternalMediaSuccessWithAlreadyRegisteredFile(): void
+	#[DataProvider('typesOfExternalFiles')]
+	public function testTheTypeOfAnExternalFileComesFromTheServerOrTheAddress(string $url, string $contentType, string $expected): void
 	{
-		$nodeId = 1;
-		$uid = 1;
-		$externalLink = 'https://example.com/video.webm';
-		$extMetadata = [];
-		$this->nodeServiceStub->method('isNodeUploadable')->willReturn(true);
-		$resolved = ['host' => $externalLink, 'port' => 80, 'ip' => '127.0.0.1',];
-		$this->ssrfValidatorStub->method('validateAndResolveUrl')->willReturn($resolved);
+		$headers = $contentType === '' ? [] : ['Content-Type' => $contentType];
 
-		$responseStub = $this->createStub(ResponseInterface::class);
-		$mediaHandler = $this->createMock(AbstractMediaHandler::class);
+		try
+		{
+			$this->service([new Response(200, $headers)])->uploadExternalMedia(7, 1, $url, []);
+			static::fail('The handler factory has to stop the upload');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertSame('handler_asked', $e->getTranslationKey());
+		}
 
-		$responseStub->method('getHeaderLine')
-			->willReturnOnConsecutiveCalls('video/webm', '1234');
-
-		$this->clientMock->expects($this->atLeastOnce())->method('head')->willReturn($responseStub);
-		$this->mediaHandlerFactoryMock->expects($this->atLeastOnce())->method('createMediaHandler')->willReturn($mediaHandler);
-		$mediaHandler->method('uploadFromExternal')->willReturn('/tmp/video.webm');
-		$mediaHandler->method('determineNewFilename')->willReturn('abc123');
-		$mediaHandler->method('removeUploadedFile')->with('/tmp/video.webm');
-		$dataSet = ['mimetype' => 'video/webm', 'metadata' => [], 'extension' => 'webm', 'media_description' => '', 'thumb_extension' => 'jpg', 'config_data' => ''];
-
-		$this->mediaRepositoryStub->method('findFirstBy')->willReturn($dataSet);
-
-		$result = $this->uploadService->uploadExternalMedia($nodeId, $uid, $externalLink, $extMetadata);
-
-		static::assertTrue($result['success']);
+		static::assertSame([$expected], $this->askedTypes);
 	}
 
+	/**
+	 * @return array<string,array{string}>
+	 */
+	public static function notAllowedAddresses(): array
+	{
+		return [
+			'no url'          => ['not a url'],
+			'file'            => ['file:///etc/passwd'],
+			'private network' => ['http://internal.example/a.png'],
+			'metadata'        => ['http://metadata.example/latest/meta-data/'],
+			'loopback'        => ['http://loopback.example:8080/a.png'],
+			'ip address'      => ['http://127.0.0.1/a.png'],
+		];
+	}
 
 	/**
-	 * @throws Exception
+	 * The address is checked before any request: the server does not even ask.
 	 */
 	#[Group('units')]
-	public function testUploadExternalMediaFailure(): void
+	#[DataProvider('notAllowedAddresses')]
+	public function testAnAddressOfTheOwnNetworkIsNeverRequested(string $url): void
 	{
-		$nodeId = 1;
-		$uid = 1;
-		$externalLink = 'https://example.com/image.jpg';
-		$extMetadata = [];
-		$responseStub = $this->createStub(ResponseInterface::class);
+		try
+		{
+			$this->service([new Response(200)])->uploadExternalMedia(7, 1, $url, []);
+			static::fail('Expected a TranslatableModuleException');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertStringStartsWith('url_', $e->getTranslationKey());
+		}
 
-		$this->nodeServiceStub->method('isNodeUploadable')->willReturn(true);
-		$this->ssrfValidatorStub->method('validateAndResolveUrl')->willReturn(['host' => 'example.com', 'port' => 443, 'ip' => '93.184.216.34']);
-		$this->mediaHandlerFactoryMock->expects($this->never())->method($this->anything());
-		$this->clientMock->expects($this->never())->method('request');
-		$this->clientMock->expects($this->once())->method('head')
-			->with($externalLink)
-			->willThrowException(new ClientException(
-				'Not found',
-				$this->createStub(RequestInterface::class),
-				$responseStub
-			));
+		static::assertSame([], $this->sent);
+	}
 
-		$this->expectException(TranslatableModuleException::class);
-		$this->expectExceptionMessage('external_media_not_loadable');
+	/**
+	 * The host is pinned to the IP which was checked, so the name can not be answered differently a second time.
+	 */
+	#[Group('units')]
+	public function testTheRequestIsPinnedToTheCheckedIp(): void
+	{
+		try
+		{
+			$this->service([new Response(404)])->uploadExternalMedia(7, 1, 'https://media.example.com:8443/a.png', []);
+		}
+		catch (TranslatableModuleException)
+		{
+		}
 
-		$this->uploadService->uploadExternalMedia($nodeId, $uid, $externalLink, $extMetadata);
+		static::assertSame(['media.example.com:8443:93.184.216.34'], $this->sent[0]['options']['curl'][CURLOPT_RESOLVE] ?? null);
+	}
+
+	/**
+	 * @return array<string,array{string}>
+	 */
+	public static function redirectsToTheOwnNetwork(): array
+	{
+		return [
+			'private network' => ['http://internal.example/secret'],
+			'metadata'        => ['http://metadata.example/latest/meta-data/'],
+			'loopback'        => ['http://loopback.example/admin'],
+			'ip address'      => ['http://127.0.0.1:9000/'],
+			'unknown host'    => ['http://nowhere.example/a.png'],
+		];
+	}
+
+	/**
+	 * A page which is fine itself can send the server somewhere else. The target is checked like the first address,
+	 * and the request to it is not made.
+	 */
+	#[Group('units')]
+	#[DataProvider('redirectsToTheOwnNetwork')]
+	public function testARedirectToTheOwnNetworkIsNotFollowed(string $target): void
+	{
+		$service = $this->service([new Response(302, ['Location' => $target]), new Response(200, ['Content-Type' => 'image/png'])]);
+
+		try
+		{
+			$service->uploadExternalMedia(7, 1, 'https://media.example.com/a.png', []);
+			static::fail('Expected a TranslatableModuleException');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertStringStartsWith('url_', $e->getTranslationKey());
+		}
+
+		static::assertCount(1, $this->sent, 'only the first address was asked');
+	}
+
+	/**
+	 * Guzzle itself follows only http and https.
+	 */
+	#[Group('units')]
+	public function testARedirectToAnotherProtocolIsAMessageForTheUser(): void
+	{
+		$service = $this->service([new Response(302, ['Location' => 'ftp://media.example.com/a.png'])]);
+
+		try
+		{
+			$service->uploadExternalMedia(7, 1, 'https://media.example.com/a.png', []);
+			static::fail('Expected a TranslatableModuleException');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertSame('external_media_not_loadable', $e->getTranslationKey());
+		}
+
+		static::assertCount(1, $this->sent);
+	}
+
+	/**
+	 * @return array<string,array{Response|\Throwable}>
+	 */
+	public static function brokenLinks(): array
+	{
+		return [
+			'not found'      => [new Response(404)],
+			'server error'   => [new Response(500)],
+			'forbidden'      => [new Response(403)],
+			'no connection'  => [new ConnectException('Connection refused', new Request('HEAD', 'https://media.example.com/a.png'))],
+		];
+	}
+
+	/**
+	 * A broken link is the mistake of the user and not a failure of the server.
+	 */
+	#[Group('units')]
+	#[DataProvider('brokenLinks')]
+	public function testABrokenLinkIsAMessageForTheUser(Response|\Throwable $answer): void
+	{
+		try
+		{
+			$this->service([$answer])->uploadExternalMedia(7, 1, 'https://media.example.com/a.png', []);
+			static::fail('Expected a TranslatableModuleException');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertSame('external_media_not_loadable', $e->getTranslationKey());
+			static::assertNotNull($e->getPrevious());
+		}
+	}
+
+	#[Group('units')]
+	public function testTooManyRedirectsAreAMessageForTheUser(): void
+	{
+		$answers = array_fill(0, 6, new Response(302, ['Location' => 'https://cdn.example.com/loop']));
+
+		try
+		{
+			$this->service($answers)->uploadExternalMedia(7, 1, 'https://media.example.com/a.png', []);
+			static::fail('Expected a TranslatableModuleException');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertSame('external_media_not_loadable', $e->getTranslationKey());
+		}
+
+		static::assertLessThanOrEqual(4, count($this->sent), 'at most three redirects are followed');
 	}
 }

@@ -26,9 +26,11 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Psr7\Utils;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
 use Psr\Http\Message\UploadedFileInterface;
+use Throwable;
 
 /**
  * AbstractMediaHandler class serves as a base handler for managing media file operations.
@@ -143,55 +145,117 @@ abstract class AbstractMediaHandler
 		return $this->filesystem->fileExists($filePath);
 	}
 
+	/**
+	 * The biggest file of this kind in bytes.
+	 */
+	abstract public function getMaxFileSize(): int;
+
 	abstract public function checkFileBeforeUpload(int $size): void;
 	abstract public function validateStoredFile(string $filePath): void;
 	abstract public function createThumbnail(string $filePath): void;
 
 	/**
+	 * The file is put into a directory of its own below the upload directory, with the name of the client.
+	 * Two uploads can never meet, and a name like the one of an original in the storage replaces nothing.
+	 * The file gets its place in the storage with the name of its hash, see UploadService.
+	 *
 	 * @throws ModuleException
+	 * @throws FilesystemException
 	 */
 	public function uploadFromLocal(UploadedFileInterface $uploadedFile): string
 	{
-		$targetPath = strtolower('/'. $this->originalPath .'/'. $this->sanitizeClientFilename($uploadedFile->getClientFilename()));
-		$uploadedFile->moveTo($this->getAbsolutePath($targetPath));
+		$name       = $this->cleanFilename((string) $uploadedFile->getClientFilename());
+		if ($name === '')
+			throw new ModuleException('mediapool', 'Invalid file name.');
+
+		$targetPath = $this->createUploadTarget($name);
+		try
+		{
+			$uploadedFile->moveTo($this->getAbsolutePath($targetPath));
+		}
+		catch (Throwable $e)
+		{
+			$this->removeUploadedFile($targetPath);
+			throw $e;
+		}
 
 		return $targetPath;
 	}
 
 	/**
-	 * The client filename is user input: strip any directory part (also with backslashes)
-	 * and control characters so it can not leave the upload directory.
-	 *
-	 * @throws ModuleException
+	 * Strips any directory part (also with backslashes) and control characters from a name which comes from
+	 * the outside, so it can not leave the upload directory. Gives '' when nothing usable is left.
 	 */
-	private function sanitizeClientFilename(?string $clientFilename): string
+	private function cleanFilename(string $name): string
 	{
-		$name = (string) preg_replace('/[\x00-\x1F\x7F]/', '', (string) $clientFilename);
+		$name = (string) preg_replace('/[\x00-\x1F\x7F]/', '', $name);
 		$name = basename(str_replace('\\', '/', $name));
 
-		if ($name === '' || $name === '.' || $name === '..')
-			throw new ModuleException('mediapool', 'Invalid file name.');
-
-		return $name;
+		return ($name === '.' || $name === '..') ? '' : $name;
 	}
 
 	/**
+	 * @throws FilesystemException
+	 */
+	private function createUploadTarget(string $name): string
+	{
+		$directory = '/' . $this->uploadPath . '/' . bin2hex(random_bytes(8));
+		$this->filesystem->createDirectory($directory);
+
+		return $directory . '/' . strtolower($name);
+	}
+
+	/**
+	 * The download stops when it gets bigger than the handler allows, whatever the server said about the size.
+	 *
 	 * @param array<string,mixed> $curlOpts Guzzle request options
 	 * @throws GuzzleException
+	 * @throws FilesystemException
 	 */
 	public function uploadFromExternal(Client $client, string $fileURI, array $curlOpts): string
 	{
-		/** @var array{path: string} $parsedUrl */
-		$parsedUrl  = parse_url($fileURI);
+		$name       = $this->cleanFilename((string) parse_url($fileURI, PHP_URL_PATH));
+		$targetPath = $this->createUploadTarget($name !== '' ? $name : 'external');
+		$maxSize    = $this->getMaxFileSize();
+		$handle     = fopen($this->getAbsolutePath($targetPath), 'w');
+		if ($handle === false)
+		{
+			$this->removeUploadedFile($targetPath);
+			throw new ModuleException('mediapool', 'The file for the download can not be created.');
+		}
 
-		/** @var array{basename: string} $pathInfo */
-		$pathInfo   = pathinfo($parsedUrl['path']);
-		$targetPath = strtolower('/'. $this->originalPath .'/'. $pathInfo['basename']);
+		$sink       = new SizeLimitedStream(
+			Utils::streamFor($handle),
+			$maxSize,
+			fn(int $size): TranslatableModuleException => $this->createFilesizeError($size, $maxSize)
+		);
 
-		$client->request('GET', $fileURI, array_merge(['sink' => $this->getAbsolutePath($targetPath)], $curlOpts));
+		try
+		{
+			$client->request('GET', $fileURI, array_merge($curlOpts, ['sink' => $sink]));
+		}
+		catch (Throwable $e)
+		{
+			$sink->close();
+			$this->removeUploadedFile($targetPath);
+			// Guzzle wraps what a write throws: the message about the size is for the user
+			throw $this->findFilesizeError($e) ?? $e;
+		}
+		$sink->close();
+
 		return $targetPath;
 	}
 
+	private function findFilesizeError(Throwable $e): ?TranslatableModuleException
+	{
+		for ($previous = $e; $previous !== null; $previous = $previous->getPrevious())
+		{
+			if ($previous instanceof TranslatableModuleException)
+				return $previous;
+		}
+
+		return null;
+	}
 
 	/**
 	 * @throws FilesystemException
@@ -202,23 +266,22 @@ abstract class AbstractMediaHandler
 		if (!$this->filesystem->fileExists($filePath))
 			throw new ModuleException('mediapool', 'Filesize: '.$filePath.' not exists');
 
-		$stream = $this->filesystem->readStream($filePath);
-
-		$contents = stream_get_contents($stream);
-		if ($contents === false)
-			throw new ModuleException('mediapool', 'Stream from '.$filePath.' not readable');
-
-		$hash = hash('sha256', $contents);
+		// read in pieces: a video of a gigabyte must not be loaded into the memory to get its hash
+		$stream  = $this->filesystem->readStream($filePath);
+		$context = hash_init('sha256');
+		hash_update_stream($context, $stream);
 		fclose($stream);
+		$hash = hash_final($context);
 
 		return $hash;
 	}
 
+	/**
+	 * The place in the storage: the name is the hash, whatever the name of the upload was.
+	 */
 	public function determineNewFilePath(string $oldFilePath, string $filehash, string $ext): string
 	{
-		/** @var array{dirname:string} $fileInfo */
-		$fileInfo    = pathinfo($oldFilePath);
-		return $fileInfo['dirname']. '/'.$filehash.'.'.$ext;
+		return '/' . $this->originalPath . '/' . $filehash . '.' . $ext;
 	}
 
 	/**
@@ -237,11 +300,18 @@ abstract class AbstractMediaHandler
 	}
 
 	/**
+	 * Deletes the file and the directory of its upload, when it has one.
+	 *
 	 * @throws FilesystemException
 	 */
 	public function removeUploadedFile(string $filePath): void
 	{
-		$this->filesystem->delete($filePath);
+		if ($this->filesystem->fileExists($filePath))
+			$this->filesystem->delete($filePath);
+
+		$directory = dirname($filePath);
+		if (dirname($directory) === '/' . $this->uploadPath && $this->filesystem->directoryExists($directory))
+			$this->filesystem->deleteDirectory($directory);
 	}
 
 	/**

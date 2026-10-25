@@ -40,6 +40,8 @@ use Psr\Http\Message\UploadedFileInterface;
  */
 class Widget extends AbstractMediaHandler
 {
+	private const array ICON_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp'];
+
 	private int $maxDownloadSize;
 	private ZipFilesystemFactory $zipFilesystemFactory;
 	private Imagick $imagick;
@@ -56,6 +58,11 @@ class Widget extends AbstractMediaHandler
 		$this->imagick              = $imagick;
 		$this->configXML            = $configXML;
 		$this->maxDownloadSize      = (int) $this->config->getConfigValue('downloads', 'mediapool', 'max_file_sizes');
+	}
+
+	public function getMaxFileSize(): int
+	{
+		return $this->maxDownloadSize;
 	}
 
 	/**
@@ -97,13 +104,15 @@ class Widget extends AbstractMediaHandler
 		}
 
 		$fileInfo  = pathinfo($filePath);
-		if ($zipFilesystem->fileExists($this->configXML->getIcon()))
+		$icon      = $this->configXML->getIcon();
+		// the ending of the icon is part of the name of the thumbnail and of its url: only the ones of images
+		if (in_array(strtolower(pathinfo($icon, PATHINFO_EXTENSION)), self::ICON_EXTENSIONS, true) && $zipFilesystem->fileExists($icon))
 		{
-			$imageContent = $zipFilesystem->read($this->configXML->getIcon());
+			$imageContent = $zipFilesystem->read($icon);
 			$this->imagick->readImageBlob($imageContent);
 			$this->imagick->thumbnailImage($this->thumbWidth, $this->thumbHeight, true);
 
-			$this->thumbExtension = pathinfo($this->configXML->getIcon(), PATHINFO_EXTENSION);
+			$this->thumbExtension = strtolower(pathinfo($icon, PATHINFO_EXTENSION));
 			$thumbPath            = $this->config->getPaths('systemDir').'/'.$this->thumbPath.'/'.$fileInfo['filename']. '.'.$this->thumbExtension;
 			$this->imagick->writeImage($thumbPath);
 		}

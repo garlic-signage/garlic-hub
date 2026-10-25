@@ -52,6 +52,11 @@ class Pdf extends AbstractMediaHandler
 		$this->maxDocumentSize = (int) $this->config->getConfigValue('documents', 'mediapool', 'max_file_sizes');
 	}
 
+	public function getMaxFileSize(): int
+	{
+		return $this->maxDocumentSize;
+	}
+
 	/**
 	 * @throws ModuleException
 	 */
