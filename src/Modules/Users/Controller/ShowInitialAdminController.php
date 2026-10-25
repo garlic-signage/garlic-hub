@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Controller;
 
+use App\Framework\Controller\RequestInput;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -67,8 +68,7 @@ readonly class ShowInitialAdminController
 		if (!$this->orchestrator->isFunctionAllowed())
 			return $response->withHeader('Location', '/')->withStatus(302);
 
-		/** @var array{username:string, email:string, locale: string, password:string, password_confirm: string} $post */
-		$post   = $request->getParsedBody();
+		$post   = RequestInput::of($request->getParsedBody())->texts(['username', 'email', 'locale', 'password', 'password_confirm', 'csrf_token']);
 		$result = $this->orchestrator->store($post);
 		if (!$result['success'])
 		{
@@ -80,7 +80,7 @@ readonly class ShowInitialAdminController
 			return $this->outputRenderedForm($post);
 		}
 
-		$this->flash->addMessage('success', 'Admin User “' . $post['username'] . '“ successfully stored. You can now login with your username and password.');
+		$this->flash->addMessage('success', 'Admin User “' . ($post['username'] ?? '') . '“ successfully stored. You can now login with your username and password.');
 		return $response->withHeader('Location', '/login')->withStatus(302);
 	}
 

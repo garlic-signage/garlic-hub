@@ -186,15 +186,40 @@ class ShowInitialAdminControllerTest extends UsersControllerTestCase
 		static::assertCount(1, $this->flash('error'));
 	}
 
-	/**
-	 * Known bug: getParsedBody() is null without a body.
-	 */
 	public function testARequestWithoutBodyIsAFormWithErrors(): void
 	{
-		static::markTestSkipped('Known bug: a request without body is a TypeError instead of the form with the errors. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
-		$this->page($this->store(null));
+		$page = $this->page($this->store(null));
 
 		static::assertSame(0, $this->countUsers());
+		static::assertNotSame([], $this->flash('error'));
+		static::assertArrayHasKey('username', $this->fields($page));
+	}
+
+	public function testAListAsLocaleIsTheDefaultLocale(): void
+	{
+		$this->assertRedirect($this->store(self::admin(['locale' => ['de_DE']])), '/login');
+
+		static::assertSame('en_US', $this->userRow(1)['locale']);
+	}
+
+	/**
+	 * @return array<string,array{array<string,mixed>}>
+	 */
+	public static function textFieldsWhichAreLists(): array
+	{
+		return ['username' => [['username' => ['root']]], 'email' => [['email' => ['root@example.com']]], 'password' => [['password' => ['Secret123!'], 'password_confirm' => ['Secret123!']]]];
+	}
+
+	/**
+	 * @param array<string,mixed> $changes
+	 */
+	#[DataProvider('textFieldsWhichAreLists')]
+	public function testAListInAFieldIsAMissingValue(array $changes): void
+	{
+		$page = $this->page($this->store(self::admin($changes)));
+
+		static::assertSame(0, $this->countUsers());
+		static::assertNotSame([], $this->flash('error'));
+		static::assertArrayHasKey('username', $this->fields($page));
 	}
 }

@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Controller;
 
+use App\Framework\Controller\RequestInput;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -85,18 +86,24 @@ readonly class ShowAdminController
 	 */
 	public function store(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array<string,mixed> $post */
-		$post = $request->getParsedBody();
-		$UID  = (int) ($post['UID'] ?? 0);
+		$input = RequestInput::of($request->getParsedBody());
+		$post  = $input->texts(['UID', 'username', 'email', 'status', 'locale', 'csrf_token']);
 
-		if ($UID === 0)
+		// the form of a new user has no id or 0
+		$sent = $input->all()['UID'] ?? null;
+		if ($sent === null || $sent === '' || $sent === '0' || $sent === 0)
 			return $this->insert($response, $post);
+
+		// an id which is no id (a list, text) is not the user 1 and not a new user
+		$UID = $input->id('UID');
+		if ($UID === 0)
+			return $this->redirectWithError($response, 'UID not valid.');
 
 		$user = $this->orchestrator->loadUserForEdit($UID);
 		if ($user === [])
 			return $this->redirectWithError($response, 'User not found.');
 
-		if (isset($post['resetPassword']))
+		if (isset($input->all()['resetPassword']))
 			return $this->resetPassword($response, $UID, $post);
 
 		return $this->update($response, $UID, $user['username'], $post);

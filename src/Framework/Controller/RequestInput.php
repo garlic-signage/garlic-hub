@@ -76,6 +76,26 @@ final readonly class RequestInput
 	}
 
 	/**
+	 * The fields of a form which are read as text, to show them again or to pass them on. A value which is missing or no
+	 * text is not in the result, so the default of the field applies as for a field which was not sent.
+	 *
+	 * @param list<string> $keys
+	 * @return array<string,string>
+	 */
+	public function texts(array $keys): array
+	{
+		$texts = [];
+		foreach ($keys as $key)
+		{
+			$value = $this->values[$key] ?? null;
+			if (is_string($value) || is_int($value))
+				$texts[$key] = (string) $value;
+		}
+
+		return $texts;
+	}
+
+	/**
 	 * A number from JSON (5) or from a form or an address ("5"). Everything else is no id.
 	 */
 	public function hasId(string $key): bool

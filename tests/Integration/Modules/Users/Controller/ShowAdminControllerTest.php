@@ -349,8 +349,6 @@ class ShowAdminControllerTest extends UsersControllerTestCase
 	#[DataProvider('textFieldsWhichAreLists')]
 	public function testAListInATextFieldIsAMissingValue(array $input): void
 	{
-		static::markTestSkipped('Known bug: a list as username or email is a TypeError when the form is shown again, instead of the error for a missing value. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(1);
 
 		$this->page($this->store(['UID' => '0'] + $input));
@@ -360,17 +358,21 @@ class ShowAdminControllerTest extends UsersControllerTestCase
 	}
 
 	/**
-	 * Known bug: UID[]=3 is (int) ['3'] = 1, the admin.
+	 * @return array<string,array{mixed}> a UID which is no id: it is not the user 1 and not a new user
 	 */
-	public function testAListAsUserIsNoUser(): void
+	public static function usersWhichAreNoIds(): array
 	{
-		static::markTestSkipped('Known bug: a list as UID is cast to 1, the data of the admin is changed. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
+		return ['a list' => [['3']], 'a list of the admin' => [['1']], 'text' => ['abc'], 'negative' => ['-3'], 'a number with text' => ['3abc']];
+	}
+
+	#[DataProvider('usersWhichAreNoIds')]
+	public function testAUidWhichIsNoIdIsNoUser(mixed $UID): void
+	{
 		$this->actingAs(1);
 
-		$this->store(['UID' => ['3'], 'username' => 'hacked', 'email' => 'hacked@example.com']);
+		$this->assertRedirect($this->store(['UID' => $UID, 'username' => 'hacked', 'email' => 'hacked@example.com']), '/users', 'UID not valid.');
 
-		static::assertSame('admin', $this->userRow(1)['username']);
+		static::assertSame(['admin', 'bernd'], [$this->userRow(1)['username'], $this->userRow(3)['username']]);
 		static::assertSame(3, $this->countUsers());
 	}
 

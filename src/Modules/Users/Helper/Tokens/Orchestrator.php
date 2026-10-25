@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace App\Modules\Users\Helper\Tokens;
 
 use App\Framework\Validation\BaseValidator;
+use App\Framework\Controller\ReadsInput;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
@@ -38,8 +39,8 @@ use Psr\Http\Message\ResponseInterface;
  */
 class Orchestrator
 {
-	/** @var array<string,mixed> */
-	private array $input = [];
+	use ReadsInput;
+
 	private int $UID = 0;
 	private string $purpose = '';
 
@@ -52,15 +53,6 @@ class Orchestrator
 	) {}
 
 	/**
-	 * @param array<string,mixed> $input
-	 */
-	public function setInput(array $input): static
-	{
-		$this->input = $input;
-		return $this;
-	}
-
-	/**
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
@@ -68,18 +60,18 @@ class Orchestrator
 	 */
 	public function validate(ResponseInterface $response): ?ResponseInterface
 	{
-		if (!$this->validator->validateCsrfToken($this->input['csrf_token'] ?? ''))
+		if (!$this->validator->validateCsrfToken($this->text('csrf_token')))
 			return $this->responseBuilder->csrfTokenMismatch($response);
 
 		if (!$this->aclValidator->isModuleAdmin($this->userSession->getUID()))
 			return $this->responseBuilder->noRights($response);
 
-		$this->UID = (int) ($this->input['UID'] ?? 0);
+		$this->UID = $this->id('UID');
 		if ($this->UID === 0)
 			return $this->responseBuilder->missingUID($response);
 
 		// validated against TokenPurposes in UserTokenService
-		$this->purpose = (string) ($this->input['purpose'] ?? '');
+		$this->purpose = $this->text('purpose');
 		if ($this->purpose === '')
 			return $this->responseBuilder->missingPurpose($response);
 

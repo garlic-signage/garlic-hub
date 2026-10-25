@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Controller;
 
+use App\Framework\Controller\RequestInput;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
@@ -46,9 +47,7 @@ readonly class UserTokenController
 	 */
 	public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array<string,mixed> $input */
-		$input = $request->getParsedBody();
-		$answer = $this->orchestrator->setInput($input)->validate($response);
+		$answer = $this->orchestrator->setInput(RequestInput::of($request->getParsedBody())->all())->validate($response);
 		if ($answer !== null)
 			return $answer;
 
@@ -64,9 +63,7 @@ readonly class UserTokenController
 	 */
 	public function refresh(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array<string,mixed> $input */
-		$input = $request->getParsedBody();
-		$answer = $this->orchestrator->setInput($input)->validate($response);
+		$answer = $this->orchestrator->setInput(RequestInput::of($request->getParsedBody())->all())->validate($response);
 		if ($answer !== null)
 			return $answer;
 

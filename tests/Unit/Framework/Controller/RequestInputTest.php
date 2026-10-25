@@ -77,6 +77,16 @@ class RequestInputTest extends TestCase
 			static::assertSame('', $input->scalarText($key), $key);
 	}
 
+	#[Group('units')]
+	public function testTheFieldsOfAFormWhichAreTextAreGiven(): void
+	{
+		$input = new RequestInput(['name' => 'Lobby', 'id' => 7, 'float' => 1.5, 'array' => ['x'], 'null' => null, 'other' => 'not asked']);
+
+		static::assertSame(['name' => 'Lobby', 'id' => '7'], $input->texts(['name', 'id', 'float', 'array', 'null', 'missing']));
+		static::assertSame(['empty' => ''], (new RequestInput(['empty' => '']))->texts(['empty']));
+		static::assertSame([], $input->texts([]));
+	}
+
 	/**
 	 * @return array<string,array{mixed,bool}>
 	 */

@@ -171,30 +171,30 @@ class UserTokenControllerTest extends UsersControllerTestCase
 		$this->assertError($this->send($action, ['UID' => '3', 'purpose' => 'password_reset']), 'Token not editable.');
 	}
 
-	/**
-	 * Known bug: UID[]=3 is (int) ['3'] = 1, the admin.
-	 */
-	public function testAListAsUserIsNoUser(): void
+	#[DataProvider('actions')]
+	public function testAListAsUserIsNoUser(string $action): void
 	{
-		static::markTestSkipped('Known bug: a list as UID is cast to 1, the tokens of the admin are changed. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(1);
 		$this->createToken(1, TokenPurposes::PASSWORD_RESET);
 
-		$this->assertError($this->send('delete', ['UID' => ['3'], 'purpose' => 'password_reset']), 'UID not transmitted.');
+		$this->assertError($this->send($action, ['UID' => ['3'], 'purpose' => 'password_reset']), 'UID not transmitted.');
 
 		static::assertSame(1, $this->countTokens(1));
 	}
 
-	/**
-	 * Known bug: a list as purpose or csrf_token is a TypeError.
-	 */
-	public function testAListAsPurposeIsNoPurpose(): void
+	#[DataProvider('actions')]
+	public function testAListAsPurposeIsNoPurpose(string $action): void
 	{
-		static::markTestSkipped('Known bug: a list as purpose or csrf_token is a TypeError or "Array to string conversion". Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(1);
 
-		$this->assertError($this->send('delete', ['UID' => '3', 'purpose' => ['password_reset']]), 'Purpose not transmitted.');
+		$this->assertError($this->send($action, ['UID' => '3', 'purpose' => ['password_reset']]), 'Purpose not transmitted.');
+	}
+
+	#[DataProvider('actions')]
+	public function testAListAsCsrfTokenIsNoToken(string $action): void
+	{
+		$this->actingAs(1);
+
+		$this->assertError($this->send($action, ['csrf_token' => ['x'], 'UID' => '3', 'purpose' => 'password_reset'], withToken: false), 'CSRF token validation error.');
 	}
 }

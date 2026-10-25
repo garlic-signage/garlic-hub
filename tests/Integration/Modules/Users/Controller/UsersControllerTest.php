@@ -113,13 +113,8 @@ class UsersControllerTest extends UsersControllerTestCase
 		$this->assertError($this->controller->delete($this->request('DELETE', body: null), $this->newResponse()), 'CSRF token mismatch.');
 	}
 
-	/**
-	 * Known bug: UID[]=3 is (int) ['3'] = 1, the admin.
-	 */
 	public function testAListAsUserIsNoUser(): void
 	{
-		static::markTestSkipped('Known bug: a list as UID is cast to 1 and deletes the admin. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(1);
 
 		$this->assertError($this->delete(['UID' => ['3']]), 'No UID');
@@ -127,13 +122,8 @@ class UsersControllerTest extends UsersControllerTestCase
 		static::assertSame(3, (int) $this->databaseValue('SELECT status FROM user_main WHERE UID = 1'));
 	}
 
-	/**
-	 * Known bug: validateToken() takes a string.
-	 */
 	public function testACsrfTokenWhichIsNoTextIsNoToken(): void
 	{
-		static::markTestSkipped('Known bug: a csrf_token which is no text is a TypeError instead of the answer for a wrong token. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(1);
 
 		$this->assertError($this->delete(['csrf_token' => ['x'], 'UID' => '3'], withToken: false), 'CSRF token mismatch.');
