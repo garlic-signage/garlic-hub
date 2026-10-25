@@ -28,14 +28,12 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Modules\Templates\Services\AclValidator;
 use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class AclValidatorTest extends TestCase
 {
-	private AclHelper&MockObject $aclHelperMock;
-	private Config&Stub $configStub;
+	private AclHelper&Stub $aclHelperStub;
 	private AclValidator $aclValidator;
 
 	/** @var array{UID: int, company_id: int, template_id: int} */
@@ -47,49 +45,38 @@ class AclValidatorTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->aclHelperMock = $this->createMock(AclHelper::class);
-		$this->configStub    = $this->createStub(Config::class);
-
-		$this->aclValidator  = new AclValidator($this->aclHelperMock);
+		$this->aclHelperStub = $this->createStub(AclHelper::class);
+		$this->aclValidator  = new AclValidator($this->aclHelperStub);
 	}
 
 	#[Group('units')]
 	public function testModuleName(): void
 	{
-		$this->aclHelperMock->expects($this->never())->method('isModuleAdmin');
-
 		static::assertSame('templates', $this->aclValidator->getModuleName());
 	}
 
-    /**
-     */
 	#[Group('units')]
 	public function testCanCreateAsModuleAdmin(): void
 	{
-		$this->aclHelperMock->expects($this->once())->method('isModuleAdmin')->with(1, 'templates')->willReturn(true);
-		$this->aclHelperMock->expects($this->never())->method('isSubAdmin');
+		$this->aclHelperStub->method('isModuleAdmin')->willReturnMap([[1, 'templates', true]]);
 
 		static::assertTrue($this->aclValidator->canCreate(1));
 	}
 
-    /**
-     */
 	#[Group('units')]
 	public function testCanCreateAsSubAdmin(): void
 	{
-		$this->aclHelperMock->expects($this->once())->method('isModuleAdmin')->willReturn(false);
-		$this->aclHelperMock->expects($this->once())->method('isSubAdmin')->with(1, 'templates')->willReturn(true);
+		$this->aclHelperStub->method('isModuleAdmin')->willReturn(false);
+		$this->aclHelperStub->method('isSubAdmin')->willReturnMap([[1, 'templates', true]]);
 
 		static::assertTrue($this->aclValidator->canCreate(1));
 	}
 
-    /**
-     */
 	#[Group('units')]
 	public function testCanCreateAsUser(): void
 	{
-		$this->aclHelperMock->expects($this->once())->method('isModuleAdmin')->willReturn(false);
-		$this->aclHelperMock->expects($this->once())->method('isSubAdmin')->willReturn(false);
+		$this->aclHelperStub->method('isModuleAdmin')->willReturn(false);
+		$this->aclHelperStub->method('isSubAdmin')->willReturn(false);
 
 		static::assertFalse($this->aclValidator->canCreate(1));
 	}
@@ -102,8 +89,7 @@ class AclValidatorTest extends TestCase
 	#[Group('units')]
 	public function testIsAllowedToDeleteTemplateAsModuleAdmin(): void
 	{
-		$this->aclHelperMock->expects($this->once())->method('isModuleAdmin')->with(1, 'templates')->willReturn(true);
-		$this->aclHelperMock->expects($this->never())->method('getConfig');
+		$this->aclHelperStub->method('isModuleAdmin')->willReturnMap([[1, 'templates', true]]);
 
 		static::assertTrue($this->aclValidator->isAllowedToDeleteTemplate(1, $this->template));
 	}
@@ -116,10 +102,12 @@ class AclValidatorTest extends TestCase
 	#[Group('units')]
 	public function testIsAllowedToDeleteTemplateInEdgeEdition(): void
 	{
-		$this->aclHelperMock->expects($this->once())->method('isModuleAdmin')->willReturn(false);
-		$this->mockEdition(Config::PLATFORM_EDITION_EDGE);
-		$this->aclHelperMock->expects($this->never())->method('hasSubAdminAccessOnCompany');
+		$this->aclHelperStub->method('isModuleAdmin')->willReturn(false);
+		$this->aclHelperStub->method('isSubAdmin')->willReturn(true);
+		$this->aclHelperStub->method('hasSubAdminAccessOnCompany')->willReturn(true);
+		$this->edition(Config::PLATFORM_EDITION_EDGE);
 
+		// the sub admin with access on the company does not count in the edge edition
 		static::assertFalse($this->aclValidator->isAllowedToDeleteTemplate(1, $this->template));
 	}
 
@@ -131,12 +119,10 @@ class AclValidatorTest extends TestCase
 	#[Group('units')]
 	public function testIsAllowedToDeleteTemplateAsSubAdminWithCompanyAccess(): void
 	{
-		$this->aclHelperMock->expects($this->once())->method('isModuleAdmin')->willReturn(false);
-		$this->mockEdition(Config::PLATFORM_EDITION_ENTERPRISE);
-		$this->aclHelperMock->expects($this->once())->method('isSubAdmin')->with(1, 'templates')->willReturn(true);
-		$this->aclHelperMock->expects($this->once())->method('hasSubAdminAccessOnCompany')
-			->with(1, 4, 'templates')
-			->willReturn(true);
+		$this->aclHelperStub->method('isModuleAdmin')->willReturn(false);
+		$this->edition(Config::PLATFORM_EDITION_ENTERPRISE);
+		$this->aclHelperStub->method('isSubAdmin')->willReturnMap([[1, 'templates', true]]);
+		$this->aclHelperStub->method('hasSubAdminAccessOnCompany')->willReturnMap([[1, 4, 'templates', true]]);
 
 		static::assertTrue($this->aclValidator->isAllowedToDeleteTemplate(1, $this->template));
 	}
@@ -149,10 +135,10 @@ class AclValidatorTest extends TestCase
 	#[Group('units')]
 	public function testIsAllowedToDeleteTemplateAsSubAdminWithoutCompanyAccess(): void
 	{
-		$this->aclHelperMock->expects($this->once())->method('isModuleAdmin')->willReturn(false);
-		$this->mockEdition(Config::PLATFORM_EDITION_ENTERPRISE);
-		$this->aclHelperMock->expects($this->once())->method('isSubAdmin')->willReturn(true);
-		$this->aclHelperMock->expects($this->once())->method('hasSubAdminAccessOnCompany')->willReturn(false);
+		$this->aclHelperStub->method('isModuleAdmin')->willReturn(false);
+		$this->edition(Config::PLATFORM_EDITION_ENTERPRISE);
+		$this->aclHelperStub->method('isSubAdmin')->willReturn(true);
+		$this->aclHelperStub->method('hasSubAdminAccessOnCompany')->willReturn(false);
 
 		static::assertFalse($this->aclValidator->isAllowedToDeleteTemplate(1, $this->template));
 	}
@@ -165,8 +151,7 @@ class AclValidatorTest extends TestCase
 	#[Group('units')]
 	public function testIsTemplateEditableAsAdmin(): void
 	{
-		$this->aclHelperMock->expects($this->once())->method('isModuleAdmin')->willReturn(true);
-		$this->aclHelperMock->expects($this->never())->method('isEditor');
+		$this->aclHelperStub->method('isModuleAdmin')->willReturn(true);
 
 		static::assertTrue($this->aclValidator->isTemplateEditable(1, $this->template));
 	}
@@ -179,14 +164,30 @@ class AclValidatorTest extends TestCase
 	#[Group('units')]
 	public function testIsTemplateEditableAsEditorWithAccess(): void
 	{
-		$this->aclHelperMock->expects($this->once())->method('isModuleAdmin')->willReturn(false);
-		$this->mockEdition(Config::PLATFORM_EDITION_EDGE);
-		$this->aclHelperMock->expects($this->once())->method('isEditor')->with(1, 'templates')->willReturn(true);
-		$this->aclHelperMock->expects($this->once())->method('hasEditorAccessOnUnit')
-			->with(1, 12, 'templates')
-			->willReturn(true);
+		$this->aclHelperStub->method('isModuleAdmin')->willReturn(false);
+		$this->edition(Config::PLATFORM_EDITION_EDGE);
+		$this->aclHelperStub->method('isEditor')->willReturnMap([[1, 'templates', true]]);
+		$this->aclHelperStub->method('hasEditorAccessOnUnit')->willReturnMap([[1, 12, 'templates', true]]);
 
 		static::assertTrue($this->aclValidator->isTemplateEditable(1, $this->template));
+	}
+
+	/**
+	 * Editor of the module, but not for this template.
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testIsTemplateEditableAsEditorWithoutAccessOnThisTemplate(): void
+	{
+		$this->aclHelperStub->method('isModuleAdmin')->willReturn(false);
+		$this->edition(Config::PLATFORM_EDITION_EDGE);
+		$this->aclHelperStub->method('isEditor')->willReturn(true);
+		$this->aclHelperStub->method('hasEditorAccessOnUnit')->willReturnMap([[1, 99, 'templates', true], [1, 12, 'templates', false]]);
+
+		static::assertFalse($this->aclValidator->isTemplateEditable(1, $this->template));
 	}
 
 	/**
@@ -197,17 +198,18 @@ class AclValidatorTest extends TestCase
 	#[Group('units')]
 	public function testIsTemplateEditableWithoutRights(): void
 	{
-		$this->aclHelperMock->expects($this->once())->method('isModuleAdmin')->willReturn(false);
-		$this->mockEdition(Config::PLATFORM_EDITION_EDGE);
-		$this->aclHelperMock->expects($this->once())->method('isEditor')->willReturn(false);
-		$this->aclHelperMock->expects($this->never())->method('hasEditorAccessOnUnit');
+		$this->aclHelperStub->method('isModuleAdmin')->willReturn(false);
+		$this->edition(Config::PLATFORM_EDITION_EDGE);
+		$this->aclHelperStub->method('isEditor')->willReturn(false);
+		$this->aclHelperStub->method('hasEditorAccessOnUnit')->willReturn(true);
 
 		static::assertFalse($this->aclValidator->isTemplateEditable(1, $this->template));
 	}
 
-	private function mockEdition(string $edition): void
+	private function edition(string $edition): void
 	{
-		$this->aclHelperMock->expects($this->once())->method('getConfig')->willReturn($this->configStub);
-		$this->configStub->method('getEdition')->willReturn($edition);
+		$config = $this->createStub(Config::class);
+		$config->method('getEdition')->willReturn($edition);
+		$this->aclHelperStub->method('getConfig')->willReturn($config);
 	}
 }
