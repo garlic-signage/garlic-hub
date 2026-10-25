@@ -19,93 +19,213 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Framework\Xml;
 
 use App\Framework\Xml\XmlParsingException;
-use App\Framework\Xml\XmlReader;
 use App\Framework\Xml\XmlReaderFactory;
+use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use SimpleXMLElement;
 
 class XmlReaderFactoryTest extends TestCase
 {
-	private XmlReaderFactory $xmlReaderFactory;
+	private const string VALID = '<root id="7"><node>value</node></root>';
+
+	private XmlReaderFactory $factory;
+	/** @var list<string> */
+	private array $files = [];
 
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->xmlReaderFactory = new XmlReaderFactory();
+		$this->factory = new XmlReaderFactory();
+	}
+
+	protected function tearDown(): void
+	{
+		array_map('unlink', $this->files);
+		parent::tearDown();
+	}
+
+	private function file(string $content): string
+	{
+		$path = sys_get_temp_dir() . '/xml_reader_' . uniqid() . '.xml';
+		file_put_contents($path, $content);
+		$this->files[] = $path;
+
+		return $path;
 	}
 
 	#[Group('units')]
-	public function testCreateFromSimpleXmlObjectValidInput(): void
+	public function testCreateFromSimpleXmlObject(): void
 	{
-		$simpleXmlObj = new \SimpleXMLElement('<root><node>value</node></root>');
-		$xmlReader = $this->xmlReaderFactory->createFromSimpleXmlObject($simpleXmlObj);
+		$reader = $this->factory->createFromSimpleXmlObject(new SimpleXMLElement(self::VALID));
 
-		// use equals here because Same is like ===
-		static::assertEquals(new XmlReader($simpleXmlObj), $xmlReader);
+		static::assertSame('7', $reader->readAttribute('id'));
+		static::assertSame('value', (string) $reader->readSubnode('node'));
 	}
 
 	#[Group('units')]
-	public function testCreateFromStringValidInput(): void
+	public function testCreateFromString(): void
 	{
-		$validXml = '<root><node>value</node></root>';
-		$xmlReader = $this->xmlReaderFactory->createFromString($validXml);
+		$reader = $this->factory->createFromString(self::VALID);
 
-		static::assertEquals(new XmlReader(new \SimpleXMLElement($validXml)), $xmlReader);
+		static::assertSame(['id' => '7'], $reader->getAllAttributes());
+		static::assertSame('value', (string) $reader->readSubnode('node'));
 	}
 
 	#[Group('units')]
-	public function testCreateFromStringInvalidInput(): void
+	public function testCreateFromFile(): void
 	{
-		$this->expectException(XmlParsingException::class);
+		$reader = $this->factory->createFromFile($this->file(self::VALID));
 
-		$invalidXml = '<root><node>value</node>'; // Missing closing root tag
-		$this->xmlReaderFactory->createFromString($invalidXml);
+		static::assertSame(['id' => '7'], $reader->getAllAttributes());
+		static::assertSame('value', (string) $reader->readSubnode('node'));
+	}
+
+	/**
+	 * @return array<string, array{string}>
+	 */
+	public static function brokenXmlProvider(): array
+	{
+		return [
+			'not closed'  => ['<root><node>value</node>'],
+			'only text'   => ['no xml at all'],
+			'two roots'   => ['<a/><b/>'],
+			'empty'       => [''],
+		];
 	}
 
 	#[Group('units')]
-	public function testCreateFromFileValidInput(): void
+	#[DataProvider('brokenXmlProvider')]
+	public function testBrokenXmlFromStringThrowsWithTheErrorsOfTheParser(string $xml): void
 	{
-		$mockFilePath = __DIR__ . '/mock_valid.xml'; // Assuming the file exists with valid XML content
-		file_put_contents($mockFilePath, '<root><node>value</node></root>');
+		try
+		{
+			$this->factory->createFromString($xml);
+		}
+		catch (XmlParsingException $e)
+		{
+			static::assertSame('Error parsing XML string', $e->getMessage());
+
+			return;
+		}
+
+		static::fail('Expected an XmlParsingException.');
+	}
+
+	#[Group('units')]
+	public function testTheExceptionHasTheLineAndColumnOfTheError(): void
+	{
+		try
+		{
+			$this->factory->createFromString("<root>\n<node>value</node>\n<open>\n</root>");
+		}
+		catch (XmlParsingException $e)
+		{
+			$errors = $e->getFormattedErrors();
+			static::assertNotSame([], $errors);
+			static::assertSame(LIBXML_ERR_FATAL, $errors[0]['level']);
+			static::assertSame(4, $errors[0]['line']);
+
+			return;
+		}
+
+		static::fail('Expected an XmlParsingException.');
+	}
+
+	#[Group('units')]
+	#[DataProvider('brokenXmlProvider')]
+	public function testBrokenXmlFromFileThrowsAndNamesTheFile(string $xml): void
+	{
+		$path = $this->file($xml);
 
 		try
 		{
-			$xmlReader = $this->xmlReaderFactory->createFromFile($mockFilePath);
-			static::assertEquals(new XmlReader(new \SimpleXMLElement('<root><node>value</node></root>')), $xmlReader);
+			$this->factory->createFromFile($path);
 		}
-		finally
+		catch (XmlParsingException $e)
 		{
-			unlink($mockFilePath);
+			static::assertSame('Error parsing XML file: ' . $path, $e->getMessage());
+
+			return;
 		}
+
+		static::fail('Expected an XmlParsingException.');
 	}
 
 	#[Group('units')]
-	public function testCreateFromFileInvalidFilePath(): void
+	public function testAFileWhichDoesNotExistThrows(): void
 	{
-		$this->expectException(\InvalidArgumentException::class);
+		$this->expectException(InvalidArgumentException::class);
 		$this->expectExceptionMessage("File '/invalid/path/to/file.xml' not found or not readable.");
 
-		$this->xmlReaderFactory->createFromFile('/invalid/path/to/file.xml');
+		$this->factory->createFromFile('/invalid/path/to/file.xml');
 	}
 
+	/**
+	 * A directory is no file: it must not end in a notice of the XML parser.
+	 */
 	#[Group('units')]
-	public function testCreateFromFileInvalidXml(): void
+	public function testADirectoryThrowsTheSameException(): void
 	{
-		$mockFilePath = __DIR__ . '/mock_invalid.xml'; // Assuming the file exists with invalid XML content
-		file_put_contents($mockFilePath, '<root><node>value</node>'); // Missing closing root tag
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('not found or not readable');
+
+		$this->factory->createFromFile(sys_get_temp_dir());
+	}
+
+	/**
+	 * Parsing must not change how libxml reports errors for the rest of the application.
+	 */
+	#[Group('units')]
+	public function testTheSettingOfLibxmlIsGivenBack(): void
+	{
+		$before = libxml_use_internal_errors(false);
 
 		try
 		{
-			$this->expectException(XmlParsingException::class);
-			$this->xmlReaderFactory->createFromFile($mockFilePath);
+			$this->factory->createFromString(self::VALID);
+			$this->factory->createFromFile($this->file(self::VALID));
+			try
+			{
+				$this->factory->createFromString('<root>');
+			}
+			catch (XmlParsingException)
+			{
+				// expected
+			}
+
+			static::assertFalse(libxml_use_internal_errors(false), 'The setting was changed.');
 		}
 		finally
 		{
-			unlink($mockFilePath); // Cleanup the temporary file
+			libxml_use_internal_errors($before);
 		}
+	}
+
+	/**
+	 * An external entity must not read a file of the server into the document (XXE).
+	 */
+	#[Group('units')]
+	public function testAnExternalEntityDoesNotLoadAFile(): void
+	{
+		$secret = $this->file('TOPSECRET');
+		$xml    = '<?xml version="1.0"?><!DOCTYPE a [<!ENTITY e SYSTEM "file://' . $secret . '">]><a>&e;</a>';
+
+		$content = '';
+		try
+		{
+			$content = (string) $this->factory->createFromString($xml)->readSubnode('e');
+			$content .= var_export($this->factory->createFromString($xml), true);
+		}
+		catch (XmlParsingException)
+		{
+			// refused is fine as well
+		}
+
+		static::assertStringNotContainsString('TOPSECRET', $content);
 	}
 }

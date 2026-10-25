@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2024 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -21,12 +21,28 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Framework\Utils\Html;
 
+use App\Framework\Security\Crypt;
 use App\Framework\Security\CsrfToken;
+use App\Framework\Utils\Html\AbstractInputField;
+use App\Framework\Utils\Html\AutocompleteField;
+use App\Framework\Utils\Html\CheckboxField;
+use App\Framework\Utils\Html\ClipboardTextField;
+use App\Framework\Utils\Html\DropdownField;
+use App\Framework\Utils\Html\EmailField;
 use App\Framework\Utils\Html\FieldsFactory;
 use App\Framework\Utils\Html\FieldType;
+use App\Framework\Utils\Html\HiddenField;
+use App\Framework\Utils\Html\NumberField;
+use App\Framework\Utils\Html\PasswordField;
+use App\Framework\Utils\Html\TextField;
+use App\Framework\Utils\Html\UrlField;
+use Defuse\Crypto\Exception\EnvironmentIsBrokenException;
+use Defuse\Crypto\Key;
 use Exception;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use Tests\Unit\Framework\Security\MemorySession;
 
 class FieldsFactoryTest extends TestCase
 {
@@ -38,131 +54,64 @@ class FieldsFactoryTest extends TestCase
 		$this->fieldsFactory = new FieldsFactory();
 	}
 
-	#[Group('units')]
-	public function testCreateTextField(): void
+	/**
+	 * @return array<string, array{string, class-string, FieldType, array<string,mixed>}> create method, class, type, needed attributes
+	 */
+	public static function createMethodProvider(): array
 	{
-		$attributes = ['id' => 'username', 'type' => FieldType::TEXT, 'name' => 'user_name'];
-
-		$field = $this->fieldsFactory->createTextField($attributes);
-
-		static::assertSame('username', $field->getId());
-		static::assertSame('user_name', $field->getName());
+		return [
+			'text'           => ['createTextField', TextField::class, FieldType::TEXT, []],
+			'number'         => ['createNumberField', NumberField::class, FieldType::NUMBER, []],
+			'autocomplete'   => ['createAutocompleteField', AutocompleteField::class, FieldType::AUTOCOMPLETE, ['data-label' => 'test-label']],
+			'dropdown'       => ['createDropdownField', DropdownField::class, FieldType::DROPDOWN, ['options' => []]],
+			'email'          => ['createEmailField', EmailField::class, FieldType::EMAIL, []],
+			'password'       => ['createPasswordField', PasswordField::class, FieldType::PASSWORD, []],
+			'clipboard text' => ['createClipboardTextField', ClipboardTextField::class, FieldType::CLIPBOARD_TEXT, []],
+			'url'            => ['createUrlField', UrlField::class, FieldType::URL, []],
+			'checkbox'       => ['createCheckboxField', CheckboxField::class, FieldType::CHECKBOX, []],
+			'hidden'         => ['createHiddenField', HiddenField::class, FieldType::HIDDEN, []],
+		];
 	}
 
+	/**
+	 * @param class-string $class
+	 * @param array<string,mixed> $needs
+	 */
 	#[Group('units')]
-	public function testCreateNumberField(): void
+	#[DataProvider('createMethodProvider')]
+	public function testEachMethodCreatesItsFieldWithTheAttributes(string $method, string $class, FieldType $type, array $needs): void
 	{
-		$attributes = ['id' => 'status', 'type' => FieldType::NUMBER, 'name' => 'user_status'];
+		$field = $this->fieldsFactory->$method(['id' => 'status', 'type' => $type, 'name' => 'user_status', 'value' => '3'] + $needs);
 
-		$field = $this->fieldsFactory->createNumberField($attributes);
-
+		static::assertInstanceOf($class, $field);
+		static::assertInstanceOf(AbstractInputField::class, $field);
 		static::assertSame('status', $field->getId());
 		static::assertSame('user_status', $field->getName());
-	}
-
-	#[Group('units')]
-	public function testCreateAutocompleteField(): void
-	{
-		$attributes = ['id' => 'UID', 'type' => FieldType::AUTOCOMPLETE, 'name' => 'username', 'data-label' => 'test-label'];
-
-		$field = $this->fieldsFactory->createAutocompleteField($attributes);
-
-		static::assertSame('UID', $field->getId());
-		static::assertSame('username', $field->getName());
-	}
-
-	#[Group('units')]
-	public function testCreateDropdownField(): void
-	{
-		$attributes = ['id' => 'countries', 'type' => FieldType::DROPDOWN, 'name' => 'countries_names', 'options' => []];
-
-		$field = $this->fieldsFactory->createDropdownField($attributes);
-
-		static::assertSame('countries', $field->getId());
-		static::assertSame('countries_names', $field->getName());
-	}
-
-
-	#[Group('units')]
-	public function testCreateEmailField(): void
-	{
-		$attributes = ['id' => 'email', 'type' => FieldType::EMAIL, 'name' => 'email_address'];
-
-		$field = $this->fieldsFactory->createEmailField($attributes);
-
-		static::assertSame('email', $field->getId());
-		static::assertSame('email_address', $field->getName());
-	}
-
-	#[Group('units')]
-	public function testCreatePasswordField(): void
-	{
-		$attributes = ['id' => 'password', 'type' => FieldType::PASSWORD, 'name' => 'user_password'];
-
-		$field = $this->fieldsFactory->createPasswordField($attributes);
-
-		static::assertSame('password', $field->getId());
-		static::assertSame('user_password', $field->getName());
+		static::assertSame($type, $field->getType());
+		static::assertSame('3', $field->getValue());
 	}
 
 	/**
 	 * @throws Exception
-	 * @throws \PHPUnit\Framework\MockObject\Exception
+	 * @throws EnvironmentIsBrokenException
 	 */
 	#[Group('units')]
 	public function testCreateCsrfTokenField(): void
 	{
-		$attributes = ['id' => 'csrf_token', 'type' => FieldType::CSRF, 'name' => 'csrf_token_name'];
+		$csrfToken = new CsrfToken(new Crypt(Key::createNewRandomKey()), new MemorySession());
 
-		$field = $this->fieldsFactory->createCsrfTokenField($attributes, $this->createStub(CsrfToken::class));
+		$field = $this->fieldsFactory->createCsrfTokenField(['id' => 'csrf_token', 'type' => FieldType::CSRF, 'name' => 'csrf_token_name'], $csrfToken);
 
 		static::assertSame('csrf_token', $field->getId());
 		static::assertSame('csrf_token_name', $field->getName());
-		static::assertEmpty($field->getValue());
+		static::assertSame($csrfToken->getToken(), $field->getValue());
 	}
 
 	#[Group('units')]
-	public function testCreateClipboardTextField(): void
+	public function testEveryCallCreatesANewField(): void
 	{
-		$attributes = ['id' => 'clipboard', 'type' => FieldType::CLIPBOARD_TEXT, 'name' => 'clipboard-text'];
+		$attributes = ['id' => 'a', 'type' => FieldType::TEXT];
 
-		$field = $this->fieldsFactory->createClipboardTextField($attributes);
-
-		static::assertSame('clipboard', $field->getId());
-		static::assertSame('clipboard-text', $field->getName());
+		static::assertNotSame($this->fieldsFactory->createTextField($attributes), $this->fieldsFactory->createTextField($attributes));
 	}
-
-	#[Group('units')]
-	public function testCreateUrlField(): void
-	{
-		$attributes = ['id' => 'url', 'type' => FieldType::URL, 'name' => 'url_link'];
-
-		$field = $this->fieldsFactory->createUrlField($attributes);
-
-		static::assertSame('url', $field->getId());
-		static::assertSame('url_link', $field->getName());
-	}
-
-	#[Group('units')]
-	public function testCheckboxField(): void
-	{
-		$attributes = ['id' => 'check', 'type' => FieldType::URL, 'name' => 'checkbox'];
-
-		$field = $this->fieldsFactory->createCheckboxField($attributes);
-
-		static::assertSame('check', $field->getId());
-		static::assertSame('checkbox', $field->getName());
-	}
-
-	#[Group('units')]
-	public function testCreateHiddenField(): void
-	{
-		$attributes = ['id' => 'username', 'type' => FieldType::HIDDEN, 'name' => 'user_name'];
-
-		$field = $this->fieldsFactory->createHiddenField($attributes);
-
-		static::assertSame('username', $field->getId());
-		static::assertSame('user_name', $field->getName());
-	}
-
 }

@@ -102,7 +102,8 @@ class HeaderPreparer
 
 		if ($this->filterParameter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_SORT_COLUMN) == $headerField->getName())
 		{
-			if ($this->filterParameter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_SORT_ORDER) == 'asc')
+			// the order is normalized to ASC/DESC by the filter parameters, so the case must not matter
+			if (strtolower((string) $this->filterParameter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_SORT_ORDER)) === 'asc')
 			{
 				$sort_order_tmp = 'desc';
 				$sortableData['SORTABLE_ORDER']    = '▼';
@@ -118,8 +119,6 @@ class HeaderPreparer
 			$sort_order_tmp = 'asc';
 			$sortableData['SORTABLE_ORDER'] = '◆';
 		}
-		$this->filterParameter->setValueOfParameter(BaseFilterParametersInterface::PARAMETER_SORT_ORDER, $sort_order_tmp);
-
 		$this->urlBuilder
 			->setPage($this->filterParameter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE))
 			->setSortColumn($headerField->getName())

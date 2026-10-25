@@ -125,4 +125,43 @@ class FormTemplatePreparerTest extends TestCase
 
 		static::assertSame($expected, $result);
 	}
+
+	#[Group('units')]
+	public function testOptionalPartsAreTaken(): void
+	{
+		$result = $this->formTemplatePreparer->prepareUITemplate([
+			'title'             => 'Edit playlist',
+			'additional_css'    => [],
+			'footer_modules'    => [],
+			'template_name'     => 'generic/edit',
+			'form_action'       => '/playlists/edit/5',
+			'hidden'            => [],
+			'visible'           => [],
+			'save_button_label' => 'Save',
+			'explanations'      => 'Change the name of the playlist.',
+			'additional_buttons' => [['ADDITIONAL_BUTTON_TYPE' => 'button', 'ADDITIONAL_BUTTON_NAME' => 'cancel', 'LANG_ADDITIONAL_BUTTON' => 'Cancel']],
+		]);
+
+		static::assertSame('Change the name of the playlist.', $result['this_layout']['data']['LANG_FORM_EXPLANATION']);
+		static::assertSame(
+			[['ADDITIONAL_BUTTON_TYPE' => 'button', 'ADDITIONAL_BUTTON_NAME' => 'cancel', 'LANG_ADDITIONAL_BUTTON' => 'Cancel']],
+			$result['this_layout']['data']['additional_buttons']
+		);
+	}
+
+	/**
+	 * The title is the title of the page and the header of the form.
+	 */
+	#[Group('units')]
+	public function testTheTitleIsPageTitleAndHeader(): void
+	{
+		$result = $this->formTemplatePreparer->prepareUITemplate([
+			'title' => 'Edit user', 'additional_css' => [], 'footer_modules' => [], 'template_name' => 'generic/edit',
+			'form_action' => '/', 'hidden' => [], 'visible' => [], 'save_button_label' => 'Save',
+		]);
+
+		static::assertSame('Edit user', $result['main_layout']['LANG_PAGE_TITLE']);
+		static::assertSame('Edit user', $result['this_layout']['data']['LANG_PAGE_HEADER']);
+		static::assertSame('generic/edit', $result['this_layout']['template']);
+	}
 }

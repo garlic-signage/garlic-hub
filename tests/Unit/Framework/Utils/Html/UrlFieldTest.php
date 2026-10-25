@@ -28,38 +28,25 @@ use PHPUnit\Framework\TestCase;
 
 class UrlFieldTest extends TestCase
 {
-	private UrlField $urlField;
-
-	protected function setUp(): void
+	#[Group('units')]
+	public function testPlaceholderAndPattern(): void
 	{
-		parent::setUp();
-		$this->urlField = new UrlField(['id' => 'url_id', 'type' => FieldType::URL]);
+		$field = new UrlField(['id' => 'homepage', 'type' => FieldType::URL]);
+
+		$result = $field->setPlaceholder('https://example.com')->setPattern('https?://.+');
+
+		static::assertSame($field, $result);
+		static::assertSame('https://example.com', $field->getPlaceholder());
+		static::assertSame('https?://.+', $field->getPattern());
 	}
 
 	#[Group('units')]
-	public function testSetPlaceholderStoresValue(): void
+	public function testAnEmptyPatternIsKept(): void
 	{
-		$placeholder = 'Enter your URL here';
-		$this->urlField->setPlaceholder($placeholder);
+		$field = new UrlField(['id' => 'homepage', 'type' => FieldType::URL]);
 
-		self::assertSame($placeholder, $this->urlField->getPlaceholder());
-	}
+		$field->setPattern('');
 
-	#[Group('units')]
-	public function testSetPatternStoresValue(): void
-	{
-		$pattern = '^https?://.*';
-		$this->urlField->setPattern($pattern);
-
-		self::assertSame($pattern, $this->urlField->getPattern());
-	}
-
-	#[Group('units')]
-	public function testSetPatternWithEmptyValue(): void
-	{
-		$pattern = '';
-		$this->urlField->setPattern($pattern);
-
-		self::assertSame($pattern, $this->urlField->getPattern());
+		static::assertSame('', $field->getPattern());
 	}
 }

@@ -28,27 +28,12 @@ use PHPUnit\Framework\TestCase;
 
 class AutocompleteFieldTest extends TestCase
 {
-	private AutocompleteField $autocompleteField;
-
-	protected function setUp(): void
-	{
-		parent::setUp();
-		$attributes = [
-			'id' => 'username',
-			'type' => FieldType::AUTOCOMPLETE,
-			'name' => 'user_name',
-			'value' => 'defaultUser',
-			'default_value' => 'guest',
-			'rules' => ['required' => true],
-			'data-label' => 'test-label'
-		];
-
-		$this->autocompleteField = new AutocompleteField($attributes);
-	}
-
 	#[Group('units')]
-	public function testGetDataLabelReturnsExpectedValue(): void
+	public function testGetDataLabel(): void
 	{
-		static::assertSame('test-label', $this->autocompleteField->getDataLabel());
+		$field = new AutocompleteField(['id' => 'UID', 'type' => FieldType::AUTOCOMPLETE, 'value' => '5', 'data-label' => 'Anna']);
+
+		static::assertSame('Anna', $field->getDataLabel());
+		static::assertSame('5', $field->getValue());
 	}
 }

@@ -80,4 +80,29 @@ class HeaderFieldTest extends TestCase
 		static::assertTrue($this->headerField->hasSpecificLangModule());
 		static::assertSame('test_module', $this->headerField->getSpecificLanguageModule());
 	}
+
+	#[Group('units')]
+	public function testNameAndTheChainOfSetters(): void
+	{
+		static::assertSame('', $this->headerField->getName());
+
+		$result = $this->headerField->setName('created')->sortable(true)->skipTranslation(true)->useSpecificLangModule('users');
+
+		static::assertSame($this->headerField, $result);
+		static::assertSame('created', $this->headerField->getName());
+	}
+
+	#[Group('units')]
+	public function testTheSpecificModuleIsEmptyBeforeItIsSet(): void
+	{
+		static::assertSame('', $this->headerField->getSpecificLanguageModule());
+	}
+
+	#[Group('units')]
+	public function testAnEmptyModuleIsNoSpecificModule(): void
+	{
+		$this->headerField->useSpecificLangModule('');
+
+		static::assertFalse($this->headerField->hasSpecificLangModule());
+	}
 }

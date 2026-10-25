@@ -53,7 +53,8 @@ class BaseValidator
 
 	public function validatePassword(string $password, string $pattern): bool
 	{
-		$pattern = '/^'.$pattern.'$/';
+		// D: the $ must not match before a line break at the end, that is no part of a password
+		$pattern = '/^'.$pattern.'$/D';
 
 		if (preg_match($pattern, $password))
 			return true;

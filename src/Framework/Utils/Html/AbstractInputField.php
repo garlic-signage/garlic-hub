@@ -110,7 +110,8 @@ class AbstractInputField implements FieldInterface
 
 	public function getValue(): string|int
 	{
-		if (empty($this->value))
+		// only an empty text is empty: 0 and "0" are values, empty() would replace them by the default
+		if ((string) $this->value === '')
 			return $this->defaultValue;
 
 		return $this->value;

@@ -23,7 +23,8 @@ namespace Tests\Unit\Framework\Utils;
 
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Utils\BaseSimpleXml;
-use Exception;
+use Error;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use SimpleXMLElement;
@@ -33,22 +34,17 @@ class ConcreteBaseSimpleXml extends BaseSimpleXml
 	/**
 	 * @throws ModuleException
 	 */
-	public function loadXmlFromStringPublic(string $xmlString): void
+	public function loadXmlFromStringPublic(string $xmlString): static
 	{
-		$this->loadXmlFromString($xmlString);
-	}
-
-	public function setXmlErrorsPublic(): void
-	{
-		$this->setXmlErrors([]);
+		return $this->loadXmlFromString($xmlString);
 	}
 
 	/**
 	 * @throws ModuleException
 	 */
-	public function loadXmlFromFilePublic(string $filePath): void
+	public function loadXmlFromFilePublic(string $filePath): static
 	{
-		$this->loadXmlFromFile($filePath);
+		return $this->loadXmlFromFile($filePath);
 	}
 
 	protected function getModuleName(): string
@@ -57,26 +53,55 @@ class ConcreteBaseSimpleXml extends BaseSimpleXml
 	}
 }
 
+/**
+ * The wrapper around SimpleXML with the real libxml: a file which is no XML throws a ModuleException and
+ * the errors of the parser can be read afterwards.
+ */
 class BaseSimpleXmlTest extends TestCase
 {
-	private ConcreteBaseSimpleXml $concreteSimpleXml;
+	private const string VALID = '<?xml version="1.0"?><document><title>Something testable</title><content><![CDATA[Some "raw" <data>]]></content></document>';
+
+	private ConcreteBaseSimpleXml $xml;
+	/** @var list<string> */
+	private array $files = [];
 
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->concreteSimpleXml = new ConcreteBaseSimpleXml();
+		$this->xml = new ConcreteBaseSimpleXml();
 	}
 
-	/**
-	 * @throws Exception
-	 */
+	protected function tearDown(): void
+	{
+		array_map('unlink', $this->files);
+		parent::tearDown();
+	}
+
+	private function file(string $content): string
+	{
+		$path = sys_get_temp_dir() . '/simple_xml_' . uniqid() . '.xml';
+		file_put_contents($path, $content);
+		$this->files[] = $path;
+
+		return $path;
+	}
+
 	#[Group('units')]
 	public function testSetAndGetXmlObj(): void
 	{
-		$xmlString = '<root><child>value</child></root>';
-		$xmlObj = new SimpleXMLElement($xmlString);
-		$this->concreteSimpleXml->setXmlObj($xmlObj);
-		static::assertSame($xmlObj, $this->concreteSimpleXml->getXmlObj());
+		$xmlObj = new SimpleXMLElement('<root><child>value</child></root>');
+
+		$this->xml->setXmlObj($xmlObj);
+
+		static::assertSame($xmlObj, $this->xml->getXmlObj());
+	}
+
+	#[Group('units')]
+	public function testTheObjectIsNotThereBeforeSomethingIsLoaded(): void
+	{
+		$this->expectException(Error::class);
+
+		$this->xml->getXmlObj();
 	}
 
 	/**
@@ -85,17 +110,13 @@ class BaseSimpleXmlTest extends TestCase
 	#[Group('units')]
 	public function testLoadXmlFromString(): void
 	{
-		$xmlString = $this->getValidTestXml();
-		$this->concreteSimpleXml->loadXmlFromStringPublic($xmlString);
-		// @phpstan-ignore-next-line
-		static::assertInstanceOf(SimpleXMLElement::class, $this->concreteSimpleXml->getXmlObj());
-	}
+		$result = $this->xml->loadXmlFromStringPublic(self::VALID);
 
-	#[Group('units')]
-	public function testLoadXmlFromStringThrowsException(): void
-	{
-		$this->expectException(ModuleException::class);
-		$this->concreteSimpleXml->loadXmlFromStringPublic('<root><child>value</child>');
+		static::assertSame($this->xml, $result);
+		static::assertSame('Something testable', (string) $this->xml->getXmlObj()->title);
+		static::assertSame('Some "raw" <data>', (string) $this->xml->getXmlObj()->content);
+		static::assertSame([], $this->xml->getXmlErrorArray());
+		static::assertSame('', $this->xml->getXmlErrorsAsString());
 	}
 
 	/**
@@ -104,149 +125,191 @@ class BaseSimpleXmlTest extends TestCase
 	#[Group('units')]
 	public function testLoadXmlFromFile(): void
 	{
-		$filePath = __DIR__ . '/test.xml';
-		file_put_contents($filePath, '<root><child>value</child></root>');
-		$this->concreteSimpleXml->loadXmlFromFilePublic($filePath);
-		// @phpstan-ignore-next-line
-		static::assertInstanceOf(SimpleXMLElement::class, $this->concreteSimpleXml->getXmlObj());
-		unlink($filePath);
+		$result = $this->xml->loadXmlFromFilePublic($this->file(self::VALID));
+
+		static::assertSame($this->xml, $result);
+		static::assertSame('Something testable', (string) $this->xml->getXmlObj()->title);
 	}
-
-	#[Group('units')]
-	public function testLoadXmlFromFileThrowsException(): void
-	{
-		$this->expectException(ModuleException::class);
-		$this->concreteSimpleXml->loadXmlFromFilePublic('nonexistent.xml');
-	}
-
-	#[Group('units')]
-	public function testgetXmlErrorsAsStringEmpty(): void
-	{
-		static::assertEmpty($this->concreteSimpleXml->getXmlErrorsAsString());
-	}
-
-	#[Group('units')]
-	public function testGetXmlErrorArray(): void
-	{
-		$invalid_xml = $this->getInvalidTestXmlFailedCDATA();
-
-		try
-		{
-			$exception_thrown = false;
-
-			$this->concreteSimpleXml->loadXmlFromStringPublic($invalid_xml);
-		}
-		catch (ModuleException $me)
-		{
-			$exception_thrown = true;
-			static::assertEquals('Error reading/parsing xml', $me->getMessage());
-			static::assertEquals('TestModule', $me->getModuleName());
-		}
-
-		static::assertTrue($exception_thrown);
-
-		$xml_errors_array = $this->concreteSimpleXml->getXmlErrorArray();
-		static::assertGreaterThanOrEqual(4, $xml_errors_array);
-		foreach($xml_errors_array as $error)
-		{
-			static::assertEquals(LIBXML_ERR_FATAL, $error->level);
-		}
-
-		$xml_error_string = $this->concreteSimpleXml->getXmlErrorsAsString();
-		$expected = 'Fatal Error: StartTag: invalid element name Line: 6, Column: 17';
-		static::assertEquals($expected, $xml_error_string);
-
-	}
-
-	#[Group('units')]
-	public function testLoadXmlFromStringWithInvalidXmlMissingClosingTags(): void
-	{
-		$invalid_xml = $this->getInvalidTestXmlFailedClosingTags();
-
-		try
-		{
-			$exception_thrown = false;
-
-			$this->concreteSimpleXml->loadXmlFromStringPublic($invalid_xml);
-		}
-		catch (ModuleException $me)
-		{
-			$exception_thrown = true;
-			static::assertEquals('Error reading/parsing xml', $me->getMessage());
-			static::assertEquals('TestModule', $me->getModuleName());
-		}
-
-		static::assertTrue($exception_thrown);
-
-		$xml_errors_array = $this->concreteSimpleXml->getXmlErrorArray();
-		static::assertCount(2, $xml_errors_array);
-
-		list($first_error, $second_error) = $xml_errors_array;
-
-		static::assertEquals(LIBXML_ERR_FATAL, $first_error->level);
-		static::assertEquals(LIBXML_ERR_FATAL, $second_error->level);
-
-		static::assertEquals('Opening and ending tag mismatch: body line 7 and document', trim($first_error->message));
-		// Php 7.4 cries
-		//	$this->assertEquals('Premature end of data in tag document line 2', trim($second_error->message));
-
-		$xml_error_string = $this->concreteSimpleXml->getXmlErrorsAsString();
-		$expected = 'Fatal Error: Opening and ending tag mismatch: body line 7 and document Line: 9, Column: 13';
-		static::assertEquals($expected, $xml_error_string);
-	}
-
-
-
-	//  Helper
 
 	/**
-	 * @return string
+	 * @return array<string, array{string}>
 	 */
-	protected function getValidTestXml(): string
+	public static function brokenXmlProvider(): array
 	{
-		return <<<XML
-<?xml version='1.0'?>
-<document>
- <title>Something testable</title>
- <from>Joe</from>
- <to>Jane</to>
- <content><foo><![CDATA[Some raw data within "CDATA"]]></foo></content>
- <body>
- 	<inner>I know that's the answer -- but what's the question?</inner>
- </body>
-</document>
-XML;
+		return [
+			'not closed'     => ['<root><child>value</child>'],
+			'closing tag mismatch' => ['<document><body><inner>x</inner></document>'],
+			'wrong CDATA'    => ['<document><content><foo><[CDATA[x]]></foo></content></document>'],
+			'empty'          => [''],
+			'only text'      => ['no xml at all'],
+			'two roots'      => ['<a/><b/>'],
+			'attribute without quotes' => ['<a b=c/>'],
+		];
 	}
 
-	protected function getInvalidTestXmlFailedCDATA(): string
+	#[Group('units')]
+	#[DataProvider('brokenXmlProvider')]
+	public function testBrokenXmlFromStringThrowsAModuleException(string $xml): void
 	{
-		return <<<XML
-<?xml version='1.0'?>
-<document>
- <title>Something testable</title>
- <from>Joe</from>
- <to>Jane</to>
- <content><foo><[CDATA[Some raw data within "CDATA"]]></foo></content>
- <body>
- 	<inner>I know that's the answer -- but what's the question?</inner>
- </body>
-</document>
-XML;
+		try
+		{
+			$this->xml->loadXmlFromStringPublic($xml);
+		}
+		catch (ModuleException $e)
+		{
+			static::assertSame('Error reading/parsing xml', $e->getMessage());
+			static::assertSame('TestModule', $e->getModuleName());
+
+			return;
+		}
+
+		static::fail('Expected a ModuleException.');
 	}
 
-	protected function getInvalidTestXmlFailedClosingTags(): string
+	#[Group('units')]
+	#[DataProvider('brokenXmlProvider')]
+	public function testBrokenXmlFromFileThrowsAModuleException(string $xml): void
 	{
-		return <<<XML
-<?xml version='1.0'?>
-<document>
- <title>Something testable</title>
- <from>Joe</from>
- <to>Jane</to>
- <content><foo><![CDATA[Some raw data within "CDATA"]]></foo></content>
- <body>
- 	<inner>I know that's the answer -- but what's the question?</inner>
- </document>
-XML;
+		$this->expectException(ModuleException::class);
+		$this->expectExceptionMessage('Error reading/parsing xml');
+
+		$this->xml->loadXmlFromFilePublic($this->file($xml));
 	}
 
+	#[Group('units')]
+	public function testAMissingFileThrowsAModuleException(): void
+	{
+		$this->expectException(ModuleException::class);
+
+		$this->xml->loadXmlFromFilePublic(sys_get_temp_dir() . '/does_not_exist_' . uniqid() . '.xml');
+	}
+
+	/**
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testTheErrorsOfTheParserCanBeReadAfterwards(): void
+	{
+		try
+		{
+			$this->xml->loadXmlFromStringPublic("<?xml version='1.0'?>\n<document>\n <body>\n  <inner>x</inner>\n </document>");
+		}
+		catch (ModuleException)
+		{
+			// the errors are read below
+		}
+
+		$errors = $this->xml->getXmlErrorArray();
+
+		static::assertNotSame([], $errors);
+		foreach ($errors as $error)
+		{
+			static::assertSame(LIBXML_ERR_FATAL, $error->level);
+		}
+		static::assertStringContainsString('mismatch', $errors[0]->message);
+	}
+
+	/**
+	 * The text names the level, the message of the parser and the place in the document. The text of the
+	 * message is the one of the installed libxml, so only its form is fixed.
+	 */
+	#[Group('units')]
+	public function testTheErrorsAsString(): void
+	{
+		try
+		{
+			$this->xml->loadXmlFromStringPublic("<?xml version='1.0'?>\n<document>\n <content><foo><[CDATA[x]]></foo></content>\n</document>");
+		}
+		catch (ModuleException)
+		{
+			// the errors are read below
+		}
+
+		static::assertMatchesRegularExpression('/^Fatal Error: .+ Line: 3, Column: \d+$/', $this->xml->getXmlErrorsAsString());
+	}
+
+	/**
+	 * The errors of the parser are reset with every load, a good document has none.
+	 *
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testTheErrorsAreClearedByTheNextLoad(): void
+	{
+		try
+		{
+			$this->xml->loadXmlFromStringPublic('<root>');
+		}
+		catch (ModuleException)
+		{
+			static::assertNotSame([], $this->xml->getXmlErrorArray());
+		}
+
+		$this->xml->loadXmlFromStringPublic(self::VALID);
+
+		static::assertSame([], $this->xml->getXmlErrorArray());
+		static::assertSame('', $this->xml->getXmlErrorsAsString());
+	}
+
+	/**
+	 * An external entity must not read a file of the server into the document (XXE).
+	 */
+	#[Group('units')]
+	public function testAnExternalEntityDoesNotLoadAFile(): void
+	{
+		$secret = $this->file('TOPSECRET');
+		$xml    = '<?xml version="1.0"?><!DOCTYPE a [<!ENTITY e SYSTEM "file://' . $secret . '">]><a>&e;</a>';
+
+		try
+		{
+			$this->xml->loadXmlFromStringPublic($xml);
+			$content = (string) $this->xml->getXmlObj();
+		}
+		catch (ModuleException)
+		{
+			$content = '';
+		}
+
+		static::assertStringNotContainsString('TOPSECRET', $content);
+	}
+
+	#[Group('units')]
+	public function testAnExternalEntityInAFileDoesNotLoadAFileEither(): void
+	{
+		$secret = $this->file('TOPSECRET');
+		$path   = $this->file('<?xml version="1.0"?><!DOCTYPE a [<!ENTITY e SYSTEM "file://' . $secret . '">]><a>&e;</a>');
+
+		try
+		{
+			$this->xml->loadXmlFromFilePublic($path);
+			$content = (string) $this->xml->getXmlObj();
+		}
+		catch (ModuleException)
+		{
+			$content = '';
+		}
+
+		static::assertStringNotContainsString('TOPSECRET', $content);
+	}
+
+	/**
+	 * Entities which expand into each other (billion laughs) are refused by the parser.
+	 */
+	#[Group('units')]
+	public function testEntitiesWhichExpandIntoEachOtherAreRefused(): void
+	{
+		$xml  = '<?xml version="1.0"?><!DOCTYPE l [<!ENTITY a "lol">';
+		$prev = 'a';
+		for ($i = 1; $i <= 9; $i++)
+		{
+			$name = 'e' . $i;
+			$xml .= '<!ENTITY ' . $name . ' "' . str_repeat('&' . $prev . ';', 10) . '">';
+			$prev = $name;
+		}
+		$xml .= ']><l>&' . $prev . ';</l>';
+
+		$this->expectException(ModuleException::class);
+
+		$this->xml->loadXmlFromStringPublic($xml);
+	}
 }

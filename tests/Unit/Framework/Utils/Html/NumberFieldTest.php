@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2024 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -23,83 +23,44 @@ namespace Tests\Unit\Framework\Utils\Html;
 
 use App\Framework\Utils\Html\FieldType;
 use App\Framework\Utils\Html\NumberField;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 class NumberFieldTest extends TestCase
 {
-	private NumberField $numberField;
-
+	/**
+	 * @param array<string,mixed> $extra
+	 * @param array<string,mixed> $expected
+	 */
 	#[Group('units')]
-	public function testConstructSetsMinAttribute(): void
+	#[DataProvider('limitProvider')]
+	public function testMinAndMaxBecomeAttributes(array $extra, array $expected): void
 	{
-		$attributes = [
-			'id' => 'logins',
-			'type' => FieldType::NUMBER,
-			'name' => 'user_logins',
-			'min' => 5
+		$field = new NumberField(['id' => 'logins', 'type' => FieldType::NUMBER, 'name' => 'user_logins'] + $extra);
+
+		static::assertSame($expected, $field->getAttributes());
+	}
+
+	/**
+	 * @return array<string, array{array<string,mixed>, array<string,mixed>}>
+	 */
+	public static function limitProvider(): array
+	{
+		return [
+			'none'       => [[], []],
+			'min'        => [['min' => 5], ['min' => 5]],
+			'max'        => [['max' => 15], ['max' => 15]],
+			'both'       => [['min' => 5, 'max' => 15], ['min' => 5, 'max' => 15]],
+			'zero limits' => [['min' => 0, 'max' => 0], ['min' => 0, 'max' => 0]],
 		];
-
-		$this->numberField = new NumberField($attributes);
-
-		$rAttributes = $this->numberField->getAttributes();
-		static::assertArrayHasKey('min', $rAttributes);
-		static::assertArrayNotHasKey('max', $rAttributes);
-		static::assertSame(5, $rAttributes['min']);
 	}
 
 	#[Group('units')]
-	public function testConstructSetsMaxAttribute(): void
+	public function testTheLimitsAreAddedToTheGivenAttributes(): void
 	{
-		$attributes = [
-			'id' => 'logins',
-			'type' => FieldType::NUMBER,
-			'name' => 'user_logins',
-			'max' => 15
-		];
+		$field = new NumberField(['id' => 'a', 'type' => FieldType::NUMBER, 'min' => 1, 'attributes' => ['step' => 5]]);
 
-		$this->numberField = new NumberField($attributes);
-
-		$rAttributes = $this->numberField->getAttributes();
-		static::assertArrayNotHasKey('min', $rAttributes);
-		static::assertArrayHasKey('max', $rAttributes);
-		static::assertSame(15, $rAttributes['max']);
-	}
-
-	#[Group('units')]
-	public function testConstructHandlesNoAttributes(): void
-	{
-		$attributes = [
-			'id' => 'logins',
-			'type' => FieldType::NUMBER,
-			'name' => 'user_logins'
-		];
-
-		$this->numberField = new NumberField($attributes);
-
-		$rAttributes = $this->numberField->getAttributes();
-		static::assertArrayNotHasKey('min', $rAttributes);
-		static::assertArrayNotHasKey('max', $rAttributes);
-	}
-
-	#[Group('units')]
-	public function testConstructHandlesBothAttributes(): void
-	{
-		$attributes = [
-			'id' => 'logins',
-			'type' => FieldType::NUMBER,
-			'name' => 'user_logins',
-			'min' => 5,
-			'max' => 15
-		];
-
-		$this->numberField = new NumberField($attributes);
-
-		$rAttributes = $this->numberField->getAttributes();
-		static::assertArrayHasKey('min', $rAttributes);
-		static::assertArrayHasKey('max', $rAttributes);
-
-		static::assertSame(5, $rAttributes['min']);
-		static::assertSame(15, $rAttributes['max']);
+		static::assertSame(['step' => 5, 'min' => 1], $field->getAttributes());
 	}
 }

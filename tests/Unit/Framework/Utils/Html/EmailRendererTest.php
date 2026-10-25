@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2024 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -23,30 +23,23 @@ namespace Tests\Unit\Framework\Utils\Html;
 
 use App\Framework\Utils\Html\EmailField;
 use App\Framework\Utils\Html\EmailRenderer;
+use App\Framework\Utils\Html\FieldType;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\TestCase;
 
 class EmailRendererTest extends TestCase
 {
-	/**
-	 * @throws Exception
-	 */
 	#[Group('units')]
-	public function testRenderWithMinimumAttributes(): void
+	public function testRender(): void
 	{
-		$fieldStub = $this->createStub(EmailField::class);
-		$fieldStub->method('getName')->willReturn('email_1');
-		$fieldStub->method('getTitle')->willReturn('edit email_1');
-		$fieldStub->method('getId')->willReturn('email_1');
-		$fieldStub->method('getValue')->willReturn('test@test.kl');
-		$fieldStub->method('getValidationRules')->willReturn([]);
-		$fieldStub->method('getAttributes')->willReturn([]);
+		$field = new EmailField([
+			'id' => 'mail', 'type' => FieldType::EMAIL, 'name' => 'email', 'title' => 'your mail', 'value' => 'anna@example.com',
+			'rules' => ['required' => true],
+		]);
 
-		$renderer = new EmailRenderer();
-		$result = $renderer->render($fieldStub);
-
-		$expected = '<input type="email" name="email_1" id="email_1" value="test@test.kl" title="edit email_1" aria-describedby="error_email_1">';
-		static::assertSame($expected, $result);
+		static::assertSame(
+			'<input type="email" name="email" id="mail" value="anna@example.com" title="your mail" required="required" aria-describedby="error_mail">',
+			(new EmailRenderer())->render($field)
+		);
 	}
 }

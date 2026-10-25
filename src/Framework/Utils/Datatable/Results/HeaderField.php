@@ -30,7 +30,7 @@ class HeaderField
 	protected bool $sortable = false;
 
 	protected bool $skipTranslation = false;
-	protected string $specificLangModule;
+	protected string $specificLangModule = '';
 
 	public function isSortable(): bool
 	{

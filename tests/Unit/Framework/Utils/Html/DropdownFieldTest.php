@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2024 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -28,25 +28,27 @@ use PHPUnit\Framework\TestCase;
 
 class DropdownFieldTest extends TestCase
 {
-	private DropdownField $dropdownField;
-
-	protected function setUp(): void
+	#[Group('units')]
+	public function testGetOptions(): void
 	{
-		parent::setUp();
-		$attributes = [
-			'id' => 'dropdown1',
-			'type' => FieldType::DROPDOWN,
-			'name' => 'dropdown_field',
-			'options' => ['Option1' => [], 'Option2' => [], 'Option3' => []]
-		];
+		$field = new DropdownField(['id' => 'country', 'type' => FieldType::DROPDOWN, 'options' => ['de' => 'Germany', 'fr' => 'France']]);
 
-		$this->dropdownField = new DropdownField($attributes);
+		static::assertSame(['de' => 'Germany', 'fr' => 'France'], $field->getOptions());
 	}
 
 	#[Group('units')]
-	public function testGetOptionsReturnsCorrectOptions(): void
+	public function testTheEmptyOptionIsOnByDefault(): void
 	{
-		static::assertSame(['Option1' => [], 'Option2' => [], 'Option3' => []], $this->dropdownField->getOptions());
-		static::assertTrue($this->dropdownField->isOptionsZero());
+		$field = new DropdownField(['id' => 'country', 'type' => FieldType::DROPDOWN, 'options' => []]);
+
+		static::assertTrue($field->isOptionsZero());
+	}
+
+	#[Group('units')]
+	public function testTheEmptyOptionCanBeSwitchedOff(): void
+	{
+		$field = new DropdownField(['id' => 'country', 'type' => FieldType::DROPDOWN, 'options' => [], 'options_zero' => false]);
+
+		static::assertFalse($field->isOptionsZero());
 	}
 }

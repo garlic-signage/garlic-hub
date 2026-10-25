@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2024 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -23,116 +23,95 @@ namespace Tests\Unit\Framework\Utils\Html;
 
 use App\Framework\Utils\Html\DropdownField;
 use App\Framework\Utils\Html\DropdownRenderer;
-use App\Framework\Utils\Html\FieldInterface;
+use App\Framework\Utils\Html\FieldType;
+use App\Framework\Utils\Html\TextField;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class DropdownRendererTest extends TestCase
 {
-	private DropdownField&Stub $dropdownFieldStub;
 	private DropdownRenderer $renderer;
 
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->dropdownFieldStub = $this->createStub(DropdownField::class);
 		$this->renderer = new DropdownRenderer();
 	}
 
-	#[Group('units')]
-	public function testRenderGeneratesValidHtml(): void
+	/**
+	 * @param array<string,mixed> $extra
+	 */
+	private function field(array $extra = []): DropdownField
 	{
-		$this->dropdownFieldStub->method('getId')->willReturn('test-id');
-		$this->dropdownFieldStub->method('getName')->willReturn('test-name');
-		$this->dropdownFieldStub->method('getOptions')->willReturn(['1' => 'Option 1', '2' => 'Option 2']);
-		$this->dropdownFieldStub->method('getValue')->willReturn('');
-		$this->dropdownFieldStub->method('isOptionsZero')->willReturn(true);
-
-		$html = $this->renderer->render($this->dropdownFieldStub);
-
-		$expectedHtml = '<select id="test-id" name= "test-name" aria-describedby="error_test-id">'
-			. '<option value="">-</option>'
-			. '<option value="1">Option 1</option>'
-			. '<option value="2">Option 2</option>'
-			. '</select>';
-
-		static::assertSame($expectedHtml, $html);
+		return new DropdownField(array_merge(['id' => 'country', 'type' => FieldType::DROPDOWN, 'name' => 'country_name', 'options' => ['de' => 'Germany', 'fr' => 'France']], $extra));
 	}
 
 	#[Group('units')]
-	public function testRenderWithSelectedValue(): void
+	public function testRenderWithTheEmptyOption(): void
 	{
-		$this->dropdownFieldStub->method('getId')->willReturn('test-id');
-		$this->dropdownFieldStub->method('getName')->willReturn('test-name');
-		$this->dropdownFieldStub->method('getOptions')->willReturn(['1' => 'Option 1', '2' => 'Option 2']);
-		$this->dropdownFieldStub->method('getValue')->willReturn('2');
-		$this->dropdownFieldStub->method('isOptionsZero')->willReturn(false);
-
-		$html = $this->renderer->render($this->dropdownFieldStub);
-
-		$expectedHtml = '<select id="test-id" name= "test-name" aria-describedby="error_test-id">'
-			. '<option value="1">Option 1</option>'
-			. '<option value="2" selected>Option 2</option>'
-			. '</select>';
-
-		static::assertSame($expectedHtml, $html);
+		static::assertSame(
+			'<select id="country" name= "country_name" aria-describedby="error_country"><option value="">-</option><option value="de">Germany</option><option value="fr">France</option></select>',
+			$this->renderer->render($this->field())
+		);
 	}
 
 	#[Group('units')]
-	public function testRenderWithEmptyOptions(): void
+	public function testRenderWithoutTheEmptyOption(): void
 	{
-		$this->dropdownFieldStub->method('getId')->willReturn('test-id');
-		$this->dropdownFieldStub->method('getName')->willReturn('test-name');
-		$this->dropdownFieldStub->method('getOptions')->willReturn([]);
-		$this->dropdownFieldStub->method('getValue')->willReturn('');
-		$this->dropdownFieldStub->method('isOptionsZero')->willReturn(true);
+		static::assertSame(
+			'<select id="country" name= "country_name" aria-describedby="error_country"><option value="de">Germany</option><option value="fr">France</option></select>',
+			$this->renderer->render($this->field(['options_zero' => false]))
+		);
+	}
 
-		$html = $this->renderer->render($this->dropdownFieldStub);
+	#[Group('units')]
+	public function testTheOptionOfTheValueIsSelected(): void
+	{
+		$html = $this->renderer->render($this->field(['value' => 'fr']));
 
-		$expectedHtml = '<select id="test-id" name= "test-name" aria-describedby="error_test-id">'
-			. '<option value="">-</option>'
-			. '</select>';
+		static::assertStringContainsString('<option value="fr" selected>France</option>', $html);
+		static::assertStringContainsString('<option value="de">Germany</option>', $html);
+	}
 
-		static::assertSame($expectedHtml, $html);
+	#[Group('units')]
+	public function testTheOptionOfTheDefaultValueIsSelected(): void
+	{
+		$html = $this->renderer->render($this->field(['default_value' => 'de']));
+
+		static::assertStringContainsString('<option value="de" selected>Germany</option>', $html);
 	}
 
 	/**
-	 * @throws Exception
+	 * The option with the key 0 (e.g. "off", status 0) is selected when the value is 0.
 	 */
 	#[Group('units')]
-	public function testRenderGeneratesNothing(): void
+	public function testTheOptionZeroIsSelectedForTheValueZero(): void
 	{
-		$fieldStub = $this->createStub(FieldInterface::class);
-		$renderer = new DropdownRenderer();
+		$field = new DropdownField(['id' => 'status', 'type' => FieldType::DROPDOWN, 'options' => [0 => 'Off', 1 => 'On'], 'value' => '0']);
 
-		$expectedHtml = '';
+		$html = $this->renderer->render($field);
 
-		$result = $renderer->render($fieldStub);
-
-		static::assertSame($expectedHtml, $result);
+		static::assertStringContainsString('<option value="0" selected>Off</option>', $html);
+		static::assertStringContainsString('<option value="1">On</option>', $html);
 	}
 
 	#[Group('units')]
-	public function testRenderEscapesSpecialCharacters(): void
+	public function testNoOptionIsSelectedWithoutAValue(): void
 	{
-		$this->dropdownFieldStub->method('getId')->willReturn('test-id');
-		$this->dropdownFieldStub->method('getName')->willReturn('test-name');
-		$this->dropdownFieldStub->method('getOptions')->willReturn(['a"b' => '<b>Tom & Jerry</b>']);
-		$this->dropdownFieldStub->method('getValue')->willReturn('');
-		$this->dropdownFieldStub->method('isOptionsZero')->willReturn(false);
-
-		$html = $this->renderer->render($this->dropdownFieldStub);
-
-		$expectedHtml = '<select id="test-id" name= "test-name" aria-describedby="error_test-id">'
-			. '<option value="a&quot;b">&lt;b&gt;Tom &amp; Jerry&lt;/b&gt;</option>'
-			. '</select>';
-
-		static::assertSame($expectedHtml, $html);
+		static::assertStringNotContainsString('selected', $this->renderer->render($this->field()));
 	}
 
+	#[Group('units')]
+	public function testRenderWithoutOptions(): void
+	{
+		$html = $this->renderer->render($this->field(['options' => [], 'options_zero' => false]));
+
+		static::assertSame('<select id="country" name= "country_name" aria-describedby="error_country"></select>', $html);
+	}
+
+	#[Group('units')]
+	public function testAFieldOfAnotherTypeRendersNothing(): void
+	{
+		static::assertSame('', $this->renderer->render(new TextField(['id' => 'a', 'type' => FieldType::TEXT])));
+	}
 }

@@ -21,55 +21,60 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Framework\Utils\Datatable;
 
-use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Utils\Datatable\AbstractDatatablePreparer;
-use App\Framework\Utils\Datatable\PrepareService;
-use App\Framework\Utils\Datatable\Results\HeaderField;
-use App\Framework\Utils\FormParameters\BaseFilterParameters;
-use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
-use App\Framework\Utils\Html\FieldInterface;
+use App\Framework\Localization\Translate\Translator;
+use App\Framework\Utils\Datatable\Paginator\Builder as PaginatorBuilder;
+use App\Framework\Utils\Datatable\Results\Builder as ResultsBuilder;
+use App\Framework\Utils\Html\FieldType;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
-class ConcreteDatatablePreparer extends AbstractDatatablePreparer
-{
-	public function prepareTableBody(array $currentFilterResults, array $fields, int $currentUID): array {return [];}
-}
+/**
+ * The preparer of a module with the real PrepareService. The Translator answers "<key>@<module>".
+ */
 class AbstractDatatablePreparerTest extends TestCase
 {
-	private AbstractDatatablePreparer $datatablePreparer;
-	private PrepareService&MockObject $prepareServiceMock;
-	private BaseFilterParameters&Stub $parametersStub;
+	private DatatableTestPreparer $preparer;
 
 	/**
-	 * @throws Exception
+	 * @param array<string,mixed> $input
+	 * @throws ModuleException
+	 */
+	private function preparer(array $input = []): DatatableTestPreparer
+	{
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $key . '@' . $module);
+
+		return new DatatableTestPreparer(DatatableTestFactory::prepareService($translator), new FilterParametersFake($input), $translator);
+	}
+
+	/**
+	 * @throws \PHPUnit\Framework\MockObject\Exception
+	 * @throws ModuleException
 	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->prepareServiceMock = $this->createMock(PrepareService::class);
-		$this->parametersStub = $this->createStub(BaseFilterParameters::class);
-		$this->datatablePreparer = new ConcreteDatatablePreparer('TestModule', $this->prepareServiceMock, $this->parametersStub, $this->createStub(Translator::class));
+		$this->preparer = $this->preparer();
 	}
 
 	/**
-	 * @throws Exception
+	 * @throws \App\Framework\Exceptions\FrameworkException
 	 */
 	#[Group('units')]
 	public function testPrepareFilterForm(): void
 	{
-		$params = [
-			'test' => $this->createStub(FieldInterface::class)
+		$form = [
+			'hidden' => DatatableTestFactory::formBuilder()->createField(['id' => 'a', 'type' => FieldType::HIDDEN, 'value' => 1]),
+			'name'   => DatatableTestFactory::formBuilder()->createField(['id' => 'name', 'type' => FieldType::TEXT, 'name' => 'name', 'label' => 'Name']),
 		];
-		$this->prepareServiceMock->expects($this->once())->method('prepareForm')->with($params);
 
-		$this->datatablePreparer->prepareFilterForm($params);
+		$result = $this->preparer->prepareFilterForm($form);
+
+		static::assertSame(['<input type="hidden" name="a" id="a" value="1">'], array_column($result['hidden'], 'HIDDEN_HTML_ELEMENT'));
+		static::assertSame(['name'], array_column($result['visible'], 'HTML_ELEMENT_ID'));
 	}
 
 	/**
@@ -78,127 +83,99 @@ class AbstractDatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testPreparePagination(): void
 	{
-		$params1 = [['name' => 'test1', 'page' => 1, 'active' => null]];
-		$params2 = ['min' => 1, 'max' => 10, 'steps' => 5];
-		$this->prepareServiceMock->expects($this->once())->method('preparePagination')->with($params1, $params2);
+		$preparer = $this->preparer(['elements_page' => '2', 'elements_per_page' => '10']);
+		$pager    = (new PaginatorBuilder())->configure(2, 10, 30, false, false)->buildPagerLinks()->getPagerLinks();
 
-		$this->datatablePreparer->preparePagination($params1, $params2);
+		$result = $preparer->preparePagination($pager, ['min' => 10, 'max' => 20, 'steps' => 10]);
+
+		static::assertSame(['1', '2', '3'], array_column($result['links'], 'ELEMENTS_PAGENAME'));
+		static::assertSame(['active_page'], array_values(array_filter(array_column($result['links'], 'ELEMENTS_ACTIVE_PAGE'))));
+		static::assertSame([10, 20], array_column($result['dropdown'], 'ELEMENTS_PER_PAGE_VALUE'));
 	}
 
 	/**
 	 * @throws CoreException
-	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws ModuleException
 	 */
 	#[Group('units')]
 	public function testPrepareTableHeader(): void
 	{
-		$params1 = [
-			$this->createStub(HeaderField::class),
-			$this->createStub(HeaderField::class)
-		];
-		$params2 = ['lang1', 'lang22'];
-		$this->prepareServiceMock->expects($this->once())->method('prepareDatatableHeader')->with($params1, $params2);
+		$builder = new ResultsBuilder();
+		$builder->createField('name', true);
 
-		$this->datatablePreparer->prepareTableHeader($params1, $params2);
+		$header = $this->preparer->prepareTableHeader($builder->getHeaderFields(), ['testmodule', 'main']);
+
+		static::assertSame('name@testmodule', $header[0]['if_sortable']['LANG_CONTROL_NAME']);
+		static::assertStringStartsWith('testmodule?elements_page=1&sort_column=name', $header[0]['if_sortable']['LINK_CONTROL_SORT_ORDER']);
 	}
 
 	/**
-	 * @throws Exception
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testPrepareAddWithoutParams(): void
+	public function testPrepareAddHasTheIconTheLinkAndTheTextOfTheModule(): void
 	{
-		$translatorMock = $this->createMock(Translator::class);
-		$this->datatablePreparer = new ConcreteDatatablePreparer('TestModule', $this->prepareServiceMock, $this->parametersStub, $translatorMock);
-		$this->prepareServiceMock->expects($this->never())->method($this->anything());
-
-		$translatorMock->expects($this->once())->method('translate')
-			->with('add', 'TestModule')->willReturn('test');
-
-		$expected = [
-			'ADD_BI_ICON' => 'folder-plus',
-			'LANG_ELEMENTS_ADD_LINK' => 'test',
-			'ELEMENTS_ADD_LINK' => '#'
-		];
-
-		$result = $this->datatablePreparer->prepareAdd();
-
-		static::assertSame($expected, $result);
+		static::assertSame(
+			['ADD_BI_ICON' => 'file-plus', 'LANG_ELEMENTS_ADD_LINK' => 'add@testmodule', 'ELEMENTS_ADD_LINK' => '/templates/add'],
+			$this->preparer->prepareAdd('file-plus', '/templates/add')
+		);
 	}
 
 	/**
-	 * @throws Exception
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testPrepareAddWithParam(): void
+	public function testPrepareAddWithoutParameters(): void
 	{
-		$translatorMock = $this->createMock(Translator::class);
-		$this->datatablePreparer = new ConcreteDatatablePreparer('TestModule', $this->prepareServiceMock, $this->parametersStub, $translatorMock);
-		$this->prepareServiceMock->expects($this->never())->method($this->anything());
-
-		$translatorMock->expects($this->once())->method('translate')
-			->with('add', 'TestModule')->willReturn('test2');
-
-		$expected = [
-			'ADD_BI_ICON' => 'hurz',
-			'LANG_ELEMENTS_ADD_LINK' => 'test2',
-			'ELEMENTS_ADD_LINK' => '#'
-		];
-
-		$result = $this->datatablePreparer->prepareAdd('hurz');
-
-		static::assertSame($expected, $result);
+		static::assertSame(
+			['ADD_BI_ICON' => 'folder-plus', 'LANG_ELEMENTS_ADD_LINK' => 'add@testmodule', 'ELEMENTS_ADD_LINK' => '#'],
+			$this->preparer->prepareAdd()
+		);
 	}
 
 	/**
 	 * @throws ModuleException
 	 */
 	#[Group('units')]
-	public function testPrepareSort(): void
+	public function testPrepareSortAndPage(): void
 	{
-		$this->prepareServiceMock->expects($this->never())->method($this->anything());
+		$preparer = $this->preparer(['sort_column' => 'created', 'sort_order' => 'DESC', 'elements_page' => '3', 'elements_per_page' => '25']);
 
-		$this->parametersStub
-			->method('getValueOfParameter')
-			->willReturnMap([
-				[BaseFilterParametersInterface::PARAMETER_SORT_COLUMN, 'current_column'],
-				[BaseFilterParametersInterface::PARAMETER_SORT_ORDER, 'asc|desc']
-			]);
-
-
-		$expected = [
-			'column' => 'current_column',
-			'order' => 'asc|desc',
-		];
-
-		$result = $this->datatablePreparer->prepareSort();
-
-		static::assertSame($expected, $result);
+		static::assertSame(['column' => 'created', 'order' => 'DESC'], $preparer->prepareSort());
+		static::assertSame(['current' => 3, 'num_elements' => 25], $preparer->preparePage());
 	}
 
 	/**
+	 * The header only reads the sort order, the sort of the filter form after it is still the real one.
+	 *
+	 * @throws CoreException
+	 * @throws FrameworkException
 	 * @throws ModuleException
 	 */
 	#[Group('units')]
-	public function testPreparePage(): void
+	public function testPrepareSortAfterThePreparedHeaderStillHasTheRealOrder(): void
 	{
-		$this->prepareServiceMock->expects($this->never())->method($this->anything());
-		$this->parametersStub
-			->method('getValueOfParameter')
-			->willReturnMap([
-				[BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE, 1],
-				[BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE, 100]
-			]);
+		$preparer = $this->preparer(['sort_column' => 'name', 'sort_order' => 'DESC']);
+		$builder  = new ResultsBuilder();
+		$builder->createField('name', true);
+		$builder->createField('created', true);
+		$preparer->prepareTableHeader($builder->getHeaderFields(), ['main']);
 
-		$expected = ['current' => 1, 'num_elements' => 100,];
-		$result   = $this->datatablePreparer->preparePage();
+		static::assertSame(['column' => 'name', 'order' => 'DESC'], $preparer->prepareSort());
+	}
 
-		static::assertSame($expected, $result);
+	#[Group('units')]
+	public function testPrepareTableBodyOfTheModule(): void
+	{
+		$builder = new ResultsBuilder();
+		$builder->createField('name', true);
+
+		$body = $this->preparer->prepareTableBody([['template_id' => 4, 'name' => 'Lobby']], $builder->getHeaderFields(), 7);
+
+		static::assertSame(4, $body[0]['UNIT_ID']);
+		static::assertSame('Lobby', $body[0]['elements_result_element'][0]['is_link']['CONTROL_ELEMENT_VALUE_NAME']);
 	}
 }

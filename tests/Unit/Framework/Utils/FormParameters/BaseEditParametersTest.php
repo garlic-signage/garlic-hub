@@ -21,67 +21,92 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Framework\Utils\FormParameters;
 
-use App\Framework\Validation\Sanitizer;
-use App\Framework\Http\Session;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Http\Session;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
+use App\Framework\Validation\Sanitizer;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\TestCase;
-
+use Tests\Unit\Framework\Security\MemorySession;
 
 class ConcreteEditBaseParameters extends BaseEditParameters
 {
-	public function __construct(Sanitizer $sanitizer, Session $session)
+	public function __construct(Session $session)
 	{
-		parent::__construct('testModule', $sanitizer, $session);
+		parent::__construct('testModule', new Sanitizer(), $session);
+		$this->currentParameters = [];
+		$this->userInputs        = [];
 	}
 
 	public function addDefaultParameter(): void
 	{
 		$this->currentParameters = $this->defaultParameters;
 	}
-	public function addNoParameter(): void
-	{
-		$this->currentParameters = [];
-	}
 }
 
 class BaseEditParametersTest extends TestCase
 {
-	private ConcreteEditBaseParameters $baseEditParameters;
+	private ConcreteEditBaseParameters $parameters;
 
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$sanitizerStub = $this->createStub(Sanitizer::class);
-		$sessionStub = $this->createStub(Session::class);
-
-		$this->baseEditParameters = new ConcreteEditBaseParameters($sanitizerStub, $sessionStub);
+		$this->parameters = new ConcreteEditBaseParameters(new MemorySession());
 	}
 
 	/**
 	 * @throws ModuleException
 	 */
 	#[Group('units')]
-	public function testCheckCsrfTokenPasses(): void
+	public function testTheCsrfTokenOfTheRequestIsTaken(): void
 	{
-		$this->baseEditParameters->addDefaultParameter();
-		$this->baseEditParameters->setValueOfParameter(BaseEditParameters::PARAMETER_CSRF_TOKEN, 'goodToken');
+		$this->parameters->addDefaultParameter();
+		$this->parameters->setUserInputs([BaseEditParameters::PARAMETER_CSRF_TOKEN => ' goodToken ', 'other' => 'ignored'])->parseInputAllParameters();
 
-		static::assertSame('goodToken', $this->baseEditParameters->getCsrfToken());
+		static::assertSame('goodToken', $this->parameters->getCsrfToken());
 	}
 
 	/**
 	 * @throws ModuleException
 	 */
 	#[Group('units')]
-	public function testCheckCsrfTokenFails(): void
+	public function testWithoutATokenInTheRequestItIsEmpty(): void
 	{
-		$this->baseEditParameters->addNoParameter();
-		static::assertEmpty($this->baseEditParameters->getCsrfToken());
+		$this->parameters->addDefaultParameter();
+		$this->parameters->setUserInputs([])->parseInputAllParameters();
+
+		static::assertSame('', $this->parameters->getCsrfToken());
+	}
+
+	/**
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testTheTokenCanBeSet(): void
+	{
+		$this->parameters->addDefaultParameter();
+		$this->parameters->setValueOfParameter(BaseEditParameters::PARAMETER_CSRF_TOKEN, 'goodToken');
+
+		static::assertSame('goodToken', $this->parameters->getCsrfToken());
+	}
+
+	/**
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testWithoutTheParameterThereIsNoToken(): void
+	{
+		static::assertSame('', $this->parameters->getCsrfToken());
+	}
+
+	#[Group('units')]
+	public function testAParameterWhichWasNotParsedYetHasNoValue(): void
+	{
+		$this->parameters->addDefaultParameter();
+
+		$this->expectException(ModuleException::class);
+		$this->expectExceptionMessage('A value for parameter with name: csrf_token is not set.');
+
+		$this->parameters->getCsrfToken();
 	}
 }

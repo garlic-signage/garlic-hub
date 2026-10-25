@@ -47,9 +47,20 @@ class Sanitizer
 		return trim($value);
 	}
 
+	/**
+	 * Keeps only the allowed tags, and these without attributes: strip_tags() leaves the attributes of an allowed
+	 * tag as they are, so onclick, style or a javascript: link would run in the page.
+	 */
 	public function html(string $value = ''): string
 	{
-		return strip_tags($value, $this->allowedTags);
+		$html = strip_tags($value, $this->allowedTags);
+
+		// an attribute value in quotes may contain a >
+		return (string) preg_replace_callback(
+			'/<(\/?)([a-z][a-z0-9]*)\b(?:"[^"]*"|\'[^\']*\'|[^>"\'])*>/i',
+			static fn(array $tag): string => '<' . $tag[1] . strtolower($tag[2]) . ($tag[1] === '' && preg_match('~/\s*>$~', $tag[0]) === 1 ? '/' : '') . '>',
+			$html
+		);
 	}
 
 	public function int(string|int $value = ''): int

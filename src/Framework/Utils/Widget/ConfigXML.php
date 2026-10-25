@@ -154,7 +154,7 @@ class ConfigXML extends BaseSimpleXml
 		$this->MyXML = $this->loadXmlFromString($string)->getXmlObj();
 		if ($this->MyXML->getName() != 'widget')
 		{
-			throw new FrameworkException('This string is not a config.xml for widgets: '.$string);
+			throw new FrameworkException('This string is not a config.xml for widgets (root element: ' . $this->MyXML->getName() . ').');
 		}
 		return $this;
 	}
@@ -251,7 +251,7 @@ class ConfigXML extends BaseSimpleXml
 	private function parseDefaultDirection(): static
 	{
 		if (isset($this->MyXML['dir']))
-			$this->defaultLanguage = (string) $this->MyXML['dir'];
+			$this->defaultDirection = (string) $this->MyXML['dir'];
 
 		return $this;
 	}
@@ -287,9 +287,9 @@ class ConfigXML extends BaseSimpleXml
 		}
 
 		if (isset($this->MyXML->author['href']))
-			$this->author['href'] = $this->MyXML->author['href'];
+			$this->author['href'] = (string) $this->MyXML->author['href'];
 		if (isset($this->MyXML->author['email']))
-			$this->author['email'] = $this->MyXML->author['email'];
+			$this->author['email'] = (string) $this->MyXML->author['email'];
 
 		$this->author['data'] = (string) $this->MyXML->author;
 		// Can have children but that is YAGNI
@@ -367,6 +367,8 @@ class ConfigXML extends BaseSimpleXml
 			$ret[$key] = (string) $value;
 		}
 
+		$type = $ret['types'] ?? '';
+
 		foreach ($pref->children('ia', true) as $child)
 		{
 			$tag_name = $child->getName();
@@ -382,14 +384,14 @@ class ConfigXML extends BaseSimpleXml
 
 				case 'options':
 					/** @var array<string,mixed> $ret */
-					if ($ret['types'] === 'radio' || $ret['types'] === 'list')
+					if ($type === 'radio' || $type === 'list')
 					{
 						if (array_key_exists('options', $ret))
 							$ret['options'] = array_merge($ret['options'], $this->generateRadioOptionArray($child));
 						else
 							$ret['options'] = $this->generateRadioOptionArray($child);
 					}
-					else if ($ret['types'] == 'combo')
+					else if ($type === 'combo')
 					{
 						if (array_key_exists('options', $ret))
 							$ret['options'] = array_merge($ret['options'], [(string) $child => (string) $child]);

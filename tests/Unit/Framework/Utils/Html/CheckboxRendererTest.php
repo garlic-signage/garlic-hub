@@ -19,72 +19,48 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Framework\Utils\Html;
 
 use App\Framework\Utils\Html\CheckboxField;
 use App\Framework\Utils\Html\CheckboxRenderer;
-use App\Framework\Utils\Html\FieldInterface;
+use App\Framework\Utils\Html\FieldType;
+use App\Framework\Utils\Html\TextField;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 class CheckboxRendererTest extends TestCase
 {
-	private CheckboxField&MockObject $checkboxFieldMock;
-	private CheckboxRenderer $renderer;
+	private CheckboxField $field;
 
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->checkboxFieldMock = $this->createMock(CheckboxField::class);
-		$this->renderer = new CheckboxRenderer();
+		$this->field = new CheckboxField(['id' => 'active', 'type' => FieldType::CHECKBOX, 'title' => 'is active']);
 	}
 
 	#[Group('units')]
-	public function testRenderReturnsEmptyString(): void
+	public function testRenderUnchecked(): void
 	{
-		$this->checkboxFieldMock->expects($this->never())->method($this->anything());
-		$fieldStub = $this->createStub(FieldInterface::class);
-		$result = $this->renderer->render($fieldStub);
-		static::assertSame('', $result);
+		static::assertSame(
+			'<input type="checkbox" id="active" name="active"  value="1" aria-describedby="error_active"> is active',
+			(new CheckboxRenderer())->render($this->field)
+		);
 	}
 
 	#[Group('units')]
-	public function testRenderReturnsCheckedCheckbox(): void
+	public function testRenderChecked(): void
 	{
-		$this->checkboxFieldMock->expects($this->once())->method('getId')
-			->willReturn('checkbox_1');
+		$this->field->setChecked(true);
 
-		$this->checkboxFieldMock->expects($this->once())->method('isChecked')
-			->willReturn(true);
-
-		$this->checkboxFieldMock->expects($this->once())->method('getTitle')
-			->willReturn('Accept Terms');
-
-		$result = $this->renderer->render($this->checkboxFieldMock);
-		static::assertSame('<input type="checkbox" id="checkbox_1" name="checkbox_1" checked value="1" aria-describedby="error_checkbox_1"> Accept Terms', $result);
+		static::assertSame(
+			'<input type="checkbox" id="active" name="active" checked value="1" aria-describedby="error_active"> is active',
+			(new CheckboxRenderer())->render($this->field)
+		);
 	}
 
 	#[Group('units')]
-	public function testRenderReturnsUncheckedCheckbox(): void
+	public function testAFieldOfAnotherTypeRendersNothing(): void
 	{
-		$map = [
-			['getId', [], 'checkbox_1'],
-			['isChecked', [], false],
-			['getTitle', [], 'Subscribe to newsletter']
-		];
-
-		$this->checkboxFieldMock->expects($this->once())->method('getId')
-			->willReturn('checkbox_1');
-
-		$this->checkboxFieldMock->expects($this->once())->method('isChecked')
-			->willReturn(false);
-
-		$this->checkboxFieldMock->expects($this->once())->method('getTitle')
-			->willReturn('Subscribe to newsletter');
-
-		$result = $this->renderer->render($this->checkboxFieldMock);
-		static::assertSame('<input type="checkbox" id="checkbox_1" name="checkbox_1"  value="1" aria-describedby="error_checkbox_1"> Subscribe to newsletter', $result);
+		static::assertSame('', (new CheckboxRenderer())->render(new TextField(['id' => 'a', 'type' => FieldType::TEXT])));
 	}
 }

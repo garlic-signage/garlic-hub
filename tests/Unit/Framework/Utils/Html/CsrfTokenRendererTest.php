@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2024 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -21,29 +21,30 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Framework\Utils\Html;
 
+use App\Framework\Security\Crypt;
+use App\Framework\Security\CsrfToken;
 use App\Framework\Utils\Html\CsrfTokenField;
 use App\Framework\Utils\Html\CsrfTokenRenderer;
+use App\Framework\Utils\Html\FieldType;
+use Defuse\Crypto\Exception\EnvironmentIsBrokenException;
+use Defuse\Crypto\Key;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\TestCase;
+use Tests\Unit\Framework\Security\MemorySession;
 
 class CsrfTokenRendererTest extends TestCase
 {
 	/**
-	 * @throws Exception
+	 * @throws EnvironmentIsBrokenException
 	 */
 	#[Group('units')]
-	public function testRenderWithBasicAttributes(): void
+	public function testRenderHasTheTokenOfTheSession(): void
 	{
-		$fieldStub = $this->createStub(CsrfTokenField::class);
-		$fieldStub->method('getName')->willReturn('csrf_token');
-		$fieldStub->method('getId')->willReturn('csrf_token');
-		$fieldStub->method('getValue')->willReturn('the_token_in_some_hash');
+		$csrfToken = new CsrfToken(new Crypt(Key::createNewRandomKey()), new MemorySession());
+		$field     = new CsrfTokenField(['id' => 'csrf', 'type' => FieldType::CSRF, 'name' => 'csrf_token'], $csrfToken);
 
-		$renderer = new CsrfTokenRenderer();
-		$result = $renderer->render($fieldStub);
+		$html = (new CsrfTokenRenderer())->render($field);
 
-		$expected = '<input type="hidden" name="csrf_token" id="csrf_token" value="the_token_in_some_hash">';
-		static::assertSame($expected, $result);
+		static::assertSame('<input type="hidden" name="csrf_token" id="csrf" value="' . $csrfToken->getToken() . '">', $html);
 	}
 }

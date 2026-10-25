@@ -19,7 +19,6 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Framework\Utils\Html;
 
 use App\Framework\Utils\Html\ClipboardTextField;
@@ -29,46 +28,28 @@ use PHPUnit\Framework\TestCase;
 
 class ClipboardTextFieldTest extends TestCase
 {
+	private ClipboardTextField $field;
 
-	private ClipboardTextField $clipboardTextField;
-
-	/**
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$attributes = [
-			'id' => 'clipboard_text',
-			'type' => FieldType::CLIPBOARD_TEXT,
-		];	$this->clipboardTextField = new ClipboardTextField($attributes);
-	}
-
-
-    #[Group('units')]
-	public function testGetDeleteTitleWithDefaultValue(): void
-	{
-		static::assertSame('', $this->clipboardTextField->getDeleteTitle());
-	}
-
-    #[Group('units')]
-	public function testGetDeleteTitleAfterSettingValue(): void
-	{
-		$expectedTitle = 'Delete Item';
-		$this->clipboardTextField->setDeleteTitle($expectedTitle);
-		static::assertSame($expectedTitle, $this->clipboardTextField->getDeleteTitle());
+		$this->field = new ClipboardTextField(['id' => 'link', 'type' => FieldType::CLIPBOARD_TEXT]);
 	}
 
 	#[Group('units')]
-	public function testGetRefreshTitleWithDefaultValue(): void
+	public function testTheTitlesAreEmptyByDefault(): void
 	{
-		static::assertSame('', $this->clipboardTextField->getRefreshTitle());
+		static::assertSame('', $this->field->getDeleteTitle());
+		static::assertSame('', $this->field->getRefreshTitle());
 	}
 
 	#[Group('units')]
-	public function testGetRefreshTitleAfterSettingValue(): void
+	public function testSetTheTitles(): void
 	{
-		$expectedTitle = 'Refresh Page';
-		$this->clipboardTextField->setRefreshTitle($expectedTitle);
-		static::assertSame($expectedTitle, $this->clipboardTextField->getRefreshTitle());
+		$result = $this->field->setDeleteTitle('Delete link')->setRefreshTitle('Renew link');
+
+		static::assertSame($this->field, $result);
+		static::assertSame('Delete link', $this->field->getDeleteTitle());
+		static::assertSame('Renew link', $this->field->getRefreshTitle());
 	}
 }

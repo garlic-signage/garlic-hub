@@ -22,65 +22,112 @@ declare(strict_types=1);
 namespace Tests\Unit\Framework\Utils\Datatable;
 
 use App\Framework\Utils\Datatable\UrlBuilder;
+use Error;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 class UrlBuilderTest extends TestCase
 {
-	#[Group('units')]
-	public function testBuildFilterUrlWithoutAdditionalParameters(): void
+	private UrlBuilder $urlBuilder;
+
+	protected function setUp(): void
 	{
-		$urlBuilder = new UrlBuilder()
-			->setSite('https://example.com')
-			->setPage(1)
-			->setElementsPerPage(10)
-			->setSortColumn('name')
-			->setSortOrder('asc');
-
-		$expectedUrl = 'https://example.com?elements_page=1&sort_column=name&sort_order=asc&elements_per_page=10';
-
-		static::assertEquals($expectedUrl, $urlBuilder->buildFilterUrl());
+		parent::setUp();
+		$this->urlBuilder = (new UrlBuilder())
+			->setSite('/playlists')
+			->setPage(2)
+			->setSortColumn('created')
+			->setSortOrder('DESC')
+			->setElementsPerPage(25);
 	}
 
 	#[Group('units')]
-	public function testClearAdditionalUrlParameters(): void
+	public function testBuildFilterUrlWithoutAdditionalParameters(): void
 	{
-		$urlBuilder = new UrlBuilder()
-			->setSite('https://example.com')
-			->setPage(1)
-			->setElementsPerPage(10)
-			->setSortColumn('name')
-			->setSortOrder('asc')
-			->addAdditionalUrlParameter('key1', 'value1')
-			->addAdditionalUrlParameter('key2', 'value2')
-			->addAdditionalUrlParameter('key3', 'value3');
+		static::assertSame('/playlists?elements_page=2&sort_column=created&sort_order=DESC&elements_per_page=25', $this->urlBuilder->buildFilterUrl());
+		static::assertFalse($this->urlBuilder->hasAdditionalUrlParameters());
+	}
 
-		static::assertTrue($urlBuilder->hasAdditionalUrlParameters());
-
-		$urlBuilder->clearAdditionalUrlParameters();
-
-		static::assertFalse($urlBuilder->hasAdditionalUrlParameters());
-
-		$expectedUrl = 'https://example.com?elements_page=1&sort_column=name&sort_order=asc&elements_per_page=10';
-
-		static::assertEquals($expectedUrl, $urlBuilder->buildFilterUrl());
+	#[Group('units')]
+	public function testTheSettersAreChainable(): void
+	{
+		static::assertSame($this->urlBuilder, $this->urlBuilder->setSite('/x')->setPage(1)->setSortColumn('a')->setSortOrder('ASC')->setElementsPerPage(5));
+		static::assertSame($this->urlBuilder, $this->urlBuilder->addAdditionalUrlParameter('a', 'b')->clearAdditionalUrlParameters());
 	}
 
 	#[Group('units')]
 	public function testBuildFilterUrlWithAdditionalParameters(): void
 	{
-		$urlBuilder = new UrlBuilder()
-			->setSite('https://example.com')
-			->setPage(2)
-			->setElementsPerPage(20)
-			->setSortColumn('date')
-			->setSortOrder('desc')
-			->addAdditionalUrlParameter('filter', 'active')
-			->addAdditionalUrlParameter('category', 'news');
+		$this->urlBuilder->addAdditionalUrlParameter('name', 'Anna')->addAdditionalUrlParameter('status', '3');
 
-		$expectedUrl = 'https://example.com?elements_page=2&sort_column=date&sort_order=desc&elements_per_page=20&filter=active&category=news';
-
-		static::assertEquals($expectedUrl, $urlBuilder->buildFilterUrl());
+		static::assertTrue($this->urlBuilder->hasAdditionalUrlParameters());
+		static::assertSame(
+			'/playlists?elements_page=2&sort_column=created&sort_order=DESC&elements_per_page=25&name=Anna&status=3',
+			$this->urlBuilder->buildFilterUrl()
+		);
 	}
 
+	#[Group('units')]
+	public function testClearAdditionalUrlParameters(): void
+	{
+		$this->urlBuilder->addAdditionalUrlParameter('name', 'Anna')->clearAdditionalUrlParameters();
+
+		static::assertFalse($this->urlBuilder->hasAdditionalUrlParameters());
+		static::assertSame('/playlists?elements_page=2&sort_column=created&sort_order=DESC&elements_per_page=25', $this->urlBuilder->buildFilterUrl());
+	}
+
+	/**
+	 * Values are encoded for the query, a value can not start another parameter.
+	 */
+	#[Group('units')]
+	public function testSpecialCharactersAreEncoded(): void
+	{
+		$this->urlBuilder->setSortColumn('a b&c=d')->addAdditionalUrlParameter('name', 'Anna & Bert=<x>#1');
+
+		$url = $this->urlBuilder->buildFilterUrl();
+
+		static::assertSame(
+			'/playlists?elements_page=2&sort_column=a+b%26c%3Dd&sort_order=DESC&elements_per_page=25&name=Anna+%26+Bert%3D%3Cx%3E%231',
+			$url
+		);
+		parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
+		static::assertSame('a b&c=d', $query['sort_column']);
+		static::assertSame('Anna & Bert=<x>#1', $query['name']);
+	}
+
+	#[Group('units')]
+	public function testAnAdditionalParameterReplacesAStandardOne(): void
+	{
+		$this->urlBuilder->addAdditionalUrlParameter('sort_order', 'asc');
+
+		static::assertStringContainsString('sort_order=asc', $this->urlBuilder->buildFilterUrl());
+		static::assertStringNotContainsString('sort_order=DESC', $this->urlBuilder->buildFilterUrl());
+	}
+
+	#[Group('units')]
+	public function testAnAdditionalParameterIsSetAgainByTheSameKey(): void
+	{
+		$this->urlBuilder->addAdditionalUrlParameter('name', 'Anna')->addAdditionalUrlParameter('name', 'Berta');
+
+		static::assertStringEndsWith('&name=Berta', $this->urlBuilder->buildFilterUrl());
+	}
+
+	#[Group('units')]
+	public function testTheSiteIsEmptyByDefault(): void
+	{
+		$url = (new UrlBuilder())->setPage(1)->setSortColumn('a')->setSortOrder('ASC')->setElementsPerPage(10)->buildFilterUrl();
+
+		static::assertSame('?elements_page=1&sort_column=a&sort_order=ASC&elements_per_page=10', $url);
+	}
+
+	/**
+	 * Every part of the URL has to be set before: there is no default.
+	 */
+	#[Group('units')]
+	public function testWithoutThePartsTheUrlCanNotBeBuilt(): void
+	{
+		$this->expectException(Error::class);
+
+		(new UrlBuilder())->setSite('/x')->buildFilterUrl();
+	}
 }

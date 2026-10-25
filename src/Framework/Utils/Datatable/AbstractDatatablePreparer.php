@@ -60,7 +60,7 @@ abstract class AbstractDatatablePreparer
 	}
 
 	/**
-	 * @param list<array{name: string, page: int, active: ?bool}> $paginationLinks
+	 * @param list<array{name: string, page: int, active?: ?bool}> $paginationLinks
 	 * @param array{min: int, max: int, steps: int} $dropDownSettings
 	 * @return array{links: mixed, dropdown: mixed}
 	 * @throws ModuleException

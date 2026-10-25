@@ -97,4 +97,55 @@ class XmlReaderTest extends TestCase
 
 		self::assertNull($result);
 	}
+
+	#[Group('units')]
+	public function testAnAttributeWithAnEmptyValueOrZeroIsNotMissing(): void
+	{
+		$reader = new XmlReader(new \SimpleXMLElement('<node empty="" zero="0" text="x"/>'));
+
+		self::assertSame('', $reader->readAttribute('empty'));
+		self::assertSame('0', $reader->readAttribute('zero'));
+		self::assertSame(['empty' => '', 'zero' => '0', 'text' => 'x'], $reader->getAllAttributes());
+	}
+
+	#[Group('units')]
+	public function testOfSeveralSubnodesWithTheSameNameTheFirstOneIsRead(): void
+	{
+		$reader = new XmlReader(new \SimpleXMLElement('<root><child>one</child><child>two</child></root>'));
+
+		self::assertSame('one', (string) $reader->readSubnode('child'));
+	}
+
+	#[Group('units')]
+	public function testAnEmptySubnodeIsFoundButEmpty(): void
+	{
+		$reader = new XmlReader(new \SimpleXMLElement('<root><child/></root>'));
+
+		self::assertInstanceOf(\SimpleXMLElement::class, $reader->readSubnode('child'));
+		self::assertSame('', (string) $reader->readSubnode('child'));
+	}
+
+	/**
+	 * Only attributes and subnodes without a namespace prefix are read.
+	 */
+	#[Group('units')]
+	public function testNamespacedAttributesAndNodesAreNotRead(): void
+	{
+		$reader = new XmlReader(new \SimpleXMLElement('<n xmlns:p="urn:p" p:attr="ns" plain="x"><p:other>o</p:other></n>'));
+
+		self::assertSame(['plain' => 'x'], $reader->getAllAttributes());
+		self::assertNull($reader->readAttribute('attr'));
+		self::assertNull($reader->readAttribute('p:attr'));
+		self::assertNull($reader->readSubnode('other'));
+		self::assertNull($reader->readSubnode('p:other'));
+	}
+
+	#[Group('units')]
+	public function testSubnodesAreNotAttributesAndTheOtherWayRound(): void
+	{
+		$reader = new XmlReader(new \SimpleXMLElement('<root name="attr"><name>node</name></root>'));
+
+		self::assertSame('attr', $reader->readAttribute('name'));
+		self::assertSame('node', (string) $reader->readSubnode('name'));
+	}
 }

@@ -19,331 +19,149 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Framework\Utils\Datatable;
 
 use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Security\Crypt;
+use App\Framework\Security\CsrfToken;
 use App\Framework\Utils\Datatable\BuildService;
-use App\Framework\Utils\Datatable\Paginator\Builder;
-use App\Framework\Utils\Datatable\Results\HeaderField;
-use App\Framework\Utils\Html\FieldInterface;
+use App\Framework\Utils\Datatable\Paginator\Builder as PaginatorBuilder;
+use App\Framework\Utils\Datatable\Results\Builder as ResultsBuilder;
+use App\Framework\Utils\Html\DropdownField;
+use App\Framework\Utils\Html\FieldsFactory;
+use App\Framework\Utils\Html\FieldsRenderFactory;
+use App\Framework\Utils\Html\FieldType;
 use App\Framework\Utils\Html\FormBuilder;
+use App\Framework\Utils\Html\TextField;
+use Defuse\Crypto\Key;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Tests\Unit\Framework\Security\MemorySession;
 
 /**
- * Class BuildServiceTest
- *
- * Unit tests for the BuildService class.
- * This class tests the buildFormField method which creates a form field using the FormBuilder.
+ * BuildService with the real form builder and the real builders for the pager and the table.
  */
 class BuildServiceTest extends TestCase
 {
 	private BuildService $buildService;
-	private Builder&MockObject $paginatorBuilderMock;
-	private \App\Framework\Utils\Datatable\Results\Builder&MockObject $resultsBuilderMock;
-	private FormBuilder&MockObject $formBuilderMock;
-	private FieldInterface&Stub $fieldStub;
+	private ResultsBuilder $resultsBuilder;
 
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->formBuilderMock = $this->createMock(FormBuilder::class);
-		$this->fieldStub = $this->createStub(FieldInterface::class);
 
-		$this->paginatorBuilderMock = $this->createMock(Builder::class);
-		$this->resultsBuilderMock   = $this->createMock(\App\Framework\Utils\Datatable\Results\Builder::class);
+		$formBuilder = new FormBuilder(
+			new FieldsFactory(),
+			new FieldsRenderFactory(),
+			new CsrfToken(new Crypt(Key::createNewRandomKey()), new MemorySession())
+		);
 
-		$this->buildService = new BuildService($this->formBuilderMock, $this->paginatorBuilderMock, $this->resultsBuilderMock);
-
+		$this->resultsBuilder = new ResultsBuilder();
+		$this->buildService   = new BuildService($formBuilder, new PaginatorBuilder(), $this->resultsBuilder);
 	}
 
 	/**
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testBuildFormFieldReturnsFieldInterface(): void
+	public function testBuildFormFieldCreatesTheFieldOfTheType(): void
 	{
-		$this->paginatorBuilderMock->expects($this->never())->method($this->anything());
-		$this->resultsBuilderMock->expects($this->never())->method($this->anything());
-		$attributes = [
-			'name' => 'email',
-			'type' => 'text',
-			'label' => 'Email'
-		];
+		$text     = $this->buildService->buildFormField(['type' => FieldType::TEXT, 'id' => 'name', 'name' => 'name', 'value' => 'Anna']);
+		$dropdown = $this->buildService->buildFormField(['type' => FieldType::DROPDOWN, 'id' => 'type', 'options' => ['a' => 'A']]);
 
-		$this->formBuilderMock
-			->expects($this->once())
-			->method('createField')
-			->with($attributes)
-			->willReturn($this->fieldStub);
-
-		$result = $this->buildService->buildFormField($attributes);
-
-		static::assertSame($this->fieldStub, $result);
+		static::assertInstanceOf(TextField::class, $text);
+		static::assertSame('Anna', $text->getValue());
+		static::assertInstanceOf(DropdownField::class, $dropdown);
+		static::assertSame(['a' => 'A'], $dropdown->getOptions());
 	}
 
 	/**
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testBuildFormFieldWithEmptyAttributes(): void
+	public function testBuildFormFieldWithAnInvalidTypeThrows(): void
 	{
-		$this->resultsBuilderMock->expects($this->never())->method($this->anything());
-		$this->paginatorBuilderMock->expects($this->never())->method($this->anything());
-		$this->formBuilderMock
-			->expects($this->once())
-			->method('createField')
-			->with([])
-			->willReturn($this->fieldStub);
+		$this->expectException(FrameworkException::class);
+		$this->expectExceptionMessage('Invalid field type');
 
-		$result = $this->buildService->buildFormField();
-
-		static::assertSame($this->resultsBuilderMock, $this->buildService->getResultsBuilder());
-		static::assertSame($this->fieldStub, $result);
+		$this->buildService->buildFormField(['type' => 'nothing']);
 	}
 
 	#[Group('units')]
-	public function testCreateDatatableFieldAddsField(): void
+	public function testTheTableFieldsKeepTheirOrderNameAndSortability(): void
 	{
-		$this->paginatorBuilderMock->expects($this->never())->method($this->anything());
-		$this->formBuilderMock->expects($this->never())->method($this->anything());
-		$fieldName = 'name';
+		$this->buildService->createDatatableField('name', true);
+		$this->buildService->createDatatableField('type', false);
 
-		$this->resultsBuilderMock
-			->expects($this->once())
-			->method('createField')
-			->with($fieldName, true);
+		$fields = $this->buildService->getDatatableFields();
 
-		$this->buildService->createDatatableField($fieldName, true);
+		static::assertSame(['name', 'type'], array_map(static fn($field): string => $field->getName(), $fields));
+		static::assertSame([true, false], array_map(static fn($field): bool => $field->isSortable(), $fields));
 	}
 
 	#[Group('units')]
-	public function testCreateDatatableFieldWithUnSortableField(): void
+	public function testThereAreNoTableFieldsAtTheStart(): void
 	{
-		$this->paginatorBuilderMock->expects($this->never())->method($this->anything());
-		$this->formBuilderMock->expects($this->never())->method($this->anything());
-		$fieldName = 'age';
-
-		$this->resultsBuilderMock
-			->expects($this->once())
-			->method('createField')
-			->with($fieldName, false);
-
-		$this->buildService->createDatatableField($fieldName, false);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testGetDatatableFieldsReturnsExpectedFields(): void
-	{
-		$this->paginatorBuilderMock->expects($this->never())->method($this->anything());
-		$this->formBuilderMock->expects($this->never())->method($this->anything());
-		$expectedFields = [
-			$this->createStub(HeaderField::class),
-			$this->createStub(HeaderField::class)
-		];
-
-		$this->resultsBuilderMock
-			->expects($this->once())
-			->method('getHeaderFields')
-			->willReturn($expectedFields);
-
-		$result = $this->buildService->getDatatableFields();
-
-		static::assertSame($expectedFields, $result);
-	}
-
-
-	#[Group('units')]
-	public function testBuildPaginationDropDownReturnsCorrectSettings(): void
-	{
-		$this->resultsBuilderMock->expects($this->never())->method($this->anything());
-		$this->formBuilderMock->expects($this->never())->method($this->anything());
-		$min = 5;
-		$max = 50;
-		$steps = 5;
-
-		$this->paginatorBuilderMock
-			->expects($this->once())
-			->method('createDropDown')
-			->with($min, $max, $steps)
-			->willReturnSelf();
-
-		$this->paginatorBuilderMock
-			->expects($this->once())
-			->method('getDropDownSettings')
-			->willReturn(['min' => 15, 'max' => 50, 'steps' => 5]);
-
-		$result = $this->buildService->buildPaginationDropDown($min, $max, $steps);
-
-		static::assertSame(['min' => 15, 'max' => 50, 'steps' => 5], $result);
+		static::assertSame([], $this->buildService->getDatatableFields());
 	}
 
 	#[Group('units')]
-	public function testBuildPaginationDropDownWithDefaultValues(): void
+	public function testTheResultsBuilderIsTheOneOfTheService(): void
 	{
-		$this->resultsBuilderMock->expects($this->never())->method($this->anything());
-		$this->formBuilderMock->expects($this->never())->method($this->anything());
-		$this->paginatorBuilderMock
-			->expects($this->once())
-			->method('createDropDown')
-			->with(10, 100, 10)
-			->willReturnSelf();
+		static::assertSame($this->resultsBuilder, $this->buildService->getResultsBuilder());
 
-		$this->paginatorBuilderMock
-			->expects($this->once())
-			->method('getDropDownSettings')
-			->willReturn(['min' => 10, 'max' => 100, 'steps' => 10]);
+		$this->buildService->createDatatableField('name', true);
 
-		$result = $this->buildService->buildPaginationDropDown();
-
-		static::assertSame(['min' => 10, 'max' => 100, 'steps' => 10],$result);
+		static::assertCount(1, $this->resultsBuilder->getHeaderFields());
 	}
 
 	#[Group('units')]
-	public function testBuildPaginationLinksWithValidParameters(): void
+	public function testBuildPaginationDropDown(): void
 	{
-		$this->resultsBuilderMock->expects($this->never())->method($this->anything());
-		$this->formBuilderMock->expects($this->never())->method($this->anything());
-		$currentPage = 1;
-		$itemsPerPage = 10;
-		$totalItems = 100;
-		$expectedLinks = [
-			['name' => '1', 'page' => 1],
-			['name' => '2', 'page' => 2],
-			['name' => '3', 'page' => 3]
-		];
-
-		$this->paginatorBuilderMock
-			->expects($this->once())
-			->method('configure')
-			->with($currentPage, $itemsPerPage, $totalItems, false, true)
-			->willReturnSelf();
-
-		$this->paginatorBuilderMock
-			->expects($this->once())
-			->method('buildPagerLinks')
-			->willReturnSelf();
-
-		$this->paginatorBuilderMock
-			->expects($this->once())
-			->method('getPagerLinks')
-			->willReturn($expectedLinks);
-
-		$result = $this->buildService->buildPaginationLinks($currentPage, $itemsPerPage, $totalItems);
-
-		static::assertSame($expectedLinks, $result);
+		static::assertSame(['min' => 5, 'max' => 50, 'steps' => 5], $this->buildService->buildPaginationDropDown(5, 50, 5));
 	}
 
 	#[Group('units')]
-	public function testBuildPaginationLinksWithUsePagerTrue(): void
+	public function testBuildPaginationDropDownWithTheDefaults(): void
 	{
-		$this->resultsBuilderMock->expects($this->never())->method($this->anything());
-		$this->formBuilderMock->expects($this->never())->method($this->anything());
-		$currentPage = 2;
-		$itemsPerPage = 20;
-		$totalItems = 200;
-		$expectedLinks = [
-			['name' => '1', 'page' => 1],
-			['name' => '2', 'page' => 2],
-			['name' => '3', 'page' => 3]
-		];
-
-		$this->paginatorBuilderMock
-			->expects($this->once())
-			->method('configure')
-			->with($currentPage, $itemsPerPage, $totalItems, true, true)
-			->willReturnSelf();
-
-		$this->paginatorBuilderMock
-			->expects($this->once())
-			->method('buildPagerLinks')
-			->willReturnSelf();
-
-		$this->paginatorBuilderMock
-			->expects($this->once())
-			->method('getPagerLinks')
-			->willReturn($expectedLinks);
-
-		$result = $this->buildService->buildPaginationLinks($currentPage, $itemsPerPage, $totalItems, true);
-
-		static::assertSame($expectedLinks, $result);
+		static::assertSame(['min' => 10, 'max' => 100, 'steps' => 10], $this->buildService->buildPaginationDropDown());
 	}
 
 	#[Group('units')]
-	public function testBuildPaginationLinksWithShortenedFalse(): void
+	public function testBuildPaginationLinksWithoutThePagerArrows(): void
 	{
-		$this->resultsBuilderMock->expects($this->never())->method($this->anything());
-		$this->formBuilderMock->expects($this->never())->method($this->anything());
-		$currentPage = 3;
-		$itemsPerPage = 5;
-		$totalItems = 50;
-		$expectedLinks = [
-			['name' => '1', 'page' => 1],
-			['name' => '2', 'page' => 2],
-			['name' => '3', 'page' => 3]
-		];
+		$links = $this->buildService->buildPaginationLinks(2, 10, 30);
 
-		$this->paginatorBuilderMock
-			->expects($this->once())
-			->method('configure')
-			->with($currentPage, $itemsPerPage, $totalItems, false, false)
-			->willReturnSelf();
-
-		$this->paginatorBuilderMock
-			->expects($this->once())
-			->method('buildPagerLinks')
-			->willReturnSelf();
-
-		$this->paginatorBuilderMock
-			->expects($this->once())
-			->method('getPagerLinks')
-			->willReturn($expectedLinks);
-
-		$result = $this->buildService->buildPaginationLinks($currentPage, $itemsPerPage, $totalItems, false, false);
-
-		static::assertSame($expectedLinks, $result);
+		static::assertSame(
+			[['name' => '1', 'page' => 1, 'active' => false], ['name' => '2', 'page' => 2, 'active' => true], ['name' => '3', 'page' => 3, 'active' => false]],
+			$links
+		);
 	}
 
 	#[Group('units')]
-	public function testBuildPaginationLinksWithExceedingCurrentPage(): void
+	public function testBuildPaginationLinksWithThePagerArrows(): void
 	{
-		$this->resultsBuilderMock->expects($this->never())->method($this->anything());
-		$this->formBuilderMock->expects($this->never())->method($this->anything());
-		$currentPage = 15;
-		$itemsPerPage = 10;
-		$totalItems = 100;
-		$expectedLinks = []; // Expected behavior for out-of-range currentPage can vary
+		$links = $this->buildService->buildPaginationLinks(2, 10, 30, true);
 
-		$this->paginatorBuilderMock
-			->expects($this->once())
-			->method('configure')
-			->with($currentPage, $itemsPerPage, $totalItems, false, true)
-			->willReturnSelf();
-
-		$this->paginatorBuilderMock
-			->expects($this->once())
-			->method('buildPagerLinks')
-			->willReturnSelf();
-
-		$this->paginatorBuilderMock
-			->expects($this->once())
-			->method('getPagerLinks')
-			->willReturn($expectedLinks);
-
-		$result = $this->buildService->buildPaginationLinks($currentPage, $itemsPerPage, $totalItems);
-
-		static::assertSame($expectedLinks, $result);
+		static::assertSame(['«', '‹', '1', '2', '3', '›', '»'], array_column($links, 'name'));
 	}
 
+	#[Group('units')]
+	public function testBuildPaginationLinksAreShortenedByDefault(): void
+	{
+		$shortened = $this->buildService->buildPaginationLinks(1, 10, 200);
+		$long      = $this->buildService->buildPaginationLinks(1, 10, 200, false, false);
 
+		static::assertSame(['1', '2', '3', '18', '19', '20'], array_column($shortened, 'name'));
+		static::assertCount(20, $long);
+	}
+
+	#[Group('units')]
+	public function testAPageBehindTheLastOneIsCorrectedToThePagesThereAre(): void
+	{
+		$links = $this->buildService->buildPaginationLinks(99, 10, 20);
+
+		static::assertSame(['1', '2'], array_column($links, 'name'));
+		static::assertSame([false, false], array_column($links, 'active'));
+	}
 }

@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2024 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -21,32 +21,23 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Framework\Utils\Html;
 
+use App\Framework\Utils\Html\FieldType;
 use App\Framework\Utils\Html\PasswordField;
 use App\Framework\Utils\Html\PasswordRenderer;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\TestCase;
 
 class PasswordRendererTest extends TestCase
 {
-	/**
-	 * @throws Exception
-	 */
 	#[Group('units')]
-	public function testRenderWithMinimumAttributes(): void
+	public function testRenderWithToggleAndPattern(): void
 	{
-		$fieldStub = $this->createStub(PasswordField::class);
-		$fieldStub->method('getName')->willReturn('password');
-		$fieldStub->method('getTitle')->willReturn('edit password');
-		$fieldStub->method('getId')->willReturn('password_1');
-		$fieldStub->method('getValue')->willReturn('janzjeheim');
-		$fieldStub->method('getValidationRules')->willReturn([]);
-		$fieldStub->method('getAttributes')->willReturn([]);
+		$field = new PasswordField(['id' => 'pw', 'type' => FieldType::PASSWORD, 'name' => 'password', 'rules' => ['required' => true]]);
+		$field->setPattern('.{8,}');
 
-		$renderer = new PasswordRenderer();
-		$result = $renderer->render($fieldStub);
-
-		$expected = '<div class="password-container"><input type="password" name="password" id="password_1" value="janzjeheim" title="edit password" aria-describedby="error_password_1"><span class="toggle-password bi bi-eye-fill" id="toggle_password_1"></span></div>';
-		static::assertSame($expected, $result);
+		static::assertSame(
+			'<div class="password-container"><input type="password" name="password" id="pw" value="" pattern=".{8,}" required="required" aria-describedby="error_pw"><span class="toggle-password bi bi-eye-fill" id="toggle_pw"></span></div>',
+			(new PasswordRenderer())->render($field)
+		);
 	}
 }

@@ -79,7 +79,7 @@ class DatatableTemplatePreparer
 					],
 					'has_add'                     => $dataSections['has_add'],
 					'LANG_ELEMENTS_PER_PAGE'      => $this->translator->translate('elements_per_page', 'main'),
-					'LANG_COUNT_SEARCH_RESULTS'   => sprintf($this->translator->translateWithPlural('count_search_results', $dataSections['module_name'], $dataSections['results_count']), $dataSections['results_count']),
+					'LANG_COUNT_SEARCH_RESULTS'   => $this->translator->translateWithPlural('count_search_results', $dataSections['module_name'], $dataSections['results_count']),
 					'elements_pager'              => $dataSections['pagination_links'],
 					'elements_result_header'      => $dataSections['results_header'],
 					'elements_results'            => $dataSections['results_list']

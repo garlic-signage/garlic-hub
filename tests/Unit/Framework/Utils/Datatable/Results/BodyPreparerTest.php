@@ -22,9 +22,14 @@ declare(strict_types=1);
 namespace Tests\Unit\Framework\Utils\Datatable\Results;
 
 use App\Framework\Utils\Datatable\Results\BodyPreparer;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * The body preparer gives the elements of a table cell their names for the template. It does not escape,
+ * the template does (see tests/Integration/Framework/Utils/DatatableTemplateTest).
+ */
 class BodyPreparerTest extends TestCase
 {
 	private BodyPreparer $bodyPreparer;
@@ -35,499 +40,106 @@ class BodyPreparerTest extends TestCase
 		$this->bodyPreparer = new BodyPreparer();
 	}
 
+	/**
+	 * @param list<mixed> $arguments
+	 * @param array<string,mixed> $expected
+	 */
 	#[Group('units')]
-	public function testFormatTextWithValidString(): void
+	#[DataProvider('formatProvider')]
+	public function testTheFormats(string $method, array $arguments, array $expected): void
 	{
-		$text = 'Sample Text';
-
-		$result = $this->bodyPreparer->formatText($text);
-
-		static::assertEquals([
-			'CONTROL_ELEMENT_VALUE_TEXT' => 'Sample Text',
-		], $result);
+		static::assertSame($expected, $this->bodyPreparer->$method(...$arguments));
 	}
 
+	/**
+	 * @return array<string, array{string, list<mixed>, array<string,mixed>}> method, arguments, result
+	 */
+	public static function formatProvider(): array
+	{
+		$empty = static fn(array $keys): array => array_fill_keys($keys, '');
+
+		return [
+			'text'                    => ['formatText', ['Sample Text'], ['CONTROL_ELEMENT_VALUE_TEXT' => 'Sample Text']],
+			'text empty'              => ['formatText', [''], ['CONTROL_ELEMENT_VALUE_TEXT' => '']],
+
+			'span'                    => ['formatSpan', ['Name', 'Title', '123', 'test-class'], [
+				'CONTROL_ELEMENT_VALUE_NAME' => 'Name', 'CONTROL_ELEMENT_VALUE_TITLE' => 'Title', 'CONTROL_ELEMENT_VALUE_ID' => '123', 'CONTROL_ELEMENT_VALUE_CLASS' => 'test-class',
+			]],
+			'span without class'      => ['formatSpan', ['Name', 'Title', '123'], [
+				'CONTROL_ELEMENT_VALUE_NAME' => 'Name', 'CONTROL_ELEMENT_VALUE_TITLE' => 'Title', 'CONTROL_ELEMENT_VALUE_ID' => '123', 'CONTROL_ELEMENT_VALUE_CLASS' => '',
+			]],
+			'span empty'              => ['formatSpan', ['', '', ''], $empty(['CONTROL_ELEMENT_VALUE_NAME', 'CONTROL_ELEMENT_VALUE_TITLE', 'CONTROL_ELEMENT_VALUE_ID', 'CONTROL_ELEMENT_VALUE_CLASS'])],
+
+			'link'                    => ['formatLink', ['Name', 'Title', '/edit/5', '5', 'link-class', 'more'], [
+				'CONTROL_ELEMENT_VALUE_NAME' => 'Name', 'CONTROL_ELEMENT_VALUE_TITLE' => 'Title', 'CONTROL_ELEMENT_VALUE_LINK' => '/edit/5',
+				'CONTROL_ELEMENT_VALUE_ID' => '5', 'CONTROL_ELEMENT_VALUE_CLASS' => 'link-class', 'CONTROL_ELEMENT_ADDITIONAL_TEXT' => 'more',
+			]],
+			'link without class and text' => ['formatLink', ['Name', 'Title', '/edit/5', '5'], [
+				'CONTROL_ELEMENT_VALUE_NAME' => 'Name', 'CONTROL_ELEMENT_VALUE_TITLE' => 'Title', 'CONTROL_ELEMENT_VALUE_LINK' => '/edit/5',
+				'CONTROL_ELEMENT_VALUE_ID' => '5', 'CONTROL_ELEMENT_VALUE_CLASS' => '', 'CONTROL_ELEMENT_ADDITIONAL_TEXT' => '',
+			]],
+
+			'button'                  => ['formatButton', ['Delete', 'Delete it', 'btn_1', 'danger'], [
+				'CONTROL_BUTTON_VALUE' => 'Delete', 'CONTROL_BUTTON_TITLE' => 'Delete it', 'CONTROL_BUTTON_ID' => 'btn_1', 'CONTROL_BUTTON_CLASS' => 'danger',
+			]],
+			'button without class'    => ['formatButton', ['Delete', 'Delete it', 'btn_1'], [
+				'CONTROL_BUTTON_VALUE' => 'Delete', 'CONTROL_BUTTON_TITLE' => 'Delete it', 'CONTROL_BUTTON_ID' => 'btn_1', 'CONTROL_BUTTON_CLASS' => '',
+			]],
+
+			'uid'                     => ['formatUID', [7, 'anna'], ['OWNER_UID' => 7, 'OWNER_NAME' => 'anna']],
+			'uid zero'                => ['formatUID', [0, ''], ['OWNER_UID' => 0, 'OWNER_NAME' => '']],
+
+			'icon'                    => ['formatIcon', ['bi bi-trash', 'Delete'], ['ICON_CLASS' => 'bi bi-trash', 'ICON_TITLE' => 'Delete']],
+
+			'action'                  => ['formatAction', ['Edit', 'edit', 5, 'bi-pencil'], [
+				'LANG_ACTION' => 'Edit', 'ACTION_ID' => 5, 'ACTION_NAME' => 'edit', 'ACTION_ICON_CLASS' => 'bi-pencil',
+			]],
+			'action with a text id'   => ['formatAction', ['Edit', 'edit', 'uuid-1', 'bi-pencil'], [
+				'LANG_ACTION' => 'Edit', 'ACTION_ID' => 'uuid-1', 'ACTION_NAME' => 'edit', 'ACTION_ICON_CLASS' => 'bi-pencil',
+			]],
+
+			'action link'             => ['formatActionLink', ['Show', '/show/5', 'show', 5, 'bi-eye'], [
+				'LANG_LINK_ACTION' => 'Show', 'LINK_ACTION' => '/show/5', 'LINK_ACTION_ID' => 5, 'LINK_ACTION_NAME' => 'show', 'LINK_ACTION_ICON_CLASS' => 'bi-eye',
+			]],
+
+			'action delete'           => ['formatActionDelete', ['Delete', 'Really delete?', '5', 'bi-trash'], [
+				'LANG_DELETE_ACTION' => 'Delete', 'DELETE_ID' => '5', 'LANG_CONFIRM_DELETE' => 'Really delete?', 'ELEMENT_DELETE_CLASS' => 'bi-trash',
+			]],
+		];
+	}
+
+	/**
+	 * @param list<mixed> $arguments
+	 */
 	#[Group('units')]
-	public function testFormatSpanWithAllParameters(): void
+	#[DataProvider('hostileProvider')]
+	public function testNothingIsChangedOrEscapedHere(string $method, array $arguments): void
 	{
-		$valueName = 'Sample Name';
-		$title = 'Sample Title';
-		$valueId = '123';
-		$cssClass = 'test-class';
+		$result = $this->bodyPreparer->$method(...$arguments);
 
-		$result = $this->bodyPreparer->formatSpan($valueName, $title, $valueId, $cssClass);
-
-		static::assertEquals([
-			'CONTROL_ELEMENT_VALUE_NAME' => 'Sample Name',
-			'CONTROL_ELEMENT_VALUE_TITLE' => 'Sample Title',
-			'CONTROL_ELEMENT_VALUE_ID' => '123',
-			'CONTROL_ELEMENT_VALUE_CLASS' => 'test-class',
-		], $result);
+		foreach ($arguments as $argument)
+		{
+			static::assertContains($argument, $result, 'The value must arrive as it is, the template escapes it.');
+		}
 	}
 
-	#[Group('units')]
-	public function testFormatSpanWithoutCssClass(): void
+	/**
+	 * @return array<string, array{string, list<mixed>}>
+	 */
+	public static function hostileProvider(): array
 	{
-		$valueName = 'Sample Name';
-		$title = 'Sample Title';
-		$valueId = '123';
+		$hostile = '"><script>alert(1)</script> & \'';
 
-		$result = $this->bodyPreparer->formatSpan($valueName, $title, $valueId);
-
-		static::assertEquals([
-			'CONTROL_ELEMENT_VALUE_NAME' => 'Sample Name',
-			'CONTROL_ELEMENT_VALUE_TITLE' => 'Sample Title',
-			'CONTROL_ELEMENT_VALUE_ID' => '123',
-			'CONTROL_ELEMENT_VALUE_CLASS' => '',
-		], $result);
+		return [
+			'text'          => ['formatText', [$hostile]],
+			'span'          => ['formatSpan', [$hostile, $hostile . '1', $hostile . '2', $hostile . '3']],
+			'link'          => ['formatLink', [$hostile, $hostile . '1', $hostile . '2', $hostile . '3', $hostile . '4', $hostile . '5']],
+			'button'        => ['formatButton', [$hostile, $hostile . '1', $hostile . '2', $hostile . '3']],
+			'uid'           => ['formatUID', [5, $hostile]],
+			'icon'          => ['formatIcon', [$hostile, $hostile . '1']],
+			'action'        => ['formatAction', [$hostile, $hostile . '1', $hostile . '2', $hostile . '3']],
+			'action link'   => ['formatActionLink', [$hostile, $hostile . '1', $hostile . '2', $hostile . '3', $hostile . '4']],
+			'action delete' => ['formatActionDelete', [$hostile, $hostile . '1', $hostile . '2', $hostile . '3']],
+		];
 	}
-
-	#[Group('units')]
-	public function testFormatSpanWithEmptyValues(): void
-	{
-		$result = $this->bodyPreparer->formatSpan('', '', '');
-
-		static::assertEquals([
-			'CONTROL_ELEMENT_VALUE_NAME' => '',
-			'CONTROL_ELEMENT_VALUE_TITLE' => '',
-			'CONTROL_ELEMENT_VALUE_ID' => '',
-			'CONTROL_ELEMENT_VALUE_CLASS' => '',
-		], $result);
-	}
-
-
-	#[Group('units')]
-	public function testFormatActionWithValidParameters(): void
-	{
-		$lang = 'en';
-		$id   = 'action_id';
-		$name = 'Example Action';
-		$cssClass = 'icon-class';
-
-		$result = $this->bodyPreparer->formatAction($lang, $name, $id, $cssClass);
-
-		static::assertEquals([
-			'LANG_ACTION' => 'en',
-			'ACTION_ID'   => 'action_id',
-			'ACTION_NAME' => 'Example Action',
-			'ACTION_ICON_CLASS' => 'icon-class',
-		], $result);
-	}
-
-	#[Group('units')]
-	public function testFormatActionWithEmptyParameters(): void
-	{
-		$lang = '';
-		$id   = '';
-		$name = '';
-		$cssClass = '';
-
-		$result = $this->bodyPreparer->formatAction($lang,  $name, $id, $cssClass);
-
-		static::assertEquals([
-			'LANG_ACTION' => '',
-			'ACTION_ID'   => '',
-			'ACTION_NAME' => '',
-			'ACTION_ICON_CLASS' => '',
-		], $result);
-	}
-
-	#[Group('units')]
-	public function testFormatActionWithSpecialCharacters(): void
-	{
-		$lang = '!lang123';
-		$id   = 'action_id';
-		$name = 'Name@Action!';
-		$cssClass = '.icon#special';
-
-		$result = $this->bodyPreparer->formatAction($lang, $name, $id, $cssClass);
-
-		static::assertEquals([
-			'LANG_ACTION' => '!lang123',
-			'ACTION_ID'   => 'action_id',
-			'ACTION_NAME' => 'Name@Action!',
-			'ACTION_ICON_CLASS' => '.icon#special',
-		], $result);
-	}
-
-	#[Group('units')]
-	public function testFormatActionLinkWithValidParameters(): void
-	{
-		$lang = 'en';
-		$link = 'https://example.com/action';
-		$id   = 'action_id';
-		$name = 'Example Action';
-		$cssClass = 'icon-class';
-
-		$result = $this->bodyPreparer->formatActionLink($lang, $link, $name, $id, $cssClass);
-
-		static::assertEquals([
-			'LANG_LINK_ACTION' => 'en',
-			'LINK_ACTION' => 'https://example.com/action',
-			'LINK_ACTION_ID'   => 'action_id',
-			'LINK_ACTION_NAME' => 'Example Action',
-			'LINK_ACTION_ICON_CLASS' => 'icon-class',
-		], $result);
-	}
-
-	#[Group('units')]
-	public function testFormatActionLinkWithEmptyParameters(): void
-	{
-		$lang = '';
-		$link = '';
-		$id   = '';
-		$name = '';
-		$cssClass = '';
-
-		$result = $this->bodyPreparer->formatActionLink($lang, $link, $name, $id, $cssClass);
-
-		static::assertEquals([
-			'LANG_LINK_ACTION' => '',
-			'LINK_ACTION' => '',
-			'LINK_ACTION_ID'   => '',
-			'LINK_ACTION_NAME' => '',
-			'LINK_ACTION_ICON_CLASS' => '',
-		], $result);
-	}
-
-	#[Group('units')]
-	public function testFormatActionLinkWithSpecialCharacters(): void
-	{
-		$lang = '!lang123';
-		$link = 'https://example.com?action=1&data=special';
-		$id   = 'action_id';
-		$name = 'Name@Action!';
-		$cssClass = '.icon#special';
-
-		$result = $this->bodyPreparer->formatActionLink($lang, $link, $name, $id, $cssClass);
-
-		static::assertEquals([
-			'LANG_LINK_ACTION' => '!lang123',
-			'LINK_ACTION' => 'https://example.com?action=1&data=special',
-			'LINK_ACTION_ID'   => 'action_id',
-			'LINK_ACTION_NAME' => 'Name@Action!',
-			'LINK_ACTION_ICON_CLASS' => '.icon#special',
-		], $result);
-	}
-
-
-	public function testFormatTextWithEmptyString(): void
-	{
-		$text = '';
-
-		$result = $this->bodyPreparer->formatText($text);
-
-		static::assertEquals([
-			'CONTROL_ELEMENT_VALUE_TEXT' => '',
-		], $result);
-	}
-
-	#[Group('units')]
-	public function testFormatTextWithSpecialCharacters(): void
-	{
-		$text = 'Text with special characters: !@#$%^&*()_+';
-
-		$result = $this->bodyPreparer->formatText($text);
-
-		static::assertEquals([
-			'CONTROL_ELEMENT_VALUE_TEXT' => 'Text with special characters: !@#$%^&*()_+',
-		], $result);
-	}
-
-	#[Group('units')]
-	public function testFormatLinkWithAllParameters(): void
-	{
-		$valueName = 'testValue';
-		$title = 'Test Title';
-		$href = 'https://example.com';
-		$valueId = '123';
-		$cssClass = 'test-class';
-
-		$result = $this->bodyPreparer->formatLink($valueName, $title, $href, $valueId, $cssClass);
-
-		static::assertEquals([
-			'CONTROL_ELEMENT_VALUE_NAME' => 'testValue',
-			'CONTROL_ELEMENT_VALUE_TITLE' => 'Test Title',
-			'CONTROL_ELEMENT_VALUE_LINK' => 'https://example.com',
-			'CONTROL_ELEMENT_VALUE_ID' => '123',
-			'CONTROL_ELEMENT_VALUE_CLASS' => 'test-class',
-			'CONTROL_ELEMENT_ADDITIONAL_TEXT' => ''
-		], $result);
-	}
-
-	#[Group('units')]
-	public function testFormatLinkWithoutCssClass(): void
-	{
-		$valueName = 'testValue';
-		$title = 'Test Title';
-		$href = 'https://example.com';
-		$valueId = '123';
-
-		$result = $this->bodyPreparer->formatLink($valueName, $title, $href, $valueId);
-
-		static::assertEquals([
-			'CONTROL_ELEMENT_VALUE_NAME' => 'testValue',
-			'CONTROL_ELEMENT_VALUE_TITLE' => 'Test Title',
-			'CONTROL_ELEMENT_VALUE_LINK' => 'https://example.com',
-			'CONTROL_ELEMENT_VALUE_ID' => '123',
-			'CONTROL_ELEMENT_VALUE_CLASS' => '',
-		    'CONTROL_ELEMENT_ADDITIONAL_TEXT' => ''
-		], $result);
-	}
-
-	#[Group('units')]
-	public function testFormatLinkWithEmptyValues(): void
-	{
-		$result = $this->bodyPreparer->formatLink('', '', '', '');
-
-		static::assertEquals([
-			'CONTROL_ELEMENT_VALUE_NAME' => '',
-			'CONTROL_ELEMENT_VALUE_TITLE' => '',
-			'CONTROL_ELEMENT_VALUE_LINK' => '',
-			'CONTROL_ELEMENT_VALUE_ID' => '',
-			'CONTROL_ELEMENT_VALUE_CLASS' => '',
-		    'CONTROL_ELEMENT_ADDITIONAL_TEXT' => ''
-		], $result);
-	}
-
-	#[Group('units')]
-	public function testFormatLinkWithSpecialCharacters(): void
-	{
-		$valueName = 'val@123';
-		$title = 'Title & More';
-		$href = 'https://example.com?page=1&name=test';
-		$valueId = 'id-456';
-		$cssClass = '.some-class#unique';
-
-		$result = $this->bodyPreparer->formatLink($valueName, $title, $href, $valueId, $cssClass, 'some suffix');
-
-		static::assertEquals([
-			'CONTROL_ELEMENT_VALUE_NAME' => 'val@123',
-			'CONTROL_ELEMENT_VALUE_TITLE' => 'Title & More',
-			'CONTROL_ELEMENT_VALUE_LINK' => 'https://example.com?page=1&name=test',
-			'CONTROL_ELEMENT_VALUE_ID' => 'id-456',
-			'CONTROL_ELEMENT_VALUE_CLASS' => '.some-class#unique',
-		    'CONTROL_ELEMENT_ADDITIONAL_TEXT' => 'some suffix'
-		], $result);
-	}
-
-	#[Group('units')]
-	public function testFormatUIDWithValidValues(): void
-	{
-		$UID = 12345;
-		$username = 'test_user';
-
-		$result = $this->bodyPreparer->formatUID($UID, $username);
-
-		static::assertEquals([
-			'OWNER_UID' => 12345,
-			'OWNER_NAME' => 'test_user',
-		], $result);
-	}
-
-	#[Group('units')]
-	public function testFormatUIDWithZeroUID(): void
-	{
-		$UID = 0;
-		$username = 'guest';
-
-		$result = $this->bodyPreparer->formatUID($UID, $username);
-
-		static::assertEquals([
-			'OWNER_UID' => 0,
-			'OWNER_NAME' => 'guest',
-		], $result);
-	}
-
-	#[Group('units')]
-	public function testFormatUIDWithEmptyUsername(): void
-	{
-		$UID = 999;
-		$username = '';
-
-		$result = $this->bodyPreparer->formatUID($UID, $username);
-
-		static::assertEquals([
-			'OWNER_UID' => 999,
-			'OWNER_NAME' => '',
-		], $result);
-	}
-
-	#[Group('units')]
-	public function testFormatUIDWithNegativeUID(): void
-	{
-		$UID = -123;
-		$username = 'negative_test';
-
-		$result = $this->bodyPreparer->formatUID($UID, $username);
-
-		static::assertEquals([
-			'OWNER_UID' => -123,
-			'OWNER_NAME' => 'negative_test',
-		], $result);
-	}
-
-	#[Group('units')]
-	public function testFormatButtonWithValidParameters(): void
-	{
-		$value = 'Submit';
-		$title = 'Submit Form';
-		$valueId = 'btn123';
-		$cssClass = 'btn-class';
-
-		$result = $this->bodyPreparer->formatButton($value, $title, $valueId, $cssClass);
-
-		static::assertEquals([
-			'CONTROL_BUTTON_VALUE' => 'Submit',
-			'CONTROL_BUTTON_TITLE' => 'Submit Form',
-			'CONTROL_BUTTON_ID' => 'btn123',
-			'CONTROL_BUTTON_CLASS' => 'btn-class',
-		], $result);
-	}
-
-	#[Group('units')]
-	public function testFormatButtonWithoutCssClass(): void
-	{
-		$value = 'Submit';
-		$title = 'Submit Form';
-		$valueId = 'btn123';
-
-		$result = $this->bodyPreparer->formatButton($value, $title, $valueId);
-
-		static::assertEquals([
-			'CONTROL_BUTTON_VALUE' => 'Submit',
-			'CONTROL_BUTTON_TITLE' => 'Submit Form',
-			'CONTROL_BUTTON_ID' => 'btn123',
-			'CONTROL_BUTTON_CLASS' => '',
-		], $result);
-	}
-
-	#[Group('units')]
-	public function testFormatButtonWithEmptyParameters(): void
-	{
-		$result = $this->bodyPreparer->formatButton('', '', '');
-
-		static::assertEquals([
-			'CONTROL_BUTTON_VALUE' => '',
-			'CONTROL_BUTTON_TITLE' => '',
-			'CONTROL_BUTTON_ID' => '',
-			'CONTROL_BUTTON_CLASS' => '',
-		], $result);
-	}
-
-	#[Group('units')]
-	public function testFormatButtonWithSpecialCharacters(): void
-	{
-		$value = '!@#$%^';
-		$title = 'Special & Title';
-		$valueId = 'btn-456@id';
-		$cssClass = '.btn-class#special';
-
-		$result = $this->bodyPreparer->formatButton($value, $title, $valueId, $cssClass);
-
-		static::assertEquals([
-			'CONTROL_BUTTON_VALUE' => '!@#$%^',
-			'CONTROL_BUTTON_TITLE' => 'Special & Title',
-			'CONTROL_BUTTON_ID' => 'btn-456@id',
-			'CONTROL_BUTTON_CLASS' => '.btn-class#special',
-		], $result);
-	}
-
-
-	#[Group('units')]
-	public function testFormatActionDeleteWithValidParameters(): void
-	{
-		$lang = 'delete';
-		$langConfirm = 'Are you sure?';
-		$id = '456';
-		$cssClass = 'delete-icon';
-
-		$result = $this->bodyPreparer->formatActionDelete($lang, $langConfirm, $id, $cssClass);
-
-		static::assertEquals([
-			'LANG_DELETE_ACTION' => 'delete',
-			'DELETE_ID' => '456',
-			'LANG_CONFIRM_DELETE' => 'Are you sure?',
-			'ELEMENT_DELETE_CLASS' => 'delete-icon',
-		], $result);
-	}
-
-	#[Group('units')]
-	public function testFormatActionDeleteWithEmptyParameters(): void
-	{
-		$lang = '';
-		$langConfirm = '';
-		$id = '';
-		$cssClass = '';
-
-		$result = $this->bodyPreparer->formatActionDelete($lang, $langConfirm, $id, $cssClass);
-
-		static::assertEquals([
-			'LANG_DELETE_ACTION' => '',
-			'DELETE_ID' => '',
-			'LANG_CONFIRM_DELETE' => '',
-			'ELEMENT_DELETE_CLASS' => '',
-		], $result);
-	}
-
-	#[Group('units')]
-	public function testFormatActionDeleteWithSpecialCharacters(): void
-	{
-		$lang = 'del@ete';
-		$langConfirm = 'Conf!rm@tion??';
-		$id = 'del-123#456';
-		$cssClass = '.del-class#special';
-
-		$result = $this->bodyPreparer->formatActionDelete($lang, $langConfirm, $id, $cssClass);
-
-		static::assertEquals([
-			'LANG_DELETE_ACTION' => 'del@ete',
-			'DELETE_ID' => 'del-123#456',
-			'LANG_CONFIRM_DELETE' => 'Conf!rm@tion??',
-			'ELEMENT_DELETE_CLASS' => '.del-class#special',
-		], $result);
-	}
-
-	#[Group('units')]
-	public function testFormatIconWithValidValues(): void
-	{
-		$iconClass = 'icon-class-test';
-		$title = 'Icon Test';
-
-		$result = $this->bodyPreparer->formatIcon($iconClass, $title);
-
-		static::assertEquals([
-			'ICON_CLASS' => 'icon-class-test',
-			'ICON_TITLE' => 'Icon Test',
-		], $result);
-	}
-
-	#[Group('units')]
-	public function testFormatIconWithEmptyValues(): void
-	{
-		$iconClass = '';
-		$title = '';
-
-		$result = $this->bodyPreparer->formatIcon($iconClass, $title);
-
-		static::assertEquals([
-			'ICON_CLASS' => '',
-			'ICON_TITLE' => '',
-		], $result);
-	}
-
-	#[Group('units')]
-	public function testFormatIconWithSpecialCharacters(): void
-	{
-		$iconClass = '.icon-class@special';
-		$title = 'Special@Icon!';
-
-		$result = $this->bodyPreparer->formatIcon($iconClass, $title);
-
-		static::assertEquals([
-			'ICON_CLASS' => '.icon-class@special',
-			'ICON_TITLE' => 'Special@Icon!',
-		], $result);
-	}
-
 }

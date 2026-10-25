@@ -21,48 +21,31 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Framework\Utils\Html;
 
+use App\Framework\Security\Crypt;
 use App\Framework\Security\CsrfToken;
 use App\Framework\Utils\Html\CsrfTokenField;
 use App\Framework\Utils\Html\FieldType;
-use Exception;
+use Defuse\Crypto\Exception\EnvironmentIsBrokenException;
+use Defuse\Crypto\Key;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Tests\Unit\Framework\Security\MemorySession;
 
 class CsrfTokenFieldTest extends TestCase
 {
-	private CsrfToken&MockObject $csrfTokeMock;
-
 	/**
-	 * @throws \PHPUnit\Framework\MockObject\Exception
-	 */
-	protected function setUp(): void
-	{
-		parent::setUp();
-		$this->csrfTokeMock = $this->createMock(CsrfToken::class);
-	}
-
-	/**
-	 * @throws Exception
+	 * @throws EnvironmentIsBrokenException
 	 */
 	#[Group('units')]
-	public function testSetupWithAttributes(): void
+	public function testTheFieldCarriesTheTokenOfTheSession(): void
 	{
-		$attributes = [
-			'id' => 'csrf_token',
-			'type' => FieldType::CSRF,
-			'name' => 'csrf_token_name'
-		];
+		$csrfToken = new CsrfToken(new Crypt(Key::createNewRandomKey()), new MemorySession());
 
-		$token = 'token';
-		$this->csrfTokeMock->expects($this->once())->method('getToken')
-			->willReturn($token);
+		$field = new CsrfTokenField(['id' => 'csrf_token', 'type' => FieldType::CSRF, 'name' => 'csrf_token_name'], $csrfToken);
 
-		$csrfTokenField = new CsrfTokenField($attributes, $this->csrfTokeMock);
-
-		static::assertSame('csrf_token', $csrfTokenField->getId());
-		static::assertSame('csrf_token_name', $csrfTokenField->getName());
-		static::assertNotEmpty($csrfTokenField->getValue());
+		static::assertSame('csrf_token', $field->getId());
+		static::assertSame('csrf_token_name', $field->getName());
+		static::assertSame($csrfToken->getToken(), $field->getValue());
+		static::assertMatchesRegularExpression('/^[0-9a-f]{64}$/', (string) $field->getValue());
 	}
-
 }

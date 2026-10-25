@@ -46,16 +46,19 @@ class XmlReaderFactory
 	 */
 	public function createFromString(string $xmlInput): XmlReader
 	{
-		libxml_use_internal_errors(true);
+		$previous = libxml_use_internal_errors(true);
 		libxml_clear_errors(); // Immer vor dem Parsen aufrufen
 
-		$simpleXml = simplexml_load_string($xmlInput);
-
-		if ($simpleXml === false)
+		try
 		{
-			$errors = libxml_get_errors();
+			$simpleXml = simplexml_load_string($xmlInput);
+			if ($simpleXml === false)
+				throw new XmlParsingException('Error parsing XML string', libxml_get_errors());
+		}
+		finally
+		{
 			libxml_clear_errors();
-			throw new XmlParsingException('Error parsing XML string', $errors);
+			libxml_use_internal_errors($previous);
 		}
 
 		return new XmlReader($simpleXml);
@@ -68,19 +71,23 @@ class XmlReaderFactory
 	 */
 	public function createFromFile(string $fileName): XmlReader
 	{
-		if (!file_exists($fileName) || !is_readable($fileName))
+		// is_file(): a directory exists and is readable, but it is no XML document
+		if (!is_file($fileName) || !is_readable($fileName))
 			throw new InvalidArgumentException("File '$fileName' not found or not readable.");
 
-		libxml_use_internal_errors(true);
+		$previous = libxml_use_internal_errors(true);
 		libxml_clear_errors();
 
-		$simpleXml = simplexml_load_file($fileName);
-
-		if ($simpleXml === false)
+		try
 		{
-			$errors = libxml_get_errors();
+			$simpleXml = simplexml_load_file($fileName);
+			if ($simpleXml === false)
+				throw new XmlParsingException('Error parsing XML file: ' . $fileName, libxml_get_errors());
+		}
+		finally
+		{
 			libxml_clear_errors();
-			throw new XmlParsingException('Error parsing XML string', $errors);
+			libxml_use_internal_errors($previous);
 		}
 
 		return new XmlReader($simpleXml);

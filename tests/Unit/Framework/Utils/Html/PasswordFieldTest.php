@@ -19,7 +19,6 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Framework\Utils\Html;
 
 use App\Framework\Utils\Html\FieldType;
@@ -29,23 +28,15 @@ use PHPUnit\Framework\TestCase;
 
 class PasswordFieldTest extends TestCase
 {
-	private PasswordField $passwordField;
-	protected function setUp(): void
-	{
-		parent::setUp();
-		$attributes = [
-			'id' => 'password',
-			'type' => FieldType::PASSWORD,
-		];
-		$this->passwordField = new PasswordField($attributes);
-	}
-
 	#[Group('units')]
-	public function testSetPattern(): void
+	public function testThePatternIsAnAttributeOfTheField(): void
 	{
-		$pattern = 'complicated Pattern';
-		$this->passwordField->setPattern($pattern);
+		$field = new PasswordField(['id' => 'password', 'type' => FieldType::PASSWORD, 'attributes' => ['class' => 'pw']]);
 
-		static::assertSame($pattern, $this->passwordField->getPattern());
+		$result = $field->setPattern('.{8,}');
+
+		static::assertSame($field, $result);
+		static::assertSame('.{8,}', $field->getPattern());
+		static::assertSame(['class' => 'pw', 'pattern' => '.{8,}'], $field->getAttributes());
 	}
 }

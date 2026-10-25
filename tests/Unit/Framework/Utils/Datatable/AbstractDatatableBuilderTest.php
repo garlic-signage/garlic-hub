@@ -19,295 +19,246 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Framework\Utils\Datatable;
 
-use App\Shared\Acl\AbstractAclValidator;
 use App\Framework\Config\Config;
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\ModuleException;
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Utils\Datatable\AbstractDatatableBuilder;
-use App\Framework\Utils\Datatable\BuildService;
-use App\Framework\Utils\FormParameters\BaseFilterParameters;
-use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
-use App\Framework\Utils\Datatable\Results\HeaderField;
+use App\Framework\Utils\FormParameters\BaseParameters;
+use App\Shared\Acl\AbstractAclValidator;
+use Doctrine\DBAL\Exception;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Tests\Unit\Framework\Config\RecordingConfigLoader;
+use Tests\Unit\Framework\Security\MemorySession;
 
-class ConcreteDatatableBuilder extends AbstractDatatableBuilder
-{
-
-	public bool $moduleParametersAdded = false;
-
-	public function buildTitle(): void{}
-
-	public function collectFormElements(): void{}
-
-	public function createTableFields(): static {return $this;}
-
-	protected function addModuleParameters(): void
-	{
-		$this->moduleParametersAdded = true;
-	}
-}
-
+/**
+ * The builder of a module with the real BuildService and real filter parameters. The ACL validator is a stub:
+ * it knows the edition and the roles of the user.
+ */
 class AbstractDatatableBuilderTest extends TestCase
 {
-	private ConcreteDatatableBuilder $datatableBuilder;
-	private BuildService&MockObject $buildServiceMock;
-	private BaseFilterParameters&MockObject $parametersMock;
-	private AbstractAclValidator&MockObject $aclValidatorMock;
-	private Config&Stub $configStub;
+	private DatatableTestParameters $parameters;
 
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->buildServiceMock = $this->createMock(BuildService::class);
-		$this->parametersMock = $this->createMock(BaseFilterParameters::class);
-		$this->aclValidatorMock = $this->createMock(AbstractAclValidator::class);
-		$this->configStub = $this->createStub(Config::class);
-		$this->aclValidatorMock->method('getConfig')->willReturn($this->configStub);
+		$this->parameters = new DatatableTestParameters(new MemorySession());
+	}
 
-		$this->datatableBuilder = new ConcreteDatatableBuilder($this->buildServiceMock, $this->parametersMock, $this->aclValidatorMock, $this->createStub(Translator::class));
+	private function builder(string $edition = Config::PLATFORM_EDITION_ENTERPRISE, bool $moduleAdmin = false, bool $subAdmin = false): DatatableTestBuilder
+	{
+		$acl = $this->createStub(AbstractAclValidator::class);
+		$acl->method('getConfig')->willReturn(new Config(new RecordingConfigLoader([]), [], ['APP_PLATFORM_EDITION' => $edition]));
+		$acl->method('isModuleAdmin')->willReturn($moduleAdmin);
+		$acl->method('isSubAdmin')->willReturn($subAdmin);
+
+		return new DatatableTestBuilder(DatatableTestFactory::buildService(), $this->parameters, $acl, $this->createStub(Translator::class));
 	}
 
 	#[Group('units')]
-	public function testConfigureParametersInEdgeEdition(): void
+	public function testTheStructureIsEmptyAtTheStart(): void
 	{
-		$this->buildServiceMock->expects($this->never())->method($this->anything());
-		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
-		$this->aclValidatorMock->expects($this->never())->method('isModuleAdmin');
-		$this->parametersMock->expects($this->never())->method('addOwner');
-		$this->parametersMock->expects($this->never())->method('addCompany');
+		static::assertSame([], $this->builder()->getDatatableStructure());
+	}
 
-		$this->datatableBuilder->configureParameters(1);
+	/**
+	 * The edge edition has one user and no companies: no filter for the owner or the company.
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 */
+	#[Group('units')]
+	public function testTheEdgeEditionAddsNothing(): void
+	{
+		$builder = $this->builder(Config::PLATFORM_EDITION_EDGE, true, true);
 
-		static::assertFalse($this->datatableBuilder->moduleParametersAdded);
+		$builder->configureParameters(1);
+
+		static::assertFalse($builder->moduleParametersAdded);
+		static::assertFalse($this->parameters->hasParameter(BaseParameters::PARAMETER_UID));
+		static::assertFalse($this->parameters->hasParameter('company_id'));
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 */
+	#[Group('units')]
+	public function testAUserGetsTheModuleParametersOnly(): void
+	{
+		$builder = $this->builder();
+
+		$builder->configureParameters(1);
+
+		static::assertTrue($builder->moduleParametersAdded);
+		static::assertFalse($this->parameters->hasParameter(BaseParameters::PARAMETER_UID));
+		static::assertFalse($this->parameters->hasParameter('company_id'));
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 */
+	#[Group('units')]
+	#[DataProvider('adminProvider')]
+	public function testAdminsGetTheOwnerAndTheCompanyFilter(bool $moduleAdmin, bool $subAdmin): void
+	{
+		$builder = $this->builder(Config::PLATFORM_EDITION_CORE, $moduleAdmin, $subAdmin);
+
+		$builder->configureParameters(1);
+
+		static::assertTrue($builder->moduleParametersAdded);
+		static::assertTrue($this->parameters->hasParameter(BaseParameters::PARAMETER_UID));
+		static::assertTrue($this->parameters->hasParameter('company_id'));
+	}
+
+	/**
+	 * @return array<string, array{bool, bool}>
+	 */
+	public static function adminProvider(): array
+	{
+		return ['module admin' => [true, false], 'sub admin' => [false, true], 'both' => [true, true]];
+	}
+
+	/**
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testDetermineParametersCreatesTheTableFieldsAndParsesTheInput(): void
+	{
+		$builder = $this->builder();
+
+		$builder->determineParameters(['name' => ' Lobby ', 'elements_page' => '3', 'elements_per_page' => '25', 'sort_order' => 'desc']);
+
+		$structure = $builder->getDatatableStructure();
+		static::assertSame(['name', 'type'], array_map(static fn($field): string => $field->getName(), $structure['header']));
+		static::assertSame('Lobby', $this->parameters->getValueOfParameter('name'));
+		static::assertSame(3, $this->parameters->getValueOfParameter('elements_page'));
+		static::assertSame(25, $this->parameters->getValueOfParameter('elements_per_page'));
+		static::assertSame('DESC', $this->parameters->getValueOfParameter('sort_order'));
+	}
+
+	/**
+	 * The sortable table fields are the only columns the list may be sorted by (the column is part of ORDER BY).
+	 *
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	#[DataProvider('sortColumnProvider')]
+	public function testOnlyASortableTableFieldCanBeSortedBy(string $requested, string $expected): void
+	{
+		$builder = $this->builder();
+
+		$builder->determineParameters(['sort_column' => $requested]);
+
+		static::assertSame($expected, $this->parameters->getValueOfParameter('sort_column'));
+	}
+
+	/**
+	 * @return array<string, array{string, string}> requested column, column which is used (the default is "name")
+	 */
+	public static function sortColumnProvider(): array
+	{
+		return [
+			'the sortable field'           => ['name', 'name'],
+			'a field which is not sortable' => ['type', 'name'],
+			'a column of the table'        => ['password', 'name'],
+			'injection'                    => ['name; DROP TABLE templates', 'name'],
+			'nothing'                      => ['', 'name'],
+		];
+	}
+
+	/**
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testCreatePaginationUsesTheParametersAndTheResultCount(): void
+	{
+		$builder = $this->builder();
+		$builder->determineParameters(['elements_page' => '2', 'elements_per_page' => '10']);
+
+		$builder->createPagination(35);
+
+		static::assertSame(
+			['«:1', '‹:1', '1:1', '2:2*', '3:3', '4:4', '›:3', '»:4'],
+			$this->shortLinks($builder->getDatatableStructure()['pager'])
+		);
+	}
+
+	/**
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testCreatePaginationWithoutThePager(): void
+	{
+		$builder = $this->builder();
+		$builder->determineParameters(['elements_per_page' => '10']);
+
+		$builder->createPagination(25, false, false);
+
+		static::assertSame(['1:1*', '2:2', '3:3'], $this->shortLinks($builder->getDatatableStructure()['pager']));
+	}
+
+	/**
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testCreatePaginationWithoutResults(): void
+	{
+		$builder = $this->builder();
+		$builder->determineParameters([]);
+
+		$builder->createPagination(0);
+
+		static::assertSame(['1:1*'], $this->shortLinks($builder->getDatatableStructure()['pager']));
 	}
 
 	#[Group('units')]
-	public function testConfigureParametersForModuleAdmin(): void
+	public function testCreateDropDownWithTheDefaults(): void
 	{
-		$this->buildServiceMock->expects($this->never())->method($this->anything());
-		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
-		$this->aclValidatorMock->expects($this->once())->method('isModuleAdmin')->with(1)->willReturn(true);
-		$this->parametersMock->expects($this->once())->method('addOwner');
-		$this->parametersMock->expects($this->once())->method('addCompany');
+		$builder = $this->builder();
 
-		$this->datatableBuilder->configureParameters(1);
+		$builder->createDropDown();
 
-		static::assertTrue($this->datatableBuilder->moduleParametersAdded);
+		static::assertSame(['min' => 10, 'max' => 100, 'steps' => 10], $builder->getDatatableStructure()['dropdown']);
 	}
 
 	#[Group('units')]
-	public function testConfigureParametersForSubAdmin(): void
+	public function testCreateDropDownWithOwnSettings(): void
 	{
-		$this->buildServiceMock->expects($this->never())->method($this->anything());
-		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
-		$this->aclValidatorMock->method('isModuleAdmin')->willReturn(false);
-		$this->aclValidatorMock->expects($this->once())->method('isSubAdmin')->with(1)->willReturn(true);
-		$this->parametersMock->expects($this->once())->method('addOwner');
-		$this->parametersMock->expects($this->once())->method('addCompany');
+		$builder = $this->builder();
 
-		$this->datatableBuilder->configureParameters(1);
+		$builder->createDropDown(5, 50, 15);
 
-		static::assertTrue($this->datatableBuilder->moduleParametersAdded);
+		static::assertSame(['min' => 5, 'max' => 50, 'steps' => 15], $builder->getDatatableStructure()['dropdown']);
 	}
 
+	/**
+	 * @throws ModuleException
+	 */
 	#[Group('units')]
-	public function testConfigureParametersForUser(): void
+	public function testTheTitleAndTheFormOfTheModuleAreInTheStructure(): void
 	{
-		$this->buildServiceMock->expects($this->never())->method($this->anything());
-		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_CORE);
-		$this->aclValidatorMock->expects($this->atLeastOnce())->method('isModuleAdmin')->willReturn(false);
-		$this->aclValidatorMock->expects($this->atLeastOnce())->method('isSubAdmin')->willReturn(false);
-		$this->parametersMock->expects($this->never())->method('addOwner');
-		$this->parametersMock->expects($this->never())->method('addCompany');
+		$builder = $this->builder();
+		$builder->determineParameters(['name' => 'Lobby']);
 
-		$this->datatableBuilder->configureParameters(1);
+		$builder->buildTitle();
+		$builder->collectFormElements();
 
-		static::assertTrue($this->datatableBuilder->moduleParametersAdded);
+		$structure = $builder->getDatatableStructure();
+		static::assertSame('Test overview', $structure['title']);
+		static::assertSame('Lobby', $structure['form']['name']->getValue());
 	}
 
-	#[Group('units')]
-	public function testDetermineParameters(): void
+	/**
+	 * @param list<array{name: string, page: int, active?: bool}> $links
+	 * @return list<string>
+	 */
+	private function shortLinks(array $links): array
 	{
-		$this->aclValidatorMock->expects($this->never())->method($this->anything());
-		$this->buildServiceMock->expects($this->once())->method('getDatatableFields')->willReturn([
-			new HeaderField()->setName('name')->sortable(true),
-			new HeaderField()->setName('type')->sortable(false)
-		]);
-		$this->parametersMock->expects($this->once())->method('setUserInputs')->with(['some' => 'input']);
-		$this->parametersMock->expects($this->once())->method('parseInputFilterAllUsers')->with(['name']);
-
-		$this->datatableBuilder->determineParameters(['some' => 'input']);
+		return array_map(static fn(array $link): string => $link['name'] . ':' . $link['page'] . (($link['active'] ?? false) ? '*' : ''), $links);
 	}
-
-	#[Group('units')]
-	public function testCreatePaginationWithValidData(): void
-	{
-		$this->aclValidatorMock->expects($this->never())->method($this->anything());
-		$resultCount = 100;
-
-		$currentPage = 1;
-		$itemsPerPage = 10;
-		$paginationLinks = ['page1', 'page2', 'page3'];
-
-		$this->parametersMock
-			->expects($this->atLeastOnce())->method('getValueOfParameter')
-			->willReturnMap([
-				[BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE, $currentPage],
-				[BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE, $itemsPerPage],
-			]);
-
-		$this->buildServiceMock
-			->expects($this->once())
-			->method('buildPaginationLinks')
-			->with($currentPage, $itemsPerPage, $resultCount, true, true)
-			->willReturn($paginationLinks);
-
-		$this->datatableBuilder->createPagination($resultCount);
-
-		$datatableStructure = $this->datatableBuilder->getDatatableStructure();
-		static::assertArrayHasKey('pager', $datatableStructure);
-		static::assertEquals($paginationLinks, $datatableStructure['pager']);
-	}
-
-	#[Group('units')]
-	public function testCreatePaginationWithoutPager(): void
-	{
-		$this->aclValidatorMock->expects($this->never())->method($this->anything());
-		$resultCount = 50;
-
-		$currentPage = 1;
-		$itemsPerPage = 20;
-		$paginationLinks = ['page1'];
-
-		$this->parametersMock
-			->expects($this->atLeastOnce())->method('getValueOfParameter')
-			->willReturnMap([
-				[BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE, $currentPage],
-				[BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE, $itemsPerPage]
-			]);
-
-		$this->buildServiceMock
-			->expects($this->once())
-			->method('buildPaginationLinks')
-			->with($currentPage, $itemsPerPage, $resultCount, false, false)
-			->willReturn($paginationLinks);
-
-		$this->datatableBuilder->createPagination($resultCount, false, false);
-
-		$datatableStructure = $this->datatableBuilder->getDatatableStructure();
-		static::assertArrayHasKey('pager', $datatableStructure);
-		static::assertEquals($paginationLinks, $datatableStructure['pager']);
-	}
-
-	#[Group('units')]
-	public function testCreatePaginationWithZeroResults(): void
-	{
-		$this->aclValidatorMock->expects($this->never())->method($this->anything());
-		$resultCount = 0;
-
-		$currentPage = 1;
-		$itemsPerPage = 10;
-		$paginationLinks = [];
-
-		$this->parametersMock
-			->expects($this->atLeastOnce())->method('getValueOfParameter')
-			->willReturnMap([
-				[BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE, $currentPage],
-				[BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE, $itemsPerPage],
-			]);
-
-		$this->buildServiceMock
-			->expects($this->once())
-			->method('buildPaginationLinks')
-			->with($currentPage, $itemsPerPage, $resultCount, true, true)
-			->willReturn($paginationLinks);
-
-		$this->datatableBuilder->createPagination($resultCount);
-
-		$datatableStructure = $this->datatableBuilder->getDatatableStructure();
-		static::assertArrayHasKey('pager', $datatableStructure);
-		static::assertEquals($paginationLinks, $datatableStructure['pager']);
-	}
-
-	#[Group('units')]
-	public function testCreateDropDownWithValidData(): void
-	{
-		$this->parametersMock->expects($this->never())->method($this->anything());
-		$this->aclValidatorMock->expects($this->never())->method($this->anything());
-		$min = 10;
-		$max = 50;
-		$steps = 10;
-
-		$dropdownOptions = [10, 20, 30, 40, 50];
-
-		$this->buildServiceMock
-			->expects($this->once())
-			->method('buildPaginationDropDown')
-			->with($min, $max, $steps)
-			->willReturn($dropdownOptions);
-
-		$this->datatableBuilder->createDropDown($min, $max, $steps);
-
-		$datatableStructure = $this->datatableBuilder->getDatatableStructure();
-		static::assertArrayHasKey('dropdown', $datatableStructure);
-		static::assertEquals($dropdownOptions, $datatableStructure['dropdown']);
-	}
-
-	#[Group('units')]
-	public function testCreateDropDownWithCustomSteps(): void
-	{
-		$this->parametersMock->expects($this->never())->method($this->anything());
-		$this->aclValidatorMock->expects($this->never())->method($this->anything());
-		$min = 10;
-		$max = 100;
-		$steps = 20;
-
-		$dropdownOptions = [10, 30, 50, 70, 90];
-
-		$this->buildServiceMock
-			->expects($this->once())
-			->method('buildPaginationDropDown')
-			->with($min, $max, $steps)
-			->willReturn($dropdownOptions);
-
-		$this->datatableBuilder->createDropDown($min, $max, $steps);
-
-		$datatableStructure = $this->datatableBuilder->getDatatableStructure();
-		static::assertArrayHasKey('dropdown', $datatableStructure);
-		static::assertEquals($dropdownOptions, $datatableStructure['dropdown']);
-	}
-
-	#[Group('units')]
-	public function testCreateDropDownWithEmptyRange(): void
-	{
-		$this->parametersMock->expects($this->never())->method($this->anything());
-		$this->aclValidatorMock->expects($this->never())->method($this->anything());
-		$min = 0;
-		$max = 0;
-		$steps = 1;
-
-		$dropdownOptions = [];
-
-		$this->buildServiceMock
-			->expects($this->once())
-			->method('buildPaginationDropDown')
-			->with($min, $max, $steps)
-			->willReturn($dropdownOptions);
-
-		$this->datatableBuilder->createDropDown($min, $max, $steps);
-
-		$datatableStructure = $this->datatableBuilder->getDatatableStructure();
-		static::assertArrayHasKey('dropdown', $datatableStructure);
-		static::assertEquals($dropdownOptions, $datatableStructure['dropdown']);
-	}
-
 }

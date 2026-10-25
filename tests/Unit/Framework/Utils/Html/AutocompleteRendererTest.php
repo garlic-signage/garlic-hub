@@ -23,50 +23,28 @@ namespace Tests\Unit\Framework\Utils\Html;
 
 use App\Framework\Utils\Html\AutocompleteField;
 use App\Framework\Utils\Html\AutocompleteRenderer;
-use App\Framework\Utils\Html\FieldInterface;
+use App\Framework\Utils\Html\FieldType;
+use App\Framework\Utils\Html\TextField;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\TestCase;
 
 class AutocompleteRendererTest extends TestCase
 {
-	private AutocompleteRenderer $renderer;
-
-
-	/**
-	 * @throws Exception
-	 */
 	#[Group('units')]
-	public function testRenderGeneratesCorrectHtml(): void
+	public function testRender(): void
 	{
-		$fieldStub = $this->createStub(AutocompleteField::class);
-		$this->renderer = new AutocompleteRenderer();
-		$fieldStub->method('getId')->willReturn('test-field');
-		$fieldStub->method('getValue')->willReturn('123');
-		$fieldStub->method('getDataLabel')->willReturn('Test Label');
+		$field = new AutocompleteField(['id' => 'UID', 'type' => FieldType::AUTOCOMPLETE, 'value' => '5', 'data-label' => 'Anna']);
 
-		$expectedHtml = '<input id="test-field_search" list="test-field_suggestions" value="Test Label" data-id="123" aria-describedby="error_test-field" class="autocomplete" autocomplete="off">
-		<input type="hidden" id="test-field" name="test-field" value="123">
-		<datalist id = "test-field_suggestions" ></datalist>';
+		$expected = '<input id="UID_search" list="UID_suggestions" value="Anna" data-id="5" aria-describedby="error_UID" class="autocomplete" autocomplete="off">
+		<input type="hidden" id="UID" name="UID" value="5">
+		<datalist id = "UID_suggestions" ></datalist>';
 
-		$result = $this->renderer->render($fieldStub);
-
-		static::assertSame($expectedHtml, $result);
+		static::assertSame($expected, (new AutocompleteRenderer())->render($field));
 	}
 
-	/**
-	 * @throws Exception
-	 */
 	#[Group('units')]
-	public function testRenderGeneratesNothing(): void
+	public function testAFieldOfAnotherTypeRendersNothing(): void
 	{
-		$fieldStub = $this->createStub(FieldInterface::class);
-		$this->renderer = new AutocompleteRenderer();
-
-		$expectedHtml = '';
-
-		$result = $this->renderer->render($fieldStub);
-
-		static::assertSame($expectedHtml, $result);
+		static::assertSame('', (new AutocompleteRenderer())->render(new TextField(['id' => 'a', 'type' => FieldType::TEXT])));
 	}
 }

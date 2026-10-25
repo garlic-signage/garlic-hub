@@ -24,165 +24,147 @@ namespace Tests\Unit\Framework\Utils\Datatable;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Localization\Translate\Translator;
+use App\Framework\Security\Crypt;
+use App\Framework\Security\CsrfToken;
+use App\Framework\Utils\Datatable\Paginator\Builder as PaginatorBuilder;
 use App\Framework\Utils\Datatable\Paginator\Preparer;
 use App\Framework\Utils\Datatable\PrepareService;
 use App\Framework\Utils\Datatable\Results\BodyPreparer;
-use App\Framework\Utils\Datatable\Results\HeaderField;
+use App\Framework\Utils\Datatable\Results\Builder as ResultsBuilder;
 use App\Framework\Utils\Datatable\Results\HeaderPreparer;
-use App\Framework\Utils\FormParameters\BaseFilterParameters;
-use App\Framework\Utils\Html\FieldInterface;
+use App\Framework\Utils\Datatable\Results\TranslatorManager;
+use App\Framework\Utils\Datatable\UrlBuilder;
+use App\Framework\Utils\Html\FieldsFactory;
+use App\Framework\Utils\Html\FieldsRenderFactory;
+use App\Framework\Utils\Html\FieldType;
 use App\Framework\Utils\Html\FormBuilder;
+use Defuse\Crypto\Key;
+use Error;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Tests\Unit\Framework\Security\MemorySession;
 
+/**
+ * PrepareService with the real preparers for form, pager, header and body. Only the Translator is a stub.
+ */
 class PrepareServiceTest extends TestCase
 {
+	private FormBuilder $formBuilder;
+	private BodyPreparer $bodyPreparer;
 	private PrepareService $prepareService;
-	private HeaderPreparer&MockObject $headerPreparerMock;
-	private BodyPreparer&Stub $bodyPreparerStub;
-	private Preparer&MockObject $paginationPreparerMock;
-	private FormBuilder&MockObject $formBuilderMock;
 
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->headerPreparerMock = $this->createMock(HeaderPreparer::class);
-		$this->bodyPreparerStub = $this->createStub(BodyPreparer::class);
-		$this->paginationPreparerMock = $this->createMock(Preparer::class);
-		$this->formBuilderMock = $this->createMock(FormBuilder::class);
 
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $key . '@' . $module);
+
+		$this->formBuilder   = new FormBuilder(new FieldsFactory(), new FieldsRenderFactory(), new CsrfToken(new Crypt(Key::createNewRandomKey()), new MemorySession()));
+		$this->bodyPreparer  = new BodyPreparer();
 		$this->prepareService = new PrepareService(
-			$this->formBuilderMock,
-			$this->paginationPreparerMock,
-			$this->headerPreparerMock,
-			$this->bodyPreparerStub
+			$this->formBuilder,
+			new Preparer(new UrlBuilder()),
+			new HeaderPreparer(new TranslatorManager($translator), new UrlBuilder()),
+			$this->bodyPreparer
 		);
 	}
 
 	/**
-	 * @throws Exception
+	 * @param array<string,mixed> $input
+	 * @throws ModuleException
 	 */
-	#[Group('units')]
-	public function testPrepareFormReturnsPreparedFormArray(): void
+	private function configure(array $input = []): void
 	{
-		$this->headerPreparerMock->expects($this->never())->method($this->anything());
-		$this->paginationPreparerMock->expects($this->never())->method($this->anything());
-		$datatableForm = [
-			'field1' => $this->createStub(FieldInterface::class),
-			'field2' => $this->createStub(FieldInterface::class)
-		];
-		$preparedForm = [
-			'hidden' => [
-				['key' => 'preparedField1', 'value' => 'preparedValue1']
-			],
-			'visible' => [
-				['key' => 'preparedField2', 'value' => 'preparedValue2']
-			]
-		];
-
-		$this->formBuilderMock
-			->expects($this->once())
-			->method('prepareForm')
-			->with($datatableForm)
-			->willReturn($preparedForm);
-
-		$result = $this->prepareService->prepareForm($datatableForm);
-
-		static::assertSame($preparedForm, $result);
+		$this->prepareService->configure(new FilterParametersFake($input), 'playlists');
 	}
 
 	/**
-	 * @throws ModuleException
-	 */
-	#[Group('units')]
-	public function testPreparePaginationReturnsPreparedPaginationArray(): void
-	{
-		$this->headerPreparerMock->expects($this->never())->method($this->anything());
-		$this->formBuilderMock->expects($this->never())->method($this->anything());
-		$paginationLinks = [
-			['name' => 'link1', 'page' => 1, 'active' => true],
-			['name' => 'link2', 'page' => 2, 'active' => null]
-		];
-		$dropDownSettings = ['min' => 1, 'max' => 10, 'steps' => 2];
-		$preparedLinks = ['preparedLink1' => 'preparedUrl1'];
-		$preparedDropdown = ['preparedDropdown1' => 'value1'];
-
-		$this->paginationPreparerMock
-			->expects($this->once())
-			->method('prepareLinks')
-			->with($paginationLinks)
-			->willReturn($preparedLinks);
-
-		$this->paginationPreparerMock
-			->expects($this->once())
-			->method('prepareDropdown')
-			->with($dropDownSettings)
-			->willReturn($preparedDropdown);
-
-		$result = $this->prepareService->preparePagination($paginationLinks, $dropDownSettings);
-
-		static::assertSame(['links' => $preparedLinks, 'dropdown' => $preparedDropdown], $result);
-	}
-
-	/**
-	 * @throws Exception
-	 * @throws ModuleException
-	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testPrepareDatatableHeaderReturnsPreparedHeaderArray(): void
+	public function testPrepareFormSplitsHiddenAndVisibleFields(): void
 	{
-		$tableHeaderFields = [
-			$this->createStub(HeaderField::class),
-			$this->createStub(HeaderField::class)
-		];
-		$langModules = ['module1', 'module2'];
-		$expectedPreparedHeader = [
-			['preparedField1' => $this->createStub(FieldInterface::class)],
-			['preparedField2' => $this->createStub(FieldInterface::class)]
+		$form = [
+			'id'   => $this->formBuilder->createField(['id' => 'playlist_id', 'type' => FieldType::HIDDEN, 'name' => 'playlist_id', 'value' => 5]),
+			'name' => $this->formBuilder->createField(['id' => 'name', 'type' => FieldType::TEXT, 'name' => 'name', 'label' => 'Name']),
 		];
 
-		$basefilterParameterStub = $this->createStub(BaseFilterParameters::class);
-		$this->paginationPreparerMock->expects($this->once())->method('setSite')->with('testModule')->willReturnSelf();
-		$this->paginationPreparerMock->expects($this->once())->method('setBaseFilter')->with($basefilterParameterStub)->willReturnSelf();
-		$this->formBuilderMock->expects($this->never())->method($this->anything());
-		$this->prepareService->configure($basefilterParameterStub, 'testModule');
-		$this->headerPreparerMock
-			->expects($this->once())
-			->method('configure')
-			->with($basefilterParameterStub, 'testModule', $langModules);
+		$result = $this->prepareService->prepareForm($form);
 
-		$this->headerPreparerMock
-			->expects($this->once())
-			->method('prepareTableHeader')
-			->with($tableHeaderFields)
-			->willReturn($expectedPreparedHeader);
+		static::assertSame([['HIDDEN_HTML_ELEMENT' => '<input type="hidden" name="playlist_id" id="playlist_id" value="5">']], $result['hidden']);
+		static::assertSame(['name'], array_column($result['visible'], 'HTML_ELEMENT_ID'));
+	}
 
-		$result = $this->prepareService->prepareDatatableHeader($tableHeaderFields, $langModules);
+	/**
+	 * The module name is the site of the links: they are relative ("playlists?...") and belong to the page /<module>,
+	 * like the action of the filter form.
+	 *
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testPreparePaginationHasLinksAndDropdownOfTheSite(): void
+	{
+		$this->configure(['elements_page' => '2', 'elements_per_page' => '20', 'sort_column' => 'created', 'sort_order' => 'DESC']);
+		$pager = (new PaginatorBuilder())->configure(2, 20, 60, false, false)->buildPagerLinks()->getPagerLinks();
 
-		static::assertSame($expectedPreparedHeader, $result);
+		$result = $this->prepareService->preparePagination($pager, ['min' => 10, 'max' => 30, 'steps' => 10]);
+
+		static::assertSame(
+			[
+				'playlists?elements_page=1&sort_column=created&sort_order=DESC&elements_per_page=20',
+				'playlists?elements_page=2&sort_column=created&sort_order=DESC&elements_per_page=20',
+				'playlists?elements_page=3&sort_column=created&sort_order=DESC&elements_per_page=20',
+			],
+			array_column($result['links'], 'ELEMENTS_PAGELINK')
+		);
+		static::assertSame(['', 'active_page', ''], array_column($result['links'], 'ELEMENTS_ACTIVE_PAGE'));
+		static::assertSame([10, 20, 30], array_column($result['dropdown'], 'ELEMENTS_PER_PAGE_VALUE'));
+		static::assertSame(['', 'selected', ''], array_column($result['dropdown'], 'ELEMENTS_PER_PAGE_SELECTED'));
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testPrepareDatatableHeaderUsesTheSiteAndTheLanguageModules(): void
+	{
+		$this->configure(['sort_column' => 'name', 'sort_order' => 'ASC']);
+		$builder = new ResultsBuilder();
+		$builder->createField('name', true);
+		$builder->createField('type', false);
+
+		$header = $this->prepareService->prepareDatatableHeader($builder->getHeaderFields(), ['playlists', 'main']);
+
+		static::assertSame(
+			[
+				'SORTABLE_ORDER'          => '▼',
+				'SORT_CONTROL_NAME'       => 'name',
+				'LINK_CONTROL_SORT_ORDER' => 'playlists?elements_page=1&sort_column=name&sort_order=desc&elements_per_page=10',
+				'LANG_CONTROL_NAME'       => 'name@playlists',
+			],
+			$header[0]['if_sortable']
+		);
+		static::assertSame('type@playlists', $header[1]['LANG_CONTROL_NAME_2']);
 	}
 
 	#[Group('units')]
 	public function testGetBodyPreparer(): void
 	{
-		$this->expectUntouched($this->headerPreparerMock, $this->paginationPreparerMock, $this->formBuilderMock);
-		$result = $this->prepareService->getBodyPreparer();
-		static::assertSame($this->bodyPreparerStub, $result);
+		static::assertSame($this->bodyPreparer, $this->prepareService->getBodyPreparer());
 	}
 
-	private function expectUntouched(MockObject ...$mocks): void
+	/**
+	 * The service has to be configured with the parameters before the pager or the header can be prepared.
+	 */
+	#[Group('units')]
+	public function testTheHeaderCanNotBePreparedBeforeConfigure(): void
 	{
-		foreach ($mocks as $mock)
-		{
-			$mock->expects($this->never())->method($this->anything());
-		}
+		$this->expectException(Error::class);
+
+		$this->prepareService->prepareDatatableHeader([], ['main']);
 	}
 }

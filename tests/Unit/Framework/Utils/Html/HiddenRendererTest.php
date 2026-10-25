@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2024 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -21,42 +21,27 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Framework\Utils\Html;
 
+use App\Framework\Utils\Html\FieldType;
 use App\Framework\Utils\Html\HiddenField;
 use App\Framework\Utils\Html\HiddenRenderer;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class HiddenRendererTest extends TestCase
 {
-	private HiddenRenderer $hiddenRenderer;
-
-	private HiddenField&Stub $fieldStub;
-
-	/**
-	 * @throws Exception
-	 */
-	protected function setUp(): void
+	#[Group('units')]
+	public function testRender(): void
 	{
-		parent::setUp();
-		$this->fieldStub = $this->createStub(HiddenField::class);
-		$this->hiddenRenderer = new HiddenRenderer();
+		$field = new HiddenField(['id' => 'playlist', 'type' => FieldType::HIDDEN, 'name' => 'playlist_id', 'value' => 12]);
+
+		static::assertSame('<input type="hidden" name="playlist_id" id="playlist" value="12">', (new HiddenRenderer())->render($field));
 	}
 
 	#[Group('units')]
-	public function testRenderGeneratesCorrectHtml(): void
+	public function testZeroIsRendered(): void
 	{
+		$field = new HiddenField(['id' => 'playlist', 'type' => FieldType::HIDDEN, 'value' => '0', 'default_value' => '9']);
 
-		$this->fieldStub->method('getName')->willReturn('testField');
-		$this->fieldStub->method('getId')->willReturn('hiddenField');
-		$this->fieldStub->method('getValue')->willReturn('hiddenValue');
-		$this->fieldStub->method('getTitle')->willReturn('');
-		$this->fieldStub->method('getLabel')->willReturn('');
-
-		$expectedHtml = '<input type="hidden" name="testField" id="hiddenField" value="hiddenValue">';
-		static::assertSame($expectedHtml, $this->hiddenRenderer->render($this->fieldStub));
+		static::assertSame('<input type="hidden" name="playlist" id="playlist" value="0">', (new HiddenRenderer())->render($field));
 	}
-
-
 }

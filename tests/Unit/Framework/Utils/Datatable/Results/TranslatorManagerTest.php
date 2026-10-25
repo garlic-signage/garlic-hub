@@ -19,135 +19,193 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Framework\Utils\Datatable\Results;
 
-use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Localization\Translate\Translator;
 use App\Framework\Utils\Datatable\Results\HeaderField;
 use App\Framework\Utils\Datatable\Results\TranslatorManager;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * The texts of the header come from the language modules in the given order. The Translator itself needs locales
+ * and files, here it knows a few texts: key and module give the text, a key without text gives an empty one.
+ */
 class TranslatorManagerTest extends TestCase
 {
-	private Translator&MockObject $translatorMock;
-	private TranslatorManager $translatorManager;
+	/** @var array<string,string> "key@module" => text */
+	private array $texts = [
+		'name@playlists'   => 'Name of the list',
+		'name@main'        => 'Name',
+		'created@main'     => 'Created',
+		'owner@users'      => 'Owner',
+	];
 
-	/**
-	 * @throws Exception
-	 */
+	/** @var array<string,string> "key@module" => message of the exception */
+	private array $failing = [];
+
+	private Translator&Stub $translatorStub;
+	private TranslatorManager $manager;
+
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->translatorMock = $this->createMock(Translator::class);
-		$this->translatorManager = new TranslatorManager($this->translatorMock);
+
+		$this->translatorStub = $this->createStub(Translator::class);
+		$this->translatorStub->method('translate')->willReturnCallback(
+			function (string $key, string $module): string
+			{
+				$id = $key . '@' . $module;
+				if (isset($this->failing[$id]))
+					throw new FrameworkException($this->failing[$id]);
+
+				return $this->texts[$id] ?? '';
+			}
+		);
+
+		$this->manager = new TranslatorManager($this->translatorStub);
+	}
+
+	private function field(string $name): HeaderField
+	{
+		return (new HeaderField())->setName($name);
 	}
 
 	/**
-	 * @throws Exception
-	 * @throws FrameworkException
 	 * @throws CoreException
-	 */
-	#[Group('units')]
-	public function testTranslateShouldReturnEmptyStringWhenTranslationIsSkipped(): void
-	{
-		$this->translatorMock->expects($this->never())->method($this->anything());
-		$headerField = $this->createStub(HeaderField::class);
-		$headerField->method('shouldSkipTranslation')->willReturn(true);
-
-		$result = $this->translatorManager->translate($headerField);
-
-		static::assertSame('', $result);
-	}
-
-	/**
-	 * @throws Exception
 	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testASkippedFieldHasNoText(): void
+	{
+		$this->manager->addLanguageModule('main');
+
+		static::assertSame('', $this->manager->translate($this->field('name')->skipTranslation(true)));
+	}
+
+	/**
 	 * @throws CoreException
+	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testTranslateShouldUseSpecificLangModuleWhenProvided(): void
+	public function testASpecificModuleIsUsedAloneAndBeforeTheOthers(): void
 	{
-		$headerField = $this->createStub(HeaderField::class);
-		$headerField->method('shouldSkipTranslation')->willReturn(false);
-		$headerField->method('hasSpecificLangModule')->willReturn(true);
-		$headerField->method('getSpecificLanguageModule')->willReturn('specific_lang_module');
-		$headerField->method('getName')->willReturn('key');
+		$this->manager->addLanguageModule('main');
 
-		$this->translatorMock->expects($this->once())
-			->method('translate')
-			->with('key', 'specific_lang_module')
-			->willReturn('translated_value');
+		$field = $this->field('owner')->useSpecificLangModule('users');
 
-		$result = $this->translatorManager->translate($headerField);
-
-		static::assertSame('translated_value', $result);
+		static::assertSame('Owner', $this->manager->translate($field));
 	}
 
 	/**
-	 * @throws Exception
+	 * @throws CoreException
+	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testTranslateShouldIterateOverLanguageModulesAndReturnFirstTranslatedValue(): void
+	public function testASpecificModuleDoesNotFallBackToTheOthers(): void
 	{
-		$headerField = $this->createStub(HeaderField::class);
-		$headerField->method('shouldSkipTranslation')->willReturn(false);
-		$headerField->method('hasSpecificLangModule')->willReturn(false);
-		$headerField->method('getName')->willReturn('key');
+		$this->manager->addLanguageModule('main');
 
-		$this->translatorManager->addLanguageModule('module_1')->addLanguageModule('module_2');
+		$field = $this->field('created')->useSpecificLangModule('users');
 
-		$this->translatorMock->expects($this->atLeastOnce())->method('translate')->willReturnMap([
-			['key', 'module_1', [], ''],
-			['key', 'module_2', [], 'translated_value']
-		]);
-
-		$result = $this->translatorManager->translate($headerField);
-
-		static::assertSame('translated_value', $result);
+		static::assertSame('', $this->manager->translate($field));
 	}
 
 	/**
-	 * @throws Exception
+	 * @throws CoreException
+	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testTranslateShouldReturnEmptyStringWhenNoTranslationIsFound(): void
+	public function testTheFirstModuleWithATextWins(): void
 	{
-		$headerField = $this->createStub(HeaderField::class);
-		$headerField->method('shouldSkipTranslation')->willReturn(false);
-		$headerField->method('hasSpecificLangModule')->willReturn(false);
-		$headerField->method('getName')->willReturn('key');
+		$this->manager->addLanguageModule('playlists')->addLanguageModule('main');
 
-		$this->translatorManager->addLanguageModule('module_1')->addLanguageModule('module_2');
-
-		$this->translatorMock->expects($this->atLeastOnce())->method('translate')->willReturn('');
-
-		$result = $this->translatorManager->translate($headerField);
-
-		static::assertSame('', $result);
+		static::assertSame('Name of the list', $this->manager->translate($this->field('name')));
+		static::assertSame('Created', $this->manager->translate($this->field('created')), 'A module without the key hands over to the next one.');
 	}
 
 	/**
-	 * @throws Exception
+	 * @throws CoreException
+	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testTranslateShouldHandleFrameworkExceptionGracefully(): void
+	public function testTheOrderOfTheModulesDecides(): void
 	{
-		$headerField = $this->createStub(HeaderField::class);
-		$headerField->method('shouldSkipTranslation')->willReturn(false);
-		$headerField->method('hasSpecificLangModule')->willReturn(false);
-		$headerField->method('getName')->willReturn('key');
+		$this->manager->addLanguageModule('main')->addLanguageModule('playlists');
 
-		$this->translatorManager->addLanguageModule('module_1')->addLanguageModule('module_2');
+		static::assertSame('Name', $this->manager->translate($this->field('name')));
+	}
 
-		$this->translatorMock->expects($this->atLeastOnce())->method('translate')->will($this->throwException(new FrameworkException('error')));
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testWithoutATextInAnyModuleTheResultIsEmpty(): void
+	{
+		$this->manager->addLanguageModule('playlists')->addLanguageModule('main');
 
-		$result = $this->translatorManager->translate($headerField);
+		static::assertSame('', $this->manager->translate($this->field('unknown_key')));
+	}
 
-		static::assertSame('', $result);
+	#[Group('units')]
+	public function testWithoutModulesTheResultIsEmpty(): void
+	{
+		static::assertSame('', $this->manager->translate($this->field('name')));
+	}
+
+	/**
+	 * A module which fails with a FrameworkException (e.g. a locale which is not configured) is skipped.
+	 *
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testAModuleWhichFailsWithAFrameworkExceptionIsSkipped(): void
+	{
+		$this->failing['name@playlists'] = 'error';
+		$this->manager->addLanguageModule('playlists')->addLanguageModule('main');
+
+		static::assertSame('Name', $this->manager->translate($this->field('name')));
+	}
+
+	/**
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testAFailingSpecificModuleIsNotHidden(): void
+	{
+		$this->failing['name@users'] = 'error';
+
+		$this->expectException(FrameworkException::class);
+
+		$this->manager->translate($this->field('name')->useSpecificLangModule('users'));
+	}
+
+	/**
+	 * A missing language file is a CoreException, it ends the search instead of trying the next module.
+	 *
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testACoreExceptionEndsTheSearch(): void
+	{
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willThrowException(new CoreException('Translation file not found'));
+		$manager = new TranslatorManager($translator);
+		$manager->addLanguageModule('playlists')->addLanguageModule('main');
+
+		$this->expectException(CoreException::class);
+
+		$manager->translate($this->field('name'));
+	}
+
+	#[Group('units')]
+	public function testAddLanguageModuleIsChainable(): void
+	{
+		static::assertSame($this->manager, $this->manager->addLanguageModule('main'));
 	}
 }

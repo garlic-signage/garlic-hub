@@ -22,141 +22,190 @@ declare(strict_types=1);
 namespace Tests\Unit\Framework\Utils\Datatable\Paginator;
 
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Utils\Datatable\Paginator\Builder;
 use App\Framework\Utils\Datatable\Paginator\Preparer;
 use App\Framework\Utils\Datatable\UrlBuilder;
-use App\Framework\Utils\FormParameters\BaseFilterParameters;
-use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Tests\Unit\Framework\Utils\Datatable\FilterParametersFake;
 
+/**
+ * The links and the dropdown of the pager with the real Builder, URL builder and filter parameters.
+ */
 class PreparerTest extends TestCase
 {
 	private Preparer $preparer;
-	private BaseFilterParameters&MockObject $baseFilterParametersMock;
-	private UrlBuilder&MockObject $urlBuilderMock;
 
-	/**
-	 * @throws Exception
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->urlBuilderMock           = $this->createMock(UrlBuilder::class);
-		$this->baseFilterParametersMock = $this->createMock(BaseFilterParameters::class);
-		$this->preparer                 = new Preparer($this->urlBuilderMock);
+		$this->preparer = new Preparer(new UrlBuilder());
+	}
+
+	/**
+	 * @param array<string,mixed> $input
+	 * @throws ModuleException
+	 */
+	private function configure(array $input): void
+	{
+		$this->preparer->setSite('/playlists')->setBaseFilter(new FilterParametersFake($input));
+	}
+
+	/**
+	 * @return list<array{name: string, page: int, active?: bool}>
+	 */
+	private function links(int $page, int $perPage, int $total, bool $usePager = true, bool $shortened = false): array
+	{
+		return (new Builder())->configure($page, $perPage, $total, $usePager, $shortened)->buildPagerLinks()->getPagerLinks();
 	}
 
 	/**
 	 * @throws ModuleException
 	 */
 	#[Group('units')]
-	public function testPrepareLinks(): void
+	public function testEveryLinkHasUrlNameAndNumber(): void
 	{
-		// Arrange
-		$pageLinks = [
-			['page' => 1, 'name' => 'Page 1', 'active' => null],
-			['page' => 2, 'name' => 'Page 2', 'active' => true]
-		];
+		$this->configure(['elements_page' => '2', 'sort_column' => 'created', 'sort_order' => 'DESC', 'elements_per_page' => '10']);
 
-		$link = '/link/to/somewhere';
+		$links = $this->preparer->prepareLinks($this->links(2, 10, 30));
 
-		$this->preparer->setBaseFilter($this->baseFilterParametersMock);
-
-		$this->baseFilterParametersMock->expects($this->exactly(3))
-			->method('getValueOfParameter')
-			->willReturnMap([
-				[BaseFilterParametersInterface::PARAMETER_SORT_COLUMN, 'name'],
-				[BaseFilterParametersInterface::PARAMETER_SORT_ORDER, 'asc'],
-				[BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE, 100]
-			]);
-		$this->urlBuilderMock->expects($this->once())->method('setSortColumn')
-			->with('name')->willReturn($this->urlBuilderMock);
-		$this->urlBuilderMock->expects($this->once())->method('setSortOrder')
-			->with('asc')->willReturn($this->urlBuilderMock);
-		$this->urlBuilderMock->expects($this->once())->method('setElementsPerPage')
-			->with(100)->willReturn($this->urlBuilderMock);
-
-		$this->urlBuilderMock->expects($this->exactly(2))->method('buildFilterUrl')->willReturn($link);
-
-		$expectedResult = [
+		static::assertSame(
 			[
-				'ELEMENTS_PAGELINK' => $link,
-				'ELEMENTS_PAGENAME' => 'Page 1',
-				'ELEMENTS_PAGENUMBER' => 1,
-				'ELEMENTS_ACTIVE_PAGE' => ''
+				'ELEMENTS_PAGELINK'    => '/playlists?elements_page=1&sort_column=created&sort_order=DESC&elements_per_page=10',
+				'ELEMENTS_PAGENAME'    => '«',
+				'ELEMENTS_PAGENUMBER'  => 1,
+				'ELEMENTS_ACTIVE_PAGE' => '',
 			],
-			[
-				'ELEMENTS_PAGELINK' => $link,
-				'ELEMENTS_PAGENAME' => 'Page 2',
-				'ELEMENTS_PAGENUMBER' => 2,
-				'ELEMENTS_ACTIVE_PAGE' => 'active_page'
-			],
-		];
+			$links[0]
+		);
+		static::assertSame(['«', '‹', '1', '2', '3', '›', '»'], array_column($links, 'ELEMENTS_PAGENAME'));
+		static::assertSame([1, 1, 1, 2, 3, 3, 3], array_column($links, 'ELEMENTS_PAGENUMBER'));
+	}
 
-		$result = $this->preparer->prepareLinks($pageLinks);
+	/**
+	 * Only the page which is shown is marked, the other numbers and the arrows are not.
+	 *
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testOnlyTheCurrentPageIsMarkedAsActive(): void
+	{
+		$this->configure(['elements_page' => '2']);
 
-		static::assertSame($expectedResult, $result);
+		$links = $this->preparer->prepareLinks($this->links(2, 10, 60));
+
+		$active = [];
+		foreach ($links as $link)
+			$active[$link['ELEMENTS_PAGENAME']] = $link['ELEMENTS_ACTIVE_PAGE'];
+
+		static::assertSame(
+			['«' => '', '‹' => '', '1' => '', '2' => 'active_page', '3' => '', '4' => '', '5' => '', '6' => '', '›' => '', '»' => ''],
+			$active
+		);
 	}
 
 	/**
 	 * @throws ModuleException
 	 */
 	#[Group('units')]
-	public function testRenderElementsPerSiteDropDown(): void
+	public function testTheLinksKeepSortingAndElementsPerPage(): void
 	{
-		$settings = ['min' => 10, 'max' => 30, 'steps' => 10];
-		$elementsPage = 2;
-		$site = 'example-site';
+		$this->configure(['sort_column' => 'created', 'sort_order' => 'DESC', 'elements_per_page' => '25']);
 
-		$this->preparer->setBaseFilter($this->baseFilterParametersMock)->setSite($site);
+		$links = $this->preparer->prepareLinks($this->links(1, 25, 60, false));
 
-		$this->baseFilterParametersMock
-			->expects($this->atLeastOnce())->method('getValueOfParameter')
-			->willReturnMap([
-				[BaseFilterParametersInterface::PARAMETER_SORT_COLUMN, 'name'],
-				[BaseFilterParametersInterface::PARAMETER_SORT_ORDER, 'asc'],
-				[BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE, $elementsPage],
-				[BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE, 20]
-			]);
+		static::assertSame(
+			['/playlists?elements_page=1&sort_column=created&sort_order=DESC&elements_per_page=25', '/playlists?elements_page=2&sort_column=created&sort_order=DESC&elements_per_page=25', '/playlists?elements_page=3&sort_column=created&sort_order=DESC&elements_per_page=25'],
+			array_column($links, 'ELEMENTS_PAGELINK')
+		);
+	}
 
-		$this->urlBuilderMock->expects($this->once())->method('setSortColumn')
-			->with('name')->willReturn($this->urlBuilderMock);
-		$this->urlBuilderMock->expects($this->once())->method('setSortOrder')
-			->with('asc')->willReturn($this->urlBuilderMock);
-		$this->urlBuilderMock->expects($this->once())->method('setPage')
-			->with($elementsPage)->willReturn($this->urlBuilderMock);
+	/**
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testNoLinksGiveNoData(): void
+	{
+		$this->configure([]);
 
-		$link = '/link/to/somewhere';
+		static::assertSame([], $this->preparer->prepareLinks([]));
+	}
 
-		$this->urlBuilderMock->expects($this->exactly(3))->method('buildFilterUrl')->willReturn($link);
+	/**
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testTheDropdownHasAnOptionPerStep(): void
+	{
+		$this->configure(['elements_per_page' => '20']);
 
-		$expectedResult = [
+		$options = $this->preparer->prepareDropdown(['min' => 10, 'max' => 30, 'steps' => 10]);
+
+		static::assertSame([10, 20, 30], array_column($options, 'ELEMENTS_PER_PAGE_VALUE'));
+		static::assertSame([10, 20, 30], array_column($options, 'ELEMENTS_PER_PAGE_NAME'));
+		static::assertSame(['', 'selected', ''], array_column($options, 'ELEMENTS_PER_PAGE_SELECTED'));
+	}
+
+	/**
+	 * Every option has its own link: the page, the sorting and the number of this option.
+	 *
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testEveryOptionHasALinkWithItsOwnNumber(): void
+	{
+		$this->configure(['elements_page' => '2', 'elements_per_page' => '20', 'sort_column' => 'created', 'sort_order' => 'DESC']);
+
+		$options = $this->preparer->prepareDropdown(['min' => 10, 'max' => 30, 'steps' => 10]);
+
+		static::assertSame(
 			[
-				'ELEMENTS_PER_PAGE_VALUE' => 10,
-				'ELEMENTS_PER_PAGE_DATA_LINK' => $link,
-				'ELEMENTS_PER_PAGE_NAME' => 10,
-				'ELEMENTS_PER_PAGE_SELECTED' => ''
+				'/playlists?elements_page=2&sort_column=created&sort_order=DESC&elements_per_page=10',
+				'/playlists?elements_page=2&sort_column=created&sort_order=DESC&elements_per_page=20',
+				'/playlists?elements_page=2&sort_column=created&sort_order=DESC&elements_per_page=30',
 			],
-			[
-				'ELEMENTS_PER_PAGE_VALUE' => 20,
-				'ELEMENTS_PER_PAGE_DATA_LINK' => $link,
-				'ELEMENTS_PER_PAGE_NAME' => 20,
-				'ELEMENTS_PER_PAGE_SELECTED' => 'selected'
-			],
-			[
-				'ELEMENTS_PER_PAGE_VALUE' => 30,
-				'ELEMENTS_PER_PAGE_DATA_LINK' => $link,
-				'ELEMENTS_PER_PAGE_NAME' => 30,
-				'ELEMENTS_PER_PAGE_SELECTED' => ''
-			]
-		];
+			array_column($options, 'ELEMENTS_PER_PAGE_DATA_LINK')
+		);
+	}
 
-		// Act
-		$result = $this->preparer->prepareDropdown($settings);
+	/**
+	 * The dropdown works without the links being prepared before.
+	 *
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testTheDropdownNeedsNoLinksBefore(): void
+	{
+		$this->configure([]);
 
-		// Assert
-		static::assertSame($expectedResult, $result);
+		$options = $this->preparer->prepareDropdown(['min' => 10, 'max' => 10, 'steps' => 10]);
+
+		static::assertCount(1, $options);
+		static::assertSame('selected', $options[0]['ELEMENTS_PER_PAGE_SELECTED']);
+	}
+
+	/**
+	 * A step of 0 would never end.
+	 *
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testAStepOfZeroDoesNotLoopForever(): void
+	{
+		$this->configure(['elements_per_page' => '10']);
+
+		$options = $this->preparer->prepareDropdown(['min' => 10, 'max' => 12, 'steps' => 0]);
+
+		static::assertSame([10, 11, 12], array_column($options, 'ELEMENTS_PER_PAGE_VALUE'));
+	}
+
+	/**
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testSettersAreChainable(): void
+	{
+		static::assertSame($this->preparer, $this->preparer->setSite('/x'));
+		static::assertSame($this->preparer, $this->preparer->setBaseFilter(new FilterParametersFake([])));
 	}
 }

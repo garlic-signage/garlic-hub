@@ -56,7 +56,7 @@ class Preparer
 	}
 
 	/**
-	 * @param list<array{name: string, page: int, active: ?bool}> $pageLinks
+	 * @param list<array{name: string, page: int, active?: ?bool}> $pageLinks
 	 * @return list<array<string,mixed>>
 	 * @throws ModuleException
 	 */
@@ -77,7 +77,7 @@ class Preparer
 				'ELEMENTS_PAGELINK'   => $this->urlBuilder->buildFilterUrl(),
 				'ELEMENTS_PAGENAME'   => $values['name'],
 				'ELEMENTS_PAGENUMBER' => $values['page'],
-				'ELEMENTS_ACTIVE_PAGE' => isset($values['active']) ? 'active_page' : ''
+				'ELEMENTS_ACTIVE_PAGE' => ($values['active'] ?? false) === true ? 'active_page' : ''
 			];
 		}
 
@@ -99,8 +99,13 @@ class Preparer
 
 		$data = [];
 		$currentElementsPerPage = (int) $this->baseFilter->getValueOfParameter(BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE);
-		for ($i = $dropDownSettings['min']; $i <= $dropDownSettings['max']; $i += $dropDownSettings['steps'])
+		// a step of 0 would never end
+		$steps = max(1, $dropDownSettings['steps']);
+		for ($i = $dropDownSettings['min']; $i <= $dropDownSettings['max']; $i += $steps)
 		{
+			// every option has its own link
+			$this->urlBuilder->setElementsPerPage($i);
+
 			$data[] = [
 				'ELEMENTS_PER_PAGE_VALUE' => $i,
 				'ELEMENTS_PER_PAGE_DATA_LINK' => $this->urlBuilder->buildFilterUrl(),

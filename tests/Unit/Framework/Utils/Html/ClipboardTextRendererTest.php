@@ -19,72 +19,35 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Framework\Utils\Html;
 
 use App\Framework\Utils\Html\ClipboardTextField;
 use App\Framework\Utils\Html\ClipboardTextRenderer;
-use App\Framework\Utils\Html\FieldInterface;
+use App\Framework\Utils\Html\FieldType;
+use App\Framework\Utils\Html\TextField;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class ClipboardTextRendererTest extends TestCase
 {
-	private ClipboardTextField&Stub $clipboardTextFieldStub;
-	private ClipboardTextRenderer $renderer;
-
-	/**
-	 * @throws Exception
-	 */
-	protected function setUp(): void
+	#[Group('units')]
+	public function testRender(): void
 	{
-		parent::setUp();
-		$this->renderer = new ClipboardTextRenderer();
-		$this->clipboardTextFieldStub = $this->createStub(ClipboardTextField::class);
+		$field = new ClipboardTextField(['id' => 'link', 'type' => FieldType::CLIPBOARD_TEXT, 'title' => 'Copy', 'value' => 'https://example.com/v/abc']);
+		$field->setDeleteTitle('Delete')->setRefreshTitle('Renew');
+
+		$expected = '<input type="text" id="link" class="verification-link" title="Copy" value="https://example.com/v/abc" readonly>
+<button type="button" data-id="link" class="copy-verification-link" title="Copy."><i class="bi bi-clipboard"></i></button>
+<button type="button" data-id="link" class="delete-verification-link" title="Delete."><i class="bi bi-trash"></i></button>
+<button type="button" data-id="link" class="refresh-verification-link" title="Renew."><i class="bi bi-arrow-clockwise"></i></button>
+';
+
+		static::assertSame($expected, (new ClipboardTextRenderer())->render($field));
 	}
 
 	#[Group('units')]
-	public function testRenderWithValidClipboardTextField(): void
+	public function testAFieldOfAnotherTypeRendersNothing(): void
 	{
-		$this->clipboardTextFieldStub->method('getId')
-			->willReturn('test-id');
-
-		$this->clipboardTextFieldStub ->method('getTitle')
-			->willReturn('Test Title');
-
-		$this->clipboardTextFieldStub->method('getValue')
-			->willReturn('Test Value');
-
-		$this->clipboardTextFieldStub->method('getDeleteTitle')
-			->willReturn('Delete Test');
-
-		$this->clipboardTextFieldStub->method('getRefreshTitle')
-			->willReturn('Refresh Test');
-
-		$result = $this->renderer->render($this->clipboardTextFieldStub);
-
-		static::assertStringContainsString('<input type="text"', $result);
-		static::assertStringContainsString('id="test-id"', $result);
-		static::assertStringContainsString('value="Test Value"', $result);
-		static::assertStringContainsString('class="copy-verification-link"', $result);
-		static::assertStringContainsString('title="Test Title."', $result);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testRenderWithInvalidFieldType(): void
-	{
-		$invalidFieldStub = $this->createStub(FieldInterface::class);
-		$invalidFieldStub
-			->method('getId')
-			->willReturn('invalid-id');
-
-		$result = $this->renderer->render($invalidFieldStub);
-
-		static::assertSame('', $result);
+		static::assertSame('', (new ClipboardTextRenderer())->render(new TextField(['id' => 'a', 'type' => FieldType::TEXT])));
 	}
 }

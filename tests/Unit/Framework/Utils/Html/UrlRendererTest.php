@@ -19,70 +19,32 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Framework\Utils\Html;
 
-use App\Framework\Utils\Html\FieldInterface;
+use App\Framework\Utils\Html\FieldType;
+use App\Framework\Utils\Html\TextField;
 use App\Framework\Utils\Html\UrlField;
 use App\Framework\Utils\Html\UrlRenderer;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class UrlRendererTest extends TestCase
 {
-	private UrlRenderer $urlRenderer;
-	private UrlField&Stub $urlFieldStub;
-
-	/**
-	 * @throws Exception
-	 */
-	protected function setUp(): void
+	#[Group('units')]
+	public function testRender(): void
 	{
-		parent::setUp();
-		$this->urlFieldStub = $this->createStub(UrlField::class);
-		$this->urlRenderer = new UrlRenderer();
+		$field = new UrlField(['id' => 'homepage', 'type' => FieldType::URL, 'name' => 'url', 'value' => 'https://example.com', 'title' => 'homepage']);
+		$field->setPattern('https?://.+')->setPlaceholder('https://');
+
+		static::assertSame(
+			'<input type="text" name="url" id="homepage" value="https://example.com" title="homepage" pattern="https?://.+" placeholder="https://" aria-describedby="error_homepage">',
+			(new UrlRenderer())->render($field)
+		);
 	}
 
 	#[Group('units')]
-	public function testRenderWithValidUrlField(): void
+	public function testAFieldOfAnotherTypeRendersNothing(): void
 	{
-		$this->urlFieldStub->method('getPattern')->willReturn('[a-z]+://.*');
-		$this->urlFieldStub->method('getPlaceholder')->willReturn('Enter URL');
-		$this->urlFieldStub->method('getId')->willReturn('urlField1');
-
-		$expectedAttributes = 'pattern="[a-z]+://.*" placeholder="Enter URL" aria-describedby="error_urlField1"';
-		$result = $this->urlRenderer->render($this->urlFieldStub);
-
-		static::assertStringContainsString('<input type="text" ', $result);
-		static::assertStringContainsString($expectedAttributes, $result);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	#[Group('units')]
-	public function testRenderWithInvalidFieldType(): void
-	{
-		$mockField = $this->createStub(FieldInterface::class);
-
-		$result = $this->urlRenderer->render($mockField);
-
-		static::assertSame('', $result);
-	}
-
-	#[Group('units')]
-	public function testRenderWithEmptyPatternAndPlaceholder(): void
-	{
-		$this->urlFieldStub->method('getPattern')->willReturn('');
-		$this->urlFieldStub->method('getPlaceholder')->willReturn('');
-		$this->urlFieldStub->method('getId')->willReturn('urlField1');
-
-		$expectedAttributes = 'pattern="" placeholder="" aria-describedby="error_urlField1"';
-		$result = $this->urlRenderer->render($this->urlFieldStub);
-
-		static::assertStringContainsString('<input type="text" ', $result);
-		static::assertStringContainsString($expectedAttributes, $result);
+		static::assertSame('', (new UrlRenderer())->render(new TextField(['id' => 'a', 'type' => FieldType::TEXT])));
 	}
 }

@@ -19,7 +19,6 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Framework\Utils\Html;
 
 use App\Framework\Utils\Html\CheckboxField;
@@ -29,25 +28,22 @@ use PHPUnit\Framework\TestCase;
 
 class CheckboxFieldTest extends TestCase
 {
-	private CheckboxField $checkboxField;
-
-	protected function setUp(): void
+	#[Group('units')]
+	public function testACheckboxIsNotCheckedByDefault(): void
 	{
-		parent::setUp();
-		$this->checkboxField = new CheckboxField(['id' => 'id', 'type' => FieldType::CHECKBOX]);
+		static::assertFalse(new CheckboxField(['id' => 'active', 'type' => FieldType::CHECKBOX])->isChecked());
 	}
 
 	#[Group('units')]
-	public function testSetCheckedTrue(): void
+	public function testSetChecked(): void
 	{
-		$this->checkboxField->setChecked(true);
-		static::assertTrue($this->checkboxField->isChecked());
-	}
+		$field = new CheckboxField(['id' => 'active', 'type' => FieldType::CHECKBOX]);
 
-	#[Group('units')]
-	public function testSetCheckedFalse(): void
-	{
-		$this->checkboxField->setChecked(false);
-		static::assertFalse($this->checkboxField->isChecked());
+		static::assertSame($field, $field->setChecked(true));
+		static::assertTrue($field->isChecked());
+
+		$field->setChecked(false);
+
+		static::assertFalse($field->isChecked());
 	}
 }
