@@ -194,11 +194,14 @@ class ShowTemplateComposerTest extends PlaylistsControllerTestCase
 
 	public function testAnImageWhichIsNoDataUrlIsAnError(): void
 	{
-		static::markTestSkipped('Known bug: an image which is no data URL throws a FrameworkException instead of the answer "Save failed". Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(2);
 
 		$this->assertError($this->save(['item_id' => '5', 'content' => '{"objects":[]}', 'image' => 'no image']), 'Save failed');
+		$this->assertError($this->save(['item_id' => '5', 'content' => '{"objects":[]}', 'image' => 'data:image/png;base64,']), 'Save failed');
+		$this->assertError($this->save(['item_id' => '5', 'content' => '{"objects":[]}', 'image' => 'data:image/png;base64,%%%']), 'Save failed');
+		$this->assertError($this->save(['item_id' => '5', 'content' => '{"objects":[]}', 'image' => ['x']]), 'Save failed');
+		$this->assertError($this->save(['item_id' => '5', 'content' => ['x'], 'image' => self::PNG]), 'Save failed');
+		static::assertSame('', $this->databaseValue('SELECT content_data FROM playlists_items WHERE item_id = 5'));
 	}
 
 	/**
@@ -206,12 +209,25 @@ class ShowTemplateComposerTest extends PlaylistsControllerTestCase
 	 */
 	public function testTheComposerChangesOnlyTemplateItems(): void
 	{
-		static::markTestSkipped('Known bug: the composer checks only the rights on the playlist, not the type of the item. The item of a mediapool image can be overwritten with content and mimetype of an image. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(2);
 
-		$this->assertError($this->save(['item_id' => '1', 'content' => '{"objects":[]}', 'image' => self::PNG]), 'No rights');
+		foreach (['1' => 'image/jpeg', '3' => '', '4' => 'application/pdf'] as $itemId => $mimetype)
+		{
+			$this->assertError($this->save(['item_id' => (string) $itemId, 'content' => '{"objects":[]}', 'image' => self::PNG]), 'Item is not a template.');
 
-		static::assertSame('image/jpeg', $this->databaseValue('SELECT mimetype FROM playlists_items WHERE item_id = 1'));
+			static::assertSame($mimetype, $this->databaseValue('SELECT mimetype FROM playlists_items WHERE item_id = ?', $itemId));
+			static::assertSame('', $this->databaseValue('SELECT content_data FROM playlists_items WHERE item_id = ?', $itemId));
+		}
+		static::assertSame([], (array) glob($this->workspace->dir . '/var/storage/playlists/items/*/*'));
+	}
+
+	public function testTheComposerOpensAndLoadsOnlyTemplateItems(): void
+	{
+		$this->actingAs(2);
+		$this->connection->executeStatement("UPDATE playlists_items SET content_data = '{\"objects\":[]}' WHERE item_id = 1");
+
+		$this->assertRedirect($this->controller->show($this->request('GET'), $this->newResponse(), ['item_id' => '1']), 'Item is not a template.');
+		$this->assertError($this->controller->load($this->request('GET'), $this->newResponse(), ['item_id' => '1']), 'Item is not a template.');
+		$this->assertError($this->controller->load($this->request('GET'), $this->newResponse(), ['item_id' => '3']), 'Item is not a template.');
 	}
 }

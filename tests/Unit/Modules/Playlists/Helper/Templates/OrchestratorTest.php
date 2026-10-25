@@ -107,4 +107,24 @@ class OrchestratorTest extends TestCase
 		$this->expectException(ModuleException::class);
 		$this->orchestrator->checkRights(9);
 	}
+
+	/**
+	 * @throws UserException
+	 */
+	#[Group('units')]
+	public function testOnlyAnItemOfTheTypeTemplateIsATemplateItem(): void
+	{
+		$this->itemsServiceMock->expects($this->exactly(3))->method('fetchItemById')->willReturnMap([
+			[1, ['item_id' => 1, 'item_type' => 'template']],
+			[2, ['item_id' => 2, 'item_type' => 'mediapool']],
+			[3, ['item_id' => 3, 'item_type' => 'playlist']],
+		]);
+
+		static::assertFalse($this->orchestrator->isTemplateItem());
+		foreach ([1 => true, 2 => false, 3 => false] as $itemId => $isTemplate)
+		{
+			$this->orchestrator->checkRights($itemId);
+			static::assertSame($isTemplate, $this->orchestrator->isTemplateItem(), 'item ' . $itemId);
+		}
+	}
 }

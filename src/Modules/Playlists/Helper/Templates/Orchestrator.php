@@ -30,6 +30,7 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Media\MediaUrlSigner;
+use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Services\ItemsService;
 use App\Modules\Templates\Helper\Composer\BaseTemplateOrchestrator;
 use App\Modules\Templates\Helper\Composer\ExportImage;
@@ -68,6 +69,14 @@ class Orchestrator extends BaseTemplateOrchestrator
 		}
 	}
 
+	/**
+	 * Only an item of the type template has a composer. Call after checkRights().
+	 */
+	public function isTemplateItem(): bool
+	{
+		return ($this->item['item_type'] ?? '') === ItemType::TEMPLATE->value;
+	}
+
     /**
      * @return array{main_layout: array<string,mixed>, this_layout: array{template: string, data: array<string,mixed>}}
      * @throws CoreException
@@ -95,7 +104,16 @@ class Orchestrator extends BaseTemplateOrchestrator
 		if ($content === '')
 			return 0;
 
-		$this->exportImage->decode($imageBase64);
+		// an image which is no valid data url is a failed save, not an error of the server
+		try
+		{
+			$this->exportImage->decode($imageBase64);
+		}
+		catch (FrameworkException|ModuleException)
+		{
+			return 0;
+		}
+
 		if ($this->exportImage->exportPlaylistItem($itemId) === false)
 			return 0;
 

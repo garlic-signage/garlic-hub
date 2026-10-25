@@ -51,6 +51,9 @@ class ShowTemplateComposer
 		if (!$this->orchestrator->checkRights($itemId))
 			return $this->redirectWithError($response, 'No rights');
 
+		if (!$this->orchestrator->isTemplateItem())
+			return $this->redirectWithError($response, 'Item is not a template.');
+
 		return new PageResponse($this->orchestrator->build());
 	}
 
@@ -59,8 +62,9 @@ class ShowTemplateComposer
 		/** @var array{item_id?: int, content?: string, image?: string, csrf_token?: string} $requestData */
 		$requestData = $request->getParsedBody();
 
-		$itemId = (int) ($requestData['item_id'] ?? 0);
-		$image      = $requestData['image'] ?? '';
+		$itemId  = (int) ($requestData['item_id'] ?? 0);
+		$image   = is_string($requestData['image'] ?? null) ? $requestData['image'] : '';
+		$content = is_string($requestData['content'] ?? null) ? $requestData['content'] : '';
 
 		if (!$this->csrfToken->validateToken($requestData['csrf_token'] ?? ''))
 			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.');
@@ -71,7 +75,10 @@ class ShowTemplateComposer
 		if (!$this->orchestrator->checkRights($itemId))
 			return $this->responseHandler->jsonError($response, 'No rights');
 
-		if ($this->orchestrator->save($itemId, $requestData['content'] ?? '', $image) === 0)
+		if (!$this->orchestrator->isTemplateItem())
+			return $this->responseHandler->jsonError($response, 'Item is not a template.');
+
+		if ($this->orchestrator->save($itemId, $content, $image) === 0)
 			return $this->responseHandler->jsonError($response, 'Save failed');
 
 		return $this->responseHandler->jsonSuccess($response);
@@ -88,6 +95,9 @@ class ShowTemplateComposer
 
 		if (!$this->orchestrator->checkRights($itemId))
 			return $this->responseHandler->jsonError($response, 'No rights');
+
+		if (!$this->orchestrator->isTemplateItem())
+			return $this->responseHandler->jsonError($response, 'Item is not a template.');
 
 		return $this->responseHandler->jsonSuccess($response, ['content' => $this->orchestrator->getContent()]);
 	}
