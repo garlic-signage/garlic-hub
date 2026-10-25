@@ -28,7 +28,6 @@ use App\Framework\Validation\Sanitizer;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-use TypeError;
 
 class ConcreteBaseParameters extends BaseParameters
 {
@@ -401,38 +400,159 @@ class BaseParametersTest extends TestCase
 	}
 
 	/**
-	 * The input of the request is not looked at before it is parsed: a parameter in the wrong shape (an array
-	 * where a text is expected, ?name[]=x) ends in a TypeError of the Sanitizer and so in an error page.
-	 * Known gap, see the report: the shape should be corrected before parsing, then these expect the default.
+	 * A request can send any shape: an array where a text is expected (?name[]=x), a text where an array is
+	 * expected (?ids=5) or nothing at all (a JSON null). Such an input is no input, the default is taken.
 	 *
 	 * @throws ModuleException
 	 */
 	#[Group('units')]
 	#[DataProvider('wrongShapeProvider')]
-	public function testKnownGapAnInputInTheWrongShapeThrowsATypeError(ScalarType $type, mixed $input): void
+	public function testAnInputInTheWrongShapeGetsTheDefault(ScalarType $type, mixed $input, mixed $default, mixed $expected): void
 	{
-		$this->parameters->addParameter('field', $type, '')->setUserInputs(['field' => $input]);
-
-		$this->expectException(TypeError::class);
+		$this->parameters->addParameter('field', $type, $default)->setUserInputs(['field' => $input]);
 
 		$this->parameters->parseInputFilterByName('field');
+
+		static::assertSame($expected, $this->parameters->getValueOfParameter('field'));
 	}
 
 	/**
-	 * @return array<string, array{ScalarType, mixed}>
+	 * @return array<string, array{ScalarType, mixed, mixed, mixed}> type, input, default of the parameter, value
 	 */
 	public static function wrongShapeProvider(): array
 	{
 		return [
-			'array for a string'       => [ScalarType::STRING, ['x']],
-			'array for an int'         => [ScalarType::INT, ['x']],
-			'array for a float'        => [ScalarType::FLOAT, ['x']],
-			'array for a boolean'      => [ScalarType::BOOLEAN, ['x']],
-			'array for html'           => [ScalarType::HTML_STRING, ['x']],
-			'array for json'           => [ScalarType::JSON, ['x']],
-			'text for a number array'  => [ScalarType::NUMERIC_ARRAY, '5'],
-			'text for a string array'  => [ScalarType::STRING_ARRAY, 'x'],
-			'null for a string'        => [ScalarType::STRING, null],
+			'array for a string'         => [ScalarType::STRING, ['x'], ' guest ', 'guest'],
+			'array for an int'           => [ScalarType::INT, ['x'], 7, 7],
+			'array for a float'          => [ScalarType::FLOAT, ['x'], 1.5, 1.5],
+			'array for a boolean'        => [ScalarType::BOOLEAN, ['x'], 'true', true],
+			'array for html'             => [ScalarType::HTML_STRING, ['x'], 'text', 'text'],
+			'array for a mediapool file' => [ScalarType::MEDIAPOOL_FILE, ['x'], 'abc', 'hidden_abc'],
+			'array for raw'              => [ScalarType::RAW, ['x'], ' raw ', ' raw '],
+			'null for a string'          => [ScalarType::STRING, null, 'guest', 'guest'],
+			'null for an int'            => [ScalarType::INT, null, '3', 3],
+			'null for a boolean'         => [ScalarType::BOOLEAN, null, '', false],
+			'null for raw'               => [ScalarType::RAW, null, 'raw', 'raw'],
+			'null without a default'     => [ScalarType::STRING, null, null, ''],
+			'text for a number array'    => [ScalarType::NUMERIC_ARRAY, '5', [], []],
+			'text for a string array'    => [ScalarType::STRING_ARRAY, 'x', [], []],
+			'null for a string array'    => [ScalarType::STRING_ARRAY, null, ['a'], ['a']],
 		];
+	}
+
+	/**
+	 * A form can send an array for JSON data, it is read as the JSON of this array.
+	 *
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testAnArrayForJsonIsTheJsonOfTheArray(): void
+	{
+		$this->parameters->addParameter('data', ScalarType::JSON, '')->addParameter('html', ScalarType::JSON_HTML, '')
+			->setUserInputs(['data' => ['a' => 1, 'b' => [2]], 'html' => ['k' => ' v ']]);
+
+		$this->parameters->parseInputAllParameters();
+
+		static::assertSame(['a' => 1, 'b' => [2]], $this->parameters->getValueOfParameter('data'));
+		static::assertSame(['k' => 'v'], $this->parameters->getValueOfParameter('html'));
+	}
+
+	/**
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testNullForJsonGetsTheDefault(): void
+	{
+		$this->parameters->addParameter('data', ScalarType::JSON, '{"a":1}')->setUserInputs(['data' => null]);
+
+		$this->parameters->parseInputFilterByName('data');
+
+		static::assertSame(['a' => 1], $this->parameters->getValueOfParameter('data'));
+	}
+
+	/**
+	 * A request in JSON can send numbers and booleans where the module expects a text, and the other way round.
+	 *
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	#[DataProvider('otherScalarProvider')]
+	public function testAScalarOfAnotherTypeIsConvertedToTheTypeOfTheParameter(ScalarType $type, mixed $input, mixed $expected): void
+	{
+		$this->parameters->addParameter('field', $type, '')->setUserInputs(['field' => $input]);
+
+		$this->parameters->parseInputFilterByName('field');
+
+		static::assertSame($expected, $this->parameters->getValueOfParameter('field'));
+	}
+
+	/**
+	 * @return array<string, array{ScalarType, mixed, mixed}>
+	 */
+	public static function otherScalarProvider(): array
+	{
+		return [
+			'int for a string'      => [ScalarType::STRING, 5, '5'],
+			'bool for a string'     => [ScalarType::STRING, true, '1'],
+			'float for a string'    => [ScalarType::STRING, 1.5, '1.5'],
+			'int for html'          => [ScalarType::HTML_STRING, 5, '5'],
+			'int for a file'        => [ScalarType::MEDIAPOOL_FILE, 5, 'hidden_5'],
+			'int for raw'           => [ScalarType::RAW, 5, '5'],
+			'float for an int'      => [ScalarType::INT, 1.9, 1],
+			'bool for an int'       => [ScalarType::INT, true, 1],
+			'int for a float'       => [ScalarType::FLOAT, 2, 2.0],
+			'bool for a float'      => [ScalarType::FLOAT, true, 1.0],
+			'int for a boolean'     => [ScalarType::BOOLEAN, 1, true],
+			'zero for a boolean'    => [ScalarType::BOOLEAN, 0, false],
+			'int for a json'        => [ScalarType::JSON, 5, []],
+			'int in a string array' => [ScalarType::STRING_ARRAY, [1, 2], ['1', '2']],
+		];
+	}
+
+	/**
+	 * The parameter classes of the modules set their own parameters, a bare one has none and does not fail.
+	 *
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testAParameterClassWithoutAnythingSetHasNoParameters(): void
+	{
+		$bare = new class('testModule', new Sanitizer()) extends BaseParameters {};
+
+		static::assertFalse($bare->hasParameter('anything'));
+		static::assertSame([], $bare->getInputParametersArray());
+		static::assertSame([], $bare->getInputParametersKeys());
+		static::assertSame([], $bare->getInputValuesArray());
+		static::assertSame($bare, $bare->parseInputAllParameters());
+	}
+
+	/**
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testAParameterClassWithoutAnythingSetThrowsTheModuleExceptionForAnUnknownParameter(): void
+	{
+		$bare = new class('testModule', new Sanitizer()) extends BaseParameters {};
+
+		$this->expectException(ModuleException::class);
+		$this->expectExceptionMessage('A parameter with name: x is not found.');
+
+		$bare->parseInputFilterByName('x');
+	}
+
+	/**
+	 * Without setUserInputs() the request sent nothing: the defaults are taken.
+	 *
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testWithoutUserInputsTheDefaultsAreTaken(): void
+	{
+		$bare = new class('testModule', new Sanitizer()) extends BaseParameters {};
+		$bare->addParameter('name', ScalarType::STRING, ' guest ');
+
+		$bare->parseInputAllParameters();
+
+		static::assertSame('guest', $bare->getValueOfParameter('name'));
 	}
 }

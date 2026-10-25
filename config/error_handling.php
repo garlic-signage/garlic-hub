@@ -62,8 +62,12 @@ $myErrorHandler = function (
 {
 	$path = $request->getUri()->getPath();
 
-	if (str_starts_with($path, '/api') || str_starts_with($path, '/async'))
-		return $jsonErrorHandler($request, $exception, $displayErrorDetails);
+	// the JSON part is /api and /async with everything below, but not a path which only starts with these letters
+	foreach (['/api', '/async'] as $jsonRoute)
+	{
+		if ($path === $jsonRoute || str_starts_with($path, $jsonRoute . '/'))
+			return $jsonErrorHandler($request, $exception, $displayErrorDetails);
+	}
 
 	// for normal Web UI operations
 	return $defaultErrorHandler->__invoke($request, $exception, $displayErrorDetails, $logErrors, $logErrorDetails);

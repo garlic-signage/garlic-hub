@@ -51,9 +51,9 @@ abstract class BaseParameters
 	protected readonly string $moduleName;
 	protected readonly Sanitizer $sanitizer;
 	/** @var array<string, array{scalar_type: ScalarType, default_value: mixed, parsed: bool, value?:mixed}> */
-	protected array $currentParameters;
+	protected array $currentParameters = [];
 	/** @var array<string,mixed>  */
-	protected array $userInputs;
+	protected array $userInputs = [];
 
 	public function __construct(string $moduleName, Sanitizer $sanitizer)
 	{
@@ -244,7 +244,8 @@ abstract class BaseParameters
 		else
 			$parameterValue = $this->currentParameters[$parameterName]['default_value'];
 
-		$parameter = $this->beforeParseHook($parameterName, $this->currentParameters[$parameterName]);
+		$parameter      = $this->beforeParseHook($parameterName, $this->currentParameters[$parameterName]);
+		$parameterValue = $this->normalizeShape($parameter['scalar_type'], $parameterValue, $parameter['default_value']);
 
 		$value = match ($parameter['scalar_type'])
 		{
@@ -266,6 +267,53 @@ abstract class BaseParameters
 
 		$this->currentParameters[$parameterName] = $this->afterParseHook($parameterName, $parameter);
 		return $this;
+	}
+
+	/**
+	 * A request can send any shape: an array where a text is expected (?name[]=x), a text where an array is
+	 * expected (?ids=5) or null (JSON). The Sanitizer takes only the shape of its type, so the input is brought
+	 * into it first. An input that has no meaning for the type is no input: the default of the parameter is taken.
+	 */
+	private function normalizeShape(ScalarType $type, mixed $value, mixed $default): mixed
+	{
+		return match ($type)
+		{
+			ScalarType::NUMERIC_ARRAY,
+			ScalarType::STRING_ARRAY => is_array($value) ? $value : (is_array($default) ? $default : []),
+
+			ScalarType::JSON,
+			ScalarType::JSON_HTML    => $this->shapeOfJson($value, $default),
+
+			default                  => $this->shapeOfScalar($type, $value, $default),
+		};
+	}
+
+	/**
+	 * JSON comes as text. A form can send an array, it is read as the JSON of this array.
+	 */
+	private function shapeOfJson(mixed $value, mixed $default): string
+	{
+		if (is_array($value))
+			return json_encode($value) ?: '';
+
+		if (is_scalar($value))
+			return (string) $value;
+
+		return is_scalar($default) ? (string) $default : '';
+	}
+
+	private function shapeOfScalar(ScalarType $type, mixed $value, mixed $default): string|int|float|bool
+	{
+		if (!is_scalar($value))
+			$value = is_scalar($default) ? $default : '';
+
+		return match ($type)
+		{
+			ScalarType::INT     => is_int($value) || is_string($value) ? $value : (string) $value,
+			ScalarType::FLOAT   => is_float($value) || is_int($value) || is_string($value) ? $value : (string) $value,
+			ScalarType::BOOLEAN => is_bool($value) || is_string($value) ? $value : (string) $value,
+			default             => (string) $value,
+		};
 	}
 
 	/**

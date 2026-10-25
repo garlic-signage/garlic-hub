@@ -186,21 +186,52 @@ class TranslatorManagerTest extends TestCase
 	}
 
 	/**
-	 * A missing language file is a CoreException, it ends the search instead of trying the next module.
+	 * A missing language file is a CoreException of the module, the search goes on with the next module.
 	 *
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testACoreExceptionEndsTheSearch(): void
+	public function testAModuleWithoutALanguageFileIsSkipped(): void
+	{
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(
+			static fn(string $key, string $module): string => $module === 'playlists' ? throw new CoreException('Translation file not found') : 'Name'
+		);
+		$manager = new TranslatorManager($translator);
+		$manager->addLanguageModule('playlists')->addLanguageModule('main');
+
+		static::assertSame('Name', $manager->translate($this->field('name')));
+	}
+
+	/**
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testWhenEveryModuleFailsTheResultIsEmpty(): void
 	{
 		$translator = $this->createStub(Translator::class);
 		$translator->method('translate')->willThrowException(new CoreException('Translation file not found'));
 		$manager = new TranslatorManager($translator);
 		$manager->addLanguageModule('playlists')->addLanguageModule('main');
 
+		static::assertSame('', $manager->translate($this->field('name')));
+	}
+
+	/**
+	 * A specific module is asked on purpose: its missing file is not hidden.
+	 *
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testAMissingFileOfASpecificModuleIsNotHidden(): void
+	{
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willThrowException(new CoreException('Translation file not found'));
+		$manager = new TranslatorManager($translator);
+
 		$this->expectException(CoreException::class);
 
-		$manager->translate($this->field('name'));
+		$manager->translate($this->field('name')->useSpecificLangModule('users'));
 	}
 
 	#[Group('units')]

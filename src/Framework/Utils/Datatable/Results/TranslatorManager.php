@@ -73,7 +73,10 @@ class TranslatorManager
 						return $translated;
 					}
 				}
-				catch(FrameworkException $e) { }
+				catch (FrameworkException | CoreException)
+				{
+					// a module without the text, with a locale that is not configured or without a language file: the next one
+				}
 			}
 		}
 

@@ -109,4 +109,56 @@ class ErrorResponsesTest extends BlackboxTestCase
 		static::assertSame(404, $response->getStatusCode());
 		static::assertNull(json_decode((string) $response->getBody(), true));
 	}
+
+	/**
+	 * @return array<string,array{string}>
+	 */
+	public static function jsonPaths(): array
+	{
+		return ['async itself' => ['/async'], 'api itself' => ['/api'], 'below async' => ['/async/x/y']];
+	}
+
+	#[DataProvider('jsonPaths')]
+	public function testThePathsOfTheJsonPartAnswerWithJson(string $path): void
+	{
+		$response = $this->browser()->get($path);
+
+		static::assertSame(404, $response->getStatusCode());
+		static::assertSame(['success' => false, 'error_message' => 'Route not found'], $this->json($response));
+	}
+
+	/**
+	 * @return array<string,array{string}>
+	 */
+	public static function webPaths(): array
+	{
+		return ['starts like async' => ['/asyncfoo'], 'starts like api' => ['/apiary'], 'below such a path' => ['/asyncfoo/x'], 'async in the middle' => ['/x/api/y']];
+	}
+
+	/**
+	 * A path which only begins with the letters of /async or /api belongs to the web UI.
+	 */
+	#[DataProvider('webPaths')]
+	public function testAPathWhichOnlyStartsLikeTheJsonPartIsNoJson(string $path): void
+	{
+		$response = $this->browser()->get($path);
+
+		static::assertSame(404, $response->getStatusCode());
+		static::assertNull(json_decode((string) $response->getBody(), true), 'The web UI must not answer with the JSON of the frontend.');
+	}
+
+	/**
+	 * A request may send an array or nothing where the page expects a text or a number (?name[]=x).
+	 * That is a request which does not make sense, but no reason for an error page.
+	 */
+	public function testAManipulatedQueryOfADatatableIsNoServerError(): void
+	{
+		$browser = $this->browser();
+		$browser->login('anna', 'Test1234!');
+
+		$response = $browser->get('/player?player_name[]=x&elements_page[]=2&elements_per_page[]=5&sort_column[]=a&sort_order[]=desc&model[]=1');
+
+		static::assertSame(200, $response->getStatusCode());
+		static::assertStringContainsString('<form', (string) $response->getBody());
+	}
 }
