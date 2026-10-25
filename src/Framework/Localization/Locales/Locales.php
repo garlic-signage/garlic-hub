@@ -54,6 +54,9 @@ class Locales
 		$this->localeExtractor  = $localeExtractor;
 		$this->availableLocales = $this->loadAvailableLocales();
 		$this->defaultLocale    = $this->config->getConfigValue('default_locale', self::CONFIG_MODULE_NAME, 'general');
+		if (!in_array($this->defaultLocale, $this->availableLocales, true))
+			throw new FrameworkException("The default locale '$this->defaultLocale' is not one of the configured locales: " . implode(', ', $this->availableLocales) . '.');
+
 		$this->currentLocale    = $this->defaultLocale;
 	}
 
@@ -101,6 +104,15 @@ class Locales
 	{
 		return $this->getConfigValue($this->currentLocale, 'date_format');
 	}
+
+    /**
+     * @throws CoreException
+     * @throws FrameworkException
+     */
+    public function getTextDirection(): string
+    {
+        return $this->getConfigValue($this->currentLocale, 'text_direction');
+    }
 
 	/**
 	 * @throws CoreException
