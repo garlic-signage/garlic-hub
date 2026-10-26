@@ -72,7 +72,6 @@ class AclValidatorTest extends TestCase
 	 */
 	private function user(int $UID): UserEntity
 	{
-		// @phpstan-ignore argument.type, argument.type
 		return new UserEntity(['UID' => $UID], [], [], [], $this->acl, $this->vip);
 	}
 

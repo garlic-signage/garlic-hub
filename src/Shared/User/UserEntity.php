@@ -37,9 +37,9 @@ class UserEntity implements UserEntityInterface
 	private array $stats;
 	/** @var array<string,mixed>  */
 	private array $security;
-	/** @var array<string,mixed>  */
+	/** @var list<array<string,mixed>>  */
 	private array $acl;
-	/** @var array<string,mixed>  */
+	/** @var list<array<string,mixed>>  */
 	private array $vip;
 
 	/**
@@ -47,8 +47,8 @@ class UserEntity implements UserEntityInterface
 	 * @param array<string,mixed> $contact
 	 * @param array<string,mixed> $stats
 	 * @param array<string,mixed> $security
-	 * @param array<string,mixed> $acl
-	 * @param array<string,mixed> $vip
+	 * @param list<array<string,mixed>> $acl
+	 * @param list<array<string,mixed>> $vip
 	 */
 	public function __construct(array $main, array $contact, array $stats, array $security, array $acl, array $vip)
 	{
@@ -93,7 +93,7 @@ class UserEntity implements UserEntityInterface
 	}
 
 	/**
-	 * @return array<string,mixed>
+	 * @return list<array<string,mixed>>
 	 */
 	public function getAcl(): array
 	{
@@ -101,7 +101,7 @@ class UserEntity implements UserEntityInterface
 	}
 
 	/**
-	 * @return array<string,mixed>
+	 * @return list<array<string,mixed>>
 	 */
 	public function getVip(): array
 	{

@@ -35,13 +35,13 @@ class UserEntityTest extends TestCase
 		$this->userEntity = new UserEntity(['id' => '123', 'name' => 'John Doe'], [
 				'email' => 'john@example.com',
 				'phone' => '123456789'
-			], ['logins' => 42, 'last_login' => '2024-12-19'], ['password' => 'hashed_password'], [
+			], ['logins' => 42, 'last_login' => '2024-12-19'], ['password' => 'hashed_password'], [[
 				'role' => 'admin',
 				'permissions' => [
 					'read',
 					'write'
 				]
-			], ['status' => 'VIP']);
+			]], [['status' => 'VIP']]);
 	}
 
 	#[Group('units')]
@@ -71,13 +71,13 @@ class UserEntityTest extends TestCase
 	#[Group('units')]
 	public function testGetAcl(): void
 	{
-		static::assertSame(['role' => 'admin', 'permissions' => ['read', 'write']], $this->userEntity->getAcl());
+		static::assertSame([['role' => 'admin', 'permissions' => ['read', 'write']]], $this->userEntity->getAcl());
 	}
 
 	#[Group('units')]
 	public function testGetVip(): void
 	{
-		static::assertSame(['status' => 'VIP'], $this->userEntity->getVip());
+		static::assertSame([['status' => 'VIP']], $this->userEntity->getVip());
 	}
 
 	#[Group('units')]

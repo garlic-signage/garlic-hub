@@ -2,7 +2,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2024 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -21,169 +21,172 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Shared\Acl;
 
+use App\Framework\Config\Config;
+use App\Framework\Exceptions\FrameworkException;
 use App\Shared\Acl\AbstractAclValidator;
 use App\Shared\Acl\AclHelper;
-use App\Framework\Config\Config;
-use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
+use App\Shared\User\UserEntity;
+use App\Shared\User\UsersService;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Exception;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 class ConcreteAclValidator extends AbstractAclValidator
 {
-
 }
 
+/**
+ * What a user may do in a module, from the rights of the user (bits per module) and, in the editions with companies,
+ * from the company of the unit. The rights are the ones of the module 'testModule': 1 viewer, 2 editor, 4 sub admin, 8 module admin.
+ */
 class AbstractAclValidatorTest extends TestCase
 {
-	private ConcreteAclValidator $aclValidator;
-	private AclHelper&MockObject $aclHelperMock;
+	private const int VIEWER = 1;
+	private const int EDITOR = 2;
+	private const int SUBADMIN = 4;
+	private const int MODULEADMIN = 8;
 
-	/**
-	 * @throws Exception
-	 */
-	protected function setUp(): void
+	private function validator(int $acl, string $edition = Config::PLATFORM_EDITION_EDGE, string $module = 'testModule'): ConcreteAclValidator
 	{
-		parent::setUp();
-		$this->aclHelperMock = $this->createMock(AclHelper::class);
-		$this->aclValidator = new ConcreteAclValidator('testModule', $this->aclHelperMock);
+		$config = $this->createStub(Config::class);
+		$config->method('getEdition')->willReturn($edition);
+		$config->method('getConfigValue')->willReturnMap([
+			['viewer', 'testModule', 'GlobalACLs', (string) self::VIEWER],
+			['editor', 'testModule', 'GlobalACLs', (string) self::EDITOR],
+			['subadmin', 'testModule', 'GlobalACLs', (string) self::SUBADMIN],
+			['moduleadmin', 'testModule', 'GlobalACLs', (string) self::MODULEADMIN],
+		]);
+		// the user has the bits for the module of the validator, the company 5 as sub admin and nothing in other modules
+		$user = new UserEntity([], [], [], [], [['module' => $module, 'acl' => $acl], ['module' => 'other', 'acl' => 15]], [['testModule_subadmin' => 5]]);
+		$users = $this->createStub(UsersService::class);
+		$users->method('getUserById')->willReturn($user);
+
+		return new ConcreteAclValidator('testModule', new AclHelper($users, $config));
 	}
 
 	/**
-	 * @throws Exception
+	 * @return array<string,array{int,list<string>}> the bits of the user and the roles he has
 	 */
-	#[Group('units')]
-	public function testGetConfig(): void
+	public static function roles(): array
 	{
-		$configMock = $this->createStub(Config::class);
-		$this->aclHelperMock->expects($this->once())->method('getConfig')->willReturn($configMock);
-		static::assertSame($configMock, $this->aclValidator->getConfig());
+		return [
+			'nothing'            => [0, []],
+			'viewer'             => [self::VIEWER, ['viewer']],
+			'editor'             => [self::EDITOR, ['editor']],
+			'sub admin'          => [self::SUBADMIN, ['subadmin', 'simple']],
+			'module admin'       => [self::MODULEADMIN, ['moduleadmin', 'simple']],
+			'editor and viewer'  => [self::EDITOR | self::VIEWER, ['editor', 'viewer']],
+			'all'                => [15, ['viewer', 'editor', 'subadmin', 'moduleadmin', 'simple']],
+			'a bit of nobody'    => [16, []],
+		];
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
+	 * @param list<string> $roles
 	 */
 	#[Group('units')]
-	public function testIsSimpleAdminReturnsTrueWhenIsModuleAdmin(): void
+	#[DataProvider('roles')]
+	public function testTheRolesFollowTheBitsOfTheModule(int $acl, array $roles): void
 	{
-		$this->aclHelperMock->expects($this->once())->method('isModuleAdmin')->with(1, 'testModule')->willReturn(true);
-		$this->aclHelperMock->expects($this->never())->method('isSubAdmin');
+		$validator = $this->validator($acl);
 
-		static::assertTrue($this->aclValidator->isSimpleAdmin(1));
+		static::assertSame(in_array('moduleadmin', $roles, true), $validator->isModuleAdmin(1));
+		static::assertSame(in_array('subadmin', $roles, true), $validator->isSubAdmin(1));
+		static::assertSame(in_array('editor', $roles, true), $validator->isEditor(1));
+		static::assertSame(in_array('viewer', $roles, true), $validator->isViewer(1));
+		static::assertSame(in_array('simple', $roles, true), $validator->isSimpleAdmin(1));
+	}
+
+	#[Group('units')]
+	public function testTheRightsOfAnotherModuleDoNotCount(): void
+	{
+		$validator = $this->validator(15, module: 'other');
+
+		static::assertFalse($validator->isModuleAdmin(1));
+		static::assertFalse($validator->isSimpleAdmin(1));
+	}
+
+	#[Group('units')]
+	public function testTheNameOfTheModuleAndTheConfigAreThoseOfTheValidator(): void
+	{
+		$validator = $this->validator(0);
+
+		static::assertSame('testModule', $validator->getModuleName());
+		static::assertSame(Config::PLATFORM_EDITION_EDGE, $validator->getConfig()->getEdition());
+	}
+
+	#[Group('units')]
+	public function testAModuleAdminMayAdministrateEveryUnitInEveryEdition(): void
+	{
+		foreach ([Config::PLATFORM_EDITION_EDGE, Config::PLATFORM_EDITION_CORE, Config::PLATFORM_EDITION_ENTERPRISE] as $edition)
+			static::assertTrue($this->validator(self::MODULEADMIN, $edition)->isAdmin(1, ['UID' => 9]), $edition);
+	}
+
+	#[Group('units')]
+	public function testInTheEdgeEditionOnlyTheModuleAdminAdministrates(): void
+	{
+		$validator = $this->validator(self::SUBADMIN);
+
+		static::assertFalse($validator->isAdmin(1, ['UID' => 9, 'company_id' => 5]));
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
+	 * @return array<string,array{string}>
 	 */
-	#[Group('units')]
-	public function testIsSimpleAdminReturnsTrueWhenIsSubAdmin(): void
+	public static function editionsWithCompanies(): array
 	{
-		$this->aclHelperMock->expects($this->once())->method('isModuleAdmin')->with(1, 'testModule')->willReturn(false);
-		$this->aclHelperMock->expects($this->once())->method('isSubAdmin')->with(1, 'testModule')->willReturn(true);
+		return ['core' => [Config::PLATFORM_EDITION_CORE], 'enterprise' => [Config::PLATFORM_EDITION_ENTERPRISE]];
+	}
 
-		static::assertTrue($this->aclValidator->isSimpleAdmin(1));
+	#[Group('units')]
+	#[DataProvider('editionsWithCompanies')]
+	public function testASubAdminAdministratesTheUnitsOfHisCompany(string $edition): void
+	{
+		$validator = $this->validator(self::SUBADMIN, $edition);
+
+		static::assertTrue($validator->isAdmin(1, ['UID' => 9, 'company_id' => 5]));
+		static::assertTrue($validator->isSubAdminWithAccessOnCompany(1, 5));
+	}
+
+	#[Group('units')]
+	#[DataProvider('editionsWithCompanies')]
+	public function testASubAdminDoesNotAdministrateTheUnitsOfAnotherCompany(string $edition): void
+	{
+		$validator = $this->validator(self::SUBADMIN, $edition);
+
+		static::assertFalse($validator->isAdmin(1, ['UID' => 9, 'company_id' => 6]));
+		static::assertFalse($validator->isSubAdminWithAccessOnCompany(1, 6));
+	}
+
+	#[Group('units')]
+	#[DataProvider('editionsWithCompanies')]
+	public function testWhoIsNoSubAdminAdministratesNoCompany(string $edition): void
+	{
+		$validator = $this->validator(self::EDITOR | self::VIEWER, $edition);
+
+		static::assertFalse($validator->isAdmin(1, ['UID' => 9, 'company_id' => 5]));
+		static::assertFalse($validator->isSubAdminWithAccessOnCompany(1, 5));
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
+	 * @return array<string,array{array<string,int>}> the unit data without company or user
 	 */
-	#[Group('units')]
-	public function testIsSimpleAdminReturnsFalse(): void
+	public static function incompleteUnits(): array
 	{
-		$this->aclHelperMock->expects($this->once())->method('isModuleAdmin')->with(1, 'testModule')->willReturn(false);
-		$this->aclHelperMock->expects($this->once())->method('isSubAdmin')->with(1, 'testModule')->willReturn(false);
-
-		static::assertFalse($this->aclValidator->isSimpleAdmin(1));
+		return ['no company' => [['UID' => 9]], 'no user' => [['company_id' => 5]], 'nothing' => [[]]];
 	}
 
 	/**
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws \Doctrine\DBAL\Exception
-	 * @throws FrameworkException
+	 * @param array<string,int> $unit
 	 */
 	#[Group('units')]
-	public function testIsAdminSubAdminAccess(): void
+	#[DataProvider('incompleteUnits')]
+	public function testAUnitWithoutCompanyOrUserCanNotBeJudgedInTheEditionsWithCompanies(array $unit): void
 	{
-		$UID = 1;
-		$unit = ['UID' => 1, 'company_id' => 4];
-
-		$configMock = $this->createMock(Config::class);
-		$this->aclHelperMock->expects($this->once())->method('getConfig')->willReturn($configMock);
-		$configMock->expects($this->once())->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
-
-		$this->aclHelperMock->method('isModuleAdmin')
-			->with($UID)
-			->willReturn(false);
-
-		$this->aclHelperMock->method('isSubAdmin')
-			->with($UID)
-			->willReturn(true);
-
-		$this->aclHelperMock->method('hasSubAdminAccessOnCompany')
-			->with($UID, 4)
-			->willReturn(true);
-
-
-		$result = $this->aclValidator->isAdmin($UID, $unit);
-
-		static::assertTrue($result);
-	}
-
-	/**
-	 * @throws Exception
-	 * @throws CoreException
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testIsAdminSubAdminAccessFailsOfNotExistingParams(): void
-	{
-		$UID = 1;
-		$unit = ['UID' => 1];
-
-		$configMock = $this->createMock(Config::class);
-		$this->aclHelperMock->expects($this->once())->method('getConfig')->willReturn($configMock);
-		$configMock->expects($this->once())->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
-
-		$this->aclHelperMock->method('isModuleAdmin')
-			->with($UID)
-			->willReturn(false);
-
-		$this->aclHelperMock->expects($this->never())->method('isSubAdmin');
-
 		$this->expectException(FrameworkException::class);
 		$this->expectExceptionMessage('Missing company id or UID in unit data.');
 
-		$result = $this->aclValidator->isAdmin($UID, $unit);
-
-		static::assertTrue($result);
+		/** @phpstan-ignore argument.type */
+		$this->validator(self::SUBADMIN, Config::PLATFORM_EDITION_CORE)->isAdmin(1, $unit);
 	}
-
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 * @throws \Doctrine\DBAL\Exception
-	 */
-	#[Group('units')]
-	public function testIsAdminFails(): void
-	{
-		$UID = 1;
-		$unit = ['UID' => 2, 'company_id' => 4];
-		$configStub = $this->createStub(Config::class);
-		$configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
-		$this->aclHelperMock->expects($this->once())->method('isModuleAdmin')->with($UID, 'testModule')->willReturn(false);
-		$this->aclHelperMock->expects($this->once())->method('getConfig')->willReturn($configStub);
-		$this->aclHelperMock->expects($this->once())->method('isSubAdmin')->with($UID, 'testModule')->willReturn(false);
-		$this->aclHelperMock->expects($this->never())->method('hasSubAdminAccessOnCompany');
-		$result = $this->aclValidator->isAdmin($UID, $unit);
-
-		static::assertFalse($result);
-	}
-
 }
