@@ -31,6 +31,7 @@ use App\Shared\Layout\LanguageSelectBuilder;
 use App\Shared\Layout\LayoutDataProvider;
 use App\Shared\Layout\MainMenuBuilder;
 use App\Shared\Layout\UserMenuBuilder;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Slim\Flash\Messages;
 use Slim\Psr7\Factory\ServerRequestFactory;
@@ -87,22 +88,34 @@ class LayoutDataProviderTest extends ContainerTestCase
 		static::assertSame(['User Management', 'Template overview'], array_column($access, 'LANG_USER_ACCESS'));
 	}
 
-	public function testASubAdminOfTheUsersGetsTheLinksToo(): void
+	/**
+	 * @return array<string,array{list<array{string,int}>,list<string>}> the rights of the user (module and bits) and the links
+	 */
+	public static function rights(): array
 	{
-		$this->connection->executeStatement("INSERT INTO user_acl (UID, acl, module) VALUES (2, 1, 'users')");
-		$this->actingAs(2);
-
-		static::assertSame(['/users', '/templates'], array_column($this->layout()['user_menu'][0]['has_user_access'], 'LINK_USER_ACCESS'));
+		return [
+			'sub admin of the users'     => [[['users', 1]], ['/users']],
+			'module admin of the users'  => [[['users', 2]], ['/users']],
+			'sub admin of the templates' => [[['templates', 4]], ['/templates']],
+			'module admin of templates'  => [[['templates', 8]], ['/templates']],
+			'both'                       => [[['users', 1], ['templates', 8]], ['/users', '/templates']],
+			'editor of the templates'    => [[['templates', 2]], []],
+			'a player admin'             => [[['player', 8]], []],
+		];
 	}
 
-	public function testTheLinkToTheTemplatesIsOnlyForWhoMayUseThem(): void
+	/**
+	 * @param list<array{string,int}> $rights
+	 * @param list<string> $links
+	 */
+	#[DataProvider('rights')]
+	public function testTheLinksAreThoseOfTheModulesTheUserAdministrates(array $rights, array $links): void
 	{
-		static::markTestSkipped('Known bug: the link to the templates depends on the rights for the module users, not on those for the module templates. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
-		$this->connection->executeStatement("INSERT INTO user_acl (UID, acl, module) VALUES (2, 1, 'users')");
+		foreach ($rights as [$module, $bits])
+			$this->connection->executeStatement('INSERT INTO user_acl (UID, acl, module) VALUES (2, ?, ?)', [$bits, $module]);
 		$this->actingAs(2);
 
-		static::assertSame(['/users'], array_column($this->layout()['user_menu'][0]['has_user_access'], 'LINK_USER_ACCESS'));
+		static::assertSame($links, array_column($this->layout()['user_menu'][0]['has_user_access'], 'LINK_USER_ACCESS'));
 	}
 
 	public function testTheLanguageSwitchOffersTheLanguagesWhichAreTranslated(): void

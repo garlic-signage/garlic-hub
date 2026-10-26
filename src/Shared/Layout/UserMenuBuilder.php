@@ -33,8 +33,6 @@ use Doctrine\DBAL\Exception;
  */
 readonly class UserMenuBuilder
 {
-	private const string ADMIN_MODULE = 'users';
-
 	public function __construct(private Session $session, private Translator $translator, private AclHelper $aclHelper)
 	{
 	}
@@ -68,12 +66,24 @@ readonly class UserMenuBuilder
 	 */
 	private function buildAdminMenuPoints(int $UID): array
 	{
-		if (!$this->aclHelper->isModuleAdmin($UID, self::ADMIN_MODULE) && !$this->aclHelper->isSubAdmin($UID, self::ADMIN_MODULE))
-			return [];
+		$points = [];
+		if ($this->isAdminOf($UID, 'users'))
+			$points[] = ['LINK_USER_ACCESS' => '/users', 'LANG_USER_ACCESS' => $this->translator->translate('management', 'users')];
 
-		return [
-			['LINK_USER_ACCESS' => '/users', 'LANG_USER_ACCESS' => $this->translator->translate('management', 'users')],
-			['LINK_USER_ACCESS' => '/templates', 'LANG_USER_ACCESS' => $this->translator->translate('overview', 'templates')]
-		];
+		if ($this->isAdminOf($UID, 'templates'))
+			$points[] = ['LINK_USER_ACCESS' => '/templates', 'LANG_USER_ACCESS' => $this->translator->translate('overview', 'templates')];
+
+		return $points;
+	}
+
+	/**
+	 * The same rights which open the list of the module.
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 */
+	private function isAdminOf(int $UID, string $module): bool
+	{
+		return $this->aclHelper->isModuleAdmin($UID, $module) || $this->aclHelper->isSubAdmin($UID, $module);
 	}
 }
