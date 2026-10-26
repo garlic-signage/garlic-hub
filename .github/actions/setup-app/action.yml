@@ -39,6 +39,7 @@ runs:
       run: |
         cp .env.dist .env
         sed -i -e 's|^APP_ENV=.*|APP_ENV=test|' \
+               -e 's|^APP_DEBUG=.*|APP_DEBUG=false|' \
                -e 's|^DB_MASTER_DRIVER=.*|DB_MASTER_DRIVER="PDO_SQLITE"|' \
                -e 's|^DB_MASTER_PATH=.*|DB_MASTER_PATH="/tmp/garlic-hub-ci.db"|' .env
         bash dev-install.sh
