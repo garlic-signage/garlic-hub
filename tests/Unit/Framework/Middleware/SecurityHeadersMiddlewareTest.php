@@ -38,6 +38,8 @@ class SecurityHeadersMiddlewareTest extends TestCase
 		'X-Frame-Options'         => 'SAMEORIGIN',
 		'Referrer-Policy'         => 'same-origin',
 		'Content-Security-Policy' => "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'",
+		'Permissions-Policy'      => 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+		'Cross-Origin-Opener-Policy' => 'same-origin',
 	];
 
 	#[Group('units')]

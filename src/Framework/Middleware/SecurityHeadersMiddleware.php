@@ -32,6 +32,9 @@ use Psr\Http\Server\RequestHandlerInterface;
  * The CSP does not restrict script-src/style-src yet, because the templates still
  * contain inline scripts and styles. It already blocks framing by other sites, plugins,
  * a manipulated <base> tag and form posts to foreign targets.
+ *
+ * Cross-Origin-Embedder-Policy and Cross-Origin-Resource-Policy are left out on purpose: the players and
+ * pages of other sites load media and content from this server.
  */
 readonly class SecurityHeadersMiddleware implements MiddlewareInterface
 {
@@ -40,11 +43,16 @@ readonly class SecurityHeadersMiddleware implements MiddlewareInterface
 		'X-Frame-Options'         => 'SAMEORIGIN',
 		'Referrer-Policy'         => 'same-origin',
 		'Content-Security-Policy' => "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'",
+		'Permissions-Policy'      => 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+		'Cross-Origin-Opener-Policy' => 'same-origin',
 	];
 
 	public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
 	{
 		$response = $handler->handle($request);
+
+		// the version of PHP is nobody's business, whatever expose_php says
+		header_remove('X-Powered-By');
 
 		foreach (self::HEADERS as $name => $value)
 		{

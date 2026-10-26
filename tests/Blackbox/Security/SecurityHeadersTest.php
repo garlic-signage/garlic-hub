@@ -37,6 +37,8 @@ class SecurityHeadersTest extends BlackboxTestCase
 		'X-Content-Type-Options' => 'nosniff',
 		'X-Frame-Options'        => 'SAMEORIGIN',
 		'Referrer-Policy'        => 'same-origin',
+		'Cross-Origin-Opener-Policy' => 'same-origin',
+		'Permissions-Policy'     => 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
 	];
 
 	protected function setUp(): void
@@ -49,6 +51,8 @@ class SecurityHeadersTest extends BlackboxTestCase
 	{
 		foreach (self::HEADERS as $name => $value)
 			static::assertSame($value, $response->getHeaderLine($name), $what . ': header ' . $name);
+
+		static::assertFalse($response->hasHeader('X-Powered-By'), $what . ': the version of PHP is shown');
 
 		$csp = $response->getHeaderLine('Content-Security-Policy');
 		static::assertStringContainsString("frame-ancestors 'self'", $csp, $what);

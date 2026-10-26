@@ -3,6 +3,9 @@ post_max_size = 1050M
 memory_limit = 1500M
 max_execution_time = 1200 ; 20min
 
+; no PHP version in the headers
+expose_php = Off
+
 ; OPcache: without it every request recompiles its scripts - noticeable on a Raspberry Pi
 opcache.enable = 1
 opcache.memory_consumption = 64
