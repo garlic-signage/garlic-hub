@@ -91,10 +91,13 @@ final class MiniDeployment
 	}
 
 	/**
-	 * Empties the cache of the server (user cache, login lock) and the sessions: every test starts clean.
+	 * Empties the cache of the server (user cache, login lock) and the sessions and writes the original .env:
+	 * every test starts clean.
 	 */
 	public function resetState(): void
 	{
+		file_put_contents($this->directory . '/.env', $this->environment());
+
 		foreach (['tmp', 'var/sessions', 'var/cache'] as $folder)
 		{
 			$path = $this->directory . '/' . $folder;
@@ -103,6 +106,16 @@ final class MiniDeployment
 
 			mkdir($path, 0775, true);
 		}
+	}
+
+	/**
+	 * The .env is read with every request, a change counts at once. resetState() writes the original again.
+	 *
+	 * @param array<string,string|null> $changes new values, null removes the variable
+	 */
+	public function changeEnvironment(array $changes): void
+	{
+		file_put_contents($this->directory . '/.env', $this->environment($changes));
 	}
 
 	public function directory(): string
@@ -132,22 +145,34 @@ final class MiniDeployment
 		file_put_contents($this->directory . '/var/install.lock', 'blackbox');
 	}
 
-	private function environment(): string
+	/**
+	 * @param array<string,string|null> $changes
+	 */
+	private function environment(array $changes = []): string
 	{
-		return implode("\n", [
-			'APP_NAME="Garlic-Hub"',
-			'APP_ENV=test',
-			'APP_DEBUG=false',
-			'APP_PLATFORM_EDITION=edge',
-			'APP_SECRET=blackbox-secret-0123456789abcdef',
-			'DB_MASTER_PATH="' . $this->databaseFile() . '"',
-			'DB_MASTER_DRIVER="PDO_SQLITE"',
-			'DB_MASTER_USER=""',
-			'DB_MASTER_PASSWORD=""',
-			'DB_MASTER_HOST=""',
-			'DB_MASTER_PORT=""',
-			'DB_MASTER_NAME=""',
-		]) . "\n";
+		$values = array_merge([
+			'APP_NAME'             => '"Garlic-Hub"',
+			'APP_ENV'              => 'test',
+			'APP_DEBUG'            => 'false',
+			'APP_PLATFORM_EDITION' => 'edge',
+			'APP_SECRET'           => 'blackbox-secret-0123456789abcdef',
+			'DB_MASTER_PATH'       => '"' . $this->databaseFile() . '"',
+			'DB_MASTER_DRIVER'     => '"PDO_SQLITE"',
+			'DB_MASTER_USER'       => '""',
+			'DB_MASTER_PASSWORD'   => '""',
+			'DB_MASTER_HOST'       => '""',
+			'DB_MASTER_PORT'       => '""',
+			'DB_MASTER_NAME'       => '""',
+		], $changes);
+
+		$lines = [];
+		foreach ($values as $name => $value)
+		{
+			if ($value !== null)
+				$lines[] = $name . '=' . $value;
+		}
+
+		return implode("\n", $lines) . "\n";
 	}
 
 	/**

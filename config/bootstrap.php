@@ -21,9 +21,7 @@ declare(strict_types=1);
 
 use App\Framework\Config\Config;
 use App\Framework\Config\IniConfigLoader;
-use App\Framework\Security\CsrfToken;
 use DI\ContainerBuilder;
-use Psr\Container\ContainerInterface;
 use Slim\App;
 use Symfony\Component\Console\Application;
 
@@ -33,6 +31,22 @@ $start_memory = memory_get_usage();
 /* @var App $app */
 $systemDir = realpath(__DIR__. '/../');
 define('INSTALL_LOCK_FILE', $systemDir . '/var/install.lock');
+
+/**
+ * Before the container exists there is no logger and no error middleware: the reason goes into the
+ * error log of PHP, the visitor gets a plain 500 without paths or messages, the console the full text.
+ */
+function bootFailure(Throwable $e): never
+{
+	if (PHP_SAPI === 'cli')
+		throw $e;
+
+	error_log('garlic-hub could not start: ' . $e);
+	http_response_code(500);
+	header('Content-Type: text/plain; charset=utf-8');
+	echo 'The application could not be started.';
+	exit(1);
+}
 
 // allow only change of language
 if (!file_exists(INSTALL_LOCK_FILE) && isset($_SERVER['REQUEST_URI']) && !str_starts_with($_SERVER['REQUEST_URI'], '/create-initial') &&
@@ -50,10 +64,12 @@ try
 	require $systemDir.'/vendor/autoload.php';
 	$dotenv = Dotenv\Dotenv::createImmutable($systemDir);
 	$dotenv->load();
+	$dotenv->required('APP_ENV')->allowedValues(['dev', 'test', 'prod']);
+	$dotenv->required('APP_DEBUG')->isBoolean();
 }
 catch (Throwable $e)
 {
-	die('Error during initialization: ' . $e->getMessage());
+	bootFailure($e);
 }
 
 if ($_ENV['APP_ENV'] === 'dev')
@@ -93,39 +109,38 @@ foreach ($directoryIterator as $file)
 		$containerBuilder->addDefinitions($file->getPathname());
 	}
 }
+// PHP-DI reads the definition files when a service is needed first: a broken definition shows up
+// while the app is created, not in build()
 try
 {
 	$container = $containerBuilder->build();
 
-	$csrfToken = $container->get(CsrfToken::class);
-}
-catch (Exception $e)
-{
-
-}
-if (php_sapi_name() !== 'cli')
-{
-	$middlewareLoader = require $systemDir.'/config/middleware.php';
-	/** @var ContainerInterface $container  */
-	$app = $middlewareLoader($container, $start_time, $start_memory);
-}
-else
-{
-	/** @var ContainerInterface $container  */
-	$app              = $container->get(Application::class);
-	$config           = $container->get(Config::class);
-	$commandDirectory = $config->getPaths('commandDir');
-
-	foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($commandDirectory)) as $file)
+	if (php_sapi_name() !== 'cli')
 	{
-		if (!$file->isFile() || $file->getExtension() !== 'php')
-			continue;
-
-		$class = 'App\\Commands\\' . $file->getBasename('.php');
-		if (class_exists($class))
-			$app->add($container->get($class));
-
+		$middlewareLoader = require $systemDir.'/config/middleware.php';
+		$app = $middlewareLoader($container, $start_time, $start_memory);
 	}
+	else
+	{
+		$app              = $container->get(Application::class);
+		$config           = $container->get(Config::class);
+		$commandDirectory = $config->getPaths('commandDir');
+
+		foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($commandDirectory)) as $file)
+		{
+			if (!$file->isFile() || $file->getExtension() !== 'php')
+				continue;
+
+			$class = 'App\\Commands\\' . $file->getBasename('.php');
+			if (class_exists($class))
+				$app->add($container->get($class));
+
+		}
+	}
+}
+catch (Throwable $e)
+{
+	bootFailure($e);
 }
 
 return $app;
