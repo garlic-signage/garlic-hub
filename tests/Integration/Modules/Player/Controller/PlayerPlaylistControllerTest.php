@@ -27,7 +27,6 @@ use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Security\Crypt;
 use App\Framework\SimpleApiExecutor;
-use App\Framework\Validation\BaseValidator;
 use App\Modules\Player\Controller\PlayerPlaylistController;
 use App\Modules\Player\Helper\PlayerPlaylist\Orchestrator;
 use App\Modules\Player\Helper\PlayerPlaylist\ResponseBuilder;
@@ -86,7 +85,6 @@ class PlayerPlaylistControllerTest extends PlayerControllerTestCase
 
 		return new PlayerPlaylistController(new Orchestrator(
 			new ResponseBuilder($this->container->get(JsonResponseHandler::class), $this->container->get(Translator::class)),
-			$this->container->get(BaseValidator::class),
 			$this->container->get(PlayerService::class),
 			$rest
 		));
@@ -104,7 +102,7 @@ class PlayerPlaylistControllerTest extends PlayerControllerTestCase
 	{
 		$this->actingAs(1);
 
-		$response = $this->replace($this->withToken(['player_id' => '3', 'playlist_id' => '1']));
+		$response = $this->replace(['player_id' => '3', 'playlist_id' => '1']);
 
 		static::assertSame(['success' => true, 'playlist_name' => 'Annas Lobby'], $this->json($response));
 		static::assertSame(1, (int) $this->playerField(3, 'playlist_id'));
@@ -115,7 +113,7 @@ class PlayerPlaylistControllerTest extends PlayerControllerTestCase
 		$this->setPlayer(3, 'playlist_id = 1');
 		$this->actingAs(1);
 
-		$response = $this->replace($this->withToken(['player_id' => 3, 'playlist_id' => 0]));
+		$response = $this->replace(['player_id' => 3, 'playlist_id' => 0]);
 
 		static::assertSame(['success' => true, 'playlist_name' => ''], $this->json($response));
 		static::assertSame(0, (int) $this->playerField(3, 'playlist_id'));
@@ -146,7 +144,7 @@ class PlayerPlaylistControllerTest extends PlayerControllerTestCase
 		$this->setPlayer(3, 'playlist_id = 3');
 		$this->actingAs(1);
 
-		$this->assertError($this->replace($this->withToken(['player_id' => '3'] + $body)), $this->text('invalid_playlist_id'));
+		$this->assertError($this->replace(['player_id' => '3'] + $body), $this->text('invalid_playlist_id'));
 		static::assertSame(3, (int) $this->playerField(3, 'playlist_id'));
 	}
 
@@ -167,38 +165,8 @@ class PlayerPlaylistControllerTest extends PlayerControllerTestCase
 		$this->actingAs(1);
 		$before = $this->connection->fetchAllAssociative('SELECT player_id, playlist_id FROM player ORDER BY player_id');
 
-		$this->assertError($this->replace($this->withToken(['playlist_id' => '1'] + $body)), $this->text('invalid_player_id'));
+		$this->assertError($this->replace(['playlist_id' => '1'] + $body), $this->text('invalid_player_id'));
 		static::assertSame($before, $this->connection->fetchAllAssociative('SELECT player_id, playlist_id FROM player ORDER BY player_id'));
-	}
-
-	/**
-	 * @return array<string,array{array<string,mixed>}>
-	 */
-	public static function wrongTokens(): array
-	{
-		return ['missing' => [[]], 'forged' => [['csrf_token' => 'forged']], 'empty' => [['csrf_token' => '']], 'a list' => [['csrf_token' => ['x']]]];
-	}
-
-	/**
-	 * @param array<string,mixed> $token
-	 */
-	#[DataProvider('wrongTokens')]
-	public function testWithoutTheTokenOfThePageNothingIsDone(array $token): void
-	{
-		$this->actingAs(1);
-		$this->csrf();
-		$body = $token + ['player_id' => '3', 'playlist_id' => '1'];
-
-		$replace = $this->controller()->replacePlaylist($this->request('PATCH', '/x', $body), $this->newResponse());
-		$push    = $this->controller()->pushPlaylist($this->request('POST', '/x', $body), $this->newResponse());
-
-		foreach ([$replace, $push] as $response)
-		{
-			static::assertSame(400, $response->getStatusCode());
-			static::assertFalse($this->json($response)['success']);
-		}
-		static::assertSame(0, (int) $this->playerField(3, 'playlist_id'));
-		static::assertSame([], $this->sent);
 	}
 
 	public function testARequestWithoutABodyDoesNothing(): void
@@ -216,7 +184,7 @@ class PlayerPlaylistControllerTest extends PlayerControllerTestCase
 
 		try
 		{
-			$this->replace($this->withToken(['player_id' => '3', 'playlist_id' => '2']));
+			$this->replace(['player_id' => '3', 'playlist_id' => '2']);
 			static::fail('Expected a TranslatableModuleException');
 		}
 		catch (TranslatableModuleException $e)
@@ -232,7 +200,7 @@ class PlayerPlaylistControllerTest extends PlayerControllerTestCase
 
 		try
 		{
-			$this->replace($this->withToken(['player_id' => '3', 'playlist_id' => '1']));
+			$this->replace(['player_id' => '3', 'playlist_id' => '1']);
 			static::fail('Expected an AccessDeniedException');
 		}
 		catch (AccessDeniedException)
@@ -262,7 +230,7 @@ class PlayerPlaylistControllerTest extends PlayerControllerTestCase
 			$this->json200('{"uri":"http://10.0.0.7/index.smil"}'),
 		]);
 
-		$response = $controller->pushPlaylist($this->request('POST', '/async/player/push', $this->withToken(['player_id' => '3'])), $this->newResponse());
+		$response = $controller->pushPlaylist($this->request('POST', '/async/player/push', ['player_id' => '3']), $this->newResponse());
 
 		static::assertSame(['success' => true, 'message' => 'Playlist pushed successfully to Bernds Player.'], $this->json($response));
 		static::assertSame(self::ENDPOINT . '/oauth2/token', (string) $this->sent[0]->getUri());
@@ -274,7 +242,7 @@ class PlayerPlaylistControllerTest extends PlayerControllerTestCase
 		$this->setPlayer(3, 'playlist_id = 1');
 		$this->actingAs(1);
 
-		$response = $this->controller()->pushPlaylist($this->request('POST', '/x', $this->withToken(['player_id' => '3'])), $this->newResponse());
+		$response = $this->controller()->pushPlaylist($this->request('POST', '/x', ['player_id' => '3']), $this->newResponse());
 
 		$this->assertError($response, $this->text('player_not_reachable'));
 		static::assertSame([], $this->sent);
@@ -285,7 +253,7 @@ class PlayerPlaylistControllerTest extends PlayerControllerTestCase
 		$this->setPlayer(3, 'is_intranet = 1, api_endpoint = ?', self::ENDPOINT);
 		$this->actingAs(1);
 
-		$response = $this->controller()->pushPlaylist($this->request('POST', '/x', $this->withToken(['player_id' => '3'])), $this->newResponse());
+		$response = $this->controller()->pushPlaylist($this->request('POST', '/x', ['player_id' => '3']), $this->newResponse());
 
 		$this->assertError($response, $this->text('no_playlist_assigned'));
 		static::assertSame([], $this->sent);
@@ -299,7 +267,7 @@ class PlayerPlaylistControllerTest extends PlayerControllerTestCase
 		$this->expectException(AccessDeniedException::class);
 		try
 		{
-			$this->controller()->pushPlaylist($this->request('POST', '/x', $this->withToken(['player_id' => '3'])), $this->newResponse());
+			$this->controller()->pushPlaylist($this->request('POST', '/x', ['player_id' => '3']), $this->newResponse());
 		}
 		finally
 		{
@@ -315,7 +283,7 @@ class PlayerPlaylistControllerTest extends PlayerControllerTestCase
 
 		try
 		{
-			$controller->pushPlaylist($this->request('POST', '/x', $this->withToken(['player_id' => '3'])), $this->newResponse());
+			$controller->pushPlaylist($this->request('POST', '/x', ['player_id' => '3']), $this->newResponse());
 			static::fail('Expected a TranslatableModuleException');
 		}
 		catch (TranslatableModuleException $e)

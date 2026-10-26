@@ -145,7 +145,7 @@ class ShowConnectivityControllerTest extends PlayerControllerTestCase
 	{
 		$this->actingAs(1);
 
-		$response = $this->store($this->withToken(['player_id' => '3', 'is_intranet' => '1', 'api_endpoint' => 'http://10.0.0.7:8080/v2']));
+		$response = $this->store(['player_id' => '3', 'is_intranet' => '1', 'api_endpoint' => 'http://10.0.0.7:8080/v2']);
 
 		$this->assertRedirect($response, '/player');
 		static::assertSame('http://10.0.0.7:8080/v2', $this->playerField(3, 'api_endpoint'));
@@ -158,7 +158,7 @@ class ShowConnectivityControllerTest extends PlayerControllerTestCase
 		$this->setPlayer(3, 'is_intranet = 1, api_endpoint = ?', 'http://10.0.0.7:8080/v2');
 		$this->actingAs(1);
 
-		$this->store($this->withToken(['player_id' => '3', 'api_endpoint' => 'http://10.0.0.7:8080/v2']));
+		$this->store(['player_id' => '3', 'api_endpoint' => 'http://10.0.0.7:8080/v2']);
 
 		static::assertSame(0, (int) $this->playerField(3, 'is_intranet'));
 	}
@@ -167,7 +167,7 @@ class ShowConnectivityControllerTest extends PlayerControllerTestCase
 	{
 		$this->actingAs(1);
 
-		$this->assertRedirect($this->store($this->withToken(['player_id' => '3'])), '/player');
+		$this->assertRedirect($this->store(['player_id' => '3']), '/player');
 		static::assertSame([], $this->flash('error'));
 	}
 
@@ -194,7 +194,7 @@ class ShowConnectivityControllerTest extends PlayerControllerTestCase
 		$this->actingAs(1);
 		$before = $this->connection->fetchAssociative('SELECT api_endpoint, is_intranet FROM player WHERE player_id = 3');
 
-		$response = $this->store($this->withToken(['player_id' => '3'] + $settings));
+		$response = $this->store(['player_id' => '3'] + $settings);
 
 		$page = $this->page($response);
 		static::assertSame('player/edit', $page->getTemplate());
@@ -207,7 +207,7 @@ class ShowConnectivityControllerTest extends PlayerControllerTestCase
 	{
 		$this->actingAs(1);
 
-		$page = $this->page($this->store($this->withToken(['player_id' => '3', 'api_endpoint' => 'ftp://"><script>alert(1)</script>'])));
+		$page = $this->page($this->store(['player_id' => '3', 'api_endpoint' => 'ftp://"><script>alert(1)</script>']));
 
 		$html = $this->fields($page)['api_endpoint'];
 		static::assertStringNotContainsString('<script>', $html);
@@ -221,21 +221,10 @@ class ShowConnectivityControllerTest extends PlayerControllerTestCase
 	{
 		$this->actingAs(1);
 
-		$page = $this->page($this->store($this->withToken(['player_id' => '3', 'is_intranet' => '1', 'api_endpoint' => ['http://10.0.0.7']])));
+		$page = $this->page($this->store(['player_id' => '3', 'is_intranet' => '1', 'api_endpoint' => ['http://10.0.0.7']]));
 
 		static::assertStringContainsString('value=""', $this->fields($page)['api_endpoint']);
 		static::assertContains($this->text('no_api_endpoint'), $this->container->get(\Slim\Flash\Messages::class)->getMessages()['error'] ?? []);
-	}
-
-	public function testWithoutTheTokenOfThePageNothingIsStored(): void
-	{
-		$this->actingAs(1);
-		$this->csrf();
-
-		$response = $this->store(['player_id' => '3', 'csrf_token' => 'forged', 'api_endpoint' => 'http://10.0.0.7:8080/v2']);
-
-		$this->page($response);
-		static::assertSame('', $this->playerField(3, 'api_endpoint'));
 	}
 
 	/**
@@ -261,7 +250,7 @@ class ShowConnectivityControllerTest extends PlayerControllerTestCase
 	{
 		$this->actingAs(1);
 
-		$this->assertRedirect($this->store($this->withToken($body + ['api_endpoint' => 'http://10.0.0.7:8080/v2'])), '/player');
+		$this->assertRedirect($this->store($body + ['api_endpoint' => 'http://10.0.0.7:8080/v2']), '/player');
 		static::assertSame('', $this->playerField(1, 'api_endpoint'));
 		static::assertSame('', $this->playerField(3, 'api_endpoint'));
 	}
@@ -270,7 +259,7 @@ class ShowConnectivityControllerTest extends PlayerControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$this->assertRedirect($this->store($this->withToken(['player_id' => '3', 'api_endpoint' => 'http://10.0.0.7:8080/v2'])), '/player');
+		$this->assertRedirect($this->store(['player_id' => '3', 'api_endpoint' => 'http://10.0.0.7:8080/v2']), '/player');
 		static::assertSame('', $this->playerField(3, 'api_endpoint'));
 	}
 

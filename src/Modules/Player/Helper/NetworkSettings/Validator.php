@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace App\Modules\Player\Helper\NetworkSettings;
 
 use App\Framework\Validation\BaseValidator;
-use App\Framework\Security\CsrfToken;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -32,15 +31,15 @@ use App\Framework\Exceptions\ModuleException;
  * Class Validator
  *
  * Extends the functionality provided by BaseValidator. The Validator class is responsible
- * for validating user input while leveraging network parameters and CSRF token verification.
+ * for validating user input with the network parameters.
  */
 class Validator extends BaseValidator
 {
 	private Parameters $networkParameters;
 
-	public function __construct(Translator $translator, Parameters $settingsParameters, CsrfToken $csrfToken)
+	public function __construct(Translator $translator, Parameters $settingsParameters)
 	{
-		parent::__construct($translator, $csrfToken);
+		parent::__construct($translator);
 		$this->networkParameters = $settingsParameters;
 	}
 
@@ -52,7 +51,7 @@ class Validator extends BaseValidator
 	 */
 	public function validateUserInput(): array
 	{
-		$errors = $this->validateFormCsrfToken($this->networkParameters);
+		$errors = [];
 
 		$isIntranet  = $this->networkParameters->getValueOfParameter(Parameters::PARAMETER_IS_INTRANET);
 		$apiEndpoint = $this->networkParameters->getValueOfParameter(Parameters::PARAMETER_API_ENDPOINT);

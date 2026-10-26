@@ -24,7 +24,6 @@ namespace Tests\Unit\Modules\Playlists\Helper;
 use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Validation\BaseValidator;
 use App\Modules\Playlists\Helper\Items\Orchestrator as ItemsOrchestrator;
 use App\Modules\Playlists\Helper\Items\ResponseBuilder as ItemsResponseBuilder;
 use App\Modules\Playlists\Helper\Playlists\Orchestrator as PlaylistsOrchestrator;
@@ -53,12 +52,8 @@ class UpdateFailuresTest extends TestCase
 {
 	private function items(ItemsService $itemsService): ItemsOrchestrator
 	{
-		$validator = $this->createStub(BaseValidator::class);
-		$validator->method('validateCsrfToken')->willReturn(true);
-
 		return new ItemsOrchestrator(
 			new ItemsResponseBuilder(new JsonResponseHandler(), $this->createStub(Translator::class)),
-			$validator,
 			$itemsService,
 			$this->createStub(InsertItemFactory::class)
 		);
@@ -66,12 +61,8 @@ class UpdateFailuresTest extends TestCase
 
 	private function playlists(PlaylistsService $playlistsService): PlaylistsOrchestrator
 	{
-		$validator = $this->createStub(BaseValidator::class);
-		$validator->method('validateCsrfToken')->willReturn(true);
-
 		return new PlaylistsOrchestrator(
 			new PlaylistsResponseBuilder(new JsonResponseHandler(), $this->createStub(Translator::class)),
-			$validator,
 			$playlistsService,
 			$this->createStub(PlaylistsDatatableService::class),
 			$this->createStub(Parameters::class),
@@ -93,10 +84,10 @@ class UpdateFailuresTest extends TestCase
 		$itemsService->method('updateItemDuration')->willReturn(null);
 		$orchestrator = $this->items($itemsService);
 
-		$orchestrator->setInput(['item_id' => '1', 'csrf_token' => 't', 'name' => 'item_name', 'value' => 'x'])->validateEdit(new Response());
+		$orchestrator->setInput(['item_id' => '1', 'name' => 'item_name', 'value' => 'x'])->validateEdit(new Response());
 		$this->assertError($orchestrator->edit(new Response()), 'Error updating item field: item_name.');
 
-		$orchestrator->setInput(['item_id' => '1', 'csrf_token' => 't', 'name' => 'item_duration', 'value' => '5'])->validateEdit(new Response());
+		$orchestrator->setInput(['item_id' => '1', 'name' => 'item_duration', 'value' => '5'])->validateEdit(new Response());
 		$this->assertError($orchestrator->edit(new Response()), 'Error updating item field: item_duration.');
 	}
 
@@ -109,7 +100,7 @@ class UpdateFailuresTest extends TestCase
 		$playlistsService->method('shufflePicking')->willReturn(['affected' => 0, 'playlist_metrics' => []]);
 		$orchestrator = $this->playlists($playlistsService);
 
-		$orchestrator->setInput(['playlist_id' => '1', 'csrf_token' => 't', 'shuffle_picking' => '2'])->validateShufflePicking(new Response());
+		$orchestrator->setInput(['playlist_id' => '1', 'shuffle_picking' => '2'])->validateShufflePicking(new Response());
 
 		$this->assertError($orchestrator->delete(new Response()), 'Playlist not found.');
 		$this->assertError($orchestrator->toggleShuffle(new Response()), 'Playlist not found.');
@@ -123,7 +114,7 @@ class UpdateFailuresTest extends TestCase
 		$playlistsService->method('saveZones')->willReturn(0);
 		$orchestrator = $this->playlists($playlistsService);
 
-		$orchestrator->setInput(['playlist_id' => '1', 'csrf_token' => 't', 'resolution' => '1920x1080'])->validateWithToken(new Response());
+		$orchestrator->setInput(['playlist_id' => '1', 'resolution' => '1920x1080'])->validate(new Response());
 
 		$this->assertError($orchestrator->saveZone(new Response()), 'Multizone could not be saved');
 	}

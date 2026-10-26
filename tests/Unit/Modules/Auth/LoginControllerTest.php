@@ -181,70 +181,13 @@ class LoginControllerTest extends TestCase
 		static::assertSame(0, $this->session->regenerations);
 	}
 
-	/**
-	 * @return array<string,array{array<string,mixed>}>
-	 */
-	public static function wrongCsrfTokens(): array
-	{
-		return [
-			'wrong'    => [['csrf_token' => 'forged']],
-			'empty'    => [['csrf_token' => '']],
-			'missing'  => [['csrf_token' => null]],
-			'an array' => [['csrf_token' => ['x']]],
-		];
-	}
-
-	/**
-	 * With the right password: without the token of the page nobody is logged in.
-	 *
-	 * @param array<string,mixed> $changes
-	 */
-	#[Group('units')]
-	#[DataProvider('wrongCsrfTokens')]
-	public function testAWrongCsrfTokenIsRefusedEvenWithTheRightPassword(array $changes): void
-	{
-		$this->csrfToken->getToken();
-
-		$response = $this->login($changes);
-
-		$this->assertRedirect($response, '/login');
-		static::assertSame(['Invalid CSRF token'], $this->flashErrors());
-		static::assertNull($this->session->get('user'));
-	}
-
-	/**
-	 * No token in the session (e.g. the session ran out): an empty token in the post must not match it.
-	 */
-	#[Group('units')]
-	public function testWithoutATokenInTheSessionNothingMatches(): void
-	{
-		$post = ['username' => 'anna', 'password' => 'secret', 'csrf_token' => ''];
-
-		$response = $this->controller->login(new ServerRequestFactory()->createServerRequest('POST', '/login')->withParsedBody($post), new Response());
-
-		$this->assertRedirect($response, '/login');
-		static::assertSame(['Invalid CSRF token'], $this->flashErrors());
-	}
-
-	#[Group('units')]
-	public function testAnEmptyTokenInTheSessionMatchesNothing(): void
-	{
-		$this->session->set('csrf_token', '');
-		$post = ['username' => 'anna', 'password' => 'secret', 'csrf_token' => ''];
-
-		$response = $this->controller->login(new ServerRequestFactory()->createServerRequest('POST', '/login')->withParsedBody($post), new Response());
-
-		$this->assertRedirect($response, '/login');
-		static::assertNull($this->session->get('user'));
-	}
-
 	#[Group('units')]
 	public function testAPostWithoutAnyBodyIsRefused(): void
 	{
 		$response = $this->controller->login(new ServerRequestFactory()->createServerRequest('POST', '/login'), new Response());
 
 		$this->assertRedirect($response, '/login');
-		static::assertSame(['Invalid CSRF token'], $this->flashErrors());
+		static::assertNull($this->session->get('user'));
 	}
 
 	/**

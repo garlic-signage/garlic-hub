@@ -23,8 +23,6 @@ declare(strict_types=1);
 namespace App\Framework\Controller;
 
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -37,17 +35,6 @@ abstract class BaseResponseBuilder
 		protected readonly JsonResponseHandler $jsonResponseHandler,
 		protected readonly Translator $translator
 	) {}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	public function csrfTokenMismatch(ResponseInterface $response): ResponseInterface
-	{
-		return $this->jsonResponseHandler->jsonError(
-			$response, $this->translator->translate('csrf_token_mismatch', 'security')
-		);
-	}
 
 	public function generalError(ResponseInterface $response, string $message): ResponseInterface
 	{

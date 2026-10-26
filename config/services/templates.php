@@ -22,7 +22,6 @@ declare(strict_types=1);
 
 use App\Shared\Acl\AclHelper;
 use App\Framework\Config\Config;
-use App\Framework\Security\CsrfToken;
 use App\Framework\Validation\Sanitizer;
 use App\Framework\Http\Session;
 use App\Framework\Localization\Translate\Translator;
@@ -132,8 +131,7 @@ $dependencies[Validator::class] = DI\factory(function (ContainerInterface $conta
 {
 	return new Validator(
 		$container->get(Translator::class),
-		$container->get(\App\Modules\Templates\Helper\Settings\Parameters::class),
-		$container->get(CsrfToken::class),
+		$container->get(\App\Modules\Templates\Helper\Settings\Parameters::class)
 	);
 });
 $dependencies[FormInputHandler::class] = DI\factory(function (ContainerInterface $container)

@@ -22,7 +22,6 @@ declare(strict_types=1);
 use App\Commands\MigrateCommand;
 use App\Framework\Controller\JsonResponseHandler;
 use App\Shared\Acl\AclHelper;
-use App\Framework\Validation\BaseValidator;
 use App\Framework\Config\Config;
 use App\Framework\Http\Cookie;
 use App\Framework\Security\Crypt;
@@ -364,10 +363,6 @@ $dependencies[JsonResponseHandler::class] = DI\factory(function ()
 $dependencies[UserSession::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new UserSession($container->get(Session::class));
-});
-$dependencies[BaseValidator::class] = DI\factory(function (ContainerInterface $container)
-{
-	return new BaseValidator($container->get(Translator::class), $container->get(CsrfToken::class));
 });
 $dependencies[MimeTypeDetector::class] = DI\factory(function (ContainerInterface $container)
 {

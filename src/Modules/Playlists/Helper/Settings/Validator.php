@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace App\Modules\Playlists\Helper\Settings;
 
 use App\Framework\Validation\BaseValidator;
-use App\Framework\Security\CsrfToken;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -33,16 +32,16 @@ use App\Modules\Playlists\Helper\PlaylistMode;
  * Class Validator
  *
  * Extends the BaseValidator to perform additional validation for user inputs,
- * specifically related to playlist management. Handles CSRF token validation
- * and checks for the presence and validity of required playlist parameters.
+ * specifically related to playlist management. Checks the presence and
+ * validity of required playlist parameters.
  */
 class Validator extends BaseValidator
 {
 	private Parameters $inputEditParameters;
 
-	public function __construct(Translator $translator, Parameters $inputEditParameters, CsrfToken $csrfToken)
+	public function __construct(Translator $translator, Parameters $inputEditParameters)
 	{
-		parent::__construct($translator, $csrfToken);
+		parent::__construct($translator);
 		$this->inputEditParameters = $inputEditParameters;
 	}
 
@@ -55,7 +54,7 @@ class Validator extends BaseValidator
 	 */
 	public function validateUserInput(array $post): array
 	{
-		$errors = $this->validateFormCsrfToken($this->inputEditParameters);
+		$errors = [];
 
 		if (empty($this->inputEditParameters->getValueOfParameter(Parameters::PARAMETER_PLAYLIST_NAME)))
 			$errors[] = $this->translator->translate('no_playlist_name', 'playlists');

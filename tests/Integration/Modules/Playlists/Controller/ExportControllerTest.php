@@ -25,7 +25,6 @@ use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Validation\BaseValidator;
 use App\Modules\Playlists\Controller\ExportController;
 use App\Modules\Playlists\Helper\Export\Orchestrator;
 use App\Modules\Playlists\Helper\Export\ResponseBuilder;
@@ -50,7 +49,6 @@ class ExportControllerTest extends PlaylistsControllerTestCase
 		$this->workspace  = new MediaWorkspace();
 		$this->controller = new ExportController(new Orchestrator(
 			new ResponseBuilder($this->container->get(JsonResponseHandler::class), $this->container->get(Translator::class)),
-			$this->container->get(BaseValidator::class),
 			$this->buildExportService($this->workspace)
 		));
 	}
@@ -65,20 +63,18 @@ class ExportControllerTest extends PlaylistsControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$response = $this->controller->export($this->request('PUT', body: $this->withToken(['playlist_id' => '1'])), $this->newResponse());
+		$response = $this->controller->export($this->request('PUT', body: ['playlist_id' => '1']), $this->newResponse());
 
 		$this->assertSuccess($response);
 		static::assertFileExists($this->workspace->absolute('/var/smil/playlists/1/items.smil'));
 		static::assertSame(68, (int) $this->databaseValue('SELECT duration FROM playlists WHERE playlist_id = 1'));
 	}
 
-	public function testTheExportNeedsTheTokenAndAPlaylist(): void
+	public function testTheExportNeedsAPlaylist(): void
 	{
 		$this->actingAs(2);
 
-		$this->assertError($this->controller->export($this->request('PUT', body: ['playlist_id' => '1']), $this->newResponse()), 'CSRF token validation error.');
-		$this->assertError($this->controller->export($this->request('PUT', body: ['playlist_id' => '1', 'csrf_token' => 'wrong']), $this->newResponse()), 'CSRF token validation error.');
-		$this->assertError($this->controller->export($this->request('PUT', body: $this->withToken([])), $this->newResponse()), 'Playlist ID not valid.');
+		$this->assertError($this->controller->export($this->request('PUT', body: []), $this->newResponse()), 'Playlist ID not valid.');
 		static::assertFileDoesNotExist($this->workspace->absolute('/var/smil/playlists/1/items.smil'));
 	}
 
@@ -88,7 +84,7 @@ class ExportControllerTest extends PlaylistsControllerTestCase
 
 		try
 		{
-			$this->controller->export($this->request('PUT', body: $this->withToken(['playlist_id' => '2'])), $this->newResponse());
+			$this->controller->export($this->request('PUT', body: ['playlist_id' => '2']), $this->newResponse());
 			static::fail('Expected AccessDeniedException');
 		}
 		catch (AccessDeniedException)
@@ -102,14 +98,13 @@ class ExportControllerTest extends PlaylistsControllerTestCase
 		$this->actingAs(2);
 
 		$this->expectException(NotFoundException::class);
-		$this->controller->export($this->request('PUT', body: $this->withToken(['playlist_id' => '999'])), $this->newResponse());
+		$this->controller->export($this->request('PUT', body: ['playlist_id' => '999']), $this->newResponse());
 	}
 
-	public function testWithoutABodyOrWithATokenOfTheWrongTypeNothingIsDone(): void
+	public function testWithoutABodyNothingIsDone(): void
 	{
 		$this->actingAs(2);
 
-		$this->assertError($this->controller->export($this->request('PUT')->withParsedBody(null), $this->newResponse()), 'CSRF token validation error.');
-		$this->assertError($this->controller->export($this->request('PUT', body: ['csrf_token' => ['x'], 'item_id' => '1', 'playlist_id' => '1']), $this->newResponse()), 'CSRF token validation error.');
+		$this->assertError($this->controller->export($this->request('PUT')->withParsedBody(null), $this->newResponse()), 'Playlist ID not valid.');
 	}
 }

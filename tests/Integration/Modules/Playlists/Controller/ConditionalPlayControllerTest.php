@@ -47,7 +47,7 @@ class ConditionalPlayControllerTest extends PlaylistsControllerTestCase
 		$this->actingAs(2);
 		$body = ['item_id' => '1', 'date' => ['from' => '2030-01-01', 'until' => '2030-12-31'], 'time' => ['from' => '08:00', 'until' => '18:30'], 'weekdays' => [1 => ['from' => '4', 'until' => '40'], 64 => ['from' => '0', 'until' => '96']]];
 
-		$saved = $this->controller->save($this->request('PATCH', body: $this->withToken($body)), $this->newResponse());
+		$saved = $this->controller->save($this->request('PATCH', body: $body), $this->newResponse());
 		$fetched = $this->controller->fetch($this->request('GET'), $this->newResponse(), ['item_id' => '1']);
 
 		$this->assertSuccess($saved);
@@ -63,9 +63,9 @@ class ConditionalPlayControllerTest extends PlaylistsControllerTestCase
 	public function testNoConditionsAreStoredAsNoConditions(): void
 	{
 		$this->actingAs(2);
-		$this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '1', 'time' => ['from' => '08:00', 'until' => '09:00']])), $this->newResponse());
+		$this->controller->save($this->request('PATCH', body: ['item_id' => '1', 'time' => ['from' => '08:00', 'until' => '09:00']]), $this->newResponse());
 
-		$this->assertSuccess($this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '1'])), $this->newResponse()));
+		$this->assertSuccess($this->controller->save($this->request('PATCH', body: ['item_id' => '1']), $this->newResponse()));
 
 		static::assertSame([], unserialize((string) $this->databaseValue('SELECT conditional FROM playlists_items WHERE item_id = 1')));
 	}
@@ -98,7 +98,7 @@ class ConditionalPlayControllerTest extends PlaylistsControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$response = $this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '1'] + $conditions)), $this->newResponse());
+		$response = $this->controller->save($this->request('PATCH', body: ['item_id' => '1'] + $conditions), $this->newResponse());
 
 		static::assertNotNull($response);
 		static::assertSame(400, $response->getStatusCode());
@@ -111,8 +111,7 @@ class ConditionalPlayControllerTest extends PlaylistsControllerTestCase
 		$this->actingAs(2);
 
 		$this->assertError($this->controller->fetch($this->request('GET'), $this->newResponse(), []), 'Invalid item ID.');
-		$this->assertError($this->controller->save($this->request('PATCH', body: $this->withToken([])), $this->newResponse()), 'Invalid item ID.');
-		$this->assertError($this->controller->save($this->request('PATCH', body: ['item_id' => '1', 'csrf_token' => 'wrong']), $this->newResponse()), 'CSRF token validation error.');
+		$this->assertError($this->controller->save($this->request('PATCH', body: []), $this->newResponse()), 'Invalid item ID.');
 	}
 
 	public function testTheSettingsOfAForeignItemCanNotBeReadOrChanged(): void
@@ -121,7 +120,7 @@ class ConditionalPlayControllerTest extends PlaylistsControllerTestCase
 
 		try
 		{
-			$this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '6', 'time' => ['from' => '08:00', 'until' => '09:00']])), $this->newResponse());
+			$this->controller->save($this->request('PATCH', body: ['item_id' => '6', 'time' => ['from' => '08:00', 'until' => '09:00']]), $this->newResponse());
 			static::fail('Expected AccessDeniedException');
 		}
 		catch (AccessDeniedException)
@@ -138,21 +137,13 @@ class ConditionalPlayControllerTest extends PlaylistsControllerTestCase
 		$this->actingAs(2);
 
 		$this->expectException(NotFoundException::class);
-		$this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '999'])), $this->newResponse());
+		$this->controller->save($this->request('PATCH', body: ['item_id' => '999']), $this->newResponse());
 	}
 
-	public function testARequestWithoutATokenIsRejectedAsAnError(): void
+	public function testWithoutABodyNothingIsDone(): void
 	{
 		$this->actingAs(2);
 
-		$this->assertError($this->controller->save($this->request('PATCH', body: ['item_id' => '1']), $this->newResponse()), 'CSRF token validation error.');
-	}
-
-	public function testWithoutABodyOrWithATokenOfTheWrongTypeNothingIsDone(): void
-	{
-		$this->actingAs(2);
-
-		$this->assertError($this->controller->save($this->request('PATCH')->withParsedBody(null), $this->newResponse()), 'CSRF token validation error.');
-		$this->assertError($this->controller->save($this->request('PATCH', body: ['csrf_token' => ['x'], 'item_id' => '1', 'playlist_id' => '1']), $this->newResponse()), 'CSRF token validation error.');
+		$this->assertError($this->controller->save($this->request('PATCH')->withParsedBody(null), $this->newResponse()), 'Invalid item ID.');
 	}
 }

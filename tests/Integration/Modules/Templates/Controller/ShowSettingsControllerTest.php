@@ -46,9 +46,9 @@ class ShowSettingsControllerTest extends TemplatesControllerTestCase
 	/**
 	 * @param array<string,mixed> $body
 	 */
-	private function store(array $body, bool $withToken = true): ResponseInterface
+	private function store(array $body): ResponseInterface
 	{
-		return $this->controller->store($this->request(body: $withToken ? $this->withToken($body) : $body), $this->newResponse());
+		return $this->controller->store($this->request(body: $body), $this->newResponse());
 	}
 
 	private function page(ResponseInterface $response): PageResponse
@@ -166,17 +166,6 @@ class ShowSettingsControllerTest extends TemplatesControllerTestCase
 		static::assertSame(3, $this->countTemplates());
 	}
 
-	public function testNothingIsStoredWithoutTheToken(): void
-	{
-		$this->actingAs(1);
-
-		$page = $this->page($this->store(['name' => 'Neu'], withToken: false));
-
-		static::assertSame('templates/edit', $page->getTemplate());
-		static::assertCount(1, $this->flash('error'));
-		static::assertSame(3, $this->countTemplates());
-	}
-
 	public function testTheSettingsOfATemplateAreChanged(): void
 	{
 		$this->actingAs(1);
@@ -221,7 +210,7 @@ class ShowSettingsControllerTest extends TemplatesControllerTestCase
 	{
 		$this->actingAs(1);
 
-		$page = $this->page($this->store(['name' => 'Neu', 'visibility' => 'global', 'UID' => '3'], withToken: false));
+		$page = $this->page($this->store(['name' => 'Neu', 'visibility' => 'global', 'UID' => '3', 'type' => 'fabric.js']));
 
 		$fields = $this->fields($page);
 		static::assertSame('Neu', $fields['name']['value']);

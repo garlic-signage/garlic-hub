@@ -24,7 +24,6 @@ namespace Tests\Unit\Modules\Templates\Helper\Settings;
 use App\Framework\Validation\Sanitizer;
 use App\Framework\Http\Session;
 use App\Framework\Exceptions\ModuleException;
-use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Modules\Templates\Helper\Settings\Parameters;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
@@ -42,9 +41,8 @@ class ParametersTest extends TestCase
 	#[Group('units')]
 	public function testConstructor(): void
 	{
-		static::assertCount(2, $this->parameters->getCurrentParameters());
+		static::assertCount(1, $this->parameters->getCurrentParameters());
 		static::assertSame('templates', $this->parameters->getModuleName());
-		static::assertTrue($this->parameters->hasParameter(BaseEditParameters::PARAMETER_CSRF_TOKEN));
 		static::assertTrue($this->parameters->hasParameter(Parameters::PARAMETER_NAME));
 	}
 
@@ -72,7 +70,7 @@ class ParametersTest extends TestCase
 
 		$this->parameters->addVisibility();
 
-		static::assertCount(3, $this->parameters->getCurrentParameters());
+		static::assertCount(2, $this->parameters->getCurrentParameters());
 		static::assertSame('private', $this->parameters->getDefaultValueOfParameter(Parameters::PARAMETER_VISIBILITY));
 	}
 
@@ -86,7 +84,7 @@ class ParametersTest extends TestCase
 
 		$this->parameters->addType();
 
-		static::assertCount(3, $this->parameters->getCurrentParameters());
+		static::assertCount(2, $this->parameters->getCurrentParameters());
 		static::assertSame('canvas', $this->parameters->getDefaultValueOfParameter(Parameters::PARAMETER_TYPE));
 	}
 }

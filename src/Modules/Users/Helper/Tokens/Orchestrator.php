@@ -21,7 +21,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Helper\Tokens;
 
-use App\Framework\Validation\BaseValidator;
 use App\Framework\Controller\ReadsInput;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -47,7 +46,6 @@ class Orchestrator
 	public function __construct(
 		private readonly ResponseBuilder $responseBuilder,
 		private readonly UserSession $userSession,
-		private readonly BaseValidator $validator,
 		private readonly AclValidator $aclValidator,
 		private readonly UserTokenService $userTokenService
 	) {}
@@ -60,9 +58,6 @@ class Orchestrator
 	 */
 	public function validate(ResponseInterface $response): ?ResponseInterface
 	{
-		if (!$this->validator->validateCsrfToken($this->text('csrf_token')))
-			return $this->responseBuilder->csrfTokenMismatch($response);
-
 		if (!$this->aclValidator->isModuleAdmin($this->userSession->getUID()))
 			return $this->responseBuilder->noRights($response);
 

@@ -23,7 +23,6 @@ namespace App\Modules\Users\Controller;
 
 use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Controller\RequestInput;
-use App\Framework\Security\CsrfToken;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
@@ -47,8 +46,7 @@ readonly class UsersController
 		private UsersDatatableService $usersDatatableService,
 		private UsersAdminService $usersAdminService,
 		private Parameters $parameters,
-		private JsonResponseHandler $responseHandler,
-		private CsrfToken $csrfToken
+		private JsonResponseHandler $responseHandler
 	) {}
 
 	/**
@@ -58,9 +56,6 @@ readonly class UsersController
 	public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
 		$input = RequestInput::of($request->getParsedBody());
-
-		if (!$this->csrfToken->validateToken($input->text('csrf_token')))
-			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.');
 
 		$UID = $input->id('UID');
 		if ($UID === 0)

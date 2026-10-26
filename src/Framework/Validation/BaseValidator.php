@@ -22,24 +22,16 @@ declare(strict_types=1);
 namespace App\Framework\Validation;
 
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Security\CsrfToken;
-use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Exceptions\ModuleException;
-use App\Framework\Utils\FormParameters\BaseEditParameters;
 
 /**
  * BaseValidator provides utility methods for common validation tasks such as
- * validating emails, JSON strings, passwords, and CSRF tokens.
+ * validating emails, JSON strings and passwords. The CSRF token is checked by the CsrfMiddleware.
  */
 class BaseValidator
 {
 	public const int MAX_PASSWORD_BYTES = 72;
 
-	public function __construct(
-		protected readonly Translator $translator,
-		protected readonly CsrfToken $csrfToken
-	)
+	public function __construct(protected readonly Translator $translator)
 	{}
 
 	public function isEmail(string $value): bool
@@ -67,27 +59,4 @@ class BaseValidator
 
 		return false;
 	}
-
-	public function validateCsrfToken(string $receivedToken): bool
-	{
-		return $this->csrfToken->validateToken($receivedToken);
-	}
-
-	/**
-	 * @return string[]
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	public function validateFormCsrfToken(BaseEditParameters $baseEditParameters): array
-	{
-		$receivedToken = $baseEditParameters->getCsrfToken();
-
-		$error = [];
-		if ($receivedToken === '' || !$this->validateCsrfToken($receivedToken))
-			$error[] = $this->translator->translate('csrf_token_mismatch', 'security');
-
-		return $error;
-	}
-
 }

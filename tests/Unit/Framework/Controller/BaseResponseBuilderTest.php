@@ -23,43 +23,21 @@ namespace Tests\Unit\Framework\Controller;
 
 use App\Framework\Controller\BaseResponseBuilder;
 use App\Framework\Controller\JsonResponseHandler;
-use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Localization\Translate\Translator;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Slim\Psr7\Response;
 
 class BaseResponseBuilderTest extends TestCase
 {
-	private Translator&Stub $translatorStub;
 	private BaseResponseBuilder $baseResponseBuilder;
 
 	protected function setUp(): void
 	{
 		parent::setUp();
 
-		$this->translatorStub     = $this->createStub(Translator::class);
-		$this->baseResponseBuilder = new class(new JsonResponseHandler(), $this->translatorStub) extends BaseResponseBuilder {};
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testCsrfTokenMismatchAnswersWithTranslatedError(): void
-	{
-		// only the right translation key gives a text
-		$this->translatorStub->method('translate')->willReturnMap([['csrf_token_mismatch', 'security', [], 'CSRF Token Mismatch']]);
-
-		$response = $this->baseResponseBuilder->csrfTokenMismatch(new Response());
-
-		static::assertSame(400, $response->getStatusCode());
-		static::assertSame('application/json', $response->getHeaderLine('Content-Type'));
-		static::assertSame(['success' => false, 'error_message' => 'CSRF Token Mismatch'], $this->body($response));
+		$this->baseResponseBuilder = new class(new JsonResponseHandler(), $this->createStub(Translator::class)) extends BaseResponseBuilder {};
 	}
 
 	#[Group('units')]

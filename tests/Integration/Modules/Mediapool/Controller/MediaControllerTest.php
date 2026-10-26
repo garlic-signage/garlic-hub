@@ -182,7 +182,7 @@ class MediaControllerTest extends ControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$response = $this->controller->edit($this->request('PATCH', $this->withToken(['media_id' => self::PHOTO, 'filename' => 'strand.jpg', 'description' => 'Am Meer'])), $this->newResponse());
+		$response = $this->controller->edit($this->request('PATCH', ['media_id' => self::PHOTO, 'filename' => 'strand.jpg', 'description' => 'Am Meer']), $this->newResponse());
 
 		$this->assertSuccess($response);
 		static::assertSame('strand.jpg', $this->field(self::PHOTO, 'filename'));
@@ -193,7 +193,7 @@ class MediaControllerTest extends ControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$this->assertSuccess($this->controller->edit($this->request('PATCH', $this->withToken(['media_id' => self::PHOTO, 'filename' => 'a.jpg', 'description' => ''])), $this->newResponse()));
+		$this->assertSuccess($this->controller->edit($this->request('PATCH', ['media_id' => self::PHOTO, 'filename' => 'a.jpg', 'description' => '']), $this->newResponse()));
 	}
 
 	/**
@@ -221,7 +221,7 @@ class MediaControllerTest extends ControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$this->assertError($this->controller->edit($this->request('PATCH', $this->withToken($body)), $this->newResponse()), $message);
+		$this->assertError($this->controller->edit($this->request('PATCH', $body), $this->newResponse()), $message);
 
 		static::assertSame('urlaub.jpg', $this->field(self::PHOTO, 'filename'));
 	}
@@ -232,7 +232,7 @@ class MediaControllerTest extends ControllerTestCase
 
 		try
 		{
-			$this->controller->edit($this->request('PATCH', $this->withToken(['media_id' => self::PRIVATE, 'filename' => 'gehackt.png', 'description' => 'x'])), $this->newResponse());
+			$this->controller->edit($this->request('PATCH', ['media_id' => self::PRIVATE, 'filename' => 'gehackt.png', 'description' => 'x']), $this->newResponse());
 			static::fail('Expected a rejection');
 		}
 		catch (AccessDeniedException)
@@ -241,32 +241,11 @@ class MediaControllerTest extends ControllerTestCase
 		}
 	}
 
-	public function testWithoutTheTokenOfThePageNothingIsChanged(): void
-	{
-		$this->actingAs(2);
-		$this->csrf();
-
-		foreach (['edit' => ['media_id' => self::PHOTO, 'filename' => 'x', 'description' => 'x'], 'delete' => ['media_id' => self::PHOTO], 'clone' => ['media_id' => self::PHOTO], 'move' => ['media_id' => self::PHOTO, 'node_id' => '9']] as $action => $body)
-		{
-			foreach ([[], ['csrf_token' => 'forged'], ['csrf_token' => ['x']]] as $token)
-			{
-				$response = $this->controller->$action($this->request('POST', $token + $body), $this->newResponse());
-				static::assertSame(400, $response->getStatusCode(), $action);
-				static::assertFalse($this->json($response)['success']);
-			}
-		}
-
-		static::assertSame('urlaub.jpg', $this->field(self::PHOTO, 'filename'));
-		static::assertSame(0, (int) $this->field(self::PHOTO, 'deleted'));
-		static::assertSame(8, (int) $this->field(self::PHOTO, 'node_id'));
-		static::assertSame(2, (int) $this->databaseValue('SELECT COUNT(*) FROM mediapool_files WHERE node_id = 8 AND deleted = 0'));
-	}
-
 	public function testAMediumIsDeleted(): void
 	{
 		$this->actingAs(2);
 
-		$response = $this->controller->delete($this->request('DELETE', $this->withToken(['media_id' => self::PHOTO])), $this->newResponse());
+		$response = $this->controller->delete($this->request('DELETE', ['media_id' => self::PHOTO]), $this->newResponse());
 
 		$this->assertSuccess($response);
 		static::assertSame(['deleted_media' => 1], $this->json($response)['data']);
@@ -296,7 +275,7 @@ class MediaControllerTest extends ControllerTestCase
 		$before = (int) $this->databaseValue('SELECT COUNT(*) FROM mediapool_files');
 
 		foreach (['delete', 'clone'] as $action)
-			$this->assertError($this->controller->$action($this->request('POST', $this->withToken($body)), $this->newResponse()), 'Media id is missing');
+			$this->assertError($this->controller->$action($this->request('POST', $body), $this->newResponse()), 'Media id is missing');
 
 		static::assertSame($before, (int) $this->databaseValue('SELECT COUNT(*) FROM mediapool_files'));
 		static::assertSame(0, (int) $this->databaseValue('SELECT COUNT(*) FROM mediapool_files WHERE deleted = 1 AND media_id <> ?', self::DELETED));
@@ -311,7 +290,7 @@ class MediaControllerTest extends ControllerTestCase
 		{
 			try
 			{
-				$this->controller->$action($this->request('POST', $this->withToken(['media_id' => self::PRIVATE])), $this->newResponse());
+				$this->controller->$action($this->request('POST', ['media_id' => self::PRIVATE]), $this->newResponse());
 				static::fail('Expected a rejection by the ACL for ' . $action);
 			}
 			catch (AccessDeniedException)
@@ -328,7 +307,7 @@ class MediaControllerTest extends ControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$response = $this->controller->clone($this->request('POST', $this->withToken(['media_id' => self::PHOTO])), $this->newResponse());
+		$response = $this->controller->clone($this->request('POST', ['media_id' => self::PHOTO]), $this->newResponse());
 
 		$this->assertSuccess($response);
 		$new = $this->json($response)['new_media'];
@@ -341,7 +320,7 @@ class MediaControllerTest extends ControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$response = $this->controller->move($this->request('POST', $this->withToken(['media_id' => self::PHOTO, 'node_id' => '9'])), $this->newResponse());
+		$response = $this->controller->move($this->request('POST', ['media_id' => self::PHOTO, 'node_id' => '9']), $this->newResponse());
 
 		$this->assertSuccess($response);
 		static::assertSame(9, (int) $this->field(self::PHOTO, 'node_id'));
@@ -370,7 +349,7 @@ class MediaControllerTest extends ControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$this->assertError($this->controller->move($this->request('POST', $this->withToken($body)), $this->newResponse()), 'media id or node is missing');
+		$this->assertError($this->controller->move($this->request('POST', $body), $this->newResponse()), 'media id or node is missing');
 
 		static::assertSame(8, (int) $this->field(self::PHOTO, 'node_id'));
 	}
@@ -381,7 +360,7 @@ class MediaControllerTest extends ControllerTestCase
 
 		try
 		{
-			$this->controller->move($this->request('POST', $this->withToken(['media_id' => self::PHOTO, 'node_id' => '11'])), $this->newResponse());
+			$this->controller->move($this->request('POST', ['media_id' => self::PHOTO, 'node_id' => '11']), $this->newResponse());
 			static::fail('Expected a rejection by the ACL');
 		}
 		catch (AccessDeniedException)

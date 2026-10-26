@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace App\Modules\Templates\Helper\Settings;
 
 use App\Framework\Validation\BaseValidator;
-use App\Framework\Security\CsrfToken;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -31,9 +30,9 @@ use App\Framework\Exceptions\ModuleException;
 
 class Validator extends BaseValidator
 {
-	public function __construct(Translator $translator, private readonly Parameters $settingsParameters, CsrfToken $csrfToken)
+	public function __construct(Translator $translator, private readonly Parameters $settingsParameters)
 	{
-		parent::__construct($translator, $csrfToken);
+		parent::__construct($translator);
 	}
 
 	/**
@@ -61,7 +60,7 @@ class Validator extends BaseValidator
 	 */
 	public function validateEditInput(): array
 	{
-		$errors = $this->validateFormCsrfToken($this->settingsParameters);
+		$errors = [];
 		$name  = $this->settingsParameters->getValueOfParameter(Parameters::PARAMETER_NAME);
 		if ($name === '')
 			$errors[] = $this->translator->translate('name_noexists', 'templates');

@@ -65,7 +65,7 @@ class WidgetsControllerTest extends PlaylistsControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$saved = $this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '1', 'urls' => 'http://example.com/feed', 'count' => '12'])), $this->newResponse());
+		$saved = $this->controller->save($this->request('PATCH', body: ['item_id' => '1', 'urls' => 'http://example.com/feed', 'count' => '12']), $this->newResponse());
 
 		$this->assertSuccess($saved);
 		$values = unserialize((string) $this->databaseValue('SELECT content_data FROM playlists_items WHERE item_id = 1'));
@@ -79,7 +79,7 @@ class WidgetsControllerTest extends PlaylistsControllerTestCase
 
 		try
 		{
-			$this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '1', 'count' => '12'])), $this->newResponse());
+			$this->controller->save($this->request('PATCH', body: ['item_id' => '1', 'count' => '12']), $this->newResponse());
 			static::fail('Expected TranslatableModuleException');
 		}
 		catch (TranslatableModuleException $e)
@@ -93,7 +93,7 @@ class WidgetsControllerTest extends PlaylistsControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '1', 'urls' => 'http://example.com/feed', 'unknown' => 'x'])), $this->newResponse());
+		$this->controller->save($this->request('PATCH', body: ['item_id' => '1', 'urls' => 'http://example.com/feed', 'unknown' => 'x']), $this->newResponse());
 
 		static::assertSame(['urls' => 'http://example.com/feed'], unserialize((string) $this->databaseValue('SELECT content_data FROM playlists_items WHERE item_id = 1')));
 	}
@@ -105,7 +105,7 @@ class WidgetsControllerTest extends PlaylistsControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '1', 'urls' => 'http://example.com/feed', 'count' => '0'])), $this->newResponse());
+		$this->controller->save($this->request('PATCH', body: ['item_id' => '1', 'urls' => 'http://example.com/feed', 'count' => '0']), $this->newResponse());
 
 		static::assertSame(['urls' => 'http://example.com/feed', 'count' => 0], unserialize((string) $this->databaseValue('SELECT content_data FROM playlists_items WHERE item_id = 1')));
 	}
@@ -116,7 +116,7 @@ class WidgetsControllerTest extends PlaylistsControllerTestCase
 		$plain = '<?xml version="1.0" encoding="UTF-8"?><widget xmlns="http://www.w3.org/ns/widgets"><preference name="url" /></widget>';
 		$this->connection->executeStatement("UPDATE mediapool_files SET config_data = ? WHERE checksum = 'checksum-image'", [$plain]);
 
-		$saved = $this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '1', 'url' => 'http://example.com'])), $this->newResponse());
+		$saved = $this->controller->save($this->request('PATCH', body: ['item_id' => '1', 'url' => 'http://example.com']), $this->newResponse());
 		$loaded = $this->controller->fetch($this->request('GET'), $this->newResponse(), ['item_id' => '1']);
 
 		$this->assertSuccess($saved);
@@ -124,13 +124,12 @@ class WidgetsControllerTest extends PlaylistsControllerTestCase
 		static::assertSame(['url'], array_keys($this->json($loaded)['data']['preferences']));
 	}
 
-	public function testWithoutAnItemOrAValidTokenNothingIsLoadedOrSaved(): void
+	public function testWithoutAnItemNothingIsLoadedOrSaved(): void
 	{
 		$this->actingAs(2);
 
 		$this->assertError($this->controller->fetch($this->request('GET'), $this->newResponse(), []), 'Item ID not valid.');
-		$this->assertError($this->controller->save($this->request('PATCH', body: $this->withToken(['urls' => 'x'])), $this->newResponse()), 'Item ID not valid.');
-		$this->assertError($this->controller->save($this->request('PATCH', body: ['item_id' => '1', 'urls' => 'x']), $this->newResponse()), 'CSRF token validation error.');
+		$this->assertError($this->controller->save($this->request('PATCH', body: ['urls' => 'x']), $this->newResponse()), 'Item ID not valid.');
 		static::assertSame('', $this->databaseValue('SELECT content_data FROM playlists_items WHERE item_id = 1'));
 	}
 
@@ -149,7 +148,7 @@ class WidgetsControllerTest extends PlaylistsControllerTestCase
 
 		try
 		{
-			$this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '1', 'urls' => 'x'])), $this->newResponse());
+			$this->controller->save($this->request('PATCH', body: ['item_id' => '1', 'urls' => 'x']), $this->newResponse());
 			static::fail('Expected AccessDeniedException');
 		}
 		catch (AccessDeniedException)
@@ -161,11 +160,10 @@ class WidgetsControllerTest extends PlaylistsControllerTestCase
 		$this->controller->fetch($this->request('GET'), $this->newResponse(), ['item_id' => '1']);
 	}
 
-	public function testWithoutABodyOrWithATokenOfTheWrongTypeNothingIsDone(): void
+	public function testWithoutABodyNothingIsDone(): void
 	{
 		$this->actingAs(2);
 
-		$this->assertError($this->controller->save($this->request('PATCH')->withParsedBody(null), $this->newResponse()), 'CSRF token validation error.');
-		$this->assertError($this->controller->save($this->request('PATCH', body: ['csrf_token' => ['x'], 'item_id' => '1', 'playlist_id' => '1']), $this->newResponse()), 'CSRF token validation error.');
+		$this->assertError($this->controller->save($this->request('PATCH')->withParsedBody(null), $this->newResponse()), 'Item ID not valid.');
 	}
 }

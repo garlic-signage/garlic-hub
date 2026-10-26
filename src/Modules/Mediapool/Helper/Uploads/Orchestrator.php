@@ -21,7 +21,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Mediapool\Helper\Uploads;
 
-use App\Framework\Validation\BaseValidator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
@@ -53,7 +52,6 @@ class Orchestrator
 	public function __construct(
 		private readonly ResponseBuilder $responseBuilder,
 		private readonly UserSession $userSession,
-		private readonly BaseValidator $validator,
 		private readonly UploadService $uploadService
 	) {}
 
@@ -114,10 +112,6 @@ class Orchestrator
 	 */
 	public function validateUploadLocalFile(ResponseInterface $response): ?ResponseInterface
 	{
-		$answer = $this->validateToken($response);
-		if ($answer !== null)
-			return $answer;
-
 		if (empty($this->uploadedFiles))
 			return $this->responseBuilder->noFilesToUpload($response);
 
@@ -153,7 +147,7 @@ class Orchestrator
 	 */
 	public function validateUploadFromUrl(ResponseInterface $response): ?ResponseInterface
 	{
-		$answer = $this->validateToken($response) ?? $this->validateNode($response);
+		$answer = $this->validateNode($response);
 		if ($answer !== null)
 			return $answer;
 
@@ -208,18 +202,6 @@ class Orchestrator
 		$this->nodeId = $this->id('node_id');
 		if ($this->nodeId === 0)
 			return $this->responseBuilder->missingNode($response);
-
-		return null;
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	private function validateToken(ResponseInterface $response): ?ResponseInterface
-	{
-		if (!$this->validator->validateCsrfToken($this->text('csrf_token')))
-			return $this->responseBuilder->csrfTokenMismatch($response);
 
 		return null;
 	}

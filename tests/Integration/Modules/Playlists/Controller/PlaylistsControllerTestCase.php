@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace Tests\Integration\Modules\Playlists\Controller;
 
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Security\CsrfToken;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Psr7\Factory\ServerRequestFactory;
@@ -49,10 +48,6 @@ abstract class PlaylistsControllerTestCase extends ContainerTestCase
 		$this->connection->executeStatement("UPDATE mediapool_files SET metadata = '{\"size\":300}' WHERE checksum <> 'checksum-video'");
 	}
 
-	protected function csrf(): string
-	{
-		return $this->container->get(CsrfToken::class)->getToken();
-	}
 
 	/**
 	 * @param array<string,mixed> $body
@@ -62,14 +57,6 @@ abstract class PlaylistsControllerTestCase extends ContainerTestCase
 		return new ServerRequestFactory()->createServerRequest($method, $path)->withParsedBody($body);
 	}
 
-	/**
-	 * @param array<string,mixed> $body
-	 * @return array<string,mixed>
-	 */
-	protected function withToken(array $body): array
-	{
-		return ['csrf_token' => $this->csrf()] + $body;
-	}
 
 	protected function newResponse(): Response
 	{

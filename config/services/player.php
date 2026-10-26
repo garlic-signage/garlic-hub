@@ -21,10 +21,8 @@ declare(strict_types=1);
 
 use App\Framework\Controller\JsonResponseHandler;
 use App\Shared\Acl\AclHelper;
-use App\Framework\Validation\BaseValidator;
 use App\Framework\Config\Config;
 use App\Framework\Security\Crypt;
-use App\Framework\Security\CsrfToken;
 use App\Framework\Validation\Sanitizer;
 use App\Framework\Http\Session;
 use App\Framework\Localization\Translate\Translator;
@@ -219,7 +217,6 @@ $dependencies[Orchestrator::class] = DI\factory(function (ContainerInterface $co
 {
 	return new Orchestrator(
 		new ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
-		$container->get(BaseValidator::class),
 		$container->get(PlayerService::class),
 		$container->get(PlayerRestAPIService::class)
 	);
@@ -232,8 +229,7 @@ $dependencies[PlayerController::class] = DI\factory(function (ContainerInterface
 {
 	return new PlayerController(
 		$container->get(JsonResponseHandler::class),
-		$container->get(PlayerService::class),
-		$container->get(CsrfToken::class)
+		$container->get(PlayerService::class)
 	);
 });
 

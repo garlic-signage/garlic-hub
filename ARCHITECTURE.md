@@ -138,7 +138,7 @@ Technical building blocks without business knowledge.
 | `Http/`            | `Session` and `Cookie`                                                      |
 | `Localization/`    | `Locales/` (current and available locales) and `Translate/` (translator, INI loader, ICU formatter) |
 | `Media/`           | Mime types, ffmpeg, media properties, signed media URLs                     |
-| `Middleware/`      | PSR-15 middleware: locale, JSON errors, final render                        |
+| `Middleware/`      | PSR-15 middleware: locale, CSRF, security headers, JSON errors, final render |
 | `OAuth2/`          | Entities and repositories for the OAuth2 server                             |
 | `Security/`        | `Crypt` and `CsrfToken`                                                     |
 | `Services/`        | Base classes for services and datatable services                            |

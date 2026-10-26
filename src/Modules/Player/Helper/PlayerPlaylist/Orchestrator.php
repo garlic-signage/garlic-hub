@@ -22,13 +22,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Helper\PlayerPlaylist;
 
-use App\Framework\Validation\BaseValidator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
-use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Framework\Controller\ReadsInput;
 use App\Modules\Player\Services\PlayerRestAPIService;
 use App\Modules\Player\Services\PlayerService;
@@ -53,7 +51,6 @@ class Orchestrator
 
 	public function __construct(
 		private readonly ResponseBuilder      $responseBuilder,
-		private readonly BaseValidator        $validator,
 		private readonly PlayerService        $playerService,
 		private readonly PlayerRestAPIService $playerRestAPIService,
 	) {}
@@ -85,9 +82,6 @@ class Orchestrator
 	 */
 	public function validateStandardInput(ResponseInterface $response): ?ResponseInterface
 	{
-		if (!$this->validator->validateCsrfToken($this->text(BaseEditParameters::PARAMETER_CSRF_TOKEN)))
-			return $this->responseBuilder->csrfTokenMismatch($response);
-
 		$this->playerId = $this->id('player_id');
 		if ($this->playerId === 0)
 			return $this->responseBuilder->invalidPlayerId($response);

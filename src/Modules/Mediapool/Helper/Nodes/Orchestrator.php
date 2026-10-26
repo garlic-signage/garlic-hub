@@ -21,7 +21,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Mediapool\Helper\Nodes;
 
-use App\Framework\Validation\BaseValidator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -43,7 +42,6 @@ class Orchestrator
 
 	public function __construct(
 		private readonly ResponseBuilder $responseBuilder,
-		private readonly BaseValidator $validator,
 		private readonly NodesService $nodesService
 	) {}
 
@@ -66,10 +64,6 @@ class Orchestrator
 	 */
 	public function validateAdd(ResponseInterface $response): ?ResponseInterface
 	{
-		$answer = $this->validateToken($response);
-		if ($answer !== null)
-			return $answer;
-
 		if ($this->text('name') === '')
 			return $this->responseBuilder->missingName($response);
 
@@ -101,10 +95,6 @@ class Orchestrator
 	 */
 	public function validateEdit(ResponseInterface $response): ?ResponseInterface
 	{
-		$answer = $this->validateToken($response);
-		if ($answer !== null)
-			return $answer;
-
 		if ($this->text('name') === '' || !$this->hasId('node_id'))
 			return $this->responseBuilder->missingNameOrId($response);
 
@@ -139,10 +129,6 @@ class Orchestrator
 	 */
 	public function validateMove(ResponseInterface $response): ?ResponseInterface
 	{
-		$answer = $this->validateToken($response);
-		if ($answer !== null)
-			return $answer;
-
 		if (!$this->hasId('src_node_id') || !$this->hasId('target_node_id') || $this->text('target_region') === '')
 			return $this->responseBuilder->missingMoveParameters($response);
 
@@ -170,10 +156,6 @@ class Orchestrator
 	 */
 	public function validateDelete(ResponseInterface $response): ?ResponseInterface
 	{
-		$answer = $this->validateToken($response);
-		if ($answer !== null)
-			return $answer;
-
 		if (!$this->hasId('node_id'))
 			return $this->responseBuilder->missingNodeId($response);
 
@@ -191,17 +173,5 @@ class Orchestrator
 		$count = $this->nodesService->deleteNode($this->id('node_id'));
 
 		return $this->responseBuilder->generalSuccess($response, ['data' => ['count_deleted_nodes' => $count]]);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	private function validateToken(ResponseInterface $response): ?ResponseInterface
-	{
-		if (!$this->validator->validateCsrfToken($this->text('csrf_token')))
-			return $this->responseBuilder->csrfTokenMismatch($response);
-
-		return null;
 	}
 }

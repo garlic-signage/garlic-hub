@@ -45,9 +45,9 @@ class UserTokenControllerTest extends UsersControllerTestCase
 	/**
 	 * @param array<string,mixed> $body
 	 */
-	private function send(string $action, array $body, bool $withToken = true): ResponseInterface
+	private function send(string $action, array $body): ResponseInterface
 	{
-		$request = $this->request($action === 'delete' ? 'DELETE' : 'POST', '/users/tokens', $withToken ? $this->withToken($body) : $body);
+		$request = $this->request($action === 'delete' ? 'DELETE' : 'POST', '/users/tokens', $body);
 
 		return $action === 'delete' ? $this->controller->delete($request, $this->newResponse()) : $this->controller->refresh($request, $this->newResponse());
 	}
@@ -95,17 +95,6 @@ class UserTokenControllerTest extends UsersControllerTestCase
 		$this->assertSuccess($this->send('delete', ['UID' => '3', 'purpose' => 'password_reset']));
 
 		static::assertSame([TokenPurposes::INITIAL_PASSWORD->value], $this->connection->fetchFirstColumn('SELECT purpose FROM user_tokens WHERE UID = 3'));
-	}
-
-	#[DataProvider('actions')]
-	public function testATokenNeedsTheCsrfToken(string $action): void
-	{
-		$this->actingAs(1);
-		$this->createToken(3, TokenPurposes::PASSWORD_RESET);
-
-		$this->assertError($this->send($action, ['UID' => '3', 'purpose' => 'password_reset'], withToken: false), 'CSRF token validation error.');
-
-		static::assertSame(1, $this->countTokens(3));
 	}
 
 	#[DataProvider('actions')]
@@ -190,11 +179,4 @@ class UserTokenControllerTest extends UsersControllerTestCase
 		$this->assertError($this->send($action, ['UID' => '3', 'purpose' => ['password_reset']]), 'Purpose not transmitted.');
 	}
 
-	#[DataProvider('actions')]
-	public function testAListAsCsrfTokenIsNoToken(string $action): void
-	{
-		$this->actingAs(1);
-
-		$this->assertError($this->send($action, ['csrf_token' => ['x'], 'UID' => '3', 'purpose' => 'password_reset'], withToken: false), 'CSRF token validation error.');
-	}
 }

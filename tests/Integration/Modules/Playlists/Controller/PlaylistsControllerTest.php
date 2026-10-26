@@ -48,7 +48,7 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 		$this->actingAs(2);
 		$this->connection->executeStatement("INSERT INTO playlists_items (item_id, playlist_id, UID, item_order, item_type, file_resource, item_name) VALUES (8, 4, 2, 1, 'template', '7', 'x')");
 
-		$response = $this->controller->delete($this->request('DELETE', body: $this->withToken(['playlist_id' => '4'])), $this->newResponse());
+		$response = $this->controller->delete($this->request('DELETE', body: ['playlist_id' => '4']), $this->newResponse());
 
 		$this->assertSuccess($response);
 		static::assertSame(0, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists WHERE playlist_id = 4'));
@@ -56,12 +56,11 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 		static::assertSame(3, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists'));
 	}
 
-	public function testDeleteNeedsTheTokenAndAPlaylist(): void
+	public function testDeleteNeedsAPlaylist(): void
 	{
 		$this->actingAs(2);
 
-		$this->assertError($this->controller->delete($this->request('DELETE', body: ['playlist_id' => '4']), $this->newResponse()), 'CSRF token validation error.');
-		$this->assertError($this->controller->delete($this->request('DELETE', body: $this->withToken([])), $this->newResponse()), 'Playlist ID not valid.');
+		$this->assertError($this->controller->delete($this->request('DELETE', body: []), $this->newResponse()), 'Playlist ID not valid.');
 		static::assertSame(4, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists'));
 	}
 
@@ -73,7 +72,7 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 		{
 			try
 			{
-				$this->controller->$method($this->request('DELETE', body: $this->withToken(['playlist_id' => '2'])), $this->newResponse());
+				$this->controller->$method($this->request('DELETE', body: ['playlist_id' => '2']), $this->newResponse());
 				static::fail($method . ' did not throw AccessDeniedException');
 			}
 			catch (AccessDeniedException)
@@ -89,35 +88,34 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 		$this->actingAs(2);
 
 		$this->expectException(NotFoundException::class);
-		$this->controller->delete($this->request('DELETE', body: $this->withToken(['playlist_id' => '999'])), $this->newResponse());
+		$this->controller->delete($this->request('DELETE', body: ['playlist_id' => '999']), $this->newResponse());
 	}
 
 	public function testTheShuffleIsToggledAndTheMetricsAreGivenBack(): void
 	{
 		$this->actingAs(2);
 
-		$response = $this->controller->toggleShuffle($this->request('PATCH', body: $this->withToken(['playlist_id' => '1'])), $this->newResponse());
+		$response = $this->controller->toggleShuffle($this->request('PATCH', body: ['playlist_id' => '1']), $this->newResponse());
 
 		$this->assertSuccess($response);
 		static::assertSame(68, $this->json($response)['playlist_metrics']['duration']);
 		static::assertSame(1, (int) $this->databaseValue('SELECT shuffle FROM playlists WHERE playlist_id = 1'));
 	}
 
-	public function testToggleShuffleNeedsTheTokenAndAPlaylist(): void
+	public function testToggleShuffleNeedsAPlaylist(): void
 	{
 		$this->actingAs(2);
 
-		$this->assertError($this->controller->toggleShuffle($this->request('PATCH', body: ['playlist_id' => '1']), $this->newResponse()), 'CSRF token validation error.');
-		$this->assertError($this->controller->toggleShuffle($this->request('PATCH', body: $this->withToken(['playlist_id' => 'abc'])), $this->newResponse()), 'Playlist ID not valid.');
+		$this->assertError($this->controller->toggleShuffle($this->request('PATCH', body: ['playlist_id' => 'abc']), $this->newResponse()), 'Playlist ID not valid.');
 		static::assertSame(0, (int) $this->databaseValue('SELECT shuffle FROM playlists WHERE playlist_id = 1'));
 	}
 
 	public function testThePickingOfAShuffledPlaylistChangesTheDuration(): void
 	{
 		$this->actingAs(2);
-		$this->controller->toggleShuffle($this->request('PATCH', body: $this->withToken(['playlist_id' => '1'])), $this->newResponse());
+		$this->controller->toggleShuffle($this->request('PATCH', body: ['playlist_id' => '1']), $this->newResponse());
 
-		$response = $this->controller->shufflePicking($this->request('PATCH', body: $this->withToken(['playlist_id' => '1', 'shuffle_picking' => '2'])), $this->newResponse());
+		$response = $this->controller->shufflePicking($this->request('PATCH', body: ['playlist_id' => '1', 'shuffle_picking' => '2']), $this->newResponse());
 
 		$this->assertSuccess($response);
 		static::assertSame(27, $this->json($response)['playlist_metrics']['duration']);
@@ -128,9 +126,8 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$this->assertError($this->controller->shufflePicking($this->request('PATCH', body: ['playlist_id' => '1', 'shuffle_picking' => '2']), $this->newResponse()), 'CSRF token validation error.');
-		$this->assertError($this->controller->shufflePicking($this->request('PATCH', body: $this->withToken(['playlist_id' => '1'])), $this->newResponse()), 'No picking value found.');
-		$this->assertError($this->controller->shufflePicking($this->request('PATCH', body: $this->withToken(['playlist_id' => '1', 'shuffle_picking' => '0'])), $this->newResponse()), 'No picking value found.');
+		$this->assertError($this->controller->shufflePicking($this->request('PATCH', body: ['playlist_id' => '1']), $this->newResponse()), 'No picking value found.');
+		$this->assertError($this->controller->shufflePicking($this->request('PATCH', body: ['playlist_id' => '1', 'shuffle_picking' => '0']), $this->newResponse()), 'No picking value found.');
 		static::assertSame(0, (int) $this->databaseValue('SELECT shuffle_picking FROM playlists WHERE playlist_id = 1'));
 	}
 
@@ -141,7 +138,7 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 		foreach (['delete', 'toggleShuffle'] as $method)
 		{
 			foreach (['1abc', ['1'], '-1'] as $playlistId)
-				$this->assertError($this->controller->$method($this->request('DELETE', body: $this->withToken(['playlist_id' => $playlistId])), $this->newResponse()), 'Playlist ID not valid.');
+				$this->assertError($this->controller->$method($this->request('DELETE', body: ['playlist_id' => $playlistId]), $this->newResponse()), 'Playlist ID not valid.');
 			static::assertSame(0, (int) $this->databaseValue('SELECT shuffle FROM playlists WHERE playlist_id = 1'));
 		}
 		$this->assertError($this->controller->loadZone($this->request('GET'), $this->newResponse(), ['playlist_id' => ['1']]), 'Playlist ID not valid.');
@@ -154,18 +151,10 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 		$this->actingAs(2);
 		$request = $this->request('PATCH')->withParsedBody(null);
 
-		$this->assertError($this->controller->delete($request, $this->newResponse()), 'CSRF token validation error.');
-		$this->assertError($this->controller->toggleShuffle($request, $this->newResponse()), 'CSRF token validation error.');
-		$this->assertError($this->controller->shufflePicking($request, $this->newResponse()), 'CSRF token validation error.');
-		$this->assertError($this->controller->saveZone($request, $this->newResponse(), ['playlist_id' => '1']), 'CSRF token validation error.');
-	}
-
-	public function testATokenOfTheWrongTypeIsAWrongToken(): void
-	{
-		$this->actingAs(2);
-
-		$this->assertError($this->controller->delete($this->request('DELETE', body: ['csrf_token' => ['x'], 'playlist_id' => '4']), $this->newResponse()), 'CSRF token validation error.');
-		static::assertSame(4, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists'));
+		$this->assertError($this->controller->delete($request, $this->newResponse()), 'Playlist ID not valid.');
+		$this->assertError($this->controller->toggleShuffle($request, $this->newResponse()), 'Playlist ID not valid.');
+		$this->assertError($this->controller->shufflePicking($request, $this->newResponse()), 'Playlist ID not valid.');
+		$this->assertError($this->controller->saveZone($request, $this->newResponse(), ['playlist_id' => '1']), 'Invalid zone data.');
 	}
 
 	/**
@@ -174,10 +163,10 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 	public function testThePickingMustBeAPositiveNumber(): void
 	{
 		$this->actingAs(2);
-		$this->controller->toggleShuffle($this->request('PATCH', body: $this->withToken(['playlist_id' => '1'])), $this->newResponse());
+		$this->controller->toggleShuffle($this->request('PATCH', body: ['playlist_id' => '1']), $this->newResponse());
 
 		foreach (['-5', 'abc', ['2']] as $picking)
-			$this->assertError($this->controller->shufflePicking($this->request('PATCH', body: $this->withToken(['playlist_id' => '1', 'shuffle_picking' => $picking])), $this->newResponse()), 'No picking value found.');
+			$this->assertError($this->controller->shufflePicking($this->request('PATCH', body: ['playlist_id' => '1', 'shuffle_picking' => $picking]), $this->newResponse()), 'No picking value found.');
 		static::assertSame(0, (int) $this->databaseValue('SELECT shuffle_picking FROM playlists WHERE playlist_id = 1'));
 	}
 
@@ -194,7 +183,7 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 		$this->actingAs(2);
 		$layout = ['resolution' => '1920x1080', 'zoom' => 70, 'export_unit' => 'pixel', 'zones' => [$this->zone(3), $this->zone(0, 'Frei')]];
 
-		$saved = $this->controller->saveZone($this->request(body: $this->withToken($layout)), $this->newResponse(), ['playlist_id' => '1']);
+		$saved = $this->controller->saveZone($this->request(body: $layout), $this->newResponse(), ['playlist_id' => '1']);
 		$loaded = $this->controller->loadZone($this->request('GET'), $this->newResponse(), ['playlist_id' => '1']);
 
 		$this->assertSuccess($saved);
@@ -205,7 +194,7 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$this->controller->saveZone($this->request(body: $this->withToken(['resolution' => '1280x720', 'unknown' => 'x', 'zones' => [['unknown' => 'y'] + $this->zone(0)]])), $this->newResponse(), ['playlist_id' => '1']);
+		$this->controller->saveZone($this->request(body: ['resolution' => '1280x720', 'unknown' => 'x', 'zones' => [['unknown' => 'y'] + $this->zone(0)]]), $this->newResponse(), ['playlist_id' => '1']);
 
 		static::assertSame(
 			['resolution' => '1280x720', 'zoom' => 70, 'export_unit' => 'pixel', 'zones' => [$this->zone(0)]],
@@ -229,16 +218,15 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 		];
 
 		foreach ($invalid as $label => $layout)
-			$this->assertError($this->controller->saveZone($this->request(body: $this->withToken($layout)), $this->newResponse(), ['playlist_id' => '1']), 'Invalid zone data.');
+			$this->assertError($this->controller->saveZone($this->request(body: $layout), $this->newResponse(), ['playlist_id' => '1']), 'Invalid zone data.');
 		static::assertNull($this->databaseValue('SELECT layout FROM playlists WHERE playlist_id = 1'));
 	}
 
-	public function testZonesCanNotBeSavedWithoutAToken(): void
+	public function testZonesCanNotBeSavedWithoutAPlaylist(): void
 	{
 		$this->actingAs(2);
 
-		$this->assertError($this->controller->saveZone($this->request(body: ['resolution' => '1x1']), $this->newResponse(), ['playlist_id' => '1']), 'CSRF token validation error.');
-		$this->assertError($this->controller->saveZone($this->request(body: $this->withToken(['resolution' => '1x1'])), $this->newResponse(), []), 'Playlist ID not valid.');
+		$this->assertError($this->controller->saveZone($this->request(body: ['resolution' => '1x1']), $this->newResponse(), []), 'Playlist ID not valid.');
 		static::assertNull($this->databaseValue('SELECT layout FROM playlists WHERE playlist_id = 1'));
 	}
 
@@ -252,7 +240,7 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 
 		try
 		{
-			$this->controller->saveZone($this->request(body: $this->withToken($layout)), $this->newResponse(), ['playlist_id' => '1']);
+			$this->controller->saveZone($this->request(body: $layout), $this->newResponse(), ['playlist_id' => '1']);
 			static::fail('Expected AccessDeniedException');
 		}
 		catch (AccessDeniedException)
@@ -265,7 +253,7 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 	{
 		$this->actingAs(1);
 
-		$this->assertSuccess($this->controller->saveZone($this->request(body: $this->withToken(['resolution' => '1920x1080', 'zones' => [$this->zone(2)]])), $this->newResponse(), ['playlist_id' => '1']));
+		$this->assertSuccess($this->controller->saveZone($this->request(body: ['resolution' => '1920x1080', 'zones' => [$this->zone(2)]]), $this->newResponse(), ['playlist_id' => '1']));
 	}
 
 	public function testAZoneCanNotPlayAnUnknownPlaylist(): void
@@ -273,7 +261,7 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 		$this->actingAs(2);
 
 		$this->expectException(NotFoundException::class);
-		$this->controller->saveZone($this->request(body: $this->withToken(['resolution' => '1920x1080', 'zones' => [$this->zone(999)]])), $this->newResponse(), ['playlist_id' => '1']);
+		$this->controller->saveZone($this->request(body: ['resolution' => '1920x1080', 'zones' => [$this->zone(999)]]), $this->newResponse(), ['playlist_id' => '1']);
 	}
 
 	public function testAZoneCanNotPlayThePlaylistItself(): void
@@ -281,7 +269,7 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 		$this->actingAs(2);
 
 		$this->expectException(TranslatableModuleException::class);
-		$this->controller->saveZone($this->request(body: $this->withToken(['resolution' => '1920x1080', 'zones' => [$this->zone(1)]])), $this->newResponse(), ['playlist_id' => '1']);
+		$this->controller->saveZone($this->request(body: ['resolution' => '1920x1080', 'zones' => [$this->zone(1)]]), $this->newResponse(), ['playlist_id' => '1']);
 	}
 
 	/**
@@ -291,7 +279,7 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$this->controller->saveZone($this->request(body: $this->withToken(['playlist_id' => '2', 'resolution' => '1x1'])), $this->newResponse(), ['playlist_id' => '1']);
+		$this->controller->saveZone($this->request(body: ['playlist_id' => '2', 'resolution' => '1x1']), $this->newResponse(), ['playlist_id' => '1']);
 
 		static::assertNotNull($this->databaseValue('SELECT layout FROM playlists WHERE playlist_id = 1'));
 		static::assertNull($this->databaseValue('SELECT layout FROM playlists WHERE playlist_id = 2'));
@@ -303,7 +291,7 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 
 		try
 		{
-			$this->controller->saveZone($this->request(body: $this->withToken(['resolution' => '1x1'])), $this->newResponse(), ['playlist_id' => '2']);
+			$this->controller->saveZone($this->request(body: ['resolution' => '1x1']), $this->newResponse(), ['playlist_id' => '2']);
 			static::fail('Expected AccessDeniedException');
 		}
 		catch (AccessDeniedException)

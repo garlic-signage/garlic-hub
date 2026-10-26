@@ -21,7 +21,6 @@ declare(strict_types=1);
 
 use App\Framework\Controller\JsonResponseHandler;
 use App\Shared\Acl\AclHelper;
-use App\Framework\Validation\BaseValidator;
 use App\Framework\Config\Config;
 use App\Framework\System\ShellExecutor;
 use App\Framework\Localization\Translate\Translator;
@@ -73,7 +72,6 @@ $dependencies[NodesController::class] = DI\factory(function (ContainerInterface 
 	return new NodesController(
 		new \App\Modules\Mediapool\Helper\Nodes\Orchestrator(
 			new \App\Modules\Mediapool\Helper\Nodes\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
-			$container->get(BaseValidator::class),
 			$container->get(NodesService::class)
 		)
 	);
@@ -124,7 +122,6 @@ $dependencies[UploadController::class] = DI\factory(function (ContainerInterface
 		new \App\Modules\Mediapool\Helper\Uploads\Orchestrator(
 			new \App\Modules\Mediapool\Helper\Uploads\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
 			$container->get(UserSession::class),
-			$container->get(BaseValidator::class),
 			$container->get(UploadService::class)
 		)
 	);
@@ -145,7 +142,6 @@ $dependencies[MediaController::class] = DI\factory(function (ContainerInterface 
 	return new MediaController(
 		new \App\Modules\Mediapool\Helper\Media\Orchestrator(
 			new \App\Modules\Mediapool\Helper\Media\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
-			$container->get(BaseValidator::class),
 			$container->get(MediaService::class)
 		)
 	);

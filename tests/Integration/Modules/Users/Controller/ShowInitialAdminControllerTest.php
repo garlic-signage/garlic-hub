@@ -78,7 +78,7 @@ class ShowInitialAdminControllerTest extends UsersControllerTestCase
 	 */
 	private function store(?array $body): ResponseInterface
 	{
-		$request = $this->request('POST', '/create-initial', $body === null ? null : $this->withToken($body));
+		$request = $this->request('POST', '/create-initial', $body === null ? null : $body);
 
 		return $this->controller->store($request, $this->newResponse());
 	}
@@ -186,16 +186,6 @@ class ShowInitialAdminControllerTest extends UsersControllerTestCase
 		static::assertSame(['root', 'wrong'], [$fields['username']['value'], $fields['email']['value']]);
 		static::assertSame('', $fields['password']['value'] ?? '');
 		static::assertSame('', $fields['password_confirm']['value'] ?? '');
-	}
-
-	public function testTheAdminNeedsTheCsrfToken(): void
-	{
-		$request = $this->request('POST', '/create-initial', self::admin());
-
-		$this->page($this->controller->store($request, $this->newResponse()));
-
-		static::assertSame(0, $this->countUsers());
-		static::assertCount(1, $this->flash('error'));
 	}
 
 	public function testARequestWithoutBodyIsAFormWithErrors(): void

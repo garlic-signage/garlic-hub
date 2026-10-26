@@ -21,7 +21,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\Widgets;
 
-use App\Framework\Validation\BaseValidator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
@@ -42,7 +41,6 @@ class Orchestrator
 
 	public function __construct(
 		private readonly ResponseBuilder $responseBuilder,
-		private readonly BaseValidator $validator,
 		private readonly WidgetsService $widgetsService
 	) {}
 
@@ -53,18 +51,6 @@ class Orchestrator
 			return $this->responseBuilder->invalidItemId($response);
 
 		return null;
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	public function validateSave(ResponseInterface $response): ?ResponseInterface
-	{
-		if (!$this->validator->validateCsrfToken($this->text('csrf_token')))
-			return $this->responseBuilder->csrfTokenMismatch($response);
-
-		return $this->validate($response);
 	}
 
 	/**

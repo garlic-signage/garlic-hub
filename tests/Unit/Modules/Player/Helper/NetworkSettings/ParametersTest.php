@@ -48,7 +48,7 @@ class ParametersTest extends TestCase
 	#[Group('units')]
 	public function testConstructor(): void
 	{
-		static::assertCount(3, $this->parameters->getCurrentParameters());
+		static::assertCount(2, $this->parameters->getCurrentParameters());
 		static::assertSame('player', $this->parameters->getModuleName());
 	}
 

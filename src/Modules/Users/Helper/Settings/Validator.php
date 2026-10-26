@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace App\Modules\Users\Helper\Settings;
 
 use App\Framework\Validation\BaseValidator;
-use App\Framework\Security\CsrfToken;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -32,7 +31,7 @@ use App\Framework\Exceptions\ModuleException;
  * Class Validator
  *
  * Extends the functionality of BaseValidator to include specific validation
- * logic for user inputs, such as validating CSRF tokens, usernames, and emails.
+ * logic for user inputs, such as validating usernames and emails.
  *
  * This class relies on Translator for error message translation and handles
  * input parameters via the Parameters class. It is designed to perform precise
@@ -42,9 +41,9 @@ class Validator extends BaseValidator
 {
 	private Parameters $inputEditParameters;
 
-	public function __construct(Translator $translator, Parameters $inputEditParameters, CsrfToken $csrfToken)
+	public function __construct(Translator $translator, Parameters $inputEditParameters)
 	{
-		parent::__construct($translator, $csrfToken);
+		parent::__construct($translator);
 		$this->inputEditParameters = $inputEditParameters;
 	}
 
@@ -56,7 +55,7 @@ class Validator extends BaseValidator
 	 */
 	public function validateUserInput(): array
 	{
-		$errors = $this->validateFormCsrfToken($this->inputEditParameters);
+		$errors = [];
 
 		if ($this->inputEditParameters->getValueOfParameter(Parameters::PARAMETER_USER_NAME) === '')
 			$errors[] = $this->translator->translate('no_username', 'users');

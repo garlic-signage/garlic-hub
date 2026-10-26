@@ -23,7 +23,6 @@ namespace Tests\Integration\Modules\Auth\Controller;
 
 use App\Framework\Http\Cookie;
 use App\Framework\Http\Session;
-use App\Framework\Security\CsrfToken;
 use App\Modules\Auth\AuthService;
 use App\Modules\Auth\AutoLoginService;
 use App\Modules\Auth\LoginController;
@@ -61,7 +60,7 @@ class LoginTest extends ContainerTestCase
 	 */
 	private function login(string $username, string $password = self::PASSWORD, array $changes = []): ResponseInterface
 	{
-		$post = ['username' => $username, 'password' => $password, 'csrf_token' => $this->container->get(CsrfToken::class)->getToken()];
+		$post = ['username' => $username, 'password' => $password];
 		foreach ($changes as $key => $value)
 		{
 			if ($value === null)
@@ -187,26 +186,6 @@ class LoginTest extends ContainerTestCase
 
 		static::assertNull($this->session()->get('user'));
 		static::assertSame(['Too many failed login attempts. Please try again later.'], $this->flashErrors());
-	}
-
-	/**
-	 * @return array<string,array{array<string,mixed>}>
-	 */
-	public static function wrongTokens(): array
-	{
-		return ['wrong' => [['csrf_token' => 'forged']], 'empty' => [['csrf_token' => '']], 'missing' => [['csrf_token' => null]]];
-	}
-
-	/**
-	 * @param array<string,mixed> $changes
-	 */
-	#[DataProvider('wrongTokens')]
-	public function testALoginWithoutTheTokenOfThePageIsRefused(array $changes): void
-	{
-		$this->assertRedirect($this->login('regular', self::PASSWORD, $changes), '/login');
-
-		static::assertNull($this->session()->get('user'));
-		static::assertSame(['Invalid CSRF token'], $this->flashErrors());
 	}
 
 	/**

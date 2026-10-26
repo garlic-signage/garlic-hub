@@ -24,7 +24,6 @@ namespace App\Modules\Templates\Controller;
 
 use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Controller\RequestInput;
-use App\Framework\Security\CsrfToken;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -43,7 +42,6 @@ readonly class TemplatesController
 		private TemplatesDatatableService $templatesDatatableService,
 		private Parameters $parameters,
 		private JsonResponseHandler $responseHandler,
-		private CsrfToken           $csrfToken,
 		private MediaUrlSigner      $mediaUrlSigner
 	) {}
 
@@ -53,9 +51,6 @@ readonly class TemplatesController
     public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
 		$input = RequestInput::of($request->getParsedBody());
-
-		if (!$this->csrfToken->validateToken($input->text('csrf_token')))
-			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.');
 
 		$templateId = $input->id('template_id');
 		if ($templateId === 0)
@@ -155,9 +150,6 @@ readonly class TemplatesController
 		$input = RequestInput::of($request->getParsedBody());
 
 		$templateId = $input->id('template_id');
-
-		if (!$this->csrfToken->validateToken($input->text('csrf_token')))
-			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.');
 
 		if ($templateId === 0)
 			return $this->responseHandler->jsonError($response, 'No template Id');

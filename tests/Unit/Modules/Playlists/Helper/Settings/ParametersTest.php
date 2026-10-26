@@ -47,7 +47,7 @@ class ParametersTest extends TestCase
 	#[Group('units')]
 	public function testConstructor(): void
 	{
-		static::assertCount(2, $this->parameters->getCurrentParameters());
+		static::assertCount(1, $this->parameters->getCurrentParameters());
 		static::assertSame('playlists', $this->parameters->getModuleName());
 	}
 
@@ -58,7 +58,7 @@ class ParametersTest extends TestCase
 	{
 		static::assertFalse($this->parameters->hasParameter(Parameters::PARAMETER_PLAYLIST_MODE));
 		$this->parameters->addPlaylistMode();
-		static::assertCount(3, $this->parameters->getCurrentParameters());
+		static::assertCount(2, $this->parameters->getCurrentParameters());
 		static::assertTrue($this->parameters->hasParameter(Parameters::PARAMETER_PLAYLIST_MODE));
 	}
 
@@ -69,7 +69,7 @@ class ParametersTest extends TestCase
 	{
 		static::assertFalse($this->parameters->hasParameter(Parameters::PARAMETER_PLAYLIST_ID));
 		$this->parameters->addPlaylistId();
-		static::assertCount(3, $this->parameters->getCurrentParameters());
+		static::assertCount(2, $this->parameters->getCurrentParameters());
 		static::assertTrue($this->parameters->hasParameter(Parameters::PARAMETER_PLAYLIST_ID));
 	}
 
@@ -80,7 +80,7 @@ class ParametersTest extends TestCase
 	{
 		static::assertFalse($this->parameters->hasParameter(Parameters::PARAMETER_TIME_LIMIT));
 		$this->parameters->addTimeLimit();
-		static::assertCount(3, $this->parameters->getCurrentParameters());
+		static::assertCount(2, $this->parameters->getCurrentParameters());
 		static::asserttrue($this->parameters->hasParameter(Parameters::PARAMETER_TIME_LIMIT));
 	}
 

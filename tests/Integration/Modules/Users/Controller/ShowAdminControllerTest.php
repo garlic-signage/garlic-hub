@@ -50,9 +50,9 @@ class ShowAdminControllerTest extends UsersControllerTestCase
 	/**
 	 * @param array<string,mixed> $body
 	 */
-	private function store(array $body, bool $withToken = true): ResponseInterface
+	private function store(array $body): ResponseInterface
 	{
-		return $this->controller->store($this->request('POST', '/users/edit', $withToken ? $this->withToken($body) : $body), $this->newResponse());
+		return $this->controller->store($this->request('POST', '/users/edit', $body), $this->newResponse());
 	}
 
 	private function edit(string $UID): ResponseInterface
@@ -143,17 +143,17 @@ class ShowAdminControllerTest extends UsersControllerTestCase
 	}
 
 	/**
-	 * @return array<string,array{array<string,mixed>,list<string>,bool}> the input, the keys of the errors and whether the token is sent
+	 * @return array<string,array{array<string,mixed>,list<string>}> the input and the keys of the errors
 	 */
 	public static function wrongInput(): array
 	{
 		return [
-			'no username'    => [['username' => '', 'email' => 'carla@example.com'], ['no_username'], true],
-			'no email'       => [['username' => 'carla', 'email' => ''], ['no_email'], true],
-			'wrong email'    => [['username' => 'carla', 'email' => 'carla.example.com'], ['no_email'], true],
-			'nothing'        => [[], ['no_username', 'no_email'], true],
-			'taken username' => [['username' => 'anna', 'email' => 'carla@example.com'], ['username_exists'], true],
-			'taken email'    => [['username' => 'carla', 'email' => 'anna@example.com'], ['email_exists'], true],
+			'no username'    => [['username' => '', 'email' => 'carla@example.com'], ['no_username']],
+			'no email'       => [['username' => 'carla', 'email' => ''], ['no_email']],
+			'wrong email'    => [['username' => 'carla', 'email' => 'carla.example.com'], ['no_email']],
+			'nothing'        => [[], ['no_username', 'no_email']],
+			'taken username' => [['username' => 'anna', 'email' => 'carla@example.com'], ['username_exists']],
+			'taken email'    => [['username' => 'carla', 'email' => 'anna@example.com'], ['email_exists']],
 		];
 	}
 
@@ -162,11 +162,11 @@ class ShowAdminControllerTest extends UsersControllerTestCase
 	 * @param list<string> $errors
 	 */
 	#[DataProvider('wrongInput')]
-	public function testANewUserWithWrongInputIsNotCreated(array $input, array $errors, bool $withToken): void
+	public function testANewUserWithWrongInputIsNotCreated(array $input, array $errors): void
 	{
 		$this->actingAs(1);
 
-		$page = $this->page($this->store(['UID' => '0'] + $input, $withToken));
+		$page = $this->page($this->store(['UID' => '0'] + $input));
 
 		static::assertSame(3, $this->countUsers());
 		static::assertCount(count($errors), $this->flash('error'));
@@ -192,17 +192,6 @@ class ShowAdminControllerTest extends UsersControllerTestCase
 
 		$fields = $this->fields($page);
 		static::assertSame(['carla', 'wrong'], [$fields['username']['value'], $fields['email']['value']]);
-	}
-
-	public function testANewUserNeedsTheCsrfToken(): void
-	{
-		$this->actingAs(1);
-
-		$page = $this->page($this->store(['UID' => '0', 'username' => 'carla', 'email' => 'carla@example.com'], withToken: false));
-
-		static::assertSame(3, $this->countUsers());
-		static::assertNotSame([], $this->flash('error'));
-		static::assertSame('carla', $this->fields($page)['username']['value']);
 	}
 
 	public function testTheAdminChangesAUser(): void
@@ -232,11 +221,11 @@ class ShowAdminControllerTest extends UsersControllerTestCase
 	 * @param list<string> $errors
 	 */
 	#[DataProvider('wrongInput')]
-	public function testAUserWithWrongInputIsNotChanged(array $input, array $errors, bool $withToken): void
+	public function testAUserWithWrongInputIsNotChanged(array $input, array $errors): void
 	{
 		$this->actingAs(1);
 
-		$page = $this->page($this->store(['UID' => '3'] + $input, $withToken));
+		$page = $this->page($this->store(['UID' => '3'] + $input));
 
 		static::assertSame(['bernd', 'bernd@example.com'], [$this->userRow(3)['username'], $this->userRow(3)['email']]);
 		static::assertCount(count($errors), $this->flash('error'));

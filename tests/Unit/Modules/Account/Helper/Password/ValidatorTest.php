@@ -107,49 +107,13 @@ class ValidatorTest extends TestCase
 	}
 
 	/**
-	 * @return array<string,array{array<string,mixed>}>
-	 */
-	public static function wrongCsrfProvider(): array
-	{
-		return [
-			'not sent'  => [['csrf_token' => null]],
-			'empty'     => [['csrf_token' => '']],
-			'wrong'     => [['csrf_token' => 'not-the-token']],
-			'an array'  => [['csrf_token' => ['x']]],
-		];
-	}
-
-	/**
-	 * @param array<string,mixed> $changes
-	 * @throws \Exception
-	 */
-	#[Group('units')]
-	#[DataProvider('wrongCsrfProvider')]
-	public function testAWrongCsrfTokenIsReported(array $changes): void
-	{
-		static::assertSame(['security.csrf_token_mismatch'], $this->validate($this->fixture->post($changes)));
-	}
-
-	/**
-	 * @throws \Exception
-	 */
-	#[Group('units')]
-	public function testWithoutATokenInTheSessionNothingIsAccepted(): void
-	{
-		$post = $this->fixture->post();
-		$this->fixture->session->clear();
-
-		static::assertSame(['security.csrf_token_mismatch'], $this->validate($post));
-	}
-
-	/**
 	 * @throws \Exception
 	 */
 	#[Group('units')]
 	public function testAllErrorsAreReportedTogether(): void
 	{
-		$errors = $this->validate($this->fixture->post(['csrf_token' => 'x', 'password' => 'a', 'password_confirm' => 'b']));
+		$errors = $this->validate($this->fixture->post(['password' => 'a', 'password_confirm' => 'b']));
 
-		static::assertSame(['security.csrf_token_mismatch', 'account.no_passwords_match', 'account.password_explanation'], $errors);
+		static::assertSame(['account.no_passwords_match', 'account.password_explanation'], $errors);
 	}
 }

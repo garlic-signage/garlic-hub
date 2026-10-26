@@ -21,34 +21,20 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Framework\Validation;
 
-use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
-use App\Framework\Exceptions\ModuleException;
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Security\Crypt;
-use App\Framework\Security\CsrfToken;
-use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Framework\Validation\BaseValidator;
-use App\Framework\Validation\Sanitizer;
-use Defuse\Crypto\Exception\EnvironmentIsBrokenException;
-use Defuse\Crypto\Key;
 use ErrorException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-use Tests\Support\MemorySession;
 
 class BaseValidatorTest extends TestCase
 {
 	/** The password pattern of config/settings/config_main.ini */
 	private const string PASSWORD_PATTERN = '(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}';
 
-	private CsrfToken $csrfToken;
 	private BaseValidator $baseValidator;
 
-	/**
-	 * @throws EnvironmentIsBrokenException
-	 */
 	protected function setUp(): void
 	{
 		parent::setUp();
@@ -56,8 +42,7 @@ class BaseValidatorTest extends TestCase
 		$translator = $this->createStub(Translator::class);
 		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $key . '@' . $module);
 
-		$this->csrfToken     = new CsrfToken(new Crypt(Key::createNewRandomKey()), new MemorySession());
-		$this->baseValidator = new BaseValidator($translator, $this->csrfToken);
+		$this->baseValidator = new BaseValidator($translator);
 	}
 
 	/**
@@ -194,96 +179,5 @@ class BaseValidatorTest extends TestCase
 		{
 			restore_error_handler();
 		}
-	}
-
-	#[Group('units')]
-	public function testValidateCsrfToken(): void
-	{
-		$token = $this->csrfToken->getToken();
-
-		static::assertTrue($this->baseValidator->validateCsrfToken($token));
-		static::assertFalse($this->baseValidator->validateCsrfToken($token . 'x'));
-		static::assertFalse($this->baseValidator->validateCsrfToken(''));
-	}
-
-	#[Group('units')]
-	public function testAnotherSessionHasAnotherToken(): void
-	{
-		$other = new CsrfToken(new Crypt(Key::createNewRandomKey()), new MemorySession());
-
-		static::assertFalse($this->baseValidator->validateCsrfToken($other->getToken()));
-	}
-
-	/**
-	 * @param array<string,mixed> $input
-	 * @throws ModuleException
-	 */
-	private function formParameters(array $input): BaseEditParameters
-	{
-		$parameters = new class extends BaseEditParameters
-		{
-			public function __construct()
-			{
-				parent::__construct('testmodule', new Sanitizer(), new MemorySession());
-				$this->currentParameters = $this->defaultParameters;
-				$this->userInputs        = [];
-			}
-		};
-
-		return $parameters->setUserInputs($input)->parseInputAllParameters();
-	}
-
-	/**
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testAFormWithTheTokenOfTheSessionHasNoError(): void
-	{
-		$parameters = $this->formParameters([BaseEditParameters::PARAMETER_CSRF_TOKEN => $this->csrfToken->getToken()]);
-
-		static::assertSame([], $this->baseValidator->validateFormCsrfToken($parameters));
-	}
-
-	/**
-	 * @return array<string, array{array<string,mixed>}>
-	 */
-	public static function wrongTokenProvider(): array
-	{
-		return [
-			'no token sent'  => [[]],
-			'empty token'    => [['csrf_token' => '']],
-			'only spaces'    => [['csrf_token' => '   ']],
-			'another token'  => [['csrf_token' => 'another']],
-		];
-	}
-
-	/**
-	 * @param array<string,mixed> $input
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	#[DataProvider('wrongTokenProvider')]
-	public function testAFormWithAWrongOrMissingTokenHasTheMismatchError(array $input): void
-	{
-		$this->csrfToken->getToken();
-
-		static::assertSame(['csrf_token_mismatch@security'], $this->baseValidator->validateFormCsrfToken($this->formParameters($input)));
-	}
-
-	/**
-	 * With a token in the session but none in the request there is no error to "match" by accident.
-	 *
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
-	public function testAnEmptyTokenIsNeverValidEvenWithoutATokenInTheSession(): void
-	{
-		static::assertSame(['csrf_token_mismatch@security'], $this->baseValidator->validateFormCsrfToken($this->formParameters(['csrf_token' => ''])));
 	}
 }

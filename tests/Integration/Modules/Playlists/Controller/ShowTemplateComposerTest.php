@@ -25,7 +25,6 @@ use App\Framework\Config\Config;
 use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Media\DataUrlDecoder;
 use App\Framework\Media\MediaUrlSigner;
-use App\Framework\Security\CsrfToken;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Modules\Playlists\Controller\ShowTemplateComposer;
 use App\Modules\Playlists\Helper\Templates\Orchestrator;
@@ -64,7 +63,6 @@ class ShowTemplateComposerTest extends PlaylistsControllerTestCase
 				$this->container->get(MediaUrlSigner::class)
 			),
 			$this->container->get(JsonResponseHandler::class),
-			$this->container->get(CsrfToken::class),
 			$this->container->get(Messages::class)
 		);
 	}
@@ -96,9 +94,9 @@ class ShowTemplateComposerTest extends PlaylistsControllerTestCase
 	/**
 	 * @param array<string,mixed> $body
 	 */
-	private function save(array $body, bool $withToken = true): ResponseInterface
+	private function save(array $body): ResponseInterface
 	{
-		return $this->controller->save($this->request('PATCH', body: $withToken ? $this->withToken($body) : $body), $this->newResponse());
+		return $this->controller->save($this->request('PATCH', body: $body), $this->newResponse());
 	}
 
 	public function testTheComposerOpensWithTheTitleOfTheItem(): void
@@ -171,12 +169,11 @@ class ShowTemplateComposerTest extends PlaylistsControllerTestCase
 		static::assertSame(['5.png'], array_map(static fn(mixed $path): string => basename((string) $path), (array) glob($this->workspace->dir . '/var/storage/playlists/items/originals/*')));
 	}
 
-	public function testSaveNeedsTheTokenAnItemAndRights(): void
+	public function testSaveNeedsAnItemAndRights(): void
 	{
 		$this->actingAs(2);
 		$body = ['item_id' => '5', 'content' => '{"objects":[]}', 'image' => self::PNG];
 
-		$this->assertError($this->save($body, withToken: false), 'CSRF token mismatch.');
 		$this->assertError($this->save(['item_id' => '0'] + $body), 'No item ID');
 		$this->assertError($this->save(['item_id' => '7'] + $body), 'No rights');
 		static::assertSame('image/png', $this->databaseValue('SELECT mimetype FROM playlists_items WHERE item_id = 5'));

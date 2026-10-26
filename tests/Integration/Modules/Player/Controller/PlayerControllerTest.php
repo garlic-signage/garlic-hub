@@ -157,7 +157,7 @@ class PlayerControllerTest extends PlayerControllerTestCase
 	{
 		$this->actingAs(1);
 
-		$response = $this->controller->delete($this->request('DELETE', '/async/player', $this->withToken(['player_id' => '3'])), $this->newResponse());
+		$response = $this->controller->delete($this->request('DELETE', '/async/player', ['player_id' => '3']), $this->newResponse());
 
 		static::assertSame(200, $response->getStatusCode());
 		static::assertTrue($this->json($response)['success']);
@@ -169,38 +169,9 @@ class PlayerControllerTest extends PlayerControllerTestCase
 	{
 		$this->actingAs(1);
 
-		$this->controller->delete($this->request('DELETE', '/async/player', $this->withToken(['player_id' => 3])), $this->newResponse());
+		$this->controller->delete($this->request('DELETE', '/async/player', ['player_id' => 3]), $this->newResponse());
 
 		static::assertSame(3, $this->countPlayers());
-	}
-
-	/**
-	 * @return array<string,array{array<string,mixed>}>
-	 */
-	public static function wrongTokens(): array
-	{
-		return [
-			'missing' => [[]],
-			'forged'  => [['csrf_token' => 'forged']],
-			'empty'   => [['csrf_token' => '']],
-			'a list'  => [['csrf_token' => ['x']]],
-			'a number' => [['csrf_token' => 5]],
-		];
-	}
-
-	/**
-	 * @param array<string,mixed> $token
-	 */
-	#[DataProvider('wrongTokens')]
-	public function testWithoutTheTokenOfThePageNothingIsDeleted(array $token): void
-	{
-		$this->actingAs(1);
-		$this->csrf();
-
-		$response = $this->controller->delete($this->request('DELETE', '/async/player', $token + ['player_id' => '3']), $this->newResponse());
-
-		$this->assertError($response, 'CSRF token mismatch.');
-		static::assertSame(4, $this->countPlayers());
 	}
 
 	public function testARequestWithoutABodyDeletesNothing(): void
@@ -208,7 +179,7 @@ class PlayerControllerTest extends PlayerControllerTestCase
 		$this->actingAs(1);
 		$request = new \Slim\Psr7\Factory\ServerRequestFactory()->createServerRequest('DELETE', '/async/player');
 
-		$this->assertError($this->controller->delete($request, $this->newResponse()), 'CSRF token mismatch.');
+		$this->assertError($this->controller->delete($request, $this->newResponse()), 'No playerId');
 		static::assertSame(4, $this->countPlayers());
 	}
 
@@ -238,7 +209,7 @@ class PlayerControllerTest extends PlayerControllerTestCase
 	{
 		$this->actingAs(1);
 
-		$this->assertError($this->controller->delete($this->request('DELETE', '/async/player', $this->withToken($body)), $this->newResponse()), 'No playerId');
+		$this->assertError($this->controller->delete($this->request('DELETE', '/async/player', $body), $this->newResponse()), 'No playerId');
 		static::assertSame(4, $this->countPlayers());
 	}
 
@@ -248,7 +219,7 @@ class PlayerControllerTest extends PlayerControllerTestCase
 
 		try
 		{
-			$this->controller->delete($this->request('DELETE', '/async/player', $this->withToken(['player_id' => '3'])), $this->newResponse());
+			$this->controller->delete($this->request('DELETE', '/async/player', ['player_id' => '3']), $this->newResponse());
 			static::fail('Expected an AccessDeniedException');
 		}
 		catch (AccessDeniedException)
@@ -262,6 +233,6 @@ class PlayerControllerTest extends PlayerControllerTestCase
 		$this->actingAs(1);
 
 		$this->expectException(NotFoundException::class);
-		$this->controller->delete($this->request('DELETE', '/async/player', $this->withToken(['player_id' => '999'])), $this->newResponse());
+		$this->controller->delete($this->request('DELETE', '/async/player', ['player_id' => '999']), $this->newResponse());
 	}
 }

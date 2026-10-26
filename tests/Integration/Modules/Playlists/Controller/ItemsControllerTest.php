@@ -82,7 +82,7 @@ class ItemsControllerTest extends PlaylistsControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$response = $this->controller->insert($this->request(body: $this->withToken(['playlist_id' => '1', 'id' => 'media-id-0000003', 'source' => 'mediapool', 'position' => '2'])), $this->newResponse());
+		$response = $this->controller->insert($this->request(body: ['playlist_id' => '1', 'id' => 'media-id-0000003', 'source' => 'mediapool', 'position' => '2']), $this->newResponse());
 
 		$this->assertSuccess($response);
 		$data = $this->json($response)['data'];
@@ -95,20 +95,10 @@ class ItemsControllerTest extends PlaylistsControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$response = $this->controller->insert($this->request(body: $this->withToken(['playlist_id' => '1', 'id' => '3', 'source' => 'playlist', 'position' => '1'])), $this->newResponse());
+		$response = $this->controller->insert($this->request(body: ['playlist_id' => '1', 'id' => '3', 'source' => 'playlist', 'position' => '1']), $this->newResponse());
 
 		$this->assertSuccess($response);
 		static::assertSame('Annas leere Liste', $this->json($response)['data']['item']['item_name']);
-	}
-
-	public function testInsertNeedsTheCsrfToken(): void
-	{
-		$this->actingAs(2);
-		$body = ['playlist_id' => '1', 'id' => 'media-id-0000003', 'source' => 'mediapool', 'position' => '1'];
-
-		$this->assertError($this->controller->insert($this->request(body: $body), $this->newResponse()), 'CSRF token validation error.');
-		$this->assertError($this->controller->insert($this->request(body: ['csrf_token' => 'wrong'] + $body), $this->newResponse()), 'CSRF token validation error.');
-		static::assertSame(5, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists_items WHERE playlist_id = 1'));
 	}
 
 	public function testInsertNeedsAllParameters(): void
@@ -116,11 +106,11 @@ class ItemsControllerTest extends PlaylistsControllerTestCase
 		$this->actingAs(2);
 		$body = ['playlist_id' => '1', 'id' => 'media-id-0000003', 'source' => 'mediapool', 'position' => '1'];
 
-		$this->assertError($this->controller->insert($this->request(body: $this->withToken(['playlist_id' => '0'] + $body)), $this->newResponse()), 'Playlist ID not valid.');
-		$this->assertError($this->controller->insert($this->request(body: $this->withToken(['id' => ''] + $body)), $this->newResponse()), 'Content ID not valid.');
-		$this->assertError($this->controller->insert($this->request(body: $this->withToken(['source' => ''] + $body)), $this->newResponse()), 'Source not valid.');
-		$this->assertError($this->controller->insert($this->request(body: $this->withToken(['position' => '0'] + $body)), $this->newResponse()), 'Position not valid.');
-		$this->assertError($this->controller->insert($this->request(body: $this->withToken(['source' => 'unknown'] + $body)), $this->newResponse()), 'Error inserting item.');
+		$this->assertError($this->controller->insert($this->request(body: ['playlist_id' => '0'] + $body), $this->newResponse()), 'Playlist ID not valid.');
+		$this->assertError($this->controller->insert($this->request(body: ['id' => ''] + $body), $this->newResponse()), 'Content ID not valid.');
+		$this->assertError($this->controller->insert($this->request(body: ['source' => ''] + $body), $this->newResponse()), 'Source not valid.');
+		$this->assertError($this->controller->insert($this->request(body: ['position' => '0'] + $body), $this->newResponse()), 'Position not valid.');
+		$this->assertError($this->controller->insert($this->request(body: ['source' => 'unknown'] + $body), $this->newResponse()), 'Error inserting item.');
 		static::assertSame(5, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists_items WHERE playlist_id = 1'));
 	}
 
@@ -130,7 +120,7 @@ class ItemsControllerTest extends PlaylistsControllerTestCase
 
 		try
 		{
-			$this->controller->insert($this->request(body: $this->withToken(['playlist_id' => '1', 'id' => 'media-id-0000003', 'source' => 'mediapool', 'position' => '1'])), $this->newResponse());
+			$this->controller->insert($this->request(body: ['playlist_id' => '1', 'id' => 'media-id-0000003', 'source' => 'mediapool', 'position' => '1']), $this->newResponse());
 			static::fail('Expected AccessDeniedException');
 		}
 		catch (AccessDeniedException)
@@ -143,7 +133,7 @@ class ItemsControllerTest extends PlaylistsControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$response = $this->controller->edit($this->request(body: $this->withToken(['item_id' => '1', 'name' => 'item_name', 'value' => 'Neu'])), $this->newResponse());
+		$response = $this->controller->edit($this->request(body: ['item_id' => '1', 'name' => 'item_name', 'value' => 'Neu']), $this->newResponse());
 
 		$this->assertSuccess($response);
 		static::assertSame('Neu', $this->databaseValue('SELECT item_name FROM playlists_items WHERE item_id = 1'));
@@ -153,7 +143,7 @@ class ItemsControllerTest extends PlaylistsControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$response = $this->controller->edit($this->request(body: $this->withToken(['item_id' => '1', 'name' => 'item_duration', 'value' => '12.6'])), $this->newResponse());
+		$response = $this->controller->edit($this->request(body: ['item_id' => '1', 'name' => 'item_duration', 'value' => '12.6']), $this->newResponse());
 
 		$this->assertSuccess($response);
 		static::assertSame(13, $this->json($response)['data']);
@@ -164,7 +154,7 @@ class ItemsControllerTest extends PlaylistsControllerTestCase
 	{
 		$this->actingAs(3);
 
-		$response = $this->controller->edit($this->request(body: $this->withToken(['item_id' => '6', 'name' => 'item_duration', 'value' => '5000'])), $this->newResponse());
+		$response = $this->controller->edit($this->request(body: ['item_id' => '6', 'name' => 'item_duration', 'value' => '5000']), $this->newResponse());
 
 		$this->assertSuccess($response);
 		static::assertLessThan(600, $this->json($response)['data']);
@@ -175,11 +165,10 @@ class ItemsControllerTest extends PlaylistsControllerTestCase
 		$this->actingAs(2);
 		$body = ['item_id' => '1', 'name' => 'item_name', 'value' => 'Neu'];
 
-		$this->assertError($this->controller->edit($this->request(body: ['item_id' => '1'] + ['name' => 'item_name', 'value' => 'x']), $this->newResponse()), 'CSRF token validation error.');
-		$this->assertError($this->controller->edit($this->request(body: $this->withToken(['item_id' => '0'] + $body)), $this->newResponse()), 'Item ID not valid.');
-		$this->assertError($this->controller->edit($this->request(body: $this->withToken(['name' => ''] + $body)), $this->newResponse()), 'No parameter name.');
-		$this->assertError($this->controller->edit($this->request(body: $this->withToken(['value' => ''] + $body)), $this->newResponse()), 'No parameter value.');
-		$this->assertError($this->controller->edit($this->request(body: $this->withToken(['name' => 'item_type'] + $body)), $this->newResponse()), 'No valid parametername.');
+		$this->assertError($this->controller->edit($this->request(body: ['item_id' => '0'] + $body), $this->newResponse()), 'Item ID not valid.');
+		$this->assertError($this->controller->edit($this->request(body: ['name' => ''] + $body), $this->newResponse()), 'No parameter name.');
+		$this->assertError($this->controller->edit($this->request(body: ['value' => ''] + $body), $this->newResponse()), 'No parameter value.');
+		$this->assertError($this->controller->edit($this->request(body: ['name' => 'item_type'] + $body), $this->newResponse()), 'No valid parametername.');
 		static::assertSame('bild.jpg', $this->databaseValue('SELECT item_name FROM playlists_items WHERE item_id = 1'));
 	}
 
@@ -191,7 +180,7 @@ class ItemsControllerTest extends PlaylistsControllerTestCase
 		$this->actingAs(2);
 
 		foreach (['playlist_id' => '2', 'UID' => '3', 'item_type' => 'playlist', 'file_resource' => 'x', 'content_data' => 'x'] as $field => $value)
-			$this->assertError($this->controller->edit($this->request(body: $this->withToken(['item_id' => '1', 'name' => $field, 'value' => $value])), $this->newResponse()), 'No valid parametername.');
+			$this->assertError($this->controller->edit($this->request(body: ['item_id' => '1', 'name' => $field, 'value' => $value]), $this->newResponse()), 'No valid parametername.');
 		static::assertSame([1, 2, 'mediapool', 'checksum-image'], array_map(fn(mixed $value) => is_numeric($value) ? (int) $value : $value, (array) $this->connection->fetchNumeric('SELECT playlist_id, UID, item_type, file_resource FROM playlists_items WHERE item_id = 1')));
 	}
 
@@ -200,7 +189,7 @@ class ItemsControllerTest extends PlaylistsControllerTestCase
 		$this->actingAs(2);
 
 		$this->expectException(AccessDeniedException::class);
-		$this->controller->edit($this->request(body: $this->withToken(['item_id' => '6', 'name' => 'item_name', 'value' => 'x'])), $this->newResponse());
+		$this->controller->edit($this->request(body: ['item_id' => '6', 'name' => 'item_name', 'value' => 'x']), $this->newResponse());
 	}
 
 	public function testAnItemIsGivenToWhoMayEditItsPlaylist(): void
@@ -227,20 +216,19 @@ class ItemsControllerTest extends PlaylistsControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$response = $this->controller->updateItemOrders($this->request(body: $this->withToken(['playlist_id' => '1', 'items_positions' => ['5', '4', '3', '2', '1']])), $this->newResponse());
+		$response = $this->controller->updateItemOrders($this->request(body: ['playlist_id' => '1', 'items_positions' => ['5', '4', '3', '2', '1']]), $this->newResponse());
 
 		$this->assertSuccess($response);
 		static::assertSame([5, 4, 3, 2, 1], array_map('intval', $this->connection->fetchFirstColumn('SELECT item_id FROM playlists_items WHERE playlist_id = 1 ORDER BY item_order')));
 	}
 
-	public function testTheOrderNeedsTheTokenThePlaylistAndTheItems(): void
+	public function testTheOrderNeedsThePlaylistAndTheItems(): void
 	{
 		$this->actingAs(2);
 
-		$this->assertError($this->controller->updateItemOrders($this->request(body: ['playlist_id' => '1', 'items_positions' => ['2', '1']]), $this->newResponse()), 'CSRF token validation error.');
-		$this->assertError($this->controller->updateItemOrders($this->request(body: $this->withToken(['items_positions' => ['2', '1']])), $this->newResponse()), 'Playlist ID not valid.');
-		$this->assertError($this->controller->updateItemOrders($this->request(body: $this->withToken(['playlist_id' => '1'])), $this->newResponse()), 'Items Position array is not valid.');
-		$this->assertError($this->controller->updateItemOrders($this->request(body: $this->withToken(['playlist_id' => '1', 'items_positions' => []])), $this->newResponse()), 'Items Position array is not valid.');
+		$this->assertError($this->controller->updateItemOrders($this->request(body: ['items_positions' => ['2', '1']]), $this->newResponse()), 'Playlist ID not valid.');
+		$this->assertError($this->controller->updateItemOrders($this->request(body: ['playlist_id' => '1']), $this->newResponse()), 'Items Position array is not valid.');
+		$this->assertError($this->controller->updateItemOrders($this->request(body: ['playlist_id' => '1', 'items_positions' => []]), $this->newResponse()), 'Items Position array is not valid.');
 	}
 
 	public function testItemsOfAnotherPlaylistCanNotBeOrdered(): void
@@ -248,14 +236,14 @@ class ItemsControllerTest extends PlaylistsControllerTestCase
 		$this->actingAs(2);
 
 		$this->expectException(NotFoundException::class);
-		$this->controller->updateItemOrders($this->request(body: $this->withToken(['playlist_id' => '1', 'items_positions' => ['7', '6']])), $this->newResponse());
+		$this->controller->updateItemOrders($this->request(body: ['playlist_id' => '1', 'items_positions' => ['7', '6']]), $this->newResponse());
 	}
 
 	public function testAnItemIsDeletedWithTheNewMetrics(): void
 	{
 		$this->actingAs(2);
 
-		$response = $this->controller->delete($this->request(body: $this->withToken(['playlist_id' => '1', 'item_id' => '1'])), $this->newResponse());
+		$response = $this->controller->delete($this->request(body: ['playlist_id' => '1', 'item_id' => '1']), $this->newResponse());
 
 		$this->assertSuccess($response);
 		$data = $this->json($response)['data'];
@@ -264,13 +252,12 @@ class ItemsControllerTest extends PlaylistsControllerTestCase
 		static::assertSame(0, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists_items WHERE item_id = 1'));
 	}
 
-	public function testDeleteNeedsTheTokenThePlaylistAndTheItem(): void
+	public function testDeleteNeedsThePlaylistAndTheItem(): void
 	{
 		$this->actingAs(2);
 
-		$this->assertError($this->controller->delete($this->request(body: ['playlist_id' => '1', 'item_id' => '1']), $this->newResponse()), 'CSRF token validation error.');
-		$this->assertError($this->controller->delete($this->request(body: $this->withToken(['item_id' => '1'])), $this->newResponse()), 'Playlist ID not valid.');
-		$this->assertError($this->controller->delete($this->request(body: $this->withToken(['playlist_id' => '1'])), $this->newResponse()), 'Item ID not valid.');
+		$this->assertError($this->controller->delete($this->request(body: ['item_id' => '1']), $this->newResponse()), 'Playlist ID not valid.');
+		$this->assertError($this->controller->delete($this->request(body: ['playlist_id' => '1']), $this->newResponse()), 'Item ID not valid.');
 		static::assertSame(7, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists_items'));
 	}
 
@@ -279,7 +266,7 @@ class ItemsControllerTest extends PlaylistsControllerTestCase
 		$this->actingAs(2);
 
 		$this->expectException(NotFoundException::class);
-		$this->controller->delete($this->request(body: $this->withToken(['playlist_id' => '1', 'item_id' => '6'])), $this->newResponse());
+		$this->controller->delete($this->request(body: ['playlist_id' => '1', 'item_id' => '6']), $this->newResponse());
 	}
 
 	public function testAnIdMustBeANumberNotOnlyStartWithOne(): void
@@ -288,8 +275,8 @@ class ItemsControllerTest extends PlaylistsControllerTestCase
 
 		$this->assertError($this->controller->loadItems($this->request('GET'), $this->newResponse(), ['playlist_id' => '1abc']), 'Playlist ID not valid.');
 		$this->assertError($this->controller->fetch($this->request('GET'), $this->newResponse(), ['item_id' => '2 or 1']), 'Item ID not valid.');
-		$this->assertError($this->controller->delete($this->request(body: $this->withToken(['playlist_id' => '-1', 'item_id' => '1'])), $this->newResponse()), 'Playlist ID not valid.');
-		$this->assertError($this->controller->delete($this->request(body: $this->withToken(['playlist_id' => '1', 'item_id' => '1.0'])), $this->newResponse()), 'Item ID not valid.');
+		$this->assertError($this->controller->delete($this->request(body: ['playlist_id' => '-1', 'item_id' => '1']), $this->newResponse()), 'Playlist ID not valid.');
+		$this->assertError($this->controller->delete($this->request(body: ['playlist_id' => '1', 'item_id' => '1.0']), $this->newResponse()), 'Item ID not valid.');
 		static::assertSame(7, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists_items'));
 	}
 
@@ -297,8 +284,8 @@ class ItemsControllerTest extends PlaylistsControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$this->assertSuccess($this->controller->delete($this->request(body: $this->withToken(['playlist_id' => 1, 'item_id' => 1])), $this->newResponse()));
-		$this->assertSuccess($this->controller->insert($this->request(body: $this->withToken(['playlist_id' => 1, 'id' => 3, 'source' => 'playlist', 'position' => 1])), $this->newResponse()));
+		$this->assertSuccess($this->controller->delete($this->request(body: ['playlist_id' => 1, 'item_id' => 1]), $this->newResponse()));
+		$this->assertSuccess($this->controller->insert($this->request(body: ['playlist_id' => 1, 'id' => 3, 'source' => 'playlist', 'position' => 1]), $this->newResponse()));
 	}
 
 	public function testWithoutABodyEverythingIsMissing(): void
@@ -315,8 +302,8 @@ class ItemsControllerTest extends PlaylistsControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$this->assertSuccess($this->controller->edit($this->request(body: $this->withToken(['item_id' => '1', 'name' => 'item_name', 'value' => '0'])), $this->newResponse()));
-		$this->assertSuccess($this->controller->edit($this->request(body: $this->withToken(['item_id' => '2', 'name' => 'item_duration', 'value' => '0'])), $this->newResponse()));
+		$this->assertSuccess($this->controller->edit($this->request(body: ['item_id' => '1', 'name' => 'item_name', 'value' => '0']), $this->newResponse()));
+		$this->assertSuccess($this->controller->edit($this->request(body: ['item_id' => '2', 'name' => 'item_duration', 'value' => '0']), $this->newResponse()));
 
 		static::assertSame('0', $this->databaseValue('SELECT item_name FROM playlists_items WHERE item_id = 1'));
 		static::assertSame(0, (int) $this->databaseValue('SELECT item_duration FROM playlists_items WHERE item_id = 2'));
@@ -327,7 +314,7 @@ class ItemsControllerTest extends PlaylistsControllerTestCase
 		$this->actingAs(2);
 
 		foreach (['-5', 'abc', '1e', ['1'], ''] as $value)
-			$this->assertError($this->controller->edit($this->request(body: $this->withToken(['item_id' => '1', 'name' => 'item_duration', 'value' => $value])), $this->newResponse()), 'No parameter value.');
+			$this->assertError($this->controller->edit($this->request(body: ['item_id' => '1', 'name' => 'item_duration', 'value' => $value]), $this->newResponse()), 'No parameter value.');
 		static::assertSame(10, (int) $this->databaseValue('SELECT item_duration FROM playlists_items WHERE item_id = 1'));
 	}
 
@@ -336,7 +323,7 @@ class ItemsControllerTest extends PlaylistsControllerTestCase
 		$this->actingAs(2);
 
 		foreach (['abc', [['1'], '2'], ['1', 'x'], ['-1'], [1.5]] as $positions)
-			$this->assertError($this->controller->updateItemOrders($this->request(body: $this->withToken(['playlist_id' => '1', 'items_positions' => $positions])), $this->newResponse()), 'Items Position array is not valid.');
+			$this->assertError($this->controller->updateItemOrders($this->request(body: ['playlist_id' => '1', 'items_positions' => $positions]), $this->newResponse()), 'Items Position array is not valid.');
 		static::assertSame([1, 2, 3, 4, 5], array_map('intval', $this->connection->fetchFirstColumn('SELECT item_id FROM playlists_items WHERE playlist_id = 1 ORDER BY item_order')));
 	}
 
@@ -362,7 +349,7 @@ class ItemsControllerTest extends PlaylistsControllerTestCase
 		{
 			try
 			{
-				$this->assertError($this->controller->$method($this->request(body: $this->withToken($body)), $this->newResponse()), $message);
+				$this->assertError($this->controller->$method($this->request(body: $body), $this->newResponse()), $message);
 			}
 			catch (Throwable $e)
 			{

@@ -28,7 +28,6 @@ use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Media\DataUrlDecoder;
 use App\Framework\Media\MediaUrlSigner;
-use App\Framework\Security\CsrfToken;
 use App\Modules\Templates\Controller\TemplatesController;
 use App\Modules\Templates\Helper\Composer\ExportImage;
 use App\Modules\Templates\Helper\Composer\Orchestrator;
@@ -72,7 +71,6 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 			$this->container->get(TemplatesDatatableService::class),
 			$this->container->get(Parameters::class),
 			$this->container->get(JsonResponseHandler::class),
-			$this->container->get(CsrfToken::class),
 			$this->container->get(MediaUrlSigner::class)
 		);
 	}
@@ -94,16 +92,16 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 	/**
 	 * @param array<string,mixed> $body
 	 */
-	private function save(array $body, bool $withToken = true): \Psr\Http\Message\ResponseInterface
+	private function save(array $body): \Psr\Http\Message\ResponseInterface
 	{
-		return $this->controller->save($this->request('PATCH', body: $withToken ? $this->withToken($body) : $body), $this->newResponse());
+		return $this->controller->save($this->request('PATCH', body: $body), $this->newResponse());
 	}
 
 	public function testAnUnusedTemplateIsDeleted(): void
 	{
 		$this->actingAs(1);
 
-		$this->assertSuccess($this->controller->delete($this->request('DELETE', body: $this->withToken(['template_id' => '3'])), $this->newResponse()));
+		$this->assertSuccess($this->controller->delete($this->request('DELETE', body: ['template_id' => '3']), $this->newResponse()));
 
 		static::assertSame(0, (int) $this->databaseValue('SELECT COUNT(*) FROM templates WHERE template_id = 3'));
 		static::assertSame(2, $this->countTemplates());
@@ -116,7 +114,7 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 
 		try
 		{
-			$this->controller->delete($this->request('DELETE', body: $this->withToken(['template_id' => '3'])), $this->newResponse());
+			$this->controller->delete($this->request('DELETE', body: ['template_id' => '3']), $this->newResponse());
 			static::fail('Expected TranslatableModuleException');
 		}
 		catch (TranslatableModuleException $e)
@@ -126,13 +124,11 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 		}
 	}
 
-	public function testDeleteNeedsTheTokenAndATemplate(): void
+	public function testDeleteNeedsATemplate(): void
 	{
 		$this->actingAs(1);
 
-		$this->assertError($this->controller->delete($this->request('DELETE', body: ['template_id' => '3']), $this->newResponse()), 'CSRF token mismatch.');
-		$this->assertError($this->controller->delete($this->request('DELETE', body: ['csrf_token' => 'wrong', 'template_id' => '3']), $this->newResponse()), 'CSRF token mismatch.');
-		$this->assertError($this->controller->delete($this->request('DELETE', body: $this->withToken([])), $this->newResponse()), 'No template Id');
+		$this->assertError($this->controller->delete($this->request('DELETE', body: []), $this->newResponse()), 'No template Id');
 		static::assertSame(3, $this->countTemplates());
 	}
 
@@ -141,7 +137,7 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 		$this->actingAs(1);
 		try
 		{
-			$this->controller->delete($this->request('DELETE', body: $this->withToken(['template_id' => '99'])), $this->newResponse());
+			$this->controller->delete($this->request('DELETE', body: ['template_id' => '99']), $this->newResponse());
 			static::fail('Expected NotFoundException');
 		}
 		catch (NotFoundException)
@@ -151,7 +147,7 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 
 		$this->actingAs(2);
 		$this->expectException(AccessDeniedException::class);
-		$this->controller->delete($this->request('DELETE', body: $this->withToken(['template_id' => '2'])), $this->newResponse());
+		$this->controller->delete($this->request('DELETE', body: ['template_id' => '2']), $this->newResponse());
 	}
 
 	public function testTheRightsOfAnAdminForAnUnusedTemplate(): void
@@ -287,12 +283,11 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 		static::assertSame(['3.jpg'], array_map(static fn(mixed $path): string => basename((string) $path), (array) glob($this->workspace->dir . '/var/storage/templates/originals/*')));
 	}
 
-	public function testSaveNeedsTheTokenATemplateAndRights(): void
+	public function testSaveNeedsATemplateAndRights(): void
 	{
 		$body = ['template_id' => '3', 'content' => '{"objects":[]}', 'image' => self::PNG];
 
 		$this->actingAs(1);
-		$this->assertError($this->save($body, withToken: false), 'CSRF token mismatch.');
 		$this->assertError($this->save(['template_id' => '0'] + $body), 'No template Id');
 		$this->assertError($this->save(['template_id' => '99'] + $body), 'No rights');
 		$this->actingAs(2);
@@ -328,12 +323,10 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 	{
 		$this->actingAs(1);
 		$cases = [
-			[fn() => $this->controller->delete($this->request('DELETE', body: $this->withToken(['template_id' => ['3']])), $this->newResponse()), 'No template Id'],
-			[fn() => $this->controller->delete($this->request('DELETE', body: $this->withToken(['template_id' => '3abc'])), $this->newResponse()), 'No template Id'],
-			[fn() => $this->controller->delete($this->request('DELETE', body: ['csrf_token' => ['x'], 'template_id' => '3']), $this->newResponse()), 'CSRF token mismatch.'],
-			[fn() => $this->controller->delete($this->request('DELETE')->withParsedBody(null), $this->newResponse()), 'CSRF token mismatch.'],
+			[fn() => $this->controller->delete($this->request('DELETE', body: ['template_id' => ['3']]), $this->newResponse()), 'No template Id'],
+			[fn() => $this->controller->delete($this->request('DELETE', body: ['template_id' => '3abc']), $this->newResponse()), 'No template Id'],
+			[fn() => $this->controller->delete($this->request('DELETE')->withParsedBody(null), $this->newResponse()), 'No template Id'],
 			[fn() => $this->save(['template_id' => ['3'], 'content' => '{"objects":[]}', 'image' => self::PNG]), 'No template Id'],
-			[fn() => $this->save(['csrf_token' => ['x'], 'template_id' => '3'], withToken: false), 'CSRF token mismatch.'],
 			[fn() => $this->save(['template_id' => '3', 'content' => ['x'], 'image' => self::PNG]), 'Save failed'],
 		];
 		foreach ($cases as $n => [$call, $message])

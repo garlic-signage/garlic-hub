@@ -21,7 +21,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Mediapool\Helper\Media;
 
-use App\Framework\Validation\BaseValidator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\DatabaseException;
 use App\Framework\Exceptions\FrameworkException;
@@ -51,7 +50,6 @@ class Orchestrator
 
 	public function __construct(
 		private readonly ResponseBuilder $responseBuilder,
-		private readonly BaseValidator $validator,
 		private readonly MediaService $mediaService
 	) {}
 
@@ -102,10 +100,6 @@ class Orchestrator
 	 */
 	public function validateEdit(ResponseInterface $response): ?ResponseInterface
 	{
-		$answer = $this->validateToken($response);
-		if ($answer !== null)
-			return $answer;
-
 		if ($this->text('media_id') === '')
 			return $this->responseBuilder->missingMediaId($response);
 
@@ -137,10 +131,6 @@ class Orchestrator
 	 */
 	public function validateWithMediaId(ResponseInterface $response): ?ResponseInterface
 	{
-		$answer = $this->validateToken($response);
-		if ($answer !== null)
-			return $answer;
-
 		if ($this->text('media_id') === '')
 			return $this->responseBuilder->missingMediaId($response);
 
@@ -175,10 +165,6 @@ class Orchestrator
 	 */
 	public function validateMove(ResponseInterface $response): ?ResponseInterface
 	{
-		$answer = $this->validateToken($response);
-		if ($answer !== null)
-			return $answer;
-
 		if ($this->text('media_id') === '' || !$this->hasId('node_id'))
 			return $this->responseBuilder->missingMediaIdOrNode($response);
 
@@ -194,17 +180,5 @@ class Orchestrator
 		$count = $this->mediaService->moveMedia($this->text('media_id'), $this->id('node_id'));
 
 		return $this->responseBuilder->generalSuccess($response, ['data' => ['deleted_media' => $count]]);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	private function validateToken(ResponseInterface $response): ?ResponseInterface
-	{
-		if (!$this->validator->validateCsrfToken($this->text('csrf_token')))
-			return $this->responseBuilder->csrfTokenMismatch($response);
-
-		return null;
 	}
 }

@@ -71,14 +71,6 @@ class ResponseBuilderTest extends TestCase
 	}
 
 	#[Group('units')]
-	public function testTheTokenErrorHasTheTextOfTheLanguage(): void
-	{
-		$response = $this->responseBuilder->csrfTokenMismatch(new Response());
-
-		static::assertSame(['success' => false, 'error_message' => 'security.csrf_token_mismatch'], json_decode((string) $response->getBody(), true));
-	}
-
-	#[Group('units')]
 	public function testAGeneralSuccessAndAGeneralErrorAreMarked(): void
 	{
 		$success = $this->responseBuilder->generalSuccess(new Response(), ['data' => ['id' => 5]]);

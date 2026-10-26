@@ -100,7 +100,7 @@ readonly class ShowAdminController
 			return $this->redirectWithError($response, 'No rights');
 
 		$input = RequestInput::of($request->getParsedBody());
-		$post  = $input->texts(['UID', 'username', 'email', 'status', 'locale', 'csrf_token']);
+		$post  = $input->texts(['UID', 'username', 'email', 'status', 'locale']);
 
 		// the form of a new user has no id or 0
 		$sent = $input->all()['UID'] ?? null;

@@ -58,7 +58,7 @@ class FormInputHandlerTest extends TestCase
 		$post = $this->fixture->post();
 
 		static::assertSame([], $this->handler->validate($post, PasswordFixture::PATTERN));
-		static::assertSame(['csrf_token' => $post['csrf_token'], 'password' => 'Secret123', 'password_confirm' => 'Secret123'], $this->handler->getParsed());
+		static::assertSame(['password' => 'Secret123', 'password_confirm' => 'Secret123'], $this->handler->getParsed());
 	}
 
 	/**

@@ -27,7 +27,6 @@ use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Auth\AuthService;
 use App\Modules\Auth\AutoLoginService;
 use App\Modules\Auth\LoginThrottle;
-use App\Framework\Security\CsrfToken;
 use App\Modules\Users\Controller\UserTokenController;
 use App\Modules\Users\Services\UsersAdminService;
 use App\Modules\Users\Services\UsersDatatableService;
@@ -302,19 +301,6 @@ class UserAccessTest extends ContainerTestCase
 		static::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_tokens WHERE UID = 3'));
 	}
 
-	public function testTokenRequestWithoutValidCsrfTokenIsRejected(): void
-	{
-		$this->actingAs(1);
-		$this->createToken(3, TokenPurposes::PASSWORD_RESET);
-		$request = (new ServerRequestFactory())->createServerRequest('DELETE', '/users/tokens')
-			->withParsedBody(['UID' => 3, 'purpose' => 'password_reset', 'csrf_token' => 'forged']);
-
-		$response = $this->container->get(UserTokenController::class)->delete($request, new Response());
-
-		static::assertNotSame(200, $response->getStatusCode());
-		static::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_tokens WHERE UID = 3'));
-	}
-
 	public function testAdminMayRefreshAndDeleteTokens(): void
 	{
 		$this->actingAs(1);
@@ -357,7 +343,6 @@ class UserAccessTest extends ContainerTestCase
 	 */
 	private function tokenRequest(string $action, array $data): ResponseInterface
 	{
-		$data['csrf_token'] = $this->container->get(CsrfToken::class)->getToken();
 		$request = (new ServerRequestFactory())->createServerRequest($action === 'delete' ? 'DELETE' : 'POST', '/users/tokens')
 			->withParsedBody($data);
 

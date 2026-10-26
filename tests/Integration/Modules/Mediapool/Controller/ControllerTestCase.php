@@ -21,7 +21,6 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Modules\Mediapool\Controller;
 
-use App\Framework\Security\CsrfToken;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Psr7\Factory\ServerRequestFactory;
@@ -43,10 +42,6 @@ abstract class ControllerTestCase extends ContainerTestCase
 		$this->loadFixture('mediapool/files.sql');
 	}
 
-	protected function csrf(): string
-	{
-		return $this->container->get(CsrfToken::class)->getToken();
-	}
 
 	/**
 	 * A request with the body the browser sends, as JSON or as form: the values are what the parser gives.
@@ -59,14 +54,6 @@ abstract class ControllerTestCase extends ContainerTestCase
 		return new ServerRequestFactory()->createServerRequest($method, '/async/mediapool')->withParsedBody($body)->withQueryParams($query);
 	}
 
-	/**
-	 * @param array<string,mixed> $body
-	 * @return array<string,mixed>
-	 */
-	protected function withToken(array $body): array
-	{
-		return ['csrf_token' => $this->csrf()] + $body;
-	}
 
 	/**
 	 * @return array<string,mixed>|list<array<string,mixed>>

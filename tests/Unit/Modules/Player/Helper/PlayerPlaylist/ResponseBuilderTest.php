@@ -70,9 +70,8 @@ class ResponseBuilderTest extends TestCase
 	}
 
 	#[Group('units')]
-	public function testTheTokenErrorAndTheGeneralAnswers(): void
+	public function testTheGeneralAnswers(): void
 	{
-		static::assertSame(['success' => false, 'error_message' => 'security.csrf_token_mismatch'], json_decode((string) $this->responseBuilder->csrfTokenMismatch(new Response())->getBody(), true));
 		static::assertSame(['success' => true, 'message' => 'ok'], json_decode((string) $this->responseBuilder->generalSuccess(new Response(), ['message' => 'ok'])->getBody(), true));
 		static::assertSame(['success' => false, 'error_message' => 'bad'], json_decode((string) $this->responseBuilder->generalError(new Response(), 'bad')->getBody(), true));
 	}

@@ -21,7 +21,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\Items;
 
-use App\Framework\Validation\BaseValidator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -46,7 +45,6 @@ class Orchestrator
 
 	public function __construct(
 		private readonly ResponseBuilder $responseBuilder,
-		private readonly BaseValidator $validator,
 		private readonly ItemsService $itemsService,
 		private readonly InsertItemFactory $insertItemFactory
 	) {}
@@ -72,7 +70,7 @@ class Orchestrator
 
 	public function validateInsert(ResponseInterface $response): ?ResponseInterface
 	{
-		$answer = $this->validateToken($response) ?? $this->validatePlaylistId($response);
+		$answer = $this->validatePlaylistId($response);
 		if ($answer !== null)
 			return $answer;
 
@@ -104,7 +102,7 @@ class Orchestrator
 
 	public function validateEdit(ResponseInterface $response): ?ResponseInterface
 	{
-		$answer = $this->validateToken($response) ?? $this->validateItemId($response);
+		$answer = $this->validateItemId($response);
 		if ($answer !== null)
 			return $answer;
 
@@ -172,7 +170,7 @@ class Orchestrator
 
 	public function validateUpdateItemOrders(ResponseInterface $response): ?ResponseInterface
 	{
-		$answer = $this->validateToken($response) ?? $this->validatePlaylistId($response);
+		$answer = $this->validatePlaylistId($response);
 		if ($answer !== null)
 			return $answer;
 
@@ -196,8 +194,7 @@ class Orchestrator
 
 	public function validateDelete(ResponseInterface $response): ?ResponseInterface
 	{
-		return $this->validateToken($response)
-			?? $this->validatePlaylistId($response)
+		return $this->validatePlaylistId($response)
 			?? $this->validateItemId($response);
 	}
 
@@ -210,18 +207,6 @@ class Orchestrator
 		$item = $this->itemsService->delete($this->playlistId, $this->itemId);
 
 		return $this->responseBuilder->generalSuccess($response, ['data' => $item]);
-	}
-
-    /**
-     * @throws CoreException
-     * @throws FrameworkException
-     */
-    private function validateToken(ResponseInterface $response): ?ResponseInterface
-	{
-		if (!$this->validator->validateCsrfToken($this->text('csrf_token')))
-			return $this->responseBuilder->csrfTokenMismatch($response);
-
-		return null;
 	}
 
 	private function validatePlaylistId(ResponseInterface $response): ?ResponseInterface

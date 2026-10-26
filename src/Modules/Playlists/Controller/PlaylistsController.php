@@ -45,7 +45,7 @@ readonly class PlaylistsController
 	 */
 	public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		$answer = $this->orchestrator->setInput($this->parsedBody($request))->validateWithToken($response);
+		$answer = $this->orchestrator->setInput($this->parsedBody($request))->validate($response);
 		if ($answer !== null)
 			return $answer;
 
@@ -61,7 +61,7 @@ readonly class PlaylistsController
 	 */
 	public function toggleShuffle(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		$answer = $this->orchestrator->setInput($this->parsedBody($request))->validateWithToken($response);
+		$answer = $this->orchestrator->setInput($this->parsedBody($request))->validate($response);
 		if ($answer !== null)
 			return $answer;
 
@@ -108,7 +108,7 @@ readonly class PlaylistsController
 		$input = $this->parsedBody($request);
 		$input['playlist_id'] = $args['playlist_id'] ?? 0;
 
-		$answer = $this->orchestrator->setInput($input)->validateWithToken($response);
+		$answer = $this->orchestrator->setInput($input)->validate($response);
 		if ($answer !== null)
 			return $answer;
 

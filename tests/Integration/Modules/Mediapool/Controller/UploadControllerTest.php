@@ -25,7 +25,6 @@ use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Media\MimeTypeService;
-use App\Framework\Validation\BaseValidator;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Controller\UploadController;
 use App\Modules\Mediapool\Helper\Uploads\Orchestrator;
@@ -98,7 +97,6 @@ class UploadControllerTest extends ControllerTestCase
 		return new UploadController(new Orchestrator(
 			new ResponseBuilder($this->container->get(JsonResponseHandler::class), $this->container->get(Translator::class)),
 			$this->container->get(UserSession::class),
-			$this->container->get(BaseValidator::class),
 			$service
 		));
 	}
@@ -139,7 +137,7 @@ class UploadControllerTest extends ControllerTestCase
 		$this->actingAs(2);
 		$before = $this->mediaCount();
 
-		$response = $this->uploadLocal($this->controller(), $this->withToken(['node_id' => '8', 'metadata' => '{"description":"Am Meer"}']), ['file' => $this->pngUpload()]);
+		$response = $this->uploadLocal($this->controller(), ['node_id' => '8', 'metadata' => '{"description":"Am Meer"}'], ['file' => $this->pngUpload()]);
 
 		static::assertSame(200, $response->getStatusCode());
 		static::assertSame(['success' => true, 'message' => 'bild.png successful uploaded'], $this->json($response));
@@ -175,7 +173,7 @@ class UploadControllerTest extends ControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$this->uploadLocal($this->controller(), $this->withToken(['node_id' => '8', 'metadata' => $sent]), ['file' => $this->pngUpload()]);
+		$this->uploadLocal($this->controller(), ['node_id' => '8', 'metadata' => $sent], ['file' => $this->pngUpload()]);
 
 		static::assertSame($description, $this->databaseValue('SELECT media_description FROM mediapool_files WHERE filename = ?', 'bild.png'));
 		$stored = json_decode((string) $this->databaseValue('SELECT metadata FROM mediapool_files WHERE filename = ?', 'bild.png'), true);
@@ -188,7 +186,7 @@ class UploadControllerTest extends ControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$this->uploadLocal($this->controller(), $this->withToken(['node_id' => '8', 'metadata' => '{"tags":["a"],"owner":{"x":1},"source":"stock","rating":4.5,"public":true}']), ['file' => $this->pngUpload()]);
+		$this->uploadLocal($this->controller(), ['node_id' => '8', 'metadata' => '{"tags":["a"],"owner":{"x":1},"source":"stock","rating":4.5,"public":true}'], ['file' => $this->pngUpload()]);
 
 		$stored = json_decode((string) $this->databaseValue('SELECT metadata FROM mediapool_files WHERE filename = ?', 'bild.png'), true);
 		static::assertArrayNotHasKey('tags', $stored);
@@ -198,28 +196,12 @@ class UploadControllerTest extends ControllerTestCase
 		static::assertTrue($stored['public']);
 	}
 
-	public function testALocalUploadNeedsTheTokenOfThePage(): void
-	{
-		$this->actingAs(2);
-		$this->csrf();
-		$before = $this->mediaCount();
-
-		foreach ([[], ['csrf_token' => 'forged'], ['csrf_token' => ['x']]] as $token)
-		{
-			$response = $this->uploadLocal($this->controller(), $token + ['node_id' => '8'], ['file' => $this->pngUpload()]);
-			static::assertSame(400, $response->getStatusCode());
-		}
-
-		static::assertSame($before, $this->mediaCount());
-		static::assertSame([], $this->workspace->listing('originals'));
-	}
-
 	public function testALocalUploadWithoutFilesIsRefused(): void
 	{
 		$this->actingAs(2);
 
-		$this->assertError($this->uploadLocal($this->controller(), $this->withToken(['node_id' => '8']), []), 'No files to upload.');
-		$this->assertError($this->uploadLocal($this->controller(), $this->withToken(['node_id' => '8']), ['other' => $this->pngUpload()]), 'no files');
+		$this->assertError($this->uploadLocal($this->controller(), ['node_id' => '8'], []), 'No files to upload.');
+		$this->assertError($this->uploadLocal($this->controller(), ['node_id' => '8'], ['other' => $this->pngUpload()]), 'no files');
 	}
 
 	/**
@@ -230,7 +212,7 @@ class UploadControllerTest extends ControllerTestCase
 		$this->actingAs(2);
 		$before = $this->mediaCount();
 
-		$response = $this->uploadLocal($this->controller(), $this->withToken(['node_id' => '8']), ['file' => [$this->pngUpload('a.png'), $this->pngUpload('b.png', 100)]]);
+		$response = $this->uploadLocal($this->controller(), ['node_id' => '8'], ['file' => [$this->pngUpload('a.png'), $this->pngUpload('b.png', 100)]]);
 
 		$this->assertError($response, 'no files');
 		static::assertSame($before, $this->mediaCount());
@@ -248,7 +230,7 @@ class UploadControllerTest extends ControllerTestCase
 	public function testAnUploadNeedsADirectory(mixed $node): void
 	{
 		$this->actingAs(2);
-		$body = $this->withToken($node === null ? [] : ['node_id' => $node, 'external_link' => 'https://media.example.com/a.png']);
+		$body = $node === null ? [] : ['node_id' => $node, 'external_link' => 'https://media.example.com/a.png'];
 
 		$this->assertError($this->uploadLocal($this->controller(), $body, ['file' => $this->pngUpload()]), 'node is missing');
 		$this->assertError($this->controller()->uploadFromUrl($this->request('POST', $body), $this->newResponse()), 'node is missing');
@@ -264,7 +246,7 @@ class UploadControllerTest extends ControllerTestCase
 			new Response(200, ['Content-Type' => 'image/png'], $body),
 		]);
 
-		$response = $controller->uploadFromUrl($this->request('POST', $this->withToken(['node_id' => '8', 'external_link' => 'https://media.example.com/img/katze.png', 'metadata' => '{"description":"Katze"}'])), $this->newResponse());
+		$response = $controller->uploadFromUrl($this->request('POST', ['node_id' => '8', 'external_link' => 'https://media.example.com/img/katze.png', 'metadata' => '{"description":"Katze"}']), $this->newResponse());
 
 		static::assertSame(['success' => true, 'message' => 'katze.png successful uploaded'], $this->json($response));
 		static::assertSame('Katze', $this->databaseValue('SELECT media_description FROM mediapool_files WHERE filename = ?', 'katze.png'));
@@ -287,7 +269,7 @@ class UploadControllerTest extends ControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$response = $this->controller()->uploadFromUrl($this->request('POST', $this->withToken(['node_id' => '8'] + $body)), $this->newResponse());
+		$response = $this->controller()->uploadFromUrl($this->request('POST', ['node_id' => '8'] + $body), $this->newResponse());
 
 		$this->assertError($response, 'No external link submitted.');
 		static::assertSame([], $this->sent);
@@ -300,7 +282,7 @@ class UploadControllerTest extends ControllerTestCase
 
 		try
 		{
-			$this->controller([new Response(200)])->uploadFromUrl($this->request('POST', $this->withToken(['node_id' => '8', 'external_link' => 'http://intranet.example/a.png'])), $this->newResponse());
+			$this->controller([new Response(200)])->uploadFromUrl($this->request('POST', ['node_id' => '8', 'external_link' => 'http://intranet.example/a.png']), $this->newResponse());
 			static::fail('Expected a TranslatableModuleException');
 		}
 		catch (TranslatableModuleException $e)
@@ -435,6 +417,6 @@ class UploadControllerTest extends ControllerTestCase
 		$request = new \Slim\Psr7\Factory\ServerRequestFactory()->createServerRequest('POST', '/async/mediapool/searchStockImages');
 
 		$this->assertError($this->controller()->searchStockImages($request, $this->newResponse()), 'Host not allowed.');
-		$this->assertError($this->controller()->uploadFromUrl($request, $this->newResponse()), 'CSRF token validation error.');
+		$this->assertError($this->controller()->uploadFromUrl($request, $this->newResponse()), 'node is missing');
 	}
 }

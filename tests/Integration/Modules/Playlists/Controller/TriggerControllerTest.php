@@ -49,7 +49,7 @@ class TriggerControllerTest extends PlaylistsControllerTestCase
 	public function testTheTriggerComesWithTheFormAndTheMediaWhichCanBeTouched(): void
 	{
 		$this->actingAs(2);
-		$this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '1', 'accesskeys' => [['accesskey' => 'a']]])), $this->newResponse());
+		$this->controller->save($this->request('PATCH', body: ['item_id' => '1', 'accesskeys' => [['accesskey' => 'a']]]), $this->newResponse());
 
 		$response = $this->controller->fetchTrigger($this->request('GET'), $this->newResponse(), ['item_id' => '1']);
 
@@ -75,7 +75,7 @@ class TriggerControllerTest extends PlaylistsControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$response = $this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '1', 'notifies' => [['notify' => 'go']]])), $this->newResponse());
+		$response = $this->controller->save($this->request('PATCH', body: ['item_id' => '1', 'notifies' => [['notify' => 'go']]]), $this->newResponse());
 
 		$this->assertSuccess($response);
 		static::assertSame(['notifies' => [['notify' => 'go']]], unserialize((string) $this->databaseValue('SELECT begin_trigger FROM playlists_items WHERE item_id = 1')));
@@ -86,8 +86,7 @@ class TriggerControllerTest extends PlaylistsControllerTestCase
 		$this->actingAs(2);
 
 		$this->assertError($this->controller->fetchTrigger($this->request('GET'), $this->newResponse(), []), 'Invalid item ID.');
-		$this->assertError($this->controller->save($this->request('PATCH', body: $this->withToken([])), $this->newResponse()), 'Invalid item ID.');
-		$this->assertError($this->controller->save($this->request('PATCH', body: ['item_id' => '1', 'csrf_token' => 'wrong']), $this->newResponse()), 'CSRF token validation error.');
+		$this->assertError($this->controller->save($this->request('PATCH', body: []), $this->newResponse()), 'Invalid item ID.');
 	}
 
 	public function testTheTriggerOfAForeignItemCanNotBeReadOrChanged(): void
@@ -96,7 +95,7 @@ class TriggerControllerTest extends PlaylistsControllerTestCase
 
 		try
 		{
-			$this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '6', 'notifies' => [['notify' => 'go']]])), $this->newResponse());
+			$this->controller->save($this->request('PATCH', body: ['item_id' => '6', 'notifies' => [['notify' => 'go']]]), $this->newResponse());
 			static::fail('Expected AccessDeniedException');
 		}
 		catch (AccessDeniedException)
@@ -116,20 +115,13 @@ class TriggerControllerTest extends PlaylistsControllerTestCase
 		$this->controller->fetchTrigger($this->request('GET'), $this->newResponse(), ['item_id' => '999']);
 	}
 
-	public function testARequestWithoutATokenIsRejectedAsAnError(): void
-	{
-		$this->actingAs(2);
-
-		$this->assertError($this->controller->save($this->request('PATCH', body: ['item_id' => '1']), $this->newResponse()), 'CSRF token validation error.');
-	}
-
 	public function testInvalidValuesAreRejectedAndNothingIsStored(): void
 	{
 		$this->actingAs(2);
 		$wallclock = ['iso_date' => '2030-01-01T10:00:00" evil="1', 'weekday' => 0, 'repeat_counts' => -1];
 
 		foreach ([['wallclocks' => [$wallclock]], ['notifies' => [['notify' => '']]], ['accesskeys' => [['accesskey' => 'ab']]], ['touches' => 'x'], ['touches' => [['touch_item_id' => 'abc']]]] as $trigger)
-			$this->assertError($this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '1'] + $trigger)), $this->newResponse()), 'Invalid trigger data.');
+			$this->assertError($this->controller->save($this->request('PATCH', body: ['item_id' => '1'] + $trigger), $this->newResponse()), 'Invalid trigger data.');
 
 		static::assertSame('', $this->databaseValue('SELECT begin_trigger FROM playlists_items WHERE item_id = 1'));
 	}
@@ -139,7 +131,7 @@ class TriggerControllerTest extends PlaylistsControllerTestCase
 		$this->actingAs(2);
 		$wallclock = ['iso_date' => '2030-01-01T10:00:00', 'weekday' => '-2', 'repeat_counts' => '0', 'repeat_minutes' => '15', 'repeat_hours' => '', 'repeat_days' => '0', 'repeat_weeks' => '0', 'repeat_months' => '0', 'repeat_years' => '0'];
 
-		$this->assertSuccess($this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '1', 'wallclocks' => [$wallclock]])), $this->newResponse()));
+		$this->assertSuccess($this->controller->save($this->request('PATCH', body: ['item_id' => '1', 'wallclocks' => [$wallclock]]), $this->newResponse()));
 
 		static::assertSame(
 			['wallclocks' => [['iso_date' => '2030-01-01T10:00:00', 'weekday' => -2, 'repeat_counts' => 0, 'repeat_minutes' => 15, 'repeat_hours' => 0, 'repeat_days' => 0, 'repeat_weeks' => 0, 'repeat_months' => 0, 'repeat_years' => 0]]],
@@ -151,7 +143,7 @@ class TriggerControllerTest extends PlaylistsControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$this->assertSuccess($this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '1', 'touches' => [['touch_item_id' => '5']]])), $this->newResponse()));
+		$this->assertSuccess($this->controller->save($this->request('PATCH', body: ['item_id' => '1', 'touches' => [['touch_item_id' => '5']]]), $this->newResponse()));
 
 		static::assertSame(['touches' => [['touch_item_id' => 5]]], unserialize((string) $this->databaseValue('SELECT begin_trigger FROM playlists_items WHERE item_id = 1')));
 	}
@@ -177,7 +169,7 @@ class TriggerControllerTest extends PlaylistsControllerTestCase
 
 		try
 		{
-			$this->controller->save($this->request('PATCH', body: $this->withToken(['item_id' => '1', 'touches' => [['touch_item_id' => $touchItemId]]])), $this->newResponse());
+			$this->controller->save($this->request('PATCH', body: ['item_id' => '1', 'touches' => [['touch_item_id' => $touchItemId]]]), $this->newResponse());
 			static::fail('Expected TranslatableModuleException');
 		}
 		catch (TranslatableModuleException $e)
@@ -234,11 +226,10 @@ class TriggerControllerTest extends PlaylistsControllerTestCase
 		return $workspace->filesystem->read('var/smil/playlists/1/items.smil') . $workspace->filesystem->read('var/smil/playlists/1/exclusive.smil');
 	}
 
-	public function testWithoutABodyOrWithATokenOfTheWrongTypeNothingIsDone(): void
+	public function testWithoutABodyNothingIsDone(): void
 	{
 		$this->actingAs(2);
 
-		$this->assertError($this->controller->save($this->request('PATCH')->withParsedBody(null), $this->newResponse()), 'CSRF token validation error.');
-		$this->assertError($this->controller->save($this->request('PATCH', body: ['csrf_token' => ['x'], 'item_id' => '1', 'playlist_id' => '1']), $this->newResponse()), 'CSRF token validation error.');
+		$this->assertError($this->controller->save($this->request('PATCH')->withParsedBody(null), $this->newResponse()), 'Invalid item ID.');
 	}
 }

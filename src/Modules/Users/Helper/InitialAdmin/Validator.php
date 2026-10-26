@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace App\Modules\Users\Helper\InitialAdmin;
 
 use App\Framework\Validation\BaseValidator;
-use App\Framework\Security\CsrfToken;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -31,16 +30,16 @@ use App\Framework\Exceptions\ModuleException;
 /**
  * Class Validator
  *
- * A class responsible for validating user input, including form tokens, usernames,
+ * A class responsible for validating user input, including usernames,
  * email addresses, and password integrity.
  */
 class Validator extends BaseValidator
 {
 	private Parameters $inputEditParameters;
 
-	public function __construct(Translator $translator, Parameters $inputEditParameters, CsrfToken $csrfToken)
+	public function __construct(Translator $translator, Parameters $inputEditParameters)
 	{
-		parent::__construct($translator, $csrfToken);
+		parent::__construct($translator);
 		$this->inputEditParameters = $inputEditParameters;
 	}
 
@@ -52,7 +51,7 @@ class Validator extends BaseValidator
 	 */
 	public function validateUserInput(string $passwordPattern): array
 	{
-		$errors = $this->validateFormCsrfToken($this->inputEditParameters);
+		$errors = [];
 
 		if ($this->inputEditParameters->getValueOfParameter(Parameters::PARAMETER_ADMIN_NAME) === '')
 			$errors[] = $this->translator->translate('no_username', 'users');

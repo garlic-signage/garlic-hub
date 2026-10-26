@@ -45,9 +45,9 @@ class ShowSettingsControllerTest extends PlaylistsControllerTestCase
 	/**
 	 * @param array<string,mixed> $body
 	 */
-	private function store(array $body, bool $withToken = true): ResponseInterface
+	private function store(array $body): ResponseInterface
 	{
-		return $this->controller->store($this->request(body: $withToken ? $this->withToken($body) : $body), $this->newResponse());
+		return $this->controller->store($this->request(body: $body), $this->newResponse());
 	}
 
 	private function page(ResponseInterface $response): PageResponse
@@ -210,16 +210,6 @@ class ShowSettingsControllerTest extends PlaylistsControllerTestCase
 		$this->actingAs(2);
 
 		$this->page($this->store(['playlist_mode' => 'evil', 'playlist_name' => 'X']));
-
-		static::assertCount(1, $this->flash('error'));
-		static::assertSame(3, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists'));
-	}
-
-	public function testNothingIsStoredWithoutTheToken(): void
-	{
-		$this->actingAs(2);
-
-		$this->page($this->store(['playlist_mode' => 'master', 'playlist_name' => 'Neu'], withToken: false));
 
 		static::assertCount(1, $this->flash('error'));
 		static::assertSame(3, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists'));

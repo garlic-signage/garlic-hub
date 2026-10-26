@@ -83,7 +83,7 @@ class OrchestratorsTest extends ContainerTestCase
 			$this->container->get(Translator::class)
 		);
 
-		$result = $orchestrator->store(['username' => 'root', 'email' => 'root@example.com', 'locale' => 'en_US', 'password' => 'Secret123!', 'password_confirm' => 'Secret123!', 'csrf_token' => $this->container->get(\App\Framework\Security\CsrfToken::class)->getToken()]);
+		$result = $orchestrator->store(['username' => 'root', 'email' => 'root@example.com', 'locale' => 'en_US', 'password' => 'Secret123!', 'password_confirm' => 'Secret123!']);
 
 		static::assertFalse($result['success']);
 		static::assertCount(1, $result['errors'] ?? []);

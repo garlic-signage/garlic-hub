@@ -21,7 +21,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\Export;
 
-use App\Framework\Validation\BaseValidator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
@@ -42,7 +41,6 @@ class Orchestrator
 
 	public function __construct(
 		private readonly ResponseBuilder $responseBuilder,
-		private readonly BaseValidator $validator,
 		private readonly ExportService $exportService
 	) {}
 
@@ -52,9 +50,6 @@ class Orchestrator
 	 */
 	public function validate(ResponseInterface $response): ?ResponseInterface
 	{
-		if (!$this->validator->validateCsrfToken($this->text('csrf_token')))
-			return $this->responseBuilder->csrfTokenMismatch($response);
-
 		$this->playlistId = $this->id('playlist_id');
 		if ($this->playlistId === 0)
 			return $this->responseBuilder->invalidPlaylistId($response);

@@ -79,7 +79,7 @@ class NodesControllerTest extends ControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$response = $this->controller->add($this->request('POST', $this->withToken(['node_id' => '8', 'name' => 'Neu'])), $this->newResponse());
+		$response = $this->controller->add($this->request('POST', ['node_id' => '8', 'name' => 'Neu']), $this->newResponse());
 
 		$this->assertSuccess($response);
 		$data = $this->json($response)['data'];
@@ -92,7 +92,7 @@ class NodesControllerTest extends ControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$response = $this->controller->add($this->request('POST', $this->withToken(['node_id' => 8, 'name' => 'Aus JSON'])), $this->newResponse());
+		$response = $this->controller->add($this->request('POST', ['node_id' => 8, 'name' => 'Aus JSON']), $this->newResponse());
 
 		$this->assertSuccess($response);
 	}
@@ -101,7 +101,7 @@ class NodesControllerTest extends ControllerTestCase
 	{
 		$this->actingAs(1);
 
-		$response = $this->controller->add($this->request('POST', $this->withToken(['name' => 'Wurzel'])), $this->newResponse());
+		$response = $this->controller->add($this->request('POST', ['name' => 'Wurzel']), $this->newResponse());
 
 		$this->assertSuccess($response);
 		static::assertSame(0, (int) $this->databaseValue('SELECT parent_id FROM mediapool_nodes WHERE node_id = ?', $this->json($response)['data']['id']));
@@ -134,40 +134,17 @@ class NodesControllerTest extends ControllerTestCase
 		$this->actingAs(1);
 		$before = $this->countNodes();
 
-		$response = $this->controller->add($this->request('POST', $this->withToken($body)), $this->newResponse());
+		$response = $this->controller->add($this->request('POST', $body), $this->newResponse());
 
 		$this->assertError($response, $message);
 		static::assertSame($before, $this->countNodes());
-	}
-
-	public function testWithoutTheTokenOfThePageNothingIsChanged(): void
-	{
-		$this->actingAs(2);
-		$before = $this->countNodes();
-		$this->csrf();
-
-		foreach ([
-			$this->controller->add($this->request('POST', ['node_id' => '8', 'name' => 'x']), $this->newResponse()),
-			$this->controller->add($this->request('POST', ['csrf_token' => 'forged', 'node_id' => '8', 'name' => 'x']), $this->newResponse()),
-			$this->controller->add($this->request('POST', ['csrf_token' => ['x'], 'node_id' => '8', 'name' => 'x']), $this->newResponse()),
-			$this->controller->edit($this->request('PATCH', ['csrf_token' => '', 'node_id' => '8', 'name' => 'x']), $this->newResponse()),
-			$this->controller->move($this->request('POST', ['src_node_id' => '9', 'target_node_id' => '8', 'target_region' => 'before']), $this->newResponse()),
-			$this->controller->delete($this->request('DELETE', ['node_id' => '8']), $this->newResponse()),
-		] as $response)
-		{
-			static::assertSame(400, $response->getStatusCode());
-			static::assertFalse($this->json($response)['success']);
-		}
-
-		static::assertSame($before, $this->countNodes());
-		static::assertSame('Fotos', $this->nameOf(8));
 	}
 
 	public function testADirectoryIsRenamed(): void
 	{
 		$this->actingAs(2);
 
-		$response = $this->controller->edit($this->request('PATCH', $this->withToken(['node_id' => '8', 'name' => 'Urlaub'])), $this->newResponse());
+		$response = $this->controller->edit($this->request('PATCH', ['node_id' => '8', 'name' => 'Urlaub']), $this->newResponse());
 
 		$this->assertSuccess($response);
 		static::assertSame(['id' => 8, 'new_name' => 'Urlaub', 'visibility' => null], $this->json($response)['data']);
@@ -197,7 +174,7 @@ class NodesControllerTest extends ControllerTestCase
 	{
 		$this->actingAs(1);
 
-		$response = $this->controller->edit($this->request('PATCH', $this->withToken(['node_id' => '8', 'name' => 'Fotos', 'visibility' => $sent])), $this->newResponse());
+		$response = $this->controller->edit($this->request('PATCH', ['node_id' => '8', 'name' => 'Fotos', 'visibility' => $sent]), $this->newResponse());
 
 		$this->assertSuccess($response);
 		static::assertSame($stored, (int) $this->databaseValue('SELECT visibility FROM mediapool_nodes WHERE node_id = ?', 8));
@@ -225,7 +202,7 @@ class NodesControllerTest extends ControllerTestCase
 	{
 		$this->actingAs(1);
 
-		$this->assertError($this->controller->edit($this->request('PATCH', $this->withToken($body)), $this->newResponse()), $message);
+		$this->assertError($this->controller->edit($this->request('PATCH', $body), $this->newResponse()), $message);
 
 		static::assertSame('Fotos', $this->nameOf(8));
 	}
@@ -236,7 +213,7 @@ class NodesControllerTest extends ControllerTestCase
 
 		try
 		{
-			$this->controller->edit($this->request('PATCH', $this->withToken(['node_id' => '11', 'name' => 'gehackt'])), $this->newResponse());
+			$this->controller->edit($this->request('PATCH', ['node_id' => '11', 'name' => 'gehackt']), $this->newResponse());
 			static::fail('Expected an AccessDeniedException');
 		}
 		catch (AccessDeniedException)
@@ -249,7 +226,7 @@ class NodesControllerTest extends ControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$response = $this->controller->move($this->request('POST', $this->withToken(['src_node_id' => '9', 'target_node_id' => '8', 'target_region' => 'before'])), $this->newResponse());
+		$response = $this->controller->move($this->request('POST', ['src_node_id' => '9', 'target_node_id' => '8', 'target_region' => 'before']), $this->newResponse());
 
 		$this->assertSuccess($response);
 		static::assertSame([9, 8], array_column($this->json($this->controller->list($this->request('GET'), $this->newResponse(), ['parent_id' => '7'])), 'key'));
@@ -278,7 +255,7 @@ class NodesControllerTest extends ControllerTestCase
 	{
 		$this->actingAs(1);
 
-		$this->assertError($this->controller->move($this->request('POST', $this->withToken($body)), $this->newResponse()), 'Source node, target node, or target region is missing');
+		$this->assertError($this->controller->move($this->request('POST', $body), $this->newResponse()), 'Source node, target node, or target region is missing');
 
 		static::assertSame(7, (int) $this->databaseValue('SELECT parent_id FROM mediapool_nodes WHERE node_id = ?', 9));
 	}
@@ -288,14 +265,14 @@ class NodesControllerTest extends ControllerTestCase
 		$this->actingAs(1);
 
 		$this->expectException(ModuleException::class);
-		$this->controller->move($this->request('POST', $this->withToken(['src_node_id' => '9', 'target_node_id' => '8', 'target_region' => 'inside'])), $this->newResponse());
+		$this->controller->move($this->request('POST', ['src_node_id' => '9', 'target_node_id' => '8', 'target_region' => 'inside']), $this->newResponse());
 	}
 
 	public function testADirectoryIsDeletedAndTheNumberIsGiven(): void
 	{
 		$this->actingAs(2);
 
-		$response = $this->controller->delete($this->request('DELETE', $this->withToken(['node_id' => '8'])), $this->newResponse());
+		$response = $this->controller->delete($this->request('DELETE', ['node_id' => '8']), $this->newResponse());
 
 		$this->assertSuccess($response);
 		static::assertSame(['count_deleted_nodes' => 1], $this->json($response)['data']);
@@ -324,7 +301,7 @@ class NodesControllerTest extends ControllerTestCase
 		$this->actingAs(1);
 		$before = $this->countNodes();
 
-		$this->assertError($this->controller->delete($this->request('DELETE', $this->withToken($body)), $this->newResponse()), 'NodeId is missing');
+		$this->assertError($this->controller->delete($this->request('DELETE', $body), $this->newResponse()), 'NodeId is missing');
 
 		static::assertSame($before, $this->countNodes());
 	}
@@ -336,7 +313,7 @@ class NodesControllerTest extends ControllerTestCase
 
 		try
 		{
-			$this->controller->delete($this->request('DELETE', $this->withToken(['node_id' => '10'])), $this->newResponse());
+			$this->controller->delete($this->request('DELETE', ['node_id' => '10']), $this->newResponse());
 			static::fail('Expected a rejection');
 		}
 		catch (AccessDeniedException|NotFoundException)

@@ -23,18 +23,14 @@ namespace Tests\Unit\Modules\Player;
 
 use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Database\Datatable\FilterConditions;
-use App\Framework\Security\Crypt;
-use App\Framework\Security\CsrfToken;
 use App\Modules\Player\Controller\PlayerController;
 use App\Modules\Player\Helper\Datatable\PlayerFilterDefinition;
 use App\Modules\Player\Services\PlayerService;
-use Defuse\Crypto\Key;
 use Doctrine\DBAL\Platforms\MariaDBPlatform;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Slim\Psr7\Factory\ServerRequestFactory;
 use Slim\Psr7\Response;
-use Tests\Support\MemorySession;
 
 /**
  * Two answers which the database of the tests (SQLite) does not give. Everything else of the player endpoints is
@@ -50,9 +46,8 @@ class PlayerEdgeCasesTest extends TestCase
 	{
 		$service = $this->createStub(PlayerService::class);
 		$service->method('delete')->willReturn(0);
-		$csrf = new CsrfToken(new Crypt(Key::createNewRandomKey()), new MemorySession());
-		$controller = new PlayerController(new JsonResponseHandler(), $service, $csrf);
-		$request = new ServerRequestFactory()->createServerRequest('DELETE', '/async/player')->withParsedBody(['csrf_token' => $csrf->getToken(), 'player_id' => '3']);
+		$controller = new PlayerController(new JsonResponseHandler(), $service);
+		$request    = new ServerRequestFactory()->createServerRequest('DELETE', '/async/player')->withParsedBody(['player_id' => '3']);
 
 		$response = $controller->delete($request, new Response());
 

@@ -21,7 +21,6 @@ declare(strict_types=1);
 
 use App\Framework\Controller\JsonResponseHandler;
 use App\Shared\Acl\AclHelper;
-use App\Framework\Validation\BaseValidator;
 use App\Framework\Config\Config;
 use App\Framework\Validation\Sanitizer;
 use App\Framework\Http\Session;
@@ -50,7 +49,6 @@ use App\Modules\Users\Services\UsersAdminService;
 use App\Modules\Users\Services\UsersDatatableService;
 use App\Shared\User\UsersService;
 use Phpfastcache\Helper\Psr16Adapter;
-use App\Framework\Security\CsrfToken;
 use Psr\Container\ContainerInterface;
 
 $dependencies = [];
@@ -104,8 +102,7 @@ $dependencies[UsersController::class] = DI\factory(function (ContainerInterface 
 		$container->get(UsersDatatableService::class),
 		$container->get(UsersAdminService::class),
 		$container->get(Parameters::class),
-		$container->get(JsonResponseHandler::class),
-		$container->get(CsrfToken::class)
+		$container->get(JsonResponseHandler::class)
 	);
 });
 $dependencies[UserTokenController::class] = DI\factory(function (ContainerInterface $container)
@@ -114,7 +111,6 @@ $dependencies[UserTokenController::class] = DI\factory(function (ContainerInterf
 		new \App\Modules\Users\Helper\Tokens\Orchestrator(
 			new \App\Modules\Users\Helper\Tokens\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
 			$container->get(UserSession::class),
-			$container->get(BaseValidator::class),
 			$container->get(AclValidator::class),
 			$container->get(UserTokenService::class)
 		)

@@ -68,7 +68,7 @@ readonly class ShowInitialAdminController
 		if (!$this->orchestrator->isFunctionAllowed())
 			return $response->withHeader('Location', '/')->withStatus(302);
 
-		$post   = RequestInput::of($request->getParsedBody())->texts(['username', 'email', 'locale', 'password', 'password_confirm', 'csrf_token']);
+		$post   = RequestInput::of($request->getParsedBody())->texts(['username', 'email', 'locale', 'password', 'password_confirm']);
 		$result = $this->orchestrator->store($post);
 		if (!$result['success'])
 		{

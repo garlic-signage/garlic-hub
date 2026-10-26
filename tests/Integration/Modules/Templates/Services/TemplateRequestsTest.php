@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace Tests\Integration\Modules\Templates\Services;
 
 use App\Framework\Exceptions\AccessDeniedException;
-use App\Framework\Security\CsrfToken;
 use App\Modules\Templates\Controller\ShowSettingsController;
 use App\Modules\Templates\Controller\TemplatesController;
 use PHPUnit\Framework\Attributes\Group;
@@ -128,18 +127,6 @@ class TemplateRequestsTest extends ContainerTestCase
 		static::assertSame(2, $this->countTemplates());
 	}
 
-	public function testDeleteWithAForgedCsrfTokenIsRejected(): void
-	{
-		$this->actingAs(1);
-		$request = (new ServerRequestFactory())->createServerRequest('DELETE', '/templates')
-			->withParsedBody(['template_id' => 3, 'csrf_token' => 'forged']);
-
-		$response = $this->templatesController()->delete($request, new Response());
-
-		static::assertNotSame(200, $response->getStatusCode());
-		static::assertSame(3, $this->countTemplates());
-	}
-
 	public function testUserMayNotLoadTheContentOfATemplate(): void
 	{
 		$this->actingAs(2);
@@ -197,7 +184,6 @@ class TemplateRequestsTest extends ContainerTestCase
 	 */
 	private function store(array $post): ResponseInterface
 	{
-		$post['csrf_token'] = $this->container->get(CsrfToken::class)->getToken();
 		$request = (new ServerRequestFactory())->createServerRequest('POST', '/templates/settings')->withParsedBody($post);
 
 		return $this->container->get(ShowSettingsController::class)->store($request, new Response());
@@ -208,7 +194,6 @@ class TemplateRequestsTest extends ContainerTestCase
 	 */
 	private function request(string $method, array $data): \Psr\Http\Message\ServerRequestInterface
 	{
-		$data['csrf_token'] = $this->container->get(CsrfToken::class)->getToken();
 
 		return (new ServerRequestFactory())->createServerRequest($method, '/templates')->withParsedBody($data);
 	}

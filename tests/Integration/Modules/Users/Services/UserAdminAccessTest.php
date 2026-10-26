@@ -24,7 +24,6 @@ namespace Tests\Integration\Modules\Users\Services;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\TranslatableModuleException;
-use App\Framework\Security\CsrfToken;
 use App\Modules\Users\Services\UsersAdminService;
 use App\Shared\User\TokenPurposes;
 use App\Modules\Users\Controller\ShowAdminController;
@@ -199,7 +198,6 @@ class UserAdminAccessTest extends ContainerTestCase
 	 */
 	private function post(array $data): ResponseInterface
 	{
-		$data['csrf_token'] = $this->container->get(CsrfToken::class)->getToken();
 		$request = (new ServerRequestFactory())->createServerRequest('POST', '/users/edit')->withParsedBody($data);
 
 		return $this->controller->store($request, new Response());

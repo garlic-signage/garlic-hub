@@ -23,7 +23,6 @@ declare(strict_types=1);
 namespace App\Modules\Player\Controller;
 
 use App\Framework\Controller\JsonResponseHandler;
-use App\Framework\Security\CsrfToken;
 use App\Framework\Controller\RequestInput;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
@@ -45,8 +44,7 @@ class PlayerController
 
 	public function __construct(
 		private readonly JsonResponseHandler $responseHandler,
-		private readonly PlayerService       $playerService,
-		private readonly CsrfToken 		 	 $csrfToken
+		private readonly PlayerService       $playerService
 	) {}
 
 	/**
@@ -112,9 +110,6 @@ class PlayerController
 	public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
 		$requestData = RequestInput::of($request->getParsedBody());
-
-		if (!$this->csrfToken->validateToken($requestData->text('csrf_token')))
-			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.');
 
 		$playerId = $requestData->id('player_id');
 		if ($playerId === 0)

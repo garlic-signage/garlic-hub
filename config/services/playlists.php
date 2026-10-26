@@ -21,9 +21,7 @@ declare(strict_types=1);
 
 use App\Framework\Controller\JsonResponseHandler;
 use App\Shared\Acl\AclHelper;
-use App\Framework\Validation\BaseValidator;
 use App\Framework\Config\Config;
-use App\Framework\Security\CsrfToken;
 use App\Framework\Validation\Sanitizer;
 use App\Framework\Http\Session;
 use App\Framework\Localization\Translate\Translator;
@@ -133,8 +131,7 @@ $dependencies[Validator::class] = DI\factory(function (ContainerInterface $conta
 {
 	return new Validator(
 		$container->get(Translator::class),
-		$container->get(Parameters::class),
-		$container->get(CsrfToken::class)
+		$container->get(Parameters::class)
 	);
 });
 
@@ -212,7 +209,6 @@ $dependencies[PlaylistsController::class] = DI\factory(function (ContainerInterf
 	return new PlaylistsController(
 		new \App\Modules\Playlists\Helper\Playlists\Orchestrator(
 			new \App\Modules\Playlists\Helper\Playlists\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
-			$container->get(BaseValidator::class),
 			$container->get(PlaylistsService::class),
 			$container->get(PlaylistsDatatableService::class),
 			$container->get(\App\Modules\Playlists\Helper\Datatable\Parameters::class),
@@ -244,7 +240,6 @@ $dependencies[ItemsController::class] = DI\factory(function (ContainerInterface 
 	return new ItemsController(
 		new \App\Modules\Playlists\Helper\Items\Orchestrator(
 			new \App\Modules\Playlists\Helper\Items\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
-			$container->get(BaseValidator::class),
 			$container->get(ItemsService::class),
 			$container->get(InsertItemFactory::class)
 		)
@@ -305,7 +300,6 @@ $dependencies[ExportController::class] = DI\factory(function (ContainerInterface
 	return new ExportController(
 		new \App\Modules\Playlists\Helper\Export\Orchestrator(
 			new \App\Modules\Playlists\Helper\Export\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
-			$container->get(BaseValidator::class),
 			$container->get(ExportService::class)
 		)
 	);
@@ -347,7 +341,6 @@ $dependencies[WidgetsController::class] = DI\factory(function (ContainerInterfac
 	return new WidgetsController(
 		new \App\Modules\Playlists\Helper\Widgets\Orchestrator(
 			new \App\Modules\Playlists\Helper\Widgets\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
-			$container->get(BaseValidator::class),
 			$container->get(WidgetsService::class)
 		)
 	);
@@ -364,7 +357,6 @@ $dependencies[ConditionalPlayController::class] = DI\factory(function (Container
 	return new ConditionalPlayController(
 		new Orchestrator(
 			new ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
-			$container->get(BaseValidator::class),
 			new TemplatePreparer($container->get(Translator::class), $container->get(AdapterInterface::class)),
 			$container->get(ConditionalPlayService::class),
 			new Schema(),
@@ -376,7 +368,6 @@ $dependencies[TriggerController::class] = DI\factory(function (ContainerInterfac
 	return new TriggerController(
 		new \App\Modules\Playlists\Helper\Trigger\Orchestrator(
 			new ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
-			$container->get(BaseValidator::class),
 			new \App\Modules\Playlists\Helper\Trigger\TemplatePreparer($container->get(AdapterInterface::class), new TriggerPreparer($container->get(Translator::class))),
 			new TriggerService($container->get(ItemsService::class), $container->get('ModuleLogger')),
 			new \App\Modules\Playlists\Helper\Trigger\Schema()

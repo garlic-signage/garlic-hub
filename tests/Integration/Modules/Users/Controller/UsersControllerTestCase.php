@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace Tests\Integration\Modules\Users\Controller;
 
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Security\CsrfToken;
 use App\Framework\TemplateEngine\PageResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -50,10 +49,6 @@ abstract class UsersControllerTestCase extends ContainerTestCase
 		$this->loadFixture('acl/users.sql');
 	}
 
-	protected function csrf(): string
-	{
-		return $this->container->get(CsrfToken::class)->getToken();
-	}
 
 	/**
 	 * @param array<string,mixed>|null $body
@@ -63,14 +58,6 @@ abstract class UsersControllerTestCase extends ContainerTestCase
 		return new ServerRequestFactory()->createServerRequest($method, $path)->withParsedBody($body);
 	}
 
-	/**
-	 * @param array<string,mixed> $body
-	 * @return array<string,mixed>
-	 */
-	protected function withToken(array $body): array
-	{
-		return ['csrf_token' => $this->csrf()] + $body;
-	}
 
 	protected function newResponse(): Response
 	{

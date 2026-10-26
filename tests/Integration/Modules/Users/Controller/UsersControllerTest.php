@@ -45,9 +45,9 @@ class UsersControllerTest extends UsersControllerTestCase
 	/**
 	 * @param array<string,mixed> $body
 	 */
-	private function delete(array $body, bool $withToken = true): ResponseInterface
+	private function delete(array $body): ResponseInterface
 	{
-		return $this->controller->delete($this->request('DELETE', body: $withToken ? $this->withToken($body) : $body), $this->newResponse());
+		return $this->controller->delete($this->request('DELETE', body: $body), $this->newResponse());
 	}
 
 	private function find(string $name): ResponseInterface
@@ -76,15 +76,6 @@ class UsersControllerTest extends UsersControllerTestCase
 		static::assertSame('deleted-3@garlic-hub.com', $this->databaseValue('SELECT email FROM user_main WHERE UID = 3'));
 	}
 
-	public function testADeletionNeedsTheCsrfToken(): void
-	{
-		$this->actingAs(1);
-
-		$this->assertError($this->delete(['UID' => '3'], withToken: false), 'CSRF token mismatch.');
-
-		static::assertSame('bernd@example.com', $this->databaseValue('SELECT email FROM user_main WHERE UID = 3'));
-	}
-
 	/**
 	 * @return array<string,array{array<string,mixed>}> the requests which name no user
 	 */
@@ -106,11 +97,12 @@ class UsersControllerTest extends UsersControllerTestCase
 		static::assertSame(3, (int) $this->databaseValue('SELECT status FROM user_main WHERE UID = 1'));
 	}
 
-	public function testADeletionWithoutBodyNeedsTheCsrfToken(): void
+	public function testADeletionWithoutBodyDeletesNothing(): void
 	{
 		$this->actingAs(1);
 
-		$this->assertError($this->controller->delete($this->request('DELETE', body: null), $this->newResponse()), 'CSRF token mismatch.');
+		$this->assertError($this->controller->delete($this->request('DELETE', body: null), $this->newResponse()), 'No UID');
+		static::assertSame('bernd@example.com', $this->databaseValue('SELECT email FROM user_main WHERE UID = 3'));
 	}
 
 	public function testAListAsUserIsNoUser(): void
@@ -120,13 +112,6 @@ class UsersControllerTest extends UsersControllerTestCase
 		$this->assertError($this->delete(['UID' => ['3']]), 'No UID');
 
 		static::assertSame(3, (int) $this->databaseValue('SELECT status FROM user_main WHERE UID = 1'));
-	}
-
-	public function testACsrfTokenWhichIsNoTextIsNoToken(): void
-	{
-		$this->actingAs(1);
-
-		$this->assertError($this->delete(['csrf_token' => ['x'], 'UID' => '3'], withToken: false), 'CSRF token mismatch.');
 	}
 
 	public function testAUserDoesNotDeleteAnotherUser(): void

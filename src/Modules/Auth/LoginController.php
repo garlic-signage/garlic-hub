@@ -97,15 +97,8 @@ readonly class LoginController
 		$params   = (array) $request->getParsedBody();
 		// no need to sanitize here, as we are executing prepared statements in DB.
 		// A field which is missing or sent as array (username[]=x) is no valid credential, not an error of the page.
-		$username  = $this->textOf($params, 'username');
-		$password  = $this->textOf($params, 'password');
-		$csrfToken = $this->textOf($params, 'csrf_token');
-
-		if (!$this->csrfToken->validateToken($csrfToken))
-		{
-			$this->flash->addMessage('error', 'Invalid CSRF token');
-			return $this->redirect($response, '/login');
-		}
+		$username = $this->textOf($params, 'username');
+		$password = $this->textOf($params, 'password');
 
 		$userEntity = $this->authService->login($username, $password);
 		if ($userEntity === null)

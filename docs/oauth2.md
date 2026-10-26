@@ -18,7 +18,7 @@ It leverages the League\OAuth2\Server for core functionalities.
 Manages user authentication and session data:
 - Verifies user credentials.
 - Manages OAuth redirection parameters post-login.
-- Supports CSRF token validation for secure form submissions.
+- Renews the CSRF token after login and logout (the `CsrfMiddleware` checks it for every form submission).
 
 ---
 
@@ -112,7 +112,7 @@ Purpose:
     - Comprehensive handling of access tokens, refresh tokens, and authorization codes.
 
 3. **Security**:
-    - CSRF token validation in `LoginController`.
+    - CSRF token validation by the `CsrfMiddleware` for the login form.
     - Secure password handling using `password_verify` in `ClientsRepository`.
 
 4. **Extensibility**:

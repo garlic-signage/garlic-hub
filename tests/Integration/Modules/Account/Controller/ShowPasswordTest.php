@@ -23,7 +23,6 @@ namespace Tests\Integration\Modules\Account\Controller;
 
 use App\Framework\Exceptions\UserException;
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Security\CsrfToken;
 use App\Framework\TemplateEngine\MustacheAdapter;
 use App\Framework\TemplateEngine\MustacheEngineFactory;
 use App\Framework\TemplateEngine\PageResponse;
@@ -39,7 +38,7 @@ use Tests\Integration\Support\ContainerTestCase;
 
 /**
  * The pages to change the own password (logged in) and to set a password by a link (initial password, reset):
- * controller, orchestrator, validation, CSRF token, tokens and the database work together.
+ * controller, orchestrator, validation, tokens and the database work together.
  * Users of the fixture: 10 regular (registered), 13 unverified, 14 other. All have the password Test1234!
  */
 #[Group('auth')]
@@ -66,10 +65,6 @@ class ShowPasswordTest extends ContainerTestCase
 		return bin2hex($token);
 	}
 
-	private function csrf(): string
-	{
-		return $this->container->get(CsrfToken::class)->getToken();
-	}
 
 	private function passwordOf(int $UID): string
 	{
@@ -108,7 +103,7 @@ class ShowPasswordTest extends ContainerTestCase
 	 */
 	private function forcedPost(string $link, array $changes = []): array
 	{
-		return array_merge(['token' => $link, 'csrf_token' => $this->csrf(), 'password' => self::NEW_PASSWORD, 'password_confirm' => self::NEW_PASSWORD], $changes);
+		return array_merge(['token' => $link, 'password' => self::NEW_PASSWORD, 'password_confirm' => self::NEW_PASSWORD], $changes);
 	}
 
 	private function page(ResponseInterface $response): PageResponse
@@ -159,8 +154,6 @@ class ShowPasswordTest extends ContainerTestCase
 	public static function wrongOwnPasswordPosts(): array
 	{
 		return [
-			'wrong csrf token'    => [['csrf_token' => 'not-the-token']],
-			'no csrf token'       => [['csrf_token' => '']],
 			'passwords differ'    => [['password_confirm' => 'Other-Pass1234']],
 			'password too weak'   => [['password' => 'weak', 'password_confirm' => 'weak']],
 			'nothing entered'     => [['password' => '', 'password_confirm' => '']],
@@ -331,7 +324,6 @@ class ShowPasswordTest extends ContainerTestCase
 	public static function wrongForcedPosts(): array
 	{
 		return [
-			'wrong csrf token' => [['csrf_token' => 'not-the-token']],
 			'passwords differ' => [['password_confirm' => 'Other-Pass1234']],
 			'too weak'         => [['password' => 'weak', 'password_confirm' => 'weak']],
 		];

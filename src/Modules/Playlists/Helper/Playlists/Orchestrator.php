@@ -21,7 +21,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\Playlists;
 
-use App\Framework\Validation\BaseValidator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -47,7 +46,6 @@ class Orchestrator
 
 	public function __construct(
 		private readonly ResponseBuilder $responseBuilder,
-		private readonly BaseValidator $validator,
 		private readonly PlaylistsService $playlistsService,
 		private readonly PlaylistsDatatableService $playlistsDatatableService,
 		private readonly Parameters $parameters,
@@ -67,21 +65,9 @@ class Orchestrator
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
-	public function validateWithToken(ResponseInterface $response): ?ResponseInterface
-	{
-		if (!$this->validator->validateCsrfToken($this->text('csrf_token')))
-			return $this->responseBuilder->csrfTokenMismatch($response);
-
-		return $this->validate($response);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
 	public function validateShufflePicking(ResponseInterface $response): ?ResponseInterface
 	{
-		$answer = $this->validateWithToken($response);
+		$answer = $this->validate($response);
 		if ($answer !== null)
 			return $answer;
 

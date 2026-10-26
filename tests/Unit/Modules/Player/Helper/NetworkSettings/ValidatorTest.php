@@ -22,13 +22,10 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Player\Helper\NetworkSettings;
 
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Security\Crypt;
-use App\Framework\Security\CsrfToken;
 use App\Framework\Validation\Sanitizer;
 use App\Modules\Player\Helper\NetworkSettings\FormInputHandler;
 use App\Modules\Player\Helper\NetworkSettings\Parameters;
 use App\Modules\Player\Helper\NetworkSettings\Validator;
-use Defuse\Crypto\Key;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
@@ -41,17 +38,14 @@ use Tests\Support\MemorySession;
 class ValidatorTest extends TestCase
 {
 	private FormInputHandler $handler;
-	private CsrfToken $csrfToken;
 
 	protected function setUp(): void
 	{
 		parent::setUp();
 		$translator = $this->createStub(Translator::class);
 		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
-		$session          = new MemorySession();
-		$this->csrfToken  = new CsrfToken(new Crypt(Key::createNewRandomKey()), $session);
-		$parameters       = new Parameters(new Sanitizer(), $session);
-		$this->handler    = new FormInputHandler($parameters, new Validator($translator, $parameters, $this->csrfToken));
+		$parameters    = new Parameters(new Sanitizer(), new MemorySession());
+		$this->handler = new FormInputHandler($parameters, new Validator($translator, $parameters));
 	}
 
 	/**
@@ -60,7 +54,7 @@ class ValidatorTest extends TestCase
 	 */
 	private function errorsOf(array $post): array
 	{
-		return array_values($this->handler->validate(['csrf_token' => $this->csrfToken->getToken()] + $post));
+		return array_values($this->handler->validate($post));
 	}
 
 	/**
@@ -169,34 +163,14 @@ class ValidatorTest extends TestCase
 		static::assertSame($address, $this->handler->getParsed()['api_endpoint']);
 	}
 
-	/**
-	 * @return array<string,array{array<string,mixed>}>
-	 */
-	public static function wrongTokens(): array
-	{
-		return ['forged' => [['csrf_token' => 'forged']], 'empty' => [['csrf_token' => '']], 'a list' => [['csrf_token' => ['x']]]];
-	}
-
-	/**
-	 * @param array<string,mixed> $token
-	 */
 	#[Group('units')]
-	#[DataProvider('wrongTokens')]
-	public function testTheTokenOfThePageIsNeeded(array $token): void
-	{
-		$this->csrfToken->getToken();
-
-		static::assertSame(['security.csrf_token_mismatch'], $this->handler->validate($token + ['api_endpoint' => 'http://192.168.1.20']));
-	}
-
-	#[Group('units')]
-	public function testTheParsedValuesAreTheTwoSettingsAndTheToken(): void
+	public function testTheParsedValuesAreTheTwoSettings(): void
 	{
 		$this->errorsOf(['is_intranet' => '1', 'api_endpoint' => 'http://192.168.1.20:8080/v2']);
 
 		$parsed = $this->handler->getParsed();
 		static::assertTrue($parsed['is_intranet']);
 		static::assertSame('http://192.168.1.20:8080/v2', $parsed['api_endpoint']);
-		static::assertEqualsCanonicalizing(['csrf_token', 'is_intranet', 'api_endpoint'], array_keys($parsed));
+		static::assertEqualsCanonicalizing(['is_intranet', 'api_endpoint'], array_keys($parsed));
 	}
 }

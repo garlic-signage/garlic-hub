@@ -22,7 +22,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\Trigger;
 
-use App\Framework\Validation\BaseValidator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -46,7 +45,6 @@ class Orchestrator
 
 	public function __construct(
 		private readonly ResponseBuilder  $responseBuilder,
-		private readonly BaseValidator    $validator,
 		private readonly TemplatePreparer $templatePreparer,
 		private readonly TriggerService   $triggerService,
 		private readonly Schema           $schema,
@@ -56,11 +54,8 @@ class Orchestrator
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
-	public function validateWithToken(ResponseInterface $response): ?ResponseInterface
+	public function validateSave(ResponseInterface $response): ?ResponseInterface
 	{
-		if (!$this->validator->validateCsrfToken($this->text('csrf_token')))
-			return $this->responseBuilder->csrfTokenMismatch($response);
-
 		$answer = $this->validate($response);
 		if ($answer !== null)
 			return $answer;

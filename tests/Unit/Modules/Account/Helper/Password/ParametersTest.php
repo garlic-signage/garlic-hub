@@ -47,10 +47,10 @@ class ParametersTest extends TestCase
 	}
 
 	#[Group('units')]
-	public function testTheParametersAreTheCsrfTokenAndBothPasswords(): void
+	public function testTheParametersAreBothPasswords(): void
 	{
 		static::assertSame('account', $this->fixture->parameters->getModuleName());
-		static::assertEqualsCanonicalizing(['csrf_token', 'password', 'password_confirm'], array_keys($this->fixture->parameters->getCurrentParameters()));
+		static::assertEqualsCanonicalizing(['password', 'password_confirm'], array_keys($this->fixture->parameters->getCurrentParameters()));
 	}
 
 	/**
@@ -84,7 +84,6 @@ class ParametersTest extends TestCase
 
 		static::assertSame('', $this->fixture->parameters->getValueOfParameter('password'));
 		static::assertSame('', $this->fixture->parameters->getValueOfParameter('password_confirm'));
-		static::assertSame('', $this->fixture->parameters->getCsrfToken());
 	}
 
 	/**

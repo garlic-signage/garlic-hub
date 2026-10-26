@@ -23,37 +23,23 @@ namespace App\Framework\Utils\FormParameters;
 
 use App\Framework\Validation\Sanitizer;
 use App\Framework\Http\Session;
-use App\Framework\Exceptions\ModuleException;
 
 /**
  * Represents a base class for handling edit parameters in a module, extending the base functionalities
- * of the `BaseParameters` class. This includes managing session data and defining a structured way
- * to handle and validate parameters such as CSRF tokens.
+ * of the `BaseParameters` class. The forms send their CSRF token in the field PARAMETER_CSRF_TOKEN,
+ * the CsrfMiddleware checks it before the parameters are read.
  */
 abstract class BaseEditParameters extends BaseParameters
 {
 	protected Session $session;
 	public const string PARAMETER_CSRF_TOKEN  = 'csrf_token';
 
-	/** @var array<string, array{scalar_type: ScalarType, default_value: mixed, parsed: bool, value?:mixed}> */
-	protected array $defaultParameters = [
-		self::PARAMETER_CSRF_TOKEN  => ['scalar_type'  => ScalarType::STRING, 'default_value' => '', 'parsed' => false]
-	];
+	/** @var array<string, array{scalar_type: ScalarType, default_value: mixed, parsed: bool, value?:mixed}> parameters every edit form has */
+	protected array $defaultParameters = [];
 
 	public function __construct(string $moduleName, Sanitizer $sanitizer, Session $session)
 	{
 		$this->session = $session;
 		parent::__construct($moduleName, $sanitizer);
-	}
-
-	/**
-	 * @throws ModuleException
-	 */
-	public function getCsrfToken(): string
-	{
-		if (!$this->hasParameter(self::PARAMETER_CSRF_TOKEN))
-			return '';
-
-		return $this->getValueOfParameter(self::PARAMETER_CSRF_TOKEN);
 	}
 }

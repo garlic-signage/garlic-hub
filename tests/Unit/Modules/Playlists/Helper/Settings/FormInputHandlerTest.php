@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Playlists\Helper\Settings;
 
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Security\CsrfToken;
 use App\Framework\Validation\Sanitizer;
 use App\Modules\Playlists\Helper\Settings\FormInputHandler;
 use App\Modules\Playlists\Helper\Settings\Parameters;
@@ -44,11 +43,9 @@ class FormInputHandlerTest extends TestCase
 		parent::setUp();
 		$translator = $this->createStub(Translator::class);
 		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $key === 'playlist_mode_unsupported' ? 'Unsupported: %s' : $module . '.' . $key);
-		$csrfToken = $this->createStub(CsrfToken::class);
-		$csrfToken->method('validateToken')->willReturnCallback(static fn(string $token): bool => $token === 'good');
 
 		$this->parameters = new Parameters(new Sanitizer(), new MemorySession());
-		$this->handler    = new FormInputHandler($this->parameters, new Validator($translator, $this->parameters, $csrfToken));
+		$this->handler    = new FormInputHandler($this->parameters, new Validator($translator, $this->parameters));
 	}
 
 	#[Group('units')]
@@ -57,11 +54,11 @@ class FormInputHandlerTest extends TestCase
 		$this->parameters->addPlaylistMode();
 		$this->parameters->addResolution();
 
-		$errors = $this->handler->validate(['csrf_token' => 'good', 'playlist_name' => 'Lobby', 'playlist_mode' => 'master', 'screen_width' => '1280', 'screen_height' => '720']);
+		$errors = $this->handler->validate(['playlist_name' => 'Lobby', 'playlist_mode' => 'master', 'screen_width' => '1280', 'screen_height' => '720']);
 
 		static::assertSame([], $errors);
 		static::assertSame(
-			['csrf_token' => 'good', 'playlist_name' => 'Lobby', 'playlist_mode' => 'master', 'screen_width' => 1280, 'screen_height' => 720],
+			['playlist_name' => 'Lobby', 'playlist_mode' => 'master', 'screen_width' => 1280, 'screen_height' => 720],
 			$this->handler->getParsed()
 		);
 	}
@@ -71,18 +68,18 @@ class FormInputHandlerTest extends TestCase
 	{
 		$this->parameters->addPlaylistId();
 
-		static::assertSame([], $this->handler->validate(['csrf_token' => 'good', 'playlist_name' => 'Lobby', 'playlist_id' => '12']));
+		static::assertSame([], $this->handler->validate(['playlist_name' => 'Lobby', 'playlist_id' => '12']));
 		static::assertSame(12, $this->handler->getParsed()['playlist_id'] ?? null);
 	}
 
 	#[Group('units')]
-	public function testAWrongTokenAMissingNameAndNoModeOrIdAreErrors(): void
+	public function testAMissingNameAndNoModeOrIdAreErrors(): void
 	{
 		$this->parameters->addPlaylistMode();
 
-		$errors = $this->handler->validate(['csrf_token' => 'wrong', 'playlist_name' => '']);
+		$errors = $this->handler->validate(['playlist_name' => '']);
 
-		static::assertSame(['security.csrf_token_mismatch', 'playlists.no_playlist_name', 'playlists.parameters_missing'], $errors);
+		static::assertSame(['playlists.no_playlist_name', 'playlists.parameters_missing'], $errors);
 	}
 
 	#[Group('units')]
@@ -90,7 +87,7 @@ class FormInputHandlerTest extends TestCase
 	{
 		$this->parameters->addPlaylistMode();
 
-		$errors = $this->handler->validate(['csrf_token' => 'good', 'playlist_name' => 'Lobby', 'playlist_mode' => 'evil']);
+		$errors = $this->handler->validate(['playlist_name' => 'Lobby', 'playlist_mode' => 'evil']);
 
 		static::assertSame(['Unsupported: evil'], $errors);
 	}
@@ -103,7 +100,7 @@ class FormInputHandlerTest extends TestCase
 	{
 		$this->parameters->addPlaylistMode();
 
-		$errors = $this->handler->validate(['csrf_token' => 'good', 'playlist_name' => 'Lobby', 'playlist_mode' => ['master']]);
+		$errors = $this->handler->validate(['playlist_name' => 'Lobby', 'playlist_mode' => ['master']]);
 
 		static::assertSame(['playlists.parameters_missing', 'Unsupported: '], $errors);
 	}
@@ -113,7 +110,7 @@ class FormInputHandlerTest extends TestCase
 	{
 		$this->parameters->addPlaylistId();
 
-		$errors = $this->handler->validate(['csrf_token' => 'good', 'playlist_name' => 'Lobby', 'playlist_id' => ['12']]);
+		$errors = $this->handler->validate(['playlist_name' => 'Lobby', 'playlist_id' => ['12']]);
 
 		static::assertSame(['playlists.parameters_missing'], $errors);
 	}

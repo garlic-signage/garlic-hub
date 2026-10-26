@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Templates\Helper\Settings;
 
 use App\Framework\Localization\Translate\Translator;
-use App\Framework\Security\CsrfToken;
 use App\Framework\Validation\Sanitizer;
 use App\Modules\Templates\Helper\Settings\FormInputHandler;
 use App\Modules\Templates\Helper\Settings\Parameters;
@@ -46,12 +45,10 @@ class FormInputHandlerTest extends TestCase
 		$translator = $this->createStub(Translator::class);
 		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
 		$translator->method('translateArrayForOptions')->willReturnMap([['types_selects', 'templates', ['canvas' => 'Canvas']]]);
-		$csrfToken = $this->createStub(CsrfToken::class);
-		$csrfToken->method('validateToken')->willReturnCallback(static fn(string $token): bool => $token === 'good');
 
 		$parameters   = new Parameters(new Sanitizer(), new MemorySession());
 		$this->policy  = new SettingsParametersPolicy($parameters);
-		$this->handler = new FormInputHandler($parameters, new Validator($translator, $parameters, $csrfToken));
+		$this->handler = new FormInputHandler($parameters, new Validator($translator, $parameters));
 	}
 
 	#[Group('units')]
@@ -59,10 +56,10 @@ class FormInputHandlerTest extends TestCase
 	{
 		$this->policy->addCreateFormElements();
 
-		$errors = $this->handler->validateCreate(['csrf_token' => 'good', 'name' => 'Lobby', 'visibility' => 'public', 'type' => 'canvas', 'UID' => '3']);
+		$errors = $this->handler->validateCreate(['name' => 'Lobby', 'visibility' => 'public', 'type' => 'canvas', 'UID' => '3']);
 
 		static::assertSame([], $errors);
-		static::assertSame(['csrf_token' => 'good', 'name' => 'Lobby', 'UID' => 3, 'visibility' => 'public', 'type' => 'canvas'], $this->handler->getParsed());
+		static::assertSame(['name' => 'Lobby', 'UID' => 3, 'visibility' => 'public', 'type' => 'canvas'], $this->handler->getParsed());
 	}
 
 	#[Group('units')]
@@ -70,15 +67,15 @@ class FormInputHandlerTest extends TestCase
 	{
 		$this->policy->addEditFormElements();
 
-		static::assertSame([], $this->handler->validateEdit(['csrf_token' => 'good', 'name' => 'Lobby']));
+		static::assertSame([], $this->handler->validateEdit(['name' => 'Lobby']));
 	}
 
 	#[Group('units')]
-	public function testAWrongTokenAndAMissingNameAreErrors(): void
+	public function testAMissingNameIsAnError(): void
 	{
 		$this->policy->addEditFormElements();
 
-		static::assertSame(['security.csrf_token_mismatch', 'templates.name_noexists'], $this->handler->validateEdit(['csrf_token' => 'wrong', 'name' => '']));
+		static::assertSame(['templates.name_noexists'], $this->handler->validateEdit(['name' => '']));
 	}
 
 	#[Group('units')]
@@ -86,7 +83,7 @@ class FormInputHandlerTest extends TestCase
 	{
 		$this->policy->addCreateFormElements();
 
-		static::assertSame(['templates.template_type_noexists'], $this->handler->validateCreate(['csrf_token' => 'good', 'name' => 'Lobby', 'type' => 'fabric.js']));
+		static::assertSame(['templates.template_type_noexists'], $this->handler->validateCreate(['name' => 'Lobby', 'type' => 'fabric.js']));
 	}
 
 	#[Group('units')]
@@ -94,7 +91,7 @@ class FormInputHandlerTest extends TestCase
 	{
 		$this->policy->addCreateFormElements();
 
-		static::assertSame([], $this->handler->validateCreate(['csrf_token' => 'good', 'name' => 'Lobby']));
+		static::assertSame([], $this->handler->validateCreate(['name' => 'Lobby']));
 		static::assertSame('canvas', $this->handler->getParsed()['type'] ?? null);
 	}
 
@@ -103,6 +100,6 @@ class FormInputHandlerTest extends TestCase
 	{
 		$this->policy->addCreateFormElements();
 
-		static::assertSame(['security.csrf_token_mismatch', 'templates.name_noexists'], $this->handler->validateCreate(['csrf_token' => ['good'], 'name' => ['Lobby'], 'type' => 'canvas']));
+		static::assertSame(['templates.name_noexists'], $this->handler->validateCreate(['name' => ['Lobby'], 'type' => 'canvas']));
 	}
 }

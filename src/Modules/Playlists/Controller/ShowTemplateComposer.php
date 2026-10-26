@@ -24,7 +24,6 @@ namespace App\Modules\Playlists\Controller;
 
 use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Controller\JsonResponseHandler;
-use App\Framework\Security\CsrfToken;
 use App\Modules\Playlists\Helper\Templates\Orchestrator;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -35,7 +34,6 @@ class ShowTemplateComposer
 	public function __construct(
 		private readonly Orchestrator $orchestrator,
 		private JsonResponseHandler $responseHandler,
-		private CsrfToken           $csrfToken,
 		private readonly Messages   $flash
 	){}
 
@@ -59,15 +57,12 @@ class ShowTemplateComposer
 
 	public function save(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array{item_id?: int, content?: string, image?: string, csrf_token?: string} $requestData */
+		/** @var array{item_id?: int, content?: string, image?: string} $requestData */
 		$requestData = $request->getParsedBody();
 
 		$itemId  = (int) ($requestData['item_id'] ?? 0);
 		$image   = is_string($requestData['image'] ?? null) ? $requestData['image'] : '';
 		$content = is_string($requestData['content'] ?? null) ? $requestData['content'] : '';
-
-		if (!$this->csrfToken->validateToken($requestData['csrf_token'] ?? ''))
-			return $this->responseHandler->jsonError($response, 'CSRF token mismatch.');
 
 		if ($itemId === 0)
 			return $this->responseHandler->jsonError($response, 'No item ID');

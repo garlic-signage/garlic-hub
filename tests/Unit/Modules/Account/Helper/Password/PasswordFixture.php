@@ -55,7 +55,7 @@ final class PasswordFixture
 		$this->session    = new MemorySession();
 		$this->csrfToken  = new CsrfToken(new Crypt(Key::createNewRandomKey()), $this->session);
 		$this->parameters = new Parameters(new Sanitizer(), $this->session);
-		$this->validator  = new Validator($translator, $this->parameters, $this->csrfToken);
+		$this->validator  = new Validator($translator, $this->parameters);
 		$this->formBuilder = new FormBuilder(new FieldsFactory(), new FieldsRenderFactory(), $this->csrfToken);
 	}
 

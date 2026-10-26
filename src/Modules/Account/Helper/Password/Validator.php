@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace App\Modules\Account\Helper\Password;
 
 use App\Framework\Validation\BaseValidator;
-use App\Framework\Security\CsrfToken;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -30,15 +29,15 @@ use App\Framework\Exceptions\ModuleException;
 
 /**
  * Validator class extends the functionality of BaseValidator to handle
- * input validation operations, such as validating user inputs and form tokens.
+ * input validation operations, such as validating user inputs.
  */
 class Validator extends BaseValidator
 {
 	private Parameters $inputEditParameters;
 
-	public function __construct(Translator $translator, Parameters $inputEditParameters, CsrfToken $csrfToken)
+	public function __construct(Translator $translator, Parameters $inputEditParameters)
 	{
-		parent::__construct($translator, $csrfToken);
+		parent::__construct($translator);
 		$this->inputEditParameters = $inputEditParameters;
 	}
 
@@ -50,7 +49,7 @@ class Validator extends BaseValidator
 	 */
 	public function validateUserInput(string $passwordPattern): array
 	{
-		$errors = $this->validateFormCsrfToken($this->inputEditParameters);
+		$errors = [];
 
 		$password = $this->inputEditParameters->getValueOfParameter(Parameters::PARAMETER_PASSWORD);
 		if ($password === '')
