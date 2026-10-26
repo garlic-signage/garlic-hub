@@ -50,9 +50,12 @@ readonly class FinalRenderMiddleware implements MiddlewareInterface
 		if (!$response instanceof PageResponse)
 			return $response;
 
-		$mainContent = $this->templateEngine->render($response->getTemplate(), $response->getTemplateData());
+		// inline scripts of the content and of the layout carry the nonce of the CSP
+		$nonce       = ['CSP_NONCE' => (string) $request->getAttribute(SecurityHeadersMiddleware::NONCE_ATTRIBUTE, '')];
+		$mainContent = $this->templateEngine->render($response->getTemplate(), $response->getTemplateData() + $nonce);
 		$layoutData  = array_merge(
 			$this->layoutDataProvider->collect($request),
+			$nonce,
 			['MAIN_CONTENT' => $mainContent],
 			$response->getMainLayoutData()
 		);

@@ -21,7 +21,7 @@
 	<template id="flashMessageTemplate">
 		<div class="message-bar message-bar--{{MESSAGE_TYPE}}">
 			<span>{{MESSAGE_TEXT}}</span>
-				<button class="close-button" onclick="this.parentElement.style.display='none';">
+				<button class="close-button">
 					<i>&times;</i>
 				</button>
 		</div>
@@ -31,7 +31,7 @@
 		<div class="message-bar message-bar--{{MESSAGE_TYPE}}">
 			<span>{{MESSAGE_TEXT}}</span>
 			{{#has_close_button}}
-				<button class="close-button" onclick="this.parentElement.style.display='none';">
+				<button class="close-button">
 					<i>&times;</i>
 				</button>
 			{{/has_close_button}}
@@ -105,7 +105,7 @@
 		</nav>
 	</footer>
 
-	<script type="module">
+	<script type="module" nonce="{{CSP_NONCE}}">
 		import "/js/main.js";
 	{{#footer_modules}}
 		import "{{.}}";

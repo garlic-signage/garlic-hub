@@ -28,3 +28,11 @@ document.addEventListener("DOMContentLoaded", function()
 	});
 
 });
+
+// the close button of the messages of the server and of the template for new ones
+document.addEventListener("click", function(event)
+{
+	const button = event.target.closest(".message-bar .close-button");
+	if (button !== null)
+		button.parentElement.style.display = "none";
+});

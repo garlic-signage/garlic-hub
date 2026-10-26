@@ -10,7 +10,7 @@ paths = [
 	'''tests/Unit/Framework/Security/CryptTest\.php''',
 	'''tests/Unit/Modules/Player/Services/PlayerTokenServiceTest\.php''',
 	'''tests/Integration/Modules/Account/Controller/ShowPasswordTest\.php''',
-	# old paths, only in the history of git
+	# old paths, only 1in the history of git
 	'''tests/Unit/Framework/Core/CryptTest\.php''',
 	'''tests/Unit/Modules/Auth/OAuth2ControllerTest\.php''',
 ]

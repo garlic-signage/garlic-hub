@@ -26,6 +26,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use RuntimeException;
 use Slim\Psr7\Factory\ServerRequestFactory;
@@ -37,15 +38,17 @@ class SecurityHeadersMiddlewareTest extends TestCase
 		'X-Content-Type-Options'  => 'nosniff',
 		'X-Frame-Options'         => 'SAMEORIGIN',
 		'Referrer-Policy'         => 'same-origin',
-		'Content-Security-Policy' => "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'",
 		'Permissions-Policy'      => 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
 		'Cross-Origin-Opener-Policy' => 'same-origin',
 	];
+
+	private const string POLICY = "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'nonce-%s'";
 
 	#[Group('units')]
 	public function testAddsSecurityHeaders(): void
 	{
 		$response = $this->process(new Response());
+		static::assertMatchesRegularExpression('/^' . preg_quote(sprintf(self::POLICY, 'NONCE'), '/') . '$/', str_replace(self::nonceOf($response), 'NONCE', $response->getHeaderLine('Content-Security-Policy')));
 
 		foreach (self::HEADERS as $name => $value)
 		{
@@ -65,6 +68,42 @@ class SecurityHeadersMiddlewareTest extends TestCase
 			if ($other !== $name)
 				static::assertSame([$value], $response->getHeader($other), $other);
 		}
+		static::assertNotSame('', self::nonceOf($response));
+	}
+
+	#[Group('units')]
+	public function testKeepsAPolicyOfTheHandler(): void
+	{
+		$response = $this->process((new Response())->withHeader('Content-Security-Policy', "default-src 'none'"));
+
+		static::assertSame(["default-src 'none'"], $response->getHeader('Content-Security-Policy'));
+		static::assertSame('nosniff', $response->getHeaderLine('X-Content-Type-Options'));
+	}
+
+	#[Group('units')]
+	public function testTheNonceIsRandomPerRequestAndGivenToTheHandler(): void
+	{
+		$seen    = [];
+		$handler = $this->createStub(RequestHandlerInterface::class);
+		$handler->method('handle')->willReturnCallback(static function (ServerRequestInterface $request) use (&$seen): ResponseInterface
+		{
+			$seen[] = $request->getAttribute(SecurityHeadersMiddleware::NONCE_ATTRIBUTE);
+
+			return new Response();
+		});
+		$request   = (new ServerRequestFactory())->createServerRequest('GET', '/');
+		$first     = new SecurityHeadersMiddleware()->process($request, $handler);
+		$second    = new SecurityHeadersMiddleware()->process($request, $handler);
+
+		static::assertMatchesRegularExpression('/^[0-9a-f]{32}$/', (string) $seen[0]);
+		static::assertSame($seen[0], self::nonceOf($first));
+		static::assertSame($seen[1], self::nonceOf($second));
+		static::assertNotSame($seen[0], $seen[1]);
+	}
+
+	private static function nonceOf(ResponseInterface $response): string
+	{
+		return preg_match("/'nonce-([0-9a-f]+)'/", $response->getHeaderLine('Content-Security-Policy'), $match) === 1 ? $match[1] : '';
 	}
 
 	/**
@@ -88,7 +127,7 @@ class SecurityHeadersMiddlewareTest extends TestCase
 		static::assertSame($body, (string) $response->getBody());
 		static::assertSame('text/html', $response->getHeaderLine('Content-Type'));
 		static::assertSame('nosniff', $response->getHeaderLine('X-Content-Type-Options'));
-		static::assertSame(self::HEADERS['Content-Security-Policy'], $response->getHeaderLine('Content-Security-Policy'));
+		static::assertStringContainsString("script-src 'self' 'nonce-", $response->getHeaderLine('Content-Security-Policy'));
 	}
 
 	/**

@@ -105,12 +105,34 @@ class FinalRenderMiddlewareTest extends TestCase
 			'layouts/main_layout:' . json_encode([
 				'main_menu'       => ['menu'],
 				'LANG_PAGE_TITLE' => 'Page title',
-				'MAIN_CONTENT'    => 'module/page:{"key":"value"}',
+				'CSP_NONCE'       => '',
+				'MAIN_CONTENT'    => 'module/page:{"key":"value","CSP_NONCE":""}',
 			]),
 			(string) $response->getBody()
 		);
 		static::assertSame('text/html', $response->getHeaderLine('Content-Type'));
 		static::assertSame(201, $response->getStatusCode());
+	}
+
+	/**
+	 * The inline scripts of the content and of the layout need the nonce which the CSP of the request allows.
+	 *
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testTheNonceOfTheRequestIsGivenToTheContentAndTheLayout(): void
+	{
+		$this->requestStub->method('getAttribute')->willReturnMap([['csp_nonce', '', 'abc123']]);
+		$this->handlerStub->method('handle')->willReturn(new PageResponse([
+			'main_layout' => [],
+			'this_layout' => ['template' => 'module/page', 'data' => []]
+		]));
+		$this->layoutDataProviderStub->method('collect')->willReturn([]);
+
+		$body = (string) $this->middleware->process($this->requestStub, $this->handlerStub)->getBody();
+
+		static::assertStringContainsString('module\\/page:{\\"CSP_NONCE\\":\\"abc123\\"}', $body);
+		static::assertStringStartsWith('layouts/main_layout:{"CSP_NONCE":"abc123"', $body);
 	}
 
 	/**
@@ -151,7 +173,7 @@ class FinalRenderMiddlewareTest extends TestCase
 
 		$response = $this->middleware->process($this->requestStub, $this->handlerStub);
 
-		static::assertSame('layouts/main_layout:{"MAIN_CONTENT":"set by the page"}', (string) $response->getBody());
+		static::assertSame('layouts/main_layout:{"CSP_NONCE":"","MAIN_CONTENT":"set by the page"}', (string) $response->getBody());
 	}
 
 	/**

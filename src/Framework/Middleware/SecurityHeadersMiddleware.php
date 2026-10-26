@@ -29,9 +29,10 @@ use Psr\Http\Server\RequestHandlerInterface;
 /**
  * Adds security headers to every response which does not set them itself.
  *
- * The CSP does not restrict script-src/style-src yet, because the templates still
- * contain inline scripts and styles. It already blocks framing by other sites, plugins,
- * a manipulated <base> tag and form posts to foreign targets.
+ * The CSP lets only scripts of this server and inline scripts with the nonce of the request run: the nonce is
+ * a request attribute for the templates (csp_nonce). style-src is not restricted yet, because the templates still
+ * contain inline styles. The CSP also blocks framing by other sites, plugins, a manipulated <base> tag and form
+ * posts to foreign targets.
  *
  * Cross-Origin-Embedder-Policy and Cross-Origin-Resource-Policy are left out on purpose: the players and
  * pages of other sites load media and content from this server.
@@ -42,14 +43,22 @@ readonly class SecurityHeadersMiddleware implements MiddlewareInterface
 		'X-Content-Type-Options'  => 'nosniff',
 		'X-Frame-Options'         => 'SAMEORIGIN',
 		'Referrer-Policy'         => 'same-origin',
-		'Content-Security-Policy' => "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'",
 		'Permissions-Policy'      => 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
 		'Cross-Origin-Opener-Policy' => 'same-origin',
 	];
 
+	public const string NONCE_ATTRIBUTE = 'csp_nonce';
+
+	private const string POLICY = "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'nonce-%s'";
+
 	public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
 	{
-		$response = $handler->handle($request);
+		// hex, so the templates need no escaping and the value is the same in the header and in the attribute
+		$nonce    = bin2hex(random_bytes(16));
+		$response = $handler->handle($request->withAttribute(self::NONCE_ATTRIBUTE, $nonce));
+
+		if (!$response->hasHeader('Content-Security-Policy'))
+			$response = $response->withHeader('Content-Security-Policy', sprintf(self::POLICY, $nonce));
 
 		// the version of PHP is nobody's business, whatever expose_php says
 		header_remove('X-Powered-By');
