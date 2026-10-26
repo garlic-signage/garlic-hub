@@ -137,7 +137,7 @@ Technical building blocks without business knowledge.
 | `Helper/`          | Small helpers, e.g. secure (un)serialization                                |
 | `Http/`            | `Session` and `Cookie`                                                      |
 | `Localization/`    | `Locales/` (current and available locales) and `Translate/` (translator, INI loader, ICU formatter) |
-| `Media/`           | Mime types, ffmpeg, media properties, signed media URLs                     |
+| `Media/`           | Mime types, ffmpeg, media properties, signed media URLs, `FileResponse` for `media.php` and `delivery.php` |
 | `Middleware/`      | PSR-15 middleware: locale, CSRF, security headers, JSON errors, final render |
 | `OAuth2/`          | Entities and repositories for the OAuth2 server                             |
 | `Security/`        | `Crypt` and `CsrfToken`                                                     |

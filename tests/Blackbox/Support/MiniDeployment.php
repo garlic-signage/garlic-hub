@@ -31,7 +31,7 @@ use RuntimeException;
  *
  * The directory has its own var/ (database file, keys, logs, smil files), so the tests never
  * touch the data of the developer. The code comes from the project: config, templates, translations
- * and migrations are copied, vendor is linked.
+ * and migrations are copied, vendor and src are linked.
  */
 final class MiniDeployment
 {
@@ -56,6 +56,8 @@ final class MiniDeployment
 			copy($root . '/public/' . $script, $this->directory . '/public/' . $script);
 		$this->copyDirectory($root . '/public/smil', $this->directory . '/public/smil');
 		symlink($root . '/vendor', $this->directory . '/vendor');
+		// delivery.php loads FileResponse without autoloader, by its path
+		symlink($root . '/src', $this->directory . '/src');
 
 		$this->createVarDirectory();
 		file_put_contents($this->directory . '/.env', $this->environment());

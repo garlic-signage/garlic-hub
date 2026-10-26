@@ -27,6 +27,7 @@
  * Signature handling: see MediaUrlSigner
  */
 
+use App\Framework\Media\FileResponse;
 use App\Framework\Media\MediaUrlSigner;
 
 $systemDir = dirname(__DIR__);
@@ -34,45 +35,6 @@ $systemDir = dirname(__DIR__);
 require $systemDir . '/vendor/autoload.php';
 Dotenv\Dotenv::createImmutable($systemDir)->safeLoad();
 
-const MEDIA_MIME = [
-	// Images
-	'jpg'  => 'image/jpeg',
-	'jpeg' => 'image/jpeg',
-	'avif' => 'image/avif',
-	'png'  => 'image/png',
-	'gif'  => 'image/gif',
-	'webp' => 'image/webp',
-	'svg'  => 'image/svg+xml',
-	'bmp'  => 'image/bmp',
-	'tif'  => 'image/tiff',
-	// Audios
-	'mp3'  => 'audio/mpeg',
-	'ogg'  => 'audio/ogg',
-	'opus' => 'audio/ogg',
-	'wav'  => 'audio/wav',
-    // Videos
-	'mp4'  => 'video/mp4',
-	'avi'  => 'video/x-msvideo',
-	'mkv'  => 'video/x-matroska',
-	'webm' => 'video/webm',
-	'mov'  => 'video/quicktime',
-	'mpg'  => 'video/mpeg',
-	// PDF
-	'pdf'  => 'application/pdf',
-	// Widgets and miscellaneous: delivered as download
-	'wgt'   => 'application/octet-stream',
-	'zip'   => 'application/zip',
-	'json'  => 'application/json',
-	'xml'   => 'application/xml',
-	'rss'   => 'application/rss+xml',
-	'atom'  => 'application/atom+xml',
-	'apk'   => 'application/vnd.android.package-archive',
-	'smil'  => 'application/smil',
-	'txt'   => 'text/plain',
-	'csv'   => 'text/csv',
-	'bin'   => 'application/octet-stream',
-];
-const MEDIA_DOWNLOAD = ['wgt', 'zip', 'json', 'xml', 'rss', 'atom', 'apk', 'smil', 'txt', 'csv', 'bin'];
 // Directories below var/storage, must stay in sync with the [directories] sections of
 // config_mediapool.ini, config_templates.ini and config_playlists.ini.
 // Mediapool files are named by their content hash, templates and playlist items by numeric id.
@@ -107,7 +69,7 @@ if (!preg_match('#^/([a-z-]+)/([a-z0-9]+)\.([a-z0-9]{2,5})$#', $_SERVER['PATH_IN
 
 [, $variant, $checksum, $ext] = $m;
 
-if (!isset(MEDIA_VARIANT_DIR[$variant]) || !preg_match(MEDIA_NAME_PATTERN[$variant], $checksum) || !isset(MEDIA_MIME[$ext]))
+if (!isset(MEDIA_VARIANT_DIR[$variant]) || !preg_match(MEDIA_NAME_PATTERN[$variant], $checksum) || !isset(FileResponse::MIME[$ext]))
 	mediaFail(400);
 
 $secret = $_ENV['APP_SECRET'] ?? (getenv('APP_SECRET') ?: '');
@@ -130,12 +92,7 @@ $mtime = filemtime($real);
 $immutable = isset(MEDIA_IMMUTABLE[$variant]);
 $etag = $immutable ? '"' . $checksum . '"' : '"' . dechex($mtime) . '-' . dechex($size) . '"';
 
-header('Content-Type: ' . MEDIA_MIME[$ext]);
-if (in_array($ext, MEDIA_DOWNLOAD, true))
-    header('Content-Disposition: attachment; filename="' . $checksum . '.' . $ext . '"');
-header('X-Content-Type-Options: nosniff');
-header('Content-Security-Policy: sandbox');
-header('Accept-Ranges: bytes');
+FileResponse::sendFileHeaders($checksum, $ext);
 header('ETag: ' . $etag);
 header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $mtime) . ' GMT');
 if ($immutable)
@@ -149,51 +106,16 @@ if (($_SERVER['HTTP_IF_NONE_MATCH'] ?? '') === $etag)
 	exit;
 }
 
-$start = 0;
-$end   = $size - 1;
-$range = $_SERVER['HTTP_RANGE'] ?? '';
-
-// Unsupported or malformed Range (e.g. multi-range) is ignored: full file with 200.
-if ($range !== '' && preg_match('/^bytes=(\d*)-(\d*)$/', $range, $m) && ($m[1] !== '' || $m[2] !== ''))
+$partOfFile = FileResponse::resolveRange($_SERVER['HTTP_RANGE'] ?? '', $size);
+if ($partOfFile === null)
 {
-    if ($m[1] === '')                       // suffix range: last N bytes
-	{
-		$start = max($size - (int) $m[2], 0);
-	}
-	else
-	{
-		$start = (int) $m[1];
-		if ($m[2] !== '')
-			$end = min((int) $m[2], $size - 1);
-	}
-	if ($start > $end || $start >= $size)
-	{
-		header('Content-Range: bytes */' . $size);
-		mediaFail(416);
-	}
-	http_response_code(206);
-	header('Content-Range: bytes ' . $start . '-' . $end . '/' . $size);
+	header('Content-Range: bytes */' . $size);
+	mediaFail(416);
 }
-
-$length = $end - $start + 1;
-header('Content-Length: ' . $length);
+$length = FileResponse::sendRangeHeaders($partOfFile, $size);
 
 if ($_SERVER['REQUEST_METHOD'] === 'HEAD')
 	exit;
 
-$fp = fopen($real, 'rb');
-if ($fp === false)
+if (!FileResponse::stream($real, $partOfFile['start'], $length))
 	mediaFail(500);
-
-set_time_limit(0);
-fseek($fp, $start);
-while ($length > 0 && !feof($fp) && !connection_aborted())
-{
-	$chunk = fread($fp, min(8192 * 8, $length));
-	if ($chunk === false)
-		break;
-	echo $chunk;
-	$length -= strlen($chunk);
-	flush();
-}
-fclose($fp);
