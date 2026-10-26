@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Services;
 
+use App\Framework\Database\Compare;
+use App\Framework\Database\Where;
 use App\Framework\Security\Crypt;
 use App\Modules\Player\Repositories\PlayerTokenRepository;
 use DateMalformedStringException;
@@ -126,7 +128,7 @@ readonly class PlayerTokenService
 	 */
 	public function cleanupExpiredTokens(): int
 	{
-		return $this->playerTokenRepository->deleteBy(['expires_at' => ['value' => date('Y-m-d H:i:s'), 'compare' => '<=']]);
+		return $this->playerTokenRepository->deleteBy([Where::compare('expires_at', Compare::LessOrEqual, date('Y-m-d H:i:s'))]);
 	}
 
 	/**

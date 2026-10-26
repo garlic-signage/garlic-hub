@@ -159,7 +159,7 @@ class NodesService
 		if (!$this->aclValidator->isModuleAdmin($this->userSession->getUID()))
 			throw new AccessDeniedException('mediapool', 'user_directory_not_deletable', ['UID' => $UID]);
 
-		$condition = ['root_id' => $this->nodesRepository->generateWhereClause($node['root_id'])];
+		$condition = ['root_id' => $node['root_id']];
 		$result = $this->nodesRepository->findAllBy($condition);
 		foreach ($result as $node)
 		{

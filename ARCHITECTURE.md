@@ -128,7 +128,7 @@ Technical building blocks without business knowledge.
 | `Config/`          | `Config` and the INI loader for `config/settings`                           |
 | `Controller/`      | Helpers for JSON responses                                                  |
 | `Dashboards/`      | Dashboard interface and aggregation for the start page                      |
-| `Database/`        | Database access                                                             |
+| `Database/`        | Database access; `Where` and `WhereApplier` for the conditions of a query   |
 | `Database/BaseRepositories/` | `SqlBase`, CRUD and find traits, transactions                     |
 | `Database/Datatable/` | Query building and filter conditions for datatables                      |
 | `Database/Migration/` | Migration runner and its repository                                      |

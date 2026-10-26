@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Framework\Database\BaseRepositories;
 
+use App\Framework\Database\WhereApplier;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -33,12 +34,14 @@ abstract class SqlBase
 	protected string $table;
 	protected string $idField;
 	protected readonly Connection $connection;
+	protected readonly WhereApplier $whereApplier;
 
 	public function __construct(Connection $connection, string $table, string $idField)
 	{
 		$this->connection   = $connection;
 		$this->table        = $table;
 		$this->idField      = $idField;
+		$this->whereApplier = new WhereApplier();
 	}
 
 	public function getTable(): string

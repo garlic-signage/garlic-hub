@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace App\Framework\Database\BaseRepositories\Traits;
 
-use Doctrine\DBAL\ArrayParameterType;
+use App\Framework\Database\Where;
 use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Query\QueryBuilder;
 
@@ -59,7 +59,7 @@ trait FindOperationsTrait
 	}
 
 	/**
-	 * @param array<string,mixed> $conditions
+	 * @param array<int|string, int|string|Where> $conditions a Where, or field => value for equality
 	 * @return array<string,mixed>|array<empty,empty>
 	 * @throws Exception
 	 */
@@ -84,7 +84,7 @@ trait FindOperationsTrait
 
 	/**
 	 * Counts records in the table with a custom WHERE clause.
-	 * @param array<string,mixed> $conditions
+	 * @param array<int|string, int|string|Where> $conditions a Where, or field => value for equality
 	 * @param array<string,string> $joins
 	 *
 	 * @throws Exception
@@ -99,7 +99,7 @@ trait FindOperationsTrait
 	/**
 	 * Finds records with a custom WHERE clause.
 	 *
-	 * @param array<string,mixed> $conditions
+	 * @param array<int|string, int|string|Where> $conditions a Where, or field => value for equality
 	 * @param array<string,string> $joins
 	 * @param array<string,int> $limit
 	 * @param list<array<string,mixed>> $orderBy
@@ -114,7 +114,7 @@ trait FindOperationsTrait
 	/**
 	 * Finds records with specific fields and a custom WHERE clause.
  	 * @param string[] $fields
-	 * @param array<string,mixed> $conditions
+	 * @param array<int|string, int|string|Where> $conditions a Where, or field => value for equality
 	 * @param array<string,string> $joins
 	 * @param array<string,int> $limit
 	 * @param list<array<string,mixed>> $orderBy
@@ -137,7 +137,7 @@ trait FindOperationsTrait
 	 *
 	 * @param array<string,int> $limit
 	 * @param list<array<string,mixed>> $orderBy
-	 * @param array<string,mixed> $conditions
+	 * @param array<int|string, int|string|Where> $conditions a Where, or field => value for equality
 	 * @return list<array<string,mixed>>
 	 * @throws Exception
 	 */
@@ -153,7 +153,7 @@ trait FindOperationsTrait
 
 	/**
 	 * Finds a single value by a custom WHERE clause.
-	 * @param array<string,mixed> $conditions
+	 * @param array<int|string, int|string|Where> $conditions a Where, or field => value for equality
 	 * @param array<string,string> $joins
 	 * @param list<array<string,mixed>> $orderBy
 	 *
@@ -183,7 +183,7 @@ trait FindOperationsTrait
 	}
 
 	/**
-	 * @param array<string,mixed> $conditions
+	 * @param array<int|string, int|string|Where> $conditions a Where, or field => value for equality
 	 * @param array<string,string> $joins
 	 * @param list<array<string,mixed>> $orderBy
 	 */
@@ -194,7 +194,7 @@ trait FindOperationsTrait
 		$queryBuilder->select($field)->from($this->table);
 
 		$this->determineLeftJoins($queryBuilder, $joins);
-		$this->determineConditions($queryBuilder, $conditions);
+		$this->whereApplier->apply($queryBuilder, $conditions);
 
 		if (!empty($groupBy))
 			$queryBuilder->groupBy($groupBy);
@@ -206,14 +206,6 @@ trait FindOperationsTrait
 		}
 
 		return $queryBuilder;
-	}
-
-	/**
-	 * @return array<string,mixed>
-	 */
-	public function generateWhereClause(int|string $value, string $compare = '=', string $logic = 'AND', ArrayParameterType $type = ArrayParameterType::INTEGER): array
-	{
-		return ['value' => $value, 'compare' => $compare, 'logic' => $logic, 'type' => $type];
 	}
 
 	/**

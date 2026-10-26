@@ -179,7 +179,7 @@ readonly class UploadService
 								   array $extMetadata = []): array
 	{
 		$fileHash = $mediaHandler->determineNewFilename($uploadedPath);
-		$dataSet  = $this->mediaRepository->findFirstBy(['checksum' => ['value' => $fileHash, 'operator' => '=']]);
+		$dataSet  = $this->mediaRepository->findFirstBy(['checksum' => $fileHash]);
 		$pathInfo = pathinfo($uploadedPath);
 
 		if (empty($dataSet))

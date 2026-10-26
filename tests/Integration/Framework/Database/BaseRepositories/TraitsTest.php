@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Framework\Database\BaseRepositories;
 
+use App\Framework\Database\Compare;
+use App\Framework\Database\Where;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
@@ -82,8 +84,8 @@ class TraitsTest extends RepositoryTestCase
 	public function testFindAllByConditionsWithOperators(): void
 	{
 		static::assertSame([2, 4], $this->ids($this->repository->findAllBy(['UID' => 2])));
-		static::assertSame([3, 4], $this->ids($this->repository->findAllBy(['template_id' => $this->repository->generateWhereClause(2, '>')])));
-		static::assertSame([2, 4], $this->ids($this->repository->findAllBy(['name' => $this->repository->generateWhereClause('Annas%', 'LIKE')])));
+		static::assertSame([3, 4], $this->ids($this->repository->findAllBy([Where::compare('template_id', Compare::Greater, 2)])));
+		static::assertSame([2, 4], $this->ids($this->repository->findAllBy([Where::startsWith('name', 'Annas')])));
 		static::assertSame([1, 2, 3, 4], $this->ids($this->repository->findAllBy()));
 	}
 
@@ -102,42 +104,41 @@ class TraitsTest extends RepositoryTestCase
 	 */
 	public function testFindAllByWithInOperator(): void
 	{
-		$byIds   = $this->repository->findAllBy(['template_id' => $this->repository->generateWhereClause('1,3', 'IN')]);
-		$byNames = $this->repository->findAllBy([
-			'name' => $this->repository->generateWhereClause('Admin Vorlage,Bernds Vorlage', 'IN', 'AND', ArrayParameterType::STRING)
-		]);
+		$byIds   = $this->repository->findAllBy([Where::in('template_id', [1, 3])]);
+		$byNames = $this->repository->findAllBy([Where::in('name', ['Admin Vorlage', 'Bernds Vorlage'], ArrayParameterType::STRING)]);
 
 		static::assertSame([1, 3], $this->ids($byIds));
 		static::assertSame([1, 3], $this->ids($byNames));
+		static::assertSame([], $this->repository->findAllBy([Where::in('template_id', [])]), 'an empty list matches nothing');
 	}
 
 	/**
-	 * @throws Exception
-	 */
-	public function testFindAllByWithOrCombinesTheConditions(): void
-	{
-		$rows = $this->repository->findAllBy([
-			'UID'          => $this->repository->generateWhereClause(1, '=', 'OR'),
-			'template_id'  => $this->repository->generateWhereClause(3, '=', 'OR'),
-		]);
-
-		static::assertSame([1, 3], $this->ids($rows));
-	}
-
-	/**
-	 * A condition with AND before an OR must stay a filter: the user sees only his own rows.
+	 * Two conditions on the same field: each has its own parameter, the second does not overwrite the first.
 	 *
 	 * @throws Exception
 	 */
-	public function testAnAndConditionIsNotBypassedByAnOrCondition(): void
+	public function testTwoConditionsOnOneFieldAreBothApplied(): void
 	{
 		$rows = $this->repository->findAllBy([
-			'UID'         => 2,
-			'template_id' => $this->repository->generateWhereClause(1, '=', 'OR'),
+			Where::compare('template_id', Compare::GreaterOrEqual, 2),
+			Where::compare('template_id', Compare::LessOrEqual, 3),
 		]);
 
-		// the rows of UID 2 plus the row 1, as the query says: (UID = 2) OR (template_id = 1)
-		static::assertSame([1, 2, 4], $this->ids($rows));
+		static::assertSame([2, 3], $this->ids($rows));
+	}
+
+	/**
+	 * % and _ in the searched prefix are no wildcards.
+	 *
+	 * @throws Exception
+	 */
+	public function testStartsWithSearchesWildcardsAsTheyAre(): void
+	{
+		$this->connection->executeStatement("INSERT INTO templates (template_id, UID, visibility, name) VALUES (5, 1, 'public', '50% Rabatt')");
+
+		static::assertSame([5], $this->ids($this->repository->findAllBy([Where::startsWith('name', '50%')])));
+		static::assertSame([], $this->repository->findAllBy([Where::startsWith('name', '%')]));
+		static::assertSame([], $this->repository->findAllBy([Where::startsWith('name', 'A_nas')]));
 	}
 
 	/**
@@ -147,7 +148,7 @@ class TraitsTest extends RepositoryTestCase
 	{
 		$rows = $this->repository->findAllByWithFields(
 			['templates.template_id', 'user_main.username'],
-			['user_main.username' => $this->repository->generateWhereClause('anna', '=')],
+			['user_main.username' => 'anna'],
 			['user_main' => 'user_main.UID = templates.UID'],
 			$this->repository->determineLimit(1, 1),
 			'',
@@ -247,6 +248,8 @@ class TraitsTest extends RepositoryTestCase
 		static::assertSame('public', $this->repository->findFirstById(4)['visibility']);
 		static::assertSame('private', $this->repository->findFirstById(3)['visibility']);
 		static::assertSame(0, $this->repository->updateWithWhere(['visibility' => 'x'], ['UID' => 99]));
+		static::assertSame(1, $this->repository->updateWithWhere(['name' => 'Neu'], [Where::compare('template_id', Compare::Greater, 3)]));
+		static::assertSame('Neu', $this->repository->findFirstById(4)['name']);
 	}
 
 	/**
@@ -257,7 +260,7 @@ class TraitsTest extends RepositoryTestCase
 		static::assertSame(1, $this->repository->delete(1));
 		static::assertSame(0, $this->repository->delete(1));
 		static::assertSame(2, $this->repository->deleteByField('UID', 2));
-		static::assertSame(1, $this->repository->deleteBy(['template_id' => $this->repository->generateWhereClause('3,9', 'IN')]));
+		static::assertSame(1, $this->repository->deleteBy([Where::in('template_id', [3, 9])]));
 
 		static::assertSame(0, $this->repository->countAll());
 	}

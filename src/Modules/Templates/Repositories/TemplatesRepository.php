@@ -45,7 +45,7 @@ class TemplatesRepository extends SqlBase
 	{
 		$select = [$this->table.'.*', 'user_main.username', 'user_main.company_id'];
 		$join   = ['user_main' => 'user_main.UID=' . $this->table . '.UID'];
-		$where  = ['template_id' => $this->generateWhereClause($templateId)];
+		$where  = ['template_id' => $templateId];
 		return $this->getFirstDataSet($this->findAllByWithFields($select, $where, $join));
 	}
 }

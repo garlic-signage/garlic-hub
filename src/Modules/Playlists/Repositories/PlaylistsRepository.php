@@ -56,7 +56,7 @@ class PlaylistsRepository extends SqlBase
 	{
 		$select = [$this->table.'.*', 'user_main.username', 'user_main.company_id'];
 		$join   = ['user_main' => 'user_main.UID=' . $this->table . '.UID'];
-		$where  = ['playlist_id' => ['value' => $playlistId, 'operator' => '=']];
+		$where  = ['playlist_id' => $playlistId];
 		return $this->getFirstDataSet($this->findAllByWithFields($select, $where, $join));
 	}
 

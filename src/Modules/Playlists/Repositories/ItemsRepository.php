@@ -51,7 +51,7 @@ class ItemsRepository extends SqlBase
 	 */
 	public function findAllByPlaylistId(int $playlistId): array
 	{
-		$where   = ['playlist_id' => $this->generateWhereClause($playlistId)];
+		$where   = ['playlist_id' => $playlistId];
 		$orderBy = [['sort' => 'item_order', 'order' => 'ASC']];
 
 		return $this->findAllBy($where,[], [], '', $orderBy);
@@ -141,8 +141,8 @@ class ItemsRepository extends SqlBase
 	public function findAllPlaylistItemsByPlaylistId(int $playlistId): array
 	{
 		$where = [
-			'playlist_id' => $this->generateWhereClause($playlistId),
-			'item_type'  => $this->generateWhereClause(ItemType::PLAYLIST->value)
+			'playlist_id' => $playlistId,
+			'item_type'  => ItemType::PLAYLIST->value
 		];
 		return $this->findAllBy($where);
 	}
@@ -187,8 +187,8 @@ class ItemsRepository extends SqlBase
 		$fields = [$this->table.'.item_id, '.$playlistsTable.'.*'];
 		$join   = [$playlistsTable => $playlistsTable.'.playlist_id = '.$this->table.'.playlist_id'];
 		$where  = [
-			$this->table.'.file_resource' => $this->generateWhereClause($playlistId),
-			$this->table.'.item_type' => $this->generateWhereClause(ItemType::PLAYLIST->value)
+			$this->table.'.file_resource' => $playlistId,
+			$this->table.'.item_type' => ItemType::PLAYLIST->value
 		];
 
 		return $this->findAllByWithFields($fields, $where, $join, [], $this->table.'.playlist_id');

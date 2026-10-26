@@ -55,7 +55,7 @@ class NodesRepository extends SqlBase
 	public function getNode(int $nodeId): array
 	{
 		$select = [$this->table.'.UID, username, company_id, node_id, visibility, root_id, is_user_folder, parent_id, level, lft, rgt, last_updated, create_date, name, media_location, ROUND((rgt - lft - 1) / 2) AS children'];
-		$where = ['node_id' => $this->generateWhereClause($nodeId)];
+		$where = ['node_id' => $nodeId];
 		$join  = ['user_main' => $this->table.'.UID = user_main.UID'];
 
 		/** @var array{
@@ -76,9 +76,9 @@ class NodesRepository extends SqlBase
 	{
 		$select = [$this->table.'.UID', 'company_id', 'node_id', 'root_id'];
 		$where = [
-			$this->table.'.UID' => $this->generateWhereClause($UID),
-			'parent_id' => $this->generateWhereClause(0),
-			'is_user_folder' => $this->generateWhereClause(1)
+			$this->table.'.UID' => $UID,
+			'parent_id' => 0,
+			'is_user_folder' => 1
 		];
 		$join  = ['user_main' => $this->table.'.UID = user_main.UID'];
 

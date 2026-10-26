@@ -204,7 +204,7 @@ readonly class DatatableQuery
 	}
 
 	/**
-	 * Todo: same as CrudTraits::determineConditions, merge when FindOperationsTrait becomes a class.
+	 * Todo: the repositories use Where and the WhereApplier already, the datatables follow (FilterConditions).
 	 *
 	 * @param array<string, mixed> $conditions
 	 */

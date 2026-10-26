@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace App\Framework\Database\BaseRepositories\Traits;
 
 use App\Framework\Helper\Serialization;
+use App\Framework\Database\Where;
 use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Query\QueryBuilder;
 
@@ -62,7 +63,7 @@ trait CrudTraits
 	 * Updates records in the database with a custom WHERE clause.
 	 *
 	 * @param array<string,mixed> $fields
-	 * @param array<string,mixed> $conditions
+	 * @param array<int|string, int|string|Where> $conditions a Where, or field => value for equality
 	 * @return int Number of affected rows
 	 * @throws Exception
 	 */
@@ -77,11 +78,7 @@ trait CrudTraits
 			$queryBuilder->setParameter("set_$field", $value);
 		}
 
-		foreach ($conditions as $field => $value)
-		{
-			$queryBuilder->andWhere("$field = :$field");
-			$queryBuilder->setParameter($field, $value);
-		}
+		$this->whereApplier->apply($queryBuilder, $conditions);
 
 		return (int) $queryBuilder->executeStatement();
 	}
@@ -109,7 +106,7 @@ trait CrudTraits
 
 	/**
 	 * Deletes records from the database with a custom WHERE clause.
-	 * @param array<string,mixed> $conditions
+	 * @param array<int|string, int|string|Where> $conditions a Where, or field => value for equality
 	 * @throws Exception
 	 */
 	public function deleteBy(array $conditions): int
@@ -117,43 +114,9 @@ trait CrudTraits
 		$queryBuilder = $this->connection->createQueryBuilder();
 		$queryBuilder->delete($this->getTable());
 
-		$this->determineConditions($queryBuilder, $conditions);
+		$this->whereApplier->apply($queryBuilder, $conditions);
 
 		return (int) $queryBuilder->executeStatement();
-	}
-
-	/**
-	 * @param array<string,mixed> $conditions
-	 */
-	protected function determineConditions(QueryBuilder $queryBuilder, array $conditions): void
-	{
-		foreach ($conditions as $field => $parameter)
-		{
-			$value    = $parameter['value'] ?? $parameter;
-			$compare  = $parameter['compare'] ?? '=';
-			$logic    = $parameter['logic'] ?? 'AND';
-
-			$govno = str_replace('.', '', $field); // because DBAl do not accept SQL dots like table.field
-			if ($compare === 'IN')
-				$placeholder = "(:$govno)";
-			else
-				$placeholder = ":$govno";
-
-			switch ($logic)
-			{
-				case 'OR':
-					$queryBuilder->orWhere("$field $compare $placeholder");
-					break;
-				case 'AND':
-				default:
-					$queryBuilder->andWhere("$field $compare $placeholder");
-			}
-
-			if ($compare === 'IN')
-				$queryBuilder->setParameter($govno, explode(',', $value), $parameter['type']);
-			else
-				$queryBuilder->setParameter($govno, $value);
-		}
 	}
 
 	/**
