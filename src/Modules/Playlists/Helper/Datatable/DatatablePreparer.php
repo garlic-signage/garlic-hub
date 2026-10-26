@@ -89,7 +89,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 						$resultElements['is_link'] = $this->prepareService->getBodyPreparer()->formatLink(
 							$playlist['playlist_name'],
 							$this->translator->translate('composer', 'playlists'),
-							'playlists/compose/'.$playlist['playlist_id'],
+							'/playlists/compose/'.$playlist['playlist_id'],
 							'playlist_name_'.$playlist['playlist_id']
 						);
 						break;
@@ -115,15 +115,15 @@ class DatatablePreparer extends AbstractDatatablePreparer
 				$list['has_action_link'] = [
 			/*		$this->prepareService->getBodyPreparer()->formatAction(
 						$this->translator->translate('copy_playlist', 'playlists'),
-						'playlists/?playlist_copy_id='.$playlist['playlist_id'],
+						'/playlists/?playlist_copy_id='.$playlist['playlist_id'],
 						'copy', 'copy'), */
 					$this->prepareService->getBodyPreparer()->formatActionLink(
 						$this->translator->translate('composer', 'playlists'),
-						'playlists/compose/'.$playlist['playlist_id'],
+						'/playlists/compose/'.$playlist['playlist_id'],
 						'composer', (string) $playlist['playlist_id'], 'pencil'),
 					$this->prepareService->getBodyPreparer()->formatActionLink(
 						$this->translator->translate('edit_settings', 'playlists'),
-						'playlists/settings/'.$playlist['playlist_id'],
+						'/playlists/settings/'.$playlist['playlist_id'],
 						'edit', (string) $playlist['playlist_id'], 'gear')
 				];
 				if (!array_key_exists($playlist['playlist_id'], $this->usedPlaylists) &&

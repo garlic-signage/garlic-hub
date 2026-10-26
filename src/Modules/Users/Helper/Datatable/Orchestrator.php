@@ -65,7 +65,7 @@ class Orchestrator extends AbstractDatatableOrchestrator
 	protected function prepareModuleTemplate(): array
 	{
 		return [
-			'has_add'        => $this->datatablePreparer->prepareAdd('person-add', 'users/new'),
+			'has_add'        => $this->datatablePreparer->prepareAdd('person-add', '/users/new'),
 			'template_name'  => 'users/datatable',
 			'module_name'    => 'users',
 			'additional_css' => ['/css/users/datatable.css'],

@@ -167,7 +167,7 @@ class ShowDatatableControllerTest extends PlaylistsControllerTestCase
 		$row = $this->list()->getTemplateData()['elements_results'][0];
 
 		static::assertSame('Annas Lobby', $row['elements_result_element'][0]['is_link']['CONTROL_ELEMENT_VALUE_NAME']);
-		static::assertSame('playlists/compose/1', $row['elements_result_element'][0]['is_link']['CONTROL_ELEMENT_VALUE_LINK']);
+		static::assertSame('/playlists/compose/1', $row['elements_result_element'][0]['is_link']['CONTROL_ELEMENT_VALUE_LINK']);
 		static::assertSame(['composer', 'edit'], array_column($row['has_action_link'], 'LINK_ACTION_NAME'));
 	}
 }

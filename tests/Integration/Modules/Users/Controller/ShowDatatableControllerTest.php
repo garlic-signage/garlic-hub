@@ -62,7 +62,7 @@ class ShowDatatableControllerTest extends UsersControllerTestCase
 		static::assertSame(['username', 'created_at', 'status'], array_column($rows[2]['elements_result_element'], 'CONTROL_NAME_BODY'));
 		static::assertSame('bernd', $rows[2]['elements_result_element'][0]['is_text']['CONTROL_ELEMENT_VALUE_TEXT']);
 		static::assertSame('Registered', $rows[2]['elements_result_element'][2]['is_text']['CONTROL_ELEMENT_VALUE_TEXT']);
-		static::assertSame('users/edit/3', $rows[2]['has_action_link'][0]['LINK_ACTION']);
+		static::assertSame('/users/edit/3', $rows[2]['has_action_link'][0]['LINK_ACTION']);
 	}
 
 	public function testThePageHasItsTemplateAndTheFilters(): void
@@ -73,6 +73,8 @@ class ShowDatatableControllerTest extends UsersControllerTestCase
 
 		static::assertSame('users/datatable', $page->getTemplate());
 		static::assertStringContainsString('3', (string) $page->getTemplateData()['LANG_COUNT_SEARCH_RESULTS']);
+		// the links start at the root: they work from every address of the list
+		static::assertSame('/users/new', $page->getTemplateData()['has_add']['ELEMENTS_ADD_LINK']);
 		static::assertSame(['username', 'email', 'status'], array_keys(HtmlFields::fromPrepared(['visible' => $page->getTemplateData()['form_element']])));
 	}
 
@@ -199,7 +201,7 @@ class ShowDatatableControllerTest extends UsersControllerTestCase
 
 		$links = array_map(static fn(array $row): string => $row['has_action_link'][0]['LINK_ACTION'], $this->list()->getTemplateData()['elements_results']);
 
-		static::assertSame(['users/edit/1', 'users/edit/2', 'users/edit/3'], $links);
+		static::assertSame(['/users/edit/1', '/users/edit/2', '/users/edit/3'], $links);
 	}
 
 	public function testAUserGetsNoLinkToTheFormOfHerself(): void
@@ -228,7 +230,7 @@ class ShowDatatableControllerTest extends UsersControllerTestCase
 
 		$rows = $this->list()->getTemplateData()['elements_results'];
 
-		static::assertSame(['users/edit/1', 'users/edit/2'], [$rows[0]['has_action_link'][0]['LINK_ACTION'], $rows[1]['has_action_link'][0]['LINK_ACTION']]);
+		static::assertSame(['/users/edit/1', '/users/edit/2'], [$rows[0]['has_action_link'][0]['LINK_ACTION'], $rows[1]['has_action_link'][0]['LINK_ACTION']]);
 		static::assertArrayNotHasKey('has_action_link', $rows[2]);
 	}
 

@@ -121,7 +121,7 @@ class DatatablePreparerTest extends TestCase
 		static::assertSame(5, $body[0]['UNIT_ID']);
 		static::assertSame(
 			[
-				['CONTROL_NAME_BODY' => 'playlist_name', 'is_link' => ['CONTROL_ELEMENT_VALUE_NAME' => 'Lobby', 'CONTROL_ELEMENT_VALUE_TITLE' => 'playlists.composer', 'CONTROL_ELEMENT_VALUE_LINK' => 'playlists/compose/5', 'CONTROL_ELEMENT_VALUE_ID' => 'playlist_name_5', 'CONTROL_ELEMENT_VALUE_CLASS' => '', 'CONTROL_ELEMENT_ADDITIONAL_TEXT' => '']],
+				['CONTROL_NAME_BODY' => 'playlist_name', 'is_link' => ['CONTROL_ELEMENT_VALUE_NAME' => 'Lobby', 'CONTROL_ELEMENT_VALUE_TITLE' => 'playlists.composer', 'CONTROL_ELEMENT_VALUE_LINK' => '/playlists/compose/5', 'CONTROL_ELEMENT_VALUE_ID' => 'playlist_name_5', 'CONTROL_ELEMENT_VALUE_CLASS' => '', 'CONTROL_ELEMENT_ADDITIONAL_TEXT' => '']],
 				['CONTROL_NAME_BODY' => 'UID', 'is_UID' => $body[0]['elements_result_element'][1]['is_UID']],
 				['CONTROL_NAME_BODY' => 'playlist_mode', 'is_text' => ['CONTROL_ELEMENT_VALUE_TEXT' => 'Master']],
 				['CONTROL_NAME_BODY' => 'duration', 'is_text' => ['CONTROL_ELEMENT_VALUE_TEXT' => '01:02:05']],
@@ -159,8 +159,8 @@ class DatatablePreparerTest extends TestCase
 
 		static::assertSame(
 			[
-				['LANG_LINK_ACTION' => 'playlists.composer', 'LINK_ACTION' => 'playlists/compose/5', 'LINK_ACTION_ID' => '5', 'LINK_ACTION_NAME' => 'composer', 'LINK_ACTION_ICON_CLASS' => 'pencil'],
-				['LANG_LINK_ACTION' => 'playlists.edit_settings', 'LINK_ACTION' => 'playlists/settings/5', 'LINK_ACTION_ID' => '5', 'LINK_ACTION_NAME' => 'edit', 'LINK_ACTION_ICON_CLASS' => 'gear'],
+				['LANG_LINK_ACTION' => 'playlists.composer', 'LINK_ACTION' => '/playlists/compose/5', 'LINK_ACTION_ID' => '5', 'LINK_ACTION_NAME' => 'composer', 'LINK_ACTION_ICON_CLASS' => 'pencil'],
+				['LANG_LINK_ACTION' => 'playlists.edit_settings', 'LINK_ACTION' => '/playlists/settings/5', 'LINK_ACTION_ID' => '5', 'LINK_ACTION_NAME' => 'edit', 'LINK_ACTION_ICON_CLASS' => 'gear'],
 			],
 			$row['has_action_link']
 		);

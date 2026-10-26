@@ -69,6 +69,7 @@ class ShowDatatableControllerTest extends TemplatesControllerTestCase
 
 		static::assertSame('templates/datatable', $page->getTemplate());
 		static::assertSame(['name', 'type', 'used'], array_column($data['elements_result_header'], 'CONTROL_NAME'));
+		static::assertSame('/templates/settings/canvas', $data['has_add']['ELEMENTS_ADD_LINK']);
 		static::assertSame(['LANG_COMPOSE', 'LANG_SETTINGS', 'LANG_TEMPLATE_DELETE', 'LANG_TEMPLATE_DELETE_CONFIRM'], array_keys($data['templates_actions_contextmenu']));
 		foreach ($data['templates_actions_contextmenu'] as $key => $text)
 			static::assertNotSame('', $text, $key);

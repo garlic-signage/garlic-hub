@@ -81,7 +81,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 							$resultElements['is_link'] = $this->prepareService->getBodyPreparer()->formatLink(
 								$user['username'],
 								$this->translator->translate('edit', 'main'),
-								'users/edit/' . $user['UID'],
+								'/users/edit/' . $user['UID'],
 								'username_' . $user['UID']
 							);
 
@@ -106,7 +106,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 				$list['has_action_link'] = [
 					$this->prepareService->getBodyPreparer()->formatActionLink(
 						$this->translator->translate('edit_settings', 'users'),
-						'users/edit/' . $user['UID'],
+						'/users/edit/' . $user['UID'],
 						'edit', (string) $user['UID'], 'pencil')
 				];
 				// nobody deletes himself, the installation would be without admin
