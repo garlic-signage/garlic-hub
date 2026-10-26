@@ -143,6 +143,36 @@ class ItemThumbnailResolverTest extends TestCase
 	/**
 	 * @throws CoreException
 	 */
+	/**
+	 * The thumbnail of an item keeps the format of the saved image: the preview takes the one which exists.
+	 */
+	#[Group('units')]
+	public function testTemplateFindsTheThumbnailInTheFormatWhichWasSaved(): void
+	{
+		$dir = sys_get_temp_dir() . '/item_thumbs_resolver_test';
+		mkdir($dir);
+		touch($dir . '/17.png');
+		touch($dir . '/18.webp');
+		$config = $this->createStub(Config::class);
+		$config->method('getConfigValue')->willReturnMap([['thumbnails', 'playlists', 'directories', $dir]]);
+		$resolver = new ItemThumbnailResolver($config, $this->mimeTypeExtensionMapperStub, new MediaUrlSigner('unit-test-secret'));
+
+		try
+		{
+			$png  = $resolver->resolve(['item_type' => ItemType::TEMPLATE->value, 'item_id' => 17]);
+			$webp = $resolver->resolve(['item_type' => ItemType::TEMPLATE->value, 'item_id' => 18]);
+			$none = $resolver->resolve(['item_type' => ItemType::TEMPLATE->value, 'item_id' => 19]);
+		}
+		finally
+		{
+			array_map('unlink', glob($dir . '/*') ?: []);
+			rmdir($dir);
+		}
+
+		static::assertSame([$dir . '/17.png', $dir . '/18.webp', $dir . '/19.jpg'], [$png['path'] ?? '', $webp['path'] ?? '', $none['path'] ?? '']);
+		static::assertStringStartsWith('/media.php/item-thumb/17.png?exp=', $png['url'] ?? '');
+	}
+
 	#[Group('units')]
 	public function testTemplateUsesJpgNamedByItemId(): void
 	{

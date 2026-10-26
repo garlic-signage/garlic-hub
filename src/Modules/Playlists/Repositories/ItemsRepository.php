@@ -90,7 +90,7 @@ class ItemsRepository extends SqlBase
 		$queryBuilder->leftJoin(
 			'playlists_items',
 			'mediapool_files',
-			'',
+			'mediapool_files',
 			'playlists_items.file_resource = mediapool_files.checksum'
 		);
 
@@ -109,8 +109,8 @@ class ItemsRepository extends SqlBase
 			$queryBuilder->leftJoin(
 				'playlists_items',
 				'templates_content',
-				'',
-				'item_type='.ItemType::TEMPLATE->value.' AND  playlists_items.file_resource = templates_content.content_id'
+				'templates_content',
+				"item_type = '" . ItemType::TEMPLATE->value . "' AND playlists_items.file_resource = templates_content.content_id"
 			);
 		}
 
@@ -120,8 +120,8 @@ class ItemsRepository extends SqlBase
 			$queryBuilder->leftJoin(
 				'playlists_items',
 				'channels',
-				'',
-				'item_type='.ItemType::CHANNEL->value.' AND  playlists_items.file_resource = channels.channel_id'
+				'channels',
+				"item_type = '" . ItemType::CHANNEL->value . "' AND playlists_items.file_resource = channels.channel_id"
 			);
 		}
 

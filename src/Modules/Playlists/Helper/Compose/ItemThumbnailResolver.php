@@ -85,18 +85,27 @@ readonly class ItemThumbnailResolver
 	}
 
 	/**
-	 * Thumbnails are always created as jpg, whatever mimetype the rendered original has.
+	 * The thumbnail keeps the format of the saved image (jpg, png, webp, bmp). Without a file the preview is the jpg.
 	 *
 	 * @return array{path:string, url:string}
 	 * @throws CoreException
 	 */
 	private function resolveTemplate(int $itemId): array
 	{
-		$thumbDir = $this->config->getConfigValue('thumbnails', 'playlists', 'directories');
+		$thumbDir  = $this->config->getConfigValue('thumbnails', 'playlists', 'directories');
+		$extension = 'jpg';
+		foreach (['jpg', 'png', 'webp', 'bmp'] as $candidate)
+		{
+			if (file_exists($thumbDir . '/' . $itemId . '.' . $candidate))
+			{
+				$extension = $candidate;
+				break;
+			}
+		}
 
 		return [
-			'path' => $thumbDir . '/' . $itemId . '.jpg',
-			'url'  => $this->mediaUrlSigner->itemThumbUrl($itemId, 'jpg')
+			'path' => $thumbDir . '/' . $itemId . '.' . $extension,
+			'url'  => $this->mediaUrlSigner->itemThumbUrl($itemId, $extension)
 		];
 	}
 }

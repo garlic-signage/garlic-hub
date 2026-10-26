@@ -184,17 +184,16 @@ class ShowTemplateComposerTest extends PlaylistsControllerTestCase
 	}
 
 	/**
-	 * The composer of the items offers jpg, png, webp and bmp. The preview of the item in the composer looks for <id>.jpg.
+	 * The composer of the items offers jpg, png, webp and bmp: the thumbnail keeps the format (the preview finds it, see ItemThumbnailResolverTest).
 	 */
-	public function testThePreviewOfAnItemSavedAsPngHasTheNameWhichTheComposerUses(): void
+	public function testTheThumbnailOfAnItemSavedAsPngKeepsTheFormat(): void
 	{
-		static::markTestSkipped('Known bug: the thumbnail keeps the format of the image (5.png, 5.webp, 5.bmp), but the preview of the item (ItemThumbnailResolver) looks for 5.jpg. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->actingAs(2);
 
 		$this->assertSuccess($this->save(['item_id' => '5', 'content' => '{"objects":[]}', 'image' => self::PNG]));
 
-		static::assertSame(['5.jpg'], array_map(static fn(mixed $path): string => basename((string) $path), (array) glob($this->workspace->dir . '/var/storage/playlists/items/thumbs/*')));
+		$thumbnails = array_map(static fn(mixed $path): string => basename((string) $path), (array) glob($this->workspace->dir . '/var/storage/playlists/items/thumbs/*'));
+		static::assertSame(['5.png'], $thumbnails);
 	}
 
 	public function testAFileWhichIsNoImageIsNotSaved(): void

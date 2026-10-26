@@ -77,8 +77,6 @@ class ItemsRepositoryEditionsTest extends RepositoryTestCase
 	 */
 	public function testCoreAddsTheTemplateContent(): void
 	{
-		static::markTestSkipped('Known bug: the joins of the Core and Enterprise edition get the same empty alias, Doctrine throws NonUniqueAlias. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$items = $this->repository->findAllByPlaylistIdWithJoins(1, Config::PLATFORM_EDITION_CORE);
 
 		static::assertCount(5, $items);
@@ -94,8 +92,6 @@ class ItemsRepositoryEditionsTest extends RepositoryTestCase
 	 */
 	public function testEnterpriseAddsTemplateContentAndChannels(): void
 	{
-		static::markTestSkipped('Known bug: the joins of the Core and Enterprise edition get the same empty alias, Doctrine throws NonUniqueAlias. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$items = $this->repository->findAllByPlaylistIdWithJoins(1, Config::PLATFORM_EDITION_ENTERPRISE);
 
 		static::assertCount(5, $items);

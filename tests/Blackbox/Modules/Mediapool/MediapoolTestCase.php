@@ -97,38 +97,6 @@ abstract class MediapoolTestCase extends BlackboxTestCase
 	}
 
 	/**
-	 * A request with the path exactly as given: the HTTP client would clean up dot segments, like a browser does,
-	 * but an attacker sends what he wants.
-	 *
-	 * @param array<string,string> $headers
-	 * @return array{status:int,headers:array<string,string>,body:string}
-	 */
-	protected function rawGet(string $path, array $headers = []): array
-	{
-		$port   = (int) parse_url($this->deployment()->baseUrl(), PHP_URL_PORT);
-		$socket = stream_socket_client('tcp://127.0.0.1:' . $port, $errorCode, $errorText, 10);
-		static::assertNotFalse($socket, (string) $errorText);
-		$request = "GET $path HTTP/1.1\r\nHost: garlic-hub.test\r\nConnection: close\r\n";
-		foreach ($headers as $name => $value)
-			$request .= "$name: $value\r\n";
-		fwrite($socket, $request . "\r\n");
-		$answer = (string) stream_get_contents($socket);
-		fclose($socket);
-
-		[$head, $body] = array_pad(explode("\r\n\r\n", $answer, 2), 2, '');
-		$lines   = explode("\r\n", $head);
-		$status  = (int) (explode(' ', $lines[0])[1] ?? 0);
-		$parsed  = [];
-		foreach (array_slice($lines, 1) as $line)
-		{
-			[$name, $value] = array_pad(explode(':', $line, 2), 2, '');
-			$parsed[strtolower(trim($name))] = trim($value);
-		}
-
-		return ['status' => $status, 'headers' => $parsed, 'body' => $body];
-	}
-
-	/**
 	 * @return array<string,mixed>
 	 */
 	protected function json(ResponseInterface $response): array
