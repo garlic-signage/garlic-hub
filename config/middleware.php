@@ -21,13 +21,18 @@ declare(strict_types=1);
 
 use Psr\Container\ContainerInterface;
 use Slim\App;
+use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Http\Cookie;
 use App\Framework\Localization\Locales\Locales;
+use App\Framework\Localization\Translate\Translator;
+use App\Framework\Middleware\CsrfMiddleware;
+use App\Framework\Security\CsrfToken;
 use App\Framework\Http\Session;
 use App\Framework\Middleware\LocaleMiddleware;
 use App\Framework\Middleware\SecurityHeadersMiddleware;
 use App\Modules\Auth\AuthMiddleware;
 use App\Modules\Auth\AuthService;
+use Slim\Flash\Messages;
 
 return function (ContainerInterface $container, $start_time, $start_memory): App
 {
@@ -35,6 +40,15 @@ return function (ContainerInterface $container, $start_time, $start_memory): App
 	$app = $container->get(App::class);
 
 	require_once __DIR__ . '/route.php';
+
+	// every POST, PUT, PATCH and DELETE needs the CSRF token, checked after the locale (the message is translated).
+	// Token and flash messages are created when needed: a request which changes nothing starts no session.
+	$app->add(new CsrfMiddleware(
+		new ReflectionClass(CsrfToken::class)->newLazyProxy(static fn(): CsrfToken => $container->get(CsrfToken::class)),
+		new ReflectionClass(Messages::class)->newLazyProxy(static fn(): Messages => $container->get(Messages::class)),
+		$container->get(Translator::class),
+		$container->get(JsonResponseHandler::class)
+	));
 
 	// determines the locale after the auth middleware (auto login writes it into the session)
 	$app->add(new LocaleMiddleware($container->get(Locales::class)));

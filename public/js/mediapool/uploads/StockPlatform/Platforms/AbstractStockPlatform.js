@@ -16,6 +16,7 @@
  You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+import { UploadApiConfig } from '../../UploadApiConfig.js';
 
 export class AbstractStockPlatform
 {
@@ -84,4 +85,24 @@ export class AbstractStockPlatform
 	}
 
 	set resultList(value) {	this.#resultList = value; }
+
+	/**
+	 * The server asks the stock platform for us. Like every POST it needs the CSRF token.
+	 */
+	async requestStockApi(dataToSend)
+	{
+		const body    = {...dataToSend, csrf_token: this.#detectCsrfTokenInMetaTag()};
+		const options = {method: "POST", headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)};
+
+		return await this.#fetchClient.fetchData(UploadApiConfig.SEARCH_STOCK_IMAGES, options);
+	}
+
+	#detectCsrfTokenInMetaTag()
+	{
+		const metaTag = document.querySelector('meta[name="csrf-token"]');
+		if (metaTag && metaTag.hasAttribute('content'))
+			return metaTag.getAttribute('content');
+
+		throw new Error("No CSRF token found in meta tag");
+	}
 }

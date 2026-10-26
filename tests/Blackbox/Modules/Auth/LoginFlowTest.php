@@ -122,7 +122,7 @@ class LoginFlowTest extends BlackboxTestCase
 
 		static::assertSame('/login', $response->getHeaderLine('Location'));
 		// the message is shown once, by the next page
-		static::assertStringContainsString('Invalid CSRF token', (string) $browser->get('/login')->getBody());
+		static::assertStringContainsString('CSRF token validation error.', (string) $browser->get('/login')->getBody());
 		static::assertSame('/login', $browser->get('/player')->getHeaderLine('Location'));
 	}
 

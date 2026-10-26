@@ -17,7 +17,6 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import { UploadApiConfig } from '../../UploadApiConfig.js';
 import { AbstractStockPlatform } from './AbstractStockPlatform.js';
 
 export class PixabayPlatform extends AbstractStockPlatform
@@ -69,8 +68,7 @@ export class PixabayPlatform extends AbstractStockPlatform
 				"&key=" + this.apiToken;
 
 			const dataToSend  = {"api_url": apiUrl};
-			const options = {method: "POST", headers: {'Content-Type': 'application/json'}, body: JSON.stringify(dataToSend)}
-			const results = await this.fetchClient.fetchData(UploadApiConfig.SEARCH_STOCK_IMAGES, options);
+			const results = await this.requestStockApi(dataToSend);
 
 			if (!results || !results.success)
 			{

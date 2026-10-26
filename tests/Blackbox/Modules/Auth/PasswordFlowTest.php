@@ -371,7 +371,8 @@ class PasswordFlowTest extends BlackboxTestCase
 
 		$response = $guest->post('/force-password', $fields);
 
-		static::assertSame(200, $response->getStatusCode());
+		// the CsrfMiddleware sends the visitor back to the form
+		static::assertSame(303, $response->getStatusCode());
 		static::assertSame('', $this->hashOf($this->uidOf('carla')));
 		// the link is not used up by the failure
 		$this->submitPassword($token, self::NEW_PASSWORD);
@@ -536,7 +537,9 @@ class PasswordFlowTest extends BlackboxTestCase
 
 		$response = $anna->post('/account/password', $fields);
 
-		static::assertSame(200, $response->getStatusCode());
+		// the CsrfMiddleware sends the visitor back to the form
+		static::assertSame(303, $response->getStatusCode());
+		static::assertSame('/account/password', $response->getHeaderLine('Location'));
 		static::assertTrue($this->hasPassword('anna', self::PASSWORD));
 	}
 
@@ -606,7 +609,8 @@ class PasswordFlowTest extends BlackboxTestCase
 	{
 		$this->connection->executeStatement('DELETE FROM user_main');
 		$guest = $this->browser();
-		$fields = ['username' => 'root', 'email' => 'root@example.com', 'locale' => 'en_US', 'password' => self::NEW_PASSWORD, 'password_confirm' => self::NEW_PASSWORD, 'csrf_token' => 'x'];
+		// a valid token: the lock has to refuse, not the CSRF check
+		$fields = ['username' => 'root', 'email' => 'root@example.com', 'locale' => 'en_US', 'password' => self::NEW_PASSWORD, 'password_confirm' => self::NEW_PASSWORD, 'csrf_token' => $guest->csrfToken('/login')];
 
 		static::assertSame('/', $guest->get('/create-initial')->getHeaderLine('Location'));
 		static::assertSame('/', $guest->post('/create-initial', $fields)->getHeaderLine('Location'));
@@ -620,8 +624,11 @@ class PasswordFlowTest extends BlackboxTestCase
 
 		static::assertSame('/', $guest->get('/create-initial')->getHeaderLine('Location'));
 		static::assertTrue($this->lockExists());
+		// a valid token, taken while the lock exists (without it every page leads to /create-initial):
+		// the existing admin has to refuse, not the CSRF check
+		$token = $guest->csrfToken('/login');
 		$this->removeLock();
-		$fields = ['username' => 'root', 'email' => 'root@example.com', 'locale' => 'en_US', 'password' => self::NEW_PASSWORD, 'password_confirm' => self::NEW_PASSWORD, 'csrf_token' => 'x'];
+		$fields = ['username' => 'root', 'email' => 'root@example.com', 'locale' => 'en_US', 'password' => self::NEW_PASSWORD, 'password_confirm' => self::NEW_PASSWORD, 'csrf_token' => $token];
 		static::assertSame('/', $guest->post('/create-initial', $fields)->getHeaderLine('Location'));
 		static::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM user_main WHERE username = 'root'"));
 		static::assertSame($this->hashOf(1) !== self::NEW_PASSWORD, true);
@@ -645,7 +652,7 @@ class PasswordFlowTest extends BlackboxTestCase
 		// the second visit is sent away and creates nothing
 		$second = $this->browser();
 		static::assertSame('/', $second->get('/create-initial')->getHeaderLine('Location'));
-		static::assertSame('/', $second->post('/create-initial', ['username' => 'root2', 'email' => 'r2@example.com', 'locale' => 'en_US', 'password' => self::NEW_PASSWORD, 'password_confirm' => self::NEW_PASSWORD, 'csrf_token' => 'x'])->getHeaderLine('Location'));
+		static::assertSame('/', $second->post('/create-initial', ['username' => 'root2', 'email' => 'r2@example.com', 'locale' => 'en_US', 'password' => self::NEW_PASSWORD, 'password_confirm' => self::NEW_PASSWORD, 'csrf_token' => $second->csrfToken('/login')])->getHeaderLine('Location'));
 		static::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_main'));
 	}
 
@@ -686,7 +693,8 @@ class PasswordFlowTest extends BlackboxTestCase
 
 		$response = $guest->post('/create-initial', $fields);
 
-		static::assertSame(200, $response->getStatusCode());
+		// the CsrfMiddleware sends the visitor back to the form
+		static::assertSame(303, $response->getStatusCode());
 		static::assertFalse($this->lockExists());
 		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_main'));
 	}
