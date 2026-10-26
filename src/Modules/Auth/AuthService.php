@@ -185,6 +185,21 @@ class AuthService
 		return $this->userService->getUserById($UID);
 	}
 
+	/**
+	 * Whether the user of a running session may still work: an admin may have blocked or deleted him since the login.
+	 * The user comes from the cache, which is invalidated when an admin changes the status.
+	 *
+	 * @throws Exception
+	 */
+	public function isUserActive(int $UID): bool
+	{
+		$status = $this->getCurrentUser($UID)->getMain()['status'] ?? null;
+		if (!is_numeric($status))
+			return false;
+
+		return !in_array((int) $status, [UsersService::USER_STATUS_DELETED, UsersService::USER_STATUS_LOCKED, UsersService::USER_STATUS_REGISTERED], true);
+	}
+
 	private function validateUserStatus(int $status): void
 	{
 		$this->logger->info('User status is: '. $status);

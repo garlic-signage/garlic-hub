@@ -131,7 +131,7 @@ $app->group('/api', function (RouteCollectorProxy $group) use ($container)
 {
 	$group->get('/authorize', resolve([OAuth2Controller::class, 'authorize'], $container));
 	$group->post('/token', resolve([OAuth2Controller::class, 'token'], $container));
-})->add(function ($request, $handler) {return $handler->handle($request)->withHeader('Content-Type', 'text/html');});
+});
 
 $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 {
@@ -196,4 +196,4 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 	$group->patch('/templates', resolve([TemplatesController::class, 'save'], $container));
 
 
-})->add(function ($request, $handler) {return $handler->handle($request)->withHeader('Content-Type', 'text/html');});
+});

@@ -241,5 +241,6 @@ class OAuth2ControllerTest extends TestCase
 		$streamMock->expects($this->once())->method('write')->with((string) json_encode(['error' => $error]));
 		$this->responseMock->expects($this->once())->method('getBody')->willReturn($streamMock);
 		$this->responseMock->expects($this->once())->method('withStatus')->with(500)->willReturnSelf();
+		$this->responseMock->expects($this->once())->method('withHeader')->with('Content-Type', 'application/json')->willReturnSelf();
 	}
 }

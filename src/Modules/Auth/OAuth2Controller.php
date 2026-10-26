@@ -100,7 +100,7 @@ class OAuth2Controller
 			if ($json !== false)
 				$response->getBody()->write($json);
 
-			return $response->withStatus(500);
+			return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
 		}
 	}
 
@@ -121,7 +121,7 @@ class OAuth2Controller
 			if ($json !== false)
 				$response->getBody()->write($json);
 
-			return $response->withStatus(500);
+			return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
 		}
 	}
 

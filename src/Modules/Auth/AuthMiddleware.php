@@ -72,7 +72,7 @@ readonly class AuthMiddleware implements MiddlewareInterface
 		if (in_array($section, self::PUBLIC_SECTIONS, true))
 			return $handler->handle($request);
 
-		$isLoggedIn = $this->session->exists('user') || $this->loginByCookie();
+		$isLoggedIn = $this->hasActiveSession() || $this->loginByCookie();
 
 		// the login page is for guests only
 		if ($section === self::LOGIN_SECTION)
@@ -90,6 +90,28 @@ readonly class AuthMiddleware implements MiddlewareInterface
 	private function determineSection(ServerRequestInterface $request): string
 	{
 		return explode('/', ltrim($request->getUri()->getPath(), '/'), 2)[0];
+	}
+
+	/**
+	 * A session of a user who was blocked or deleted after his login ends with the next request.
+	 *
+	 * @throws FrameworkException
+	 * @throws Exception
+	 */
+	private function hasActiveSession(): bool
+	{
+		$user = $this->session->get('user');
+		if ($user === null)
+			return false;
+
+		$UID = is_array($user) && is_numeric($user['UID'] ?? null) ? (int) $user['UID'] : 0;
+		if ($UID > 0 && $this->authService->isUserActive($UID))
+			return true;
+
+		$this->session->clear();
+		$this->session->regenerateID();
+
+		return false;
 	}
 
 	/**

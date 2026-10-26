@@ -237,8 +237,6 @@ class StoredNamesTest extends BlackboxTestCase
 	#[DataProvider('jsonEndpoints')]
 	public function testTheJsonPartSaysThatItIsJson(string $path): void
 	{
-		static::markTestSkipped('Known bug: a middleware of the group /async sets Content-Type text/html on every answer, also on JSON. A browser which opens the address shows the names as a page. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->setNames('<img src=x onerror=alert(1)>');
 
 		static::assertStringContainsString('application/json', $this->admin->get($path)->getHeaderLine('Content-Type'), $path);

@@ -48,12 +48,15 @@ class AuthMiddlewareTest extends TestCase
 	private MemorySession $session;
 	private AuthMiddleware $middleware;
 	private RequestHandlerInterface $handler;
+	/** @var list<int> users who were blocked or deleted after their login */
+	private array $inactiveUsers = [];
 
 	protected function setUp(): void
 	{
 		parent::setUp();
 		$_COOKIE = [];
 		$this->authService = $this->createStub(AuthService::class);
+		$this->authService->method('isUserActive')->willReturnCallback(fn(int $UID): bool => !in_array($UID, $this->inactiveUsers, true));
 		$this->session     = new MemorySession();
 		$this->handler     = new class implements RequestHandlerInterface {
 			public function handle(ServerRequestInterface $request): ResponseInterface
@@ -209,6 +212,77 @@ class AuthMiddlewareTest extends TestCase
 		$this->session->set('user', ['UID' => 1]);
 
 		$this->assertRedirect($this->process('/login'), '/');
+	}
+
+	/**
+	 * Blocked or deleted by an admin after the login: the running session must not keep him in.
+	 */
+	#[Group('units')]
+	public function testTheSessionOfAnInactiveUserEndsWithTheNextRequest(): void
+	{
+		$this->inactiveUsers = [1];
+		$this->session->set('user', ['UID' => 1]);
+		$this->session->set('locale', 'de_DE');
+
+		$this->assertRedirect($this->process('/playlists'), '/login');
+
+		static::assertSame([], $this->session->data);
+		static::assertSame(1, $this->session->regenerations);
+	}
+
+	#[Group('units')]
+	public function testAnInactiveUserGetsAJsonErrorOnApiPaths(): void
+	{
+		$this->inactiveUsers = [1];
+		$this->session->set('user', ['UID' => 1]);
+
+		static::assertSame(401, $this->process('/async/player/push')->getStatusCode());
+	}
+
+	#[Group('units')]
+	public function testAnInactiveUserMayOpenTheLoginPage(): void
+	{
+		$this->inactiveUsers = [1];
+		$this->session->set('user', ['UID' => 1]);
+
+		$this->assertHandled($this->process('/login'), '/login');
+	}
+
+	/**
+	 * @return array<string,array{mixed}>
+	 */
+	public static function brokenSessionUsers(): array
+	{
+		return [
+			'no UID'      => [['username' => 'x']],
+			'UID 0'       => [['UID' => 0]],
+			'UID as text' => [['UID' => 'abc']],
+			'no array'    => ['user'],
+		];
+	}
+
+	#[Group('units')]
+	#[DataProvider('brokenSessionUsers')]
+	public function testASessionWithoutAValidUserIsNoLogin(mixed $user): void
+	{
+		$this->session->data['user'] = $user;
+
+		$this->assertRedirect($this->process('/playlists'), '/login');
+		static::assertSame([], $this->session->data);
+	}
+
+	/**
+	 * The session ends, but the cookie may still log in: the login by cookie checks the status itself.
+	 */
+	#[Group('units')]
+	public function testAnEndedSessionIsReplacedByTheRememberMeCookie(): void
+	{
+		$this->inactiveUsers = [1];
+		$this->session->set('user', ['UID' => 1]);
+		$this->rememberMeCookieOf(7);
+
+		$this->assertHandled($this->process('/playlists'), '/playlists');
+		static::assertSame(7, $this->session->get('user')['UID'] ?? null);
 	}
 
 	#[Group('units')]

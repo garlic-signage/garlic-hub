@@ -28,6 +28,7 @@ use App\Modules\Auth\AuthMiddleware;
 use App\Modules\Auth\AuthService;
 use App\Modules\Auth\AutoLoginService;
 use App\Modules\Auth\LoginThrottle;
+use App\Modules\Users\Services\UsersAdminService;
 use App\Shared\User\UsersService;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
@@ -156,6 +157,44 @@ class AuthMiddlewareTest extends ContainerTestCase
 
 		static::assertSame(302, $response->getStatusCode());
 		static::assertSame('/', $response->getHeaderLine('Location'));
+	}
+
+	/**
+	 * The admin blocks the user while he works: the user is cached from the first request,
+	 * the next one must not let him in anymore.
+	 */
+	public function testAUserBlockedByTheAdminIsLoggedOutWithTheNextRequest(): void
+	{
+		$this->actingAs(10);
+		static::assertSame(200, $this->process('GET', '/player')->getStatusCode());
+
+		$this->container->get(UsersAdminService::class)->updateUser(10, ['username' => 'regular', 'email' => 'Regular@Example.com', 'status' => UsersService::USER_STATUS_LOCKED]);
+
+		$response = $this->process('GET', '/player');
+		static::assertSame(302, $response->getStatusCode());
+		static::assertSame('/login', $response->getHeaderLine('Location'));
+		static::assertFalse($this->container->get(Session::class)->exists('user'));
+		static::assertSame(401, $this->process('GET', '/async/player/push')->getStatusCode());
+	}
+
+	/**
+	 * @return array<string,array{int}>
+	 */
+	public static function inactiveUsers(): array
+	{
+		return ['deleted' => [11], 'blocked' => [12], 'not verified' => [13], 'not existing' => [99]];
+	}
+
+	#[DataProvider('inactiveUsers')]
+	public function testASessionOfAnInactiveUserIsNoLogin(int $UID): void
+	{
+		$this->container->get(Session::class)->set('user', ['UID' => $UID, 'username' => 'x', 'locale' => 'en_US']);
+
+		$response = $this->process('GET', '/player');
+
+		static::assertSame(302, $response->getStatusCode());
+		static::assertSame('/login', $response->getHeaderLine('Location'));
+		static::assertFalse($this->container->get(Session::class)->exists('user'));
 	}
 
 	public function testRememberMeCookieLogsTheUserIn(): void
