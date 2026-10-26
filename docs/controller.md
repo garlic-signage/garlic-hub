@@ -63,7 +63,7 @@ readonly class PlaylistsController
 
     public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $answer = $this->orchestrator->setInput($request->getParsedBody())->validateWithToken($response);
+        $answer = $this->orchestrator->setInput($request->getParsedBody())->validate($response);
         if ($answer !== null)
             return $answer;
 
@@ -71,6 +71,9 @@ readonly class PlaylistsController
     }
 }
 ```
+
+An orchestrator is used exactly once per request: `setInput()`, then `validate…()`, then the action.
+The validation keeps the checked values (e.g. the playlist id) for the action.
 
 Every JSON answer has the format of `JsonResponseHandler`:
 `{"success": true, …}` or `{"success": false, "error_message": "…"}`.

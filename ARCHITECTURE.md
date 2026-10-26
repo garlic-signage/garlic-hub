@@ -211,7 +211,7 @@ PHPUnit tests, namespace `Tests\`.
   - `Modules/<Module>/Repositories/` — repository tests, group `db`.
   - `Modules/<Module>/Services/` — tests of who sees and may change what through the real services, group `acl`.
 - `Blackbox/` — tests over HTTP, suite `blackbox`, group `blackbox`: `Support/MiniDeployment` starts the application with the PHP web server in a temporary directory (own `var/`, own database file), `Support/Browser` is a visitor with cookies. They cover the login, the way of a player (`/smil-index`), the security headers and the rights as a user would try them.
-- `Architecture/` — rules for the structure, suite `architecture`: the layers and module dependencies of `src/` (`LayersTest`) and the groups of the integration tests (`TestGroupsTest`).
+- `Architecture/` — rules for the structure, suite `architecture`: the layers and module dependencies of `src/` (`LayersTest`), the groups of the integration tests (`TestGroupsTest`) and a ratchet for `@var` assertions on arrays, whose number per file may only go down (`ArrayCastsTest`).
 - `resources/` — fixtures: config files, translations, widgets, temporary files.
   - `sql/<topic>/` — SQL scripts which insert test data for integration tests (`acl/` holds the shared users).
 
