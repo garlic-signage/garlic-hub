@@ -148,6 +148,18 @@ class BaseValidatorTest extends TestCase
 		static::assertSame($expected, $this->baseValidator->validatePassword($password, self::PASSWORD_PATTERN));
 	}
 
+	/**
+	 * bcrypt ignores everything after the 72nd byte, so a longer password is refused (the limit counts bytes).
+	 */
+	#[Group('units')]
+	public function testAPasswordLongerThan72BytesIsRefused(): void
+	{
+		static::assertTrue($this->baseValidator->validatePassword('Aa1' . str_repeat('x', 69), self::PASSWORD_PATTERN));
+		static::assertFalse($this->baseValidator->validatePassword('Aa1' . str_repeat('x', 70), self::PASSWORD_PATTERN));
+		static::assertTrue($this->baseValidator->validatePassword('Aa1' . str_repeat('ü', 34), self::PASSWORD_PATTERN));
+		static::assertFalse($this->baseValidator->validatePassword('Aa1' . str_repeat('ü', 35), self::PASSWORD_PATTERN));
+	}
+
 	#[Group('units')]
 	public function testThePatternMatchesTheWholePassword(): void
 	{

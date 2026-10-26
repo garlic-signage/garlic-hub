@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Account\Controller;
 
+use App\Framework\Controller\RequestInput;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
@@ -64,7 +65,7 @@ readonly class ShowPasswordController
 	 */
 	public function showForcedPasswordForm(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		$passwordToken = (string) ($request->getQueryParams()['token'] ?? '');
+		$passwordToken = RequestInput::of($request->getQueryParams())->text('token');
 		if ($passwordToken === '')
 			return $this->redirectToLoginWithError($response, 'no_token');
 

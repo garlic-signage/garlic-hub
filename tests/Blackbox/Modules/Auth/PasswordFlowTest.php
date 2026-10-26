@@ -221,8 +221,6 @@ class PasswordFlowTest extends BlackboxTestCase
 
 	public function testAListAsTokenInTheAddressLeadsToTheLogin(): void
 	{
-		static::markTestSkipped('Known bug: /force-password?token[]=x ends with an error 500. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->assertRefusedToLogin($this->browser()->get('/force-password?token[]=abc'));
 	}
 
@@ -315,8 +313,6 @@ class PasswordFlowTest extends BlackboxTestCase
 
 	public function testABlockedUserCanNotUseAnOpenLink(): void
 	{
-		static::markTestSkipped('Known bug: a blocked user with an open link can set a password and uses up the link. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$token = $this->createUserAndLink();
 		$this->connection->executeStatement("UPDATE user_main SET status = 1 WHERE username = 'carla'");
 
@@ -327,8 +323,6 @@ class PasswordFlowTest extends BlackboxTestCase
 
 	public function testADeletedUserCanNotUseAnOpenLink(): void
 	{
-		static::markTestSkipped('Known bug: a deleted user with an open link can set a password and uses up the link. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$token = $this->createUserAndLink();
 		$this->connection->executeStatement("UPDATE user_main SET status = 0 WHERE username = 'carla'");
 
@@ -458,15 +452,23 @@ class PasswordFlowTest extends BlackboxTestCase
 		static::assertSame('/login', $response->getHeaderLine('Location') ?: '/login');
 	}
 
-	public function testPasswordsWhichDifferAfterTheEndOfTheHashAreNotTheSame(): void
+	/**
+	 * bcrypt ignores everything after the 72nd byte: a password which is longer is refused, so that no one
+	 * thinks that the tail counts. The limit is in bytes, an umlaut has two of them.
+	 */
+	public function testAPasswordIsAllowedUpTo72BytesAndRefusedBeyond(): void
 	{
-		static::markTestSkipped('Known bug: bcrypt cuts the password after 72 bytes, a longer tail does not count. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$token = $this->createUserAndLink();
-		$long  = 'Aa1' . str_repeat('x', 80);
-		$this->submitPassword($token, $long . 'A');
+		$long  = 'Aa1' . str_repeat('x', 69);
 
-		static::assertFalse($this->canLogin('carla', $long . 'B'));
+		$refused = $this->submitPassword($token, $long . 'y');
+		static::assertSame(200, $refused->getStatusCode());
+		static::assertSame('', $this->hashOf($this->uidOf('carla')));
+		$refusedUmlauts = $this->submitPassword($token, 'Aa1' . str_repeat('ü', 35));
+		static::assertSame(200, $refusedUmlauts->getStatusCode());
+
+		$this->assertRefusedToLogin($this->submitPassword($token, $long));
+		static::assertTrue($this->canLogin('carla', $long));
 	}
 
 	// ---------------------------------------------------------------- C: the own password

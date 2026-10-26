@@ -32,6 +32,7 @@ use App\Modules\Account\Helper\Password\Orchestrator;
 use App\Modules\Account\Helper\Password\SettingsFormBuilder;
 use App\Modules\Account\Services\AccountService;
 use App\Modules\Auth\UserSession;
+use App\Modules\Users\UserStatus;
 use App\Shared\User\TokenPurposes;
 use App\Shared\User\UserTokenService;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -164,6 +165,35 @@ class OrchestratorTest extends TestCase
 		$user = $this->orchestratorWith($service)->loadTokenUser('abcd');
 
 		static::assertSame($accepted, $user !== []);
+	}
+
+	/**
+	 * @return array<string,array{int,bool}>
+	 */
+	public static function statusProvider(): array
+	{
+		return [
+			'deleted'      => [UserStatus::DELETED->value, false],
+			'blocked'      => [UserStatus::BLOCKED->value, false],
+			'not verified' => [UserStatus::NOT_VERIFIED->value, true],
+			'registered'   => [UserStatus::REGISTERED->value, true],
+			'admin'        => [UserStatus::ADMIN->value, true],
+		];
+	}
+
+	/**
+	 * A link which was given before does not work for a user who was blocked or deleted since.
+	 *
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	#[DataProvider('statusProvider')]
+	public function testTheLinkOfABlockedOrDeletedUserIsRejected(int $status, bool $accepted): void
+	{
+		$service = $this->createStub(UserTokenService::class);
+		$service->method('findByToken')->willReturn(['status' => $status] + $this->tokenUser);
+
+		static::assertSame($accepted, $this->orchestratorWith($service)->loadTokenUser('abcd') !== []);
 	}
 
 	/**

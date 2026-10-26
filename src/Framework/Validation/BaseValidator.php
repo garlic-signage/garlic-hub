@@ -34,6 +34,8 @@ use App\Framework\Utils\FormParameters\BaseEditParameters;
  */
 class BaseValidator
 {
+	public const int MAX_PASSWORD_BYTES = 72;
+
 	public function __construct(
 		protected readonly Translator $translator,
 		protected readonly CsrfToken $csrfToken
@@ -53,6 +55,10 @@ class BaseValidator
 
 	public function validatePassword(string $password, string $pattern): bool
 	{
+		// bcrypt ignores everything after the 72nd byte: a longer password would be shorter than it looks
+		if (strlen($password) > self::MAX_PASSWORD_BYTES)
+			return false;
+
 		// D: the $ must not match before a line break at the end, that is no part of a password
 		$pattern = '/^'.$pattern.'$/D';
 

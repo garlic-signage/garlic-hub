@@ -29,6 +29,7 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\UserSession;
+use App\Modules\Users\UserStatus;
 use App\Shared\User\TokenPurposes;
 use App\Modules\Account\Services\AccountService;
 use App\Shared\User\UserTokenService;
@@ -52,7 +53,7 @@ readonly class Orchestrator
 	) {}
 
 	/**
-	 * Returns an empty array when the token is invalid or not meant for a password change.
+	 * Returns an empty array when the token is invalid, not meant for a password change or the user is blocked or deleted.
 	 *
 	 * @return array{UID:int, company_id:int, username:string, status:int, purpose:string}|array{}
 	 * @throws DateMalformedStringException
@@ -70,6 +71,10 @@ readonly class Orchestrator
 
 		if ($user['purpose'] !== TokenPurposes::PASSWORD_RESET->value &&
 			$user['purpose'] !== TokenPurposes::INITIAL_PASSWORD->value)
+			return [];
+
+		// a blocked or deleted user must not use a link which was given before
+		if ($user['status'] === UserStatus::DELETED->value || $user['status'] === UserStatus::BLOCKED->value)
 			return [];
 
 		return $user;
