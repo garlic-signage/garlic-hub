@@ -47,7 +47,7 @@ class PlayerFilterDefinitionTest extends RepositoryTestCase
 		$this->loadFixture('player/players.sql');
 		$conditions      = new FilterConditions();
 		$this->definition = new PlayerFilterDefinition($conditions, $this->connection->getDatabasePlatform());
-		$this->query      = new DatatableQuery($this->connection, $conditions);
+		$this->query      = new DatatableQuery($this->connection);
 	}
 
 	/**

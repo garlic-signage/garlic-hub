@@ -23,7 +23,7 @@ namespace Tests\Unit\Framework\Database\Datatable;
 
 use App\Framework\Database\Datatable\FilterConditions;
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
-use Doctrine\DBAL\ArrayParameterType;
+use App\Framework\Database\Where;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
@@ -36,28 +36,6 @@ class FilterConditionsTest extends TestCase
 	{
 		parent::setUp();
 		$this->conditions = new FilterConditions();
-	}
-
-	#[Group('units')]
-	public function testWhereClauseDefaults(): void
-	{
-		$expected = ['value' => 5, 'compare' => '=', 'logic' => 'AND', 'type' => ArrayParameterType::INTEGER];
-
-		static::assertSame($expected, $this->conditions->whereClause(5));
-	}
-
-	#[Group('units')]
-	public function testWhereClauseCustom(): void
-	{
-		$expected = ['value' => 'a,b', 'compare' => 'IN', 'logic' => 'OR', 'type' => ArrayParameterType::STRING];
-
-		static::assertSame($expected, $this->conditions->whereClause('a,b', 'IN', 'OR', ArrayParameterType::STRING));
-	}
-
-	#[Group('units')]
-	public function testExpression(): void
-	{
-		static::assertSame(['expression' => 'a.b < c.d'], $this->conditions->expression('a.b < c.d'));
 	}
 
 	#[Group('units')]
@@ -80,7 +58,7 @@ class FilterConditionsTest extends TestCase
 	{
 		$result = $this->conditions->forField('table', 'username', ['value' => 'jo*hn']);
 
-		static::assertSame(['user_main.username' => $this->like('%jo%hn%')], $result);
+		static::assertSame(['user_main.username' => $this->like('user_main.username', '%jo%hn%')], $this->described($result));
 	}
 
 	#[Group('units')]
@@ -88,7 +66,7 @@ class FilterConditionsTest extends TestCase
 	{
 		$result = $this->conditions->forField('table', 'name', ['value' => 'a*b*c']);
 
-		static::assertSame(['table.name' => $this->like('%a%b%c%')], $result);
+		static::assertSame(['table.name' => $this->like('table.name', '%a%b%c%')], $this->described($result));
 	}
 
 	#[Group('units')]
@@ -96,7 +74,7 @@ class FilterConditionsTest extends TestCase
 	{
 		$result = $this->conditions->forField('table', 'UID', ['value' => 'john']);
 
-		static::assertSame(['user_main.username' => $this->like('%john%')], $result);
+		static::assertSame(['user_main.username' => $this->like('user_main.username', '%john%')], $this->described($result));
 	}
 
 	#[Group('units')]
@@ -104,7 +82,7 @@ class FilterConditionsTest extends TestCase
 	{
 		$result = $this->conditions->forField('table', 'UID', ['value' => 7]);
 
-		static::assertSame(['table.UID' => ['value' => 7, 'compare' => '=', 'logic' => 'AND', 'type' => ArrayParameterType::INTEGER]], $result);
+		static::assertSame(['table.UID' => ['table.UID = :p', 7]], $this->described($result));
 	}
 
 	#[Group('units')]
@@ -112,7 +90,7 @@ class FilterConditionsTest extends TestCase
 	{
 		$result = $this->conditions->forField('table', 'username', ['value' => '7']);
 
-		static::assertSame(['user_main.username' => $this->like('%7%')], $result);
+		static::assertSame(['user_main.username' => $this->like('user_main.username', '%7%')], $this->described($result));
 	}
 
 	#[Group('units')]
@@ -120,7 +98,7 @@ class FilterConditionsTest extends TestCase
 	{
 		$result = $this->conditions->forField('table', 'company_id', ['value' => 123]);
 
-		static::assertSame(['user_main.company_id' => ['value' => 123, 'compare' => '=', 'logic' => 'AND', 'type' => ArrayParameterType::INTEGER]], $result);
+		static::assertSame(['user_main.company_id' => ['user_main.company_id = :p', 123]], $this->described($result));
 	}
 
 	#[Group('units')]
@@ -134,7 +112,7 @@ class FilterConditionsTest extends TestCase
 	{
 		$result = $this->conditions->forField('table', 'name', ['value' => 'abc']);
 
-		static::assertSame(['table.name' => $this->like('%abc%')], $result);
+		static::assertSame(['table.name' => $this->like('table.name', '%abc%')], $this->described($result));
 	}
 
 	/**
@@ -146,7 +124,7 @@ class FilterConditionsTest extends TestCase
 	{
 		$result = $this->conditions->forField('table', $key, ['value' => '0']);
 
-		static::assertSame([$column => $this->like('%0%')], $result);
+		static::assertSame([$column => $this->like($column, '%0%')], $this->described($result));
 	}
 
 	#[Group('units')]
@@ -186,13 +164,23 @@ class FilterConditionsTest extends TestCase
 	}
 
 	/**
-	 * @return array{value: string, compare: string, logic: string, type: ArrayParameterType, escape: string}
+	 * @return array{string, string} the SQL and the pattern of a search
 	 */
-	private function like(string $value): array
+	private function like(string $field, string $pattern): array
 	{
-		return ['value' => $value, 'compare' => 'LIKE', 'logic' => 'AND', 'type' => ArrayParameterType::STRING, 'escape' => '!'];
+		return [$field . " LIKE :p ESCAPE '!'", $pattern];
 	}
 
+	/**
+	 * The conditions as SQL (with the parameter :p) and value, to compare them.
+	 *
+	 * @param array<string, Where> $where
+	 * @return array<string, array{string, mixed}>
+	 */
+	private function described(array $where): array
+	{
+		return array_map(static fn(Where $condition): array => [$condition->sql('p'), $condition->value], $where);
+	}
 	/**
 	 * The signs of LIKE in a search term are searched as they are, only * is a wildcard.
 	 *
@@ -214,21 +202,15 @@ class FilterConditionsTest extends TestCase
 
 	#[Group('units')]
 	#[DataProvider('searchTermProvider')]
-	public function testLikeClauseEscapesTheSignsOfLike(string $term, string $pattern): void
+	public function testASearchTermEscapesTheSignsOfLike(string $term, string $pattern): void
 	{
-		static::assertSame($this->like($pattern), $this->conditions->likeClause($term));
-	}
-
-	#[Group('units')]
-	public function testLikeClauseTakesTheLogic(): void
-	{
-		static::assertSame('OR', $this->conditions->likeClause('a', 'OR')['logic']);
+		static::assertSame(['table.name' => $this->like('table.name', $pattern)], $this->described($this->conditions->forField('table', 'name', ['value' => $term])));
 	}
 
 	#[Group('units')]
 	public function testTheFilterFieldsEscapeTheSearchTerm(): void
 	{
-		static::assertSame(['user_main.username' => $this->like('%50!%%')], $this->conditions->forField('table', 'username', ['value' => '50%']));
-		static::assertSame(['table.name' => $this->like('%a!_b%')], $this->conditions->forField('table', 'name', ['value' => 'a_b']));
+		static::assertSame(['user_main.username' => $this->like('user_main.username', '%50!%%')], $this->described($this->conditions->forField('table', 'username', ['value' => '50%'])));
+		static::assertSame(['table.name' => $this->like('table.name', '%a!_b%')], $this->described($this->conditions->forField('table', 'name', ['value' => 'a_b'])));
 	}
 }

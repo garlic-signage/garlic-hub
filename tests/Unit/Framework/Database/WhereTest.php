@@ -160,6 +160,27 @@ class WhereTest extends TestCase
 		$this->sql([5]);
 	}
 
+	/**
+	 * A search term of a visitor: found anywhere, only * is a wildcard, % and _ are searched as they are.
+	 */
+	#[Group('units')]
+	public function testContainsSearchesTheTermAnywhere(): void
+	{
+		$where = Where::contains('user_main.username', 'jo*n_50%');
+
+		static::assertSame("user_main.username LIKE :p ESCAPE '!'", $where->sql('p'));
+		static::assertSame('%jo%n!_50!%%', $where->value);
+	}
+
+	#[Group('units')]
+	public function testRawSqlHasNoParameter(): void
+	{
+		$where = Where::raw('player.last_access >= 5');
+
+		static::assertFalse($where->hasParameter());
+		static::assertSame('SELECT * FROM t WHERE (player.last_access >= 5) AND (id = :where0)', $this->sql([$where, 'id' => 3]));
+	}
+
 	#[Group('units')]
 	public function testTheEscapeOfLikeKeepsTheWildcardsAsText(): void
 	{

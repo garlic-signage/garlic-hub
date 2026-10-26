@@ -78,10 +78,12 @@ The `FilterDefinition` describes the query for the `DatatableQuery`:
 
 - `table()`, `joins()`, `userJoins()` (joins when the user sees only own rows)
 - `selects()`, `selectsWithUser()` (adds `username` and `company_id` for admins)
-- `whereForFiltering($fields)`: special filters (activity, ids) are written by hand, everything else
-  is handled by `FilterConditions::forField()`.
+- `whereForFiltering($fields)`: returns the conditions as `Where` (`Framework\Database\Where`). Special
+  filters (activity, ids) are written by hand, e.g. `Where::equals('player.playlist_id', $id)`, everything
+  else is handled by `FilterConditions::forField()` (a search term becomes `Where::contains()`).
 
-All values go into the query as parameters.
+All values go into the query as parameters, the `WhereApplier` joins the conditions with AND. `Where::raw()`
+is only for fixed SQL of the code, like the arithmetic with columns of the player activity.
 
 ## Builder: table and form
 

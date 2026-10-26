@@ -72,7 +72,7 @@ class ShowDatatableEnterpriseTest extends PlayerControllerTestCase
 			new DatatablePreparer($this->container->get(PrepareService::class), $parameters, $this->container->get(TimeUnitsCalculator::class), $translator, new DateTimeZone('UTC')),
 			new PlayerDatatableService(
 				new PlayerFilterDefinition($conditions, $this->connection->getDatabasePlatform()),
-				new DatatableQuery($this->connection, $conditions),
+				new DatatableQuery($this->connection),
 				$parameters,
 				$acl,
 				$this->container->get(UserSession::class),

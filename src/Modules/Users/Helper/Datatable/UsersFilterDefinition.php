@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Helper\Datatable;
 
+use App\Framework\Database\Compare;
+use App\Framework\Database\Where;
 use App\Framework\Database\Datatable\FilterConditions;
 use App\Framework\Database\Datatable\FilterDefinition;
 
@@ -74,7 +76,7 @@ readonly class UsersFilterDefinition implements FilterDefinition
 			switch ($key)
 			{
 				case Parameters::PARAMETER_FROM_STATUS:
-					$where[self::TABLE.'.status'] = $this->conditions->whereClause((int) $parameter['value'], '>=');
+					$where[self::TABLE.'.status'] = Where::compare(self::TABLE.'.status', Compare::GreaterOrEqual, (int) $parameter['value']);
 					break;
 
 				default:

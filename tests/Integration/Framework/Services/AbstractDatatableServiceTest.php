@@ -52,7 +52,7 @@ class AbstractDatatableServiceTest extends RepositoryTestCase
 
 		$conditions       = new FilterConditions();
 		$this->definition = new TemplatesFilterDefinition($conditions);
-		$this->service    = new DatatableTestService(new NullLogger(), new DatatableQuery($this->connection, $conditions));
+		$this->service    = new DatatableTestService(new NullLogger(), new DatatableQuery($this->connection));
 	}
 
 	/**

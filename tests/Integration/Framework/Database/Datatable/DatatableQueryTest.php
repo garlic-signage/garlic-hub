@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace Tests\Integration\Framework\Database\Datatable;
 
 use App\Framework\Database\Datatable\DatatableQuery;
+use App\Framework\Database\Where;
 use App\Framework\Database\Datatable\FilterConditions;
 use App\Framework\Database\Datatable\FilterDefinition;
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
@@ -40,7 +41,6 @@ use Tests\Integration\Support\RepositoryTestCase;
 class DatatableQueryTest extends RepositoryTestCase
 {
 	private DatatableQuery $query;
-	private FilterConditions $conditions;
 	private TemplatesFilterDefinition $definition;
 
 	protected function setUp(): void
@@ -51,9 +51,8 @@ class DatatableQueryTest extends RepositoryTestCase
 		$this->connection->executeStatement("INSERT INTO user_main (UID, company_id, status, locale, username, email) VALUES (4, 2, 3, 'en_US', 'carla', 'carla@example.com')");
 		$this->connection->executeStatement("INSERT INTO templates (template_id, UID, visibility, name) VALUES (4, 2, 'private', 'Annas zweite'), (5, 4, 'private', 'Carlas Vorlage')");
 
-		$this->conditions = new FilterConditions();
-		$this->definition = new TemplatesFilterDefinition($this->conditions);
-		$this->query      = new DatatableQuery($this->connection, $this->conditions);
+		$this->definition = new TemplatesFilterDefinition(new FilterConditions());
+		$this->query      = new DatatableQuery($this->connection);
 	}
 
 	/**
@@ -247,47 +246,11 @@ class DatatableQueryTest extends RepositoryTestCase
 	}
 
 	/**
-	 * A definition which filters with OR must not let the rows of others through the scope.
-	 *
-	 * @throws Exception
-	 */
-	public function testAnOrFilterDoesNotBypassTheScope(): void
-	{
-		$orDefinition = new class($this->conditions) implements FilterDefinition {
-			public function __construct(private readonly FilterConditions $conditions) {}
-
-			public function table(): string { return 'templates'; }
-			public function joins(): array { return ['user_main' => 'user_main.UID = templates.UID']; }
-			public function userJoins(): array { return []; }
-			public function selects(): array { return ['templates.*']; }
-			public function selectsWithUser(): array { return $this->selects(); }
-			public function whereForFiltering(array $fields): array
-			{
-				return [
-					'templates.name'        => $this->conditions->whereClause('%Admin%', 'LIKE', 'OR'),
-					'templates.description' => $this->conditions->whereClause('%Admin%', 'LIKE', 'OR'),
-				];
-			}
-		};
-
-		// without the scope the filter finds template 1 (name) and nothing else: "von Admin" is in the description of 1
-		static::assertSame([1], $this->ids($this->query->findForModuleAdmin($orDefinition, [])));
-		// anna has no part in it: the scope keeps her out of the rows of the admin
-		static::assertSame([], $this->query->findForReseller($orDefinition, [], [], 2));
-		static::assertSame(0, $this->query->countForReseller($orDefinition, [], [], 2));
-		// the admin as a reseller sees his own row
-		static::assertSame([1], $this->ids($this->query->findForReseller($orDefinition, [], [], 1)));
-		static::assertSame([], $this->query->findForUser($orDefinition, [], 2));
-	}
-
-	/**
 	 * @throws Exception
 	 */
 	public function testExpressionsAreAppliedAsTheyAre(): void
 	{
-		$definition = new class($this->conditions) implements FilterDefinition {
-			public function __construct(private readonly FilterConditions $conditions) {}
-
+		$definition = new class() implements FilterDefinition {
 			public function table(): string { return 'templates'; }
 			public function joins(): array { return []; }
 			public function userJoins(): array { return []; }
@@ -295,7 +258,7 @@ class DatatableQueryTest extends RepositoryTestCase
 			public function selectsWithUser(): array { return $this->selects(); }
 			public function whereForFiltering(array $fields): array
 			{
-				return ['e' => $this->conditions->expression("templates.visibility = 'public'")];
+				return ['e' => Where::raw("templates.visibility = 'public'")];
 			}
 		};
 
@@ -353,29 +316,5 @@ class DatatableQueryTest extends RepositoryTestCase
 		$rows = $this->query->findForUser($this->definition, $this->fields(['name' => '50%']), 2);
 
 		static::assertSame(['Rabatt 50% Aktion'], array_column($rows, 'name'));
-	}
-
-	/**
-	 * The escape sign is written into the SQL only when the condition comes from likeClause().
-	 * A text in the key of the condition can not bring something else into it.
-	 *
-	 * @throws Exception
-	 */
-	public function testOnlyTheKnownEscapeSignIsWrittenIntoTheQuery(): void
-	{
-		$definition = new class() implements FilterDefinition {
-			public function table(): string { return 'templates'; }
-			public function joins(): array { return []; }
-			public function userJoins(): array { return []; }
-			public function selects(): array { return ['templates.*']; }
-			public function selectsWithUser(): array { return $this->selects(); }
-			public function whereForFiltering(array $fields): array
-			{
-				return ['templates.name' => ['value' => '%Admin%', 'compare' => 'LIKE', 'logic' => 'AND', 'escape' => "' OR '1'='1"]];
-			}
-		};
-
-		// no escape sign is written, the condition is a normal LIKE
-		static::assertSame([1], $this->ids($this->query->findForModuleAdmin($definition, [])));
 	}
 }

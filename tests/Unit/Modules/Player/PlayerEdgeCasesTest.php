@@ -66,7 +66,7 @@ class PlayerEdgeCasesTest extends TestCase
 		$active   = $definition->whereForFiltering(['activity' => ['value' => 'active']]);
 		$inactive = $definition->whereForFiltering(['activity' => ['value' => 'inactive']]);
 
-		static::assertSame(['expression' => 'player.last_access >= DATE_SUB(NOW(), INTERVAL (2 * player.refresh) SECOND)'], $active['player.last_access']);
-		static::assertSame(['expression' => 'player.last_access < DATE_SUB(NOW(), INTERVAL (2 * player.refresh) SECOND)'], $inactive['player.last_access']);
+		static::assertSame('player.last_access >= DATE_SUB(NOW(), INTERVAL (2 * player.refresh) SECOND)', $active['player.last_access']->sql('p'));
+		static::assertSame('player.last_access < DATE_SUB(NOW(), INTERVAL (2 * player.refresh) SECOND)', $inactive['player.last_access']->sql('p'));
 	}
 }

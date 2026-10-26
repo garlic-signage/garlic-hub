@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Users\Helper\Datatable;
 
+use App\Framework\Database\Compare;
+use App\Framework\Database\Where;
 use App\Framework\Database\Datatable\FilterConditions;
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
 use App\Modules\Users\Helper\Datatable\UsersFilterDefinition;
@@ -29,14 +31,12 @@ use PHPUnit\Framework\TestCase;
 
 class UsersFilterDefinitionTest extends TestCase
 {
-	private FilterConditions $conditions;
 	private UsersFilterDefinition $definition;
 
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->conditions = new FilterConditions();
-		$this->definition = new UsersFilterDefinition($this->conditions);
+		$this->definition = new UsersFilterDefinition(new FilterConditions());
 	}
 
 	#[Group('units')]
@@ -63,10 +63,10 @@ class UsersFilterDefinitionTest extends TestCase
 		];
 
 		$expected = [
-			'user_main.username' => $this->conditions->likeClause('johndoe'),
-			'user_main.status'   => $this->conditions->whereClause(3, '>=')
+			'user_main.username' => Where::contains('user_main.username', 'johndoe'),
+			'user_main.status'   => Where::compare('user_main.status', Compare::GreaterOrEqual, 3)
 		];
-		static::assertSame($expected, $this->definition->whereForFiltering($fields));
+		static::assertEquals($expected, $this->definition->whereForFiltering($fields));
 	}
 
 	#[Group('units')]
@@ -74,6 +74,6 @@ class UsersFilterDefinitionTest extends TestCase
 	{
 		$where = $this->definition->whereForFiltering(['email' => ['value' => 'doe*.de'], 'status' => ['value' => 0]]);
 
-		static::assertSame(['user_main.email' => $this->conditions->likeClause('doe*.de')], $where);
+		static::assertEquals(['user_main.email' => Where::contains('user_main.email', 'doe*.de')], $where);
 	}
 }

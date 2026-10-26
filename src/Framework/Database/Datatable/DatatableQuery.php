@@ -22,6 +22,8 @@ declare(strict_types=1);
 namespace App\Framework\Database\Datatable;
 
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
+use App\Framework\Database\Where;
+use App\Framework\Database\WhereApplier;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
@@ -34,8 +36,11 @@ use Doctrine\DBAL\Query\QueryBuilder;
  */
 readonly class DatatableQuery
 {
-	public function __construct(private Connection $connection, private FilterConditions $conditions)
+	private WhereApplier $whereApplier;
+
+	public function __construct(private Connection $connection)
 	{
+		$this->whereApplier = new WhereApplier();
 	}
 
 	/**
@@ -124,12 +129,12 @@ readonly class DatatableQuery
 
 	/**
 	 * @param array<string, array<string, mixed>> $fields
-	 * @return array<string, mixed>
+	 * @return array<string, Where>
 	 */
 	private function buildUserWhere(FilterDefinition $definition, array $fields, int $UID): array
 	{
 		$where = $definition->whereForFiltering($fields);
-		$where[$definition->table().'.UID'] = $this->conditions->whereClause($UID);
+		$where[$definition->table().'.UID'] = Where::equals($definition->table().'.UID', $UID);
 
 		return $where;
 	}
@@ -185,7 +190,7 @@ readonly class DatatableQuery
 	}
 
 	/**
-	 * @param array<string, mixed> $where
+	 * @param array<string, Where> $where
 	 * @param array<string, string> $joins
 	 */
 	private function buildQuery(string $select, string $table, array $where, array $joins): QueryBuilder
@@ -198,48 +203,9 @@ readonly class DatatableQuery
 			$queryBuilder->leftJoin($table, $joinTable, $joinTable, $onCondition);
 		}
 
-		$this->applyConditions($queryBuilder, $where);
+		$this->whereApplier->apply($queryBuilder, $where);
 
 		return $queryBuilder;
-	}
-
-	/**
-	 * Todo: the repositories use Where and the WhereApplier already, the datatables follow (FilterConditions).
-	 *
-	 * @param array<string, mixed> $conditions
-	 */
-	private function applyConditions(QueryBuilder $queryBuilder, array $conditions): void
-	{
-		foreach ($conditions as $field => $parameter)
-		{
-			if (is_array($parameter) && isset($parameter['expression']))
-			{
-				$queryBuilder->andWhere($parameter['expression']);
-				continue;
-			}
-
-			$value   = $parameter['value'] ?? $parameter;
-			$compare = $parameter['compare'] ?? '=';
-			$logic   = $parameter['logic'] ?? 'AND';
-
-			$parameterName = str_replace('.', '', $field); // because DBAL do not accept SQL dots like table.field
-			$placeholder   = ($compare === 'IN') ? "(:$parameterName)" : ":$parameterName";
-
-			// only the one escape sign of FilterConditions::likeClause() is written into the SQL, never a given text
-			$escape = (is_array($parameter) && ($parameter['escape'] ?? null) === FilterConditions::LIKE_ESCAPE)
-				? " ESCAPE '" . FilterConditions::LIKE_ESCAPE . "'"
-				: '';
-
-			if ($logic === 'OR')
-				$queryBuilder->orWhere("$field $compare $placeholder$escape");
-			else
-				$queryBuilder->andWhere("$field $compare $placeholder$escape");
-
-			if ($compare === 'IN')
-				$queryBuilder->setParameter($parameterName, explode(',', $value), $parameter['type']);
-			else
-				$queryBuilder->setParameter($parameterName, $value);
-		}
 	}
 
 	/**

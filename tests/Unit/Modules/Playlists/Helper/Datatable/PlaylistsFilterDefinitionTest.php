@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Playlists\Helper\Datatable;
 
+use App\Framework\Database\Where;
 use App\Framework\Database\Datatable\FilterConditions;
 use App\Modules\Playlists\Helper\Datatable\PlaylistsFilterDefinition;
 use Doctrine\DBAL\ArrayParameterType;
@@ -29,14 +30,12 @@ use PHPUnit\Framework\TestCase;
 
 class PlaylistsFilterDefinitionTest extends TestCase
 {
-	private FilterConditions $conditions;
 	private PlaylistsFilterDefinition $definition;
 
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->conditions = new FilterConditions();
-		$this->definition = new PlaylistsFilterDefinition($this->conditions);
+		$this->definition = new PlaylistsFilterDefinition(new FilterConditions());
 	}
 
 	#[Group('units')]
@@ -54,7 +53,7 @@ class PlaylistsFilterDefinitionTest extends TestCase
 	{
 		$where = $this->definition->whereForFiltering(['playlist_mode' => ['value' => 'master']]);
 
-		static::assertSame(['playlist_mode' => $this->conditions->whereClause('master')], $where);
+		static::assertEquals(['playlist_mode' => Where::equals('playlist_mode', 'master')], $where);
 	}
 
 	#[Group('units')]
@@ -62,8 +61,8 @@ class PlaylistsFilterDefinitionTest extends TestCase
 	{
 		$where = $this->definition->whereForFiltering(['playlist_mode' => ['value' => 'master,multizone']]);
 
-		$expected = ['playlist_mode' => $this->conditions->whereClause('master,multizone', 'IN', 'AND', ArrayParameterType::STRING)];
-		static::assertSame($expected, $where);
+		$expected = ['playlist_mode' => Where::in('playlist_mode', ['master', 'multizone'], ArrayParameterType::STRING)];
+		static::assertEquals($expected, $where);
 	}
 
 	#[Group('units')]
@@ -83,10 +82,10 @@ class PlaylistsFilterDefinitionTest extends TestCase
 		];
 
 		$expected = [
-			'playlist_mode'          => $this->conditions->whereClause('multizone'),
-			'playlists.playlist_name' => $this->conditions->likeClause('name'),
-			'user_main.username'     => $this->conditions->likeClause('john')
+			'playlist_mode'           => Where::equals('playlist_mode', 'multizone'),
+			'playlists.playlist_name' => Where::contains('playlists.playlist_name', 'name'),
+			'user_main.username'      => Where::contains('user_main.username', 'john')
 		];
-		static::assertSame($expected, $this->definition->whereForFiltering($fields));
+		static::assertEquals($expected, $this->definition->whereForFiltering($fields));
 	}
 }

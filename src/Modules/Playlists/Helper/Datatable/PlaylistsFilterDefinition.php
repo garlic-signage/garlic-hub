@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\Datatable;
 
+use App\Framework\Database\Where;
 use App\Framework\Database\Datatable\FilterConditions;
 use App\Framework\Database\Datatable\FilterDefinition;
 use Doctrine\DBAL\ArrayParameterType;
@@ -73,9 +74,9 @@ readonly class PlaylistsFilterDefinition implements FilterDefinition
 				continue;
 
 			if (str_contains($parameter['value'], ','))
-				$where[$key] = $this->conditions->whereClause($parameter['value'], 'IN', 'AND', ArrayParameterType::STRING);
+				$where[$key] = Where::in($key, explode(',', $parameter['value']), ArrayParameterType::STRING);
 			else
-				$where[$key] = $this->conditions->whereClause($parameter['value']);
+				$where[$key] = Where::equals($key, $parameter['value']);
 		}
 		return $where;
 	}

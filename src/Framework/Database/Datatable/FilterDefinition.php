@@ -21,10 +21,12 @@ declare(strict_types=1);
 
 namespace App\Framework\Database\Datatable;
 
+use App\Framework\Database\Where;
+
 /**
  * Describes how the datatable of a module is queried.
  *
- * Implementations deliver plain arrays only and never touch the database,
+ * Implementations deliver the conditions as Where and never touch the database,
  * the execution is done by DatatableQuery.
  */
 interface FilterDefinition
@@ -59,7 +61,7 @@ interface FilterDefinition
 
 	/**
 	 * @param array<string, array<string, mixed>> $fields
-	 * @return array<string, mixed>
+	 * @return array<string, Where>
 	 */
 	public function whereForFiltering(array $fields): array;
 }

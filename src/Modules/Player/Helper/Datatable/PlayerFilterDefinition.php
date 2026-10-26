@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Helper\Datatable;
 
+use App\Framework\Database\Where;
 use App\Framework\Database\Datatable\FilterConditions;
 use App\Framework\Database\Datatable\FilterDefinition;
 use App\Modules\Player\Enums\PlayerActivity;
@@ -80,14 +81,14 @@ readonly class PlayerFilterDefinition implements FilterDefinition
 				case 'activity':
 					$activity = $parameter['value'] ?? '';
 					if ($activity === PlayerActivity::ACTIVE->value)
-						$where[self::TABLE.'.last_access'] = $this->conditions->expression(self::TABLE.'.last_access >= '.$this->activeSince());
+						$where[self::TABLE.'.last_access'] = Where::raw(self::TABLE.'.last_access >= '.$this->activeSince());
 					elseif ($activity === PlayerActivity::INACTIVE->value)
-						$where[self::TABLE.'.last_access'] = $this->conditions->expression(self::TABLE.'.last_access < '.$this->activeSince());
+						$where[self::TABLE.'.last_access'] = Where::raw(self::TABLE.'.last_access < '.$this->activeSince());
 					break;
 
 				case 'playlist_id':
 					if ((int) ($parameter['value'] ?? 0) > 0)
-						$where[self::TABLE.'.'.$key] = $this->conditions->whereClause((int) $parameter['value']);
+						$where[self::TABLE.'.'.$key] = Where::equals(self::TABLE.'.'.$key, (int) $parameter['value']);
 					break;
 
 				default:

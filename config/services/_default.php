@@ -245,7 +245,7 @@ $dependencies[FilterConditions::class] = DI\factory(function ()
 });
 $dependencies[DatatableQuery::class] = DI\factory(function (ContainerInterface $container)
 {
-	return new DatatableQuery($container->get('SqlConnection'), $container->get(FilterConditions::class));
+	return new DatatableQuery($container->get('SqlConnection'));
 });
 $dependencies[Service::class] = DI\factory(function (ContainerInterface $container)
 {

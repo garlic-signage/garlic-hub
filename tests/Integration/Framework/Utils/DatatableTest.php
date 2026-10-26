@@ -93,7 +93,7 @@ class DatatableTest extends RepositoryTestCase
 		$acl->method('getConfig')->willReturn(new Config(new RecordingConfigLoader([]), [], ['APP_PLATFORM_EDITION' => 'edge']));
 
 		$definition = new TemplatesFilterDefinition($conditions);
-		$service    = new class(new DatatableQuery($this->connection, $conditions), $definition, $parameters) extends AbstractDatatableService
+		$service    = new class(new DatatableQuery($this->connection), $definition, $parameters) extends AbstractDatatableService
 		{
 			public function __construct(DatatableQuery $query, private readonly TemplatesFilterDefinition $definition, private readonly DatatableTestParameters $parameters)
 			{

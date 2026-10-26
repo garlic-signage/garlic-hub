@@ -22,67 +22,19 @@ declare(strict_types=1);
 namespace App\Framework\Database\Datatable;
 
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
-use Doctrine\DBAL\ArrayParameterType;
+use App\Framework\Database\Where;
 
 /**
- * Stateless helpers to build the where conditions of a datatable.
+ * Stateless helper to build the where conditions of a datatable: the default handling of the filter fields.
  */
 readonly class FilterConditions
 {
-	/**
-	 * Escape character of a search term in LIKE. A backslash would have to be written differently in MySQL and
-	 * SQLite, this sign is the same in both.
-	 */
-	public const string LIKE_ESCAPE = '!';
-
-	/**
-	 * @return array{value: int|string, compare: string, logic: string, type: ArrayParameterType}
-	 */
-	public function whereClause(int|string $value, string $compare = '=', string $logic = 'AND', ArrayParameterType $type = ArrayParameterType::INTEGER): array
-	{
-		return ['value' => $value, 'compare' => $compare, 'logic' => $logic, 'type' => $type];
-	}
-
-	/**
-	 * A search term of a visitor for LIKE: the signs % and _ (and the escape sign) are searched as they are,
-	 * only the * is a wildcard. The term is searched anywhere in the value.
-	 *
-	 * @return array{value: string, compare: string, logic: string, type: ArrayParameterType, escape: string}
-	 */
-	public function likeClause(string $searchTerm, string $logic = 'AND'): array
-	{
-		$escaped = str_replace(
-			[self::LIKE_ESCAPE, '%', '_'],
-			[self::LIKE_ESCAPE . self::LIKE_ESCAPE, self::LIKE_ESCAPE . '%', self::LIKE_ESCAPE . '_'],
-			$searchTerm
-		);
-
-		return [
-			'value'   => '%' . str_replace('*', '%', $escaped) . '%',
-			'compare' => 'LIKE',
-			'logic'   => $logic,
-			'type'    => ArrayParameterType::STRING,
-			'escape'  => self::LIKE_ESCAPE,
-		];
-	}
-
-	/**
-	 * Raw SQL condition without bound parameter, e.g. for column arithmetics.
-	 * Never pass user input here.
-	 *
-	 * @return array{expression: string}
-	 */
-	public function expression(string $sql): array
-	{
-		return ['expression' => $sql];
-	}
-
 	/**
 	 * Default handling of a filter field: paging and sorting are ignored,
 	 * user fields are searched in user_main, everything else with LIKE in the table.
 	 *
 	 * @param array<string, mixed> $parameter
-	 * @return array<string, mixed>
+	 * @return array<string, Where>
 	 */
 	public function forField(string $table, string $key, array $parameter): array
 	{
@@ -102,20 +54,20 @@ readonly class FilterConditions
 
 				// The owner field of the lists is an autocomplete: it sends the number of the user. A name is searched in the names.
 				if ($key === 'UID' && ctype_digit((string) $parameter['value']) && (int) $parameter['value'] > 0)
-					$where[$table . '.UID'] = $this->whereClause((int) $parameter['value']);
+					$where[$table . '.UID'] = Where::equals($table . '.UID', (int) $parameter['value']);
 				else
-					$where['user_main.username'] = $this->likeClause((string) $parameter['value']);
+					$where['user_main.username'] = Where::contains('user_main.username', (string) $parameter['value']);
 				break;
 
 			case 'company_id':
 				if ((int) $parameter['value'] > 0)
-					$where['user_main.'.$key] = $this->whereClause($parameter['value']);
+					$where['user_main.'.$key] = Where::equals('user_main.'.$key, (int) $parameter['value']);
 				break;
 
 			default:
 				if ($this->isEmpty($parameter))
 					break;
-				$where[$table.'.'.$key] = $this->likeClause((string) $parameter['value']);
+				$where[$table.'.'.$key] = Where::contains($table.'.'.$key, (string) $parameter['value']);
 		}
 		return $where;
 	}

@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Templates\Helper\Datatable;
 
+use App\Framework\Database\Where;
 use App\Framework\Database\Datatable\FilterConditions;
 use App\Modules\Templates\Helper\Datatable\TemplatesFilterDefinition;
 use PHPUnit\Framework\Attributes\Group;
@@ -28,14 +29,12 @@ use PHPUnit\Framework\TestCase;
 
 class TemplatesFilterDefinitionTest extends TestCase
 {
-	private FilterConditions $conditions;
 	private TemplatesFilterDefinition $definition;
 
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->conditions = new FilterConditions();
-		$this->definition = new TemplatesFilterDefinition($this->conditions);
+		$this->definition = new TemplatesFilterDefinition(new FilterConditions());
 	}
 
 	#[Group('units')]
@@ -60,10 +59,10 @@ class TemplatesFilterDefinitionTest extends TestCase
 		];
 
 		$expected = [
-			'templates.name' => $this->conditions->likeClause('my*'),
-			'templates.type' => $this->conditions->likeClause('canvas')
+			'templates.name' => Where::contains('templates.name', 'my*'),
+			'templates.type' => Where::contains('templates.type', 'canvas')
 		];
-		static::assertSame($expected, $this->definition->whereForFiltering($fields));
+		static::assertEquals($expected, $this->definition->whereForFiltering($fields));
 	}
 
 	#[Group('units')]

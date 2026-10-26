@@ -80,6 +80,25 @@ final readonly class Where
 		return new self(self::checkedField($field) . " LIKE :%s ESCAPE '" . self::LIKE_ESCAPE . "'", self::escapeLike($prefix) . '%');
 	}
 
+	/**
+	 * A search term of a visitor: % and _ are searched as they are, only * is a wildcard. The term is searched
+	 * anywhere in the value.
+	 */
+	public static function contains(string $field, string $searchTerm): self
+	{
+		$pattern = '%' . str_replace('*', '%', self::escapeLike($searchTerm)) . '%';
+
+		return new self(self::checkedField($field) . " LIKE :%s ESCAPE '" . self::LIKE_ESCAPE . "'", $pattern);
+	}
+
+	/**
+	 * SQL without a parameter, e.g. for arithmetics with columns. Only fixed text of the code, never an input.
+	 */
+	public static function raw(string $sql): self
+	{
+		return new self($sql);
+	}
+
 	public static function escapeLike(string $text): string
 	{
 		return str_replace(
