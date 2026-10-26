@@ -151,8 +151,8 @@ final class MiniDeployment
 	}
 
 	/**
-	 * Files that exist (media.php, delivery.php, static files) are served by the web server itself,
-	 * everything else goes to the front controller, like the rewrite rules of Apache do.
+	 * Files that exist (static files) are served by the web server itself, media.php and delivery.php get their
+	 * path info, everything else goes to the front controller, like the rewrite rules of Apache do.
 	 */
 	private function router(): string
 	{
@@ -161,6 +161,19 @@ final class MiniDeployment
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 if ($path !== '/' && is_file(__DIR__ . '/public' . $path))
 	return false;
+
+// media.php/<variant>/<name>.<ext> and delivery.php/...: the web server sets PATH_INFO (decoded) for them
+foreach (['/media.php', '/delivery.php'] as $script)
+{
+	if (str_starts_with($path, $script . '/'))
+	{
+		$_SERVER['PATH_INFO']       = rawurldecode(substr($path, strlen($script)));
+		$_SERVER['SCRIPT_NAME']     = $script;
+		$_SERVER['SCRIPT_FILENAME'] = __DIR__ . '/public' . $script;
+		require __DIR__ . '/public' . $script;
+		return true;
+	}
+}
 
 $_SERVER['SCRIPT_NAME']     = '/index.php';
 $_SERVER['SCRIPT_FILENAME'] = __DIR__ . '/public/index.php';
