@@ -31,6 +31,7 @@ use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Playlists\Helper\ItemType;
+use App\Modules\Playlists\Helper\TemplateItemName;
 use App\Modules\Playlists\Services\ItemsService;
 use App\Modules\Templates\Helper\Composer\BaseTemplateOrchestrator;
 use App\Modules\Templates\Helper\Composer\ExportImage;
@@ -45,6 +46,7 @@ class Orchestrator extends BaseTemplateOrchestrator
 		private readonly ItemsService    $itemsService,
 		private readonly ExportImage         $exportImage,
 		private readonly TemplatePreparer    $templatePreparer,
+		private readonly TemplateItemName    $templateItemName,
 		Config $config,
 		MediaUrlSigner $mediaUrlSigner
 	)
@@ -105,8 +107,9 @@ class Orchestrator extends BaseTemplateOrchestrator
 			return 0;
 
 		// an image which is no valid data url is not exported
+		// the image of the former content stays for the players until the export, see ExportService
 		$this->exportImage->decode($imageBase64);
-		if ($this->exportImage->exportPlaylistItem($itemId) === false)
+		if ($this->exportImage->exportPlaylistItem($this->templateItemName->build($itemId, $content)) === false)
 			return 0;
 
 		$saveData = ['content_data' => $content, 'mimetype' => $this->exportImage->getMimeType()];

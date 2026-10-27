@@ -44,8 +44,11 @@ class DeliveryUrlBuilder
 		return $this->serverUrl . self::ENDPOINT . '/' . $checksum . '.' . $extension;
 	}
 
-	public function templateUrl(int|string $itemId, string $extension): string
+	/**
+	 * @param string $name the name of the rendered image of a template item, see TemplateItemName
+	 */
+	public function templateUrl(string $name, string $extension): string
 	{
-		return $this->serverUrl . self::ENDPOINT . '/tpl/' . $itemId . '.' . $extension;
+		return $this->serverUrl . self::ENDPOINT . '/tpl/' . $name . '.' . $extension;
 	}
 }

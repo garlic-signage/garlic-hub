@@ -77,14 +77,15 @@ if (!isAuthorizedPlayer($_SERVER))
 
 // Source = first path segment, none means mediapool. Directories must stay in sync with
 // [originals] in config_mediapool.ini and config_playlists.ini. Mediapool files are named
-// by their content hash, rendered template items by item id - the id stays the same when
-// the item is rendered again, so these files must not be cached as immutable.
+// by their content hash, rendered template items by item id and the hmac of their content.
+// Until the first export after an update the template items are named by item id only and
+// change under the same name, so these files must not be cached as immutable.
 const DELIVERY_SOURCES = [
 	'mediapool' => ['dir' => 'mediapool/originals',       'name' => '/^[a-f0-9]{32,64}$/',        'immutable' => true],
-    'tpl'       => ['dir' => 'playlists/items/originals', 'name' => '/^\d{1,10}$/',        'immutable' => false],
+    'tpl'       => ['dir' => 'playlists/items/originals', 'name' => '/^\d{1,10}(-[a-f0-9]{32})?$/', 'immutable' => false],
 ];
 
-if (!preg_match('#^/(?:(tpl)/)?([a-z0-9]+)\.([a-z0-9]{2,5})$#', $_SERVER['PATH_INFO'] ?? '', $m)
+if (!preg_match('#^/(?:(tpl)/)?([a-z0-9-]+)\.([a-z0-9]{2,5})$#', $_SERVER['PATH_INFO'] ?? '', $m)
     || !isset(FileResponse::MIME[$m[3]]))
     deliveryFail(400);
 

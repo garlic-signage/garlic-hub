@@ -32,7 +32,9 @@ use App\Framework\Helper\Serialization;
 use App\Framework\Services\AbstractBaseService;
 use App\Modules\Playlists\Helper\ExportSmil\LocalWriter;
 use App\Modules\Playlists\Helper\ExportSmil\PlaylistContent;
+use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Helper\PlaylistMode;
+use App\Modules\Playlists\Helper\TemplateItemName;
 use Doctrine\DBAL\Exception;
 use League\Flysystem\FilesystemException;
 use Psr\Log\LoggerInterface;
@@ -47,8 +49,9 @@ class ExportService extends AbstractBaseService
 	private readonly Transactions $transactions;
 	private readonly LocalWriter $localSmilWriter;
 	private readonly PlaylistContent $playlistContent;
+	private readonly TemplateItemName $templateItemName;
 
-	public function __construct(Config $config, PlaylistsService $playlistsService, ExportItemsLoader $exportItemsLoader, PlaylistMetricsUpdater $playlistMetricsUpdater, Transactions $transactions, LocalWriter $localSmilWriter, PlaylistContent $playlistContent, LoggerInterface $logger )
+	public function __construct(Config $config, PlaylistsService $playlistsService, ExportItemsLoader $exportItemsLoader, PlaylistMetricsUpdater $playlistMetricsUpdater, Transactions $transactions, LocalWriter $localSmilWriter, PlaylistContent $playlistContent, TemplateItemName $templateItemName, LoggerInterface $logger )
 	{
 		$this->config          = $config;
 		$this->playlistsService = $playlistsService;
@@ -57,6 +60,7 @@ class ExportService extends AbstractBaseService
 		$this->transactions    = $transactions;
 		$this->localSmilWriter = $localSmilWriter;
 		$this->playlistContent = $playlistContent;
+		$this->templateItemName = $templateItemName;
 
 		parent::__construct($logger);
 	}
@@ -143,8 +147,45 @@ class ExportService extends AbstractBaseService
 		$this->playlistContent->init($playlist, $results['items'])->build();
 		$this->localSmilWriter->initExport($playlist['playlist_id']);
 		$this->localSmilWriter->writeSMILFiles($this->playlistContent);
+		$this->keepExportedTemplateImages($results['items']);
 
 		return $results['playlist_metrics']->toPlaylistTableArray();
+	}
+
+	/**
+	 * The players get the image of the exported content (see TemplateItemName), the images of former contents are removed.
+	 * An image from before the update, named by the item id only, gets the name of the content.
+	 *
+	 * @param list<array<string,mixed>> $items
+	 * @throws CoreException
+	 */
+	private function keepExportedTemplateImages(array $items): void
+	{
+		$systemDir = $this->config->getPaths('systemDir');
+		foreach ($items as $item)
+		{
+			if ($item['item_type'] !== ItemType::TEMPLATE->value)
+				continue;
+
+			$itemId = (int) $item['item_id'];
+			$name   = $this->templateItemName->build($itemId, (string) $item['content_data']);
+			foreach (['originals', 'thumbnails'] as $key)
+			{
+				$directory = $systemDir . '/' . $this->config->getConfigValue($key, 'playlists', 'directories');
+				// <item_id>.<ext> and <item_id>-<hmac>.<ext>, not the files of the item 12 for the item 1
+				foreach (glob($directory . '/' . $itemId . '[.-]*') ?: [] as $file)
+				{
+					$fileName = pathinfo($file, PATHINFO_FILENAME);
+					if ($fileName === $name)
+						continue;
+
+					if ($fileName === (string) $itemId && glob($directory . '/' . $name . '.*') === [])
+						rename($file, $directory . '/' . $name . '.' . pathinfo($file, PATHINFO_EXTENSION));
+					else
+						unlink($file);
+				}
+			}
+		}
 	}
 
 }

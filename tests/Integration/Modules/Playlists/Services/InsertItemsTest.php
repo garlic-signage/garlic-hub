@@ -28,6 +28,7 @@ use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\MediaService;
+use App\Modules\Playlists\Helper\TemplateItemName;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\InsertItems\AbstractInsertItem;
 use App\Modules\Playlists\Services\InsertItems\InsertItemFactory;
@@ -76,6 +77,7 @@ class InsertItemsTest extends ContainerTestCase
 			$this->workspace->config,
 			$this->workspace->filesystem,
 			$this->container->get(MediaUrlSigner::class),
+			$this->container->get(TemplateItemName::class),
 			$this->container->get(PlaylistMetricsCalculator::class),
 			$this->container->get(WidgetsService::class),
 			$this->container->get(UserSession::class),
@@ -225,8 +227,11 @@ class InsertItemsTest extends ContainerTestCase
 		$id   = (int) $result['item']['item_id'];
 		$item = $this->item($id);
 		static::assertSame(['template', '2', 'Annas Vorlage', 15, 3, '{"objects":[]}'], [$item['item_type'], $item['file_resource'], $item['item_name'], (int) $item['item_duration'], (int) $item['item_order'], $item['content_data']]);
-		static::assertSame('thumb', $this->workspace->filesystem->read('var/storage/playlists/items/thumbs/' . $id . '.jpg'));
-		static::assertSame('original', $this->workspace->filesystem->read('var/storage/playlists/items/originals/' . $id . '.jpg'));
+		// named by the content, the export links to it, see ExportService
+		$name = $this->container->get(TemplateItemName::class)->build($id, $item['content_data']);
+		static::assertSame('thumb', $this->workspace->filesystem->read('var/storage/playlists/items/thumbs/' . $name . '.jpg'));
+		static::assertSame('original', $this->workspace->filesystem->read('var/storage/playlists/items/originals/' . $name . '.jpg'));
+		static::assertStringStartsWith('/media.php/item-thumb/' . $name . '.jpg?', $result['item']['urls']['thumbnail']);
 		static::assertSame([1, 2, 3, 4, 5, 6], $this->orderOfPlaylist(1));
 		static::assertSame(1, (int) $item['UID']);
 	}

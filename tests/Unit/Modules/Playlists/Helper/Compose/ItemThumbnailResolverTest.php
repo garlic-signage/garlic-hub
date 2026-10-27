@@ -27,6 +27,7 @@ use App\Framework\Media\MediaUrlSigner;
 use App\Framework\Media\MimeTypeExtensionMapper;
 use App\Modules\Playlists\Helper\Compose\ItemThumbnailResolver;
 use App\Modules\Playlists\Helper\ItemType;
+use App\Modules\Playlists\Helper\TemplateItemName;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\Stub;
@@ -59,7 +60,8 @@ class ItemThumbnailResolverTest extends TestCase
 		$this->resolver = new ItemThumbnailResolver(
 			$this->configStub,
 			$this->mimeTypeExtensionMapperStub,
-			new MediaUrlSigner('unit-test-secret')
+			new MediaUrlSigner('unit-test-secret'),
+			new TemplateItemName('unit-test-secret')
 		);
 	}
 
@@ -145,23 +147,25 @@ class ItemThumbnailResolverTest extends TestCase
 	 */
 	/**
 	 * The thumbnail of an item keeps the format of the saved image: the preview takes the one which exists.
+	 * Before the first export after an update the thumbnail is named by the item id only.
 	 */
 	#[Group('units')]
 	public function testTemplateFindsTheThumbnailInTheFormatWhichWasSaved(): void
 	{
-		$dir = sys_get_temp_dir() . '/item_thumbs_resolver_test';
+		$names = new TemplateItemName('unit-test-secret');
+		$dir   = sys_get_temp_dir() . '/item_thumbs_resolver_test';
 		mkdir($dir);
-		touch($dir . '/17.png');
+		touch($dir . '/' . $names->build(17, 'content') . '.png');
 		touch($dir . '/18.webp');
 		$config = $this->createStub(Config::class);
 		$config->method('getConfigValue')->willReturnMap([['thumbnails', 'playlists', 'directories', $dir]]);
-		$resolver = new ItemThumbnailResolver($config, $this->mimeTypeExtensionMapperStub, new MediaUrlSigner('unit-test-secret'));
+		$resolver = new ItemThumbnailResolver($config, $this->mimeTypeExtensionMapperStub, new MediaUrlSigner('unit-test-secret'), $names);
 
 		try
 		{
-			$png  = $resolver->resolve(['item_type' => ItemType::TEMPLATE->value, 'item_id' => 17]);
-			$webp = $resolver->resolve(['item_type' => ItemType::TEMPLATE->value, 'item_id' => 18]);
-			$none = $resolver->resolve(['item_type' => ItemType::TEMPLATE->value, 'item_id' => 19]);
+			$png  = $resolver->resolve(['item_type' => ItemType::TEMPLATE->value, 'item_id' => 17, 'content_data' => 'content']);
+			$webp = $resolver->resolve(['item_type' => ItemType::TEMPLATE->value, 'item_id' => 18, 'content_data' => 'content']);
+			$none = $resolver->resolve(['item_type' => ItemType::TEMPLATE->value, 'item_id' => 19, 'content_data' => 'content']);
 		}
 		finally
 		{
@@ -169,19 +173,53 @@ class ItemThumbnailResolverTest extends TestCase
 			rmdir($dir);
 		}
 
-		static::assertSame([$dir . '/17.png', $dir . '/18.webp', $dir . '/19.jpg'], [$png['path'] ?? '', $webp['path'] ?? '', $none['path'] ?? '']);
-		static::assertStringStartsWith('/media.php/item-thumb/17.png?exp=', $png['url'] ?? '');
+		static::assertSame(
+			[$dir . '/' . $names->build(17, 'content') . '.png', $dir . '/18.webp', $dir . '/' . $names->build(19, 'content') . '.jpg'],
+			[$png['path'] ?? '', $webp['path'] ?? '', $none['path'] ?? '']
+		);
+		static::assertStringStartsWith('/media.php/item-thumb/' . $names->build(17, 'content') . '.png?exp=', $png['url'] ?? '');
+		static::assertStringStartsWith('/media.php/item-thumb/18.webp?exp=', $webp['url'] ?? '');
+	}
+
+	/**
+	 * The composer saved a new content which is not exported yet: the preview shows the new one.
+	 */
+	#[Group('units')]
+	public function testTemplatePrefersTheThumbnailOfTheSavedContent(): void
+	{
+		$names = new TemplateItemName('unit-test-secret');
+		$dir   = sys_get_temp_dir() . '/item_thumbs_resolver_test';
+		mkdir($dir);
+		touch($dir . '/17.jpg');
+		touch($dir . '/' . $names->build(17, 'old') . '.jpg');
+		touch($dir . '/' . $names->build(17, 'new') . '.jpg');
+		$config = $this->createStub(Config::class);
+		$config->method('getConfigValue')->willReturnMap([['thumbnails', 'playlists', 'directories', $dir]]);
+		$resolver = new ItemThumbnailResolver($config, $this->mimeTypeExtensionMapperStub, new MediaUrlSigner('unit-test-secret'), $names);
+
+		try
+		{
+			$result = $resolver->resolve(['item_type' => ItemType::TEMPLATE->value, 'item_id' => 17, 'content_data' => 'new']);
+		}
+		finally
+		{
+			array_map('unlink', glob($dir . '/*') ?: []);
+			rmdir($dir);
+		}
+
+		static::assertSame($dir . '/' . $names->build(17, 'new') . '.jpg', $result['path'] ?? '');
 	}
 
 	#[Group('units')]
-	public function testTemplateUsesJpgNamedByItemId(): void
+	public function testTemplateUsesJpgNamedByItemIdAndContent(): void
 	{
+		$name = (new TemplateItemName('unit-test-secret'))->build(17, '');
 
 		$result = $this->resolver->resolve(['item_type' => ItemType::TEMPLATE->value, 'item_id' => '17']);
 
 		static::assertNotNull($result);
-		static::assertSame('/path/to/item/thumbs/17.jpg', $result['path']);
-		static::assertStringStartsWith('/media.php/item-thumb/17.jpg?exp=', $result['url']);
+		static::assertSame('/path/to/item/thumbs/' . $name . '.jpg', $result['path']);
+		static::assertStringStartsWith('/media.php/item-thumb/' . $name . '.jpg?exp=', $result['url']);
 	}
 
 	/**

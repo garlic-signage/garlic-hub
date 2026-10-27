@@ -28,6 +28,7 @@ use App\Framework\Media\MimeTypeExtensionMapper;
 use App\Modules\Playlists\Helper\ExportSmil\items\ItemsFactory;
 use App\Modules\Playlists\Helper\ExportSmil\LocalWriter;
 use App\Modules\Playlists\Helper\ExportSmil\PlaylistContent;
+use App\Modules\Playlists\Helper\TemplateItemName;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\ExportItemsLoader;
 use App\Modules\Playlists\Services\ExportService;
@@ -49,6 +50,7 @@ trait BuildsExportService
 		$playlistsService = $this->container->get(PlaylistsService::class);
 		$calculator       = $this->container->get(PlaylistMetricsCalculator::class);
 		$config           = $this->container->get(Config::class);
+		$templateItemName = $this->container->get(TemplateItemName::class);
 
 		return new ExportService(
 			$workspace->config,
@@ -60,8 +62,10 @@ trait BuildsExportService
 			new PlaylistContent(
 				new ItemsFactory($config),
 				new DeliveryUrlBuilder($config->getConfigValue('url', 'mediapool', 'content_server')),
-				$this->container->get(MimeTypeExtensionMapper::class)
+				$this->container->get(MimeTypeExtensionMapper::class),
+				$templateItemName
 			),
+			$templateItemName,
 			new NullLogger()
 		);
 	}

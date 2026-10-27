@@ -25,6 +25,7 @@ use App\Framework\Exceptions\AccessDeniedException;
 use App\Modules\Playlists\Collector\Builder\BuildHelper;
 use App\Modules\Playlists\Collector\ContentReader;
 use App\Modules\Playlists\Collector\ExternalContentReader;
+use App\Modules\Playlists\Helper\TemplateItemName;
 use GuzzleHttp\Client;
 use App\Modules\Playlists\Services\ExportService;
 use PHPUnit\Framework\Attributes\Group;
@@ -97,7 +98,7 @@ class ExportServiceTest extends ContainerTestCase
 		$items = (new BuildHelper($reader, new ExternalContentReader($this->workspace->filesystem, new Client(), 'var/smil/playlists'), new NullLogger()))->collectItems(1);
 		static::assertStringNotContainsString('{ITEMS_', $items);
 		// the items of the playlist 1 in their order, the playlist 2 and the empty playlist 3 nested at the place of the item 3
-		$titles = ['title="bild.jpg"', 'title="film.mp4"', '<seq title="Bernds Kantine"', '<seq title="Annas leere Liste"', 'delivery.php/tpl/7.png', 'title="doc.pdf"', 'delivery.php/tpl/5.png'];
+		$titles = ['title="bild.jpg"', 'title="film.mp4"', '<seq title="Bernds Kantine"', '<seq title="Annas leere Liste"', 'delivery.php/tpl/7-', 'title="doc.pdf"', 'delivery.php/tpl/5-'];
 		$last   = -1;
 		foreach ($titles as $title)
 		{
@@ -106,6 +107,27 @@ class ExportServiceTest extends ContainerTestCase
 			static::assertGreaterThan($last, $position, $title . ' is in the wrong place');
 			$last = $position;
 		}
+	}
+
+	/**
+	 * Item 5 is a template item. After an update its image is still named by the item id: the export gives it
+	 * the name of the content, removes the images of former contents and links to it.
+	 */
+	public function testTheExportLinksToTheImageOfTheExportedContentAndRemovesTheOtherOnes(): void
+	{
+		$this->actingAs(2);
+		$directory = $this->workspace->absolute('/var/storage/playlists/items/originals');
+		mkdir($directory, 0775, true);
+		mkdir($this->workspace->absolute('/var/storage/playlists/items/thumbs'), 0775, true);
+		file_put_contents($directory . '/5.png', 'image');
+		file_put_contents($directory . '/5-0123456789abcdef0123456789abcdef.png', 'former content');
+		$name = $this->container->get(TemplateItemName::class)->build(5, (string) $this->connection->fetchOne('SELECT content_data FROM playlists_items WHERE item_id = 5'));
+
+		$this->exportService->exportToSmil(1);
+
+		static::assertSame([$name . '.png'], array_values(array_diff((array) scandir($directory), ['.', '..'])));
+		static::assertSame('image', file_get_contents($directory . '/' . $name . '.png'));
+		static::assertStringContainsString('delivery.php/tpl/' . $name . '.png', (string) file_get_contents($this->workspace->absolute('/var/smil/playlists/1/items.smil')));
 	}
 
 	public function testAUserMayNotExportAForeignPlaylist(): void

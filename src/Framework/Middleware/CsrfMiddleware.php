@@ -32,7 +32,7 @@ use Slim\Flash\Messages;
 use Slim\Psr7\Response;
 
 /**
- * Every request which can change something (POST, PUT, PATCH, DELETE) needs the CSRF token of the session
+ * Every request that can change something (POST, PUT, PATCH, DELETE) needs the CSRF token of the session
  * in the field csrf_token of its body. Secure by default: a new route is protected without doing anything.
  *
  * /api is left out, OAuth clients call it without a session. Runs after the LocaleMiddleware, so the message

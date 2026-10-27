@@ -27,6 +27,7 @@ use App\Framework\Media\DataUrlDecoder;
 use App\Framework\Media\MediaUrlSigner;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Modules\Playlists\Controller\ShowTemplateComposer;
+use App\Modules\Playlists\Helper\TemplateItemName;
 use App\Modules\Playlists\Helper\Templates\Orchestrator;
 use App\Modules\Playlists\Services\ItemsService;
 use App\Modules\Templates\Helper\Composer\ExportImage;
@@ -59,6 +60,7 @@ class ShowTemplateComposerTest extends PlaylistsControllerTestCase
 				$this->container->get(ItemsService::class),
 				new ExportImage($this->container->get(DataUrlDecoder::class), $this->workspace->handlerFactory()),
 				$this->container->get(TemplatePreparer::class),
+				$this->container->get(TemplateItemName::class),
 				$this->container->get(Config::class),
 				$this->container->get(MediaUrlSigner::class)
 			),
@@ -89,6 +91,24 @@ class ShowTemplateComposerTest extends PlaylistsControllerTestCase
 		static::assertSame(302, $response->getStatusCode());
 		static::assertSame('/playlists', $response->getHeaderLine('Location'));
 		static::assertSame([$error], $this->flash('error'));
+	}
+
+	/**
+	 * @return list<string>
+	 */
+	private function files(string $directory): array
+	{
+		return array_map(static fn(mixed $path): string => basename((string) $path), (array) glob($this->workspace->dir . '/var/storage/playlists/items/' . $directory . '/*'));
+	}
+
+	/**
+	 * The name of the image of the content which is stored for the item, see TemplateItemName.
+	 */
+	private function nameOfItem(int $itemId): string
+	{
+		$content = $this->databaseValue('SELECT content_data FROM playlists_items WHERE item_id = ?', $itemId);
+
+		return $this->container->get(TemplateItemName::class)->build($itemId, (string) $content);
 	}
 
 	/**
@@ -166,7 +186,34 @@ class ShowTemplateComposerTest extends PlaylistsControllerTestCase
 		static::assertSame('image/png', $row['mimetype']);
 		// the sources of the images are built on loading, they come never from the client
 		static::assertSame(['objects' => [['type' => 'image', 'fileName' => 'abc123.jpg']]], json_decode($row['content_data'], true));
-		static::assertSame(['5.png'], array_map(static fn(mixed $path): string => basename((string) $path), (array) glob($this->workspace->dir . '/var/storage/playlists/items/originals/*')));
+		static::assertSame([$this->nameOfItem(5) . '.png'], $this->files('originals'));
+	}
+
+	/**
+	 * The players get the image of the former content until the playlist is exported, see ExportService.
+	 */
+	public function testTheImageOfTheFormerContentStaysUntilTheExport(): void
+	{
+		$this->actingAs(2);
+
+		$this->assertSuccess($this->save(['item_id' => '5', 'content' => '{"objects":[]}', 'image' => self::PNG]));
+		$former = $this->nameOfItem(5);
+		$this->assertSuccess($this->save(['item_id' => '5', 'content' => '{"objects":[{"type":"rect"}]}', 'image' => self::PNG]));
+
+		$expected = [$former . '.png', $this->nameOfItem(5) . '.png'];
+		sort($expected);
+		static::assertNotSame($former, $this->nameOfItem(5));
+		static::assertSame($expected, $this->files('originals'));
+	}
+
+	public function testSavingTheSameContentAgainKeepsTheName(): void
+	{
+		$this->actingAs(2);
+
+		$this->assertSuccess($this->save(['item_id' => '5', 'content' => '{"objects":[]}', 'image' => self::PNG]));
+		$this->assertSuccess($this->save(['item_id' => '5', 'content' => '{"objects":[]}', 'image' => self::PNG]));
+
+		static::assertSame([$this->nameOfItem(5) . '.png'], $this->files('originals'));
 	}
 
 	public function testSaveNeedsAnItemAndRights(): void
@@ -189,8 +236,7 @@ class ShowTemplateComposerTest extends PlaylistsControllerTestCase
 
 		$this->assertSuccess($this->save(['item_id' => '5', 'content' => '{"objects":[]}', 'image' => self::PNG]));
 
-		$thumbnails = array_map(static fn(mixed $path): string => basename((string) $path), (array) glob($this->workspace->dir . '/var/storage/playlists/items/thumbs/*'));
-		static::assertSame(['5.png'], $thumbnails);
+		static::assertSame([$this->nameOfItem(5) . '.png'], $this->files('thumbs'));
 	}
 
 	public function testAFileWhichIsNoImageIsNotSaved(): void

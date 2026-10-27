@@ -155,6 +155,11 @@ class PlayerDeliveryTest extends MediapoolTestCase
 			'a template which is no number' => ['/delivery.php/tpl/abc.jpg'],
 			'a template with parents'       => ['/delivery.php/tpl/../../../.env.jpg'],
 			'a template with a long number' => ['/delivery.php/tpl/' . str_repeat('1', 30) . '.jpg'],
+			'a template with a short hmac'  => ['/delivery.php/tpl/5-abc.jpg'],
+			'a template with a hmac only'   => ['/delivery.php/tpl/-' . str_repeat('a', 32) . '.jpg'],
+			'a template with capitals'      => ['/delivery.php/tpl/5-' . str_repeat('A', 32) . '.jpg'],
+			'a template with parents in it' => ['/delivery.php/tpl/5-../../.env.jpg'],
+			'a mediapool name with a hyphen' => ["/delivery.php/5-$name.png"],
 		];
 	}
 
@@ -166,6 +171,33 @@ class PlayerDeliveryTest extends MediapoolTestCase
 		static::assertContains($response['status'], [400, 404], $path);
 		static::assertStringNotContainsString('APP_SECRET', $response['body']);
 		static::assertStringNotContainsString('<?php', $response['body']);
+	}
+
+	/**
+	 * A template item is named by its id and the hmac of its content. Until the first export after an update
+	 * it is named by its id only.
+	 */
+	public function testATemplateItemIsDeliveredByTheNameOfItsContentAndByItsIdBeforeTheFirstExport(): void
+	{
+		$directory = $this->deployment()->directory() . '/var/storage/playlists/items/originals';
+		$name      = '5-' . str_repeat('0123456789abcdef', 2);
+		file_put_contents($directory . '/' . $name . '.png', self::png());
+		file_put_contents($directory . '/6.png', self::png());
+
+		try
+		{
+			$byContent = $this->rawGet('/delivery.php/tpl/' . $name . '.png', self::asPlayer());
+			$byId      = $this->rawGet('/delivery.php/tpl/6.png', self::asPlayer());
+		}
+		finally
+		{
+			unlink($directory . '/' . $name . '.png');
+			unlink($directory . '/6.png');
+		}
+
+		static::assertSame([200, 200], [$byContent['status'], $byId['status']]);
+		static::assertSame(self::png(), $byContent['body']);
+		static::assertSame('image/png', $byContent['headers']['content-type']);
 	}
 
 	public function testATemplateWhichWasNotRenderedIsNotFound(): void

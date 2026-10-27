@@ -66,6 +66,7 @@ use App\Modules\Playlists\Helper\ExportSmil\LocalWriter;
 use App\Modules\Playlists\Helper\ExportSmil\PlaylistContent;
 use App\Modules\Playlists\Helper\Settings\Parameters;
 use App\Modules\Playlists\Helper\Settings\Validator;
+use App\Modules\Playlists\Helper\TemplateItemName;
 use App\Modules\Playlists\Helper\Trigger\TriggerPreparer;
 use App\Modules\Playlists\Helper\Widgets\ContentDataPreparer;
 use App\Modules\Playlists\Repositories\ItemsRepository;
@@ -218,6 +219,10 @@ $dependencies[PlaylistsController::class] = DI\factory(function (ContainerInterf
 });
 
 // Items
+$dependencies[TemplateItemName::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new TemplateItemName($container->get(Config::class)->getEnv('APP_SECRET'));
+});
 $dependencies[InsertItemFactory::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new InsertItemFactory(
@@ -229,6 +234,7 @@ $dependencies[InsertItemFactory::class] = DI\factory(function (ContainerInterfac
 		$container->get(Config::class),
 		$container->get('LocalFileSystem'),
 		$container->get(MediaUrlSigner::class),
+		$container->get(TemplateItemName::class),
 		$container->get(PlaylistMetricsCalculator::class),
 		$container->get(WidgetsService::class),
 		$container->get(UserSession::class),
@@ -265,7 +271,8 @@ $dependencies[ItemsService::class] = DI\factory(function (ContainerInterface $co
 		new ItemThumbnailResolver(
 			$container->get(Config::class),
 			$container->get(MimeTypeExtensionMapper::class),
-			$container->get(MediaUrlSigner::class)
+			$container->get(MediaUrlSigner::class),
+			$container->get(TemplateItemName::class)
 		),
 		$container->get('ModuleLogger')
 	);
@@ -291,7 +298,9 @@ $dependencies[ExportService::class] = DI\factory(function (ContainerInterface $c
 			new ItemsFactory($container->get(Config::class)),
 			new DeliveryUrlBuilder($container->get(Config::class)->getConfigValue('url', 'mediapool', 'content_server')),
 			$container->get(MimeTypeExtensionMapper::class),
+			$container->get(TemplateItemName::class)
 		),
+		$container->get(TemplateItemName::class),
 		$container->get('ModuleLogger')
 	);
 });
@@ -380,6 +389,7 @@ $dependencies[\App\Modules\Playlists\Helper\Templates\Orchestrator::class] = DI\
 		$container->get(ItemsService::class),
 		$container->get(ExportImage::class),
 		$container->get(\App\Modules\Templates\Helper\Composer\TemplatePreparer::class),
+		$container->get(TemplateItemName::class),
 		$container->get(Config::class),
 		$container->get(MediaUrlSigner::class)
 	);

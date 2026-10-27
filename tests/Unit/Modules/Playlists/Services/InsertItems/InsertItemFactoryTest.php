@@ -26,6 +26,7 @@ use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\MediaService;
+use App\Modules\Playlists\Helper\TemplateItemName;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\InsertItems\InsertItemFactory;
 use App\Modules\Playlists\Services\InsertItems\Media;
@@ -71,6 +72,7 @@ class InsertItemFactoryTest extends TestCase
 			$configStub,
 			$fileSystemStub,
 			new MediaUrlSigner('unit-test-secret'),
+			new TemplateItemName('unit-test-secret'),
 			$playlistMetricsCalculatorStub,
 			$widgetsServiceStub,
 			$this->createStub(UserSession::class),

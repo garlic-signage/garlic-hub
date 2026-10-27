@@ -80,7 +80,10 @@ class ExportImage
 		}
 	}
 
-	public function exportPlaylistItem(int $id): bool
+	/**
+	 * @param string $fileName the name of the content, see TemplateItemName
+	 */
+	public function exportPlaylistItem(string $fileName): bool
 	{
 		if (!$this->hasDecodedImage())
 			return false;
@@ -89,7 +92,7 @@ class ExportImage
 		{
 
 			$mediaHandler     = $this->mediaHandlerFactory->createPlaylistsHandler($this->decodedDataUrlFile->mimeType);
-			$filePath         = '/'.$mediaHandler->getOriginalPath().'/'.$id.'.'.$this->decodedDataUrlFile->extension;
+			$filePath         = '/'.$mediaHandler->getOriginalPath().'/'.$fileName.'.'.$this->decodedDataUrlFile->extension;
 			$absoluteFilePath = $mediaHandler->getAbsolutePath($filePath);
 			$mediaHandler->writeBinaryString($filePath, $this->decodedDataUrlFile->binaryContent);
 			$mediaHandler->validateStoredFile($filePath);

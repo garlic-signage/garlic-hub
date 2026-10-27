@@ -25,6 +25,7 @@ use App\Framework\Config\Config;
 use App\Framework\Database\BaseRepositories\Transactions;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\MediaService;
+use App\Modules\Playlists\Helper\TemplateItemName;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
 use App\Modules\Playlists\Services\PlaylistsService;
@@ -46,6 +47,7 @@ readonly class InsertItemFactory
 								private Config $config,
 								private Filesystem $fileSystem,
 								private MediaUrlSigner $mediaUrlSigner,
+								private TemplateItemName $templateItemName,
 								private PlaylistMetricsCalculator $playlistMetricsCalculator,
 								private WidgetsService $widgetsService,
 								private UserSession $userSession,
@@ -66,6 +68,7 @@ readonly class InsertItemFactory
 				$this->config,
 				$this->fileSystem,
 				$this->mediaUrlSigner,
+				$this->templateItemName,
 				$this->playlistsService,
 				$this->playlistMetricsCalculator,
 				$this->userSession,

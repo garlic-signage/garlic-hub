@@ -35,6 +35,7 @@ use App\Modules\Playlists\Helper\ItemDatasource;
 use App\Modules\Playlists\Helper\ItemFlags;
 use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Helper\PlaylistMode;
+use App\Modules\Playlists\Helper\TemplateItemName;
 
 /**
  * The `PlaylistContent` class is responsible for managing and constructing playlist content,
@@ -57,6 +58,7 @@ class PlaylistContent
 	public function __construct(private readonly ItemsFactory $itemsFactory,
 								private readonly DeliveryUrlBuilder $deliveryUrlBuilder,
 								private readonly MimeTypeExtensionMapper $mimeTypeExtensionMapper,
+								private readonly TemplateItemName $templateItemName
 	)
 	{}
 
@@ -207,8 +209,9 @@ class PlaylistContent
 		$item->setBelongsToMasterPlaylist($this->playlist['playlist_mode'] === PlaylistMode::MASTER->value);
 		$item->setTouches($this->touchTrigger);
 
+		// the image of the exported content, see ExportService
 		$item->setLink($this->deliveryUrlBuilder->templateUrl(
-			$itemData['item_id'],
+			$this->templateItemName->build((int) $itemData['item_id'], (string) $itemData['content_data']),
 			$this->mimeTypeExtensionMapper->determineExtension($itemData['mimetype'])
 		));
 

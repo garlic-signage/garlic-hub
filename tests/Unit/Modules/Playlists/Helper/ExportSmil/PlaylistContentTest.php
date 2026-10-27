@@ -32,6 +32,7 @@ use App\Modules\Playlists\Helper\ItemDatasource;
 use App\Modules\Playlists\Helper\ItemFlags;
 use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Helper\PlaylistMode;
+use App\Modules\Playlists\Helper\TemplateItemName;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
@@ -52,7 +53,7 @@ class PlaylistContentTest extends TestCase
 			['volume', 'playlists', 'Defaults', '100'],
 		]);
 
-		$this->playlistContent = new PlaylistContent(new ItemsFactory($config), new DeliveryUrlBuilder('https://content.server.com'), new MimeTypeExtensionMapper());
+		$this->playlistContent = new PlaylistContent(new ItemsFactory($config), new DeliveryUrlBuilder('https://content.server.com'), new MimeTypeExtensionMapper(), new TemplateItemName('unit-test-secret'));
 	}
 
 	/**
@@ -92,12 +93,13 @@ class PlaylistContentTest extends TestCase
 	#[Group('units')]
 	public function testATemplateLinksToTheRenderedImageOfTheItem(): void
 	{
-		$template = self::video(['item_id' => 13, 'item_type' => ItemType::TEMPLATE->value, 'item_name' => 'Vorlage', 'mimetype' => 'image/jpeg', 'extension' => null, 'file_resource' => '7']);
+		$template = self::video(['item_id' => 13, 'item_type' => ItemType::TEMPLATE->value, 'item_name' => 'Vorlage', 'mimetype' => 'image/jpeg', 'extension' => null, 'file_resource' => '7', 'content_data' => '{"objects":[]}']);
+		$name     = (new TemplateItemName('unit-test-secret'))->build(13, '{"objects":[]}');
 
 		$content = $this->build([$template]);
 
-		static::assertStringContainsString('src="https://content.server.com/delivery.php/tpl/13.jpg"', $content->getContentElements());
-		static::assertStringContainsString('delivery.php/tpl/13.jpg', $content->getContentPrefetch());
+		static::assertStringContainsString('src="https://content.server.com/delivery.php/tpl/' . $name . '.jpg"', $content->getContentElements());
+		static::assertStringContainsString('delivery.php/tpl/' . $name . '.jpg', $content->getContentPrefetch());
 	}
 
 	#[Group('units')]

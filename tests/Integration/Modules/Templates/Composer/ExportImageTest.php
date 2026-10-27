@@ -38,6 +38,7 @@ use Tests\Integration\Support\MediaWorkspace;
 #[Group('io')]
 class ExportImageTest extends TestCase
 {
+	private const string ITEM = '34-0123456789abcdef0123456789abcdef';
 	private const string PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
 
 	private MediaWorkspace $workspace;
@@ -88,10 +89,10 @@ class ExportImageTest extends TestCase
 	{
 		$this->exportImage->decode(self::PNG);
 
-		static::assertTrue($this->exportImage->exportPlaylistItem(34));
+		static::assertTrue($this->exportImage->exportPlaylistItem(self::ITEM));
 
-		static::assertSame(['34.png'], $this->files('playlists/items/originals'));
-		static::assertSame(['34.png'], $this->files('playlists/items/thumbs'));
+		static::assertSame([self::ITEM . '.png'], $this->files('playlists/items/originals'));
+		static::assertSame([self::ITEM . '.png'], $this->files('playlists/items/thumbs'));
 		static::assertSame([], $this->files('templates/originals'));
 	}
 
@@ -110,7 +111,7 @@ class ExportImageTest extends TestCase
 	{
 		$this->exportImage->decode('data:image/png;base64,' . base64_encode('this is not an image'));
 
-		static::assertFalse($this->exportImage->exportPlaylistItem(34));
+		static::assertFalse($this->exportImage->exportPlaylistItem(self::ITEM));
 
 		static::assertNotSame('', $this->exportImage->getErrorText());
 		static::assertSame([], $this->files('playlists/items/originals'));
@@ -138,7 +139,7 @@ class ExportImageTest extends TestCase
 
 		static::assertNotSame('', $this->exportImage->getErrorText());
 		static::assertFalse($this->exportImage->exportBase64(12));
-		static::assertFalse($this->exportImage->exportPlaylistItem(12));
+		static::assertFalse($this->exportImage->exportPlaylistItem(self::ITEM));
 		static::assertSame([], $this->files('templates/originals'));
 		static::assertSame([], $this->files('playlists/items/originals'));
 	}

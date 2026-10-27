@@ -48,7 +48,7 @@ class MediaUrlSignerTest extends TestCase
 	{
 		$query = [];
 		parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
-		if (preg_match('#^/media\.php/([a-z-]+)/([a-z0-9]+)\.([a-z0-9]+)$#', (string) parse_url($url, PHP_URL_PATH), $m) !== 1)
+		if (preg_match('#^/media\.php/([a-z-]+)/([a-z0-9-]+)\.([a-z0-9]+)$#', (string) parse_url($url, PHP_URL_PATH), $m) !== 1)
 			static::fail('Unexpected media url: ' . $url);
 
 		return ['c' => $m[2], 'ext' => $m[3], 'v' => $m[1]] + $query;
@@ -70,10 +70,10 @@ class MediaUrlSignerTest extends TestCase
 	public function testTemplateAndItemThumbUrlsUseTheirOwnVariantAndVerify(): void
 	{
 		$template = $this->queryOf($this->mediaUrlSigner->templateThumbUrl(12, 'jpg', self::NOW));
-		$item     = $this->queryOf($this->mediaUrlSigner->itemThumbUrl(34, 'jpg', self::NOW));
+		$item     = $this->queryOf($this->mediaUrlSigner->itemThumbUrl('34-0123456789abcdef0123456789abcdef', 'jpg', self::NOW));
 
 		static::assertSame(['12', 'tpl-thumb'], [$template['c'], $template['v']]);
-		static::assertSame(['34', 'item-thumb'], [$item['c'], $item['v']]);
+		static::assertSame(['34-0123456789abcdef0123456789abcdef', 'item-thumb'], [$item['c'], $item['v']]);
 		static::assertTrue(MediaUrlSigner::verify($template, self::SECRET, self::NOW));
 		// the variant is part of the signature, a template url cannot be turned into an item url
 		static::assertFalse(MediaUrlSigner::verify(['v' => 'item-thumb'] + $template, self::SECRET, self::NOW));

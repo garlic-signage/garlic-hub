@@ -23,6 +23,7 @@ namespace Tests\Integration\Modules\Playlists\Services;
 
 use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\TranslatableModuleException;
+use App\Modules\Playlists\Helper\TemplateItemName;
 use App\Modules\Playlists\Services\ItemsService;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Integration\Support\ContainerTestCase;
@@ -119,7 +120,8 @@ class ItemsServiceTest extends ContainerTestCase
 		static::assertSame([1, 2, 3, 4, 5], array_map(intval(...), array_column($result['items'], 'item_id')));
 		// a nested playlist has the icon of a playlist, a template the rendered thumbnail of the item
 		static::assertSame('/images/icons/playlist.svg', $result['items'][2]['urls']['thumbnail']);
-		static::assertStringEndsWith('/5.jpg', $result['items'][4]['paths']['thumbnail']);
+		$name = $this->container->get(TemplateItemName::class)->build(5, (string) $result['items'][4]['content_data']);
+		static::assertStringEndsWith('/' . $name . '.jpg', $result['items'][4]['paths']['thumbnail']);
 		static::assertStringContainsString('checksum-image.jpg', $result['items'][0]['paths']['thumbnail']);
 	}
 

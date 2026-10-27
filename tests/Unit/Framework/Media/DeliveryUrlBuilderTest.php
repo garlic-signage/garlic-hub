@@ -44,13 +44,7 @@ class DeliveryUrlBuilderTest extends TestCase
 	#[Group('units')]
 	public function testTemplateUrlUsesTplSource(): void
 	{
-		static::assertSame('https://content.server.com/delivery.php/tpl/13.jpg', $this->builder->templateUrl(13, 'jpg'));
-	}
-
-	#[Group('units')]
-	public function testTemplateUrlTakesAStringId(): void
-	{
-		static::assertSame('https://content.server.com/delivery.php/tpl/13.jpg', $this->builder->templateUrl('13', 'jpg'));
+		static::assertSame('https://content.server.com/delivery.php/tpl/13-0123456789abcdef0123456789abcdef.jpg', $this->builder->templateUrl('13-0123456789abcdef0123456789abcdef', 'jpg'));
 	}
 
 	#[Group('units')]
@@ -59,6 +53,6 @@ class DeliveryUrlBuilderTest extends TestCase
 		$builder = new DeliveryUrlBuilder('https://content.server.com/');
 
 		static::assertSame('https://content.server.com/delivery.php/abc123.mp4', $builder->mediapoolUrl('abc123', 'mp4'));
-		static::assertSame('https://content.server.com/delivery.php/tpl/13.jpg', $builder->templateUrl(13, 'jpg'));
+		static::assertSame('https://content.server.com/delivery.php/tpl/13-abc.jpg', $builder->templateUrl('13-abc', 'jpg'));
 	}
 }

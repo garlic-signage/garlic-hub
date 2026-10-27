@@ -37,7 +37,8 @@ Dotenv\Dotenv::createImmutable($systemDir)->safeLoad();
 
 // Directories below var/storage, must stay in sync with the [directories] sections of
 // config_mediapool.ini, config_templates.ini and config_playlists.ini.
-// Mediapool files are named by their content hash, templates and playlist items by numeric id.
+// Mediapool files are named by their content hash, templates by numeric id, playlist items by
+// numeric id and the hmac of their content (before the first export after an update by numeric id only).
 const MEDIA_VARIANT_DIR = [
 	'thumb'      => 'mediapool/thumbs',
 	'orig'       => 'mediapool/originals',
@@ -51,8 +52,8 @@ const MEDIA_NAME_PATTERN = [
 	'orig'       => '/^[a-f0-9]{32,64}$/',
 	'tpl-thumb'  => '/^\d{1,10}$/',
     'tpl-orig'   => '/^\d{1,10}$/',
-	'item-thumb' => '/^\d{1,10}$/',
-    'item-orig'  => '/^\d{1,10}$/',
+	'item-thumb' => '/^\d{1,10}(-[a-f0-9]{32})?$/',
+    'item-orig'  => '/^\d{1,10}(-[a-f0-9]{32})?$/',
 ];
 
 const MEDIA_IMMUTABLE = ['thumb' => true, 'orig' => true];
@@ -64,7 +65,7 @@ function mediaFail(int $status): never
 	exit;
 }
 
-if (!preg_match('#^/([a-z-]+)/([a-z0-9]+)\.([a-z0-9]{2,5})$#', $_SERVER['PATH_INFO'] ?? '', $m))
+if (!preg_match('#^/([a-z-]+)/([a-z0-9-]+)\.([a-z0-9]{2,5})$#', $_SERVER['PATH_INFO'] ?? '', $m))
 	mediaFail(400);
 
 [, $variant, $checksum, $ext] = $m;

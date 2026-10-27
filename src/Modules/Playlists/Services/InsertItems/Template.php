@@ -31,6 +31,7 @@ use App\Framework\Exceptions\UserException;
 use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\ItemType;
+use App\Modules\Playlists\Helper\TemplateItemName;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
 use App\Modules\Playlists\Services\PlaylistsService;
@@ -49,6 +50,7 @@ class Template extends AbstractInsertItem
 								private readonly Config $config,
 								private readonly Filesystem $fileSystem,
 								private readonly MediaUrlSigner $mediaUrlSigner,
+								private readonly TemplateItemName $templateItemName,
 								PlaylistsService $playlistsService,
 								PlaylistMetricsCalculator $playlistMetricsCalculator,
 								UserSession $userSession,
@@ -109,8 +111,9 @@ class Template extends AbstractInsertItem
 			if ($id === 0)
 				throw new TranslatableModuleException('playlists', 'item_not_inserted', ['playlist_id' => $playlistId]);
 
+			$nameItem             = $this->templateItemName->build($id, (string) $template['content']);
 			$fileNameTemplate     = $insertId.'.jpg';
-			$fileNameItem         = $id.'.jpg';
+			$fileNameItem         = $nameItem.'.jpg';
 			$thumbPathTemplate    = $this->config->getConfigValue('thumbnails', 'templates', 'directories').'/'.$fileNameTemplate;
 			$orginalPathTemplate  = $this->config->getConfigValue('originals', 'templates', 'directories').'/'.$fileNameTemplate;
 			$thumbPathItem        = $this->config->getConfigValue('thumbnails', 'playlists', 'directories').'/'.$fileNameItem;
@@ -120,7 +123,7 @@ class Template extends AbstractInsertItem
 			$this->fileSystem->copy($thumbPathTemplate, $thumbPathItem);
 			$saveItem['item_id'] = $id;
 			$saveItem['paths']['thumbnail'] = $thumbPathItem;
-			$saveItem['urls']['thumbnail']  = $this->mediaUrlSigner->itemThumbUrl($id, 'jpg');
+			$saveItem['urls']['thumbnail']  = $this->mediaUrlSigner->itemThumbUrl($nameItem, 'jpg');
 
 			$playlistMetrics = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlistData)->toFrontendArray();
 

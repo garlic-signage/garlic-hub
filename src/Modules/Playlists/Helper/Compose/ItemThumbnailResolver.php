@@ -26,6 +26,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Media\MediaUrlSigner;
 use App\Framework\Media\MimeTypeExtensionMapper;
 use App\Modules\Playlists\Helper\ItemType;
+use App\Modules\Playlists\Helper\TemplateItemName;
 
 /**
  * Determines the thumbnail of a playlist item for the composer:
@@ -36,7 +37,8 @@ readonly class ItemThumbnailResolver
 	public function __construct(
 		private Config $config,
 		private MimeTypeExtensionMapper $mimeTypeExtensionMapper,
-		private MediaUrlSigner $mediaUrlSigner
+		private MediaUrlSigner $mediaUrlSigner,
+		private TemplateItemName $templateItemName
 	) {}
 
 	/**
@@ -50,7 +52,7 @@ readonly class ItemThumbnailResolver
 		{
 			ItemType::MEDIAPOOL->value => $this->resolveMediapool($item),
 			ItemType::PLAYLIST->value  => ['path' => 'public/images/icons/playlist.svg', 'url' => '/images/icons/playlist.svg'],
-			ItemType::TEMPLATE->value  => $this->resolveTemplate((int) $item['item_id']),
+			ItemType::TEMPLATE->value  => $this->resolveTemplate((int) $item['item_id'], (string) ($item['content_data'] ?? '')),
 			default                    => null,
 		};
 	}
@@ -85,27 +87,37 @@ readonly class ItemThumbnailResolver
 	}
 
 	/**
-	 * The thumbnail keeps the format of the saved image (jpg, png, webp, bmp). Without a file the preview is the jpg.
+	 * The thumbnail of the saved content (see TemplateItemName), before the first export after an update
+	 * the one named by the item id. It keeps the format of the saved image (jpg, png, webp, bmp).
+	 * Without a file the preview is the jpg of the content.
 	 *
 	 * @return array{path:string, url:string}
 	 * @throws CoreException
 	 */
-	private function resolveTemplate(int $itemId): array
+	private function resolveTemplate(int $itemId, string $content): array
 	{
-		$thumbDir  = $this->config->getConfigValue('thumbnails', 'playlists', 'directories');
-		$extension = 'jpg';
-		foreach (['jpg', 'png', 'webp', 'bmp'] as $candidate)
+		$thumbDir = $this->config->getConfigValue('thumbnails', 'playlists', 'directories');
+		$name     = $this->templateItemName->build($itemId, $content);
+		foreach ([$name, (string) $itemId] as $candidateName)
 		{
-			if (file_exists($thumbDir . '/' . $itemId . '.' . $candidate))
+			foreach (['jpg', 'png', 'webp', 'bmp'] as $extension)
 			{
-				$extension = $candidate;
-				break;
+				if (file_exists($thumbDir . '/' . $candidateName . '.' . $extension))
+					return $this->templateThumbnail($thumbDir, $candidateName, $extension);
 			}
 		}
 
+		return $this->templateThumbnail($thumbDir, $name, 'jpg');
+	}
+
+	/**
+	 * @return array{path:string, url:string}
+	 */
+	private function templateThumbnail(string $thumbDir, string $name, string $extension): array
+	{
 		return [
-			'path' => $thumbDir . '/' . $itemId . '.' . $extension,
-			'url'  => $this->mediaUrlSigner->itemThumbUrl($itemId, $extension)
+			'path' => $thumbDir . '/' . $name . '.' . $extension,
+			'url'  => $this->mediaUrlSigner->itemThumbUrl($name, $extension)
 		];
 	}
 }
