@@ -9,3 +9,4 @@
 /.phpunit.cache/
 /public/var/
 .DS_Store
+/tests/Load/media/
