@@ -3,7 +3,7 @@ type: php
 docroot: public
 php_version: "8.4"
 webserver_type: apache-fpm
-xdebug_enabled: true
+xdebug_enabled: false
 additional_hostnames:
     - garlic-hub.ddev.site
 additional_fqdns: []
