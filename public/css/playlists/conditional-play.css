@@ -8,7 +8,7 @@
 
 
 .sliders-group{margin:0;padding:0.5rem;display: flex; gap:0.5rem;align-items:center;height:55px}
-.sliders-group:nth-child(odd) {background-color: #f1f1f1;}
+.sliders-group:nth-child(odd) {background-color: var(--gh-form-background);}
 .sliders-group > label{width:8rem;}
 .sliders-group label{display: inline;padding:0;margin:0;}
 

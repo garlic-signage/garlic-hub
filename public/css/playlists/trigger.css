@@ -13,7 +13,7 @@
 	}
     #trigger .trigger-form
     {
-        background-color:#eee;
+        background-color:var(--gh-form-background);
         padding: 0.25rem 0.5rem;
     }
 

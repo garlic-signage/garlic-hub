@@ -25,6 +25,7 @@
     --gh-body-bg: #F7FAFC;
     --gh-surface-color: #fff;
     --gh-input-bg: #fff;
+    --gh-form-background: #eee;
     --gh-input-placeholder: #888;
     --gh-border-color: #aaa;
     --gh-border-color-hover: #000;
@@ -372,6 +373,7 @@ footer nav ul #compile_time {margin-left: auto;}
         --gh-body-bg: #14181c;
         --gh-surface-color: #1e242a;
         --gh-input-bg: #232b32;
+        --gh-form-background: #1a2025;
         --gh-input-placeholder: #8a939c;
         --gh-border-color: #3a434d;
         --gh-border-color-hover: #6b7884;
