@@ -228,7 +228,8 @@ class ShowDatatableControllerTest extends PlayerControllerTestCase
 		$this->setPlayer(2, 'model = 6');
 
 		static::assertSame([1, 2], $this->idsOf(['model' => '6']));
-		static::assertSame([1, 2, 3, 4], $this->idsOf(['model' => '0']), 'The model 0 is no filter.');
+		static::assertSame([3, 4], $this->idsOf(['model' => '0']), 'The model 0 is unknown, not all.');
+		static::assertSame([1, 2, 3, 4], $this->idsOf(['model' => '']), 'The empty value is no filter.');
 	}
 
 	public function testTheListCanBeSortedByTheNameInBothDirections(): void

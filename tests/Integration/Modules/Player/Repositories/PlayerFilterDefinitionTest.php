@@ -108,6 +108,19 @@ class PlayerFilterDefinitionTest extends RepositoryTestCase
 		static::assertEqualsCanonicalizing([1, 2, 3, 4], $this->idsFor(['playlist_id' => 'x']));
 	}
 
+	public function testTheModelFilterFindsTheUnknownModelAndNoParts(): void
+	{
+		$this->connection->executeStatement('UPDATE player SET model = 0 WHERE player_id = 1');
+		$this->connection->executeStatement('UPDATE player SET model = 1 WHERE player_id = 2');
+		$this->connection->executeStatement('UPDATE player SET model = 10 WHERE player_id IN (3, 4)');
+
+		static::assertEqualsCanonicalizing([1], $this->idsFor(['model' => '0']), 'The model 0 is unknown, not all.');
+		static::assertEqualsCanonicalizing([2], $this->idsFor(['model' => '1']), 'The model 1 does not find the model 10.');
+		static::assertEqualsCanonicalizing([3, 4], $this->idsFor(['model' => '10']));
+		static::assertEqualsCanonicalizing([1, 2, 3, 4], $this->idsFor(['model' => '']), 'The empty value is no filter.');
+		static::assertEqualsCanonicalizing([1, 2, 3, 4], $this->idsFor(['model' => 'x']));
+	}
+
 	/**
 	 * @return array<string,array{string,list<int>}>
 	 */

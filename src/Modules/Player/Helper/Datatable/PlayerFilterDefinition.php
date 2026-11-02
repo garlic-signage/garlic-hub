@@ -91,6 +91,12 @@ readonly class PlayerFilterDefinition implements FilterDefinition
 						$where[self::TABLE.'.'.$key] = Where::equals(self::TABLE.'.'.$key, (int) $parameter['value']);
 					break;
 
+				case 'model':
+					$model = (string) ($parameter['value'] ?? '');
+					if (ctype_digit($model))
+						$where[self::TABLE.'.'.$key] = Where::equals(self::TABLE.'.'.$key, (int) $model);
+					break;
+
 				default:
 					$where = array_merge($where, $this->conditions->forField(self::TABLE, $key, $parameter));
 			}

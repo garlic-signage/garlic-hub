@@ -44,7 +44,8 @@ class Parameters extends BaseFilterParameters
 	 */
 	protected array $moduleParameters = [
 		self::PARAMETER_PLAYER_NAME => ['scalar_type' => ScalarType::STRING, 'default_value' => '', 'parsed' => false],
-		self::PARAMETER_MODEL => ['scalar_type' => ScalarType::INT, 'default_value' => 0, 'parsed' => false],
+		// a string: the model 0 is "unknown", only the empty value of the select means all models
+		self::PARAMETER_MODEL => ['scalar_type' => ScalarType::STRING, 'default_value' => '', 'parsed' => false],
 		self::PARAMETER_UUID => ['scalar_type' => ScalarType::STRING, 'default_value' => '', 'parsed' => false],
 	];
 
