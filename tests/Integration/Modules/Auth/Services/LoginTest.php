@@ -111,6 +111,23 @@ class LoginTest extends ContainerTestCase
 		static::assertNull($this->login('regular', ''));
 	}
 
+	/**
+	 * A user created by an admin has no password yet (NULL), a password reset leaves an empty one.
+	 * Neither may log in or break the login, whatever the status.
+	 */
+	public function testAUserWithoutPasswordLooksLikeAWrongPassword(): void
+	{
+		$this->connection->executeStatement('UPDATE user_main SET password = NULL WHERE username = ?', ['blocked']);
+		$this->connection->executeStatement("UPDATE user_main SET password = '' WHERE username = ?", ['regular']);
+
+		static::assertNull($this->login('blocked', ''));
+		static::assertSame('Invalid credentials.', $this->authService->getErrorMessage());
+		static::assertNull($this->login('blocked', self::PASSWORD));
+		static::assertSame('Invalid credentials.', $this->authService->getErrorMessage());
+		static::assertNull($this->login('regular', ''));
+		static::assertSame('Invalid credentials.', $this->authService->getErrorMessage());
+	}
+
 	public function testHashOfAnotherUsersPasswordDoesNotWork(): void
 	{
 		// the stored hash is not the password

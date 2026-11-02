@@ -68,12 +68,14 @@ class AuthService
 		}
 
 		$userData = $this->userService->findUser($identifier);
-		if ($userData === [])
+		// a user created by an admin has no password (NULL) until he sets one: he can not log in, like an unknown user
+		$hash = $userData['password'] ?? '';
+		if (!is_string($hash) || $hash === '')
 		{
 			// hashing costs as much as verifying, so the response time does not reveal whether the user exists
 			password_hash($password, PASSWORD_DEFAULT);
 		}
-		if ($userData === [] || !password_verify($password, $userData['password']))
+		if (!is_string($hash) || $hash === '' || !password_verify($password, $hash))
 		{
 			$this->loginThrottle->registerFailure($identifier, $ip);
 			$this->errorMessage = 'Invalid credentials.';
