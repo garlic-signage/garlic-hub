@@ -46,7 +46,7 @@ class UserMainRepositoryTest extends RepositoryTestCase
 		$rows = $this->repository->findById(10);
 
 		static::assertCount(1, $rows);
-		static::assertSame(['UID', 'company_id', 'status', 'locale', 'email', 'username'], array_keys($rows[0]));
+		static::assertSame(['UID', 'company_id', 'status', 'locale', 'email', 'username', 'last_password_change'], array_keys($rows[0]));
 		static::assertSame('regular', $rows[0]['username']);
 	}
 

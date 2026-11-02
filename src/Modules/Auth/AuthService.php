@@ -188,18 +188,23 @@ class AuthService
 	}
 
 	/**
-	 * Whether the user of a running session may still work: an admin may have blocked or deleted him since the login.
-	 * The user comes from the cache, which is invalidated when an admin changes the status.
+	 * Whether the user of a running session may still work: an admin may have blocked or deleted him since the login,
+	 * or the password was changed (by the user in another browser or reset by an admin) after the session started.
+	 * The user comes from the cache, which is invalidated when an admin changes the status or the password changes.
 	 *
 	 * @throws Exception
 	 */
-	public function isUserActive(int $UID): bool
+	public function isUserActive(int $UID, ?string $passwordChangeOfSession): bool
 	{
-		$status = $this->getCurrentUser($UID)->getMain()['status'] ?? null;
+		$main   = $this->getCurrentUser($UID)->getMain();
+		$status = $main['status'] ?? null;
 		if (!is_numeric($status))
 			return false;
 
-		return !in_array((int) $status, [UsersService::USER_STATUS_DELETED, UsersService::USER_STATUS_LOCKED, UsersService::USER_STATUS_REGISTERED], true);
+		if (in_array((int) $status, [UsersService::USER_STATUS_DELETED, UsersService::USER_STATUS_LOCKED, UsersService::USER_STATUS_REGISTERED], true))
+			return false;
+
+		return ($main['last_password_change'] ?? null) === $passwordChangeOfSession;
 	}
 
 	private function validateUserStatus(int $status): void

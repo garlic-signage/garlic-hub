@@ -230,6 +230,24 @@ class OrchestratorTest extends TestCase
 	}
 
 	/**
+	 * The change ends all sessions from before, except the one in which the user changed the password.
+	 *
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testStorePasswordKeepsTheOwnSessionLoggedIn(): void
+	{
+		$this->accountService->method('findLastPasswordChange')->willReturn('2026-11-02 12:00:00');
+
+		$this->orchestrator->storePassword($this->fixture->post());
+
+		static::assertSame(
+			['UID' => 7, 'username' => 'regular', 'locale' => 'de_DE', 'last_password_change' => '2026-11-02 12:00:00'],
+			$this->fixture->session->get('user')
+		);
+	}
+
+	/**
 	 * @throws \Exception
 	 */
 	#[Group('units')]

@@ -109,6 +109,8 @@ readonly class Orchestrator
 		if ($this->accountService->updatePassword($UID, $this->getParsedPassword()) === 0)
 			return ['success' => false, 'errors' => [$this->translator->translate('password_update_failed', 'account')]];
 
+		$this->userSession->keepAfterPasswordChange($this->accountService->findLastPasswordChange($UID));
+
 		return ['success' => true];
 	}
 

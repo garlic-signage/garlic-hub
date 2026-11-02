@@ -24,10 +24,12 @@ namespace Tests\Integration\Modules\Auth\Services;
 use App\Framework\Http\Cookie;
 use App\Framework\Http\Session;
 use Tests\Integration\Support\ArraySession;
+use App\Modules\Account\Services\AccountService;
 use App\Modules\Auth\AuthMiddleware;
 use App\Modules\Auth\AuthService;
 use App\Modules\Auth\AutoLoginService;
 use App\Modules\Auth\LoginThrottle;
+use App\Modules\Auth\UserSession;
 use App\Modules\Users\Services\UsersAdminService;
 use App\Shared\User\UsersService;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -175,6 +177,56 @@ class AuthMiddlewareTest extends ContainerTestCase
 		static::assertSame('/login', $response->getHeaderLine('Location'));
 		static::assertFalse($this->container->get(Session::class)->exists('user'));
 		static::assertSame(401, $this->process('GET', '/async/player/push')->getStatusCode());
+	}
+
+	/**
+	 * The user changes the password in another browser: this session was started with the old one and ends.
+	 */
+	public function testAPasswordChangeEndsTheOtherSessionsOfTheUser(): void
+	{
+		$this->actingAs(10);
+		static::assertSame(200, $this->process('GET', '/player')->getStatusCode());
+
+		$this->container->get(AccountService::class)->updatePassword(10, 'New-Pass1!');
+
+		$response = $this->process('GET', '/player');
+		static::assertSame(302, $response->getStatusCode());
+		static::assertSame('/login', $response->getHeaderLine('Location'));
+		static::assertFalse($this->container->get(Session::class)->exists('user'));
+	}
+
+	/**
+	 * Like the Orchestrator of the password change: the session in which the user changed the password stays.
+	 */
+	public function testTheSessionWhichChangedThePasswordStaysLoggedIn(): void
+	{
+		$this->actingAs(10);
+		$accountService = $this->container->get(AccountService::class);
+
+		$accountService->updatePassword(10, 'New-Pass1!');
+		new UserSession($this->container->get(Session::class))->keepAfterPasswordChange($accountService->findLastPasswordChange(10));
+
+		static::assertSame(200, $this->process('GET', '/player')->getStatusCode());
+	}
+
+	public function testAPasswordResetByTheAdminEndsTheSessionsOfTheUser(): void
+	{
+		$this->actingAs(10);
+		static::assertSame(200, $this->process('GET', '/player')->getStatusCode());
+
+		$this->container->get(UsersAdminService::class)->createPasswordResetToken(10);
+
+		static::assertSame(302, $this->process('GET', '/player')->getStatusCode());
+		static::assertFalse($this->container->get(Session::class)->exists('user'));
+	}
+
+	public function testAPasswordChangeOfAnotherUserKeepsTheSession(): void
+	{
+		$this->actingAs(10);
+
+		$this->container->get(AccountService::class)->updatePassword(14, 'New-Pass1!');
+
+		static::assertSame(200, $this->process('GET', '/player')->getStatusCode());
 	}
 
 	/**

@@ -27,6 +27,7 @@ use App\Framework\Database\BaseRepositories\Transactions;
 use App\Modules\Account\Controller\EditLocalesController;
 use App\Modules\Account\Helper\Password\Parameters;
 use App\Modules\Account\Services\AccountService;
+use App\Shared\User\UsersService;
 use App\Shared\User\UserTokenService;
 use App\Shared\User\Repositories\UserRepositoryFactory;
 use Psr\Container\ContainerInterface;
@@ -54,7 +55,8 @@ $dependencies[AccountService::class] = DI\factory(function (ContainerInterface $
 		$repositories['main'],
 		$container->get(UserTokenService::class),
 		$container->get(Crypt::class),
-		$container->get(Transactions::class)
+		$container->get(Transactions::class),
+		$container->get(UsersService::class)
 	);
 });
 $dependencies[EditLocalesController::class] = DI\factory(function (ContainerInterface $container)

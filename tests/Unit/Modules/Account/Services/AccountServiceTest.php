@@ -28,6 +28,7 @@ use App\Framework\Security\Crypt;
 use App\Modules\Account\Services\AccountService;
 use App\Modules\Users\UserStatus;
 use App\Shared\User\Repositories\Edge\UserMainRepository;
+use App\Shared\User\UsersService;
 use App\Shared\User\UserTokenService;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
@@ -66,7 +67,7 @@ class AccountServiceTest extends TestCase
 		$this->userTokenService   = $this->createStub(UserTokenService::class);
 		$this->userTokenService->method('useToken')->willReturnCallback(fn(): int => $this->step('token'));
 
-		$this->accountService = new AccountService($this->userMainRepository, $this->userTokenService, $crypt, new Transactions($this->connection));
+		$this->accountService = new AccountService($this->userMainRepository, $this->userTokenService, $crypt, new Transactions($this->connection), $this->createStub(UsersService::class));
 	}
 
 	/**
@@ -154,7 +155,7 @@ class AccountServiceTest extends TestCase
 
 		$this->accountService->storeNewForcedPassword(5, 'token', 'New-Pass1!');
 
-		static::assertSame(['password', 'token'], $this->steps());
+		static::assertSame(['token', 'password'], $this->steps());
 		static::assertFalse($this->connection->isTransactionActive());
 	}
 }

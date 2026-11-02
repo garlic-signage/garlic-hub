@@ -63,7 +63,7 @@ abstract class ContainerTestCase extends DatabaseTestCase
 	 */
 	protected function actingAs(int $UID): void
 	{
-		$user = $this->connection->fetchAssociative('SELECT UID, username, locale FROM user_main WHERE UID = ?', [$UID]);
+		$user = $this->connection->fetchAssociative('SELECT UID, username, locale, last_password_change FROM user_main WHERE UID = ?', [$UID]);
 		if ($user === false)
 			self::fail('No user ' . $UID . ' in the test database.');
 

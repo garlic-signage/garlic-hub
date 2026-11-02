@@ -21,7 +21,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Account\Services;
 
+use App\Framework\Exceptions\CoreException;
 use App\Shared\User\TokenPurposes;
+use App\Shared\User\UsersService;
 use App\Shared\User\UserTokenService;
 use App\Framework\Security\Crypt;
 use App\Framework\Database\BaseRepositories\Transactions;
@@ -43,13 +45,15 @@ class AccountService
 	private readonly UserTokenService $userTokenService;
 	private readonly Crypt $crypt;
 	private readonly Transactions $transactions;
+	private readonly UsersService $usersService;
 
-	public function __construct(UserMainRepository $userMainRepository, UserTokenService $userTokenService, Crypt $crypt, Transactions $transactions)
+	public function __construct(UserMainRepository $userMainRepository, UserTokenService $userTokenService, Crypt $crypt, Transactions $transactions, UsersService $usersService)
 	{
 		$this->userMainRepository = $userMainRepository;
 		$this->userTokenService   = $userTokenService;
 		$this->crypt              = $crypt;
 		$this->transactions       = $transactions;
+		$this->usersService       = $usersService;
 	}
 
 	/**
@@ -64,11 +68,12 @@ class AccountService
 		$this->transactions->begin();
 		try
 		{
-			if ($this->updatePassword($UID, $password) === 0)
-				throw new TranslatableModuleException('account', 'password_update_failed', ['UID' => $UID]);
-
+			// before the new password: it deletes the links of the user, this one included
 			if ($this->userTokenService->useToken($passwordToken) === 0)
 				throw new TranslatableModuleException('account', 'token_update_failed', ['UID' => $UID]);
+
+			if ($this->updatePassword($UID, $password) === 0)
+				throw new TranslatableModuleException('account', 'password_update_failed', ['UID' => $UID]);
 
 			$user = $this->userMainRepository->findByIdSecured($UID);
 			if (empty($user))
@@ -88,20 +93,39 @@ class AccountService
 	}
 
 	/**
-	 * A changed password ends all remember-me logins: whoever has copied such a cookie
-	 * must not stay logged in after the owner has changed the password.
+	 * A changed password ends all other logins: whoever has copied a remember-me cookie, a password link
+	 * or a session must not stay logged in after the owner has changed the password.
+	 * The sessions end with the time of the change, see AuthService::isUserActive().
 	 *
 	 * @throws Exception
+	 * @throws CoreException
 	 * @throws \Exception
 	 */
 	public function updatePassword(int $UID, string $password): int
 	{
-		$data     = ['password' => $this->crypt->createPasswordHash($password)];
+		$data     = ['password' => $this->crypt->createPasswordHash($password), 'last_password_change' => date('Y-m-d H:i:s')];
 		$affected = $this->userMainRepository->update($UID, $data);
-		if ($affected > 0)
-			$this->userTokenService->deleteByUserPurpose($UID, TokenPurposes::AUTOLOGIN->value);
+		if ($affected === 0)
+			return 0;
+
+		$this->userTokenService->deleteByUserPurpose($UID, TokenPurposes::AUTOLOGIN->value);
+		$this->userTokenService->deleteByUserPurpose($UID, TokenPurposes::PASSWORD_RESET->value);
+		$this->userTokenService->deleteByUserPurpose($UID, TokenPurposes::INITIAL_PASSWORD->value);
+		$this->usersService->invalidateCache($UID);
 
 		return $affected;
+	}
+
+	/**
+	 * The session in which the password was changed takes this time over to stay logged in.
+	 *
+	 * @throws Exception
+	 */
+	public function findLastPasswordChange(int $UID): ?string
+	{
+		$changed = $this->userMainRepository->findByIdSecured($UID)['last_password_change'] ?? null;
+
+		return is_string($changed) ? $changed : null;
 	}
 
 	/**

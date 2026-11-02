@@ -67,6 +67,18 @@ readonly class UserSession
 	}
 
 	/**
+	 * The session in which the user changed his password stays logged in, all others end.
+	 *
+	 * @throws UserException
+	 */
+	public function keepAfterPasswordChange(?string $lastPasswordChange): void
+	{
+		$user = $this->checkUser();
+		$user['last_password_change'] = $lastPasswordChange;
+		$this->session->set('user', $user);
+	}
+
+	/**
 	 * @return array{UID:int, username:string, locale:string}
 	 * @throws UserException
 	 */

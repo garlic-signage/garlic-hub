@@ -93,7 +93,7 @@ readonly class AuthMiddleware implements MiddlewareInterface
 	}
 
 	/**
-	 * A session of a user who was blocked or deleted after his login ends with the next request.
+	 * A session of a user who was blocked or deleted after his login, or whose password changed since, ends with the next request.
 	 *
 	 * @throws FrameworkException
 	 * @throws Exception
@@ -104,8 +104,9 @@ readonly class AuthMiddleware implements MiddlewareInterface
 		if ($user === null)
 			return false;
 
-		$UID = is_array($user) && is_numeric($user['UID'] ?? null) ? (int) $user['UID'] : 0;
-		if ($UID > 0 && $this->authService->isUserActive($UID))
+		$UID            = is_array($user) && is_numeric($user['UID'] ?? null) ? (int) $user['UID'] : 0;
+		$passwordChange = is_array($user) && is_string($user['last_password_change'] ?? null) ? $user['last_password_change'] : null;
+		if ($UID > 0 && $this->authService->isUserActive($UID, $passwordChange))
 			return true;
 
 		$this->session->clear();

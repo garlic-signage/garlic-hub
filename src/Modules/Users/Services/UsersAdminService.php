@@ -197,11 +197,13 @@ class UsersAdminService
 		$this->transactions->begin();
 		try
 		{
-			if ($this->userMainRepository->update($UID, ['password' => '']) === 0)
+			// the time of the change ends the running sessions of the user, see AuthService::isUserActive()
+			if ($this->userMainRepository->update($UID, ['password' => '', 'last_password_change' => date('Y-m-d H:i:s')]) === 0)
 				throw new TranslatableModuleException('users', 'password_reset_failed', ['UID' => $UID]);
 
 			// without password there is no reason to keep remember-me logins alive
 			$this->userTokenService->deleteByUserPurpose($UID, TokenPurposes::AUTOLOGIN->value);
+			$this->usersService->invalidateCache($UID);
 
 			$token = $this->userTokenService->generateToken();
 			if ($this->userTokenService->insertToken($UID, $token, TokenPurposes::PASSWORD_RESET) === '')

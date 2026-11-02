@@ -171,6 +171,32 @@ class PasswordTest extends ContainerTestCase
 		static::assertSame(1, $this->countTokens(14, TokenPurposes::AUTOLOGIN));
 	}
 
+	/**
+	 * A link which was sent before (reset or initial password) must not set another password after the change.
+	 */
+	public function testChangingThePasswordEndsThePasswordLinksOfTheUser(): void
+	{
+		$this->createToken(10, TokenPurposes::PASSWORD_RESET);
+		$this->createToken(10, TokenPurposes::INITIAL_PASSWORD);
+		$this->createToken(14, TokenPurposes::PASSWORD_RESET);
+
+		$this->accountService->updatePassword(10, 'New-Pass1!');
+
+		static::assertSame(0, $this->countTokens(10, TokenPurposes::PASSWORD_RESET));
+		static::assertSame(0, $this->countTokens(10, TokenPurposes::INITIAL_PASSWORD));
+		static::assertSame(1, $this->countTokens(14, TokenPurposes::PASSWORD_RESET));
+	}
+
+	public function testChangingThePasswordStoresTheTimeOfTheChange(): void
+	{
+		static::assertNull($this->accountService->findLastPasswordChange(10));
+
+		$this->accountService->updatePassword(10, 'New-Pass1!');
+
+		static::assertNotNull($this->accountService->findLastPasswordChange(10));
+		static::assertNull($this->accountService->findLastPasswordChange(14));
+	}
+
 	public function testChangingThePasswordKeepsTheOtherTokensOfTheUser(): void
 	{
 		$this->createToken(10, TokenPurposes::AUTOLOGIN);
