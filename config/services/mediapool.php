@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 use App\Framework\Controller\JsonResponseHandler;
 use App\Shared\Acl\AclHelper;
+use App\Shared\Acl\AclGrantService;
 use App\Shared\Acl\AclUnitProvider;
 use App\Shared\Acl\TableUnitProvider;
 use App\Framework\Config\Config;
@@ -70,7 +71,8 @@ $dependencies[NodesService::class] = DI\factory(function (ContainerInterface $co
 		$container->get(Service::class),
 		$container->get(MediaService::class),
 		$container->get(AclValidator::class),
-		$container->get(UserSession::class)
+		$container->get(UserSession::class),
+		$container->get(AclGrantService::class)
 	);
 });
 $dependencies[NodesController::class] = DI\factory(function (ContainerInterface $container)

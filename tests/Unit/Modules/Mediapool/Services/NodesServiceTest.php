@@ -30,6 +30,7 @@ use App\Modules\Mediapool\Services\MediaService;
 use App\Modules\Mediapool\Services\NodesService;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use App\Shared\Acl\AclGrantService;
 
 /**
  * The rights and the changes of the tree are tested with the real database in tests/Integration/Modules/Mediapool/Services
@@ -55,7 +56,7 @@ class NodesServiceTest extends TestCase
 		$session = $this->createStub(UserSession::class);
 		$session->method('getUID')->willReturn(1);
 
-		$service = new NodesService($repository, $this->createStub(Service::class), $this->createStub(MediaService::class), $acl, $session);
+		$service = new NodesService($repository, $this->createStub(Service::class), $this->createStub(MediaService::class), $acl, $session, $this->createStub(AclGrantService::class));
 
 		$this->expectException(ModuleException::class);
 		$this->expectExceptionMessage('Delete nodes by root id failed.');

@@ -60,6 +60,8 @@ class NodeAccessTest extends ContainerTestCase
 		static::assertFalse($rights[1]['create']);
 		static::assertFalse($rights[1]['edit']);
 		static::assertFalse($rights[1]['delete']);
+		// a user shares nothing, not even his own folder
+		static::assertFalse($rights[7]['share_unit']);
 	}
 
 	/**
@@ -86,6 +88,7 @@ class NodeAccessTest extends ContainerTestCase
 			static::assertTrue($rights[$nodeId]['create']);
 			static::assertTrue($rights[$nodeId]['edit']);
 			static::assertTrue($rights[$nodeId]['delete']);
+			static::assertTrue($rights[$nodeId]['share_unit'], 'Only the admin opens the share dialog of a directory.');
 		}
 	}
 
@@ -99,7 +102,7 @@ class NodeAccessTest extends ContainerTestCase
 		$nodes = $this->nodesService->getNodes(10);
 
 		static::assertSame([12], array_column($nodes, 'key'));
-		static::assertSame(['create' => false, 'edit' => false, 'delete' => false, 'share' => ''], $nodes[0]['rights']);
+		static::assertSame(['create' => false, 'edit' => false, 'delete' => false, 'share' => '', 'share_unit' => false], $nodes[0]['rights']);
 	}
 
 	public function testThePrivateDirectoriesOfOthersAreNotShownAtAnyLevel(): void

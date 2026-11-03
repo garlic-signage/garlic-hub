@@ -64,13 +64,17 @@ class UpdateFailuresTest extends TestCase
 
 	private function playlists(PlaylistsService $playlistsService): PlaylistsOrchestrator
 	{
+		// the user may delete, the delete itself fails
+		$aclValidator = $this->createStub(AclValidator::class);
+		$aclValidator->method('isAllowedToDeletePlaylist')->willReturn(true);
+
 		return new PlaylistsOrchestrator(
 			new PlaylistsResponseBuilder(new JsonResponseHandler(), $this->createStub(Translator::class)),
 			$playlistsService,
 			$this->createStub(PlaylistsDatatableService::class),
 			$this->createStub(Parameters::class),
 			new ZonesSchema(),
-			$this->createStub(AclValidator::class),
+			$aclValidator,
 			$this->createStub(AclGrantService::class),
 			$this->createStub(UserSession::class)
 		);

@@ -26,6 +26,8 @@ use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Playlists\Controller\PlaylistsController;
 use PHPUnit\Framework\Attributes\Group;
+use App\Shared\Acl\AclGrantService;
+use App\Shared\Acl\AclSections;
 
 /**
  * The playlist endpoints /async/playlists: delete, shuffle, zones of a multizone playlist and the search for playlists.
@@ -97,6 +99,43 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 		static::assertSame(0, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists WHERE playlist_id = 4'));
 		static::assertSame(0, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists_items WHERE playlist_id = 4'));
 		static::assertSame(3, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists'));
+	}
+
+	public function testAPlaylistInUseIsNotDeleted(): void
+	{
+		$this->actingAs(1);
+
+		try
+		{
+			$this->controller->delete($this->request('DELETE', body: ['playlist_id' => '3']), $this->newResponse());
+			static::fail('A playlist in use must stay.');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertSame('playlist_in_use', $e->getTranslationKey());
+			static::assertSame(1, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists WHERE playlist_id = 3'));
+		}
+	}
+
+	public function testAnEditorOfASharedPlaylistMayEditButNotDeleteIt(): void
+	{
+		$grants = $this->container->get(AclGrantService::class);
+		$grants->setRole(1, 3, 'playlists', AclSections::EDITOR, true);
+		$grants->setUnitRole(1, 3, 'playlists', 4, AclSections::EDITOR);
+		$this->actingAs(3);
+
+		static::assertTrue($this->rights(4)['can_edit']);
+		static::assertFalse($this->rights(4)['can_delete']);
+
+		$this->expectException(AccessDeniedException::class);
+		try
+		{
+			$this->controller->delete($this->request('DELETE', body: ['playlist_id' => '4']), $this->newResponse());
+		}
+		finally
+		{
+			static::assertSame(1, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists WHERE playlist_id = 4'));
+		}
 	}
 
 	public function testDeleteNeedsAPlaylist(): void

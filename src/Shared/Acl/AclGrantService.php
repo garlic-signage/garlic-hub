@@ -182,6 +182,18 @@ class AclGrantService
 	}
 
 	/**
+	 * Like canShareUnit() for a unit whose company is known already, e.g. every directory of the
+	 * mediapool tree: no query for the unit.
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 */
+	public function canShareInCompany(int $granterUID, string $module, int $companyId): bool
+	{
+		return isset($this->unitProviders[$module]) && $this->findGrantableRolesInCompany($granterUID, $module, $companyId) !== [];
+	}
+
+	/**
 	 * Everything the share dialog of a unit needs: the roles the granter may give on the unit
 	 * and every user who has one of them as bit, with his roles and his current role on the unit.
 	 *
@@ -302,9 +314,19 @@ class AclGrantService
 	{
 		$unit = $this->findUnit($module, $unitId);
 
+		return $this->findGrantableRolesInCompany($granterUID, $module, $unit['company_id']);
+	}
+
+	/**
+	 * @return list<AclSections>
+	 * @throws CoreException
+	 * @throws Exception
+	 */
+	private function findGrantableRolesInCompany(int $granterUID, string $module, int $companyId): array
+	{
 		return array_values(array_filter(
 			$this->getUnitRoles($module),
-			fn(AclSections $role) => $this->mayGrant($granterUID, $module, $role, [$unit['company_id']])
+			fn(AclSections $role) => $this->mayGrant($granterUID, $module, $role, [$companyId])
 		));
 	}
 

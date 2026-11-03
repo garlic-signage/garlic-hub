@@ -143,7 +143,7 @@ export class DirectoryView
             // check rights
             const currentTreeNode = this.setActiveNodeFromEventTarget(event.target);
             const rights = currentTreeNode.data.rights;
-            if (!rights.create  && !rights.edit  && !rights.delete)
+            if (!rights.create  && !rights.edit  && !rights.delete && !rights.share_unit)
                 return;
 
             const contextMenu  = contextMenuTreeViewFactory.create();
@@ -160,6 +160,8 @@ export class DirectoryView
                 contextMenu.addAddEvent(addNodeElement, this);
             else
                 addNodeElement.remove();
+
+            contextMenu.addShareEvent(document.getElementById("share_node"), currentTreeNode);
 
             const removeNodeElement = document.getElementById("remove_node");
             if (rights.delete)
@@ -244,18 +246,20 @@ export class DirectoryView
 
     addRootChild(key, folder_name)
     {
-		const rights = {"create" : true, "edit" : true, "delete" : true}
+		// only a module admin creates root folders
+		const rights = {"create" : true, "edit" : true, "delete" : true, "share_unit" : true}
         this.#tree.addChildren({ key:  key, title: folder_name, isFolder: true, rights: rights });
     }
 
     addSubChild(key, folder_name)
     {
-		const rights = {"create" : true, "edit" : true, "delete" : true}
         if (this.#activeNode === null)
         {
             console.error("No active node");
             return;
         }
+		// a sub folder belongs to the same user and company as its parent
+		const rights = {"create" : true, "edit" : true, "delete" : true, "share_unit" : this.#activeNode.data.rights.share_unit === true}
         this.#tree.getActiveNode().addChildren({ key:  key, title: folder_name, isFolder: true, rights: rights });
     }
 

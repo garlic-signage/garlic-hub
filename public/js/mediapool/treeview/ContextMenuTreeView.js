@@ -26,9 +26,11 @@ export class ContextMenuTreeView
 	#treeViewService = null;
 	#flashMessageHandler = null;
 	#lang  = null;
+	#shareDialog = null;
 
-    constructor(treeViewElements, treeDialog, treeViewService, flashMessageHandler, lang)
+    constructor(treeViewElements, treeDialog, treeViewService, flashMessageHandler, lang, shareDialog)
     {
+		this.#shareDialog     = shareDialog;
         this.#menu            = treeViewElements.menuTemplate.content.cloneNode(true).firstElementChild;
         this.#treeDialog      = treeDialog;
 		this.#treeViewService = treeViewService;
@@ -61,6 +63,11 @@ export class ContextMenuTreeView
             this.#treeDialog.prepareShow("add_sub_folder", this.#lang);
             this.#treeDialog.show(directoryView);
         });
+    }
+
+    addShareEvent(shareNodeElement, currentTreeNode)
+    {
+		this.#shareDialog.attachTo(shareNodeElement, currentTreeNode.key, currentTreeNode.data.rights.share_unit === true);
     }
 
     addRemoveEvent(removeNodeElement, currentTreeNode)

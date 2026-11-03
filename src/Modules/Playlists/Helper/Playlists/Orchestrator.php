@@ -26,6 +26,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
 use App\Framework\Controller\ReadsInput;
@@ -108,9 +109,8 @@ class Orchestrator
 		}
 
 		$UID     = $this->userSession->getUID();
-		$inUse   = $this->playlistsDatatableService->getPlaylistsInUse([$playlistId]);
 		$rights['can_edit']      = true;
-		$rights['can_delete']    = !array_key_exists($playlistId, $inUse) && $this->aclValidator->isAllowedToDeletePlaylist($UID, $playlist);
+		$rights['can_delete']    = $this->aclValidator->isAllowedToDeletePlaylist($UID, $playlist) && !$this->isInUse($playlistId);
 		$rights['can_share']     = $this->aclGrantService->canShareUnit($UID, 'playlists', $playlistId);
 		$rights['playlist_id']   = $playlistId;
 		$rights['playlist_name'] = (string) ($playlist['playlist_name'] ?? '');
@@ -119,14 +119,38 @@ class Orchestrator
 	}
 
 	/**
+	 * Editing is not enough: an editor of a shared playlist must not delete it, and a playlist
+	 * which is played by a player or nested in another playlist stays.
+	 *
+	 * @throws AccessDeniedException
+	 * @throws NotFoundException
+	 * @throws TranslatableModuleException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
 	 * @throws UserException
 	 */
 	public function delete(ResponseInterface $response): ResponseInterface
 	{
+		$playlist = $this->playlistsService->loadWithUserById($this->playlistId);
+		if (!$this->aclValidator->isAllowedToDeletePlaylist($this->userSession->getUID(), $playlist))
+			throw new AccessDeniedException('playlists', 'playlist_not_deletable', ['playlist_id' => $this->playlistId]);
+
+		if ($this->isInUse($this->playlistId))
+			throw new TranslatableModuleException('playlists', 'playlist_in_use', ['playlist_id' => $this->playlistId]);
+
 		if ($this->playlistsService->delete($this->playlistId) === 0)
 			return $this->responseBuilder->playlistNotFound($response);
 
 		return $this->responseBuilder->generalSuccess($response, []);
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	private function isInUse(int $playlistId): bool
+	{
+		return array_key_exists($playlistId, $this->playlistsDatatableService->getPlaylistsInUse([$playlistId]));
 	}
 
 	/**

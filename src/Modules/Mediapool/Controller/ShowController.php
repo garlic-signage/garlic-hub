@@ -90,6 +90,7 @@ class ShowController
 					'LANG_ADD_SUB_FOLDER' => $this->translator->translate('add_sub_folder', 'mediapool'),
 					'LANG_EDIT_FOLDER' => $this->translator->translate('edit_folder', 'mediapool'),
 					'LANG_REMOVE' => $this->translator->translate('remove', 'main'),
+					'LANG_SHARE' => $this->translator->translate('share_unit', 'users'),
 					'LANG_INFORMATION' => $this->translator->translate('information', 'main'),
 					'LANG_OWNER' => $this->translator->translate('owner', 'main'),
 					'LANG_UPLOADER' => $this->translator->translate('uploader', 'mediapool'),

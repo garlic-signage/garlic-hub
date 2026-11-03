@@ -32,6 +32,7 @@ use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Repositories\NodesRepository;
 use Doctrine\DBAL\Exception;
+use App\Shared\Acl\AclGrantService;
 
 /**
  * Class NodesService
@@ -44,9 +45,11 @@ class NodesService
 	private readonly AclValidator $aclValidator;
 	private readonly Service $nestedSetsService;
 	private readonly UserSession $userSession;
+	private readonly AclGrantService $aclGrantService;
 
-	public function __construct(NodesRepository $nodesRepository, Service $nestedSetsService, MediaService $mediaService, AclValidator $aclValidator, UserSession $userSession)
+	public function __construct(NodesRepository $nodesRepository, Service $nestedSetsService, MediaService $mediaService, AclValidator $aclValidator, UserSession $userSession, AclGrantService $aclGrantService)
 	{
+		$this->aclGrantService = $aclGrantService;
 		$this->nodesRepository = $nodesRepository;
 		$this->nestedSetsService = $nestedSetsService;
 		$this->nestedSetsService->initRepository('mediapool_nodes', 'node_id');
@@ -341,7 +344,7 @@ class NodesService
 
 	/**
 	 * @param array{UID:int, node_id:int, parent_id:int, name:string, company_id:int, visibility:int, ...} $node
-	 * @return array{create:bool, edit:bool, delete:bool, share:string}
+	 * @return array{create:bool, edit:bool, delete:bool, share:string, share_unit:bool}
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
@@ -349,14 +352,14 @@ class NodesService
 	 */
 	private function determineRights(array $node): array
 	{
-		return $this->determineReadableRights($node) ?? ['create' => false, 'edit' => false, 'delete' => false, 'share' => ''];
+		return $this->determineReadableRights($node) ?? ['create' => false, 'edit' => false, 'delete' => false, 'share' => '', 'share_unit' => false];
 	}
 
 	/**
 	 * The rights of the user on the directory, null when the user may not even read it.
 	 *
 	 * @param array{UID:int, node_id:int, parent_id:int, name:string, company_id:int, visibility:int, ...} $node
-	 * @return array{create:bool, edit:bool, delete:bool, share:string}|null
+	 * @return array{create:bool, edit:bool, delete:bool, share:string, share_unit:bool}|null
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws ModuleException
@@ -372,12 +375,14 @@ class NodesService
 		$create = false;
 		$edit = false;
 		$delete = false;
+		// share_unit: the share dialog for users (AclGrantService), share: the visibility of the directory
+		$shareUnit = $this->aclGrantService->canShareInCompany($UID, 'mediapool', (int) $node['company_id']);
 
 		// only admin can edit and delete and root nodes
 		if ($node['parent_id'] === 0)
 		{
 			if ($this->aclValidator->isModuleAdmin($UID))
-				return ['create' => true, 'edit' => true, 'delete' => true, 'share' => $rights['share']];
+				return ['create' => true, 'edit' => true, 'delete' => true, 'share' => $rights['share'], 'share_unit' => $shareUnit];
 			else if ($UID == $node['UID']) // only User dirs
 			{
 				$create = true;
@@ -390,6 +395,6 @@ class NodesService
 			$delete = $rights['create'];
 		}
 
-		return ['create' => $create, 'edit' => $edit, 'delete' => $delete, 'share' => $rights['share']];
+		return ['create' => $create, 'edit' => $edit, 'delete' => $delete, 'share' => $rights['share'], 'share_unit' => $shareUnit];
 	}
 }

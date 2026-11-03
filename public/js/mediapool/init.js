@@ -57,6 +57,7 @@ import { StockPlatformElements } from "./uploads/StockPlatform/StockPlatformElem
 import { StockPlatformFactory } from "./uploads/StockPlatform/Platforms/StockPlatformFactory.js";
 import { StockPlatformUploader } from "./uploads/StockPlatform/StockPlatformUploader.js";
 import {ContextMenuTreeViewFactory} from "./treeview/ContextMenuTreeViewFactory.js";
+import {UnitShareDialog} from "../core/UnitShareDialog.js";
 
 document.addEventListener("DOMContentLoaded", function()
 {
@@ -97,7 +98,8 @@ document.addEventListener("DOMContentLoaded", function()
 		treeDialog,
 		treeViewService,
 		flashMessageHandler,
-		lang
+		lang,
+		UnitShareDialog.create("mediapool")
 	);
 	directoryView.addContextMenu(contextMenuTreeViewFactory);
 
