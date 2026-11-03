@@ -10,6 +10,3 @@
 /public/var/
 .DS_Store
 /tests/Load/media/
-
-# preview player: build output of garlic-player (src/player-ui/js, build/wasm-release)
-/public/player-preview/
