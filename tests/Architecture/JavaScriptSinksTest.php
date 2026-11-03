@@ -107,9 +107,9 @@ class JavaScriptSinksTest extends TestCase
 		foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS)) as $file)
 		{
 			$relative = substr($file->getPathname(), strlen($root) + 1);
-			// libraries are not ours, the generated list of the fonts is a fixed file
+			// libraries are not ours, the generated list of the fonts is a fixed file, the WASM glue is built by garlic-player
 			if (!str_ends_with($relative, '.js') || str_ends_with($relative, '.min.js') || str_starts_with($relative, 'external/')
-				|| str_contains($relative, 'canvas-composer/Fonts/'))
+				|| str_contains($relative, 'canvas-composer/Fonts/') || $relative === 'player/preview/garlic-core.js')
 				continue;
 
 			foreach ((array) file($file->getPathname(), FILE_IGNORE_NEW_LINES) as $line)
