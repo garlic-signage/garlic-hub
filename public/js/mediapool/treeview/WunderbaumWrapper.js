@@ -180,7 +180,8 @@ export class WunderbaumWrapper
 				if (e.node.data.virtual === true)
 					return false;
 
-				if (e.sourceNode === null) // media drag'nDrop
+				// before or after a shared directory would be a place under "shared with me", only into it
+				if (e.sourceNode === null || e.node.parent?.data.virtual === true) // media drag'nDrop
 					return ["appendChild"];
 				else
 					return ["before", "after", "appendChild"];
