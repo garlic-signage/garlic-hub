@@ -198,10 +198,13 @@ class UserAccessTest extends ContainerTestCase
 	{
 		$this->actingAs(1);
 		$this->connection->executeStatement("INSERT INTO user_acl (UID, acl, module) VALUES (3, 1, 'playlists')");
+		$this->connection->executeStatement("INSERT INTO user_vip (UID, vip_name, unit_id) VALUES (3, 'playlists_viewer', '1'), (2, 'playlists_viewer', '1')");
 
 		$this->container->get(UsersAdminService::class)->deleteUser(3);
 
 		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_acl WHERE UID = 3'));
+		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_vip WHERE UID = 3'));
+		static::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_vip WHERE UID = 2'));
 	}
 
 	public function testTheAdminMayNotDeleteHimself(): void

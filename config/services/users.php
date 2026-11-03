@@ -160,6 +160,7 @@ $dependencies[UsersAdminService::class] = DI\factory(function (ContainerInterfac
 	return new UsersAdminService(
 		$repositories['main'],
 		$repositories['acl'],
+		$repositories['vip'],
 		$container->get(NodesService::class),
 		$container->get(UserTokenService::class),
 		$container->get(AclValidator::class),

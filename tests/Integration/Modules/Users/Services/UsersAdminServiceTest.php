@@ -29,6 +29,7 @@ use App\Modules\Mediapool\Services\NodesService;
 use App\Modules\Users\Services\AclValidator;
 use App\Modules\Users\Services\UsersAdminService;
 use App\Shared\User\Repositories\Edge\UserAclRepository;
+use App\Shared\User\Repositories\Edge\UserVipRepository;
 use App\Shared\User\Repositories\Edge\UserMainRepository;
 use App\Shared\User\TokenPurposes;
 use App\Shared\User\UsersService;
@@ -259,6 +260,7 @@ class UsersAdminServiceTest extends ContainerTestCase
 		return new UsersAdminService(
 			$users ?? new UserMainRepository($this->connection),
 			new UserAclRepository($this->connection),
+			new UserVipRepository($this->connection),
 			$nodes ?? $this->container->get(NodesService::class),
 			$tokens ?? $this->container->get(UserTokenService::class),
 			$this->container->get(AclValidator::class),

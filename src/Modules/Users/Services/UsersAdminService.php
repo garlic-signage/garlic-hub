@@ -34,6 +34,7 @@ use App\Shared\User\UsersService;
 use App\Shared\User\UserTokenService;
 use App\Shared\User\Repositories\Edge\UserAclRepository;
 use App\Shared\User\Repositories\Edge\UserMainRepository;
+use App\Shared\User\Repositories\Edge\UserVipRepository;
 use Doctrine\DBAL\Exception;
 use Throwable;
 
@@ -50,6 +51,7 @@ class UsersAdminService
 	public function __construct(
 		private readonly UserMainRepository $userMainRepository,
 		private readonly UserAclRepository $userAclRepository,
+		private readonly UserVipRepository $userVipRepository,
 		private readonly NodesService $nodesService,
 		private readonly UserTokenService $userTokenService,
 		private readonly AclValidator $aclValidator,
@@ -170,6 +172,7 @@ class UsersAdminService
 			$this->userTokenService->deleteAllUserTokens($UID);
 			// the rights must not outlive the user: SQLite does not cascade without a pragma
 			$this->userAclRepository->delete($UID);
+			$this->userVipRepository->delete($UID);
 
 			$this->nodesService->deleteUserDirectory($UID);
 			$this->usersService->invalidateCache($UID);
