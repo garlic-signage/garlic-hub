@@ -22,6 +22,8 @@ declare(strict_types=1);
 namespace App\Shared\User\Repositories\Edge;
 
 use App\Framework\Database\BaseRepositories\SqlBase;
+use App\Framework\Database\BaseRepositories\Traits\CrudTraits;
+use App\Framework\Database\BaseRepositories\Traits\FindOperationsTrait;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -30,8 +32,11 @@ use Doctrine\DBAL\Connection;
  */
 class UserVipRepository extends SqlBase
 {
+	use CrudTraits;
+	use FindOperationsTrait;
+
 	public function __construct(Connection $connection)
 	{
-		parent::__construct($connection,'user_security', 'UID');
+		parent::__construct($connection,'user_vip', 'UID');
 	}
 }

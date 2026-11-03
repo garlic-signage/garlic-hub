@@ -78,7 +78,7 @@ class UserEntityFactoryTest extends TestCase
 			'stats' => ['logins' => 3],
 			'security' => ['role' => 'user'], // Ignoriert in Core
 			'acl' => ['permissions' => ['read']],
-			'vip' => ['status' => 'silver'], // Ignoriert in Core
+			'vip' => ['status' => 'silver'],
 		];
 
 		$this->configStub
@@ -92,7 +92,7 @@ class UserEntityFactoryTest extends TestCase
 		static::assertEquals($userData['stats'], $result->getStats());
 		static::assertEquals([], $result->getSecurity());
 		static::assertEquals($userData['acl'], $result->getAcl());
-		static::assertEquals([], $result->getVip());
+		static::assertEquals($userData['vip'], $result->getVip());
 	}
 
 	#[Group('units')]
@@ -104,7 +104,7 @@ class UserEntityFactoryTest extends TestCase
 			'stats' => ['logins' => 1], // Ignored in Edge
 			'security' => ['role' => 'guest'], // Ignored in Edge
 			'acl' => ['permissions' => ['read']],
-			'vip' => ['status' => 'none'], // Ignored in Edge
+			'vip' => ['status' => 'none'],
 		];
 
 		$this->configStub
@@ -118,6 +118,6 @@ class UserEntityFactoryTest extends TestCase
 		static::assertEmpty($result->getStats());
 		static::assertEmpty($result->getSecurity());
 		static::assertNotEmpty($result->getAcl());
-		static::assertEmpty($result->getVip());
+		static::assertEquals($userData['vip'], $result->getVip());
 	}
 }

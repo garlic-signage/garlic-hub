@@ -43,7 +43,8 @@ class UserRepositoryFactory
 	 * @var array{
 	 *     main: UserMainRepository,
 	 *     tokens: UserTokensRepository,
-	 *     acl: UserAclRepository
+	 *     acl: UserAclRepository,
+	 *     vip: UserVipRepository
 	 *	 }|null
 	 */
 	private ?array $repositories = null;
@@ -65,7 +66,7 @@ class UserRepositoryFactory
 	 *     acl: UserAclRepository,
 	 *     contact?: UserContactRepository,
 	 *     stats?: UserStatsRepository,
-	 * 	   vip?: UserVipRepository,
+	 *     vip: UserVipRepository,
 	 *     security?: UserSecurityRepository
 	 *	 }
 	 */
@@ -89,13 +90,15 @@ class UserRepositoryFactory
 				'main'    => new UserMainRepository($this->connection),
 				'tokens'  => new UserTokensRepository($this->connection),
 				'acl'     => new UserAclRepository($this->connection),
+				'vip'     => new UserVipRepository($this->connection),
 				'contact' => new UserContactRepository($this->connection),
 				'stats'   => new UserStatsRepository($this->connection)
 			],
 			default => [
 				'main' => new UserMainRepository($this->connection),
 				'tokens' => new UserTokensRepository($this->connection),
-				'acl'  => new UserAclRepository($this->connection)
+				'acl'  => new UserAclRepository($this->connection),
+				'vip'  => new UserVipRepository($this->connection)
 			],
 		};
 		return $this->repositories;

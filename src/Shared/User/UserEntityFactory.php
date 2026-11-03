@@ -40,8 +40,8 @@ class UserEntityFactory
 		return match ($this->config->getEdition())
 		{
 			Config::PLATFORM_EDITION_ENTERPRISE => new UserEntity($userData['main'], $userData['contact'], $userData['stats'], $userData['security'], $userData['acl'], $userData['vip']),
-			Config::PLATFORM_EDITION_CORE => new UserEntity($userData['main'], $userData['contact'], $userData['stats'], [], $userData['acl'], []),
-			default => new UserEntity($userData['main'], [], [], [],  $userData['acl'], []),
+			Config::PLATFORM_EDITION_CORE => new UserEntity($userData['main'], $userData['contact'], $userData['stats'], [], $userData['acl'], $userData['vip']),
+			default => new UserEntity($userData['main'], [], [], [],  $userData['acl'], $userData['vip']),
 		};
 	}
 }

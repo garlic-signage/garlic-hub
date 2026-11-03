@@ -25,6 +25,7 @@ use App\Framework\Services\AbstractBaseService;
 use App\Shared\User\Repositories\Edge\UserAclRepository;
 use App\Shared\User\Repositories\Edge\UserMainRepository;
 use App\Shared\User\Repositories\Edge\UserTokensRepository;
+use App\Shared\User\Repositories\Edge\UserVipRepository;
 use App\Shared\User\Repositories\UserRepositoryFactory;
 use App\Framework\Exceptions\CoreException;
 use Doctrine\DBAL\Exception;
@@ -61,7 +62,8 @@ class UsersService extends AbstractBaseService
 	/** @var array{
 	 *     main: UserMainRepository,
 	 *     tokens: UserTokensRepository,
-	 *     acl: UserAclRepository
+	 *     acl: UserAclRepository,
+ *     vip: UserVipRepository
 	 *	 }  */
 	private array $userRepositories;
 
@@ -184,7 +186,7 @@ class UsersService extends AbstractBaseService
 				/** @var UserMainRepository $repository */
 				$userData[$key] = $repository->findByIdSecured($UID);
 			}
-			elseif ($key === 'acl')
+			elseif ($key === 'acl' || $key === 'vip')
 			{
 				// because there can be more than one result
 				/** @var UserAclRepository $repository */
