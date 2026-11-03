@@ -58,6 +58,16 @@ abstract class AbstractAclValidator
 		return $this->helper->isModuleAdmin($UID, $this->moduleName);
 	}
 
+	/**
+	 * The names of the roles in user_vip, e.g. playlists_editor.
+	 *
+	 * @return list<string>
+	 */
+	public function getVipNames(AclSections ...$roles): array
+	{
+		return array_values(array_map(fn(AclSections $role) => $this->helper->getVipName($this->moduleName, $role), $roles));
+	}
+
 	public function getConfig(): Config
 	{
 		return $this->helper->getConfig();

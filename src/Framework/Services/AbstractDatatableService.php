@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Framework\Services;
 
+use App\Framework\Database\Datatable\SharedUnits;
 use App\Framework\Database\Datatable\DatatableQuery;
 use App\Framework\Database\Datatable\FilterDefinition;
 use App\Framework\Utils\FormParameters\BaseParameters;
@@ -59,13 +60,13 @@ abstract class AbstractDatatableService extends AbstractBaseService
 	/**
 	 * @throws Exception
 	 */
-	public function fetchForUser(FilterDefinition $definition, BaseParameters $parameters, int $UID): static
+	public function fetchForUser(FilterDefinition $definition, BaseParameters $parameters, int $UID, ?SharedUnits $sharedUnits = null): static
 	{
 		$fields = $parameters->getInputParametersArray();
 
 		return $this->setAllResultData(
-			$this->datatableQuery->countForUser($definition, $fields, $UID),
-			$this->datatableQuery->findForUser($definition, $fields, $UID)
+			$this->datatableQuery->countForUser($definition, $fields, $UID, $sharedUnits),
+			$this->datatableQuery->findForUser($definition, $fields, $UID, $sharedUnits)
 		);
 	}
 }

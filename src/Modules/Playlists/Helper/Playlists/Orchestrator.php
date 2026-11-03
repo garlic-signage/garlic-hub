@@ -236,7 +236,7 @@ class Orchestrator
 		);
 		$this->parameters->parseInputAllParameters();
 
-		$this->playlistsDatatableService->loadDatatable();
+		$this->playlistsDatatableService->loadForSelection();
 		$results = [];
 		foreach ($this->playlistsDatatableService->getCurrentFilterResults() as $value)
 		{

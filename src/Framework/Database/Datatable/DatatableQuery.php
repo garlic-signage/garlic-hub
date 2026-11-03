@@ -106,9 +106,10 @@ readonly class DatatableQuery
 	 * @param array<string, array<string, mixed>> $fields
 	 * @throws Exception
 	 */
-	public function countForUser(FilterDefinition $definition, array $fields, int $UID): int
+	public function countForUser(FilterDefinition $definition, array $fields, int $UID, ?SharedUnits $sharedUnits = null): int
 	{
-		$queryBuilder = $this->buildQuery('COUNT(1)', $definition->table(), $this->buildUserWhere($definition, $fields, $UID), $definition->userJoins());
+		$queryBuilder = $this->buildQuery('COUNT(1)', $definition->table(), $definition->whereForFiltering($fields), $definition->userJoins());
+		$this->applyUserScope($queryBuilder, $definition->table(), $UID, $sharedUnits);
 
 		return $this->count($queryBuilder);
 	}
@@ -118,25 +119,33 @@ readonly class DatatableQuery
 	 * @return list<array<string, mixed>>
 	 * @throws Exception
 	 */
-	public function findForUser(FilterDefinition $definition, array $fields, int $UID): array
+	public function findForUser(FilterDefinition $definition, array $fields, int $UID, ?SharedUnits $sharedUnits = null): array
 	{
 		$selects   = $definition->selects();
 		$selects[] = "'user'";
-		$queryBuilder = $this->buildQuery(implode(', ', $selects), $definition->table(), $this->buildUserWhere($definition, $fields, $UID), $definition->userJoins());
+		$queryBuilder = $this->buildQuery(implode(', ', $selects), $definition->table(), $definition->whereForFiltering($fields), $definition->userJoins());
+		$this->applyUserScope($queryBuilder, $definition->table(), $UID, $sharedUnits);
 
 		return $this->find($queryBuilder, $definition->table(), $fields);
 	}
 
 	/**
-	 * @param array<string, array<string, mixed>> $fields
-	 * @return array<string, Where>
+	 * The own units of the user and the ones shared with him. In brackets like the reseller scope:
+	 * filters AND (UID = x OR id IN (shared units))
 	 */
-	private function buildUserWhere(FilterDefinition $definition, array $fields, int $UID): array
+	private function applyUserScope(QueryBuilder $queryBuilder, string $table, int $UID, ?SharedUnits $sharedUnits): void
 	{
-		$where = $definition->whereForFiltering($fields);
-		$where[$definition->table().'.UID'] = Where::equals($definition->table().'.UID', $UID);
+		$parameterName = str_replace('.', '', $table).'UID';
+		$scope         = $table.'.UID = :'.$parameterName;
+		$queryBuilder->setParameter($parameterName, $UID);
 
-		return $where;
+		if ($sharedUnits !== null && $sharedUnits->vipNames !== [])
+		{
+			$scope = '('.$scope.' OR '.$table.'.'.$sharedUnits->idField.' IN (SELECT user_vip.unit_id FROM user_vip WHERE user_vip.UID = :'.$parameterName.' AND user_vip.vip_name IN (:shared_vip_names)))';
+			$queryBuilder->setParameter('shared_vip_names', $sharedUnits->vipNames, ArrayParameterType::STRING);
+		}
+
+		$queryBuilder->andWhere($scope);
 	}
 
 	/**

@@ -408,6 +408,19 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 		static::assertSame([], $this->json($this->controller->findByName($this->request('GET'), $this->newResponse(), ['playlist_mode' => 'internal'])));
 	}
 
+	public function testAPlaylistSharedForUsingIsFoundUntilTheShareIsRevoked(): void
+	{
+		$grants = $this->container->get(AclGrantService::class);
+		$grants->setRole(1, 2, 'playlists', AclSections::VIEWER, true);
+		$grants->setUnitRole(1, 2, 'playlists', 2, AclSections::VIEWER);
+		$this->actingAs(2);
+
+		static::assertSame([['id' => 2, 'name' => 'Bernds Kantine']], $this->json($this->controller->findByName($this->request('GET'), $this->newResponse(), ['playlist_mode' => 'internal'])));
+
+		$grants->setUnitRole(1, 2, 'playlists', 2, null);
+		static::assertSame([], $this->json($this->controller->findByName($this->request('GET'), $this->newResponse(), ['playlist_mode' => 'internal'])));
+	}
+
 	public function testThePlaylistsAreFoundByAPartOfTheName(): void
 	{
 		$this->actingAs(2);

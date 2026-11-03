@@ -41,6 +41,7 @@ use Tests\Integration\Support\MediaWorkspace;
 use Throwable;
 use App\Modules\Auth\UserSession;
 use App\Shared\Acl\AclGrantService;
+use App\Shared\Acl\AclSections;
 
 /**
  * The template endpoints /async/templates: delete, rights, load, find and save. The images of save go into a temporary directory.
@@ -249,6 +250,18 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 		$templates = $this->json($this->controller->find($this->request('GET'), $this->newResponse()))['templates'];
 
 		static::assertSame([2], array_column($templates, 'id'));
+	}
+
+	public function testAViewerFindsTheTemplateSharedWithHimToUseIt(): void
+	{
+		$grants = $this->container->get(AclGrantService::class);
+		$grants->setRole(1, 2, 'templates', AclSections::VIEWER, true);
+		$grants->setUnitRole(1, 2, 'templates', 3, AclSections::VIEWER);
+		$this->actingAs(2);
+
+		$templates = $this->json($this->controller->find($this->request('GET'), $this->newResponse()))['templates'];
+
+		static::assertSame([2, 3], array_map('intval', array_column($templates, 'id')));
 	}
 
 	public function testTheNumberOfTheFoundTemplatesCanBeLimited(): void

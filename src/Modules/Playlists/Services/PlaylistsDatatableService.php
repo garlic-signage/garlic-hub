@@ -21,10 +21,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Services;
 
+use App\Shared\Acl\AbstractUnitDatatableService;
+use App\Shared\Acl\AclSections;
 use App\Framework\Database\Datatable\DatatableQuery;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\UserException;
-use App\Framework\Services\AbstractDatatableService;
 use App\Framework\Services\SearchFilterParamsTrait;
 use App\Framework\Utils\FormParameters\BaseParameters;
 use App\Modules\Auth\UserSession;
@@ -32,7 +33,7 @@ use App\Modules\Playlists\Helper\Datatable\PlaylistsFilterDefinition;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
 
-class PlaylistsDatatableService extends AbstractDatatableService
+class PlaylistsDatatableService extends AbstractUnitDatatableService
 {
 	use SearchFilterParamsTrait;
 	private readonly PlaylistsFilterDefinition $filterDefinition;
@@ -59,27 +60,18 @@ class PlaylistsDatatableService extends AbstractDatatableService
 	 */
 	public function loadDatatable(): void
 	{
-		$UID = $this->userSession->getUID();
-		if ($this->aclValidator->isModuleAdmin($UID))
-		{
-			$this->fetchForModuleAdmin($this->filterDefinition, $this->parameters);
-		}
-		elseif ($this->aclValidator->isSubAdmin($UID))
-		{
-	//		$this->handleRequestSubAdmin($this->filterDefinition);
-		}
-		elseif ($this->aclValidator->isEditor($UID))
-		{
-			// Todo
-		}
-		elseif ($this->aclValidator->isViewer($UID))
-		{
-			// Todo
-		}
-		else
-		{
-			$this->fetchForUser($this->filterDefinition, $this->parameters, $UID);
-		}
+		$this->fetchForRoles($this->aclValidator, $this->filterDefinition, $this->parameters, $this->userSession->getUID(), 'playlist_id', AclSections::EDITOR);
+	}
+
+	/**
+	 * For the selections: the units shared for using, too.
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 */
+	public function loadForSelection(): void
+	{
+		$this->fetchForRoles($this->aclValidator, $this->filterDefinition, $this->parameters, $this->userSession->getUID(), 'playlist_id', AclSections::EDITOR, AclSections::VIEWER);
 	}
 
 	/**

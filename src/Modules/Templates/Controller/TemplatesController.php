@@ -128,7 +128,7 @@ readonly class TemplatesController
 		$this->parameters->setUserInputs(['elements_per_page' => $elements]);
 		$this->parameters->parseInputAllParameters();
 
-		$this->templatesDatatableService->loadDatatable();
+		$this->templatesDatatableService->loadForSelection();
 		$templates = [];
 		foreach ($this->templatesDatatableService->getCurrentFilterResults() as $template)
 		{

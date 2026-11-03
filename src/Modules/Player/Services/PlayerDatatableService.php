@@ -21,10 +21,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Services;
 
+use App\Shared\Acl\AbstractUnitDatatableService;
+use App\Shared\Acl\AclSections;
 use App\Framework\Database\Datatable\DatatableQuery;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\UserException;
-use App\Framework\Services\AbstractDatatableService;
 use App\Framework\Services\SearchFilterParamsTrait;
 use App\Framework\Utils\FormParameters\BaseParameters;
 use App\Modules\Auth\UserSession;
@@ -38,7 +39,7 @@ use Psr\Log\LoggerInterface;
  * Extends the AbstractDatatableService to utilize common datatable functionalities.
  * Utilizes the SearchFilterParamsTrait to apply search filters.
  */
-class PlayerDatatableService extends AbstractDatatableService
+class PlayerDatatableService extends AbstractUnitDatatableService
 {
 	use SearchFilterParamsTrait;
 	private readonly PlayerFilterDefinition $filterDefinition;
@@ -63,26 +64,6 @@ class PlayerDatatableService extends AbstractDatatableService
 	 */
 	public function loadDatatable(): void
 	{
-		$UID = $this->userSession->getUID();
-		if ($this->aclValidator->isModuleAdmin($UID))
-		{
-			$this->fetchForModuleAdmin($this->filterDefinition, $this->parameters);
-		}
-		elseif ($this->aclValidator->isSubAdmin($UID))
-		{
-			//		$this->handleRequestSubAdmin($this->filterDefinition);
-		}
-		elseif ($this->aclValidator->isEditor($UID))
-		{
-			// Todo
-		}
-		elseif ($this->aclValidator->isViewer($UID))
-		{
-			// Todo
-		}
-		else
-		{
-			$this->fetchForUser($this->filterDefinition, $this->parameters, $UID);
-		}
+		$this->fetchForRoles($this->aclValidator, $this->filterDefinition, $this->parameters, $this->userSession->getUID(), 'player_id', AclSections::EDITOR);
 	}
 }

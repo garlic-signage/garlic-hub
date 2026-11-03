@@ -24,6 +24,8 @@ namespace Tests\Integration\Modules\Playlists\Controller;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Modules\Playlists\Controller\ShowDatatableController;
 use PHPUnit\Framework\Attributes\Group;
+use App\Shared\Acl\AclGrantService;
+use App\Shared\Acl\AclSections;
 
 /**
  * The list of the playlists /playlists: who sees which playlist, the columns, the filters and the actions.
@@ -84,6 +86,37 @@ class ShowDatatableControllerTest extends PlaylistsControllerTestCase
 	{
 		$this->actingAs(3);
 		static::assertSame([2], $this->idsOf());
+	}
+
+	/**
+	 * The management list shows the playlists shared for editing, the ones shared for using are only in the selections.
+	 */
+	public function testAnEditorSeesHisOwnAndTheSharedPlaylistsButNotTheOnesForUsing(): void
+	{
+		$grants = $this->container->get(AclGrantService::class);
+		$grants->setRole(1, 2, 'playlists', AclSections::EDITOR, true);
+		$grants->setRole(1, 2, 'playlists', AclSections::VIEWER, true);
+		$this->actingAs(2);
+		static::assertSame([1, 3], $this->sortedIds(), 'The role alone shows the own playlists.');
+
+		$grants->setUnitRole(1, 2, 'playlists', 2, AclSections::VIEWER);
+		static::assertSame([1, 3], $this->sortedIds());
+
+		$grants->setUnitRole(1, 2, 'playlists', 2, AclSections::EDITOR);
+		static::assertSame([1, 2, 3], $this->sortedIds());
+		static::assertSame([2], $this->sortedIds(['playlist_name' => 'Bernd']), 'The filters apply to the shared playlists, too.');
+	}
+
+	/**
+	 * @param array<string,string|int> $query
+	 * @return list<int>
+	 */
+	private function sortedIds(array $query = []): array
+	{
+		$ids = $this->idsOf($query);
+		sort($ids);
+
+		return $ids;
 	}
 
 	public function testThePlaylistsAreFilteredByMode(): void
