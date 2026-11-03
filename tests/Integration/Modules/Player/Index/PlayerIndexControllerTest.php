@@ -51,6 +51,17 @@ class PlayerIndexControllerTest extends PlayerIndexTestCase
 		return $controller->index($request, new Response());
 	}
 
+	public function testThePreflightIsAllowedWithoutAgent(): void
+	{
+		$controller = new PlayerIndexController($this->service(), new IndexResponseHandler(new FileUtils()), new Sanitizer());
+		$request    = new ServerRequestFactory()->createServerRequest('OPTIONS', '/smil-index', ['SERVER_NAME' => 'hub.example.com', 'REQUEST_METHOD' => 'OPTIONS']);
+
+		$response = $controller->preflight($request, new Response());
+
+		static::assertSame(204, $response->getStatusCode());
+		static::assertSame('*', $response->getHeaderLine('Access-Control-Allow-Origin'));
+	}
+
 	public function testAKnownPlayerGetsItsIndexWithTheHeadersOfTheFile(): void
 	{
 		$this->givePlayer(PlayerStatus::RELEASED->value, 1);
@@ -135,6 +146,7 @@ class PlayerIndexControllerTest extends PlayerIndexTestCase
 		static::assertSame(404, $response->getStatusCode());
 		static::assertSame('application/smil+xml', $response->getHeaderLine('Content-Type'));
 		static::assertSame('', (string) $response->getBody());
+		static::assertSame('*', $response->getHeaderLine('Access-Control-Allow-Origin')); // a browser player sees the 404
 	}
 
 	/**

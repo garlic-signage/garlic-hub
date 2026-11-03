@@ -72,6 +72,22 @@ function isAuthorizedPlayer(array $server): bool
 	return (bool) preg_match('/UUID:([^;)]+)/', $agent);
 }
 
+// CORS for browser players (JS/WASM) on another origin. Sent with every answer, the errors too, so such a player
+// sees the real status instead of a blocked request. The files are the same for every player, so no Vary.
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: HEAD, GET, OPTIONS');
+header('Access-Control-Allow-Headers: User-Agent, If-None-Match, If-Modified-Since, X-Signage-Agent');
+header('Access-Control-Expose-Headers: ETag, Last-Modified');
+header('Access-Control-Max-Age: 86400');
+
+// The preflight: before a request with X-Signage-Agent or If-None-Match the browser asks with OPTIONS whether it may
+// send it. The preflight carries no agent, so it is answered before the check, with nothing but the headers above.
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS')
+{
+	http_response_code(204);
+	exit;
+}
+
 if (!isAuthorizedPlayer($_SERVER))
 	deliveryFail(403);
 

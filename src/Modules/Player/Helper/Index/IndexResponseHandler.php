@@ -154,6 +154,27 @@ class IndexResponseHandler
 			->withStatus(200);
 	}
 
+	/**
+	 * The preflight of a browser player on another origin: before a request with X-Signage-Agent or If-None-Match the
+	 * browser asks with OPTIONS whether it may send it. The answer only allows; it needs no file and no agent, the
+	 * preflight carries none.
+	 */
+	public function doOPTIONS(ResponseInterface $response): ResponseInterface
+	{
+		return $this->addAccessControlHeader($response)->withStatus(204);
+	}
+
+	/**
+	 * No index for this request. With the CORS headers, so a browser player on another origin sees the 404 and not a
+	 * blocked request.
+	 */
+	public function doNotFound(ResponseInterface $response): ResponseInterface
+	{
+		return $this->addAccessControlHeader($response)
+			->withHeader('Content-Type', 'application/smil+xml')
+			->withStatus(404);
+	}
+
 	private function return304(ResponseInterface $response): ResponseInterface
 	{
 		$response = $this->addAccessControlHeader($response);
@@ -183,6 +204,8 @@ class IndexResponseHandler
 						->withHeader('Access-Control-Allow-Origin', '*')
 						->withHeader('Access-Control-Allow-Methods', 'HEAD, GET, OPTIONS')
 						->withHeader('Access-Control-Max-Age', '86400')
-						->withHeader('Access-Control-Allow-Headers', 'User-Agent, If-None-Match, If-Modified-Since, Authorization, X-Signage-Agent');
+						->withHeader('Access-Control-Allow-Headers', 'User-Agent, If-None-Match, If-Modified-Since, Authorization, X-Signage-Agent')
+						// without it a browser player cannot read them and would download the index at every check
+						->withHeader('Access-Control-Expose-Headers', 'ETag, Last-Modified');
 	}
 }

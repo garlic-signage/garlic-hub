@@ -108,12 +108,12 @@ abstract class BlackboxTestCase extends TestCase
 	 * @param array<string,string> $headers
 	 * @return array{status:int,headers:array<string,string>,body:string}
 	 */
-	protected function rawGet(string $path, array $headers = []): array
+	protected function rawGet(string $path, array $headers = [], string $method = 'GET'): array
 	{
 		$port   = (int) parse_url($this->deployment()->baseUrl(), PHP_URL_PORT);
 		$socket = stream_socket_client('tcp://127.0.0.1:' . $port, $errorCode, $errorText, 10);
 		static::assertNotFalse($socket, (string) $errorText);
-		$request = "GET $path HTTP/1.1\r\nHost: garlic-hub.test\r\nConnection: close\r\n";
+		$request = "$method $path HTTP/1.1\r\nHost: garlic-hub.test\r\nConnection: close\r\n";
 		foreach ($headers as $name => $value)
 			$request .= "$name: $value\r\n";
 		fwrite($socket, $request . "\r\n");

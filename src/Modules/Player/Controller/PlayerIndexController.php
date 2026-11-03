@@ -70,9 +70,17 @@ readonly class PlayerIndexController
 
 		$filePath = $this->indexService->handleIndexRequest($ownerId, $userAgent, $server, $localPlayer);
 		if (empty($filePath))
-			return $response->withHeader('Content-Type', 'application/smil+xml')->withStatus(404);
+			return $this->indexResponseHandler->doNotFound($response);
 
 		return $this->sendSmilHeader($response, $server, $filePath);
+	}
+
+	/**
+	 * OPTIONS /smil-index: the preflight of a browser player on another origin (see IndexResponseHandler::doOPTIONS).
+	 */
+	public function preflight(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	{
+		return $this->indexResponseHandler->doOPTIONS($response);
 	}
 
 	/**

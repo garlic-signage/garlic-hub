@@ -79,6 +79,7 @@ assert($app instanceof App);
 $container = $app->getContainer();
 
 $app->get('/smil-index', resolve([PlayerIndexController::class, 'index'], $container));
+$app->options('/smil-index', resolve([PlayerIndexController::class, 'preflight'], $container));
 
 $app->group('', function (RouteCollectorProxy $group) use ($container)
 {

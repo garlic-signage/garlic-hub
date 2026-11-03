@@ -66,6 +66,35 @@ class PlayerDeliveryTest extends MediapoolTestCase
 		static::assertStringContainsString('immutable', $response['headers']['cache-control']);
 	}
 
+	public function testABrowserPlayerOnAnotherOriginMayReadTheFileAndItsEtag(): void
+	{
+		[$address] = $this->original();
+
+		$response = $this->rawGet($address, ['Origin' => 'http://localhost:8800'] + self::asPlayer());
+
+		static::assertSame(200, $response['status']);
+		static::assertSame('*', $response['headers']['access-control-allow-origin']);
+		static::assertSame('ETag, Last-Modified', $response['headers']['access-control-expose-headers']);
+	}
+
+	public function testThePreflightIsAllowedWithoutAgentAndWithoutFile(): void
+	{
+		[$address] = $this->original();
+
+		$response = $this->rawGet($address, [
+			'User-Agent'                     => '',
+			'Origin'                         => 'http://localhost:8800',
+			'Access-Control-Request-Method'  => 'GET',
+			'Access-Control-Request-Headers' => 'x-signage-agent, if-none-match',
+		], 'OPTIONS');
+
+		static::assertSame(204, $response['status']);
+		static::assertSame('', $response['body']);
+		static::assertSame('*', $response['headers']['access-control-allow-origin']);
+		static::assertStringContainsString('X-Signage-Agent', $response['headers']['access-control-allow-headers']);
+		static::assertStringContainsString('If-None-Match', $response['headers']['access-control-allow-headers']);
+	}
+
 	/**
 	 * @return array<string,array{array<string,string>,int}> the headers of the request and the status
 	 */

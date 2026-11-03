@@ -118,6 +118,29 @@ class IndexResponseTest extends TestCase
 		static::assertSame('*', $response->getHeaderLine('Access-Control-Allow-Origin'));
 		static::assertSame('HEAD, GET, OPTIONS', $response->getHeaderLine('Access-Control-Allow-Methods'));
 		static::assertStringContainsString('X-Signage-Agent', $response->getHeaderLine('Access-Control-Allow-Headers'));
+		static::assertSame('ETag, Last-Modified', $response->getHeaderLine('Access-Control-Expose-Headers'));
+	}
+
+	public function testNotFoundCanBeReadByAnotherWebsite(): void
+	{
+		$response = $this->handler->doNotFound(new Response());
+
+		static::assertSame(404, $response->getStatusCode());
+		static::assertSame('application/smil+xml', $response->getHeaderLine('Content-Type'));
+		static::assertSame('*', $response->getHeaderLine('Access-Control-Allow-Origin'));
+		static::assertSame('User-Agent, X-Signage-Agent', $response->getHeaderLine('Vary'));
+	}
+
+	public function testThePreflightOfABrowserPlayerIsAllowedWithoutFile(): void
+	{
+		$response = $this->handler->doOPTIONS(new Response());
+
+		static::assertSame(204, $response->getStatusCode());
+		static::assertSame('', (string) $response->getBody());
+		static::assertSame('*', $response->getHeaderLine('Access-Control-Allow-Origin'));
+		static::assertSame('HEAD, GET, OPTIONS', $response->getHeaderLine('Access-Control-Allow-Methods'));
+		static::assertStringContainsString('X-Signage-Agent', $response->getHeaderLine('Access-Control-Allow-Headers'));
+		static::assertStringContainsString('If-None-Match', $response->getHeaderLine('Access-Control-Allow-Headers'));
 	}
 
 	public function testHeadHasTheHeadersButNoBody(): void
