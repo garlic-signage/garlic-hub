@@ -28,7 +28,7 @@ use App\Shared\User\Repositories\Edge\UserAclRepository;
 use App\Shared\User\Repositories\Edge\UserMainRepository;
 use App\Shared\User\Repositories\Edge\UserTokensRepository;
 use App\Shared\User\Repositories\Enterprise\UserSecurityRepository;
-use App\Shared\User\Repositories\Enterprise\UserVipRepository;
+use App\Shared\User\Repositories\Edge\UserVipRepository;
 use Doctrine\DBAL\Connection;
 
 /**

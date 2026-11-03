@@ -19,7 +19,7 @@
 */
 declare(strict_types=1);
 
-namespace App\Shared\User\Repositories\Enterprise;
+namespace App\Shared\User\Repositories\Edge;
 
 use App\Framework\Database\BaseRepositories\SqlBase;
 use Doctrine\DBAL\Connection;
