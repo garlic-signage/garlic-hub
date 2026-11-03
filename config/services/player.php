@@ -90,7 +90,7 @@ $dependencies[PlayerRepository::class] = DI\factory(function (ContainerInterface
 });
 $dependencies[AclUnitProvider::class . '.player'] = DI\factory(function (ContainerInterface $container)
 {
-	return new TableUnitProvider($container->get('SqlConnection'), $container->get(PlayerRepository::class));
+	return new TableUnitProvider($container->get('SqlConnection'), $container->get(PlayerRepository::class), 'player_name');
 });
 $dependencies[PlayerIndexRepository::class] = DI\factory(function (ContainerInterface $container)
 {

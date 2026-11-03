@@ -1,0 +1,18 @@
+/* the rights page of a user: one tab per module */
+#userRights .tab-header {display: flex; gap: 0.25rem; border-bottom: 1px solid var(--gh-border-color);}
+#userRights .tab-button {padding: 0.5rem 1rem; border: 0; background: none; cursor: pointer; color: var(--gh-primary-text-color);}
+#userRights .tab-button.active {font-weight: bold; border-bottom: 2px solid var(--gh-secondary-color);}
+#userRights .tab-content {display: none; padding: 1rem 0;}
+#userRights .tab-content.active {display: block;}
+
+#userRights fieldset {border: 0; padding: 0; margin: 0 0 1rem 0;}
+#userRights .rights-roles {display: flex; flex-wrap: wrap; gap: 1.5rem;}
+#userRights .rights-units legend {font-weight: bold; margin-bottom: 0.5rem;}
+#userRights .rights-add-unit {display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;}
+#userRights .rights-add-unit input[type="text"] {width: min(30rem, 100%);}
+
+/* a compact list like the share dialog of a unit, not a datatable */
+#userRights .rights-unit-list {list-style: none; margin: 0; padding: 0; max-width: 40rem;}
+#userRights .rights-unit-list li {display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.35rem 0.5rem; border-left: 3px solid var(--gh-third-color);}
+#userRights .rights-unit-list li:nth-child(odd) {background-color: var(--gh-primary-bgcolor);}
+#userRights .rights-unit-name {overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}

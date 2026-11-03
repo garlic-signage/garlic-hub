@@ -47,6 +47,7 @@ class AclGrantService
 {
 	private const string MODULE_NAME = 'users';
 	private const array UNIT_ROLES = [AclSections::EDITOR, AclSections::VIEWER];
+	private const int SEARCH_LIMIT = 20;
 
 	/**
 	 * @param array<string,AclUnitProvider> $unitProviders module name => provider
@@ -179,6 +180,87 @@ class AclGrantService
 		{
 			return false;
 		}
+	}
+
+	/**
+	 * The tabs of the rights page of a user: the modules in which the granter may give a user
+	 * of the company at least one role.
+	 *
+	 * @return list<string>
+	 * @throws CoreException
+	 * @throws Exception
+	 */
+	public function findGrantableModules(int $granterUID, int $companyId): array
+	{
+		$modules = [];
+		foreach (EditionAclModules::getModules($this->aclHelper->getConfig()->getEdition()) as $module)
+		{
+			if ($this->findGrantableRoles($granterUID, $module, $companyId) !== [])
+				$modules[] = $module;
+		}
+
+		return $modules;
+	}
+
+	/**
+	 * A tab of the rights page: the roles the granter may give with the ones the user has,
+	 * and the units of the user, the ones the granter may change.
+	 *
+	 * @return array{roles: list<array{role:AclSections, granted:bool}>, units: list<array{id:string, name:string, role:AclSections}>}
+	 * @throws AccessDeniedException
+	 * @throws NotFoundException
+	 * @throws CoreException
+	 * @throws Exception
+	 */
+	public function findUserRights(int $granterUID, int $UID, string $module): array
+	{
+		$companyId = $this->findCompanyOfUser($UID);
+		$roles     = $this->findGrantableRoles($granterUID, $module, $companyId);
+		if ($granterUID === $UID || $roles === [])
+			throw new AccessDeniedException(self::MODULE_NAME, 'rights_not_grantable', ['UID' => $UID, 'module' => $module]);
+
+		$acl     = $this->userAclRepository->findAcl($UID, $module);
+		$granted = array_map(fn(AclSections $role) => ['role' => $role, 'granted' => ($acl & $this->aclHelper->getAclBit($module, $role)) > 0], $roles);
+
+		$units = [];
+		if (isset($this->unitProviders[$module]))
+		{
+			foreach ($this->getUnitRoles($module) as $role)
+			{
+				$found = $this->unitProviders[$module]->findUnitsByIds($this->userVipRepository->findUnitIds($UID, $this->aclHelper->getVipName($module, $role)));
+				foreach ($found as $unitId => $unit)
+				{
+					if ($this->mayGrant($granterUID, $module, $role, [$unit['company_id']]))
+						$units[] = ['id' => (string) $unitId, 'name' => $unit['name'], 'role' => $role];
+				}
+			}
+			usort($units, fn(array $a, array $b) => strcasecmp($a['name'], $b['name']));
+		}
+
+		return ['roles' => $granted, 'units' => $units];
+	}
+
+	/**
+	 * The units the granter may share whose name contains the search, for the autocomplete of the rights page.
+	 *
+	 * @return list<array{id:string, name:string}>
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 */
+	public function searchUnits(int $granterUID, string $module, string $search): array
+	{
+		if (!isset($this->unitProviders[$module]) || !$this->mayGrantAtAll($granterUID, $module))
+			throw new AccessDeniedException(self::MODULE_NAME, 'rights_not_grantable', ['module' => $module]);
+
+		$units = [];
+		foreach ($this->unitProviders[$module]->searchUnits($search, self::SEARCH_LIMIT) as $unit)
+		{
+			if ($this->findGrantableRolesInCompany($granterUID, $module, $unit['company_id']) !== [])
+				$units[] = ['id' => $unit['id'], 'name' => $unit['name']];
+		}
+
+		return $units;
 	}
 
 	/**
@@ -315,6 +397,21 @@ class AclGrantService
 		$unit = $this->findUnit($module, $unitId);
 
 		return $this->findGrantableRolesInCompany($granterUID, $module, $unit['company_id']);
+	}
+
+	/**
+	 * Every role of the module the granter may give in the company, the unit roles and the admin roles.
+	 *
+	 * @return list<AclSections>
+	 * @throws CoreException
+	 * @throws Exception
+	 */
+	private function findGrantableRoles(int $granterUID, string $module, int $companyId): array
+	{
+		return array_values(array_filter(
+			$this->getModuleRoles($module),
+			fn(AclSections $role) => $this->mayGrant($granterUID, $module, $role, [$companyId])
+		));
 	}
 
 	/**

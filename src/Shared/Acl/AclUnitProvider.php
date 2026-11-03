@@ -26,7 +26,7 @@ use Doctrine\DBAL\Exception;
 /**
  * Every module with units (player, playlists, templates ...) gives the AclGrantService
  * access to its units with one of these. The service needs the owner and the company
- * of a unit to decide who may grant rights on it.
+ * of a unit to decide who may grant rights on it, and the names for the rights page.
  */
 interface AclUnitProvider
 {
@@ -35,4 +35,19 @@ interface AclUnitProvider
 	 * @throws Exception
 	 */
 	public function findUnit(int|string $unitId): array;
+
+	/**
+	 * The units whose name contains the search, for the rights page of a user.
+	 *
+	 * @return list<array{id:string, name:string, company_id:int}>
+	 * @throws Exception
+	 */
+	public function searchUnits(string $search, int $limit): array;
+
+	/**
+	 * @param list<string> $unitIds
+	 * @return array<string,array{name:string, company_id:int}> unit id => name and company, unknown ids are missing
+	 * @throws Exception
+	 */
+	public function findUnitsByIds(array $unitIds): array;
 }

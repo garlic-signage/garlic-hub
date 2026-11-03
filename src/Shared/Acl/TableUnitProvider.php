@@ -22,7 +22,9 @@ declare(strict_types=1);
 namespace App\Shared\Acl;
 
 use App\Framework\Database\BaseRepositories\SqlBase;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Query\QueryBuilder;
 
 /**
  * The units of a module are rows of the table of its repository, every row has the UID of its owner.
@@ -31,8 +33,9 @@ use Doctrine\DBAL\Connection;
 class TableUnitProvider implements AclUnitProvider
 {
 	public function __construct(
-		private readonly Connection $connection,
-		private readonly SqlBase $repository
+		protected readonly Connection $connection,
+		private readonly SqlBase $repository,
+		private readonly string $nameField
 	) {}
 
 	public function findUnit(int|string $unitId): array
@@ -50,5 +53,68 @@ class TableUnitProvider implements AclUnitProvider
 			return [];
 
 		return ['UID' => (int) $unit['UID'], 'company_id' => (int) $unit['company_id']];
+	}
+
+	public function searchUnits(string $search, int $limit): array
+	{
+		$queryBuilder = $this->selectUnits()
+			->where($this->repository->getTable() . '.' . $this->nameField . " LIKE :search ESCAPE '!'")
+			->setParameter('search', '%' . addcslashes($search, '%_!') . '%')
+			->orderBy($this->repository->getTable() . '.' . $this->nameField)
+			->setMaxResults($limit);
+
+		$units = [];
+		foreach ($queryBuilder->executeQuery()->fetchAllAssociative() as $row)
+		{
+			$units[] = ['id' => (string) $row['id'], 'name' => (string) $row['name'], 'company_id' => (int) $row['company_id']];
+		}
+
+		return $this->describe($units);
+	}
+
+	public function findUnitsByIds(array $unitIds): array
+	{
+		if ($unitIds === [])
+			return [];
+
+		$queryBuilder = $this->selectUnits()
+			->where($this->repository->getTable() . '.' . $this->repository->getIdField() . ' IN (:ids)')
+			->setParameter('ids', $unitIds, ArrayParameterType::STRING);
+
+		$units = [];
+		foreach ($queryBuilder->executeQuery()->fetchAllAssociative() as $row)
+		{
+			$units[] = ['id' => (string) $row['id'], 'name' => (string) $row['name'], 'company_id' => (int) $row['company_id']];
+		}
+
+		$byId = [];
+		foreach ($this->describe($units) as $unit)
+		{
+			$byId[$unit['id']] = ['name' => $unit['name'], 'company_id' => $unit['company_id']];
+		}
+
+		return $byId;
+	}
+
+	/**
+	 * The name under which a user finds the unit, the name of the row by default.
+	 *
+	 * @param list<array{id:string, name:string, company_id:int}> $units
+	 * @return list<array{id:string, name:string, company_id:int}>
+	 */
+	protected function describe(array $units): array
+	{
+		return $units;
+	}
+
+	private function selectUnits(): QueryBuilder
+	{
+		$table        = $this->repository->getTable();
+		$queryBuilder = $this->connection->createQueryBuilder();
+
+		return $queryBuilder
+			->select($table . '.' . $this->repository->getIdField() . ' AS id', $table . '.' . $this->nameField . ' AS name', 'user_main.company_id')
+			->from($table)
+			->innerJoin($table, 'user_main', 'user_main', 'user_main.UID = ' . $table . '.UID');
 	}
 }

@@ -20,6 +20,7 @@
 declare(strict_types=1);
 
 use App\Modules\Users\Controller\UnitSharesController;
+use App\Modules\Users\Controller\UserRightsController;
 use App\Shared\Acl\AclGrantService;
 use App\Framework\Controller\JsonResponseHandler;
 use App\Shared\Acl\AclHelper;
@@ -50,6 +51,7 @@ use App\Modules\Users\Services\UsersAdminCreateService;
 use App\Modules\Users\Services\UsersAdminService;
 use App\Modules\Users\Services\UsersDatatableService;
 use App\Shared\User\UsersService;
+use Slim\Flash\Messages;
 use Phpfastcache\Helper\Psr16Adapter;
 use Psr\Container\ContainerInterface;
 
@@ -107,6 +109,17 @@ $dependencies[UsersController::class] = DI\factory(function (ContainerInterface 
 		$container->get(JsonResponseHandler::class)
 	);
 });
+$dependencies[UserRightsController::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new UserRightsController(
+		$container->get(AclGrantService::class),
+		$container->get(UsersService::class),
+		$container->get(UserSession::class),
+		$container->get(Translator::class),
+		$container->get(JsonResponseHandler::class),
+		$container->get(Messages::class)
+	);
+});
 $dependencies[UnitSharesController::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new UnitSharesController(
@@ -150,7 +163,8 @@ $dependencies[DatatablePreparer::class] = DI\factory(function (ContainerInterfac
 		$container->get(PrepareService::class),
 		$container->get(AclValidator::class),
 		$container->get(Parameters::class),
-		$container->get(Translator::class)
+		$container->get(Translator::class),
+		$container->get(AclGrantService::class)
 	);
 });
 $dependencies[\App\Modules\Users\Helper\Datatable\Orchestrator::class] = DI\factory(function (ContainerInterface $container)

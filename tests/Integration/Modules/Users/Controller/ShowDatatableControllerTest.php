@@ -204,6 +204,20 @@ class ShowDatatableControllerTest extends UsersControllerTestCase
 		static::assertSame(['/users/edit/1', '/users/edit/2', '/users/edit/3'], $links);
 	}
 
+	public function testTheAdminGetsALinkToTheRightsOfEveryOtherUser(): void
+	{
+		$this->actingAs(1);
+
+		$links = array_map(
+			static fn(array $row): array => array_column($row['has_action_link'] ?? [], 'LINK_ACTION', 'LINK_ACTION_NAME'),
+			$this->list()->getTemplateData()['elements_results']
+		);
+
+		static::assertArrayNotHasKey('rights', $links[0], 'Nobody changes his own rights.');
+		static::assertSame('/users/rights/2', $links[1]['rights']);
+		static::assertSame('/users/rights/3', $links[2]['rights']);
+	}
+
 	public function testAUserGetsNoLinkToTheFormOfHerself(): void
 	{
 		$this->actingAs(2);

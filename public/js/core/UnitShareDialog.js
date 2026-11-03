@@ -16,27 +16,9 @@
  You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-import {BaseService}         from "./Base/BaseService.js";
+import {UnitShareService}    from "./UnitShareService.js";
 import {FetchClient}         from "./FetchClient.js";
 import {FlashMessageHandler} from "./FlashMessageHandler.js";
-
-class UnitShareService extends BaseService
-{
-	load(module, unitId)
-	{
-		return this._sendRequest(UnitShareService.#url(module, unitId), "GET");
-	}
-
-	save(module, unitId, UID, role)
-	{
-		return this._sendRequest(UnitShareService.#url(module, unitId), "PUT", {UID: UID, role: role});
-	}
-
-	static #url(module, unitId)
-	{
-		return "/async/acl/" + encodeURIComponent(module) + "/units/" + encodeURIComponent(unitId);
-	}
-}
 
 /**
  * The share dialog of a unit, the same for every module. It is opened from the context menu

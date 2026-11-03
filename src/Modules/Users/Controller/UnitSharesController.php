@@ -87,6 +87,19 @@ readonly class UnitSharesController
 	}
 
 	/**
+	 * The autocomplete of the rights page: plain [{id, name}] without the success envelope.
+	 *
+	 * @param array<string,string> $args
+	 * @throws Throwable
+	 */
+	public function findUnits(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+	{
+		$units = $this->aclGrantService->searchUnits($this->userSession->getUID(), $args['module'] ?? '', $args['search'] ?? '');
+
+		return $this->responseHandler->jsonResponse($response, $units);
+	}
+
+	/**
 	 * An empty role removes the role of the user on the unit.
 	 *
 	 * @param array<string,string> $args

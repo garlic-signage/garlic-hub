@@ -31,6 +31,7 @@ use App\Framework\Utils\Datatable\Results\HeaderField;
 use App\Modules\Users\Services\AclValidator;
 use App\Modules\Users\UserStatus;
 use Doctrine\DBAL\Exception;
+use App\Shared\Acl\AclGrantService;
 
 /**
  * DatatablePreparer is responsible for preparing table data based on
@@ -42,7 +43,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 {
 	private AclValidator $aclValidator;
 
-	public function __construct(PrepareService $prepareService, AclValidator $aclValidator, Parameters $parameters, Translator $translator)
+	public function __construct(PrepareService $prepareService, AclValidator $aclValidator, Parameters $parameters, Translator $translator, private readonly AclGrantService $aclGrantService)
 	{
 		$this->aclValidator = $aclValidator;
 		parent::__construct('users', $prepareService, $parameters, $translator);
@@ -120,6 +121,15 @@ class DatatablePreparer extends AbstractDatatablePreparer
 					);
 				}
 
+			}
+			// the rights page is for who may grant a right in any module, nobody changes his own rights
+			if ((int) $user['status'] !== UserStatus::DELETED->value && (int) $user['UID'] !== $currentUID
+				&& $this->aclGrantService->findGrantableModules($currentUID, (int) $user['company_id']) !== [])
+			{
+				$list['has_action_link'][] = $this->prepareService->getBodyPreparer()->formatActionLink(
+					$this->translator->translate('rights', 'users'),
+					'/users/rights/' . $user['UID'],
+					'rights', (string) $user['UID'], 'shield-lock');
 			}
 			$body[] = $list;
 		}

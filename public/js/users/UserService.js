@@ -30,4 +30,18 @@ export class UserService  extends BaseService
 		};
 		return await this._sendRequest(url, "DELETE", data);
 	}
+
+	/**
+	 * Sets or removes a role of the user in the module.
+	 */
+	async setRole(uid, module, role, granted)
+	{
+		const url  = UsersApiConfig.USER_RIGHTS_URI + "/" + uid;
+		const data = {
+			module: module,
+			role: role,
+			granted: granted ? "1" : "0"
+		};
+		return await this._sendRequest(url, "PUT", data);
+	}
 }

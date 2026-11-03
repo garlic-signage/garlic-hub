@@ -104,7 +104,7 @@ $dependencies[PlaylistsRepository::class] = DI\factory(function (ContainerInterf
 });
 $dependencies[AclUnitProvider::class . '.playlists'] = DI\factory(function (ContainerInterface $container)
 {
-	return new TableUnitProvider($container->get('SqlConnection'), $container->get(PlaylistsRepository::class));
+	return new TableUnitProvider($container->get('SqlConnection'), $container->get(PlaylistsRepository::class), 'playlist_name');
 });
 $dependencies[TemplateUsageCounterInterface::class] = DI\factory(function (ContainerInterface $container)
 {

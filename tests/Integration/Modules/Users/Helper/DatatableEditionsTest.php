@@ -36,6 +36,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Integration\Support\ContainerTestCase;
 use Tests\Support\HtmlFields;
+use App\Shared\Acl\AclGrantService;
 
 /**
  * The list of the users in the editions Core and Enterprise: a company, more columns and a link on the name. The
@@ -78,7 +79,7 @@ class DatatableEditionsTest extends ContainerTestCase
 
 	private function preparer(string $edition): DatatablePreparer
 	{
-		return new DatatablePreparer($this->container->get(PrepareService::class), $this->aclOf($edition), $this->container->get(Parameters::class), $this->container->get(Translator::class));
+		return new DatatablePreparer($this->container->get(PrepareService::class), $this->aclOf($edition), $this->container->get(Parameters::class), $this->container->get(Translator::class), $this->container->get(AclGrantService::class));
 	}
 
 	#[DataProvider('editions')]

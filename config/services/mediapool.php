@@ -23,7 +23,7 @@ use App\Framework\Controller\JsonResponseHandler;
 use App\Shared\Acl\AclHelper;
 use App\Shared\Acl\AclGrantService;
 use App\Shared\Acl\AclUnitProvider;
-use App\Shared\Acl\TableUnitProvider;
+use App\Modules\Mediapool\Services\MediapoolUnitProvider;
 use App\Framework\Config\Config;
 use App\Framework\System\ShellExecutor;
 use App\Framework\Localization\Translate\Translator;
@@ -58,7 +58,7 @@ $dependencies[NodesRepository::class] = DI\factory(function (ContainerInterface 
 });
 $dependencies[AclUnitProvider::class . '.mediapool'] = DI\factory(function (ContainerInterface $container)
 {
-	return new TableUnitProvider($container->get('SqlConnection'), $container->get(NodesRepository::class));
+	return new MediapoolUnitProvider($container->get('SqlConnection'), $container->get(NodesRepository::class), 'name');
 });
 $dependencies[AclValidator::class] = DI\factory(function (ContainerInterface $container)
 {

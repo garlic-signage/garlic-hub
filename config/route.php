@@ -50,6 +50,7 @@ use App\Modules\Users\Controller\ShowInitialAdminController;
 use App\Modules\Users\Controller\UsersController;
 use App\Modules\Users\Controller\UserTokenController;
 use App\Modules\Users\Controller\UnitSharesController;
+use App\Modules\Users\Controller\UserRightsController;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -97,6 +98,7 @@ $app->group('', function (RouteCollectorProxy $group) use ($container)
 	$group->post('/users/edit', resolve([ShowAdminController::class, 'store'], $container));
 	$group->get('/users/new', resolve([ShowAdminController::class, 'newUserForm'], $container));
 	$group->get('/users/edit/{UID:\d+}', resolve([ShowAdminController::class, 'editUserForm'], $container));
+	$group->get('/users/rights/{UID:\d+}', resolve([UserRightsController::class, 'show'], $container));
 
 	// for later profile call
 //	$group->get('/user/{UID:\d}', createControllerCallable([xxxx::class, 'profile'], $container));
@@ -188,7 +190,9 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 
 	$group->get('/users/find/{username}', resolve([UsersController::class, 'findByName'], $container));
 	$group->delete('/users', resolve([UsersController::class, 'delete'], $container));
+	$group->get('/acl/{module:\w+}/find[/{search}]', resolve([UnitSharesController::class, 'findUnits'], $container));
 	$group->get('/acl/{module:\w+}/units/{unit_id:[\w-]+}', resolve([UnitSharesController::class, 'show'], $container));
+	$group->put('/users/rights/{UID:\d+}', resolve([UserRightsController::class, 'updateRole'], $container));
 	$group->put('/acl/{module:\w+}/units/{unit_id:[\w-]+}', resolve([UnitSharesController::class, 'update'], $container));
 
 	$group->post('/users/tokens', resolve([UserTokenController::class, 'refresh'], $container));

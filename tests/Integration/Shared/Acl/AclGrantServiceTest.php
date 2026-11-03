@@ -284,6 +284,61 @@ class AclGrantServiceTest extends ContainerTestCase
 		static::assertFalse($this->service->canShareInCompany(1, 'users', 1), 'The module users has no units.');
 	}
 
+	public function testTheAdminGetsATabForEveryModuleAndAUserNone(): void
+	{
+		static::assertSame(['users', 'mediapool', 'player', 'playlists', 'templates'], $this->service->findGrantableModules(1, 1));
+		static::assertSame([], $this->service->findGrantableModules(2, 1));
+	}
+
+	public function testTheRightsOfAUserInAModule(): void
+	{
+		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
+		$this->service->setRole(1, 2, 'player', AclSections::VIEWER, true);
+		$this->service->setUnitRole(1, 2, 'player', 4, AclSections::EDITOR);
+		$this->service->setUnitRole(1, 2, 'player', 3, AclSections::VIEWER);
+
+		$rights = $this->service->findUserRights(1, 2, 'player');
+
+		static::assertSame([
+			['role' => AclSections::MODULEADMIN, 'granted' => false],
+			['role' => AclSections::EDITOR, 'granted' => true],
+			['role' => AclSections::VIEWER, 'granted' => true],
+		], $rights['roles']);
+		static::assertSame([
+			['id' => '4', 'name' => 'Admin Player', 'role' => AclSections::EDITOR],
+			['id' => '3', 'name' => 'Bernds Player', 'role' => AclSections::VIEWER],
+		], $rights['units']);
+	}
+
+	public function testTheModuleUsersHasOnlyTheAdminRoleAndNoUnits(): void
+	{
+		static::assertSame(['roles' => [['role' => AclSections::MODULEADMIN, 'granted' => false]], 'units' => []], $this->service->findUserRights(1, 2, 'users'));
+	}
+
+	public function testNobodySeesHisOwnRightsPage(): void
+	{
+		$this->expectException(AccessDeniedException::class);
+		$this->service->findUserRights(1, 1, 'player');
+	}
+
+	public function testAUserWithoutRightsSeesNoRightsPage(): void
+	{
+		$this->expectException(AccessDeniedException::class);
+		$this->service->findUserRights(2, 3, 'player');
+	}
+
+	public function testTheAdminSearchesTheUnitsByName(): void
+	{
+		static::assertSame([['id' => '1', 'name' => 'Annas Player 1'], ['id' => '2', 'name' => 'Annas Player 2']], $this->service->searchUnits(1, 'player', 'annas'));
+		static::assertSame([], $this->service->searchUnits(1, 'player', '%'), 'A wildcard is searched as text.');
+	}
+
+	public function testAUserMayNotSearchUnits(): void
+	{
+		$this->expectException(AccessDeniedException::class);
+		$this->service->searchUnits(2, 'player', 'annas');
+	}
+
 	private function aclOf(int $UID, string $module): int
 	{
 		return (int) $this->connection->fetchOne('SELECT acl FROM user_acl WHERE UID = ? AND module = ?', [$UID, $module]);

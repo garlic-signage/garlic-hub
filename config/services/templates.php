@@ -70,7 +70,7 @@ $dependencies[TemplatesRepository::class] = DI\factory(function (ContainerInterf
 });
 $dependencies[AclUnitProvider::class . '.templates'] = DI\factory(function (ContainerInterface $container)
 {
-	return new TableUnitProvider($container->get('SqlConnection'), $container->get(TemplatesRepository::class));
+	return new TableUnitProvider($container->get('SqlConnection'), $container->get(TemplatesRepository::class), 'name');
 });
 $dependencies[AclValidator::class] = DI\factory(function (ContainerInterface $container)
 {

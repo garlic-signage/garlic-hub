@@ -77,6 +77,27 @@ class TableUnitProviderTest extends ContainerTestCase
 		static::assertSame([], $this->provider($module)->findUnit(999));
 	}
 
+	public function testTheUnitsAreSearchedByTheirName(): void
+	{
+		static::assertSame([['id' => '1', 'name' => 'Annas Lobby', 'company_id' => 7]], $this->provider('playlists')->searchUnits('lobby', 10));
+		static::assertSame([['id' => '2', 'name' => 'Annas Vorlage', 'company_id' => 7]], $this->provider('templates')->searchUnits('annas', 10));
+	}
+
+	public function testTheNamesOfUnitsByTheirIds(): void
+	{
+		static::assertSame(['3' => ['name' => 'Bernds Player', 'company_id' => 1]], $this->provider('player')->findUnitsByIds(['3', '999']));
+		static::assertSame([], $this->provider('player')->findUnitsByIds([]));
+	}
+
+	/**
+	 * Every user has his own "Fotos", so a directory is named by its path.
+	 */
+	public function testADirectoryIsNamedByItsPath(): void
+	{
+		static::assertSame([['id' => '8', 'name' => 'anna / Fotos', 'company_id' => 7]], $this->provider('mediapool')->searchUnits('fotos', 10));
+		static::assertSame(['12' => ['name' => 'bernd / Geteilt', 'company_id' => 1]], $this->provider('mediapool')->findUnitsByIds(['12']));
+	}
+
 	private function provider(string $module): AclUnitProvider
 	{
 		$provider = $this->container->get(AclUnitProvider::class . '.' . $module);

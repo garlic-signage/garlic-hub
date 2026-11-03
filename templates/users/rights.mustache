@@ -1,0 +1,57 @@
+<h1>{{LANG_PAGE_HEADER}}</h1>
+<section id="userRights" class="main-element-group" data-uid="{{UID}}" data-confirm-remove-role="{{LANG_CONFIRM_REMOVE_ROLE}}">
+	<nav class="tab-header">
+		{{#tabs}}
+		<button type="button" class="tab-button" data-tab="{{MODULE}}">{{LANG_MODULE}}</button>
+		{{/tabs}}
+	</nav>
+
+	{{#tabs}}
+	<section class="tab-content" id="tab_{{MODULE}}" data-module="{{MODULE}}">
+		<fieldset class="rights-roles">
+			{{#roles}}
+			<label>
+				<input type="checkbox" class="rights-role" value="{{ROLE}}" {{CHECKED}}> {{LANG_ROLE}}
+			</label>
+			{{/roles}}
+		</fieldset>
+
+		{{#has_units}}
+		<fieldset class="rights-units">
+			<legend>{{LANG_UNITS}}</legend>
+			<label class="rights-add-unit">
+				{{LANG_ADD_UNIT}}
+				<input type="text" class="autocomplete" id="unit_{{MODULE}}_search" list="unit_{{MODULE}}_suggestions" autocomplete="off">
+				<datalist id="unit_{{MODULE}}_suggestions"></datalist>
+				<input type="hidden" id="unit_{{MODULE}}">
+			</label>
+			<p class="rights-no-units" {{NO_UNITS}}>{{LANG_NO_UNITS}}</p>
+			<ul class="rights-unit-list">
+				{{#units}}
+				<li data-unit-id="{{UNIT_ID}}">
+					<span class="rights-unit-name">{{UNIT_NAME}}</span>
+					<select class="rights-unit-role">
+						<option value="">{{LANG_ROLE_NONE}}</option>
+						{{#unit_roles}}
+						<option value="{{VALUE}}" {{SELECTED}}>{{LANG_ROLE}}</option>
+						{{/unit_roles}}
+					</select>
+				</li>
+				{{/units}}
+			</ul>
+			<template class="rights-unit-template">
+				<li>
+					<span class="rights-unit-name"></span>
+					<select class="rights-unit-role">
+						<option value="">{{LANG_ROLE_NONE}}</option>
+						{{#unit_roles}}
+						<option value="{{VALUE}}">{{LANG_ROLE}}</option>
+						{{/unit_roles}}
+					</select>
+				</li>
+			</template>
+		</fieldset>
+		{{/has_units}}
+	</section>
+	{{/tabs}}
+</section>
