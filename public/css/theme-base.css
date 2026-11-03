@@ -257,6 +257,7 @@ footer nav ul #compile_time {margin-left: auto;}
     gap: 8px;
     white-space: nowrap;
 }
+.context-menu li a{width:100%;}
 
 .context-menu .delete {
     border-top: 1px solid var(--gh-border-color);
