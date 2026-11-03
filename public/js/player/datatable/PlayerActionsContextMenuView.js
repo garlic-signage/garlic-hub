@@ -56,21 +56,6 @@ export class PlayerActionsContextMenuView
 		this.#gotoMenuItem.querySelector('a').href = "playlists/compose/" + playlistId;
 	}
 
-	/**
-	 * The preview player (public/js/player/preview) in a new tab: it plays as this player, so it gets its playlist
-	 * from the SMIL index like the device. The cache stays in memory.
-	 */
-	setPreviewLink(uuid, playerName)
-	{
-		const params = new URLSearchParams({
-			index: location.origin + "/smil-index",
-			uuid: uuid,
-			name: playerName,
-			storage: "memory"
-		});
-		this.#previewMenuItem.querySelector('a').href = "/js/player/preview/index.html?" + params.toString();
-	}
-
 
 	get menu()
 	{

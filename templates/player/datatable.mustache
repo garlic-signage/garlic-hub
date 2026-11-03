@@ -16,7 +16,7 @@
 			<a href="">{{LANG_GOTO_PLAYLIST}}</a>
 		</li>
 		<li class="preview">
-			<a href="" target="_blank" rel="noopener">{{LANG_PREVIEW}}</a>
+			{{LANG_PREVIEW}}
 		</li>
 		<li class="delete" data-confirm="{{LANG_PLAYER_DELETE_CONFIRM}}">
 			{{LANG_PLAYER_DELETE}}
@@ -24,4 +24,12 @@
 	</ul>
 	{{/player_actions_contextmenu}}
 </template>
+
+<dialog id="playerPreviewDialog" class="player-preview">
+	<header>
+		<span class="dialog-name"></span>
+		<button type="button" class="close-button bi bi-x" aria-label="Close"></button>
+	</header>
+	<div class="preview-frame"></div>
+</dialog>
 

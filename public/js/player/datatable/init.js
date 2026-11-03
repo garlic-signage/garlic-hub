@@ -22,6 +22,7 @@ import {FetchClient} from "../../core/FetchClient.js";
 import {AutocompleteFactory}      from "../../core/AutocompleteFactory.js";
 import {FlashMessageHandler} from "../../core/FlashMessageHandler.js";
 import {PlayerActionsContextMenuFactory} from "./PlayerActionsContextMenuFactory.js";
+import {PreviewOverlay} from "./PreviewOverlay.js";
 
 document.addEventListener("DOMContentLoaded", function()
 {
@@ -32,7 +33,8 @@ document.addEventListener("DOMContentLoaded", function()
 	const playerActionsContextMenuFactory = new PlayerActionsContextMenuFactory(
 		flashMessageHandler,
 		autocompleteFactory,
-		playerService
+		playerService,
+		new PreviewOverlay()
 	);
 
 	const contextMenus = document.getElementsByClassName("player-contextmenu");

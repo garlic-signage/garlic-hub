@@ -30,14 +30,16 @@ export class PlayerActionsContextMenu
 	#controller = null;
 	#currentPlayerId = 0;
 	#waitOverlay = null;
+	#previewOverlay = null;
 
-	constructor(contextMenuView, flashMessageHandler, autoCompleteFactory, waitOverlay, playerService)
+	constructor(contextMenuView, flashMessageHandler, autoCompleteFactory, waitOverlay, playerService, previewOverlay)
 	{
 		this.#contextMenuView       = contextMenuView;
 		this.#flashMessageHandler   = flashMessageHandler;
 		this.#autoCompleteFactory   = autoCompleteFactory;
 		this.#waitOverlay           = waitOverlay;
 		this.#playerService         = playerService;
+		this.#previewOverlay        = previewOverlay;
 		this.#controller            = new AbortController();
 	}
 
@@ -68,7 +70,9 @@ export class PlayerActionsContextMenu
 		{
 			this.#addUnAssignEventListener();
 			this.#contextMenuView.setGotoLink(responseData.playlist_id);
-			this.#contextMenuView.setPreviewLink(responseData.uuid, responseData.player_name);
+			this.#contextMenuView.previewMenuItem.addEventListener("click", () => {
+				this.#previewOverlay.open(responseData.uuid, responseData.player_name);
+			});
 		}
 
 		this.#addAssignEventListener(); // always active
