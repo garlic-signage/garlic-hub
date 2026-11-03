@@ -58,7 +58,7 @@ $dependencies[NodesRepository::class] = DI\factory(function (ContainerInterface 
 });
 $dependencies[AclUnitProvider::class . '.mediapool'] = DI\factory(function (ContainerInterface $container)
 {
-	return new MediapoolUnitProvider($container->get('SqlConnection'), $container->get(NodesRepository::class), 'name');
+	return new MediapoolUnitProvider($container->get('SqlConnection'), $container->get(NodesRepository::class));
 });
 $dependencies[AclValidator::class] = DI\factory(function (ContainerInterface $container)
 {

@@ -53,7 +53,14 @@ class Orchestrator
 	 */
 	public function list(ResponseInterface $response): ResponseInterface
 	{
-		$nodes = $this->nodesService->getNodes($this->id('parent_id'));
+		$parentId = $this->id('parent_id');
+		$nodes    = $this->nodesService->getNodes($parentId);
+		if ($parentId === 0)
+		{
+			$shared = $this->nodesService->getSharedNodes();
+			if ($shared !== [])
+				$nodes[] = $this->responseBuilder->sharedRootNode($shared);
+		}
 
 		return $this->responseBuilder->nodeList($response, $nodes);
 	}

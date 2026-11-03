@@ -93,6 +93,9 @@ export class DirectoryView
                 preventNonNodes: false,
                 preventForeignNodes: false,
                 dragStart: (e) => {
+					if (e.node.data.virtual === true)
+						return false;
+
 					e.event.dataTransfer.effectAllowed = "all";
                     return true;
                 },
@@ -103,6 +106,10 @@ export class DirectoryView
                     return true;
                 },
                 dragEnter: (e) => {
+					// nothing is dropped on or next to the root "shared with me"
+					if (e.node.data.virtual === true)
+						return false;
+
 					if (e.sourceNode === null) // media drag'nDrop
                         return ["appendChild"];
                     else
@@ -265,6 +272,14 @@ export class DirectoryView
 
     async #loadMediaInDirectory(node)
     {
+		// the root "shared with me" is no directory: it has no media and takes no uploads
+		if (node.data.virtual === true)
+		{
+			UploadDialogElements.openUploadDialog.disabled = true;
+			this.#mediaList.render([]);
+			return;
+		}
+
         try
         {
 			UploadDialogElements.openUploadDialog.disabled = !node.data.rights.create;

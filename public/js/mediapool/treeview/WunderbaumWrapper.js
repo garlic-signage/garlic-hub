@@ -139,7 +139,9 @@ export class WunderbaumWrapper
 				let keyList = parentList.map(parent => parent.key);
 				localStorage.setItem('parent_list', keyList);
 
-				this.#loadMediaInDirectory(e.node.key);
+				// the root "shared with me" is no directory and has no media
+				if (e.node.data.virtual !== true)
+					this.#loadMediaInDirectory(e.node.key);
 			},
 			filter: {autoApply: true, mode: "hide"}
 		}
@@ -159,6 +161,9 @@ export class WunderbaumWrapper
 			preventForeignNodes: false,
 			dragStart: (e) =>
 			{
+				if (e.node.data.virtual === true)
+					return false;
+
 				e.event.dataTransfer.effectAllowed = "all";
 				return true;
 			},
@@ -172,6 +177,9 @@ export class WunderbaumWrapper
 			},
 			dragEnter: (e) =>
 			{
+				if (e.node.data.virtual === true)
+					return false;
+
 				if (e.sourceNode === null) // media drag'nDrop
 					return ["appendChild"];
 				else

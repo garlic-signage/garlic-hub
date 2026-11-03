@@ -118,6 +118,25 @@ class AclHelper
 	}
 
 	/**
+	 * The units shared with the user in one of the roles, from the cached user.
+	 *
+	 * @param list<string> $vipNames
+	 * @return list<string>
+	 * @throws Exception
+	 */
+	public function findSharedUnitIds(int $UID, array $vipNames): array
+	{
+		$unitIds = [];
+		foreach ($this->userService->getUserById($UID)->getVip() as $vip)
+		{
+			if (in_array($vip['vip_name'] ?? '', $vipNames, true))
+				$unitIds[] = (string) ($vip['unit_id'] ?? '');
+		}
+
+		return array_values(array_unique($unitIds));
+	}
+
+	/**
 	 * The name of the role in user_vip, e.g. player_editor.
 	 */
 	public function getVipName(string $moduleName, AclSections $role): string

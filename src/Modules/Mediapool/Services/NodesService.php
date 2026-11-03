@@ -33,6 +33,7 @@ use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Repositories\NodesRepository;
 use Doctrine\DBAL\Exception;
 use App\Shared\Acl\AclGrantService;
+use App\Shared\Acl\AclSections;
 
 /**
  * Class NodesService
@@ -96,6 +97,51 @@ class NodesService
 		else
 			$nodes = $this->nestedSetsService->findAllChildNodesByParentNode($parent_id);
 
+		return $this->prepareTree($nodes);
+	}
+
+	/**
+	 * The directories shared with the user, the children of the root "shared with me" in the tree.
+	 * They are named by their path, their own parents may not be readable. A shared directory
+	 * does not share its sub directories.
+	 *
+	 * @return list<array<string,mixed>>
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws ModuleException
+	 * @throws UserException
+	 */
+	public function getSharedNodes(): array
+	{
+		$UID = $this->userSession->getUID();
+		// the module admin sees every directory in the tree anyway
+		if ($this->aclValidator->isModuleAdmin($UID))
+			return [];
+
+		$nodeIds = array_map('intval', $this->aclValidator->findSharedUnitIds($UID, AclSections::EDITOR, AclSections::VIEWER));
+		$paths   = $this->nodesRepository->findPaths($nodeIds);
+
+		// the own directories are in the tree already
+		$nodes = array_values(array_filter($this->nodesRepository->findNodesByIds($nodeIds), fn(array $node) => (int) $node['UID'] !== $UID));
+		$tree  = $this->prepareTree($nodes, $paths);
+		usort($tree, fn(array $a, array $b) => strcasecmp((string) $a['title'], (string) $b['title']));
+
+		return $tree;
+	}
+
+	/**
+	 * The directories the user may read, prepared for Wunderbaum. A directory with a path is named by it.
+	 *
+	 * @param list<array<string,mixed>> $nodes
+	 * @param array<string,list<string>> $paths node id => names from the root on
+	 * @return list<array<string,mixed>>
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws ModuleException
+	 * @throws UserException
+	 */
+	private function prepareTree(array $nodes, array $paths = []): array
+	{
 		$tree = [];
 		/** @var array{
 		 * UID:int, username:string, company_id:int, node_id:int, visibility:int, root_id:int, is_user_folder:int,
@@ -109,6 +155,9 @@ class NodesService
 			$rights = $this->determineReadableRights($node);
 			if ($rights === null)
 				continue;
+
+			if (isset($paths[(string) $node['node_id']]))
+				$node['name'] = implode(MediapoolUnitProvider::PATH_SEPARATOR, $paths[(string) $node['node_id']]);
 
 			$tree[] = $this->prepareForWunderbaum($node, $rights);
 		}

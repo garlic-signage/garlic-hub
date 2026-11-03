@@ -68,6 +68,15 @@ abstract class AbstractAclValidator
 		return array_values(array_map(fn(AclSections $role) => $this->helper->getVipName($this->moduleName, $role), $roles));
 	}
 
+	/**
+	 * @return list<string>
+	 * @throws Exception
+	 */
+	public function findSharedUnitIds(int $UID, AclSections ...$roles): array
+	{
+		return $this->helper->findSharedUnitIds($UID, $this->getVipNames(...$roles));
+	}
+
 	public function getConfig(): Config
 	{
 		return $this->helper->getConfig();

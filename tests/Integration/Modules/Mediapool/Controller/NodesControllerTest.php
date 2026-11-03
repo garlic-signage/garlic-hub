@@ -27,6 +27,8 @@ use App\Framework\Exceptions\NotFoundException;
 use App\Modules\Mediapool\Controller\NodesController;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
+use App\Shared\Acl\AclGrantService;
+use App\Shared\Acl\AclSections;
 
 /**
  * The directory endpoints /async/mediapool/node as the tree of the browser uses them.
@@ -64,6 +66,37 @@ class NodesControllerTest extends ControllerTestCase
 		static::assertSame([1, 7], array_column($nodes, 'key'));
 		static::assertSame('anna', $nodes[1]['title']);
 		static::assertTrue($nodes[1]['rights']['create']);
+	}
+
+	/**
+	 * Anna's folder "anna" is private, so bernd reaches the shared "Fotos" only through the root "shared with me".
+	 */
+	public function testTheSharedDirectoriesAreUnderTheirOwnRootWithTheirPath(): void
+	{
+		$grants = $this->container->get(AclGrantService::class);
+		$grants->setRole(1, 3, 'mediapool', AclSections::VIEWER, true);
+		$grants->setUnitRole(1, 3, 'mediapool', 8, AclSections::VIEWER);
+		$this->actingAs(3);
+
+		$nodes = $this->json($this->controller->list($this->request('GET'), $this->newResponse(), ['parent_id' => '0']));
+
+		static::assertSame([1, 10, 'shared'], array_column($nodes, 'key'));
+		$shared = $nodes[2];
+		static::assertTrue($shared['virtual']);
+		static::assertFalse($shared['rights']['create']);
+		static::assertSame([8], array_column($shared['children'], 'key'));
+		static::assertSame('anna / Fotos', $shared['children'][0]['title']);
+		// a viewer reads, but does not change
+		static::assertFalse($shared['children'][0]['rights']['create']);
+	}
+
+	public function testWithoutSharedDirectoriesThereIsNoSharedRoot(): void
+	{
+		$this->actingAs(1);
+
+		$nodes = $this->json($this->controller->list($this->request('GET'), $this->newResponse(), ['parent_id' => '0']));
+
+		static::assertNotContains('shared', array_column($nodes, 'key'));
 	}
 
 	public function testTheListOfTheChildren(): void

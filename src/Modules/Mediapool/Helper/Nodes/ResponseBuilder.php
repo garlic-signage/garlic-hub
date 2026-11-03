@@ -22,6 +22,8 @@ declare(strict_types=1);
 namespace App\Modules\Mediapool\Helper\Nodes;
 
 use App\Framework\Controller\BaseResponseBuilder;
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -47,6 +49,26 @@ class ResponseBuilder extends BaseResponseBuilder
 	public function missingMoveParameters(ResponseInterface $response): ResponseInterface
 	{
 		return $this->jsonResponseHandler->jsonError($response, 'Source node, target node, or target region is missing');
+	}
+
+	/**
+	 * The root "shared with me" is no directory: no media, no menu, nothing can be dropped on it.
+	 *
+	 * @param list<array<string,mixed>> $children
+	 * @return array<string,mixed>
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	public function sharedRootNode(array $children): array
+	{
+		return [
+			'title'    => $this->translator->translate('shared_with_me', 'mediapool'),
+			'folder'   => true,
+			'key'      => 'shared',
+			'virtual'  => true,
+			'rights'   => ['create' => false, 'edit' => false, 'delete' => false, 'share' => '', 'share_unit' => false],
+			'children' => $children
+		];
 	}
 
 	/**

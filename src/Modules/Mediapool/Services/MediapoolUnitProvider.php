@@ -21,8 +21,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Mediapool\Services;
 
+use App\Modules\Mediapool\Repositories\NodesRepository;
 use App\Shared\Acl\TableUnitProvider;
-use Doctrine\DBAL\ArrayParameterType;
+use Doctrine\DBAL\Connection;
 
 /**
  * The directories of the mediapool. Their names repeat (every user has "Fotos"), so a directory
@@ -30,29 +31,16 @@ use Doctrine\DBAL\ArrayParameterType;
  */
 class MediapoolUnitProvider extends TableUnitProvider
 {
-	private const string PATH_SEPARATOR = ' / ';
+	public const string PATH_SEPARATOR = ' / ';
+
+	public function __construct(Connection $connection, private readonly NodesRepository $nodesRepository)
+	{
+		parent::__construct($connection, $nodesRepository, 'name');
+	}
 
 	protected function describe(array $units): array
 	{
-		if ($units === [])
-			return [];
-
-		// the ancestors of a node in the nested set: same tree, lft and rgt around the node
-		$queryBuilder = $this->connection->createQueryBuilder();
-		$queryBuilder->select('node.node_id', 'ancestor.name')
-			->from('mediapool_nodes', 'node')
-			->innerJoin('node', 'mediapool_nodes', 'ancestor', 'ancestor.root_id = node.root_id AND ancestor.lft <= node.lft AND ancestor.rgt >= node.rgt')
-			->where('node.node_id IN (:ids)')
-			->setParameter('ids', array_column($units, 'id'), ArrayParameterType::STRING)
-			->orderBy('node.node_id')
-			->addOrderBy('ancestor.lft');
-
-		$paths = [];
-		foreach ($queryBuilder->executeQuery()->fetchAllAssociative() as $row)
-		{
-			$paths[(string) $row['node_id']][] = (string) $row['name'];
-		}
-
+		$paths = $this->nodesRepository->findPaths(array_column($units, 'id'));
 		foreach ($units as $key => $unit)
 		{
 			$units[$key]['name'] = implode(self::PATH_SEPARATOR, $paths[$unit['id']] ?? [$unit['name']]);

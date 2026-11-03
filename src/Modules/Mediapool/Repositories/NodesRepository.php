@@ -25,6 +25,7 @@ use App\Framework\Database\BaseRepositories\SqlBase;
 use App\Framework\Database\BaseRepositories\Traits\CrudTraits;
 use App\Framework\Database\BaseRepositories\Traits\FindOperationsTrait;
 use App\Framework\Exceptions\DatabaseException;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
@@ -110,4 +111,57 @@ class NodesRepository extends SqlBase
 		return $ret;
 	}
 
+
+	/**
+	 * The directories with the same fields as the nodes of the tree.
+	 *
+	 * @param list<int> $nodeIds
+	 * @return list<array<string,mixed>>
+	 * @throws Exception
+	 */
+	public function findNodesByIds(array $nodeIds): array
+	{
+		if ($nodeIds === [])
+			return [];
+
+		$queryBuilder = $this->connection->createQueryBuilder();
+		$queryBuilder->select('*, FLOOR((rgt-lft)/2) AS children')
+			->from($this->table)
+			->leftJoin($this->table, 'user_main', 'user_main', $this->table.'.UID = user_main.UID')
+			->where('node_id IN (:ids)')
+			->setParameter('ids', $nodeIds, ArrayParameterType::INTEGER);
+
+		return $queryBuilder->executeQuery()->fetchAllAssociative();
+	}
+
+	/**
+	 * The names of the directories from the root on: the ancestors in the nested set
+	 * are in the same tree, with lft and rgt around the node.
+	 *
+	 * @param list<int|string> $nodeIds
+	 * @return array<string,list<string>> node id => names from the root to the node
+	 * @throws Exception
+	 */
+	public function findPaths(array $nodeIds): array
+	{
+		if ($nodeIds === [])
+			return [];
+
+		$queryBuilder = $this->connection->createQueryBuilder();
+		$queryBuilder->select('node.node_id', 'ancestor.name')
+			->from($this->table, 'node')
+			->innerJoin('node', $this->table, 'ancestor', 'ancestor.root_id = node.root_id AND ancestor.lft <= node.lft AND ancestor.rgt >= node.rgt')
+			->where('node.node_id IN (:ids)')
+			->setParameter('ids', array_map('strval', $nodeIds), ArrayParameterType::STRING)
+			->orderBy('node.node_id')
+			->addOrderBy('ancestor.lft');
+
+		$paths = [];
+		foreach ($queryBuilder->executeQuery()->fetchAllAssociative() as $row)
+		{
+			$paths[(string) $row['node_id']][] = (string) $row['name'];
+		}
+
+		return $paths;
+	}
 }
