@@ -116,9 +116,10 @@ class AclHelper
 	{
 		$userEntity = $this->userService->getUserById($UID);
 		$vips = $userEntity->getVip();
+		// unit_id is a varchar, so ids are compared as strings
 		foreach ($vips as $vip)
 		{
-			if (isset($vip[$vipName]) && $vip[$vipName] === $id)
+			if (($vip['vip_name'] ?? '') === $vipName && (string) ($vip['unit_id'] ?? '') === (string) $id)
 				return true;
 		}
 

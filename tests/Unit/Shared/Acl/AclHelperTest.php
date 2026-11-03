@@ -244,7 +244,7 @@ class AclHelperTest extends TestCase
 		$moduleName = 'testModule_subadmin';
 
 		$this->userEntityStub->method('getVip')->willReturn([
-			[$moduleName => $companyId]
+			['UID' => $UID, 'vip_name' => $moduleName, 'unit_id' => (string) $companyId]
 		]);
 
 		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
@@ -265,7 +265,7 @@ class AclHelperTest extends TestCase
 		$moduleName = 'testModule_subadmin';
 
 		$this->userEntityStub->method('getVip')->willReturn([
-			[$moduleName => 101]
+			['UID' => $UID, 'vip_name' => $moduleName, 'unit_id' => '101']
 		]);
 
 		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
@@ -302,7 +302,7 @@ class AclHelperTest extends TestCase
 		$moduleName = 'testModule_editor';
 
 		$this->userEntityStub->method('getVip')->willReturn([
-			[$moduleName => $unitId]
+			['UID' => $UID, 'vip_name' => $moduleName, 'unit_id' => (string) $unitId]
 		]);
 
 		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
@@ -323,7 +323,7 @@ class AclHelperTest extends TestCase
 		$moduleName = 'testModule_viewer';
 
 		$this->userEntityStub->method('getVip')->willReturn([
-			[$moduleName => $unitId]
+			['UID' => $UID, 'vip_name' => $moduleName, 'unit_id' => (string) $unitId]
 		]);
 
 		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
@@ -344,7 +344,7 @@ class AclHelperTest extends TestCase
 		$moduleName = 'testModule_viewer';
 
 		$this->userEntityStub->method('getVip')->willReturn([
-			[$moduleName => 301]
+			['UID' => $UID, 'vip_name' => $moduleName, 'unit_id' => '301']
 		]);
 
 		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
@@ -383,7 +383,7 @@ class AclHelperTest extends TestCase
 		$moduleName = 'testModule_editor';
 
 		$this->userEntityStub->method('getVip')->willReturn([
-			[$moduleName => 201]
+			['UID' => $UID, 'vip_name' => $moduleName, 'unit_id' => '201']
 		]);
 
 		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
@@ -408,6 +408,44 @@ class AclHelperTest extends TestCase
 
 		$result = $this->aclHelper->hasEditorAccessOnUnit($UID, $unitId, 'testModule');
 		static::assertFalse($result);
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	#[Group('units')]
+	public function testHasEditorAccessOnUnitReturnsFalseForViewerOnSameUnit(): void
+	{
+		$UID = 1;
+		$unitId = 200;
+
+		$this->userEntityStub->method('getVip')->willReturn([
+			['UID' => $UID, 'vip_name' => 'testModule_viewer', 'unit_id' => (string) $unitId]
+		]);
+
+		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
+
+		$result = $this->aclHelper->hasEditorAccessOnUnit($UID, $unitId, 'testModule');
+		static::assertFalse($result);
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	#[Group('units')]
+	public function testHasViewerAccessOnUnitWithStringUnitId(): void
+	{
+		$UID = 1;
+		$unitId = '11111111-1111-4111-8111-111111111111';
+
+		$this->userEntityStub->method('getVip')->willReturn([
+			['UID' => $UID, 'vip_name' => 'testModule_viewer', 'unit_id' => $unitId]
+		]);
+
+		$this->usersServiceStub->method('getUserById')->willReturn($this->userEntityStub);
+
+		$result = $this->aclHelper->hasViewerAccessOnUnit($UID, $unitId, 'testModule');
+		static::assertTrue($result);
 	}
 
 	private function mockConfigValues(): void

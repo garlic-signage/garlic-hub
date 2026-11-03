@@ -51,7 +51,7 @@ class AclValidatorTest extends TestCase
 	private AclValidator $validator;
 	/** @var list<array{module:string, acl:int}> */
 	private array $acl = [];
-	/** @var list<array<string,int>> */
+	/** @var list<array{UID:int,vip_name:string,unit_id:string}> */
 	private array $vip = [];
 
 	protected function setUp(): void
@@ -174,21 +174,21 @@ class AclValidatorTest extends TestCase
 	}
 
 	/**
-	 * @return array<string,array{list<array{module:string,acl:int}>,list<array<string,int>>,array<string,mixed>,array{create:bool,read:bool,edit:bool,share:string}}>
+	 * @return array<string,array{list<array{module:string,acl:int}>,list<array{UID:int,vip_name:string,unit_id:string}>,array<string,mixed>,array{create:bool,read:bool,edit:bool,share:string}}>
 	 */
 	public static function roleProvider(): array
 	{
 		return [
 			'subadmin of the company' => [
-				[['module' => 'mediapool', 'acl' => self::SUBADMIN]], [['mediapool_subadmin' => 4]], [],
+				[['module' => 'mediapool', 'acl' => self::SUBADMIN]], [['UID' => 1, 'vip_name' => 'mediapool_subadmin', 'unit_id' => '4']], [],
 				['create' => true, 'read' => true, 'edit' => true, 'share' => 'company'],
 			],
 			'subadmin of another company' => [
-				[['module' => 'mediapool', 'acl' => self::SUBADMIN]], [['mediapool_subadmin' => 5]], [],
+				[['module' => 'mediapool', 'acl' => self::SUBADMIN]], [['UID' => 1, 'vip_name' => 'mediapool_subadmin', 'unit_id' => '5']], [],
 				['create' => false, 'read' => false, 'edit' => false, 'share' => ''],
 			],
 			'subadmin of the company, on the root level' => [
-				[['module' => 'mediapool', 'acl' => self::SUBADMIN]], [['mediapool_subadmin' => 4]], ['parent_id' => 0],
+				[['module' => 'mediapool', 'acl' => self::SUBADMIN]], [['UID' => 1, 'vip_name' => 'mediapool_subadmin', 'unit_id' => '4']], ['parent_id' => 0],
 				['create' => true, 'read' => true, 'edit' => false, 'share' => 'company'],
 			],
 			'right as subadmin without the right on a company' => [
@@ -196,23 +196,23 @@ class AclValidatorTest extends TestCase
 				['create' => false, 'read' => false, 'edit' => false, 'share' => ''],
 			],
 			'company right without the global right' => [
-				[], [['mediapool_subadmin' => 4]], [],
+				[], [['UID' => 1, 'vip_name' => 'mediapool_subadmin', 'unit_id' => '4']], [],
 				['create' => false, 'read' => false, 'edit' => false, 'share' => ''],
 			],
 			'editor of the directory' => [
-				[['module' => 'mediapool', 'acl' => self::EDITOR]], [['mediapool_editor' => 20]], [],
+				[['module' => 'mediapool', 'acl' => self::EDITOR]], [['UID' => 1, 'vip_name' => 'mediapool_editor', 'unit_id' => '20']], [],
 				['create' => true, 'read' => true, 'edit' => false, 'share' => ''],
 			],
 			'editor of another directory' => [
-				[['module' => 'mediapool', 'acl' => self::EDITOR]], [['mediapool_editor' => 21]], [],
+				[['module' => 'mediapool', 'acl' => self::EDITOR]], [['UID' => 1, 'vip_name' => 'mediapool_editor', 'unit_id' => '21']], [],
 				['create' => false, 'read' => false, 'edit' => false, 'share' => ''],
 			],
 			'viewer of the directory' => [
-				[['module' => 'mediapool', 'acl' => self::VIEWER]], [['mediapool_viewer' => 20]], [],
+				[['module' => 'mediapool', 'acl' => self::VIEWER]], [['UID' => 1, 'vip_name' => 'mediapool_viewer', 'unit_id' => '20']], [],
 				['create' => false, 'read' => true, 'edit' => false, 'share' => ''],
 			],
 			'viewer of another directory' => [
-				[['module' => 'mediapool', 'acl' => self::VIEWER]], [['mediapool_viewer' => 21]], [],
+				[['module' => 'mediapool', 'acl' => self::VIEWER]], [['UID' => 1, 'vip_name' => 'mediapool_viewer', 'unit_id' => '21']], [],
 				['create' => false, 'read' => false, 'edit' => false, 'share' => ''],
 			],
 			'viewer right without the right on a directory' => [
@@ -220,11 +220,11 @@ class AclValidatorTest extends TestCase
 				['create' => false, 'read' => false, 'edit' => false, 'share' => ''],
 			],
 			'editor and viewer of the directory' => [
-				[['module' => 'mediapool', 'acl' => self::EDITOR | self::VIEWER]], [['mediapool_editor' => 20], ['mediapool_viewer' => 20]], [],
+				[['module' => 'mediapool', 'acl' => self::EDITOR | self::VIEWER]], [['UID' => 1, 'vip_name' => 'mediapool_editor', 'unit_id' => '20'], ['UID' => 1, 'vip_name' => 'mediapool_viewer', 'unit_id' => '20']], [],
 				['create' => true, 'read' => true, 'edit' => false, 'share' => ''],
 			],
 			'subadmin who is editor of the directory loses the edit right' => [
-				[['module' => 'mediapool', 'acl' => self::SUBADMIN | self::EDITOR]], [['mediapool_subadmin' => 4], ['mediapool_editor' => 20]], [],
+				[['module' => 'mediapool', 'acl' => self::SUBADMIN | self::EDITOR]], [['UID' => 1, 'vip_name' => 'mediapool_subadmin', 'unit_id' => '4'], ['UID' => 1, 'vip_name' => 'mediapool_editor', 'unit_id' => '20']], [],
 				['create' => true, 'read' => true, 'edit' => false, 'share' => ''],
 			],
 		];
@@ -232,7 +232,7 @@ class AclValidatorTest extends TestCase
 
 	/**
 	 * @param list<array{module:string,acl:int}> $acl
-	 * @param list<array<string,int>> $vip
+	 * @param list<array{UID:int,vip_name:string,unit_id:string}> $vip
 	 * @param array<string,mixed> $directoryChanges
 	 * @param array{create:bool,read:bool,edit:bool,share:string} $expected
 	 */
@@ -280,7 +280,7 @@ class AclValidatorTest extends TestCase
 	public function testNobodyButTheAdminEditsARootDirectory(): void
 	{
 		$this->acl = [['module' => 'mediapool', 'acl' => self::SUBADMIN | self::EDITOR | self::VIEWER]];
-		$this->vip = [['mediapool_subadmin' => 4], ['mediapool_editor' => 20], ['mediapool_viewer' => 20]];
+		$this->vip = [['UID' => 1, 'vip_name' => 'mediapool_subadmin', 'unit_id' => '4'], ['UID' => 1, 'vip_name' => 'mediapool_editor', 'unit_id' => '20'], ['UID' => 1, 'vip_name' => 'mediapool_viewer', 'unit_id' => '20']];
 
 		$permissions = $this->validator->checkDirectoryPermissions(self::ME, $this->directory(['parent_id' => 0]));
 

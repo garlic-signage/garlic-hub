@@ -120,4 +120,24 @@ class UserEntityFactoryTest extends TestCase
 		static::assertNotEmpty($result->getAcl());
 		static::assertEquals($userData['vip'], $result->getVip());
 	}
+
+	/**
+	 * User data cached before the vip was loaded in every edition has no vip key.
+	 */
+	#[Group('units')]
+	public function testCreateWithoutVipInCachedData(): void
+	{
+		$userData = [
+			'main' => ['id' => 1, 'name' => 'Edge User'],
+			'acl' => ['permissions' => ['read']],
+		];
+
+		$this->configStub
+			->method('getEdition')
+			->willReturn(Config::PLATFORM_EDITION_EDGE);
+
+		$result = $this->factory->create($userData);
+
+		static::assertSame([], $result->getVip());
+	}
 }

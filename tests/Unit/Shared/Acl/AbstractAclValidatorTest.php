@@ -57,7 +57,7 @@ class AbstractAclValidatorTest extends TestCase
 			['moduleadmin', 'testModule', 'GlobalACLs', (string) self::MODULEADMIN],
 		]);
 		// the user has the bits for the module of the validator, the company 5 as sub admin and nothing in other modules
-		$user = new UserEntity([], [], [], [], [['module' => $module, 'acl' => $acl], ['module' => 'other', 'acl' => 15]], [['testModule_subadmin' => 5]]);
+		$user = new UserEntity([], [], [], [], [['module' => $module, 'acl' => $acl], ['module' => 'other', 'acl' => 15]], [['UID' => 1, 'vip_name' => 'testModule_subadmin', 'unit_id' => '5']]);
 		$users = $this->createStub(UsersService::class);
 		$users->method('getUserById')->willReturn($user);
 

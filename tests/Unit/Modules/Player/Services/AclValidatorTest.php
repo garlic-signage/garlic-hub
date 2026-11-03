@@ -48,7 +48,7 @@ class AclValidatorTest extends TestCase
 	private UsersService&Stub $userService;
 	/** @var list<array{module:string, acl:int}> */
 	private array $acl = [];
-	/** @var list<array<string,int>> */
+	/** @var list<array{UID:int,vip_name:string,unit_id:string}> */
 	private array $vip = [];
 
 	protected function setUp(): void
@@ -146,7 +146,7 @@ class AclValidatorTest extends TestCase
 	public function testTheSubAdminIsAdminOfHisCompanyInTheEnterpriseEditionOnly(string $edition, int $company, bool $expected): void
 	{
 		$this->acl = [['module' => 'player', 'acl' => self::SUBADMIN]];
-		$this->vip = [['player_subadmin' => $company]];
+		$this->vip = [['UID' => 1, 'vip_name' => 'player_subadmin', 'unit_id' => (string) $company]];
 
 		static::assertSame($expected, $this->validator($edition)->isPlayerEditable(self::ME, $this->player()));
 		static::assertSame($expected, $this->validator($edition)->isAllowedToDeletePlayer(self::ME, $this->player()));
@@ -162,16 +162,16 @@ class AclValidatorTest extends TestCase
 	}
 
 	/**
-	 * @return array<string,array{list<array{module:string,acl:int}>,list<array<string,int>>,bool,bool}> the rights, the result for editing and for deleting
+	 * @return array<string,array{list<array{module:string,acl:int}>,list<array{UID:int,vip_name:string,unit_id:string}>,bool,bool}> the rights, the result for editing and for deleting
 	 */
 	public static function editors(): array
 	{
 		return [
-			'editor of the player'          => [[['module' => 'player', 'acl' => self::EDITOR]], [['player_editor' => 20]], true, false],
-			'editor of another player'      => [[['module' => 'player', 'acl' => self::EDITOR]], [['player_editor' => 21]], false, false],
+			'editor of the player'          => [[['module' => 'player', 'acl' => self::EDITOR]], [['UID' => 1, 'vip_name' => 'player_editor', 'unit_id' => '20']], true, false],
+			'editor of another player'      => [[['module' => 'player', 'acl' => self::EDITOR]], [['UID' => 1, 'vip_name' => 'player_editor', 'unit_id' => '21']], false, false],
 			'editor right on no player'     => [[['module' => 'player', 'acl' => self::EDITOR]], [], false, false],
-			'right on the player, no editor' => [[], [['player_editor' => 20]], false, false],
-			'viewer of the player'          => [[['module' => 'player', 'acl' => self::VIEWER]], [['player_viewer' => 20]], false, false],
+			'right on the player, no editor' => [[], [['UID' => 1, 'vip_name' => 'player_editor', 'unit_id' => '20']], false, false],
+			'viewer of the player'          => [[['module' => 'player', 'acl' => self::VIEWER]], [['UID' => 1, 'vip_name' => 'player_viewer', 'unit_id' => '20']], false, false],
 		];
 	}
 
@@ -179,7 +179,7 @@ class AclValidatorTest extends TestCase
 	 * An editor of a player changes it, but does not delete it.
 	 *
 	 * @param list<array{module:string,acl:int}> $acl
-	 * @param list<array<string,int>> $vip
+	 * @param list<array{UID:int,vip_name:string,unit_id:string}> $vip
 	 */
 	#[Group('units')]
 	#[DataProvider('editors')]
