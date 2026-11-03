@@ -121,7 +121,7 @@ class AclGrantServiceTest extends ContainerTestCase
 		$this->expectExceptionMessage('user_without_role');
 		try
 		{
-			$this->service->grantUnit(1, 2, 'player', AclSections::EDITOR, 1);
+			$this->service->setUnitRole(1, 2, 'player', 1, AclSections::EDITOR);
 		}
 		finally
 		{
@@ -134,7 +134,7 @@ class AclGrantServiceTest extends ContainerTestCase
 		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
 		static::assertFalse($this->aclHelper->hasEditorAccessOnUnit(2, 1, 'player'));
 
-		$this->service->grantUnit(1, 2, 'player', AclSections::EDITOR, 1);
+		$this->service->setUnitRole(1, 2, 'player', 1, AclSections::EDITOR);
 
 		static::assertTrue($this->aclHelper->hasEditorAccessOnUnit(2, 1, 'player'));
 		static::assertFalse($this->aclHelper->hasEditorAccessOnUnit(2, 2, 'player'));
@@ -144,8 +144,8 @@ class AclGrantServiceTest extends ContainerTestCase
 	{
 		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
 
-		$this->service->grantUnit(1, 2, 'player', AclSections::EDITOR, 1);
-		$this->service->grantUnit(1, 2, 'player', AclSections::EDITOR, '1');
+		$this->service->setUnitRole(1, 2, 'player', 1, AclSections::EDITOR);
+		$this->service->setUnitRole(1, 2, 'player', '1', AclSections::EDITOR);
 
 		static::assertSame(1, $this->countVips(2));
 	}
@@ -155,14 +155,14 @@ class AclGrantServiceTest extends ContainerTestCase
 		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
 
 		$this->expectException(NotFoundException::class);
-		$this->service->grantUnit(1, 2, 'player', AclSections::EDITOR, 99);
+		$this->service->setUnitRole(1, 2, 'player', 99, AclSections::EDITOR);
 	}
 
 	public function testOnlyEditorsAndViewersHaveUnits(): void
 	{
 		$this->expectException(TranslatableModuleException::class);
 		$this->expectExceptionMessage('role_not_available');
-		$this->service->grantUnit(1, 2, 'player', AclSections::MODULEADMIN, 1);
+		$this->service->setUnitRole(1, 2, 'player', 1, AclSections::MODULEADMIN);
 	}
 
 	public function testUserWithoutRightsMayNotGrantAUnit(): void
@@ -170,16 +170,16 @@ class AclGrantServiceTest extends ContainerTestCase
 		$this->service->setRole(1, 3, 'player', AclSections::VIEWER, true);
 
 		$this->expectException(AccessDeniedException::class);
-		$this->service->grantUnit(2, 3, 'player', AclSections::VIEWER, 1);
+		$this->service->setUnitRole(2, 3, 'player', 1, AclSections::VIEWER);
 	}
 
 	public function testRevokingAUnit(): void
 	{
 		$this->service->setRole(1, 2, 'player', AclSections::VIEWER, true);
-		$this->service->grantUnit(1, 2, 'player', AclSections::VIEWER, 1);
-		$this->service->grantUnit(1, 2, 'player', AclSections::VIEWER, 2);
+		$this->service->setUnitRole(1, 2, 'player', 1, AclSections::VIEWER);
+		$this->service->setUnitRole(1, 2, 'player', 2, AclSections::VIEWER);
 
-		$this->service->revokeUnit(1, 2, 'player', AclSections::VIEWER, 1);
+		$this->service->setUnitRole(1, 2, 'player', 1, null);
 
 		static::assertFalse($this->aclHelper->hasViewerAccessOnUnit(2, 1, 'player'));
 		static::assertTrue($this->aclHelper->hasViewerAccessOnUnit(2, 2, 'player'));
@@ -190,8 +190,8 @@ class AclGrantServiceTest extends ContainerTestCase
 	{
 		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
 		$this->service->setRole(1, 2, 'player', AclSections::VIEWER, true);
-		$this->service->grantUnit(1, 2, 'player', AclSections::EDITOR, 1);
-		$this->service->grantUnit(1, 2, 'player', AclSections::VIEWER, 2);
+		$this->service->setUnitRole(1, 2, 'player', 1, AclSections::EDITOR);
+		$this->service->setUnitRole(1, 2, 'player', 2, AclSections::VIEWER);
 
 		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, false);
 
@@ -219,9 +219,9 @@ class AclGrantServiceTest extends ContainerTestCase
 	{
 		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
 		$this->service->setRole(1, 3, 'player', AclSections::VIEWER, true);
-		$this->service->grantUnit(1, 2, 'player', AclSections::EDITOR, 1);
-		$this->service->grantUnit(1, 3, 'player', AclSections::VIEWER, 1);
-		$this->service->grantUnit(1, 3, 'player', AclSections::VIEWER, 2);
+		$this->service->setUnitRole(1, 2, 'player', 1, AclSections::EDITOR);
+		$this->service->setUnitRole(1, 3, 'player', 1, AclSections::VIEWER);
+		$this->service->setUnitRole(1, 3, 'player', 2, AclSections::VIEWER);
 
 		$users = $this->service->findUsersOfUnit(1, 'player', 1);
 
@@ -232,6 +232,41 @@ class AclGrantServiceTest extends ContainerTestCase
 	{
 		$this->expectException(ModuleException::class);
 		$this->service->findUsersOfUnit(1, 'playlists', 1);
+	}
+
+	public function testANewRoleOnAUnitReplacesTheOtherOne(): void
+	{
+		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
+		$this->service->setRole(1, 2, 'player', AclSections::VIEWER, true);
+		$this->service->setUnitRole(1, 2, 'player', 1, AclSections::VIEWER);
+
+		$this->service->setUnitRole(1, 2, 'player', 1, AclSections::EDITOR);
+
+		static::assertSame(1, $this->countVips(2));
+		static::assertTrue($this->aclHelper->hasEditorAccessOnUnit(2, 1, 'player'));
+		static::assertFalse($this->aclHelper->hasViewerAccessOnUnit(2, 1, 'player'));
+	}
+
+	public function testTheShareDialogOfAUnit(): void
+	{
+		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
+		$this->service->setRole(1, 2, 'player', AclSections::VIEWER, true);
+		$this->service->setRole(1, 3, 'player', AclSections::VIEWER, true);
+		$this->service->setUnitRole(1, 3, 'player', 1, AclSections::VIEWER);
+
+		$shares = $this->service->findUnitShares(1, 'player', 1);
+
+		static::assertSame([AclSections::EDITOR, AclSections::VIEWER], $shares['roles']);
+		static::assertSame([
+			['UID' => 2, 'username' => 'anna', 'roles' => [AclSections::EDITOR, AclSections::VIEWER], 'role' => null],
+			['UID' => 3, 'username' => 'bernd', 'roles' => [AclSections::VIEWER], 'role' => AclSections::VIEWER],
+		], $shares['users']);
+	}
+
+	public function testUserWithoutRightsMayNotOpenTheShareDialog(): void
+	{
+		$this->expectException(AccessDeniedException::class);
+		$this->service->findUnitShares(2, 'player', 1);
 	}
 
 	private function aclOf(int $UID, string $module): int

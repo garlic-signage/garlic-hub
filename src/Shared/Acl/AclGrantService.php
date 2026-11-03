@@ -41,6 +41,7 @@ use Throwable;
  * - A sub admin (not in Edge) grants editor and viewer, for users and units of his companies.
  * - Nobody changes his own rights.
  * - Units are granted only to users who have the role bit already.
+ * - A user has at most one role on a unit, an editor may use it, too.
  */
 class AclGrantService
 {
@@ -114,38 +115,90 @@ class AclGrantService
 	}
 
 	/**
+	 * Sets the role of the user on the unit, null removes it. An editor may use the unit too,
+	 * so a user has at most one role on a unit: the new role replaces the other one.
+	 *
 	 * @throws AccessDeniedException
 	 * @throws NotFoundException
 	 * @throws TranslatableModuleException
 	 * @throws Throwable
 	 */
-	public function grantUnit(int $granterUID, int $UID, string $module, AclSections $role, int|string $unitId): void
+	public function setUnitRole(int $granterUID, int $UID, string $module, int|string $unitId, ?AclSections $role): void
 	{
-		$this->assertMayGrantOnUnit($granterUID, $UID, $module, $role, $unitId);
+		$unit        = $this->findUnit($module, $unitId);
+		$companyIds  = [$this->findCompanyOfUser($UID), $unit['company_id']];
+		$unitRoles   = $this->getUnitRoles($module);
+		if ($role !== null && !in_array($role, $unitRoles, true))
+			throw new TranslatableModuleException(self::MODULE_NAME, 'role_not_available', ['module' => $module, 'role' => $role->value]);
 
-		$hasRole = ($this->userAclRepository->findAcl($UID, $module) & $this->aclHelper->getAclBit($module, $role)) > 0;
-		if (!$hasRole)
+		foreach ($unitRoles as $unitRole)
+		{
+			$this->assertMayGrant($granterUID, $UID, $module, $unitRole, $companyIds);
+		}
+
+		if ($role !== null && ($this->userAclRepository->findAcl($UID, $module) & $this->aclHelper->getAclBit($module, $role)) === 0)
 			throw new TranslatableModuleException(self::MODULE_NAME, 'user_without_role', ['UID' => $UID, 'role' => $role->value]);
 
-		$vipName = $this->aclHelper->getVipName($module, $role);
-		if ($this->userVipRepository->hasUnit($UID, $vipName, (string) $unitId))
-			return;
+		$this->transactions->begin();
+		try
+		{
+			foreach ($unitRoles as $unitRole)
+			{
+				$this->userVipRepository->deleteBy(['UID' => $UID, 'vip_name' => $this->aclHelper->getVipName($module, $unitRole), 'unit_id' => (string) $unitId]);
+			}
 
-		$this->writeVip($UID, fn() => $this->userVipRepository->insert(['UID' => $UID, 'vip_name' => $vipName, 'unit_id' => (string) $unitId]));
+			if ($role !== null)
+				$this->userVipRepository->insert(['UID' => $UID, 'vip_name' => $this->aclHelper->getVipName($module, $role), 'unit_id' => (string) $unitId]);
+
+			$this->usersService->invalidateCache($UID);
+			$this->transactions->commit();
+		}
+		catch (Throwable $e)
+		{
+			$this->transactions->rollBack();
+			throw $e;
+		}
 	}
 
 	/**
+	 * Everything the share dialog of a unit needs: the roles the granter may give on the unit
+	 * and every user who has one of them as bit, with his roles and his current role on the unit.
+	 *
+	 * @return array{roles: list<AclSections>, users: list<array{UID:int, username:string, roles:list<AclSections>, role:?AclSections}>}
 	 * @throws AccessDeniedException
 	 * @throws NotFoundException
-	 * @throws TranslatableModuleException
-	 * @throws Throwable
+	 * @throws ModuleException
+	 * @throws CoreException
+	 * @throws Exception
 	 */
-	public function revokeUnit(int $granterUID, int $UID, string $module, AclSections $role, int|string $unitId): void
+	public function findUnitShares(int $granterUID, string $module, int|string $unitId): array
 	{
-		$this->assertMayGrantOnUnit($granterUID, $UID, $module, $role, $unitId);
+		$unit  = $this->findUnit($module, $unitId);
+		$roles = array_values(array_filter(
+			$this->getUnitRoles($module),
+			fn(AclSections $role) => $this->mayGrant($granterUID, $module, $role, [$unit['company_id']])
+		));
+		if ($roles === [])
+			throw new AccessDeniedException(self::MODULE_NAME, 'rights_not_grantable', ['module' => $module]);
 
-		$vipName = $this->aclHelper->getVipName($module, $role);
-		$this->writeVip($UID, fn() => $this->userVipRepository->deleteBy(['UID' => $UID, 'vip_name' => $vipName, 'unit_id' => (string) $unitId]));
+		$current = [];
+		foreach ($this->findUsersOfUnit($granterUID, $module, $unitId) as $row)
+		{
+			$current[$row['UID']] = $row['role'];
+		}
+
+		$users = [];
+		foreach ($roles as $role)
+		{
+			foreach ($this->findUsersWithRole($granterUID, $module, $role) as $user)
+			{
+				$users[$user['UID']] ??= ['UID' => $user['UID'], 'username' => $user['username'], 'roles' => [], 'role' => $current[$user['UID']] ?? null];
+				$users[$user['UID']]['roles'][] = $role;
+			}
+		}
+		usort($users, fn(array $a, array $b) => strcasecmp($a['username'], $b['username']));
+
+		return ['roles' => $roles, 'users' => $users];
 	}
 
 	/**
@@ -182,10 +235,9 @@ class AclGrantService
 	{
 		$unit  = $this->findUnit($module, $unitId);
 		$roles = [];
-		$moduleRoles = $this->getModuleRoles($module);
-		foreach (self::UNIT_ROLES as $role)
+		foreach ($this->getUnitRoles($module) as $role)
 		{
-			if (in_array($role, $moduleRoles, true) && $this->mayGrant($granterUID, $module, $role, [$unit['company_id']]))
+			if ($this->mayGrant($granterUID, $module, $role, [$unit['company_id']]))
 				$roles[$this->aclHelper->getVipName($module, $role)] = $role;
 		}
 
@@ -221,18 +273,13 @@ class AclGrantService
 	}
 
 	/**
-	 * @throws AccessDeniedException
-	 * @throws NotFoundException
-	 * @throws TranslatableModuleException
-	 * @throws ModuleException
-	 * @throws CoreException
-	 * @throws Exception
+	 * Editor and viewer, as far as the module knows them.
+	 *
+	 * @return list<AclSections>
 	 */
-	private function assertMayGrantOnUnit(int $granterUID, int $UID, string $module, AclSections $role, int|string $unitId): void
+	private function getUnitRoles(string $module): array
 	{
-		$this->assertUnitRole($module, $role);
-		$unit = $this->findUnit($module, $unitId);
-		$this->assertMayGrant($granterUID, $UID, $module, $role, [$this->findCompanyOfUser($UID), $unit['company_id']]);
+		return array_values(array_filter($this->getModuleRoles($module), fn(AclSections $role) => in_array($role, self::UNIT_ROLES, true)));
 	}
 
 	/**
@@ -338,25 +385,5 @@ class AclGrantService
 			throw new NotFoundException(self::MODULE_NAME, 'user_not_found', ['UID' => $UID]);
 
 		return (int) $main['company_id'];
-	}
-
-	/**
-	 * @param callable():mixed $write
-	 * @throws Throwable
-	 */
-	private function writeVip(int $UID, callable $write): void
-	{
-		$this->transactions->begin();
-		try
-		{
-			$write();
-			$this->usersService->invalidateCache($UID);
-			$this->transactions->commit();
-		}
-		catch (Throwable $e)
-		{
-			$this->transactions->rollBack();
-			throw $e;
-		}
 	}
 }

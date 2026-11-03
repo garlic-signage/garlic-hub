@@ -122,6 +122,24 @@ abstract class AbstractDatatablePreparer
 	}
 
 	/**
+	 * The button which opens the share dialog of a unit (/js/core/UnitShareDialog.js).
+	 * It is shown to admins only, the server checks the rights again when the dialog loads.
+	 *
+	 * @return array{LANG_ACTION: string, ACTION_ID: string|int, ACTION_NAME: string}
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	protected function formatShareAction(string|int $unitId): array
+	{
+		return $this->prepareService->getBodyPreparer()->formatAction(
+			$this->translator->translate('share_unit', 'users'),
+			'share-unit',
+			$unitId,
+			'share share-unit'
+		);
+	}
+
+	/**
 	 * @param list<array<string,mixed>> $currentFilterResults
 	 * @param list<HeaderField> $fields
 	 * @return list<array<string,mixed>>

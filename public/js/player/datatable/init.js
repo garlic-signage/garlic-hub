@@ -23,9 +23,11 @@ import {AutocompleteFactory}      from "../../core/AutocompleteFactory.js";
 import {FlashMessageHandler} from "../../core/FlashMessageHandler.js";
 import {PlayerActionsContextMenuFactory} from "./PlayerActionsContextMenuFactory.js";
 import {PreviewOverlay} from "./PreviewOverlay.js";
+import {UnitShareDialog} from "../../core/UnitShareDialog.js";
 
 document.addEventListener("DOMContentLoaded", function()
 {
+	UnitShareDialog.bind("player");
 	const playerService       = new PlayerService(new FetchClient())
 	const flashMessageHandler = new FlashMessageHandler("body");
 	const autocompleteFactory = new AutocompleteFactory();

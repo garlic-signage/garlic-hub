@@ -69,7 +69,7 @@ class ShowDatatableEnterpriseTest extends PlayerControllerTestCase
 
 		$orchestrator = new Orchestrator(
 			new DatatableBuilder($this->container->get(BuildService::class), $parameters, $acl, $translator),
-			new DatatablePreparer($this->container->get(PrepareService::class), $parameters, $this->container->get(TimeUnitsCalculator::class), $translator, new DateTimeZone('UTC')),
+			new DatatablePreparer($this->container->get(PrepareService::class), $acl, $parameters, $this->container->get(TimeUnitsCalculator::class), $translator, new DateTimeZone('UTC')),
 			new PlayerDatatableService(
 				new PlayerFilterDefinition($conditions, $this->connection->getDatabasePlatform()),
 				new DatatableQuery($this->connection),
@@ -157,7 +157,7 @@ class ShowDatatableEnterpriseTest extends PlayerControllerTestCase
 		$build->createDatatableField('status', false);
 		$build->createDatatableField('firmware', false);
 		$parameters = new Parameters($this->container->get(Sanitizer::class), $this->container->get(Session::class));
-		$preparer   = new DatatablePreparer($this->container->get(PrepareService::class), $parameters, $this->container->get(TimeUnitsCalculator::class), $this->container->get(Translator::class), new DateTimeZone('UTC'));
+		$preparer   = new DatatablePreparer($this->container->get(PrepareService::class), $this->container->get(AclValidator::class), $parameters, $this->container->get(TimeUnitsCalculator::class), $this->container->get(Translator::class), new DateTimeZone('UTC'));
 		$players = [
 			['player_id' => 1, 'status' => 2, 'firmware' => 'v1'],
 			['player_id' => 2, 'status' => 1, 'firmware' => 'v2'],

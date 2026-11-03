@@ -72,7 +72,8 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	 */
 	public function prepareTableBody(array $currentFilterResults, array $fields, int $currentUID): array
 	{
-		$body = [];
+		$body     = [];
+		$canShare = $this->aclValidator->isSimpleAdmin($currentUID);
 		foreach($currentFilterResults as $playlist)
 		{
 			$list            = [];
@@ -139,6 +140,9 @@ class DatatablePreparer extends AbstractDatatablePreparer
 				}
 
 			}
+			if ($canShare)
+				$list['has_action'][] = $this->formatShareAction((string) $playlist['playlist_id']);
+
 			$body[] = $list;
 		}
 

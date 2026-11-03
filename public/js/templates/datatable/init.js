@@ -22,9 +22,11 @@ import {TemplatesService}  from "../TemplatesService.js";
 import {FetchClient}       from "../../core/FetchClient.js";
 import {TemplatesActionsContextMenuFactory} from "./TemplatesActionsContextMenuFactory.js";
 import {FlashMessageHandler} from "../../core/FlashMessageHandler.js";
+import {UnitShareDialog} from "../../core/UnitShareDialog.js";
 
 document.addEventListener("DOMContentLoaded", function()
 {
+	UnitShareDialog.bind("templates");
 	const templatesService                   = new TemplatesService(new FetchClient());
 	const templatesActionsContextMenuFactory = new TemplatesActionsContextMenuFactory(
 		new FlashMessageHandler(),

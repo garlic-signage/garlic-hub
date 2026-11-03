@@ -49,6 +49,7 @@ use App\Modules\Users\Controller\ShowAdminController;
 use App\Modules\Users\Controller\ShowInitialAdminController;
 use App\Modules\Users\Controller\UsersController;
 use App\Modules\Users\Controller\UserTokenController;
+use App\Modules\Users\Controller\UnitSharesController;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -186,6 +187,8 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 
 	$group->get('/users/find/{username}', resolve([UsersController::class, 'findByName'], $container));
 	$group->delete('/users', resolve([UsersController::class, 'delete'], $container));
+	$group->get('/acl/{module:\w+}/units/{unit_id:[\w-]+}', resolve([UnitSharesController::class, 'show'], $container));
+	$group->put('/acl/{module:\w+}/units/{unit_id:[\w-]+}', resolve([UnitSharesController::class, 'update'], $container));
 
 	$group->post('/users/tokens', resolve([UserTokenController::class, 'refresh'], $container));
 	$group->delete('/users/tokens', resolve([UserTokenController::class, 'delete'], $container));

@@ -93,7 +93,7 @@ class AclGrantServiceSubAdminTest extends TestCase
 		$userVipRepository->expects($this->once())->method('insert')->with(['UID' => 2, 'vip_name' => 'player_editor', 'unit_id' => '20']);
 		$this->userVipRepository = $userVipRepository;
 
-		$this->service(Config::PLATFORM_EDITION_ENTERPRISE)->grantUnit(1, 2, 'player', AclSections::EDITOR, 20);
+		$this->service(Config::PLATFORM_EDITION_ENTERPRISE)->setUnitRole(1, 2, 'player', 20, AclSections::EDITOR);
 	}
 
 	#[Group('units')]
@@ -107,7 +107,7 @@ class AclGrantServiceSubAdminTest extends TestCase
 		$this->userVipRepository = $userVipRepository;
 
 		$this->expectException(AccessDeniedException::class);
-		$this->service(Config::PLATFORM_EDITION_ENTERPRISE)->grantUnit(1, 2, 'player', AclSections::EDITOR, 30);
+		$this->service(Config::PLATFORM_EDITION_ENTERPRISE)->setUnitRole(1, 2, 'player', 30, AclSections::EDITOR);
 	}
 
 	#[Group('units')]

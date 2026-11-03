@@ -21,9 +21,11 @@ import {CreateContextMenu} from "./CreateContextMenu.js";
 import {PlaylistsActions}  from "./PlaylistsActions.js";
 import {PlaylistsService}  from "../compose/standard/playlists/PlaylistsService.js";
 import {FetchClient}       from "../../core/FetchClient.js";
+import {UnitShareDialog} from "../../core/UnitShareDialog.js";
 
 document.addEventListener("DOMContentLoaded", function()
 {
+	UnitShareDialog.bind("playlists");
 
  	const createContextMenu = new CreateContextMenu(
 		document.getElementById("createUnitAction"),

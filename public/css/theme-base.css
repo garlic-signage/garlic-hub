@@ -178,6 +178,14 @@ dialog footer
 .dialog-footer button {padding: 5px 10px; font-size: 14px; cursor: pointer;}
 dialog fieldset {background-color: unset; border:0;}
 dialog .close-button {color: #fff;}
+/* the share dialog of a unit (/js/core/UnitShareDialog.js): a compact list, not a datatable */
+dialog.unit-share {width: min(28rem, 92vw); padding: 0; border: 1px solid var(--gh-secondary-color); border-radius: var(--gh-border-radius);}
+.unit-share .unit-share-filter {display: block; width: calc(100% - 1.5rem); margin: 0.75rem; box-sizing: border-box;}
+.unit-share .unit-share-users {list-style: none; margin: 0; padding: 0 0.75rem 0.75rem; max-height: 60vh; overflow-y: auto;}
+.unit-share .unit-share-users li {display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.35rem 0.5rem; border-left: 3px solid var(--gh-third-color);}
+.unit-share .unit-share-users li:nth-child(odd) {background-color: var(--gh-primary-bgcolor);}
+.unit-share .unit-share-users label {overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
+.unit-share .unit-share-empty {margin: 1rem 0.75rem;}
 
 
 main{flex: 1; margin:1em; position:relative;}

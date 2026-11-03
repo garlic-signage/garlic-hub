@@ -152,6 +152,17 @@ class ShowDatatableControllerTest extends PlaylistsControllerTestCase
 		static::assertSame([1, 4], $deletable);
 	}
 
+	public function testOnlyTheAdminSeesTheShareButton(): void
+	{
+		$this->actingAs(1);
+		$actions = array_column($this->list()->getTemplateData()['elements_results'][0]['has_action'] ?? [], 'ACTION_NAME');
+		static::assertContains('share-unit', $actions);
+
+		$this->actingAs(2);
+		$actions = array_column($this->list()->getTemplateData()['elements_results'][0]['has_action'] ?? [], 'ACTION_NAME');
+		static::assertNotContains('share-unit', $actions);
+	}
+
 	public function testAPlaylistOfAPlayerCanNotBeDeleted(): void
 	{
 		$this->actingAs(1);

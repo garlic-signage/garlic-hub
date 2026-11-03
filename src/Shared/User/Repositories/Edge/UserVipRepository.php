@@ -43,14 +43,6 @@ class UserVipRepository extends SqlBase
 	}
 
 	/**
-	 * @throws Exception
-	 */
-	public function hasUnit(int $UID, string $vipName, string $unitId): bool
-	{
-		return $this->findOneValueBy('UID', ['UID' => $UID, 'vip_name' => $vipName, 'unit_id' => $unitId]) !== '';
-	}
-
-	/**
 	 * @return list<string>
 	 * @throws Exception
 	 */

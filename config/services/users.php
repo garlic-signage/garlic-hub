@@ -19,6 +19,8 @@
 */
 declare(strict_types=1);
 
+use App\Modules\Users\Controller\UnitSharesController;
+use App\Shared\Acl\AclGrantService;
 use App\Framework\Controller\JsonResponseHandler;
 use App\Shared\Acl\AclHelper;
 use App\Framework\Config\Config;
@@ -102,6 +104,15 @@ $dependencies[UsersController::class] = DI\factory(function (ContainerInterface 
 		$container->get(UsersDatatableService::class),
 		$container->get(UsersAdminService::class),
 		$container->get(Parameters::class),
+		$container->get(JsonResponseHandler::class)
+	);
+});
+$dependencies[UnitSharesController::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new UnitSharesController(
+		$container->get(AclGrantService::class),
+		$container->get(UserSession::class),
+		$container->get(Translator::class),
 		$container->get(JsonResponseHandler::class)
 	);
 });
