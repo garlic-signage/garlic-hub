@@ -95,7 +95,7 @@ class ShowDatatableControllerTest extends PlayerControllerTestCase
 
 		static::assertSame('player/datatable', $this->list()->getTemplate());
 		static::assertSame(['last_access', 'player_name', 'model', 'playlist_id'], array_column($data['elements_result_header'], 'CONTROL_NAME'));
-		static::assertSame(['LANG_ASSIGN_PLAYLIST', 'LANG_UNASSIGN_PLAYLIST', 'LANG_GOTO_PLAYLIST', 'LANG_PUSH_PLAYLIST', 'LANG_PREVIEW', 'LANG_PLAYER_DELETE', 'LANG_PLAYER_DELETE_CONFIRM'], array_keys($data['player_actions_contextmenu']));
+		static::assertSame(['LANG_ASSIGN_PLAYLIST', 'LANG_UNASSIGN_PLAYLIST', 'LANG_GOTO_PLAYLIST', 'LANG_PUSH_PLAYLIST', 'LANG_PREVIEW', 'LANG_SHARE', 'LANG_PLAYER_DELETE', 'LANG_PLAYER_DELETE_CONFIRM'], array_keys($data['player_actions_contextmenu']));
 		foreach ($data['player_actions_contextmenu'] as $key => $text)
 			static::assertNotSame('', $text, $key);
 	}

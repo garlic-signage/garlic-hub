@@ -29,7 +29,6 @@ use App\Framework\Utils\Datatable\PrepareService;
 use App\Framework\Utils\Datatable\Results\HeaderField;
 use App\Framework\Utils\Datatable\TimeUnitsCalculator;
 use App\Modules\Player\Enums\PlayerStatus;
-use App\Modules\Player\Services\AclValidator;
 use DateMalformedStringException;
 use DateTime;
 use DateTimeZone;
@@ -49,7 +48,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	 * @param DateTimeZone|null $databaseTimezone the zone of the times which the database writes itself (last_access):
 	 *                          SQLite writes UTC, MariaDB the zone of its server, which is that of PHP (null)
 	 */
-	public function __construct(PrepareService $prepareService, private readonly AclValidator $aclValidator, Parameters $parameters, TimeUnitsCalculator $timeUnitsCalculator, Translator $translator, private readonly ?DateTimeZone $databaseTimezone = null)
+	public function __construct(PrepareService $prepareService, Parameters $parameters, TimeUnitsCalculator $timeUnitsCalculator, Translator $translator, private readonly ?DateTimeZone $databaseTimezone = null)
 	{
 		$this->timeUnitsCalculator = $timeUnitsCalculator;
 
@@ -69,8 +68,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	 */
 	public function prepareTableBody(array $currentFilterResults, array $fields, int $currentUID): array
 	{
-		$body     = [];
-		$canShare = $this->aclValidator->isSimpleAdmin($currentUID);
+		$body = [];
 		foreach($currentFilterResults as $player)
 		{
 			$list            = [];
@@ -147,8 +145,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 				(string) $player['player_id'],
 				'three-dots player-contextmenu',
 			);
-			if ($canShare)
-				$list['has_action'][] = $this->formatShareAction((string) $player['player_id']);
+
 
 			$body[] = $list;
 		}
@@ -169,6 +166,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 			'LANG_GOTO_PLAYLIST' => $this->translator->translate('goto_playlist', 'player'),
 			'LANG_PUSH_PLAYLIST' => $this->translator->translate('push_playlist', 'player'),
 			'LANG_PREVIEW' => $this->translator->translate('preview', 'player'),
+			'LANG_SHARE' => $this->translator->translate('share_unit', 'users'),
 			'LANG_PLAYER_DELETE' => $this->translator->translate('delete', 'main'),
 			'LANG_PLAYER_DELETE_CONFIRM' => $this->translator->translate('delete_confirm', 'player')
 		];

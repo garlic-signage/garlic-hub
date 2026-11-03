@@ -43,6 +43,49 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 		$this->connection->executeStatement("INSERT INTO playlists (playlist_id, UID, playlist_mode, playlist_name) VALUES (4, 2, 'master', 'Frei')");
 	}
 
+	/**
+	 * @return array<string,mixed>
+	 */
+	private function rights(int $playlistId): array
+	{
+		return $this->json($this->controller->determineRights($this->request('GET', body: []), $this->newResponse(), ['playlist_id' => (string) $playlistId]));
+	}
+
+	public function testTheOwnerMayEditAndDeleteAFreePlaylistButNotShareIt(): void
+	{
+		$this->actingAs(2);
+
+		static::assertSame(
+			['success' => true, 'can_edit' => true, 'can_delete' => true, 'can_share' => false, 'playlist_id' => 4, 'playlist_name' => 'Frei'],
+			$this->rights(4)
+		);
+	}
+
+	public function testTheAdminMayShareAPlaylist(): void
+	{
+		$this->actingAs(1);
+
+		static::assertTrue($this->rights(4)['can_share']);
+	}
+
+	public function testAPlaylistInUseCanBeEditedButNotDeleted(): void
+	{
+		$this->actingAs(1);
+
+		$rights = $this->rights(3);
+
+		static::assertTrue($rights['can_edit']);
+		static::assertFalse($rights['can_delete']);
+	}
+
+	public function testAForeignOrUnknownPlaylistAllowsNothingAndIsNoError(): void
+	{
+		$this->actingAs(2);
+
+		static::assertSame(['success' => true, 'can_edit' => false, 'can_delete' => false, 'can_share' => false], $this->rights(2));
+		static::assertSame(['success' => true, 'can_edit' => false, 'can_delete' => false, 'can_share' => false], $this->rights(99));
+	}
+
 	public function testAPlaylistIsDeletedWithItsItems(): void
 	{
 		$this->actingAs(2);

@@ -39,8 +39,8 @@ class UnitShareService extends BaseService
 }
 
 /**
- * The share dialog of a unit, the same for every module. The datatable shows a button with the
- * class share-unit to admins (AbstractDatatablePreparer::formatShareAction()).
+ * The share dialog of a unit, the same for every module. It is opened from the context menu
+ * of a unit, the entry "share" is shown when /async/<module>/acls answers can_share.
  *
  * Every user with the role editor or viewer in the module gets a select: none, viewer or editor,
  * limited to the roles he has. A change is saved at once. An editor may use the unit, too.
@@ -60,21 +60,23 @@ export class UnitShareDialog
 		this.#flashMessageHandler = flashMessageHandler;
 	}
 
-	/**
-	 * One line in the init.js of a module: UnitShareDialog.bind("player");
-	 */
-	static bind(module)
+	static create(module)
 	{
-		const dialog = new UnitShareDialog(module, new UnitShareService(new FetchClient()), new FlashMessageHandler());
-		document.addEventListener("click", async (event) =>
-		{
-			const button = event.target.closest(".share-unit");
-			if (button === null)
-				return;
+		return new UnitShareDialog(module, new UnitShareService(new FetchClient()), new FlashMessageHandler());
+	}
 
-			event.preventDefault();
-			await dialog.open(button.dataset.actionId);
-		});
+	/**
+	 * The entry of a context menu: removed without the right, otherwise it opens the dialog.
+	 */
+	attachTo(menuItem, unitId, canShare)
+	{
+		if (!canShare)
+		{
+			menuItem.remove();
+			return;
+		}
+
+		menuItem.addEventListener("click", () => this.open(unitId));
 	}
 
 	async open(unitId)

@@ -161,6 +161,27 @@ class AclGrantService
 	}
 
 	/**
+	 * For the context menu of a unit: may the user open the share dialog?
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 */
+	public function canShareUnit(int $granterUID, string $module, int|string $unitId): bool
+	{
+		if (!isset($this->unitProviders[$module]))
+			return false;
+
+		try
+		{
+			return $this->findGrantableUnitRoles($granterUID, $module, $unitId) !== [];
+		}
+		catch (NotFoundException)
+		{
+			return false;
+		}
+	}
+
+	/**
 	 * Everything the share dialog of a unit needs: the roles the granter may give on the unit
 	 * and every user who has one of them as bit, with his roles and his current role on the unit.
 	 *
@@ -173,11 +194,7 @@ class AclGrantService
 	 */
 	public function findUnitShares(int $granterUID, string $module, int|string $unitId): array
 	{
-		$unit  = $this->findUnit($module, $unitId);
-		$roles = array_values(array_filter(
-			$this->getUnitRoles($module),
-			fn(AclSections $role) => $this->mayGrant($granterUID, $module, $role, [$unit['company_id']])
-		));
+		$roles = $this->findGrantableUnitRoles($granterUID, $module, $unitId);
 		if ($roles === [])
 			throw new AccessDeniedException(self::MODULE_NAME, 'rights_not_grantable', ['module' => $module]);
 
@@ -270,6 +287,25 @@ class AclGrantService
 			throw new AccessDeniedException(self::MODULE_NAME, 'rights_not_grantable', ['module' => $module]);
 
 		return $this->userVipRepository->findUnitIds($UID, $this->aclHelper->getVipName($module, $role));
+	}
+
+	/**
+	 * The roles the granter may give on the unit.
+	 *
+	 * @return list<AclSections>
+	 * @throws NotFoundException
+	 * @throws ModuleException
+	 * @throws CoreException
+	 * @throws Exception
+	 */
+	private function findGrantableUnitRoles(int $granterUID, string $module, int|string $unitId): array
+	{
+		$unit = $this->findUnit($module, $unitId);
+
+		return array_values(array_filter(
+			$this->getUnitRoles($module),
+			fn(AclSections $role) => $this->mayGrant($granterUID, $module, $role, [$unit['company_id']])
+		));
 	}
 
 	/**

@@ -18,21 +18,35 @@
 */
 "use strict";
 import {CreateContextMenu} from "./CreateContextMenu.js";
-import {PlaylistsActions}  from "./PlaylistsActions.js";
+import {PlaylistsActionsContextMenuFactory} from "./PlaylistsActionsContextMenuFactory.js";
 import {PlaylistsService}  from "../compose/standard/playlists/PlaylistsService.js";
 import {FetchClient}       from "../../core/FetchClient.js";
+import {FlashMessageHandler} from "../../core/FlashMessageHandler.js";
 import {UnitShareDialog} from "../../core/UnitShareDialog.js";
 
 document.addEventListener("DOMContentLoaded", function()
 {
-	UnitShareDialog.bind("playlists");
-
  	const createContextMenu = new CreateContextMenu(
 		document.getElementById("createUnitAction"),
 		document.getElementById("playlistContextMenuTemplate")
 	);
 	createContextMenu.init();
 
-	const playlistsActions = new PlaylistsActions(new PlaylistsService(new FetchClient()));
-	playlistsActions.init()
+	const playlistsActionsContextMenuFactory = new PlaylistsActionsContextMenuFactory(
+		new FlashMessageHandler(),
+		new PlaylistsService(new FetchClient()),
+		UnitShareDialog.create("playlists")
+	);
+
+	const contextMenus = document.getElementsByClassName("playlist-contextmenu");
+
+	for (let i = 0; i < contextMenus.length; i++)
+	{
+		contextMenus[i].addEventListener('click', async (event) =>
+		{
+			event.preventDefault();
+			const contextMenu = playlistsActionsContextMenuFactory.create();
+			await contextMenu.init(event);
+		});
+	}
 });

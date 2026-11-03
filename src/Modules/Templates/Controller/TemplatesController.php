@@ -28,9 +28,11 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Media\MediaUrlSigner;
+use App\Modules\Auth\UserSession;
 use App\Modules\Templates\Helper\Composer\Orchestrator;
 use App\Modules\Templates\Helper\Datatable\Parameters;
 use App\Modules\Templates\Services\TemplatesDatatableService;
+use App\Shared\Acl\AclGrantService;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -42,7 +44,9 @@ readonly class TemplatesController
 		private TemplatesDatatableService $templatesDatatableService,
 		private Parameters $parameters,
 		private JsonResponseHandler $responseHandler,
-		private MediaUrlSigner      $mediaUrlSigner
+		private MediaUrlSigner      $mediaUrlSigner,
+		private AclGrantService     $aclGrantService,
+		private UserSession         $userSession
 	) {}
 
     /**
@@ -72,13 +76,14 @@ readonly class TemplatesController
 	public function determineRights(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
 		$templateId = (int) ($args['template_id'] ?? 0);
-		$responseData = ['can_edit' => false, 'can_delete' => false];
+		$responseData = ['can_edit' => false, 'can_delete' => false, 'can_share' => false];
 		if ($templateId === 0 || !$this->orchestrator->checkEditRights($templateId))
 			return $this->responseHandler->jsonSuccess($response, $responseData);
 
 		$inUse = $this->templatesDatatableService->getTemplatesInUse([$templateId]);
 		$responseData['can_edit']      = true;
 		$responseData['template_id']   = $templateId;
+		$responseData['can_share']     = $this->aclGrantService->canShareUnit($this->userSession->getUID(), 'templates', $templateId);
 
 		if ( $inUse === [])
 			$responseData['can_delete'] = true;

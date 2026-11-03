@@ -27,7 +27,6 @@ import {UnitShareDialog} from "../../core/UnitShareDialog.js";
 
 document.addEventListener("DOMContentLoaded", function()
 {
-	UnitShareDialog.bind("player");
 	const playerService       = new PlayerService(new FetchClient())
 	const flashMessageHandler = new FlashMessageHandler("body");
 	const autocompleteFactory = new AutocompleteFactory();
@@ -36,7 +35,8 @@ document.addEventListener("DOMContentLoaded", function()
 		flashMessageHandler,
 		autocompleteFactory,
 		playerService,
-		new PreviewOverlay()
+		new PreviewOverlay(),
+		UnitShareDialog.create("player")
 	);
 
 	const contextMenus = document.getElementsByClassName("player-contextmenu");

@@ -40,6 +40,12 @@ export class PlaylistsService extends BaseService
 		return await this._sendRequest(url, "DELETE", data);
 	}
 
+	determineRights(playlistId)
+	{
+		const url = PlaylistsApiConfig.ACLS_URI + "/" + playlistId;
+		return this._sendRequestAsync(url, "GET");
+	}
+
 	async toggleShuffle(playlistId)
 	{
 		const url = PlaylistsApiConfig.SHUFFLE_URI;

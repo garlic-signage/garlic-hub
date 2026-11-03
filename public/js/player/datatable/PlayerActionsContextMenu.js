@@ -31,9 +31,11 @@ export class PlayerActionsContextMenu
 	#currentPlayerId = 0;
 	#waitOverlay = null;
 	#previewOverlay = null;
+	#shareDialog = null;
 
-	constructor(contextMenuView, flashMessageHandler, autoCompleteFactory, waitOverlay, playerService, previewOverlay)
+	constructor(contextMenuView, flashMessageHandler, autoCompleteFactory, waitOverlay, playerService, previewOverlay, shareDialog)
 	{
+		this.#shareDialog           = shareDialog;
 		this.#contextMenuView       = contextMenuView;
 		this.#flashMessageHandler   = flashMessageHandler;
 		this.#autoCompleteFactory   = autoCompleteFactory;
@@ -76,6 +78,7 @@ export class PlayerActionsContextMenu
 		}
 
 		this.#addAssignEventListener(); // always active
+		this.#shareDialog.attachTo(this.#contextMenuView.shareMenuItem, this.#currentPlayerId, responseData.can_share);
 
 		if (!responseData.has_playlist || !responseData.is_intranet)
 			this.#contextMenuView.pushMenuItem.remove();

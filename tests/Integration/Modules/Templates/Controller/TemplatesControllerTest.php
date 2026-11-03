@@ -39,6 +39,8 @@ use App\Modules\Templates\Services\TemplatesUsageService;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Integration\Support\MediaWorkspace;
 use Throwable;
+use App\Modules\Auth\UserSession;
+use App\Shared\Acl\AclGrantService;
 
 /**
  * The template endpoints /async/templates: delete, rights, load, find and save. The images of save go into a temporary directory.
@@ -71,7 +73,9 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 			$this->container->get(TemplatesDatatableService::class),
 			$this->container->get(Parameters::class),
 			$this->container->get(JsonResponseHandler::class),
-			$this->container->get(MediaUrlSigner::class)
+			$this->container->get(MediaUrlSigner::class),
+			$this->container->get(AclGrantService::class),
+			$this->container->get(UserSession::class)
 		);
 	}
 
@@ -156,7 +160,7 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 
 		$rights = $this->json($this->controller->determineRights($this->request('GET'), $this->newResponse(), ['template_id' => '2']));
 
-		static::assertSame(['success' => true, 'can_edit' => true, 'can_delete' => true, 'template_id' => 2], $rights);
+		static::assertSame(['success' => true, 'can_edit' => true, 'can_delete' => true, 'can_share' => true, 'template_id' => 2], $rights);
 	}
 
 	public function testATemplateInUseCanBeEditedButNotDeleted(): void
@@ -166,7 +170,7 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 
 		$rights = $this->json($this->controller->determineRights($this->request('GET'), $this->newResponse(), ['template_id' => '2']));
 
-		static::assertSame(['success' => true, 'can_edit' => true, 'can_delete' => false, 'template_id' => 2], $rights);
+		static::assertSame(['success' => true, 'can_edit' => true, 'can_delete' => false, 'can_share' => true, 'template_id' => 2], $rights);
 	}
 
 	/**
@@ -194,7 +198,7 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 
 		$this->assertSuccess($this->controller->determineRights($this->request('GET'), $this->newResponse(), $args));
 
-		static::assertSame(['success' => true, 'can_edit' => false, 'can_delete' => false], $this->json($this->controller->determineRights($this->request('GET'), $this->newResponse(), $args)));
+		static::assertSame(['success' => true, 'can_edit' => false, 'can_delete' => false, 'can_share' => false], $this->json($this->controller->determineRights($this->request('GET'), $this->newResponse(), $args)));
 	}
 
 	public function testTheContentIsLoadedWithFreshSignedUrls(): void

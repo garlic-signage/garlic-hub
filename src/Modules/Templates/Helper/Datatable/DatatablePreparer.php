@@ -78,7 +78,6 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	public function prepareTableBody(array $currentFilterResults, array $fields, int $currentUID): array
 	{
 		$body      = [];
-		$canShare  = $this->aclValidator->isSimpleAdmin($currentUID);
 		// a type without a name (the type of the schema is fabric.js) is shown as it is
 		$typeNames = $this->translator->translateArrayForOptions('types_selects', 'templates');
 		foreach($currentFilterResults as $template)
@@ -130,9 +129,6 @@ class DatatablePreparer extends AbstractDatatablePreparer
 					'three-dots template-contextmenu',
 				);
 			}
-			if ($canShare)
-				$list['has_action'][] = $this->formatShareAction((string) $template['template_id']);
-
 			$body[] = $list;
 		}
 
@@ -149,6 +145,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 		return [
 			'LANG_COMPOSE' => $this->translator->translate('composer', 'templates'),
 			'LANG_SETTINGS' => $this->translator->translate('settings', 'main'),
+			'LANG_SHARE' => $this->translator->translate('share_unit', 'users'),
 			'LANG_TEMPLATE_DELETE' => $this->translator->translate('delete', 'main'),
 			'LANG_TEMPLATE_DELETE_CONFIRM' => $this->translator->translate('confirm_delete', 'templates')
 		];

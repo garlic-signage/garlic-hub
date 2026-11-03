@@ -40,24 +40,12 @@ use Doctrine\DBAL\Exception;
  */
 class DatatablePreparer extends AbstractDatatablePreparer
 {
-	/** @var array<int,bool> */
-	private array $usedPlaylists;
-
 	private AclValidator $aclValidator;
 
 	public function __construct(PrepareService $prepareService, AclValidator $aclValidator, Parameters $parameters, Translator $translator)
 	{
 		$this->aclValidator = $aclValidator;
 		parent::__construct('playlists', $prepareService, $parameters, $translator);
-	}
-
-	/**
-	 * @param array<int,bool> $usedPlaylists
-	 */
-	public function setUsedPlaylists(array $usedPlaylists): static
-	{
-		$this->usedPlaylists = $usedPlaylists;
-		return $this;
 	}
 
 	/**
@@ -72,8 +60,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	 */
 	public function prepareTableBody(array $currentFilterResults, array $fields, int $currentUID): array
 	{
-		$body     = [];
-		$canShare = $this->aclValidator->isSimpleAdmin($currentUID);
+		$body = [];
 		foreach($currentFilterResults as $playlist)
 		{
 			$list            = [];
@@ -113,36 +100,13 @@ class DatatablePreparer extends AbstractDatatablePreparer
 
 			if ($playlist['UID'] == $currentUID || $this->aclValidator->isSimpleAdmin($currentUID))
 			{
-				$list['has_action_link'] = [
-			/*		$this->prepareService->getBodyPreparer()->formatAction(
-						$this->translator->translate('copy_playlist', 'playlists'),
-						'/playlists/?playlist_copy_id='.$playlist['playlist_id'],
-						'copy', 'copy'), */
-					$this->prepareService->getBodyPreparer()->formatActionLink(
-						$this->translator->translate('composer', 'playlists'),
-						'/playlists/compose/'.$playlist['playlist_id'],
-						'composer', (string) $playlist['playlist_id'], 'pencil'),
-					$this->prepareService->getBodyPreparer()->formatActionLink(
-						$this->translator->translate('edit_settings', 'playlists'),
-						'/playlists/settings/'.$playlist['playlist_id'],
-						'edit', (string) $playlist['playlist_id'], 'gear')
-				];
-				if (!array_key_exists($playlist['playlist_id'], $this->usedPlaylists) &&
-					$this->aclValidator->isAllowedToDeletePlaylist($currentUID, $playlist))
-				{
-					$deleteText = $this->translator->translate('confirm_delete', 'playlists');
-					$list['has_delete'] = $this->prepareService->getBodyPreparer()->formatActionDelete(
-						$this->translator->translate('delete', 'main'),
-						sprintf($deleteText, $playlist['playlist_name']),
-						(string) $playlist['playlist_id'],
-						'delete-playlist'
-					);
-				}
-
+				$list['has_action'][] = $this->prepareService->getBodyPreparer()->formatAction(
+					$this->translator->translate('actions', 'playlists'),
+					'playlist-contextmenu',
+					(string) $playlist['playlist_id'],
+					'three-dots playlist-contextmenu',
+				);
 			}
-			if ($canShare)
-				$list['has_action'][] = $this->formatShareAction((string) $playlist['playlist_id']);
-
 			$body[] = $list;
 		}
 
@@ -170,6 +134,24 @@ class DatatablePreparer extends AbstractDatatablePreparer
 			];
 		}
 		return $data;
+	}
+
+	/**
+	 * The context menu of a playlist row. Which entries are shown, decides /async/playlists/acls.
+	 *
+	 * @return array<string,string>
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	public function formatActionsContextMenu(): array
+	{
+		return [
+			'LANG_COMPOSE'                 => $this->translator->translate('composer', 'playlists'),
+			'LANG_SETTINGS'                => $this->translator->translate('edit_settings', 'playlists'),
+			'LANG_SHARE'                   => $this->translator->translate('share_unit', 'users'),
+			'LANG_PLAYLIST_DELETE'         => $this->translator->translate('delete', 'main'),
+			'LANG_PLAYLIST_DELETE_CONFIRM' => $this->translator->translate('confirm_delete', 'playlists')
+		];
 	}
 
 	private function isPlaylistModeAllowedInEdge(string $key): bool

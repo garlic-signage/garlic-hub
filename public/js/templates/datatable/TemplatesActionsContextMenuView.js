@@ -23,6 +23,7 @@ export class TemplatesActionsContextMenuView
 	#template = document.getElementById("templatesActionsContextMenuTemplate");
 	#composer;
 	#settings;
+	#shareMenuItem;
 	#deleteMenuItem;
 	#menu;
 
@@ -36,6 +37,7 @@ export class TemplatesActionsContextMenuView
 		this.#deleteMenuItem = this.#menu.querySelector(".delete-template");
 		this.#composer = this.#menu.querySelector(".composer");
 		this.#settings = this.#menu.querySelector(".settings");
+		this.#shareMenuItem = this.#menu.querySelector(".share");
 	}
 
 	placeMenu(x, y)
@@ -59,6 +61,11 @@ export class TemplatesActionsContextMenuView
 	get menu()
 	{
 		return this.#menu;
+	}
+
+	get shareMenuItem()
+	{
+		return this.#shareMenuItem;
 	}
 
 	get deleteMenuItem()

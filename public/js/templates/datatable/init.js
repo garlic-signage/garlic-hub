@@ -26,11 +26,11 @@ import {UnitShareDialog} from "../../core/UnitShareDialog.js";
 
 document.addEventListener("DOMContentLoaded", function()
 {
-	UnitShareDialog.bind("templates");
 	const templatesService                   = new TemplatesService(new FetchClient());
 	const templatesActionsContextMenuFactory = new TemplatesActionsContextMenuFactory(
 		new FlashMessageHandler(),
-		templatesService
+		templatesService,
+		UnitShareDialog.create("templates")
 	);
 
 	const contextMenus = document.getElementsByClassName("template-contextmenu");

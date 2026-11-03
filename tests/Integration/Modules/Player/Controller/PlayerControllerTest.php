@@ -55,7 +55,7 @@ class PlayerControllerTest extends PlayerControllerTestCase
 		$this->actingAs(1);
 
 		static::assertSame(
-			['success' => true, 'can_edit' => true, 'can_delete' => true, 'has_playlist' => true, 'playlist_id' => 1, 'is_intranet' => true,
+			['success' => true, 'can_edit' => true, 'can_delete' => true, 'can_share' => true, 'has_playlist' => true, 'playlist_id' => 1, 'is_intranet' => true,
 			 'uuid' => (string) $this->playerField(3, 'uuid'), 'player_name' => (string) $this->playerField(3, 'player_name')],
 			$this->rights(3)
 		);
@@ -91,7 +91,7 @@ class PlayerControllerTest extends PlayerControllerTestCase
 		$this->setPlayer(3, $state);
 		$this->actingAs(1);
 
-		static::assertSame(['success' => true, 'can_edit' => false, 'can_delete' => false], $this->rights(3));
+		static::assertSame(['success' => true, 'can_edit' => false, 'can_delete' => false, 'can_share' => true], $this->rights(3));
 	}
 
 	/**
@@ -116,7 +116,7 @@ class PlayerControllerTest extends PlayerControllerTestCase
 		$this->setPlayer(3, 'status = 2, licence_id = 1');
 		$this->actingAs($user);
 
-		static::assertSame(['success' => true, 'can_edit' => false, 'can_delete' => false], $this->rights($playerId));
+		static::assertSame(['success' => true, 'can_edit' => false, 'can_delete' => false, 'can_share' => false], $this->rights($playerId));
 	}
 
 	public function testThePlayerIsGivenToWhoMayChangeIt(): void

@@ -62,6 +62,7 @@ readonly class ShowDatatableController
 
 		$templateData = $this->templateFormatter->preparerUITemplate($dataGrid);
 		$templateData['this_layout']['data']['create_playlist_contextmenu'] = $this->orchestrator->prepareContextMenu();
+		$templateData['this_layout']['data']['playlists_actions_contextmenu'] = $this->orchestrator->prepareActionsContextMenu();
 		return new PageResponse($templateData);
 	}
 }

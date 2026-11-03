@@ -42,6 +42,9 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Slim\Psr7\Response;
+use App\Modules\Auth\UserSession;
+use App\Modules\Playlists\Services\AclValidator;
+use App\Shared\Acl\AclGrantService;
 
 /**
  * What the orchestrators answer when a service reports that no row was changed. The database of the integration tests
@@ -66,7 +69,10 @@ class UpdateFailuresTest extends TestCase
 			$playlistsService,
 			$this->createStub(PlaylistsDatatableService::class),
 			$this->createStub(Parameters::class),
-			new ZonesSchema()
+			new ZonesSchema(),
+			$this->createStub(AclValidator::class),
+			$this->createStub(AclGrantService::class),
+			$this->createStub(UserSession::class)
 		);
 	}
 

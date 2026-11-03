@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 use App\Framework\Controller\JsonResponseHandler;
 use App\Shared\Acl\AclHelper;
+use App\Shared\Acl\AclGrantService;
 use App\Shared\Acl\AclUnitProvider;
 use App\Shared\Acl\TableUnitProvider;
 use App\Framework\Config\Config;
@@ -219,7 +220,10 @@ $dependencies[PlaylistsController::class] = DI\factory(function (ContainerInterf
 			$container->get(PlaylistsService::class),
 			$container->get(PlaylistsDatatableService::class),
 			$container->get(\App\Modules\Playlists\Helper\Datatable\Parameters::class),
-			new \App\Modules\Playlists\Helper\Playlists\ZonesSchema()
+			new \App\Modules\Playlists\Helper\Playlists\ZonesSchema(),
+			$container->get(AclValidator::class),
+			$container->get(AclGrantService::class),
+			$container->get(UserSession::class)
 		)
 	);
 });

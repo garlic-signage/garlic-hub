@@ -10,3 +10,22 @@
 		{{/create_playlist_contextmenu}}
 	</ul>
 </template>
+
+<template id="playlistsActionsContextMenuTemplate">
+	{{#playlists_actions_contextmenu}}
+	<ul class="context-menu">
+		<li class="composer">
+			<a href="">{{LANG_COMPOSE}}</a>
+		</li>
+		<li class="settings">
+			<a href="">{{LANG_SETTINGS}}</a>
+		</li>
+		<li class="share">
+			{{LANG_SHARE}}
+		</li>
+		<li class="delete-playlist" data-confirm="{{LANG_PLAYLIST_DELETE_CONFIRM}}">
+			{{LANG_PLAYLIST_DELETE}}
+		</li>
+	</ul>
+	{{/playlists_actions_contextmenu}}
+</template>

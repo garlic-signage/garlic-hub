@@ -158,6 +158,7 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 	$group->delete('/playlists', resolve([PlaylistsController::class, 'delete'], $container));
 	$group->put('/playlists', resolve([ExportController::class, 'export'], $container));
 	$group->get('/playlists/find/{playlist_id:\d+}', resolve([PlaylistsController::class, 'findById'], $container));
+	$group->get('/playlists/acls/{playlist_id:\d+}', resolve([PlaylistsController::class, 'determineRights'], $container));
 	$group->get('/playlists/multizone/{playlist_id:\d+}', resolve([PlaylistsController::class, 'loadZone'], $container));
 	$group->post('/playlists/multizone/{playlist_id:\d+}', resolve([PlaylistsController::class, 'saveZone'], $container));
 	$group->patch('/playlists/shuffle', resolve([PlaylistsController::class, 'toggleShuffle'], $container));

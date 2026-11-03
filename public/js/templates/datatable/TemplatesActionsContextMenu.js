@@ -25,9 +25,11 @@ export class TemplatesActionsContextMenu
 	#contextMenuView = null;
 	#controller = null;
 	#currentTemplateId = 0;
+	#shareDialog = null;
 
-	constructor(contextMenuView, flashMessageHandler, templatesService)
+	constructor(contextMenuView, flashMessageHandler, templatesService, shareDialog)
 	{
+		this.#shareDialog           = shareDialog;
 		this.#contextMenuView       = contextMenuView;
 		this.#flashMessageHandler   = flashMessageHandler;
 		this.#templatesService      = templatesService;
@@ -45,6 +47,7 @@ export class TemplatesActionsContextMenu
 		this.#contextMenuView.initMenuItems();
 		this.#contextMenuView.setComposerLink(this.#currentTemplateId);
 		this.#contextMenuView.setSettingsLink(this.#currentTemplateId);
+		this.#shareDialog.attachTo(this.#contextMenuView.shareMenuItem, this.#currentTemplateId, responseData.can_share);
 
 		if (!responseData.can_delete)
 			this.#contextMenuView.deleteMenuItem.remove();

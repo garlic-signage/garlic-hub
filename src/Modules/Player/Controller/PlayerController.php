@@ -29,8 +29,10 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\UserException;
+use App\Modules\Auth\UserSession;
 use App\Modules\Player\Enums\PlayerStatus;
 use App\Modules\Player\Services\PlayerService;
+use App\Shared\Acl\AclGrantService;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -44,7 +46,9 @@ class PlayerController
 
 	public function __construct(
 		private readonly JsonResponseHandler $responseHandler,
-		private readonly PlayerService       $playerService
+		private readonly PlayerService       $playerService,
+		private readonly AclGrantService     $aclGrantService,
+		private readonly UserSession         $userSession
 	) {}
 
 	/**
@@ -57,7 +61,7 @@ class PlayerController
 	public function determineRights(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
 		$playerId = (int) ($args['player_id'] ?? 0);
-		$responseData = ['can_edit' => false, 'can_delete' => false];
+		$responseData = ['can_edit' => false, 'can_delete' => false, 'can_share' => false];
 		if ($playerId === 0)
 			return $this->responseHandler->jsonSuccess($response, $responseData);
 
@@ -70,6 +74,8 @@ class PlayerController
 			// asking for rights is no error, the user simply has none for this player
 			return $this->responseHandler->jsonSuccess($response, $responseData);
 		}
+
+		$responseData['can_share'] = $this->aclGrantService->canShareUnit($this->userSession->getUID(), 'player', $playerId);
 
 		if ((int) $this->playerData['status'] >= PlayerStatus::RELEASED->value && (int) $this->playerData['licence_id'] > 0)
 		{

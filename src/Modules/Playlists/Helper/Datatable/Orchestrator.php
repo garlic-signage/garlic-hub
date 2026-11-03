@@ -25,7 +25,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\Datatable\AbstractDatatableOrchestrator;
-use App\Framework\Utils\Datatable\Results\HeaderField;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Services\PlaylistsDatatableService;
 use Doctrine\DBAL\Exception;
@@ -68,6 +67,16 @@ class Orchestrator extends AbstractDatatableOrchestrator
 	}
 
 	/**
+	 * @return array<string,string>
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	public function prepareActionsContextMenu(): array
+	{
+		return $this->datatablePreparer->formatActionsContextMenu();
+	}
+
+	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
@@ -80,24 +89,5 @@ class Orchestrator extends AbstractDatatableOrchestrator
 			'additional_css' => ['/css/playlists/overview.css'],
 			'footer_modules' => ['/js/playlists/overview/init.js']
 		];
-	}
-
-	/**
-	 * @param list<HeaderField> $fields
-	 * @return list<array<string,mixed>>
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
-	protected function prepareList(array $fields): array
-	{
-		/** @var list<array{"UID": int, "company_id": int, playlist_id:int, playlist_name:string, username:string, duration:int, playlist_mode: string,...}> $currentResults */
-		$currentResults = $this->datatableService->getCurrentFilterResults();
-		$showedIds = array_column($currentResults, 'playlist_id');
-
-		$used = $this->datatableService->getPlaylistsInUse($showedIds);
-		$this->datatablePreparer->setUsedPlaylists($used);
-
-		return $this->datatablePreparer->prepareTableBody($currentResults, $fields, $this->UID);
 	}
 }

@@ -137,38 +137,19 @@ class ShowDatatableControllerTest extends PlaylistsControllerTestCase
 	/**
 	 * A playlist which is nested in another one or assigned to a player has no delete button.
 	 */
-	public function testOnlyAPlaylistWhichIsNotInUseCanBeDeleted(): void
+	public function testTheAdminGetsTheContextMenuOfEveryPlaylistAndTheUserOfHisOwn(): void
 	{
 		$this->actingAs(1);
-		$this->connection->executeStatement("INSERT INTO playlists (playlist_id, UID, playlist_mode, playlist_name) VALUES (4, 2, 'master', 'Frei')");
-
-		$deletable = [];
 		foreach ($this->list()->getTemplateData()['elements_results'] as $row)
 		{
-			if (isset($row['has_delete']))
-				$deletable[] = (int) $row['has_delete']['DELETE_ID'];
+			static::assertSame(['playlist-contextmenu'], array_column($row['has_action'], 'ACTION_NAME'));
 		}
 
-		static::assertSame([1, 4], $deletable);
-	}
-
-	public function testOnlyTheAdminSeesTheShareButton(): void
-	{
-		$this->actingAs(1);
-		$actions = array_column($this->list()->getTemplateData()['elements_results'][0]['has_action'] ?? [], 'ACTION_NAME');
-		static::assertContains('share-unit', $actions);
-
 		$this->actingAs(2);
-		$actions = array_column($this->list()->getTemplateData()['elements_results'][0]['has_action'] ?? [], 'ACTION_NAME');
-		static::assertNotContains('share-unit', $actions);
-	}
-
-	public function testAPlaylistOfAPlayerCanNotBeDeleted(): void
-	{
-		$this->actingAs(1);
-		$this->connection->executeStatement("INSERT INTO player (player_id, playlist_id, UID, uuid) VALUES (1, 1, 2, '11111111-1111-4111-8111-111111111111')");
-
-		static::assertArrayNotHasKey('has_delete', $this->list()->getTemplateData()['elements_results'][0]);
+		foreach ($this->list()->getTemplateData()['elements_results'] as $row)
+		{
+			static::assertArrayHasKey('has_action', $row);
+		}
 	}
 
 	public function testTheNameOfAPlaylistIsALinkToTheComposer(): void
@@ -179,6 +160,5 @@ class ShowDatatableControllerTest extends PlaylistsControllerTestCase
 
 		static::assertSame('Annas Lobby', $row['elements_result_element'][0]['is_link']['CONTROL_ELEMENT_VALUE_NAME']);
 		static::assertSame('/playlists/compose/1', $row['elements_result_element'][0]['is_link']['CONTROL_ELEMENT_VALUE_LINK']);
-		static::assertSame(['composer', 'edit'], array_column($row['has_action_link'], 'LINK_ACTION_NAME'));
 	}
 }

@@ -21,15 +21,20 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Helper\Playlists;
 
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
 use App\Framework\Controller\ReadsInput;
+use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\Datatable\Parameters;
+use App\Modules\Playlists\Services\AclValidator;
 use App\Modules\Playlists\Services\PlaylistsDatatableService;
 use App\Modules\Playlists\Services\PlaylistsService;
+use App\Shared\Acl\AclGrantService;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
 
@@ -49,7 +54,10 @@ class Orchestrator
 		private readonly PlaylistsService $playlistsService,
 		private readonly PlaylistsDatatableService $playlistsDatatableService,
 		private readonly Parameters $parameters,
-		private readonly ZonesSchema $zonesSchema
+		private readonly ZonesSchema $zonesSchema,
+		private readonly AclValidator $aclValidator,
+		private readonly AclGrantService $aclGrantService,
+		private readonly UserSession $userSession
 	) {}
 
 	public function validate(ResponseInterface $response): ?ResponseInterface
@@ -76,6 +84,38 @@ class Orchestrator
 			return $this->responseBuilder->missingPickingValue($response);
 
 		return null;
+	}
+
+	/**
+	 * The context menu of a playlist asks what the user may do. Asking is no error:
+	 * without rights the answer is "nothing".
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws UserException
+	 */
+	public function determineRights(ResponseInterface $response, int $playlistId): ResponseInterface
+	{
+		$rights = ['can_edit' => false, 'can_delete' => false, 'can_share' => false];
+		try
+		{
+			$playlist = $this->playlistsService->loadWithUserById($playlistId);
+		}
+		catch (NotFoundException|AccessDeniedException)
+		{
+			return $this->responseBuilder->generalSuccess($response, $rights);
+		}
+
+		$UID     = $this->userSession->getUID();
+		$inUse   = $this->playlistsDatatableService->getPlaylistsInUse([$playlistId]);
+		$rights['can_edit']      = true;
+		$rights['can_delete']    = !array_key_exists($playlistId, $inUse) && $this->aclValidator->isAllowedToDeletePlaylist($UID, $playlist);
+		$rights['can_share']     = $this->aclGrantService->canShareUnit($UID, 'playlists', $playlistId);
+		$rights['playlist_id']   = $playlistId;
+		$rights['playlist_name'] = (string) ($playlist['playlist_name'] ?? '');
+
+		return $this->responseBuilder->generalSuccess($response, $rights);
 	}
 
 	/**

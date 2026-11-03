@@ -108,7 +108,7 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testWithoutPlaylistsTheBodyIsEmpty(): void
 	{
-		static::assertSame([], $this->preparer->setUsedPlaylists([])->prepareTableBody([], $this->fields(['playlist_name']), 2));
+		static::assertSame([], $this->preparer->prepareTableBody([], $this->fields(['playlist_name']), 2));
 	}
 
 	#[Group('units')]
@@ -116,7 +116,7 @@ class DatatablePreparerTest extends TestCase
 	{
 		$this->aclValidatorStub->method('isSimpleAdmin')->willReturn(false);
 
-		$body = $this->preparer->setUsedPlaylists([])->prepareTableBody([self::playlist()], $this->fields(['playlist_name', 'UID', 'playlist_mode', 'duration', 'playlist_id']), 3);
+		$body = $this->preparer->prepareTableBody([self::playlist()], $this->fields(['playlist_name', 'UID', 'playlist_mode', 'duration', 'playlist_id']), 3);
 
 		static::assertSame(5, $body[0]['UNIT_ID']);
 		static::assertSame(
@@ -144,73 +144,56 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testTheDurationIsShownAsTime(int $seconds, string $time): void
 	{
-		$body = $this->preparer->setUsedPlaylists([])->prepareTableBody([self::playlist(duration: $seconds)], $this->fields(['duration']), 3);
+		$body = $this->preparer->prepareTableBody([self::playlist(duration: $seconds)], $this->fields(['duration']), 3);
 
 		static::assertSame($time, $body[0]['elements_result_element'][0]['is_text']['CONTROL_ELEMENT_VALUE_TEXT']);
 	}
 
 	#[Group('units')]
-	public function testTheOwnerGetsTheActionsAndTheDeleteButton(): void
+	public function testTheOwnerGetsTheContextMenu(): void
 	{
 		$this->aclValidatorStub->method('isSimpleAdmin')->willReturn(false);
-		$this->aclValidatorStub->method('isAllowedToDeletePlaylist')->willReturn(true);
 
-		$row = $this->preparer->setUsedPlaylists([])->prepareTableBody([self::playlist()], $this->fields(['playlist_name']), 2)[0];
+		$row = $this->preparer->prepareTableBody([self::playlist()], $this->fields(['playlist_name']), 2)[0];
 
 		static::assertSame(
-			[
-				['LANG_LINK_ACTION' => 'playlists.composer', 'LINK_ACTION' => '/playlists/compose/5', 'LINK_ACTION_ID' => '5', 'LINK_ACTION_NAME' => 'composer', 'LINK_ACTION_ICON_CLASS' => 'pencil'],
-				['LANG_LINK_ACTION' => 'playlists.edit_settings', 'LINK_ACTION' => '/playlists/settings/5', 'LINK_ACTION_ID' => '5', 'LINK_ACTION_NAME' => 'edit', 'LINK_ACTION_ICON_CLASS' => 'gear'],
-			],
-			$row['has_action_link']
+			[['LANG_ACTION' => 'playlists.actions', 'ACTION_ID' => '5', 'ACTION_NAME' => 'playlist-contextmenu', 'ACTION_ICON_CLASS' => 'three-dots playlist-contextmenu']],
+			$row['has_action']
 		);
-		static::assertSame(['LANG_DELETE_ACTION' => 'main.delete', 'DELETE_ID' => '5', 'LANG_CONFIRM_DELETE' => 'Delete Lobby?', 'ELEMENT_DELETE_CLASS' => 'delete-playlist'], $row['has_delete']);
-	}
-
-	#[Group('units')]
-	public function testAPlaylistWhichIsInUseCanNotBeDeleted(): void
-	{
-		$this->aclValidatorStub->method('isSimpleAdmin')->willReturn(false);
-		$this->aclValidatorStub->method('isAllowedToDeletePlaylist')->willReturn(true);
-
-		$row = $this->preparer->setUsedPlaylists([5 => true])->prepareTableBody([self::playlist()], $this->fields(['playlist_name']), 2)[0];
-
-		static::assertArrayHasKey('has_action_link', $row);
-		static::assertArrayNotHasKey('has_delete', $row);
-	}
-
-	#[Group('units')]
-	public function testWhoMayNotDeleteGetsNoDeleteButton(): void
-	{
-		$this->aclValidatorStub->method('isSimpleAdmin')->willReturn(false);
-		$this->aclValidatorStub->method('isAllowedToDeletePlaylist')->willReturn(false);
-
-		$row = $this->preparer->setUsedPlaylists([])->prepareTableBody([self::playlist()], $this->fields(['playlist_name']), 2)[0];
-
-		static::assertArrayNotHasKey('has_delete', $row);
-	}
-
-	#[Group('units')]
-	public function testTheAdminGetsTheActionsOfThePlaylistsOfOthers(): void
-	{
-		$this->aclValidatorStub->method('isSimpleAdmin')->willReturn(true);
-		$this->aclValidatorStub->method('isAllowedToDeletePlaylist')->willReturn(true);
-
-		$row = $this->preparer->setUsedPlaylists([])->prepareTableBody([self::playlist(owner: 2)], $this->fields(['playlist_name']), 1)[0];
-
-		static::assertCount(2, $row['has_action_link']);
-		static::assertArrayHasKey('has_delete', $row);
-	}
-
-	#[Group('units')]
-	public function testAUserGetsNoActionsOfThePlaylistsOfOthers(): void
-	{
-		$this->aclValidatorStub->method('isSimpleAdmin')->willReturn(false);
-
-		$row = $this->preparer->setUsedPlaylists([])->prepareTableBody([self::playlist(owner: 2)], $this->fields(['playlist_name']), 3)[0];
-
 		static::assertArrayNotHasKey('has_action_link', $row);
 		static::assertArrayNotHasKey('has_delete', $row);
+	}
+
+	#[Group('units')]
+	public function testTheAdminGetsTheContextMenuOfThePlaylistsOfOthers(): void
+	{
+		$this->aclValidatorStub->method('isSimpleAdmin')->willReturn(true);
+
+		$row = $this->preparer->prepareTableBody([self::playlist(owner: 2)], $this->fields(['playlist_name']), 1)[0];
+
+		static::assertCount(1, $row['has_action']);
+	}
+
+	#[Group('units')]
+	public function testAUserGetsNoContextMenuOfThePlaylistsOfOthers(): void
+	{
+		$this->aclValidatorStub->method('isSimpleAdmin')->willReturn(false);
+
+		$row = $this->preparer->prepareTableBody([self::playlist(owner: 2)], $this->fields(['playlist_name']), 3)[0];
+
+		static::assertArrayNotHasKey('has_action', $row);
+	}
+
+	#[Group('units')]
+	public function testTheContextMenuOfARow(): void
+	{
+		static::assertSame([
+			'LANG_COMPOSE'                 => 'playlists.composer',
+			'LANG_SETTINGS'                => 'playlists.edit_settings',
+			'LANG_SHARE'                   => 'users.share_unit',
+			'LANG_PLAYLIST_DELETE'         => 'main.delete',
+			'LANG_PLAYLIST_DELETE_CONFIRM' => 'Delete %s?',
+		], $this->preparer->formatActionsContextMenu());
 	}
 
 	#[Group('units')]

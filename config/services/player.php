@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 use App\Framework\Controller\JsonResponseHandler;
 use App\Shared\Acl\AclHelper;
+use App\Shared\Acl\AclGrantService;
 use App\Shared\Acl\AclUnitProvider;
 use App\Shared\Acl\TableUnitProvider;
 use App\Framework\Config\Config;
@@ -179,7 +180,6 @@ $dependencies[DatatablePreparer::class] = DI\factory(function (ContainerInterfac
 {
 	return new DatatablePreparer(
 		$container->get(PrepareService::class),
-		$container->get(AclValidator::class),
 		$container->get(Parameters::class),
 		$container->get(TimeUnitsCalculator::class),
 		$container->get(Translator::class),
@@ -236,7 +236,9 @@ $dependencies[PlayerController::class] = DI\factory(function (ContainerInterface
 {
 	return new PlayerController(
 		$container->get(JsonResponseHandler::class),
-		$container->get(PlayerService::class)
+		$container->get(PlayerService::class),
+		$container->get(AclGrantService::class),
+		$container->get(UserSession::class)
 	);
 });
 

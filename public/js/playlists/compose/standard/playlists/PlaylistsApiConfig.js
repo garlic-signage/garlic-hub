@@ -19,6 +19,7 @@
 
 export const PlaylistsApiConfig = {
 	BASE_URI: "/async/playlists",
+	ACLS_URI: "/async/playlists/acls",
 	SHUFFLE_URI: "/async/playlists/shuffle",
 	PICKING_URI: "/async/playlists/picking",
 	FIND_URI: "/async/playlists/find"

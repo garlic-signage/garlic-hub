@@ -39,6 +39,18 @@ readonly class PlaylistsController
 	public function __construct(private Orchestrator $orchestrator) {}
 
 	/**
+	 * @param array<string,string> $args
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws UserException
+	 */
+	public function determineRights(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+	{
+		return $this->orchestrator->determineRights($response, (int) ($args['playlist_id'] ?? 0));
+	}
+
+	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 * @throws UserException

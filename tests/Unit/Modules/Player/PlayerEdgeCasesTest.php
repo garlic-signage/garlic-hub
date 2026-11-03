@@ -31,6 +31,8 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Slim\Psr7\Factory\ServerRequestFactory;
 use Slim\Psr7\Response;
+use App\Modules\Auth\UserSession;
+use App\Shared\Acl\AclGrantService;
 
 /**
  * Two answers which the database of the tests (SQLite) does not give. Everything else of the player endpoints is
@@ -46,7 +48,7 @@ class PlayerEdgeCasesTest extends TestCase
 	{
 		$service = $this->createStub(PlayerService::class);
 		$service->method('delete')->willReturn(0);
-		$controller = new PlayerController(new JsonResponseHandler(), $service);
+		$controller = new PlayerController(new JsonResponseHandler(), $service, $this->createStub(AclGrantService::class), $this->createStub(UserSession::class));
 		$request    = new ServerRequestFactory()->createServerRequest('DELETE', '/async/player')->withParsedBody(['player_id' => '3']);
 
 		$response = $controller->delete($request, new Response());

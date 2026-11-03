@@ -26,6 +26,7 @@ export class PlayerActionsContextMenuView
 	#pushMenuItem;
 	#gotoMenuItem;
 	#previewMenuItem;
+	#shareMenuItem;
 	#deleteMenuItem;
 	#menu;
 
@@ -42,6 +43,7 @@ export class PlayerActionsContextMenuView
 		this.#pushMenuItem = this.#menu.querySelector(".push");
 		this.#gotoMenuItem = this.#menu.querySelector(".goto");
 		this.#previewMenuItem = this.#menu.querySelector(".preview");
+		this.#shareMenuItem = this.#menu.querySelector(".share");
 	}
 
 	placeMenu(x, y)
@@ -85,6 +87,11 @@ export class PlayerActionsContextMenuView
 	get previewMenuItem()
 	{
 		return this.#previewMenuItem;
+	}
+
+	get shareMenuItem()
+	{
+		return this.#shareMenuItem;
 	}
 
 	get deleteMenuItem()

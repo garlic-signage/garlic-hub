@@ -27,9 +27,11 @@ export class PlayerActionsContextMenuFactory
 	#autocompleteFactory;
 	#playerService;
 	#previewOverlay;
+	#shareDialog;
 
-	constructor(flashMessageHandler,  autocompleteFactory, playerService, previewOverlay)
+	constructor(flashMessageHandler,  autocompleteFactory, playerService, previewOverlay, shareDialog)
 	{
+		this.#shareDialog = shareDialog;
 		this.#flashMessageHandler = flashMessageHandler;
 		this.#autocompleteFactory = autocompleteFactory;
 		this.#playerService = playerService;
@@ -44,7 +46,8 @@ export class PlayerActionsContextMenuFactory
 			this.#autocompleteFactory,
 			new WaitOverlay(),
 			this.#playerService,
-			this.#previewOverlay
+			this.#previewOverlay,
+			this.#shareDialog
 		);
 	}
 

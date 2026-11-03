@@ -269,6 +269,14 @@ class AclGrantServiceTest extends ContainerTestCase
 		$this->service->findUnitShares(2, 'player', 1);
 	}
 
+	public function testOnlyTheAdminMayShareAUnit(): void
+	{
+		static::assertTrue($this->service->canShareUnit(1, 'player', 1));
+		static::assertFalse($this->service->canShareUnit(2, 'player', 1));
+		static::assertFalse($this->service->canShareUnit(1, 'player', 99), 'An unknown unit can not be shared.');
+		static::assertFalse($this->service->canShareUnit(1, 'users', 1), 'The module users has no units.');
+	}
+
 	private function aclOf(int $UID, string $module): int
 	{
 		return (int) $this->connection->fetchOne('SELECT acl FROM user_acl WHERE UID = ? AND module = ?', [$UID, $module]);
