@@ -62,11 +62,13 @@ export class PlayerActionsContextMenu
 		{
 			this.#contextMenuView.unassignMenuItem.remove();
 			this.#contextMenuView.gotoMenuItem.remove();
+			this.#contextMenuView.previewMenuItem.remove();
 		}
 		else
 		{
 			this.#addUnAssignEventListener();
 			this.#contextMenuView.setGotoLink(responseData.playlist_id);
+			this.#contextMenuView.setPreviewLink(responseData.uuid, responseData.player_name);
 		}
 
 		this.#addAssignEventListener(); // always active

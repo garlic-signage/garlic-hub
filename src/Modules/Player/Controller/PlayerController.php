@@ -78,6 +78,9 @@ class PlayerController
 			$responseData['has_playlist']  = (int) $this->playerData['playlist_id'] > 0;
 			$responseData['playlist_id']   = $this->playerData['playlist_id'];
 			$responseData['is_intranet']   = (int) $this->playerData['is_intranet'] === 1;
+			// the preview plays as this player: it gets the playlist of the player like the device itself
+			$responseData['uuid']          = (string) $this->playerData['uuid'];
+			$responseData['player_name']   = (string) $this->playerData['player_name'];
 		}
 
 		return $this->responseHandler->jsonSuccess($response, $responseData);

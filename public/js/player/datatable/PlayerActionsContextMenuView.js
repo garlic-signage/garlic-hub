@@ -25,6 +25,7 @@ export class PlayerActionsContextMenuView
 	#unassignMenuItem;
 	#pushMenuItem;
 	#gotoMenuItem;
+	#previewMenuItem;
 	#deleteMenuItem;
 	#menu;
 
@@ -40,6 +41,7 @@ export class PlayerActionsContextMenuView
 		this.#unassignMenuItem = this.#menu.querySelector(".unassign");
 		this.#pushMenuItem = this.#menu.querySelector(".push");
 		this.#gotoMenuItem = this.#menu.querySelector(".goto");
+		this.#previewMenuItem = this.#menu.querySelector(".preview");
 	}
 
 	placeMenu(x, y)
@@ -52,6 +54,21 @@ export class PlayerActionsContextMenuView
 	setGotoLink(playlistId)
 	{
 		this.#gotoMenuItem.querySelector('a').href = "playlists/compose/" + playlistId;
+	}
+
+	/**
+	 * The preview player (public/player-preview) in a new tab: it plays as this player, so it gets its playlist
+	 * from the SMIL index like the device. The cache stays in memory.
+	 */
+	setPreviewLink(uuid, playerName)
+	{
+		const params = new URLSearchParams({
+			index: location.origin + "/smil-index",
+			uuid: uuid,
+			name: playerName,
+			storage: "memory"
+		});
+		this.#previewMenuItem.querySelector('a').href = "/player-preview/index.html?" + params.toString();
 	}
 
 
@@ -78,6 +95,11 @@ export class PlayerActionsContextMenuView
 	get gotoMenuItem()
 	{
 		return this.#gotoMenuItem;
+	}
+
+	get previewMenuItem()
+	{
+		return this.#previewMenuItem;
 	}
 
 	get deleteMenuItem()

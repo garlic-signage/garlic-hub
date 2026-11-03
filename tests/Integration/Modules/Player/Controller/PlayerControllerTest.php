@@ -55,7 +55,8 @@ class PlayerControllerTest extends PlayerControllerTestCase
 		$this->actingAs(1);
 
 		static::assertSame(
-			['success' => true, 'can_edit' => true, 'can_delete' => true, 'has_playlist' => true, 'playlist_id' => 1, 'is_intranet' => true],
+			['success' => true, 'can_edit' => true, 'can_delete' => true, 'has_playlist' => true, 'playlist_id' => 1, 'is_intranet' => true,
+			 'uuid' => (string) $this->playerField(3, 'uuid'), 'player_name' => (string) $this->playerField(3, 'player_name')],
 			$this->rights(3)
 		);
 	}

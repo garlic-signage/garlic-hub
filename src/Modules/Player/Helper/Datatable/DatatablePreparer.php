@@ -165,6 +165,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 			'LANG_UNASSIGN_PLAYLIST' => $this->translator->translate('remove_playlist', 'player'),
 			'LANG_GOTO_PLAYLIST' => $this->translator->translate('goto_playlist', 'player'),
 			'LANG_PUSH_PLAYLIST' => $this->translator->translate('push_playlist', 'player'),
+			'LANG_PREVIEW' => $this->translator->translate('preview', 'player'),
 			'LANG_PLAYER_DELETE' => $this->translator->translate('delete', 'main'),
 			'LANG_PLAYER_DELETE_CONFIRM' => $this->translator->translate('delete_confirm', 'player')
 		];
