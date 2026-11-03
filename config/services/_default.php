@@ -22,6 +22,11 @@ declare(strict_types=1);
 use App\Commands\MigrateCommand;
 use App\Framework\Controller\JsonResponseHandler;
 use App\Shared\Acl\AclHelper;
+use App\Shared\Acl\AclGrantService;
+use App\Shared\Acl\AclUnitProvider;
+use App\Shared\Acl\EditionAclModules;
+use App\Shared\User\Repositories\Edge\UserAclRepository;
+use App\Shared\User\Repositories\Edge\UserVipRepository;
 use App\Framework\Config\Config;
 use App\Framework\Http\Cookie;
 use App\Framework\Security\Crypt;
@@ -307,6 +312,25 @@ $dependencies[AclHelper::class] = DI\factory(function (ContainerInterface $conta
 	return new AclHelper(
 		$container->get(UsersService::class),
 		$container->get(Config::class)
+	);
+});
+$dependencies[AclGrantService::class] = DI\factory(function (ContainerInterface $container)
+{
+	// every module with units registers its provider as AclUnitProvider::class . '.<module>'
+	$unitProviders = [];
+	foreach (EditionAclModules::getModules($container->get(Config::class)->getEdition()) as $module)
+	{
+		if ($container->has(AclUnitProvider::class . '.' . $module))
+			$unitProviders[$module] = $container->get(AclUnitProvider::class . '.' . $module);
+	}
+
+	return new AclGrantService(
+		$container->get(AclHelper::class),
+		new UserAclRepository($container->get('SqlConnection')),
+		new UserVipRepository($container->get('SqlConnection')),
+		$container->get(UsersService::class),
+		$container->get(Transactions::class),
+		$unitProviders
 	);
 });
 $dependencies[PrepareService::class] = DI\factory(function (ContainerInterface $container)

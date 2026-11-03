@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 use App\Framework\Controller\JsonResponseHandler;
 use App\Shared\Acl\AclHelper;
+use App\Shared\Acl\AclUnitProvider;
+use App\Shared\Acl\TableUnitProvider;
 use App\Framework\Config\Config;
 use App\Framework\Validation\Sanitizer;
 use App\Framework\Http\Session;
@@ -98,6 +100,10 @@ $dependencies = [];
 $dependencies[PlaylistsRepository::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new PlaylistsRepository($container->get('SqlConnection'));
+});
+$dependencies[AclUnitProvider::class . '.playlists'] = DI\factory(function (ContainerInterface $container)
+{
+	return new TableUnitProvider($container->get('SqlConnection'), $container->get(PlaylistsRepository::class));
 });
 $dependencies[TemplateUsageCounterInterface::class] = DI\factory(function (ContainerInterface $container)
 {

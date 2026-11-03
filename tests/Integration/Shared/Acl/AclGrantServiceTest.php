@@ -21,7 +21,6 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Shared\Acl;
 
-use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\NotFoundException;
@@ -29,17 +28,13 @@ use App\Framework\Exceptions\TranslatableModuleException;
 use App\Shared\Acl\AclGrantService;
 use App\Shared\Acl\AclHelper;
 use App\Shared\Acl\AclSections;
-use App\Shared\Acl\AclUnitProvider;
-use App\Shared\User\Repositories\Edge\UserAclRepository;
-use App\Shared\User\Repositories\Edge\UserVipRepository;
-use App\Shared\User\UsersService;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Integration\Support\ContainerTestCase;
 
 /**
  * Granting rights in the Edge edition: only the module admin grants, units only to users with the role bit.
  * Fixtures: 1 admin (module admin of all modules), 2 anna and 3 bernd without rights.
- * The player module has the units 20 and 21 of the admin.
+ * The units are the players of acl/players.sql: 1 and 2 of anna, 3 of bernd, 4 of the admin.
  */
 #[Group('acl')]
 class AclGrantServiceTest extends ContainerTestCase
@@ -51,24 +46,10 @@ class AclGrantServiceTest extends ContainerTestCase
 	{
 		parent::setUp();
 		$this->loadFixture('acl/users.sql');
-
-		$units = new class implements AclUnitProvider
-		{
-			public function findUnit(int|string $unitId): array
-			{
-				return in_array((string) $unitId, ['20', '21'], true) ? ['UID' => 1, 'company_id' => 1] : [];
-			}
-		};
+		$this->loadFixture('acl/players.sql');
 
 		$this->aclHelper = $this->container->get(AclHelper::class);
-		$this->service   = new AclGrantService(
-			$this->aclHelper,
-			new UserAclRepository($this->connection),
-			new UserVipRepository($this->connection),
-			$this->container->get(UsersService::class),
-			$this->container->get(Transactions::class),
-			['player' => $units]
-		);
+		$this->service   = $this->container->get(AclGrantService::class);
 	}
 
 	public function testTheRolesOfAModuleComeFromItsConfigWithoutSubAdminInEdge(): void
@@ -140,7 +121,7 @@ class AclGrantServiceTest extends ContainerTestCase
 		$this->expectExceptionMessage('user_without_role');
 		try
 		{
-			$this->service->grantUnit(1, 2, 'player', AclSections::EDITOR, 20);
+			$this->service->grantUnit(1, 2, 'player', AclSections::EDITOR, 1);
 		}
 		finally
 		{
@@ -151,20 +132,20 @@ class AclGrantServiceTest extends ContainerTestCase
 	public function testGrantingAUnitTakesEffectAtOnce(): void
 	{
 		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
-		static::assertFalse($this->aclHelper->hasEditorAccessOnUnit(2, 20, 'player'));
+		static::assertFalse($this->aclHelper->hasEditorAccessOnUnit(2, 1, 'player'));
 
-		$this->service->grantUnit(1, 2, 'player', AclSections::EDITOR, 20);
+		$this->service->grantUnit(1, 2, 'player', AclSections::EDITOR, 1);
 
-		static::assertTrue($this->aclHelper->hasEditorAccessOnUnit(2, 20, 'player'));
-		static::assertFalse($this->aclHelper->hasEditorAccessOnUnit(2, 21, 'player'));
+		static::assertTrue($this->aclHelper->hasEditorAccessOnUnit(2, 1, 'player'));
+		static::assertFalse($this->aclHelper->hasEditorAccessOnUnit(2, 2, 'player'));
 	}
 
 	public function testGrantingAUnitTwiceKeepsOneRow(): void
 	{
 		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
 
-		$this->service->grantUnit(1, 2, 'player', AclSections::EDITOR, 20);
-		$this->service->grantUnit(1, 2, 'player', AclSections::EDITOR, '20');
+		$this->service->grantUnit(1, 2, 'player', AclSections::EDITOR, 1);
+		$this->service->grantUnit(1, 2, 'player', AclSections::EDITOR, '1');
 
 		static::assertSame(1, $this->countVips(2));
 	}
@@ -181,7 +162,7 @@ class AclGrantServiceTest extends ContainerTestCase
 	{
 		$this->expectException(TranslatableModuleException::class);
 		$this->expectExceptionMessage('role_not_available');
-		$this->service->grantUnit(1, 2, 'player', AclSections::MODULEADMIN, 20);
+		$this->service->grantUnit(1, 2, 'player', AclSections::MODULEADMIN, 1);
 	}
 
 	public function testUserWithoutRightsMayNotGrantAUnit(): void
@@ -189,19 +170,19 @@ class AclGrantServiceTest extends ContainerTestCase
 		$this->service->setRole(1, 3, 'player', AclSections::VIEWER, true);
 
 		$this->expectException(AccessDeniedException::class);
-		$this->service->grantUnit(2, 3, 'player', AclSections::VIEWER, 20);
+		$this->service->grantUnit(2, 3, 'player', AclSections::VIEWER, 1);
 	}
 
 	public function testRevokingAUnit(): void
 	{
 		$this->service->setRole(1, 2, 'player', AclSections::VIEWER, true);
-		$this->service->grantUnit(1, 2, 'player', AclSections::VIEWER, 20);
-		$this->service->grantUnit(1, 2, 'player', AclSections::VIEWER, 21);
+		$this->service->grantUnit(1, 2, 'player', AclSections::VIEWER, 1);
+		$this->service->grantUnit(1, 2, 'player', AclSections::VIEWER, 2);
 
-		$this->service->revokeUnit(1, 2, 'player', AclSections::VIEWER, 20);
+		$this->service->revokeUnit(1, 2, 'player', AclSections::VIEWER, 1);
 
-		static::assertFalse($this->aclHelper->hasViewerAccessOnUnit(2, 20, 'player'));
-		static::assertTrue($this->aclHelper->hasViewerAccessOnUnit(2, 21, 'player'));
+		static::assertFalse($this->aclHelper->hasViewerAccessOnUnit(2, 1, 'player'));
+		static::assertTrue($this->aclHelper->hasViewerAccessOnUnit(2, 2, 'player'));
 		static::assertTrue($this->aclHelper->isViewer(2, 'player'), 'The bit stays when units are revoked.');
 	}
 
@@ -209,12 +190,12 @@ class AclGrantServiceTest extends ContainerTestCase
 	{
 		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
 		$this->service->setRole(1, 2, 'player', AclSections::VIEWER, true);
-		$this->service->grantUnit(1, 2, 'player', AclSections::EDITOR, 20);
-		$this->service->grantUnit(1, 2, 'player', AclSections::VIEWER, 21);
+		$this->service->grantUnit(1, 2, 'player', AclSections::EDITOR, 1);
+		$this->service->grantUnit(1, 2, 'player', AclSections::VIEWER, 2);
 
 		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, false);
 
-		static::assertSame(['21'], $this->service->findUnitsOfUser(1, 2, 'player', AclSections::VIEWER));
+		static::assertSame(['2'], $this->service->findUnitsOfUser(1, 2, 'player', AclSections::VIEWER));
 		static::assertSame([], $this->service->findUnitsOfUser(1, 2, 'player', AclSections::EDITOR));
 	}
 
@@ -238,11 +219,11 @@ class AclGrantServiceTest extends ContainerTestCase
 	{
 		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
 		$this->service->setRole(1, 3, 'player', AclSections::VIEWER, true);
-		$this->service->grantUnit(1, 2, 'player', AclSections::EDITOR, 20);
-		$this->service->grantUnit(1, 3, 'player', AclSections::VIEWER, 20);
-		$this->service->grantUnit(1, 3, 'player', AclSections::VIEWER, 21);
+		$this->service->grantUnit(1, 2, 'player', AclSections::EDITOR, 1);
+		$this->service->grantUnit(1, 3, 'player', AclSections::VIEWER, 1);
+		$this->service->grantUnit(1, 3, 'player', AclSections::VIEWER, 2);
 
-		$users = $this->service->findUsersOfUnit(1, 'player', 20);
+		$users = $this->service->findUsersOfUnit(1, 'player', 1);
 
 		static::assertSame([['UID' => 2, 'role' => AclSections::EDITOR], ['UID' => 3, 'role' => AclSections::VIEWER]], $users);
 	}
@@ -250,7 +231,7 @@ class AclGrantServiceTest extends ContainerTestCase
 	public function testAUnitOfAModuleWithoutProviderFails(): void
 	{
 		$this->expectException(ModuleException::class);
-		$this->service->findUsersOfUnit(1, 'playlists', 20);
+		$this->service->findUsersOfUnit(1, 'playlists', 1);
 	}
 
 	private function aclOf(int $UID, string $module): int

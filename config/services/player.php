@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 use App\Framework\Controller\JsonResponseHandler;
 use App\Shared\Acl\AclHelper;
+use App\Shared\Acl\AclUnitProvider;
+use App\Shared\Acl\TableUnitProvider;
 use App\Framework\Config\Config;
 use App\Framework\Security\Crypt;
 use App\Framework\Validation\Sanitizer;
@@ -84,6 +86,10 @@ $dependencies[PlaylistUsageFinderInterface::class] = DI\factory(function (Contai
 $dependencies[PlayerRepository::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new PlayerRepository($container->get('SqlConnection'));
+});
+$dependencies[AclUnitProvider::class . '.player'] = DI\factory(function (ContainerInterface $container)
+{
+	return new TableUnitProvider($container->get('SqlConnection'), $container->get(PlayerRepository::class));
 });
 $dependencies[PlayerIndexRepository::class] = DI\factory(function (ContainerInterface $container)
 {

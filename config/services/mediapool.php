@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 use App\Framework\Controller\JsonResponseHandler;
 use App\Shared\Acl\AclHelper;
+use App\Shared\Acl\AclUnitProvider;
+use App\Shared\Acl\TableUnitProvider;
 use App\Framework\Config\Config;
 use App\Framework\System\ShellExecutor;
 use App\Framework\Localization\Translate\Translator;
@@ -52,6 +54,10 @@ $dependencies = [];
 $dependencies[NodesRepository::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new NodesRepository($container->get('SqlConnection'));
+});
+$dependencies[AclUnitProvider::class . '.mediapool'] = DI\factory(function (ContainerInterface $container)
+{
+	return new TableUnitProvider($container->get('SqlConnection'), $container->get(NodesRepository::class));
 });
 $dependencies[AclValidator::class] = DI\factory(function (ContainerInterface $container)
 {

@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 
 use App\Shared\Acl\AclHelper;
+use App\Shared\Acl\AclUnitProvider;
+use App\Shared\Acl\TableUnitProvider;
 use App\Framework\Config\Config;
 use App\Framework\Validation\Sanitizer;
 use App\Framework\Http\Session;
@@ -65,6 +67,10 @@ $dependencies = [];
 $dependencies[TemplatesRepository::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new TemplatesRepository($container->get('SqlConnection'));
+});
+$dependencies[AclUnitProvider::class . '.templates'] = DI\factory(function (ContainerInterface $container)
+{
+	return new TableUnitProvider($container->get('SqlConnection'), $container->get(TemplatesRepository::class));
 });
 $dependencies[AclValidator::class] = DI\factory(function (ContainerInterface $container)
 {
