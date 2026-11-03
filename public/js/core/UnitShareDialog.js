@@ -1,0 +1,186 @@
+/*
+ garlic-hub: Digital Signage Management Platform
+
+ Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ This file is part of the garlic-hub source code
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License, version 3,
+ as published by the Free Software Foundation.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+import {BaseService}         from "./Base/BaseService.js";
+import {FetchClient}         from "./FetchClient.js";
+import {FlashMessageHandler} from "./FlashMessageHandler.js";
+
+class UnitShareService extends BaseService
+{
+	load(module, unitId)
+	{
+		return this._sendRequest(UnitShareService.#url(module, unitId), "GET");
+	}
+
+	save(module, unitId, UID, role)
+	{
+		return this._sendRequest(UnitShareService.#url(module, unitId), "PUT", {UID: UID, role: role});
+	}
+
+	static #url(module, unitId)
+	{
+		return "/async/acl/" + encodeURIComponent(module) + "/units/" + encodeURIComponent(unitId);
+	}
+}
+
+/**
+ * The share dialog of a unit, the same for every module. The datatable shows a button with the
+ * class share-unit to admins (AbstractDatatablePreparer::formatShareAction()).
+ *
+ * Every user with the role editor or viewer in the module gets a select: none, viewer or editor,
+ * limited to the roles he has. A change is saved at once. An editor may use the unit, too.
+ */
+export class UnitShareDialog
+{
+	#module              = "";
+	#unitId              = "";
+	#service             = null;
+	#flashMessageHandler = null;
+	#dialog              = null;
+
+	constructor(module, service, flashMessageHandler)
+	{
+		this.#module              = module;
+		this.#service             = service;
+		this.#flashMessageHandler = flashMessageHandler;
+	}
+
+	/**
+	 * One line in the init.js of a module: UnitShareDialog.bind("player");
+	 */
+	static bind(module)
+	{
+		const dialog = new UnitShareDialog(module, new UnitShareService(new FetchClient()), new FlashMessageHandler());
+		document.addEventListener("click", async (event) =>
+		{
+			const button = event.target.closest(".share-unit");
+			if (button === null)
+				return;
+
+			event.preventDefault();
+			await dialog.open(button.dataset.actionId);
+		});
+	}
+
+	async open(unitId)
+	{
+		this.#unitId = unitId;
+		const result = await this.#service.load(this.#module, unitId);
+		if (!result.success)
+		{
+			this.#flashMessageHandler.showError(result.error_message);
+			return;
+		}
+
+		this.#dialog?.remove();
+		this.#dialog = this.#build(result);
+		document.body.appendChild(this.#dialog);
+		this.#dialog.showModal();
+	}
+
+	#build(data)
+	{
+		const dialog = document.createElement("dialog");
+		dialog.className = "unit-share";
+		dialog.addEventListener("close", () => dialog.remove());
+
+		const header = document.createElement("header");
+		const title  = document.createElement("span");
+		title.textContent = data.labels.title;
+		const close = document.createElement("button");
+		close.type      = "button";
+		close.className = "close-button bi bi-x";
+		close.setAttribute("aria-label", data.labels.close);
+		close.addEventListener("click", () => dialog.close());
+		header.append(title, close);
+		dialog.appendChild(header);
+
+		if (data.users.length === 0)
+		{
+			const empty = document.createElement("p");
+			empty.className   = "unit-share-empty";
+			empty.textContent = data.labels.no_users;
+			dialog.appendChild(empty);
+			return dialog;
+		}
+
+		const filter = document.createElement("input");
+		filter.type        = "search";
+		filter.className   = "unit-share-filter";
+		filter.placeholder = data.labels.filter;
+		dialog.appendChild(filter);
+
+		const list = document.createElement("ul");
+		list.className = "unit-share-users";
+		for (const user of data.users)
+		{
+			list.appendChild(this.#buildUser(user, data.labels));
+		}
+		dialog.appendChild(list);
+
+		filter.addEventListener("input", () =>
+		{
+			const search = filter.value.trim().toLowerCase();
+			for (const item of list.children)
+			{
+				item.hidden = search !== "" && !item.dataset.username.includes(search);
+			}
+		});
+
+		return dialog;
+	}
+
+	#buildUser(user, labels)
+	{
+		const item = document.createElement("li");
+		item.dataset.username = user.username.toLowerCase();
+
+		const name = document.createElement("label");
+		name.textContent = user.username;
+		const select = document.createElement("select");
+		select.id      = "unit-share-" + user.UID;
+		name.htmlFor   = select.id;
+
+		select.appendChild(new Option(labels.none, ""));
+		for (const role of ["viewer", "editor"])
+		{
+			if (user.roles.includes(role))
+				select.appendChild(new Option(labels[role], role));
+		}
+		select.value = user.role;
+
+		let saved = user.role;
+		select.addEventListener("change", async () =>
+		{
+			select.disabled = true;
+			const result = await this.#service.save(this.#module, this.#unitId, user.UID, select.value);
+			select.disabled = false;
+			if (result.success)
+			{
+				saved = select.value;
+				return;
+			}
+
+			select.value = saved;
+			this.#flashMessageHandler.showError(result.error_message);
+		});
+
+		item.append(name, select);
+		return item;
+	}
+}
