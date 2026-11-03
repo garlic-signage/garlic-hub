@@ -1,0 +1,10 @@
+# CORS for browser players (JS/WASM) on another origin: the default, simulation and test media of the SMIL files
+# here are static files, so Apache answers them and their preflight (OPTIONS) itself, without PHP. The rules of the
+# .htaccess in public/ still apply, this file only adds the headers.
+<IfModule mod_headers.c>
+	Header always set Access-Control-Allow-Origin "*"
+	Header always set Access-Control-Allow-Methods "HEAD, GET, OPTIONS"
+	Header always set Access-Control-Allow-Headers "User-Agent, If-None-Match, If-Modified-Since, X-Signage-Agent"
+	Header always set Access-Control-Expose-Headers "ETag, Last-Modified"
+	Header always set Access-Control-Max-Age "86400"
+</IfModule>
