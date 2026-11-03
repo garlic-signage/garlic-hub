@@ -29,6 +29,7 @@ use App\Framework\Database\BaseRepositories\Traits\FindOperationsTrait;
 use App\Framework\Exceptions\UserException;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
+use Doctrine\DBAL\ParameterType;
 
 /**
  * Repository class for managing user ACLs (Access Control Lists).
@@ -67,5 +68,57 @@ class UserAclRepository extends SqlBase
 			$this->connection->executeStatement("INSERT INTO user_acl (UID, acl, module) VALUES ($UID, $adminRights, '$module');");
 		}
 		$this->connection->executeStatement('PRAGMA foreign_keys = ON;');
+	}
+
+	/**
+	 * The bits of the user in the module, 0 without a row.
+	 *
+	 * @throws Exception
+	 */
+	public function findAcl(int $UID, string $module): int
+	{
+		return (int) $this->findOneValueBy('acl', ['UID' => $UID, 'module' => $module]);
+	}
+
+	/**
+	 * One row per user and module, without bits there is no row.
+	 *
+	 * @throws Exception
+	 */
+	public function saveAcl(int $UID, string $module, int $acl): void
+	{
+		$conditions = ['UID' => $UID, 'module' => $module];
+
+		if ($acl === 0)
+			$this->deleteBy($conditions);
+		elseif ($this->findOneValueBy('UID', $conditions) === '')
+			$this->insert(['UID' => $UID, 'module' => $module, 'acl' => $acl]);
+		else
+			$this->updateWithWhere(['acl' => $acl], $conditions);
+	}
+
+	/**
+	 * @return list<array{UID:int, username:string, company_id:int}>
+	 * @throws Exception
+	 */
+	public function findUsersWithBit(string $module, int $bit): array
+	{
+		$queryBuilder = $this->connection->createQueryBuilder();
+		$queryBuilder->select('user_main.UID', 'user_main.username', 'user_main.company_id')
+			->from($this->table)
+			->innerJoin($this->table, 'user_main', 'user_main', 'user_main.UID = ' . $this->table . '.UID')
+			->where($this->table . '.module = :module')
+			->andWhere('(' . $this->table . '.acl & :bit) > 0')
+			->setParameter('module', $module)
+			->setParameter('bit', $bit, ParameterType::INTEGER)
+			->orderBy('user_main.username');
+
+		$users = [];
+		foreach ($queryBuilder->executeQuery()->fetchAllAssociative() as $row)
+		{
+			$users[] = ['UID' => (int) $row['UID'], 'username' => (string) $row['username'], 'company_id' => (int) $row['company_id']];
+		}
+
+		return $users;
 	}
 }

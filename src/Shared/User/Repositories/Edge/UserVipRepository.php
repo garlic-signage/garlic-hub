@@ -24,11 +24,13 @@ namespace App\Shared\User\Repositories\Edge;
 use App\Framework\Database\BaseRepositories\SqlBase;
 use App\Framework\Database\BaseRepositories\Traits\CrudTraits;
 use App\Framework\Database\BaseRepositories\Traits\FindOperationsTrait;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception;
 
 /**
  * Repository class for managing VIP user data interactions with the database.
- * Extends the SqlBase class to facilitate database operations specific to the 'user_security' table.
+ * One row per user, role (vip_name, e.g. player_editor) and unit.
  */
 class UserVipRepository extends SqlBase
 {
@@ -38,5 +40,49 @@ class UserVipRepository extends SqlBase
 	public function __construct(Connection $connection)
 	{
 		parent::__construct($connection,'user_vip', 'UID');
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function hasUnit(int $UID, string $vipName, string $unitId): bool
+	{
+		return $this->findOneValueBy('UID', ['UID' => $UID, 'vip_name' => $vipName, 'unit_id' => $unitId]) !== '';
+	}
+
+	/**
+	 * @return list<string>
+	 * @throws Exception
+	 */
+	public function findUnitIds(int $UID, string $vipName): array
+	{
+		$rows = $this->findAllByWithFields(['unit_id'], ['UID' => $UID, 'vip_name' => $vipName], [], [], '', [['sort' => 'unit_id']]);
+
+		return array_map(fn(array $row) => (string) $row['unit_id'], $rows);
+	}
+
+	/**
+	 * @param list<string> $vipNames
+	 * @return list<array{UID:int, vip_name:string}>
+	 * @throws Exception
+	 */
+	public function findUsersOfUnit(array $vipNames, string $unitId): array
+	{
+		$queryBuilder = $this->connection->createQueryBuilder();
+		$queryBuilder->select('UID', 'vip_name')
+			->from($this->table)
+			->where('vip_name IN (:vipNames)')
+			->andWhere('unit_id = :unitId')
+			->setParameter('vipNames', $vipNames, ArrayParameterType::STRING)
+			->setParameter('unitId', $unitId)
+			->orderBy('UID');
+
+		$users = [];
+		foreach ($queryBuilder->executeQuery()->fetchAllAssociative() as $row)
+		{
+			$users[] = ['UID' => (int) $row['UID'], 'vip_name' => (string) $row['vip_name']];
+		}
+
+		return $users;
 	}
 }

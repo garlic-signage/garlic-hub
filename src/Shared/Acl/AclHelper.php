@@ -54,7 +54,7 @@ class AclHelper
 	 */
 	public function isModuleAdmin(int $UID, string $moduleName): bool
 	{
-		return $this->hasGlobalAcl($UID, AclSections::MODULEADMIN->value, $moduleName);
+		return $this->hasGlobalAcl($UID, AclSections::MODULEADMIN, $moduleName);
 	}
 
 	/**
@@ -63,7 +63,7 @@ class AclHelper
 	 */
 	public function isSubAdmin(int $UID, string $moduleName): bool
 	{
-		return $this->hasGlobalAcl($UID, AclSections::SUBADMIN->value, $moduleName);
+		return $this->hasGlobalAcl($UID, AclSections::SUBADMIN, $moduleName);
 	}
 
 	/**
@@ -72,7 +72,7 @@ class AclHelper
 	 */
 	public function isEditor(int $UID, string $moduleName): bool
 	{
-		return $this->hasGlobalAcl($UID, AclSections::EDITOR->value, $moduleName);
+		return $this->hasGlobalAcl($UID, AclSections::EDITOR, $moduleName);
 	}
 
 	/**
@@ -81,7 +81,7 @@ class AclHelper
 	 */
 	public function isViewer(int $UID, string $moduleName): bool
 	{
-		return $this->hasGlobalAcl($UID, AclSections::VIEWER->value, $moduleName);
+		return $this->hasGlobalAcl($UID, AclSections::VIEWER, $moduleName);
 	}
 
 	/**
@@ -89,7 +89,7 @@ class AclHelper
 	 */
 	public function hasSubAdminAccessOnCompany(int $UID, int $companyId, string $moduleName): bool
 	{
-		return $this->hasVip($UID,$moduleName.'_'.AclSections::SUBADMIN->value, $companyId);
+		return $this->hasVip($UID, $this->getVipName($moduleName, AclSections::SUBADMIN), $companyId);
 	}
 
 	/**
@@ -97,7 +97,7 @@ class AclHelper
 	 */
 	public function hasEditorAccessOnUnit(int $UID, int|string $unitId, string $moduleName): bool
 	{
-		return $this->hasVip($UID,$moduleName.'_'.AclSections::EDITOR->value, $unitId);
+		return $this->hasVip($UID, $this->getVipName($moduleName, AclSections::EDITOR), $unitId);
 	}
 
 	/**
@@ -105,8 +105,24 @@ class AclHelper
 	 */
 	public function hasViewerAccessOnUnit(int $UID, int|string $unitId, string $moduleName): bool
 	{
-		return $this->hasVip($UID,$moduleName.'_'.AclSections::VIEWER->value, $unitId);
+		return $this->hasVip($UID, $this->getVipName($moduleName, AclSections::VIEWER), $unitId);
 
+	}
+
+	/**
+	 * The bit of the role in user_acl. 0 when the module does not know the role.
+	 */
+	public function getAclBit(string $moduleName, AclSections $role): int
+	{
+		return (int) $this->config->getConfigValue($role->value, $moduleName, self::SECTION_GLOBAL_ACLS);
+	}
+
+	/**
+	 * The name of the role in user_vip, e.g. player_editor.
+	 */
+	public function getVipName(string $moduleName, AclSections $role): string
+	{
+		return $moduleName . '_' . $role->value;
 	}
 
 	/**
@@ -131,12 +147,12 @@ class AclHelper
 	 * @throws CoreException
 	 * @throws Exception
 	 */
-	private function hasGlobalAcl(int $UID, string $aclName, string $moduleName): bool
+	private function hasGlobalAcl(int $UID, AclSections $role, string $moduleName): bool
 	{
 		$userEntity = $this->userService->getUserById($UID);
 		$acls       = $userEntity->getAcl();
 
-		$aclValue = (int) $this->config->getConfigValue($aclName, $moduleName, self::SECTION_GLOBAL_ACLS);
+		$aclValue = $this->getAclBit($moduleName, $role);
 
 		foreach ($acls as $acl)
 		{
