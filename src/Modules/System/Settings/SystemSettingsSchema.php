@@ -34,7 +34,7 @@ final readonly class SystemSettingsSchema implements SettingsSchema
 	{
 		return [
 			new SettingField('Audit', 'enabled', SettingType::SWITCH, 'audit_enabled'),
-			new SettingField('Audit', 'retention_days', SettingType::NUMBER, 'audit_retention_days', 1, 3650),
+			new SettingField('Audit', 'retention_days', SettingType::NUMBER, 'audit_retention_days', 1, 3650, dependsOn: 'Audit.enabled'),
 			new SettingField('Queue', 'enabled', SettingType::SWITCH, 'queue_enabled'),
 		];
 	}

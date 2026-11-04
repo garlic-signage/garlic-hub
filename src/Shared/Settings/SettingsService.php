@@ -111,6 +111,10 @@ class SettingsService
 		foreach ($this->schemas[$module]->fields() as $field)
 		{
 			$name = $field->section . '.' . $field->key;
+			// the form does not send a setting whose switch is off: it keeps its value
+			if ($field->dependsOn !== null && !$this->isOn($values[$field->dependsOn] ?? null) && !in_array($name, $reset, true))
+				continue;
+
 			unset($sections[$field->section][$field->key]);
 			if (in_array($name, $reset, true))
 				continue;
@@ -132,11 +136,16 @@ class SettingsService
 
 		return match ($field->type)
 		{
-			SettingType::SWITCH => in_array($value, ['1', 1, true, 'on'], true) ? '1' : '0',
+			SettingType::SWITCH => $this->isOn($value) ? '1' : '0',
 			SettingType::NUMBER => $this->validateNumber($field, $value) ?? throw $invalid,
 			SettingType::TEXT   => is_string($value) && !str_contains($value, '"') && preg_match('/[\r\n]/', $value) !== 1 ? trim($value) : throw $invalid,
 			SettingType::SELECT => is_string($value) && in_array($value, $field->options, true) ? $value : throw $invalid,
 		};
+	}
+
+	private function isOn(mixed $value): bool
+	{
+		return in_array($value, ['1', 1, true, 'on'], true);
 	}
 
 	private function validateNumber(SettingField $field, mixed $value): ?string

@@ -20,9 +20,20 @@
 import {PageTabs} from "../../core/PageTabs.js";
 
 /**
- * The settings page: the tabs only, every tab is a form which is sent to the server.
+ * The settings page: every tab is a form which is sent to the server. A setting which depends on a switch
+ * is greyed out while the switch is off.
  */
 document.addEventListener("DOMContentLoaded", function()
 {
-	PageTabs.init(document.getElementById("systemSettings"));
+	const page = document.getElementById("systemSettings");
+	PageTabs.init(page);
+
+	for (const setting of page.querySelectorAll("[data-depends-on]:not([data-depends-on=''])"))
+	{
+		const toggle = document.getElementById(setting.dataset.dependsOn);
+		if (toggle === null)
+			continue;
+
+		toggle.addEventListener("change", () => setting.disabled = !toggle.checked);
+	}
 });

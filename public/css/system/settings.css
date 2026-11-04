@@ -3,5 +3,6 @@
 #systemSettings .setting label {flex: 0 0 18rem;}
 #systemSettings .setting input[type="number"], #systemSettings .setting input[type="text"] {width: 10rem;}
 #systemSettings .setting-default {color: var(--gh-input-placeholder); font-size: 0.9em;}
+#systemSettings .setting :disabled {opacity: 0.5;}
 #systemSettings .setting-changed {font-weight: bold;}
 #systemSettings .form-submits {margin-top: 1rem;}

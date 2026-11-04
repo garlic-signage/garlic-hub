@@ -120,6 +120,12 @@ readonly class ShowSettingsController
 	 */
 	private function prepareTab(string $module, array $settings): array
 	{
+		$values = [];
+		foreach ($settings as $setting)
+		{
+			$values[$setting['field']->section . '.' . $setting['field']->key] = $setting['value'];
+		}
+
 		$fields = [];
 		foreach ($settings as $setting)
 		{
@@ -130,6 +136,9 @@ readonly class ShowSettingsController
 				'ID'            => 'setting_' . $module . '_' . $field->section . '_' . $field->key,
 				'LANG_LABEL'    => $this->translator->translate($field->label, $module),
 				'VALUE'         => $setting['value'],
+				// a setting of a switch which is off is greyed out, the script follows the switch
+				'DEPENDS_ON'    => $field->dependsOn !== null ? 'setting_' . $module . '_' . str_replace('.', '_', $field->dependsOn) : '',
+				'DISABLED'      => $field->dependsOn !== null && ($values[$field->dependsOn] ?? '0') !== '1' ? 'disabled' : '',
 				'is_switch'     => $field->type === SettingType::SWITCH ? ['CHECKED' => $setting['value'] === '1' ? 'checked' : ''] : [],
 				'is_number'     => $field->type === SettingType::NUMBER ? ['MIN' => $field->min ?? '', 'MAX' => $field->max ?? ''] : [],
 				'is_text'       => $field->type === SettingType::TEXT ? [[]] : [],

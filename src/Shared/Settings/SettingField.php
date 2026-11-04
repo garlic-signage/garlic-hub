@@ -24,6 +24,7 @@ namespace App\Shared\Settings;
 /**
  * One setting an admin may change: a key in a section of the ini of the module.
  * The label is a key of the translations of the module. A select offers only its options.
+ * A setting which depends on a switch ("section.key") is only changed while the switch is on.
  * A number with a factor is shown in its unit (a factor of 1048576: MB) and stored multiplied, min and max are in the unit.
  */
 final readonly class SettingField
@@ -39,6 +40,7 @@ final readonly class SettingField
 		public ?int $min = null,
 		public ?int $max = null,
 		public array $options = [],
-		public int $factor = 1
+		public int $factor = 1,
+		public ?string $dependsOn = null
 	) {}
 }

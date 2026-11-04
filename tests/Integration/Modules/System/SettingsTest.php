@@ -95,9 +95,39 @@ class SettingsTest extends ContainerTestCase
 	{
 		$this->service->save(1, 'system', ['Audit.enabled' => '1', 'Audit.retention_days' => '365']);
 
-		$this->service->save(1, 'system', ['Audit.retention_days' => '365']);
+		$this->service->save(1, 'system', []);
 
 		static::assertSame([], $this->overrides->load('system'), 'The value of the default is no change.');
+	}
+
+	public function testTheDaysKeepTheirValueWhileTheAuditLogIsOff(): void
+	{
+		$this->service->save(1, 'system', ['Audit.enabled' => '1', 'Audit.retention_days' => '30']);
+
+		// the greyed out field is not sent
+		$this->service->save(1, 'system', []);
+
+		static::assertSame(['Audit' => ['retention_days' => '30']], $this->overrides->load('system'));
+	}
+
+	public function testTheDaysAreResetEvenWhileTheAuditLogIsOff(): void
+	{
+		$this->service->save(1, 'system', ['Audit.enabled' => '1', 'Audit.retention_days' => '30']);
+
+		$this->service->save(1, 'system', [], ['Audit.retention_days']);
+
+		static::assertSame([], $this->overrides->load('system'));
+	}
+
+	public function testTheDaysAreGreyedOutWhileTheAuditLogIsOff(): void
+	{
+		$this->actingAs(1);
+
+		$response = $this->controller()->show(new ServerRequestFactory()->createServerRequest('GET', '/system/settings'), new Response());
+
+		static::assertInstanceOf(PageResponse::class, $response);
+		$days = $response->getTemplateData()['tabs'][2]['fields'][1];
+		static::assertSame(['setting_system_Audit_enabled', 'disabled'], [$days['DEPENDS_ON'], $days['DISABLED']]);
 	}
 
 	public function testASettingIsResetToItsDefault(): void
