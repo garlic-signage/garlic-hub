@@ -24,6 +24,7 @@ namespace Tests\Integration\Modules\Auth\Services;
 use App\Modules\Auth\AuthService;
 use App\Modules\Auth\AutoLoginService;
 use App\Modules\Auth\LoginThrottle;
+use App\Shared\Audit\AuditLog;
 use App\Shared\User\TokenPurposes;
 use App\Shared\User\UserEntity;
 use App\Shared\User\UsersService;
@@ -299,7 +300,8 @@ class AutoLoginTest extends ContainerTestCase
 			$this->container->get(UsersService::class),
 			$this->container->get(AutoLoginService::class),
 			$this->container->get('ModuleLogger'),
-			new LoginThrottle($this->container->get(Psr16Adapter::class))
+			new LoginThrottle($this->container->get(Psr16Adapter::class)),
+			$this->container->get(AuditLog::class)
 		);
 	}
 }

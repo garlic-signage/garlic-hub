@@ -28,6 +28,7 @@ use App\Shared\Acl\AclGrantService;
 use App\Shared\Acl\AclHelper;
 use App\Shared\Acl\AclSections;
 use App\Shared\Acl\AclUnitProvider;
+use App\Shared\Audit\NullAuditLog;
 use App\Shared\User\Repositories\Core\UserAclRepository;
 use App\Shared\User\Repositories\Core\UserVipRepository;
 use App\Shared\User\UserEntity;
@@ -172,7 +173,8 @@ class AclGrantServiceSubAdminTest extends TestCase
 			$this->userVipRepository,
 			$usersService,
 			$this->createStub(Transactions::class),
-			['player' => $units]
+			['player' => $units],
+			new NullAuditLog()
 		);
 	}
 }

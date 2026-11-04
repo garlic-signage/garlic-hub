@@ -27,6 +27,7 @@ use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Security\Crypt;
 use App\Modules\Account\Services\AccountService;
 use App\Modules\Users\UserStatus;
+use App\Shared\Audit\NullAuditLog;
 use App\Shared\User\Repositories\Core\UserMainRepository;
 use App\Shared\User\UsersService;
 use App\Shared\User\UserTokenService;
@@ -67,7 +68,7 @@ class AccountServiceTest extends TestCase
 		$this->userTokenService   = $this->createStub(UserTokenService::class);
 		$this->userTokenService->method('useToken')->willReturnCallback(fn(): int => $this->step('token'));
 
-		$this->accountService = new AccountService($this->userMainRepository, $this->userTokenService, $crypt, new Transactions($this->connection), $this->createStub(UsersService::class));
+		$this->accountService = new AccountService($this->userMainRepository, $this->userTokenService, $crypt, new Transactions($this->connection), $this->createStub(UsersService::class), new NullAuditLog());
 	}
 
 	/**

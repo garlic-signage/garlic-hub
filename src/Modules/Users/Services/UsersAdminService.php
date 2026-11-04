@@ -29,6 +29,8 @@ use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\NodesService;
 use App\Modules\Users\UserStatus;
+use App\Shared\Audit\AuditAction;
+use App\Shared\Audit\AuditLog;
 use App\Shared\User\TokenPurposes;
 use App\Shared\User\UsersService;
 use App\Shared\User\UserTokenService;
@@ -45,6 +47,7 @@ use Throwable;
  */
 class UsersAdminService
 {
+	private const string MODULE_NAME = 'users';
 
 	private string $token = '';
 
@@ -57,7 +60,8 @@ class UsersAdminService
 		private readonly AclValidator $aclValidator,
 		private readonly Transactions $transactions,
 		private readonly UserSession $userSession,
-		private readonly UsersService $usersService
+		private readonly UsersService $usersService,
+		private readonly AuditLog $auditLog
 	) {}
 
 	public function getToken(): string
@@ -122,6 +126,7 @@ class UsersAdminService
 			$this->userTokenService->insertToken($UID, $this->token, TokenPurposes::INITIAL_PASSWORD);
 
 			$this->nodesService->addUserDirectory($UID, $saveData['username']);
+			$this->auditLog->record($this->userSession->getUID(), self::MODULE_NAME, AuditAction::USER_CREATED, null, $UID, ['username' => $saveData['username']]);
 
 			$this->transactions->commit();
 
@@ -175,6 +180,7 @@ class UsersAdminService
 			$this->userVipRepository->delete($UID);
 
 			$this->nodesService->deleteUserDirectory($UID);
+			$this->auditLog->record($this->userSession->getUID(), self::MODULE_NAME, AuditAction::USER_DELETED, null, $UID);
 			$this->usersService->invalidateCache($UID);
 
 			$this->transactions->commit();
@@ -211,6 +217,8 @@ class UsersAdminService
 			$token = $this->userTokenService->generateToken();
 			if ($this->userTokenService->insertToken($UID, $token, TokenPurposes::PASSWORD_RESET) === '')
 				throw new TranslatableModuleException('users', 'password_reset_failed', ['UID' => $UID]);
+
+			$this->auditLog->record($this->userSession->getUID(), self::MODULE_NAME, AuditAction::PASSWORD_RESET_CREATED, null, $UID);
 
 			$this->transactions->commit();
 
@@ -252,7 +260,13 @@ class UsersAdminService
 		$this->assertUnique($UID, $postData['username'], $postData['email']);
 
 		$saveData = $this->collectCommonData($postData);
+		$before   = $this->userMainRepository->findByIdSecured($UID);
 		$affected = $this->userMainRepository->update($UID, $saveData);
+
+		// only the names of the changed fields: the values are personal data
+		$changed = array_keys(array_filter($saveData, static fn(string|int $value, string $field): bool => (string) ($before[$field] ?? '') !== (string) $value, ARRAY_FILTER_USE_BOTH));
+		if ($changed !== [])
+			$this->auditLog->record($this->userSession->getUID(), self::MODULE_NAME, AuditAction::USER_UPDATED, null, $UID, ['fields' => $changed]);
 
 		// the user is cached for a day: a new status (blocked) or locale must count at once
 		$this->usersService->invalidateCache($UID);

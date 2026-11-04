@@ -28,6 +28,7 @@ use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Services\NodesService;
 use App\Modules\Users\Services\AclValidator;
 use App\Modules\Users\Services\UsersAdminService;
+use App\Shared\Audit\AuditLog;
 use App\Shared\User\Repositories\Core\UserAclRepository;
 use App\Shared\User\Repositories\Core\UserVipRepository;
 use App\Shared\User\Repositories\Core\UserMainRepository;
@@ -266,7 +267,8 @@ class UsersAdminServiceTest extends ContainerTestCase
 			$this->container->get(AclValidator::class),
 			$this->container->get(Transactions::class),
 			$this->container->get(UserSession::class),
-			$this->container->get(UsersService::class)
+			$this->container->get(UsersService::class),
+			$this->container->get(AuditLog::class)
 		);
 	}
 }

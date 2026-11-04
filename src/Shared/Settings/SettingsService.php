@@ -28,6 +28,8 @@ use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Shared\Acl\AclHelper;
+use App\Shared\Audit\AuditAction;
+use App\Shared\Audit\AuditLog;
 use Doctrine\DBAL\Exception;
 
 /**
@@ -45,7 +47,8 @@ class SettingsService
 		private readonly AclHelper $aclHelper,
 		private readonly ConfigLoaderInterface $defaults,
 		private readonly ConfigOverrides $overrides,
-		private readonly array $schemas
+		private readonly array $schemas,
+		private readonly AuditLog $auditLog
 	) {}
 
 	/**
@@ -125,6 +128,30 @@ class SettingsService
 		}
 
 		$this->overrides->save($module, $sections);
+		$this->recordChanges($UID, $module, $defaults, $overrides, $sections);
+	}
+
+	/**
+	 * The settings whose value changed, with the new value.
+	 *
+	 * @param array<string,string|array<string,string>> $defaults
+	 * @param array<string,string|array<string,string>> $before
+	 * @param array<string,array<string,string>> $after
+	 * @throws Exception
+	 */
+	private function recordChanges(int $UID, string $module, array $defaults, array $before, array $after): void
+	{
+		$changed = [];
+		foreach ($this->schemas[$module]->fields() as $field)
+		{
+			$default  = $this->valueOf($defaults, $field) ?? '';
+			$newValue = $this->valueOf($after, $field) ?? $default;
+			if (($this->valueOf($before, $field) ?? $default) !== $newValue)
+				$changed[$field->section . '.' . $field->key] = $newValue;
+		}
+
+		if ($changed !== [])
+			$this->auditLog->record($UID, $module, AuditAction::SETTINGS_CHANGED, null, null, ['changed' => $changed]);
 	}
 
 	/**

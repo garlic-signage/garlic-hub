@@ -115,6 +115,14 @@ class Config
 	}
 
 	/**
+	 * A switch of the settings (1 or 0), the defaults may have a comment behind the value.
+	 */
+	public function isSwitchOn(string $key, string $module, string $section): bool
+	{
+		return trim(explode(';', $this->getConfigValue($key, $module, $section))[0]) === '1';
+	}
+
+	/**
 	 * @param string $module
 	 * @return array<string,mixed>
 	 */

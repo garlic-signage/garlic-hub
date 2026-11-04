@@ -22,6 +22,8 @@ declare(strict_types=1);
 namespace App\Modules\Account\Services;
 
 use App\Framework\Exceptions\CoreException;
+use App\Shared\Audit\AuditAction;
+use App\Shared\Audit\AuditLog;
 use App\Shared\User\TokenPurposes;
 use App\Shared\User\UsersService;
 use App\Shared\User\UserTokenService;
@@ -46,14 +48,16 @@ class AccountService
 	private readonly Crypt $crypt;
 	private readonly Transactions $transactions;
 	private readonly UsersService $usersService;
+	private readonly AuditLog $auditLog;
 
-	public function __construct(UserMainRepository $userMainRepository, UserTokenService $userTokenService, Crypt $crypt, Transactions $transactions, UsersService $usersService)
+	public function __construct(UserMainRepository $userMainRepository, UserTokenService $userTokenService, Crypt $crypt, Transactions $transactions, UsersService $usersService, AuditLog $auditLog)
 	{
 		$this->userMainRepository = $userMainRepository;
 		$this->userTokenService   = $userTokenService;
 		$this->crypt              = $crypt;
 		$this->transactions       = $transactions;
 		$this->usersService       = $usersService;
+		$this->auditLog           = $auditLog;
 	}
 
 	/**
@@ -111,6 +115,8 @@ class AccountService
 		$this->userTokenService->deleteByUserPurpose($UID, TokenPurposes::AUTOLOGIN->value);
 		$this->userTokenService->deleteByUserPurpose($UID, TokenPurposes::PASSWORD_RESET->value);
 		$this->userTokenService->deleteByUserPurpose($UID, TokenPurposes::INITIAL_PASSWORD->value);
+		// by the user himself: logged in or with a link
+		$this->auditLog->record($UID, 'account', AuditAction::PASSWORD_CHANGED, null, $UID);
 		$this->usersService->invalidateCache($UID);
 
 		return $affected;

@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 use App\Modules\Users\Controller\UnitSharesController;
 use App\Modules\Users\Controller\UserRightsController;
+use App\Shared\Audit\AuditLog;
 use App\Shared\Acl\AclGrantService;
 use App\Framework\Controller\JsonResponseHandler;
 use App\Shared\Acl\AclHelper;
@@ -199,7 +200,8 @@ $dependencies[UsersAdminService::class] = DI\factory(function (ContainerInterfac
 		$container->get(AclValidator::class),
 		$container->get(Transactions::class),
 		$container->get(UserSession::class),
-		$container->get(UsersService::class)
+		$container->get(UsersService::class),
+		$container->get(AuditLog::class)
 	);
 });
 $dependencies[UsersAdminCreateService::class] = DI\factory(function (ContainerInterface $container)

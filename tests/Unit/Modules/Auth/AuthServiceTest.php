@@ -25,6 +25,7 @@ use App\Framework\Exceptions\AuthException;
 use App\Modules\Auth\AuthService;
 use App\Modules\Auth\AutoLoginService;
 use App\Modules\Auth\LoginThrottle;
+use App\Shared\Audit\NullAuditLog;
 use App\Shared\User\UserEntity;
 use App\Shared\User\UsersService;
 use Doctrine\DBAL\Exception\InvalidArgumentException as DbalException;
@@ -78,7 +79,7 @@ class AuthServiceTest extends TestCase
 		$this->autoLoginService->method('removeAutoLogin')->willReturnCallback(function (): void { $this->removedCookies++; });
 
 		$this->logs        = new TestHandler();
-		$this->authService = new AuthService($this->userService, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new ArrayCache()));
+		$this->authService = new AuthService($this->userService, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new ArrayCache()), new NullAuditLog());
 	}
 
 	protected function tearDown(): void
@@ -367,7 +368,7 @@ class AuthServiceTest extends TestCase
 		$users->method('findUser')->willReturn($this->users['user@example.com']);
 		$users->method('getUserById')->willReturn($this->entity(1));
 		$users->method('updatePasswordHash')->willThrowException(new DbalException('database is read only'));
-		$service = new AuthService($users, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new ArrayCache()));
+		$service = new AuthService($users, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new ArrayCache()), new NullAuditLog());
 
 		static::assertNotNull($service->login('user@example.com', self::PASSWORD));
 		static::assertTrue($this->logs->hasWarningThatContains('could not be renewed'));

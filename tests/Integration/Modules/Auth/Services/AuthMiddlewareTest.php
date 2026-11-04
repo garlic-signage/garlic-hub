@@ -23,6 +23,7 @@ namespace Tests\Integration\Modules\Auth\Services;
 
 use App\Framework\Http\Cookie;
 use App\Framework\Http\Session;
+use App\Shared\Audit\AuditLog;
 use Tests\Integration\Support\ArraySession;
 use App\Modules\Account\Services\AccountService;
 use App\Modules\Auth\AuthMiddleware;
@@ -60,7 +61,8 @@ class AuthMiddlewareTest extends ContainerTestCase
 				$this->container->get(UsersService::class),
 				$this->container->get(AutoLoginService::class),
 				$this->container->get('ModuleLogger'),
-				new LoginThrottle($this->container->get(Psr16Adapter::class))
+				new LoginThrottle($this->container->get(Psr16Adapter::class)),
+			$this->container->get(AuditLog::class)
 			),
 			$this->container->get(Session::class),
 			$this->container->get(Cookie::class)

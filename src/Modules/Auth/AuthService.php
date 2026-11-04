@@ -23,6 +23,8 @@ namespace App\Modules\Auth;
 
 use App\Framework\Exceptions\AuthException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Shared\Audit\AuditAction;
+use App\Shared\Audit\AuditLog;
 use App\Shared\User\UserEntity;
 use App\Shared\User\UsersService;
 use DateMalformedStringException;
@@ -42,7 +44,8 @@ class AuthService
 	public function __construct(private readonly UsersService 		$userService,
 								private readonly AutoLoginService   $autoLoginService,
 								private readonly LoggerInterface    $logger,
-								private readonly LoginThrottle      $loginThrottle)
+								private readonly LoginThrottle      $loginThrottle,
+								private readonly AuditLog           $auditLog)
 	{}
 
 	public function getErrorMessage(): string
@@ -85,6 +88,7 @@ class AuthService
 				'time' => date('Y-m-d H:i:s'),
 				'reason' => 'Invalid credentials.',
 			]);
+			$this->auditLog->record(0, 'auth', AuditAction::LOGIN_FAILED, null, isset($userData['UID']) ? (int) $userData['UID'] : null, ['username' => $identifier, 'ip_address' => $ip]);
 			return null;
 		}
 		$this->validateUserStatus($userData['status']);

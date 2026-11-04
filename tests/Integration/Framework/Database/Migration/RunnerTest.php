@@ -79,7 +79,7 @@ class RunnerTest extends TestCase
 		$runner->execute();
 
 		static::assertTrue($runner->isApplied());
-		static::assertSame([1, 2, 3, 4, 5, 6], $this->versions());
+		static::assertSame([1, 2, 3, 4, 5, 6, 7], $this->versions());
 		foreach (['user_main', 'user_acl', 'player', 'playlists', 'playlists_items', 'mediapool_nodes', 'mediapool_files', 'templates', 'user_vip'] as $table)
 			static::assertContains($table, $this->tables());
 	}
@@ -93,7 +93,7 @@ class RunnerTest extends TestCase
 		$second->execute();
 
 		static::assertFalse($second->isApplied());
-		static::assertSame([1, 2, 3, 4, 5, 6], $this->versions());
+		static::assertSame([1, 2, 3, 4, 5, 6, 7], $this->versions());
 		static::assertSame($schema, $this->schema());
 	}
 
@@ -113,7 +113,7 @@ class RunnerTest extends TestCase
 
 		$this->runner(self::MIGRATIONS)->execute();
 
-		static::assertSame([1, 2, 3, 4, 5, 6], $this->versions());
+		static::assertSame([1, 2, 3, 4, 5, 6, 7], $this->versions());
 		static::assertContains('layout', $this->columns('playlists'));
 	}
 
@@ -131,14 +131,14 @@ class RunnerTest extends TestCase
 	public function testRollbackOfOneVersionRestoresTheSchemaBeforeIt(): void
 	{
 		$schemas = [];
-		foreach ([1, 2, 3, 4, 5, 6] as $version)
+		foreach ([1, 2, 3, 4, 5, 6, 7] as $version)
 		{
 			$this->withMigrationsUpTo($version, fn(string $dir) => $this->runner($dir)->execute());
 			$schemas[$version] = $this->schema();
 		}
 
 		$runner = $this->runner(self::MIGRATIONS);
-		foreach ([6, 5, 4, 3, 2] as $version)
+		foreach ([7, 6, 5, 4, 3, 2] as $version)
 		{
 			$runner->rollback($version);
 			static::assertSame($schemas[$version - 1], $this->schema(), "The down migration of version $version must undo exactly its up migration.");
@@ -183,7 +183,7 @@ class RunnerTest extends TestCase
 		$runner->execute();
 
 		static::assertSame($first, $this->schema());
-		static::assertSame([1, 2, 3, 4, 5, 6], $this->versions());
+		static::assertSame([1, 2, 3, 4, 5, 6, 7], $this->versions());
 	}
 
 	/**

@@ -156,6 +156,7 @@ Technical building blocks without business knowledge.
 #### `src/Shared/`
 Business code every module needs.
 - `Acl/` — uniform access levels (module admin, sub admin, editor, viewer) used by all modules.
+- `Audit/` — the audit log: `AuditLog::record()` for rights, shares, settings, users and failed logins, into `audit_log`. The container gives the `NullAuditLog` unless `Audit.enabled` and `Scheduler.enabled` are on; the task `audit.cleanup` of the module System deletes the entries older than `Audit.retention_days`.
 - `Layout/` — data of the main layout: main menu, user menu, language switch, flash messages.
 - `Scheduler/` — runs the `ScheduledTask`s which are due (hourly or daily), remembers their last run in `scheduler_runs`. A module has its tasks in `App\Modules\<Module>\Scheduler\<Module>ScheduledTasks`.
 - `Settings/` — the settings page: `SettingsSchema`, `SettingField` and `SettingsService`.

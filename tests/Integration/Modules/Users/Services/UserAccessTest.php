@@ -30,6 +30,7 @@ use App\Modules\Auth\LoginThrottle;
 use App\Modules\Users\Controller\UserTokenController;
 use App\Modules\Users\Services\UsersAdminService;
 use App\Modules\Users\Services\UsersDatatableService;
+use App\Shared\Audit\AuditLog;
 use App\Shared\User\TokenPurposes;
 use App\Shared\User\UsersService;
 use App\Shared\User\UserTokenService;
@@ -177,7 +178,8 @@ class UserAccessTest extends ContainerTestCase
 				$users,
 				$this->container->get(AutoLoginService::class),
 				$this->container->get('ModuleLogger'),
-				new LoginThrottle($this->container->get(Psr16Adapter::class))
+				new LoginThrottle($this->container->get(Psr16Adapter::class)),
+			$this->container->get(AuditLog::class)
 			);
 			static::assertNull($authService->login('bernd', $password));
 		}

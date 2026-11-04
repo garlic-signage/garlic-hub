@@ -28,6 +28,8 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\TranslatableModuleException;
+use App\Shared\Audit\AuditAction;
+use App\Shared\Audit\AuditLog;
 use App\Shared\User\Repositories\Core\UserAclRepository;
 use App\Shared\User\Repositories\Core\UserVipRepository;
 use App\Shared\User\UsersService;
@@ -58,7 +60,8 @@ class AclGrantService
 		private readonly UserVipRepository $userVipRepository,
 		private readonly UsersService $usersService,
 		private readonly Transactions $transactions,
-		private readonly array $unitProviders
+		private readonly array $unitProviders,
+		private readonly AuditLog $auditLog
 	) {}
 
 	/**
@@ -105,6 +108,7 @@ class AclGrantService
 			if (!$granted)
 				$this->userVipRepository->deleteBy(['UID' => $UID, 'vip_name' => $this->aclHelper->getVipName($module, $role)]);
 
+			$this->auditLog->record($granterUID, $module, $granted ? AuditAction::ROLE_GRANTED : AuditAction::ROLE_REVOKED, null, $UID, ['role' => $role->value]);
 			$this->usersService->invalidateCache($UID);
 			$this->transactions->commit();
 		}
@@ -151,6 +155,7 @@ class AclGrantService
 			if ($role !== null)
 				$this->userVipRepository->insert(['UID' => $UID, 'vip_name' => $this->aclHelper->getVipName($module, $role), 'unit_id' => (string) $unitId]);
 
+			$this->auditLog->record($granterUID, $module, $role !== null ? AuditAction::UNIT_SHARED : AuditAction::UNIT_UNSHARED, $unitId, $UID, $role !== null ? ['role' => $role->value] : []);
 			$this->usersService->invalidateCache($UID);
 			$this->transactions->commit();
 		}

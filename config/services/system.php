@@ -22,13 +22,21 @@ declare(strict_types=1);
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Security\CsrfToken;
 use App\Modules\Auth\UserSession;
+use App\Framework\Config\Config;
 use App\Modules\System\Controller\ShowSettingsController;
+use App\Modules\System\Scheduler\AuditCleanupTask;
+use App\Modules\System\Scheduler\SystemScheduledTasks;
+use App\Shared\Audit\AuditLogRepository;
 use App\Shared\Settings\SettingsService;
 use Psr\Container\ContainerInterface;
 use Slim\Flash\Messages;
 
 $dependencies = [];
 
+$dependencies[SystemScheduledTasks::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new SystemScheduledTasks(new AuditCleanupTask($container->get(AuditLogRepository::class), $container->get(Config::class)));
+});
 $dependencies[ShowSettingsController::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new ShowSettingsController(

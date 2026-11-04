@@ -25,6 +25,7 @@ use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Auth\AuthService;
 use App\Modules\Auth\AutoLoginService;
 use App\Modules\Auth\LoginThrottle;
+use App\Shared\Audit\AuditLog;
 use App\Shared\User\UsersService;
 use Phpfastcache\Helper\Psr16Adapter;
 use App\Modules\Account\Helper\Password\Orchestrator;
@@ -216,7 +217,8 @@ class PasswordTest extends ContainerTestCase
 			$this->container->get(UsersService::class),
 			$this->container->get(AutoLoginService::class),
 			$this->container->get('ModuleLogger'),
-			new LoginThrottle($this->container->get(Psr16Adapter::class))
+			new LoginThrottle($this->container->get(Psr16Adapter::class)),
+			$this->container->get(AuditLog::class)
 		);
 
 		static::assertNull($authService->loginByCookie());
