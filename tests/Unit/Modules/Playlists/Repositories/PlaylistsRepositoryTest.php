@@ -23,7 +23,6 @@ namespace Tests\Unit\Modules\Playlists\Repositories;
 
 use App\Modules\Playlists\Repositories\PlaylistsRepository;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Platforms\MariaDBPlatform;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -52,14 +51,18 @@ class PlaylistsRepositoryTest extends TestCase
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testDeleteDoesNotSetThePragmaOutsideOfSqlite(): void
+	public function testDeleteRemovesTheItemsFirstWithoutAPragma(): void
 	{
-		$this->connectionMock->expects($this->once())->method('getDatabasePlatform')->willReturn(new MariaDBPlatform());
 		$this->connectionMock->expects($this->never())->method('executeQuery');
-		$this->connectionMock->expects($this->once())->method('delete')
-			->with('playlists', ['playlist_id' => 1])
-			->willReturn(1);
+		$deleted = [];
+		$this->connectionMock->expects($this->exactly(2))->method('delete')
+			->willReturnCallback(function (string $table, array $criteria) use (&$deleted): int
+			{
+				$deleted[] = [$table, $criteria];
+				return 1;
+			});
 
 		static::assertSame(1, $this->repository->delete(1));
+		static::assertSame([['playlists_items', ['playlist_id' => 1]], ['playlists', ['playlist_id' => 1]]], $deleted);
 	}
 }

@@ -70,9 +70,16 @@ readonly class AuditFilterDefinition implements FilterDefinition
 		if ($to !== null)
 			$where['created_at_to'] = Where::compare(self::TABLE . '.created_at', Compare::LessOrEqual, $to . ' 23:59:59');
 
+		// who: the user who did it, or what was typed in at a failed login
 		$username = $fields[Parameters::PARAMETER_USERNAME]['value'] ?? '';
 		if (is_string($username) && $username !== '')
-			$where['user_main.username'] = Where::contains('user_main.username', $username);
+			$where['user_main.username'] = Where::anyOf(
+				Where::contains('user_main.username', $username),
+				Where::allOf(
+					Where::equals(self::TABLE . '.action', AuditAction::LOGIN_FAILED->value),
+					Where::contains(self::TABLE . '.details', '"username":"*' . $username)
+				)
+			);
 
 		$module = $fields[Parameters::PARAMETER_MODULE]['value'] ?? '';
 		if (is_string($module) && $module !== '')

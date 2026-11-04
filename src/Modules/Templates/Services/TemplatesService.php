@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Services;
 
+use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -37,6 +38,7 @@ use App\Shared\Audit\AuditLog;
 use App\Shared\Versioning\UnitVersions;
 use Doctrine\DBAL\Exception;
 use JsonException;
+use Throwable;
 
 class TemplatesService
 {
@@ -48,7 +50,8 @@ class TemplatesService
 		private readonly UserSession $userSession,
 		private readonly AclGrantService $aclGrantService,
 		private readonly UnitVersions $unitVersions,
-		private readonly AuditLog $auditLog
+		private readonly AuditLog $auditLog,
+		private readonly Transactions $transactions
 	) {}
 
     /**
@@ -148,13 +151,25 @@ class TemplatesService
 		// editing is not enough: an editor of a shared template must not delete it.
 		// Whether it is used, Composer\Orchestrator::delete() checks.
 		$template = $this->loadCheckedTemplate($templateId, true);
-		$deleted  = $this->templatesRepository->delete($templateId);
-		if ($deleted > 0)
+
+		// the shares and versions go with the template or nothing goes
+		$this->transactions->begin();
+		try
 		{
-			$this->aclGrantService->removeUnitShares(self::MODULE_NAME, [$templateId]);
-			$this->unitVersions->removeUnits(self::MODULE_NAME, [$templateId]);
-			// the name: the list of the audit log finds no template anymore
-			$this->auditLog->record($this->userSession->getUID(), self::MODULE_NAME, AuditAction::UNIT_DELETED, $templateId, null, ['name' => $template['name']]);
+			$deleted = $this->templatesRepository->delete($templateId);
+			if ($deleted > 0)
+			{
+				$this->aclGrantService->removeUnitShares(self::MODULE_NAME, [$templateId]);
+				$this->unitVersions->removeUnits(self::MODULE_NAME, [$templateId]);
+				// the name: the list of the audit log finds no template anymore
+				$this->auditLog->record($this->userSession->getUID(), self::MODULE_NAME, AuditAction::UNIT_DELETED, $templateId, null, ['name' => $template['name']]);
+			}
+			$this->transactions->commit();
+		}
+		catch (Throwable $e)
+		{
+			$this->transactions->rollBack();
+			throw $e;
 		}
 
 		return $deleted;
@@ -173,6 +188,32 @@ class TemplatesService
 	public function loadWithUserById(int $templateId): array
 	{
 		return $this->loadCheckedTemplate($templateId, false);
+	}
+
+	/**
+	 * A template which goes into a playlist: a viewer may use it, too.
+	 *
+	 * @return array<int|string,mixed>
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws NotFoundException
+	 * @throws UserException
+	 */
+	public function loadUsableById(int $templateId): array
+	{
+		try
+		{
+			return $this->loadCheckedTemplate($templateId, false);
+		}
+		catch (AccessDeniedException)
+		{
+			if (!$this->aclValidator->isViewerWithAccessOnUnit($this->userSession->getUID(), $templateId))
+				throw new AccessDeniedException(self::MODULE_NAME, 'template_not_usable', ['template_id' => $templateId]);
+
+			return $this->templatesRepository->findFirstWithUserName($templateId);
+		}
 	}
 
 	/**

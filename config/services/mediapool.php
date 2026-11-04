@@ -20,6 +20,7 @@
 declare(strict_types=1);
 
 use App\Framework\Controller\JsonResponseHandler;
+use App\Framework\Database\BaseRepositories\Transactions;
 use App\Shared\Acl\AclHelper;
 use App\Shared\Acl\AclGrantService;
 use App\Shared\Acl\AclUnitProvider;
@@ -72,7 +73,8 @@ $dependencies[NodesService::class] = DI\factory(function (ContainerInterface $co
 		$container->get(MediaService::class),
 		$container->get(AclValidator::class),
 		$container->get(UserSession::class),
-		$container->get(AclGrantService::class)
+		$container->get(AclGrantService::class),
+		$container->get(Transactions::class)
 	);
 });
 $dependencies[NodesController::class] = DI\factory(function (ContainerInterface $container)

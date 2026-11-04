@@ -60,10 +60,8 @@ class PlaylistsRepository extends SqlBase
 
 	public function delete(int|string $id): int
 	{
-		$platform   = $this->connection->getDatabasePlatform();
-		$driverName = strtolower(str_replace('Doctrine\DBAL\Platforms\\', '', get_class($platform)));
-		if ($driverName === 'sqliteplatform')
-			$this->connection->executeQuery('PRAGMA foreign_keys = ON');
+		// the items go explicitly: SQLite cascades only with a pragma, and it ignores the pragma inside a transaction
+		$this->connection->delete('playlists_items', ['playlist_id' => $id]);
 
 		return $this->deleteByField($this->getIdField(), $id);
 	}

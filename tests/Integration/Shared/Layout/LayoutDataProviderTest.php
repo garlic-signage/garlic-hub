@@ -101,6 +101,8 @@ class LayoutDataProviderTest extends ContainerTestCase
 			'both'                       => [[['users', 1], ['templates', 8]], ['/users', '/templates']],
 			'editor of the templates'    => [[['templates', 2]], []],
 			'a player admin'             => [[['player', 8]], []],
+			// he changes the settings of his module, not the audit log
+			'module admin of mediapool'  => [[['mediapool', 8]], ['/system/settings']],
 		];
 	}
 

@@ -30,7 +30,9 @@ use PHPUnit\Framework\Attributes\Group;
 use Psr\Http\Message\ResponseInterface;
 use Slim\Psr7\Factory\ServerRequestFactory;
 use Slim\Psr7\Response;
+use Tests\Integration\Modules\Playlists\BuildsExportService;
 use Tests\Integration\Support\ContainerTestCase;
+use Tests\Integration\Support\MediaWorkspace;
 
 /**
  * The versions of the playlists: the exported states. Users: 1 admin, 2 anna, 3 bernd.
@@ -39,6 +41,8 @@ use Tests\Integration\Support\ContainerTestCase;
 #[Group('acl')]
 class PlaylistVersionsTest extends ContainerTestCase
 {
+	use BuildsExportService;
+
 	protected function setUp(): void
 	{
 		parent::setUp();
@@ -177,6 +181,53 @@ class PlaylistVersionsTest extends ContainerTestCase
 
 		static::assertSame(['Bernds Kantine', 'doc.pdf'], $omitted);
 		static::assertSame([[1, 1, 'bild.jpg'], [2, 2, 'film.mp4'], [5, 3, 'Vorlage']], array_map('array_values', $this->items(1)));
+	}
+
+	public function testANestedPlaylistWhichContainsThePlaylistByNowIsLeftOut(): void
+	{
+		$this->enable();
+		$this->actingAs(1);
+		$this->export(1);
+		// playlist 2 is taken out of 1, then 1 goes into 2
+		$this->connection->delete('playlists_items', ['item_id' => 3]);
+		$this->connection->insert('playlists_items', ['playlist_id' => 2, 'UID' => 1, 'item_order' => 3, 'item_type' => 'playlist', 'file_resource' => '1', 'item_name' => 'Annas Lobby']);
+
+		$omitted = $this->service()->restoreVersion(1, 1);
+
+		static::assertSame(['Bernds Kantine'], $omitted);
+		static::assertNotContains('Bernds Kantine', array_column($this->items(1), 'item_name'));
+	}
+
+	public function testThePositionsStartAtTheFirstOneEvenWhenItIsLeftOut(): void
+	{
+		$this->enable();
+		$this->actingAs(2);
+		$this->export(1);
+		$this->connection->delete('mediapool_files', ['checksum' => 'checksum-image']);
+
+		$this->service()->restoreVersion(1, 1);
+
+		static::assertSame([1, 2, 3, 4], array_column($this->items(1), 'item_order'));
+	}
+
+	public function testTheExportOfAMultizonePlaylistRecordsItsZones(): void
+	{
+		$this->enable();
+		$this->actingAs(2);
+		$workspace = new MediaWorkspace();
+		$this->connection->executeStatement("UPDATE playlists SET playlist_mode = 'multizone', layout = ? WHERE playlist_id = 3", [serialize(['resolution' => '1920x1080', 'zones' => ['screen1' => ['zone_playlist_id' => 1]]])]);
+
+		try
+		{
+			$this->buildExportService($workspace)->exportToSmil(3);
+		}
+		finally
+		{
+			$workspace->remove();
+		}
+
+		static::assertSame([1], $this->versions(1));
+		static::assertSame([1], $this->versions(3));
 	}
 
 	public function testARestoreCanBeUndone(): void

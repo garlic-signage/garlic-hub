@@ -26,7 +26,8 @@ use InvalidArgumentException;
 
 /**
  * Writes the conditions into a query. They are joined with AND, every value gets a parameter with a name of its
- * own, so two conditions on the same field do not overwrite each other.
+ * own, so two conditions on the same field do not overwrite each other. A group (Where::anyOf, Where::allOf)
+ * is written in brackets with its own operator.
  */
 final readonly class WhereApplier
 {
@@ -37,18 +38,29 @@ final readonly class WhereApplier
 	{
 		foreach ($conditions as $field => $condition)
 		{
-			$where     = $this->toWhere($field, $condition);
-			$parameter = 'where' . count($queryBuilder->getParameters());
-
-			$queryBuilder->andWhere($where->sql($parameter));
-			if (!$where->hasParameter())
-				continue;
-
-			if ($where->listType !== null)
-				$queryBuilder->setParameter($parameter, $where->value, $where->listType);
-			else
-				$queryBuilder->setParameter($parameter, $where->value);
+			$queryBuilder->andWhere($this->write($queryBuilder, $this->toWhere($field, $condition)));
 		}
+	}
+
+	private function write(QueryBuilder $queryBuilder, Where $where): string
+	{
+		if ($where->isGroup())
+		{
+			$parts = array_map(fn(Where $condition): string => $this->write($queryBuilder, $condition), $where->conditions);
+
+			return '(' . implode(' ' . $where->operator . ' ', $parts) . ')';
+		}
+
+		$parameter = 'where' . count($queryBuilder->getParameters());
+		if (!$where->hasParameter())
+			return $where->sql($parameter);
+
+		if ($where->listType !== null)
+			$queryBuilder->setParameter($parameter, $where->value, $where->listType);
+		else
+			$queryBuilder->setParameter($parameter, $where->value);
+
+		return $where->sql($parameter);
 	}
 
 	private function toWhere(int|string $field, mixed $condition): Where

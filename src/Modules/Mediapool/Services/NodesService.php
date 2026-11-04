@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Mediapool\Services;
 
+use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Database\NestedSets\Calculator;
 use App\Framework\Database\NestedSets\Service;
 use App\Framework\Exceptions\AccessDeniedException;
@@ -34,6 +35,7 @@ use App\Modules\Mediapool\Repositories\NodesRepository;
 use Doctrine\DBAL\Exception;
 use App\Shared\Acl\AclGrantService;
 use App\Shared\Acl\AclSections;
+use Throwable;
 
 /**
  * Class NodesService
@@ -48,7 +50,7 @@ class NodesService
 	private readonly UserSession $userSession;
 	private readonly AclGrantService $aclGrantService;
 
-	public function __construct(NodesRepository $nodesRepository, Service $nestedSetsService, MediaService $mediaService, AclValidator $aclValidator, UserSession $userSession, AclGrantService $aclGrantService)
+	public function __construct(NodesRepository $nodesRepository, Service $nestedSetsService, MediaService $mediaService, AclValidator $aclValidator, UserSession $userSession, AclGrantService $aclGrantService, private readonly Transactions $transactions)
 	{
 		$this->aclGrantService = $aclGrantService;
 		$this->nodesRepository = $nodesRepository;
@@ -342,18 +344,28 @@ class NodesService
 		// get all node_id of the partial tree
 		$deleted_nodes = $this->nestedSetsService->findAllSubNodeIdsByRootIdsAndPosition($node['root_id'], $node['rgt'], $node['lft']);
 
-		// the media of a directory are not readable without it: they go with it
-		foreach ($deleted_nodes as $deletedNode)
-			$this->mediaService->markDeleteMediaByNodeId((int) $deletedNode['node_id']);
+		// the media, the directories and their shares go together or nothing goes
+		$this->transactions->begin();
+		try
+		{
+			// the media of a directory are not readable without it: they go with it
+			foreach ($deleted_nodes as $deletedNode)
+				$this->mediaService->markDeleteMediaByNodeId((int) $deletedNode['node_id']);
 
+			if ($node['children'] == 0)
+				$this->nestedSetsService->deleteSingleNode($node);
+			elseif ($node['children'] > 0)
+				$this->nestedSetsService->deleteTree($node);
 
-		if ($node['children'] == 0)
-			$this->nestedSetsService->deleteSingleNode($node);
-		elseif ($node['children'] > 0)
-			$this->nestedSetsService->deleteTree($node);
-
-		// the sub directories are gone, too
-		$this->aclGrantService->removeUnitShares('mediapool', array_values(array_column($deleted_nodes, 'node_id')));
+			// the sub directories are gone, too
+			$this->aclGrantService->removeUnitShares('mediapool', array_values(array_column($deleted_nodes, 'node_id')));
+			$this->transactions->commit();
+		}
+		catch (Throwable $e)
+		{
+			$this->transactions->rollBack();
+			throw $e;
+		}
 
 		return count($deleted_nodes);
 	}

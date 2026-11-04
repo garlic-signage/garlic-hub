@@ -75,6 +75,17 @@ class WhereTest extends TestCase
 	}
 
 	#[Group('units')]
+	public function testAGroupIsWrittenInBracketsWithItsOperator(): void
+	{
+		$sql = $this->sql([
+			'UID' => 2,
+			Where::anyOf(Where::equals('a', 1), Where::allOf(Where::equals('b', 2), Where::startsWith('c', 'x'))),
+		]);
+
+		static::assertSame("SELECT * FROM t WHERE (UID = :where0) AND ((a = :where1 OR (b = :where2 AND c LIKE :where3 ESCAPE '!')))", $sql);
+	}
+
+	#[Group('units')]
 	public function testTheValuesAreParameters(): void
 	{
 		$queryBuilder = $this->connection->createQueryBuilder()->select('*')->from('t');

@@ -96,7 +96,10 @@ class ExportService extends AbstractBaseService
 					if ((int) ($zone['zone_playlist_id'] ?? 0) === 0)
 						continue;
 
-					$tmp = $this->export($this->playlistsService->loadPureById((int) $zone['zone_playlist_id']));
+					// a viewer of a zone playlist may use it in his multizone playlist
+					$zonePlaylist = $this->playlistsService->loadUsableById((int) $zone['zone_playlist_id']);
+					$tmp          = $this->export($zonePlaylist);
+					$this->playlistVersionsService->recordExport($zonePlaylist);
 					$count++;
 					// use the highest values for the duration of multizone.
 					$metrics['filesize'] = max($metrics['filesize'], $tmp['filesize']);

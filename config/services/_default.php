@@ -155,7 +155,7 @@ $dependencies[LayoutDataProviderInterface::class] = DI\factory(function (Contain
 
 	return new LayoutDataProvider(
 		new MainMenuBuilder($session, $translator),
-		new UserMenuBuilder($session, $translator, $container->get(AclHelper::class)),
+		new UserMenuBuilder($session, $translator, $container->get(AclHelper::class), $container->get(SettingsService::class)),
 		new LanguageSelectBuilder($translator, $locales),
 		new FlashMessagesBuilder($flash),
 		$container->get(CsrfToken::class),

@@ -33,13 +33,18 @@
 				<span class="setting-default">{{LANG_DEFAULT}}</span>
 				{{#is_changed}}
 				<span class="setting-changed">{{LANG_CHANGED}}</span>
-				<button type="submit" name="reset" value="{{NAME}}" class="setting-reset">{{LANG_RESET}}</button>
+				<button type="submit" form="reset-{{MODULE}}" name="reset" value="{{NAME}}" class="setting-reset">{{LANG_RESET}}</button>
 				{{/is_changed}}
 			</div>
 			{{/fields}}
 			<div class="form-submits">
 				<button type="submit" class="primary">{{LANG_SAVE}}</button>
 			</div>
+		</form>
+		<!-- the reset buttons belong to this form: Enter in the settings saves, and a reset sends no other change -->
+		<form id="reset-{{MODULE}}" action="/system/settings" method="post">
+			<input type="hidden" name="csrf_token" value="{{CSRF_TOKEN}}">
+			<input type="hidden" name="module" value="{{MODULE}}">
 		</form>
 	</section>
 	{{/tabs}}

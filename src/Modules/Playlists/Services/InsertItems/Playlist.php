@@ -31,6 +31,7 @@ use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
+use App\Modules\Playlists\Services\PlaylistNesting;
 use App\Modules\Playlists\Services\PlaylistsService;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
@@ -63,9 +64,10 @@ class Playlist extends AbstractInsertItem
 		{
 
 			$playlistTargetData = $this->checkPlaylistAcl($playlistId);
-			$playlistInsertData = $this->checkPlaylistAcl((int) $insertId);
+			// a viewer of the nested playlist may use it
+			$playlistInsertData = $this->playlistsService->loadUsableById((int) $insertId);
 
-			if ($this->checkForRecursiveInserts($playlistTargetData['playlist_id'], $playlistInsertData['playlist_id']))
+			if (new PlaylistNesting($this->itemsRepository)->wouldRecurse((int) $playlistTargetData['playlist_id'], (int) $playlistInsertData['playlist_id']))
 				throw new TranslatableModuleException('playlists', 'playlist_recursion', ['playlist_id' => $playlistId, 'insert_id' => (int) $insertId]);
 
 			/*			if (!$this->allowedByTimeLimit($targetId, $playlistTargetData['time_limit']))
@@ -104,22 +106,5 @@ class Playlist extends AbstractInsertItem
 			$this->transactions->rollBack();
 			throw $e;
 		}
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	private function checkForRecursiveInserts(int $targetId, int $insertId): bool
-	{
-		if ($targetId == $insertId)
-			return true;
-
-		foreach ($this->itemsRepository->findAllPlaylistItemsByPlaylistId($insertId) as $value)
-		{
-			if (isset($value['file_resource']) && $this->checkForRecursiveInserts($targetId, (int) $value['file_resource']) === true)
-				return true;
-		}
-
-		return false;
 	}
 }

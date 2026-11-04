@@ -103,7 +103,11 @@ readonly class ShowSettingsController
 
 		try
 		{
-			$this->settingsService->save($this->userSession->getUID(), $module, $values, $reset === '' ? [] : [$reset]);
+			// the reset buttons have a form of their own: it sends nothing else
+			if ($reset !== '')
+				$this->settingsService->reset($this->userSession->getUID(), $module, $reset);
+			else
+				$this->settingsService->save($this->userSession->getUID(), $module, $values);
 			$this->flash->addMessage('success', $this->translator->translate('settings_saved', self::MODULE_NAME));
 		}
 		catch (TranslatableModuleException $e)

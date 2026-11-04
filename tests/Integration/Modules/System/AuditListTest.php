@@ -147,6 +147,16 @@ class AuditListTest extends ContainerTestCase
 		static::assertSame(['User deleted', 'User created'], array_column($this->rows(['action' => '', 'module' => 'users', 'username' => 'adm']), 'action'));
 	}
 
+	public function testTheFilterOfWhoFindsWhatWasTypedInAtAFailedLogin(): void
+	{
+		$this->entry('2026-11-01 10:00:00', 1, 'users', 'user_created', null, 3, ['username' => 'mallory']);
+		$this->entry('2026-11-02 10:00:00', 0, 'auth', 'login_failed', null, null, ['username' => 'mallory', 'ip_address' => '10.0.0.1']);
+		$this->actingAs(1);
+
+		// the user created by the admin has the name in the details, too: it is no failed login
+		static::assertSame(['Login failed'], array_column($this->rows(['username' => 'mallo']), 'action'));
+	}
+
 	public function testThePageSaysWhenTheLogIsOff(): void
 	{
 		$this->actingAs(1);

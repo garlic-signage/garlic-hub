@@ -41,12 +41,43 @@ final readonly class Where
 
 	/**
 	 * @param int|string|list<int|string>|null $value
+	 * @param list<Where> $conditions the conditions of a group (anyOf, allOf), joined with the operator
 	 */
 	private function __construct(
 		private string $sql,
 		public int|string|array|null $value = null,
-		public ?ArrayParameterType $listType = null
+		public ?ArrayParameterType $listType = null,
+		public array $conditions = [],
+		public string $operator = ''
 	) {}
+
+	/**
+	 * One of the conditions: they are joined with OR in brackets.
+	 */
+	public static function anyOf(Where ...$conditions): self
+	{
+		// none of nothing: like IN ()
+		if ($conditions === [])
+			return new self('1 = 0');
+
+		return new self('', conditions: array_values($conditions), operator: 'OR');
+	}
+
+	/**
+	 * All of the conditions, e.g. as one condition of anyOf().
+	 */
+	public static function allOf(Where ...$conditions): self
+	{
+		if ($conditions === [])
+			return new self('1 = 1');
+
+		return new self('', conditions: array_values($conditions), operator: 'AND');
+	}
+
+	public function isGroup(): bool
+	{
+		return $this->conditions !== [];
+	}
 
 	public static function equals(string $field, int|string $value): self
 	{

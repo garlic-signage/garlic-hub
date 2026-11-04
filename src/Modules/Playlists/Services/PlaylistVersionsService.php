@@ -115,9 +115,10 @@ class PlaylistVersionsService
 		{
 			$this->unitVersions->record(self::MODULE_NAME, $playlistId, $this->userSession->getUID(), $this->snapshot($playlist));
 
-			[$items, $omitted] = $this->splitItems($playlistId, array_values(array_filter($snapshot['items'], 'is_array')));
+			$snapshotItems     = array_values(array_filter($snapshot['items'], 'is_array'));
+			[$items, $omitted] = $this->splitItems($playlistId, $snapshotItems);
 			$this->itemsRepository->deleteBy(['playlist_id' => $playlistId]);
-			$this->insertItems($playlistId, $items);
+			$this->insertItems($playlistId, $items, $this->firstPosition($snapshotItems));
 			$this->playlistsRepository->update($playlistId, array_intersect_key($snapshot['playlist'], array_flip(self::PLAYLIST_FIELDS)));
 
 			$this->auditLog->record($this->userSession->getUID(), self::MODULE_NAME, AuditAction::VERSION_RESTORED, $playlistId, null, ['version' => $version]);
@@ -162,7 +163,8 @@ class PlaylistVersionsService
 
 	/**
 	 * Media which are marked as deleted still exist. Templates items have their own content, external
-	 * resources are not checked.
+	 * resources are not checked. A nested playlist which contains this playlist by now is left out, too:
+	 * the nesting would be endless.
 	 *
 	 * @param list<array<mixed>> $items
 	 * @return array{list<array<mixed>>, list<string>} the items to restore and the names of the ones left out
@@ -183,14 +185,16 @@ class PlaylistVersionsService
 		$existingChecksums = $this->itemsRepository->findExistingChecksums(array_values(array_unique($checksums)));
 		$existingPlaylists = $this->playlistsRepository->findExistingIds(array_values(array_unique($playlistIds)));
 
+		$nesting = new PlaylistNesting($this->itemsRepository);
 		$kept    = [];
 		$omitted = [];
 		foreach ($items as $item)
 		{
-			$exists = match ($item['item_type'] ?? '')
+			$nestedId = (int) ($item['file_resource'] ?? 0);
+			$exists   = match ($item['item_type'] ?? '')
 			{
 				ItemType::MEDIAPOOL->value => in_array((string) ($item['file_resource'] ?? ''), $existingChecksums, true),
-				ItemType::PLAYLIST->value  => (int) ($item['file_resource'] ?? 0) !== $playlistId && in_array((int) ($item['file_resource'] ?? 0), $existingPlaylists, true),
+				ItemType::PLAYLIST->value  => in_array($nestedId, $existingPlaylists, true) && !$nesting->wouldRecurse($playlistId, $nestedId),
 				default                    => true
 			};
 
@@ -204,18 +208,27 @@ class PlaylistVersionsService
 	}
 
 	/**
+	 * The position of the first item of the snapshot, also when it is left out: the positions count from it.
+	 *
+	 * @param list<array<mixed>> $items
+	 */
+	private function firstPosition(array $items): int
+	{
+		$orders = array_map(static fn(array $item): int => is_numeric($item['item_order'] ?? null) ? (int) $item['item_order'] : 0, $items);
+
+		return $orders === [] ? 1 : min($orders);
+	}
+
+	/**
 	 * In the order of the snapshot, without gaps of the left out items.
 	 *
 	 * @param list<array<mixed>> $items
 	 * @throws Exception
 	 */
-	private function insertItems(int $playlistId, array $items): void
+	private function insertItems(int $playlistId, array $items, int $first): void
 	{
 		$itemIds = array_map(static fn(array $item): int => is_numeric($item['item_id'] ?? null) ? (int) $item['item_id'] : 0, $items);
 		$taken   = $this->itemsRepository->findItemIdsOfOtherPlaylists($playlistId, array_values(array_filter($itemIds)));
-		// the positions count from the first one of the snapshot
-		$orders  = array_map(static fn(array $item): int => is_numeric($item['item_order'] ?? null) ? (int) $item['item_order'] : 0, $items);
-		$first   = $orders === [] ? 0 : min($orders);
 
 		foreach ($items as $position => $item)
 		{

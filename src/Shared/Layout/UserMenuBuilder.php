@@ -26,6 +26,7 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Http\Session;
 use App\Framework\Localization\Translate\Translator;
 use App\Shared\Acl\AclHelper;
+use App\Shared\Settings\SettingsService;
 use Doctrine\DBAL\Exception;
 
 /**
@@ -33,7 +34,7 @@ use Doctrine\DBAL\Exception;
  */
 readonly class UserMenuBuilder
 {
-	public function __construct(private Session $session, private Translator $translator, private AclHelper $aclHelper)
+	public function __construct(private Session $session, private Translator $translator, private AclHelper $aclHelper, private SettingsService $settingsService)
 	{
 	}
 
@@ -73,11 +74,12 @@ readonly class UserMenuBuilder
 		if ($this->isAdminOf($UID, 'templates'))
 			$points[] = ['LINK_USER_ACCESS' => '/templates', 'LANG_USER_ACCESS' => $this->translator->translate('overview', 'templates')];
 
-		if ($this->isAdminOf($UID, 'system'))
-		{
+		// the module admin of mediapool or playlists has a tab there, too
+		if ($this->settingsService->findEditableModules($UID) !== [])
 			$points[] = ['LINK_USER_ACCESS' => '/system/settings', 'LANG_USER_ACCESS' => $this->translator->translate('settings', 'system')];
+
+		if ($this->isAdminOf($UID, 'system'))
 			$points[] = ['LINK_USER_ACCESS' => '/system/audit', 'LANG_USER_ACCESS' => $this->translator->translate('audit_log', 'system')];
-		}
 
 		return $points;
 	}

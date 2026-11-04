@@ -88,40 +88,29 @@ class SettingsService
 
 	/**
 	 * Stores the values of the schema. A value like the default is no change, so its key is removed:
-	 * a later default of an update takes effect. The keys to reset go back to the default.
+	 * a later default of an update takes effect.
 	 *
 	 * @param array<string,mixed> $values "section.key" => value, a switch which is not sent is off
-	 * @param list<string> $reset "section.key"
 	 * @throws AccessDeniedException
 	 * @throws TranslatableModuleException
 	 * @throws CoreException
 	 * @throws Exception
 	 */
-	public function save(int $UID, string $module, array $values, array $reset = []): void
+	public function save(int $UID, string $module, array $values): void
 	{
 		$this->assertMayChange($UID, $module);
 
 		$defaults  = $this->defaults->load($module);
 		$overrides = $this->overrides->load($module);
-		$sections  = [];
-		// changes which are not in the schema (written by hand) stay
-		foreach ($overrides as $section => $keys)
-		{
-			if (is_array($keys))
-				$sections[$section] = $keys;
-		}
-
+		$sections  = $this->sectionsOf($overrides);
 		foreach ($this->schemas[$module]->fields() as $field)
 		{
 			$name = $field->section . '.' . $field->key;
 			// the form does not send a setting whose switch is off: it keeps its value
-			if ($field->dependsOn !== null && !$this->isOn($values[$field->dependsOn] ?? null) && !in_array($name, $reset, true))
+			if ($field->dependsOn !== null && !$this->isOn($values[$field->dependsOn] ?? null))
 				continue;
 
 			unset($sections[$field->section][$field->key]);
-			if (in_array($name, $reset, true))
-				continue;
-
 			$value = $this->validate($field, $values[$name] ?? null);
 			if ($value !== ($this->valueOf($defaults, $field) ?? ''))
 				$sections[$field->section][$field->key] = $value;
@@ -129,6 +118,48 @@ class SettingsService
 
 		$this->overrides->save($module, $sections);
 		$this->recordChanges($UID, $module, $defaults, $overrides, $sections);
+	}
+
+	/**
+	 * One setting goes back to its default, the others stay as they are stored.
+	 *
+	 * @param string $name "section.key" of the schema
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 */
+	public function reset(int $UID, string $module, string $name): void
+	{
+		$this->assertMayChange($UID, $module);
+
+		$overrides = $this->overrides->load($module);
+		$sections  = $this->sectionsOf($overrides);
+		foreach ($this->schemas[$module]->fields() as $field)
+		{
+			if ($field->section . '.' . $field->key === $name)
+				unset($sections[$field->section][$field->key]);
+		}
+
+		$this->overrides->save($module, $sections);
+		$this->recordChanges($UID, $module, $this->defaults->load($module), $overrides, $sections);
+	}
+
+	/**
+	 * The changes which are not in the schema (written by hand) stay.
+	 *
+	 * @param array<string,string|array<string,string>> $overrides
+	 * @return array<string,array<string,string>>
+	 */
+	private function sectionsOf(array $overrides): array
+	{
+		$sections = [];
+		foreach ($overrides as $section => $keys)
+		{
+			if (is_array($keys))
+				$sections[$section] = $keys;
+		}
+
+		return $sections;
 	}
 
 	/**

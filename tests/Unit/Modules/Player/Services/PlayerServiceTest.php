@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Player\Services;
 
+use App\Framework\Database\BaseRepositories\Transactions;
 use App\Modules\Auth\UserSession;
 use App\Modules\Player\Repositories\PlayerRepository;
 use App\Modules\Player\Services\AclValidator;
@@ -42,7 +43,7 @@ class PlayerServiceTest extends TestCase
 	{
 		$repository = $this->createStub(PlayerRepository::class);
 		$repository->method('findAllForDashboard')->willReturn([]);
-		$service = new PlayerService($repository, $this->createStub(PlaylistsService::class), $this->createStub(AclValidator::class), $this->createStub(UserSession::class), $this->createStub(AclGrantService::class));
+		$service = new PlayerService($repository, $this->createStub(PlaylistsService::class), $this->createStub(AclValidator::class), $this->createStub(UserSession::class), $this->createStub(AclGrantService::class), $this->createStub(Transactions::class));
 
 		static::assertSame(['active' => 0, 'inactive' => 0, 'pending' => 0], $service->findAllForDashboard());
 	}

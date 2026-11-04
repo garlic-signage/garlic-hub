@@ -20,6 +20,7 @@
 declare(strict_types=1);
 
 
+use App\Framework\Database\BaseRepositories\Transactions;
 use App\Shared\Audit\AuditLog;
 use App\Shared\Versioning\UnitVersions;
 use App\Shared\Acl\AclHelper;
@@ -89,7 +90,8 @@ $dependencies[TemplatesService::class] = DI\factory(function (ContainerInterface
 		$container->get(UserSession::class),
 		$container->get(AclGrantService::class),
 		$container->get(UnitVersions::class),
-		$container->get(AuditLog::class)
+		$container->get(AuditLog::class),
+		$container->get(Transactions::class)
 	);
 });
 

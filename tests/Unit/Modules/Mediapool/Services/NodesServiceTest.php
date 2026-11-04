@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Mediapool\Services;
 
+use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Database\NestedSets\Service;
 use App\Framework\Exceptions\ModuleException;
 use App\Modules\Auth\UserSession;
@@ -56,7 +57,7 @@ class NodesServiceTest extends TestCase
 		$session = $this->createStub(UserSession::class);
 		$session->method('getUID')->willReturn(1);
 
-		$service = new NodesService($repository, $this->createStub(Service::class), $this->createStub(MediaService::class), $acl, $session, $this->createStub(AclGrantService::class));
+		$service = new NodesService($repository, $this->createStub(Service::class), $this->createStub(MediaService::class), $acl, $session, $this->createStub(AclGrantService::class), $this->createStub(Transactions::class));
 
 		$this->expectException(ModuleException::class);
 		$this->expectExceptionMessage('Delete nodes by root id failed.');

@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Services;
 
+use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -34,6 +35,7 @@ use App\Modules\Playlists\Helper\PlaylistMode;
 use App\Modules\Playlists\Services\PlaylistsService;
 use Doctrine\DBAL\Exception;
 use App\Shared\Acl\AclGrantService;
+use Throwable;
 
 /**
  * PlayerService class provides functionalities for managing players, including updating player information,
@@ -50,7 +52,7 @@ class PlayerService
 	private readonly UserSession $userSession;
 	private readonly AclGrantService $aclGrantService;
 
-	public function __construct(PlayerRepository $playerRepository, PlaylistsService $playlistService, AclValidator $playerValidator, UserSession $userSession, AclGrantService $aclGrantService)
+	public function __construct(PlayerRepository $playerRepository, PlaylistsService $playlistService, AclValidator $playerValidator, UserSession $userSession, AclGrantService $aclGrantService, private readonly Transactions $transactions)
 	{
 		$this->aclGrantService  = $aclGrantService;
 		$this->playerRepository = $playerRepository;
@@ -104,9 +106,21 @@ class PlayerService
 		// editing is not enough: an editor of a shared player must not delete it
 		$this->loadCheckedPlayer($playerId, true);
 
-		$deleted = $this->playerRepository->delete($playerId);
-		if ($deleted > 0)
-			$this->aclGrantService->removeUnitShares('player', [$playerId]);
+		// the shares go with the player or nothing goes
+		$this->transactions->begin();
+		try
+		{
+			$deleted = $this->playerRepository->delete($playerId);
+			if ($deleted > 0)
+				$this->aclGrantService->removeUnitShares('player', [$playerId]);
+
+			$this->transactions->commit();
+		}
+		catch (Throwable $e)
+		{
+			$this->transactions->rollBack();
+			throw $e;
+		}
 
 		return $deleted;
 	}
@@ -129,7 +143,8 @@ class PlayerService
 		$isIntranet   = 0;
 		if ($playlistId > 0)
 		{
-			$playlist = $this->playlistService->loadPureById($playlistId);
+			// a viewer of the playlist may put it onto his player
+			$playlist = $this->playlistService->loadUsableById($playlistId);
 			if ($playlist['playlist_mode'] !==  PlaylistMode::MASTER->value && $playlist['playlist_mode'] !==  PlaylistMode::MULTIZONE->value)
 				throw new TranslatableModuleException('player', 'playlist_not_master', ['playlist_name' => (string) $playlist['playlist_name']]);
 

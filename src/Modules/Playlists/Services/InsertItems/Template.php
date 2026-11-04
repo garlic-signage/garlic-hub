@@ -82,7 +82,8 @@ class Template extends AbstractInsertItem
 
 			$playlistData = $this->checkPlaylistAcl($playlistId);
 
-			$template = $this->templatesService->loadWithUserById((int) $insertId); // checks rights, too
+			// a viewer of the template may use it
+			$template = $this->templatesService->loadUsableById((int) $insertId);
 
 			/*			if (!$this->allowedByTimeLimit($playlistId, $playlistData['time_limit']))
 							throw new ModuleException('items', 'Playlist time limit exceeds');

@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Services;
 
+use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -38,6 +39,7 @@ use App\Shared\Acl\AclGrantService;
 use App\Shared\Audit\AuditAction;
 use App\Shared\Audit\AuditLog;
 use App\Shared\Versioning\UnitVersions;
+use Throwable;
 
 class PlaylistsService extends AbstractBaseService
 {
@@ -48,6 +50,7 @@ class PlaylistsService extends AbstractBaseService
 								private readonly AclGrantService $aclGrantService,
 								private readonly UnitVersions $unitVersions,
 								private readonly AuditLog $auditLog,
+								private readonly Transactions $transactions,
 								LoggerInterface $logger)
 	{
 		parent::__construct($logger);
@@ -153,13 +156,24 @@ class PlaylistsService extends AbstractBaseService
 	{
 		$playlist = $this->loadWithUserById($playlistId);
 
-		$deleted = $this->playlistsRepository->delete($playlistId);
-		if ($deleted > 0)
+		// the shares and versions go with the playlist or nothing goes
+		$this->transactions->begin();
+		try
 		{
-			$this->aclGrantService->removeUnitShares('playlists', [$playlistId]);
-			$this->unitVersions->removeUnits('playlists', [$playlistId]);
-			// the name: the list of the audit log finds no playlist anymore
-			$this->auditLog->record($this->userSession->getUID(), 'playlists', AuditAction::UNIT_DELETED, $playlistId, null, ['name' => (string) ($playlist['playlist_name'] ?? '')]);
+			$deleted = $this->playlistsRepository->delete($playlistId);
+			if ($deleted > 0)
+			{
+				$this->aclGrantService->removeUnitShares('playlists', [$playlistId]);
+				$this->unitVersions->removeUnits('playlists', [$playlistId]);
+				// the name: the list of the audit log finds no playlist anymore
+				$this->auditLog->record($this->userSession->getUID(), 'playlists', AuditAction::UNIT_DELETED, $playlistId, null, ['name' => (string) ($playlist['playlist_name'] ?? '')]);
+			}
+			$this->transactions->commit();
+		}
+		catch (Throwable $e)
+		{
+			$this->transactions->rollBack();
+			throw $e;
 		}
 
 		return $deleted;
@@ -207,6 +221,32 @@ class PlaylistsService extends AbstractBaseService
 			throw new AccessDeniedException('playlists', 'playlist_not_editable', ['playlist_id' => $playlistId]);
 
 		return $playlist;
+	}
+
+	/**
+	 * A playlist which goes into another playlist, a zone or onto a player: a viewer may use it, too.
+	 *
+	 * @return array<string,mixed>
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws NotFoundException
+	 * @throws UserException
+	 */
+	public function loadUsableById(int $playlistId): array
+	{
+		try
+		{
+			return $this->loadPureById($playlistId);
+		}
+		catch (AccessDeniedException)
+		{
+			if (!$this->aclValidator->isViewerWithAccessOnUnit($this->userSession->getUID(), $playlistId))
+				throw new AccessDeniedException('playlists', 'playlist_not_usable', ['playlist_id' => $playlistId]);
+
+			return $this->fetchById($playlistId);
+		}
 	}
 
 	/**
@@ -277,7 +317,7 @@ class PlaylistsService extends AbstractBaseService
 		if ($zones === [])
 			return 0;
 
-		// the playlists of the zones are played on the players of this playlist: only playlists the user may edit
+		// the playlists of the zones are played on the players of this playlist: only playlists the user may use
 		foreach ($zones['zones'] ?? [] as $zone)
 		{
 			$zonePlaylistId = (int) ($zone['zone_playlist_id'] ?? 0);
@@ -287,7 +327,7 @@ class PlaylistsService extends AbstractBaseService
 			if ($zonePlaylistId === $playlistId)
 				throw new TranslatableModuleException('playlists', 'invalid_zone_data', ['playlist_id' => $playlistId]);
 
-			$this->loadPureById($zonePlaylistId);
+			$this->loadUsableById($zonePlaylistId);
 		}
 
 		return $this->playlistsRepository->update($playlist['playlist_id'], ['layout' => serialize($zones)]);

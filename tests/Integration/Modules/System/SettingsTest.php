@@ -125,7 +125,9 @@ class SettingsTest extends ContainerTestCase
 	{
 		$this->service->save(1, 'system', ['Scheduler.enabled' => '1', 'Audit.enabled' => '1', 'Audit.retention_days' => '30']);
 
-		$this->service->save(1, 'system', ['Scheduler.enabled' => '1'], ['Audit.retention_days']);
+		$this->service->save(1, 'system', ['Scheduler.enabled' => '1']);
+
+		$this->service->reset(1, 'system', 'Audit.retention_days');
 
 		static::assertSame(['Scheduler' => ['enabled' => '1']], $this->overrides->load('system'));
 	}
@@ -159,7 +161,7 @@ class SettingsTest extends ContainerTestCase
 		$values = ['Scheduler.enabled' => '1', 'Audit.enabled' => '1', 'Audit.retention_days' => '30'];
 		$this->service->save(1, 'system', $values);
 
-		$this->service->save(1, 'system', $values, ['Audit.retention_days']);
+		$this->service->reset(1, 'system', 'Audit.retention_days');
 
 		static::assertSame(['Scheduler' => ['enabled' => '1'], 'Audit' => ['enabled' => '1']], $this->overrides->load('system'));
 	}
@@ -274,6 +276,19 @@ class SettingsTest extends ContainerTestCase
 		static::assertSame('/system/settings#system', $response->getHeaderLine('Location'));
 		static::assertSame(['Scheduler' => ['enabled' => '1']], $this->overrides->load('system'));
 		static::assertNotEmpty($this->container->get(Messages::class)->getMessage('success') ?? $_SESSION['slimFlash']['success'] ?? []);
+	}
+
+	public function testAResetChangesNothingElse(): void
+	{
+		$this->service->save(1, 'system', ['Scheduler.enabled' => '1', 'Audit.enabled' => '1', 'Audit.retention_days' => '30']);
+		$this->actingAs(1);
+		// the reset form sends the module and the setting only
+		$request = new ServerRequestFactory()->createServerRequest('POST', '/system/settings')
+			->withParsedBody(['module' => 'system', 'reset' => 'Audit.retention_days']);
+
+		$this->controller()->store($request, new Response());
+
+		static::assertSame(['Scheduler' => ['enabled' => '1'], 'Audit' => ['enabled' => '1']], $this->overrides->load('system'));
 	}
 
 	private function controller(): ShowSettingsController
