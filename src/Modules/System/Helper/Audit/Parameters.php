@@ -57,7 +57,8 @@ class Parameters extends BaseFilterParameters
 		parent::__construct('system', $sanitizer, $session, 'audit_filter');
 		$this->currentParameters = array_merge($this->defaultParameters, $this->moduleParameters);
 
-		$this->setDefaultForParameter(self::PARAMETER_SORT_COLUMN, 'created_at');
+		// the time has seconds only: the id keeps the entries of the same second in their order
+		$this->setDefaultForParameter(self::PARAMETER_SORT_COLUMN, 'id');
 		$this->setDefaultForParameter(self::PARAMETER_SORT_ORDER, 'DESC');
 	}
 }

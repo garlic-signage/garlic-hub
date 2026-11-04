@@ -66,7 +66,8 @@ readonly class TemplatesController
 	}
 
 	/**
-	 * A template can be deleted by everyone who can edit it, as long as it is not used in a playlist.
+	 * Only an admin of the template deletes it, an editor of a shared template does not, and only
+	 * while it is not used in a playlist.
 	 *
 	 * @param array<string,string> $args
 	 * @throws CoreException

@@ -197,8 +197,7 @@ class AclGrantServiceTest extends ContainerTestCase
 
 		$this->service->setRole(1, 2, 'playlists', AclSections::EDITOR, false);
 
-		static::assertSame(['2'], $this->service->findUnitsOfUser(1, 2, 'playlists', AclSections::VIEWER));
-		static::assertSame([], $this->service->findUnitsOfUser(1, 2, 'playlists', AclSections::EDITOR));
+		static::assertSame([['vip_name' => 'playlists_viewer', 'unit_id' => '2']], $this->connection->fetchAllAssociative('SELECT vip_name, unit_id FROM user_vip WHERE UID = 2'));
 	}
 
 	public function testTheShareDialogListsOnlyUsersWithTheRoleBit(): void

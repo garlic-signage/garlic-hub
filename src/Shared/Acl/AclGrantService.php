@@ -391,25 +391,6 @@ class AclGrantService
 	}
 
 	/**
-	 * The units of a user in the role, for the rights page of a user.
-	 *
-	 * @return list<string>
-	 * @throws AccessDeniedException
-	 * @throws NotFoundException
-	 * @throws TranslatableModuleException
-	 * @throws CoreException
-	 * @throws Exception
-	 */
-	public function findUnitsOfUser(int $granterUID, int $UID, string $module, AclSections $role): array
-	{
-		$this->assertUnitRole($module, $role);
-		if (!$this->mayGrant($granterUID, $module, $role, [$this->findCompanyOfUser($UID)]))
-			throw new AccessDeniedException(self::MODULE_NAME, 'rights_not_grantable', ['module' => $module]);
-
-		return $this->userVipRepository->findUnitIds($UID, $this->aclHelper->getVipName($module, $role));
-	}
-
-	/**
 	 * The roles the granter may give on the unit.
 	 *
 	 * @return list<AclSections>

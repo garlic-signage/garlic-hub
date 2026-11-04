@@ -100,6 +100,8 @@ class TemplatesService
 	}
 
 	/**
+	 * Also while the versioning is off: the versions stay readable until the template is deleted, like the audit log.
+	 *
 	 * @return list<array{version:int, created_at:string, username:string}> the newest first
 	 * @throws AccessDeniedException
 	 * @throws CoreException

@@ -76,6 +76,8 @@ class PlaylistVersionsService
 	}
 
 	/**
+	 * Also while the versioning is off: the versions stay readable until the playlist is deleted, like the audit log.
+	 *
 	 * @return list<array{version:int, created_at:string, username:string}> the newest first
 	 * @throws AccessDeniedException
 	 * @throws CoreException
@@ -131,16 +133,6 @@ class PlaylistVersionsService
 		}
 
 		return $omitted;
-	}
-
-	/**
-	 * The versions go with the playlist.
-	 *
-	 * @throws Exception
-	 */
-	public function removeVersions(int $playlistId): void
-	{
-		$this->unitVersions->removeUnits(self::MODULE_NAME, [$playlistId]);
 	}
 
 	/**
