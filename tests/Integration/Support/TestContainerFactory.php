@@ -65,7 +65,7 @@ final class TestContainerFactory
 		$env = [
 			'APP_ENV'              => 'test',
 			'APP_DEBUG'            => 'false',
-			'APP_PLATFORM_EDITION' => 'edge',
+			'APP_PLATFORM_EDITION' => 'core',
 			'DB_MASTER_DRIVER'     => 'pdo_sqlite',
 		];
 

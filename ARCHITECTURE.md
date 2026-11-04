@@ -77,7 +77,7 @@ Project documentation.
 
 ### `dockerapp-configs/`
 Configuration files copied into the Docker image: Apache vhost, PHP ini, ImageMagick policy,
-`.env` for the Edge edition.
+`.env` for the Core edition.
 
 ### `.ddev/`
 Local development environment with DDEV.
@@ -90,7 +90,7 @@ Local development environment with DDEV.
 
 ### `migrations/`
 SQL migrations as `NNN_name.up.sql` / `NNN_name.down.sql`.
-- `edge/` — schema of the Edge edition.
+- `core/` — schema of the Core edition. The `Runner` takes the directory of the edition (`APP_PLATFORM_EDITION`, empty is `core`).
 - `tests/` — test data.
 
 ### `misc/`
@@ -158,7 +158,7 @@ Business code every module needs.
 - `Acl/` — uniform access levels (module admin, sub admin, editor, viewer) used by all modules.
 - `Layout/` — data of the main layout: main menu, user menu, language switch, flash messages.
 - `User/` — the user: `UserEntity`, `UsersService`, tokens and the user repositories.
-  - `Repositories/Edge|Core|Enterprise` — repositories per edition; the larger editions add tables.
+  - `Repositories/Core|Enterprise` — repositories per edition; Enterprise adds tables.
 
 #### `src/Modules/`
 The features. Every module follows the same layout:

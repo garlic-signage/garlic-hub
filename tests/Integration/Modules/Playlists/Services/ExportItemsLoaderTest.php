@@ -59,7 +59,7 @@ class ExportItemsLoaderTest extends ContainerTestCase
 			[serialize(['weekdays' => ['mon']]), serialize(['fit' => 'meet']), serialize(['news']), serialize(['urls' => 'x']), serialize(['touches' => []]), serialize(['stop' => 1])]
 		);
 
-		$result = $this->loader->loadByPlaylist($this->playlist, Config::PLATFORM_EDITION_EDGE);
+		$result = $this->loader->loadByPlaylist($this->playlist, Config::PLATFORM_EDITION_CORE);
 
 		$item = $result['items'][0];
 		static::assertSame(1, (int) $item['item_id']);
@@ -76,7 +76,7 @@ class ExportItemsLoaderTest extends ContainerTestCase
 	{
 		$this->connection->executeStatement("UPDATE playlists_items SET conditional = 'not serialized {' WHERE item_id = 2");
 
-		$result = $this->loader->loadByPlaylist($this->playlist, Config::PLATFORM_EDITION_EDGE);
+		$result = $this->loader->loadByPlaylist($this->playlist, Config::PLATFORM_EDITION_CORE);
 
 		static::assertSame([], $result['items'][0]['conditional']);
 		static::assertSame([], $result['items'][1]['conditional']);
@@ -90,14 +90,14 @@ class ExportItemsLoaderTest extends ContainerTestCase
 	{
 		$this->connection->executeStatement("UPDATE playlists_items SET content_data = '{\"objects\":[]}' WHERE item_id = 5");
 
-		$result = $this->loader->loadByPlaylist($this->playlist, Config::PLATFORM_EDITION_EDGE);
+		$result = $this->loader->loadByPlaylist($this->playlist, Config::PLATFORM_EDITION_CORE);
 
 		static::assertSame('{"objects":[]}', $result['items'][4]['content_data']);
 	}
 
 	public function testTheMetricsAreThoseOfTheItems(): void
 	{
-		$result = $this->loader->loadByPlaylist($this->playlist, Config::PLATFORM_EDITION_EDGE);
+		$result = $this->loader->loadByPlaylist($this->playlist, Config::PLATFORM_EDITION_CORE);
 
 		static::assertSame(
 			['count_items' => 5, 'count_owner_items' => 4, 'filesize' => 1170, 'duration' => 68, 'owner_duration' => 63],
@@ -108,7 +108,7 @@ class ExportItemsLoaderTest extends ContainerTestCase
 
 	public function testAnEmptyPlaylistHasNoItemsAndNoMetrics(): void
 	{
-		$result = $this->loader->loadByPlaylist($this->container->get(PlaylistsService::class)->fetchById(3), Config::PLATFORM_EDITION_EDGE);
+		$result = $this->loader->loadByPlaylist($this->container->get(PlaylistsService::class)->fetchById(3), Config::PLATFORM_EDITION_CORE);
 
 		static::assertSame([], $result['items']);
 		static::assertSame(0, $result['playlist_metrics']->countEntries);

@@ -88,14 +88,14 @@ class AclValidatorTest extends TestCase
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	#[Group('units')]
-	public function testIsPlaylistEditableEdgeEdition(): void
+	public function testIsPlaylistEditableCoreEdition(): void
 	{
 		$UID = 1;
 		$playlist = ['UID' => 2, 'company_id' => 4, 'playlist_id' => 12];
 
 		$configStub = $this->createStub(Config::class);
 		$this->aclHelperStub->method('getConfig')->willReturn($configStub);
-		$configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
+		$configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_CORE);
 
 		$result = $this->aclValidator->isPlaylistEditable($UID, $playlist);
 

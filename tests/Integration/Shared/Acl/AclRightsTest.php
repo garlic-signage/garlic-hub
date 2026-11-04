@@ -26,7 +26,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Shared\Acl\AclHelper;
 use App\Shared\Acl\EditionAclModules;
 use App\Modules\Users\Services\AclValidator;
-use App\Shared\User\Repositories\Edge\UserAclRepository;
+use App\Shared\User\Repositories\Core\UserAclRepository;
 use Phpfastcache\Helper\Psr16Adapter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
@@ -110,7 +110,7 @@ class AclRightsTest extends ContainerTestCase
 		static::assertSame(count(EditionAclModules::getModules($config->getEdition())), (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_acl WHERE UID = 1'));
 	}
 
-	public function testInTheEdgeEditionOnlyTheModuleAdminMayAdministrateAUnit(): void
+	public function testInTheCoreEditionOnlyTheModuleAdminMayAdministrateAUnit(): void
 	{
 		$this->connection->executeStatement("INSERT INTO user_acl (UID, acl, module) VALUES (2, 1, 'users')");
 		$this->container->get(Psr16Adapter::class)->clear();

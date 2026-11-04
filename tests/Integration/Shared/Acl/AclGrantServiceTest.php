@@ -32,7 +32,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Integration\Support\ContainerTestCase;
 
 /**
- * Granting rights in the Edge edition: only the module admin grants, units only to users with the role bit.
+ * Granting rights in the Core edition: only the module admin grants, units only to users with the role bit.
  * Fixtures: 1 admin (module admin of all modules), 2 anna and 3 bernd without rights.
  * The units are the playlists of acl/playlists.sql: 1 and 2 of anna, 3 of bernd, 4 of the admin.
  */
@@ -52,7 +52,7 @@ class AclGrantServiceTest extends ContainerTestCase
 		$this->service   = $this->container->get(AclGrantService::class);
 	}
 
-	public function testTheRolesOfAModuleComeFromItsConfigWithoutSubAdminInEdge(): void
+	public function testTheRolesOfAModuleComeFromItsConfigWithoutSubAdminInCore(): void
 	{
 		static::assertSame([AclSections::MODULEADMIN, AclSections::EDITOR, AclSections::VIEWER], $this->service->getModuleRoles('playlists'));
 		// a player is not selected anywhere, so there is nothing to use it for: no viewer

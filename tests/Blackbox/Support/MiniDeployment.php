@@ -156,7 +156,7 @@ final class MiniDeployment
 			'APP_NAME'             => '"Garlic-Hub"',
 			'APP_ENV'              => 'test',
 			'APP_DEBUG'            => 'false',
-			'APP_PLATFORM_EDITION' => 'edge',
+			'APP_PLATFORM_EDITION' => 'core',
 			'APP_SECRET'           => 'blackbox-secret-0123456789abcdef',
 			'DB_MASTER_PATH'       => '"' . $this->databaseFile() . '"',
 			'DB_MASTER_DRIVER'     => '"PDO_SQLITE"',

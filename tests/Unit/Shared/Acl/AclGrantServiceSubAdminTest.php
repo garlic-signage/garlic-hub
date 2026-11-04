@@ -28,8 +28,8 @@ use App\Shared\Acl\AclGrantService;
 use App\Shared\Acl\AclHelper;
 use App\Shared\Acl\AclSections;
 use App\Shared\Acl\AclUnitProvider;
-use App\Shared\User\Repositories\Edge\UserAclRepository;
-use App\Shared\User\Repositories\Edge\UserVipRepository;
+use App\Shared\User\Repositories\Core\UserAclRepository;
+use App\Shared\User\Repositories\Core\UserVipRepository;
 use App\Shared\User\UserEntity;
 use App\Shared\User\UsersService;
 use PHPUnit\Framework\Attributes\Group;
@@ -111,14 +111,14 @@ class AclGrantServiceSubAdminTest extends TestCase
 	}
 
 	#[Group('units')]
-	public function testSubAdminGrantsNothingInEdge(): void
+	public function testSubAdminGrantsNothingInCore(): void
 	{
 		$userAclRepository = $this->createMock(UserAclRepository::class);
 		$userAclRepository->expects($this->never())->method('saveAcl');
 		$this->userAclRepository = $userAclRepository;
 
 		$this->expectException(AccessDeniedException::class);
-		$this->service(Config::PLATFORM_EDITION_EDGE)->setRole(1, 2, 'player', AclSections::EDITOR, true);
+		$this->service(Config::PLATFORM_EDITION_CORE)->setRole(1, 2, 'player', AclSections::EDITOR, true);
 	}
 
 	#[Group('units')]

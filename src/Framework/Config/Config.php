@@ -31,7 +31,6 @@ use Monolog\Level;
  */
 class Config
 {
-	public const string PLATFORM_EDITION_EDGE = 'edge';
 	public const string PLATFORM_EDITION_CORE = 'core';
 	public const string PLATFORM_EDITION_ENTERPRISE = 'enterprise';
 	public const string APP_CONTAINER_DOCKER = 'docker';
@@ -65,7 +64,7 @@ class Config
 	{
 		$edition = $this->getEnv('APP_PLATFORM_EDITION');
 		if (empty($edition))
-			return self::PLATFORM_EDITION_EDGE;
+			return self::PLATFORM_EDITION_CORE;
 
 		return $edition;
 	}

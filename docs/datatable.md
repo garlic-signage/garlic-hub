@@ -36,7 +36,7 @@ return new PageResponse($templateData);
 ```
 
 1. **`configure()`** takes the UID from the `UserSession` and calls `Builder::configureParameters($UID)`.
-   Outside of the edge edition this adds the module parameters (hook `addModuleParameters()`) and, for
+   Outside of the core edition this adds the module parameters (hook `addModuleParameters()`) and, for
    module admins and sub admins, the owner and company filters.
 2. **`processSubmittedUserInput()`** calls `Builder::determineParameters()` and then
    `Service::loadDatatable()`.

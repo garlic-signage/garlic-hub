@@ -53,7 +53,7 @@ class AbstractDatatableOrchestratorTest extends TestCase
 		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $key . '@' . $module);
 
 		$acl = $this->createStub(AbstractAclValidator::class);
-		$acl->method('getConfig')->willReturn(new Config(new RecordingConfigLoader([]), [], ['APP_PLATFORM_EDITION' => 'edge']));
+		$acl->method('getConfig')->willReturn(new Config(new RecordingConfigLoader([]), [], ['APP_PLATFORM_EDITION' => 'core']));
 
 		$this->service      = new DatatableTestService($this->createStub(DatatableQuery::class), $parameters);
 		$this->orchestrator = new DatatableTestOrchestrator(

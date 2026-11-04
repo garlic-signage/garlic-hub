@@ -48,7 +48,7 @@ use Tests\Support\MemorySession;
 
 /**
  * The rows of the playlist list with the real services of the datatable. The container of the integration tests
- * knows only the edge edition and the owner of a playlist: the rest is tested here.
+ * knows only the core edition and the owner of a playlist: the rest is tested here.
  */
 class DatatablePreparerTest extends TestCase
 {
@@ -197,9 +197,9 @@ class DatatablePreparerTest extends TestCase
 	}
 
 	#[Group('units')]
-	public function testTheCreateMenuOfTheEdgeEditionHasNoExternalAndNoChannelPlaylists(): void
+	public function testTheCreateMenuOfTheCoreEditionHasNoExternalAndNoChannelPlaylists(): void
 	{
-		$this->edition(Config::PLATFORM_EDITION_EDGE);
+		$this->edition(Config::PLATFORM_EDITION_CORE);
 
 		static::assertSame(
 			[['CREATE_PLAYLIST_MODE' => 'master', 'LANG_CREATE_PLAYLIST_MODE' => 'Master'], ['CREATE_PLAYLIST_MODE' => 'internal', 'LANG_CREATE_PLAYLIST_MODE' => 'Internal']],

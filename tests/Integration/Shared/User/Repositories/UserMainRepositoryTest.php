@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Shared\User\Repositories;
 
-use App\Shared\User\Repositories\Edge\UserMainRepository;
+use App\Shared\User\Repositories\Core\UserMainRepository;
 use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Integration\Support\RepositoryTestCase;

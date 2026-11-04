@@ -30,7 +30,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Integration\Support\ContainerTestCase;
 
 /**
- * Who may open, change and delete which template. In the edge edition only the module admin may,
+ * Who may open, change and delete which template. In the core edition only the module admin may,
  * even the owner of a template may not. Fixtures: template 1 belongs to the admin, 2 to anna, 3 to bernd.
  */
 #[Group('acl')]

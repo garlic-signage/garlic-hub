@@ -75,7 +75,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 				switch ($innerKey)
 				{
 					case 'username':
-						if ($this->aclValidator->getConfig()->getEdition() === Config::PLATFORM_EDITION_EDGE)
+						if ($this->aclValidator->getConfig()->getEdition() === Config::PLATFORM_EDITION_CORE)
 							$resultElements['is_text'] = $this->prepareService->getBodyPreparer()->formatText($user['username']);
 						else
 						{

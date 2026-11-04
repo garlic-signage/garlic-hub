@@ -22,10 +22,10 @@ declare(strict_types=1);
 namespace App\Shared\User;
 
 use App\Framework\Services\AbstractBaseService;
-use App\Shared\User\Repositories\Edge\UserAclRepository;
-use App\Shared\User\Repositories\Edge\UserMainRepository;
-use App\Shared\User\Repositories\Edge\UserTokensRepository;
-use App\Shared\User\Repositories\Edge\UserVipRepository;
+use App\Shared\User\Repositories\Core\UserAclRepository;
+use App\Shared\User\Repositories\Core\UserMainRepository;
+use App\Shared\User\Repositories\Core\UserTokensRepository;
+use App\Shared\User\Repositories\Core\UserVipRepository;
 use App\Shared\User\Repositories\UserRepositoryFactory;
 use App\Framework\Exceptions\CoreException;
 use Doctrine\DBAL\Exception;

@@ -37,7 +37,7 @@ class ShowSettingsController
 
 	public function show(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		// In the edge Version user can only edit his password
+		// In the core edition a user can only edit his password
 		// For later versions there will be more settings like company, contact data, MFA select, etc.
 		return $response->withHeader('Location', '/account/password')->withStatus(302);
 	}

@@ -25,8 +25,8 @@ use App\Shared\Acl\AclHelper;
 use App\Shared\Acl\AclGrantService;
 use App\Shared\Acl\AclUnitProvider;
 use App\Shared\Acl\EditionAclModules;
-use App\Shared\User\Repositories\Edge\UserAclRepository;
-use App\Shared\User\Repositories\Edge\UserVipRepository;
+use App\Shared\User\Repositories\Core\UserAclRepository;
+use App\Shared\User\Repositories\Core\UserVipRepository;
 use App\Framework\Config\Config;
 use App\Framework\Http\Cookie;
 use App\Framework\Security\Crypt;
@@ -275,7 +275,8 @@ if (php_sapi_name() === 'cli')
 	{
 
 		$config = $container->get(Config::class);
-		$path = $config->getPaths('migrationDir') . '/' . $config->getEnv('APP_PLATFORM_EDITION') . '/';
+		// getEdition(): an empty edition in the .env is the core edition, too
+		$path = $config->getPaths('migrationDir') . '/' . $config->getEdition() . '/';
 		return new Runner(
 			$container->get(Repository::class),
 			new Filesystem(new LocalFilesystemAdapter($path))

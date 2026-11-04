@@ -23,7 +23,7 @@ namespace App\Shared\User;
 
 use App\Framework\Security\Crypt;
 use App\Framework\Services\AbstractBaseService;
-use App\Shared\User\Repositories\Edge\UserTokensRepository;
+use App\Shared\User\Repositories\Core\UserTokensRepository;
 use DateMalformedStringException;
 use DateTime;
 use Doctrine\DBAL\Exception;

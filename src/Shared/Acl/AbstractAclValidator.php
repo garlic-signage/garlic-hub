@@ -102,7 +102,7 @@ abstract class AbstractAclValidator
 		if ($this->isModuleAdmin($UID))
 			return true;
 
-		if ($this->getConfig()->getEdition() === Config::PLATFORM_EDITION_EDGE)
+		if ($this->getConfig()->getEdition() === Config::PLATFORM_EDITION_CORE)
 			return false;
 
 		if (!array_key_exists('company_id', $unitData) || !array_key_exists('UID', $unitData))

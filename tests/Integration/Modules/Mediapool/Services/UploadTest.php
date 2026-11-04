@@ -81,7 +81,7 @@ class UploadTest extends ContainerTestCase
 	private function buildService(array $answers): UploadService
 	{
 		$root   = (string) realpath(__DIR__ . '/../../../../..');
-		$config = new Config(new IniConfigLoader($root . '/config/settings'), ['systemDir' => $this->dir], ['APP_PLATFORM_EDITION' => 'edge']);
+		$config = new Config(new IniConfigLoader($root . '/config/settings'), ['systemDir' => $this->dir], ['APP_PLATFORM_EDITION' => 'core']);
 		$fs     = new Filesystem(new LocalFilesystemAdapter($this->dir));
 
 		return new UploadService(

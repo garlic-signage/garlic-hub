@@ -64,27 +64,15 @@ class UserRepositoryFactoryTest extends TestCase
 
 		$result = $this->factory->create();
 
-		static::assertArrayHasKey('contact', $result);
-		static::assertArrayHasKey('vip', $result);
-		static::assertArrayNotHasKey('security', $result);
-	}
-
-	#[Group('units')]
-	public function testCreateEdgeEdition(): void
-	{
-		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
-
-		$result = $this->factory->create();
-
 		static::assertArrayNotHasKey('contact', $result);
 		static::assertArrayHasKey('vip', $result);
 		static::assertArrayNotHasKey('security', $result);
 	}
 
 	#[Group('units')]
-	public function testCreateEdgeEditionFromCache(): void
+	public function testCreateCoreEditionFromCache(): void
 	{
-		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
+		$this->configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_CORE);
 
 		$result = $this->factory->create();
 

@@ -32,13 +32,13 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The real migrations of the edge edition on an empty database, up and down. These tests are the
+ * The real migrations of the core edition on an empty database, up and down. These tests are the
  * safety net for a release: every migration must apply, must be reversible and must keep the data.
  */
 #[Group('db')]
 class RunnerTest extends TestCase
 {
-	private const string MIGRATIONS = __DIR__ . '/../../../../../migrations/edge';
+	private const string MIGRATIONS = __DIR__ . '/../../../../../migrations/core';
 
 	private Connection $connection;
 

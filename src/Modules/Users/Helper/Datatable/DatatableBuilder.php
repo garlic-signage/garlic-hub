@@ -150,7 +150,7 @@ class DatatableBuilder extends AbstractDatatableBuilder
 		$this->buildService->getResultsBuilder()->createField('username',true);
 		$this->buildService->getResultsBuilder()->createField('created_at', true);
 		$this->buildService->getResultsBuilder()->createField('status', false);
-		if ($this->aclValidator->getConfig()->getEdition() === Config::PLATFORM_EDITION_CORE || $this->aclValidator->getConfig()->getEdition()  === Config::PLATFORM_EDITION_ENTERPRISE)
+		if ($this->aclValidator->getConfig()->getEdition() === Config::PLATFORM_EDITION_ENTERPRISE)
 		{
 			$this->buildService->getResultsBuilder()->createField('firstname', false);
 			$this->buildService->getResultsBuilder()->createField('surname', false);

@@ -257,7 +257,7 @@ The following are the guidelines for writing templates:
 | `integration` | `tests/Integration` | `db`, `acl` | Real SQLite database, real code, no mocks of our own classes. |
 
 - Do not test repositories with a mocked query builder. Such a test repeats the code and breaks on every refactoring without finding a wrong query. Write a `db` test instead.
-- The database of an integration test is built by the real migrations (`migrations/edge`), not by a schema made for tests. A changed schema must make the tests fail.
+- The database of an integration test is built by the real migrations (`migrations/core`), not by a schema made for tests. A changed schema must make the tests fail.
 - Every test gets a fresh in-memory database. Test data comes from SQL scripts in `tests/resources/sql/<topic>/`, loaded with `loadFixture('<topic>/<file>.sql')`. Shared users (admin `1`, anna `2`, bernd `3`) are in `acl/users.sql`.
 - The directory mirrors `src/`: `tests/Integration/Modules/<Module>/Repositories/` and `.../Services/`.
 

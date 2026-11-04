@@ -100,14 +100,14 @@ class AclValidatorTest extends TestCase
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testIsAllowedToDeleteTemplateInEdgeEdition(): void
+	public function testIsAllowedToDeleteTemplateInCoreEdition(): void
 	{
 		$this->aclHelperStub->method('isModuleAdmin')->willReturn(false);
 		$this->aclHelperStub->method('isSubAdmin')->willReturn(true);
 		$this->aclHelperStub->method('hasSubAdminAccessOnCompany')->willReturn(true);
-		$this->edition(Config::PLATFORM_EDITION_EDGE);
+		$this->edition(Config::PLATFORM_EDITION_CORE);
 
-		// the sub admin with access on the company does not count in the edge edition
+		// the sub admin with access on the company does not count in the core edition
 		static::assertFalse($this->aclValidator->isAllowedToDeleteTemplate(1, $this->template));
 	}
 
@@ -165,7 +165,7 @@ class AclValidatorTest extends TestCase
 	public function testIsTemplateEditableAsEditorWithAccess(): void
 	{
 		$this->aclHelperStub->method('isModuleAdmin')->willReturn(false);
-		$this->edition(Config::PLATFORM_EDITION_EDGE);
+		$this->edition(Config::PLATFORM_EDITION_CORE);
 		$this->aclHelperStub->method('isEditor')->willReturnMap([[1, 'templates', true]]);
 		$this->aclHelperStub->method('hasEditorAccessOnUnit')->willReturnMap([[1, 12, 'templates', true]]);
 
@@ -183,7 +183,7 @@ class AclValidatorTest extends TestCase
 	public function testIsTemplateEditableAsEditorWithoutAccessOnThisTemplate(): void
 	{
 		$this->aclHelperStub->method('isModuleAdmin')->willReturn(false);
-		$this->edition(Config::PLATFORM_EDITION_EDGE);
+		$this->edition(Config::PLATFORM_EDITION_CORE);
 		$this->aclHelperStub->method('isEditor')->willReturn(true);
 		$this->aclHelperStub->method('hasEditorAccessOnUnit')->willReturnMap([[1, 99, 'templates', true], [1, 12, 'templates', false]]);
 
@@ -199,7 +199,7 @@ class AclValidatorTest extends TestCase
 	public function testIsTemplateEditableWithoutRights(): void
 	{
 		$this->aclHelperStub->method('isModuleAdmin')->willReturn(false);
-		$this->edition(Config::PLATFORM_EDITION_EDGE);
+		$this->edition(Config::PLATFORM_EDITION_CORE);
 		$this->aclHelperStub->method('isEditor')->willReturn(false);
 		$this->aclHelperStub->method('hasEditorAccessOnUnit')->willReturn(true);
 

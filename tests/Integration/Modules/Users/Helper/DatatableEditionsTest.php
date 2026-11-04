@@ -40,8 +40,8 @@ use App\Shared\Acl\AclGrantService;
 use App\Modules\Users\Services\UserActions;
 
 /**
- * The list of the users in the editions Core and Enterprise: a company, more columns and a link on the name. The
- * database of the tests is the one of the edge edition, so the helpers are built with an ACL validator of the edition
+ * The list of the users in the Enterprise edition: a company, more columns and a link on the name. The
+ * database of the tests is the one of the core edition, so the helpers are built with an ACL validator of the edition
  * and only the helpers are tested, not the list.
  */
 #[Group('acl')]
@@ -58,7 +58,7 @@ class DatatableEditionsTest extends ContainerTestCase
 	 */
 	public static function editions(): array
 	{
-		return ['core' => [Config::PLATFORM_EDITION_CORE], 'enterprise' => [Config::PLATFORM_EDITION_ENTERPRISE]];
+		return ['enterprise' => [Config::PLATFORM_EDITION_ENTERPRISE]];
 	}
 
 	private function aclOf(string $edition): AclValidator
@@ -158,7 +158,7 @@ class DatatableEditionsTest extends ContainerTestCase
 		$parameters = $this->container->get(Parameters::class);
 		foreach ([Parameters::PARAMETER_FIRSTNAME, Parameters::PARAMETER_SURNAME, Parameters::PARAMETER_COMPANY_NAME] as $name)
 			$parameters->addParameter($name, ScalarType::STRING, '');
-		$builder = $this->builder(Config::PLATFORM_EDITION_CORE);
+		$builder = $this->builder(Config::PLATFORM_EDITION_ENTERPRISE);
 		$builder->determineParameters(['firstname' => 'Anna']);
 		$builder->collectFormElements();
 

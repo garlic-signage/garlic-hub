@@ -30,7 +30,7 @@ use Tests\Integration\Support\RepositoryTestCase;
 
 /**
  * The filters of the player list against the real schema. The filter by activity and by playlist belong to the
- * enterprise edition (the edge list has neither), but the definition has to work for them.
+ * enterprise edition (the core list has neither), but the definition has to work for them.
  * Players of player/players.sql: 1 and 2 play the playlist 1, 3 plays the playlist 2, 4 plays none; all have the refresh time 300.
  */
 #[Group('db')]

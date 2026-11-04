@@ -28,7 +28,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Integration\Support\RepositoryTestCase;
 
 /**
- * The Enterprise edition joins the channels. The migrations of the edge edition do not
+ * The Enterprise edition joins the channels. The migrations of the core edition do not
  * create them, so the test creates the little it needs and runs the real query.
  */
 #[Group('db')]
@@ -50,9 +50,9 @@ class ItemsRepositoryEditionsTest extends RepositoryTestCase
 	/**
 	 * @throws Exception
 	 */
-	public function testEdgeHasNoColumnsOfTheOtherEditions(): void
+	public function testCoreHasNoColumnsOfEnterprise(): void
 	{
-		$items = $this->repository->findAllByPlaylistIdWithJoins(1, Config::PLATFORM_EDITION_EDGE);
+		$items = $this->repository->findAllByPlaylistIdWithJoins(1, Config::PLATFORM_EDITION_CORE);
 
 		static::assertArrayNotHasKey('channel_type', $items[0]);
 	}
@@ -60,23 +60,11 @@ class ItemsRepositoryEditionsTest extends RepositoryTestCase
 	/**
 	 * @throws Exception
 	 */
-	public function testAnUnknownEditionGetsTheColumnsOfEdge(): void
+	public function testAnUnknownEditionGetsTheColumnsOfCore(): void
 	{
 		$items = $this->repository->findAllByPlaylistIdWithJoins(1, 'undefined_edition');
 
 		static::assertCount(5, $items);
-		static::assertArrayNotHasKey('channel_type', $items[0]);
-	}
-
-	/**
-	 * @throws Exception
-	 */
-	public function testCoreHasTheColumnsOfEdge(): void
-	{
-		$items = $this->repository->findAllByPlaylistIdWithJoins(1, Config::PLATFORM_EDITION_CORE);
-
-		static::assertCount(5, $items);
-		static::assertArrayNotHasKey('filetype', $items[0]);
 		static::assertArrayNotHasKey('channel_type', $items[0]);
 	}
 

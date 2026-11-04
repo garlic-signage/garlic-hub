@@ -46,7 +46,7 @@ class AbstractAclValidatorTest extends TestCase
 	private const int SUBADMIN = 4;
 	private const int MODULEADMIN = 8;
 
-	private function validator(int $acl, string $edition = Config::PLATFORM_EDITION_EDGE, string $module = 'testModule'): ConcreteAclValidator
+	private function validator(int $acl, string $edition = Config::PLATFORM_EDITION_CORE, string $module = 'testModule'): ConcreteAclValidator
 	{
 		$config = $this->createStub(Config::class);
 		$config->method('getEdition')->willReturn($edition);
@@ -112,18 +112,18 @@ class AbstractAclValidatorTest extends TestCase
 		$validator = $this->validator(0);
 
 		static::assertSame('testModule', $validator->getModuleName());
-		static::assertSame(Config::PLATFORM_EDITION_EDGE, $validator->getConfig()->getEdition());
+		static::assertSame(Config::PLATFORM_EDITION_CORE, $validator->getConfig()->getEdition());
 	}
 
 	#[Group('units')]
 	public function testAModuleAdminMayAdministrateEveryUnitInEveryEdition(): void
 	{
-		foreach ([Config::PLATFORM_EDITION_EDGE, Config::PLATFORM_EDITION_CORE, Config::PLATFORM_EDITION_ENTERPRISE] as $edition)
+		foreach ([Config::PLATFORM_EDITION_CORE, Config::PLATFORM_EDITION_ENTERPRISE] as $edition)
 			static::assertTrue($this->validator(self::MODULEADMIN, $edition)->isAdmin(1, ['UID' => 9]), $edition);
 	}
 
 	#[Group('units')]
-	public function testInTheEdgeEditionOnlyTheModuleAdminAdministrates(): void
+	public function testInTheCoreEditionOnlyTheModuleAdminAdministrates(): void
 	{
 		$validator = $this->validator(self::SUBADMIN);
 
@@ -135,7 +135,7 @@ class AbstractAclValidatorTest extends TestCase
 	 */
 	public static function editionsWithCompanies(): array
 	{
-		return ['core' => [Config::PLATFORM_EDITION_CORE], 'enterprise' => [Config::PLATFORM_EDITION_ENTERPRISE]];
+		return ['enterprise' => [Config::PLATFORM_EDITION_ENTERPRISE]];
 	}
 
 	#[Group('units')]
@@ -187,6 +187,6 @@ class AbstractAclValidatorTest extends TestCase
 		$this->expectExceptionMessage('Missing company id or UID in unit data.');
 
 		/** @phpstan-ignore argument.type */
-		$this->validator(self::SUBADMIN, Config::PLATFORM_EDITION_CORE)->isAdmin(1, $unit);
+		$this->validator(self::SUBADMIN, Config::PLATFORM_EDITION_ENTERPRISE)->isAdmin(1, $unit);
 	}
 }

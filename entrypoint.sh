@@ -39,6 +39,12 @@ if ! grep -qE '^APP_SECRET=[[:space:]]*[^[:space:]#]' /var/www/.env; then
     echo "APP_SECRET=$(openssl rand -hex 16)" >> /var/www/.env
 fi
 
+# the edition edge is called core now: an older .env still names it edge
+if grep -qE '^APP_PLATFORM_EDITION=[[:space:]]*edge([[:space:]#]|$)' /var/www/.env; then
+    echo "Renaming the edition edge to core..."
+    sed -i -E 's/^APP_PLATFORM_EDITION=[[:space:]]*edge([[:space:]#]|$)/APP_PLATFORM_EDITION=core\1/' /var/www/.env
+fi
+
 if ! grep -q '^APP_CONTAINER=' /var/www/.env; then
     echo "Setting CONTAINER environment variable..."
     echo "APP_CONTAINER=docker" >> /var/www/.env

@@ -40,7 +40,7 @@ use Symfony\Component\Console\Tester\CommandTester;
 #[Group('db')]
 class MigrateCommandTest extends TestCase
 {
-	private const string MIGRATIONS = __DIR__ . '/../../../migrations/edge';
+	private const string MIGRATIONS = __DIR__ . '/../../../migrations/core';
 
 	private Connection $connection;
 	private CommandTester $tester;

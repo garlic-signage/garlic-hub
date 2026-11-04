@@ -164,9 +164,9 @@ class ConfigTest extends TestCase
 	}
 
 	#[Group('units')]
-	public function testGetEditionDefaultsToEdge(): void
+	public function testGetEditionDefaultsToCore(): void
 	{
-		static::assertSame(Config::PLATFORM_EDITION_EDGE, $this->config->getEdition());
+		static::assertSame(Config::PLATFORM_EDITION_CORE, $this->config->getEdition());
 	}
 
 	/**

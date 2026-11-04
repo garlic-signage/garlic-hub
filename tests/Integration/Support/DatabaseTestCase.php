@@ -32,7 +32,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Base class for tests which run against a real database.
  *
- * The schema is built by the real migrations (migrations/edge), not by a copy for tests.
+ * The schema is built by the real migrations (migrations/core), not by a copy for tests.
  * Whenever a migration changes the schema, the tests see it. Every test gets a fresh
  * in-memory database, so tests can not influence each other.
  *
@@ -43,7 +43,7 @@ use PHPUnit\Framework\TestCase;
  */
 abstract class DatabaseTestCase extends TestCase
 {
-	private const string MIGRATION_DIR = __DIR__ . '/../../../migrations/edge';
+	private const string MIGRATION_DIR = __DIR__ . '/../../../migrations/core';
 	private const string FIXTURE_DIR   = __DIR__ . '/../../resources/sql';
 
 	protected Connection $connection;

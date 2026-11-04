@@ -63,7 +63,7 @@ class AclValidatorTest extends TestCase
 		return new UserEntity(['UID' => $UID], [], [], $this->acl, $this->vip);
 	}
 
-	private function validator(string $edition = Config::PLATFORM_EDITION_EDGE): AclValidator
+	private function validator(string $edition = Config::PLATFORM_EDITION_CORE): AclValidator
 	{
 		$config = new Config(
 			new RecordingConfigLoader(['player' => ['GlobalACLs' => ['viewer' => (string) self::VIEWER, 'editor' => (string) self::EDITOR, 'subadmin' => (string) self::SUBADMIN, 'moduleadmin' => (string) self::MODULEADMIN]]]),
@@ -100,7 +100,7 @@ class AclValidatorTest extends TestCase
 	}
 
 	/**
-	 * The owner has no right because of owning: in the edge edition only the module admin changes players.
+	 * The owner has no right because of owning: in the core edition only the module admin changes players.
 	 */
 	#[Group('units')]
 	public function testTheOwnerOfAPlayerHasNoRightBecauseOfOwningIt(): void
@@ -132,14 +132,14 @@ class AclValidatorTest extends TestCase
 	public static function subAdmins(): array
 	{
 		return [
-			'edge, own company'          => [Config::PLATFORM_EDITION_EDGE, 4, false],
+			'edge, own company'          => [Config::PLATFORM_EDITION_CORE, 4, false],
 			'enterprise, own company'    => [Config::PLATFORM_EDITION_ENTERPRISE, 4, true],
 			'enterprise, other company'  => [Config::PLATFORM_EDITION_ENTERPRISE, 5, false],
 		];
 	}
 
 	/**
-	 * The edge edition has no sub admins, in the enterprise edition one is admin of the players of his company.
+	 * The core edition has no sub admins, in the enterprise edition one is admin of the players of his company.
 	 */
 	#[Group('units')]
 	#[DataProvider('subAdmins')]

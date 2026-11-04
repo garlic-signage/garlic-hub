@@ -107,8 +107,8 @@ class ShowComposeControllerTest extends PlaylistsControllerTestCase
 		$data = $this->page('1')->getTemplateData();
 
 		static::assertSame(1, $data['PLAYLIST_ID']);
-		static::assertSame('edge', $data['CMS_EDITION']);
-		// a playlist without a time limit can contain playlists and templates, the edge edition no external media
+		static::assertSame('core', $data['CMS_EDITION']);
+		// a playlist without a time limit can contain playlists and templates, the core edition no external media
 		static::assertNotSame([], $data['can_playlists']);
 		static::assertNotSame([], $data['can_templates']);
 		static::assertSame([], $data['can_external_media']);

@@ -24,7 +24,7 @@ namespace Tests\Integration\Shared\User\Repositories;
 use App\Framework\Config\Config;
 use App\Framework\Config\IniConfigLoader;
 use App\Shared\Acl\EditionAclModules;
-use App\Shared\User\Repositories\Edge\UserAclRepository;
+use App\Shared\User\Repositories\Core\UserAclRepository;
 use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Integration\Support\RepositoryTestCase;
@@ -69,12 +69,12 @@ class UserAclRepositoryTest extends RepositoryTestCase
 		$config = new Config(
 			new IniConfigLoader(__DIR__ . '/../../../../../config/settings'),
 			[],
-			['APP_PLATFORM_EDITION' => Config::PLATFORM_EDITION_EDGE]
+			['APP_PLATFORM_EDITION' => Config::PLATFORM_EDITION_CORE]
 		);
 
 		$this->repository->addAdminRights($config, 14);
 
-		$modules = EditionAclModules::getModules(Config::PLATFORM_EDITION_EDGE);
+		$modules = EditionAclModules::getModules(Config::PLATFORM_EDITION_CORE);
 		$acls    = array_column($this->repository->findById(14), 'acl', 'module');
 		static::assertEqualsCanonicalizing($modules, array_keys($acls));
 		foreach ($modules as $module)

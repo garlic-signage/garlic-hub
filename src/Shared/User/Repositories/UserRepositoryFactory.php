@@ -23,11 +23,11 @@ namespace App\Shared\User\Repositories;
 
 use App\Framework\Config\Config;
 use App\Shared\User\Repositories\Core\UserContactRepository;
-use App\Shared\User\Repositories\Edge\UserAclRepository;
-use App\Shared\User\Repositories\Edge\UserMainRepository;
-use App\Shared\User\Repositories\Edge\UserTokensRepository;
+use App\Shared\User\Repositories\Core\UserAclRepository;
+use App\Shared\User\Repositories\Core\UserMainRepository;
+use App\Shared\User\Repositories\Core\UserTokensRepository;
 use App\Shared\User\Repositories\Enterprise\UserSecurityRepository;
-use App\Shared\User\Repositories\Edge\UserVipRepository;
+use App\Shared\User\Repositories\Core\UserVipRepository;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -82,13 +82,6 @@ class UserRepositoryFactory
 				'contact'  => new UserContactRepository($this->connection),
 				'vip'      => new UserVipRepository($this->connection),
 				'security' => new UserSecurityRepository($this->connection)
-			],
-			Config::PLATFORM_EDITION_CORE => [
-				'main'    => new UserMainRepository($this->connection),
-				'tokens'  => new UserTokensRepository($this->connection),
-				'acl'     => new UserAclRepository($this->connection),
-				'vip'     => new UserVipRepository($this->connection),
-				'contact' => new UserContactRepository($this->connection)
 			],
 			default => [
 				'main' => new UserMainRepository($this->connection),

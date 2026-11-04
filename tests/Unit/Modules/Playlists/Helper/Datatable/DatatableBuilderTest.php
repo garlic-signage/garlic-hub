@@ -45,7 +45,7 @@ use Tests\Support\MemorySession;
 
 /**
  * The builder of the playlist list with the real parameters and the real services of the datatable.
- * The container of the integration tests knows only the edge edition: the editions are tested here.
+ * The container of the integration tests knows only the core edition: the editions are tested here.
  */
 class DatatableBuilderTest extends TestCase
 {
@@ -92,9 +92,9 @@ class DatatableBuilderTest extends TestCase
 	}
 
 	#[Group('units')]
-	public function testTheEdgeEditionAddsNoParameters(): void
+	public function testTheCoreEditionAddsNoParameters(): void
 	{
-		$this->edition(Config::PLATFORM_EDITION_EDGE);
+		$this->edition(Config::PLATFORM_EDITION_CORE);
 		$this->aclValidatorStub->method('isModuleAdmin')->willReturn(true);
 
 		$this->builder->configureParameters(123);
@@ -165,7 +165,7 @@ class DatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testTheFormHasTheNameTheModeAndForAnAdminTheOwner(): void
 	{
-		$this->edition(Config::PLATFORM_EDITION_CORE);
+		$this->edition(Config::PLATFORM_EDITION_ENTERPRISE);
 		$this->parameters->addOwner();
 		$this->parseRequest();
 
@@ -181,7 +181,7 @@ class DatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testTheFormOfAUserHasNoOwner(): void
 	{
-		$this->edition(Config::PLATFORM_EDITION_EDGE);
+		$this->edition(Config::PLATFORM_EDITION_CORE);
 		$this->parseRequest();
 
 		$this->builder->collectFormElements();
@@ -190,9 +190,9 @@ class DatatableBuilderTest extends TestCase
 	}
 
 	#[Group('units')]
-	public function testTheEdgeEditionKnowsNoExternalAndNoChannelPlaylists(): void
+	public function testTheCoreEditionKnowsNoExternalAndNoChannelPlaylists(): void
 	{
-		$this->edition(Config::PLATFORM_EDITION_EDGE);
+		$this->edition(Config::PLATFORM_EDITION_CORE);
 
 		static::assertSame(['master' => 'Master', 'internal' => 'Internal'], $this->builder->determineAllowedPlaylistModes());
 
@@ -206,7 +206,7 @@ class DatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testTheOtherEditionsKnowAllPlaylistModes(): void
 	{
-		$this->edition(Config::PLATFORM_EDITION_CORE);
+		$this->edition(Config::PLATFORM_EDITION_ENTERPRISE);
 
 		static::assertSame(['master', 'internal', 'external', 'channel'], array_keys($this->builder->determineAllowedPlaylistModes()));
 	}

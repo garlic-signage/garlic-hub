@@ -208,10 +208,10 @@ class ShowDatatableControllerTest extends PlayerControllerTestCase
 	}
 
 	/**
-	 * The edge edition has no filter by activity (and none by the owner): the field is not there, and the address
+	 * The core edition has no filter by activity (and none by the owner): the field is not there, and the address
 	 * with it shows the same list.
 	 */
-	public function testTheEdgeEditionHasNoFilterByActivity(): void
+	public function testTheCoreEditionHasNoFilterByActivity(): void
 	{
 		$this->actingAs(1);
 		$this->lastAccessSecondsAgo(1, 10);

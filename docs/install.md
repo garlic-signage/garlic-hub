@@ -56,7 +56,7 @@ Set at least these values in `.env`:
 ```dotenv
 APP_ENV=dev
 APP_DEBUG=true
-APP_PLATFORM_EDITION=edge
+APP_PLATFORM_EDITION=core
 ```
 
 Then choose a database.

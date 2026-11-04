@@ -65,15 +65,15 @@ class AbstractDatatableBuilderTest extends TestCase
 	}
 
 	/**
-	 * The edge edition has one user and no companies: no filter for the owner or the company.
+	 * The core edition has one user and no companies: no filter for the owner or the company.
 	 *
 	 * @throws CoreException
 	 * @throws Exception
 	 */
 	#[Group('units')]
-	public function testTheEdgeEditionAddsNothing(): void
+	public function testTheCoreEditionAddsNothing(): void
 	{
-		$builder = $this->builder(Config::PLATFORM_EDITION_EDGE, true, true);
+		$builder = $this->builder(Config::PLATFORM_EDITION_CORE, true, true);
 
 		$builder->configureParameters(1);
 
@@ -106,7 +106,7 @@ class AbstractDatatableBuilderTest extends TestCase
 	#[DataProvider('adminProvider')]
 	public function testAdminsGetTheOwnerAndTheCompanyFilter(bool $moduleAdmin, bool $subAdmin): void
 	{
-		$builder = $this->builder(Config::PLATFORM_EDITION_CORE, $moduleAdmin, $subAdmin);
+		$builder = $this->builder(Config::PLATFORM_EDITION_ENTERPRISE, $moduleAdmin, $subAdmin);
 
 		$builder->configureParameters(1);
 

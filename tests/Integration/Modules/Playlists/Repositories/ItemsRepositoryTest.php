@@ -70,7 +70,7 @@ class ItemsRepositoryTest extends RepositoryTestCase
 	 */
 	public function testFindAllByPlaylistIdWithJoinsAddsMediaAndNestedPlaylistData(): void
 	{
-		$items = $this->repository->findAllByPlaylistIdWithJoins(1, Config::PLATFORM_EDITION_EDGE);
+		$items = $this->repository->findAllByPlaylistIdWithJoins(1, Config::PLATFORM_EDITION_CORE);
 
 		static::assertSame([1, 2, 3, 4, 5], $this->ids($items, 'item_id'));
 		static::assertSame('jpg', $items[0]['extension']);
@@ -88,7 +88,7 @@ class ItemsRepositoryTest extends RepositoryTestCase
 	 */
 	public function testFindAllByPlaylistIdWithJoinsDoesNotDuplicateItemsForDoubleFiles(): void
 	{
-		$items = $this->repository->findAllByPlaylistIdWithJoins(1, Config::PLATFORM_EDITION_EDGE);
+		$items = $this->repository->findAllByPlaylistIdWithJoins(1, Config::PLATFORM_EDITION_CORE);
 
 		static::assertCount(5, $items);
 	}

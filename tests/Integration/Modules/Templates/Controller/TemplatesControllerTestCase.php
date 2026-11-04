@@ -32,7 +32,7 @@ use Tests\Integration\Support\ContainerTestCase;
 /**
  * The base of the tests of the template endpoints: the controllers of the real container with the real services
  * and the database. Users: 1 admin, 2 anna, 3 bernd. Templates: 1 of the admin (public, with content), 2 of anna,
- * 3 of bernd (private, without content). In the edge edition only the admin may use templates.
+ * 3 of bernd (private, without content). In the core edition only the admin may use templates.
  * The template 7 is used by two items of the playlists, the templates 1 to 3 are not used.
  */
 abstract class TemplatesControllerTestCase extends ContainerTestCase

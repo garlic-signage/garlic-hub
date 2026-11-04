@@ -120,12 +120,12 @@ class ShowControllerTest extends ControllerTestCase
 		static::assertStringNotContainsString('>', $json);
 	}
 
-	public function testTheEditionEdgeHasNoChoiceOfTheVisibility(): void
+	public function testTheEditionCoreHasNoChoiceOfTheVisibility(): void
 	{
 		$this->actingAs(2);
 
 		static::assertArrayNotHasKey('folder_dialog_visibility', $this->show()->getTemplateData());
-		static::assertArrayNotHasKey('folder_dialog_visibility', $this->show(Config::PLATFORM_EDITION_EDGE)->getTemplateData());
+		static::assertArrayNotHasKey('folder_dialog_visibility', $this->show(Config::PLATFORM_EDITION_CORE)->getTemplateData());
 	}
 
 	public function testTheEditionEnterpriseOffersTheVisibilityInTheFolderDialog(): void

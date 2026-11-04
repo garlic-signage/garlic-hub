@@ -58,9 +58,9 @@ class RightsCheckerTest extends TestCase
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testCheckInsertExternalMediaEdge(): void
+	public function testCheckInsertExternalMediaCore(): void
 	{
-		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
+		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_CORE);
 		$this->checker = new RightsChecker($this->translatorMock, $this->aclValidatorMock);
 
 		$result = $this->checker->checkInsertExternalMedia();
@@ -73,9 +73,9 @@ class RightsCheckerTest extends TestCase
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testCheckInsertExternalMediaCore(): void
+	public function testCheckInsertExternalMediaEnterprise(): void
 	{
-		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_CORE);
+		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
 		$this->checker = new RightsChecker($this->translatorMock, $this->aclValidatorMock);
 
 		$this->translatorMock->method('translate')->willReturn('Translated Message');
@@ -121,21 +121,6 @@ class RightsCheckerTest extends TestCase
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testCheckInsertExternalPlaylistEdgeWithTimeLimit(): void
-	{
-		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
-		$this->checker = new RightsChecker($this->translatorMock, $this->aclValidatorMock);
-
-		$result = $this->checker->checkInsertExternalPlaylist(10);
-
-		static::assertSame([], $result);
-	}
-
-	/**
-	 * @throws CoreException
-	 * @throws FrameworkException
-	 */
-	#[Group('units')]
 	public function testCheckInsertExternalPlaylistCoreWithTimeLimit(): void
 	{
 		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_CORE);
@@ -151,9 +136,24 @@ class RightsCheckerTest extends TestCase
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testCheckInsertExternalPlaylistCoreWithoutTimeLimit(): void
+	public function testCheckInsertExternalPlaylistEnterpriseWithTimeLimit(): void
 	{
-		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_CORE);
+		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
+		$this->checker = new RightsChecker($this->translatorMock, $this->aclValidatorMock);
+
+		$result = $this->checker->checkInsertExternalPlaylist(10);
+
+		static::assertSame([], $result);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testCheckInsertExternalPlaylistEnterpriseWithoutTimeLimit(): void
+	{
+		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
 		$this->checker = new RightsChecker($this->translatorMock, $this->aclValidatorMock);
 
 		$this->translatorMock->method('translate')->willReturn('Translated External Playlist Message');
@@ -168,9 +168,9 @@ class RightsCheckerTest extends TestCase
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testCheckInsertTemplatesEdgeEdition(): void
+	public function testCheckInsertTemplatesCoreEdition(): void
 	{
-		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
+		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_CORE);
 		$this->checker = new RightsChecker($this->translatorMock, $this->aclValidatorMock);
 
 		$result = $this->checker->checkInsertTemplates();
@@ -185,9 +185,9 @@ class RightsCheckerTest extends TestCase
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testCheckInsertTemplatesCoreEdition(): void
+	public function testCheckInsertTemplatesEnterpriseEdition(): void
 	{
-		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_CORE);
+		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
 		$this->checker = new RightsChecker($this->translatorMock, $this->aclValidatorMock);
 
 		$this->translatorMock->method('translate')->willReturn('Translated Template Message');
@@ -202,9 +202,9 @@ class RightsCheckerTest extends TestCase
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testCheckInsertChannelsEdgeEdition(): void
+	public function testCheckInsertChannelsCoreEdition(): void
 	{
-		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_EDGE);
+		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_CORE);
 		$this->checker = new RightsChecker($this->translatorMock, $this->aclValidatorMock);
 
 		$result = $this->checker->checkInsertChannels();
@@ -217,9 +217,9 @@ class RightsCheckerTest extends TestCase
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testCheckInsertChannelsCoreEdition(): void
+	public function testCheckInsertChannelsEnterpriseEdition(): void
 	{
-		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_CORE);
+		$this->configMock->method('getEdition')->willReturn(Config::PLATFORM_EDITION_ENTERPRISE);
 		$this->checker = new RightsChecker($this->translatorMock, $this->aclValidatorMock);
 
 		$this->translatorMock->method('translate')->willReturn('Translated Channels Message');

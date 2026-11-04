@@ -63,7 +63,7 @@ abstract class AbstractDatatableBuilder
 	abstract public function buildTitle(): void;
 
 	/**
-	 * Adds the filter parameters which are not available in the edge edition.
+	 * Adds the filter parameters which are not available in the core edition.
 	 * Owner and company filters are only added for module and sub admins.
 	 *
 	 * @throws CoreException
@@ -71,7 +71,7 @@ abstract class AbstractDatatableBuilder
 	 */
 	public function configureParameters(int $UID): void
 	{
-		if ($this->aclValidator->getConfig()->getEdition() === Config::PLATFORM_EDITION_EDGE)
+		if ($this->aclValidator->getConfig()->getEdition() === Config::PLATFORM_EDITION_CORE)
 			return;
 
 		$this->addModuleParameters();
@@ -129,7 +129,7 @@ abstract class AbstractDatatableBuilder
 	}
 
 	/**
-	 * Hook for module specific filter parameters, called by configureParameters() outside the edge edition.
+	 * Hook for module specific filter parameters, called by configureParameters() outside the core edition.
 	 */
 	protected function addModuleParameters(): void
 	{

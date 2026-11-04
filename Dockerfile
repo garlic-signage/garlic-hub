@@ -43,7 +43,7 @@ RUN composer dump-autoload --no-dev --optimize --classmap-authoritative
 COPY dockerapp-configs/http.conf /etc/apache2/sites-available/000-default.conf
 COPY ./dockerapp-configs/php.ini-custom /usr/local/etc/php/conf.d/docker-php-ext-custom.ini
 COPY ./dockerapp-configs/policy.xml /etc/ImageMagick-6/policy.xml
-COPY ./dockerapp-configs/env.edge /var/www/.env
+COPY ./dockerapp-configs/env.core /var/www/.env
 
 RUN chown -R www-data:www-data /var/www/
 

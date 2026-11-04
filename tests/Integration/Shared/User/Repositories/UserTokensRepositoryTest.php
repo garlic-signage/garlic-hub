@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Shared\User\Repositories;
 
-use App\Shared\User\Repositories\Edge\UserTokensRepository;
+use App\Shared\User\Repositories\Core\UserTokensRepository;
 use App\Shared\User\TokenPurposes;
 use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;

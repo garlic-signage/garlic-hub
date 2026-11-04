@@ -90,7 +90,7 @@ class DatatableTest extends RepositoryTestCase
 		]]), new MessageFormatterFactory(), new MemoryCache());
 
 		$acl = $this->createStub(AbstractAclValidator::class);
-		$acl->method('getConfig')->willReturn(new Config(new RecordingConfigLoader([]), [], ['APP_PLATFORM_EDITION' => 'edge']));
+		$acl->method('getConfig')->willReturn(new Config(new RecordingConfigLoader([]), [], ['APP_PLATFORM_EDITION' => 'core']));
 
 		$definition = new TemplatesFilterDefinition($conditions);
 		$service    = new class(new DatatableQuery($this->connection), $definition, $parameters) extends AbstractDatatableService

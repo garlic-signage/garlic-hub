@@ -22,7 +22,7 @@ declare(strict_types=1);
 namespace Tests\Integration\Shared\User;
 
 use App\Framework\Security\Crypt;
-use App\Shared\User\Repositories\Edge\UserTokensRepository;
+use App\Shared\User\Repositories\Core\UserTokensRepository;
 use App\Shared\User\TokenPurposes;
 use App\Shared\User\UserTokenService;
 use Defuse\Crypto\Key;

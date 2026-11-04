@@ -65,7 +65,7 @@ class RightsChecker
 	 */
 	public function checkInsertExternalMedia(): array
 	{
-		if ($this->getEdition() === Config::PLATFORM_EDITION_EDGE)
+		if ($this->getEdition() === Config::PLATFORM_EDITION_CORE)
 			return [];
 
 		return [
@@ -95,7 +95,7 @@ class RightsChecker
 	 */
 	public function checkInsertExternalPlaylist(int $timeLimit): array
 	{
-		if ($this->getEdition() === Config::PLATFORM_EDITION_EDGE || $timeLimit > 0)
+		if ($this->getEdition() === Config::PLATFORM_EDITION_CORE || $timeLimit > 0)
 			return [];
 
 		return [
@@ -122,7 +122,7 @@ class RightsChecker
 	 */
 	public function checkInsertChannels():array
 	{
-		if ($this->getEdition() === Config::PLATFORM_EDITION_EDGE)
+		if ($this->getEdition() === Config::PLATFORM_EDITION_CORE)
 			return [];
 
 		return [

@@ -91,9 +91,9 @@ class DatatableBuilderTest extends TestCase
 	}
 
 	#[Group('units')]
-	public function testTheEdgeEditionAddsNoParameters(): void
+	public function testTheCoreEditionAddsNoParameters(): void
 	{
-		$this->edition(Config::PLATFORM_EDITION_EDGE);
+		$this->edition(Config::PLATFORM_EDITION_CORE);
 		$this->aclValidatorStub->method('isModuleAdmin')->willReturn(true);
 
 		$this->builder->configureParameters(1);
@@ -105,7 +105,7 @@ class DatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testTheAdminOfAnotherEditionFiltersByOwnerAndCompany(): void
 	{
-		$this->edition(Config::PLATFORM_EDITION_CORE);
+		$this->edition(Config::PLATFORM_EDITION_ENTERPRISE);
 		$this->aclValidatorStub->method('isModuleAdmin')->willReturnMap([[1, true]]);
 		$this->aclValidatorStub->method('isSubAdmin')->willReturn(false);
 
@@ -118,7 +118,7 @@ class DatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testTheSubAdminFiltersByOwnerAndCompany(): void
 	{
-		$this->edition(Config::PLATFORM_EDITION_CORE);
+		$this->edition(Config::PLATFORM_EDITION_ENTERPRISE);
 		$this->aclValidatorStub->method('isModuleAdmin')->willReturn(false);
 		$this->aclValidatorStub->method('isSubAdmin')->willReturnMap([[4, true]]);
 
@@ -131,7 +131,7 @@ class DatatableBuilderTest extends TestCase
 	#[Group('units')]
 	public function testAUserFiltersNotByOwner(): void
 	{
-		$this->edition(Config::PLATFORM_EDITION_CORE);
+		$this->edition(Config::PLATFORM_EDITION_ENTERPRISE);
 		$this->aclValidatorStub->method('isModuleAdmin')->willReturn(false);
 		$this->aclValidatorStub->method('isSubAdmin')->willReturn(false);
 

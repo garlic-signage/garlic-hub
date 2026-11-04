@@ -64,11 +64,11 @@ class SettingsParametersPolicyTest extends TestCase
 	{
 		// mode, edition, resolution, time limit
 		return [
-			'master core'       => ['master', Config::PLATFORM_EDITION_CORE, true, true],
-			'master edge'       => ['master', Config::PLATFORM_EDITION_EDGE, true, false],
-			'multizone core'    => ['multizone', Config::PLATFORM_EDITION_CORE, true, false],
-			'internal core'     => ['internal', Config::PLATFORM_EDITION_CORE, false, true],
-			'external core'     => ['external', Config::PLATFORM_EDITION_CORE, false, false],
+			'master enterprise'    => ['master', Config::PLATFORM_EDITION_ENTERPRISE, true, true],
+			'master core'          => ['master', Config::PLATFORM_EDITION_CORE, true, false],
+			'multizone enterprise' => ['multizone', Config::PLATFORM_EDITION_ENTERPRISE, true, false],
+			'internal enterprise'  => ['internal', Config::PLATFORM_EDITION_ENTERPRISE, false, true],
+			'external enterprise'  => ['external', Config::PLATFORM_EDITION_ENTERPRISE, false, false],
 		];
 	}
 

@@ -1,7 +1,7 @@
 /*
  Can a Raspberry Pi serve 10 users and 200 players at the same time?
 
- Runs against a fresh installation (edge edition, own .env and database): the setup uploads the media of
+ Runs against a fresh installation (core edition, own .env and database): the setup uploads the media of
  make-media.sh, builds a playlist, registers the players, assigns the playlist and exports it. Then all
  players ask for their index at once, like after an export, and download the media. Afterwards they ask
  every 5 minutes, while the users work in the UI.
@@ -104,7 +104,7 @@ export function setup() {
 		playlist_id: String(playlist.id), id: m.media_id, source: 'mediapool', position: String(i + 1), csrf_token: token,
 	}), `insert ${m.filename}`));
 
-	// a new player is registered by its first request, the edge edition releases it
+	// a new player is registered by its first request, the core edition releases it
 	const uuids = new Set();
 	for (let number = 1; number <= PLAYERS; number++)
 	{

@@ -32,9 +32,9 @@ use App\Modules\Users\UserStatus;
 use App\Shared\User\TokenPurposes;
 use App\Shared\User\UsersService;
 use App\Shared\User\UserTokenService;
-use App\Shared\User\Repositories\Edge\UserAclRepository;
-use App\Shared\User\Repositories\Edge\UserMainRepository;
-use App\Shared\User\Repositories\Edge\UserVipRepository;
+use App\Shared\User\Repositories\Core\UserAclRepository;
+use App\Shared\User\Repositories\Core\UserMainRepository;
+use App\Shared\User\Repositories\Core\UserVipRepository;
 use Doctrine\DBAL\Exception;
 use Throwable;
 

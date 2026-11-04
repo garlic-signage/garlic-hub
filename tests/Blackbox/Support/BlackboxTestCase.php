@@ -69,7 +69,7 @@ abstract class BlackboxTestCase extends TestCase
 		$this->connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'path' => $file]);
 		(new Runner(
 			new Repository($this->connection),
-			new Filesystem(new LocalFilesystemAdapter(__DIR__ . '/../../../migrations/edge'))
+			new Filesystem(new LocalFilesystemAdapter(__DIR__ . '/../../../migrations/core'))
 		))->execute();
 	}
 

@@ -28,8 +28,8 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\TranslatableModuleException;
-use App\Shared\User\Repositories\Edge\UserAclRepository;
-use App\Shared\User\Repositories\Edge\UserVipRepository;
+use App\Shared\User\Repositories\Core\UserAclRepository;
+use App\Shared\User\Repositories\Core\UserVipRepository;
 use App\Shared\User\UsersService;
 use Doctrine\DBAL\Exception;
 use Throwable;
@@ -38,7 +38,7 @@ use Throwable;
  * The only place which writes the rights: the role bits in user_acl and the units in user_vip.
  *
  * - A module admin grants every role of his module.
- * - A sub admin (not in Edge) grants editor and viewer, for users and units of his companies.
+ * - A sub admin (Enterprise only) grants editor and viewer, for users and units of his companies.
  * - Nobody changes his own rights.
  * - Units are granted only to users who have the role bit already.
  * - A user has at most one role on a unit, an editor may use it, too.
@@ -62,17 +62,17 @@ class AclGrantService
 	) {}
 
 	/**
-	 * The roles the module knows, the sub admin only outside Edge.
+	 * The roles the module knows, the sub admin only in Enterprise.
 	 *
 	 * @return list<AclSections>
 	 */
 	public function getModuleRoles(string $module): array
 	{
-		$isEdge = $this->aclHelper->getConfig()->getEdition() === Config::PLATFORM_EDITION_EDGE;
+		$isCore = $this->aclHelper->getConfig()->getEdition() === Config::PLATFORM_EDITION_CORE;
 		$roles  = [];
 		foreach (AclSections::cases() as $role)
 		{
-			if ($isEdge && $role === AclSections::SUBADMIN)
+			if ($isCore && $role === AclSections::SUBADMIN)
 				continue;
 
 			if ($this->aclHelper->getAclBit($module, $role) > 0)
@@ -484,7 +484,7 @@ class AclGrantService
 		if ($this->aclHelper->isModuleAdmin($granterUID, $module))
 			return true;
 
-		if (!in_array($role, self::UNIT_ROLES, true) || !$this->isSubAdminOutsideEdge($granterUID, $module))
+		if (!in_array($role, self::UNIT_ROLES, true) || !$this->isEnterpriseSubAdmin($granterUID, $module))
 			return false;
 
 		foreach ($companyIds as $companyId)
@@ -502,16 +502,16 @@ class AclGrantService
 	 */
 	private function mayGrantAtAll(int $granterUID, string $module): bool
 	{
-		return $this->aclHelper->isModuleAdmin($granterUID, $module) || $this->isSubAdminOutsideEdge($granterUID, $module);
+		return $this->aclHelper->isModuleAdmin($granterUID, $module) || $this->isEnterpriseSubAdmin($granterUID, $module);
 	}
 
 	/**
 	 * @throws CoreException
 	 * @throws Exception
 	 */
-	private function isSubAdminOutsideEdge(int $granterUID, string $module): bool
+	private function isEnterpriseSubAdmin(int $granterUID, string $module): bool
 	{
-		return $this->aclHelper->getConfig()->getEdition() !== Config::PLATFORM_EDITION_EDGE
+		return $this->aclHelper->getConfig()->getEdition() !== Config::PLATFORM_EDITION_CORE
 			&& $this->aclHelper->isSubAdmin($granterUID, $module);
 	}
 

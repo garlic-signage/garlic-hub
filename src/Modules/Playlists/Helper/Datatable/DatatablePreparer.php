@@ -125,7 +125,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 		$edition = $this->aclValidator->getConfig()->getEdition();
 		foreach ($list as $key => $value)
 		{
-			if ($edition === Config::PLATFORM_EDITION_EDGE && !$this->isPlaylistModeAllowedInEdge($key))
+			if ($edition === Config::PLATFORM_EDITION_CORE && !$this->isPlaylistModeAllowedInCore($key))
 				continue;
 
 			$data[] = [
@@ -154,7 +154,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 		];
 	}
 
-	private function isPlaylistModeAllowedInEdge(string $key): bool
+	private function isPlaylistModeAllowedInCore(string $key): bool
 	{
 		if ($key === PlaylistMode::CHANNEL->value)
 			return false;

@@ -246,7 +246,7 @@ export class Item
 		else
 			this.#playlistItem.querySelector('.edit-template').remove();
 
-		if (this.#cmsEdition !== "edge")
+		if (this.#cmsEdition !== "core")
 		{
 			this.#editSettingsAction    = this.#playlistItem.querySelector('.edit-settings');
 		}
@@ -313,7 +313,7 @@ export class Item
 			});
 		}
 
-		if (this.#cmsEdition !== "edge" && (this.#itemData.item_type === "template" || this.#itemData.item_type === "playlist"))
+		if (this.#cmsEdition !== "core" && (this.#itemData.item_type === "template" || this.#itemData.item_type === "playlist"))
 			this.#copyItemAction = this.#playlistItem.querySelector('.copy-item');
 		else
 			this.#playlistItem.querySelector('.copy-item').remove();

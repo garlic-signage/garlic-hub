@@ -53,7 +53,7 @@ final class MediaWorkspace
 		foreach ((array) glob($root . '/public/images/icons/*.svg') as $icon)
 			copy((string) $icon, $this->dir . '/public/images/icons/' . basename((string) $icon));
 
-		$this->config     = new Config(new IniConfigLoader($root . '/config/settings'), ['systemDir' => $this->dir], ['APP_PLATFORM_EDITION' => 'edge']);
+		$this->config     = new Config(new IniConfigLoader($root . '/config/settings'), ['systemDir' => $this->dir], ['APP_PLATFORM_EDITION' => 'core']);
 		$this->filesystem = new Filesystem(new LocalFilesystemAdapter($this->dir));
 	}
 

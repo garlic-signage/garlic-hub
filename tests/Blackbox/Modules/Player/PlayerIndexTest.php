@@ -88,7 +88,7 @@ class PlayerIndexTest extends BlackboxTestCase
 
 		static::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM player'));
 		static::assertSame(200, $second->getStatusCode());
-		// in the edge edition the new player is released at once, without playlist it gets the empty index
+		// in the core edition the new player is released at once, without playlist it gets the empty index
 		static::assertStringContainsString('released.smil', $second->getHeaderLine('Content-Disposition'));
 		static::assertStringNotContainsString('unreleased', $second->getHeaderLine('Content-Disposition'));
 	}

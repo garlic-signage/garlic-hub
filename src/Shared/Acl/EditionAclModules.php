@@ -32,7 +32,6 @@ use App\Framework\Config\Config;
  */
 class EditionAclModules
 {
-	private const array EDGE_MODULES = ['users', 'mediapool', 'player', 'playlists', 'templates'];
 	private const array CORE_MODULES = ['users', 'mediapool', 'player', 'playlists', 'templates'];
 	private const array ENTERPRISE_MODULES = ['users', 'mediapool', 'player', 'playlists', 'templates'];
 
@@ -43,7 +42,6 @@ class EditionAclModules
 	{
 		return match ($edition)
 		{
-			Config::PLATFORM_EDITION_EDGE => self::EDGE_MODULES,
 			Config::PLATFORM_EDITION_CORE => self::CORE_MODULES,
 			Config::PLATFORM_EDITION_ENTERPRISE => self::ENTERPRISE_MODULES,
 			default => [],

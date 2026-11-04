@@ -72,39 +72,15 @@ class UserEntityFactoryTest extends TestCase
 	{
 		$userData = [
 			'main' => ['id' => 1, 'name' => 'Core User'],
-			'contact' => ['email' => 'core@example.com'],
-			'security' => ['role' => 'user'], // Ignoriert in Core
-			'acl' => ['permissions' => ['read']],
-			'vip' => ['status' => 'silver'],
-		];
-
-		$this->configStub
-			->method('getEdition')
-			->willReturn(Config::PLATFORM_EDITION_CORE);
-
-		$result = $this->factory->create($userData);
-
-		static::assertEquals($userData['main'], $result->getMain());
-		static::assertEquals($userData['contact'], $result->getContact());
-		static::assertEquals([], $result->getSecurity());
-		static::assertEquals($userData['acl'], $result->getAcl());
-		static::assertEquals($userData['vip'], $result->getVip());
-	}
-
-	#[Group('units')]
-	public function testCreateEdgeEdition(): void
-	{
-		$userData = [
-			'main' => ['id' => 1, 'name' => 'Edge User'],
-			'contact' => ['email' => 'edge@example.com'], // Ignored in Edge
-			'security' => ['role' => 'guest'], // Ignored in Edge
+			'contact' => ['email' => 'edge@example.com'], // Ignored in Core
+			'security' => ['role' => 'guest'], // Ignored in Core
 			'acl' => ['permissions' => ['read']],
 			'vip' => ['status' => 'none'],
 		];
 
 		$this->configStub
 			->method('getEdition')
-			->willReturn(Config::PLATFORM_EDITION_EDGE);
+			->willReturn(Config::PLATFORM_EDITION_CORE);
 
 		$result = $this->factory->create($userData);
 
@@ -122,13 +98,13 @@ class UserEntityFactoryTest extends TestCase
 	public function testCreateWithoutVipInCachedData(): void
 	{
 		$userData = [
-			'main' => ['id' => 1, 'name' => 'Edge User'],
+			'main' => ['id' => 1, 'name' => 'Core User'],
 			'acl' => ['permissions' => ['read']],
 		];
 
 		$this->configStub
 			->method('getEdition')
-			->willReturn(Config::PLATFORM_EDITION_EDGE);
+			->willReturn(Config::PLATFORM_EDITION_CORE);
 
 		$result = $this->factory->create($userData);
 

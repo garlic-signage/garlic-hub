@@ -19,7 +19,7 @@
 */
 declare(strict_types=1);
 
-namespace App\Shared\User\Repositories\Edge;
+namespace App\Shared\User\Repositories\Core;
 
 use App\Framework\Database\BaseRepositories\SqlBase;
 use App\Framework\Database\BaseRepositories\Traits\CrudTraits;

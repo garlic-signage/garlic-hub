@@ -34,7 +34,7 @@ class EditionAclModulesTest extends TestCase
 	 */
 	public static function editions(): array
 	{
-		return ['edge' => [Config::PLATFORM_EDITION_EDGE], 'core' => [Config::PLATFORM_EDITION_CORE], 'enterprise' => [Config::PLATFORM_EDITION_ENTERPRISE]];
+		return ['core' => [Config::PLATFORM_EDITION_CORE], 'enterprise' => [Config::PLATFORM_EDITION_ENTERPRISE]];
 	}
 
 	#[Group('units')]

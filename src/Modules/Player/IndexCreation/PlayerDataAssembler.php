@@ -122,7 +122,7 @@ class PlayerDataAssembler
 	{
 		$saveData = $this->buildInsertArray($ownerId);
 
-		if($this->config->getEdition() === Config::PLATFORM_EDITION_EDGE)
+		if($this->config->getEdition() === Config::PLATFORM_EDITION_CORE)
 			$saveData = array_merge($saveData, ['status' => PlayerStatus::RELEASED->value, 'licence_id' => 1]);
 
 		// Todo: integrate license system to handle free licenses

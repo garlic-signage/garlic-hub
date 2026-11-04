@@ -31,7 +31,7 @@ use Tests\Integration\Support\ContainerTestCase;
  * Who may change or delete which player. Fixtures: players 1 and 2 belong to anna,
  * 3 to bernd, 4 to the admin.
  *
- * Currently only the module admin may change a player in the edge edition. Even the owner
+ * Currently only the module admin may change a player in the core edition. Even the owner
  * is denied. These tests describe that and protect the "deny by default".
  */
 #[Group('acl')]

@@ -75,7 +75,7 @@ abstract class PlayerIndexTestCase extends ContainerTestCase
 		parent::tearDown();
 	}
 
-	protected function config(string $edition = Config::PLATFORM_EDITION_EDGE, string $container = ''): Config
+	protected function config(string $edition = Config::PLATFORM_EDITION_CORE, string $container = ''): Config
 	{
 		return new Config(
 			new IniConfigLoader(dirname(__DIR__, 5) . '/config/settings'),
@@ -84,7 +84,7 @@ abstract class PlayerIndexTestCase extends ContainerTestCase
 		);
 	}
 
-	protected function service(string $edition = Config::PLATFORM_EDITION_EDGE, string $container = ''): PlayerIndexService
+	protected function service(string $edition = Config::PLATFORM_EDITION_CORE, string $container = ''): PlayerIndexService
 	{
 		$config  = $this->config($edition, $container);
 		$logger  = new Logger('test', [$this->logs]);

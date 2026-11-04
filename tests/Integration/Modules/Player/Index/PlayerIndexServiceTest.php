@@ -63,7 +63,7 @@ class PlayerIndexServiceTest extends PlayerIndexTestCase
 	public static function editions(): array
 	{
 		return [
-			'edge: free of charge, released at once' => [Config::PLATFORM_EDITION_EDGE, PlayerStatus::RELEASED->value, 1],
+			'edge: free of charge, released at once' => [Config::PLATFORM_EDITION_CORE, PlayerStatus::RELEASED->value, 1],
 			'enterprise: the admin releases it'      => [Config::PLATFORM_EDITION_ENTERPRISE, PlayerStatus::UNRELEASED->value, 0],
 		];
 	}
@@ -213,7 +213,7 @@ class PlayerIndexServiceTest extends PlayerIndexTestCase
 
 	public function testTheLocalPlayerInDockerUsesTheHostOfDocker(): void
 	{
-		$this->service(Config::PLATFORM_EDITION_EDGE, Config::APP_CONTAINER_DOCKER)->handleIndexRequest(2, self::AGENT, [], true);
+		$this->service(Config::PLATFORM_EDITION_CORE, Config::APP_CONTAINER_DOCKER)->handleIndexRequest(2, self::AGENT, [], true);
 
 		static::assertSame('http://host.docker.internal:8080/v2', $this->playerRow()['api_endpoint']);
 	}

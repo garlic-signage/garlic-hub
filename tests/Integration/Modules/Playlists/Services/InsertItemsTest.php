@@ -214,7 +214,7 @@ class InsertItemsTest extends ContainerTestCase
 	}
 
 	/**
-	 * In the edge edition only the module admin may use templates.
+	 * In the core edition only the module admin may use templates.
 	 */
 	public function testATemplateIsInsertedWithACopyOfItsImages(): void
 	{

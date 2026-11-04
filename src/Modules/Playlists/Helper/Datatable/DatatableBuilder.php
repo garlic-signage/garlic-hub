@@ -125,10 +125,10 @@ class DatatableBuilder extends AbstractDatatableBuilder
 		$edition = $this->aclValidator->getConfig()->getEdition();
 		foreach ($list as $key => $value)
 		{
-			if ($edition === Config::PLATFORM_EDITION_EDGE && $key === PlaylistMode::CHANNEL->value)
+			if ($edition === Config::PLATFORM_EDITION_CORE && $key === PlaylistMode::CHANNEL->value)
 				continue;
 
-			if ($edition === Config::PLATFORM_EDITION_EDGE && $key === PlaylistMode::EXTERNAL->value)
+			if ($edition === Config::PLATFORM_EDITION_CORE && $key === PlaylistMode::EXTERNAL->value)
 				continue;
 
 			$allowedPlaylistModes[$key] = $value;

@@ -83,7 +83,7 @@ readonly class SettingsParametersPolicy
 	{
 		$this->parameters->addOwner();
 
-		if ($this->aclValidator->getConfig()->getEdition() !== Config::PLATFORM_EDITION_EDGE && $this->isTimeLimitPlaylist($playlistMode))
+		if ($this->aclValidator->getConfig()->getEdition() !== Config::PLATFORM_EDITION_CORE && $this->isTimeLimitPlaylist($playlistMode))
 			$this->parameters->addTimeLimit();
 	}
 

@@ -61,7 +61,7 @@ class AclValidator extends AbstractAclValidator
 		if ($this->isModuleAdmin($UID) || $directory['UID'] == $UID)
 			return ['create' => true, 'read' => true, 'edit' => true, 'share' => 'global'];
 
-		// Edge Edition will not move further as there is not subadmin
+		// the core edition will not move further as there is no sub admin
 		if ($this->isSubAdminWithAccessOnCompany($UID, $directory['company_id']))
 			$permissions = ['create' => true, 'read' => true, 'edit' => true, 'share' => 'company'];
 
