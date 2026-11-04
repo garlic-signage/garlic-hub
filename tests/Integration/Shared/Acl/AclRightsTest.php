@@ -87,13 +87,13 @@ class AclRightsTest extends ContainerTestCase
 
 	public function testTheBitsOfAModuleAreTheOnesOfItsConfiguration(): void
 	{
-		// player: viewer 1, editor 2, sub admin 4, module admin 8; users: sub admin 1, module admin 2
-		$this->connection->executeStatement("INSERT INTO user_acl (UID, acl, module) VALUES (2, 1, 'player'), (2, 1, 'users'), (3, 6, 'player'), (3, 2, 'users')");
+		// playlists: viewer 1, editor 2, sub admin 4, module admin 8; users: sub admin 1, module admin 2
+		$this->connection->executeStatement("INSERT INTO user_acl (UID, acl, module) VALUES (2, 1, 'playlists'), (2, 1, 'users'), (3, 6, 'playlists'), (3, 2, 'users')");
 		$this->container->get(Psr16Adapter::class)->clear();
 
-		static::assertSame([false, false, false, true], [$this->acl->isModuleAdmin(2, 'player'), $this->acl->isSubAdmin(2, 'player'), $this->acl->isEditor(2, 'player'), $this->acl->isViewer(2, 'player')]);
+		static::assertSame([false, false, false, true], [$this->acl->isModuleAdmin(2, 'playlists'), $this->acl->isSubAdmin(2, 'playlists'), $this->acl->isEditor(2, 'playlists'), $this->acl->isViewer(2, 'playlists')]);
 		static::assertSame([false, true], [$this->acl->isModuleAdmin(2, 'users'), $this->acl->isSubAdmin(2, 'users')]);
-		static::assertSame([false, true, true, false], [$this->acl->isModuleAdmin(3, 'player'), $this->acl->isSubAdmin(3, 'player'), $this->acl->isEditor(3, 'player'), $this->acl->isViewer(3, 'player')]);
+		static::assertSame([false, true, true, false], [$this->acl->isModuleAdmin(3, 'playlists'), $this->acl->isSubAdmin(3, 'playlists'), $this->acl->isEditor(3, 'playlists'), $this->acl->isViewer(3, 'playlists')]);
 		static::assertSame([true, false], [$this->acl->isModuleAdmin(3, 'users'), $this->acl->isSubAdmin(3, 'users')]);
 	}
 

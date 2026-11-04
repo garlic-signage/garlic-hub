@@ -29,7 +29,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Psr\Http\Message\ResponseInterface;
 
 /**
- * The rights page of a user. Users: 1 admin, 2 anna, 3 bernd. Units: the players of acl/players.sql.
+ * The rights page of a user. Users: 1 admin, 2 anna, 3 bernd. Units: the playlists of acl/playlists.sql.
  */
 #[Group('acl')]
 class UserRightsControllerTest extends UsersControllerTestCase
@@ -39,7 +39,7 @@ class UserRightsControllerTest extends UsersControllerTestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->loadFixture('acl/players.sql');
+		$this->loadFixture('acl/playlists.sql');
 		$this->controller = $this->container->get(UserRightsController::class);
 	}
 
@@ -59,20 +59,22 @@ class UserRightsControllerTest extends UsersControllerTestCase
 	public function testTheAdminSeesATabPerModuleWithTheRolesAndUnits(): void
 	{
 		$grants = $this->container->get(AclGrantService::class);
-		$grants->setRole(1, 2, 'player', AclSections::VIEWER, true);
-		$grants->setUnitRole(1, 2, 'player', 3, AclSections::VIEWER);
+		$grants->setRole(1, 2, 'playlists', AclSections::VIEWER, true);
+		$grants->setUnitRole(1, 2, 'playlists', 3, AclSections::VIEWER);
 		$this->actingAs(1);
 
 		$data = $this->page($this->show(2))->getTemplateData();
 
 		static::assertSame(['users', 'mediapool', 'player', 'playlists', 'templates'], array_column($data['tabs'], 'MODULE'));
-		$player = $data['tabs'][2];
-		static::assertSame(['moduleadmin', 'editor', 'viewer'], array_column($player['roles'], 'ROLE'));
-		static::assertSame(['', '', 'checked'], array_column($player['roles'], 'CHECKED'));
-		static::assertTrue($player['has_units']);
-		static::assertSame(['3'], array_column($player['units'], 'UNIT_ID'));
+		// a player has no viewer
+		static::assertSame(['moduleadmin', 'editor'], array_column($data['tabs'][2]['roles'], 'ROLE'));
+		$playlists = $data['tabs'][3];
+		static::assertSame(['moduleadmin', 'editor', 'viewer'], array_column($playlists['roles'], 'ROLE'));
+		static::assertSame(['', '', 'checked'], array_column($playlists['roles'], 'CHECKED'));
+		static::assertTrue($playlists['has_units']);
+		static::assertSame(['3'], array_column($playlists['units'], 'UNIT_ID'));
 		// anna is only viewer: a unit can not be made editable for her
-		static::assertSame(['viewer'], array_column($player['unit_roles'], 'VALUE'));
+		static::assertSame(['viewer'], array_column($playlists['unit_roles'], 'VALUE'));
 		static::assertFalse($data['tabs'][0]['has_units'], 'The module users has no units.');
 	}
 
@@ -113,6 +115,6 @@ class UserRightsControllerTest extends UsersControllerTestCase
 		$this->actingAs(2);
 
 		$this->expectException(AccessDeniedException::class);
-		$this->updateRole(3, ['module' => 'player', 'role' => 'viewer', 'granted' => '1']);
+		$this->updateRole(3, ['module' => 'playlists', 'role' => 'viewer', 'granted' => '1']);
 	}
 }

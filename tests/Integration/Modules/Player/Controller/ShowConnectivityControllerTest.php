@@ -26,6 +26,8 @@ use App\Modules\Player\Controller\ShowConnectivityController;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Psr\Http\Message\ResponseInterface;
+use App\Shared\Acl\AclGrantService;
+use App\Shared\Acl\AclSections;
 
 /**
  * The page /player/connectivity/{id} where the admin sets how the server reaches a player: the address of its API
@@ -151,6 +153,18 @@ class ShowConnectivityControllerTest extends PlayerControllerTestCase
 		static::assertSame('http://10.0.0.7:8080/v2', $this->playerField(3, 'api_endpoint'));
 		static::assertSame(1, (int) $this->playerField(3, 'is_intranet'));
 		static::assertSame(['Player connectivity data successfully stored.'], $this->flash('success'));
+	}
+
+	public function testAnEditorOfASharedPlayerStoresTheSettings(): void
+	{
+		$grants = $this->container->get(AclGrantService::class);
+		$grants->setRole(1, 2, 'player', AclSections::EDITOR, true);
+		$grants->setUnitRole(1, 2, 'player', 3, AclSections::EDITOR);
+		$this->actingAs(2);
+
+		$this->assertRedirect($this->store(['player_id' => '3', 'is_intranet' => '1', 'api_endpoint' => 'http://10.0.0.8:8080/v2']), '/player');
+
+		static::assertSame('http://10.0.0.8:8080/v2', $this->playerField(3, 'api_endpoint'));
 	}
 
 	public function testTheBoxWhichIsNotSentMeansNotInTheNetwork(): void

@@ -30,8 +30,8 @@ use PHPUnit\Framework\Attributes\Group;
 use Psr\Http\Message\ResponseInterface;
 
 /**
- * The share dialog of a unit. Users: 1 admin, 2 anna (editor and viewer of player), 3 bernd (viewer of player).
- * Units: the players of acl/players.sql.
+ * The share dialog of a unit. Users: 1 admin, 2 anna (editor and viewer of playlists), 3 bernd (viewer of playlists).
+ * Units: the playlists of acl/playlists.sql.
  */
 #[Group('acl')]
 class UnitSharesControllerTest extends UsersControllerTestCase
@@ -41,12 +41,12 @@ class UnitSharesControllerTest extends UsersControllerTestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->loadFixture('acl/players.sql');
+		$this->loadFixture('acl/playlists.sql');
 		$grants = $this->container->get(AclGrantService::class);
-		$grants->setRole(1, 2, 'player', AclSections::EDITOR, true);
-		$grants->setRole(1, 2, 'player', AclSections::VIEWER, true);
-		$grants->setRole(1, 3, 'player', AclSections::VIEWER, true);
-		$grants->setUnitRole(1, 3, 'player', 4, AclSections::VIEWER);
+		$grants->setRole(1, 2, 'playlists', AclSections::EDITOR, true);
+		$grants->setRole(1, 2, 'playlists', AclSections::VIEWER, true);
+		$grants->setRole(1, 3, 'playlists', AclSections::VIEWER, true);
+		$grants->setUnitRole(1, 3, 'playlists', 4, AclSections::VIEWER);
 
 		$this->controller = $this->container->get(UnitSharesController::class);
 	}
@@ -61,14 +61,14 @@ class UnitSharesControllerTest extends UsersControllerTestCase
 	 */
 	private function update(string $unitId, array $body): ResponseInterface
 	{
-		return $this->controller->update($this->request('PUT', '/async/acl/player/units/' . $unitId, $body), $this->newResponse(), ['module' => 'player', 'unit_id' => $unitId]);
+		return $this->controller->update($this->request('PUT', '/async/acl/playlists/units/' . $unitId, $body), $this->newResponse(), ['module' => 'playlists', 'unit_id' => $unitId]);
 	}
 
 	public function testTheAdminSeesTheUsersWithTheirRoles(): void
 	{
 		$this->actingAs(1);
 
-		$data = $this->json($this->show('player', '4'));
+		$data = $this->json($this->show('playlists', '4'));
 
 		static::assertSame(['editor', 'viewer'], $data['roles']);
 		static::assertSame([
@@ -83,7 +83,7 @@ class UnitSharesControllerTest extends UsersControllerTestCase
 		$this->actingAs(1);
 
 		$this->assertSuccess($this->update('4', ['UID' => '2', 'role' => 'editor']));
-		static::assertSame('player_editor', $this->databaseValue("SELECT vip_name FROM user_vip WHERE UID = 2 AND unit_id = '4'"));
+		static::assertSame('playlists_editor', $this->databaseValue("SELECT vip_name FROM user_vip WHERE UID = 2 AND unit_id = '4'"));
 
 		$this->assertSuccess($this->update('4', ['UID' => '2', 'role' => '']));
 		static::assertSame(0, (int) $this->databaseValue('SELECT COUNT(*) FROM user_vip WHERE UID = 2'));

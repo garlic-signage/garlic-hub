@@ -34,7 +34,7 @@ use Tests\Integration\Support\ContainerTestCase;
 /**
  * Granting rights in the Edge edition: only the module admin grants, units only to users with the role bit.
  * Fixtures: 1 admin (module admin of all modules), 2 anna and 3 bernd without rights.
- * The units are the players of acl/players.sql: 1 and 2 of anna, 3 of bernd, 4 of the admin.
+ * The units are the playlists of acl/playlists.sql: 1 and 2 of anna, 3 of bernd, 4 of the admin.
  */
 #[Group('acl')]
 class AclGrantServiceTest extends ContainerTestCase
@@ -46,7 +46,7 @@ class AclGrantServiceTest extends ContainerTestCase
 	{
 		parent::setUp();
 		$this->loadFixture('acl/users.sql');
-		$this->loadFixture('acl/players.sql');
+		$this->loadFixture('acl/playlists.sql');
 
 		$this->aclHelper = $this->container->get(AclHelper::class);
 		$this->service   = $this->container->get(AclGrantService::class);
@@ -54,33 +54,35 @@ class AclGrantServiceTest extends ContainerTestCase
 
 	public function testTheRolesOfAModuleComeFromItsConfigWithoutSubAdminInEdge(): void
 	{
-		static::assertSame([AclSections::MODULEADMIN, AclSections::EDITOR, AclSections::VIEWER], $this->service->getModuleRoles('player'));
+		static::assertSame([AclSections::MODULEADMIN, AclSections::EDITOR, AclSections::VIEWER], $this->service->getModuleRoles('playlists'));
+		// a player is not selected anywhere, so there is nothing to use it for: no viewer
+		static::assertSame([AclSections::MODULEADMIN, AclSections::EDITOR], $this->service->getModuleRoles('player'));
 		static::assertSame([AclSections::MODULEADMIN], $this->service->getModuleRoles('users'));
 	}
 
 	public function testModuleAdminSetsAndRemovesARole(): void
 	{
-		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
-		$this->service->setRole(1, 2, 'player', AclSections::VIEWER, true);
+		$this->service->setRole(1, 2, 'playlists', AclSections::EDITOR, true);
+		$this->service->setRole(1, 2, 'playlists', AclSections::VIEWER, true);
 
-		static::assertSame(3, $this->aclOf(2, 'player'));
-		static::assertTrue($this->aclHelper->isEditor(2, 'player'));
+		static::assertSame(3, $this->aclOf(2, 'playlists'));
+		static::assertTrue($this->aclHelper->isEditor(2, 'playlists'));
 
-		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, false);
+		$this->service->setRole(1, 2, 'playlists', AclSections::EDITOR, false);
 
-		static::assertSame(1, $this->aclOf(2, 'player'));
-		static::assertFalse($this->aclHelper->isEditor(2, 'player'));
+		static::assertSame(1, $this->aclOf(2, 'playlists'));
+		static::assertFalse($this->aclHelper->isEditor(2, 'playlists'));
 
-		$this->service->setRole(1, 2, 'player', AclSections::VIEWER, false);
+		$this->service->setRole(1, 2, 'playlists', AclSections::VIEWER, false);
 
 		static::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM user_acl WHERE UID = 2"));
 	}
 
 	public function testModuleAdminGrantsModuleAdmin(): void
 	{
-		$this->service->setRole(1, 2, 'player', AclSections::MODULEADMIN, true);
+		$this->service->setRole(1, 2, 'playlists', AclSections::MODULEADMIN, true);
 
-		static::assertTrue($this->aclHelper->isModuleAdmin(2, 'player'));
+		static::assertTrue($this->aclHelper->isModuleAdmin(2, 'playlists'));
 	}
 
 	public function testUserWithoutRightsMayNotGrant(): void
@@ -88,18 +90,18 @@ class AclGrantServiceTest extends ContainerTestCase
 		$this->expectException(AccessDeniedException::class);
 		try
 		{
-			$this->service->setRole(2, 3, 'player', AclSections::EDITOR, true);
+			$this->service->setRole(2, 3, 'playlists', AclSections::EDITOR, true);
 		}
 		finally
 		{
-			static::assertSame(0, $this->aclOf(3, 'player'));
+			static::assertSame(0, $this->aclOf(3, 'playlists'));
 		}
 	}
 
 	public function testNobodyChangesHisOwnRights(): void
 	{
 		$this->expectException(AccessDeniedException::class);
-		$this->service->setRole(1, 1, 'player', AclSections::MODULEADMIN, false);
+		$this->service->setRole(1, 1, 'playlists', AclSections::MODULEADMIN, false);
 	}
 
 	public function testARoleTheModuleDoesNotKnowIsRefused(): void
@@ -112,7 +114,7 @@ class AclGrantServiceTest extends ContainerTestCase
 	public function testUnknownUserIsNotFound(): void
 	{
 		$this->expectException(NotFoundException::class);
-		$this->service->setRole(1, 99, 'player', AclSections::EDITOR, true);
+		$this->service->setRole(1, 99, 'playlists', AclSections::EDITOR, true);
 	}
 
 	public function testAUnitNeedsTheRoleBitFirst(): void
@@ -121,7 +123,7 @@ class AclGrantServiceTest extends ContainerTestCase
 		$this->expectExceptionMessage('user_without_role');
 		try
 		{
-			$this->service->setUnitRole(1, 2, 'player', 1, AclSections::EDITOR);
+			$this->service->setUnitRole(1, 2, 'playlists', 1, AclSections::EDITOR);
 		}
 		finally
 		{
@@ -131,80 +133,80 @@ class AclGrantServiceTest extends ContainerTestCase
 
 	public function testGrantingAUnitTakesEffectAtOnce(): void
 	{
-		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
-		static::assertFalse($this->aclHelper->hasEditorAccessOnUnit(2, 1, 'player'));
+		$this->service->setRole(1, 2, 'playlists', AclSections::EDITOR, true);
+		static::assertFalse($this->aclHelper->hasEditorAccessOnUnit(2, 1, 'playlists'));
 
-		$this->service->setUnitRole(1, 2, 'player', 1, AclSections::EDITOR);
+		$this->service->setUnitRole(1, 2, 'playlists', 1, AclSections::EDITOR);
 
-		static::assertTrue($this->aclHelper->hasEditorAccessOnUnit(2, 1, 'player'));
-		static::assertFalse($this->aclHelper->hasEditorAccessOnUnit(2, 2, 'player'));
+		static::assertTrue($this->aclHelper->hasEditorAccessOnUnit(2, 1, 'playlists'));
+		static::assertFalse($this->aclHelper->hasEditorAccessOnUnit(2, 2, 'playlists'));
 	}
 
 	public function testGrantingAUnitTwiceKeepsOneRow(): void
 	{
-		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
+		$this->service->setRole(1, 2, 'playlists', AclSections::EDITOR, true);
 
-		$this->service->setUnitRole(1, 2, 'player', 1, AclSections::EDITOR);
-		$this->service->setUnitRole(1, 2, 'player', '1', AclSections::EDITOR);
+		$this->service->setUnitRole(1, 2, 'playlists', 1, AclSections::EDITOR);
+		$this->service->setUnitRole(1, 2, 'playlists', '1', AclSections::EDITOR);
 
 		static::assertSame(1, $this->countVips(2));
 	}
 
 	public function testAnUnknownUnitIsNotFound(): void
 	{
-		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
+		$this->service->setRole(1, 2, 'playlists', AclSections::EDITOR, true);
 
 		$this->expectException(NotFoundException::class);
-		$this->service->setUnitRole(1, 2, 'player', 99, AclSections::EDITOR);
+		$this->service->setUnitRole(1, 2, 'playlists', 99, AclSections::EDITOR);
 	}
 
 	public function testOnlyEditorsAndViewersHaveUnits(): void
 	{
 		$this->expectException(TranslatableModuleException::class);
 		$this->expectExceptionMessage('role_not_available');
-		$this->service->setUnitRole(1, 2, 'player', 1, AclSections::MODULEADMIN);
+		$this->service->setUnitRole(1, 2, 'playlists', 1, AclSections::MODULEADMIN);
 	}
 
 	public function testUserWithoutRightsMayNotGrantAUnit(): void
 	{
-		$this->service->setRole(1, 3, 'player', AclSections::VIEWER, true);
+		$this->service->setRole(1, 3, 'playlists', AclSections::VIEWER, true);
 
 		$this->expectException(AccessDeniedException::class);
-		$this->service->setUnitRole(2, 3, 'player', 1, AclSections::VIEWER);
+		$this->service->setUnitRole(2, 3, 'playlists', 1, AclSections::VIEWER);
 	}
 
 	public function testRevokingAUnit(): void
 	{
-		$this->service->setRole(1, 2, 'player', AclSections::VIEWER, true);
-		$this->service->setUnitRole(1, 2, 'player', 1, AclSections::VIEWER);
-		$this->service->setUnitRole(1, 2, 'player', 2, AclSections::VIEWER);
+		$this->service->setRole(1, 2, 'playlists', AclSections::VIEWER, true);
+		$this->service->setUnitRole(1, 2, 'playlists', 1, AclSections::VIEWER);
+		$this->service->setUnitRole(1, 2, 'playlists', 2, AclSections::VIEWER);
 
-		$this->service->setUnitRole(1, 2, 'player', 1, null);
+		$this->service->setUnitRole(1, 2, 'playlists', 1, null);
 
-		static::assertFalse($this->aclHelper->hasViewerAccessOnUnit(2, 1, 'player'));
-		static::assertTrue($this->aclHelper->hasViewerAccessOnUnit(2, 2, 'player'));
-		static::assertTrue($this->aclHelper->isViewer(2, 'player'), 'The bit stays when units are revoked.');
+		static::assertFalse($this->aclHelper->hasViewerAccessOnUnit(2, 1, 'playlists'));
+		static::assertTrue($this->aclHelper->hasViewerAccessOnUnit(2, 2, 'playlists'));
+		static::assertTrue($this->aclHelper->isViewer(2, 'playlists'), 'The bit stays when units are revoked.');
 	}
 
 	public function testRemovingARoleRemovesOnlyItsUnits(): void
 	{
-		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
-		$this->service->setRole(1, 2, 'player', AclSections::VIEWER, true);
-		$this->service->setUnitRole(1, 2, 'player', 1, AclSections::EDITOR);
-		$this->service->setUnitRole(1, 2, 'player', 2, AclSections::VIEWER);
+		$this->service->setRole(1, 2, 'playlists', AclSections::EDITOR, true);
+		$this->service->setRole(1, 2, 'playlists', AclSections::VIEWER, true);
+		$this->service->setUnitRole(1, 2, 'playlists', 1, AclSections::EDITOR);
+		$this->service->setUnitRole(1, 2, 'playlists', 2, AclSections::VIEWER);
 
-		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, false);
+		$this->service->setRole(1, 2, 'playlists', AclSections::EDITOR, false);
 
-		static::assertSame(['2'], $this->service->findUnitsOfUser(1, 2, 'player', AclSections::VIEWER));
-		static::assertSame([], $this->service->findUnitsOfUser(1, 2, 'player', AclSections::EDITOR));
+		static::assertSame(['2'], $this->service->findUnitsOfUser(1, 2, 'playlists', AclSections::VIEWER));
+		static::assertSame([], $this->service->findUnitsOfUser(1, 2, 'playlists', AclSections::EDITOR));
 	}
 
 	public function testTheShareDialogListsOnlyUsersWithTheRoleBit(): void
 	{
-		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
-		$this->service->setRole(1, 3, 'player', AclSections::VIEWER, true);
+		$this->service->setRole(1, 2, 'playlists', AclSections::EDITOR, true);
+		$this->service->setRole(1, 3, 'playlists', AclSections::VIEWER, true);
 
-		$editors = $this->service->findUsersWithRole(1, 'player', AclSections::EDITOR);
+		$editors = $this->service->findUsersWithRole(1, 'playlists', AclSections::EDITOR);
 
 		static::assertSame([['UID' => 2, 'username' => 'anna', 'company_id' => 1]], $editors);
 	}
@@ -212,18 +214,18 @@ class AclGrantServiceTest extends ContainerTestCase
 	public function testUserWithoutRightsMayNotListUsers(): void
 	{
 		$this->expectException(AccessDeniedException::class);
-		$this->service->findUsersWithRole(2, 'player', AclSections::EDITOR);
+		$this->service->findUsersWithRole(2, 'playlists', AclSections::EDITOR);
 	}
 
 	public function testTheUsersOfAUnit(): void
 	{
-		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
-		$this->service->setRole(1, 3, 'player', AclSections::VIEWER, true);
-		$this->service->setUnitRole(1, 2, 'player', 1, AclSections::EDITOR);
-		$this->service->setUnitRole(1, 3, 'player', 1, AclSections::VIEWER);
-		$this->service->setUnitRole(1, 3, 'player', 2, AclSections::VIEWER);
+		$this->service->setRole(1, 2, 'playlists', AclSections::EDITOR, true);
+		$this->service->setRole(1, 3, 'playlists', AclSections::VIEWER, true);
+		$this->service->setUnitRole(1, 2, 'playlists', 1, AclSections::EDITOR);
+		$this->service->setUnitRole(1, 3, 'playlists', 1, AclSections::VIEWER);
+		$this->service->setUnitRole(1, 3, 'playlists', 2, AclSections::VIEWER);
 
-		$users = $this->service->findUsersOfUnit(1, 'player', 1);
+		$users = $this->service->findUsersOfUnit(1, 'playlists', 1);
 
 		static::assertSame([['UID' => 2, 'role' => AclSections::EDITOR], ['UID' => 3, 'role' => AclSections::VIEWER]], $users);
 	}
@@ -231,30 +233,30 @@ class AclGrantServiceTest extends ContainerTestCase
 	public function testAUnitOfAModuleWithoutProviderFails(): void
 	{
 		$this->expectException(ModuleException::class);
-		$this->service->findUsersOfUnit(1, 'playlists', 1);
+		$this->service->findUsersOfUnit(1, 'users', 1);
 	}
 
 	public function testANewRoleOnAUnitReplacesTheOtherOne(): void
 	{
-		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
-		$this->service->setRole(1, 2, 'player', AclSections::VIEWER, true);
-		$this->service->setUnitRole(1, 2, 'player', 1, AclSections::VIEWER);
+		$this->service->setRole(1, 2, 'playlists', AclSections::EDITOR, true);
+		$this->service->setRole(1, 2, 'playlists', AclSections::VIEWER, true);
+		$this->service->setUnitRole(1, 2, 'playlists', 1, AclSections::VIEWER);
 
-		$this->service->setUnitRole(1, 2, 'player', 1, AclSections::EDITOR);
+		$this->service->setUnitRole(1, 2, 'playlists', 1, AclSections::EDITOR);
 
 		static::assertSame(1, $this->countVips(2));
-		static::assertTrue($this->aclHelper->hasEditorAccessOnUnit(2, 1, 'player'));
-		static::assertFalse($this->aclHelper->hasViewerAccessOnUnit(2, 1, 'player'));
+		static::assertTrue($this->aclHelper->hasEditorAccessOnUnit(2, 1, 'playlists'));
+		static::assertFalse($this->aclHelper->hasViewerAccessOnUnit(2, 1, 'playlists'));
 	}
 
 	public function testTheShareDialogOfAUnit(): void
 	{
-		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
-		$this->service->setRole(1, 2, 'player', AclSections::VIEWER, true);
-		$this->service->setRole(1, 3, 'player', AclSections::VIEWER, true);
-		$this->service->setUnitRole(1, 3, 'player', 1, AclSections::VIEWER);
+		$this->service->setRole(1, 2, 'playlists', AclSections::EDITOR, true);
+		$this->service->setRole(1, 2, 'playlists', AclSections::VIEWER, true);
+		$this->service->setRole(1, 3, 'playlists', AclSections::VIEWER, true);
+		$this->service->setUnitRole(1, 3, 'playlists', 1, AclSections::VIEWER);
 
-		$shares = $this->service->findUnitShares(1, 'player', 1);
+		$shares = $this->service->findUnitShares(1, 'playlists', 1);
 
 		static::assertSame([AclSections::EDITOR, AclSections::VIEWER], $shares['roles']);
 		static::assertSame([
@@ -266,14 +268,14 @@ class AclGrantServiceTest extends ContainerTestCase
 	public function testUserWithoutRightsMayNotOpenTheShareDialog(): void
 	{
 		$this->expectException(AccessDeniedException::class);
-		$this->service->findUnitShares(2, 'player', 1);
+		$this->service->findUnitShares(2, 'playlists', 1);
 	}
 
 	public function testOnlyTheAdminMayShareAUnit(): void
 	{
-		static::assertTrue($this->service->canShareUnit(1, 'player', 1));
-		static::assertFalse($this->service->canShareUnit(2, 'player', 1));
-		static::assertFalse($this->service->canShareUnit(1, 'player', 99), 'An unknown unit can not be shared.');
+		static::assertTrue($this->service->canShareUnit(1, 'playlists', 1));
+		static::assertFalse($this->service->canShareUnit(2, 'playlists', 1));
+		static::assertFalse($this->service->canShareUnit(1, 'playlists', 99), 'An unknown unit can not be shared.');
 		static::assertFalse($this->service->canShareUnit(1, 'users', 1), 'The module users has no units.');
 	}
 
@@ -292,12 +294,12 @@ class AclGrantServiceTest extends ContainerTestCase
 
 	public function testTheRightsOfAUserInAModule(): void
 	{
-		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
-		$this->service->setRole(1, 2, 'player', AclSections::VIEWER, true);
-		$this->service->setUnitRole(1, 2, 'player', 4, AclSections::EDITOR);
-		$this->service->setUnitRole(1, 2, 'player', 3, AclSections::VIEWER);
+		$this->service->setRole(1, 2, 'playlists', AclSections::EDITOR, true);
+		$this->service->setRole(1, 2, 'playlists', AclSections::VIEWER, true);
+		$this->service->setUnitRole(1, 2, 'playlists', 4, AclSections::EDITOR);
+		$this->service->setUnitRole(1, 2, 'playlists', 3, AclSections::VIEWER);
 
-		$rights = $this->service->findUserRights(1, 2, 'player');
+		$rights = $this->service->findUserRights(1, 2, 'playlists');
 
 		static::assertSame([
 			['role' => AclSections::MODULEADMIN, 'granted' => false],
@@ -305,8 +307,8 @@ class AclGrantServiceTest extends ContainerTestCase
 			['role' => AclSections::VIEWER, 'granted' => true],
 		], $rights['roles']);
 		static::assertSame([
-			['id' => '4', 'name' => 'Admin Player', 'role' => AclSections::EDITOR],
-			['id' => '3', 'name' => 'Bernds Player', 'role' => AclSections::VIEWER],
+			['id' => '4', 'name' => 'Admin Playlist', 'role' => AclSections::EDITOR],
+			['id' => '3', 'name' => 'Bernds Playlist', 'role' => AclSections::VIEWER],
 		], $rights['units']);
 	}
 
@@ -318,44 +320,44 @@ class AclGrantServiceTest extends ContainerTestCase
 	public function testNobodySeesHisOwnRightsPage(): void
 	{
 		$this->expectException(AccessDeniedException::class);
-		$this->service->findUserRights(1, 1, 'player');
+		$this->service->findUserRights(1, 1, 'playlists');
 	}
 
 	public function testAUserWithoutRightsSeesNoRightsPage(): void
 	{
 		$this->expectException(AccessDeniedException::class);
-		$this->service->findUserRights(2, 3, 'player');
+		$this->service->findUserRights(2, 3, 'playlists');
 	}
 
 	public function testTheAdminSearchesTheUnitsByName(): void
 	{
-		static::assertSame([['id' => '1', 'name' => 'Annas Player 1'], ['id' => '2', 'name' => 'Annas Player 2']], $this->service->searchUnits(1, 'player', 'annas'));
-		static::assertSame([], $this->service->searchUnits(1, 'player', '%'), 'A wildcard is searched as text.');
+		static::assertSame([['id' => '1', 'name' => 'Annas Playlist 1'], ['id' => '2', 'name' => 'Annas Playlist 2']], $this->service->searchUnits(1, 'playlists', 'annas'));
+		static::assertSame([], $this->service->searchUnits(1, 'playlists', '%'), 'A wildcard is searched as text.');
 	}
 
 	public function testAUserMayNotSearchUnits(): void
 	{
 		$this->expectException(AccessDeniedException::class);
-		$this->service->searchUnits(2, 'player', 'annas');
+		$this->service->searchUnits(2, 'playlists', 'annas');
 	}
 
 	public function testADeletedUnitTakesItsSharesWithIt(): void
 	{
-		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
-		$this->service->setRole(1, 2, 'player', AclSections::VIEWER, true);
-		$this->service->setRole(1, 3, 'player', AclSections::VIEWER, true);
+		$this->service->setRole(1, 2, 'playlists', AclSections::EDITOR, true);
+		$this->service->setRole(1, 2, 'playlists', AclSections::VIEWER, true);
+		$this->service->setRole(1, 3, 'playlists', AclSections::VIEWER, true);
 		$this->service->setRole(1, 2, 'templates', AclSections::VIEWER, true);
-		$this->service->setUnitRole(1, 2, 'player', 1, AclSections::EDITOR);
-		$this->service->setUnitRole(1, 3, 'player', 1, AclSections::VIEWER);
-		$this->service->setUnitRole(1, 2, 'player', 2, AclSections::VIEWER);
+		$this->service->setUnitRole(1, 2, 'playlists', 1, AclSections::EDITOR);
+		$this->service->setUnitRole(1, 3, 'playlists', 1, AclSections::VIEWER);
+		$this->service->setUnitRole(1, 2, 'playlists', 2, AclSections::VIEWER);
 		$this->connection->executeStatement("INSERT INTO user_vip (UID, vip_name, unit_id) VALUES (2, 'templates_viewer', '1')");
-		static::assertTrue($this->aclHelper->hasEditorAccessOnUnit(2, 1, 'player'));
+		static::assertTrue($this->aclHelper->hasEditorAccessOnUnit(2, 1, 'playlists'));
 
-		$this->service->removeUnitShares('player', [1]);
+		$this->service->removeUnitShares('playlists', [1]);
 
-		static::assertFalse($this->aclHelper->hasEditorAccessOnUnit(2, 1, 'player'), 'The cache of the user is invalidated.');
-		static::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM user_vip WHERE vip_name LIKE 'player_%' AND unit_id = '1'"));
-		static::assertTrue($this->aclHelper->hasViewerAccessOnUnit(2, 2, 'player'), 'Other units keep their shares.');
+		static::assertFalse($this->aclHelper->hasEditorAccessOnUnit(2, 1, 'playlists'), 'The cache of the user is invalidated.');
+		static::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM user_vip WHERE vip_name LIKE 'playlists_%' AND unit_id = '1'"));
+		static::assertTrue($this->aclHelper->hasViewerAccessOnUnit(2, 2, 'playlists'), 'Other units keep their shares.');
 		static::assertSame(1, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM user_vip WHERE vip_name = 'templates_viewer' AND unit_id = '1'"), 'The same id in another module is another unit.');
 	}
 
