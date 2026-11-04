@@ -24,7 +24,6 @@ namespace App\Modules\Templates\Services;
 use App\Shared\Acl\AbstractAclValidator;
 use App\Shared\Acl\AclHelper;
 use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
 use Doctrine\DBAL\Exception;
 
 /**
@@ -33,6 +32,7 @@ use Doctrine\DBAL\Exception;
  */
 class AclValidator extends AbstractAclValidator
 {
+	protected const string UNIT_NAME = 'template';
 
 	public function __construct(AclHelper $aclHelper)
 	{
@@ -46,36 +46,6 @@ class AclValidator extends AbstractAclValidator
     public function canCreate(int $UID): bool
 	{
 		return $this->isSimpleAdmin($UID);
-	}
-
-	/**
-	 * @param int $UID
-	 * @param array{UID: int, company_id: int, template_id: int, ...} $template
-	 * @return bool
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
-	public function isTemplateEditable(int $UID, array $template): bool
-	{
-		if ($this->isAllowedToDeleteTemplate($UID, $template))
-			return true;
-
-		if($this->isEditorWithAccessOnUnit($UID, $template['template_id']))
-			return true;
-
-		return false;
-	}
-
-	/**
-	 * @param array{UID: int, company_id: int, template_id:int, ...} $template
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
-	public function isAllowedToDeleteTemplate(int $UID, array $template): bool
-	{
-		return $this->isAdmin($UID, $template);
 	}
 
 }

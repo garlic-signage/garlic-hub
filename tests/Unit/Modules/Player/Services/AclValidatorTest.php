@@ -95,8 +95,8 @@ class AclValidatorTest extends TestCase
 	#[Group('units')]
 	public function testAUserWithoutAnyRightMayNothing(): void
 	{
-		static::assertFalse($this->validator()->isPlayerEditable(self::ME, $this->player()));
-		static::assertFalse($this->validator()->isAllowedToDeletePlayer(self::ME, $this->player()));
+		static::assertFalse($this->validator()->isUnitEditable(self::ME, $this->player()));
+		static::assertFalse($this->validator()->isUnitDeletable(self::ME, $this->player()));
 	}
 
 	/**
@@ -105,7 +105,7 @@ class AclValidatorTest extends TestCase
 	#[Group('units')]
 	public function testTheOwnerOfAPlayerHasNoRightBecauseOfOwningIt(): void
 	{
-		static::assertFalse($this->validator()->isPlayerEditable(self::ME, $this->player(['UID' => self::ME])));
+		static::assertFalse($this->validator()->isUnitEditable(self::ME, $this->player(['UID' => self::ME])));
 	}
 
 	#[Group('units')]
@@ -113,9 +113,9 @@ class AclValidatorTest extends TestCase
 	{
 		$this->acl = [['module' => 'player', 'acl' => self::MODULEADMIN]];
 
-		static::assertTrue($this->validator()->isPlayerEditable(self::ME, $this->player()));
-		static::assertTrue($this->validator()->isAllowedToDeletePlayer(self::ME, $this->player()));
-		static::assertTrue($this->validator(Config::PLATFORM_EDITION_ENTERPRISE)->isAllowedToDeletePlayer(self::ME, $this->player(['company_id' => 99])));
+		static::assertTrue($this->validator()->isUnitEditable(self::ME, $this->player()));
+		static::assertTrue($this->validator()->isUnitDeletable(self::ME, $this->player()));
+		static::assertTrue($this->validator(Config::PLATFORM_EDITION_ENTERPRISE)->isUnitDeletable(self::ME, $this->player(['company_id' => 99])));
 	}
 
 	#[Group('units')]
@@ -123,7 +123,7 @@ class AclValidatorTest extends TestCase
 	{
 		$this->acl = [['module' => 'playlists', 'acl' => self::MODULEADMIN]];
 
-		static::assertFalse($this->validator()->isPlayerEditable(self::ME, $this->player()));
+		static::assertFalse($this->validator()->isUnitEditable(self::ME, $this->player()));
 	}
 
 	/**
@@ -148,8 +148,8 @@ class AclValidatorTest extends TestCase
 		$this->acl = [['module' => 'player', 'acl' => self::SUBADMIN]];
 		$this->vip = [['UID' => 1, 'vip_name' => 'player_subadmin', 'unit_id' => (string) $company]];
 
-		static::assertSame($expected, $this->validator($edition)->isPlayerEditable(self::ME, $this->player()));
-		static::assertSame($expected, $this->validator($edition)->isAllowedToDeletePlayer(self::ME, $this->player()));
+		static::assertSame($expected, $this->validator($edition)->isUnitEditable(self::ME, $this->player()));
+		static::assertSame($expected, $this->validator($edition)->isUnitDeletable(self::ME, $this->player()));
 	}
 
 	#[Group('units')]
@@ -158,7 +158,7 @@ class AclValidatorTest extends TestCase
 		$this->expectException(FrameworkException::class);
 
 		// @phpstan-ignore argument.type
-		$this->validator(Config::PLATFORM_EDITION_ENTERPRISE)->isPlayerEditable(self::ME, ['player_id' => 20]);
+		$this->validator(Config::PLATFORM_EDITION_ENTERPRISE)->isUnitEditable(self::ME, ['player_id' => 20]);
 	}
 
 	/**
@@ -188,7 +188,7 @@ class AclValidatorTest extends TestCase
 		$this->acl = $acl;
 		$this->vip = $vip;
 
-		static::assertSame($editable, $this->validator()->isPlayerEditable(self::ME, $this->player()));
-		static::assertSame($deletable, $this->validator()->isAllowedToDeletePlayer(self::ME, $this->player()));
+		static::assertSame($editable, $this->validator()->isUnitEditable(self::ME, $this->player()));
+		static::assertSame($deletable, $this->validator()->isUnitDeletable(self::ME, $this->player()));
 	}
 }

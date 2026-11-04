@@ -43,6 +43,7 @@ use App\Shared\Acl\EditionAclModules;
 use App\Modules\System\Controller\ShowSettingsController;
 use App\Modules\System\Scheduler\AuditCleanupTask;
 use App\Modules\System\Scheduler\SystemScheduledTasks;
+use App\Shared\Audit\AuditLog;
 use App\Shared\Audit\AuditLogRepository;
 use App\Shared\Settings\SettingsService;
 use Psr\Container\ContainerInterface;
@@ -97,7 +98,7 @@ $dependencies[ShowAuditController::class] = DI\factory(function (ContainerInterf
 		$container->get(DatatableTemplatePreparer::class),
 		$container->get(AclValidator::class),
 		$container->get(UserSession::class),
-		$container->get(Config::class),
+		$container->get(AuditLog::class),
 		$container->get(Translator::class),
 		$container->get(Messages::class)
 	);

@@ -70,9 +70,9 @@ class UnitSharesControllerTest extends UsersControllerTestCase
 
 		$data = $this->json($this->show('playlists', '4'));
 
-		static::assertSame(['editor', 'viewer'], $data['roles']);
+		static::assertSame(['viewer', 'editor'], $data['roles']);
 		static::assertSame([
-			['UID' => 2, 'username' => 'anna', 'roles' => ['editor', 'viewer'], 'role' => ''],
+			['UID' => 2, 'username' => 'anna', 'roles' => ['viewer', 'editor'], 'role' => ''],
 			['UID' => 3, 'username' => 'bernd', 'roles' => ['viewer'], 'role' => 'viewer'],
 		], $data['users']);
 		static::assertArrayHasKey('title', $data['labels']);

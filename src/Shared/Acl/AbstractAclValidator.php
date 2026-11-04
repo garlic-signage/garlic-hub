@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace App\Shared\Acl;
 
 use App\Framework\Config\Config;
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use Doctrine\DBAL\Exception;
@@ -35,6 +36,9 @@ use Doctrine\DBAL\Exception;
  */
 abstract class AbstractAclValidator
 {
+	// a module with units which are shared, e.g. playlist: the key of the id and of the messages
+	protected const string UNIT_NAME = '';
+
 	protected AclHelper $helper;
 	protected string $moduleName;
 
@@ -174,5 +178,64 @@ abstract class AbstractAclValidator
 	public function isViewerWithAccessOnUnit(int $UID, int|string $unitId): bool
 	{
 		return ($this->isViewer($UID) && $this->helper->hasViewerAccessOnUnit($UID, $unitId, $this->moduleName));
+	}
+
+	/**
+	 * Who deletes a unit: its admins. A module whose owners delete their units, too, overrides it.
+	 *
+	 * @param array{UID: int, company_id: int, ...} $unit
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 */
+	public function isUnitDeletable(int $UID, array $unit): bool
+	{
+		return $this->isAdmin($UID, $unit);
+	}
+
+	/**
+	 * Who deletes a unit edits it, an editor of a shared unit, too.
+	 *
+	 * @param array{UID: int, company_id: int, ...} $unit
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 */
+	public function isUnitEditable(int $UID, array $unit): bool
+	{
+		if ($this->isUnitDeletable($UID, $unit))
+			return true;
+
+		return $this->isEditorWithAccessOnUnit($UID, $this->unitIdOf($unit));
+	}
+
+	/**
+	 * The check before a unit is edited or deleted. Editing is not enough for a delete:
+	 * an editor of a shared unit must not delete it.
+	 *
+	 * @param array{UID: int, company_id: int, ...} $unit
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 */
+	public function assertUnitAccess(int $UID, array $unit, bool $forDelete): void
+	{
+		$replacements = [static::UNIT_NAME . '_id' => $this->unitIdOf($unit)];
+		if (!$this->isUnitEditable($UID, $unit))
+			throw new AccessDeniedException($this->moduleName, static::UNIT_NAME . '_not_editable', $replacements);
+
+		if ($forDelete && !$this->isUnitDeletable($UID, $unit))
+			throw new AccessDeniedException($this->moduleName, static::UNIT_NAME . '_not_deletable', $replacements);
+	}
+
+	/**
+	 * @param array<string,mixed> $unit
+	 */
+	private function unitIdOf(array $unit): int|string
+	{
+		$unitId = $unit[static::UNIT_NAME . '_id'] ?? '';
+
+		return is_int($unitId) || is_string($unitId) ? $unitId : '';
 	}
 }

@@ -31,4 +31,7 @@ enum AclSections: string
 	case SUBADMIN    = 'subadmin';
 	case EDITOR      = 'editor';
 	case VIEWER      = 'viewer';
+
+	// the roles of a user on a single unit, from the lowest to the highest
+	public const array UNIT_ROLES = [self::VIEWER, self::EDITOR];
 }

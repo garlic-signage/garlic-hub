@@ -253,11 +253,7 @@ class TemplatesService
 		if ($template === [])
 			throw new NotFoundException('templates', 'template_not_found', ['template_id' => $templateId]);
 
-		if (!$this->aclValidator->isTemplateEditable($this->userSession->getUID(), $template))
-			throw new AccessDeniedException('templates', 'template_not_editable', ['template_id' => $templateId]);
-
-		if ($forDelete && !$this->aclValidator->isAllowedToDeleteTemplate($this->userSession->getUID(), $template))
-			throw new AccessDeniedException('templates', 'template_not_deletable', ['template_id' => $templateId]);
+		$this->aclValidator->assertUnitAccess($this->userSession->getUID(), $template, $forDelete);
 
 		return $template;
 	}

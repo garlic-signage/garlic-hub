@@ -39,8 +39,8 @@ export class TemplatesActionsContextMenu extends ActionsContextMenu
 
 	prepare(rights)
 	{
-		this.view.setLink("composer", "templates/composer/" + this.unitId);
-		this.view.setLink("settings", "templates/settings/" + this.unitId);
+		this.view.setLink("composer", "/templates/composer/" + this.unitId);
+		this.view.setLink("settings", "/templates/settings/" + this.unitId);
 		this.#shareDialog.attachTo(this.view.item("share"), this.unitId, rights.can_share);
 		this.#versionsDialog.attachTo(this.view.item("versions"), this.unitId, rights.can_version);
 		this.addDelete(rights.can_delete, (templateId) => this.#templatesService.delete(templateId));

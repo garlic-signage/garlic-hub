@@ -59,7 +59,7 @@ class AclValidatorTest extends TestCase
 		$UID = 1;
 		$playlist = ['UID' => 1, 'company_id' => 4, 'playlist_id' => 12];
 
-		$result = $this->aclValidator->isPlaylistEditable($UID, $playlist);
+		$result = $this->aclValidator->isUnitEditable($UID, $playlist);
 
 		static::assertTrue($result);
 	}
@@ -76,7 +76,7 @@ class AclValidatorTest extends TestCase
 		$playlist = ['UID' => 2, 'company_id' => 4, 'playlist_id' => 12];
 
 		$this->aclHelperStub->method('isModuleAdmin')->willReturnMap([[$UID, 'playlists', true]]);
-		$result = $this->aclValidator->isPlaylistEditable($UID, $playlist);
+		$result = $this->aclValidator->isUnitEditable($UID, $playlist);
 
 		static::assertTrue($result);
 	}
@@ -97,7 +97,7 @@ class AclValidatorTest extends TestCase
 		$this->aclHelperStub->method('getConfig')->willReturn($configStub);
 		$configStub->method('getEdition')->willReturn(Config::PLATFORM_EDITION_CORE);
 
-		$result = $this->aclValidator->isPlaylistEditable($UID, $playlist);
+		$result = $this->aclValidator->isUnitEditable($UID, $playlist);
 
 		static::assertFalse($result);
 	}
@@ -117,7 +117,7 @@ class AclValidatorTest extends TestCase
 
 		$this->aclHelperStub->method('hasSubAdminAccessOnCompany')->willReturnMap([[$UID, 4, 'playlists', false]]);
 
-		$result = $this->aclValidator->isPlaylistEditable($UID, $playlist);
+		$result = $this->aclValidator->isUnitEditable($UID, $playlist);
 
 		static::assertFalse($result);
 	}
@@ -137,7 +137,7 @@ class AclValidatorTest extends TestCase
 
 		$this->aclHelperStub->method('hasSubAdminAccessOnCompany')->willReturnMap([[$UID, 4, 'playlists', true]]);
 
-		$result = $this->aclValidator->isPlaylistEditable($UID, $playlist);
+		$result = $this->aclValidator->isUnitEditable($UID, $playlist);
 
 		static::assertTrue($result);
 	}
@@ -157,7 +157,7 @@ class AclValidatorTest extends TestCase
 
 		$this->aclHelperStub->method('hasEditorAccessOnUnit')->willReturnMap([[$UID, 12, 'playlists', true]]);
 
-		$result = $this->aclValidator->isPlaylistEditable($UID, $playlist);
+		$result = $this->aclValidator->isUnitEditable($UID, $playlist);
 
 		static::assertTrue($result);
 	}
@@ -177,7 +177,7 @@ class AclValidatorTest extends TestCase
 
 		$this->aclHelperStub->method('hasEditorAccessOnUnit')->willReturnMap([[$UID, 12, 'playlists', false]]);
 
-		$result = $this->aclValidator->isPlaylistEditable($UID, $playlist);
+		$result = $this->aclValidator->isUnitEditable($UID, $playlist);
 
 		static::assertFalse($result);
 	}

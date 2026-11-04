@@ -104,7 +104,7 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testTheCellsOfARow(): void
 	{
-		$this->aclValidatorStub->method('isTemplateEditable')->willReturn(false);
+		$this->aclValidatorStub->method('isUnitEditable')->willReturn(false);
 
 		$body = $this->preparer->setUsedTemplates([5 => 3])->prepareTableBody([self::template()], $this->fields(['name', 'type', 'UID', 'used']), 3);
 
@@ -123,7 +123,7 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testATemplateWhichIsNotUsedIsUsedZeroTimes(): void
 	{
-		$this->aclValidatorStub->method('isTemplateEditable')->willReturn(false);
+		$this->aclValidatorStub->method('isUnitEditable')->willReturn(false);
 
 		$body = $this->preparer->setUsedTemplates([6 => 2])->prepareTableBody([self::template()], $this->fields(['used']), 3);
 
@@ -133,7 +133,7 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testAnUnknownColumnIsShownAsText(): void
 	{
-		$this->aclValidatorStub->method('isTemplateEditable')->willReturn(false);
+		$this->aclValidatorStub->method('isUnitEditable')->willReturn(false);
 
 		$body = $this->preparer->prepareTableBody([self::template()], $this->fields(['company_id']), 3);
 
@@ -143,7 +143,7 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testATypeWithoutANameIsShownAsItIs(): void
 	{
-		$this->aclValidatorStub->method('isTemplateEditable')->willReturn(false);
+		$this->aclValidatorStub->method('isUnitEditable')->willReturn(false);
 
 		$body = $this->preparer->prepareTableBody([self::template(type: 'fabric.js')], $this->fields(['type']), 3);
 
@@ -153,7 +153,7 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testTheOwnerAndWhoMayEditGetTheContextMenu(): void
 	{
-		$this->aclValidatorStub->method('isTemplateEditable')->willReturn(false);
+		$this->aclValidatorStub->method('isUnitEditable')->willReturn(false);
 		$row = $this->preparer->prepareTableBody([self::template()], $this->fields(['name']), 2)[0];
 
 		static::assertSame([['LANG_ACTION' => 'templates.actions', 'ACTION_ID' => '5', 'ACTION_NAME' => 'template-contextmenu', 'ACTION_ICON_CLASS' => 'three-dots template-contextmenu']], $row['has_action']);
@@ -162,7 +162,7 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testWhoMayEditATemplateOfAnotherUserGetsTheContextMenuToo(): void
 	{
-		$this->aclValidatorStub->method('isTemplateEditable')->willReturn(true);
+		$this->aclValidatorStub->method('isUnitEditable')->willReturn(true);
 
 		static::assertArrayHasKey('has_action', $this->preparer->prepareTableBody([self::template(owner: 2)], $this->fields(['name']), 1)[0]);
 	}
@@ -170,7 +170,7 @@ class DatatablePreparerTest extends TestCase
 	#[Group('units')]
 	public function testOthersGetNoContextMenu(): void
 	{
-		$this->aclValidatorStub->method('isTemplateEditable')->willReturn(false);
+		$this->aclValidatorStub->method('isUnitEditable')->willReturn(false);
 
 		static::assertArrayNotHasKey('has_action', $this->preparer->prepareTableBody([self::template(owner: 2)], $this->fields(['name']), 3)[0]);
 	}

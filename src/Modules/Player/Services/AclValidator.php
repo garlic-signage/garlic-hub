@@ -23,9 +23,6 @@ namespace App\Modules\Player\Services;
 
 use App\Shared\Acl\AbstractAclValidator;
 use App\Shared\Acl\AclHelper;
-use App\Framework\Exceptions\CoreException;
-use App\Framework\Exceptions\FrameworkException;
-use Doctrine\DBAL\Exception;
 
 /**
  * AclValidator class is responsible for handling access control validation
@@ -33,40 +30,10 @@ use Doctrine\DBAL\Exception;
  */
 class AclValidator extends AbstractAclValidator
 {
+	protected const string UNIT_NAME = 'player';
 
 	public function __construct(AclHelper $aclHelper)
 	{
 		parent::__construct('player', $aclHelper);
 	}
-
-	/**
-	 * @param int $UID
-	 * @param array{UID: int, company_id: int, player_id: int, ...} $player
-	 * @return bool
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
-	public function isPlayerEditable(int $UID, array $player): bool
-	{
-		if ($this->isAllowedToDeletePlayer($UID, $player))
-			return true;
-
-		if($this->isEditorWithAccessOnUnit($UID, $player['player_id']))
-			return true;
-
-		return false;
-	}
-
-	/**
-	 * @param array{UID: int, company_id: int, player_id:int, ...} $player
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
-	public function isAllowedToDeletePlayer(int $UID, array $player): bool
-	{
-		return $this->isAdmin($UID, $player);
-	}
-
 }

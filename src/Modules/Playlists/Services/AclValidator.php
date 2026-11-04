@@ -29,6 +29,7 @@ use Doctrine\DBAL\Exception;
 
 class AclValidator extends AbstractAclValidator
 {
+	protected const string UNIT_NAME = 'playlist';
 
 	public function __construct(AclHelper $aclHelper)
 	{
@@ -36,37 +37,18 @@ class AclValidator extends AbstractAclValidator
 	}
 
 	/**
-	 * @param int $UID
-	 * @param array{"UID": int, "company_id": int, "playlist_id": int, ...} $playlist
-	 * @return bool
+	 * The owner deletes his playlists, too.
+	 *
+	 * @param array{UID: int, company_id: int, ...} $unit
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 */
-	public function isPlaylistEditable(int $UID, array $playlist): bool
+	public function isUnitDeletable(int $UID, array $unit): bool
 	{
-		if ($this->isAllowedToDeletePlaylist($UID, $playlist))
+		if ($UID == $unit['UID'])
 			return true;
 
-		if($this->isEditorWithAccessOnUnit($UID, $playlist['playlist_id']))
-			return true;
-
-		return false;
-	}
-
-	/**
-	 * @param int $UID
-	 * @param array{"UID": int, "company_id": int, "playlist_id": int, ...} $playlist
-	 * @return bool
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 */
-	public function isAllowedToDeletePlaylist(int $UID, array $playlist): bool
-	{
-		if ($UID == $playlist['UID'])
-			return true;
-
-		return $this->isAdmin($UID, $playlist);
+		return $this->isAdmin($UID, $unit);
 	}
 }

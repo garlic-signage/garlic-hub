@@ -141,11 +141,9 @@ export class UnitShareDialog
 		name.htmlFor   = select.id;
 
 		select.appendChild(new Option(labels.none, ""));
-		for (const role of ["viewer", "editor"])
-		{
-			if (user.roles.includes(role))
-				select.appendChild(new Option(labels[role], role));
-		}
+		// the roles the user may get, in the order of the server
+		for (const role of user.roles)
+			select.appendChild(new Option(labels[role], role));
 		select.value = user.role;
 
 		let saved = user.role;

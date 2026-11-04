@@ -30,6 +30,11 @@ final readonly class DatabaseAuditLog implements AuditLog
 {
 	public function __construct(private AuditLogRepository $repository) {}
 
+	public function isEnabled(): bool
+	{
+		return true;
+	}
+
 	/**
 	 * @throws JsonException
 	 */

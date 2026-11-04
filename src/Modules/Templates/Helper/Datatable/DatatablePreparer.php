@@ -120,7 +120,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 				}
 				$list['elements_result_element'][] = $resultElements;
 			}
-			if ($template['UID'] == $currentUID || $this->aclValidator->isTemplateEditable($currentUID, $template))
+			if ($template['UID'] == $currentUID || $this->aclValidator->isUnitEditable($currentUID, $template))
 			{
 				$list['has_action'][] = $this->prepareService->getBodyPreparer()->formatAction(
 					$this->translator->translate('actions', 'templates'),

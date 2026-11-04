@@ -110,6 +110,26 @@ class PlaylistAccessTest extends ContainerTestCase
 		}
 	}
 
+	public function testAnEditorOfASharedPlaylistMayNotDeleteIt(): void
+	{
+		// anna edits the playlist of bernd
+		$this->connection->executeStatement("INSERT INTO user_acl (UID, acl, module) VALUES (2, 2, 'playlists')");
+		$this->connection->executeStatement("INSERT INTO user_vip (UID, vip_name, unit_id) VALUES (2, 'playlists_editor', '2')");
+		$this->actingAs(2);
+		static::assertSame('Bernds Kantine', $this->playlistsService->loadNameById(2)['name']);
+
+		try
+		{
+			$this->playlistsService->delete(2);
+			static::fail('Expected AccessDeniedException');
+		}
+		catch (AccessDeniedException $e)
+		{
+			static::assertSame('playlist_not_deletable', $e->getTranslationKey());
+			static::assertSame([1, 2, 3], $this->remainingPlaylistIds());
+		}
+	}
+
 	public function testOwnerMayToggleShuffle(): void
 	{
 		$this->actingAs(2);

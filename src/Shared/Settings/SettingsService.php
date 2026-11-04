@@ -24,6 +24,7 @@ namespace App\Shared\Settings;
 use App\Framework\Config\Config;
 use App\Framework\Config\ConfigLoaderInterface;
 use App\Framework\Config\ConfigOverrides;
+use App\Framework\Config\IniConfigLoader;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\TranslatableModuleException;
@@ -196,7 +197,7 @@ class SettingsService
 		{
 			SettingType::SWITCH => $this->isOn($value) ? '1' : '0',
 			SettingType::NUMBER => $this->validateNumber($field, $value) ?? throw $invalid,
-			SettingType::TEXT   => is_string($value) && !str_contains($value, '"') && preg_match('/[\r\n]/', $value) !== 1 ? trim($value) : throw $invalid,
+			SettingType::TEXT   => is_string($value) && ConfigOverrides::isStorable($value) ? trim($value) : throw $invalid,
 			SettingType::SELECT => is_string($value) && in_array($value, $field->options, true) ? $value : throw $invalid,
 		};
 	}
@@ -238,8 +239,7 @@ class SettingsService
 		if (!is_array($section) || !array_key_exists($field->key, $section))
 			return null;
 
-		// the defaults have comments behind the value
-		return trim(explode(';', $section[$field->key])[0]);
+		return IniConfigLoader::withoutComment($section[$field->key]);
 	}
 
 	/**

@@ -119,7 +119,7 @@ class Config
 	 */
 	public function isSwitchOn(string $key, string $module, string $section): bool
 	{
-		return trim(explode(';', $this->getConfigValue($key, $module, $section))[0]) === '1';
+		return IniConfigLoader::withoutComment($this->getConfigValue($key, $module, $section)) === '1';
 	}
 
 	/**

@@ -26,6 +26,11 @@ namespace App\Shared\Audit;
  */
 final readonly class NullAuditLog implements AuditLog
 {
+	public function isEnabled(): bool
+	{
+		return false;
+	}
+
 	public function record(int $UID, string $module, AuditAction $action, int|string|null $unitId = null, ?int $targetUID = null, array $details = []): void
 	{
 	}

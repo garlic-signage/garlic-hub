@@ -258,9 +258,9 @@ class AclGrantServiceTest extends ContainerTestCase
 
 		$shares = $this->service->findUnitShares(1, 'playlists', 1);
 
-		static::assertSame([AclSections::EDITOR, AclSections::VIEWER], $shares['roles']);
+		static::assertSame([AclSections::VIEWER, AclSections::EDITOR], $shares['roles']);
 		static::assertSame([
-			['UID' => 2, 'username' => 'anna', 'roles' => [AclSections::EDITOR, AclSections::VIEWER], 'role' => null],
+			['UID' => 2, 'username' => 'anna', 'roles' => [AclSections::VIEWER, AclSections::EDITOR], 'role' => null],
 			['UID' => 3, 'username' => 'bernd', 'roles' => [AclSections::VIEWER], 'role' => AclSections::VIEWER],
 		], $shares['users']);
 	}

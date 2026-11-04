@@ -71,6 +71,10 @@ readonly class UnitSharesController
 			];
 		}
 
+		$roleLabels = [];
+		foreach (AclSections::UNIT_ROLES as $role)
+			$roleLabels[$role->value] = $this->translator->translate('role_' . $role->value, 'users');
+
 		return $this->responseHandler->jsonSuccess($response, [
 			'roles'  => array_map(fn(AclSections $role) => $role->value, $shares['roles']),
 			'users'  => $users,
@@ -79,10 +83,8 @@ readonly class UnitSharesController
 				'filter'   => $this->translator->translate('share_filter', 'users'),
 				'no_users' => $this->translator->translate('share_no_users', 'users'),
 				'none'     => $this->translator->translate('role_none', 'users'),
-				'viewer'   => $this->translator->translate('role_viewer', 'users'),
-				'editor'   => $this->translator->translate('role_editor', 'users'),
 				'close'    => $this->translator->translate('close', 'main')
-			]
+			] + $roleLabels
 		]);
 	}
 

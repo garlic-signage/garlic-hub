@@ -29,6 +29,8 @@ use Doctrine\DBAL\Exception;
  */
 interface AuditLog
 {
+	public function isEnabled(): bool;
+
 	/**
 	 * @param int $UID who did it, 0 for nobody known (a failed login)
 	 * @param int|null $targetUID the user it was done to (rights, users)

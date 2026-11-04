@@ -132,7 +132,7 @@ readonly class UserRightsController
 				'CHECKED'   => $right['granted'] ? 'checked' : ''
 			];
 			// a unit can get the roles the user has
-			if ($right['granted'] && in_array($right['role'], [AclSections::VIEWER, AclSections::EDITOR], true))
+			if ($right['granted'] && in_array($right['role'], AclSections::UNIT_ROLES, true))
 				$unitRoles[] = $right['role'];
 		}
 
@@ -161,7 +161,7 @@ readonly class UserRightsController
 	private function prepareUnitRoles(array $unitRoles, ?AclSections $current): array
 	{
 		$options = [];
-		foreach ([AclSections::VIEWER, AclSections::EDITOR] as $role)
+		foreach (AclSections::UNIT_ROLES as $role)
 		{
 			if (in_array($role, $unitRoles, true) || $role === $current)
 				$options[] = ['VALUE' => $role->value, 'LANG_ROLE' => $this->translator->translate('role_' . $role->value, 'users'), 'SELECTED' => $role === $current ? 'selected' : ''];

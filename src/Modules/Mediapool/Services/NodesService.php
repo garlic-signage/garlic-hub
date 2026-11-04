@@ -121,7 +121,7 @@ class NodesService
 		if ($this->aclValidator->isModuleAdmin($UID))
 			return [];
 
-		$nodeIds = array_map('intval', $this->aclValidator->findSharedUnitIds($UID, AclSections::EDITOR, AclSections::VIEWER));
+		$nodeIds = array_map('intval', $this->aclValidator->findSharedUnitIds($UID, ...AclSections::UNIT_ROLES));
 		$paths   = $this->nodesRepository->findPaths($nodeIds);
 
 		$nodeIds = $this->findUnreachableNodeIds($nodeIds);

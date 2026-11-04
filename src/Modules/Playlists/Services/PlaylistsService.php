@@ -154,7 +154,9 @@ class PlaylistsService extends AbstractBaseService
 	 */
 	public function delete(int $playlistId): int
 	{
-		$playlist = $this->loadWithUserById($playlistId);
+		// editing is not enough: an editor of a shared playlist must not delete it.
+		// Whether it is used, Playlists\Orchestrator::delete() checks.
+		$playlist = $this->loadCheckedPlaylist($playlistId, true);
 
 		// the shares and versions go with the playlist or nothing goes
 		$this->transactions->begin();
@@ -216,9 +218,7 @@ class PlaylistsService extends AbstractBaseService
 	{
 		/** @var array{UID: int, company_id: int, playlist_id: int, ...} $playlist */
 		$playlist = $this->fetchById($playlistId); // the playlist is sure not empty here
-
-		if (!$this->aclValidator->isPlaylistEditable($this->userSession->getUID(), $playlist))
-			throw new AccessDeniedException('playlists', 'playlist_not_editable', ['playlist_id' => $playlistId]);
+		$this->aclValidator->assertUnitAccess($this->userSession->getUID(), $playlist, false);
 
 		return $playlist;
 	}
@@ -275,13 +275,26 @@ class PlaylistsService extends AbstractBaseService
 	 */
 	public function loadWithUserById(int $playlistId): array
 	{
+		return $this->loadCheckedPlaylist($playlistId, false);
+	}
+
+	/**
+	 * @return array{UID: int, company_id: int, playlist_id: int, ...}
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws UserException
+	 * @throws AccessDeniedException
+	 * @throws NotFoundException
+	 */
+	private function loadCheckedPlaylist(int $playlistId, bool $forDelete): array
+	{
 		/** @var array{UID: int, company_id: int, playlist_id: int, ...} $playlist */
 		$playlist = $this->playlistsRepository->findFirstWithUserName($playlistId);
 		if ($playlist === [])
 			throw new NotFoundException('playlists', 'playlist_not_found', ['playlist_id' => $playlistId]);
 
-		if (!$this->aclValidator->isPlaylistEditable($this->userSession->getUID(), $playlist))
-			throw new AccessDeniedException('playlists', 'playlist_not_editable', ['playlist_id' => $playlistId]);
+		$this->aclValidator->assertUnitAccess($this->userSession->getUID(), $playlist, $forDelete);
 
 		return $playlist;
 	}

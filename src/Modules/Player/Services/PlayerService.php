@@ -206,13 +206,8 @@ class PlayerService
 		if ($player === [])
 			throw new NotFoundException('player', 'player_not_found', ['player_id' => $playerId]);
 
-		$UID = $this->userSession->getUID();
 		/** @var array{UID: int, company_id: int, player_id: int, ...} $player */
-		if (!$this->playerValidator->isPlayerEditable($UID, $player))
-			throw new AccessDeniedException('player', 'player_not_editable', ['player_id' => $playerId]);
-
-		if ($forDelete && !$this->playerValidator->isAllowedToDeletePlayer($UID, $player))
-			throw new AccessDeniedException('player', 'player_not_deletable', ['player_id' => $playerId]);
+		$this->playerValidator->assertUnitAccess($this->userSession->getUID(), $player, $forDelete);
 
 		return $player;
 	}

@@ -71,7 +71,7 @@ class PlaylistsDatatableService extends AbstractUnitDatatableService
 	 */
 	public function loadForSelection(): void
 	{
-		$this->fetchForRoles($this->aclValidator, $this->filterDefinition, $this->parameters, $this->userSession->getUID(), 'playlist_id', AclSections::EDITOR, AclSections::VIEWER);
+		$this->fetchForRoles($this->aclValidator, $this->filterDefinition, $this->parameters, $this->userSession->getUID(), 'playlist_id', ...AclSections::UNIT_ROLES);
 	}
 
 	/**

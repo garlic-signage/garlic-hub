@@ -21,7 +21,6 @@ declare(strict_types=1);
 
 namespace App\Modules\System\Controller;
 
-use App\Framework\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -31,6 +30,7 @@ use App\Framework\Utils\Datatable\DatatableTemplatePreparer;
 use App\Modules\Auth\UserSession;
 use App\Modules\System\Helper\Audit\Orchestrator;
 use App\Modules\System\Services\AclValidator;
+use App\Shared\Audit\AuditLog;
 use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
@@ -50,7 +50,7 @@ readonly class ShowAuditController
 		private DatatableTemplatePreparer $templatePreparer,
 		private AclValidator $aclValidator,
 		private UserSession $userSession,
-		private Config $config,
+		private AuditLog $auditLog,
 		private Translator $translator,
 		private Messages $flash
 	) {}
@@ -76,13 +76,8 @@ readonly class ShowAuditController
 
 		$templateData = $this->templatePreparer->preparerUITemplate($this->orchestrator->prepareUITemplate());
 		$templateData['this_layout']['data']['FORM_ACTION']    = '/system/audit';
-		$templateData['this_layout']['data']['audit_disabled'] = $this->isEnabled() ? [] : [['LANG_AUDIT_DISABLED' => $this->translator->translate('audit_disabled', self::MODULE_NAME)]];
+		$templateData['this_layout']['data']['audit_disabled'] = $this->auditLog->isEnabled() ? [] : [['LANG_AUDIT_DISABLED' => $this->translator->translate('audit_disabled', self::MODULE_NAME)]];
 
 		return new PageResponse($templateData);
-	}
-
-	private function isEnabled(): bool
-	{
-		return $this->config->isSwitchOn('enabled', self::MODULE_NAME, 'Scheduler') && $this->config->isSwitchOn('enabled', self::MODULE_NAME, 'Audit');
 	}
 }

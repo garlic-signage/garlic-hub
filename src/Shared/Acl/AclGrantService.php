@@ -48,7 +48,6 @@ use Throwable;
 class AclGrantService
 {
 	private const string MODULE_NAME = 'users';
-	private const array UNIT_ROLES = [AclSections::EDITOR, AclSections::VIEWER];
 	private const int SEARCH_LIMIT = 20;
 
 	/**
@@ -200,7 +199,7 @@ class AclGrantService
 		$modules = [];
 		foreach (EditionAclModules::getModules($this->aclHelper->getConfig()->getEdition()) as $module)
 		{
-			if ($this->findGrantableRoles($granterUID, $module, $companyId) !== [])
+			if ($this->findGrantableRoles($granterUID, $module, $companyId, $this->getModuleRoles($module)) !== [])
 				$modules[] = $module;
 		}
 
@@ -220,7 +219,7 @@ class AclGrantService
 	public function findUserRights(int $granterUID, int $UID, string $module): array
 	{
 		$companyId = $this->findCompanyOfUser($UID);
-		$roles     = $this->findGrantableRoles($granterUID, $module, $companyId);
+		$roles     = $this->findGrantableRoles($granterUID, $module, $companyId, $this->getModuleRoles($module));
 		if ($granterUID === $UID || $roles === [])
 			throw new AccessDeniedException(self::MODULE_NAME, 'rights_not_grantable', ['UID' => $UID, 'module' => $module]);
 
@@ -261,7 +260,7 @@ class AclGrantService
 		$units = [];
 		foreach ($this->unitProviders[$module]->searchUnits($search, self::SEARCH_LIMIT) as $unit)
 		{
-			if ($this->findGrantableRolesInCompany($granterUID, $module, $unit['company_id']) !== [])
+			if ($this->findGrantableRoles($granterUID, $module, $unit['company_id'], $this->getUnitRoles($module)) !== [])
 				$units[] = ['id' => $unit['id'], 'name' => $unit['name']];
 		}
 
@@ -277,7 +276,7 @@ class AclGrantService
 	 */
 	public function canShareInCompany(int $granterUID, string $module, int $companyId): bool
 	{
-		return isset($this->unitProviders[$module]) && $this->findGrantableRolesInCompany($granterUID, $module, $companyId) !== [];
+		return isset($this->unitProviders[$module]) && $this->findGrantableRoles($granterUID, $module, $companyId, $this->getUnitRoles($module)) !== [];
 	}
 
 	/**
@@ -331,7 +330,7 @@ class AclGrantService
 		if ($unitIds === [])
 			return;
 
-		$vipNames = array_map(fn(AclSections $role) => $this->aclHelper->getVipName($module, $role), self::UNIT_ROLES);
+		$vipNames = array_map(fn(AclSections $role) => $this->aclHelper->getVipName($module, $role), AclSections::UNIT_ROLES);
 		$unitIds  = array_values(array_map('strval', $unitIds));
 		$UIDs     = $this->userVipRepository->findUserIdsOfUnits($vipNames, $unitIds);
 
@@ -376,11 +375,8 @@ class AclGrantService
 	{
 		$unit  = $this->findUnit($module, $unitId);
 		$roles = [];
-		foreach ($this->getUnitRoles($module) as $role)
-		{
-			if ($this->mayGrant($granterUID, $module, $role, [$unit['company_id']]))
-				$roles[$this->aclHelper->getVipName($module, $role)] = $role;
-		}
+		foreach ($this->findGrantableRoles($granterUID, $module, $unit['company_id'], $this->getUnitRoles($module)) as $role)
+			$roles[$this->aclHelper->getVipName($module, $role)] = $role;
 
 		if ($roles === [])
 			throw new AccessDeniedException(self::MODULE_NAME, 'rights_not_grantable', ['module' => $module]);
@@ -426,35 +422,20 @@ class AclGrantService
 	{
 		$unit = $this->findUnit($module, $unitId);
 
-		return $this->findGrantableRolesInCompany($granterUID, $module, $unit['company_id']);
+		return $this->findGrantableRoles($granterUID, $module, $unit['company_id'], $this->getUnitRoles($module));
 	}
 
 	/**
-	 * Every role of the module the granter may give in the company, the unit roles and the admin roles.
+	 * The roles of the list the granter may give in the company.
 	 *
+	 * @param list<AclSections> $roles
 	 * @return list<AclSections>
 	 * @throws CoreException
 	 * @throws Exception
 	 */
-	private function findGrantableRoles(int $granterUID, string $module, int $companyId): array
+	private function findGrantableRoles(int $granterUID, string $module, int $companyId, array $roles): array
 	{
-		return array_values(array_filter(
-			$this->getModuleRoles($module),
-			fn(AclSections $role) => $this->mayGrant($granterUID, $module, $role, [$companyId])
-		));
-	}
-
-	/**
-	 * @return list<AclSections>
-	 * @throws CoreException
-	 * @throws Exception
-	 */
-	private function findGrantableRolesInCompany(int $granterUID, string $module, int $companyId): array
-	{
-		return array_values(array_filter(
-			$this->getUnitRoles($module),
-			fn(AclSections $role) => $this->mayGrant($granterUID, $module, $role, [$companyId])
-		));
+		return array_values(array_filter($roles, fn(AclSections $role) => $this->mayGrant($granterUID, $module, $role, [$companyId])));
 	}
 
 	/**
@@ -464,7 +445,7 @@ class AclGrantService
 	 */
 	private function getUnitRoles(string $module): array
 	{
-		return array_values(array_filter($this->getModuleRoles($module), fn(AclSections $role) => in_array($role, self::UNIT_ROLES, true)));
+		return array_values(array_filter(AclSections::UNIT_ROLES, fn(AclSections $role) => in_array($role, $this->getModuleRoles($module), true)));
 	}
 
 	/**
@@ -489,7 +470,7 @@ class AclGrantService
 		if ($this->aclHelper->isModuleAdmin($granterUID, $module))
 			return true;
 
-		if (!in_array($role, self::UNIT_ROLES, true) || !$this->isEnterpriseSubAdmin($granterUID, $module))
+		if (!in_array($role, AclSections::UNIT_ROLES, true) || !$this->isEnterpriseSubAdmin($granterUID, $module))
 			return false;
 
 		foreach ($companyIds as $companyId)
@@ -537,7 +518,7 @@ class AclGrantService
 	private function assertUnitRole(string $module, AclSections $role): void
 	{
 		$this->assertRoleInModule($module, $role);
-		if (!in_array($role, self::UNIT_ROLES, true))
+		if (!in_array($role, AclSections::UNIT_ROLES, true))
 			throw new TranslatableModuleException(self::MODULE_NAME, 'role_not_available', ['module' => $module, 'role' => $role->value]);
 	}
 

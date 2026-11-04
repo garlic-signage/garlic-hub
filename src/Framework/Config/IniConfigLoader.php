@@ -71,6 +71,14 @@ class IniConfigLoader implements ConfigLoaderInterface
 	}
 
 	/**
+	 * The files are read raw: a comment behind the value stays in it.
+	 */
+	public static function withoutComment(string $value): string
+	{
+		return trim(explode(';', $value)[0]);
+	}
+
+	/**
 	 * Builds the full file path for a module's configuration file.
 	 *
 	 * @param string $module The name of the module.

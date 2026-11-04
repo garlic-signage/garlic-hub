@@ -110,7 +110,7 @@ class Orchestrator
 
 		$UID     = $this->userSession->getUID();
 		$rights['can_edit']      = true;
-		$rights['can_delete']    = $this->aclValidator->isAllowedToDeletePlaylist($UID, $playlist) && !$this->isInUse($playlistId);
+		$rights['can_delete']    = $this->aclValidator->isUnitDeletable($UID, $playlist) && !$this->isInUse($playlistId);
 		$rights['can_share']     = $this->aclGrantService->canShareUnit($UID, 'playlists', $playlistId);
 		$rights['can_version']   = $this->playlistsService->isVersioningEnabled();
 		$rights['playlist_id']   = $playlistId;
@@ -133,10 +133,8 @@ class Orchestrator
 	 */
 	public function delete(ResponseInterface $response): ResponseInterface
 	{
-		$playlist = $this->playlistsService->loadWithUserById($this->playlistId);
-		if (!$this->aclValidator->isAllowedToDeletePlaylist($this->userSession->getUID(), $playlist))
-			throw new AccessDeniedException('playlists', 'playlist_not_deletable', ['playlist_id' => $this->playlistId]);
-
+		// who may not see it learns nothing about its use. The right to delete the service checks
+		$this->playlistsService->loadWithUserById($this->playlistId);
 		if ($this->isInUse($this->playlistId))
 			throw new TranslatableModuleException('playlists', 'playlist_in_use', ['playlist_id' => $this->playlistId]);
 

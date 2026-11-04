@@ -91,7 +91,7 @@ class AclValidatorTest extends TestCase
 	{
 		$this->aclHelperStub->method('isModuleAdmin')->willReturnMap([[1, 'templates', true]]);
 
-		static::assertTrue($this->aclValidator->isAllowedToDeleteTemplate(1, $this->template));
+		static::assertTrue($this->aclValidator->isUnitDeletable(1, $this->template));
 	}
 
 	/**
@@ -108,7 +108,7 @@ class AclValidatorTest extends TestCase
 		$this->edition(Config::PLATFORM_EDITION_CORE);
 
 		// the sub admin with access on the company does not count in the core edition
-		static::assertFalse($this->aclValidator->isAllowedToDeleteTemplate(1, $this->template));
+		static::assertFalse($this->aclValidator->isUnitDeletable(1, $this->template));
 	}
 
 	/**
@@ -124,7 +124,7 @@ class AclValidatorTest extends TestCase
 		$this->aclHelperStub->method('isSubAdmin')->willReturnMap([[1, 'templates', true]]);
 		$this->aclHelperStub->method('hasSubAdminAccessOnCompany')->willReturnMap([[1, 4, 'templates', true]]);
 
-		static::assertTrue($this->aclValidator->isAllowedToDeleteTemplate(1, $this->template));
+		static::assertTrue($this->aclValidator->isUnitDeletable(1, $this->template));
 	}
 
 	/**
@@ -140,7 +140,7 @@ class AclValidatorTest extends TestCase
 		$this->aclHelperStub->method('isSubAdmin')->willReturn(true);
 		$this->aclHelperStub->method('hasSubAdminAccessOnCompany')->willReturn(false);
 
-		static::assertFalse($this->aclValidator->isAllowedToDeleteTemplate(1, $this->template));
+		static::assertFalse($this->aclValidator->isUnitDeletable(1, $this->template));
 	}
 
 	/**
@@ -153,7 +153,7 @@ class AclValidatorTest extends TestCase
 	{
 		$this->aclHelperStub->method('isModuleAdmin')->willReturn(true);
 
-		static::assertTrue($this->aclValidator->isTemplateEditable(1, $this->template));
+		static::assertTrue($this->aclValidator->isUnitEditable(1, $this->template));
 	}
 
 	/**
@@ -169,7 +169,7 @@ class AclValidatorTest extends TestCase
 		$this->aclHelperStub->method('isEditor')->willReturnMap([[1, 'templates', true]]);
 		$this->aclHelperStub->method('hasEditorAccessOnUnit')->willReturnMap([[1, 12, 'templates', true]]);
 
-		static::assertTrue($this->aclValidator->isTemplateEditable(1, $this->template));
+		static::assertTrue($this->aclValidator->isUnitEditable(1, $this->template));
 	}
 
 	/**
@@ -187,7 +187,7 @@ class AclValidatorTest extends TestCase
 		$this->aclHelperStub->method('isEditor')->willReturn(true);
 		$this->aclHelperStub->method('hasEditorAccessOnUnit')->willReturnMap([[1, 99, 'templates', true], [1, 12, 'templates', false]]);
 
-		static::assertFalse($this->aclValidator->isTemplateEditable(1, $this->template));
+		static::assertFalse($this->aclValidator->isUnitEditable(1, $this->template));
 	}
 
 	/**
@@ -203,7 +203,7 @@ class AclValidatorTest extends TestCase
 		$this->aclHelperStub->method('isEditor')->willReturn(false);
 		$this->aclHelperStub->method('hasEditorAccessOnUnit')->willReturn(true);
 
-		static::assertFalse($this->aclValidator->isTemplateEditable(1, $this->template));
+		static::assertFalse($this->aclValidator->isUnitEditable(1, $this->template));
 	}
 
 	private function edition(string $edition): void

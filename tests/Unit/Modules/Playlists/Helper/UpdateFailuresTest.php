@@ -66,7 +66,7 @@ class UpdateFailuresTest extends TestCase
 	{
 		// the user may delete, the delete itself fails
 		$aclValidator = $this->createStub(AclValidator::class);
-		$aclValidator->method('isAllowedToDeletePlaylist')->willReturn(true);
+		$aclValidator->method('isUnitDeletable')->willReturn(true);
 
 		return new PlaylistsOrchestrator(
 			new PlaylistsResponseBuilder(new JsonResponseHandler(), $this->createStub(Translator::class)),

@@ -90,8 +90,7 @@ class ConfigOverrides
 			$ini .= '[' . $section . "]\n";
 			foreach ($values as $key => $value)
 			{
-				// the defaults are read raw: a quote or a line break would end the value
-				if (str_contains($value, '"') || preg_match('/[\r\n]/', $value) === 1)
+				if (!self::isStorable($value))
 					throw new CoreException('A configuration value must not contain quotes or line breaks: ' . $section . '.' . $key);
 
 				$ini .= $key . ' = "' . $value . "\"\n";
@@ -100,6 +99,14 @@ class ConfigOverrides
 		}
 
 		return $ini;
+	}
+
+	/**
+	 * The files are read raw: a quote or a line break would end the value.
+	 */
+	public static function isStorable(string $value): bool
+	{
+		return !str_contains($value, '"') && preg_match('/[\r\n]/', $value) !== 1;
 	}
 
 	private function fileName(string $module): string
