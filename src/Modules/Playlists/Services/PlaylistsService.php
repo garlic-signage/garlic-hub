@@ -300,6 +300,8 @@ class PlaylistsService extends AbstractBaseService
 	}
 
 	/**
+	 * The name of a zone in the multizone editor: a viewer may use the playlist, too.
+	 *
 	 * @return array{playlist_id:int, name:mixed}
 	 * @throws AccessDeniedException
 	 * @throws CoreException
@@ -310,7 +312,7 @@ class PlaylistsService extends AbstractBaseService
 	 */
 	public function loadNameById(int $playlistId): array
 	{
-		$playlist = $this->loadPureById($playlistId);
+		$playlist = $this->loadUsableById($playlistId);
 
 		return ['playlist_id' => $playlistId, 'name' => $playlist['playlist_name']];
 	}

@@ -50,6 +50,11 @@ class UsableUnitsTest extends ContainerTestCase
 		static::assertSame('Bernds Kantine', $this->container->get(PlaylistsService::class)->loadUsableById(2)['playlist_name']);
 	}
 
+	public function testAViewerSeesTheNameOfASharedPlaylistInAZone(): void
+	{
+		static::assertSame(['playlist_id' => 2, 'name' => 'Bernds Kantine'], $this->container->get(PlaylistsService::class)->loadNameById(2));
+	}
+
 	public function testAViewerDoesNotEditASharedPlaylist(): void
 	{
 		$this->expectException(AccessDeniedException::class);
