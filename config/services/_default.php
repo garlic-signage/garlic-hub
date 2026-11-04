@@ -20,9 +20,17 @@
 declare(strict_types=1);
 
 use App\Commands\MigrateCommand;
+use App\Commands\ScheduleRunCommand;
 use App\Framework\Controller\JsonResponseHandler;
 use App\Shared\Acl\AclHelper;
 use App\Shared\Acl\AclGrantService;
+use App\Shared\Audit\AuditLog;
+use App\Shared\Audit\AuditLogRepository;
+use App\Shared\Audit\DatabaseAuditLog;
+use App\Shared\Audit\NullAuditLog;
+use App\Shared\Scheduler\ScheduledTasks;
+use App\Shared\Scheduler\Scheduler;
+use App\Shared\Scheduler\SchedulerRunRepository;
 use App\Shared\Settings\SettingsSchema;
 use App\Shared\Settings\SettingsService;
 use App\Shared\Acl\AclUnitProvider;
@@ -290,6 +298,29 @@ if (php_sapi_name() === 'cli')
 	{
 		return new MigrateCommand($container->get(Runner::class));
 	});
+	$dependencies[Scheduler::class] = DI\factory(function (ContainerInterface $container)
+	{
+		$config = $container->get(Config::class);
+		// a module with tasks has them in App\Modules\<Module>\Scheduler\<Module>ScheduledTasks
+		$tasks  = [];
+		foreach (EditionAclModules::getModules($config->getEdition()) as $module)
+		{
+			$class = 'App\\Modules\\' . ucfirst($module) . '\\Scheduler\\' . ucfirst($module) . 'ScheduledTasks';
+			if (is_subclass_of($class, ScheduledTasks::class))
+				$tasks = array_merge($tasks, $container->get($class)->tasks());
+		}
+
+		return new Scheduler(
+			new SchedulerRunRepository($container->get('SqlConnection')),
+			$tasks,
+			$config->getPaths('cacheDir') . '/scheduler.lock',
+			$container->get('AppLogger')
+		);
+	});
+	$dependencies[ScheduleRunCommand::class] = DI\factory(function (ContainerInterface $container)
+	{
+		return new ScheduleRunCommand($container->get(Config::class), $container->get(Scheduler::class));
+	});
 }
 $dependencies[FormBuilder::class] = DI\factory(function (ContainerInterface $container)
 {
@@ -332,7 +363,7 @@ $dependencies[SettingsService::class] = DI\factory(function (ContainerInterface 
 			$schemas[$module] = $container->get($class);
 	}
 
-	return new SettingsService($container->get(AclHelper::class), $container->get('ConfigDefaults'), $container->get(ConfigOverrides::class), $schemas);
+	return new SettingsService($container->get(AclHelper::class), $container->get('ConfigDefaults'), $container->get(ConfigOverrides::class), $schemas, $container->get(AuditLog::class));
 });
 $dependencies[AclHelper::class] = DI\factory(function (ContainerInterface $container)
 {
@@ -357,8 +388,22 @@ $dependencies[AclGrantService::class] = DI\factory(function (ContainerInterface 
 		new UserVipRepository($container->get('SqlConnection')),
 		$container->get(UsersService::class),
 		$container->get(Transactions::class),
-		$unitProviders
+		$unitProviders,
+		$container->get(AuditLog::class)
 	);
+});
+$dependencies[AuditLogRepository::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new AuditLogRepository($container->get('SqlConnection'));
+});
+// the system is lean: without the switches nothing is written. The scheduler deletes the old entries
+$dependencies[AuditLog::class] = DI\factory(function (ContainerInterface $container)
+{
+	$config = $container->get(Config::class);
+	if (!$config->isSwitchOn('enabled', 'system', 'Scheduler') || !$config->isSwitchOn('enabled', 'system', 'Audit'))
+		return new NullAuditLog();
+
+	return new DatabaseAuditLog($container->get(AuditLogRepository::class));
 });
 $dependencies[PrepareService::class] = DI\factory(function (ContainerInterface $container)
 {

@@ -126,11 +126,14 @@ readonly class ShowSettingsController
 			$values[$setting['field']->section . '.' . $setting['field']->key] = $setting['value'];
 		}
 
-		$fields = [];
+		$fields   = [];
+		$disabled = [];
 		foreach ($settings as $setting)
 		{
 			$field  = $setting['field'];
 			$name   = $field->section . '.' . $field->key;
+			// greyed out like its switch, too: the switch comes first in the schema
+			$disabled[$name] = $field->dependsOn !== null && (($values[$field->dependsOn] ?? '0') !== '1' || ($disabled[$field->dependsOn] ?? false));
 			$fields[] = [
 				'NAME'          => $name,
 				'ID'            => 'setting_' . $module . '_' . $field->section . '_' . $field->key,
@@ -138,7 +141,7 @@ readonly class ShowSettingsController
 				'VALUE'         => $setting['value'],
 				// a setting of a switch which is off is greyed out, the script follows the switch
 				'DEPENDS_ON'    => $field->dependsOn !== null ? 'setting_' . $module . '_' . str_replace('.', '_', $field->dependsOn) : '',
-				'DISABLED'      => $field->dependsOn !== null && ($values[$field->dependsOn] ?? '0') !== '1' ? 'disabled' : '',
+				'DISABLED'      => $disabled[$name] ? 'disabled' : '',
 				'is_switch'     => $field->type === SettingType::SWITCH ? ['CHECKED' => $setting['value'] === '1' ? 'checked' : ''] : [],
 				'is_number'     => $field->type === SettingType::NUMBER ? ['MIN' => $field->min ?? '', 'MAX' => $field->max ?? ''] : [],
 				'is_text'       => $field->type === SettingType::TEXT ? [[]] : [],

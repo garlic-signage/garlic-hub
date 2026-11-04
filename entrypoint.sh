@@ -66,6 +66,10 @@ php bin/console.php db:migrate
 chown -R www-data:www-data /var/www/public/var /var/www/var
 chmod -R 775 /var/www/public/var /var/www/var
 
+# the scheduler: every 5 minutes, it ends at once while it is not enabled on the settings page
+echo '*/5 * * * * www-data cd /var/www && /usr/local/bin/php bin/console.php schedule:run >> /var/www/var/logs/scheduler.log 2>&1' > /etc/cron.d/garlic-hub
+chmod 0644 /etc/cron.d/garlic-hub
+cron
 
 # Apache starten
 exec apache2-foreground

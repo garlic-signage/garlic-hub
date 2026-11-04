@@ -33,9 +33,10 @@ final readonly class SystemSettingsSchema implements SettingsSchema
 	public function fields(): array
 	{
 		return [
-			new SettingField('Audit', 'enabled', SettingType::SWITCH, 'audit_enabled'),
+			new SettingField('Scheduler', 'enabled', SettingType::SWITCH, 'scheduler_enabled'),
+			// the scheduler deletes the old entries of the audit log
+			new SettingField('Audit', 'enabled', SettingType::SWITCH, 'audit_enabled', dependsOn: 'Scheduler.enabled'),
 			new SettingField('Audit', 'retention_days', SettingType::NUMBER, 'audit_retention_days', 1, 3650, dependsOn: 'Audit.enabled'),
-			new SettingField('Queue', 'enabled', SettingType::SWITCH, 'queue_enabled'),
 		];
 	}
 }

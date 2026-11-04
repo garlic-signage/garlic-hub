@@ -15,7 +15,7 @@
 			<div class="setting">
 				<label for="{{ID}}">{{LANG_LABEL}}</label>
 				{{#is_switch}}
-				<input type="checkbox" id="{{ID}}" name="settings[{{NAME}}]" value="1" {{CHECKED}}>
+				<input type="checkbox" id="{{ID}}" name="settings[{{NAME}}]" value="1" {{CHECKED}} data-depends-on="{{DEPENDS_ON}}" {{DISABLED}}>
 				{{/is_switch}}
 				{{#is_number}}
 				<input type="number" id="{{ID}}" name="settings[{{NAME}}]" value="{{VALUE}}" min="{{MIN}}" max="{{MAX}}" data-depends-on="{{DEPENDS_ON}}" {{DISABLED}}>

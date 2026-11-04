@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libonig-dev \
     ghostscript \
     ffmpeg \
+    cron \
     libapache2-mod-xsendfile
 
 # Install required PHP extensions

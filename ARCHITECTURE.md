@@ -115,7 +115,7 @@ Web root. Only what the browser or a player may fetch directly.
 Application code, namespace `App\`.
 
 #### `src/Commands/`
-Console commands (e.g. `MigrateCommand`).
+Console commands (e.g. `MigrateCommand`). `schedule:run` (`ScheduleRunCommand`) is started by the cron every 5 minutes (the Docker image sets it up in `entrypoint.sh`, an installation by hand needs the crontab line itself). It ends at once while `Scheduler.enabled` of the system settings is off.
 
 #### `src/Controller/`
 Controllers which belong to no module, e.g. `HomeController` (dashboard, legal notice).
@@ -157,6 +157,8 @@ Technical building blocks without business knowledge.
 Business code every module needs.
 - `Acl/` — uniform access levels (module admin, sub admin, editor, viewer) used by all modules.
 - `Layout/` — data of the main layout: main menu, user menu, language switch, flash messages.
+- `Scheduler/` — runs the `ScheduledTask`s which are due (hourly or daily), remembers their last run in `scheduler_runs`. A module has its tasks in `App\Modules\<Module>\Scheduler\<Module>ScheduledTasks`.
+- `Settings/` — the settings page: `SettingsSchema`, `SettingField` and `SettingsService`.
 - `User/` — the user: `UserEntity`, `UsersService`, tokens and the user repositories.
   - `Repositories/Core|Enterprise` — repositories per edition; Enterprise adds tables.
 
@@ -176,7 +178,7 @@ The modules:
 
 - **`Account/`** — the logged-in user's own account: change password, forced password change, language.
 - **`Auth/`** — login, logout, auto login, OAuth2 endpoints, `UserSession` and the `AuthMiddleware` (protects all routes except a list of public ones).
-- **`System/`** — the settings page `/system/settings`: a tab per module whose module admin the user is. A module offers settings with a `SettingsSchema` (`Shared/Settings`), found by name as `App\Modules\<Module>\Settings\<Module>SettingsSchema`. Optional subsystems (audit log, job queue) are off by default.
+- **`System/`** — the settings page `/system/settings`: a tab per module whose module admin the user is. A module offers settings with a `SettingsSchema` (`Shared/Settings`), found by name as `App\Modules\<Module>\Settings\<Module>SettingsSchema`. Optional subsystems (scheduler, audit log) are off by default, the audit log needs the scheduler.
 - **`Mediapool/`** — media management.
   - `Helper/Media`, `Helper/Nodes`, `Helper/Uploads` — media files, folder tree, uploads.
   - `Utils/` — handlers per media type (image, video, audio, PDF, widget) and the SSRF check for URL uploads.
@@ -226,9 +228,9 @@ New keys have to be added to all languages, there is no fallback.
 ### `var/` (git-ignored)
 Runtime data.
 - `cache/` — application cache, incl. compiled Mustache templates in `cache/mustache`.
-- `config/` — the settings an admin changed (`config_<module>.ini`, only the changed keys). `OverridingConfigLoader` puts them over the defaults of `config/settings`.
+- `settings/` — the settings an admin changed (`config_<module>.ini`, only the changed keys). `OverridingConfigLoader` puts them over the defaults of `config/settings`.
 - `keys/` — encryption key and the OAuth2 key pair.
-- `logs/` — application logs; `weblogs/` — web server logs.
+- `logs/` — application logs (`scheduler.log`: the output of the cron); `weblogs/` — web server logs.
 - `sessions/` — PHP sessions.
 - `smil/` — generated SMIL files: `indexes/` per player, `playlists/` per playlist.
 - `storage/` — uploaded and generated files: `mediapool/` (originals, thumbs), `playlists/`, `templates/`.

@@ -70,9 +70,9 @@ class SettingsTest extends ContainerTestCase
 	public function testTheSystemIsLeanByDefault(): void
 	{
 		static::assertSame([
+			'Scheduler.enabled'    => ['value' => '0', 'default' => '0', 'changed' => false],
 			'Audit.enabled'        => ['value' => '0', 'default' => '0', 'changed' => false],
 			'Audit.retention_days' => ['value' => '365', 'default' => '365', 'changed' => false],
-			'Queue.enabled'        => ['value' => '0', 'default' => '0', 'changed' => false],
 		], $this->settings(1));
 	}
 
@@ -84,16 +84,16 @@ class SettingsTest extends ContainerTestCase
 
 	public function testTheAdminEnablesTheAuditLog(): void
 	{
-		$this->service->save(1, 'system', ['Audit.enabled' => '1', 'Audit.retention_days' => '30']);
+		$this->service->save(1, 'system', ['Scheduler.enabled' => '1', 'Audit.enabled' => '1', 'Audit.retention_days' => '30']);
 
-		// only the changes are written, the queue stays at its default
-		static::assertSame(['Audit' => ['enabled' => '1', 'retention_days' => '30']], $this->overrides->load('system'));
+		// only the changes are written
+		static::assertSame(['Scheduler' => ['enabled' => '1'], 'Audit' => ['enabled' => '1', 'retention_days' => '30']], $this->overrides->load('system'));
 		static::assertSame(['value' => '1', 'default' => '0', 'changed' => true], $this->settings(1)['Audit.enabled']);
 	}
 
 	public function testASwitchWhichIsNotSentIsOff(): void
 	{
-		$this->service->save(1, 'system', ['Audit.enabled' => '1', 'Audit.retention_days' => '365']);
+		$this->service->save(1, 'system', ['Scheduler.enabled' => '1']);
 
 		$this->service->save(1, 'system', []);
 
@@ -102,21 +102,30 @@ class SettingsTest extends ContainerTestCase
 
 	public function testTheDaysKeepTheirValueWhileTheAuditLogIsOff(): void
 	{
-		$this->service->save(1, 'system', ['Audit.enabled' => '1', 'Audit.retention_days' => '30']);
+		$this->service->save(1, 'system', ['Scheduler.enabled' => '1', 'Audit.enabled' => '1', 'Audit.retention_days' => '30']);
 
 		// the greyed out field is not sent
+		$this->service->save(1, 'system', ['Scheduler.enabled' => '1']);
+
+		static::assertSame(['Scheduler' => ['enabled' => '1'], 'Audit' => ['retention_days' => '30']], $this->overrides->load('system'));
+	}
+
+	public function testTheAuditLogKeepsItsValueWhileTheSchedulerIsOff(): void
+	{
+		$this->service->save(1, 'system', ['Scheduler.enabled' => '1', 'Audit.enabled' => '1', 'Audit.retention_days' => '30']);
+
 		$this->service->save(1, 'system', []);
 
-		static::assertSame(['Audit' => ['retention_days' => '30']], $this->overrides->load('system'));
+		static::assertSame(['Audit' => ['enabled' => '1', 'retention_days' => '30']], $this->overrides->load('system'));
 	}
 
 	public function testTheDaysAreResetEvenWhileTheAuditLogIsOff(): void
 	{
-		$this->service->save(1, 'system', ['Audit.enabled' => '1', 'Audit.retention_days' => '30']);
+		$this->service->save(1, 'system', ['Scheduler.enabled' => '1', 'Audit.enabled' => '1', 'Audit.retention_days' => '30']);
 
-		$this->service->save(1, 'system', [], ['Audit.retention_days']);
+		$this->service->save(1, 'system', ['Scheduler.enabled' => '1'], ['Audit.retention_days']);
 
-		static::assertSame([], $this->overrides->load('system'));
+		static::assertSame(['Scheduler' => ['enabled' => '1']], $this->overrides->load('system'));
 	}
 
 	public function testTheDaysAreGreyedOutWhileTheAuditLogIsOff(): void
@@ -126,24 +135,38 @@ class SettingsTest extends ContainerTestCase
 		$response = $this->controller()->show(new ServerRequestFactory()->createServerRequest('GET', '/system/settings'), new Response());
 
 		static::assertInstanceOf(PageResponse::class, $response);
-		$days = $response->getTemplateData()['tabs'][2]['fields'][1];
-		static::assertSame(['setting_system_Audit_enabled', 'disabled'], [$days['DEPENDS_ON'], $days['DISABLED']]);
+		$fields = $response->getTemplateData()['tabs'][2]['fields'];
+		static::assertSame(['setting_system_Scheduler_enabled', 'disabled'], [$fields[1]['DEPENDS_ON'], $fields[1]['DISABLED']]);
+		static::assertSame(['setting_system_Audit_enabled', 'disabled'], [$fields[2]['DEPENDS_ON'], $fields[2]['DISABLED']]);
+	}
+
+	public function testTheDaysAreGreyedOutWhileTheSchedulerIsOff(): void
+	{
+		// the audit log is on, but its switch is greyed out
+		$this->overrides->save('system', ['Audit' => ['enabled' => '1']]);
+		$this->actingAs(1);
+
+		$response = $this->controller()->show(new ServerRequestFactory()->createServerRequest('GET', '/system/settings'), new Response());
+
+		static::assertInstanceOf(PageResponse::class, $response);
+		static::assertSame('disabled', $response->getTemplateData()['tabs'][2]['fields'][2]['DISABLED']);
 	}
 
 	public function testASettingIsResetToItsDefault(): void
 	{
-		$this->service->save(1, 'system', ['Audit.enabled' => '1', 'Audit.retention_days' => '30']);
+		$values = ['Scheduler.enabled' => '1', 'Audit.enabled' => '1', 'Audit.retention_days' => '30'];
+		$this->service->save(1, 'system', $values);
 
-		$this->service->save(1, 'system', ['Audit.enabled' => '1', 'Audit.retention_days' => '30'], ['Audit.retention_days']);
+		$this->service->save(1, 'system', $values, ['Audit.retention_days']);
 
-		static::assertSame(['Audit' => ['enabled' => '1']], $this->overrides->load('system'));
+		static::assertSame(['Scheduler' => ['enabled' => '1'], 'Audit' => ['enabled' => '1']], $this->overrides->load('system'));
 	}
 
 	public function testANumberOutsideItsLimitsChangesNothing(): void
 	{
 		try
 		{
-			$this->service->save(1, 'system', ['Audit.enabled' => '1', 'Audit.retention_days' => '0']);
+			$this->service->save(1, 'system', ['Scheduler.enabled' => '1', 'Audit.enabled' => '1', 'Audit.retention_days' => '0']);
 			static::fail('A retention of 0 days must be refused.');
 		}
 		catch (TranslatableModuleException $e)
@@ -206,14 +229,14 @@ class SettingsTest extends ContainerTestCase
 
 	public function testTheConfigReadsTheChangedValue(): void
 	{
-		$this->service->save(1, 'system', ['Audit.enabled' => '1', 'Audit.retention_days' => '365']);
+		$this->service->save(1, 'system', ['Scheduler.enabled' => '1', 'Audit.enabled' => '1', 'Audit.retention_days' => '365']);
 
 		// a new request: the Config of this one has the values of before in its memory
 		$loader = new OverridingConfigLoader($this->container->get('ConfigDefaults'), $this->overrides);
 		$config = new Config($loader, [], []);
 
 		static::assertSame('1', $config->getConfigValue('enabled', 'system', 'Audit'));
-		static::assertSame('0', $config->getConfigValue('enabled', 'system', 'Queue'));
+		static::assertSame('1', $config->getConfigValue('enabled', 'system', 'Scheduler'));
 	}
 
 	public function testThePageHasATabPerModuleWithTheFields(): void
@@ -225,7 +248,7 @@ class SettingsTest extends ContainerTestCase
 		static::assertInstanceOf(PageResponse::class, $response);
 		$data = $response->getTemplateData();
 		static::assertSame(['mediapool', 'playlists', 'system'], array_column($data['tabs'], 'MODULE'));
-		static::assertSame(['Audit.enabled', 'Audit.retention_days', 'Queue.enabled'], array_column($data['tabs'][2]['fields'], 'NAME'));
+		static::assertSame(['Scheduler.enabled', 'Audit.enabled', 'Audit.retention_days'], array_column($data['tabs'][2]['fields'], 'NAME'));
 	}
 
 	public function testAUserWithoutRightsIsSentBack(): void
@@ -242,12 +265,12 @@ class SettingsTest extends ContainerTestCase
 	{
 		$this->actingAs(1);
 		$request = new ServerRequestFactory()->createServerRequest('POST', '/system/settings')
-			->withParsedBody(['module' => 'system', 'settings' => ['Queue.enabled' => '1', 'Audit.retention_days' => '365']]);
+			->withParsedBody(['module' => 'system', 'settings' => ['Scheduler.enabled' => '1']]);
 
 		$response = $this->controller()->store($request, new Response());
 
 		static::assertSame('/system/settings#system', $response->getHeaderLine('Location'));
-		static::assertSame(['Queue' => ['enabled' => '1']], $this->overrides->load('system'));
+		static::assertSame(['Scheduler' => ['enabled' => '1']], $this->overrides->load('system'));
 		static::assertNotEmpty($this->container->get(Messages::class)->getMessage('success') ?? $_SESSION['slimFlash']['success'] ?? []);
 	}
 
