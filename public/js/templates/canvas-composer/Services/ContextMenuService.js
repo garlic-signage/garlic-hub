@@ -31,6 +31,10 @@ export class ContextMenuService
 	duplicate()
 	{
 		const object = this.#fabricWrapper.getActiveObject();
+		// Ctrl+D while nothing is selected
+		if (!object)
+			return;
+
 		object.clone(cloned =>
 		{
 			this.#clipboard = cloned;
@@ -41,6 +45,9 @@ export class ContextMenuService
 	remove()
 	{
 		const object = this.#fabricWrapper.getActiveObject();
+		if (!object)
+			return;
+
 		this.#fabricWrapper.remove(object);
 		this.#handleFabric();
 	}

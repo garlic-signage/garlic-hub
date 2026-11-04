@@ -35,7 +35,8 @@ export class Widget
 
 	async fetch (itemId)
 	{
-		this.#widgetData = await this.#widgetsService.fetchConfiguration(itemId)
+		this.#widgetData = await this.#widgetsService.fetchConfiguration(itemId);
+		return this.#widgetData;
 	}
 
 	initDialog()

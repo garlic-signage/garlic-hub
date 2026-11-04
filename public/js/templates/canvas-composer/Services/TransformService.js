@@ -30,8 +30,9 @@ export class TransformService extends BasePropertyService
 
 	moveActiveObject(direction, step = 50)
 	{
-		const object = this._getActiveObject();
-		if (object === undefined)
+		// the arrow keys while nothing is selected
+		const object = this._findActiveObject();
+		if (object === null)
 			return;
 
 		switch (direction)

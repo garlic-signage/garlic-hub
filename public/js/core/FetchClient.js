@@ -27,16 +27,12 @@ export class FetchClient
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), this.#timeout);
 
-		const defaultOptions  = {
-			method: 'GET',
-			headers: { 'Accept': 'application/json', 'Cache-Control': 'no-cache' },
-			signal: controller.signal
-		};
-		const config          = { ...defaultOptions, ...options };
+		const defaultHeaders = { 'Accept': 'application/json', 'Cache-Control': 'no-cache' };
+		const config         = { method: 'GET', ...options, headers: { ...defaultHeaders, ...options.headers }, signal: controller.signal };
 
 		try
 		{
-			const response = await fetch(url, config);
+			const response = await this.#fetch(url, config);
 
 			// structured errors like {success: false, error_message: "..."} are
 			// returned to the caller, so it can show the message
@@ -49,26 +45,40 @@ export class FetchClient
 			// do not use const response.headers.get('Content-Type'); as
 			// supposed alternative.
 			// It is not trustable as the server could send the wrong content type.
+			// The body can be read once only: as text, then parsed.
+			const text = await response.text();
 			try
 			{
-				return await response.json()
-			} catch (e)
-			{
-				return await response.text();
+				return JSON.parse(text);
 			}
-		}
-		catch (error)
-		{
-			if (error.name === 'AbortError')
-				throw new Error('Timeout: Server did not respond.');
-			else
-				throw new Error('Network error: ' + error.message);
+			catch
+			{
+				return text;
+			}
 		}
 		finally
 		{
 			clearTimeout(timeoutId);
 		}
     }
+
+	/**
+	 * Only the errors of the request itself are network errors, not the HTTP errors of the answer.
+	 */
+	async #fetch(url, config)
+	{
+		try
+		{
+			return await fetch(url, config);
+		}
+		catch (error)
+		{
+			if (error.name === 'AbortError')
+				throw new Error('Timeout: Server did not respond.');
+
+			throw new Error('Network error: ' + error.message);
+		}
+	}
 
     initUploadWithProgress()
     {

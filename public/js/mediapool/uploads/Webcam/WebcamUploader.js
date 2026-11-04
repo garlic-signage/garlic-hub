@@ -25,6 +25,7 @@ export class WebcamUploader extends LocalFilesUploader
     #webcam         = null;
     #mediaRecorder  = null;
     #recordedChunks = [];
+    #stopTimer      = null;
 
     constructor(webcam, filePreviews, domElements, directoryView, uploaderDialog, fetchClient)
     {
@@ -51,7 +52,17 @@ export class WebcamUploader extends LocalFilesUploader
     {
         if(event.target.checked)
         {
-            await this.#webcam.startCamera();
+            try
+            {
+                await this.#webcam.startCamera();
+            }
+            catch (error)
+            {
+                // e.g. the permission is denied
+                event.target.checked = false;
+                console.error("Camera can not be started:", error);
+                return;
+            }
             this.domElements.selectCamera.disabled = true;
             this.domElements.capturePhotoButton.disabled = false;
             this.domElements.startRecordingButton.disabled = false;
@@ -78,10 +89,12 @@ export class WebcamUploader extends LocalFilesUploader
 			const startTime = Date.now();
             event.target.textContent = "Stop Aufnahme";
 
-            setTimeout(() => {
-                if (this.#mediaRecorder.state === 'recording')
+            // the recorder of this recording: a stop by hand clears the timer, a later recording has its own
+            const recorder = this.#mediaRecorder;
+            this.#stopTimer = setTimeout(() => {
+                if (recorder.state === 'recording')
                 {
-                    this.#mediaRecorder.stop();
+                    recorder.stop();
                     event.target.textContent = "Start Aufnahme";
                 }
             }, this.#maxRecordTime * 1000);
@@ -104,6 +117,7 @@ export class WebcamUploader extends LocalFilesUploader
         }
         else
         {
+            clearTimeout(this.#stopTimer);
             this.#mediaRecorder.stop();
             event.target.textContent = "Start Aufnahme";
             this.#mediaRecorder = null;
@@ -134,6 +148,12 @@ export class WebcamUploader extends LocalFilesUploader
     {
         this.#webcam.detectVideoDevices().then(videoDevices =>
         {
+            // a second detection replaces the cameras of the first
+            for (const option of [...this.domElements.selectCamera.options])
+            {
+                if (option.value !== "-")
+                    option.remove();
+            }
             for(let webcam of videoDevices)
             {
                 this.domElements.addCameraToSelect(webcam.deviceId, webcam.label)

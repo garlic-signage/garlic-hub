@@ -54,15 +54,22 @@ export class FontLoader
 		MyCallBack();
 	}
 
+	/**
+	 * A font which can not be loaded must not stop the composer: the text takes the default font.
+	 */
 	async loadFontFaceAsync(font_id)
 	{
-		return new Promise(async (resolve) => {
+		try
+		{
 			const font_face = this.createFontFace(font_id);
 			await font_face.load();
 			document.fonts.add(font_face);
 			this.setLoaded(font_id);
-			resolve();
-		});
+		}
+		catch (error)
+		{
+			console.error("Font can not be loaded: " + this.#fontsList[font_id]?.name, error);
+		}
 	}
 
 //============== private methods ===========================================================

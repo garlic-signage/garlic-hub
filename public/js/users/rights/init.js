@@ -128,16 +128,19 @@ document.addEventListener("DOMContentLoaded", function()
 			// the first role the user has, viewer before editor
 			select.selectedIndex = 1;
 
+			// in the list before the request: a second select of the unit while it runs finds it
+			item.dataset.unitId = unitId;
+			item.querySelector(".rights-unit-name").textContent = name;
+			list.prepend(item);
+
 			const result = await unitShareService.save(module, unitId, UID, select.value);
 			if (!result.success)
 			{
+				item.remove();
 				flashMessageHandler.showError(result.error_message);
 				return;
 			}
 
-			item.dataset.unitId = unitId;
-			item.querySelector(".rights-unit-name").textContent = name;
-			list.prepend(item);
 			initUnitRole(tab, module, item);
 			showNoUnits(tab);
 		});

@@ -19,6 +19,7 @@
 'use strict';
 
 import {ComposerEventBus} from "../Utils/ComposerEventBus.js";
+import {FlashMessageHandler} from "../../../core/FlashMessageHandler.js";
 
 export class LoadService
 {
@@ -44,21 +45,36 @@ export class LoadService
 
 	async loadFromTemplateDataBase(templateId)
 	{
-		this.#waitOverlay.start();
-
-		const jsonResponse = await this.#templatesService.loadTemplateContent(templateId);
-		await this.#loadJsonFromString(jsonResponse.content);
-		this.#waitOverlay.stop();
+		await this.#load(() => this.#templatesService.loadTemplateContent(templateId));
 	}
 
 	async loadFromPlaylistItemDataBase(itemId)
 	{
+		await this.#load(() => this.#templatesService.loadPlaylistItemContent(itemId));
+	}
+
+	/**
+	 * The overlay stops also when the content can not be loaded.
+	 */
+	async #load(request)
+	{
 		this.#waitOverlay.start();
+		try
+		{
+			const jsonResponse = await request();
+			if (jsonResponse.success === false)
+				throw new Error(jsonResponse.error_message);
 
-		const jsonResponse = await this.#templatesService.loadPlaylistItemContent(itemId);
-		await this.#loadJsonFromString(jsonResponse.content);
-
-		this.#waitOverlay.stop();
+			await this.#loadJsonFromString(jsonResponse.content);
+		}
+		catch (error)
+		{
+			new FlashMessageHandler().showError(error.message);
+		}
+		finally
+		{
+			this.#waitOverlay.stop();
+		}
 	}
 
 	async #loadJsonFromString(jsonContent)
@@ -92,7 +108,7 @@ export class LoadService
 				this.#migrateScaleToPixel(objects[i]);
 			}
 			else if (obj.type === "group" && obj.objects)
-				this.traverseObjects(obj.objects);
+				this.#traverseObjects(obj.objects);
 		}
 	}
 

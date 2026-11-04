@@ -55,7 +55,7 @@ export class TemplatesService extends BaseService
 	determineRights(templateId)
 	{
 		const url = TemplatesApiConfig.ACLS_URI + "/" + templateId;
-		return this._sendRequestAsync(url, "GET");
+		return this._sendRequest(url, "GET");
 	}
 
 	async saveTemplateContent(templateId, content, image)

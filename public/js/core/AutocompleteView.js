@@ -87,7 +87,8 @@ export class AutocompleteView
     restore(newName)
     {
         this.#li.replaceWith(this.#oldParent);
-        this.#oldParent.innerHTML = newName;
+        // the name comes from the server: text, no HTML
+        this.#oldParent.textContent = newName;
     }
 
 }

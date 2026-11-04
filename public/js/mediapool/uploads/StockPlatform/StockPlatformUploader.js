@@ -23,6 +23,8 @@ export class StockPlatformUploader extends BaseUploader
 {
 	#stockPlatformFactory = null;
 	#stockPlatform = null;
+	#shownIds      = new Set();
+	#loadingPage   = false;
 
 	constructor(stockPlatformFactory, domElements, directoryView, uploaderDialog, fetchClient)
 	{
@@ -66,14 +68,14 @@ export class StockPlatformUploader extends BaseUploader
 			const pathname = url.pathname;
 			const filename = pathname.split('/').pop();
 
-			this.domElements.downloadStatus.innerHTML = "Start downloading: " + filename;;
+			this.domElements.downloadStatus.textContent = "Start downloading: " + filename;
 
 			const mediaUrl = await this.#stockPlatform.determineMediaDownloadUrl(uri);
 
 			let metadata   = this.#stockPlatform.resultList[checkbox.id].metadata;
 			await this.uploadExternalFile(mediaUrl, metadata);
 
-			this.domElements.downloadStatus.innerHTML = "Finish downloading: " + filename;
+			this.domElements.downloadStatus.textContent = "Finish downloading: " + filename;
 
 			checkbox.checked = false;
 
@@ -129,15 +131,13 @@ export class StockPlatformUploader extends BaseUploader
 		if (this.#stockPlatform.hasVideos && this.domElements.searchMediatypeVideos.checked)
 			mediatype = "videos";
 
+		this.#shownIds.clear();
 		const results = await this.#stockPlatform.search(this.domElements.searchTerms.value, mediatype);
-
-		if (results === null)
+		// an error returns nothing
+		if (!results)
 			return;
 
-		for (const [id, item] of Object.entries(results))
-		{
-			this.#addSearchResult(id, item);
-		}
+		this.#addSearchResults(results);
 	}
 
 	async #loadNextPage()
@@ -145,18 +145,36 @@ export class StockPlatformUploader extends BaseUploader
 //		return; // temporary disabled to save requests during developing
 		if (this.domElements.searchResultsArea.scrollTop + this.domElements.searchResultsArea.clientHeight >= this.domElements.searchResultsArea.scrollHeight)
 		{
-			if (this.#stockPlatform === null)
+			// every scroll event at the end would load the page again
+			if (this.#stockPlatform === null || this.#loadingPage)
 				return;
 
-			const results = await this.#stockPlatform.loadNextPage();
-
-			if (results === null)
-				return;
-
-			for (const [id, item] of Object.entries(results))
+			this.#loadingPage = true;
+			try
 			{
-				this.#addSearchResult(id, item);
+				const results = await this.#stockPlatform.loadNextPage();
+				if (results)
+					this.#addSearchResults(results);
 			}
+			finally
+			{
+				this.#loadingPage = false;
+			}
+		}
+	}
+
+	/**
+	 * The platform returns all results up to now: the ones shown already are left out.
+	 */
+	#addSearchResults(results)
+	{
+		for (const [id, item] of Object.entries(results))
+		{
+			if (this.#shownIds.has(id))
+				continue;
+
+			this.#shownIds.add(id);
+			this.#addSearchResult(id, item);
 		}
 	}
 

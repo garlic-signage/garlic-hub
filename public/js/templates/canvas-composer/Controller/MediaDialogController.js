@@ -65,13 +65,16 @@ export class MediaDialogController
 				await this.#insertService.insertImage(id, src, fileName, i);
 			}
 			this.remove();
-		}, { once: true });
+		});
 		this.#mediaDialogView.applyMedia.addEventListener("click", async (event) =>
 		{
 			let selectedMedia = this.#mediaSelector.getSelectedMedia()[0];
+			if (selectedMedia === undefined)
+				return;
+
 			await this.#insertService.replaceImage(selectedMedia.id, selectedMedia.src, selectedMedia.fileName);
 			this.remove();
-		}, { once: true });
+		});
 
 		this.#mediaDialogView.closeEditMediaDialog.addEventListener("click",() =>
 		{

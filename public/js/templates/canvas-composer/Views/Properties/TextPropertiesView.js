@@ -63,7 +63,7 @@ export class TextPropertiesView
 
 	setfontFamilyValue(value)
 	{
-		this.#fontFamily.innerHTML = value;
+		this.#fontFamily.textContent = value;
 	}
 
 	getFontSizeValue()

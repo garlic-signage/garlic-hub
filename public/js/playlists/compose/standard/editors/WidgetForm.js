@@ -36,7 +36,7 @@ export class WidgetForm
 			return;
 
 		var value = "";
-		this.html_form = '<ul class="form_edit"';
+		this.html_form = '<ul class="form_edit">';
 		for (const [key, props] of Object.entries(this.preferences))
 		{
 			let label = key;
@@ -45,7 +45,7 @@ export class WidgetForm
 			else if (props.hasOwnProperty("tooltip"))
 				label = props["tooltip"];
 
-			this.html_form += "<li><label>" + label + "<br />";
+			this.html_form += "<li><label>" + WidgetForm.#escape(label) + "<br />";
 			if (this.values[key] !== undefined)
 				value = this.values[key]
 			else
@@ -77,9 +77,7 @@ export class WidgetForm
 			this.html_form += "</label></li>";
 		}
 
-		this.html_form += '</ul>'
-
-		this.html_form += "";
+		this.html_form += '</ul>';
 	}
 
 	collectValues()
@@ -132,7 +130,7 @@ export class WidgetForm
 	generateEdit(key, props, value)
 	{
 		let the_value = this.checkForDefaultValue(props, value);
-		return '<input type="text"' + ' id="' + this._elementId(key) + '"' + ' name="' + key + '"' + this.checkToolTip(props) + this.checkMandatory(props) + the_value + '/>';
+		return '<input type="text"' + ' id="' + this.#id(key) + '"' + ' name="' + WidgetForm.#escape(key) + '"' + this.checkToolTip(props) + this.checkMandatory(props) + the_value + '/>';
 	}
 
 	generateRadio(key, props, value)
@@ -141,15 +139,11 @@ export class WidgetForm
 		for (const [options_key, options_value] of Object.entries(props.options))
 		{
 			let checked = "";
-			if (value === "" && props.hasOwnProperty("default") &&
-				(props.default === options_value || props.default === options_value))
+			if (value === "" && props.hasOwnProperty("default") && props.default === options_value)
 				checked = ' checked="checked"';
-			else
-			{
-				if (value === options_value)
-					checked = ' checked="checked"';
-			}
-			html += '<input type="radio"' + ' id="' + this._elementId(key + "_" + options_key) + '"' + ' name="' + key + '"' + ' value="' + options_value +'"' + checked + '/>'  + options_key;
+			else if (value === options_value)
+				checked = ' checked="checked"';
+			html += '<input type="radio"' + ' id="' + this.#id(key + "_" + options_key) + '"' + ' name="' + WidgetForm.#escape(key) + '"' + ' value="' + WidgetForm.#escape(options_value) +'"' + checked + '/>'  + WidgetForm.#escape(options_key);
 		}
 		return html;
 	}
@@ -162,31 +156,29 @@ export class WidgetForm
 			min_max += ' min="'+min+'"';
 		if (max !== undefined)
 			min_max += ' max="'+max+'"';
-		return '<input type="number"' + ' id="' + this._elementId(key) + '"' + ' name="' + key + '"' + min_max + this.checkToolTip(props) + this.checkMandatory(props) + the_value + '/>';
+		return '<input type="number"' + ' id="' + this.#id(key) + '"' + ' name="' + WidgetForm.#escape(key) + '"' + min_max + this.checkToolTip(props) + this.checkMandatory(props) + the_value + '/>';
 	}
 
 	generateColor(key, props, value)
 	{
 		let the_value = this.checkForDefaultColorValue(props, value);
-		return '<input type="color"' + ' id="' + this._elementId(key) + '"' + ' name="' + key + '"' + this.checkToolTip(props) + this.checkMandatory(props) +  the_value + '/>';
+		return '<input type="color"' + ' id="' + this.#id(key) + '"' + ' name="' + WidgetForm.#escape(key) + '"' + this.checkToolTip(props) + this.checkMandatory(props) +  the_value + '/>';
 	}
 
 	generateDropDown(key, props, value)
 	{
-		let html = '<select id="' + this._elementId(key) + '" name="' + key + '" />';
+		let html = '<select id="' + this.#id(key) + '" name="' + WidgetForm.#escape(key) + '">';
 
 		for (const [options_key, options_value] of Object.entries(props.options))
 		{
+			// the value of an option is its key: a saved value is a key
 			let selected = "";
 			if (value === "" && props.hasOwnProperty("default") &&
-				(props.default === options_value || props.default === options_value))
+				(props.default === options_key || props.default === options_value))
 				selected = ' selected="selected"';
-			else
-			{
-				if (value === options_value)
-					selected = ' selected="selected"';
-			}
-			html += '<option value="'+ options_key +'"' + selected + '>'  + options_value + '</option>';
+			else if (value === options_key)
+				selected = ' selected="selected"';
+			html += '<option value="'+ WidgetForm.#escape(options_key) +'"' + selected + '>'  + WidgetForm.#escape(options_value) + '</option>';
 		}
 		html += "</select>";
 		return html;
@@ -196,12 +188,9 @@ export class WidgetForm
 	{
 		let the_value;
 		if (value === "" && props.hasOwnProperty("default"))
-			the_value = ' value="' + this.standardizeColor(props.default) + '"';
+			the_value = ' value="' + WidgetForm.#escape(this.standardizeColor(props.default)) + '"';
 		else
-			the_value = ' value="' + value + '"';
-
-		if (the_value.charAt(0) !== '')
-			the_value = '' + the_value;
+			the_value = ' value="' + WidgetForm.#escape(value) + '"';
 
 		return the_value;
 	}
@@ -217,9 +206,9 @@ export class WidgetForm
 	{
 		let the_value;
 		if (value === "" && props.hasOwnProperty("default"))
-			the_value = ' value="' + props.default + '"';
+			the_value = ' value="' + WidgetForm.#escape(props.default) + '"';
 		else
-			the_value = ' value="' + value + '"';
+			the_value = ' value="' + WidgetForm.#escape(value) + '"';
 
 		return the_value;
 	}
@@ -229,7 +218,7 @@ export class WidgetForm
 		if(!props.hasOwnProperty("tooltip"))
 			return ""
 
-		return ' title="' + props.tooltip + '"';
+		return ' title="' + WidgetForm.#escape(props.tooltip) + '"';
 	}
 
 	checkMandatory(props)
@@ -241,6 +230,19 @@ export class WidgetForm
 			return "";
 
 		return " required";
+	}
+
+	#id(key)
+	{
+		return WidgetForm.#escape(this._elementId(key));
+	}
+
+	/**
+	 * The form is HTML: the labels, options and values of the widget and of the user are text.
+	 */
+	static #escape(text)
+	{
+		return String(text).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
 	}
 
 	_elementId(key)

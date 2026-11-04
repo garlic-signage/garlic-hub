@@ -133,7 +133,7 @@ export class WallclockEdit extends BaseTypes
 			ar.weekday = 0;
 		else
 		{
-			let prefix       = this.#editWeekday.value;
+			let prefix       = this.#editWeekdayPrefix.value;
 			if (prefix === "-")
 				ar.weekday = "-" + weekday;
 			else
@@ -152,7 +152,7 @@ export class WallclockEdit extends BaseTypes
 		}
 
 		// datetime-local did not commit seconds when 0. Let's add it here to get a valid ISO date.
-		if (ar.iso_date.length < 17)
+		if (ar.iso_date !== "" && ar.iso_date.length < 17)
 			ar.iso_date += ':00';
 
 		let el = document.getElementsByName(this.#REPEATS_NAME + this.id);

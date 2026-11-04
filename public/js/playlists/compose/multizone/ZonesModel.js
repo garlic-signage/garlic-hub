@@ -122,7 +122,7 @@ export class ZonesModel
 			const response = await fetch(url);
 			const playlist = await response.json();
 
-			if (playlist.lenght === 0)
+			if (!response.ok || !playlist?.playlist_id)
 				return '';
 
 			return playlist.name;
@@ -211,48 +211,37 @@ export class ZonesModel
 		return converted_zones;
 	}
 
-	saveToDataBase()
+	/**
+	 * @return {Promise<{success: boolean, error_message?: string}>}
+	 */
+	async saveToDataBase()
 	{
-		let MyProgress = new WaitOverlay();
-		MyProgress.start();
+		const progress = new WaitOverlay();
+		progress.start();
 
 		try
 		{
-			const Properties = this.#createJsonForSave();
-			Properties.csrf_token = this.#detectCsrfTokenInMetaTag();
+			const properties = this.#createJsonForSave();
+			properties.csrf_token = this.#detectCsrfTokenInMetaTag();
 
-			let url = "/async/playlists/multizone/"+ this.#playlist_id;
-			fetch(url, {
+			const response = await fetch("/async/playlists/multizone/" + this.#playlist_id, {
 				method: 'POST',
 				headers: {'Content-Type': 'application/json;charset=UTF-8'},
-				body: JSON.stringify(Properties)
-			}).then(response => {
-				MyProgress.stop();
+				body: JSON.stringify(properties)
+			});
+			const result = await response.json().catch(() => null);
+			if (result !== null && typeof result === "object" && "success" in result)
+				return result;
 
-				if (!response.ok)
-				{
-					throw new Error(`HTTP-Fehler: ${response.statusText}`);
-				}
-
-				return response.json();
-			})
-				.then(jsonResponse => {
-					if (jsonResponse.success === false)
-					{
-				//		jThymian.printError(jsonResponse.message);
-					}
-				})
-				.catch(error => {
-					MyProgress.stop();
-				//	jThymian.printError(error.message);  // Fehler ausgeben
-				//	ThymianLog.log(error.message, 0, window.location.pathname);
-				});
-
+			return response.ok ? {success: true} : {success: false, error_message: "HTTP-Error: " + response.status};
 		}
-		catch (err) {
-			MyProgress.stop();
-	//		ThymianLog.logException(err);
-	//		jThymian.printError(err);
+		catch (error)
+		{
+			return {success: false, error_message: error.message};
+		}
+		finally
+		{
+			progress.stop();
 		}
 	}
 

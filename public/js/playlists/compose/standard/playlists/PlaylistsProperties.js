@@ -65,7 +65,7 @@ export class PlaylistsProperties
 				return;
 			}
 
-			this.#pickingValue = this.#shufflePicking.value;
+			this.#pickingValue = Number(this.#shufflePicking.value);
 			this.display(result.playlist_metrics);
 
 			PlaylistsProperties.notifySave();
@@ -92,7 +92,7 @@ export class PlaylistsProperties
 	setOptions(playlist)
 	{
 		this.#toggleShuffle.checked = playlist.shuffle === 1;
-		this.#pickingValue = playlist.shuffle_picking;
+		this.#pickingValue = Number(playlist.shuffle_picking);
 
 		if (playlist.export_time < playlist.last_update)
 			PlaylistsProperties.notifySave();

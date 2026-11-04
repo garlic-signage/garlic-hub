@@ -18,6 +18,7 @@
 */
 
 import {PlaylistsProperties} from "./playlists/PlaylistsProperties.js";
+import {FlashMessageHandler} from "../../../core/FlashMessageHandler.js";
 
 export class DragDropHandler
 {
@@ -30,6 +31,7 @@ export class DragDropHandler
 	#drake        = null;
 	#playlistId     = 0;
 	#source         = "";
+	#flashMessageHandler = new FlashMessageHandler();
 
 	constructor(dropTarget, itemService, itemList)
 	{
@@ -103,7 +105,12 @@ export class DragDropHandler
 					});
 					// for debug onlyconsole.log(itemsPosition);
 
-					await this.#itemService.updateItemsOrders(this.#playlistId, itemsPosition);
+					const result = await this.#itemService.updateItemsOrders(this.#playlistId, itemsPosition);
+					if (result.success === false)
+					{
+						this.#flashMessageHandler.showError(result.error_message);
+						return;
+					}
 					PlaylistsProperties.notifySave();
 					return;
 				}
@@ -134,6 +141,14 @@ export class DragDropHandler
 						break;
 					default:
 						throw new Error("Unknown source");
+				}
+
+				if (result.success === false)
+				{
+					// the copy of the selector must not stay as an item
+					el.remove();
+					this.#flashMessageHandler.showError(result.error_message);
+					return;
 				}
 
 				this.#itemList.createPlaylistItem(result.data.item, droppedIndex);

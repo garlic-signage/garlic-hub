@@ -25,6 +25,7 @@ export class ScreencastUploader extends LocalFilesUploader
     #screencast     = null;
     #mediaRecorder  = null;
     #recordedChunks = [];
+    #stopTimer      = null;
 
     constructor(screencast, filePreviews, domElements, directoryView, uploaderDialog, fetchClient)
     {
@@ -74,10 +75,12 @@ export class ScreencastUploader extends LocalFilesUploader
 			const startTime = Date.now();
             event.target.textContent = "Stop Aufnahme";
 
-            setTimeout(() => {
-                if (this.#mediaRecorder.state === 'recording')
+            // the recorder of this recording: a stop by hand clears the timer, a later recording has its own
+            const recorder = this.#mediaRecorder;
+            this.#stopTimer = setTimeout(() => {
+                if (recorder.state === 'recording')
                 {
-                    this.#mediaRecorder.stop();
+                    recorder.stop();
                     event.target.textContent = "Start Aufnahme";
                 }
             }, this.#maxRecordTime * 1000);
@@ -100,6 +103,7 @@ export class ScreencastUploader extends LocalFilesUploader
         }
         else
         {
+            clearTimeout(this.#stopTimer);
             this.#mediaRecorder.stop();
             event.target.textContent = "Start Aufnahme";
             this.#mediaRecorder = null;

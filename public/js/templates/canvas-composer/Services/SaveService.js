@@ -19,6 +19,7 @@
 'use strict';
 
 import {ComposerEventBus} from "../Utils/ComposerEventBus.js";
+import {FlashMessageHandler} from "../../../core/FlashMessageHandler.js";
 
 export class SaveService
 {
@@ -59,24 +60,32 @@ export class SaveService
 	async save(originalWidth, originalHeight, isPlaylist, id)
 	{
 		this.#waitOverlay.start();
-		const save = this.#prepareCanvasForSave(originalWidth, originalHeight);
-		const image = await this.#createImage();
-
 		try
 		{
+			const save  = this.#prepareCanvasForSave(originalWidth, originalHeight);
+			const image = await this.#createImage();
+
+			let result;
 			if (isPlaylist) // only when in playlist
-				await this.#templatesService.savePlaylistItemContent(id, save, image);
+				result = await this.#templatesService.savePlaylistItemContent(id, save, image);
 			else
-				await this.#templatesService.saveTemplateContent(id, save, image);
+				result = await this.#templatesService.saveTemplateContent(id, save, image);
+
+			// a rejected save keeps the changes as unsaved
+			if (result.success === false)
+				throw new Error(result.error_message);
 
 			ComposerEventBus.dispatchEvent(new CustomEvent("canvasUpdated"));
 			this.#fabricWrapper.resetChange();
 		}
-		catch(e)
+		catch (e)
 		{
-			console.error(e);
+			new FlashMessageHandler().showError(e.message);
 		}
-		this.#waitOverlay.stop();
+		finally
+		{
+			this.#waitOverlay.stop();
+		}
 	}
 
 	async #createImage()

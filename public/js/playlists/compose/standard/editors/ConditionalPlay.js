@@ -43,6 +43,7 @@ export class ConditionalPlay
 			this.#itemData = result.data;
 			this.#html = result.html;
 		}
+		return result;
 	}
 
 	initDialog(actionButton)

@@ -43,7 +43,7 @@ export class PlaylistsService extends BaseService
 	determineRights(playlistId)
 	{
 		const url = PlaylistsApiConfig.ACLS_URI + "/" + playlistId;
-		return this._sendRequestAsync(url, "GET");
+		return this._sendRequest(url, "GET");
 	}
 
 	async toggleShuffle(playlistId)

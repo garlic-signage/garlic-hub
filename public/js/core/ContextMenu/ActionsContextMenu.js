@@ -27,6 +27,8 @@ import {Utils} from "../Utils.js";
  */
 export class ActionsContextMenu
 {
+	// a second click before the rights of the first came back must not open a second menu
+	static #current      = null;
 	#view                = null;
 	#flashMessageHandler = null;
 	#controller          = new AbortController();
@@ -80,19 +82,30 @@ export class ActionsContextMenu
 	{
 		this.#unitId = Number(event.target.dataset.actionId);
 		const rights = await this.determineRights(this.#unitId);
+		if (rights.success === false)
+		{
+			this.#flashMessageHandler.showError(rights.error_message);
+			return;
+		}
 		if (!this.isShown(rights))
 			return;
 
 		this.prepare(rights);
 
+		ActionsContextMenu.#current?.close();
+		ActionsContextMenu.#current = this;
 		document.body.appendChild(this.#view.menu);
 		this.#view.placeMenu(event.clientX, event.clientY);
 
-		document.addEventListener("click", () =>
-		{
-			this.#controller.abort();
-			this.#view.menu.remove();
-		}, {once: true});
+		document.addEventListener("click", () => this.close(), {once: true});
+	}
+
+	close()
+	{
+		this.#controller.abort();
+		this.#view.menu.remove();
+		if (ActionsContextMenu.#current === this)
+			ActionsContextMenu.#current = null;
 	}
 
 	/**

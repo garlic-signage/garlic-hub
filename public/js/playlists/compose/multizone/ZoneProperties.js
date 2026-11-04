@@ -207,7 +207,8 @@ export class ZoneProperties
 
 	highlightListItemById(id)
 	{
-		document.querySelectorAll('li').forEach((item) => {
+		// only the zones: the menu of the page has active entries, too
+		this.zones_container.querySelectorAll('li').forEach((item) => {
 			item.classList.remove('active');
 		});
 
@@ -234,7 +235,7 @@ export class ZoneProperties
 
 	addList(MyLabeledZone)
 	{
-		let list = zones_container.querySelector('ul');
+		let list = this.zones_container.querySelector('ul');
 		if (!list)
 		{
 			list = document.createElement('ul');
@@ -292,7 +293,7 @@ export class ZoneProperties
 			const response = await fetch(url);
 			const playlist = await response.json();
 
-			if (playlist.lenght === 0)
+			if (!response.ok || !playlist?.playlist_id)
 				return;
 
 			this.autocompletePlaylist.setInputFields(playlist.playlist_id, playlist.name);

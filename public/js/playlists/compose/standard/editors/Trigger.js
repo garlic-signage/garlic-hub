@@ -45,6 +45,7 @@ export class Trigger
 			this.#touchableMedialist = result.touchable_medialist;
 			this.#html = result.html;
 		}
+		return result;
 	}
 
 	initDialog(actionButton)
@@ -78,8 +79,9 @@ export class Trigger
 
 		this.#editDialog.onSave(saveCallBack);
 		this.#editDialog.onCancel();
-		this.#editDialog.setWidth("80%")
 		this.#editDialog.openDialog();
+		// after the opening: the closing resets it for the other editors
+		this.#editDialog.setWidth("80%");
 
 	}
 

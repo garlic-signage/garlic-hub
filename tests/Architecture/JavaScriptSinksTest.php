@@ -56,7 +56,7 @@ class JavaScriptSinksTest extends TestCase
 			'that.#rangeUntil.innerHTML = that.#convertMinutesToTime(values[1] * 15);',
 		],
 		'mediapool/media/MediaList.js'                                    => ['this.#mediaListElement.innerHTML = ""; // Clear previous content'],
-		// the content is the form of a widget (WidgetForm, see the known places) or of a trigger and a conditional play (fixed)
+		// the content is the form of a widget (WidgetForm, see the list SAFE) or of a trigger and a conditional play (fixed)
 		'playlists/compose/standard/editors/EditDialog.js'                => ['this.#itemContentElement.innerHTML = content;', 'this.#itemContentElement.innerHTML = "";'],
 		'mediapool/uploads/StockPlatform/StockPlatformUploader.js'        => ['this.domElements.searchResultsArea.innerHTML = "";'],
 		'playlists/compose/standard/playlists/PlaylistsProperties.js'     => [
@@ -69,8 +69,17 @@ class JavaScriptSinksTest extends TestCase
 		'playlists/compose/standard/selectors/PlaylistsSelectorView.js'   => ['this.#playlistsListElement.innerHTML = "";'],
 		// the list of the fonts is a fixed file of the application
 		'templates/canvas-composer/Controller/Properties/TextPropertiesController.js' => ['div.innerHTML = this.#fontLoader.fontsList[i].preview'],
-		'templates/canvas-composer/Views/Properties/GlobalPropertiesView.js' => ['this.#opacityDisplay.innerHTML = value;', 'this.#strokeWidthDisplay.innerHTML = value;'],
-		'playlists/compose/standard/editors/WidgetForm.js'                => ['this.html_form = \'<ul class="form_edit"\';'],
+		// the labels, options and values of the widget and of the user are escaped by WidgetForm.#escape()
+		'playlists/compose/standard/editors/WidgetForm.js'                => [
+			'this.html_form = \'<ul class="form_edit">\';',
+			'this.html_form += "<li><label>" + WidgetForm.#escape(label) + "<br />";',
+			'return \'<input type="text"\' + \' id="\' + this.#id(key) + \'"\' + \' name="\' + WidgetForm.#escape(key) + ',
+			'html += \'<input type="radio"\' + \' id="\' + this.#id(key + "_" + options_key) + \'"\' + \' name="\' + Widg',
+			'return \'<input type="number"\' + \' id="\' + this.#id(key) + \'"\' + \' name="\' + WidgetForm.#escape(key) ',
+			'return \'<input type="color"\' + \' id="\' + this.#id(key) + \'"\' + \' name="\' + WidgetForm.#escape(key) +',
+			'let html = \'<select id="\' + this.#id(key) + \'" name="\' + WidgetForm.#escape(key) + \'">\';',
+			'html += \'<option value="\'+ WidgetForm.#escape(options_key) +\'"\' + selected + \'>\'  + WidgetForm.#esca',
+		],
 	];
 
 	/**
@@ -79,23 +88,7 @@ class JavaScriptSinksTest extends TestCase
 	 *
 	 * @var array<string,list<string>> file => the lines
 	 */
-	private const array KNOWN = [
-		'core/AutocompleteView.js'                                        => ['this.#oldParent.innerHTML = newName;'],
-		'mediapool/uploads/StockPlatform/StockPlatformUploader.js'        => [
-			'this.domElements.downloadStatus.innerHTML = "Start downloading: " + filename;;',
-			'this.domElements.downloadStatus.innerHTML = "Finish downloading: " + filename;',
-		],
-		'templates/canvas-composer/Views/Properties/TextPropertiesView.js' => ['this.#fontFamily.innerHTML = value;'],
-		'playlists/compose/standard/editors/WidgetForm.js'                => [
-			'this.html_form += "<li><label>" + label + "<br />";',
-			'return \'<input type="text"\' + \' id="\' + this._elementId(key) + \'"\' + \' name="\' + key + \'"\' + this.checkTo',
-			'html += \'<input type="radio"\' + \' id="\' + this._elementId(key + "_" + options_key) + \'"\' + \' name="\' + k',
-			'return \'<input type="number"\' + \' id="\' + this._elementId(key) + \'"\' + \' name="\' + key + \'"\' + min_max + ',
-			'return \'<input type="color"\' + \' id="\' + this._elementId(key) + \'"\' + \' name="\' + key + \'"\' + this.checkT',
-			'let html = \'<select id="\' + this._elementId(key) + \'" name="\' + key + \'" />\';',
-			'html += \'<option value="\'+ options_key +\'"\' + selected + \'>\'  + options_value + \'</option>\';',
-		],
-	];
+	private const array KNOWN = [];
 
 	/**
 	 * @return array<string,list<string>> the places in the own JavaScript, file => lines (trimmed, 100 characters)
@@ -155,8 +148,6 @@ class JavaScriptSinksTest extends TestCase
 
 	public function testNoPlaceBuildsHtmlFromDataOfUsers(): void
 	{
-		static::markTestSkipped('Known: ' . count(self::flat(self::KNOWN)) . ' places build HTML from names, labels, values and fonts (AutocompleteView, StockPlatformUploader, TextPropertiesView, WidgetForm). Remove this line when the list KNOWN is empty.');
-		// @phpstan-ignore deadCode.unreachable
 		static::assertSame([], self::flat(self::KNOWN));
 	}
 }

@@ -27,39 +27,24 @@ export class BaseService
 
 	/**
 	 * as JavaScript do not have protected methods, we use the old "private" workaround
+	 *
+	 * Never throws: a timeout, a network or a server error comes back like the errors of the server,
+	 * as {success: false, error_message}. The caller shows the message.
 	 */
-	async _sendRequest(url, method, data)
+	async _sendRequest(url, method, data = {})
 	{
-		let options;
-
-		if (method === "GET")
-			options = {method, headers: { 'Content-Type': 'application/json' }};
-		else
+		try
 		{
-			data.csrf_token = this.#detectCsrfTokenInMetaTag();
+			const options = {method, headers: { 'Content-Type': 'application/json' }};
+			if (method !== "GET")
+				options.body = JSON.stringify({...data, csrf_token: this.#detectCsrfTokenInMetaTag()});
 
-			options = {method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)};
+			return await this.#fetchClient.fetchData(url, options);
 		}
-
-		return await this.#fetchClient.fetchData(url, options).catch(error => {
-			throw new Error(error.message);
-		});
-	}
-
-	_sendRequestAsync(url, method, data)
-	{
-		let options;
-
-		if (method === "GET")
-			options = {method, headers: { 'Content-Type': 'application/json' }};
-		else
+		catch (error)
 		{
-			data.csrf_token = this.#detectCsrfTokenInMetaTag();
-
-			options = {method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)};
+			return {success: false, error_message: error.message};
 		}
-
-		return this.#fetchClient.fetchData(url, options);
 	}
 
 	#detectCsrfTokenInMetaTag()

@@ -62,7 +62,7 @@ export class GlobalPropertiesView
 	setOpacityValue(value)
 	{
 		this.#opacity.value = value;
-		this.#opacityDisplay.innerHTML = value;
+		this.#opacityDisplay.textContent = value;
 	}
 
 	get strokeColor()
@@ -108,7 +108,7 @@ export class GlobalPropertiesView
 	setStrokeWidthValue(value)
 	{
 		this.#strokeWidth.value = value;
-		this.#strokeWidthDisplay.innerHTML = value;
+		this.#strokeWidthDisplay.textContent = value;
 	}
 
 	getStrokeWidthValue()

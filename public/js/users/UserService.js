@@ -24,7 +24,7 @@ export class UserService  extends BaseService
 {
 	determineRights(uid)
 	{
-		return this._sendRequestAsync(UsersApiConfig.USER_ACLS_URI + "/" + uid, "GET");
+		return this._sendRequest(UsersApiConfig.USER_ACLS_URI + "/" + uid, "GET");
 	}
 
 	async deleteUser(uid)

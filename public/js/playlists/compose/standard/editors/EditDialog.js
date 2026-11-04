@@ -26,12 +26,19 @@ export class EditDialog
 	#closeEditDialog      = document.getElementById("closeEditDialog");
 	#editItemErrorMessage = document.getElementById("editItemErrorMessage");
 	#cancelButton         = this.#dialogElement.querySelector('button[value="cancel"]');
-	#saveCallback         = null;
+	// a new instance per edit on the same dialog: its listeners end when the dialog closes, also by ESC
+	#controller           = new AbortController();
 
 	constructor() {}
 
 	openDialog()
 	{
+		this.setErrorMessage("");
+		this.#dialogElement.addEventListener("close", () =>
+		{
+			this.#controller.abort();
+			this.setWidth("");
+		}, {once: true, signal: this.#controller.signal});
 		this.#dialogElement.showModal();
 	}
 
@@ -43,7 +50,6 @@ export class EditDialog
 	closeDialog()
 	{
 		this.#dialogElement.close();
-		this.#editItemForm.removeEventListener("submit", this.#saveCallback);
 	}
 
 	setId(id)
@@ -73,25 +79,23 @@ export class EditDialog
 		this.#itemContentElement.innerHTML = "";
 	}
 
+	/**
+	 * Stays until the dialog closes: after an error the user saves again.
+	 */
 	onSave(callback)
 	{
-		this.#saveCallback = callback
-		this.#editItemForm.addEventListener("submit", this.#saveCallback, { once: true });
+		this.#editItemForm.addEventListener("submit", callback, {signal: this.#controller.signal});
 	}
 
 	onCancel()
 	{
-
-		this.cancelHandler = (e) => {
+		const cancel = (e) =>
+		{
 			e.preventDefault();
-			this.#cancelButton.removeEventListener("click", this.cancelHandler);
-			this.#editItemForm.removeEventListener("click", this.#saveCallback);
 			this.empty();
 			this.closeDialog();
 		};
-		this.#cancelButton.addEventListener("click", this.cancelHandler);
-		this.#closeEditDialog.addEventListener("click", this.cancelHandler);
+		this.#cancelButton.addEventListener("click", cancel, {signal: this.#controller.signal});
+		this.#closeEditDialog.addEventListener("click", cancel, {signal: this.#controller.signal});
 	}
-
-
 }

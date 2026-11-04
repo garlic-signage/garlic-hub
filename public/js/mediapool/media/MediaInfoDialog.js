@@ -24,6 +24,7 @@ export class MediaInfoDialog
 	#closeInfoDialog = document.getElementById("closeInfoDialog");
     #mediaService    = null;
 	#flashMessageHandler = null;
+	#hiddenRows = [];
 
     constructor(mediaService, flashMessageHandler)
     {
@@ -37,6 +38,11 @@ export class MediaInfoDialog
 		this.#mediaService.getMediaById(currentMedia.getAttribute("data-media-id"))
 			.then((media) =>
 			{
+				// the rows hidden for the media before are shown again
+				for (const row of this.#hiddenRows)
+					row.style.display = "";
+				this.#hiddenRows = [];
+
 				this.#dialogElement.querySelector(".media-filename").textContent = media.filename;
 				this.#dialogElement.querySelector(".media-mimetype").textContent = media.mimetype;
 
@@ -45,12 +51,12 @@ export class MediaInfoDialog
 					this.#dialogElement.querySelector(".media-dimensions").textContent = media.metadata.dimensions.width + "x" + media.metadata.dimensions.height;
 				}
 				else
-					this.#dialogElement.querySelector(".media-dimensions").parentElement.style.display = "none";
+					this.#hide(".media-dimensions");
 
 				if (media.metadata.duration !== undefined && media.metadata.duration > 0 )
 					this.#dialogElement.querySelector(".media-duration").textContent = this.#formatSeconds(media.metadata.duration);
 				else
-					this.#dialogElement.querySelector(".media-duration").parentElement.style.display = "none";
+					this.#hide(".media-duration");
 
 				this.#dialogElement.querySelector(".media-owner").textContent = media.username;
 				this.#dialogElement.querySelector(".media-uploaded-at").textContent = media.upload_time;
@@ -61,34 +67,41 @@ export class MediaInfoDialog
 				if (media.metadata.page_url !== undefined && media.metadata.page_url !== "")
 					this.#dialogElement.querySelector(".stock-page-url").href = media.metadata.page_url;
 				else
-					this.#dialogElement.querySelector(".stock-page-url").parentElement.style.display = "none";
+					this.#hide(".stock-page-url");
 
 				if (media.metadata.description !== undefined && media.metadata.description !== "")
 					this.#dialogElement.querySelector(".stock-description").textContent = media.metadata.description;
 				else
-					this.#dialogElement.querySelector(".stock-description").parentElement.style.display = "none";
+					this.#hide(".stock-description");
 
 				const username = media.metadata.user?.username || null;
 				if (username !== null)
 					this.#dialogElement.querySelector(".stock-username").textContent = username;
 				else
-					this.#dialogElement.querySelector(".stock-username").parentElement.style.display = "none";
+					this.#hide(".stock-username");
 
 				const realname = media.metadata.user?.name || null;
 				if (realname !== null)
 					this.#dialogElement.querySelector(".stock-realname").textContent = realname;
 				else
-					this.#dialogElement.querySelector(".stock-realname").parentElement.style.display = "none";
+					this.#hide(".stock-realname");
 
 				const userUrl = media.metadata.user?.url || null;
 				if (userUrl !== null)
 					this.#dialogElement.querySelector(".stock-user-url").textContent = userUrl;
 				else
-					this.#dialogElement.querySelector(".stock-user-url").parentElement.style.display = "none";
+					this.#hide(".stock-user-url");
 
 				this.#dialogElement.showModal();
 			})
 			.catch(err => this.#flashMessageHandler.showError(err.message));
+	}
+
+	#hide(selector)
+	{
+		const row = this.#dialogElement.querySelector(selector).parentElement;
+		row.style.display = "none";
+		this.#hiddenRows.push(row);
 	}
 
 	#addCancelEvent()

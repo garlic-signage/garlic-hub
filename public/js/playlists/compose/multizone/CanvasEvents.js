@@ -20,6 +20,7 @@ import './CanvasView.js';
 import './ContextMenu.js';
 import './ZoneProperties.js';
 import './ZonesModel.js';
+import {FlashMessageHandler} from "../../../core/FlashMessageHandler.js";
 
 export class CanvasEvents
 {
@@ -65,8 +66,8 @@ export class CanvasEvents
 			// convert zone_smil_playlist_id to zone playlist_id (SmilControl)
 			if (zones[i]?.zone_smil_playlist_id != null)
 			{
-				zones[i].zone_playlist_id = zone.smil_playlist_id;
-				delete zones[i].smil_playlist_id;
+				zones[i].zone_playlist_id = zones[i].zone_smil_playlist_id;
+				delete zones[i].zone_smil_playlist_id;
 			}
 
 			if (zones[i].zone_playlist_id > 0)
@@ -244,6 +245,10 @@ export class CanvasEvents
 
 	#removeObject()
 	{
+		// nothing selected
+		if (this.MyCanvasView.getActiveObject() == null)
+			return;
+
 		let id = this.MyCanvasView.getActiveObject().getId()
 		this.MyZoneProperties.removeListItem(id);
 		this.MyCanvasView.removeActiveObject();
@@ -289,8 +294,14 @@ export class CanvasEvents
 	}
 
 	#initSaveEvent() {
-		document.getElementById("save_zones").addEventListener("click", () => {
-			this.MyZonesModel.saveToDataBase();
+		document.getElementById("save_zones").addEventListener("click", async () => {
+			const result = await this.MyZonesModel.saveToDataBase();
+			// unsaved changes keep the question when the editor closes
+			if (result.success === false)
+			{
+				new FlashMessageHandler().showError(result.error_message);
+				return;
+			}
 			this.MyCanvasView.setChanged(false);
 		});
 	}
@@ -300,13 +311,16 @@ export class CanvasEvents
 		document.getElementById("close_zones_editor").addEventListener("click", () => {
 			const changed = this.MyCanvasView.hasChanged();
 			if (!changed || (changed && confirm(lang["confirm_close"])))
-				window.location.href = "/playlists";1
+				window.location.href = "/playlists";
 		});
 
 	}
 
 	#duplicateZone()
 	{
+		if (this.MyCanvasView.getActiveObject() == null)
+			return;
+
 		let props = this.MyCanvasView.getActiveObject().getPropertiesForDuplicate();
 		props.zone_left += 20;
 		props.zone_top += 20;

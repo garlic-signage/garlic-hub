@@ -32,6 +32,14 @@ export class BasePropertyService
 		return this.#fabricWrapper;
 	}
 
+	/**
+	 * @return {Object|null} null when nothing is selected
+	 */
+	_findActiveObject()
+	{
+		return this.#fabricWrapper.getActiveObject() ?? null;
+	}
+
 	_getActiveObject()
 	{
 		const object = this.#fabricWrapper.getActiveObject();

@@ -83,6 +83,8 @@ export class PlayerActionsContextMenu extends ActionsContextMenu
 				const result = await this.#playerService.replacePlaylist(this.unitId, playlistId);
 				if (result.success)
 					playlistAutocomplete.restore(result.playlist_name);
+				else
+					this.flashMessageHandler.showError(result.error_message);
 			});
 		});
 	}
@@ -93,7 +95,10 @@ export class PlayerActionsContextMenu extends ActionsContextMenu
 
 			const result = await this.#playerService.replacePlaylist(this.unitId, 0);
 			if (!result.success)
+			{
+				this.flashMessageHandler.showError(result.error_message);
 				return;
+			}
 
 			this.#findPlaylistNameInResultsBody().textContent = "";
 		});

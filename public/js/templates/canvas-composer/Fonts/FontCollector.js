@@ -64,16 +64,11 @@ export class FontCollector
 
 	async preloadUsedFonts()
 	{
-		return new Promise(async (resolve) => {
-			for (let i = 0; i < this.used_fonts.length; i++)
-			{
-				let font_id = this.#fontLoader.findFontListKey(this.used_fonts[i]);
-				if (font_id !== -1 && !this.#fontLoader.isFontLoaded(font_id))
-				{
-					await this.#fontLoader.loadFontFaceAsync(font_id);
-				}
-			}
-			resolve();
-		});
+		for (let i = 0; i < this.used_fonts.length; i++)
+		{
+			let font_id = this.#fontLoader.findFontListKey(this.used_fonts[i]);
+			if (font_id !== -1 && !this.#fontLoader.isFontLoaded(font_id))
+				await this.#fontLoader.loadFontFaceAsync(font_id);
+		}
 	}
 }

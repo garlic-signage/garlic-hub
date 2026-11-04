@@ -41,6 +41,7 @@ export class Autocomplete
 	#debounce_timeout  = null;
 	#fieldName         = ""
 	#ignoreBlur         = false; // datalist do not fire events sometimes. @see #handleNotSelected()
+	#request            = null; // the answer of an older request must not replace a newer one
 
 
 	/**
@@ -101,7 +102,7 @@ export class Autocomplete
 	clearAll()
 	{
 		this.#autocompleteView.datalistElement.innerHTML = '';
-		this.#autocompleteView.inputElement.value = 0;
+		this.#autocompleteView.inputElement.value = '';
 		this.#clearSelection();
 	}
 
@@ -121,17 +122,23 @@ export class Autocomplete
 			return;
 		}
 */
+		this.#request?.abort();
+		this.#request = new AbortController();
 		try
 		{
-			const url = this.#apiEndpoint + this.#autocompleteView.inputElement.value;
-			const response    = await fetch(url);
+			const url      = this.#apiEndpoint + encodeURIComponent(this.#autocompleteView.inputElement.value);
+			const response = await fetch(url, {signal: this.#request.signal});
+			if (!response.ok)
+				throw new Error('HTTP-Error: ' + response.status);
+
 			const suggestions = await response.json();
 			this.#updateDataList(suggestions);
 			this.#autocompleteView.inputElement.dispatchEvent(new Event('focus'));
 		}
 		catch (error)
 		{
-			console.error('Error fetching suggestions:', error);
+			if (error.name !== 'AbortError')
+				console.error('Error fetching suggestions:', error);
 		}
 	}
 

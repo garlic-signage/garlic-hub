@@ -18,6 +18,7 @@
 */
 
 import {Utils} from "../../../../core/Utils.js";
+import {FlashMessageHandler} from "../../../../core/FlashMessageHandler.js";
 import {PlaylistsProperties} from "../playlists/PlaylistsProperties.js";
 
 export class Item
@@ -42,6 +43,7 @@ export class Item
 	#editItemName = false;
 	#itemDuration = null;
 	#isItemDurationInProcess = false;
+	#flashMessageHandler     = new FlashMessageHandler();
 
 	constructor(itemData, itemsService, widgetFactory, conditionalPlayFactory, triggerFactory)
 	{
@@ -177,11 +179,16 @@ export class Item
 				resetButton.classList.add("bi-arrow-clockwise");
 				inputGroup.appendChild(resetButton);
 
+				// the field keeps the focus: its blur would remove the button before the click
+				resetButton.addEventListener('mousedown', (event) => event.preventDefault());
 				resetButton.addEventListener('click', async () => {
 					this.#isItemDurationInProcess = true;
 					const result = await this.#itemsService.fetchDefaultSeconds(this.#itemData.item_id);
 					if (!result.success)
+					{
+						this.#flashMessageHandler.showError(result.error_message);
 						return;
+					}
 
 					inputField.value = result.item.default_duration;
 					await this.#saveDuration(inputField);
@@ -218,14 +225,26 @@ export class Item
 	{
 		const result = await this.#itemsService.editItem(this.#itemData.item_id, 'item_duration', inputElement.value);
 		if (!result.success)
+		{
+			this.#flashMessageHandler.showError(result.error_message);
 			return;
+		}
 
 		this.#itemDuration.dataset.seconds = result.data;
 		this.#itemDuration.textContent = Utils.formatSecondsToTime(result.data);
 
-		inputElement.parentNode.replaceChild(this.#itemDuration, inputElement);
-		inputElement.remove();
+		// the whole field with its button goes, not only the input
+		inputElement.closest(".item-duration-input").replaceWith(this.#itemDuration);
 		PlaylistsProperties.notifySave();
+	}
+
+	#isLoaded(result)
+	{
+		if (result.success === true)
+			return true;
+
+		this.#flashMessageHandler.showError(result.error_message);
+		return false;
 	}
 
 	#initActions()
@@ -279,8 +298,8 @@ export class Item
 			this.#conditionalPlayAction.addEventListener("click", async () =>
 			{
 				let conditionalPlay = this.#conditionalPlayFactory.create();
-				await conditionalPlay.fetch(this.#itemData.item_id);
-				conditionalPlay.initDialog(this.#conditionalPlayAction);
+				if (this.#isLoaded(await conditionalPlay.fetch(this.#itemData.item_id)))
+					conditionalPlay.initDialog(this.#conditionalPlayAction);
 			});
 		}
 		if (this.#editTriggerAction !== null)
@@ -288,8 +307,8 @@ export class Item
 			this.#editTriggerAction.addEventListener("click", async () =>
 			{
 				let trigger = this.#triggerFactory.create();
-				await trigger.fetchBeginTrigger(this.#itemData.item_id);
-				trigger.initDialog(this.#editTriggerAction);
+				if (this.#isLoaded(await trigger.fetchBeginTrigger(this.#itemData.item_id)))
+					trigger.initDialog(this.#editTriggerAction);
 			});
 		}
 		if (this.#itemData.mimetype === "application/widget" && this.#itemData.content_data !== "")
@@ -298,8 +317,8 @@ export class Item
 			this.#editWidgetAction.addEventListener("click", async () =>
 			{
 				let widget = this.#widgetFactory.create();
-				await widget.fetch(this.#itemData.item_id);
-				widget.initDialog();
+				if (this.#isLoaded(await widget.fetch(this.#itemData.item_id)))
+					widget.initDialog();
 			});
 		}
 		else

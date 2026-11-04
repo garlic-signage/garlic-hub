@@ -28,6 +28,7 @@ export class MediaList
 	#setListView = document.getElementById("setListView");
 	#setGridView = document.getElementById("setGridView");
 	#rights = null;
+	#lightbox = null;
 
     constructor(mediaListElement, mediaFactory, contextMenuFactory, mediaService)
     {
@@ -59,7 +60,9 @@ export class MediaList
             this.#addMediaToList(media);
         });
 
-        const lightbox = GLightbox({
+        // one lightbox per folder: the one of the folder before goes
+        this.#lightbox?.destroy();
+        this.#lightbox = GLightbox({
             plyr: {
                 css: MediaApiConfig.PYR_CSS_PATH,
                 js: MediaApiConfig.PYR_JS_PATH
