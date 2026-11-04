@@ -127,6 +127,17 @@ class Orchestrator extends BaseTemplateOrchestrator
 	}
 
 	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws UserException
+	 */
+	public function isDeletable(int $templateId): bool
+	{
+		return $this->templatesService->isDeletable($templateId);
+	}
+
+	/**
 	 * Content of the template loaded by checkEditRights() with fresh signed media urls.
 	 */
 	public function getContent(): string

@@ -101,7 +101,8 @@ class PlayerService
 	 */
 	public function delete(int $playerId): int
 	{
-		$this->fetchAclCheckedPlayerData($playerId);
+		// editing is not enough: an editor of a shared player must not delete it
+		$this->loadCheckedPlayer($playerId, true);
 
 		$deleted = $this->playerRepository->delete($playerId);
 		if ($deleted > 0)
@@ -151,13 +152,52 @@ class PlayerService
 	 */
 	public function fetchAclCheckedPlayerData(int $playerId): array
 	{
+		return $this->loadCheckedPlayer($playerId, false);
+	}
+
+	/**
+	 * For the context menu: may the user delete the player?
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws UserException
+	 */
+	public function isDeletable(int $playerId): bool
+	{
+		try
+		{
+			$this->loadCheckedPlayer($playerId, true);
+			return true;
+		}
+		catch (NotFoundException|AccessDeniedException)
+		{
+			return false;
+		}
+	}
+
+	/**
+	 * @return array<string,mixed>
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws NotFoundException
+	 * @throws UserException
+	 */
+	private function loadCheckedPlayer(int $playerId, bool $forDelete): array
+	{
 		$player = $this->playerRepository->findFirstById($playerId);
 		if ($player === [])
 			throw new NotFoundException('player', 'player_not_found', ['player_id' => $playerId]);
 
+		$UID = $this->userSession->getUID();
 		/** @var array{UID: int, company_id: int, player_id: int, ...} $player */
-		if (!$this->playerValidator->isPlayerEditable($this->userSession->getUID(), $player))
+		if (!$this->playerValidator->isPlayerEditable($UID, $player))
 			throw new AccessDeniedException('player', 'player_not_editable', ['player_id' => $playerId]);
+
+		if ($forDelete && !$this->playerValidator->isAllowedToDeletePlayer($UID, $player))
+			throw new AccessDeniedException('player', 'player_not_deletable', ['player_id' => $playerId]);
 
 		return $player;
 	}

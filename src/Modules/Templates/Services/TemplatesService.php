@@ -75,8 +75,9 @@ class TemplatesService
 	 */
 	public function delete(int $templateId): int
 	{
-		$this->loadWithUserById($templateId);
-		// Todo: Check if used
+		// editing is not enough: an editor of a shared template must not delete it.
+		// Whether it is used, Composer\Orchestrator::delete() checks.
+		$this->loadCheckedTemplate($templateId, true);
 		$deleted = $this->templatesRepository->delete($templateId);
 		if ($deleted > 0)
 			$this->aclGrantService->removeUnitShares('templates', [$templateId]);
@@ -96,6 +97,41 @@ class TemplatesService
      */
 	public function loadWithUserById(int $templateId): array
 	{
+		return $this->loadCheckedTemplate($templateId, false);
+	}
+
+	/**
+	 * For the context menu: may the user delete the template?
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws UserException
+	 */
+	public function isDeletable(int $templateId): bool
+	{
+		try
+		{
+			$this->loadCheckedTemplate($templateId, true);
+			return true;
+		}
+		catch (NotFoundException|AccessDeniedException)
+		{
+			return false;
+		}
+	}
+
+	/**
+	 * @return array{UID: int, company_id: int, template_id: int, name: string, content: string|null, ...}
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws NotFoundException
+	 * @throws AccessDeniedException
+	 * @throws UserException
+	 */
+	private function loadCheckedTemplate(int $templateId, bool $forDelete): array
+	{
 		/** @var array{UID: int, company_id: int, template_id: int, name: string, content: string|null, ...}|array{} $template */
 		$template = $this->templatesRepository->findFirstWithUserName($templateId);
 		if ($template === [])
@@ -103,6 +139,9 @@ class TemplatesService
 
 		if (!$this->aclValidator->isTemplateEditable($this->userSession->getUID(), $template))
 			throw new AccessDeniedException('templates', 'template_not_editable', ['template_id' => $templateId]);
+
+		if ($forDelete && !$this->aclValidator->isAllowedToDeleteTemplate($this->userSession->getUID(), $template))
+			throw new AccessDeniedException('templates', 'template_not_deletable', ['template_id' => $templateId]);
 
 		return $template;
 	}

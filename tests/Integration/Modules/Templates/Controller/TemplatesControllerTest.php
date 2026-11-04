@@ -166,6 +166,28 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 		static::assertSame(['success' => true, 'can_edit' => true, 'can_delete' => true, 'can_share' => true, 'template_id' => 2], $rights);
 	}
 
+	public function testAnEditorOfASharedTemplateMayEditButNotDeleteIt(): void
+	{
+		$grants = $this->container->get(AclGrantService::class);
+		$grants->setRole(1, 2, 'templates', AclSections::EDITOR, true);
+		$grants->setUnitRole(1, 2, 'templates', 3, AclSections::EDITOR);
+		$this->actingAs(2);
+
+		$rights = $this->json($this->controller->determineRights($this->request('GET'), $this->newResponse(), ['template_id' => '3']));
+		static::assertTrue($rights['can_edit']);
+		static::assertFalse($rights['can_delete']);
+
+		$this->expectException(AccessDeniedException::class);
+		try
+		{
+			$this->controller->delete($this->request('DELETE', body: ['template_id' => '3']), $this->newResponse());
+		}
+		finally
+		{
+			static::assertSame(1, (int) $this->databaseValue('SELECT COUNT(*) FROM templates WHERE template_id = 3'));
+		}
+	}
+
 	public function testATemplateInUseCanBeEditedButNotDeleted(): void
 	{
 		$this->actingAs(1);

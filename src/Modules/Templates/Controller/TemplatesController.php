@@ -85,7 +85,7 @@ readonly class TemplatesController
 		$responseData['template_id']   = $templateId;
 		$responseData['can_share']     = $this->aclGrantService->canShareUnit($this->userSession->getUID(), 'templates', $templateId);
 
-		if ( $inUse === [])
+		if ($inUse === [] && $this->orchestrator->isDeletable($templateId))
 			$responseData['can_delete'] = true;
 
 		return $this->responseHandler->jsonSuccess($response, $responseData);

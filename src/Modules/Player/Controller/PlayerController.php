@@ -80,7 +80,7 @@ class PlayerController
 		if ((int) $this->playerData['status'] >= PlayerStatus::RELEASED->value && (int) $this->playerData['licence_id'] > 0)
 		{
 			$responseData['can_edit']      = true;
-			$responseData['can_delete']    = true;
+			$responseData['can_delete']    = $this->playerService->isDeletable($playerId);
 			$responseData['has_playlist']  = (int) $this->playerData['playlist_id'] > 0;
 			$responseData['playlist_id']   = $this->playerData['playlist_id'];
 			$responseData['is_intranet']   = (int) $this->playerData['is_intranet'] === 1;

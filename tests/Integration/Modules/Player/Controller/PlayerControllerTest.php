@@ -26,6 +26,8 @@ use App\Framework\Exceptions\NotFoundException;
 use App\Modules\Player\Controller\PlayerController;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
+use App\Shared\Acl\AclGrantService;
+use App\Shared\Acl\AclSections;
 
 /**
  * The player endpoints /async/player of the list of players: what the user may do, the data, deleting.
@@ -152,6 +154,29 @@ class PlayerControllerTest extends PlayerControllerTestCase
 		$this->actingAs(1);
 
 		$this->assertError($this->controller->fetchPlayer($this->request('GET', '/async/player/0'), $this->newResponse(), ['player_id' => '0']), 'No playerId');
+	}
+
+	public function testAnEditorOfASharedPlayerMayChangeButNotDeleteIt(): void
+	{
+		$this->setPlayer(3, 'status = 2, licence_id = 1');
+		$grants = $this->container->get(AclGrantService::class);
+		$grants->setRole(1, 2, 'player', AclSections::EDITOR, true);
+		$grants->setUnitRole(1, 2, 'player', 3, AclSections::EDITOR);
+		$this->actingAs(2);
+
+		$rights = $this->rights(3);
+		static::assertTrue($rights['can_edit']);
+		static::assertFalse($rights['can_delete']);
+
+		$this->expectException(AccessDeniedException::class);
+		try
+		{
+			$this->controller->delete($this->request('DELETE', '/async/player', ['player_id' => '3']), $this->newResponse());
+		}
+		finally
+		{
+			static::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM player WHERE player_id = 3'));
+		}
 	}
 
 	public function testThePlayerIsDeletedByTheAdmin(): void
