@@ -125,7 +125,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 	public function formatContextMenu(): array
 	{
 		return [
-			'LANG_EDIT'           => $this->translator->translate('edit_settings', 'users'),
+			'LANG_EDIT'           => $this->translator->translate('edit', 'main'),
 			'LANG_RIGHTS'         => $this->translator->translate('rights', 'users'),
 			'LANG_DELETE'         => $this->translator->translate('delete', 'main'),
 			'LANG_CONFIRM_DELETE' => $this->translator->translate('confirm_delete', 'users')

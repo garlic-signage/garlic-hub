@@ -212,6 +212,15 @@ class ShowDatatableControllerTest extends UsersControllerTestCase
 		static::assertArrayNotHasKey('has_delete', $rows[1]);
 	}
 
+	public function testEveryEntryOfTheContextMenuHasAText(): void
+	{
+		$this->actingAs(1);
+
+		$menu = $this->list()->getTemplateData()['users_actions_contextmenu'];
+
+		static::assertSame(['Edit', 'Rights', 'Delete'], [$menu['LANG_EDIT'], $menu['LANG_RIGHTS'], $menu['LANG_DELETE']]);
+	}
+
 	public function testAUserGetsNoContextMenuOfHerself(): void
 	{
 		$this->actingAs(2);
