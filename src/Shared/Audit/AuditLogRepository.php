@@ -25,6 +25,7 @@ use App\Framework\Database\BaseRepositories\SqlBase;
 use App\Framework\Database\BaseRepositories\Traits\CrudTraits;
 use App\Framework\Database\BaseRepositories\Traits\FindOperationsTrait;
 use DateTimeImmutable;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
@@ -36,6 +37,33 @@ class AuditLogRepository extends SqlBase
 	public function __construct(Connection $connection)
 	{
 		parent::__construct($connection, 'audit_log', 'id');
+	}
+
+	/**
+	 * The names of the users an entry was done to, for the list.
+	 *
+	 * @param list<int> $UIDs
+	 * @return array<int,string> UID => username
+	 * @throws Exception
+	 */
+	public function findUsernames(array $UIDs): array
+	{
+		if ($UIDs === [])
+			return [];
+
+		$queryBuilder = $this->connection->createQueryBuilder();
+		$queryBuilder->select('UID', 'username')
+			->from('user_main')
+			->where('UID IN (:UIDs)')
+			->setParameter('UIDs', $UIDs, ArrayParameterType::INTEGER);
+
+		$usernames = [];
+		foreach ($queryBuilder->executeQuery()->fetchAllAssociative() as $row)
+		{
+			$usernames[(int) $row['UID']] = (string) $row['username'];
+		}
+
+		return $usernames;
 	}
 
 	/**

@@ -39,6 +39,8 @@ use Psr\SimpleCache\InvalidArgumentException;
  */
 class AuthService
 {
+	// the audit log shows what was typed in: nobody fills it with huge strings
+	private const int MAX_LOGGED_IDENTIFIER = 64;
 	private string $errorMessage = '';
 
 	public function __construct(private readonly UsersService 		$userService,
@@ -66,7 +68,7 @@ class AuthService
 		if ($this->loginThrottle->isBlocked($identifier, $ip))
 		{
 			$this->errorMessage = 'Too many failed login attempts. Please try again later.';
-			$this->logger->warning('Login blocked', ['username' => $identifier, 'ip_address' => $ip]);
+			$this->logger->warning('Login blocked', ['username' => mb_substr($identifier, 0, self::MAX_LOGGED_IDENTIFIER), 'ip_address' => $ip]);
 			return null;
 		}
 
@@ -88,7 +90,7 @@ class AuthService
 				'time' => date('Y-m-d H:i:s'),
 				'reason' => 'Invalid credentials.',
 			]);
-			$this->auditLog->record(0, 'auth', AuditAction::LOGIN_FAILED, null, isset($userData['UID']) ? (int) $userData['UID'] : null, ['username' => $identifier, 'ip_address' => $ip]);
+			$this->auditLog->record(0, 'auth', AuditAction::LOGIN_FAILED, null, isset($userData['UID']) ? (int) $userData['UID'] : null, ['username' => mb_substr($identifier, 0, self::MAX_LOGGED_IDENTIFIER), 'ip_address' => $ip]);
 			return null;
 		}
 		$this->validateUserStatus($userData['status']);

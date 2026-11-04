@@ -1,0 +1,3 @@
+/* the audit log: a list of text only (generic datatable) */
+.audit-disabled {padding: 0.5rem 1rem; border-left: 4px solid var(--gh-warning-color);}
+.results-listing .details {white-space: normal; overflow-wrap: anywhere;}

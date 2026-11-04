@@ -179,7 +179,7 @@ The modules:
 
 - **`Account/`** — the logged-in user's own account: change password, forced password change, language.
 - **`Auth/`** — login, logout, auto login, OAuth2 endpoints, `UserSession` and the `AuthMiddleware` (protects all routes except a list of public ones).
-- **`System/`** — the settings page `/system/settings`: a tab per module whose module admin the user is. A module offers settings with a `SettingsSchema` (`Shared/Settings`), found by name as `App\Modules\<Module>\Settings\<Module>SettingsSchema`. Optional subsystems (scheduler, audit log) are off by default, the audit log needs the scheduler.
+- **`System/`** — the audit log `/system/audit` (a datatable for the module admin of system, readable while the log is off) and the settings page `/system/settings`: a tab per module whose module admin the user is. A module offers settings with a `SettingsSchema` (`Shared/Settings`), found by name as `App\Modules\<Module>\Settings\<Module>SettingsSchema`. Optional subsystems (scheduler, audit log) are off by default, the audit log needs the scheduler.
 - **`Mediapool/`** — media management.
   - `Helper/Media`, `Helper/Nodes`, `Helper/Uploads` — media files, folder tree, uploads.
   - `Utils/` — handlers per media type (image, video, audio, PDF, widget) and the SSRF check for URL uploads.
