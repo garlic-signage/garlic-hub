@@ -23,6 +23,7 @@ import {FetchClient}       from "../../core/FetchClient.js";
 import {TemplatesActionsContextMenuFactory} from "./TemplatesActionsContextMenuFactory.js";
 import {FlashMessageHandler} from "../../core/FlashMessageHandler.js";
 import {UnitShareDialog} from "../../core/UnitShareDialog.js";
+import {ActionsContextMenu} from "../../core/ContextMenu/ActionsContextMenu.js";
 
 document.addEventListener("DOMContentLoaded", function()
 {
@@ -33,16 +34,6 @@ document.addEventListener("DOMContentLoaded", function()
 		UnitShareDialog.create("templates")
 	);
 
-	const contextMenus = document.getElementsByClassName("template-contextmenu");
-
-	for (let i = 0; i < contextMenus.length; i++)
-	{
-		contextMenus[i].addEventListener('click', async (event) =>
-		{
-			event.preventDefault();
-			const contextMenu = templatesActionsContextMenuFactory.create();
-			await contextMenu.init(event);
-		});
-	}
+	ActionsContextMenu.bindTo("template-contextmenu", () => templatesActionsContextMenuFactory.create());
 
 });

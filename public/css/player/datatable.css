@@ -15,7 +15,6 @@
 .player-active{background: url("/images/bullets/green.png") no-repeat 0 center;padding-left:20px;}
 .player-pending{background: url("/images/bullets/yellow.png") no-repeat 0 center;padding-left:20px;}
 .player-inactive{background: url("/images/bullets/red.png") no-repeat 0 center;padding-left:20px;}
-.context-menu .delete{border-top: 1px solid #e0e0e0;margin-top: 4px;padding-top: 8px;color: #d32f2f;}
 
 /* the preview player: an iframe in the proportions of the layout; the width is dragged at the corner, the height follows */
 .player-preview .preview-frame {position: relative; width: min(960px, 90vw); min-width: 320px; max-width: 95vw; aspect-ratio: 16 / 9; resize: horizontal; overflow: hidden; background: #000;}

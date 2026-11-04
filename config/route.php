@@ -190,6 +190,7 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 
 	$group->get('/users/find/{username}', resolve([UsersController::class, 'findByName'], $container));
 	$group->delete('/users', resolve([UsersController::class, 'delete'], $container));
+	$group->get('/users/acls/{UID:\d+}', resolve([UsersController::class, 'determineRights'], $container));
 	$group->get('/acl/{module:\w+}/find[/{search}]', resolve([UnitSharesController::class, 'findUnits'], $container));
 	$group->get('/acl/{module:\w+}/units/{unit_id:[\w-]+}', resolve([UnitSharesController::class, 'show'], $container));
 	$group->put('/users/rights/{UID:\d+}', resolve([UserRightsController::class, 'updateRole'], $container));

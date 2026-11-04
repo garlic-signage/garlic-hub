@@ -24,6 +24,7 @@ import {FlashMessageHandler} from "../../core/FlashMessageHandler.js";
 import {PlayerActionsContextMenuFactory} from "./PlayerActionsContextMenuFactory.js";
 import {PreviewOverlay} from "./PreviewOverlay.js";
 import {UnitShareDialog} from "../../core/UnitShareDialog.js";
+import {ActionsContextMenu} from "../../core/ContextMenu/ActionsContextMenu.js";
 
 document.addEventListener("DOMContentLoaded", function()
 {
@@ -39,15 +40,5 @@ document.addEventListener("DOMContentLoaded", function()
 		UnitShareDialog.create("player")
 	);
 
-	const contextMenus = document.getElementsByClassName("player-contextmenu");
-
-	for (let i = 0; i < contextMenus.length; i++)
-	{
-		contextMenus[i].addEventListener('click', async (event) =>
-		{
-			event.preventDefault();
-			const contextMenu = playerActionsContextMenuFactory.create();
-			await contextMenu.init(event);
-		});
-	}
+	ActionsContextMenu.bindTo("player-contextmenu", () => playerActionsContextMenuFactory.create());
 });

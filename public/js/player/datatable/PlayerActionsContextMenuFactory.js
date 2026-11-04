@@ -18,7 +18,7 @@
 */
 'use strict';
 import {PlayerActionsContextMenu} from "./PlayerActionsContextMenu.js";
-import {PlayerActionsContextMenuView} from "./PlayerActionsContextMenuView.js";
+import {ActionsContextMenuView} from "../../core/ContextMenu/ActionsContextMenuView.js";
 import {WaitOverlay}     from "../../core/WaitOverlay.js";
 
 export class PlayerActionsContextMenuFactory
@@ -41,7 +41,7 @@ export class PlayerActionsContextMenuFactory
 	create()
 	{
 		return  new PlayerActionsContextMenu(
-			new PlayerActionsContextMenuView(),
+			new ActionsContextMenuView("playerActionsContextMenuTemplate"),
 			this.#flashMessageHandler,
 			this.#autocompleteFactory,
 			new WaitOverlay(),

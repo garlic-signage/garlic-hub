@@ -1,2 +1,17 @@
-
 {{> datatable}}
+
+<template id="usersActionsContextMenuTemplate">
+	{{#users_actions_contextmenu}}
+	<ul class="context-menu">
+		<li class="edit">
+			<a href=""><i class="bi bi-pencil"></i> {{LANG_EDIT}}</a>
+		</li>
+		<li class="rights">
+			<a href=""><i class="bi bi-shield-lock"></i> {{LANG_RIGHTS}}</a>
+		</li>
+		<li class="delete" data-confirm="{{LANG_CONFIRM_DELETE}}">
+			<i class="bi bi-trash"></i> {{LANG_DELETE}}
+		</li>
+	</ul>
+	{{/users_actions_contextmenu}}
+</template>

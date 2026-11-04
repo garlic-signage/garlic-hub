@@ -16,66 +16,33 @@
  You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-import {Utils} from "../../core/Utils.js";
+import {ActionsContextMenu} from "../../core/ContextMenu/ActionsContextMenu.js";
 
-export class PlaylistsActionsContextMenu
+export class PlaylistsActionsContextMenu extends ActionsContextMenu
 {
 	#playlistsService = null;
-	#flashMessageHandler = null;
-	#contextMenuView = null;
-	#shareDialog = null;
-	#controller = null;
-	#currentPlaylistId = 0;
+	#shareDialog      = null;
 
 	constructor(contextMenuView, flashMessageHandler, playlistsService, shareDialog)
 	{
-		this.#contextMenuView     = contextMenuView;
-		this.#flashMessageHandler = flashMessageHandler;
-		this.#playlistsService    = playlistsService;
-		this.#shareDialog         = shareDialog;
-		this.#controller          = new AbortController();
+		super(contextMenuView, flashMessageHandler);
+		this.#playlistsService = playlistsService;
+		this.#shareDialog      = shareDialog;
 	}
 
-	async init(event)
+	async determineRights(playlistId)
 	{
-		this.#currentPlaylistId = Number(event.target.dataset.actionId);
-		const responseData = await this.#playlistsService.determineRights(this.#currentPlaylistId);
-
-		if (!responseData.can_edit)
-			return;
-
-		this.#contextMenuView.initMenuItems();
-		this.#contextMenuView.setComposerLink(this.#currentPlaylistId);
-		this.#contextMenuView.setSettingsLink(this.#currentPlaylistId);
-		this.#shareDialog.attachTo(this.#contextMenuView.shareMenuItem, this.#currentPlaylistId, responseData.can_share);
-
-		if (!responseData.can_delete)
-			this.#contextMenuView.deleteMenuItem.remove();
-		else
-			this.#deleteEventListener(responseData.playlist_name);
-
-		document.body.appendChild(this.#contextMenuView.menu);
-		this.#contextMenuView.placeMenu(event.clientX, event.clientY);
-
-		document.addEventListener('click', () => {
-			this.#controller.abort(); // removes the delete listener
-			this.#contextMenuView.menu.remove();
-		}, { once: true });
+		return await this.#playlistsService.determineRights(playlistId);
 	}
 
-	#deleteEventListener(playlistName)
+	prepare(rights)
 	{
-		this.#contextMenuView.deleteMenuItem.addEventListener('click', async (e) => {
-			e.preventDefault();
-			const ok = await Utils.confirmAction(this.#contextMenuView.deleteMenuItem.dataset.confirm.replace("%s", playlistName));
-			if (!ok)
-				return;
+		this.view.setLink("composer", "/playlists/compose/" + this.unitId);
+		this.view.setLink("settings", "/playlists/settings/" + this.unitId);
+		this.#shareDialog.attachTo(this.view.item("share"), this.unitId, rights.can_share);
 
-			const result = await this.#playlistsService.delete(this.#currentPlaylistId);
-			if (result.success)
-				document.querySelector(`ul[data-id="${this.#currentPlaylistId}"]`)?.closest('li')?.remove();
-			else
-				this.#flashMessageHandler.showError(result.error_message);
-		}, { signal: this.#controller.signal });
+		// the question names the playlist
+		const confirmText = this.view.item("delete").dataset.confirm.replace("%s", rights.playlist_name ?? "");
+		this.addDelete(rights.can_delete, (playlistId) => this.#playlistsService.delete(playlistId), confirmText);
 	}
 }

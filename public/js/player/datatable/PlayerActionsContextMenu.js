@@ -16,112 +16,82 @@
  You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-import {Utils} from "../../core/Utils.js";
-import { PushHandler } from "./ActionHandler/PushHandler.js";
+import {ActionsContextMenu} from "../../core/ContextMenu/ActionsContextMenu.js";
+import {PushHandler}        from "./ActionHandler/PushHandler.js";
 
-export class PlayerActionsContextMenu
+export class PlayerActionsContextMenu extends ActionsContextMenu
 {
-	#playerService = null;
-	#flashMessageHandler = null;
+	#playerService       = null;
 	#autoCompleteFactory = null;
-	#pushHandler = null;
-	#playerNameAutocomplete = null;
-	#contextMenuView = null;
-	#controller = null;
-	#currentPlayerId = 0;
-	#waitOverlay = null;
-	#previewOverlay = null;
-	#shareDialog = null;
+	#waitOverlay         = null;
+	#previewOverlay      = null;
+	#shareDialog         = null;
 
 	constructor(contextMenuView, flashMessageHandler, autoCompleteFactory, waitOverlay, playerService, previewOverlay, shareDialog)
 	{
-		this.#shareDialog           = shareDialog;
-		this.#contextMenuView       = contextMenuView;
-		this.#flashMessageHandler   = flashMessageHandler;
-		this.#autoCompleteFactory   = autoCompleteFactory;
-		this.#waitOverlay           = waitOverlay;
-		this.#playerService         = playerService;
-		this.#previewOverlay        = previewOverlay;
-		this.#controller            = new AbortController();
+		super(contextMenuView, flashMessageHandler);
+		this.#autoCompleteFactory = autoCompleteFactory;
+		this.#waitOverlay         = waitOverlay;
+		this.#playerService       = playerService;
+		this.#previewOverlay      = previewOverlay;
+		this.#shareDialog         = shareDialog;
 	}
 
-	async init(event)
+	async determineRights(playerId)
 	{
-		this.#currentPlayerId = Number(event.target.dataset.actionId);
-		const responseData = await this.#playerService.determineRights(this.#currentPlayerId );
+		return await this.#playerService.determineRights(playerId);
+	}
 
-		if (!responseData.can_edit)
-			return;
+	prepare(rights)
+	{
+		this.addDelete(rights.can_delete, (playerId) => this.#playerService.delete(playerId));
 
-		this.#pushHandler = new PushHandler(this.#flashMessageHandler, this.#playerService, this.#waitOverlay, this.#currentPlayerId); 
-
-		this.#contextMenuView.initMenuItems();
-
-		if (!responseData.can_delete)
-			this.#contextMenuView.deleteMenuItem.remove();
-		else
-			this.#deletePlayerEventListener();
-
-		if (!responseData.has_playlist)
+		if (!rights.has_playlist)
 		{
-			this.#contextMenuView.unassignMenuItem.remove();
-			this.#contextMenuView.gotoMenuItem.remove();
-			this.#contextMenuView.previewMenuItem.remove();
+			this.view.remove("unassign");
+			this.view.remove("goto");
+			this.view.remove("preview");
 		}
 		else
 		{
 			this.#addUnAssignEventListener();
-			this.#contextMenuView.setGotoLink(responseData.playlist_id);
-			this.#contextMenuView.previewMenuItem.addEventListener("click", () => {
-				this.#previewOverlay.open(responseData.uuid, responseData.player_name);
+			this.view.setLink("goto", "playlists/compose/" + rights.playlist_id);
+			this.view.item("preview").addEventListener("click", () => {
+				this.#previewOverlay.open(rights.uuid, rights.player_name);
 			});
 		}
 
 		this.#addAssignEventListener(); // always active
-		this.#shareDialog.attachTo(this.#contextMenuView.shareMenuItem, this.#currentPlayerId, responseData.can_share);
+		this.#shareDialog.attachTo(this.view.item("share"), this.unitId, rights.can_share);
 
-		if (!responseData.has_playlist || !responseData.is_intranet)
-			this.#contextMenuView.pushMenuItem.remove();
+		if (!rights.has_playlist || !rights.is_intranet)
+			this.view.remove("push");
 		else
-			this.#pushHandler.addPushPlaylistListener(this.#contextMenuView.pushMenuItem);
-
-		document.body.appendChild(this.#contextMenuView.menu);
-
-		this.#contextMenuView.placeMenu(event.clientX, event.clientY)
-
-		document.addEventListener('click', () => {
-			this.#controller.abort(); // Killt delete-Listener
-			this.#contextMenuView.menu.remove();
-		}, { once: true });
-
+			new PushHandler(this.flashMessageHandler, this.#playerService, this.#waitOverlay, this.unitId).addPushPlaylistListener(this.view.item("push"));
 	}
 
 	#addAssignEventListener()
 	{
-		this.#contextMenuView.assignMenuItem.addEventListener("click", async (event) => {
+		this.view.item("assign").addEventListener("click", async () => {
 
-			let editPlaylistField = this.#findPlaylistNameInResultsBody();
+			const editPlaylistField = this.#findPlaylistNameInResultsBody();
 
-			this.#playerNameAutocomplete = this.#autoCompleteFactory.create("playlist_name", "/async/playlists/find/for-player/");
-			this.#playerNameAutocomplete.initWithCreateFields(editPlaylistField, 'playlist_id');
-			this.#playerNameAutocomplete.getHiddenIdElement().addEventListener("selectedFromDataList", async (event) => {
+			const playlistAutocomplete = this.#autoCompleteFactory.create("playlist_name", "/async/playlists/find/for-player/");
+			playlistAutocomplete.initWithCreateFields(editPlaylistField, 'playlist_id');
+			playlistAutocomplete.getHiddenIdElement().addEventListener("selectedFromDataList", async (event) => {
 				const playlistId = event.target.value;
-				const result = await this.#playerService.replacePlaylist(this.#currentPlayerId, playlistId);
+				const result = await this.#playerService.replacePlaylist(this.unitId, playlistId);
 				if (result.success)
-				{
-					this.#playerNameAutocomplete.restore(result.playlist_name);
-				}
+					playlistAutocomplete.restore(result.playlist_name);
 			});
-
 		});
-
 	}
 
 	#addUnAssignEventListener()
 	{
-		this.#contextMenuView.unassignMenuItem.addEventListener("click", async (event) => {
+		this.view.item("unassign").addEventListener("click", async () => {
 
-			const result = await this.#playerService.replacePlaylist(this.#currentPlayerId, 0);
+			const result = await this.#playerService.replacePlaylist(this.unitId, 0);
 			if (!result.success)
 				return;
 
@@ -129,24 +99,8 @@ export class PlayerActionsContextMenu
 		});
 	}
 
-	#deletePlayerEventListener()
+	#findPlaylistNameInResultsBody()
 	{
-		this.#contextMenuView.deleteMenuItem.addEventListener('click', async (e) => {
-			e.preventDefault();
-			const ok = await Utils.confirmAction(this.#contextMenuView.deleteMenuItem.dataset.confirm);
-			if (ok)
-			{
-				const result = await this.#playerService.delete(this.#currentPlayerId);
-				if (result.success)
-					document.querySelector(`ul[data-id="${this.#currentPlayerId}"]`)?.closest('li')?.remove();
-				else
-					this.#flashMessageHandler.showError(result.error_message);
-			}
-		}, { signal: this.#controller.signal });
-	}
-
-	#findPlaylistNameInResultsBody(element)
-	{
-		return document.querySelector('ul.results-body[data-id="' + this.#currentPlayerId + '"] li.playlist_id');
+		return document.querySelector('ul.results-body[data-id="' + this.unitId + '"] li.playlist_id');
 	}
 }

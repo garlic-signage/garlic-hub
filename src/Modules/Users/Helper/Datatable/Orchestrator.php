@@ -59,6 +59,16 @@ class Orchestrator extends AbstractDatatableOrchestrator
 	}
 
 	/**
+	 * @return array<string,string>
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	public function prepareContextMenu(): array
+	{
+		return $this->datatablePreparer->formatContextMenu();
+	}
+
+	/**
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */

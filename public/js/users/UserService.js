@@ -22,6 +22,11 @@ import {UsersApiConfig} from "./UsersApiConfig.js";
 
 export class UserService  extends BaseService
 {
+	determineRights(uid)
+	{
+		return this._sendRequestAsync(UsersApiConfig.USER_ACLS_URI + "/" + uid, "GET");
+	}
+
 	async deleteUser(uid)
 	{
 		const url = UsersApiConfig.USER_DELETE_FROM_UI;

@@ -54,6 +54,7 @@ use App\Shared\User\UsersService;
 use Slim\Flash\Messages;
 use Phpfastcache\Helper\Psr16Adapter;
 use Psr\Container\ContainerInterface;
+use App\Modules\Users\Services\UserActions;
 
 $dependencies = [];
 $dependencies[UserRepositoryFactory::class] = DI\factory(function (ContainerInterface $container)
@@ -106,7 +107,10 @@ $dependencies[UsersController::class] = DI\factory(function (ContainerInterface 
 		$container->get(UsersDatatableService::class),
 		$container->get(UsersAdminService::class),
 		$container->get(Parameters::class),
-		$container->get(JsonResponseHandler::class)
+		$container->get(JsonResponseHandler::class),
+		$container->get(UserActions::class),
+		$container->get(UsersService::class),
+		$container->get(UserSession::class)
 	);
 });
 $dependencies[UserRightsController::class] = DI\factory(function (ContainerInterface $container)
@@ -164,8 +168,12 @@ $dependencies[DatatablePreparer::class] = DI\factory(function (ContainerInterfac
 		$container->get(AclValidator::class),
 		$container->get(Parameters::class),
 		$container->get(Translator::class),
-		$container->get(AclGrantService::class)
+		$container->get(UserActions::class)
 	);
+});
+$dependencies[UserActions::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new UserActions($container->get(AclValidator::class), $container->get(AclGrantService::class));
 });
 $dependencies[\App\Modules\Users\Helper\Datatable\Orchestrator::class] = DI\factory(function (ContainerInterface $container)
 {

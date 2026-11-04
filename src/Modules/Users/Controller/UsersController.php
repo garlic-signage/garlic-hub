@@ -35,6 +35,9 @@ use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Throwable;
+use App\Modules\Auth\UserSession;
+use App\Modules\Users\Services\UserActions;
+use App\Shared\User\UsersService;
 
 /**
  * UsersController handles user-related operations and interacts with services
@@ -46,8 +49,30 @@ readonly class UsersController
 		private UsersDatatableService $usersDatatableService,
 		private UsersAdminService $usersAdminService,
 		private Parameters $parameters,
-		private JsonResponseHandler $responseHandler
+		private JsonResponseHandler $responseHandler,
+		private UserActions $userActions,
+		private UsersService $usersService,
+		private UserSession $userSession
 	) {}
+
+	/**
+	 * The context menu of a user asks what the current user may do. Asking is no error:
+	 * without rights the answer is "nothing".
+	 *
+	 * @param array<string,string> $args
+	 * @throws Throwable
+	 */
+	public function determineRights(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+	{
+		$UID  = (int) ($args['UID'] ?? 0);
+		$main = $UID > 0 ? $this->usersService->getUserById($UID)->getMain() : [];
+		if ($main === [])
+			return $this->responseHandler->jsonSuccess($response, ['can_edit' => false, 'can_rights' => false, 'can_delete' => false]);
+
+		$actions = $this->userActions->determine($this->userSession->getUID(), $UID, (int) $main['company_id'], (int) $main['status']);
+
+		return $this->responseHandler->jsonSuccess($response, $actions);
+	}
 
 	/**
 	 * @throws Exception

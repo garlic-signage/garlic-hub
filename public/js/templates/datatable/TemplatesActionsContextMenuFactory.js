@@ -17,7 +17,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 'use strict';
-import {TemplatesActionsContextMenuView} from "./TemplatesActionsContextMenuView.js";
+import {ActionsContextMenuView} from "../../core/ContextMenu/ActionsContextMenuView.js";
 import {TemplatesActionsContextMenu} from "./TemplatesActionsContextMenu.js";
 
 export class TemplatesActionsContextMenuFactory
@@ -36,7 +36,7 @@ export class TemplatesActionsContextMenuFactory
 	create()
 	{
 		return  new TemplatesActionsContextMenu(
-			new TemplatesActionsContextMenuView(),
+			new ActionsContextMenuView("templatesActionsContextMenuTemplate"),
 			this.#flashMessageHandler,
 			this.#templatesService,
 			this.#shareDialog

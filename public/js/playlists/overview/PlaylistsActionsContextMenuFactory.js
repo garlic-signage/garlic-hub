@@ -17,7 +17,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 'use strict';
-import {PlaylistsActionsContextMenuView} from "./PlaylistsActionsContextMenuView.js";
+import {ActionsContextMenuView} from "../../core/ContextMenu/ActionsContextMenuView.js";
 import {PlaylistsActionsContextMenu}     from "./PlaylistsActionsContextMenu.js";
 
 export class PlaylistsActionsContextMenuFactory
@@ -36,7 +36,7 @@ export class PlaylistsActionsContextMenuFactory
 	create()
 	{
 		return new PlaylistsActionsContextMenu(
-			new PlaylistsActionsContextMenuView(),
+			new ActionsContextMenuView("playlistsActionsContextMenuTemplate"),
 			this.#flashMessageHandler,
 			this.#playlistsService,
 			this.#shareDialog

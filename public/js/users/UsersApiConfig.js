@@ -19,6 +19,7 @@
 export const UsersApiConfig = {
 	USER_TOKENS_BASE_URI: "/async/users/tokens",
 	USER_DELETE_FROM_UI: "/async/users",
-	USER_RIGHTS_URI: "/async/users/rights"
+	USER_RIGHTS_URI: "/async/users/rights",
+	USER_ACLS_URI: "/async/users/acls"
 
 }

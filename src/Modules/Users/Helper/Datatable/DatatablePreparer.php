@@ -31,7 +31,7 @@ use App\Framework\Utils\Datatable\Results\HeaderField;
 use App\Modules\Users\Services\AclValidator;
 use App\Modules\Users\UserStatus;
 use Doctrine\DBAL\Exception;
-use App\Shared\Acl\AclGrantService;
+use App\Modules\Users\Services\UserActions;
 
 /**
  * DatatablePreparer is responsible for preparing table data based on
@@ -43,7 +43,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 {
 	private AclValidator $aclValidator;
 
-	public function __construct(PrepareService $prepareService, AclValidator $aclValidator, Parameters $parameters, Translator $translator, private readonly AclGrantService $aclGrantService)
+	public function __construct(PrepareService $prepareService, AclValidator $aclValidator, Parameters $parameters, Translator $translator, private readonly UserActions $userActions)
 	{
 		$this->aclValidator = $aclValidator;
 		parent::__construct('users', $prepareService, $parameters, $translator);
@@ -101,38 +101,34 @@ class DatatablePreparer extends AbstractDatatablePreparer
 				$list['elements_result_element'][] = $resultElements;
 			}
 
-			// the form is for who may change the user, a deleted user is anonymized and can not be changed
-			if ((int) $user['status'] !== UserStatus::DELETED->value && $this->aclValidator->isAdmin($currentUID, ['UID' => (int) $user['UID'], 'company_id' => (int) $user['company_id']]))
+			// a context menu for who may do anything with the user, the entries come from the acls endpoint
+			$actions = $this->userActions->determine($currentUID, (int) $user['UID'], (int) $user['company_id'], (int) $user['status']);
+			if (UserActions::hasAny($actions))
 			{
-				$list['has_action_link'] = [
-					$this->prepareService->getBodyPreparer()->formatActionLink(
-						$this->translator->translate('edit_settings', 'users'),
-						'/users/edit/' . $user['UID'],
-						'edit', (string) $user['UID'], 'pencil')
-				];
-				// nobody deletes himself, the installation would be without admin
-				if ($this->aclValidator->isModuleAdmin($currentUID) && (int) $user['UID'] !== $currentUID)
-				{
-					$list['has_delete'] = $this->prepareService->getBodyPreparer()->formatActionDelete(
-						$this->translator->translate('delete', 'main'),
-						$this->translator->translate('confirm_delete', 'users'),
-						(string) $user['UID'],
-						'delete-user'
-					);
-				}
-
-			}
-			// the rights page is for who may grant a right in any module, nobody changes his own rights
-			if ((int) $user['status'] !== UserStatus::DELETED->value && (int) $user['UID'] !== $currentUID
-				&& $this->aclGrantService->findGrantableModules($currentUID, (int) $user['company_id']) !== [])
-			{
-				$list['has_action_link'][] = $this->prepareService->getBodyPreparer()->formatActionLink(
-					$this->translator->translate('rights', 'users'),
-					'/users/rights/' . $user['UID'],
-					'rights', (string) $user['UID'], 'shield-lock');
+				$list['has_action'][] = $this->prepareService->getBodyPreparer()->formatAction(
+					$this->translator->translate('actions', 'users'),
+					'user-contextmenu',
+					(string) $user['UID'],
+					'three-dots user-contextmenu',
+				);
 			}
 			$body[] = $list;
 		}
 		return $body;
+	}
+
+	/**
+	 * @return array<string,string>
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	public function formatContextMenu(): array
+	{
+		return [
+			'LANG_EDIT'           => $this->translator->translate('edit_settings', 'users'),
+			'LANG_RIGHTS'         => $this->translator->translate('rights', 'users'),
+			'LANG_DELETE'         => $this->translator->translate('delete', 'main'),
+			'LANG_CONFIRM_DELETE' => $this->translator->translate('confirm_delete', 'users')
+		];
 	}
 }

@@ -62,7 +62,7 @@ class ShowDatatableControllerTest extends UsersControllerTestCase
 		static::assertSame(['username', 'created_at', 'status'], array_column($rows[2]['elements_result_element'], 'CONTROL_NAME_BODY'));
 		static::assertSame('bernd', $rows[2]['elements_result_element'][0]['is_text']['CONTROL_ELEMENT_VALUE_TEXT']);
 		static::assertSame('Registered', $rows[2]['elements_result_element'][2]['is_text']['CONTROL_ELEMENT_VALUE_TEXT']);
-		static::assertSame('/users/edit/3', $rows[2]['has_action_link'][0]['LINK_ACTION']);
+		static::assertSame('user-contextmenu', $rows[2]['has_action'][0]['ACTION_NAME']);
 	}
 
 	public function testThePageHasItsTemplateAndTheFilters(): void
@@ -195,57 +195,28 @@ class ShowDatatableControllerTest extends UsersControllerTestCase
 		static::assertSame([1, 2, 3], $this->idsOf(['username' => ['an'], 'status' => ['1']]));
 	}
 
-	public function testTheAdminGetsALinkToTheFormOfEveryUser(): void
+	/**
+	 * Which entries the menu has, says the acls endpoint (UsersControllerTest).
+	 */
+	public function testTheAdminGetsTheContextMenuOfEveryUserButNotOfADeletedOne(): void
 	{
 		$this->actingAs(1);
+		$this->connection->executeStatement('UPDATE user_main SET status = 0 WHERE UID = 3');
 
-		$links = array_map(static fn(array $row): string => $row['has_action_link'][0]['LINK_ACTION'], $this->list()->getTemplateData()['elements_results']);
+		$rows = $this->list()->getTemplateData()['elements_results'];
 
-		static::assertSame(['/users/edit/1', '/users/edit/2', '/users/edit/3'], $links);
+		static::assertSame(['user-contextmenu'], array_column($rows[0]['has_action'], 'ACTION_NAME'));
+		static::assertSame(['user-contextmenu'], array_column($rows[1]['has_action'], 'ACTION_NAME'));
+		static::assertArrayNotHasKey('has_action', $rows[2]);
+		static::assertArrayNotHasKey('has_action_link', $rows[1], 'The single action icons are gone.');
+		static::assertArrayNotHasKey('has_delete', $rows[1]);
 	}
 
-	public function testTheAdminGetsALinkToTheRightsOfEveryOtherUser(): void
-	{
-		$this->actingAs(1);
-
-		$links = array_map(
-			static fn(array $row): array => array_column($row['has_action_link'] ?? [], 'LINK_ACTION', 'LINK_ACTION_NAME'),
-			$this->list()->getTemplateData()['elements_results']
-		);
-
-		static::assertArrayNotHasKey('rights', $links[0], 'Nobody changes his own rights.');
-		static::assertSame('/users/rights/2', $links[1]['rights']);
-		static::assertSame('/users/rights/3', $links[2]['rights']);
-	}
-
-	public function testAUserGetsNoLinkToTheFormOfHerself(): void
+	public function testAUserGetsNoContextMenuOfHerself(): void
 	{
 		$this->actingAs(2);
 
-		static::assertArrayNotHasKey('has_action_link', $this->list()->getTemplateData()['elements_results'][0]);
-	}
-
-	public function testTheAdminCanDeleteOtherActiveUsersButNeitherHimselfNorDeletedOnes(): void
-	{
-		$this->actingAs(1);
-		$this->connection->executeStatement('UPDATE user_main SET status = 0 WHERE UID = 3');
-
-		$rows = $this->list()->getTemplateData()['elements_results'];
-
-		static::assertArrayNotHasKey('has_delete', $rows[0]);
-		static::assertSame('delete-user', $rows[1]['has_delete']['DELETE_CLASS'] ?? $rows[1]['has_delete']['ELEMENT_DELETE_CLASS'] ?? null);
-		static::assertArrayNotHasKey('has_delete', $rows[2]);
-	}
-
-	public function testADeletedUserHasNoLinkToTheForm(): void
-	{
-		$this->actingAs(1);
-		$this->connection->executeStatement('UPDATE user_main SET status = 0 WHERE UID = 3');
-
-		$rows = $this->list()->getTemplateData()['elements_results'];
-
-		static::assertSame(['/users/edit/1', '/users/edit/2'], [$rows[0]['has_action_link'][0]['LINK_ACTION'], $rows[1]['has_action_link'][0]['LINK_ACTION']]);
-		static::assertArrayNotHasKey('has_action_link', $rows[2]);
+		static::assertArrayNotHasKey('has_action', $this->list()->getTemplateData()['elements_results'][0]);
 	}
 
 	public function testAUserDoesNotGetADeleteAction(): void

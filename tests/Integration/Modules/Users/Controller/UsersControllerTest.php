@@ -66,6 +66,39 @@ class UsersControllerTest extends UsersControllerTestCase
 		return $names;
 	}
 
+	/**
+	 * @return array<string,mixed>
+	 */
+	private function rights(int $UID): array
+	{
+		return $this->json($this->controller->determineRights($this->request('GET', '/async/users/acls/' . $UID, null), $this->newResponse(), ['UID' => (string) $UID]));
+	}
+
+	public function testTheEntriesOfTheContextMenuOfAUser(): void
+	{
+		$this->actingAs(1);
+
+		static::assertSame(['success' => true, 'can_edit' => true, 'can_rights' => true, 'can_delete' => true], $this->rights(2));
+		// nobody deletes himself or changes his own rights
+		static::assertSame(['success' => true, 'can_edit' => true, 'can_rights' => false, 'can_delete' => false], $this->rights(1));
+		static::assertSame(['success' => true, 'can_edit' => false, 'can_rights' => false, 'can_delete' => false], $this->rights(99));
+	}
+
+	public function testADeletedUserHasNoEntries(): void
+	{
+		$this->actingAs(1);
+		$this->connection->executeStatement('UPDATE user_main SET status = 0 WHERE UID = 3');
+
+		static::assertSame(['success' => true, 'can_edit' => false, 'can_rights' => false, 'can_delete' => false], $this->rights(3));
+	}
+
+	public function testAUserWithoutRightsHasNoEntries(): void
+	{
+		$this->actingAs(2);
+
+		static::assertSame(['success' => true, 'can_edit' => false, 'can_rights' => false, 'can_delete' => false], $this->rights(3));
+	}
+
 	public function testTheAdminDeletesAUser(): void
 	{
 		$this->actingAs(1);

@@ -18,32 +18,15 @@
 */
 
 "use strict";
-import {UserService} from "../UserService.js";
-import {FetchClient} from "../../core/FetchClient.js";
-import {FlashMessageHandler} from "../../core/FlashMessageHandler.js";
-import {Utils} from "../../core/Utils.js";
+import {UserService}                    from "../UserService.js";
+import {FetchClient}                    from "../../core/FetchClient.js";
+import {FlashMessageHandler}            from "../../core/FlashMessageHandler.js";
+import {ActionsContextMenu}             from "../../core/ContextMenu/ActionsContextMenu.js";
+import {UsersActionsContextMenuFactory} from "./UsersActionsContextMenuFactory.js";
 
 document.addEventListener("DOMContentLoaded", function()
 {
-	const deleteUsers         = document.getElementsByClassName("delete-user");
-	const userService         = new UserService(new FetchClient());
-	const flashMessageHandler = new FlashMessageHandler();
+	const factory = new UsersActionsContextMenuFactory(new FlashMessageHandler(), new UserService(new FetchClient()));
 
-	for (const deleteUser of deleteUsers)
-	{
-		deleteUser.addEventListener('click',  async function (e)
-		{
-			e.preventDefault();
-			const UID = e.target.dataset.deleteId;
-			const ok  = await Utils.confirmAction(e.target.dataset.confirm);
-			if (!ok)
-				return;
-
-			const result = await userService.deleteUser(UID);
-			if (result.success)
-				document.querySelector(`ul[data-id="${UID}"]`)?.closest('li')?.remove();
-			else
-				flashMessageHandler.showError(result.error_message);
-		});
-	}
+	ActionsContextMenu.bindTo("user-contextmenu", () => factory.create());
 });

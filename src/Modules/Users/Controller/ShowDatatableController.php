@@ -57,6 +57,7 @@ readonly class ShowDatatableController
 		$dataGrid = $this->orchestrator->prepareUITemplate();
 
 		$templateData = $this->templateFormatter->preparerUITemplate($dataGrid);
+		$templateData['this_layout']['data']['users_actions_contextmenu'] = $this->orchestrator->prepareContextMenu();
 
 		return new PageResponse($templateData);
 	}
