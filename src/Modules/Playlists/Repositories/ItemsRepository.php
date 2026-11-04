@@ -103,17 +103,6 @@ class ItemsRepository extends SqlBase
 
 		$select = 'item_id, flags, playlists_items.playlist_id, playlists_items.UID, item_type, item_order, file_resource, datasource, item_duration, item_filesize, playlists_items.mimetype, item_name, properties, conditional, categories, content_data, begin_trigger, end_trigger, mediapool_files.extension, nested_playlist.time_limit, nested_playlist.owner_duration';
 
-		if ($edition === Config::PLATFORM_EDITION_CORE || $edition === Config::PLATFORM_EDITION_ENTERPRISE)
-		{
-			$select .= ', templates_content.filetype, templates_content.media_type';
-			$queryBuilder->leftJoin(
-				'playlists_items',
-				'templates_content',
-				'templates_content',
-				"item_type = '" . ItemType::TEMPLATE->value . "' AND playlists_items.file_resource = templates_content.content_id"
-			);
-		}
-
 		if ($edition === Config::PLATFORM_EDITION_ENTERPRISE)
 		{
 			$select .= ', channels.channel_type, channels.view_mode, channels.vendor';

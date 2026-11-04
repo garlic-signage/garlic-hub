@@ -105,7 +105,7 @@ class AuthMiddlewareTest extends TestCase
 	{
 		$_COOKIE[AutoLoginService::COOKIE_NAME_AUTO_LOGIN] = 'cookie-token';
 		$this->authService->method('loginByCookie')->willReturn(
-			new UserEntity(['UID' => $UID, 'username' => 'user', 'locale' => $locale], [], [], [], [], [])
+			new UserEntity(['UID' => $UID, 'username' => 'user', 'locale' => $locale], [], [], [], [])
 		);
 	}
 
@@ -339,7 +339,7 @@ class AuthMiddlewareTest extends TestCase
 	#[Group('units')]
 	public function testWithoutACookieNobodyIsLoggedIn(): void
 	{
-		$this->authService->method('loginByCookie')->willReturn(new UserEntity(['UID' => 1, 'locale' => 'en_US'], [], [], [], [], []));
+		$this->authService->method('loginByCookie')->willReturn(new UserEntity(['UID' => 1, 'locale' => 'en_US'], [], [], [], []));
 
 		$this->assertRedirect($this->process('/playlists'), '/login');
 		static::assertSame([], $this->session->data);

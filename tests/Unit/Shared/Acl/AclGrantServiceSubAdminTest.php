@@ -158,7 +158,7 @@ class AclGrantServiceSubAdminTest extends TestCase
 
 		$usersService = $this->createStub(UsersService::class);
 		$usersService->method('getUserById')->willReturnCallback(
-			fn(int $UID) => new UserEntity(['UID' => $UID, 'company_id' => $UID === 3 ? 6 : 5], [], [], [], [], [])
+			fn(int $UID) => new UserEntity(['UID' => $UID, 'company_id' => $UID === 3 ? 6 : 5], [], [], [], [])
 		);
 
 		$units = $this->createStub(AclUnitProvider::class);

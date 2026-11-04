@@ -108,7 +108,7 @@ class AuthServiceTest extends TestCase
 				$status = $user['status'];
 		}
 
-		return new UserEntity(['UID' => $UID, 'status' => $status, 'username' => 'user', 'locale' => 'en_US'], [], [], [], [], []);
+		return new UserEntity(['UID' => $UID, 'status' => $status, 'username' => 'user', 'locale' => 'en_US'], [], [], [], []);
 	}
 
 	/**

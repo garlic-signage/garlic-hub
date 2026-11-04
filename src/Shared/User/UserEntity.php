@@ -34,8 +34,6 @@ class UserEntity implements UserEntityInterface
 	/** @var array<string,mixed>  */
 	private array $contact;
 	/** @var array<string,mixed>  */
-	private array $stats;
-	/** @var array<string,mixed>  */
 	private array $security;
 	/** @var list<array<string,mixed>>  */
 	private array $acl;
@@ -45,16 +43,14 @@ class UserEntity implements UserEntityInterface
 	/**
 	 * @param array<string,mixed> $main
 	 * @param array<string,mixed> $contact
-	 * @param array<string,mixed> $stats
 	 * @param array<string,mixed> $security
 	 * @param list<array<string,mixed>> $acl
 	 * @param list<array<string,mixed>> $vip
 	 */
-	public function __construct(array $main, array $contact, array $stats, array $security, array $acl, array $vip)
+	public function __construct(array $main, array $contact, array $security, array $acl, array $vip)
 	{
 		$this->main     = $main;
 		$this->contact  = $contact;
-		$this->stats    = $stats;
 		$this->security = $security;
 		$this->acl      = $acl;
 		$this->vip      = $vip;
@@ -76,13 +72,6 @@ class UserEntity implements UserEntityInterface
 		return $this->contact;
 	}
 
-	/**
-	 * @return array<string,mixed>
-	 */
-	public function getStats(): array
-	{
-		return $this->stats;
-	}
 
 	/**
 	 * @return array<string,mixed>

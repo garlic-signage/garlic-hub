@@ -60,7 +60,7 @@ class AclValidatorTest extends TestCase
 
 	private function user(int $UID): UserEntity
 	{
-		return new UserEntity(['UID' => $UID], [], [], [], $this->acl, $this->vip);
+		return new UserEntity(['UID' => $UID], [], [], $this->acl, $this->vip);
 	}
 
 	private function validator(string $edition = Config::PLATFORM_EDITION_EDGE): AclValidator

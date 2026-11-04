@@ -23,7 +23,6 @@ namespace App\Shared\User\Repositories;
 
 use App\Framework\Config\Config;
 use App\Shared\User\Repositories\Core\UserContactRepository;
-use App\Shared\User\Repositories\Core\UserStatsRepository;
 use App\Shared\User\Repositories\Edge\UserAclRepository;
 use App\Shared\User\Repositories\Edge\UserMainRepository;
 use App\Shared\User\Repositories\Edge\UserTokensRepository;
@@ -65,7 +64,6 @@ class UserRepositoryFactory
 	 *     tokens: UserTokensRepository,
 	 *     acl: UserAclRepository,
 	 *     contact?: UserContactRepository,
-	 *     stats?: UserStatsRepository,
 	 *     vip: UserVipRepository,
 	 *     security?: UserSecurityRepository
 	 *	 }
@@ -82,7 +80,6 @@ class UserRepositoryFactory
 				'tokens'   => new UserTokensRepository($this->connection),
 				'acl'      => new UserAclRepository($this->connection),
 				'contact'  => new UserContactRepository($this->connection),
-				'stats'    => new UserStatsRepository($this->connection),
 				'vip'      => new UserVipRepository($this->connection),
 				'security' => new UserSecurityRepository($this->connection)
 			],
@@ -91,8 +88,7 @@ class UserRepositoryFactory
 				'tokens'  => new UserTokensRepository($this->connection),
 				'acl'     => new UserAclRepository($this->connection),
 				'vip'     => new UserVipRepository($this->connection),
-				'contact' => new UserContactRepository($this->connection),
-				'stats'   => new UserStatsRepository($this->connection)
+				'contact' => new UserContactRepository($this->connection)
 			],
 			default => [
 				'main' => new UserMainRepository($this->connection),

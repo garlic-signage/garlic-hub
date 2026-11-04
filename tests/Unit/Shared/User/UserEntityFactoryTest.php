@@ -49,7 +49,6 @@ class UserEntityFactoryTest extends TestCase
 		$userData = [
 			'main' => ['id' => 1, 'name' => 'Enterprise User'],
 			'contact' => ['email' => 'enterprise@example.com'],
-			'stats' => ['logins' => 5],
 			'security' => ['role' => 'admin'],
 			'acl' => ['permissions' => ['read', 'write']],
 			'vip' => ['status' => 'gold'],
@@ -63,7 +62,6 @@ class UserEntityFactoryTest extends TestCase
 
 		static::assertEquals($userData['main'], $result->getMain());
 		static::assertEquals($userData['contact'], $result->getContact());
-		static::assertEquals($userData['stats'], $result->getStats());
 		static::assertEquals($userData['security'], $result->getSecurity());
 		static::assertEquals($userData['acl'], $result->getAcl());
 		static::assertEquals($userData['vip'], $result->getVip());
@@ -75,7 +73,6 @@ class UserEntityFactoryTest extends TestCase
 		$userData = [
 			'main' => ['id' => 1, 'name' => 'Core User'],
 			'contact' => ['email' => 'core@example.com'],
-			'stats' => ['logins' => 3],
 			'security' => ['role' => 'user'], // Ignoriert in Core
 			'acl' => ['permissions' => ['read']],
 			'vip' => ['status' => 'silver'],
@@ -89,7 +86,6 @@ class UserEntityFactoryTest extends TestCase
 
 		static::assertEquals($userData['main'], $result->getMain());
 		static::assertEquals($userData['contact'], $result->getContact());
-		static::assertEquals($userData['stats'], $result->getStats());
 		static::assertEquals([], $result->getSecurity());
 		static::assertEquals($userData['acl'], $result->getAcl());
 		static::assertEquals($userData['vip'], $result->getVip());
@@ -101,7 +97,6 @@ class UserEntityFactoryTest extends TestCase
 		$userData = [
 			'main' => ['id' => 1, 'name' => 'Edge User'],
 			'contact' => ['email' => 'edge@example.com'], // Ignored in Edge
-			'stats' => ['logins' => 1], // Ignored in Edge
 			'security' => ['role' => 'guest'], // Ignored in Edge
 			'acl' => ['permissions' => ['read']],
 			'vip' => ['status' => 'none'],
@@ -115,7 +110,6 @@ class UserEntityFactoryTest extends TestCase
 
 		static::assertEquals($userData['main'], $result->getMain());
 		static::assertEmpty($result->getContact());
-		static::assertEmpty($result->getStats());
 		static::assertEmpty($result->getSecurity());
 		static::assertNotEmpty($result->getAcl());
 		static::assertEquals($userData['vip'], $result->getVip());

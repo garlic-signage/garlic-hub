@@ -53,7 +53,6 @@ class UserRepositoryFactoryTest extends TestCase
 		$result = $this->factory->create();
 
 		static::assertArrayHasKey('contact', $result);
-		static::assertArrayHasKey('stats', $result);
 		static::assertArrayHasKey('vip', $result);
 		static::assertArrayHasKey('security', $result);
 	}
@@ -66,7 +65,6 @@ class UserRepositoryFactoryTest extends TestCase
 		$result = $this->factory->create();
 
 		static::assertArrayHasKey('contact', $result);
-		static::assertArrayHasKey('stats', $result);
 		static::assertArrayHasKey('vip', $result);
 		static::assertArrayNotHasKey('security', $result);
 	}
@@ -79,7 +77,6 @@ class UserRepositoryFactoryTest extends TestCase
 		$result = $this->factory->create();
 
 		static::assertArrayNotHasKey('contact', $result);
-		static::assertArrayNotHasKey('stats', $result);
 		static::assertArrayHasKey('vip', $result);
 		static::assertArrayNotHasKey('security', $result);
 	}
@@ -92,14 +89,12 @@ class UserRepositoryFactoryTest extends TestCase
 		$result = $this->factory->create();
 
 		static::assertArrayNotHasKey('contact', $result);
-		static::assertArrayNotHasKey('stats', $result);
 		static::assertArrayHasKey('vip', $result);
 		static::assertArrayNotHasKey('security', $result);
 
 		$result = $this->factory->create();
 
 		static::assertArrayNotHasKey('contact', $result);
-		static::assertArrayNotHasKey('stats', $result);
 		static::assertArrayHasKey('vip', $result);
 		static::assertArrayNotHasKey('security', $result);
 

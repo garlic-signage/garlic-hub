@@ -35,7 +35,7 @@ class UserEntityTest extends TestCase
 		$this->userEntity = new UserEntity(['id' => '123', 'name' => 'John Doe'], [
 				'email' => 'john@example.com',
 				'phone' => '123456789'
-			], ['logins' => 42, 'last_login' => '2024-12-19'], ['password' => 'hashed_password'], [[
+			], ['password' => 'hashed_password'], [[
 				'role' => 'admin',
 				'permissions' => [
 					'read',
@@ -54,12 +54,6 @@ class UserEntityTest extends TestCase
 	public function testGetContact(): void
 	{
 		static::assertSame(['email' => 'john@example.com', 'phone' => '123456789'], $this->userEntity->getContact());
-	}
-
-	#[Group('units')]
-	public function testGetStats(): void
-	{
-		static::assertSame(['logins' => 42, 'last_login' => '2024-12-19'], $this->userEntity->getStats());
 	}
 
 	#[Group('units')]

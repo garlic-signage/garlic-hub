@@ -61,7 +61,7 @@ class LoginControllerTest extends TestCase
 		$this->authService = $this->createStub(AuthService::class);
 		$this->authService->method('login')->willReturnCallback(
 			static fn(string $username, string $password): ?UserEntity => $username === 'anna' && $password === 'secret'
-				? new UserEntity(['UID' => 2, 'username' => 'anna', 'locale' => 'de_DE'], [], [], [], [], [])
+				? new UserEntity(['UID' => 2, 'username' => 'anna', 'locale' => 'de_DE'], [], [], [], [])
 				: null
 		);
 		$this->authService->method('getErrorMessage')->willReturn('Invalid credentials.');
