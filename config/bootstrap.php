@@ -114,6 +114,8 @@ foreach ($directoryIterator as $file)
 try
 {
 	$container = $containerBuilder->build();
+	// a wrong edition in the .env stops the start, it must not run with the wrong migrations
+	$container->get(Config::class)->getEdition();
 
 	if (php_sapi_name() !== 'cli')
 	{

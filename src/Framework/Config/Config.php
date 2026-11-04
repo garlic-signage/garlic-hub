@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Framework\Config;
 
+use App\Framework\Exceptions\CoreException;
 use Monolog\Level;
 
 /**
@@ -34,6 +35,8 @@ class Config
 	public const string PLATFORM_EDITION_CORE = 'core';
 	public const string PLATFORM_EDITION_ENTERPRISE = 'enterprise';
 	public const string APP_CONTAINER_DOCKER = 'docker';
+	/** the former name of the core edition, an older .env still has it */
+	private const string LEGACY_EDITION_EDGE = 'edge';
 
 	private ConfigLoaderInterface $configLoader;
 
@@ -60,11 +63,20 @@ class Config
 		return $this->env[$key] ?? '';
 	}
 
+	/**
+	 * An empty edition and the former name edge are the core edition. Any other value is a mistake
+	 * in the .env: running it as core would apply the migrations of the wrong edition, so it fails.
+	 *
+	 * @throws CoreException
+	 */
 	public function getEdition(): string
 	{
-		$edition = $this->getEnv('APP_PLATFORM_EDITION');
-		if (empty($edition))
+		$edition = trim($this->getEnv('APP_PLATFORM_EDITION'));
+		if ($edition === '' || $edition === self::LEGACY_EDITION_EDGE)
 			return self::PLATFORM_EDITION_CORE;
+
+		if ($edition !== self::PLATFORM_EDITION_CORE && $edition !== self::PLATFORM_EDITION_ENTERPRISE)
+			throw new CoreException("Unknown APP_PLATFORM_EDITION '" . $edition . "', expected core or enterprise.");
 
 		return $edition;
 	}

@@ -170,6 +170,33 @@ class ConfigTest extends TestCase
 	}
 
 	/**
+	 * @return array<string,array{string}>
+	 */
+	public static function coreEditions(): array
+	{
+		return ['empty' => [''], 'blank' => ['  '], 'core' => ['core'], 'the former name edge' => ['edge']];
+	}
+
+	#[Group('units')]
+	#[DataProvider('coreEditions')]
+	public function testEmptyAndTheFormerNameEdgeAreTheCoreEdition(string $edition): void
+	{
+		$config = new Config($this->loader, [], ['APP_PLATFORM_EDITION' => $edition]);
+
+		static::assertSame(Config::PLATFORM_EDITION_CORE, $config->getEdition());
+	}
+
+	#[Group('units')]
+	public function testAnUnknownEditionIsAnError(): void
+	{
+		$config = new Config($this->loader, [], ['APP_PLATFORM_EDITION' => 'enterprize']);
+
+		$this->expectException(CoreException::class);
+		$this->expectExceptionMessage("Unknown APP_PLATFORM_EDITION 'enterprize', expected core or enterprise.");
+		$config->getEdition();
+	}
+
+	/**
 	 * @param array<string,string> $env
 	 */
 	#[Group('units')]
