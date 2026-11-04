@@ -77,7 +77,7 @@ class SettingsService
 		{
 			$default  = $this->valueOf($defaults, $field);
 			$override = $this->valueOf($overrides, $field);
-			$settings[] = ['field' => $field, 'value' => $override ?? $default ?? '', 'default' => $default ?? '', 'changed' => $override !== null];
+			$settings[] = ['field' => $field, 'value' => $this->toUnit($field, $override ?? $default ?? ''), 'default' => $this->toUnit($field, $default ?? ''), 'changed' => $override !== null];
 		}
 
 		return $settings;
@@ -148,7 +148,18 @@ class SettingsService
 		if ($number === false || ($field->min !== null && $number < $field->min) || ($field->max !== null && $number > $field->max))
 			return null;
 
-		return (string) $number;
+		return (string) ($number * $field->factor);
+	}
+
+	/**
+	 * A stored number in the unit of the form, a value which is no whole unit is rounded.
+	 */
+	private function toUnit(SettingField $field, string $value): string
+	{
+		if ($field->factor === 1 || !is_numeric($value))
+			return $value;
+
+		return (string) (int) round((float) $value / $field->factor);
 	}
 
 	/**

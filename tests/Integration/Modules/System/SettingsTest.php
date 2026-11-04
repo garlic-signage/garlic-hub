@@ -139,6 +139,17 @@ class SettingsTest extends ContainerTestCase
 		static::assertSame(['Defaults' => ['duration' => '20', 'fit' => 'fill']], $this->overrides->load('playlists'));
 	}
 
+	public function testTheFileSizesAreInMegabytesAndStoredInBytes(): void
+	{
+		static::assertSame(['value' => '20', 'default' => '20', 'changed' => false], $this->settings(1, 'mediapool')['max_file_sizes.images']);
+
+		$this->service->save(1, 'mediapool', ['max_file_sizes.images' => '50', 'max_file_sizes.documents' => '20', 'max_file_sizes.audios' => '100',
+			'max_file_sizes.videos' => '1024', 'max_file_sizes.downloads' => '1024', 'max_file_sizes.datasource' => '100']);
+
+		static::assertSame(['max_file_sizes' => ['images' => '52428800']], $this->overrides->load('mediapool'));
+		static::assertSame(['value' => '50', 'default' => '20', 'changed' => true], $this->settings(1, 'mediapool')['max_file_sizes.images']);
+	}
+
 	public function testASelectAcceptsOnlyItsOptions(): void
 	{
 		$this->expectException(TranslatableModuleException::class);

@@ -26,16 +26,19 @@ use App\Shared\Settings\SettingsSchema;
 use App\Shared\Settings\SettingType;
 
 /**
- * The largest file per media type an upload or a download may have, in bytes.
+ * The largest file per media type an upload or a download may have: in bytes in the ini, in MB in the form.
  */
 final readonly class MediapoolSettingsSchema implements SettingsSchema
 {
+	private const int MEGABYTE      = 1048576;
+	private const int MAX_MEGABYTES = 1048576; // 1 TB
+
 	public function fields(): array
 	{
 		$fields = [];
 		foreach (['images', 'documents', 'audios', 'videos', 'downloads', 'datasource'] as $type)
 		{
-			$fields[] = new SettingField('max_file_sizes', $type, SettingType::NUMBER, 'max_file_size_' . $type, 1);
+			$fields[] = new SettingField('max_file_sizes', $type, SettingType::NUMBER, 'max_file_size_' . $type, 1, self::MAX_MEGABYTES, factor: self::MEGABYTE);
 		}
 
 		return $fields;
