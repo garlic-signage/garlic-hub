@@ -26,4 +26,5 @@ enum SettingType: string
 	case SWITCH = 'switch';
 	case NUMBER = 'number';
 	case TEXT   = 'text';
+	case SELECT = 'select';
 }

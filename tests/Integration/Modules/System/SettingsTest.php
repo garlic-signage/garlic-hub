@@ -56,10 +56,10 @@ class SettingsTest extends ContainerTestCase
 	/**
 	 * @return array<string,array{value:string, default:string, changed:bool}>
 	 */
-	private function settings(int $UID): array
+	private function settings(int $UID, string $module = 'system'): array
 	{
 		$settings = [];
-		foreach ($this->service->findSettings($UID, 'system') as $setting)
+		foreach ($this->service->findSettings($UID, $module) as $setting)
 		{
 			$settings[$setting['field']->section . '.' . $setting['field']->key] = ['value' => $setting['value'], 'default' => $setting['default'], 'changed' => $setting['changed']];
 		}
@@ -76,9 +76,9 @@ class SettingsTest extends ContainerTestCase
 		], $this->settings(1));
 	}
 
-	public function testOnlyTheModuleAdminOfSystemGetsTheTab(): void
+	public function testOnlyTheModuleAdminGetsTheTabsOfTheModulesWithASchema(): void
 	{
-		static::assertSame(['system'], $this->service->findEditableModules(1));
+		static::assertSame(['mediapool', 'playlists', 'system'], $this->service->findEditableModules(1));
 		static::assertSame([], $this->service->findEditableModules(2));
 	}
 
@@ -123,6 +123,40 @@ class SettingsTest extends ContainerTestCase
 		}
 	}
 
+	public function testEverySettingOfASchemaHasADefault(): void
+	{
+		foreach ($this->service->findEditableModules(1) as $module)
+		{
+			foreach ($this->settings(1, $module) as $name => $setting)
+				static::assertNotSame('', $setting['default'], $module . ': ' . $name . ' is not in config_' . $module . '.ini');
+		}
+	}
+
+	public function testTheAdminChangesTheDefaultsOfThePlaylists(): void
+	{
+		$this->service->save(1, 'playlists', ['Defaults.duration' => '20', 'Defaults.volume' => '100', 'Defaults.fit' => 'fill', 'Defaults.media_align' => 'center']);
+
+		static::assertSame(['Defaults' => ['duration' => '20', 'fit' => 'fill']], $this->overrides->load('playlists'));
+	}
+
+	public function testASelectAcceptsOnlyItsOptions(): void
+	{
+		$this->expectException(TranslatableModuleException::class);
+		$this->service->save(1, 'playlists', ['Defaults.duration' => '15', 'Defaults.volume' => '100', 'Defaults.fit' => 'stretch', 'Defaults.media_align' => 'center']);
+	}
+
+	public function testTheSelectShowsTheStoredOption(): void
+	{
+		$this->service->save(1, 'playlists', ['Defaults.duration' => '15', 'Defaults.volume' => '100', 'Defaults.fit' => 'slice', 'Defaults.media_align' => 'center']);
+		$this->actingAs(1);
+
+		$response = $this->controller()->show(new ServerRequestFactory()->createServerRequest('GET', '/system/settings'), new Response());
+
+		static::assertInstanceOf(PageResponse::class, $response);
+		$fit = $response->getTemplateData()['tabs'][1]['fields'][2]['is_select']['options'];
+		static::assertSame(['slice'], array_column(array_filter($fit, static fn(array $option): bool => $option['SELECTED'] === 'selected'), 'OPTION'));
+	}
+
 	public function testAUserWithoutRightsChangesNothing(): void
 	{
 		$this->expectException(AccessDeniedException::class);
@@ -149,8 +183,8 @@ class SettingsTest extends ContainerTestCase
 
 		static::assertInstanceOf(PageResponse::class, $response);
 		$data = $response->getTemplateData();
-		static::assertSame(['system'], array_column($data['tabs'], 'MODULE'));
-		static::assertSame(['Audit.enabled', 'Audit.retention_days', 'Queue.enabled'], array_column($data['tabs'][0]['fields'], 'NAME'));
+		static::assertSame(['mediapool', 'playlists', 'system'], array_column($data['tabs'], 'MODULE'));
+		static::assertSame(['Audit.enabled', 'Audit.retention_days', 'Queue.enabled'], array_column($data['tabs'][2]['fields'], 'NAME'));
 	}
 
 	public function testAUserWithoutRightsIsSentBack(): void

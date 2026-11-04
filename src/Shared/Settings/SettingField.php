@@ -23,16 +23,20 @@ namespace App\Shared\Settings;
 
 /**
  * One setting an admin may change: a key in a section of the ini of the module.
- * The label is a key of the translations of the module.
+ * The label is a key of the translations of the module. A select offers only its options.
  */
 final readonly class SettingField
 {
+	/**
+	 * @param list<string> $options the values of a select
+	 */
 	public function __construct(
 		public string $section,
 		public string $key,
 		public SettingType $type,
 		public string $label,
 		public ?int $min = null,
-		public ?int $max = null
+		public ?int $max = null,
+		public array $options = []
 	) {}
 }

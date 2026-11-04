@@ -133,6 +133,7 @@ readonly class ShowSettingsController
 				'is_switch'     => $field->type === SettingType::SWITCH ? ['CHECKED' => $setting['value'] === '1' ? 'checked' : ''] : [],
 				'is_number'     => $field->type === SettingType::NUMBER ? ['MIN' => $field->min ?? '', 'MAX' => $field->max ?? ''] : [],
 				'is_text'       => $field->type === SettingType::TEXT ? [[]] : [],
+				'is_select'     => $field->type === SettingType::SELECT ? ['options' => $this->prepareOptions($field->options, $setting['value'])] : [],
 				'LANG_DEFAULT'  => $this->translator->translate('default_value', self::MODULE_NAME) . ': ' . $this->formatDefault($field->type, $setting['default']),
 				'is_changed'    => $setting['changed'] ? [['LANG_CHANGED' => $this->translator->translate('changed', self::MODULE_NAME)]] : []
 			];
@@ -143,6 +144,15 @@ readonly class ShowSettingsController
 			'LANG_MODULE' => $this->translator->translate($module, 'menu'),
 			'fields'      => $fields
 		];
+	}
+
+	/**
+	 * @param list<string> $options
+	 * @return list<array{OPTION:string, SELECTED:string}>
+	 */
+	private function prepareOptions(array $options, string $value): array
+	{
+		return array_map(static fn(string $option): array => ['OPTION' => $option, 'SELECTED' => $option === $value ? 'selected' : ''], $options);
 	}
 
 	private function formatDefault(SettingType $type, string $default): string

@@ -135,6 +135,7 @@ class SettingsService
 			SettingType::SWITCH => in_array($value, ['1', 1, true, 'on'], true) ? '1' : '0',
 			SettingType::NUMBER => $this->validateNumber($field, $value) ?? throw $invalid,
 			SettingType::TEXT   => is_string($value) && !str_contains($value, '"') && preg_match('/[\r\n]/', $value) !== 1 ? trim($value) : throw $invalid,
+			SettingType::SELECT => is_string($value) && in_array($value, $field->options, true) ? $value : throw $invalid,
 		};
 	}
 

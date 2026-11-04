@@ -33,8 +33,7 @@ class Properties
 	private string $fit;
 	private string $mediaAlign;
 	private string $volume;
-	/** @var string[] */
-	private array $mediaAligns = ['topLeft', 'topMid', 'topRight', 'midLeft', 'center', 'midRight', 'bottomLeft', 'bottomMid', 'bottomRight'];
+	public const array MEDIA_ALIGNS = ['topLeft', 'topMid', 'topRight', 'midLeft', 'center', 'midRight', 'bottomLeft', 'bottomMid', 'bottomRight'];
 	/** @var string[] */
 	private array $fits = ['fill', 'meet', 'meetBest', 'slice', 'scroll'];
 
@@ -60,7 +59,7 @@ class Properties
 
 	public function getMediaAlign(): string
 	{
-		if (in_array($this->mediaAlign, $this->mediaAligns))
+		if (in_array($this->mediaAlign, self::MEDIA_ALIGNS))
 			return 'mediaAlign="'.$this->mediaAlign.'" ';
 
 		return '';

@@ -23,6 +23,13 @@
 				{{#is_text}}
 				<input type="text" id="{{ID}}" name="settings[{{NAME}}]" value="{{VALUE}}">
 				{{/is_text}}
+				{{#is_select}}
+				<select id="{{ID}}" name="settings[{{NAME}}]">
+					{{#options}}
+					<option value="{{OPTION}}" {{SELECTED}}>{{OPTION}}</option>
+					{{/options}}
+				</select>
+				{{/is_select}}
 				<span class="setting-default">{{LANG_DEFAULT}}</span>
 				{{#is_changed}}
 				<span class="setting-changed">{{LANG_CHANGED}}</span>
