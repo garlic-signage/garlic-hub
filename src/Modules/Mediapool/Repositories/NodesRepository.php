@@ -164,4 +164,32 @@ class NodesRepository extends SqlBase
 
 		return $paths;
 	}
+
+	/**
+	 * The parents, grandparents ... of the directories, without the directories themselves.
+	 *
+	 * @param list<int> $nodeIds
+	 * @return array<string,list<int>> node id => ids of its ancestors, a root directory has none
+	 * @throws Exception
+	 */
+	public function findAncestorIds(array $nodeIds): array
+	{
+		if ($nodeIds === [])
+			return [];
+
+		$queryBuilder = $this->connection->createQueryBuilder();
+		$queryBuilder->select('node.node_id', 'ancestor.node_id AS ancestor_id')
+			->from($this->table, 'node')
+			->innerJoin('node', $this->table, 'ancestor', 'ancestor.root_id = node.root_id AND ancestor.lft < node.lft AND ancestor.rgt > node.rgt')
+			->where('node.node_id IN (:ids)')
+			->setParameter('ids', $nodeIds, ArrayParameterType::INTEGER);
+
+		$ancestors = [];
+		foreach ($queryBuilder->executeQuery()->fetchAllAssociative() as $row)
+		{
+			$ancestors[(string) $row['node_id']][] = (int) $row['ancestor_id'];
+		}
+
+		return $ancestors;
+	}
 }

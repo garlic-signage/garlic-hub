@@ -90,6 +90,22 @@ class NodesControllerTest extends ControllerTestCase
 		static::assertFalse($shared['children'][0]['rights']['create']);
 	}
 
+	/**
+	 * A shared root directory is in the tree already: Wunderbaum stops with "Duplicate key" when it is there twice.
+	 */
+	public function testASharedRootDirectoryIsOnlyOnceInTheTree(): void
+	{
+		$this->connection->executeStatement("INSERT INTO mediapool_nodes (node_id, root_id, parent_id, level, root_order, is_user_folder, lft, rgt, UID, visibility, name) VALUES (13, 13, 0, 1, 13, 0, 1, 2, 1, 0, 'test')");
+		$grants = $this->container->get(AclGrantService::class);
+		$grants->setRole(1, 3, 'mediapool', AclSections::VIEWER, true);
+		$grants->setUnitRole(1, 3, 'mediapool', 13, AclSections::VIEWER);
+		$this->actingAs(3);
+
+		$nodes = $this->json($this->controller->list($this->request('GET'), $this->newResponse(), ['parent_id' => '0']));
+
+		static::assertSame([1, 10, 13], array_column($nodes, 'key'));
+	}
+
 	public function testWithoutSharedDirectoriesThereIsNoSharedRoot(): void
 	{
 		$this->actingAs(1);

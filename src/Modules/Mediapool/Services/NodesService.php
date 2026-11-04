@@ -102,8 +102,9 @@ class NodesService
 
 	/**
 	 * The directories shared with the user, the children of the root "shared with me" in the tree.
-	 * They are named by their path, their own parents may not be readable. A shared directory
-	 * does not share its sub directories.
+	 * Only the ones which the tree does not show anyway: a parent of them is not readable. A key may
+	 * be in the tree only once. They are named by their path. A shared directory does not share its
+	 * sub directories.
 	 *
 	 * @return list<array<string,mixed>>
 	 * @throws CoreException
@@ -121,12 +122,35 @@ class NodesService
 		$nodeIds = array_map('intval', $this->aclValidator->findSharedUnitIds($UID, AclSections::EDITOR, AclSections::VIEWER));
 		$paths   = $this->nodesRepository->findPaths($nodeIds);
 
+		$nodeIds = $this->findUnreachableNodeIds($nodeIds);
 		// the own directories are in the tree already
 		$nodes = array_values(array_filter($this->nodesRepository->findNodesByIds($nodeIds), fn(array $node) => (int) $node['UID'] !== $UID));
 		$tree  = $this->prepareTree($nodes, $paths);
 		usort($tree, fn(array $a, array $b) => strcasecmp((string) $a['title'], (string) $b['title']));
 
 		return $tree;
+	}
+
+	/**
+	 * The directories which can not be reached by opening the tree: one of their parents is not readable.
+	 *
+	 * @param list<int> $nodeIds
+	 * @return list<int>
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws ModuleException
+	 * @throws UserException
+	 */
+	private function findUnreachableNodeIds(array $nodeIds): array
+	{
+		$ancestors = $this->nodesRepository->findAncestorIds($nodeIds);
+		$allIds    = array_values(array_unique(array_merge(...array_values($ancestors ?: [[]]))));
+		$readable  = array_map('intval', array_column($this->prepareTree($this->nodesRepository->findNodesByIds($allIds)), 'key'));
+
+		return array_values(array_filter(
+			$nodeIds,
+			fn(int $nodeId) => array_diff($ancestors[(string) $nodeId] ?? [], $readable) !== []
+		));
 	}
 
 	/**
