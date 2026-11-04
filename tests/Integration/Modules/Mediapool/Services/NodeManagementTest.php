@@ -29,6 +29,8 @@ use App\Modules\Mediapool\Services\NodesService;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Integration\Support\ContainerTestCase;
+use App\Shared\Acl\AclSections;
+use App\Shared\Acl\AclGrantService;
 
 /**
  * What the directory tree does besides the rights (see NodeAccessTest): user folders, the number of deleted
@@ -102,6 +104,28 @@ class NodeManagementTest extends ContainerTestCase
 
 		$this->nodesService->deleteUserDirectory(3);
 		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_vip WHERE UID = 3'));
+	}
+
+	public function testAnEditorOfASharedDirectoryAddsToItButDoesNotDeleteIt(): void
+	{
+		$grants = $this->container->get(AclGrantService::class);
+		$grants->setRole(1, 3, 'mediapool', AclSections::EDITOR, true);
+		$grants->setUnitRole(1, 3, 'mediapool', 8, AclSections::EDITOR);
+		$this->actingAs(3);
+
+		$rights = array_column($this->nodesService->getSharedNodes(), 'rights', 'key')[8];
+		static::assertTrue($rights['create']);
+		static::assertFalse($rights['delete']);
+
+		$this->expectException(AccessDeniedException::class);
+		try
+		{
+			$this->nodesService->deleteNode(8);
+		}
+		finally
+		{
+			static::assertSame(1, $this->countNodes('node_id = 8'));
+		}
 	}
 
 	public function testDeletingTheFolderOfAUserWithoutOneDoesNothing(): void

@@ -470,7 +470,8 @@ class NodesService
 		{
 			$create = $rights['create'];
 			$edit = $rights['edit'];
-			$delete = $rights['create'];
+			// like edit: admin, owner and sub admin. An editor of a shared directory adds to it, but does not delete it
+			$delete = $rights['edit'];
 		}
 
 		return ['create' => $create, 'edit' => $edit, 'delete' => $delete, 'share' => $rights['share'], 'share_unit' => $shareUnit];
