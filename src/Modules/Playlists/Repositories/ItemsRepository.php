@@ -46,6 +46,50 @@ class ItemsRepository extends SqlBase
 	}
 
 	/**
+	 * The files of the mediapool which still exist, also the ones marked as deleted.
+	 *
+	 * @param list<string> $checksums
+	 * @return list<string>
+	 * @throws Exception
+	 */
+	public function findExistingChecksums(array $checksums): array
+	{
+		if ($checksums === [])
+			return [];
+
+		return array_map('strval', $this->connection->createQueryBuilder()
+			->select('DISTINCT checksum')
+			->from('mediapool_files')
+			->where('checksum IN (:checksums)')
+			->setParameter('checksums', $checksums, ArrayParameterType::STRING)
+			->executeQuery()
+			->fetchFirstColumn());
+	}
+
+	/**
+	 * Items of other playlists with one of the ids: a restored item must not take them over.
+	 *
+	 * @param list<int> $itemIds
+	 * @return list<int>
+	 * @throws Exception
+	 */
+	public function findItemIdsOfOtherPlaylists(int $playlistId, array $itemIds): array
+	{
+		if ($itemIds === [])
+			return [];
+
+		return array_map('intval', $this->connection->createQueryBuilder()
+			->select('item_id')
+			->from($this->table)
+			->where('item_id IN (:itemIds)')
+			->andWhere('playlist_id <> :playlistId')
+			->setParameter('itemIds', $itemIds, ArrayParameterType::INTEGER)
+			->setParameter('playlistId', $playlistId)
+			->executeQuery()
+			->fetchFirstColumn());
+	}
+
+	/**
 	 * @return list<array<string, mixed>>
 	 * @throws Exception
 	 */

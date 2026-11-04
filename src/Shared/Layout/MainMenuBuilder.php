@@ -28,6 +28,7 @@ use App\Framework\Localization\Translate\Translator;
 
 /**
  * Main navigation: the modules for logged-in users, otherwise the login link.
+ * The entry whose URL the current path starts with is marked active.
  */
 readonly class MainMenuBuilder
 {
@@ -36,19 +37,29 @@ readonly class MainMenuBuilder
 	}
 
 	/**
-	 * @return list<array{URL: string, LANG_MENU_POINT: string}>
+	 * @return list<array{URL: string, LANG_MENU_POINT: string, ACTIVE: string}>
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
-	public function build(): array
+	public function build(string $currentPath): array
 	{
 		if (!$this->session->exists('user'))
-			return [['URL' => '/login', 'LANG_MENU_POINT' => $this->translator->translate('login', 'login')]];
+			return [$this->buildEntry('/login', $this->translator->translate('login', 'login'), $currentPath)];
 
 		return [
-			['URL' => '/player', 'LANG_MENU_POINT' => $this->translator->translate('player', 'menu')],
-			['URL' => '/playlists', 'LANG_MENU_POINT' => $this->translator->translate('playlists', 'menu')],
-			['URL' => '/mediapool', 'LANG_MENU_POINT' => $this->translator->translate('mediapool', 'menu')]
+			$this->buildEntry('/player', $this->translator->translate('player', 'menu'), $currentPath),
+			$this->buildEntry('/playlists', $this->translator->translate('playlists', 'menu'), $currentPath),
+			$this->buildEntry('/mediapool', $this->translator->translate('mediapool', 'menu'), $currentPath)
 		];
+	}
+
+	/**
+	 * @return array{URL: string, LANG_MENU_POINT: string, ACTIVE: string}
+	 */
+	private function buildEntry(string $url, string $menuPoint, string $currentPath): array
+	{
+		$isActive = $currentPath === $url || str_starts_with($currentPath, $url . '/');
+
+		return ['URL' => $url, 'LANG_MENU_POINT' => $menuPoint, 'ACTIVE' => $isActive ? 'active' : ''];
 	}
 }

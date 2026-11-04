@@ -37,6 +37,8 @@ final readonly class SystemSettingsSchema implements SettingsSchema
 			// the scheduler deletes the old entries of the audit log
 			new SettingField('Audit', 'enabled', SettingType::SWITCH, 'audit_enabled', dependsOn: 'Scheduler.enabled'),
 			new SettingField('Audit', 'retention_days', SettingType::NUMBER, 'audit_retention_days', 1, 3650, dependsOn: 'Audit.enabled'),
+			new SettingField('Versioning', 'enabled', SettingType::SWITCH, 'versioning_enabled'),
+			new SettingField('Versioning', 'max_versions', SettingType::NUMBER, 'versioning_max_versions', 1, 100, dependsOn: 'Versioning.enabled'),
 		];
 	}
 }

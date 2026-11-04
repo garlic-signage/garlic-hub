@@ -165,6 +165,8 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 	$group->put('/playlists', resolve([ExportController::class, 'export'], $container));
 	$group->get('/playlists/find/{playlist_id:\d+}', resolve([PlaylistsController::class, 'findById'], $container));
 	$group->get('/playlists/acls/{playlist_id:\d+}', resolve([PlaylistsController::class, 'determineRights'], $container));
+	$group->get('/playlists/versions/{playlist_id:\d+}', resolve([\App\Modules\Playlists\Controller\PlaylistVersionsController::class, 'list'], $container));
+	$group->post('/playlists/versions/{playlist_id:\d+}', resolve([\App\Modules\Playlists\Controller\PlaylistVersionsController::class, 'restore'], $container));
 	$group->get('/playlists/multizone/{playlist_id:\d+}', resolve([PlaylistsController::class, 'loadZone'], $container));
 	$group->post('/playlists/multizone/{playlist_id:\d+}', resolve([PlaylistsController::class, 'saveZone'], $container));
 	$group->patch('/playlists/shuffle', resolve([PlaylistsController::class, 'toggleShuffle'], $container));
@@ -206,6 +208,8 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 	$group->delete('/templates', resolve([TemplatesController::class, 'delete'], $container));
 	$group->get('/templates/{template_id:\d+}', resolve([TemplatesController::class, 'load'], $container));
 	$group->get('/templates/acls/{template_id:\d+}', resolve([TemplatesController::class, 'determineRights'], $container));
+	$group->get('/templates/versions/{template_id:\d+}', resolve([\App\Modules\Templates\Controller\TemplateVersionsController::class, 'list'], $container));
+	$group->post('/templates/versions/{template_id:\d+}', resolve([\App\Modules\Templates\Controller\TemplateVersionsController::class, 'restore'], $container));
 	$group->get('/templates/find', resolve([TemplatesController::class, 'find'], $container));
 	$group->patch('/templates', resolve([TemplatesController::class, 'save'], $container));
 

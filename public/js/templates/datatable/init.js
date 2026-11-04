@@ -23,6 +23,7 @@ import {FetchClient}       from "../../core/FetchClient.js";
 import {TemplatesActionsContextMenuFactory} from "./TemplatesActionsContextMenuFactory.js";
 import {FlashMessageHandler} from "../../core/FlashMessageHandler.js";
 import {UnitShareDialog} from "../../core/UnitShareDialog.js";
+import {UnitVersionsDialog} from "../../core/UnitVersionsDialog.js";
 import {ActionsContextMenu} from "../../core/ContextMenu/ActionsContextMenu.js";
 
 document.addEventListener("DOMContentLoaded", function()
@@ -31,7 +32,8 @@ document.addEventListener("DOMContentLoaded", function()
 	const templatesActionsContextMenuFactory = new TemplatesActionsContextMenuFactory(
 		new FlashMessageHandler(),
 		templatesService,
-		UnitShareDialog.create("templates")
+		UnitShareDialog.create("templates"),
+		UnitVersionsDialog.create("templates")
 	);
 
 	ActionsContextMenu.bindTo("template-contextmenu", () => templatesActionsContextMenuFactory.create());

@@ -25,10 +25,12 @@ export class TemplatesActionsContextMenuFactory
 	#flashMessageHandler;
 	#templatesService;
 	#shareDialog;
+	#versionsDialog;
 
-	constructor(flashMessageHandler, templatesService, shareDialog)
+	constructor(flashMessageHandler, templatesService, shareDialog, versionsDialog)
 	{
 		this.#shareDialog = shareDialog;
+		this.#versionsDialog = versionsDialog;
 		this.#flashMessageHandler = flashMessageHandler;
 		this.#templatesService = templatesService;
 	}
@@ -39,7 +41,8 @@ export class TemplatesActionsContextMenuFactory
 			new ActionsContextMenuView("templatesActionsContextMenuTemplate"),
 			this.#flashMessageHandler,
 			this.#templatesService,
-			this.#shareDialog
+			this.#shareDialog,
+			this.#versionsDialog
 		);
 	}
 

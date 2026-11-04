@@ -24,6 +24,8 @@ use App\Shared\Acl\AclHelper;
 use App\Shared\Acl\AclGrantService;
 use App\Shared\Acl\AclUnitProvider;
 use App\Shared\Acl\TableUnitProvider;
+use App\Shared\Audit\AuditLog;
+use App\Shared\Versioning\UnitVersions;
 use App\Framework\Config\Config;
 use App\Framework\Validation\Sanitizer;
 use App\Framework\Http\Session;
@@ -84,6 +86,7 @@ use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
 use App\Modules\Playlists\Services\PlaylistMetricsUpdater;
 use App\Modules\Playlists\Services\PlaylistsDatatableService;
 use App\Modules\Playlists\Services\PlaylistsService;
+use App\Modules\Playlists\Services\PlaylistVersionsService;
 use App\Modules\Playlists\Contracts\PlaylistUsageFinderInterface;
 use App\Modules\Playlists\Services\PlaylistTemplateUsageCounter;
 use App\Modules\Playlists\Services\PlaylistUsageService;
@@ -126,7 +129,20 @@ $dependencies[PlaylistsService::class] = DI\factory(function (ContainerInterface
 		$container->get(AclValidator::class),
 		$container->get(UserSession::class),
 		$container->get(AclGrantService::class),
+		$container->get(UnitVersions::class),
 		$container->get('ModuleLogger')
+	);
+});
+$dependencies[PlaylistVersionsService::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new PlaylistVersionsService(
+		$container->get(PlaylistsService::class),
+		$container->get(PlaylistsRepository::class),
+		$container->get(ItemsRepository::class),
+		$container->get(UnitVersions::class),
+		$container->get(Transactions::class),
+		$container->get(UserSession::class),
+		$container->get(AuditLog::class)
 	);
 });
 $dependencies[Parameters::class] = DI\factory(function (ContainerInterface $container)
@@ -312,6 +328,7 @@ $dependencies[ExportService::class] = DI\factory(function (ContainerInterface $c
 			$container->get(TemplateItemName::class)
 		),
 		$container->get(TemplateItemName::class),
+		$container->get(PlaylistVersionsService::class),
 		$container->get('ModuleLogger')
 	);
 });

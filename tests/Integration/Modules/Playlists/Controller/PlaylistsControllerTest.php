@@ -58,7 +58,7 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 		$this->actingAs(2);
 
 		static::assertSame(
-			['success' => true, 'can_edit' => true, 'can_delete' => true, 'can_share' => false, 'playlist_id' => 4, 'playlist_name' => 'Frei'],
+			['success' => true, 'can_edit' => true, 'can_delete' => true, 'can_share' => false, 'can_version' => false, 'playlist_id' => 4, 'playlist_name' => 'Frei'],
 			$this->rights(4)
 		);
 	}
@@ -84,8 +84,8 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 	{
 		$this->actingAs(2);
 
-		static::assertSame(['success' => true, 'can_edit' => false, 'can_delete' => false, 'can_share' => false], $this->rights(2));
-		static::assertSame(['success' => true, 'can_edit' => false, 'can_delete' => false, 'can_share' => false], $this->rights(99));
+		static::assertSame(['success' => true, 'can_edit' => false, 'can_delete' => false, 'can_share' => false, 'can_version' => false], $this->rights(2));
+		static::assertSame(['success' => true, 'can_edit' => false, 'can_delete' => false, 'can_share' => false, 'can_version' => false], $this->rights(99));
 	}
 
 	public function testAPlaylistIsDeletedWithItsItems(): void

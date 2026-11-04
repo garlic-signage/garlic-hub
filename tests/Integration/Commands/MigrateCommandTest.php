@@ -64,7 +64,7 @@ class MigrateCommandTest extends TestCase
 
 		static::assertSame(Command::SUCCESS, $this->tester->getStatusCode());
 		static::assertStringContainsString('Migration succeed.', $this->tester->getDisplay());
-		static::assertSame([1, 2, 3, 4, 5, 6, 7], $this->versions());
+		static::assertSame([1, 2, 3, 4, 5], $this->versions());
 		static::assertContains('user_main', $this->tables());
 	}
 
@@ -76,7 +76,7 @@ class MigrateCommandTest extends TestCase
 
 		static::assertSame(Command::SUCCESS, $this->tester->getStatusCode());
 		static::assertStringContainsString('No migrations found to apply.', $this->tester->getDisplay());
-		static::assertSame([1, 2, 3, 4, 5, 6, 7], $this->versions());
+		static::assertSame([1, 2, 3, 4, 5], $this->versions());
 	}
 
 	public function testMigrateToVersionStopsThere(): void

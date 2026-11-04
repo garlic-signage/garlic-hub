@@ -31,16 +31,24 @@ use App\Framework\Utils\FormParameters\BaseParameters;
 use App\Modules\Auth\UserSession;
 use App\Modules\Templates\Helper\Settings\Parameters;
 use App\Modules\Templates\Repositories\TemplatesRepository;
-use Doctrine\DBAL\Exception;
 use App\Shared\Acl\AclGrantService;
+use App\Shared\Audit\AuditAction;
+use App\Shared\Audit\AuditLog;
+use App\Shared\Versioning\UnitVersions;
+use Doctrine\DBAL\Exception;
+use JsonException;
 
 class TemplatesService
 {
+	private const string MODULE_NAME = 'templates';
+
 	public function __construct(
 		private readonly TemplatesRepository $templatesRepository,
 		private readonly AclValidator $aclValidator,
 		private readonly UserSession $userSession,
-		private readonly AclGrantService $aclGrantService
+		private readonly AclGrantService $aclGrantService,
+		private readonly UnitVersions $unitVersions,
+		private readonly AuditLog $auditLog
 	) {}
 
     /**
@@ -66,6 +74,68 @@ class TemplatesService
 	}
 
 	/**
+	 * The content of the composer. The content it replaces becomes a version (while the versioning is on).
+	 *
+	 * @param array<string,mixed> $template as loaded with the rights of the user
+	 * @throws Exception
+	 * @throws JsonException
+	 * @throws UserException
+	 */
+	public function updateContent(array $template, string $content): int
+	{
+		$templateId = (int) $template['template_id'];
+		$previous   = $template['content'] ?? null;
+		if (is_string($previous) && $previous !== '' && $previous !== $content)
+			$this->unitVersions->record(self::MODULE_NAME, $templateId, $this->userSession->getUID(), ['content' => $previous]);
+
+		return $this->templatesRepository->update($templateId, ['content' => $content]);
+	}
+
+	public function isVersioningEnabled(): bool
+	{
+		return $this->unitVersions->isEnabled();
+	}
+
+	/**
+	 * @return list<array{version:int, created_at:string, username:string}> the newest first
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws NotFoundException
+	 * @throws UserException
+	 */
+	public function findVersions(int $templateId): array
+	{
+		$this->loadCheckedTemplate($templateId, false);
+
+		return $this->unitVersions->findVersions(self::MODULE_NAME, $templateId);
+	}
+
+	/**
+	 * The content of the version replaces the current one, which becomes a version itself:
+	 * a restore can be undone. The thumbnail is renewed with the next save in the composer.
+	 *
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws JsonException
+	 * @throws NotFoundException
+	 * @throws UserException
+	 */
+	public function restoreVersion(int $templateId, int $version): void
+	{
+		$template = $this->loadCheckedTemplate($templateId, false);
+		$snapshot = $this->unitVersions->findSnapshot(self::MODULE_NAME, $templateId, $version);
+		if ($snapshot === null || !is_string($snapshot['content'] ?? null))
+			throw new NotFoundException(self::MODULE_NAME, 'version_not_found', ['template_id' => $templateId, 'version' => $version]);
+
+		$this->updateContent($template, $snapshot['content']);
+		$this->auditLog->record($this->userSession->getUID(), self::MODULE_NAME, AuditAction::VERSION_RESTORED, $templateId, null, ['version' => $version]);
+	}
+
+	/**
 	 * @throws AccessDeniedException
 	 * @throws CoreException
 	 * @throws Exception
@@ -80,7 +150,10 @@ class TemplatesService
 		$this->loadCheckedTemplate($templateId, true);
 		$deleted = $this->templatesRepository->delete($templateId);
 		if ($deleted > 0)
-			$this->aclGrantService->removeUnitShares('templates', [$templateId]);
+		{
+			$this->aclGrantService->removeUnitShares(self::MODULE_NAME, [$templateId]);
+			$this->unitVersions->removeUnits(self::MODULE_NAME, [$templateId]);
+		}
 
 		return $deleted;
 	}

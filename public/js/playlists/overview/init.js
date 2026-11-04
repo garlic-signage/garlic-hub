@@ -23,6 +23,7 @@ import {PlaylistsService}  from "../compose/standard/playlists/PlaylistsService.
 import {FetchClient}       from "../../core/FetchClient.js";
 import {FlashMessageHandler} from "../../core/FlashMessageHandler.js";
 import {UnitShareDialog} from "../../core/UnitShareDialog.js";
+import {UnitVersionsDialog} from "../../core/UnitVersionsDialog.js";
 import {ActionsContextMenu} from "../../core/ContextMenu/ActionsContextMenu.js";
 
 document.addEventListener("DOMContentLoaded", function()
@@ -36,7 +37,8 @@ document.addEventListener("DOMContentLoaded", function()
 	const playlistsActionsContextMenuFactory = new PlaylistsActionsContextMenuFactory(
 		new FlashMessageHandler(),
 		new PlaylistsService(new FetchClient()),
-		UnitShareDialog.create("playlists")
+		UnitShareDialog.create("playlists"),
+		UnitVersionsDialog.create("playlists")
 	);
 
 	ActionsContextMenu.bindTo("playlist-contextmenu", () => playlistsActionsContextMenuFactory.create());

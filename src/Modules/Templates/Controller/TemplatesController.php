@@ -76,7 +76,7 @@ readonly class TemplatesController
 	public function determineRights(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
 		$templateId = (int) ($args['template_id'] ?? 0);
-		$responseData = ['can_edit' => false, 'can_delete' => false, 'can_share' => false];
+		$responseData = ['can_edit' => false, 'can_delete' => false, 'can_share' => false, 'can_version' => false];
 		if ($templateId === 0 || !$this->orchestrator->checkEditRights($templateId))
 			return $this->responseHandler->jsonSuccess($response, $responseData);
 
@@ -84,6 +84,7 @@ readonly class TemplatesController
 		$responseData['can_edit']      = true;
 		$responseData['template_id']   = $templateId;
 		$responseData['can_share']     = $this->aclGrantService->canShareUnit($this->userSession->getUID(), 'templates', $templateId);
+		$responseData['can_version']   = $this->orchestrator->isVersioningEnabled();
 
 		if ($inUse === [] && $this->orchestrator->isDeletable($templateId))
 			$responseData['can_delete'] = true;

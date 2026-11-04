@@ -163,7 +163,7 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 
 		$rights = $this->json($this->controller->determineRights($this->request('GET'), $this->newResponse(), ['template_id' => '2']));
 
-		static::assertSame(['success' => true, 'can_edit' => true, 'can_delete' => true, 'can_share' => true, 'template_id' => 2], $rights);
+		static::assertSame(['success' => true, 'can_edit' => true, 'can_delete' => true, 'can_share' => true, 'can_version' => false, 'template_id' => 2], $rights);
 	}
 
 	public function testAnEditorOfASharedTemplateMayEditButNotDeleteIt(): void
@@ -195,7 +195,7 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 
 		$rights = $this->json($this->controller->determineRights($this->request('GET'), $this->newResponse(), ['template_id' => '2']));
 
-		static::assertSame(['success' => true, 'can_edit' => true, 'can_delete' => false, 'can_share' => true, 'template_id' => 2], $rights);
+		static::assertSame(['success' => true, 'can_edit' => true, 'can_delete' => false, 'can_share' => true, 'can_version' => false, 'template_id' => 2], $rights);
 	}
 
 	/**
@@ -223,7 +223,7 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 
 		$this->assertSuccess($this->controller->determineRights($this->request('GET'), $this->newResponse(), $args));
 
-		static::assertSame(['success' => true, 'can_edit' => false, 'can_delete' => false, 'can_share' => false], $this->json($this->controller->determineRights($this->request('GET'), $this->newResponse(), $args)));
+		static::assertSame(['success' => true, 'can_edit' => false, 'can_delete' => false, 'can_share' => false, 'can_version' => false], $this->json($this->controller->determineRights($this->request('GET'), $this->newResponse(), $args)));
 	}
 
 	public function testTheContentIsLoadedWithFreshSignedUrls(): void

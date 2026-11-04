@@ -20,6 +20,8 @@
 declare(strict_types=1);
 
 
+use App\Shared\Audit\AuditLog;
+use App\Shared\Versioning\UnitVersions;
 use App\Shared\Acl\AclHelper;
 use App\Shared\Acl\AclGrantService;
 use App\Shared\Acl\AclUnitProvider;
@@ -85,7 +87,9 @@ $dependencies[TemplatesService::class] = DI\factory(function (ContainerInterface
 		$container->get(TemplatesRepository::class),
 		$container->get(AclValidator::class),
 		$container->get(UserSession::class),
-		$container->get(AclGrantService::class)
+		$container->get(AclGrantService::class),
+		$container->get(UnitVersions::class),
+		$container->get(AuditLog::class)
 	);
 });
 

@@ -35,7 +35,7 @@
 						<input type="hidden" id="current_node_id" name="current_node_id">
 
 						<footer>
-							<button value="submit" type="submit">{{LANG_SAVE}}</button>
+							<button value="submit" type="submit" class="primary">{{LANG_SAVE}}</button>
 							<button value="cancel" formnovalidate autofocus>{{LANG_CANCEL}}</button>
 						</footer>
 					</fieldset>
@@ -80,7 +80,7 @@
 						<input type="file" id="fileInput" style="display: none;" multiple>
 					</p>
 					<div id="dropzonePreview" class="preview-media"></div>
-					<button id="startLocalFilesUpload" class="upload-button">{{LANG_START_UPLOAD}}</button>
+					<button id="startLocalFilesUpload" class="upload-button primary">{{LANG_START_UPLOAD}}</button>
 				</section>
 
 				<section class="tab-content" id="linkTab">
@@ -88,7 +88,7 @@
 					<label>
 						<input type="url" placeholder="https://example.com/media.jpg" id="externalLinkField">
 					</label>
-					<button id="startExternalFileUpload" class="upload-button">{{LANG_START_UPLOAD}}</button>
+					<button id="startExternalFileUpload" class="upload-button primary">{{LANG_START_UPLOAD}}</button>
 				</section>
 
 				<section class="tab-content" id="webcamTab">
@@ -173,7 +173,7 @@
 						<label>
 							<input type="text" id="platformApiToken" placeholder="{{LANG_ENTER_API_TOKEN}}">
 						</label>
-						<button id="savePlatformApiToken">{{LANG_SAVE}}</button>
+						<button id="savePlatformApiToken" class="primary">{{LANG_SAVE}}</button>
 					</div>
 					<div id="downloadStatus"></div>
 					<button id="startPlatformsUpload" class="upload-button">{{LANG_DOWNLOAD_MARKED}}</button>
@@ -196,7 +196,7 @@
 			<h2 id="currentPath"> / </h2>
 
 			<div class="list-actions main-element-group">
-				<button id="openUploadDialog" disabled><i class="bi bi-upload"></i> Uploader</button>
+				<button id="openUploadDialog" class="primary" disabled><i class="bi bi-upload"></i> Uploader</button>
 				<button id="setListView" style="margin-left:auto;"><i class="bi bi-list-stars"></i> </button>
 				<button id="setGridView"><i class="bi bi-grid"></i> </button>
 			</div>
@@ -218,7 +218,7 @@
 							</textarea>
 						</label>
 						<footer>
-							<button id="submitEditMedia" type="submit">{{LANG_SAVE}}</button>
+							<button id="submitEditMedia" type="submit" class="primary">{{LANG_SAVE}}</button>
 							<button value="cancel" formnovalidate autofocus>{{LANG_CANCEL}}</button>
 						</footer>
 					</fieldset>

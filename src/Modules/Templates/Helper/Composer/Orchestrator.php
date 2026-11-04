@@ -34,6 +34,7 @@ use App\Framework\Exceptions\UserException;
 use App\Modules\Templates\Services\TemplatesService;
 use App\Modules\Templates\Services\TemplatesUsageService;
 use Doctrine\DBAL\Exception;
+use JsonException;
 
 /**
  * Handles orchestration of validation, fetching, and saving processes.
@@ -94,7 +95,9 @@ class Orchestrator extends BaseTemplateOrchestrator
      * @return int
      * @throws Exception
      * @throws FrameworkException
+     * @throws JsonException
      * @throws ModuleException
+     * @throws UserException
      */
 	public function saveTemplate(int $templateId, string $content, string $imageBase64): int
 	{
@@ -106,7 +109,8 @@ class Orchestrator extends BaseTemplateOrchestrator
 		if ($this->exportImage->exportBase64($templateId) === false)
 			return 0;
 
-		return $this->templatesService->update($templateId, ['content' => $content]);
+		// the template of checkEditRights(): its content becomes a version
+		return $this->templatesService->updateContent($this->template + ['template_id' => $templateId], $content);
 	}
 
 	/**
@@ -124,6 +128,11 @@ class Orchestrator extends BaseTemplateOrchestrator
 			throw new TranslatableModuleException('templates', 'template_in_use', ['template_id' => $templateId]);
 
 		$this->templatesService->delete($templateId);
+	}
+
+	public function isVersioningEnabled(): bool
+	{
+		return $this->templatesService->isVersioningEnabled();
 	}
 
 	/**

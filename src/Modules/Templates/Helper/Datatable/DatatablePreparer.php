@@ -146,6 +146,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 			'LANG_COMPOSE' => $this->translator->translate('composer', 'templates'),
 			'LANG_SETTINGS' => $this->translator->translate('settings', 'main'),
 			'LANG_SHARE' => $this->translator->translate('share_unit', 'users'),
+			'LANG_VERSIONS' => $this->translator->translate('versions', 'main'),
 			'LANG_TEMPLATE_DELETE' => $this->translator->translate('delete', 'main'),
 			'LANG_TEMPLATE_DELETE_CONFIRM' => $this->translator->translate('confirm_delete', 'templates')
 		];

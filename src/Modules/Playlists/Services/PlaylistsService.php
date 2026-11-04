@@ -35,6 +35,7 @@ use App\Modules\Playlists\Repositories\PlaylistsRepository;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
 use App\Shared\Acl\AclGrantService;
+use App\Shared\Versioning\UnitVersions;
 
 class PlaylistsService extends AbstractBaseService
 {
@@ -43,6 +44,7 @@ class PlaylistsService extends AbstractBaseService
 								private readonly AclValidator $aclValidator,
 								private readonly UserSession $userSession,
 								private readonly AclGrantService $aclGrantService,
+								private readonly UnitVersions $unitVersions,
 								LoggerInterface $logger)
 	{
 		parent::__construct($logger);
@@ -150,9 +152,17 @@ class PlaylistsService extends AbstractBaseService
 
 		$deleted = $this->playlistsRepository->delete($playlistId);
 		if ($deleted > 0)
+		{
 			$this->aclGrantService->removeUnitShares('playlists', [$playlistId]);
+			$this->unitVersions->removeUnits('playlists', [$playlistId]);
+		}
 
 		return $deleted;
+	}
+
+	public function isVersioningEnabled(): bool
+	{
+		return $this->unitVersions->isEnabled();
 	}
 
 	/**

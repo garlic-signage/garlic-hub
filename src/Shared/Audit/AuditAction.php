@@ -37,4 +37,5 @@ enum AuditAction: string
 	case PASSWORD_RESET_CREATED = 'password_reset_created';
 	case PASSWORD_CHANGED       = 'password_changed';
 	case LOGIN_FAILED           = 'login_failed';
+	case VERSION_RESTORED       = 'version_restored';
 }

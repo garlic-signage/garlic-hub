@@ -58,7 +58,7 @@ class MainMenuBuilderTest extends TestCase
 	{
 		$this->sessionStub->method('exists')->willReturn(false);
 
-		static::assertSame([['URL' => '/login', 'LANG_MENU_POINT' => 'login.login']], $this->builder->build());
+		static::assertSame([['URL' => '/login', 'LANG_MENU_POINT' => 'login.login', 'ACTIVE' => 'active']], $this->builder->build('/login'));
 	}
 
 	/**
@@ -71,9 +71,34 @@ class MainMenuBuilderTest extends TestCase
 		$this->sessionStub->method('exists')->willReturn(true);
 
 		static::assertSame([
-			['URL' => '/player', 'LANG_MENU_POINT' => 'menu.player'],
-			['URL' => '/playlists', 'LANG_MENU_POINT' => 'menu.playlists'],
-			['URL' => '/mediapool', 'LANG_MENU_POINT' => 'menu.mediapool']
-		], $this->builder->build());
+			['URL' => '/player', 'LANG_MENU_POINT' => 'menu.player', 'ACTIVE' => ''],
+			['URL' => '/playlists', 'LANG_MENU_POINT' => 'menu.playlists', 'ACTIVE' => ''],
+			['URL' => '/mediapool', 'LANG_MENU_POINT' => 'menu.mediapool', 'ACTIVE' => '']
+		], $this->builder->build('/'));
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testBuildMarksTheModuleOfTheCurrentPathActive(): void
+	{
+		$this->sessionStub->method('exists')->willReturn(true);
+
+		static::assertSame(['', 'active', ''], array_column($this->builder->build('/playlists/compose/12'), 'ACTIVE'));
+		static::assertSame(['active', '', ''], array_column($this->builder->build('/player'), 'ACTIVE'));
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testBuildDoesNotMarkAModuleWithTheSamePrefixActive(): void
+	{
+		$this->sessionStub->method('exists')->willReturn(true);
+
+		static::assertSame(['', '', ''], array_column($this->builder->build('/players'), 'ACTIVE'));
 	}
 }

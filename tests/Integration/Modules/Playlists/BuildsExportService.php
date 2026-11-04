@@ -35,6 +35,7 @@ use App\Modules\Playlists\Services\ExportService;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
 use App\Modules\Playlists\Services\PlaylistMetricsUpdater;
 use App\Modules\Playlists\Services\PlaylistsService;
+use App\Modules\Playlists\Services\PlaylistVersionsService;
 use Psr\Log\NullLogger;
 use Tests\Integration\Support\MediaWorkspace;
 
@@ -66,6 +67,7 @@ trait BuildsExportService
 				$templateItemName
 			),
 			$templateItemName,
+			$this->container->get(PlaylistVersionsService::class),
 			new NullLogger()
 		);
 	}

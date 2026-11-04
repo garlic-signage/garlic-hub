@@ -191,6 +191,7 @@ class DatatablePreparerTest extends TestCase
 			'LANG_COMPOSE'                 => 'playlists.composer',
 			'LANG_SETTINGS'                => 'playlists.edit_settings',
 			'LANG_SHARE'                   => 'users.share_unit',
+			'LANG_VERSIONS'                => 'main.versions',
 			'LANG_PLAYLIST_DELETE'         => 'main.delete',
 			'LANG_PLAYLIST_DELETE_CONFIRM' => 'Delete %s?',
 		], $this->preparer->formatActionsContextMenu());

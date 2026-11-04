@@ -22,12 +22,14 @@ export class PlaylistsActionsContextMenu extends ActionsContextMenu
 {
 	#playlistsService = null;
 	#shareDialog      = null;
+	#versionsDialog   = null;
 
-	constructor(contextMenuView, flashMessageHandler, playlistsService, shareDialog)
+	constructor(contextMenuView, flashMessageHandler, playlistsService, shareDialog, versionsDialog)
 	{
 		super(contextMenuView, flashMessageHandler);
 		this.#playlistsService = playlistsService;
 		this.#shareDialog      = shareDialog;
+		this.#versionsDialog   = versionsDialog;
 	}
 
 	async determineRights(playlistId)
@@ -40,6 +42,7 @@ export class PlaylistsActionsContextMenu extends ActionsContextMenu
 		this.view.setLink("composer", "/playlists/compose/" + this.unitId);
 		this.view.setLink("settings", "/playlists/settings/" + this.unitId);
 		this.#shareDialog.attachTo(this.view.item("share"), this.unitId, rights.can_share);
+		this.#versionsDialog.attachTo(this.view.item("versions"), this.unitId, rights.can_version);
 
 		// the question names the playlist
 		const confirmText = this.view.item("delete").dataset.confirm.replace("%s", rights.playlist_name ?? "");

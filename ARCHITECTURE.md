@@ -158,6 +158,7 @@ Business code every module needs.
 - `Acl/` — uniform access levels (module admin, sub admin, editor, viewer) used by all modules.
 - `Audit/` — the audit log: `AuditLog::record()` for rights, shares, settings, users and failed logins, into `audit_log`. The container gives the `NullAuditLog` unless `Audit.enabled` and `Scheduler.enabled` are on; the task `audit.cleanup` of the module System deletes the entries older than `Audit.retention_days`.
 - `Layout/` — data of the main layout: main menu, user menu, language switch, flash messages.
+- `Versioning/` — `UnitVersions`: the earlier states of units in `unit_versions` (templates: the content of the composer; playlists: the exported state, restored with the item ids, items whose media or nested playlist is gone are left out), off by default (`Versioning.enabled`), the newest `max_versions` per unit stay. The module records the state it replaces and restores it itself; the dialog is `public/js/core/UnitVersionsDialog.js`.
 - `Scheduler/` — runs the `ScheduledTask`s which are due (hourly or daily), remembers their last run in `scheduler_runs`. A module has its tasks in `App\Modules\<Module>\Scheduler\<Module>ScheduledTasks`.
 - `Settings/` — the settings page: `SettingsSchema`, `SettingField` and `SettingsService`.
 - `User/` — the user: `UserEntity`, `UsersService`, tokens and the user repositories.

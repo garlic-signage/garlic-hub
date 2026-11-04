@@ -58,7 +58,7 @@ readonly class LayoutDataProvider implements LayoutDataProviderInterface
 		$locale = $this->locales->getLanguageCode();
 		$data   = [
 			'messages'             => $this->flashMessagesBuilder->build(),
-			'main_menu'            => $this->mainMenuBuilder->build(),
+			'main_menu'            => $this->mainMenuBuilder->build($request->getUri()->getPath()),
 			'user_menu'            => $this->userMenuBuilder->build(),
 			'language_select'      => $this->languageSelectBuilder->build(),
 			'CSRF_TOKEN'           => $this->csrfToken->getToken(),

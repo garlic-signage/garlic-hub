@@ -62,7 +62,7 @@ class LayoutDataProviderTest extends ContainerTestCase
 	{
 		$data = $this->layout();
 
-		static::assertSame([['URL' => '/login', 'LANG_MENU_POINT' => 'Login']], $data['main_menu']);
+		static::assertSame([['URL' => '/login', 'LANG_MENU_POINT' => 'Login', 'ACTIVE' => '']], $data['main_menu']);
 		static::assertSame([], $data['user_menu']);
 		static::assertSame([], $data['messages']);
 	}

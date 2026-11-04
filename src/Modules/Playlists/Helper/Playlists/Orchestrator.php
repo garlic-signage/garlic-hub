@@ -98,7 +98,7 @@ class Orchestrator
 	 */
 	public function determineRights(ResponseInterface $response, int $playlistId): ResponseInterface
 	{
-		$rights = ['can_edit' => false, 'can_delete' => false, 'can_share' => false];
+		$rights = ['can_edit' => false, 'can_delete' => false, 'can_share' => false, 'can_version' => false];
 		try
 		{
 			$playlist = $this->playlistsService->loadWithUserById($playlistId);
@@ -112,6 +112,7 @@ class Orchestrator
 		$rights['can_edit']      = true;
 		$rights['can_delete']    = $this->aclValidator->isAllowedToDeletePlaylist($UID, $playlist) && !$this->isInUse($playlistId);
 		$rights['can_share']     = $this->aclGrantService->canShareUnit($UID, 'playlists', $playlistId);
+		$rights['can_version']   = $this->playlistsService->isVersioningEnabled();
 		$rights['playlist_id']   = $playlistId;
 		$rights['playlist_name'] = (string) ($playlist['playlist_name'] ?? '');
 

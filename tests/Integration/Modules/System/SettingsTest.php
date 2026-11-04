@@ -73,6 +73,8 @@ class SettingsTest extends ContainerTestCase
 			'Scheduler.enabled'    => ['value' => '0', 'default' => '0', 'changed' => false],
 			'Audit.enabled'        => ['value' => '0', 'default' => '0', 'changed' => false],
 			'Audit.retention_days' => ['value' => '365', 'default' => '365', 'changed' => false],
+			'Versioning.enabled'   => ['value' => '0', 'default' => '0', 'changed' => false],
+			'Versioning.max_versions' => ['value' => '20', 'default' => '20', 'changed' => false],
 		], $this->settings(1));
 	}
 
@@ -248,7 +250,7 @@ class SettingsTest extends ContainerTestCase
 		static::assertInstanceOf(PageResponse::class, $response);
 		$data = $response->getTemplateData();
 		static::assertSame(['mediapool', 'playlists', 'system'], array_column($data['tabs'], 'MODULE'));
-		static::assertSame(['Scheduler.enabled', 'Audit.enabled', 'Audit.retention_days'], array_column($data['tabs'][2]['fields'], 'NAME'));
+		static::assertSame(['Scheduler.enabled', 'Audit.enabled', 'Audit.retention_days', 'Versioning.enabled', 'Versioning.max_versions'], array_column($data['tabs'][2]['fields'], 'NAME'));
 	}
 
 	public function testAUserWithoutRightsIsSentBack(): void

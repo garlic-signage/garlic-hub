@@ -25,12 +25,14 @@ export class PlaylistsActionsContextMenuFactory
 	#flashMessageHandler;
 	#playlistsService;
 	#shareDialog;
+	#versionsDialog;
 
-	constructor(flashMessageHandler, playlistsService, shareDialog)
+	constructor(flashMessageHandler, playlistsService, shareDialog, versionsDialog)
 	{
 		this.#flashMessageHandler = flashMessageHandler;
 		this.#playlistsService    = playlistsService;
 		this.#shareDialog         = shareDialog;
+		this.#versionsDialog      = versionsDialog;
 	}
 
 	create()
@@ -39,7 +41,8 @@ export class PlaylistsActionsContextMenuFactory
 			new ActionsContextMenuView("playlistsActionsContextMenuTemplate"),
 			this.#flashMessageHandler,
 			this.#playlistsService,
-			this.#shareDialog
+			this.#shareDialog,
+			this.#versionsDialog
 		);
 	}
 }

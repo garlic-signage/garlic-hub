@@ -22,12 +22,14 @@ export class TemplatesActionsContextMenu extends ActionsContextMenu
 {
 	#templatesService = null;
 	#shareDialog      = null;
+	#versionsDialog   = null;
 
-	constructor(contextMenuView, flashMessageHandler, templatesService, shareDialog)
+	constructor(contextMenuView, flashMessageHandler, templatesService, shareDialog, versionsDialog)
 	{
 		super(contextMenuView, flashMessageHandler);
 		this.#templatesService = templatesService;
 		this.#shareDialog      = shareDialog;
+		this.#versionsDialog   = versionsDialog;
 	}
 
 	async determineRights(templateId)
@@ -40,6 +42,7 @@ export class TemplatesActionsContextMenu extends ActionsContextMenu
 		this.view.setLink("composer", "templates/composer/" + this.unitId);
 		this.view.setLink("settings", "templates/settings/" + this.unitId);
 		this.#shareDialog.attachTo(this.view.item("share"), this.unitId, rights.can_share);
+		this.#versionsDialog.attachTo(this.view.item("versions"), this.unitId, rights.can_version);
 		this.addDelete(rights.can_delete, (templateId) => this.#templatesService.delete(templateId));
 	}
 }

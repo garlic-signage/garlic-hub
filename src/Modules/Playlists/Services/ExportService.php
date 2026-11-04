@@ -50,8 +50,9 @@ class ExportService extends AbstractBaseService
 	private readonly LocalWriter $localSmilWriter;
 	private readonly PlaylistContent $playlistContent;
 	private readonly TemplateItemName $templateItemName;
+	private readonly PlaylistVersionsService $playlistVersionsService;
 
-	public function __construct(Config $config, PlaylistsService $playlistsService, ExportItemsLoader $exportItemsLoader, PlaylistMetricsUpdater $playlistMetricsUpdater, Transactions $transactions, LocalWriter $localSmilWriter, PlaylistContent $playlistContent, TemplateItemName $templateItemName, LoggerInterface $logger )
+	public function __construct(Config $config, PlaylistsService $playlistsService, ExportItemsLoader $exportItemsLoader, PlaylistMetricsUpdater $playlistMetricsUpdater, Transactions $transactions, LocalWriter $localSmilWriter, PlaylistContent $playlistContent, TemplateItemName $templateItemName, PlaylistVersionsService $playlistVersionsService, LoggerInterface $logger )
 	{
 		$this->config          = $config;
 		$this->playlistsService = $playlistsService;
@@ -61,6 +62,7 @@ class ExportService extends AbstractBaseService
 		$this->localSmilWriter = $localSmilWriter;
 		$this->playlistContent = $playlistContent;
 		$this->templateItemName = $templateItemName;
+		$this->playlistVersionsService = $playlistVersionsService;
 
 		parent::__construct($logger);
 	}
@@ -111,6 +113,8 @@ class ExportService extends AbstractBaseService
 			if ($this->playlistsService->updateExport($playlistId, $metrics) === 0)
 				throw new TranslatableModuleException('playlists', 'playlist_export_failed', ['playlist_id' => $playlistId]);
 
+			// the exported state is a version (while the versioning is on)
+			$this->playlistVersionsService->recordExport($playlist);
 			$this->transactions->commit();
 			return $count;
 		}

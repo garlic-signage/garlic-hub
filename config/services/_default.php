@@ -32,6 +32,8 @@ use App\Shared\Scheduler\ScheduledTasks;
 use App\Shared\Scheduler\Scheduler;
 use App\Shared\Scheduler\SchedulerRunRepository;
 use App\Shared\Settings\SettingsSchema;
+use App\Shared\Versioning\UnitVersions;
+use App\Shared\Versioning\UnitVersionsRepository;
 use App\Shared\Settings\SettingsService;
 use App\Shared\Acl\AclUnitProvider;
 use App\Shared\Acl\EditionAclModules;
@@ -390,6 +392,17 @@ $dependencies[AclGrantService::class] = DI\factory(function (ContainerInterface 
 		$container->get(Transactions::class),
 		$unitProviders,
 		$container->get(AuditLog::class)
+	);
+});
+// the system is lean: without the switch nothing is recorded
+$dependencies[UnitVersions::class] = DI\factory(function (ContainerInterface $container)
+{
+	$config = $container->get(Config::class);
+
+	return new UnitVersions(
+		new UnitVersionsRepository($container->get('SqlConnection')),
+		$config->isSwitchOn('enabled', 'system', 'Versioning'),
+		max(1, (int) $config->getConfigValue('max_versions', 'system', 'Versioning'))
 	);
 });
 $dependencies[AuditLogRepository::class] = DI\factory(function (ContainerInterface $container)

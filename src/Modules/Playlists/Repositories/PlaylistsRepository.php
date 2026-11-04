@@ -24,6 +24,7 @@ namespace App\Modules\Playlists\Repositories;
 use App\Framework\Database\BaseRepositories\SqlBase;
 use App\Framework\Database\BaseRepositories\Traits\CrudTraits;
 use App\Framework\Database\BaseRepositories\Traits\FindOperationsTrait;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\ParameterType;
@@ -36,6 +37,25 @@ class PlaylistsRepository extends SqlBase
 	public function __construct(Connection $connection)
 	{
 		parent::__construct($connection,'playlists', 'playlist_id');
+	}
+
+	/**
+	 * @param list<int> $playlistIds
+	 * @return list<int> the ones which exist
+	 * @throws Exception
+	 */
+	public function findExistingIds(array $playlistIds): array
+	{
+		if ($playlistIds === [])
+			return [];
+
+		return array_map('intval', $this->connection->createQueryBuilder()
+			->select('playlist_id')
+			->from($this->table)
+			->where('playlist_id IN (:playlistIds)')
+			->setParameter('playlistIds', $playlistIds, ArrayParameterType::INTEGER)
+			->executeQuery()
+			->fetchFirstColumn());
 	}
 
 	public function delete(int|string $id): int

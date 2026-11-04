@@ -36,6 +36,9 @@
     --gh-primary-color: #03393a;
     --gh-secondary-color: rgb(0, 122, 80);
     --gh-third-color: rgba(0, 122, 80, 0.32);
+    --gh-accent-color: rgb(0, 122, 80);
+    --gh-accent-hover-color: rgb(0, 97, 64);
+    --gh-on-accent-color: #fff;
     --gh-primary-text-color: #000;
     --gh-alert-color: #c0392b;
     --gh-success-color: #1a7f44;
@@ -82,7 +85,19 @@ header nav
 }
 header nav ul {list-style: none;}
 header nav .menu {display: flex; gap: 1rem;padding:0;align-items: center;justify-items: flex-start;}
-header nav .main-menu {margin-left: auto;}
+header nav .menu > li {cursor: default;}
+header nav .main-menu {margin: 0 0 0 1.5rem; align-self: stretch; gap: 1.5rem;}
+header nav .main-menu > li {display: flex;}
+header nav .main-menu > li > a
+{
+    display: flex;
+    align-items: center;
+    color: var(--gh-primary-text-color);
+    border-top: 3px solid transparent;
+    border-bottom: 3px solid transparent;
+}
+header nav .main-menu > li > a:hover {color: var(--gh-accent-color);}
+header nav .main-menu > li > a.active {color: var(--gh-accent-color); border-bottom-color: var(--gh-accent-color);}
 header nav #language_select {margin-left: auto;}
 header nav .menu ul
 {
@@ -93,7 +108,8 @@ header nav .menu ul
     box-shadow: var(--gh-box-shadow);
 }
 header nav .right_menu{margin-left: auto;}
-.menu ul a:hover{ color: var(--gh-surface-color); background-color: var(--gh-primary-text-color); }
+.menu ul a {color: var(--gh-primary-text-color);}
+.menu ul a:hover{ color: var(--gh-accent-color); background-color: var(--gh-hover-bg); }
 nav .menu ul, nav .menu li:hover .menu ul, nav .menu ul li:hover .menu ul{display: none;}
 nav .menu li:hover ul, nav .menu ul li:hover ul, nav .menu ul ul li:hover ul {display: block;}
 .menu ul li a {display:flex;align-items: center;gap:0.5rem;padding:0.5em 1rem;white-space:nowrap;}
@@ -106,8 +122,10 @@ h3, h4, h5, h6{font-size: 1.0rem; font-family: var(--gh-font-bold), sans-serif;}
 
 /* forms */
 form {margin: 0 auto;}
-fieldset{border-radius:var(--gh-border-radius); background-color: var(--gh-primary-bgcolor); padding: 0.5rem 1rem 1rem 1rem;}
-fieldset legend {padding: 0 0.5em; font-family: OpenSans-Bold, sans-serif;}
+fieldset{border: 0; border-radius:var(--gh-border-radius); background-color: var(--gh-primary-bgcolor); padding: 1rem; margin: 0 0 1rem 0;}
+/* floated, the legend is a normal heading inside the box instead of sitting in its border */
+fieldset legend {float: left; width: 100%; padding: 0; margin: 0 0 0.75rem 0; font-size: 1.05rem; font-family: var(--gh-font-bold), sans-serif;}
+fieldset legend + * {clear: both;}
 form label {display: flex; flex-direction:column; gap:0.25em;margin: 0 0 0.25rem 0;}
 input:not([type='checkbox'], [type='radio']), textarea, select, button, a.button, .add-unit
 {
@@ -123,15 +141,33 @@ input:not([type='checkbox'], [type='radio']), textarea, select
 ::placeholder { color: var(--gh-input-placeholder); }
 input:hover, input:focus, textarea:hover, textarea:focus, select:hover, select:focus{border: 1px solid var(--gh-border-color-hover);}
 button *, a.button, select, input *{color:var(--gh-primary-text-color);text-decoration: none;}
-button, a.button {padding: 0.25rem 1rem;display: inline-block; line-height: normal; background-color: var(--gh-button-bg); cursor: pointer;}
+button, a.button {padding: 0.4rem 1rem;display: inline-block; line-height: normal; background-color: var(--gh-surface-color); color: var(--gh-primary-text-color); cursor: pointer;}
 
 button:hover, a.button:hover, .unit-action:hover{color:var(--gh-primary-text-color);border: 1px solid var(--gh-border-color-hover);}
+button:hover, a.button:hover {background-color: var(--gh-hover-bg);}
+button:focus-visible, a.button:focus-visible, .add-unit:focus-visible {outline: 2px solid var(--gh-accent-color); outline-offset: 2px;}
+
+/* the main action of a page or dialog; the first submit of the generic edit form is one implicitly */
+button.primary, a.button.primary, .form-submits > button[type="submit"]:first-child, .add-unit
+{
+    background-color: var(--gh-accent-color);
+    border-color: var(--gh-accent-color);
+    color: var(--gh-on-accent-color);
+}
+button.primary *, a.button.primary *, .form-submits > button[type="submit"]:first-child * {color: var(--gh-on-accent-color);}
+button.primary:hover, a.button.primary:hover, .form-submits > button[type="submit"]:first-child:hover, .add-unit:hover
+{
+    background-color: var(--gh-accent-hover-color);
+    border-color: var(--gh-accent-hover-color);
+    color: var(--gh-on-accent-color);
+}
+button.primary:disabled {opacity: 0.5; cursor: not-allowed;}
 .naked-button{border:none;background:none;padding:0;margin:0;cursor:pointer;color:var(--gh-link-text-color);}
 .naked-button:hover{border:none;}
 .trumbowyg-button-pane button{min-width:0;}
 
-.add-unit{background-color: var(--gh-link-text-color); color: #fff;display: block;}
-.add-unit i{color: #fff; margin-right: .5rem;}
+.add-unit{display: block;}
+.add-unit i{color: var(--gh-on-accent-color); margin-right: .5rem;}
 
 .unit-action {
     background: none;
@@ -193,6 +229,13 @@ dialog.unit-share {width: min(28rem, 92vw); padding: 0; border: 1px solid var(--
 .unit-share .unit-share-users li:nth-child(odd) {background-color: var(--gh-primary-bgcolor);}
 .unit-share .unit-share-users label {overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
 .unit-share .unit-share-empty {margin: 1rem 0.75rem;}
+
+/* the versions dialog of a unit (/js/core/UnitVersionsDialog.js) */
+dialog.unit-versions {width: min(28rem, 92vw); padding: 0; border: 1px solid var(--gh-secondary-color); border-radius: var(--gh-border-radius);}
+.unit-versions .unit-versions-list {list-style: none; margin: 0; padding: 0.75rem; max-height: 60vh; overflow-y: auto;}
+.unit-versions .unit-versions-list li {display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.35rem 0.5rem; border-left: 3px solid var(--gh-third-color);}
+.unit-versions .unit-versions-list li:nth-child(odd) {background-color: var(--gh-primary-bgcolor);}
+.unit-versions .unit-versions-empty {padding: 0.75rem;}
 
 
 main{flex: 1; margin:1em; position:relative;}
