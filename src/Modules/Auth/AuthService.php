@@ -31,6 +31,7 @@ use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
 use Psr\SimpleCache\InvalidArgumentException;
+use Throwable;
 
 /**
  * Authentication service responsible for managing user authentication,
@@ -90,7 +91,7 @@ class AuthService
 				'time' => date('Y-m-d H:i:s'),
 				'reason' => 'Invalid credentials.',
 			]);
-			$this->auditLog->record(0, 'auth', AuditAction::LOGIN_FAILED, null, isset($userData['UID']) ? (int) $userData['UID'] : null, ['username' => mb_substr($identifier, 0, self::MAX_LOGGED_IDENTIFIER), 'ip_address' => $ip]);
+			$this->recordFailedLogin($identifier, $ip, isset($userData['UID']) ? (int) $userData['UID'] : null);
 			return null;
 		}
 		$this->validateUserStatus($userData['status']);
@@ -107,6 +108,21 @@ class AuthService
 		$this->logger->info('Entity created for: '. implode('|', $entity->getMain()));
 
 		return $entity;
+	}
+
+	/**
+	 * A failure of the audit log must not turn a wrong password into an error page.
+	 */
+	private function recordFailedLogin(string $identifier, string $ip, ?int $UID): void
+	{
+		try
+		{
+			$this->auditLog->record(0, 'auth', AuditAction::LOGIN_FAILED, null, $UID, ['username' => mb_substr($identifier, 0, self::MAX_LOGGED_IDENTIFIER), 'ip_address' => $ip]);
+		}
+		catch (Throwable $e)
+		{
+			$this->logger->error('Failed login could not be audited: ' . $e->getMessage());
+		}
 	}
 
 	/**

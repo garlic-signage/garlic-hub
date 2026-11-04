@@ -30,6 +30,7 @@ use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\ParameterType;
+use Doctrine\DBAL\Schema\Column;
 
 class ItemsRepository extends SqlBase
 {
@@ -87,6 +88,17 @@ class ItemsRepository extends SqlBase
 			->setParameter('playlistId', $playlistId)
 			->executeQuery()
 			->fetchFirstColumn());
+	}
+
+	/**
+	 * The columns of today: an old version may have one which is gone by now.
+	 *
+	 * @return list<string>
+	 * @throws Exception
+	 */
+	public function findColumnNames(): array
+	{
+		return array_values(array_map(static fn(Column $column): string => $column->getName(), $this->connection->createSchemaManager()->listTableColumns($this->table)));
 	}
 
 	/**

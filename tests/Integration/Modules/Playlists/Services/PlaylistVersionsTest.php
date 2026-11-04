@@ -230,6 +230,33 @@ class PlaylistVersionsTest extends ContainerTestCase
 		static::assertSame([1], $this->versions(3));
 	}
 
+	public function testAColumnWhichIsGoneByNowIsLeftOutOfTheRestore(): void
+	{
+		$this->enable();
+		$this->actingAs(2);
+		$this->export(1);
+		// a version from before a change of the table
+		$snapshot = json_decode((string) $this->connection->fetchOne('SELECT snapshot FROM unit_versions'), true);
+		static::assertIsArray($snapshot);
+		$snapshot['items'][0]['gone_column'] = 'old';
+		$this->connection->update('unit_versions', ['snapshot' => json_encode($snapshot)], ['version' => 1]);
+
+		$this->service()->restoreVersion(1, 1);
+
+		static::assertSame([1, 2, 3, 4, 5], array_column($this->items(1), 'item_id'));
+	}
+
+	public function testANameWithABrokenCharacterDoesNotStopTheExport(): void
+	{
+		$this->enable();
+		$this->actingAs(2);
+		$this->connection->update('playlists_items', ['item_name' => "bild\xC3.jpg"], ['item_id' => 1]);
+
+		$this->export(1);
+
+		static::assertSame([1], $this->versions(1));
+	}
+
 	public function testARestoreCanBeUndone(): void
 	{
 		$this->enable();

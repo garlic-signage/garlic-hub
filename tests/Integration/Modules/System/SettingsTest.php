@@ -295,4 +295,26 @@ class SettingsTest extends ContainerTestCase
 	{
 		return $this->container->get(ShowSettingsController::class);
 	}
+
+	public function testASettingWhichCanNotBeWrittenIsAMessage(): void
+	{
+		$this->actingAs(1);
+		// a directory in the place of the file: it can not be written
+		$blocked = rtrim($this->container->get(Config::class)->getPaths('settingsOverrideDir'), '/') . '/config_system.ini';
+		mkdir($blocked, 0775, true);
+		$request = new ServerRequestFactory()->createServerRequest('POST', '/system/settings')
+			->withParsedBody(['module' => 'system', 'settings' => ['Scheduler.enabled' => '1']]);
+
+		try
+		{
+			$response = $this->controller()->store($request, new Response());
+		}
+		finally
+		{
+			rmdir($blocked);
+		}
+
+		static::assertSame('/system/settings#system', $response->getHeaderLine('Location'));
+		static::assertStringContainsString('could not be saved', implode(' ', $_SESSION['slimFlash']['error'] ?? []));
+	}
 }

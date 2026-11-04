@@ -42,7 +42,7 @@ final readonly class DatabaseAuditLog implements AuditLog
 			'action'     => $action->value,
 			'unit_id'    => $unitId === null ? null : (string) $unitId,
 			'target_UID' => $targetUID,
-			'details'    => $details === [] ? null : json_encode($details, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE)
+			'details'    => $details === [] ? null : json_encode($details, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE)
 		]);
 	}
 }

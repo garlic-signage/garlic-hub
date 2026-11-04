@@ -25,6 +25,7 @@ use App\Framework\Exceptions\AuthException;
 use App\Modules\Auth\AuthService;
 use App\Modules\Auth\AutoLoginService;
 use App\Modules\Auth\LoginThrottle;
+use App\Shared\Audit\AuditLog;
 use App\Shared\Audit\NullAuditLog;
 use App\Shared\User\UserEntity;
 use App\Shared\User\UsersService;
@@ -412,5 +413,22 @@ class AuthServiceTest extends TestCase
 		static::assertGreaterThan(10_000_000, $unknown);
 		static::assertLessThan(3, $unknown / $wrong);
 		static::assertGreaterThan(1 / 3, $unknown / $wrong);
+	}
+
+	/**
+	 * A database which can not store the audit entry must not turn a wrong password into an error page.
+	 *
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testAnAuditLogWhichFailsDoesNotStopTheFailedLogin(): void
+	{
+		$auditLog = $this->createStub(AuditLog::class);
+		$auditLog->method('record')->willThrowException(new DbalException('database is locked'));
+		$service = new AuthService($this->userService, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new ArrayCache()), $auditLog);
+
+		static::assertNull($service->login('user@example.com', 'wrong'));
+		static::assertSame('Invalid credentials.', $service->getErrorMessage());
+		static::assertTrue($this->logs->hasErrorThatContains('could not be audited'));
 	}
 }

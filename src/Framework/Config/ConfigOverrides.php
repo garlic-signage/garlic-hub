@@ -71,7 +71,7 @@ class ConfigOverrides
 			throw new CoreException('Directory for configuration overrides can not be created: ' . $this->directory);
 
 		$temporary = $fileName . '.' . bin2hex(random_bytes(4)) . '.tmp';
-		if (file_put_contents($temporary, $this->toIni($sections)) === false || !rename($temporary, $fileName))
+		if (@file_put_contents($temporary, $this->toIni($sections)) === false || !@rename($temporary, $fileName))
 		{
 			@unlink($temporary);
 			throw new CoreException('Configuration overrides can not be written: ' . $fileName);

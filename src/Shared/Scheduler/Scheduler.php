@@ -56,7 +56,8 @@ class Scheduler
 	 */
 	public function runDueTasks(DateTimeImmutable $now): ?array
 	{
-		$lock = @fopen($this->lockFile, 'c');
+		// read only is enough for a lock: a file of root from a run by hand does not stop the cron
+		$lock = @fopen($this->lockFile, 'c') ?: @fopen($this->lockFile, 'r');
 		if ($lock === false)
 			throw new CoreException('The lock file ' . $this->lockFile . ' of the scheduler can not be opened.');
 

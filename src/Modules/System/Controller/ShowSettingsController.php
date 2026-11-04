@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace App\Modules\System\Controller;
 
 use App\Framework\Controller\RequestInput;
+use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Security\CsrfToken;
@@ -113,6 +114,11 @@ readonly class ShowSettingsController
 		catch (TranslatableModuleException $e)
 		{
 			$this->flash->addMessage('error', $this->translator->translateException($e));
+		}
+		catch (CoreException $e)
+		{
+			// e.g. var/settings is not writable
+			$this->flash->addMessage('error', $this->translator->translate('settings_not_saved', self::MODULE_NAME, ['{reason}' => $e->getMessage()]));
 		}
 
 		return $response->withHeader('Location', '/system/settings#' . rawurlencode($module))->withStatus(302);

@@ -229,13 +229,14 @@ class PlaylistVersionsService
 	{
 		$itemIds = array_map(static fn(array $item): int => is_numeric($item['item_id'] ?? null) ? (int) $item['item_id'] : 0, $items);
 		$taken   = $this->itemsRepository->findItemIdsOfOtherPlaylists($playlistId, array_values(array_filter($itemIds)));
+		$columns = $this->itemsRepository->findColumnNames();
 
 		foreach ($items as $position => $item)
 		{
 			$row = [];
 			foreach ($item as $field => $value)
 			{
-				if (is_string($field))
+				if (in_array($field, $columns, true))
 					$row[$field] = $value;
 			}
 			$row['playlist_id'] = $playlistId;

@@ -136,4 +136,15 @@ class SchedulerTest extends RepositoryTestCase
 		static::assertNull($ran);
 		static::assertSame([], $this->executed);
 	}
+
+	public function testALockFileWhichIsNotWritableDoesNotStopTheRun(): void
+	{
+		// e.g. left by a run of root by hand
+		touch($this->lockFile);
+		chmod($this->lockFile, 0444);
+
+		$ran = $this->scheduler([$this->task('daily', TaskInterval::DAILY)])->runDueTasks(new DateTimeImmutable('2026-11-04 03:00:00'));
+
+		static::assertSame(['daily'], $ran);
+	}
 }

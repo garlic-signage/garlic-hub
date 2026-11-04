@@ -195,6 +195,16 @@ class AuditLogTest extends ContainerTestCase
 		], $this->entries());
 	}
 
+	public function testAFailedLoginWithABrokenCharacterIsRecorded(): void
+	{
+		$this->enable();
+		$_SERVER['REMOTE_ADDR'] = '10.0.0.1';
+
+		static::assertNull($this->container->get(AuthService::class)->login("ann\xC3a", 'wrong'));
+
+		static::assertSame(['username' => 'ann?a', 'ip_address' => '10.0.0.1'], $this->entries()[0]['details']);
+	}
+
 	public function testDeletedPlaylistsAndTemplatesAreRecordedWithTheirName(): void
 	{
 		$this->loadFixture('templates/templates.sql');

@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace App\Shared\Versioning;
 
 use Doctrine\DBAL\Exception;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use JsonException;
 
 /**
@@ -49,14 +50,23 @@ readonly class UnitVersions
 			return;
 
 		$unitId  = (string) $unitId;
-		$json    = json_encode($snapshot, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+		// a broken character in a name must not stop the export
+		$json    = json_encode($snapshot, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
 		$last    = $this->repository->findLastVersion($module, $unitId);
 		// e.g. a playlist exported twice without a change
 		if ($last > 0 && $this->repository->findSnapshot($module, $unitId, $last) === $json)
 			return;
 
 		$version = $last + 1;
-		$this->repository->insertVersion($module, $unitId, $version, $UID, $json);
+		try
+		{
+			$this->repository->insertVersion($module, $unitId, $version, $UID, $json);
+		}
+		catch (UniqueConstraintViolationException)
+		{
+			// a save at the same time recorded this version: its state is as good as this one
+			return;
+		}
 		$this->repository->deleteOlderThan($module, $unitId, $version - $this->maxVersions + 1);
 	}
 
