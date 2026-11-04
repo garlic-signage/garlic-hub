@@ -25,6 +25,8 @@ use App\Framework\Config\ConfigOverrides;
 use App\Modules\Account\Services\AccountService;
 use App\Modules\Auth\AuthService;
 use App\Modules\System\Scheduler\SystemScheduledTasks;
+use App\Modules\Playlists\Services\PlaylistsService;
+use App\Modules\Templates\Services\TemplatesService;
 use App\Modules\Users\Services\UsersAdminService;
 use App\Shared\Acl\AclGrantService;
 use App\Shared\Acl\AclSections;
@@ -190,6 +192,21 @@ class AuditLogTest extends ContainerTestCase
 		static::assertSame([
 			['UID' => 0, 'module' => 'auth', 'action' => 'login_failed', 'unit_id' => null, 'target_UID' => 2, 'details' => ['username' => 'anna', 'ip_address' => '10.0.0.1']],
 			['UID' => 0, 'module' => 'auth', 'action' => 'login_failed', 'unit_id' => null, 'target_UID' => null, 'details' => ['username' => 'nobody', 'ip_address' => '10.0.0.1']],
+		], $this->entries());
+	}
+
+	public function testDeletedPlaylistsAndTemplatesAreRecordedWithTheirName(): void
+	{
+		$this->loadFixture('templates/templates.sql');
+		$this->enable();
+		$this->actingAs(1);
+
+		$this->container->get(PlaylistsService::class)->delete(3);
+		$this->container->get(TemplatesService::class)->delete(3);
+
+		static::assertSame([
+			['UID' => 1, 'module' => 'playlists', 'action' => 'unit_deleted', 'unit_id' => '3', 'target_UID' => null, 'details' => ['name' => 'Bernds Playlist']],
+			['UID' => 1, 'module' => 'templates', 'action' => 'unit_deleted', 'unit_id' => '3', 'target_UID' => null, 'details' => ['name' => 'Bernds Vorlage']],
 		], $this->entries());
 	}
 

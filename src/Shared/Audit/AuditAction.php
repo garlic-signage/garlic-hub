@@ -22,7 +22,8 @@ declare(strict_types=1);
 namespace App\Shared\Audit;
 
 /**
- * What the audit log records: the changes of rights, shares, settings and users, and failed logins.
+ * What the audit log records: the changes of rights, shares, settings and users, failed logins,
+ * restored versions and deleted units.
  */
 enum AuditAction: string
 {
@@ -38,4 +39,5 @@ enum AuditAction: string
 	case PASSWORD_CHANGED       = 'password_changed';
 	case LOGIN_FAILED           = 'login_failed';
 	case VERSION_RESTORED       = 'version_restored';
+	case UNIT_DELETED           = 'unit_deleted';
 }

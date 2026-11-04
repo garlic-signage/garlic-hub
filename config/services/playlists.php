@@ -130,6 +130,7 @@ $dependencies[PlaylistsService::class] = DI\factory(function (ContainerInterface
 		$container->get(UserSession::class),
 		$container->get(AclGrantService::class),
 		$container->get(UnitVersions::class),
+		$container->get(AuditLog::class),
 		$container->get('ModuleLogger')
 	);
 });

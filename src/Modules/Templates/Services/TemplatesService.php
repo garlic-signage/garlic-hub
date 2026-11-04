@@ -147,12 +147,14 @@ class TemplatesService
 	{
 		// editing is not enough: an editor of a shared template must not delete it.
 		// Whether it is used, Composer\Orchestrator::delete() checks.
-		$this->loadCheckedTemplate($templateId, true);
-		$deleted = $this->templatesRepository->delete($templateId);
+		$template = $this->loadCheckedTemplate($templateId, true);
+		$deleted  = $this->templatesRepository->delete($templateId);
 		if ($deleted > 0)
 		{
 			$this->aclGrantService->removeUnitShares(self::MODULE_NAME, [$templateId]);
 			$this->unitVersions->removeUnits(self::MODULE_NAME, [$templateId]);
+			// the name: the list of the audit log finds no template anymore
+			$this->auditLog->record($this->userSession->getUID(), self::MODULE_NAME, AuditAction::UNIT_DELETED, $templateId, null, ['name' => $template['name']]);
 		}
 
 		return $deleted;

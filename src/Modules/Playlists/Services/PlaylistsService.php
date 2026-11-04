@@ -35,6 +35,8 @@ use App\Modules\Playlists\Repositories\PlaylistsRepository;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
 use App\Shared\Acl\AclGrantService;
+use App\Shared\Audit\AuditAction;
+use App\Shared\Audit\AuditLog;
 use App\Shared\Versioning\UnitVersions;
 
 class PlaylistsService extends AbstractBaseService
@@ -45,6 +47,7 @@ class PlaylistsService extends AbstractBaseService
 								private readonly UserSession $userSession,
 								private readonly AclGrantService $aclGrantService,
 								private readonly UnitVersions $unitVersions,
+								private readonly AuditLog $auditLog,
 								LoggerInterface $logger)
 	{
 		parent::__construct($logger);
@@ -148,13 +151,15 @@ class PlaylistsService extends AbstractBaseService
 	 */
 	public function delete(int $playlistId): int
 	{
-		$this->loadWithUserById($playlistId);
+		$playlist = $this->loadWithUserById($playlistId);
 
 		$deleted = $this->playlistsRepository->delete($playlistId);
 		if ($deleted > 0)
 		{
 			$this->aclGrantService->removeUnitShares('playlists', [$playlistId]);
 			$this->unitVersions->removeUnits('playlists', [$playlistId]);
+			// the name: the list of the audit log finds no playlist anymore
+			$this->auditLog->record($this->userSession->getUID(), 'playlists', AuditAction::UNIT_DELETED, $playlistId, null, ['name' => (string) ($playlist['playlist_name'] ?? '')]);
 		}
 
 		return $deleted;
