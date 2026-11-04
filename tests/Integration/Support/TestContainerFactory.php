@@ -98,7 +98,7 @@ final class TestContainerFactory
 			'SqlConnection'     => $connection,
 			Session::class      => new ArraySession(), // works on $_SESSION, PHP starts no session
 			Cookie::class       => new InMemoryCookie(),
-			Psr16Adapter::class => new Psr16Adapter('Memstatic'),
+			Psr16Adapter::class => new Psr16Adapter('Memory'),
 			'ModuleLogger'      => new NullLogger(),
 			'FrameworkLogger'   => new NullLogger(),
 			'AppLogger'         => new NullLogger(),

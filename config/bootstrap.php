@@ -74,9 +74,6 @@ catch (Throwable $e)
 	bootFailure($e);
 }
 
-if ($_ENV['APP_ENV'] === 'dev')
-	require __DIR__ . '/bootstrap_dev.php';
-
 $paths = [
 	'systemDir' => $systemDir,
 	'varDir' => $systemDir . '/var',

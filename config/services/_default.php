@@ -197,7 +197,12 @@ $dependencies[Locales::class] = DI\factory(function (ContainerInterface $contain
 		new SessionLocaleExtractor($container->get(Session::class))
 	);
 });
-$dependencies[Psr16Adapter::class] = DI\factory(function (){return new Psr16Adapter('Files');});
+// dev keeps nothing between requests: changed translations count at once, and parallel requests
+// of a page do not delete the files of each other (a warning would break their JSON)
+$dependencies[Psr16Adapter::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new Psr16Adapter($container->get(Config::class)->getEnv('APP_ENV') === 'dev' ? 'Memory' : 'Files');
+});
 $dependencies[Translator::class] = DI\factory(function (ContainerInterface $container)
 {
 	$translationDir = $container->get(Config::class)->getPaths('translationDir');

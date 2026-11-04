@@ -61,7 +61,6 @@ CLI entry points.
 ### `config/`
 Wiring of the application.
 - `bootstrap.php` — loads `.env`, builds the DI container, returns the Slim or console app.
-- `bootstrap_dev.php` — additions for `APP_ENV=dev`.
 - `middleware.php` — middleware stack of the web app.
 - `route.php` — all routes, grouped into HTML pages, `/api` and `/async`.
 - `error_handling.php` — PHP error handler and Slim error middleware (JSON errors for `/api` and `/async`).
