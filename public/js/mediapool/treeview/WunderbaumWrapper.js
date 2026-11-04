@@ -105,10 +105,19 @@ export class WunderbaumWrapper
 			source: {url: TreeViewApiConfig.ROOT_NODES_URI},
 			init: async (e) =>
 			{
-				if (localStorage.getItem('parent_list') === null)
+				// JSON keeps the type of the keys: node ids are numbers, the shared root is a string
+				let parentList = [];
+				try
+				{
+					parentList = JSON.parse(localStorage.getItem('parent_list') ?? "[]");
+				}
+				catch (error)
+				{
+					return; // an old comma separated list
+				}
+				if (!Array.isArray(parentList) || parentList.length === 0)
 					return;
 
-				const parentList = localStorage.getItem('parent_list').split(",");
 				let node = null;
 				for (const key of parentList)
 				{
@@ -137,7 +146,7 @@ export class WunderbaumWrapper
 
 				const parentList = e.node.getParentList(false, true);
 				let keyList = parentList.map(parent => parent.key);
-				localStorage.setItem('parent_list', keyList);
+				localStorage.setItem('parent_list', JSON.stringify(keyList));
 
 				// the root "shared with me" is no directory and has no media
 				if (e.node.data.virtual !== true)

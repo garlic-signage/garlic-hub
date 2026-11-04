@@ -56,10 +56,19 @@ export class DirectoryView
             element: this.#treeViewElements.mediapoolTree,
             source: { url: TreeViewApiConfig.ROOT_NODES_URI },
             init: async (e) => {
-                if (localStorage.getItem('parent_list') === null)
+                // JSON keeps the type of the keys: node ids are numbers, the shared root is a string
+                let parentList = [];
+                try
+                {
+                    parentList = JSON.parse(localStorage.getItem('parent_list') ?? "[]");
+                }
+                catch (error)
+                {
+                    return; // an old comma separated list
+                }
+                if (!Array.isArray(parentList) || parentList.length === 0)
                     return;
 
-                const parentList = localStorage.getItem('parent_list').split(",");
                 let node = null;
                 for (const key of parentList)
                 {
@@ -82,7 +91,7 @@ export class DirectoryView
 
                 const parentList = e.node.getParentList(false, true);
                 let keyList = parentList.map(parent => parent.key);
-                localStorage.setItem('parent_list', keyList);
+                localStorage.setItem('parent_list', JSON.stringify(keyList));
                 this.#loadMediaInDirectory(e.node);
 			},
             filter: {autoApply: true, mode: "hide"},
