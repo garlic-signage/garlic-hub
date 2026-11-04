@@ -28,6 +28,7 @@ use App\Modules\Player\Services\PlayerService;
 use App\Modules\Playlists\Services\PlaylistsService;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use App\Shared\Acl\AclGrantService;
 
 /**
  * The rights and the changes of the players are tested with the real database in
@@ -41,7 +42,7 @@ class PlayerServiceTest extends TestCase
 	{
 		$repository = $this->createStub(PlayerRepository::class);
 		$repository->method('findAllForDashboard')->willReturn([]);
-		$service = new PlayerService($repository, $this->createStub(PlaylistsService::class), $this->createStub(AclValidator::class), $this->createStub(UserSession::class));
+		$service = new PlayerService($repository, $this->createStub(PlaylistsService::class), $this->createStub(AclValidator::class), $this->createStub(UserSession::class), $this->createStub(AclGrantService::class));
 
 		static::assertSame(['active' => 0, 'inactive' => 0, 'pending' => 0], $service->findAllForDashboard());
 	}

@@ -89,6 +89,21 @@ class NodeManagementTest extends ContainerTestCase
 	/**
 	 * A user without a folder (e.g. deleted before it was created) is nothing to fail about.
 	 */
+	/**
+	 * The ids of deleted directories are given again: a share must not go over to a new directory.
+	 */
+	public function testADeletedDirectoryTakesTheSharesOfItsSubDirectoriesWithIt(): void
+	{
+		$this->connection->executeStatement("INSERT INTO user_vip (UID, vip_name, unit_id) VALUES (3, 'mediapool_viewer', '7'), (3, 'mediapool_viewer', '8'), (3, 'mediapool_editor', '11')");
+		$this->actingAs(1);
+
+		$this->nodesService->deleteNode(7);
+		static::assertSame(['11'], $this->connection->fetchFirstColumn('SELECT unit_id FROM user_vip WHERE UID = 3'));
+
+		$this->nodesService->deleteUserDirectory(3);
+		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_vip WHERE UID = 3'));
+	}
+
 	public function testDeletingTheFolderOfAUserWithoutOneDoesNothing(): void
 	{
 		$this->actingAs(2);

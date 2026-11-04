@@ -32,13 +32,15 @@ use App\Modules\Auth\UserSession;
 use App\Modules\Templates\Helper\Settings\Parameters;
 use App\Modules\Templates\Repositories\TemplatesRepository;
 use Doctrine\DBAL\Exception;
+use App\Shared\Acl\AclGrantService;
 
 class TemplatesService
 {
 	public function __construct(
 		private readonly TemplatesRepository $templatesRepository,
 		private readonly AclValidator $aclValidator,
-		private readonly UserSession $userSession
+		private readonly UserSession $userSession,
+		private readonly AclGrantService $aclGrantService
 	) {}
 
     /**
@@ -75,7 +77,11 @@ class TemplatesService
 	{
 		$this->loadWithUserById($templateId);
 		// Todo: Check if used
-		return $this->templatesRepository->delete($templateId);
+		$deleted = $this->templatesRepository->delete($templateId);
+		if ($deleted > 0)
+			$this->aclGrantService->removeUnitShares('templates', [$templateId]);
+
+		return $deleted;
 	}
 
     /**

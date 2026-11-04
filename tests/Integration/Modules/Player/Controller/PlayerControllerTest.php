@@ -157,12 +157,14 @@ class PlayerControllerTest extends PlayerControllerTestCase
 	public function testThePlayerIsDeletedByTheAdmin(): void
 	{
 		$this->actingAs(1);
+		$this->connection->executeStatement("INSERT INTO user_vip (UID, vip_name, unit_id) VALUES (2, 'player_viewer', '3')");
 
 		$response = $this->controller->delete($this->request('DELETE', '/async/player', ['player_id' => '3']), $this->newResponse());
 
 		static::assertSame(200, $response->getStatusCode());
 		static::assertTrue($this->json($response)['success']);
 		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM player WHERE player_id = 3'));
+		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_vip'), 'The shares go with the player.');
 		static::assertSame(3, $this->countPlayers());
 	}
 

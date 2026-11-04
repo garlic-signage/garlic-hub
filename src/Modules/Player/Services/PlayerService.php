@@ -33,6 +33,7 @@ use App\Modules\Player\Repositories\PlayerRepository;
 use App\Modules\Playlists\Helper\PlaylistMode;
 use App\Modules\Playlists\Services\PlaylistsService;
 use Doctrine\DBAL\Exception;
+use App\Shared\Acl\AclGrantService;
 
 /**
  * PlayerService class provides functionalities for managing players, including updating player information,
@@ -47,9 +48,11 @@ class PlayerService
 	private readonly PlaylistsService $playlistService;
 	private readonly AclValidator $playerValidator;
 	private readonly UserSession $userSession;
+	private readonly AclGrantService $aclGrantService;
 
-	public function __construct(PlayerRepository $playerRepository, PlaylistsService $playlistService, AclValidator $playerValidator, UserSession $userSession)
+	public function __construct(PlayerRepository $playerRepository, PlaylistsService $playlistService, AclValidator $playerValidator, UserSession $userSession, AclGrantService $aclGrantService)
 	{
+		$this->aclGrantService  = $aclGrantService;
 		$this->playerRepository = $playerRepository;
 		$this->playlistService  = $playlistService;
 		$this->playerValidator  = $playerValidator;
@@ -100,7 +103,11 @@ class PlayerService
 	{
 		$this->fetchAclCheckedPlayerData($playerId);
 
-		return $this->playerRepository->delete($playerId);
+		$deleted = $this->playerRepository->delete($playerId);
+		if ($deleted > 0)
+			$this->aclGrantService->removeUnitShares('player', [$playerId]);
+
+		return $deleted;
 	}
 
 	/**

@@ -145,7 +145,8 @@ $dependencies[PlayerService::class] = DI\factory(function (ContainerInterface $c
 		$container->get(PlayerRepository::class),
 		$container->get(PlaylistsService::class),
 		$container->get(AclValidator::class),
-		$container->get(UserSession::class));
+		$container->get(UserSession::class),
+		$container->get(AclGrantService::class));
 });
 
 

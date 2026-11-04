@@ -313,6 +313,31 @@ class AclGrantService
 	}
 
 	/**
+	 * A deleted unit takes its shares with it. Otherwise a new unit with the same id would be shared
+	 * at once: SQLite gives the highest id again after a delete. The caller has checked the right to
+	 * delete, and calls it after the delete in his transaction.
+	 *
+	 * @param list<int|string> $unitIds
+	 * @throws CoreException
+	 * @throws Exception
+	 */
+	public function removeUnitShares(string $module, array $unitIds): void
+	{
+		if ($unitIds === [])
+			return;
+
+		$vipNames = array_map(fn(AclSections $role) => $this->aclHelper->getVipName($module, $role), self::UNIT_ROLES);
+		$unitIds  = array_values(array_map('strval', $unitIds));
+		$UIDs     = $this->userVipRepository->findUserIdsOfUnits($vipNames, $unitIds);
+
+		$this->userVipRepository->deleteUnits($vipNames, $unitIds);
+		foreach ($UIDs as $UID)
+		{
+			$this->usersService->invalidateCache($UID);
+		}
+	}
+
+	/**
 	 * The users who may get the role on units, for the share dialog of a unit.
 	 *
 	 * @return list<array{UID:int, username:string, company_id:int}>

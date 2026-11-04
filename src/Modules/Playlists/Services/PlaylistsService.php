@@ -34,6 +34,7 @@ use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Repositories\PlaylistsRepository;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
+use App\Shared\Acl\AclGrantService;
 
 class PlaylistsService extends AbstractBaseService
 {
@@ -41,6 +42,7 @@ class PlaylistsService extends AbstractBaseService
 								private readonly PlaylistMetricsCalculator $playlistMetricsCalculator,
 								private readonly AclValidator $aclValidator,
 								private readonly UserSession $userSession,
+								private readonly AclGrantService $aclGrantService,
 								LoggerInterface $logger)
 	{
 		parent::__construct($logger);
@@ -146,7 +148,11 @@ class PlaylistsService extends AbstractBaseService
 	{
 		$this->loadWithUserById($playlistId);
 
-		return $this->playlistsRepository->delete($playlistId);
+		$deleted = $this->playlistsRepository->delete($playlistId);
+		if ($deleted > 0)
+			$this->aclGrantService->removeUnitShares('playlists', [$playlistId]);
+
+		return $deleted;
 	}
 
 	/**

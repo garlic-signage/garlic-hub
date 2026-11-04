@@ -92,6 +92,7 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 	{
 		$this->actingAs(2);
 		$this->connection->executeStatement("INSERT INTO playlists_items (item_id, playlist_id, UID, item_order, item_type, file_resource, item_name) VALUES (8, 4, 2, 1, 'template', '7', 'x')");
+		$this->connection->executeStatement("INSERT INTO user_vip (UID, vip_name, unit_id) VALUES (3, 'playlists_viewer', '4')");
 
 		$response = $this->controller->delete($this->request('DELETE', body: ['playlist_id' => '4']), $this->newResponse());
 
@@ -99,6 +100,7 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 		static::assertSame(0, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists WHERE playlist_id = 4'));
 		static::assertSame(0, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists_items WHERE playlist_id = 4'));
 		static::assertSame(3, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists'));
+		static::assertSame(0, (int) $this->databaseValue('SELECT COUNT(*) FROM user_vip'), 'The shares go with the playlist.');
 	}
 
 	public function testAPlaylistInUseIsNotDeleted(): void

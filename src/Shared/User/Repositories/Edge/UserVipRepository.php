@@ -77,4 +77,40 @@ class UserVipRepository extends SqlBase
 
 		return $users;
 	}
+
+	/**
+	 * @param list<string> $vipNames
+	 * @param list<string> $unitIds
+	 * @return list<int>
+	 * @throws Exception
+	 */
+	public function findUserIdsOfUnits(array $vipNames, array $unitIds): array
+	{
+		$queryBuilder = $this->connection->createQueryBuilder();
+		$queryBuilder->select('DISTINCT UID')
+			->from($this->table)
+			->where('vip_name IN (:vipNames)')
+			->andWhere('unit_id IN (:unitIds)')
+			->setParameter('vipNames', $vipNames, ArrayParameterType::STRING)
+			->setParameter('unitIds', $unitIds, ArrayParameterType::STRING);
+
+		return array_map('intval', $queryBuilder->executeQuery()->fetchFirstColumn());
+	}
+
+	/**
+	 * @param list<string> $vipNames
+	 * @param list<string> $unitIds
+	 * @throws Exception
+	 */
+	public function deleteUnits(array $vipNames, array $unitIds): int
+	{
+		$queryBuilder = $this->connection->createQueryBuilder();
+		$queryBuilder->delete($this->table)
+			->where('vip_name IN (:vipNames)')
+			->andWhere('unit_id IN (:unitIds)')
+			->setParameter('vipNames', $vipNames, ArrayParameterType::STRING)
+			->setParameter('unitIds', $unitIds, ArrayParameterType::STRING);
+
+		return (int) $queryBuilder->executeStatement();
+	}
 }

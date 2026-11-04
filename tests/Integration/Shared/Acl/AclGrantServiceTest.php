@@ -339,6 +339,26 @@ class AclGrantServiceTest extends ContainerTestCase
 		$this->service->searchUnits(2, 'player', 'annas');
 	}
 
+	public function testADeletedUnitTakesItsSharesWithIt(): void
+	{
+		$this->service->setRole(1, 2, 'player', AclSections::EDITOR, true);
+		$this->service->setRole(1, 2, 'player', AclSections::VIEWER, true);
+		$this->service->setRole(1, 3, 'player', AclSections::VIEWER, true);
+		$this->service->setRole(1, 2, 'templates', AclSections::VIEWER, true);
+		$this->service->setUnitRole(1, 2, 'player', 1, AclSections::EDITOR);
+		$this->service->setUnitRole(1, 3, 'player', 1, AclSections::VIEWER);
+		$this->service->setUnitRole(1, 2, 'player', 2, AclSections::VIEWER);
+		$this->connection->executeStatement("INSERT INTO user_vip (UID, vip_name, unit_id) VALUES (2, 'templates_viewer', '1')");
+		static::assertTrue($this->aclHelper->hasEditorAccessOnUnit(2, 1, 'player'));
+
+		$this->service->removeUnitShares('player', [1]);
+
+		static::assertFalse($this->aclHelper->hasEditorAccessOnUnit(2, 1, 'player'), 'The cache of the user is invalidated.');
+		static::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM user_vip WHERE vip_name LIKE 'player_%' AND unit_id = '1'"));
+		static::assertTrue($this->aclHelper->hasViewerAccessOnUnit(2, 2, 'player'), 'Other units keep their shares.');
+		static::assertSame(1, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM user_vip WHERE vip_name = 'templates_viewer' AND unit_id = '1'"), 'The same id in another module is another unit.');
+	}
+
 	private function aclOf(int $UID, string $module): int
 	{
 		return (int) $this->connection->fetchOne('SELECT acl FROM user_acl WHERE UID = ? AND module = ?', [$UID, $module]);

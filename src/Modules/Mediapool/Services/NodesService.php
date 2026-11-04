@@ -244,6 +244,8 @@ class NodesService
 
 		if ($this->nodesRepository->deleteBy($condition) == 0)
 			throw new ModuleException('mediapool','Delete nodes by root id failed.');
+
+		$this->aclGrantService->removeUnitShares('mediapool', array_values(array_column($result, 'node_id')));
 	}
 
 	/**
@@ -349,6 +351,9 @@ class NodesService
 			$this->nestedSetsService->deleteSingleNode($node);
 		elseif ($node['children'] > 0)
 			$this->nestedSetsService->deleteTree($node);
+
+		// the sub directories are gone, too
+		$this->aclGrantService->removeUnitShares('mediapool', array_values(array_column($deleted_nodes, 'node_id')));
 
 		return count($deleted_nodes);
 	}

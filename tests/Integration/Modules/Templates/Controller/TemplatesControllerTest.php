@@ -105,10 +105,12 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 	public function testAnUnusedTemplateIsDeleted(): void
 	{
 		$this->actingAs(1);
+		$this->connection->executeStatement("INSERT INTO user_vip (UID, vip_name, unit_id) VALUES (2, 'templates_viewer', '3')");
 
 		$this->assertSuccess($this->controller->delete($this->request('DELETE', body: ['template_id' => '3']), $this->newResponse()));
 
 		static::assertSame(0, (int) $this->databaseValue('SELECT COUNT(*) FROM templates WHERE template_id = 3'));
+		static::assertSame(0, (int) $this->databaseValue('SELECT COUNT(*) FROM user_vip'), 'The shares go with the template.');
 		static::assertSame(2, $this->countTemplates());
 	}
 

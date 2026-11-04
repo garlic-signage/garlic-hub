@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 
 use App\Shared\Acl\AclHelper;
+use App\Shared\Acl\AclGrantService;
 use App\Shared\Acl\AclUnitProvider;
 use App\Shared\Acl\TableUnitProvider;
 use App\Framework\Config\Config;
@@ -83,7 +84,8 @@ $dependencies[TemplatesService::class] = DI\factory(function (ContainerInterface
 	return new TemplatesService(
 		$container->get(TemplatesRepository::class),
 		$container->get(AclValidator::class),
-		$container->get(UserSession::class)
+		$container->get(UserSession::class),
+		$container->get(AclGrantService::class)
 	);
 });
 
