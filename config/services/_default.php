@@ -23,11 +23,15 @@ use App\Commands\MigrateCommand;
 use App\Framework\Controller\JsonResponseHandler;
 use App\Shared\Acl\AclHelper;
 use App\Shared\Acl\AclGrantService;
+use App\Shared\Settings\SettingsSchema;
+use App\Shared\Settings\SettingsService;
 use App\Shared\Acl\AclUnitProvider;
 use App\Shared\Acl\EditionAclModules;
 use App\Shared\User\Repositories\Core\UserAclRepository;
 use App\Shared\User\Repositories\Core\UserVipRepository;
 use App\Framework\Config\Config;
+use App\Framework\Config\ConfigOverrides;
+use App\Framework\Config\IniConfigLoader;
 use App\Framework\Http\Cookie;
 use App\Framework\Security\Crypt;
 use App\Framework\Security\CsrfToken;
@@ -307,6 +311,28 @@ $dependencies[BuildService::class] = DI\factory(function (ContainerInterface $co
 		new Builder(),
 		new \App\Framework\Utils\Datatable\Results\Builder()
 	);
+});
+$dependencies[ConfigOverrides::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new ConfigOverrides($container->get(Config::class)->getPaths('settingsOverrideDir'));
+});
+// the defaults without the changes of the admin, for the settings page
+$dependencies['ConfigDefaults'] = DI\factory(function (ContainerInterface $container)
+{
+	return new IniConfigLoader($container->get(Config::class)->getPaths('configDir') . '/settings');
+});
+$dependencies[SettingsService::class] = DI\factory(function (ContainerInterface $container)
+{
+	// a module with changeable settings has its schema in App\Modules\<Module>\Settings\<Module>SettingsSchema
+	$schemas = [];
+	foreach (EditionAclModules::getModules($container->get(Config::class)->getEdition()) as $module)
+	{
+		$class = 'App\\Modules\\' . ucfirst($module) . '\\Settings\\' . ucfirst($module) . 'SettingsSchema';
+		if (is_subclass_of($class, SettingsSchema::class))
+			$schemas[$module] = $container->get($class);
+	}
+
+	return new SettingsService($container->get(AclHelper::class), $container->get('ConfigDefaults'), $container->get(ConfigOverrides::class), $schemas);
 });
 $dependencies[AclHelper::class] = DI\factory(function (ContainerInterface $container)
 {

@@ -20,7 +20,9 @@
 declare(strict_types=1);
 
 use App\Framework\Config\Config;
+use App\Framework\Config\ConfigOverrides;
 use App\Framework\Config\IniConfigLoader;
+use App\Framework\Config\OverridingConfigLoader;
 use DI\ContainerBuilder;
 use Slim\App;
 use Symfony\Component\Console\Application;
@@ -85,6 +87,8 @@ $paths = [
 	'translationDir' => $systemDir . '/translations',
 	'configDir' => $systemDir . '/config',
 	'migrationDir' => $systemDir . '/migrations',
+	// the settings an admin changed, the defaults are in configDir/settings
+	'settingsOverrideDir' => $systemDir . '/var/settings',
 	'commandDir' => $systemDir . '/src/Commands'
 ];
 
@@ -92,7 +96,7 @@ $containerBuilder = new ContainerBuilder();
 // The Config class has to load first
 $containerBuilder->addDefinitions([
 	Config::class => new Config(
-		new IniConfigLoader($paths['configDir'].'/settings'),
+		new OverridingConfigLoader(new IniConfigLoader($paths['configDir'].'/settings'), new ConfigOverrides($paths['settingsOverrideDir'])),
 		$paths,
 		$_ENV
 	),

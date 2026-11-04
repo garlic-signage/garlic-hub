@@ -1,0 +1,39 @@
+<h1>{{LANG_PAGE_HEADER}}</h1>
+<section id="systemSettings" class="main-element-group page-tabs">
+	<nav class="tab-header">
+		{{#tabs}}
+		<button type="button" class="tab-button" data-tab="{{MODULE}}">{{LANG_MODULE}}</button>
+		{{/tabs}}
+	</nav>
+
+	{{#tabs}}
+	<section class="tab-content" data-module="{{MODULE}}">
+		<form action="/system/settings" method="post">
+			<input type="hidden" name="csrf_token" value="{{CSRF_TOKEN}}">
+			<input type="hidden" name="module" value="{{MODULE}}">
+			{{#fields}}
+			<div class="setting">
+				<label for="{{ID}}">{{LANG_LABEL}}</label>
+				{{#is_switch}}
+				<input type="checkbox" id="{{ID}}" name="settings[{{NAME}}]" value="1" {{CHECKED}}>
+				{{/is_switch}}
+				{{#is_number}}
+				<input type="number" id="{{ID}}" name="settings[{{NAME}}]" value="{{VALUE}}" min="{{MIN}}" max="{{MAX}}">
+				{{/is_number}}
+				{{#is_text}}
+				<input type="text" id="{{ID}}" name="settings[{{NAME}}]" value="{{VALUE}}">
+				{{/is_text}}
+				<span class="setting-default">{{LANG_DEFAULT}}</span>
+				{{#is_changed}}
+				<span class="setting-changed">{{LANG_CHANGED}}</span>
+				<button type="submit" name="reset" value="{{NAME}}" class="setting-reset">{{LANG_RESET}}</button>
+				{{/is_changed}}
+			</div>
+			{{/fields}}
+			<div class="form-submits">
+				<button type="submit">{{LANG_SAVE}}</button>
+			</div>
+		</form>
+	</section>
+	{{/tabs}}
+</section>

@@ -41,7 +41,7 @@ class EditionAclModulesTest extends TestCase
 	#[DataProvider('editions')]
 	public function testEveryEditionHasTheModulesWithRights(string $edition): void
 	{
-		static::assertSame(['users', 'mediapool', 'player', 'playlists', 'templates'], EditionAclModules::getModules($edition));
+		static::assertSame(['users', 'mediapool', 'player', 'playlists', 'templates', 'system'], EditionAclModules::getModules($edition));
 	}
 
 	#[Group('units')]

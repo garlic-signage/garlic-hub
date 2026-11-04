@@ -47,6 +47,7 @@ class LayersTest extends TestCase
 		'Player'    => ['Auth', 'Playlists'],
 		'Users'     => ['Auth', 'Mediapool'],
 		'Account'   => ['Auth', 'Users'],
+		'System'    => ['Auth'],
 	];
 
 	/**

@@ -94,6 +94,9 @@ $app->group('', function (RouteCollectorProxy $group) use ($container)
 	$group->get('/logout', resolve([LoginController::class, 'logout'], $container));
 	$group->get('/set-locales/{locale}', resolve([EditLocalesController::class, 'setLocales'], $container));
 
+	$group->get('/system/settings', resolve([\App\Modules\System\Controller\ShowSettingsController::class, 'show'], $container));
+	$group->post('/system/settings', resolve([\App\Modules\System\Controller\ShowSettingsController::class, 'store'], $container));
+
 	$group->get('/users', resolve([\App\Modules\Users\Controller\ShowDatatableController::class, 'show'], $container));
 	$group->post('/users/edit', resolve([ShowAdminController::class, 'store'], $container));
 	$group->get('/users/new', resolve([ShowAdminController::class, 'newUserForm'], $container));

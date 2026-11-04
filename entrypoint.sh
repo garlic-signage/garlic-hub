@@ -24,6 +24,7 @@ mkdir -p \
   /var/www/var/weblogs \
   /var/www/var/devicelogs \
   /var/www/var/keys \
+  /var/www/var/settings \
   /var/www/var/sessions \
   /var/www/var/storage/mediapool/thumbs \
   /var/www/var/storage/mediapool/originals \

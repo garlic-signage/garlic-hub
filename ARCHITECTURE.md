@@ -66,7 +66,7 @@ Wiring of the application.
 - `route.php` — all routes, grouped into HTML pages, `/api` and `/async`.
 - `error_handling.php` — PHP error handler and Slim error middleware (JSON errors for `/api` and `/async`).
 - `services/` — DI definitions, one file per module (`_default.php` for framework and shared services).
-- `settings/` — INI configuration per module (`config_<module>.ini`).
+- `settings/` — INI configuration per module (`config_<module>.ini`): the defaults, an update replaces them. What an admin changes on the settings page is in `var/settings`.
 
 ### `docs/`
 Project documentation.
@@ -176,6 +176,7 @@ The modules:
 
 - **`Account/`** — the logged-in user's own account: change password, forced password change, language.
 - **`Auth/`** — login, logout, auto login, OAuth2 endpoints, `UserSession` and the `AuthMiddleware` (protects all routes except a list of public ones).
+- **`System/`** — the settings page `/system/settings`: a tab per module whose module admin the user is. A module offers settings with a `SettingsSchema` (`Shared/Settings`), found by name as `App\Modules\<Module>\Settings\<Module>SettingsSchema`. Optional subsystems (audit log, job queue) are off by default.
 - **`Mediapool/`** — media management.
   - `Helper/Media`, `Helper/Nodes`, `Helper/Uploads` — media files, folder tree, uploads.
   - `Utils/` — handlers per media type (image, video, audio, PDF, widget) and the SSRF check for URL uploads.
@@ -225,6 +226,7 @@ New keys have to be added to all languages, there is no fallback.
 ### `var/` (git-ignored)
 Runtime data.
 - `cache/` — application cache, incl. compiled Mustache templates in `cache/mustache`.
+- `config/` — the settings an admin changed (`config_<module>.ini`, only the changed keys). `OverridingConfigLoader` puts them over the defaults of `config/settings`.
 - `keys/` — encryption key and the OAuth2 key pair.
 - `logs/` — application logs; `weblogs/` — web server logs.
 - `sessions/` — PHP sessions.

@@ -23,6 +23,7 @@ import {FetchClient}         from "../../core/FetchClient.js";
 import {FlashMessageHandler} from "../../core/FlashMessageHandler.js";
 import {AutocompleteFactory} from "../../core/AutocompleteFactory.js";
 import {Utils}               from "../../core/Utils.js";
+import {PageTabs}            from "../../core/PageTabs.js";
 
 /**
  * The rights page of a user: a tab per module with the roles and the units of the user.
@@ -38,7 +39,7 @@ document.addEventListener("DOMContentLoaded", function()
 	const flashMessageHandler = new FlashMessageHandler();
 	const autocompleteFactory = new AutocompleteFactory();
 
-	initTabs(page);
+	PageTabs.init(page);
 
 	for (const tab of page.querySelectorAll(".tab-content"))
 	{
@@ -53,32 +54,6 @@ document.addEventListener("DOMContentLoaded", function()
 			initUnitRole(tab, module, item);
 
 		initAddUnit(tab, module, list);
-	}
-
-	function initTabs(page)
-	{
-		const buttons = page.querySelectorAll(".tab-button");
-		const show    = (module) =>
-		{
-			for (const button of buttons)
-				button.classList.toggle("active", button.dataset.tab === module);
-			for (const tab of page.querySelectorAll(".tab-content"))
-				tab.classList.toggle("active", tab.dataset.module === module);
-		};
-
-		for (const button of buttons)
-		{
-			button.addEventListener("click", () =>
-			{
-				show(button.dataset.tab);
-				history.replaceState(null, "", "#" + button.dataset.tab);
-			});
-		}
-
-		// the tab stays the same after the reload of a changed role
-		const fromHash = location.hash.substring(1);
-		const exists   = [...buttons].some(button => button.dataset.tab === fromHash);
-		show(exists ? fromHash : buttons[0]?.dataset.tab);
 	}
 
 	function initRoles(tab, module)

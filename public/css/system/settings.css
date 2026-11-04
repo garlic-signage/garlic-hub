@@ -1,0 +1,7 @@
+/* the settings page: one tab per module (.page-tabs in theme-base.css) */
+#systemSettings .setting {display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; padding: 0.4rem 0;}
+#systemSettings .setting label {flex: 0 0 18rem;}
+#systemSettings .setting input[type="number"], #systemSettings .setting input[type="text"] {width: 10rem;}
+#systemSettings .setting-default {color: var(--gh-input-placeholder); font-size: 0.9em;}
+#systemSettings .setting-changed {font-weight: bold;}
+#systemSettings .form-submits {margin-top: 1rem;}

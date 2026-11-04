@@ -12,4 +12,5 @@ VALUES
 (1, 8, 'playlists'),
 (1, 8, 'mediapool'),
 (1, 8, 'templates'),
-(1, 2, 'users'); -- the module users has its own bits: subadmin 1, moduleadmin 2
+(1, 2, 'users'), -- the module users has its own bits: subadmin 1, moduleadmin 2
+(1, 8, 'system');

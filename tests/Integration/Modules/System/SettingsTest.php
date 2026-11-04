@@ -1,0 +1,183 @@
+<?php
+/*
+ garlic-hub: Digital Signage Management Platform
+
+ Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ This file is part of the garlic-hub source code
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License, version 3,
+ as published by the Free Software Foundation.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+declare(strict_types=1);
+
+namespace Tests\Integration\Modules\System;
+
+use App\Framework\Config\Config;
+use App\Framework\Config\ConfigOverrides;
+use App\Framework\Config\OverridingConfigLoader;
+use App\Framework\Exceptions\AccessDeniedException;
+use App\Framework\Exceptions\TranslatableModuleException;
+use App\Framework\TemplateEngine\PageResponse;
+use App\Modules\System\Controller\ShowSettingsController;
+use App\Shared\Settings\SettingsService;
+use PHPUnit\Framework\Attributes\Group;
+use Slim\Flash\Messages;
+use Slim\Psr7\Factory\ServerRequestFactory;
+use Slim\Psr7\Response;
+use Tests\Integration\Support\ContainerTestCase;
+
+/**
+ * The settings page. Users: 1 admin (module admin of system), 2 anna without rights.
+ * The defaults: everything which costs resources is off.
+ */
+#[Group('acl')]
+class SettingsTest extends ContainerTestCase
+{
+	private SettingsService $service;
+	private ConfigOverrides $overrides;
+
+	protected function setUp(): void
+	{
+		parent::setUp();
+		$this->loadFixture('acl/users.sql');
+		$this->service   = $this->container->get(SettingsService::class);
+		$this->overrides = $this->container->get(ConfigOverrides::class);
+	}
+
+	/**
+	 * @return array<string,array{value:string, default:string, changed:bool}>
+	 */
+	private function settings(int $UID): array
+	{
+		$settings = [];
+		foreach ($this->service->findSettings($UID, 'system') as $setting)
+		{
+			$settings[$setting['field']->section . '.' . $setting['field']->key] = ['value' => $setting['value'], 'default' => $setting['default'], 'changed' => $setting['changed']];
+		}
+
+		return $settings;
+	}
+
+	public function testTheSystemIsLeanByDefault(): void
+	{
+		static::assertSame([
+			'Audit.enabled'        => ['value' => '0', 'default' => '0', 'changed' => false],
+			'Audit.retention_days' => ['value' => '365', 'default' => '365', 'changed' => false],
+			'Queue.enabled'        => ['value' => '0', 'default' => '0', 'changed' => false],
+		], $this->settings(1));
+	}
+
+	public function testOnlyTheModuleAdminOfSystemGetsTheTab(): void
+	{
+		static::assertSame(['system'], $this->service->findEditableModules(1));
+		static::assertSame([], $this->service->findEditableModules(2));
+	}
+
+	public function testTheAdminEnablesTheAuditLog(): void
+	{
+		$this->service->save(1, 'system', ['Audit.enabled' => '1', 'Audit.retention_days' => '30']);
+
+		// only the changes are written, the queue stays at its default
+		static::assertSame(['Audit' => ['enabled' => '1', 'retention_days' => '30']], $this->overrides->load('system'));
+		static::assertSame(['value' => '1', 'default' => '0', 'changed' => true], $this->settings(1)['Audit.enabled']);
+	}
+
+	public function testASwitchWhichIsNotSentIsOff(): void
+	{
+		$this->service->save(1, 'system', ['Audit.enabled' => '1', 'Audit.retention_days' => '365']);
+
+		$this->service->save(1, 'system', ['Audit.retention_days' => '365']);
+
+		static::assertSame([], $this->overrides->load('system'), 'The value of the default is no change.');
+	}
+
+	public function testASettingIsResetToItsDefault(): void
+	{
+		$this->service->save(1, 'system', ['Audit.enabled' => '1', 'Audit.retention_days' => '30']);
+
+		$this->service->save(1, 'system', ['Audit.enabled' => '1', 'Audit.retention_days' => '30'], ['Audit.retention_days']);
+
+		static::assertSame(['Audit' => ['enabled' => '1']], $this->overrides->load('system'));
+	}
+
+	public function testANumberOutsideItsLimitsChangesNothing(): void
+	{
+		try
+		{
+			$this->service->save(1, 'system', ['Audit.enabled' => '1', 'Audit.retention_days' => '0']);
+			static::fail('A retention of 0 days must be refused.');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertSame('setting_invalid', $e->getTranslationKey());
+			static::assertSame([], $this->overrides->load('system'));
+		}
+	}
+
+	public function testAUserWithoutRightsChangesNothing(): void
+	{
+		$this->expectException(AccessDeniedException::class);
+		$this->service->save(2, 'system', ['Audit.enabled' => '1']);
+	}
+
+	public function testTheConfigReadsTheChangedValue(): void
+	{
+		$this->service->save(1, 'system', ['Audit.enabled' => '1', 'Audit.retention_days' => '365']);
+
+		// a new request: the Config of this one has the values of before in its memory
+		$loader = new OverridingConfigLoader($this->container->get('ConfigDefaults'), $this->overrides);
+		$config = new Config($loader, [], []);
+
+		static::assertSame('1', $config->getConfigValue('enabled', 'system', 'Audit'));
+		static::assertSame('0', $config->getConfigValue('enabled', 'system', 'Queue'));
+	}
+
+	public function testThePageHasATabPerModuleWithTheFields(): void
+	{
+		$this->actingAs(1);
+
+		$response = $this->controller()->show(new ServerRequestFactory()->createServerRequest('GET', '/system/settings'), new Response());
+
+		static::assertInstanceOf(PageResponse::class, $response);
+		$data = $response->getTemplateData();
+		static::assertSame(['system'], array_column($data['tabs'], 'MODULE'));
+		static::assertSame(['Audit.enabled', 'Audit.retention_days', 'Queue.enabled'], array_column($data['tabs'][0]['fields'], 'NAME'));
+	}
+
+	public function testAUserWithoutRightsIsSentBack(): void
+	{
+		$this->actingAs(2);
+
+		$response = $this->controller()->show(new ServerRequestFactory()->createServerRequest('GET', '/system/settings'), new Response());
+
+		static::assertSame(302, $response->getStatusCode());
+		static::assertSame('/', $response->getHeaderLine('Location'));
+	}
+
+	public function testTheFormIsStoredAndOpensTheTabAgain(): void
+	{
+		$this->actingAs(1);
+		$request = new ServerRequestFactory()->createServerRequest('POST', '/system/settings')
+			->withParsedBody(['module' => 'system', 'settings' => ['Queue.enabled' => '1', 'Audit.retention_days' => '365']]);
+
+		$response = $this->controller()->store($request, new Response());
+
+		static::assertSame('/system/settings#system', $response->getHeaderLine('Location'));
+		static::assertSame(['Queue' => ['enabled' => '1']], $this->overrides->load('system'));
+		static::assertNotEmpty($this->container->get(Messages::class)->getMessage('success') ?? $_SESSION['slimFlash']['success'] ?? []);
+	}
+
+	private function controller(): ShowSettingsController
+	{
+		return $this->container->get(ShowSettingsController::class);
+	}
+}

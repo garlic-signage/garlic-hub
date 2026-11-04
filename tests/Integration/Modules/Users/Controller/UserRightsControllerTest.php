@@ -65,7 +65,7 @@ class UserRightsControllerTest extends UsersControllerTestCase
 
 		$data = $this->page($this->show(2))->getTemplateData();
 
-		static::assertSame(['users', 'mediapool', 'player', 'playlists', 'templates'], array_column($data['tabs'], 'MODULE'));
+		static::assertSame(['users', 'mediapool', 'player', 'playlists', 'templates', 'system'], array_column($data['tabs'], 'MODULE'));
 		// a player has no viewer
 		static::assertSame(['moduleadmin', 'editor'], array_column($data['tabs'][2]['roles'], 'ROLE'));
 		$playlists = $data['tabs'][3];

@@ -288,7 +288,7 @@ class AclGrantServiceTest extends ContainerTestCase
 
 	public function testTheAdminGetsATabForEveryModuleAndAUserNone(): void
 	{
-		static::assertSame(['users', 'mediapool', 'player', 'playlists', 'templates'], $this->service->findGrantableModules(1, 1));
+		static::assertSame(['users', 'mediapool', 'player', 'playlists', 'templates', 'system'], $this->service->findGrantableModules(1, 1));
 		static::assertSame([], $this->service->findGrantableModules(2, 1));
 	}
 

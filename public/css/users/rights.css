@@ -1,9 +1,4 @@
-/* the rights page of a user: one tab per module */
-#userRights .tab-header {display: flex; gap: 0.25rem; border-bottom: 1px solid var(--gh-border-color);}
-#userRights .tab-button {padding: 0.5rem 1rem; border: 0; background: none; cursor: pointer; color: var(--gh-primary-text-color);}
-#userRights .tab-button.active {font-weight: bold; border-bottom: 2px solid var(--gh-secondary-color);}
-#userRights .tab-content {display: none; padding: 1rem 0;}
-#userRights .tab-content.active {display: block;}
+/* the rights page of a user: one tab per module (.page-tabs in theme-base.css) */
 
 #userRights fieldset {border: 0; padding: 0; margin: 0 0 1rem 0;}
 #userRights .rights-roles {display: flex; flex-wrap: wrap; gap: 1.5rem;}

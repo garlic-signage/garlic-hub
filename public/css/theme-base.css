@@ -178,6 +178,13 @@ dialog footer
 .dialog-footer button {padding: 5px 10px; font-size: 14px; cursor: pointer;}
 dialog fieldset {background-color: unset; border:0;}
 dialog .close-button {color: #fff;}
+/* the tabs of a page (/js/core/PageTabs.js): the rights of a user, the settings */
+.page-tabs .tab-header {display: flex; flex-wrap: wrap; gap: 0.25rem; border-bottom: 1px solid var(--gh-border-color);}
+.page-tabs .tab-button {padding: 0.5rem 1rem; border: 0; background: none; cursor: pointer; color: var(--gh-primary-text-color);}
+.page-tabs .tab-button.active {font-weight: bold; border-bottom: 2px solid var(--gh-secondary-color);}
+.page-tabs .tab-content {display: none; padding: 1rem 0;}
+.page-tabs .tab-content.active {display: block;}
+
 /* the share dialog of a unit (/js/core/UnitShareDialog.js): a compact list, not a datatable */
 dialog.unit-share {width: min(28rem, 92vw); padding: 0; border: 1px solid var(--gh-secondary-color); border-radius: var(--gh-border-radius);}
 .unit-share .unit-share-filter {display: block; width: calc(100% - 1.5rem); margin: 0.75rem; box-sizing: border-box;}

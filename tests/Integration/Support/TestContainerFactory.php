@@ -22,7 +22,9 @@ declare(strict_types=1);
 namespace Tests\Integration\Support;
 
 use App\Framework\Config\Config;
+use App\Framework\Config\ConfigOverrides;
 use App\Framework\Config\IniConfigLoader;
+use App\Framework\Config\OverridingConfigLoader;
 use App\Framework\Http\Cookie;
 use App\Framework\Http\Session;
 use DI\ContainerBuilder;
@@ -61,6 +63,7 @@ final class TestContainerFactory
 			'configDir'      => $root . '/config',
 			'migrationDir'   => $root . '/migrations',
 			'commandDir'     => $root . '/src/Commands',
+			'settingsOverrideDir' => $runtimeDir . '/settings',
 		];
 		$env = [
 			'APP_ENV'              => 'test',
@@ -74,9 +77,13 @@ final class TestContainerFactory
 			mkdir($paths['keysDir'], 0775, true);
 		file_put_contents($paths['keysDir'] . '/encryption.key', Key::createNewRandomKey()->saveToAsciiSafeString());
 
+		// every test starts with the defaults: the changed settings of a test before are gone
+		foreach (glob($paths['settingsOverrideDir'] . '/*.ini') ?: [] as $override)
+			unlink($override);
+
 		$builder = new ContainerBuilder();
 		$builder->addDefinitions([
-			Config::class => new Config(new IniConfigLoader($paths['configDir'] . '/settings'), $paths, $env),
+			Config::class => new Config(new OverridingConfigLoader(new IniConfigLoader($paths['configDir'] . '/settings'), new ConfigOverrides($paths['settingsOverrideDir'])), $paths, $env),
 		]);
 		$builder->addDefinitions($root . '/config/services/_default.php'); // must be the first file
 

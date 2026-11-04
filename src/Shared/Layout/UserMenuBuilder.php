@@ -73,6 +73,9 @@ readonly class UserMenuBuilder
 		if ($this->isAdminOf($UID, 'templates'))
 			$points[] = ['LINK_USER_ACCESS' => '/templates', 'LANG_USER_ACCESS' => $this->translator->translate('overview', 'templates')];
 
+		if ($this->isAdminOf($UID, 'system'))
+			$points[] = ['LINK_USER_ACCESS' => '/system/settings', 'LANG_USER_ACCESS' => $this->translator->translate('settings', 'system')];
+
 		return $points;
 	}
 
