@@ -35,7 +35,7 @@ final class Browser
 	private Client $client;
 	private CookieJar $cookies;
 
-	public function __construct(string $baseUrl)
+	public function __construct(string $baseUrl, private readonly ?MiniDeployment $deployment = null)
 	{
 		$this->cookies = new CookieJar();
 		$this->client  = new Client([
@@ -76,14 +76,21 @@ final class Browser
 	 */
 	public function csrfToken(string $page = '/'): string
 	{
-		$html = (string) $this->get($page)->getBody();
+		$response = $this->get($page);
+		$html     = (string) $response->getBody();
 		if (preg_match('/<meta name="csrf-token" content="([^"]+)"/', $html, $m) === 1)
 			return $m[1];
 
 		if (preg_match('/name="csrf_token"[^>]*value="([^"]+)"/', $html, $m) === 1 || preg_match('/value="([^"]+)"[^>]*name="csrf_token"/', $html, $m) === 1)
 			return $m[1];
 
-		throw new \RuntimeException('No CSRF token on ' . $page);
+		// the answer and the end of the server log tell why, e.g. an error page
+		$message = 'No CSRF token on ' . $page . ', status ' . $response->getStatusCode() . ":\n" . substr($html, 0, 500);
+		$log     = $this->deployment?->serverLog() ?? '';
+		if ($log !== '')
+			$message .= "\nserver log:\n" . substr($log, -2000);
+
+		throw new \RuntimeException($message);
 	}
 
 	public function login(string $username, string $password, bool $autologin = false): ResponseInterface

@@ -94,7 +94,7 @@ abstract class BlackboxTestCase extends TestCase
 
 	protected function browser(): Browser
 	{
-		return new Browser($this->deployment()->baseUrl());
+		return new Browser($this->deployment()->baseUrl(), $this->deployment());
 	}
 
 	protected function loadFixture(string $name): void
