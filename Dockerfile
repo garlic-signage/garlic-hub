@@ -48,7 +48,7 @@ COPY ./dockerapp-configs/env.core /var/www/.env
 
 RUN chown -R www-data:www-data /var/www/
 
-RUN a2enmod rewrite xsendfile # mod_rewrite, mod_xsendfile for delivery.php
+RUN a2enmod rewrite xsendfile headers # mod_rewrite, mod_xsendfile for delivery.php, mod_headers for the Cache-Control of the scripts
 
 EXPOSE 80
 
