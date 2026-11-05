@@ -190,7 +190,8 @@ readonly class UiTemplatesPreparer
 					'LANG_JS' => Json::encodeForScript([
 						'picking_all' => $this->translator->translate('all', self::MODULE_NAME),
 						'request_release' => $this->translator->translate('request_release', self::MODULE_NAME),
-						'release_requested' => $this->translator->translate('release_requested', self::MODULE_NAME)
+						'release_requested' => $this->translator->translate('release_requested', self::MODULE_NAME),
+						'released' => $this->translator->translateArrayForOptions('release_status_selects', self::MODULE_NAME)['released'] ?? ''
 					]),
 					'LANG_PICKING_MEDIA_PER_CYCLE' => $this->translator->translate('picking_media_per_cycle', self::MODULE_NAME),
 					'LANG_PLAYER_EXPORT' => $this->translator->translate($requestRelease ? 'request_release' : 'player_export', self::MODULE_NAME),

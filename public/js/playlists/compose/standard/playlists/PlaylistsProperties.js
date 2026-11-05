@@ -77,7 +77,7 @@ export class PlaylistsProperties
 			{
 				const result = await this.#sendSafe(() => this.#playlistsService.requestRelease(playlistId));
 				if (result !== null)
-					PlaylistsProperties.#showRequested();
+					PlaylistsProperties.#showDone(lang.release_requested);
 				return;
 			}
 
@@ -114,11 +114,14 @@ export class PlaylistsProperties
 		this.#toggleShuffle.checked = playlist.shuffle === 1;
 		this.#pickingValue = Number(playlist.shuffle_picking);
 
-		// while the release is on, the button asks for it: the server knows whether this is done already
+		// while the release is on, the button asks for it: the server knows whether this is done already,
+		// or whether the admin released the playlist and nothing changed since
 		if (PlaylistsProperties.#isRelease())
 		{
 			if (playlist.release_status === "ready")
-				PlaylistsProperties.#showRequested();
+				PlaylistsProperties.#showDone(lang.release_requested);
+			else if (playlist.release_status === "released")
+				PlaylistsProperties.#showDone(lang.released);
 			else
 				PlaylistsProperties.notifySave();
 		}
@@ -146,12 +149,15 @@ export class PlaylistsProperties
 			hint.hidden = !waiting;
 	}
 
-	static #showRequested()
+	/**
+	 * Nothing to ask for: the release waits or is done. A change asks again (see notifySave).
+	 */
+	static #showDone(label)
 	{
 		const button = document.getElementById("playerExport");
 		PlaylistsProperties.removeSave();
 		button.disabled = true;
-		button.querySelector(".label").textContent = lang.release_requested;
+		button.querySelector(".label").textContent = label;
 	}
 
 	display(playlistMetrics)

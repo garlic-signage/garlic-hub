@@ -86,6 +86,27 @@ class PlaylistReleaseTest extends BrowserTestCase
 		$this->assertNoErrors();
 	}
 
+	public function testAReleasedPlaylistAsksForNothingUntilItChanges(): void
+	{
+		$this->connection->executeStatement("UPDATE playlists SET release_status = 'released' WHERE playlist_id = 1");
+		$this->login('anna');
+		$this->openComposer();
+
+		$driver = $this->client()->getWebDriver();
+		$driver->wait(10)->until(fn() => $this->text('#playerExport') === 'Released');
+		static::assertFalse($this->exportButtonIsEnabled());
+		static::assertStringNotContainsString('notify-save', (string) $driver->findElement(WebDriverBy::id('playerExport'))->getAttribute('class'));
+
+		// a change: the release is asked for again
+		$this->click('#toggleShuffle');
+		$driver->wait(10)->until(fn() => $this->text('#playerExport') === 'Ready for release');
+		static::assertTrue($this->exportButtonIsEnabled());
+		static::assertStringContainsString('notify-save', (string) $driver->findElement(WebDriverBy::id('playerExport'))->getAttribute('class'));
+		static::assertSame('in_progress', $this->releaseStatus());
+
+		$this->assertNoErrors();
+	}
+
 	public function testTheAdminSeesWhatWaitsAndExports(): void
 	{
 		$this->connection->executeStatement("UPDATE playlists SET release_status = 'ready' WHERE playlist_id = 1");

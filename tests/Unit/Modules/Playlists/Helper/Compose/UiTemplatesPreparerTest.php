@@ -250,6 +250,8 @@ class UiTemplatesPreparerTest extends TestCase
 	 */
 	private function stubCircularEditor(array $playlist): void
 	{
+		$this->translatorStub->method('translateArrayForOptions')
+			->willReturnMap([['release_status_selects', UiTemplatesPreparer::MODULE_NAME, ['in_progress' => 'In progress', 'ready' => 'Waiting for release', 'released' => 'Released']]]);
 
 		$this->translatorStub->method('translate')
 			->willReturnMap([
@@ -331,7 +333,7 @@ class UiTemplatesPreparerTest extends TestCase
 					'LANG_TOTAL_FILESIZE' => 'Total Filesize',
 					'has_time_limit' => [],
 					'LANG_SHUFFLE' => 'Shuffle',
-					'LANG_JS' => '{"picking_all":"All","request_release":"Ready for release","release_requested":"Waiting for release"}',
+					'LANG_JS' => '{"picking_all":"All","request_release":"Ready for release","release_requested":"Waiting for release","released":"Released"}',
 					'LANG_PICKING_MEDIA_PER_CYCLE' => 'Picking Media Per Cycle',
 					'LANG_PLAYER_EXPORT' => $exportLabel,
 					'RELEASE_REQUEST' => $releaseRequest,
