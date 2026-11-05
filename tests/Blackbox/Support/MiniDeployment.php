@@ -42,6 +42,11 @@ final class MiniDeployment
 	/** @var resource|null */
 	private $process = null;
 
+	/**
+	 * @param bool $withAssets the browser tests need the JavaScript, the styles, the fonts and the images, too
+	 */
+	public function __construct(private readonly bool $withAssets = false) {}
+
 	public function start(): void
 	{
 		$root = (string) realpath(self::ROOT);
@@ -55,6 +60,11 @@ final class MiniDeployment
 		foreach (['index.php', 'media.php', 'delivery.php'] as $script)
 			copy($root . '/public/' . $script, $this->directory . '/public/' . $script);
 		$this->copyDirectory($root . '/public/smil', $this->directory . '/public/smil');
+		if ($this->withAssets)
+		{
+			foreach (['js', 'css', 'fonts', 'images'] as $folder)
+				symlink($root . '/public/' . $folder, $this->directory . '/public/' . $folder);
+		}
 		symlink($root . '/vendor', $this->directory . '/vendor');
 		// delivery.php loads FileResponse without autoloader, by its path
 		symlink($root . '/src', $this->directory . '/src');

@@ -9,7 +9,8 @@
          displayDetailsOnPhpunitDeprecations="true"
          failOnPhpunitDeprecation="true"
          failOnRisky="true"
-         failOnWarning="true">
+         failOnWarning="true"
+         defaultTestSuite="unit,integration,blackbox,architecture">
     <testsuites>
         <testsuite name="unit">
             <directory>tests/Unit</directory>
@@ -22,6 +23,10 @@
         </testsuite>
         <testsuite name="architecture">
             <directory>tests/Architecture</directory>
+        </testsuite>
+        <!-- headless Chromium, not in the default run: phpunit with the option testsuite browser -->
+        <testsuite name="browser">
+            <directory>tests/Browser</directory>
         </testsuite>
     </testsuites>
     <php>

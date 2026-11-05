@@ -62,7 +62,7 @@ readonly class UserActions
 	}
 
 	/**
-	 * @param array{can_edit:bool, can_ri   ghts:bool, can_delete:bool} $actions
+	 * @param array{can_edit:bool, can_rights:bool, can_delete:bool} $actions
 	 */
 	public static function hasAny(array $actions): bool
 	{

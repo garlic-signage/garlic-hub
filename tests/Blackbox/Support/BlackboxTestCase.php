@@ -44,7 +44,7 @@ abstract class BlackboxTestCase extends TestCase
 	public static function setUpBeforeClass(): void
 	{
 		parent::setUpBeforeClass();
-		self::$deployment = new MiniDeployment();
+		self::$deployment = new MiniDeployment(static::withAssets());
 		self::$deployment->start();
 	}
 
@@ -77,6 +77,11 @@ abstract class BlackboxTestCase extends TestCase
 	{
 		$this->connection->close();
 		parent::tearDown();
+	}
+
+	protected static function withAssets(): bool
+	{
+		return false;
 	}
 
 	protected function deployment(): MiniDeployment
