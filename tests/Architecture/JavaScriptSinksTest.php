@@ -46,7 +46,6 @@ class JavaScriptSinksTest extends TestCase
 	private const array SAFE = [
 		'mediapool/selector/MediaSelectorView.js'                         => ['this.#mediaListElement.innerHTML = "";'],
 		'core/Autocomplete.js'                                            => ["this.#autocompleteView.datalistElement.innerHTML = '';", "this.#autocompleteView.datalistElement.innerHTML = ''; // Clear existing options"],
-		'playlists/compose/multizone/ContextMenu.js'                      => ['this.context_menu.innerHTML = document.getElementById("context-menu").innerHTML;'],
 		'playlists/compose/standard/editors/ConditionalPlaySlider.js'     => [
 			'this.#rangeFrom.innerHTML = this.#convertMinutesToTime(Number(positions[0]) * 15)',
 			'this.#rangeUntil.innerHTML = this.#convertMinutesToTime(Number(positions[1]) * 15)',

@@ -18,4 +18,5 @@
 */
 'use strict';
 
-export const ComposerEventBus = new EventTarget();
+// the bus is shared with the multizone editor
+export {ComposerEventBus} from "../../../core/canvas/ComposerEventBus.js";

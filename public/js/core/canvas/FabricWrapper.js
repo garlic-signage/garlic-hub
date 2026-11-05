@@ -20,6 +20,12 @@
 
 import {ComposerEventBus} from "./ComposerEventBus.js";
 
+/**
+ * The fabric canvas of a composer: the template composer and the multizone editor.
+ *
+ * It tells the composer by the ComposerEventBus what happened on the canvas: setChanged, resetChanged,
+ * snapToGrid and drawGrid while an object moves, mouseLeftUp and mouseRightUp.
+ */
 export class FabricWrapper
 {
 	#fabricCanvas
@@ -37,13 +43,11 @@ export class FabricWrapper
 	setWidth(width)
 	{
 		this.#fabricCanvas.setWidth(width);
-		this.#hasChanged = true;
 	}
 
 	setHeight(height)
 	{
 		this.#fabricCanvas.setHeight(height);
-		this.#hasChanged = true;
 	}
 
 	getWidth()
@@ -67,30 +71,31 @@ export class FabricWrapper
 		ComposerEventBus.dispatchEvent(new CustomEvent('setChanged'));
 	}
 
+	/**
+	 * Changed without the event setChanged.
+	 */
+	markChanged()
+	{
+		this.#hasChanged = true;
+	}
+
 	resetChange()
 	{
 		this.#hasChanged = false;
 		ComposerEventBus.dispatchEvent(new CustomEvent('resetChanged'));
 	}
 
+	/**
+	 * An event of fabric which the wrapper does not pass on itself, e.g. selection:created.
+	 */
+	on(eventName, handler)
+	{
+		this.#fabricCanvas.on(eventName, handler);
+	}
+
 	getViewportTransform()
 	{
 		return this.#fabricCanvas.viewportTransform;
-	}
-
-	undo()
-	{
-		this.#fabricCanvas.undo();
-	}
-
-	redo()
-	{
-		this.#fabricCanvas.redo();
-	}
-
-	historySaveAction()
-	{
-		this.#fabricCanvas._historySaveAction();
 	}
 
 	add(object)
@@ -107,6 +112,7 @@ export class FabricWrapper
 	{
 		this.#fabricCanvas.renderAll();
 	}
+
 	getObjects()
 	{
 		return this.#fabricCanvas.getObjects();
@@ -117,7 +123,6 @@ export class FabricWrapper
 		this.#fabricCanvas.setActiveObject(object);
 	}
 
-
 	getActiveObject()
 	{
 		return this.#fabricCanvas.getActiveObject();
@@ -127,7 +132,6 @@ export class FabricWrapper
 	{
 		return this.#fabricCanvas.discardActiveObject();
 	}
-
 
 	setZoom(factor)
 	{
@@ -142,19 +146,6 @@ export class FabricWrapper
 	zoomToPoint(x, y, factor)
 	{
 		this.#fabricCanvas.zoomToPoint(new fabric.Point(x, y), factor);
-	}
-
-	toTemplateJSON()
-	{
-		return this.#fabricCanvas.toJSON([
-			"mediaId",
-			"fileName",
-			"lockMovementX",
-			"lockMovementY",
-			"lockRotation",
-			"lockScalingX",
-			"lockScalingY",
-		]);
 	}
 
 	clear()
@@ -177,26 +168,12 @@ export class FabricWrapper
 		return this.#fabricCanvas.getContext("2d");
 	}
 
-	load(jsonContent)
+	/**
+	 * For the subclasses: the canvas for what is special to their composer.
+	 */
+	get fabricCanvas()
 	{
-		return new Promise((resolve) => {
-			this.#fabricCanvas.loadFromJSON(jsonContent, () => {
-				fabric.util.clearFabricFontCache();
-				fabric.charWidthsCache = {};
-				fabric.Canvas.prototype.historyUndo = [];
-				fabric.Canvas.prototype.historyRedo = [];
-				resolve();
-			});
-		});
-	}
-
-	toBase64Image(format, quality, backgroundColor)
-	{
-		this.#fabricCanvas.backgroundColor = backgroundColor;
-		return this.#fabricCanvas.toDataURL({
-			format: format,
-			quality: quality
-		});
+		return this.#fabricCanvas;
 	}
 
 	#initChangeDetectors()

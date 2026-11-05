@@ -30,7 +30,7 @@ import {MediaService} from "../../mediapool/media/MediaService.js";
 import {MediaSelectorView} from "../../mediapool/selector/MediaSelectorView.js";
 import {MediaFactory}     from "../../mediapool/media/MediaFactory.js";
 import {BmpDitherFactory}   from "./Formats/BmpDitherFactory.js";
-import {FabricWrapper}      from "./Utils/FabricWrapper.js";
+import {TemplateFabricWrapper} from "./Utils/TemplateFabricWrapper.js";
 import {LoadService}         from "./Services/LoadService.js";
 import {ViewportView}               from "./Views/ViewportView.js";
 import {ViewportService}            from "./Services/ViewportService.js";
@@ -86,7 +86,7 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const templateService = new TemplatesService(new FetchClient());
 	const fontLoader      = new FontLoader(FontsList);
 	const fontCollector   = new FontCollector(fontLoader);
-	const fabricWrapper   = new FabricWrapper(fabricCanvas);
+	const fabricWrapper   = new TemplateFabricWrapper(fabricCanvas);
 	const waitOverlay     = new WaitOverlay();
 	const loadService     = new LoadService(fabricWrapper, templateService, fontCollector, waitOverlay);
 

@@ -1,7 +1,7 @@
 /*
  garlic-hub: Digital Signage Management Platform
 
- Copyright (C) 2025 Nikolaos Sagiadinos <garlic@saghiadinos.de>
+ Copyright (C) 2026 Nikolaos Sagiadinos <garlic@saghiadinos.de>
  This file is part of the garlic-hub source code
 
  This program is free software: you can redistribute it and/or modify
@@ -16,59 +16,66 @@
  You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-import { LabeledZoneFactory } from './LabeledZoneFactory.js';
-import { CanvasView } from './CanvasView.js';
-import { ContextMenu } from './ContextMenu.js';
-import { ZoneProperties } from './ZoneProperties.js';
-import { ZonesModel } from './ZonesModel.js';
-import { CanvasEvents } from './CanvasEvents.js';
-import { AutocompleteFactory } from '../../../core/AutocompleteFactory.js';
-import { PlaylistsService } from "../standard/playlists/PlaylistsService.js";
-import { FetchClient } from "../../../core/FetchClient.js";
+'use strict';
+
+import {FabricWrapper}            from "../../../core/canvas/FabricWrapper.js";
+import {AutocompleteFactory}      from "../../../core/AutocompleteFactory.js";
+import {FetchClient}              from "../../../core/FetchClient.js";
+import {PlaylistsService}         from "../standard/playlists/PlaylistsService.js";
+import {LabeledZoneFactory}       from "./Utils/LabeledZoneFactory.js";
+import {LayoutSettings}           from "./Utils/LayoutSettings.js";
+import {ViewportService}          from "./Services/ViewportService.js";
+import {ZoneService}              from "./Services/ZoneService.js";
+import {ZonePropertiesService}    from "./Services/ZonePropertiesService.js";
+import {LoadService}              from "./Services/LoadService.js";
+import {SaveService}              from "./Services/SaveService.js";
+import {ViewportView}             from "./Views/ViewportView.js";
+import {ZonePropertiesView}       from "./Views/ZonePropertiesView.js";
+import {ZoneListView}             from "./Views/ZoneListView.js";
+import {ContextMenuView}          from "./Views/ContextMenuView.js";
+import {ToolbarView}              from "./Views/ToolbarView.js";
+import {ViewportController}       from "./Controller/ViewportController.js";
+import {ZonePropertiesController} from "./Controller/ZonePropertiesController.js";
+import {ZoneListController}       from "./Controller/ZoneListController.js";
+import {ContextMenuController}    from "./Controller/ContextMenuController.js";
+import {ToolbarController}        from "./Controller/ToolbarController.js";
 
 window.onload = async function ()
 {
-    let MyCanvas                = new fabric.Canvas("canvas", {stopContextMenu: true, fireRightClick: true, preserveObjectStacking: true})
-	MyCanvas.selection = false;
+	const fabricCanvas = new fabric.Canvas("canvas", {stopContextMenu: true, fireRightClick: true, preserveObjectStacking: true});
+	fabricCanvas.selection = false;
 
-	let MyLabeledZoneFactory    = new LabeledZoneFactory();
-    let MyCanvasView            = new CanvasView(MyCanvas);
+	const fabricWrapper    = new FabricWrapper(fabricCanvas);
+	const settings         = new LayoutSettings();
+	const playlistId       = document.getElementById("playlist_id").value;
+	const playlistsService = new PlaylistsService(new FetchClient());
+	const viewportService  = new ViewportService(fabricWrapper);
+	const zoneService      = new ZoneService(fabricWrapper, new LabeledZoneFactory());
 
-    const MyAutocompleteFactory = new AutocompleteFactory();
-    const MyPlaylistSearch      = MyAutocompleteFactory.create(
-        "zone_playlist", "/async/playlists/find/master/"
-    );
-    MyPlaylistSearch.initWithExistingFields();
+	const playlistSearch = new AutocompleteFactory().create("zone_playlist", "/async/playlists/find/master/");
+	playlistSearch.initWithExistingFields();
 
+	const viewportController   = new ViewportController(new ViewportView(), viewportService, settings, fabricWrapper);
+	const propertiesController = new ZonePropertiesController(
+		new ZonePropertiesView(),
+		new ZonePropertiesService(fabricWrapper, playlistsService),
+		playlistSearch,
+		fabricWrapper
+	);
+	new ZoneListController(new ZoneListView(), zoneService, propertiesController, fabricWrapper);
+	new ContextMenuController(new ContextMenuView(), zoneService, fabricWrapper);
+	new ToolbarController(new ToolbarView(), zoneService, new SaveService(settings, viewportService, zoneService, playlistId), propertiesController, fabricWrapper);
 
-    let MyContextMenu           = new ContextMenu(MyCanvasView);
-    const MyPlaylistsService    = new PlaylistsService(new FetchClient());
-    let MyZoneProperties        = new ZoneProperties(MyCanvasView, MyPlaylistSearch, MyPlaylistsService);
-    let MyZonesModel            = new ZonesModel(MyCanvasView);
-    let MyCanvasEvents          = new CanvasEvents(
-        MyZonesModel,
-        MyContextMenu,
-        MyCanvasView,
-        MyZoneProperties,
-        MyLabeledZoneFactory,
-        MyPlaylistsService
-    );
-
-    let playlist_id = document.getElementById("playlist_id").value;
-
-    try
-    {
-        await MyZonesModel.loadFromDataBase(playlist_id);
-
-        await MyCanvasEvents.buildUI();
-        MyCanvasEvents.initInteractions();
-    }
-    catch(error)
-    {
-        console.log("Error while loading zones:", error);
-
-       // ThymianLog.logException("Error while loading zones:", error);
-       // jThymian.printError("Error while loading zones:", error);
-    }
-
+	try
+	{
+		await new LoadService(settings, viewportService, zoneService, playlistsService).load(playlistId);
+		viewportController.show();
+		fabricWrapper.renderAll();
+		// the zones of the layout are no change
+		fabricWrapper.resetChange();
+	}
+	catch(error)
+	{
+		console.log("Error while loading zones:", error);
+	}
 };
