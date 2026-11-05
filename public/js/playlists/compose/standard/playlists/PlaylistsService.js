@@ -86,6 +86,14 @@ export class PlaylistsService extends BaseService
 		return await this._sendRequest(url, "PUT", data);
 	}
 
+	async requestRelease(playlistId)
+	{
+		const data = {
+			playlist_id: playlistId,
+		};
+		return await this._sendRequest(PlaylistsApiConfig.RELEASE_URI, "PATCH", data);
+	}
+
 
 }
 

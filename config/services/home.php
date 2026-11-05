@@ -23,6 +23,7 @@ use App\Controller\HomeController;
 use App\Framework\Dashboards\DashboardsAggregator;
 use App\Framework\Dashboards\SystemDashboard;
 use App\Modules\Player\Dashboard\PlayerDashboard;
+use App\Modules\Playlists\Dashboard\PlaylistsDashboard;
 use Psr\Container\ContainerInterface;
 
 $dependencies = [];
@@ -34,6 +35,7 @@ $dependencies[DashboardsAggregator::class] = DI\factory(function (ContainerInter
 	$aggregator->registerDashboard($container->get(PlayerDashboard::class));
 
 	$aggregator->registerDashboard($container->get(PlayerDashboard::class));
+	$aggregator->registerDashboard($container->get(PlaylistsDashboard::class));
 	$aggregator->registerDashboard($container->get(SystemDashboard::class));
 
 	return $aggregator;

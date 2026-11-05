@@ -41,6 +41,8 @@ class DashboardsAggregator
 	}
 
 	/**
+	 * A dashboard without content has nothing for the user and is left out.
+	 *
 	 * @return list<array<string,string>>
 	 */
 	public function renderDashboardsContents(): array
@@ -49,9 +51,13 @@ class DashboardsAggregator
 		foreach ($this->dashboards as $dashboard)
 		{
 			/** @var DashboardInterface $dashboard */
+			$content = $dashboard->renderContent();
+			if ($content === '')
+				continue;
+
 			$resolvedDashboards[] = [
 				'LANG_DASHBOARD_TITLE' => $dashboard->getTitle(),
-				'DASHBOARD_CONTENT'    =>$dashboard->renderContent()
+				'DASHBOARD_CONTENT'    => $content
 			];
 		}
 

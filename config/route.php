@@ -163,6 +163,7 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 	$group->get('/playlists/find/for-player[/{playlist_name}]', resolve([PlaylistsController::class, 'findForPlayerAssignment'], $container));
 	$group->delete('/playlists', resolve([PlaylistsController::class, 'delete'], $container));
 	$group->put('/playlists', resolve([ExportController::class, 'export'], $container));
+	$group->patch('/playlists/release', resolve([ExportController::class, 'requestRelease'], $container));
 	$group->get('/playlists/find/{playlist_id:\d+}', resolve([PlaylistsController::class, 'findById'], $container));
 	$group->get('/playlists/acls/{playlist_id:\d+}', resolve([PlaylistsController::class, 'determineRights'], $container));
 	$group->get('/playlists/versions/{playlist_id:\d+}', resolve([\App\Modules\Playlists\Controller\PlaylistVersionsController::class, 'list'], $container));

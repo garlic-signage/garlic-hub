@@ -163,7 +163,10 @@ class ItemsService extends AbstractBaseService
 
 		$this->playlistsService->loadPureById($item['playlist_id']); // will check for rights
 
-		return $this->itemsRepository->update($itemId, $saveData);
+		$affected = $this->itemsRepository->update($itemId, $saveData);
+		$this->playlistsService->markEdited((int) $item['playlist_id']);
+
+		return $affected;
 	}
 
 
@@ -190,6 +193,8 @@ class ItemsService extends AbstractBaseService
 		$itemDuration = $this->playlistMetricsCalculator->calculateRemainingDuration($playlist, $wantedDuration);
 		if ($this->itemsRepository->update($itemId, ['item_duration' => $itemDuration]) === 0)
 			return null;
+
+		$this->playlistsService->markEdited((int) $item['playlist_id']);
 
 		return $itemDuration;
 	}
@@ -226,6 +231,7 @@ class ItemsService extends AbstractBaseService
 				if ($this->itemsRepository->updateItemOrder((int)$itemId, $key) === 0)
 					throw new TranslatableModuleException('playlists', 'item_order_not_updated', ['item_id' => $itemId]);
 			}
+			$this->playlistsService->markEdited($playlistId);
 			$this->transactions->commit();
 		}
 		catch (Throwable $e)
@@ -263,6 +269,7 @@ class ItemsService extends AbstractBaseService
 				throw new TranslatableModuleException('playlists', 'item_not_deleted', ['item_id' => $itemId]);
 
 			$this->itemsRepository->updatePositionsWhenDeleted($playlistId, $item['item_order']);
+			$this->playlistsService->markEdited($playlistId);
 
 			$playlistMetrics = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlistData)->toFrontendArray();
 

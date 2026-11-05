@@ -39,6 +39,9 @@ Editor and viewer are general bits of the module. Which units a user gets is set
 
 Modules differ in the details:
 - **Playlists**: the owner edits and deletes his own playlists (`Playlists\Services\AclValidator`).
+  While the release is enabled in the playlist settings (off by default), owner and editor only ask for the release
+  ("ready for release"), the module admin exports. Every change sets the playlist back to "in progress", the home
+  page shows the module admin how many playlists wait (`Playlists\Services\PlaylistRelease`).
 - **Mediapool**: folders are shared one by one, a sub folder does not inherit the rights of its parent.
   The owner of a folder has all rights on it. An editor may upload into a shared folder but not change the
   folder. A viewer and everybody for a public folder may read it (`Mediapool\Services\AclValidator`).

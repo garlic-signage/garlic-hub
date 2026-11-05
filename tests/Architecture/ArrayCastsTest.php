@@ -61,7 +61,6 @@ class ArrayCastsTest extends TestCase
 		'src/Modules/Player/Services/PlayerRestAPIService.php'                       => 1,
 		'src/Modules/Player/Services/PlayerService.php'                              => 1,
 		'src/Modules/Playlists/Controller/ConditionalPlayController.php'             => 1,
-		'src/Modules/Playlists/Controller/ExportController.php'                      => 1,
 		'src/Modules/Playlists/Controller/ItemsController.php'                       => 4,
 		'src/Modules/Playlists/Controller/ShowComposeController.php'                 => 1,
 		'src/Modules/Playlists/Controller/ShowTemplateComposer.php'                  => 1,

@@ -112,6 +112,8 @@ class Template extends AbstractInsertItem
 			if ($id === 0)
 				throw new TranslatableModuleException('playlists', 'item_not_inserted', ['playlist_id' => $playlistId]);
 
+			$this->playlistsService->markEdited($playlistId);
+
 			$nameItem             = $this->templateItemName->build($id, (string) $template['content']);
 			$fileNameTemplate     = $insertId.'.jpg';
 			$fileNameItem         = $nameItem.'.jpg';

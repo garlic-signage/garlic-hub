@@ -39,6 +39,7 @@ final readonly class PlaylistsSettingsSchema implements SettingsSchema
 			new SettingField('Defaults', 'volume', SettingType::NUMBER, 'default_volume', 0, 100),
 			new SettingField('Defaults', 'fit', SettingType::SELECT, 'default_fit', options: array_map(static fn(ItemFit $fit): string => $fit->value, ItemFit::cases())),
 			new SettingField('Defaults', 'media_align', SettingType::SELECT, 'default_media_align', options: Properties::MEDIA_ALIGNS),
+			new SettingField('Release', 'enabled', SettingType::SWITCH, 'release_enabled'),
 		];
 	}
 }

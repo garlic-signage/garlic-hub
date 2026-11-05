@@ -30,7 +30,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
- * Handles export-related functionality within the application.
+ * Handles export-related functionality within the application, and the request for a release.
  * Validation and execution are delegated to the Orchestrator.
  */
 readonly class ExportController
@@ -45,14 +45,38 @@ readonly class ExportController
 	 */
 	public function export(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		/** @var array<string,mixed> $input */
-		$input = $request->getParsedBody();
-		// no body, or one which could not be read: nothing was sent
-		$input = is_array($input) ? $input : [];
-		$answer = $this->orchestrator->setInput($input)->validate($response);
+		$answer = $this->orchestrator->setInput($this->parsedBody($request))->validate($response);
 		if ($answer !== null)
 			return $answer;
 
 		return $this->orchestrator->export($response);
+	}
+
+	/**
+	 * While the release is on, the editor asks for it instead of exporting.
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws UserException
+	 */
+	public function requestRelease(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	{
+		$answer = $this->orchestrator->setInput($this->parsedBody($request))->validate($response);
+		if ($answer !== null)
+			return $answer;
+
+		return $this->orchestrator->requestRelease($response);
+	}
+
+	/**
+	 * @return array<string,mixed>
+	 */
+	private function parsedBody(ServerRequestInterface $request): array
+	{
+		$input = $request->getParsedBody();
+
+		// no body, or one which could not be read: nothing was sent
+		return is_array($input) ? $input : [];
 	}
 }

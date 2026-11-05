@@ -23,6 +23,7 @@ namespace App\Modules\Playlists\Services;
 
 use App\Framework\Config\Config;
 use App\Framework\Database\BaseRepositories\Transactions;
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
@@ -34,6 +35,7 @@ use App\Modules\Playlists\Helper\ExportSmil\LocalWriter;
 use App\Modules\Playlists\Helper\ExportSmil\PlaylistContent;
 use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Helper\PlaylistMode;
+use App\Modules\Playlists\Helper\ReleaseStatus;
 use App\Modules\Playlists\Helper\TemplateItemName;
 use Doctrine\DBAL\Exception;
 use League\Flysystem\FilesystemException;
@@ -51,8 +53,9 @@ class ExportService extends AbstractBaseService
 	private readonly PlaylistContent $playlistContent;
 	private readonly TemplateItemName $templateItemName;
 	private readonly PlaylistVersionsService $playlistVersionsService;
+	private readonly PlaylistRelease $playlistRelease;
 
-	public function __construct(Config $config, PlaylistsService $playlistsService, ExportItemsLoader $exportItemsLoader, PlaylistMetricsUpdater $playlistMetricsUpdater, Transactions $transactions, LocalWriter $localSmilWriter, PlaylistContent $playlistContent, TemplateItemName $templateItemName, PlaylistVersionsService $playlistVersionsService, LoggerInterface $logger )
+	public function __construct(Config $config, PlaylistsService $playlistsService, ExportItemsLoader $exportItemsLoader, PlaylistMetricsUpdater $playlistMetricsUpdater, Transactions $transactions, LocalWriter $localSmilWriter, PlaylistContent $playlistContent, TemplateItemName $templateItemName, PlaylistVersionsService $playlistVersionsService, PlaylistRelease $playlistRelease, LoggerInterface $logger )
 	{
 		$this->config          = $config;
 		$this->playlistsService = $playlistsService;
@@ -63,12 +66,14 @@ class ExportService extends AbstractBaseService
 		$this->playlistContent = $playlistContent;
 		$this->templateItemName = $templateItemName;
 		$this->playlistVersionsService = $playlistVersionsService;
+		$this->playlistRelease = $playlistRelease;
 
 		parent::__construct($logger);
 	}
 
 	/**
 	 * @return int number of exported playlists, more than one for a multizone playlist
+	 * @throws AccessDeniedException
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FilesystemException
@@ -82,11 +87,14 @@ class ExportService extends AbstractBaseService
 		try
 		{
 
-			$playlist = $this->playlistsService->loadPureById($playlistId); // checks rights
+			$playlist = $this->playlistsService->loadWithUserById($playlistId); // checks rights
+			// while the release is on, the export is the release: only an admin does it
+			if (!$this->playlistRelease->mayExport($playlist))
+				throw new AccessDeniedException('playlists', 'playlist_export_not_allowed', ['playlist_id' => $playlistId]);
 
 			$count = 0;
 			$layout = Serialization::unserializeSecure($playlist['layout'] ?? null);
-			if ($playlist['playlist_mode'] === PlaylistMode::MULTIZONE->value && !empty($layout['zones']))
+			if (($playlist['playlist_mode'] ?? '') === PlaylistMode::MULTIZONE->value && !empty($layout['zones']))
 			{
 				$zones = $layout['zones'];
 				$metrics = ['filesize' => 0, 'duration' => 0, 'owner_duration' => 0];
@@ -100,6 +108,7 @@ class ExportService extends AbstractBaseService
 					$zonePlaylist = $this->playlistsService->loadUsableById((int) $zone['zone_playlist_id']);
 					$tmp          = $this->export($zonePlaylist);
 					$this->playlistVersionsService->recordExport($zonePlaylist);
+					$this->playlistsService->update((int) $zonePlaylist['playlist_id'], ['release_status' => ReleaseStatus::RELEASED->value]);
 					$count++;
 					// use the highest values for the duration of multizone.
 					$metrics['filesize'] = max($metrics['filesize'], $tmp['filesize']);
@@ -113,6 +122,7 @@ class ExportService extends AbstractBaseService
 				$count++;
 			}
 
+			$metrics['release_status'] = ReleaseStatus::RELEASED->value;
 			if ($this->playlistsService->updateExport($playlistId, $metrics) === 0)
 				throw new TranslatableModuleException('playlists', 'playlist_export_failed', ['playlist_id' => $playlistId]);
 

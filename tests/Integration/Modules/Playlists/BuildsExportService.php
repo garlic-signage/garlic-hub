@@ -35,6 +35,7 @@ use App\Modules\Playlists\Services\ExportService;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
 use App\Modules\Playlists\Services\PlaylistMetricsUpdater;
 use App\Modules\Playlists\Services\PlaylistsService;
+use App\Modules\Playlists\Services\PlaylistRelease;
 use App\Modules\Playlists\Services\PlaylistVersionsService;
 use Psr\Log\NullLogger;
 use Tests\Integration\Support\MediaWorkspace;
@@ -45,7 +46,7 @@ use Tests\Integration\Support\MediaWorkspace;
  */
 trait BuildsExportService
 {
-	private function buildExportService(MediaWorkspace $workspace): ExportService
+	private function buildExportService(MediaWorkspace $workspace, ?PlaylistRelease $playlistRelease = null): ExportService
 	{
 		$itemsRepository  = $this->container->get(ItemsRepository::class);
 		$playlistsService = $this->container->get(PlaylistsService::class);
@@ -68,6 +69,7 @@ trait BuildsExportService
 			),
 			$templateItemName,
 			$this->container->get(PlaylistVersionsService::class),
+			$playlistRelease ?? $this->container->get(PlaylistRelease::class),
 			new NullLogger()
 		);
 	}

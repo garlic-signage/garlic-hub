@@ -76,6 +76,17 @@ class DashboardsAggregatorTest extends TestCase
 		static::assertSame([['LANG_DASHBOARD_TITLE' => 'New', 'DASHBOARD_CONTENT' => 'New Content']], $result);
 	}
 
+	#[Group('units')]
+	public function testADashboardWithoutContentIsLeftOut(): void
+	{
+		$this->aggregator->registerDashboard($this->dashboard('first', 'First', 'Content 1'));
+		$this->aggregator->registerDashboard($this->dashboard('empty', 'Empty', ''));
+
+		$result = $this->aggregator->renderDashboardsContents();
+
+		static::assertSame([['LANG_DASHBOARD_TITLE' => 'First', 'DASHBOARD_CONTENT' => 'Content 1']], $result);
+	}
+
 	private function dashboard(string $id, string $title, string $content): DashboardInterface
 	{
 		$dashboardStub = $this->createStub(DashboardInterface::class);

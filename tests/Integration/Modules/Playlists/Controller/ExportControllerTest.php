@@ -28,6 +28,7 @@ use App\Framework\Localization\Translate\Translator;
 use App\Modules\Playlists\Controller\ExportController;
 use App\Modules\Playlists\Helper\Export\Orchestrator;
 use App\Modules\Playlists\Helper\Export\ResponseBuilder;
+use App\Modules\Playlists\Services\PlaylistRelease;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Integration\Modules\Playlists\BuildsExportService;
 use Tests\Integration\Support\MediaWorkspace;
@@ -49,7 +50,8 @@ class ExportControllerTest extends PlaylistsControllerTestCase
 		$this->workspace  = new MediaWorkspace();
 		$this->controller = new ExportController(new Orchestrator(
 			new ResponseBuilder($this->container->get(JsonResponseHandler::class), $this->container->get(Translator::class)),
-			$this->buildExportService($this->workspace)
+			$this->buildExportService($this->workspace),
+			$this->container->get(PlaylistRelease::class)
 		));
 	}
 

@@ -73,15 +73,32 @@ export class PlaylistsProperties
 		});
 		this.#playerExport.addEventListener('click', async () =>
 		{
+			if (PlaylistsProperties.#isRelease())
+			{
+				const result = await this.#sendSafe(() => this.#playlistsService.requestRelease(playlistId));
+				if (result !== null)
+					PlaylistsProperties.#showRequested();
+				return;
+			}
+
 			const result = await this.#sendSafe(() => this.#playlistsService.export(playlistId));
 			if (result !== null)
 				PlaylistsProperties.removeSave();
 		});
 	}
 
+	/**
+	 * A change: the export is due, or while the release is on, the request for it again.
+	 */
 	static notifySave()
 	{
-		document.getElementById("playerExport").classList.add("notify-save");
+		const button = document.getElementById("playerExport");
+		button.classList.add("notify-save");
+		if (!PlaylistsProperties.#isRelease())
+			return;
+
+		button.disabled = false;
+		button.querySelector(".label").textContent = lang.request_release;
 	}
 
 	static removeSave()
@@ -94,8 +111,32 @@ export class PlaylistsProperties
 		this.#toggleShuffle.checked = playlist.shuffle === 1;
 		this.#pickingValue = Number(playlist.shuffle_picking);
 
-		if (playlist.export_time < playlist.last_update)
+		// while the release is on, the button asks for it: the server knows whether this is done already
+		if (PlaylistsProperties.#isRelease())
+		{
+			if (playlist.release_status === "ready")
+				PlaylistsProperties.#showRequested();
+			else
+				PlaylistsProperties.notifySave();
+		}
+		else if (playlist.export_time < playlist.last_update)
 			PlaylistsProperties.notifySave();
+	}
+
+	/**
+	 * The user may not export: the button asks for the release.
+	 */
+	static #isRelease()
+	{
+		return document.getElementById("playerExport").dataset.release === "1";
+	}
+
+	static #showRequested()
+	{
+		const button = document.getElementById("playerExport");
+		PlaylistsProperties.removeSave();
+		button.disabled = true;
+		button.querySelector(".label").textContent = lang.release_requested;
 	}
 
 	display(playlistMetrics)

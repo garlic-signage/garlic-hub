@@ -108,6 +108,8 @@ class Media extends AbstractInsertItem
 			if ($insertId === 0)
 				throw new TranslatableModuleException('playlists', 'item_not_inserted', ['playlist_id' => $playlistId]);
 
+			$this->playlistsService->markEdited($playlistId);
+
 			$saveItem['item_id'] = $insertId;
 			$saveItem['paths'] = $media['paths'];
 			$saveItem['urls']  = $media['urls'];

@@ -25,6 +25,8 @@ use App\Framework\Helper\Json;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Modules\Playlists\Services\PlaylistRelease;
+use Doctrine\DBAL\Exception;
 
 /**
  * This class is responsible for preparing various UI templates for playlists.
@@ -36,11 +38,13 @@ readonly class UiTemplatesPreparer
 	CONST string MODULE_NAME = 'playlists';
 	private Translator $translator;
 	private RightsChecker $rightsChecker;
+	private PlaylistRelease $playlistRelease;
 
-	public function __construct(Translator $translator, RightsChecker $rightsChecker)
+	public function __construct(Translator $translator, RightsChecker $rightsChecker, PlaylistRelease $playlistRelease)
 	{
 		$this->translator = $translator;
 		$this->rightsChecker = $rightsChecker;
+		$this->playlistRelease = $playlistRelease;
 	}
 
 	/**
@@ -139,11 +143,14 @@ readonly class UiTemplatesPreparer
 	 * @param array<string,mixed> $playlist
 	 * @return array<string,mixed>
 	 * @throws CoreException
+	 * @throws Exception
 	 * @throws FrameworkException
 	 */
 	public function buildCircularEditor(array $playlist): array
 	{
 		$title = $this->translator->translate('composer', self::MODULE_NAME). ' ('.$playlist['playlist_name'].')';
+		// while the release is on, a user who may not export asks for the release with the same button
+		$requestRelease = !$this->playlistRelease->mayExport($playlist);
 		return [
 			'main_layout' => [
 				'LANG_PAGE_TITLE' => $title,
@@ -176,9 +183,14 @@ readonly class UiTemplatesPreparer
 					'LANG_TOTAL_FILESIZE' => $this->translator->translate('total_filesize', self::MODULE_NAME),
 					'has_time_limit' => $this->rightsChecker->checkTimeLimit($playlist['time_limit']),
 					'LANG_SHUFFLE' => $this->translator->translate('shuffle', self::MODULE_NAME),
-					'LANG_JS' => Json::encodeForScript(['picking_all' => $this->translator->translate('all', self::MODULE_NAME)]),
+					'LANG_JS' => Json::encodeForScript([
+						'picking_all' => $this->translator->translate('all', self::MODULE_NAME),
+						'request_release' => $this->translator->translate('request_release', self::MODULE_NAME),
+						'release_requested' => $this->translator->translate('release_requested', self::MODULE_NAME)
+					]),
 					'LANG_PICKING_MEDIA_PER_CYCLE' => $this->translator->translate('picking_media_per_cycle', self::MODULE_NAME),
-					'LANG_PLAYER_EXPORT' => $this->translator->translate('player_export', self::MODULE_NAME),
+					'LANG_PLAYER_EXPORT' => $this->translator->translate($requestRelease ? 'request_release' : 'player_export', self::MODULE_NAME),
+					'RELEASE_REQUEST' => $requestRelease ? '1' : '0',
 					'LANG_PLAYLIST_PREVIEW' => $this->translator->translate('preview', self::MODULE_NAME),
 					'LANG_ITEM_NAME' => $this->translator->translate('item_name', self::MODULE_NAME),
 					'LANG_SAVE' => $this->translator->translate('save', 'main'),

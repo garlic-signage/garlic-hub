@@ -29,6 +29,7 @@ use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Helper\ItemType;
+use App\Modules\Playlists\Helper\ReleaseStatus;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Modules\Playlists\Repositories\PlaylistsRepository;
 use App\Shared\Audit\AuditAction;
@@ -121,7 +122,8 @@ class PlaylistVersionsService
 			[$items, $omitted] = $this->splitItems($playlistId, $snapshotItems);
 			$this->itemsRepository->deleteBy(['playlist_id' => $playlistId]);
 			$this->insertItems($playlistId, $items, $this->firstPosition($snapshotItems));
-			$this->playlistsRepository->update($playlistId, array_intersect_key($snapshot['playlist'], array_flip(self::PLAYLIST_FIELDS)));
+			// a restore is a change: the release starts again
+			$this->playlistsRepository->update($playlistId, array_intersect_key($snapshot['playlist'], array_flip(self::PLAYLIST_FIELDS)) + ['release_status' => ReleaseStatus::IN_PROGRESS->value]);
 
 			$this->auditLog->record($this->userSession->getUID(), self::MODULE_NAME, AuditAction::VERSION_RESTORED, $playlistId, null, ['version' => $version]);
 			$this->transactions->commit();

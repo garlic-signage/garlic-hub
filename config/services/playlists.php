@@ -52,6 +52,7 @@ use App\Modules\Playlists\Controller\ExportController;
 use App\Modules\Playlists\Controller\ItemsController;
 use App\Modules\Playlists\Controller\PlaylistsController;
 use App\Modules\Playlists\Controller\ShowComposeController;
+use App\Modules\Playlists\Dashboard\PlaylistsDashboard;
 use App\Modules\Playlists\Controller\ShowDatatableController;
 use App\Modules\Playlists\Controller\TriggerController;
 use App\Modules\Playlists\Controller\WidgetsController;
@@ -85,6 +86,7 @@ use App\Modules\Playlists\Services\ItemsService;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
 use App\Modules\Playlists\Services\PlaylistFiles;
 use App\Modules\Playlists\Services\PlaylistMetricsUpdater;
+use App\Modules\Playlists\Services\PlaylistRelease;
 use App\Modules\Playlists\Services\PlaylistsDatatableService;
 use App\Modules\Playlists\Services\PlaylistsService;
 use App\Modules\Playlists\Services\PlaylistVersionsService;
@@ -237,7 +239,8 @@ $dependencies[ShowComposeController::class] = DI\factory(function (ContainerInte
 		new UiTemplatesPreparer(
 			$container->get(Translator::class),
 			new RightsChecker(
-				$container->get(Translator::class), $container->get(AclValidator::class))
+				$container->get(Translator::class), $container->get(AclValidator::class)),
+			$container->get(PlaylistRelease::class)
 		),
 		$container->get(Messages::class)
 	);
@@ -342,7 +345,24 @@ $dependencies[ExportService::class] = DI\factory(function (ContainerInterface $c
 		),
 		$container->get(TemplateItemName::class),
 		$container->get(PlaylistVersionsService::class),
+		$container->get(PlaylistRelease::class),
 		$container->get('ModuleLogger')
+	);
+});
+$dependencies[PlaylistRelease::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new PlaylistRelease(
+		$container->get(Config::class)->isSwitchOn('enabled', 'playlists', 'Release'),
+		$container->get(PlaylistsService::class),
+		$container->get(AclValidator::class),
+		$container->get(UserSession::class)
+	);
+});
+$dependencies[PlaylistsDashboard::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new PlaylistsDashboard(
+		$container->get(PlaylistRelease::class),
+		$container->get(Translator::class)
 	);
 });
 $dependencies[ExportController::class] = DI\factory(function (ContainerInterface $container)
@@ -350,7 +370,8 @@ $dependencies[ExportController::class] = DI\factory(function (ContainerInterface
 	return new ExportController(
 		new \App\Modules\Playlists\Helper\Export\Orchestrator(
 			new \App\Modules\Playlists\Helper\Export\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
-			$container->get(ExportService::class)
+			$container->get(ExportService::class),
+			$container->get(PlaylistRelease::class)
 		)
 	);
 });

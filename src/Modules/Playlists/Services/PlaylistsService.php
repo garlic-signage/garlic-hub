@@ -32,6 +32,7 @@ use App\Framework\Exceptions\UserException;
 use App\Framework\Helper\Serialization;
 use App\Framework\Services\AbstractBaseService;
 use App\Modules\Auth\UserSession;
+use App\Modules\Playlists\Helper\ReleaseStatus;
 use App\Modules\Playlists\Repositories\PlaylistsRepository;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
@@ -86,6 +87,7 @@ class PlaylistsService extends AbstractBaseService
 		else
 			$saveData['shuffle'] = 0;
 
+		$saveData['release_status'] = ReleaseStatus::IN_PROGRESS->value;
 		$affected            = $this->update($playlistId, $saveData);
 		$playlist['shuffle'] = $saveData['shuffle']; // prevent reloading playlist with new values
 		$playlistMetrics     =  $this->playlistMetricsCalculator->calculateFromPlaylistData($playlist)->toFrontendArray();
@@ -104,7 +106,7 @@ class PlaylistsService extends AbstractBaseService
 	public function shufflePicking(int $playlistId, int $shufflePicking): array
 	{
 		$playlist                    = $this->loadPureById($playlistId);
-		$affected                    = $this->update($playlist['playlist_id'], ['shuffle_picking' => $shufflePicking]);
+		$affected                    = $this->update($playlist['playlist_id'], ['shuffle_picking' => $shufflePicking, 'release_status' => ReleaseStatus::IN_PROGRESS->value]);
 		$playlist['shuffle_picking'] = $shufflePicking; // prevent reloading playlist with new values
 		$playlistMetrics             =  $this->playlistMetricsCalculator->calculateFromPlaylistData($playlist)->toFrontendArray();
 
@@ -134,6 +136,24 @@ class PlaylistsService extends AbstractBaseService
 	public function update(int $playlistId, array $saveData): int
 	{
 		return $this->playlistsRepository->update($playlistId, $saveData);
+	}
+
+	/**
+	 * A change of the content or the settings: the release starts again (see PlaylistRelease).
+	 *
+	 * @throws Exception
+	 */
+	public function markEdited(int $playlistId): void
+	{
+		$this->playlistsRepository->update($playlistId, ['release_status' => ReleaseStatus::IN_PROGRESS->value]);
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function countByReleaseStatus(ReleaseStatus $status): int
+	{
+		return $this->playlistsRepository->countAllBy(['release_status' => $status->value]);
 	}
 
 	/**
@@ -356,7 +376,7 @@ class PlaylistsService extends AbstractBaseService
 			$this->loadUsableById($zonePlaylistId);
 		}
 
-		return $this->playlistsRepository->update($playlist['playlist_id'], ['layout' => serialize($zones)]);
+		return $this->playlistsRepository->update($playlist['playlist_id'], ['layout' => serialize($zones), 'release_status' => ReleaseStatus::IN_PROGRESS->value]);
 	}
 
 	/**
@@ -409,7 +429,7 @@ class PlaylistsService extends AbstractBaseService
 	 */
 	private function collectDataForUpdate(array $postData): array
 	{
-		$saveData = [];
+		$saveData = ['release_status' => ReleaseStatus::IN_PROGRESS->value];
 		// only module admin is allowed to change UID
 		if (array_key_exists('UID', $postData))
 			$saveData['UID'] = $postData['UID'];

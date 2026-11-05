@@ -26,11 +26,12 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Controller\ReadsInput;
 use App\Modules\Playlists\Services\ExportService;
+use App\Modules\Playlists\Services\PlaylistRelease;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
 
 /**
- * Validates the input for the playlist export and executes it.
+ * Validates the input for the playlist export and executes it, or the request for the release.
  * validate() returns a response on error and null when the input is valid.
  */
 class Orchestrator
@@ -41,7 +42,8 @@ class Orchestrator
 
 	public function __construct(
 		private readonly ResponseBuilder $responseBuilder,
-		private readonly ExportService $exportService
+		private readonly ExportService $exportService,
+		private readonly PlaylistRelease $playlistRelease
 	) {}
 
 	/**
@@ -65,6 +67,19 @@ class Orchestrator
 	public function export(ResponseInterface $response): ResponseInterface
 	{
 		$this->exportService->exportToSmil($this->playlistId);
+
+		return $this->responseBuilder->generalSuccess($response, []);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws UserException
+	 */
+	public function requestRelease(ResponseInterface $response): ResponseInterface
+	{
+		$this->playlistRelease->requestRelease($this->playlistId);
 
 		return $this->responseBuilder->generalSuccess($response, []);
 	}

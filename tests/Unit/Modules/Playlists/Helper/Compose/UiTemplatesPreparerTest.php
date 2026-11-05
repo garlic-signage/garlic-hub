@@ -26,6 +26,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Modules\Playlists\Helper\Compose\RightsChecker;
 use App\Modules\Playlists\Helper\Compose\UiTemplatesPreparer;
+use App\Modules\Playlists\Services\PlaylistRelease;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
 use PHPUnit\Framework\MockObject\Stub;
@@ -35,6 +36,7 @@ class UiTemplatesPreparerTest extends TestCase
 {
 	private Translator&Stub $translatorStub;
 	private RightsChecker&Stub $rightsCheckerStub;
+	private PlaylistRelease&Stub $playlistReleaseStub;
 	private UiTemplatesPreparer $preparer;
 
 	/**
@@ -45,8 +47,9 @@ class UiTemplatesPreparerTest extends TestCase
 		parent::setUp();
 		$this->translatorStub   = $this->createStub(Translator::class);
 		$this->rightsCheckerStub = $this->createStub(RightsChecker::class);
+		$this->playlistReleaseStub = $this->createStub(PlaylistRelease::class);
 
-		$this->preparer = new UiTemplatesPreparer($this->translatorStub, $this->rightsCheckerStub);
+		$this->preparer = new UiTemplatesPreparer($this->translatorStub, $this->rightsCheckerStub, $this->playlistReleaseStub);
 	}
 
 
@@ -197,6 +200,37 @@ class UiTemplatesPreparerTest extends TestCase
 	public function testBuildCircularEditor(): void
 	{
 		$playlist = ['playlist_id' => 789, 'playlist_name' => 'Circular Playlist', 'time_limit' => 3600];
+		$this->playlistReleaseStub->method('mayExport')->willReturn(true);
+		$this->stubCircularEditor($playlist);
+
+		$result = $this->preparer->buildCircularEditor($playlist);
+
+		static::assertSame($this->expectedCircularEditor('Player Export', '0'), $result);
+	}
+
+	/**
+	 * While the release is on, a user who may not export asks for the release with the export button.
+	 *
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testBuildCircularEditorAsksForTheReleaseWhenTheUserMayNotExport(): void
+	{
+		$playlist = ['playlist_id' => 789, 'playlist_name' => 'Circular Playlist', 'time_limit' => 3600];
+		$this->playlistReleaseStub->method('mayExport')->willReturn(false);
+		$this->stubCircularEditor($playlist);
+
+		$result = $this->preparer->buildCircularEditor($playlist);
+
+		static::assertSame($this->expectedCircularEditor('Ready for release', '1'), $result);
+	}
+
+	/**
+	 * @param array{time_limit: int, ...} $playlist
+	 */
+	private function stubCircularEditor(array $playlist): void
+	{
 
 		$this->translatorStub->method('translate')
 			->willReturnMap([
@@ -210,6 +244,8 @@ class UiTemplatesPreparerTest extends TestCase
 				['all', UiTemplatesPreparer::MODULE_NAME, [], 'All'],
 				['picking_media_per_cycle', UiTemplatesPreparer::MODULE_NAME, [], 'Picking Media Per Cycle'],
 				['player_export', UiTemplatesPreparer::MODULE_NAME, [], 'Player Export'],
+				['request_release', UiTemplatesPreparer::MODULE_NAME, [], 'Ready for release'],
+				['release_requested', UiTemplatesPreparer::MODULE_NAME, [], 'Waiting for release'],
 				['item_name', UiTemplatesPreparer::MODULE_NAME, [], 'Item Name'],
 				['preview', UiTemplatesPreparer::MODULE_NAME, [], 'Playlist Preview'],
 				['save', 'main', [], 'Save'],
@@ -236,10 +272,14 @@ class UiTemplatesPreparerTest extends TestCase
 
 		$this->rightsCheckerStub->method('checkTimeLimit')
 			->willReturnMap([[$playlist['time_limit'], []]]);
+	}
 
-		$result = $this->preparer->buildCircularEditor($playlist);
-
-		$expected = [
+	/**
+	 * @return array<string,mixed>
+	 */
+	private function expectedCircularEditor(string $exportLabel, string $releaseRequest): array
+	{
+		return [
 			'main_layout' => [
 				'LANG_PAGE_TITLE' => 'Composer (Circular Playlist)',
 				'additional_css' => [
@@ -271,9 +311,10 @@ class UiTemplatesPreparerTest extends TestCase
 					'LANG_TOTAL_FILESIZE' => 'Total Filesize',
 					'has_time_limit' => [],
 					'LANG_SHUFFLE' => 'Shuffle',
-					'LANG_JS' => '{"picking_all":"All"}',
+					'LANG_JS' => '{"picking_all":"All","request_release":"Ready for release","release_requested":"Waiting for release"}',
 					'LANG_PICKING_MEDIA_PER_CYCLE' => 'Picking Media Per Cycle',
-					'LANG_PLAYER_EXPORT' => 'Player Export',
+					'LANG_PLAYER_EXPORT' => $exportLabel,
+					'RELEASE_REQUEST' => $releaseRequest,
 					'LANG_PLAYLIST_PREVIEW' => 'Playlist Preview',
 					'LANG_ITEM_NAME' => 'Item Name',
 					'LANG_SAVE' => 'Save',
@@ -281,9 +322,5 @@ class UiTemplatesPreparerTest extends TestCase
 				],
 			],
 		];
-
-		static::assertSame($expected, $result);
 	}
-
-
 }

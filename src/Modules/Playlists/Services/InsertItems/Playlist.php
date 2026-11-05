@@ -91,6 +91,8 @@ class Playlist extends AbstractInsertItem
 			if ($id === 0)
 				throw new TranslatableModuleException('playlists', 'item_not_inserted', ['playlist_id' => $playlistId]);
 
+			$this->playlistsService->markEdited($playlistId);
+
 			$saveItem['item_id'] = $id;
 			$saveItem['paths']['thumbnail'] = 'public/images/icons/playlist.svg';
 			$saveItem['urls']['thumbnail']  = '/images/icons/playlist.svg';

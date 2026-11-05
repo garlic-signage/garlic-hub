@@ -88,7 +88,8 @@ class PlaylistsRepository extends SqlBase
 		$queryBuilder->update($this->table);
 		foreach ($saveData as $key => $value)
 		{
-			$queryBuilder->set($key, (string)$value);
+			$queryBuilder->set($key, ':' . $key);
+			$queryBuilder->setParameter($key, $value);
 		}
 		$queryBuilder->set('export_time', 'CURRENT_TIMESTAMP');
 
