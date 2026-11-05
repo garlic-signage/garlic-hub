@@ -23,6 +23,7 @@ namespace Tests\Integration\Modules\Mediapool\Controller;
 
 use App\Framework\Config\Config;
 use App\Framework\Config\IniConfigLoader;
+use App\Framework\Middleware\SecurityHeadersMiddleware;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\TemplateEngine\MustacheAdapter;
 use App\Framework\TemplateEngine\MustacheEngineFactory;
@@ -76,6 +77,8 @@ class ShowControllerTest extends ControllerTestCase
 		static::assertContains('/css/mediapool/overview.css', $layout['additional_css']);
 		static::assertSame(['/js/mediapool/init.js'], $layout['footer_modules']);
 		static::assertContains('/js/external/glightbox.min.js', $layout['footer_scripts']);
+		// the webcam and the screencast record with sound
+		static::assertSame(SecurityHeadersMiddleware::PERMISSIONS_WITH_CAMERA, $page->getHeaderLine('Permissions-Policy'));
 	}
 
 	/**

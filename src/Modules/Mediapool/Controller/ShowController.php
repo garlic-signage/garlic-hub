@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace App\Modules\Mediapool\Controller;
 
 use App\Framework\Helper\Json;
+use App\Framework\Middleware\SecurityHeadersMiddleware;
 use App\Framework\Localization\Translate\Translator;
 use App\Modules\Auth\UserSession;
 use App\Framework\TemplateEngine\PageResponse;
@@ -157,6 +158,6 @@ class ShowController
 
 		}
 
-		return new PageResponse($data);
+		return new PageResponse($data)->withHeader('Permissions-Policy', SecurityHeadersMiddleware::PERMISSIONS_WITH_CAMERA);
 	}
 }

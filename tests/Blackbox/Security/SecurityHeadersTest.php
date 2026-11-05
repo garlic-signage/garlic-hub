@@ -85,6 +85,22 @@ class SecurityHeadersTest extends BlackboxTestCase
 		$this->assertSecurityHeaders($browser->get('/users/edit/1'), 'a page without the right');
 	}
 
+	/**
+	 * The uploads of the mediapool record with the webcam and the screen, with sound. No other page may ask for them.
+	 */
+	public function testOnlyTheMediapoolMayUseTheCameraAndTheMicrophone(): void
+	{
+		$this->loadFixture('mediapool/nodes.sql');
+		$browser = $this->browser();
+		$browser->login('anna', 'Test1234!');
+
+		$mediapool = $browser->get('/mediapool');
+		static::assertSame(200, $mediapool->getStatusCode());
+		static::assertSame('camera=(self), microphone=(self), geolocation=(), payment=(), usb=()', $mediapool->getHeaderLine('Permissions-Policy'));
+		static::assertSame(self::HEADERS['Permissions-Policy'], $browser->get('/playlists')->getHeaderLine('Permissions-Policy'));
+		static::assertSame(self::HEADERS['Permissions-Policy'], $browser->get('/async/mediapool/node/0')->getHeaderLine('Permissions-Policy'));
+	}
+
 	public function testTheAnswerForAPlayerHasThemToo(): void
 	{
 		$response = $this->browser()->request('GET', '/smil-index', ['headers' => ['User-Agent' => 'GAPI/1.0 (UUID:3f0cd56c-d511-486a-a8e1-9d2cefd78b3f; NAME:a) garlic-macOS/v0.6.0.679 (MODEL:Garlic)']]);

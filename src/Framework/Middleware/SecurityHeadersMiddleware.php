@@ -49,6 +49,9 @@ readonly class SecurityHeadersMiddleware implements MiddlewareInterface
 
 	public const string NONCE_ATTRIBUTE = 'csp_nonce';
 
+	// the uploads of the mediapool record with the webcam and the screen, with sound: only this page sets it
+	public const string PERMISSIONS_WITH_CAMERA = 'camera=(self), microphone=(self), geolocation=(), payment=(), usb=()';
+
 	private const string POLICY = "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'nonce-%s'";
 
 	public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface

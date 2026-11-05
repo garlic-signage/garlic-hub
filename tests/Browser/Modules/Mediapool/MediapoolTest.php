@@ -99,4 +99,25 @@ class MediapoolTest extends BrowserTestCase
 
 		$this->assertNoErrors();
 	}
+
+	/**
+	 * The webcam and the screencast record with sound: the Permissions-Policy of the page allows camera and
+	 * microphone. The browser has fake devices and asks nobody.
+	 */
+	public function testTheCameraAndTheMicrophoneMayBeUsed(): void
+	{
+		$this->login('anna');
+		$this->visit('/mediapool');
+		$this->client()->getWebDriver()->manage()->timeouts()->setScriptTimeout(10);
+
+		$result = $this->client()->executeAsyncScript(
+			"const done = arguments[0];
+			navigator.mediaDevices.getUserMedia({video: true, audio: true})
+				.then(stream => { stream.getTracks().forEach(track => track.stop()); done('allowed'); })
+				.catch(error => done(error.name));"
+		);
+
+		static::assertSame('allowed', $result);
+		$this->assertNoErrors();
+	}
 }
