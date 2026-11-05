@@ -28,11 +28,13 @@ use App\Framework\Config\OverridingConfigLoader;
 use App\Framework\Http\Cookie;
 use App\Framework\Http\Session;
 use App\Modules\Playlists\Repositories\ItemsRepository;
-use App\Modules\Playlists\Services\TemplateItemImages;
+use App\Modules\Playlists\Services\PlaylistFiles;
 use App\Shared\Versioning\UnitVersions;
 use DI\ContainerBuilder;
 use Defuse\Crypto\Key;
 use Doctrine\DBAL\Connection;
+use League\Flysystem\Filesystem;
+use League\Flysystem\Local\LocalFilesystemAdapter;
 use FilesystemIterator;
 use Phpfastcache\Helper\Psr16Adapter;
 use Psr\Container\ContainerInterface;
@@ -106,8 +108,9 @@ final class TestContainerFactory
 			'FrameworkLogger'   => new NullLogger(),
 			'AppLogger'         => new NullLogger(),
 			// removes files: not the ones of the installation
-			TemplateItemImages::class => \DI\factory(static fn(ContainerInterface $container): TemplateItemImages => new TemplateItemImages(
+			PlaylistFiles::class => \DI\factory(static fn(ContainerInterface $container): PlaylistFiles => new PlaylistFiles(
 				new Config(new IniConfigLoader($paths['configDir'] . '/settings'), ['systemDir' => $runtimeDir . '/system'], $env),
+				new Filesystem(new LocalFilesystemAdapter($runtimeDir . '/system')),
 				$container->get(ItemsRepository::class),
 				$container->get(UnitVersions::class)
 			)),

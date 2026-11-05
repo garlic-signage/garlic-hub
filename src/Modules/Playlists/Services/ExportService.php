@@ -161,7 +161,7 @@ class ExportService extends AbstractBaseService
 
 	/**
 	 * The players get the image of the exported content (see TemplateItemName). The images of former contents stay:
-	 * a restored version of the playlist needs them, they go with the playlist (see TemplateItemImages).
+	 * a restored version of the playlist needs them, they go with the playlist (see PlaylistFiles).
 	 * An image from before the update, named by the item id only, gets the name of the content.
 	 *
 	 * @param list<array<string,mixed>> $items

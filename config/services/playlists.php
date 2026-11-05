@@ -83,11 +83,11 @@ use App\Modules\Playlists\Services\ExportService;
 use App\Modules\Playlists\Services\InsertItems\InsertItemFactory;
 use App\Modules\Playlists\Services\ItemsService;
 use App\Modules\Playlists\Services\PlaylistMetricsCalculator;
+use App\Modules\Playlists\Services\PlaylistFiles;
 use App\Modules\Playlists\Services\PlaylistMetricsUpdater;
 use App\Modules\Playlists\Services\PlaylistsDatatableService;
 use App\Modules\Playlists\Services\PlaylistsService;
 use App\Modules\Playlists\Services\PlaylistVersionsService;
-use App\Modules\Playlists\Services\TemplateItemImages;
 use App\Modules\Playlists\Contracts\PlaylistUsageFinderInterface;
 use App\Modules\Playlists\Services\PlaylistTemplateUsageCounter;
 use App\Modules\Playlists\Services\PlaylistUsageService;
@@ -133,14 +133,15 @@ $dependencies[PlaylistsService::class] = DI\factory(function (ContainerInterface
 		$container->get(UnitVersions::class),
 		$container->get(AuditLog::class),
 		$container->get(Transactions::class),
-		$container->get(TemplateItemImages::class),
+		$container->get(PlaylistFiles::class),
 		$container->get('ModuleLogger')
 	);
 });
-$dependencies[TemplateItemImages::class] = DI\factory(function (ContainerInterface $container)
+$dependencies[PlaylistFiles::class] = DI\factory(function (ContainerInterface $container)
 {
-	return new TemplateItemImages(
+	return new PlaylistFiles(
 		$container->get(Config::class),
+		$container->get('LocalFileSystem'),
 		$container->get(ItemsRepository::class),
 		$container->get(UnitVersions::class)
 	);

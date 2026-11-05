@@ -229,10 +229,22 @@ class PlaylistsServiceTest extends ContainerTestCase
 		static::assertSame([], $this->files($thumbnails));
 	}
 
-	public function testTheImagesStayWhenThePlaylistMayNotBeDeleted(): void
+	public function testDeleteRemovesTheSmilFilesOfThePlaylistOnly(): void
+	{
+		$this->actingAs(2);
+		$smil = $this->storeSmil([1, 3]);
+
+		static::assertSame(1, $this->playlistsService->delete(1));
+
+		static::assertDirectoryDoesNotExist($smil . '/1');
+		static::assertFileExists($smil . '/3/items.smil');
+	}
+
+	public function testTheFilesStayWhenThePlaylistMayNotBeDeleted(): void
 	{
 		$this->actingAs(3);
 		$originals = $this->storeImages('originals', ['5-0123456789abcdef0123456789abcdef.png']);
+		$smil      = $this->storeSmil([1]);
 
 		try
 		{
@@ -242,11 +254,28 @@ class PlaylistsServiceTest extends ContainerTestCase
 		catch (AccessDeniedException)
 		{
 			static::assertSame(['5-0123456789abcdef0123456789abcdef.png'], $this->files($originals));
+			static::assertFileExists($smil . '/1/items.smil');
 		}
 	}
 
 	/**
-	 * In the system directory of the TemplateItemImages of the tests, see TestContainerFactory.
+	 * @param list<int> $playlistIds
+	 */
+	private function storeSmil(array $playlistIds): string
+	{
+		$directory = sys_get_temp_dir() . '/garlic-hub-tests/system/' . $this->container->get(Config::class)->getConfigValue('path_playlists', 'playlists');
+		foreach ($playlistIds as $playlistId)
+		{
+			if (!is_dir($directory . '/' . $playlistId))
+				mkdir($directory . '/' . $playlistId, 0775, true);
+			file_put_contents($directory . '/' . $playlistId . '/items.smil', '<seq/>');
+		}
+
+		return $directory;
+	}
+
+	/**
+	 * In the system directory of the PlaylistFiles of the tests, see TestContainerFactory.
 	 *
 	 * @param list<string> $names
 	 */

@@ -27,15 +27,17 @@ use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Repositories\ItemsRepository;
 use App\Shared\Versioning\UnitVersions;
 use Doctrine\DBAL\Exception;
+use League\Flysystem\Filesystem;
+use League\Flysystem\FilesystemException;
 
 /**
- * The rendered images of the template items of a playlist (see TemplateItemName). The export keeps the images
- * of former contents, as a restored version needs them. They go with the playlist: a deleted playlist
- * can not be restored.
+ * The files of a playlist which go with it: a deleted playlist can not be restored.
+ * The SMIL files of the export and the rendered images of the template items (see TemplateItemName).
+ * The export keeps the images of former contents, as a restored version needs them.
  */
-readonly class TemplateItemImages
+readonly class PlaylistFiles
 {
-	public function __construct(private Config $config, private ItemsRepository $itemsRepository, private UnitVersions $unitVersions)
+	public function __construct(private Config $config, private Filesystem $filesystem, private ItemsRepository $itemsRepository, private UnitVersions $unitVersions)
 	{}
 
 	/**
@@ -45,7 +47,7 @@ readonly class TemplateItemImages
 	 * @return list<int>
 	 * @throws Exception
 	 */
-	public function findItemIds(int $playlistId): array
+	public function findTemplateItemIds(int $playlistId): array
 	{
 		$items = $this->itemsRepository->findAllByPlaylistId($playlistId);
 		foreach ($this->unitVersions->findVersions('playlists', $playlistId) as $version)
@@ -67,18 +69,28 @@ readonly class TemplateItemImages
 	/**
 	 * After the commit: if a file can not be removed, only an orphan is left.
 	 *
-	 * @param list<int> $itemIds
-	 * @return list<string> the files which could not be removed
+	 * @param list<int> $templateItemIds
+	 * @return list<string> the files and directories which could not be removed
 	 * @throws CoreException
 	 */
-	public function remove(array $itemIds): array
+	public function remove(int $playlistId, array $templateItemIds): array
 	{
-		$systemDir = $this->config->getPaths('systemDir');
 		$failed    = [];
+		$smilPath  = $this->config->getConfigValue('path_playlists', 'playlists') . '/' . $playlistId;
+		try
+		{
+			$this->filesystem->deleteDirectory($smilPath);
+		}
+		catch (FilesystemException)
+		{
+			$failed[] = $smilPath;
+		}
+
+		$systemDir = $this->config->getPaths('systemDir');
 		foreach (['originals', 'thumbnails'] as $key)
 		{
 			$directory = $systemDir . '/' . $this->config->getConfigValue($key, 'playlists', 'directories');
-			foreach ($itemIds as $itemId)
+			foreach ($templateItemIds as $itemId)
 			{
 				// <item_id>.<ext> and <item_id>-<hmac>.<ext>, not the files of the item 12 for the item 1
 				foreach (glob($directory . '/' . $itemId . '[.-]*') ?: [] as $file)
