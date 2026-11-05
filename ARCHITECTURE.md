@@ -48,7 +48,7 @@ in `config/services/`.
 | `.htaccess`                        | Forwards requests to `public/` when Apache serves the project root |
 | `dev-install.sh`                   | Creates the runtime directories below `var/` for development    |
 | `getloc.sh`                        | Counts lines of code with `cloc`                                |
-| `preCommit.sh`                     | Runs tests with coverage, PHPStan, coverage badge and SBOM before a commit |
+| `bin/check-code.sh`                     | Runs tests with coverage and PHPStan                        |
 | `sbom.json`                        | Software bill of materials (CycloneDX)                          |
 
 ## Directories

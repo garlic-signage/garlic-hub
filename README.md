@@ -99,7 +99,7 @@ ddev exec vendor/bin/phpunit --testsuite blackbox                     # the real
 ddev exec vendor/bin/phpstan analyze
 ```
 
-`preCommit.sh` runs the tests with coverage and the static analysis, plus coverage badge and SBOM.
+`bin/check-code.sh` runs the tests with coverage and the static analysis.
 
 ### Tech Stack
 
