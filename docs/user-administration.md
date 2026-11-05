@@ -1,45 +1,61 @@
 # User Administration
 
-The user administration concept supports four distinct roles for each module. These roles define the level of access 
-and permissions for managing module-specific entities. The different modules include entities like Players, Playlists, 
-Templates, Channels, associated Users, and more.
+Every module has its own roles. A user gets them per module on the rights page of the user
+(`/users/rights/{UID}`). The roles are bits in `user_acl`, defined in the `[GlobalACLs]` section of
+`config/settings/config_<module>.ini`.
 
-Every module with its own user administration abilities should derivate from the class [AbstractAclValidator](
-..%2Fsrc%2FFramework%2FCore%2FAcl%2FAbstractAclValidator.php).
+Every module with rights derives its validator from
+[AbstractAclValidator](../src/Shared/Acl/AbstractAclValidator.php). The only place which writes rights is
+[AclGrantService](../src/Shared/Acl/AclGrantService.php).
 
-## Role Types
+## Roles per module
 
-### 1. **Module Administrator (Module Admin)**
-- **Permissions:**
-    - Full access to all entities within the module.
-    - Can view and administer Reseller-specific entities.
-- **Responsibilities:**
-    - Manage and configure all module-specific settings and data.
-    - Oversee Reseller accounts and their entities.
+| Module    | Viewer | Editor | Sub admin | Module admin |
+|-----------|:------:|:------:|:---------:|:------------:|
+| mediapool | ✓      | ✓      | ✓         | ✓            |
+| playlists | ✓      | ✓      | ✓         | ✓            |
+| templates | ✓      | ✓      | ✓         | ✓            |
+| player    |        | ✓      | ✓         | ✓            |
+| users     |        |        | ✓         | ✓            |
+| system    |        |        |           | ✓            |
 
-### 2. **Sub Administrator (SubAdmin)**
-- **Permissions:**
-    - Access is limited to module-specific entities associated with the Reseller/Company they grant access to.
-- **Responsibilities:**
-    - Manage and configure entities only within their designated scope.
+- **Module admin**: everything in the module. Grants the roles of the module and shares its units.
+  The module admin of `system` changes the settings and reads the audit log.
+- **Sub admin**: Enterprise only, the same within his companies. The Core edition does not offer the role.
+- **Editor**: may use and edit the units which are shared with him, but not delete or share them.
+- **Viewer**: may use the units which are shared with him, e.g. a playlist in a zone or a template in a playlist.
 
-### 3. **ConditionalPlayEditor**
-- **Permissions:**
-    - Can view, utilize, and edit assigned entities within the module.
-- **Responsibilities:**
-    - Modify and use module-specific entities as permitted.
+Editor and viewer are general bits of the module. Which units a user gets is set per unit in the share dialog
+(context menu of a unit → share), stored in `user_vip`.
 
-### 4. **Viewer**
-- **Permissions:**
-    - Can only view and utilize the assigned entities within the module.
-- **Responsibilities:**
-    - Restricted to viewing and basic usage of entities.
+## What a user may do with a unit
 
-## Summary Table
+| Who                           | View | Use | Edit | Delete | Share |
+|-------------------------------|:----:|:---:|:----:|:------:|:-----:|
+| Module admin                  | ✓    | ✓   | ✓    | ✓      | ✓     |
+| Owner of a playlist           | ✓    | ✓   | ✓    | ✓      |       |
+| Editor of the unit            | ✓    | ✓   | ✓    |        |       |
+| Viewer of the unit            | ✓    | ✓   |      |        |       |
 
-| Role            | View Entities | Edit Entities | Administer Resellers | Scope              |
-|-----------------|---------------|---------------|----------------------|--------------------|
-| Module Admin    | ✓            | ✓            | ✓                 | All entities in the module |
-| SubAdmin        | ✓            | ✓            |                      | Reseller-specific   |
-| Viewer          | ✓            |               |                      | Assigned entities   |
+Modules differ in the details:
+- **Playlists**: the owner edits and deletes his own playlists (`Playlists\Services\AclValidator`).
+- **Mediapool**: folders are shared one by one, a sub folder does not inherit the rights of its parent.
+  The owner of a folder has all rights on it. An editor may upload into a shared folder but not change the
+  folder. A viewer and everybody for a public folder may read it (`Mediapool\Services\AclValidator`).
 
+## Rules for granting
+
+- A module admin grants every role of his module.
+- Nobody changes his own rights.
+- A unit is shared only with users who have the editor or viewer bit of the module.
+- A user has at most one role on a unit: the new role replaces the other one.
+- Removing a role bit removes the shared units of this role, too.
+- Grants and shares are written to the audit log, when it is enabled.
+
+## Users
+
+- **Delete** anonymizes the user: the row stays, so the UID is never given to somebody else and his content
+  keeps an owner. Email, password and session are cleared, tokens and rights are removed, his media folder is
+  deleted.
+- **Password reset** by an admin clears the password, ends the running sessions and the autologin and creates a
+  link with which the user sets a new password.

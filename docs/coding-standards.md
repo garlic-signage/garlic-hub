@@ -27,11 +27,11 @@ Concrete: If you have a directory named `Settings` do not use `Settings` in clas
     - `OrderProcessor`
     - `LocaleSubscriber`
 ### Controller Naming
-- Controllers for GUI Actions should have a Show-prefix plus generic a name
+- Controllers for GUI Actions should have a Show-prefix plus generic a name, see [controller](controller.md)
   **Examples**:
-    - `ShowController`
     - `ShowSettingsController`
-    - `ShowOverviewController`
+    - `ShowDatatableController`
+    - `ShowComposeController`
   
 ## 2. Method Names
 
@@ -68,12 +68,13 @@ Concrete: If you have a directory named `Settings` do not use `Settings` in clas
 
 - **Style**: `PascalCase`
 - **Convention**: File names should match class names exactly and use PascalCase.
+  The entry file of a JavaScript page which only wires the classes is `init.js` (`main.js` for the layout).
 - **Examples**:
     - `UserService.php`
     - `OrderProcessor.php`
 ### Templates
 small letters and snake case
-##ä Translations
+### Translations
 small letters and snake case
 
 ### For Documentation Files
@@ -88,7 +89,10 @@ small letters and snake case
 ## 6. Directory Names
 ### PHP
 PascalCase
-### Javascript, Templates
+### Javascript
+small letters, kebab-case for more words (`canvas-composer`). A directory which groups classes of one kind
+is named like a class: `Controller`, `Views`, `ActionHandler`.
+### Templates
 small letters and snake case
 ### Translations
 only the two code language code
@@ -100,11 +104,11 @@ only the two code language code
 
 ## 7. Function and Parameter Documentation
 
-All functions and methods should be documented with `phpdoc` comments. These comments should include:
+Types belong into the signature. A `phpdoc` comment is written for what the signature can not say:
 
-- **Description** of the function's purpose.
-- **Parameters**: Each parameter should be described with its expected data type and purpose.
-- **Return Type**: Describe the return type of the function.
+- a description, when the purpose is not clear from the name,
+- the shape of arrays and generics (`@param array{UID: int, ...}`, `@return list<string>`), PHPStan level 8 needs them,
+- `@throws` for the exceptions a caller has to know.
 
 ### Example
 
@@ -112,20 +116,19 @@ All functions and methods should be documented with `phpdoc` comments. These com
 /**
  * Processes a user's order and returns a confirmation number.
  *
- * @param int $userId The ID of the user.
- * @param array $orderDetails An array of order details.
- * @return string Confirmation number of the processed order.
+ * @param array{product_id: int, amount: int} $orderDetails
+ * @throws OrderNotFoundException
  */
 public function processOrder(int $userId, array $orderDetails): string
 {
-    // Method implementation
+	// Method implementation
 }
 
 ```
 
 ## 8. Code Formatting
 
-- **Indentation**: Use 4 spaces per indentation level.
+- **Indentation**: Use tabs.
 - **Braces in Allman style**:
   - Place opening braces `{` on a new line, directly below the control statement or function definition.
   - **Single-line statements**: For single-line statements following a control structure (`if`, `else`, `while`, etc.), braces `{}` are optional. When omitted, place the statement on a new line directly below the control structure and leave an empty line after it for clarity. Example:
@@ -164,36 +167,15 @@ public function processOrder(int $userId, array $orderDetails)
 
 ## 9. Error Handling and Exception Management
 
-- Use meaningful exception messages to provide clear context about the error.
-- Avoid using generic exceptions (e.g., `Exception`) when specific exceptions are available, as they improve debugging and readability.
-- Log errors appropriately, but avoid exposing sensitive information in error messages to maintain security.
-- Wrap potentially error-prone code in try-catch blocks where necessary to handle exceptions gracefully and ensure application stability.
-
-### Example
-
-```php
-try
-{
-    $this->processOrder($orderId);
-}
-catch (OrderNotFoundException $e)
-{
-    // Log the error and display a user-friendly message
-    $logger->error("Order not found: " . $e->getMessage());
-    echo "The order could not be found. Please check the ID and try again.";
-}
-catch (Exception $e)
-{
-    // Generic catch for unexpected exceptions
-    $logger->error("Unexpected error: " . $e->getMessage());
-    echo "An unexpected error occurred. Please try again later.";
-}
-```
+See [exceptions](exceptions.md): services throw the exceptions of the project, a catch only cleans up or reacts,
+the error handlers decide about the answer.
 
 ## 10. Naming Conventions for Interfaces and Abstract Classes
 
-- **Interfaces** should end with `Interface` (e.g., `UserRepositoryInterface`).
-- **Abstract Classes** should start with `Abstract` (e.g., `AbstractOrderProcessor`).
+- **Interfaces** end with `Interface` (e.g., `PlaylistBuilderInterface`). An interface which names a role
+  can go without it (e.g., `AuditLog`, `ScheduledTask`, `FilterDefinition`).
+- **Abstract Classes** start with `Abstract` (e.g., `AbstractDatatableBuilder`). The base classes of the
+  parameters, the response builders and the repositories are named `Base…` (e.g., `BaseParameters`, `BaseResponseBuilder`).
 
 ## 11. Commenting Style and Inline Documentation
 
@@ -203,7 +185,7 @@ do not write babbling comments if it is obvious from the source code.
 - **Inline Comments**: Use inline comments sparingly with //
 - Write a comment when you temporarily comment out source code
 - Keep comments up-to-date with any code changes to ensure accuracy.
-- **PHPDoc comments** over methods: As PHP 8.3 is required methods do not need any parameter and return value as annotations
+- **PHPDoc comments** over methods: see section 7.
 
 ## 12. Attribute Placement Standards
 o
@@ -245,16 +227,23 @@ The following are the guidelines for writing templates:
 - Write unit tests for all public methods to validate functionality.
 - Use a consistent naming convention for test methods to improve readability.
 - Use descriptive names for test methods (e.g., `testProcessOrderReturnsConfirmationNumber`) for clarity.
-- Use proper assertions to validate expected results (e.g., `assertEquals`, `assertTrue`, `assertFalse`).
-- End mocked classes with Mock as Suffix (e.g., userRepositoryMock)
+- Use strict assertions, called static: `static::assertSame`, `static::assertTrue`, `static::assertFalse`.
+- Use `createStub()` for collaborators which only return values, `createMock()` only with expectations.
+  Name them with the suffix `Stub` or `Mock` (e.g., `userRepositoryStub`).
 - Unit tests are isolated and avoid dependencies on external resources (e.g., database, filesystem) for reliable results.
 
-### Unit and integration tests
+### Test suites
 
 | Suite | Directory | Groups | Purpose |
 |-------|-----------|--------|---------|
-| `unit` | `tests/Unit` | `units` | Logic of one class, collaborators are mocked. Must stay fast. |
-| `integration` | `tests/Integration` | `db`, `acl` | Real SQLite database, real code, no mocks of our own classes. |
+| `unit` | `tests/Unit` | `units` | Logic of one class, collaborators are stubbed. Must stay fast. |
+| `integration` | `tests/Integration` | `db`, `acl`, `auth`, `io` | Real SQLite database, real code, no mocks of our own classes. |
+| `blackbox` | `tests/Blackbox` | `blackbox` | The application over HTTP with a PHP built-in server. |
+| `architecture` | `tests/Architecture` | | Rules of the code: layers, routes, test groups, JavaScript sinks. |
+| `browser` | `tests/Browser` | `browser` | Headless Chromium (Panther) for the JavaScript. Not in the default run: `--testsuite browser`. |
+
+- Unit tests put `#[Group('units')]` above every test method.
+- `auth`: login, remember me cookie, passwords and tokens. `io`: real files or other system boundaries without a database.
 
 - Do not test repositories with a mocked query builder. Such a test repeats the code and breaks on every refactoring without finding a wrong query. Write a `db` test instead.
 - The database of an integration test is built by the real migrations (`migrations/core`), not by a schema made for tests. A changed schema must make the tests fail.

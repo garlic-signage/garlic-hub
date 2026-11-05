@@ -9,17 +9,19 @@ For a production installation see the
 - Docker and DDEV
 - Git
 
-DDEV brings PHP 8.4, Apache and MariaDB (see `.ddev/config.yaml`). Without DDEV you need:
+DDEV brings PHP 8.4, Apache, ffmpeg and ImageMagick (see `.ddev/config.yaml`). Without DDEV you need:
 
 - PHP 8.4 with the extensions curl, fileinfo, imagick, intl, mbstring, openssl, simplexml and zip
 - Composer
-- Apache, Nginx or another PHP capable web server with `public/` as document root
+- Apache, Nginx or another PHP capable web server with `public/` as document root;
+  Apache needs `mod_rewrite` and `mod_xsendfile` (the Docker image enables both)
+- ffmpeg (`ffprobe` reads videos and audio files) and Ghostscript for PDFs
 - SQLite or MariaDB
 
 Debian packages for a setup without DDEV:
 
 ```bash
-apt install curl php-cli php-curl php-imagick php-intl php-mbstring php-simplexml php-zip git unzip
+apt install curl php-cli php-curl php-imagick php-intl php-mbstring php-simplexml php-zip git unzip ffmpeg ghostscript
 ```
 
 ## Setup
@@ -68,7 +70,8 @@ DB_MASTER_DRIVER="PDO_SQLITE"
 DB_MASTER_PATH="/var/www/html/var/garlic-hub.sqlite"
 ```
 
-**MariaDB** of DDEV (DDEV's default credentials):
+**MariaDB** of DDEV (DDEV's default credentials). The project's `.ddev/config.yaml` disables the
+db container with `omit_containers: [db]`, remove it there and run `ddev restart` first:
 
 ```dotenv
 DB_MASTER_DRIVER="PDO_MYSQL"

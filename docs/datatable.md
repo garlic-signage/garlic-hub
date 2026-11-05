@@ -1,4 +1,4 @@
-updated doc for # Datatables
+# Datatables
 
 How the overview pages (players, playlists, templates, users) are built: a filter form, a sortable
 result list and a paginator. Every module follows the same structure. The **Player** module is the
@@ -16,7 +16,7 @@ All classes of a module datatable live in `src/Modules/<Module>/Helper/Datatable
 | `Parameters` | `Framework\Utils\FormParameters\BaseFilterParameters` | The request parameters: filter fields, sort, page. Sanitizes them and keeps them in the session. |
 | `DatatableBuilder` | `AbstractDatatableBuilder` | Describes the table: title, columns, filter form fields, pagination. |
 | `DatatableService` | `Framework\Services\AbstractDatatableService` | Loads the rows for the current user and filter. |
-| `FilterDefinition` | `Framework\Database\Datatable\FilterDefinition` | Table, joins, selected columns and WHERE conditions for the query. |
+| `<Module>FilterDefinition` | implements the interface `Framework\Database\Datatable\FilterDefinition` | Table, joins, selected columns and WHERE conditions for the query. |
 | `DatatablePreparer` | `AbstractDatatablePreparer` | Turns rows and structure into the variables of the Mustache template. |
 
 The generic work (pagination, header, form, body elements) is done by `BuildService` and
@@ -71,8 +71,11 @@ Strings are sanitized by the `Sanitizer` (see [escaping](escaping.md)), they are
 ## The service and the filter definition
 
 `AbstractDatatableService` offers `fetchForModuleAdmin()` (all rows) and `fetchForUser()` (rows of one
-UID). `loadDatatable()` decides by role which one is used. The player service has branches for sub
-admin, editor and viewer which are prepared for the reseller extension but not implemented yet.
+UID). The modules with units which can be shared (player, playlists, templates) extend
+`Shared\Acl\AbstractUnitDatatableService`: its `fetchForRoles()` loads all rows for the module admin,
+nothing for a sub admin (Enterprise) and for everybody else the own rows plus the units shared with him
+(`SharedUnits`, from `user_vip`). The list shows the units shared for editing, a selection (e.g. a
+template for a playlist) the ones shared for using, too.
 
 The `FilterDefinition` describes the query for the `DatatableQuery`:
 
@@ -155,8 +158,8 @@ protected function prepareModuleTemplate(): array
 }
 ```
 
-Playlists and Templates override `prepareList()` to load additional data for the shown rows
-("is the playlist in use"). Templates has `checkRights()`. Users has no context menu, its delete action
+Templates overrides `prepareList()` to load additional data for the shown rows ("is the template in
+use") and has `checkRights()`. Users has a context menu, too (`prepareContextMenu()`), its delete action
 is `DELETE /async/users`.
 
 ## Template
@@ -190,7 +193,7 @@ with `{{{HTML_ELEMENT}}}`. All other variables use `{{ }}`, see [escaping](escap
    - the names of the table fields and of the filter fields.
 8. Wiring: factories for the classes in `config/services/<module>.php` and the route in
    `config/route.php` (`$group->get('/<module>', resolve([ShowDatatableController::class, 'show'], $container))`).
-9. Tests: copy the tests of the Player module (`tests/Unit/Modules/Player/Helper/Datatable`).
+9. Tests: copy the tests of the Playlists module (`tests/Unit/Modules/Playlists/Helper/Datatable`).
 
 ## Paginator
 

@@ -1,7 +1,8 @@
 # DI Container
 
-garlic-hub uses [PHP-DI](https://php-di.org). All services are defined explicitly in
-`config/services/`, one file per module.
+garlic-hub uses [PHP-DI](https://php-di.org). The services are defined in `config/services/`,
+one file per module. Autowiring of PHP-DI is on: a class without a definition is built from the types
+of its constructor.
 
 ## How the container is built
 
@@ -9,7 +10,8 @@ garlic-hub uses [PHP-DI](https://php-di.org). All services are defined explicitl
 
 1. `Config` — created directly in the bootstrap, because every other definition may need it.
 2. `config/services/_default.php` — framework and shared services. It must come first.
-3. All other `*.php` files below `config/services/`, found recursively.
+3. All `*.php` files below `config/services/`, found recursively. `_default.php` is read a second
+   time, with the same definitions.
 
 The container is built once per request. A service is created on first use and then shared:
 every `$container->get(Session::class)` within a request returns the same instance.
@@ -47,9 +49,11 @@ return $dependencies;
 
 Rules:
 
-1. **Explicit factories.** Every service is created in a `DI\factory()` with `new` and its
-   dependencies from `$container->get()`. Autowiring is not used, so the wiring stays readable
-   in one place.
+1. **Explicit factories.** A service is created in a `DI\factory()` with `new` and its
+   dependencies from `$container->get()`, so the wiring stays readable in one place. Autowiring
+   builds the rest: classes whose constructor only takes classes the container knows, e.g.
+   `PlaylistVersionsController`, `TemplatesController`, `ShowAdminController`. A constructor with
+   a scalar, an interface without a binding or a named service needs a factory.
 2. **Constructor injection only.** Classes get their dependencies by constructor, never from
    request attributes or by calling the container themselves.
 3. **Register what is shared, create inline what is not.** A class that is used in several
@@ -91,6 +95,7 @@ Current bindings:
 | `TemplateEngine\LayoutDataProviderInterface` | `Shared\Layout\LayoutDataProvider` | `_default.php` |
 | `Playlists\Contracts\PlaylistUsageFinderInterface` | `Player\Services\PlayerPlaylistUsageFinder` | `player.php` |
 | `Templates\Contracts\TemplateUsageCounterInterface` | `Playlists\Services\PlaylistTemplateUsageCounter` | `playlists.php` |
+| `Shared\Audit\AuditLog` | `NullAuditLog`, `DatabaseAuditLog` when scheduler and audit are on | `_default.php` |
 
 ## Controllers and middleware
 
@@ -102,4 +107,4 @@ Current bindings:
 ## Console commands
 
 `bin/console.php` uses the same bootstrap. Every class in `src/Commands/` is fetched from
-the container and added to the console, so a command needs a definition like any other service.
+the container and added to the console. The commands have their definitions in `_default.php`.

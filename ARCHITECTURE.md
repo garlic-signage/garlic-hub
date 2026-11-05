@@ -46,10 +46,9 @@ in `config/services/`.
 | `Dockerfile` / `entrypoint.sh` / `.dockerignore` | Production image and its start script          |
 | `docker-compose.yaml`              | Local container stack                                           |
 | `.htaccess`                        | Forwards requests to `public/` when Apache serves the project root |
-| `dev-install.sh`                   | Creates the runtime directories below `var/` for development    |
+| `dev-install.sh`                   | Development setup: `var/` directories, `APP_SECRET`, keys, migrations |
 | `getloc.sh`                        | Counts lines of code with `cloc`                                |
-| `bin/check-code.sh`                     | Runs tests with coverage and PHPStan                        |
-| `sbom.json`                        | Software bill of materials (CycloneDX)                          |
+| `sbom.json`                        | Software bill of materials (CycloneDX), made by `bin/create-sbom.sh` |
 
 ## Directories
 
@@ -57,6 +56,8 @@ in `config/services/`.
 CLI entry points.
 - `console.php` — Symfony console, loads the commands from `src/Commands`.
 - `migrate-storage.sh` — moves uploaded files from `public/var` to `var/storage`.
+- `check-code.sh` — runs the tests with coverage and PHPStan.
+- `create-sbom.sh` — writes `sbom.json`.
 
 ### `config/`
 Wiring of the application.
@@ -70,8 +71,6 @@ Wiring of the application.
 ### `docs/`
 Project documentation.
 - `*.md` — topics like installation, CLI, controllers, DI container, exceptions, OAuth2, threat model.
-- `how-tos/` — step-by-step guides.
-- `generic/` — documentation of generic components (e.g. `datatable/paginator.md`).
 - `media/` — images for the documentation.
 
 ### `dockerapp-configs/`
@@ -83,7 +82,7 @@ Local development environment with DDEV.
 
 ### `.github/`
 - `workflows/tests.yml` — CI on every push and pull request, one job each: static analysis with the architecture tests, unit tests, integration tests, blackbox tests, coverage, security checks (`composer audit`, secret scan with `.gitleaks.toml`). On `main` the job `badge` writes the coverage badge of the README into the branch `badges` (one commit, replaced on every run).
-- `workflows/docker-*.yml` — Docker Hub images, started by hand.
+- `workflows/dockerhub-releases.yml` — Docker Hub images, started by hand.
 - `actions/setup-app/` — PHP, Composer packages and environment, shared by the jobs of the tests.
 - `dependabot.yml` — weekly updates of the Composer packages and the actions.
 
@@ -215,7 +214,7 @@ PHPUnit tests, namespace `Tests\`.
   - `Modules/<Module>/Repositories/` — repository tests, group `db`.
   - `Modules/<Module>/Services/` — tests of who sees and may change what through the real services, group `acl`.
 - `Blackbox/` — tests over HTTP, suite `blackbox`, group `blackbox`: `Support/MiniDeployment` starts the application with the PHP web server in a temporary directory (own `var/`, own database file), `Support/Browser` is a visitor with cookies. They cover the login, the way of a player (`/smil-index`), the security headers and the rights as a user would try them.
-- `Architecture/` — rules for the structure, suite `architecture`: the layers and module dependencies of `src/` (`LayersTest`), the groups of the integration tests (`TestGroupsTest`) and a ratchet for `@var` assertions on arrays, whose number per file may only go down (`ArrayCastsTest`).
+- `Architecture/` — rules for the structure, suite `architecture`: the layers and module dependencies of `src/` (`LayersTest`), the groups of the integration tests (`TestGroupsTest`), a controller for every route (`RoutesTest`), a list of the places where the own JavaScript writes HTML (`JavaScriptSinksTest`) and a ratchet for `@var` assertions on arrays, whose number per file may only go down (`ArrayCastsTest`).
 - `resources/` — fixtures: config files, translations, widgets, temporary files.
   - `sql/<topic>/` — SQL scripts which insert test data for integration tests (`acl/` holds the shared users).
 

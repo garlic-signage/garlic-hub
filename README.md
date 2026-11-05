@@ -1,5 +1,5 @@
 [![tests](https://github.com/garlic-signage/garlic-hub/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/garlic-signage/garlic-hub/actions/workflows/tests.yml)
-[![docker-hub image](https://github.com/garlic-signage/garlic-hub/actions/workflows/dockerhub-releases.yml/badge.svg?branch=main)](https://github.com/garlic-signage/garlic-hub/actions/workflows/docker-releases.yml)
+[![docker-hub image](https://github.com/garlic-signage/garlic-hub/actions/workflows/dockerhub-releases.yml/badge.svg?branch=main)](https://github.com/garlic-signage/garlic-hub/actions/workflows/dockerhub-releases.yml)
 [![garlic-hub coverage](https://raw.githubusercontent.com/garlic-signage/garlic-hub/badges/coverage.svg)](https://github.com/garlic-signage/garlic-hub/actions/workflows/tests.yml)
 [![phpstan level](https://github.com/garlic-signage/garlic-hub/blob/main/misc/phpstan-level.svg)](https://github.com/garlic-signage/garlic-hub/blob/main/misc/phpstan-level.svg)
 [![php version](https://github.com/garlic-signage/garlic-hub/blob/main/misc/php-version.svg)](https://github.com/garlic-signage/garlic-hub/blob/main/misc/php-version.svg)
@@ -54,7 +54,7 @@ The demo is deleted and rebuilt regularly.
 | **Preview player**        | 🧪      | Preview playlists in the browser with the WASM player in a resizable overlay                                           |
 | **Thumbnail preview**     | 🧪      | Enlarged thumbnail of playlist items on hover and touch                                                                |
 | **Sharing**               | 🧪      | Share units and mediapool folders with users and grant roles from the context menu                                     |
-| **Playlist versioning**   | 🧪      | Exported playlists are versioned; items whose resource is gone are left out                                            |
+| **Versioning**            | 🧪      | Exported playlists and saved templates are versioned and can be restored; items whose resource is gone are left out; off by default |
 | **System settings**       | 🧪      | Settings per module, e.g. playlist defaults and mediapool file sizes                                                   |
 | **Audit log**             | 🧪      | Log of rights, shares, settings, users, deletions and failed logins; off by default                                   |
 | **Scheduler**             | 🧪      | Background jobs run by cron every 5 minutes; off by default                                                            |
@@ -88,7 +88,7 @@ Then open https://garlic-hub.ddev.site and create the admin user. The full guide
 ### Tests and Static Analysis
 
 ```bash
-ddev exec vendor/bin/phpunit                                          # everything
+ddev exec vendor/bin/phpunit                                          # everything except the browser tests
 ddev exec vendor/bin/phpunit --testsuite unit                         # fast unit tests with mocks
 ddev exec vendor/bin/phpunit --testsuite integration                  # real database, real migrations, real services
 ddev exec vendor/bin/phpunit --testsuite integration --group db       # only repository tests
