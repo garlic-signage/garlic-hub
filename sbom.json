@@ -2,14 +2,14 @@
     "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
     "bomFormat": "CycloneDX",
     "specVersion": "1.5",
-    "serialNumber": "urn:uuid:d6fbfb81-ffff-404e-a54d-fe8392a53287",
+    "serialNumber": "urn:uuid:31079de7-363b-4adf-8cc6-ca45d0f1526f",
     "version": 1,
     "metadata": {
-        "timestamp": "2026-10-24T21:40:20Z",
+        "timestamp": "2026-11-05T12:27:58Z",
         "tools": [
             {
                 "name": "composer",
-                "version": "2.10.3"
+                "version": "2.11.1"
             },
             {
                 "vendor": "cyclonedx",
@@ -99,11 +99,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "6c5036b6d5f4789476b66c589b7acf1395b68f6b"
+                    "value": "410e3a22323e972aeb49effcc661ef2460184302"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "6c5036b6d5f4789476b66c589b7acf1395b68f6b"
+                    "value": "410e3a22323e972aeb49effcc661ef2460184302"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -440,10 +440,10 @@
             ]
         },
         {
-            "bom-ref": "guzzlehttp/guzzle-8.3.0.0",
+            "bom-ref": "guzzlehttp/guzzle-8.3.1.0",
             "type": "library",
             "name": "guzzle",
-            "version": "8.3.0",
+            "version": "8.3.1",
             "group": "guzzlehttp",
             "description": "Guzzle is a PHP HTTP client library",
             "author": "Graham Campbell, Michael Dowling, Jeremy Lindblom, George Mponos, Tobias Nyholm, M\u00e1rk S\u00e1gi-Kaz\u00e1r, Tobias Schultze",
@@ -454,17 +454,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/guzzlehttp/guzzle@8.3.0",
+            "purl": "pkg:composer/guzzlehttp/guzzle@8.3.1",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/guzzle/guzzle/zipball/b920e5fcaf81d761b8fabe600ca90999beaefdb7",
-                    "comment": "dist reference: b920e5fcaf81d761b8fabe600ca90999beaefdb7"
+                    "url": "https://api.github.com/repos/guzzle/guzzle/zipball/7d9b1f430bb65ac664e120af227bf9a795ad6333",
+                    "comment": "dist reference: 7d9b1f430bb65ac664e120af227bf9a795ad6333"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/guzzle/guzzle.git",
-                    "comment": "source reference: b920e5fcaf81d761b8fabe600ca90999beaefdb7"
+                    "comment": "source reference: 7d9b1f430bb65ac664e120af227bf9a795ad6333"
                 },
                 {
                     "type": "issue-tracker",
@@ -473,18 +473,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/guzzle/guzzle/tree/8.3.0",
+                    "url": "https://github.com/guzzle/guzzle/tree/8.3.1",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "b920e5fcaf81d761b8fabe600ca90999beaefdb7"
+                    "value": "7d9b1f430bb65ac664e120af227bf9a795ad6333"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "b920e5fcaf81d761b8fabe600ca90999beaefdb7"
+                    "value": "7d9b1f430bb65ac664e120af227bf9a795ad6333"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -1018,10 +1018,10 @@
             ]
         },
         {
-            "bom-ref": "league/uri-7.9.0.0",
+            "bom-ref": "league/uri-7.10.0.0",
             "type": "library",
             "name": "uri",
-            "version": "7.9.0",
+            "version": "7.10.0",
             "group": "league",
             "description": "URI manipulation library",
             "author": "Ignace Nyamagana Butera",
@@ -1032,17 +1032,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/league/uri@7.9.0",
+            "purl": "pkg:composer/league/uri@7.10.0",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/thephpleague/uri/zipball/fcc872a3d872aa13f935e0cd1887b9abb06da07f",
-                    "comment": "dist reference: fcc872a3d872aa13f935e0cd1887b9abb06da07f"
+                    "url": "https://api.github.com/repos/thephpleague/uri/zipball/be89e2382e37acdef232259071ade5180821397b",
+                    "comment": "dist reference: be89e2382e37acdef232259071ade5180821397b"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/thephpleague/uri.git",
-                    "comment": "source reference: fcc872a3d872aa13f935e0cd1887b9abb06da07f"
+                    "comment": "source reference: be89e2382e37acdef232259071ade5180821397b"
                 },
                 {
                     "type": "website",
@@ -1066,18 +1066,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/thephpleague/uri/tree/7.9.0",
+                    "url": "https://github.com/thephpleague/uri/tree/7.10.0",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "fcc872a3d872aa13f935e0cd1887b9abb06da07f"
+                    "value": "be89e2382e37acdef232259071ade5180821397b"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "fcc872a3d872aa13f935e0cd1887b9abb06da07f"
+                    "value": "be89e2382e37acdef232259071ade5180821397b"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -1086,10 +1086,10 @@
             ]
         },
         {
-            "bom-ref": "league/uri-interfaces-7.9.0.0",
+            "bom-ref": "league/uri-interfaces-7.10.0.0",
             "type": "library",
             "name": "uri-interfaces",
-            "version": "7.9.0",
+            "version": "7.10.0",
             "group": "league",
             "description": "Common tools for parsing and resolving RFC3987/RFC3986 URI",
             "author": "Ignace Nyamagana Butera",
@@ -1100,17 +1100,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/league/uri-interfaces@7.9.0",
+            "purl": "pkg:composer/league/uri-interfaces@7.10.0",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/thephpleague/uri-interfaces/zipball/eb5f6d24e6a4fe0a8e9c78ded4eb1dfff1404f58",
-                    "comment": "dist reference: eb5f6d24e6a4fe0a8e9c78ded4eb1dfff1404f58"
+                    "url": "https://api.github.com/repos/thephpleague/uri-interfaces/zipball/ea66240cff4ae9a56ce85d577a04d038b771e51c",
+                    "comment": "dist reference: ea66240cff4ae9a56ce85d577a04d038b771e51c"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/thephpleague/uri-interfaces.git",
-                    "comment": "source reference: eb5f6d24e6a4fe0a8e9c78ded4eb1dfff1404f58"
+                    "comment": "source reference: ea66240cff4ae9a56ce85d577a04d038b771e51c"
                 },
                 {
                     "type": "website",
@@ -1134,18 +1134,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/thephpleague/uri-interfaces/tree/7.9.0",
+                    "url": "https://github.com/thephpleague/uri-interfaces/tree/7.10.0",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "eb5f6d24e6a4fe0a8e9c78ded4eb1dfff1404f58"
+                    "value": "ea66240cff4ae9a56ce85d577a04d038b771e51c"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "eb5f6d24e6a4fe0a8e9c78ded4eb1dfff1404f58"
+                    "value": "ea66240cff4ae9a56ce85d577a04d038b771e51c"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -2614,10 +2614,10 @@
             ]
         },
         {
-            "bom-ref": "symfony/console-7.4.21.0",
+            "bom-ref": "symfony/console-7.4.23.0",
             "type": "library",
             "name": "console",
-            "version": "v7.4.21",
+            "version": "v7.4.23",
             "group": "symfony",
             "description": "Eases the creation of beautiful and testable command line interfaces",
             "author": "Fabien Potencier, Symfony Community",
@@ -2628,17 +2628,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/symfony/console@v7.4.21",
+            "purl": "pkg:composer/symfony/console@v7.4.23",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/symfony/console/zipball/21f1bc2296f7ff6043241a8dcbc09559b3732820",
-                    "comment": "dist reference: 21f1bc2296f7ff6043241a8dcbc09559b3732820"
+                    "url": "https://api.github.com/repos/symfony/console/zipball/81957c2440c05c962fe8291f318de6e85f8db330",
+                    "comment": "dist reference: 81957c2440c05c962fe8291f318de6e85f8db330"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/symfony/console.git",
-                    "comment": "source reference: 21f1bc2296f7ff6043241a8dcbc09559b3732820"
+                    "comment": "source reference: 81957c2440c05c962fe8291f318de6e85f8db330"
                 },
                 {
                     "type": "website",
@@ -2647,18 +2647,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/symfony/console/tree/v7.4.21",
+                    "url": "https://github.com/symfony/console/tree/v7.4.23",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "21f1bc2296f7ff6043241a8dcbc09559b3732820"
+                    "value": "81957c2440c05c962fe8291f318de6e85f8db330"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "21f1bc2296f7ff6043241a8dcbc09559b3732820"
+                    "value": "81957c2440c05c962fe8291f318de6e85f8db330"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -2667,10 +2667,10 @@
             ]
         },
         {
-            "bom-ref": "symfony/deprecation-contracts-3.7.1.0",
+            "bom-ref": "symfony/deprecation-contracts-3.8.1.0",
             "type": "library",
             "name": "deprecation-contracts",
-            "version": "v3.7.1",
+            "version": "v3.8.1",
             "group": "symfony",
             "description": "A generic function and convention to trigger deprecation notices",
             "author": "Nicolas Grekas, Symfony Community",
@@ -2681,17 +2681,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/symfony/deprecation-contracts@v3.7.1",
+            "purl": "pkg:composer/symfony/deprecation-contracts@v3.8.1",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/symfony/deprecation-contracts/zipball/f3202fa1b5097b0af062dc978b32ecf63404e31d",
-                    "comment": "dist reference: f3202fa1b5097b0af062dc978b32ecf63404e31d"
+                    "url": "https://api.github.com/repos/symfony/deprecation-contracts/zipball/feb1edf4e546af3b85c5caebe8359a20db230ca3",
+                    "comment": "dist reference: feb1edf4e546af3b85c5caebe8359a20db230ca3"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/symfony/deprecation-contracts.git",
-                    "comment": "source reference: f3202fa1b5097b0af062dc978b32ecf63404e31d"
+                    "comment": "source reference: feb1edf4e546af3b85c5caebe8359a20db230ca3"
                 },
                 {
                     "type": "website",
@@ -2700,18 +2700,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/symfony/deprecation-contracts/tree/v3.7.1",
+                    "url": "https://github.com/symfony/deprecation-contracts/tree/v3.8.1",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "f3202fa1b5097b0af062dc978b32ecf63404e31d"
+                    "value": "feb1edf4e546af3b85c5caebe8359a20db230ca3"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "f3202fa1b5097b0af062dc978b32ecf63404e31d"
+                    "value": "feb1edf4e546af3b85c5caebe8359a20db230ca3"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -2773,10 +2773,10 @@
             ]
         },
         {
-            "bom-ref": "symfony/polyfill-intl-grapheme-1.43.0.0",
+            "bom-ref": "symfony/polyfill-intl-grapheme-1.43.3.0",
             "type": "library",
             "name": "polyfill-intl-grapheme",
-            "version": "v1.43.0",
+            "version": "v1.43.3",
             "group": "symfony",
             "description": "Symfony polyfill for intl's grapheme_* functions",
             "author": "Nicolas Grekas, Symfony Community",
@@ -2787,17 +2787,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/symfony/polyfill-intl-grapheme@v1.43.0",
+            "purl": "pkg:composer/symfony/polyfill-intl-grapheme@v1.43.3",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/symfony/polyfill-intl-grapheme/zipball/5cac8f4db97208823aa353f59a01faad2da52c75",
-                    "comment": "dist reference: 5cac8f4db97208823aa353f59a01faad2da52c75"
+                    "url": "https://api.github.com/repos/symfony/polyfill-intl-grapheme/zipball/5a8f33c87aeecffce24e721b5064fab05f4becf8",
+                    "comment": "dist reference: 5a8f33c87aeecffce24e721b5064fab05f4becf8"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/symfony/polyfill-intl-grapheme.git",
-                    "comment": "source reference: 5cac8f4db97208823aa353f59a01faad2da52c75"
+                    "comment": "source reference: 5a8f33c87aeecffce24e721b5064fab05f4becf8"
                 },
                 {
                     "type": "website",
@@ -2806,18 +2806,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/symfony/polyfill-intl-grapheme/tree/v1.43.0",
+                    "url": "https://github.com/symfony/polyfill-intl-grapheme/tree/v1.43.3",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "5cac8f4db97208823aa353f59a01faad2da52c75"
+                    "value": "5a8f33c87aeecffce24e721b5064fab05f4becf8"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "5cac8f4db97208823aa353f59a01faad2da52c75"
+                    "value": "5a8f33c87aeecffce24e721b5064fab05f4becf8"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -2879,10 +2879,10 @@
             ]
         },
         {
-            "bom-ref": "symfony/polyfill-mbstring-1.43.0.0",
+            "bom-ref": "symfony/polyfill-mbstring-1.43.3.0",
             "type": "library",
             "name": "polyfill-mbstring",
-            "version": "v1.43.0",
+            "version": "v1.43.3",
             "group": "symfony",
             "description": "Symfony polyfill for the Mbstring extension",
             "author": "Nicolas Grekas, Symfony Community",
@@ -2893,17 +2893,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/symfony/polyfill-mbstring@v1.43.0",
+            "purl": "pkg:composer/symfony/polyfill-mbstring@v1.43.3",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/symfony/polyfill-mbstring/zipball/4d5d331bf731e0aedbc6b2f5e61135b7b7996a72",
-                    "comment": "dist reference: 4d5d331bf731e0aedbc6b2f5e61135b7b7996a72"
+                    "url": "https://api.github.com/repos/symfony/polyfill-mbstring/zipball/122889ed24dc000165bcbfd77ec412f15cbdfc6a",
+                    "comment": "dist reference: 122889ed24dc000165bcbfd77ec412f15cbdfc6a"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/symfony/polyfill-mbstring.git",
-                    "comment": "source reference: 4d5d331bf731e0aedbc6b2f5e61135b7b7996a72"
+                    "comment": "source reference: 122889ed24dc000165bcbfd77ec412f15cbdfc6a"
                 },
                 {
                     "type": "website",
@@ -2912,18 +2912,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/symfony/polyfill-mbstring/tree/v1.43.0",
+                    "url": "https://github.com/symfony/polyfill-mbstring/tree/v1.43.3",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "4d5d331bf731e0aedbc6b2f5e61135b7b7996a72"
+                    "value": "122889ed24dc000165bcbfd77ec412f15cbdfc6a"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "4d5d331bf731e0aedbc6b2f5e61135b7b7996a72"
+                    "value": "122889ed24dc000165bcbfd77ec412f15cbdfc6a"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -3038,10 +3038,10 @@
             ]
         },
         {
-            "bom-ref": "symfony/service-contracts-3.7.3.0",
+            "bom-ref": "symfony/service-contracts-3.8.1.0",
             "type": "library",
             "name": "service-contracts",
-            "version": "v3.7.3",
+            "version": "v3.8.1",
             "group": "symfony",
             "description": "Generic abstractions related to writing services",
             "author": "Nicolas Grekas, Symfony Community",
@@ -3052,17 +3052,17 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/symfony/service-contracts@v3.7.3",
+            "purl": "pkg:composer/symfony/service-contracts@v3.8.1",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/symfony/service-contracts/zipball/15e6a07ec2a2c75ceb1b21dd98105ee8456d2257",
-                    "comment": "dist reference: 15e6a07ec2a2c75ceb1b21dd98105ee8456d2257"
+                    "url": "https://api.github.com/repos/symfony/service-contracts/zipball/052852a96fd5e5ebdb617dba22031e41a3300fb5",
+                    "comment": "dist reference: 052852a96fd5e5ebdb617dba22031e41a3300fb5"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/symfony/service-contracts.git",
-                    "comment": "source reference: 15e6a07ec2a2c75ceb1b21dd98105ee8456d2257"
+                    "comment": "source reference: 052852a96fd5e5ebdb617dba22031e41a3300fb5"
                 },
                 {
                     "type": "website",
@@ -3071,18 +3071,18 @@
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/symfony/service-contracts/tree/v3.7.3",
+                    "url": "https://github.com/symfony/service-contracts/tree/v3.8.1",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "15e6a07ec2a2c75ceb1b21dd98105ee8456d2257"
+                    "value": "052852a96fd5e5ebdb617dba22031e41a3300fb5"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "15e6a07ec2a2c75ceb1b21dd98105ee8456d2257"
+                    "value": "052852a96fd5e5ebdb617dba22031e41a3300fb5"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -3144,10 +3144,10 @@
             ]
         },
         {
-            "bom-ref": "vlucas/phpdotenv-5.7.0.0",
+            "bom-ref": "vlucas/phpdotenv-5.8.0.0",
             "type": "library",
             "name": "phpdotenv",
-            "version": "v5.7.0",
+            "version": "v5.8.0",
             "group": "vlucas",
             "description": "Loads environment variables from `.env` to `$_ENV` and `$_SERVER` automagically, and optionally to `getenv()`.",
             "author": "Graham Campbell, Vance Lucas",
@@ -3158,37 +3158,37 @@
                     }
                 }
             ],
-            "purl": "pkg:composer/vlucas/phpdotenv@v5.7.0",
+            "purl": "pkg:composer/vlucas/phpdotenv@v5.8.0",
             "externalReferences": [
                 {
                     "type": "distribution",
-                    "url": "https://api.github.com/repos/phpdotenv/phpdotenv/zipball/301c07936b16d88628b126b01d082ba153cf4c40",
-                    "comment": "dist reference: 301c07936b16d88628b126b01d082ba153cf4c40"
+                    "url": "https://api.github.com/repos/phpdotenv/phpdotenv/zipball/96149103e62ac67e915f6d2ef59b72dee2e011e0",
+                    "comment": "dist reference: 96149103e62ac67e915f6d2ef59b72dee2e011e0"
                 },
                 {
                     "type": "vcs",
                     "url": "https://github.com/phpdotenv/phpdotenv.git",
-                    "comment": "source reference: 301c07936b16d88628b126b01d082ba153cf4c40"
+                    "comment": "source reference: 96149103e62ac67e915f6d2ef59b72dee2e011e0"
                 },
                 {
                     "type": "issue-tracker",
-                    "url": "https://github.com/vlucas/phpdotenv/issues",
+                    "url": "https://github.com/phpdotenv/phpdotenv/issues",
                     "comment": "as detected from Composer manifest 'support.issues'"
                 },
                 {
                     "type": "vcs",
-                    "url": "https://github.com/vlucas/phpdotenv/tree/v5.7.0",
+                    "url": "https://github.com/phpdotenv/phpdotenv/tree/v5.8.0",
                     "comment": "as detected from Composer manifest 'support.source'"
                 }
             ],
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "301c07936b16d88628b126b01d082ba153cf4c40"
+                    "value": "96149103e62ac67e915f6d2ef59b72dee2e011e0"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "301c07936b16d88628b126b01d082ba153cf4c40"
+                    "value": "96149103e62ac67e915f6d2ef59b72dee2e011e0"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -3228,7 +3228,7 @@
             ]
         },
         {
-            "ref": "guzzlehttp/guzzle-8.3.0.0",
+            "ref": "guzzlehttp/guzzle-8.3.1.0",
             "dependsOn": [
                 "guzzlehttp/promises-3.1.0.0",
                 "guzzlehttp/psr7-3.2.0.0",
@@ -3241,7 +3241,7 @@
         {
             "ref": "guzzlehttp/promises-3.1.0.0",
             "dependsOn": [
-                "symfony/deprecation-contracts-3.7.1.0"
+                "symfony/deprecation-contracts-3.8.1.0"
             ]
         },
         {
@@ -3298,21 +3298,21 @@
                 "defuse/php-encryption-2.4.0.0",
                 "lcobucci/jwt-5.6.1.0",
                 "league/event-3.0.3.0",
-                "league/uri-7.9.0.0",
+                "league/uri-7.10.0.0",
                 "psr/clock-1.0.0.0",
                 "psr/http-message-2.0.0.0",
                 "psr/http-server-middleware-1.0.2.0"
             ]
         },
         {
-            "ref": "league/uri-7.9.0.0",
+            "ref": "league/uri-7.10.0.0",
             "dependsOn": [
-                "league/uri-interfaces-7.9.0.0",
+                "league/uri-interfaces-7.10.0.0",
                 "psr/http-factory-1.1.0.0"
             ]
         },
         {
-            "ref": "league/uri-interfaces-7.9.0.0",
+            "ref": "league/uri-interfaces-7.10.0.0",
             "dependsOn": [
                 "psr/http-message-2.0.0.0"
             ]
@@ -3447,28 +3447,28 @@
             ]
         },
         {
-            "ref": "symfony/console-7.4.21.0",
+            "ref": "symfony/console-7.4.23.0",
             "dependsOn": [
-                "symfony/deprecation-contracts-3.7.1.0",
-                "symfony/polyfill-mbstring-1.43.0.0",
-                "symfony/service-contracts-3.7.3.0",
+                "symfony/deprecation-contracts-3.8.1.0",
+                "symfony/polyfill-mbstring-1.43.3.0",
+                "symfony/service-contracts-3.8.1.0",
                 "symfony/string-8.0.15.0"
             ]
         },
         {
-            "ref": "symfony/deprecation-contracts-3.7.1.0"
+            "ref": "symfony/deprecation-contracts-3.8.1.0"
         },
         {
             "ref": "symfony/polyfill-ctype-1.37.0.0"
         },
         {
-            "ref": "symfony/polyfill-intl-grapheme-1.43.0.0"
+            "ref": "symfony/polyfill-intl-grapheme-1.43.3.0"
         },
         {
             "ref": "symfony/polyfill-intl-normalizer-1.43.0.0"
         },
         {
-            "ref": "symfony/polyfill-mbstring-1.43.0.0"
+            "ref": "symfony/polyfill-mbstring-1.43.3.0"
         },
         {
             "ref": "symfony/polyfill-php80-1.43.0.0"
@@ -3477,28 +3477,28 @@
             "ref": "symfony/polyfill-php82-1.43.0.0"
         },
         {
-            "ref": "symfony/service-contracts-3.7.3.0",
+            "ref": "symfony/service-contracts-3.8.1.0",
             "dependsOn": [
                 "psr/container-2.0.2.0",
-                "symfony/deprecation-contracts-3.7.1.0"
+                "symfony/deprecation-contracts-3.8.1.0"
             ]
         },
         {
             "ref": "symfony/string-8.0.15.0",
             "dependsOn": [
                 "symfony/polyfill-ctype-1.37.0.0",
-                "symfony/polyfill-intl-grapheme-1.43.0.0",
+                "symfony/polyfill-intl-grapheme-1.43.3.0",
                 "symfony/polyfill-intl-normalizer-1.43.0.0",
-                "symfony/polyfill-mbstring-1.43.0.0"
+                "symfony/polyfill-mbstring-1.43.3.0"
             ]
         },
         {
-            "ref": "vlucas/phpdotenv-5.7.0.0",
+            "ref": "vlucas/phpdotenv-5.8.0.0",
             "dependsOn": [
                 "graham-campbell/result-type-1.2.0.0",
                 "phpoption/phpoption-1.10.0.0",
                 "symfony/polyfill-ctype-1.37.0.0",
-                "symfony/polyfill-mbstring-1.43.0.0",
+                "symfony/polyfill-mbstring-1.43.3.0",
                 "symfony/polyfill-php80-1.43.0.0"
             ]
         },
@@ -3511,15 +3511,15 @@
                 "slim/flash-0.4.0.0",
                 "php-di/php-di-7.1.1.0",
                 "mustache/mustache-3.2.0.0",
-                "vlucas/phpdotenv-5.7.0.0",
+                "vlucas/phpdotenv-5.8.0.0",
                 "monolog/monolog-3.12.1.0",
                 "league/flysystem-3.36.0.0",
                 "league/oauth2-server-9.4.1.0",
                 "league/flysystem-ziparchive-3.31.0.0",
                 "phpfastcache/phpfastcache-9.2.4.0",
                 "doctrine/dbal-4.5.0.0",
-                "symfony/console-7.4.21.0",
-                "guzzlehttp/guzzle-8.3.0.0",
+                "symfony/console-7.4.23.0",
+                "guzzlehttp/guzzle-8.3.1.0",
                 "defuse/php-encryption-2.4.0.0",
                 "ramsey/uuid-4.9.4.0"
             ]
