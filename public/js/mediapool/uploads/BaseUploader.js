@@ -18,6 +18,7 @@
 */
 
 import { UploadApiConfig } from './UploadApiConfig.js';
+import {Utils} from "../../core/Utils.js";
 
 export class BaseUploader
 {
@@ -50,7 +51,7 @@ export class BaseUploader
 			const formData = new FormData();
 			formData.append("node_id", String(this.directoryView.getActiveNodeId()));
 			formData.append("external_link", filePath);
-			formData.append("csrf_token", this.detectCsrfTokenInMetaTag());
+			formData.append("csrf_token", Utils.csrfToken());
 			if (metadata !== null)
 				formData.append("metadata", JSON.stringify(metadata));
 
@@ -127,14 +128,5 @@ export class BaseUploader
 		this.#uploaderDialog.enableActions();
 		this.disableUploadButton();
 		document.getElementById("linkTab").disabled = false;
-	}
-
-	detectCsrfTokenInMetaTag()
-	{
-		const metaTag = document.querySelector('meta[name="csrf-token"]');
-		if (metaTag && metaTag.hasAttribute('content'))
-			return metaTag.getAttribute('content');
-
-		throw new Error("No CSRF token found in meta tag");
 	}
 }

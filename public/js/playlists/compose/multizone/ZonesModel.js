@@ -18,6 +18,7 @@
 */
 import './CanvasView.js';
 import { WaitOverlay } from '../../../core/WaitOverlay.js';
+import {Utils} from "../../../core/Utils.js";
 
 export class ZonesModel
 {
@@ -114,27 +115,6 @@ export class ZonesModel
 		});
 	}
 
-	async determinNameById(playlist_id)
-	{
-		try
-		{
-			const url      = "/async/playlists/find/" + playlist_id;
-			const response = await fetch(url);
-			const playlist = await response.json();
-
-			if (!response.ok || !playlist?.playlist_id)
-				return '';
-
-			return playlist.name;
-
-		}
-		catch (error)
-		{
-			console.error('Error fetching suggestions:', error);
-		}
-	}
-
-
 	#createZonesObject(response)
 	{
 
@@ -222,7 +202,7 @@ export class ZonesModel
 		try
 		{
 			const properties = this.#createJsonForSave();
-			properties.csrf_token = this.#detectCsrfTokenInMetaTag();
+			properties.csrf_token = Utils.csrfToken();
 
 			const response = await fetch("/async/playlists/multizone/" + this.#playlist_id, {
 				method: 'POST',
@@ -331,14 +311,5 @@ export class ZonesModel
 			this.#export_unit = ZonesModel.UNIT_PERCENT
 		else
 			this.#export_unit = ZonesModel.UNIT_PIXEL;
-	}
-
-	#detectCsrfTokenInMetaTag()
-	{
-		const metaTag = document.querySelector('meta[name="csrf-token"]');
-		if (metaTag && metaTag.hasAttribute('content'))
-			return metaTag.getAttribute('content');
-
-		throw new Error("No CSRF token found in meta tag");
 	}
 }

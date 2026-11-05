@@ -71,7 +71,7 @@ export class CanvasEvents
 			}
 
 			if (zones[i].zone_playlist_id > 0)
-				zones[i].zone_playlist_name = await this.MyZonesModel.determinNameById(zones[i].zone_playlist_id)
+				zones[i].zone_playlist_name = await this.#playlistsService.findNameById(zones[i].zone_playlist_id)
 			else
 				zones[i].zone_playlist_name = "";
 

@@ -16,6 +16,8 @@
  You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+import {Utils} from "../Utils.js";
+
 export class BaseService
 {
 	#fetchClient       = null;
@@ -37,7 +39,7 @@ export class BaseService
 		{
 			const options = {method, headers: { 'Content-Type': 'application/json' }};
 			if (method !== "GET")
-				options.body = JSON.stringify({...data, csrf_token: this.#detectCsrfTokenInMetaTag()});
+				options.body = JSON.stringify({...data, csrf_token: Utils.csrfToken()});
 
 			return await this.#fetchClient.fetchData(url, options);
 		}
@@ -45,14 +47,5 @@ export class BaseService
 		{
 			return {success: false, error_message: error.message};
 		}
-	}
-
-	#detectCsrfTokenInMetaTag()
-	{
-		const metaTag = document.querySelector('meta[name="csrf-token"]');
-		if (metaTag && metaTag.hasAttribute('content'))
-			return metaTag.getAttribute('content');
-
-		throw new Error("No CSRF token found in meta tag");
 	}
 }

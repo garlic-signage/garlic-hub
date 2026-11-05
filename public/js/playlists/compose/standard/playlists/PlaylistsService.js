@@ -31,6 +31,18 @@ export class PlaylistsService extends BaseService
 		return await response.json();
 	}
 
+	/**
+	 * The name of a zone in the multizone editor.
+	 *
+	 * @return {Promise<string>} empty when the playlist is not found or not usable
+	 */
+	async findNameById(playlistId)
+	{
+		const result = await this._sendRequest(PlaylistsApiConfig.FIND_URI + "/" + encodeURIComponent(playlistId), "GET");
+
+		return result?.playlist_id ? String(result.name ?? "") : "";
+	}
+
 	async delete(playlistId)
 	{
 		const url = PlaylistsApiConfig.BASE_URI;

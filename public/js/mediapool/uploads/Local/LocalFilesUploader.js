@@ -19,6 +19,7 @@
 
 import { BaseUploader } from "../BaseUploader.js";
 import { UploadApiConfig } from '../UploadApiConfig.js';
+import {Utils} from "../../../core/Utils.js";
 
 export class LocalFilesUploader extends BaseUploader
 {
@@ -67,7 +68,7 @@ export class LocalFilesUploader extends BaseUploader
 					formData.append("file", file);
 					formData.append("node_id", this.directoryView.getActiveNodeId());
 					formData.append("metadata", JSON.stringify(this.#filePreviews.metaDataList[id]));
-					formData.append("csrf_token", this.detectCsrfTokenInMetaTag());
+					formData.append("csrf_token", Utils.csrfToken());
 
 					const options  = {method: "POST", body: formData};
 
@@ -111,6 +112,4 @@ export class LocalFilesUploader extends BaseUploader
 
 		})();
 	}
-
-
 }

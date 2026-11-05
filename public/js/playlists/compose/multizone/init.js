@@ -42,7 +42,8 @@ window.onload = async function ()
 
 
     let MyContextMenu           = new ContextMenu(MyCanvasView);
-    let MyZoneProperties        = new ZoneProperties(MyCanvasView, MyPlaylistSearch);
+    const MyPlaylistsService    = new PlaylistsService(new FetchClient());
+    let MyZoneProperties        = new ZoneProperties(MyCanvasView, MyPlaylistSearch, MyPlaylistsService);
     let MyZonesModel            = new ZonesModel(MyCanvasView);
     let MyCanvasEvents          = new CanvasEvents(
         MyZonesModel,
@@ -50,7 +51,7 @@ window.onload = async function ()
         MyCanvasView,
         MyZoneProperties,
         MyLabeledZoneFactory,
-        new PlaylistsService(new FetchClient())
+        MyPlaylistsService
     );
 
     let playlist_id = document.getElementById("playlist_id").value;

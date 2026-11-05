@@ -42,6 +42,18 @@ export class Utils
 		return `${size} ${sizes[i]}`;
 	}
 
+	/**
+	 * The token of the session, the layout puts it into a meta tag.
+	 */
+	static csrfToken()
+	{
+		const metaTag = document.querySelector('meta[name="csrf-token"]');
+		if (metaTag && metaTag.hasAttribute('content'))
+			return metaTag.getAttribute('content');
+
+		throw new Error("No CSRF token found in meta tag");
+	}
+
 	static async confirmAction(message)
 	{
 		return confirm(message);

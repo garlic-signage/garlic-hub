@@ -36,9 +36,12 @@ export class ZoneProperties
 	MyCanvasView = null;
 	autocompletePlaylist = null;
 
-	constructor(MyCanvasView, autocompletePlaylist)
+	#playlistsService = null;
+
+	constructor(MyCanvasView, autocompletePlaylist, playlistsService)
 	{
 		this.MyCanvasView         = MyCanvasView;
+		this.#playlistsService    = playlistsService;
 		this.autocompletePlaylist = autocompletePlaylist;
 		this.zone_playlist_id     = autocompletePlaylist.getHiddenIdElement();
 		this.zone_playlist_name   = autocompletePlaylist.getEditFieldElement();
@@ -287,23 +290,9 @@ export class ZoneProperties
 			return;
 		}
 
-		try
-		{
-			const url      = "/async/playlists/find/" + this.ActiveGroup.zone_playlist_id;
-			const response = await fetch(url);
-			const playlist = await response.json();
-
-			if (!response.ok || !playlist?.playlist_id)
-				return;
-
-			this.autocompletePlaylist.setInputFields(playlist.playlist_id, playlist.name);
-
-		}
-		catch (error)
-		{
-			console.error('Error fetching suggestions:', error);
-		}
+		const playlistId = this.ActiveGroup.zone_playlist_id;
+		const name       = await this.#playlistsService.findNameById(playlistId);
+		if (name !== "")
+			this.autocompletePlaylist.setInputFields(playlistId, name);
 	}
-
-
 }

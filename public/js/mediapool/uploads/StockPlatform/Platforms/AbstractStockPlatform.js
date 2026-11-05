@@ -17,6 +17,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 import { UploadApiConfig } from '../../UploadApiConfig.js';
+import {Utils} from "../../../../core/Utils.js";
 
 export class AbstractStockPlatform
 {
@@ -91,18 +92,9 @@ export class AbstractStockPlatform
 	 */
 	async requestStockApi(dataToSend)
 	{
-		const body    = {...dataToSend, csrf_token: this.#detectCsrfTokenInMetaTag()};
+		const body    = {...dataToSend, csrf_token: Utils.csrfToken()};
 		const options = {method: "POST", headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)};
 
 		return await this.#fetchClient.fetchData(UploadApiConfig.SEARCH_STOCK_IMAGES, options);
-	}
-
-	#detectCsrfTokenInMetaTag()
-	{
-		const metaTag = document.querySelector('meta[name="csrf-token"]');
-		if (metaTag && metaTag.hasAttribute('content'))
-			return metaTag.getAttribute('content');
-
-		throw new Error("No CSRF token found in meta tag");
 	}
 }

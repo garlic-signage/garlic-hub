@@ -17,6 +17,8 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+import {Utils} from "../../core/Utils.js";
+
 export class MediaInfoDialog
 {
     #dialogElement   = document.getElementById("editInfoDialog");
@@ -54,13 +56,13 @@ export class MediaInfoDialog
 					this.#hide(".media-dimensions");
 
 				if (media.metadata.duration !== undefined && media.metadata.duration > 0 )
-					this.#dialogElement.querySelector(".media-duration").textContent = this.#formatSeconds(media.metadata.duration);
+					this.#dialogElement.querySelector(".media-duration").textContent = Utils.formatSecondsToTime(media.metadata.duration);
 				else
 					this.#hide(".media-duration");
 
 				this.#dialogElement.querySelector(".media-owner").textContent = media.username;
 				this.#dialogElement.querySelector(".media-uploaded-at").textContent = media.upload_time;
-				this.#dialogElement.querySelector(".media-filesize").textContent = this.#formatBytes(media.metadata.size);
+				this.#dialogElement.querySelector(".media-filesize").textContent = Utils.formatBytes(media.metadata.size);
 				this.#dialogElement.querySelector(".media-description").textContent = media.media_description;
 				this.#dialogElement.querySelector(".stock-name").textContent = media.metadata.origin;
 
@@ -114,26 +116,5 @@ export class MediaInfoDialog
 		{
 			this.#dialogElement.close("cancel");
 		});
-	}
-
-	#formatBytes(bytes)
-	{
-		if (bytes >= 1073741824)  // 1 GB
-			return (bytes / 1073741824).toFixed(2) + " GB";
-		else if (bytes >= 1048576)  // 1 MB
-			return (bytes / 1048576).toFixed(2) + " MB";
-		else if (bytes >= 1024)  // 1 KB
-			return (bytes / 1024).toFixed(2) + " KB";
-		else
-			return bytes + " Bytes"; // less 1 KB
-	}
-
-	#formatSeconds(seconds)
-	{
-		const hours = Math.floor(seconds / 3600);
-		const minutes = Math.floor((seconds % 3600) / 60);
-		const secs = seconds % 60;
-
-		return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
 	}
 }

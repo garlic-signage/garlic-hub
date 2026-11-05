@@ -18,14 +18,12 @@
 */
 
 import { LocalFilesUploader } from "../Local/LocalFilesUploader.js";
+import { MediaCapture } from "../MediaCapture.js";
 
 export class WebcamUploader extends LocalFilesUploader
 {
-    #maxRecordTime  = 300; // 5min
     #webcam         = null;
-    #mediaRecorder  = null;
-    #recordedChunks = [];
-    #stopTimer      = null;
+    #capture        = new MediaCapture();
 
     constructor(webcam, filePreviews, domElements, directoryView, uploaderDialog, fetchClient)
     {
@@ -77,72 +75,28 @@ export class WebcamUploader extends LocalFilesUploader
         }
     }
 
-    #toggleRecording(event)
-    {
-        if (this.#mediaRecorder === null || this.#mediaRecorder.state !== 'recording')
-        {
-            let stream = this.domElements.webcamVideo.srcObject;
-            this.#recordedChunks = [];
-	        this.#mediaRecorder = new MediaRecorder(stream);
+	#toggleRecording(event)
+	{
+		const button = event.target;
+		if (this.#capture.isRecording())
+		{
+			this.#capture.stop();
+			return;
+		}
 
-            this.#mediaRecorder.start(1000); // 1000ms = 1 sec per chunk
-			const startTime = Date.now();
-            event.target.textContent = "Stop Aufnahme";
+		this.#capture.start(
+			this.domElements.webcamVideo.srcObject,
+			(file, duration) => this.filePreviews.addFile(file, {"duration": duration, "origin": "Camera video", "page_url": ""}),
+			() => button.textContent = "Start Aufnahme"
+		);
+		button.textContent = "Stop Aufnahme";
+	}
 
-            // the recorder of this recording: a stop by hand clears the timer, a later recording has its own
-            const recorder = this.#mediaRecorder;
-            this.#stopTimer = setTimeout(() => {
-                if (recorder.state === 'recording')
-                {
-                    recorder.stop();
-                    event.target.textContent = "Start Aufnahme";
-                }
-            }, this.#maxRecordTime * 1000);
-
-            this.#mediaRecorder.ondataavailable = (event) => {
-                this.#recordedChunks.push(event.data);
-            };
-
-            this.#mediaRecorder.onstop = () => {
-                const blob = new Blob(this.#recordedChunks, { type: "video/webm;" });
-				const endTime = Date.now();
-				const durationInSeconds = (endTime - startTime) / 1000; // ms to sec
-
-				const file = new File([blob], "recorded-video.webm", { type: blob.type });
-				const metadata = {"duration":  durationInSeconds, "origin": "Camera video", "page_url": "" };
-				this.filePreviews.addFile(file, metadata);
-				this.#mediaRecorder = null;
-
-            };
-        }
-        else
-        {
-            clearTimeout(this.#stopTimer);
-            this.#mediaRecorder.stop();
-            event.target.textContent = "Start Aufnahme";
-            this.#mediaRecorder = null;
-        }
-    }
-
-    #capturePhoto()
-    {
-        const dataURL = this.#webcam.capturePhoto(document.createElement("canvas"))
-
-        const [header, base64] = dataURL.split(',');
-        const mimeType = header.match(/:(.*?);/)[1]; // MIME-Typ extrahieren
-
-        const binary = atob(base64);
-        const array = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++)
-        {
-            array[i] = binary.charCodeAt(i);
-        }
-
-        const file = new File([array], "webcam_shoot.jpg", { type: mimeType });
-
-		const metadata = {"origin": "Camera screenshot", "page_url": ""};
-        this.filePreviews.addFile(file, metadata);
-    }
+	#capturePhoto()
+	{
+		const file = MediaCapture.fileFromDataUrl(this.#webcam.capturePhoto(document.createElement("canvas")), "webcam_shoot.jpg");
+		this.filePreviews.addFile(file, {"origin": "Camera screenshot", "page_url": ""});
+	}
 
     #detectCameras()
     {
