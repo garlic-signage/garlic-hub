@@ -56,6 +56,7 @@ The demo is deleted and rebuilt regularly.
 | **Thumbnail preview**     | 🧪      | Enlarged thumbnail of playlist items on hover and touch                                                                |
 | **Sharing**               | 🧪      | Share units and mediapool folders with users and grant roles from the context menu                                     |
 | **Versioning**            | 🧪      | Exported playlists and saved templates are versioned and can be restored, including the template items of a playlist |
+| **Release**               | 🧪      | Editors mark playlists as ready for release, only admins export; status in the list and on the dashboard; off by default |
 | **System settings**       | 🧪      | Settings per module, e.g. playlist defaults and mediapool file sizes                                                   |
 | **Audit log**             | 🧪      | Log of rights, shares, settings, users, deletions and failed logins; off by default                                   |
 | **Scheduler**             | 🧪      | Background jobs run by cron every 5 minutes; off by default                                                            |
