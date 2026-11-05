@@ -152,7 +152,7 @@ class SecurityHeadersTest extends BlackboxTestCase
 
 	public function testUnknownHostnamesAreServedLikeTheOwnOne(): void
 	{
-		$browser = new Browser($this->deployment()->baseUrl());
+		$browser = new Browser($this->deployment()->baseUrl(), $this->deployment());
 
 		$response = $browser->request('GET', '/login', ['headers' => ['Host' => 'evil.example']]);
 
