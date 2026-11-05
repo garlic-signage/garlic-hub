@@ -24,6 +24,7 @@ namespace Tests\Browser\Modules\Playlists;
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverElement;
 use Facebook\WebDriver\WebDriverExpectedCondition;
+use Facebook\WebDriver\WebDriverHasInputDevices;
 use Facebook\WebDriver\WebDriverKeys;
 use Facebook\WebDriver\WebDriverSelect;
 use PHPUnit\Framework\Attributes\Group;
@@ -146,8 +147,8 @@ class MultizoneEditorTest extends BrowserTestCase
 		// Haupt: a step to the right, a big step down, then a copy which is put to the background
 		$this->clickCanvas(640, 540);
 		$this->pressKeys(WebDriverKeys::ARROW_RIGHT);
-		$this->pressKeys([WebDriverKeys::SHIFT, WebDriverKeys::ARROW_DOWN]);
-		$this->pressKeys([WebDriverKeys::CONTROL, 'd']);
+		$this->pressKeys(WebDriverKeys::SHIFT . WebDriverKeys::ARROW_DOWN);
+		$this->pressKeys(WebDriverKeys::CONTROL . 'd');
 		static::assertSame(['Haupt', 'Ticker', 'Haupt'], $this->zoneNames());
 		static::assertSame(['Haupt', '21', '70'], array_slice($this->properties(), 0, 3));
 
@@ -385,10 +386,13 @@ class MultizoneEditorTest extends BrowserTestCase
 	}
 
 	/**
-	 * @param string|list<string> $keys
+	 * A modifier like SHIFT stays pressed until the end of the keys.
 	 */
-	private function pressKeys(string|array $keys): void
+	private function pressKeys(string $keys): void
 	{
-		$this->client()->getWebDriver()->getKeyboard()->sendKeys($keys);
+		$driver = $this->client()->getWebDriver();
+		static::assertInstanceOf(WebDriverHasInputDevices::class, $driver);
+
+		$driver->getKeyboard()->sendKeys($keys);
 	}
 }
