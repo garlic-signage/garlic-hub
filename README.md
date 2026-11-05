@@ -51,6 +51,15 @@ The demo is deleted and rebuilt regularly.
 | **User management**       | ✅      | Basic user management with roles per module; initial admin user set up after installation                             |
 | **Authentication**        | ✅      | Session login with remember-me and basic OAuth2 token authorization                                                    |
 | **Internationalization**  | ✅      | UI in English, German, Spanish, French, Greek and Russian                                                              |
+| **Preview player**        | 🧪      | Preview playlists in the browser with the WASM player in a resizable overlay                                           |
+| **Thumbnail preview**     | 🧪      | Enlarged thumbnail of playlist items on hover and touch                                                                |
+| **Sharing**               | 🧪      | Share units and mediapool folders with users and grant roles from the context menu                                     |
+| **Playlist versioning**   | 🧪      | Exported playlists are versioned; items whose resource is gone are left out                                            |
+| **System settings**       | 🧪      | Settings per module, e.g. playlist defaults and mediapool file sizes                                                   |
+| **Audit log**             | 🧪      | Log of rights, shares, settings, users, deletions and failed logins; off by default                                   |
+| **Scheduler**             | 🧪      | Background jobs run by cron every 5 minutes; off by default                                                            |
+
+✅ released · 🧪 in testing on `main`, not yet in a release
 
 Planned work: [Milestones](https://github.com/garlic-signage/garlic-hub/milestones)
 
