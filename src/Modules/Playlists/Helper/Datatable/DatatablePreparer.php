@@ -91,6 +91,10 @@ class DatatablePreparer extends AbstractDatatablePreparer
 						$selectableModes = $this->translator->translateArrayForOptions('playlist_mode_selects', 'playlists');
 						$resultElements['is_text'] = $this->prepareService->getBodyPreparer()->formatText($selectableModes[$playlist['playlist_mode']]);
 						break;
+					case 'release_status':
+						$statuses = $this->translator->translateArrayForOptions('release_status_selects', 'playlists');
+						$resultElements['is_text'] = $this->prepareService->getBodyPreparer()->formatText($statuses[(string) ($playlist['release_status'] ?? '')] ?? '');
+						break;
 					default:
 						$resultElements['is_text'] = $this->prepareService->getBodyPreparer()->formatText((string) $playlist[$innerKey]);
 						break;

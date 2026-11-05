@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Blackbox\Support;
 
+use App\Framework\Config\ConfigOverrides;
 use Defuse\Crypto\Key;
 use RuntimeException;
 
@@ -103,14 +104,14 @@ final class MiniDeployment
 	}
 
 	/**
-	 * Empties the cache of the server (user cache, login lock) and the sessions and writes the original .env:
-	 * every test starts clean.
+	 * Empties the cache of the server (user cache, login lock), the sessions and the changed settings and writes
+	 * the original .env: every test starts clean.
 	 */
 	public function resetState(): void
 	{
 		file_put_contents($this->directory . '/.env', $this->environment());
 
-		foreach (['tmp', 'var/sessions', 'var/cache'] as $folder)
+		foreach (['tmp', 'var/sessions', 'var/cache', 'var/settings'] as $folder)
 		{
 			$path = $this->directory . '/' . $folder;
 			if (is_dir($path))
@@ -128,6 +129,17 @@ final class MiniDeployment
 	public function changeEnvironment(array $changes): void
 	{
 		file_put_contents($this->directory . '/.env', $this->environment($changes));
+	}
+
+	/**
+	 * Settings like an admin changes them on the settings page. The config is read with every request,
+	 * a change counts at once. resetState() removes them.
+	 *
+	 * @param array<string,array<string,string>> $sections section => key => value
+	 */
+	public function changeSettings(string $module, array $sections): void
+	{
+		new ConfigOverrides($this->directory . '/var/settings')->save($module, $sections);
 	}
 
 	public function directory(): string

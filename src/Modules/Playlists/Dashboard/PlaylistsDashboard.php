@@ -25,6 +25,7 @@ use App\Framework\Dashboards\DashboardInterface;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Localization\Translate\Translator;
+use App\Modules\Playlists\Helper\ReleaseStatus;
 use App\Modules\Playlists\Services\PlaylistRelease;
 use Doctrine\DBAL\Exception;
 
@@ -61,8 +62,9 @@ readonly class PlaylistsDashboard implements DashboardInterface
 		if ($waiting === null)
 			return '';
 
+		// the number leads to the list of the waiting playlists
 		return '<ul>
-	<li><strong>'.$this->translator->translate('count_release_ready', 'playlists').':</strong><span>'.$waiting.'</span></li>
+	<li><strong>'.$this->translator->translate('count_release_ready', 'playlists').':</strong><span><a href="/playlists?release_status='.ReleaseStatus::READY->value.'">'.$waiting.'</a></span></li>
 </ul>';
 	}
 }

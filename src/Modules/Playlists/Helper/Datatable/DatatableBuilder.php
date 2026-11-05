@@ -32,6 +32,8 @@ use App\Framework\Utils\FormParameters\BaseParameters;
 use App\Framework\Utils\Html\FieldType;
 use App\Modules\Playlists\Helper\PlaylistMode;
 use App\Modules\Playlists\Services\AclValidator;
+use App\Modules\Playlists\Services\PlaylistRelease;
+use Doctrine\DBAL\Exception;
 
 /**
  * Class DatatableBuilder
@@ -41,9 +43,23 @@ use App\Modules\Playlists\Services\AclValidator;
  */
 class DatatableBuilder extends AbstractDatatableBuilder
 {
-	public function __construct(BuildService $buildService, Parameters $parameters, AclValidator $aclValidator, Translator $translator)
+	public function __construct(BuildService $buildService, Parameters $parameters, AclValidator $aclValidator, Translator $translator, private readonly PlaylistRelease $playlistRelease)
 	{
 		parent::__construct($buildService, $parameters, $aclValidator, $translator);
+	}
+
+	/**
+	 * The status of the release is a filter and a column while the release is on, in every edition.
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 */
+	public function configureParameters(int $UID): void
+	{
+		parent::configureParameters($UID);
+
+		if ($this->playlistRelease->isEnabled() && $this->parameters instanceof Parameters)
+			$this->parameters->addReleaseStatus();
 	}
 
 	/**
@@ -95,6 +111,19 @@ class DatatableBuilder extends AbstractDatatableBuilder
 			'options' => $allowedPlaylistModes
 		]);
 
+		if ($this->parameters->hasParameter(Parameters::PARAMETER_RELEASE_STATUS))
+		{
+			$form[Parameters::PARAMETER_RELEASE_STATUS] = $this->buildService->buildFormField([
+				'type' => FieldType::DROPDOWN,
+				'id' => Parameters::PARAMETER_RELEASE_STATUS,
+				'name' => Parameters::PARAMETER_RELEASE_STATUS,
+				'title' => $this->translator->translate(Parameters::PARAMETER_RELEASE_STATUS, 'playlists'),
+				'label' => $this->translator->translate(Parameters::PARAMETER_RELEASE_STATUS, 'playlists'),
+				'value' => $this->parameters->getValueOfParameter(Parameters::PARAMETER_RELEASE_STATUS),
+				'options' => $this->translator->translateArrayForOptions(Parameters::PARAMETER_RELEASE_STATUS . '_selects', 'playlists')
+			]);
+		}
+
 		$this->datatableStructure['form'] = $form;
 	}
 
@@ -107,6 +136,9 @@ class DatatableBuilder extends AbstractDatatableBuilder
 
 		$this->buildService->createDatatableField('playlist_mode', true);
 		$this->buildService->createDatatableField('duration', false);
+
+		if ($this->parameters->hasParameter(Parameters::PARAMETER_RELEASE_STATUS))
+			$this->buildService->createDatatableField(Parameters::PARAMETER_RELEASE_STATUS, true);
 
 		$this->datatableStructure['header'] = $this->buildService->getDatatableFields();
 

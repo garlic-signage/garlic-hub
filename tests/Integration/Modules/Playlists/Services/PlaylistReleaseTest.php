@@ -183,7 +183,7 @@ class PlaylistReleaseTest extends ContainerTestCase
 
 		$this->actingAs(1);
 		$label = $this->container->get(Translator::class)->translate('count_release_ready', 'playlists');
-		static::assertStringContainsString('<strong>' . $label . ':</strong><span>1</span>', $dashboard->renderContent());
+		static::assertStringContainsString('<strong>' . $label . ':</strong><span><a href="/playlists?release_status=ready">1</a></span>', $dashboard->renderContent());
 	}
 
 	public function testNobodySeesTheDashboardWhileTheReleaseIsOff(): void

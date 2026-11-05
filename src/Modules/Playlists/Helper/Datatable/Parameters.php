@@ -49,6 +49,7 @@ class Parameters extends BaseFilterParameters implements BaseFilterParametersInt
 	const string PARAMETER_PLAYLIST_NAME = 'playlist_name';
 	const string PARAMETER_PLAYLIST_MODE = 'playlist_mode';
 	const string PARAMETER_PLAYLIST_ID   = 'playlist_id';
+	const string PARAMETER_RELEASE_STATUS = 'release_status';
 
 	/**
 	 * @var array<string, array{scalar_type: ScalarType, default_value: mixed, parsed: bool}>
@@ -67,5 +68,13 @@ class Parameters extends BaseFilterParameters implements BaseFilterParametersInt
 		$this->currentParameters = array_merge($this->defaultParameters, $this->moduleParameters);
 
 		$this->setDefaultForParameter(self::PARAMETER_SORT_COLUMN, self::PARAMETER_PLAYLIST_ID);
+	}
+
+	/**
+	 * Only while the release is on (see PlaylistRelease).
+	 */
+	public function addReleaseStatus(): void
+	{
+		$this->addParameter(self::PARAMETER_RELEASE_STATUS, ScalarType::STRING, '');
 	}
 }

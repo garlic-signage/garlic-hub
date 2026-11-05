@@ -227,6 +227,25 @@ class UiTemplatesPreparerTest extends TestCase
 	}
 
 	/**
+	 * While the release is on, the admin exports and sees whether the playlist waits for him.
+	 *
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testBuildCircularEditorShowsTheAdminWhetherThePlaylistWaits(): void
+	{
+		$playlist = ['playlist_id' => 789, 'playlist_name' => 'Circular Playlist', 'time_limit' => 3600];
+		$this->playlistReleaseStub->method('mayExport')->willReturn(true);
+		$this->playlistReleaseStub->method('isEnabled')->willReturn(true);
+		$this->stubCircularEditor($playlist);
+
+		$result = $this->preparer->buildCircularEditor($playlist);
+
+		static::assertSame($this->expectedCircularEditor('Player Export', '0', ['LANG_RELEASE_REQUESTED' => 'Waiting for release']), $result);
+	}
+
+	/**
 	 * @param array{time_limit: int, ...} $playlist
 	 */
 	private function stubCircularEditor(array $playlist): void
@@ -275,9 +294,10 @@ class UiTemplatesPreparerTest extends TestCase
 	}
 
 	/**
+	 * @param array<string,string> $releaseWaiting
 	 * @return array<string,mixed>
 	 */
-	private function expectedCircularEditor(string $exportLabel, string $releaseRequest): array
+	private function expectedCircularEditor(string $exportLabel, string $releaseRequest, array $releaseWaiting = []): array
 	{
 		return [
 			'main_layout' => [
@@ -315,6 +335,7 @@ class UiTemplatesPreparerTest extends TestCase
 					'LANG_PICKING_MEDIA_PER_CYCLE' => 'Picking Media Per Cycle',
 					'LANG_PLAYER_EXPORT' => $exportLabel,
 					'RELEASE_REQUEST' => $releaseRequest,
+					'release_waiting' => $releaseWaiting,
 					'LANG_PLAYLIST_PREVIEW' => 'Playlist Preview',
 					'LANG_ITEM_NAME' => 'Item Name',
 					'LANG_SAVE' => 'Save',

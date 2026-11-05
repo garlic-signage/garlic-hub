@@ -149,8 +149,12 @@ readonly class UiTemplatesPreparer
 	public function buildCircularEditor(array $playlist): array
 	{
 		$title = $this->translator->translate('composer', self::MODULE_NAME). ' ('.$playlist['playlist_name'].')';
-		// while the release is on, a user who may not export asks for the release with the same button
+		// while the release is on, a user who may not export asks for the release with the same button,
+		// the admin sees whether the playlist waits for him
 		$requestRelease = !$this->playlistRelease->mayExport($playlist);
+		$releaseWaiting = [];
+		if ($this->playlistRelease->isEnabled() && !$requestRelease)
+			$releaseWaiting = ['LANG_RELEASE_REQUESTED' => $this->translator->translate('release_requested', self::MODULE_NAME)];
 		return [
 			'main_layout' => [
 				'LANG_PAGE_TITLE' => $title,
@@ -191,6 +195,7 @@ readonly class UiTemplatesPreparer
 					'LANG_PICKING_MEDIA_PER_CYCLE' => $this->translator->translate('picking_media_per_cycle', self::MODULE_NAME),
 					'LANG_PLAYER_EXPORT' => $this->translator->translate($requestRelease ? 'request_release' : 'player_export', self::MODULE_NAME),
 					'RELEASE_REQUEST' => $requestRelease ? '1' : '0',
+					'release_waiting' => $releaseWaiting,
 					'LANG_PLAYLIST_PREVIEW' => $this->translator->translate('preview', self::MODULE_NAME),
 					'LANG_ITEM_NAME' => $this->translator->translate('item_name', self::MODULE_NAME),
 					'LANG_SAVE' => $this->translator->translate('save', 'main'),

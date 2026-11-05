@@ -94,6 +94,8 @@ export class PlaylistsProperties
 	{
 		const button = document.getElementById("playerExport");
 		button.classList.add("notify-save");
+		// a change of the admin: the playlist does not wait anymore
+		PlaylistsProperties.#showWaiting(false);
 		if (!PlaylistsProperties.#isRelease())
 			return;
 
@@ -104,6 +106,7 @@ export class PlaylistsProperties
 	static removeSave()
 	{
 		document.getElementById("playerExport").classList.remove("notify-save");
+		PlaylistsProperties.#showWaiting(false);
 	}
 
 	setOptions(playlist)
@@ -121,6 +124,8 @@ export class PlaylistsProperties
 		}
 		else if (playlist.export_time < playlist.last_update)
 			PlaylistsProperties.notifySave();
+
+		PlaylistsProperties.#showWaiting(playlist.release_status === "ready");
 	}
 
 	/**
@@ -129,6 +134,16 @@ export class PlaylistsProperties
 	static #isRelease()
 	{
 		return document.getElementById("playerExport").dataset.release === "1";
+	}
+
+	/**
+	 * Only the admin has the hint, and only while the release is on.
+	 */
+	static #showWaiting(waiting)
+	{
+		const hint = document.getElementById("releaseWaiting");
+		if (hint !== null)
+			hint.hidden = !waiting;
 	}
 
 	static #showRequested()

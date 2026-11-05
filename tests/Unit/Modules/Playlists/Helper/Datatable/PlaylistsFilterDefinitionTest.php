@@ -66,6 +66,20 @@ class PlaylistsFilterDefinitionTest extends TestCase
 	}
 
 	#[Group('units')]
+	public function testTheReleaseStatusIsTheSameValue(): void
+	{
+		$where = $this->definition->whereForFiltering(['release_status' => ['value' => 'ready']]);
+
+		static::assertEquals(['release_status' => Where::equals('playlists.release_status', 'ready')], $where);
+	}
+
+	#[Group('units')]
+	public function testTheReleaseStatusEmptyIsIgnored(): void
+	{
+		static::assertSame([], $this->definition->whereForFiltering(['release_status' => ['value' => '']]));
+	}
+
+	#[Group('units')]
 	public function testPlaylistModeEmptyIsIgnored(): void
 	{
 		static::assertSame([], $this->definition->whereForFiltering(['playlist_mode' => ['value' => '']]));

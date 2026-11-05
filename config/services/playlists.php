@@ -203,7 +203,8 @@ $dependencies[DatatableBuilder::class] = DI\factory(function (ContainerInterface
 		$container->get(BuildService::class),
 		$container->get(\App\Modules\Playlists\Helper\Datatable\Parameters::class),
 		$container->get(AclValidator::class),
-		$container->get(Translator::class)
+		$container->get(Translator::class),
+		$container->get(PlaylistRelease::class)
 	);
 });
 $dependencies[DatatablePreparer::class] = DI\factory(function (ContainerInterface $container)

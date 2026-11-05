@@ -64,6 +64,14 @@ readonly class PlaylistsFilterDefinition implements FilterDefinition
 		$where = [];
 		foreach ($fields as $key => $parameter)
 		{
+			// a status is chosen from a list: the same value, not a part of it
+			if ($key === 'release_status')
+			{
+				if (!empty($parameter['value']))
+					$where[$key] = Where::equals(self::TABLE . '.' . $key, $parameter['value']);
+				continue;
+			}
+
 			if ($key !== 'playlist_mode')
 			{
 				$where = array_merge($where, $this->conditions->forField(self::TABLE, $key, $parameter));

@@ -63,7 +63,9 @@ class DatatablePreparerTest extends TestCase
 		parent::setUp();
 		$translator = $this->createStub(Translator::class);
 		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $key === 'confirm_delete' ? 'Delete %s?' : $module . '.' . $key);
-		$translator->method('translateArrayForOptions')->willReturn(['master' => 'Master', 'internal' => 'Internal', 'external' => 'External', 'channel' => 'Channel']);
+		$translator->method('translateArrayForOptions')->willReturnCallback(static fn(string $section): array => $section === 'release_status_selects'
+			? ['in_progress' => 'In progress', 'ready' => 'Waiting for release', 'released' => 'Released']
+			: ['master' => 'Master', 'internal' => 'Internal', 'external' => 'External', 'channel' => 'Channel']);
 		$session = new MemorySession();
 		$urlBuilder = new UrlBuilder();
 
@@ -103,6 +105,16 @@ class DatatablePreparerTest extends TestCase
 		$config = $this->createStub(Config::class);
 		$config->method('getEdition')->willReturn($edition);
 		$this->aclValidatorStub->method('getConfig')->willReturn($config);
+	}
+
+	#[Group('units')]
+	public function testTheReleaseStatusIsShownByItsName(): void
+	{
+		$this->aclValidatorStub->method('isSimpleAdmin')->willReturn(false);
+
+		$body = $this->preparer->prepareTableBody([self::playlist() + ['release_status' => 'ready']], $this->fields(['release_status']), 3);
+
+		static::assertSame([['CONTROL_NAME_BODY' => 'release_status', 'is_text' => ['CONTROL_ELEMENT_VALUE_TEXT' => 'Waiting for release']]], $body[0]['elements_result_element']);
 	}
 
 	#[Group('units')]

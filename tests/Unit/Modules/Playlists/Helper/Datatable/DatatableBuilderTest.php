@@ -37,6 +37,7 @@ use App\Framework\Validation\Sanitizer;
 use App\Modules\Playlists\Helper\Datatable\DatatableBuilder;
 use App\Modules\Playlists\Helper\Datatable\Parameters;
 use App\Modules\Playlists\Services\AclValidator;
+use App\Modules\Playlists\Services\PlaylistRelease;
 use Defuse\Crypto\Key;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Stub;
@@ -51,6 +52,7 @@ class DatatableBuilderTest extends TestCase
 {
 	private Parameters $parameters;
 	private AclValidator&Stub $aclValidatorStub;
+	private PlaylistRelease&Stub $playlistReleaseStub;
 	private DatatableBuilder $builder;
 	private BuildService $buildService;
 
@@ -72,7 +74,8 @@ class DatatableBuilderTest extends TestCase
 			new PaginatorBuilder(),
 			new ResultsBuilder()
 		);
-		$this->builder = new DatatableBuilder($this->buildService, $this->parameters, $this->aclValidatorStub, $translator);
+		$this->playlistReleaseStub = $this->createStub(PlaylistRelease::class);
+		$this->builder = new DatatableBuilder($this->buildService, $this->parameters, $this->aclValidatorStub, $translator, $this->playlistReleaseStub);
 	}
 
 	/**
@@ -101,6 +104,18 @@ class DatatableBuilderTest extends TestCase
 
 		static::assertFalse($this->parameters->hasParameter('UID'));
 		static::assertFalse($this->parameters->hasParameter('company_id'));
+	}
+
+	#[Group('units')]
+	public function testWhileTheReleaseIsOnTheCoreEditionFiltersByTheReleaseStatus(): void
+	{
+		$this->edition(Config::PLATFORM_EDITION_CORE);
+		$this->playlistReleaseStub->method('isEnabled')->willReturn(true);
+
+		$this->builder->configureParameters(123);
+
+		static::assertTrue($this->parameters->hasParameter('release_status'));
+		static::assertFalse($this->parameters->hasParameter('UID'));
 	}
 
 	#[Group('units')]
@@ -229,5 +244,23 @@ class DatatableBuilderTest extends TestCase
 		static::assertSame(['playlist_name', 'UID', 'playlist_mode', 'duration'], array_map(static fn($field): string => $field->getName(), $this->buildService->getDatatableFields()));
 		static::assertSame([true, true, true, false], array_map(static fn($field): bool => $field->isSortable(), $this->buildService->getDatatableFields()));
 		static::assertCount(4, $this->builder->getDatatableStructure()['header']);
+	}
+
+	#[Group('units')]
+	public function testWhileTheReleaseIsOnTheFormAndTheTableHaveTheReleaseStatus(): void
+	{
+		$this->edition(Config::PLATFORM_EDITION_CORE);
+		$this->parameters->addReleaseStatus();
+		$this->parseRequest();
+
+		$this->builder->collectFormElements();
+		$this->builder->createTableFields();
+
+		$form = $this->builder->getDatatableStructure()['form'];
+		static::assertSame(['playlist_name', 'playlist_mode', 'release_status'], array_keys($form));
+		static::assertInstanceOf(DropdownField::class, $form['release_status']);
+		static::assertSame('playlists.release_status', $form['release_status']->getLabel());
+		static::assertSame(['playlist_name', 'playlist_mode', 'duration', 'release_status'], array_map(static fn($field): string => $field->getName(), $this->buildService->getDatatableFields()));
+		static::assertSame([true, true, false, true], array_map(static fn($field): bool => $field->isSortable(), $this->buildService->getDatatableFields()));
 	}
 }
