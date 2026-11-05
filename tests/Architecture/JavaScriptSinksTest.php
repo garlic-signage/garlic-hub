@@ -28,7 +28,7 @@ use RecursiveIteratorIterator;
 
 /**
  * Every place in the own JavaScript which puts a string into the page as HTML (innerHTML, outerHTML,
- * insertAdjacentHTML, document.write, HTML in a string) is on a list. A browser test can not be run in the project,
+ * insertAdjacentHTML, document.write, HTML in a string) is on a list. The browser tests only cover a few pages,
  * so this test makes a new place visible: whoever adds one has to say here, why it is safe.
  *
  * The places which build HTML from data of users are listed as known, until they are changed to textContent

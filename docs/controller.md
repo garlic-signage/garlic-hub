@@ -18,6 +18,10 @@ and no database access.
 | HTML page         | `Show*Controller`   | `''` (default)   | `PageResponse`, or a redirect             |
 | JSON endpoint     | `*Controller`       | `/async`, `/api` | JSON via a `ResponseBuilder`              |
 
+Older classes do not follow the naming: `HomeController`, `Auth\LoginController`, `UserRightsController`
+and `EditLocalesController` are HTML pages without the prefix, `Playlists\Controller\ShowTemplateComposer`
+serves a page and JSON (`load`, `save`).
+
 ### HTML pages
 
 A page controller returns a `PageResponse` with the page data. It does not render anything
@@ -63,7 +67,7 @@ readonly class PlaylistsController
 
     public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
-        $answer = $this->orchestrator->setInput($request->getParsedBody())->validate($response);
+        $answer = $this->orchestrator->setInput(RequestInput::of($request->getParsedBody())->all())->validate($response);
         if ($answer !== null)
             return $answer;
 
@@ -71,6 +75,10 @@ readonly class PlaylistsController
     }
 }
 ```
+
+The body comes from the outside and can have any shape. `Framework\Controller\RequestInput` reads it
+typed: `text()`, `id()`, `hasId()`, `texts()`; a value of the wrong kind counts as missing. The orchestrators
+read their input with the trait `ReadsInput` in the same way.
 
 An orchestrator is used exactly once per request: `setInput()`, then `validate…()`, then the action.
 The validation keeps the checked values (e.g. the playlist id) for the action.
@@ -81,8 +89,8 @@ Every JSON answer has the format of `JsonResponseHandler`:
 ## Rules
 
 1. **Signature.** Every action has the form
-   `(ServerRequestInterface $request, ResponseInterface $response, array $args = []): ResponseInterface`.
-   `$args` holds the route placeholders, e.g. `{playlist_id}`.
+   `(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface`.
+   A route with placeholders adds `array $args` (no default), e.g. for `{playlist_id}`.
 2. **Dependencies by constructor.** Everything a controller needs (orchestrator, session,
    translator, flash messages …) is injected by the constructor. Request attributes are not used.
    Prefer `readonly` classes with constructor property promotion.
@@ -92,10 +100,8 @@ Every JSON answer has the format of `JsonResponseHandler`:
    `(int) ($args['playlist_id'] ?? 0)`. Sanitizing and validating happens in the
    `Parameters` and `Validator` classes of the module, the work in services.
 5. **No exception handling by default.** Services throw. For `/async` and `/api` the
-   `JsonErrorHandler` turns every exception into a JSON error with the right status
-   (`NotFoundException` → 404, `AccessDeniedException` → 403, other
-   `TranslatableModuleException` → 400, plain `ModuleException` → 400, everything else → 500)
-   and logs it.
+   `JsonErrorHandler` turns every exception into a JSON error with the right status and logs it,
+   see the table in [Exceptions](exceptions.md).
    Catch an exception only if the controller has to react differently, e.g. an HTML page
    that redirects with a flash message instead of showing an error page. Add a comment why.
    See [Exceptions](exceptions.md).

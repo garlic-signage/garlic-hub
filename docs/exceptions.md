@@ -31,7 +31,7 @@ Exception
             └── AccessDeniedException   no rights for the record       → 403
 
 RuntimeException
-└── AuthException                       internal to the auto login, caught there
+└── AuthException                       auto login and session, → 401 on JSON routes
 ```
 
 ## Which one to throw
@@ -83,6 +83,7 @@ falls back to the bare key). Use the English text in every file until it is tran
 
 | Exception                        | Status | Message for the user                           |
 |----------------------------------|--------|------------------------------------------------|
+| `AuthException`                  | 401    | `Authentication required`, the reason stays in the log |
 | `NotFoundException`              | 404    | translated                                     |
 | `AccessDeniedException`          | 403    | translated                                     |
 | `TranslatableModuleException`    | 400    | translated                                     |

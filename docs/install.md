@@ -105,6 +105,18 @@ is redirected to `/create-initial`, where you create the first admin user. Savin
 
 To start over, delete the database and `var/install.lock` and run the installer again.
 
+## Optional features
+
+The system is lean by default. The module admin of `system` switches these on at `/system/settings`:
+
+- **Scheduler**: runs the background tasks every 5 minutes. The Docker image has the cron line already,
+  for ddev add one on the host: `*/5 * * * * cd /path/to/garlic-hub && ddev exec php bin/console.php schedule:run`.
+- **Audit log**: needs the scheduler, which deletes the old entries. The log is shown at `/system/audit`.
+- **Versioning**: keeps earlier states of templates and exported playlists.
+
+The admin overrides of the settings are written to `var/settings`. `dev-install.sh` does not create it:
+`ddev exec mkdir -p var/settings`.
+
 ## Next steps
 
 - Run the tests: `ddev exec vendor/bin/phpunit`

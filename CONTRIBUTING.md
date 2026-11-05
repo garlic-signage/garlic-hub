@@ -51,6 +51,7 @@ New behaviour and bug fixes come with a test. Which kind:
 1. **Integration test (preferred)** in `tests/Integration/`. Real database, real migrations, SQL fixtures in `tests/resources/sql`. Because it uses the real schema, it breaks when the schema changes, which is wanted. Use `#[Group('db')]` for repository tests, `#[Group('acl')]` for "who sees and may do what" tests and `#[Group('io')]` for tests with real files or other system boundaries but without a database.
 2. **Unit test** in `tests/Unit/` for pure logic (calculations, mapping, validation) and for real boundaries (filesystem, network, time). Please do not mock your way through a whole service: such tests break with every refactoring and prove little. If you need five mocks, write an integration test instead.
 3. **Blackbox test** in `tests/Blackbox/` only for behaviour that is visible over HTTP: redirects, headers, cookies, status codes.
+4. **Browser test** in `tests/Browser/` for the JavaScript of a page: a headless Chromium (Symfony Panther) clicks through it. Chromium comes with ddev. These tests are slow and not in the default run, keep them few and check results in the database where possible.
 
 Every test class needs its own `#[Group(...)]` attribute, groups are not inherited by PHPUnit. The architecture test checks this and says which class is missing one.
 
@@ -60,6 +61,7 @@ Useful commands:
 ddev exec vendor/bin/phpunit --testsuite unit
 ddev exec vendor/bin/phpunit --testsuite integration --group db
 ddev exec vendor/bin/phpunit --testsuite integration --group acl
+ddev exec vendor/bin/phpunit --testsuite browser
 ddev exec vendor/bin/phpunit --filter SomeTestName
 ```
 

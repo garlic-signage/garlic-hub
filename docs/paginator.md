@@ -22,7 +22,8 @@ $settings = $builder->getDropDownSettings();      // ['min' => 10, 'max' => 100,
 ```
 
 - `configure()` corrects invalid values: the page and the items per page are at least 1, the total at least 0.
-- `$usePager` adds the arrows `«` (first), `‹` (previous), `›` (next) and `»` (last).
+- `$usePager` adds the arrows `«` (first) and `‹` (previous) when the page is above 1, `›` (next) and `»` (last)
+  when it is below the last page.
 - `$shortened` shows only the pages 1 to 3, the last three pages and the pages two before and after the
   current one.
 - A link is `['name' => string, 'page' => int, 'active' => bool]`. Arrows have no `active`.
@@ -52,6 +53,7 @@ parameters. Filter values are not part of the page links, the datatable keeps th
 | `ELEMENTS_PAGELINK` | URL of the page, e.g. `player?elements_page=2&sort_column=player_id&sort_order=ASC&elements_per_page=10` |
 | `ELEMENTS_PAGENAME` | text of the link (`2`, `«`, …) |
 | `ELEMENTS_PAGENUMBER` | the page number |
+| `ELEMENTS_PAGE_ID` | id of the link: `page_number_<page>` for a number, `page_nav_<index>` for an arrow |
 | `ELEMENTS_ACTIVE_PAGE` | `active_page` for the current page, otherwise empty |
 
 ### `prepareDropdown()`

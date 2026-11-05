@@ -153,8 +153,8 @@ Technical building blocks without business knowledge.
 
 #### `src/Shared/`
 Business code every module needs.
-- `Acl/` — uniform access levels (module admin, sub admin, editor, viewer) used by all modules.
-- `Audit/` — the audit log: `AuditLog::record()` for rights, shares, settings, users and failed logins, into `audit_log`. The container gives the `NullAuditLog` unless `Audit.enabled` and `Scheduler.enabled` are on; the task `audit.cleanup` of the module System deletes the entries older than `Audit.retention_days`.
+- `Acl/` — uniform access levels (module admin, sub admin, editor, viewer) used by all modules. `AclGrantService` is the only place which writes rights: the role bits in `user_acl` and the units shared with a role in `user_vip`. `AbstractUnitDatatableService` lists the own and the shared units, see [User Administration](docs/user-administration.md).
+- `Audit/` — the audit log: `AuditLog::record()` for rights, shares, settings, users, password changes and resets, deleted units, restored versions and failed logins, into `audit_log`. The container gives the `NullAuditLog` unless `Audit.enabled` and `Scheduler.enabled` are on; the task `audit.cleanup` of the module System deletes the entries older than `Audit.retention_days`.
 - `Layout/` — data of the main layout: main menu, user menu, language switch, flash messages.
 - `Versioning/` — `UnitVersions`: the earlier states of units in `unit_versions` (templates: the content of the composer; playlists: the exported state, restored with the item ids, items whose media or nested playlist is gone are left out), off by default (`Versioning.enabled`), the newest `max_versions` per unit stay. The module records the state it replaces and restores it itself; the dialog is `public/js/core/UnitVersionsDialog.js`.
 - `Scheduler/` — runs the `ScheduledTask`s which are due (hourly or daily), remembers their last run in `scheduler_runs`. A module has its tasks in `App\Modules\<Module>\Scheduler\<Module>ScheduledTasks`.
@@ -198,7 +198,7 @@ The modules:
   - `Services/InsertItems` — inserting media, playlists or templates as items.
 - **`Templates/`** — design templates (canvas, SVG, HTML) for playlists.
   - `Helper/Composer` — template editor and image export.
-- **`Users/`** — administration of other users (admin only): list, create, edit, initial admin, password reset tokens.
+- **`Users/`** — administration of other users (admin only): list, create, edit, initial admin, password reset tokens, the rights page of a user (`UserRightsController`) and the backend of the share dialog of all modules (`UnitSharesController`, `public/js/core/UnitShareDialog.js`).
 
 ### `templates/`
 Mustache templates, one folder per module.
@@ -213,8 +213,11 @@ PHPUnit tests, namespace `Tests\`.
   - `Support/` — base classes (`DatabaseTestCase`, `RepositoryTestCase`, `ContainerTestCase`) and the factory for the real DI container.
   - `Modules/<Module>/Repositories/` — repository tests, group `db`.
   - `Modules/<Module>/Services/` — tests of who sees and may change what through the real services, group `acl`.
-- `Blackbox/` — tests over HTTP, suite `blackbox`, group `blackbox`: `Support/MiniDeployment` starts the application with the PHP web server in a temporary directory (own `var/`, own database file), `Support/Browser` is a visitor with cookies. They cover the login, the way of a player (`/smil-index`), the security headers and the rights as a user would try them.
+- `Blackbox/` — tests over HTTP, suite `blackbox`, group `blackbox`: `Support/MiniDeployment` starts the application with the PHP web server in a temporary directory (own `var/`, own database file), `Support/Browser` is a visitor with cookies. They cover e.g. the login and the password flow, the way of a player (`/smil-index`), CSRF, the security headers and the CSP, error responses, redirects, uploads and the upload from a URL, and the rights as a user would try them.
 - `Architecture/` — rules for the structure, suite `architecture`: the layers and module dependencies of `src/` (`LayersTest`), the groups of the integration tests (`TestGroupsTest`), a controller for every route (`RoutesTest`), a list of the places where the own JavaScript writes HTML (`JavaScriptSinksTest`) and a ratchet for `@var` assertions on arrays, whose number per file may only go down (`ArrayCastsTest`).
+- `Browser/` — tests in a headless Chromium (Symfony Panther), suite and group `browser`: the JavaScript of the mediapool, the playlist composer, the multizone editor, the template composer and the context menus. `Support/BrowserTestCase` extends the `BlackboxTestCase` and serves the assets, too. Chromium and chromedriver come with ddev (`.ddev/config.yaml`). Not in the default run and not in the CI: `--testsuite browser`.
+- `Support/` — fakes shared by the suites, e.g. `MemorySession`, `ArrayCache`, `RecordingLogger`, `ScriptedShellExecutor`.
+- `Load/` — a load test with k6 (`pi.js`: users and players at the same time on a Raspberry Pi) and `make-media.sh`, which creates its media.
 - `resources/` — fixtures: config files, translations, widgets, temporary files.
   - `sql/<topic>/` — SQL scripts which insert test data for integration tests (`acl/` holds the shared users).
 

@@ -13,6 +13,8 @@ How user input is cleaned, checked and made safe for output. Three jobs, three p
 1. **The database stores the value the user typed.** No `htmlspecialchars` before saving.
    SQL is protected by prepared statements, not by escaping.
 2. **The `Sanitizer` normalizes, it does not escape.** Type casts, valid UTF-8, no control characters, trim.
+   The one exception is markup the user may enter (`ScalarType::HTML_STRING`, `JSON_HTML`): `Sanitizer::html()`
+   keeps only the allowed tags and removes all their attributes.
 3. **Validation rejects.** Length, format, allowed values. Fields with a fixed set of values
    (locales, token purposes, modes) are compared with a whitelist instead of being escaped.
 4. **Escaping happens where the value is written out,** and only the output knows its context.
@@ -28,7 +30,7 @@ gets entities it does not want. The next escaping step then escapes the entities
 
 ### HTML templates (Mustache)
 
-- `{{VARIABLE}}` escapes with `ENT_QUOTES` (set in `config/services/_default.php`). **This is the default.**
+- `{{VARIABLE}}` escapes with `ENT_QUOTES | ENT_SUBSTITUTE` (set in `Framework\TemplateEngine\MustacheEngineFactory`). **This is the default.**
 - `{{{VARIABLE}}}` writes the value as it is. Use it only for HTML that was built by the code itself
   and is escaped inside, e.g. the form fields from `FormBuilder` (`HTML_ELEMENT`).
 - Never use `{{{ }}}` for names, titles, texts, IDs, URLs or anything else that came from a user, the
@@ -72,6 +74,13 @@ The helper hex-escapes `<`, `>`, `&` and `'`. For single values in the HTML (not
 
 Build query strings with `http_build_query`, not by concatenation. A URL in an `href` or `src` is
 additionally escaped by the template.
+
+### JavaScript in the browser
+
+- Put text into the page with `textContent` and build elements with `document.createElement()`.
+- `innerHTML`, `outerHTML`, `insertAdjacentHTML` and HTML in strings are on a list in
+  `tests/Architecture/JavaScriptSinksTest.php`. A new place fails the test until it is added there with the
+  reason why it is safe.
 
 ## Checklist for a new field or template
 

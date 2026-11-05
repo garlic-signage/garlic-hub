@@ -96,6 +96,7 @@ ddev exec vendor/bin/phpunit --testsuite integration --group acl      # only who
 ddev exec vendor/bin/phpunit --testsuite integration --group io       # only tests with real files etc., no database
 ddev exec vendor/bin/phpunit --testsuite architecture                 # layers, module dependencies, groups of the tests
 ddev exec vendor/bin/phpunit --testsuite blackbox                     # the real application behind a web server, asked over HTTP
+ddev exec vendor/bin/phpunit --testsuite browser                      # the JavaScript in a headless Chromium, not in the default run
 ddev exec vendor/bin/phpstan analyze
 ```
 

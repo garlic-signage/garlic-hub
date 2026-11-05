@@ -81,6 +81,37 @@ by a direct URL, only through the delivery scripts described in section 3.
 - Common web application attack classes on authenticated routes: session
   fixation, CSRF, SQL injection, stored and reflected XSS, path traversal on
   upload and download handlers.
+- Server-side request forgery through the upload from a URL.
+
+The controls in the application:
+
+- **Login throttle**: 5 failures per username and IP, 30 per IP, within 15
+  minutes. The username alone is not blocked, so nobody can lock out an admin
+  (`LoginThrottle`).
+- **Sessions**: the session id is renewed on login and autologin. The session
+  cookie is `HttpOnly` and `SameSite=Strict`, other cookies `HttpOnly` and
+  `SameSite=Lax`, both `Secure` under HTTPS.
+- **Tokens** for autologin, password links and the initial password are stored
+  as HMAC-SHA256, never in plain text. They expire: autologin after 28 days, an
+  initial password link after 24 hours, other links after 2 hours. A link token
+  can not be used for an autologin.
+- **Passwords**: a reset by an admin clears the password and ends the running
+  sessions and the autologin. A user can be forced to change the password.
+- **CSRF**: every POST, PUT, PATCH and DELETE needs the token of the session
+  (`CsrfMiddleware`).
+- **Security headers** on every response: a Content Security Policy with a
+  nonce per request for the scripts (`object-src 'none'`, `base-uri`,
+  `form-action 'self'`, `frame-ancestors 'self'`), `X-Content-Type-Options`,
+  `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` and
+  `Cross-Origin-Opener-Policy` (`SecurityHeadersMiddleware`).
+- **Upload from a URL**: the address must resolve to a public IP address, the
+  request is pinned to the checked IP and every redirect is checked again
+  (`SsrfValidator`, `UploadService`). The search of the stock platforms follows
+  no redirects.
+- **Audit log** (optional, off by default): failed logins, granted and revoked
+  roles, shares, settings, created, changed and deleted users, password changes
+  and resets, deleted units and restored versions. Only the module admin of
+  `system` reads it.
 
 ---
 
@@ -139,7 +170,8 @@ device they do not recognise.
 
 **Accepted risk.** A party that knows an installation's endpoint URL can cause
 unused player records to appear in an account's inventory. The effect is limited
-to unwanted rows in a list. Rate limiting is applied as a mitigation.
+to unwanted rows in a list. The application does not limit the rate of these
+requests, this is left to the operator's reverse proxy.
 
 ---
 
@@ -212,8 +244,9 @@ closed with a reference to this section.
 - Attacks requiring physical access to a player device.
 - Denial of service through raw request volume.
 - Vulnerabilities in third-party player firmware.
-- Missing hardening headers, cookie flags or TLS configuration on a deployment,
-  where these are the responsibility of the operator's reverse proxy.
+- Missing TLS configuration on a deployment, which is the responsibility of
+  the operator's reverse proxy. Defects in the headers and cookie flags which
+  garlic-hub sets itself (section 4) are in scope.
 
 ---
 
@@ -233,7 +266,8 @@ security issues:
 - Any cross-account access through the administrative interface.
 - Authentication or session handling defects on administrative routes.
 - Injection, traversal or deserialisation defects on any route.
-- Privilege escalation between account roles.
+- Privilege escalation between account roles, including the role editor and
+  the share dialog of a unit.
 - A registration flow satisfiable by standards-compliant signage firmware that
   would close the risk accepted in section 6. Such a report is welcome as a
   design contribution.
