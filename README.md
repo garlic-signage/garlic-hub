@@ -46,8 +46,9 @@ The demo is deleted and rebuilt regularly.
 | **Template editor**       | ✅      | Image templates based on fabric.js                                                                                     |
 | **Conditional play**      | ✅      | Date and time conditions for media playback                                                                            |
 | **Triggers**              | ✅      | Play media or nested playlists by priority, triggered by access keys, touch/click, date/time or network                |
-| **Local player**          | ✅      | Integration of one local media player                                                                                  |
-| **Push**                  | ✅      | Push a playlist to a local player                                                                                      |
+| **Player management**     | ✅      | Any number of players register on first contact; list with filters for online/offline, model and playlist; assign playlists |
+| **Local player**          | ✅      | A player on the same machine is connected automatically without registration                                          |
+| **Push**                  | ✅      | Push a playlist directly to players reachable over their REST API, e.g. in the intranet                               |
 | **User management**       | ✅      | Basic user management with roles per module; initial admin user set up after installation                             |
 | **Authentication**        | ✅      | Session login with remember-me and basic OAuth2 token authorization                                                    |
 | **Internationalization**  | ✅      | UI in English, German, Spanish, French, Greek and Russian                                                              |
