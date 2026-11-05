@@ -51,6 +51,7 @@ class PlaylistsService extends AbstractBaseService
 								private readonly UnitVersions $unitVersions,
 								private readonly AuditLog $auditLog,
 								private readonly Transactions $transactions,
+								private readonly TemplateItemImages $templateItemImages,
 								LoggerInterface $logger)
 	{
 		parent::__construct($logger);
@@ -158,6 +159,9 @@ class PlaylistsService extends AbstractBaseService
 		// Whether it is used, Playlists\Orchestrator::delete() checks.
 		$playlist = $this->loadCheckedPlaylist($playlistId, true);
 
+		// before the items and versions are gone, which name the images
+		$templateItemIds = $this->templateItemImages->findItemIds($playlistId);
+
 		// the shares and versions go with the playlist or nothing goes
 		$this->transactions->begin();
 		try
@@ -176,6 +180,13 @@ class PlaylistsService extends AbstractBaseService
 		{
 			$this->transactions->rollBack();
 			throw $e;
+		}
+
+		// the files only after the commit: a rollback would leave a playlist without its images
+		if ($deleted > 0)
+		{
+			foreach ($this->templateItemImages->remove($templateItemIds) as $file)
+				$this->logger->warning('The image of a template item of the deleted playlist ' . $playlistId . ' could not be removed: ' . $file);
 		}
 
 		return $deleted;

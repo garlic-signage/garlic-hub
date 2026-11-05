@@ -111,9 +111,9 @@ class ExportServiceTest extends ContainerTestCase
 
 	/**
 	 * Item 5 is a template item. After an update its image is still named by the item id: the export gives it
-	 * the name of the content, removes the images of former contents and links to it.
+	 * the name of the content and links to it. The image of a former content stays for a restored version.
 	 */
-	public function testTheExportLinksToTheImageOfTheExportedContentAndRemovesTheOtherOnes(): void
+	public function testTheExportLinksToTheImageOfTheExportedContentAndKeepsTheFormerOnes(): void
 	{
 		$this->actingAs(2);
 		$directory = $this->workspace->absolute('/var/storage/playlists/items/originals');
@@ -125,7 +125,8 @@ class ExportServiceTest extends ContainerTestCase
 
 		$this->exportService->exportToSmil(1);
 
-		static::assertSame([$name . '.png'], array_values(array_diff((array) scandir($directory), ['.', '..'])));
+		$files = array_values(array_diff((array) scandir($directory), ['.', '..']));
+		static::assertEqualsCanonicalizing(['5-0123456789abcdef0123456789abcdef.png', $name . '.png'], $files);
 		static::assertSame('image', file_get_contents($directory . '/' . $name . '.png'));
 		static::assertStringContainsString('delivery.php/tpl/' . $name . '.png', (string) file_get_contents($this->workspace->absolute('/var/smil/playlists/1/items.smil')));
 	}

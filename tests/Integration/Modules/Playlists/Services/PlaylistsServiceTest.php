@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Modules\Playlists\Services;
 
+use App\Framework\Config\Config;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\NotFoundException;
 use App\Modules\Playlists\Services\PlaylistsService;
@@ -206,6 +207,68 @@ class PlaylistsServiceTest extends ContainerTestCase
 		{
 			static::assertNull($this->playlist(2)['layout']);
 		}
+	}
+
+	/**
+	 * Item 5 is the template item of the playlist 1, item 9 one which only a version still has.
+	 * The files of the item 55 are not the ones of the item 5.
+	 */
+	public function testDeleteRemovesTheImagesOfTheTemplateItemsOfThePlaylistAndItsVersions(): void
+	{
+		$this->actingAs(2);
+		$this->connection->insert('unit_versions', [
+			'module' => 'playlists', 'unit_id' => '1', 'version' => 1, 'UID' => 2, 'created_at' => '2026-11-05 10:00:00',
+			'snapshot' => (string) json_encode(['playlist' => [], 'items' => [['item_id' => 9, 'item_type' => 'template'], ['item_id' => 1, 'item_type' => 'mediapool']]])
+		]);
+		$originals = $this->storeImages('originals', ['5.png', '5-0123456789abcdef0123456789abcdef.png', '9-fedcba9876543210fedcba9876543210.jpg', '55-0123456789abcdef0123456789abcdef.png', '1-0123456789abcdef0123456789abcdef.png']);
+		$thumbnails = $this->storeImages('thumbnails', ['5-0123456789abcdef0123456789abcdef.jpg']);
+
+		static::assertSame(1, $this->playlistsService->delete(1));
+
+		static::assertEqualsCanonicalizing(['55-0123456789abcdef0123456789abcdef.png', '1-0123456789abcdef0123456789abcdef.png'], $this->files($originals));
+		static::assertSame([], $this->files($thumbnails));
+	}
+
+	public function testTheImagesStayWhenThePlaylistMayNotBeDeleted(): void
+	{
+		$this->actingAs(3);
+		$originals = $this->storeImages('originals', ['5-0123456789abcdef0123456789abcdef.png']);
+
+		try
+		{
+			$this->playlistsService->delete(1);
+			static::fail('Expected AccessDeniedException');
+		}
+		catch (AccessDeniedException)
+		{
+			static::assertSame(['5-0123456789abcdef0123456789abcdef.png'], $this->files($originals));
+		}
+	}
+
+	/**
+	 * In the system directory of the TemplateItemImages of the tests, see TestContainerFactory.
+	 *
+	 * @param list<string> $names
+	 */
+	private function storeImages(string $key, array $names): string
+	{
+		$directory = sys_get_temp_dir() . '/garlic-hub-tests/system/' . $this->container->get(Config::class)->getConfigValue($key, 'playlists', 'directories');
+		if (!is_dir($directory))
+			mkdir($directory, 0775, true);
+		foreach (glob($directory . '/*') ?: [] as $file)
+			unlink($file);
+		foreach ($names as $name)
+			file_put_contents($directory . '/' . $name, 'image');
+
+		return $directory;
+	}
+
+	/**
+	 * @return list<string>
+	 */
+	private function files(string $directory): array
+	{
+		return array_values(array_diff(scandir($directory) ?: [], ['.', '..']));
 	}
 
 	/**

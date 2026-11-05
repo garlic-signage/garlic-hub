@@ -27,6 +27,9 @@ use App\Framework\Config\IniConfigLoader;
 use App\Framework\Config\OverridingConfigLoader;
 use App\Framework\Http\Cookie;
 use App\Framework\Http\Session;
+use App\Modules\Playlists\Repositories\ItemsRepository;
+use App\Modules\Playlists\Services\TemplateItemImages;
+use App\Shared\Versioning\UnitVersions;
 use DI\ContainerBuilder;
 use Defuse\Crypto\Key;
 use Doctrine\DBAL\Connection;
@@ -102,6 +105,12 @@ final class TestContainerFactory
 			'ModuleLogger'      => new NullLogger(),
 			'FrameworkLogger'   => new NullLogger(),
 			'AppLogger'         => new NullLogger(),
+			// removes files: not the ones of the installation
+			TemplateItemImages::class => \DI\factory(static fn(ContainerInterface $container): TemplateItemImages => new TemplateItemImages(
+				new Config(new IniConfigLoader($paths['configDir'] . '/settings'), ['systemDir' => $runtimeDir . '/system'], $env),
+				$container->get(ItemsRepository::class),
+				$container->get(UnitVersions::class)
+			)),
 		]);
 
 		return $builder->build();

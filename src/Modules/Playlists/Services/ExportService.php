@@ -154,19 +154,20 @@ class ExportService extends AbstractBaseService
 		$this->playlistContent->init($playlist, $results['items'])->build();
 		$this->localSmilWriter->initExport($playlist['playlist_id']);
 		$this->localSmilWriter->writeSMILFiles($this->playlistContent);
-		$this->keepExportedTemplateImages($results['items']);
+		$this->nameLegacyTemplateImages($results['items']);
 
 		return $results['playlist_metrics']->toPlaylistTableArray();
 	}
 
 	/**
-	 * The players get the image of the exported content (see TemplateItemName), the images of former contents are removed.
+	 * The players get the image of the exported content (see TemplateItemName). The images of former contents stay:
+	 * a restored version of the playlist needs them, they go with the playlist (see TemplateItemImages).
 	 * An image from before the update, named by the item id only, gets the name of the content.
 	 *
 	 * @param list<array<string,mixed>> $items
 	 * @throws CoreException
 	 */
-	private function keepExportedTemplateImages(array $items): void
+	private function nameLegacyTemplateImages(array $items): void
 	{
 		$systemDir = $this->config->getPaths('systemDir');
 		foreach ($items as $item)
@@ -179,17 +180,11 @@ class ExportService extends AbstractBaseService
 			foreach (['originals', 'thumbnails'] as $key)
 			{
 				$directory = $systemDir . '/' . $this->config->getConfigValue($key, 'playlists', 'directories');
-				// <item_id>.<ext> and <item_id>-<hmac>.<ext>, not the files of the item 12 for the item 1
-				foreach (glob($directory . '/' . $itemId . '[.-]*') ?: [] as $file)
+				// <item_id>.<ext>, not the files of the item 12 for the item 1
+				foreach (glob($directory . '/' . $itemId . '.*') ?: [] as $file)
 				{
-					$fileName = pathinfo($file, PATHINFO_FILENAME);
-					if ($fileName === $name)
-						continue;
-
-					if ($fileName === (string) $itemId && glob($directory . '/' . $name . '.*') === [])
+					if (glob($directory . '/' . $name . '.*') === [])
 						rename($file, $directory . '/' . $name . '.' . pathinfo($file, PATHINFO_EXTENSION));
-					else
-						unlink($file);
 				}
 			}
 		}
