@@ -257,7 +257,17 @@ $dependencies['SqlConnection'] = DI\factory(function (ContainerInterface $contai
 	$dbalConfig = new Configuration();
 	$dbalConfig->setMiddlewares([new Middleware($logger)]);
 
-	return DriverManager::getConnection($connectionParams, $dbalConfig);
+	$connection = DriverManager::getConnection($connectionParams, $dbalConfig);
+
+	// WAL: the players read while an editor writes. The mode stays in the file, an existing database
+	// changes on the first connection. A second writer waits instead of failing with "database is locked".
+	if ($driver === 'pdo_sqlite' || $driver === 'sqlite3')
+	{
+		$connection->executeStatement('PRAGMA journal_mode = WAL');
+		$connection->executeStatement('PRAGMA busy_timeout = 5000');
+	}
+
+	return $connection;
 });
 $dependencies[Transactions::class] = DI\factory(function (ContainerInterface $container)
 {
