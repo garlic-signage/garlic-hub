@@ -88,6 +88,16 @@ export class ZoneService
 		this.#fabricWrapper.remove(active);
 	}
 
+	removeAll()
+	{
+		this.#fabricWrapper.discardActiveObject();
+		for (const zone of this.zones())
+		{
+			ComposerEventBus.dispatchEvent(new CustomEvent("zoneRemoved", {detail: {id: zone.getId()}}));
+			this.#fabricWrapper.remove(zone);
+		}
+	}
+
 	selectById(id)
 	{
 		const zone = this.#fabricWrapper.getObjects().find(object => object.id === id);

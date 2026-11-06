@@ -119,3 +119,10 @@
 		background-color: #d3d3d3;
 		font-weight: bold;
 	}
+/* the dialog of the presets (/js/playlists/compose/multizone/Views/PresetDialogView.js) */
+dialog.multizone-presets {width: min(40rem, 92vw); border: 1px solid var(--gh-secondary-color);}
+.multizone-presets-list {list-style: none; margin: 0; padding: 1rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: 1rem; max-height: 70vh; overflow-y: auto;}
+.multizone-presets-list button {display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 0.5rem; width: 100%; height: 100%; padding: 0.75rem 0.5rem; cursor: pointer;}
+.multizone-presets-list button:hover, .multizone-presets-list button:focus-visible {border-color: var(--gh-accent-color);}
+.multizone-presets-list svg {background-color: #222; outline: 1px solid var(--gh-border-color);}
+.multizone-presets-list rect {stroke: #fff; stroke-width: 1;}

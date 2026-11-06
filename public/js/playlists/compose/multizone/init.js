@@ -29,16 +29,19 @@ import {ZoneService}              from "./Services/ZoneService.js";
 import {ZonePropertiesService}    from "./Services/ZonePropertiesService.js";
 import {LoadService}              from "./Services/LoadService.js";
 import {SaveService}              from "./Services/SaveService.js";
+import {PresetService}            from "./Services/PresetService.js";
 import {ViewportView}             from "./Views/ViewportView.js";
 import {ZonePropertiesView}       from "./Views/ZonePropertiesView.js";
 import {ZoneListView}             from "./Views/ZoneListView.js";
 import {ContextMenuView}          from "./Views/ContextMenuView.js";
 import {ToolbarView}              from "./Views/ToolbarView.js";
+import {PresetDialogView}         from "./Views/PresetDialogView.js";
 import {ViewportController}       from "./Controller/ViewportController.js";
 import {ZonePropertiesController} from "./Controller/ZonePropertiesController.js";
 import {ZoneListController}       from "./Controller/ZoneListController.js";
 import {ContextMenuController}    from "./Controller/ContextMenuController.js";
 import {ToolbarController}        from "./Controller/ToolbarController.js";
+import {PresetController}         from "./Controller/PresetController.js";
 
 window.onload = async function ()
 {
@@ -65,6 +68,7 @@ window.onload = async function ()
 	new ZoneListController(new ZoneListView(), zoneService, propertiesController, fabricWrapper);
 	new ContextMenuController(new ContextMenuView(), zoneService, fabricWrapper);
 	new ToolbarController(new ToolbarView(), zoneService, new SaveService(settings, viewportService, zoneService, playlistId), propertiesController, fabricWrapper);
+	new PresetController(new PresetDialogView(), new PresetService(viewportService, zoneService), viewportService, propertiesController, fabricWrapper, multizonePresets.presets ?? []);
 
 	try
 	{

@@ -1,0 +1,61 @@
+[
+	{
+		"id": "fullscreen",
+		"zones": [
+			{"left": 0, "top": 0, "width": 100, "height": 100, "bgcolor": "#4a6fa5"}
+		]
+	},
+	{
+		"id": "two_columns",
+		"zones": [
+			{"left": 0,  "top": 0, "width": 50, "height": 100, "bgcolor": "#4a6fa5"},
+			{"left": 50, "top": 0, "width": 50, "height": 100, "bgcolor": "#6b8e23"}
+		]
+	},
+	{
+		"id": "two_rows",
+		"zones": [
+			{"left": 0, "top": 0,  "width": 100, "height": 50, "bgcolor": "#4a6fa5"},
+			{"left": 0, "top": 50, "width": 100, "height": 50, "bgcolor": "#6b8e23"}
+		]
+	},
+	{
+		"id": "main_sidebar",
+		"zones": [
+			{"left": 0,  "top": 0, "width": 75, "height": 100, "bgcolor": "#4a6fa5"},
+			{"left": 75, "top": 0, "width": 25, "height": 100, "bgcolor": "#6b8e23"}
+		]
+	},
+	{
+		"id": "main_ticker",
+		"zones": [
+			{"left": 0, "top": 0,  "width": 100, "height": 90, "bgcolor": "#4a6fa5"},
+			{"left": 0, "top": 90, "width": 100, "height": 10, "bgcolor": "#b5651d"}
+		]
+	},
+	{
+		"id": "l_layout",
+		"zones": [
+			{"left": 0,  "top": 0,  "width": 75,  "height": 90, "bgcolor": "#4a6fa5"},
+			{"left": 75, "top": 0,  "width": 25,  "height": 90, "bgcolor": "#6b8e23"},
+			{"left": 0,  "top": 90, "width": 100, "height": 10, "bgcolor": "#b5651d"}
+		]
+	},
+	{
+		"id": "header_main_footer",
+		"zones": [
+			{"left": 0, "top": 0,  "width": 100, "height": 10, "bgcolor": "#7b4f9d"},
+			{"left": 0, "top": 10, "width": 100, "height": 80, "bgcolor": "#4a6fa5"},
+			{"left": 0, "top": 90, "width": 100, "height": 10, "bgcolor": "#b5651d"}
+		]
+	},
+	{
+		"id": "grid_2x2",
+		"zones": [
+			{"left": 0,  "top": 0,  "width": 50, "height": 50, "bgcolor": "#4a6fa5"},
+			{"left": 50, "top": 0,  "width": 50, "height": 50, "bgcolor": "#6b8e23"},
+			{"left": 0,  "top": 50, "width": 50, "height": 50, "bgcolor": "#b5651d"},
+			{"left": 50, "top": 50, "width": 50, "height": 50, "bgcolor": "#7b4f9d"}
+		]
+	}
+]

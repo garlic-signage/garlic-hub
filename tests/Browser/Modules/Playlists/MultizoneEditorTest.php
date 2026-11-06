@@ -237,6 +237,77 @@ class MultizoneEditorTest extends BrowserTestCase
 	}
 
 	/**
+	 * An empty layout takes the preset without a question, the percent of the preset become pixel of the resolution.
+	 */
+	public function testAPresetFillsAnEmptyLayout(): void
+	{
+		$this->login('anna');
+		$this->visit('/playlists/compose/4');
+		$this->waitForEditor();
+
+		$this->openPresets();
+		static::assertCount(8, $this->client()->getWebDriver()->findElements(WebDriverBy::cssSelector('dialog.multizone-presets li')));
+		$this->choosePreset(6);
+		static::assertSame(['Zone 1', 'Zone 2', 'Zone 3'], $this->zoneNames());
+
+		static::assertSame('a:4:{s:10:"resolution";s:9:"1920x1080";s:4:"zoom";i:70;s:11:"export_unit";s:5:"pixel";s:5:"zones";a:3:{i:0;a:8:{s:9:"zone_name";s:6:"Zone 1";s:9:"zone_left";i:0;s:8:"zone_top";i:0;s:10:"zone_width";i:1440;s:11:"zone_height";i:972;s:12:"zone_z-index";i:0;s:12:"zone_bgcolor";s:7:"#4a6fa5";s:16:"zone_playlist_id";i:0;}i:1;a:8:{s:9:"zone_name";s:6:"Zone 2";s:9:"zone_left";i:1440;s:8:"zone_top";i:0;s:10:"zone_width";i:480;s:11:"zone_height";i:972;s:12:"zone_z-index";i:1;s:12:"zone_bgcolor";s:7:"#6b8e23";s:16:"zone_playlist_id";i:0;}i:2;a:8:{s:9:"zone_name";s:6:"Zone 3";s:9:"zone_left";i:0;s:8:"zone_top";i:972;s:10:"zone_width";i:1920;s:11:"zone_height";i:108;s:12:"zone_z-index";i:2;s:12:"zone_bgcolor";s:7:"#b5651d";s:16:"zone_playlist_id";i:0;}}}', $this->saveAndLoadLayout());
+		$this->assertNoErrors();
+	}
+
+	/**
+	 * Existing zones are replaced only after the question, the playlists of the old zones are not taken over.
+	 */
+	public function testAPresetReplacesTheZonesAfterTheQuestion(): void
+	{
+		$this->open(self::PIXEL_LAYOUT);
+		$driver = $this->client()->getWebDriver();
+
+		$this->openPresets();
+		$this->choosePreset(1);
+		$driver->wait(5)->until(WebDriverExpectedCondition::alertIsPresent());
+		$driver->switchTo()->alert()->dismiss();
+		static::assertSame(['Haupt', 'Ticker'], $this->zoneNames());
+
+		$this->choosePreset(1);
+		$driver->wait(5)->until(WebDriverExpectedCondition::alertIsPresent());
+		$driver->switchTo()->alert()->accept();
+		static::assertSame(['Zone 1'], $this->zoneNames());
+
+		static::assertSame('a:4:{s:10:"resolution";s:9:"1920x1080";s:4:"zoom";i:50;s:11:"export_unit";s:5:"pixel";s:5:"zones";a:1:{i:0;a:8:{s:9:"zone_name";s:6:"Zone 1";s:9:"zone_left";i:0;s:8:"zone_top";i:0;s:10:"zone_width";i:1920;s:11:"zone_height";i:1080;s:12:"zone_z-index";i:0;s:12:"zone_bgcolor";s:7:"#4a6fa5";s:16:"zone_playlist_id";i:0;}}}', $this->saveAndLoadLayout());
+		$this->assertNoErrors();
+	}
+
+	/**
+	 * The preview follows the ratio of the resolution: a portrait screen shows portrait tiles.
+	 */
+	public function testThePreviewOfAPresetFollowsTheResolution(): void
+	{
+		$this->open(self::PIXEL_LAYOUT);
+		$this->type('screen_width', '1080', true);
+		$this->type('screen_height', '1920', true);
+
+		$this->openPresets();
+		$svg = $this->client()->getWebDriver()->findElement(WebDriverBy::cssSelector('dialog.multizone-presets li:nth-child(2) svg'));
+		static::assertSame(['68', '120'], [$svg->getAttribute('width'), $svg->getAttribute('height')]);
+		static::assertCount(2, $svg->findElements(WebDriverBy::tagName('rect')));
+		$this->assertNoErrors();
+	}
+
+	private function openPresets(): void
+	{
+		$this->click('#open_presets');
+		$this->client()->getWebDriver()->wait(5)->until(fn() => (bool) $this->client()->executeScript("return document.querySelector('dialog.multizone-presets')?.open === true;"));
+	}
+
+	/**
+	 * @param int $position the position of the tile, 1 is the first
+	 */
+	private function choosePreset(int $position): void
+	{
+		$this->click('dialog.multizone-presets li:nth-child(' . $position . ') button');
+	}
+
+	/**
 	 * @param array<mixed> $layout
 	 */
 	private function open(array $layout): void

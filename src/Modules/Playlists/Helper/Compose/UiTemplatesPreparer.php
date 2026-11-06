@@ -39,12 +39,14 @@ readonly class UiTemplatesPreparer
 	private Translator $translator;
 	private RightsChecker $rightsChecker;
 	private PlaylistRelease $playlistRelease;
+	private MultizonePresets $multizonePresets;
 
-	public function __construct(Translator $translator, RightsChecker $rightsChecker, PlaylistRelease $playlistRelease)
+	public function __construct(Translator $translator, RightsChecker $rightsChecker, PlaylistRelease $playlistRelease, MultizonePresets $multizonePresets)
 	{
 		$this->translator = $translator;
 		$this->rightsChecker = $rightsChecker;
 		$this->playlistRelease = $playlistRelease;
+		$this->multizonePresets = $multizonePresets;
 	}
 
 	/**
@@ -90,6 +92,13 @@ readonly class UiTemplatesPreparer
 		{
 			$exportUnits[] = ['LANG_OPTION' => $value, 'VALUE_OPTION' => $key];
 		}
+		// a preset without a translation shows its id
+		$presetNames = $this->translator->translateArrayForOptions('multizone_preset_selects', self::MODULE_NAME);
+		$presets = [];
+		foreach ($this->multizonePresets->load() as $preset)
+		{
+			$presets[] = ['id' => $preset['id'], 'name' => $presetNames[$preset['id']] ?? $preset['id'], 'zones' => $preset['zones']];
+		}
 		$title = $this->translator->translate('zone_edit', self::MODULE_NAME). ' ('.$playlist['playlist_name'].')';
 		return [
 			'main_layout' => [
@@ -110,6 +119,7 @@ readonly class UiTemplatesPreparer
 					'LANG_MOVE_FOREGROUND' =>  $this->translator->translate('move_foreground', 'templates'),
 					'PLAYLIST_ID' => $playlist['playlist_id'],
 					'LANG_ADD_ZONE' => $this->translator->translate('add_zone', 'playlists'),
+					'LANG_MULTIZONE_PRESETS' => $this->translator->translate('multizone_presets', self::MODULE_NAME),
 					'LANG_MULTIZONE_EXPORT_UNIT' => $this->translator->translate('multizone_export_unit', self::MODULE_NAME),
 					'export_units' => $exportUnits,
 					'LANG_SCREEN_RESOLUTION' =>  $this->translator->translate('screen_resolution', self::MODULE_NAME),
@@ -132,8 +142,12 @@ readonly class UiTemplatesPreparer
 					'LANG_ZONE_BGCOLOR' => $this->translator->translate('zone_bgcolor', self::MODULE_NAME),
 					'LANG_ZONE_TRANSPARENT' => $this->translator->translate('zone_transparent', self::MODULE_NAME),
 					'LANG_JS' => Json::encodeForScript([
-						'confirm_close' => $this->translator->translate('confirm_close_editor', self::MODULE_NAME)
-					])
+						'confirm_close' => $this->translator->translate('confirm_close_editor', self::MODULE_NAME),
+						'confirm_preset' => $this->translator->translate('confirm_multizone_preset', self::MODULE_NAME),
+						'presets' => $this->translator->translate('multizone_presets', self::MODULE_NAME),
+						'close' => $this->translator->translate('close', 'main')
+					]),
+					'PRESETS_JS' => Json::encodeForScript(['presets' => $presets])
 				]
 			]
 		];

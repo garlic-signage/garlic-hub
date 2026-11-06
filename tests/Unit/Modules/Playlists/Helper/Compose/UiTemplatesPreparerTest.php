@@ -24,6 +24,7 @@ namespace Tests\Unit\Modules\Playlists\Helper\Compose;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Modules\Playlists\Helper\Compose\MultizonePresets;
 use App\Modules\Playlists\Helper\Compose\RightsChecker;
 use App\Modules\Playlists\Helper\Compose\UiTemplatesPreparer;
 use App\Modules\Playlists\Services\PlaylistRelease;
@@ -37,6 +38,7 @@ class UiTemplatesPreparerTest extends TestCase
 	private Translator&Stub $translatorStub;
 	private RightsChecker&Stub $rightsCheckerStub;
 	private PlaylistRelease&Stub $playlistReleaseStub;
+	private MultizonePresets&Stub $multizonePresetsStub;
 	private UiTemplatesPreparer $preparer;
 
 	/**
@@ -48,8 +50,9 @@ class UiTemplatesPreparerTest extends TestCase
 		$this->translatorStub   = $this->createStub(Translator::class);
 		$this->rightsCheckerStub = $this->createStub(RightsChecker::class);
 		$this->playlistReleaseStub = $this->createStub(PlaylistRelease::class);
+		$this->multizonePresetsStub = $this->createStub(MultizonePresets::class);
 
-		$this->preparer = new UiTemplatesPreparer($this->translatorStub, $this->rightsCheckerStub, $this->playlistReleaseStub);
+		$this->preparer = new UiTemplatesPreparer($this->translatorStub, $this->rightsCheckerStub, $this->playlistReleaseStub, $this->multizonePresetsStub);
 	}
 
 
@@ -112,6 +115,8 @@ class UiTemplatesPreparerTest extends TestCase
 				['move_front', 'templates', [], 'Move Front'],
 				['move_foreground', 'templates', [], 'Move Foreground'],
 				['add_zone', UiTemplatesPreparer::MODULE_NAME, [], 'Add Zone'],
+				['multizone_presets', UiTemplatesPreparer::MODULE_NAME, [], 'Layout presets'],
+				['confirm_multizone_preset', UiTemplatesPreparer::MODULE_NAME, [], 'Replace?'],
 				['multizone_export_unit', UiTemplatesPreparer::MODULE_NAME, [], 'Export Unit'],
 				['screen_resolution', UiTemplatesPreparer::MODULE_NAME, [], 'Screen Resolution'],
 				['zoom', 'main', [], 'Zoom'],
@@ -134,10 +139,16 @@ class UiTemplatesPreparerTest extends TestCase
 			]);
 
 		$this->translatorStub->method('translateArrayForOptions')
-			->willReturn([
-				'unit_one' => 'Unit One',
-				'unit_two' => 'Unit Two',
+			->willReturnMap([
+				['export_unit_selects', UiTemplatesPreparer::MODULE_NAME, ['unit_one' => 'Unit One', 'unit_two' => 'Unit Two']],
+				['multizone_preset_selects', UiTemplatesPreparer::MODULE_NAME, ['fullscreen' => 'Fullscreen']]
 			]);
+		// a preset without a translation shows its id
+		$fullscreen = ['left' => 0, 'top' => 0, 'width' => 100, 'height' => 100, 'bgcolor' => '#4a6fa5'];
+		$this->multizonePresetsStub->method('load')->willReturn([
+			['id' => 'fullscreen', 'zones' => [$fullscreen]],
+			['id' => 'own_layout', 'zones' => [$fullscreen]]
+		]);
 
 		$result = $this->preparer->buildMultizoneEditor($playlist);
 
@@ -160,6 +171,7 @@ class UiTemplatesPreparerTest extends TestCase
 					'LANG_MOVE_FOREGROUND' => 'Move Foreground',
 					'PLAYLIST_ID' => 456,
 					'LANG_ADD_ZONE' => 'Add Zone',
+					'LANG_MULTIZONE_PRESETS' => 'Layout presets',
 					'LANG_MULTIZONE_EXPORT_UNIT' => 'Export Unit',
 					'export_units' => [
 						['LANG_OPTION' => 'Unit One', 'VALUE_OPTION' => 'unit_one'],
@@ -184,7 +196,9 @@ class UiTemplatesPreparerTest extends TestCase
 					'LANG_ZONE_HEIGHT' => 'Height',
 					'LANG_ZONE_BGCOLOR' => 'Background Color',
 					'LANG_ZONE_TRANSPARENT' => 'Transparent',
-					'LANG_JS' => '{"confirm_close":"Confirm Close Editor"}'
+					'LANG_JS' => '{"confirm_close":"Confirm Close Editor","confirm_preset":"Replace?","presets":"Layout presets","close":"Close"}',
+					'PRESETS_JS' => '{"presets":[{"id":"fullscreen","name":"Fullscreen","zones":[{"left":0,"top":0,"width":100,"height":100,"bgcolor":"#4a6fa5"}]},'
+						. '{"id":"own_layout","name":"own_layout","zones":[{"left":0,"top":0,"width":100,"height":100,"bgcolor":"#4a6fa5"}]}]}'
 				]
 			]
 		];

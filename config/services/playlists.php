@@ -58,6 +58,7 @@ use App\Modules\Playlists\Controller\TriggerController;
 use App\Modules\Playlists\Controller\WidgetsController;
 use App\Modules\Playlists\Helper\Compose\ItemThumbnailResolver;
 use App\Modules\Playlists\Helper\Compose\RightsChecker;
+use App\Modules\Playlists\Helper\Compose\MultizonePresets;
 use App\Modules\Playlists\Helper\Compose\UiTemplatesPreparer;
 use App\Modules\Playlists\Helper\ConditionalPlay\Orchestrator;
 use App\Modules\Playlists\Helper\ConditionalPlay\ResponseBuilder;
@@ -241,7 +242,8 @@ $dependencies[ShowComposeController::class] = DI\factory(function (ContainerInte
 			$container->get(Translator::class),
 			new RightsChecker(
 				$container->get(Translator::class), $container->get(AclValidator::class)),
-			$container->get(PlaylistRelease::class)
+			$container->get(PlaylistRelease::class),
+			new MultizonePresets($container->get(Config::class)->getPaths('configDir') . '/multizone_presets.json', new \App\Modules\Playlists\Helper\Playlists\ZonesSchema())
 		),
 		$container->get(Messages::class)
 	);
