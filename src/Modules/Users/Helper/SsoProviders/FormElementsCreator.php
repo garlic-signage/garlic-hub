@@ -77,7 +77,9 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 		return [[
 			'ADDITIONAL_BUTTON_TYPE' => 'submit',
 			'ADDITIONAL_BUTTON_NAME' => 'delete',
-			'LANG_ADDITIONAL_BUTTON' => $this->translator->translate('delete', 'main')
+			'LANG_ADDITIONAL_BUTTON' => $this->translator->translate('delete', 'main'),
+			// the users of the provider lose their link to it
+			'ADDITIONAL_BUTTON_CONFIRM' => $this->translator->translate('sso_delete_confirm', self::MODULE_NAME)
 		]];
 	}
 

@@ -190,7 +190,7 @@ readonly class SsoProvidersController
 		return new PageResponse($this->formTemplatePreparer->prepareUITemplate($form + [
 			'title'              => $provider !== null ? $this->translate('sso_provider') . ': ' . $provider->name : $this->translate('sso_provider_new'),
 			'additional_css'     => [],
-			'footer_modules'     => [],
+			'footer_modules'     => ['/js/users/sso/init.js'],
 			'template_name'      => 'users/edit',
 			'form_action'        => '/users/sso/edit',
 			'explanations'       => $this->translate('sso_redirect_uri') . ' ' . SsoLogin::redirectUri($request),

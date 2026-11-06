@@ -18,8 +18,9 @@
 				{{#form_button}}
 					<button type="{{ELEMENT_BUTTON_TYPE}}" name="{{ELEMENT_BUTTON_NAME}}" id="{{ELEMENT_BUTTON_NAME}}" value="{{LANG_ELEMENT_BUTTON}}">{{LANG_ELEMENT_BUTTON}}</button>
 				{{/form_button}}
+				{{! a button with a question (delete) does not check the fields }}
 				{{#additional_buttons}}
-					<button type="{{ADDITIONAL_BUTTON_TYPE}}" name="{{ADDITIONAL_BUTTON_NAME}}" id="{{ADDITIONAL_BUTTON_NAME}}" value="{{LANG_ADDITIONAL_BUTTON}}">{{LANG_ADDITIONAL_BUTTON}}</button>
+					<button type="{{ADDITIONAL_BUTTON_TYPE}}" name="{{ADDITIONAL_BUTTON_NAME}}" id="{{ADDITIONAL_BUTTON_NAME}}" value="{{LANG_ADDITIONAL_BUTTON}}"{{#ADDITIONAL_BUTTON_CONFIRM}} data-confirm="{{ADDITIONAL_BUTTON_CONFIRM}}" formnovalidate{{/ADDITIONAL_BUTTON_CONFIRM}}>{{LANG_ADDITIONAL_BUTTON}}</button>
 				{{/additional_buttons}}
 			</div>
 		</form>
