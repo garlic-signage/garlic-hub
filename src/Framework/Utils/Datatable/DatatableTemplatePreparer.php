@@ -78,6 +78,7 @@ class DatatableTemplatePreparer
 						]
 					],
 					'has_add'                     => $dataSections['has_add'],
+					'additional_actions'          => $dataSections['additional_actions'] ?? [],
 					'LANG_ELEMENTS_PER_PAGE'      => $this->translator->translate('elements_per_page', 'main'),
 					'LANG_COUNT_SEARCH_RESULTS'   => $this->translator->translateWithPlural('count_search_results', $dataSections['module_name'], $dataSections['results_count']),
 					'elements_pager'              => $dataSections['pagination_links'],

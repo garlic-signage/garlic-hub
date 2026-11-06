@@ -158,6 +158,10 @@ protected function prepareModuleTemplate(): array
 }
 ```
 
+The optional key `additional_actions` adds buttons beside the add link: a list of `ACTION_ID`,
+`ACTION_BI_ICON`, `LANG_ACTION` and `LANG_ACTION_CONFIRM` (as `data-confirm`). The JS of the module binds
+them by their id. Templates uses it for the button which installs the bundled template pack.
+
 Templates overrides `prepareList()` to load additional data for the shown rows ("is the template in
 use") and has `checkRights()`. Users has a context menu, too (`prepareContextMenu()`), its delete action
 is `DELETE /async/users`.

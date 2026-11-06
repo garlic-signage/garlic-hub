@@ -152,6 +152,23 @@ class DatatablePreparer extends AbstractDatatablePreparer
 		];
 	}
 
+	/**
+	 * The button which installs the bundled templates.
+	 *
+	 * @return array{ACTION_ID: string, ACTION_BI_ICON: string, LANG_ACTION: string, LANG_ACTION_CONFIRM: string}
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	public function prepareInstallPack(): array
+	{
+		return [
+			'ACTION_ID'           => 'installTemplatePack',
+			'ACTION_BI_ICON'      => 'box-seam',
+			'LANG_ACTION'         => $this->translator->translate('install_template_pack', 'templates'),
+			'LANG_ACTION_CONFIRM' => $this->translator->translate('confirm_install_template_pack', 'templates')
+		];
+	}
+
 
 
 }

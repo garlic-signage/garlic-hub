@@ -99,6 +99,7 @@ abstract class AbstractDatatableOrchestrator implements DatatableOrchestratorInt
 			'pagination_dropdown' => $pagination['dropdown'],
 			'pagination_links'    => $pagination['links'],
 			'has_add'			  => $moduleTemplate['has_add'],
+			'additional_actions'  => $moduleTemplate['additional_actions'] ?? [],
 			'results_header'      => $this->datatablePreparer->prepareTableHeader($datatableStructure['header'], [$moduleTemplate['module_name'], 'main']),
 			'results_list'        => $this->prepareList($datatableStructure['header']),
 			'results_count'       => $this->datatableService->getCurrentTotalResult(),
@@ -113,9 +114,10 @@ abstract class AbstractDatatableOrchestrator implements DatatableOrchestratorInt
 	}
 
 	/**
-	 * Module specific parts of the UI template.
+	 * Module specific parts of the UI template. additional_actions are buttons beside the add link, the JS of the
+	 * module binds them.
 	 *
-	 * @return array{has_add: array<string,string>, template_name: string, module_name: string, additional_css: list<string>, footer_modules: list<string>}
+	 * @return array{has_add: array<string,string>, additional_actions?: list<array<string,string>>, template_name: string, module_name: string, additional_css: list<string>, footer_modules: list<string>}
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */

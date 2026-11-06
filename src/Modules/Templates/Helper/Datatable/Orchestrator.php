@@ -27,6 +27,7 @@ use App\Framework\Exceptions\UserException;
 use App\Framework\Utils\Datatable\AbstractDatatableOrchestrator;
 use App\Framework\Utils\Datatable\Results\HeaderField;
 use App\Modules\Auth\UserSession;
+use App\Modules\Templates\Services\TemplatePackService;
 use App\Modules\Templates\Services\TemplatesDatatableService;
 use Doctrine\DBAL\Exception;
 
@@ -42,7 +43,8 @@ class Orchestrator extends AbstractDatatableOrchestrator
 		DatatableBuilder          $datatableBuilder,
 		DatatablePreparer         $datatablePreparer,
 		TemplatesDatatableService $datatableService,
-		private readonly UserSession $userSession
+		private readonly UserSession $userSession,
+		private readonly TemplatePackService $templatePackService
 	)
 	{
 		parent::__construct($datatableBuilder, $datatablePreparer, $datatableService);
@@ -80,12 +82,19 @@ class Orchestrator extends AbstractDatatableOrchestrator
 
 	/**
 	 * @throws CoreException
+	 * @throws Exception
 	 * @throws FrameworkException
+	 * @throws UserException
 	 */
 	protected function prepareModuleTemplate(): array
 	{
+		$additionalActions = [];
+		if ($this->templatePackService->canInstall())
+			$additionalActions[] = $this->datatablePreparer->prepareInstallPack();
+
 		return [
 			'has_add'        => $this->datatablePreparer->prepareAdd('file-plus', '/templates/settings/canvas'),
+			'additional_actions' => $additionalActions,
 			'template_name'  => 'templates/datatable',
 			'module_name'    => 'templates',
 			'additional_css' => ['/css/templates/datatable.css'],

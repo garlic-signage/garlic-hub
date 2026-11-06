@@ -131,7 +131,7 @@ class AbstractDatatableOrchestratorTest extends TestCase
 
 		static::assertSame(
 			[
-				'filter_elements', 'pagination_dropdown', 'pagination_links', 'has_add', 'results_header', 'results_list', 'results_count',
+				'filter_elements', 'pagination_dropdown', 'pagination_links', 'has_add', 'additional_actions', 'results_header', 'results_list', 'results_count',
 				'title', 'template_name', 'module_name', 'additional_css', 'footer_modules', 'sort', 'page',
 			],
 			array_keys($template)
@@ -143,6 +143,7 @@ class AbstractDatatableOrchestratorTest extends TestCase
 		static::assertSame(25, $template['results_count']);
 		static::assertSame(['current' => 2, 'num_elements' => 10], $template['page']);
 		static::assertSame('/templates/add', $template['has_add']['ELEMENTS_ADD_LINK']);
+		static::assertSame([], $template['additional_actions']);
 		static::assertSame(['name'], array_column($template['filter_elements']['visible'], 'HTML_ELEMENT_ID'));
 		static::assertSame(['name', 'type'], array_column($template['results_header'], 'CONTROL_NAME'));
 		static::assertSame(4, $template['results_list'][0]['UNIT_ID']);

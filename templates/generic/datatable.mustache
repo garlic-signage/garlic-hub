@@ -50,6 +50,11 @@
 				<a href="{{ELEMENTS_ADD_LINK}}" title="{{LANG_ELEMENTS_ADD_LINK}}" class="add-unit" id="createUnitAction"><i class="bi bi-{{ADD_BI_ICON}}"></i> {{LANG_ELEMENTS_ADD_LINK}}</a>
 			</div>
 			{{/has_add}}
+			{{#additional_actions}}
+			<div>
+				<button type="button" id="{{ACTION_ID}}" title="{{LANG_ACTION}}" data-confirm="{{LANG_ACTION_CONFIRM}}"><i class="bi bi-{{ACTION_BI_ICON}}"></i> {{LANG_ACTION}}</button>
+			</div>
+			{{/additional_actions}}
 		</div>
 	</form>
 	<ul class="results-listing main-element-group">

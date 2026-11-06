@@ -48,4 +48,18 @@ class TemplatesRepository extends SqlBase
 		$where  = ['template_id' => $templateId];
 		return $this->getFirstDataSet($this->findAllByWithFields($select, $where, $join));
 	}
+
+	/**
+	 * The keys of the installed templates of the bundled pack.
+	 *
+	 * @return list<string>
+	 * @throws Exception
+	 */
+	public function findSeedKeys(): array
+	{
+		$queryBuilder = $this->connection->createQueryBuilder();
+		$queryBuilder->select('seed_key')->from($this->table)->where('seed_key IS NOT NULL');
+
+		return array_values(array_filter($queryBuilder->executeQuery()->fetchFirstColumn(), is_string(...)));
+	}
 }

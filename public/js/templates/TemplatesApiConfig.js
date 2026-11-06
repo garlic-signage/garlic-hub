@@ -21,6 +21,7 @@ export const TemplatesApiConfig = {
     BASE_URI: "/async/templates",
 	ACLS_URI: "/async/templates/acls",
 	FIND_URI: "/async/templates/find",
+	PACK_URI: "/async/templates/pack",
 	LOAD_PLAYLIST_ITEM_URI: "/async/playlist-item/composer/load",
 	SAVE_PLAYLIST_ITEM_URI: "/async/playlist-item/composer/save"
 };

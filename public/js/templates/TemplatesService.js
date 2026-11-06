@@ -52,6 +52,11 @@ export class TemplatesService extends BaseService
 		return await this._sendRequest(url, "GET");
 	}
 
+	async installPack()
+	{
+		return await this._sendRequest(TemplatesApiConfig.PACK_URI, "POST");
+	}
+
 	determineRights(templateId)
 	{
 		const url = TemplatesApiConfig.ACLS_URI + "/" + templateId;

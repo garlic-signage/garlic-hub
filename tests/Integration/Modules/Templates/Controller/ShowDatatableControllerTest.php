@@ -75,6 +75,25 @@ class ShowDatatableControllerTest extends TemplatesControllerTestCase
 			static::assertNotSame('', $text, $key);
 	}
 
+	public function testTheModuleAdminHasTheButtonOfTheTemplatePack(): void
+	{
+		$this->actingAs(1);
+
+		$actions = $this->list()->getTemplateData()['additional_actions'];
+
+		static::assertSame(['installTemplatePack'], array_column($actions, 'ACTION_ID'));
+		static::assertSame($this->text('install_template_pack'), $actions[0]['LANG_ACTION']);
+		static::assertSame($this->text('confirm_install_template_pack'), $actions[0]['LANG_ACTION_CONFIRM']);
+	}
+
+	public function testASubAdminHasNoButtonOfTheTemplatePack(): void
+	{
+		$this->connection->executeStatement("INSERT INTO user_acl (UID, acl, module) VALUES (2, 4, 'templates')");
+		$this->actingAs(2);
+
+		static::assertSame([], $this->list()->getTemplateData()['additional_actions']);
+	}
+
 	public function testTheAdminSeesAllTemplates(): void
 	{
 		$this->actingAs(1);

@@ -42,3 +42,8 @@ CREATE TABLE `user_sso` (
                             FOREIGN KEY (`UID`) REFERENCES `user_main` (`UID`) ON DELETE CASCADE,
                             FOREIGN KEY (`provider_id`) REFERENCES `sso_providers` (`provider_id`) ON DELETE CASCADE
 );
+
+-- a template of the bundled pack (resources/templates) has its key, e.g. fabric/menu_portrait:
+-- installing the pack again adds only the ones which are not there
+ALTER TABLE templates ADD COLUMN seed_key VARCHAR(100) NULL DEFAULT NULL;
+CREATE UNIQUE INDEX idx_templates_seed_key ON templates (seed_key);

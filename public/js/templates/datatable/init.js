@@ -25,6 +25,7 @@ import {FlashMessageHandler} from "../../core/FlashMessageHandler.js";
 import {UnitShareDialog} from "../../core/UnitShareDialog.js";
 import {UnitVersionsDialog} from "../../core/UnitVersionsDialog.js";
 import {ActionsContextMenu} from "../../core/ContextMenu/ActionsContextMenu.js";
+import {Utils} from "../../core/Utils.js";
 
 document.addEventListener("DOMContentLoaded", function()
 {
@@ -37,5 +38,23 @@ document.addEventListener("DOMContentLoaded", function()
 	);
 
 	ActionsContextMenu.bindTo("template-contextmenu", () => templatesActionsContextMenuFactory.create());
+
+	// installed templates come with the reload, the message of the server too
+	const installPack = document.getElementById("installTemplatePack");
+	installPack?.addEventListener("click", async () =>
+	{
+		if (!await Utils.confirmAction(installPack.dataset.confirm))
+			return;
+
+		installPack.disabled = true;
+		const result = await templatesService.installPack();
+		installPack.disabled = false;
+		if (!result.success)
+			new FlashMessageHandler().showError(result.error_message);
+		else if (result.installed > 0)
+			window.location.reload();
+		else
+			new FlashMessageHandler().showInformation(result.message);
+	});
 
 });

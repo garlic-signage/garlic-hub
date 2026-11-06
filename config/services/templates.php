@@ -63,6 +63,7 @@ use App\Modules\Templates\Services\TemplatesDatatableService;
 use App\Modules\Templates\Services\TemplatesService;
 use App\Modules\Templates\Contracts\TemplateUsageCounterInterface;
 use App\Modules\Templates\Services\TemplatesUsageService;
+use App\Modules\Templates\Services\TemplatePackService;
 use Psr\Container\ContainerInterface;
 use Slim\Flash\Messages;
 
@@ -117,6 +118,18 @@ $dependencies[\App\Modules\Templates\Helper\Composer\Orchestrator::class] = DI\f
 		$container->get(TemplatesService::class),
 		$container->get(Config::class),
 		$container->get(MediaUrlSigner::class)
+	);
+});
+
+$dependencies[TemplatePackService::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new TemplatePackService(
+		$container->get(TemplatesRepository::class),
+		$container->get(AclValidator::class),
+		$container->get(UserSession::class),
+		$container->get(ExportImage::class),
+		$container->get(Transactions::class),
+		$container->get(Config::class)->getPaths('systemDir') . '/resources/templates'
 	);
 });
 
@@ -235,7 +248,8 @@ $dependencies[\App\Modules\Templates\Helper\Datatable\Orchestrator::class] = DI\
 		$container->get(DatatableBuilder::class),
 		$container->get(DatatablePreparer::class),
 		$container->get(TemplatesDatatableService::class),
-		$container->get(UserSession::class)
+		$container->get(UserSession::class),
+		$container->get(TemplatePackService::class)
 	);
 });
 

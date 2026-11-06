@@ -67,6 +67,7 @@ class DatatableTemplatePreparerTest extends TestCase
 			'page'                => ['current' => 2, 'num_elements' => 10],
 			'pagination_dropdown' => [['ELEMENTS_PER_PAGE_VALUE' => 10]],
 			'has_add'             => ['ELEMENTS_ADD_LINK' => '/module1/add'],
+			'additional_actions'  => [['ACTION_ID' => 'installPack']],
 			'results_count'       => $count,
 			'pagination_links'    => [['ELEMENTS_PAGENAME' => '1']],
 			'results_header'      => [['CONTROL_NAME' => 'name']],
@@ -105,6 +106,7 @@ class DatatableTemplatePreparerTest extends TestCase
 						'elements_per_page'         => [['ELEMENTS_PER_PAGE_VALUE' => 10]],
 						'form_button'               => [['ELEMENT_BUTTON_TYPE' => 'submit', 'ELEMENT_BUTTON_NAME' => 'submit']],
 						'has_add'                   => ['ELEMENTS_ADD_LINK' => '/module1/add'],
+						'additional_actions'        => [['ACTION_ID' => 'installPack']],
 						'LANG_ELEMENTS_PER_PAGE'    => 'Elements per page',
 						'LANG_COUNT_SEARCH_RESULTS' => '100 Templates',
 						'elements_pager'            => [['ELEMENTS_PAGENAME' => '1']],
@@ -166,6 +168,23 @@ class DatatableTemplatePreparerTest extends TestCase
 		$result = $preparer->preparerUITemplate($this->sections());
 
 		static::assertSame('', $result['this_layout']['data']['LANG_COUNT_SEARCH_RESULTS']);
+	}
+
+	/**
+	 * A module without buttons beside the add link.
+	 *
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testWithoutAdditionalActionsThereAreNone(): void
+	{
+		$sections = $this->sections();
+		unset($sections['additional_actions']);
+
+		$result = $this->preparer()->preparerUITemplate($sections);
+
+		static::assertSame([], $result['this_layout']['data']['additional_actions']);
 	}
 
 	private function translatorWithoutCountText(): Translator
