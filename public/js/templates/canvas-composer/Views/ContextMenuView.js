@@ -26,6 +26,8 @@ export class ContextMenuView
 	#replaceImage = document.getElementById("replaceImage");
 	#duplicate = document.getElementById("duplicate");
 	#delete = document.getElementById("delete");
+	// only with an LLM of the user
+	#correctText = document.getElementById("correctText");
 	#toggleLock = document.getElementById("toggleLock");
 	#lock = document.getElementById("lock");
 	#unlock = document.getElementById("unlock");
@@ -120,6 +122,17 @@ export class ContextMenuView
 	get delete()
 	{
 		return this.#delete;
+	}
+
+	get correctText()
+	{
+		return this.#correctText;
+	}
+
+	showCorrectText(isShown)
+	{
+		if (this.#correctText !== null)
+			this.#correctText.style.display = isShown ? "block" : "none";
 	}
 
 	get toggleLock()

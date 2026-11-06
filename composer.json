@@ -31,7 +31,8 @@
     "ext-curl": "*",
     "spomky-labs/otphp": "^11.5",
     "bacon/bacon-qr-code": "^3.1",
-    "facile-it/php-openid-client": "^1.0"
+    "facile-it/php-openid-client": "^1.0",
+    "openai-php/client": "^0.22"
   },
   "autoload": {
     "psr-4": {

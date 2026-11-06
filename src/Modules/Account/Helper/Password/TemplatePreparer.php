@@ -34,15 +34,16 @@ readonly class TemplatePreparer
 	{}
 
 	/**
-	 * The account of the user: a tab for the password and one for the second factor.
+	 * The account of the user: a tab for the password, one for the second factor and one for the own LLM.
 	 *
 	 * @param array<string,mixed> $dataSections
 	 * @param array<string,mixed> $twoFactorTab
+	 * @param array<string,mixed> $llmTab
 	 * @return array<string,mixed>
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
-	public function preparePasswordForm(array $dataSections, array $twoFactorTab): array
+	public function preparePasswordForm(array $dataSections, array $twoFactorTab, array $llmTab): array
 	{
 		$dataSections['title']       = $this->translator->translate('my_account', 'menu');
 		$dataSections['form_action'] = '/account/password';
@@ -51,9 +52,11 @@ readonly class TemplatePreparer
 		$page['main_layout']['additional_css'][] = '/css/account/settings.css';
 		$page['this_layout']['data']['tabs'] = [
 			['MODULE' => 'password', 'LANG_MODULE' => $this->translator->translate('password', 'account')],
-			['MODULE' => 'two_factor', 'LANG_MODULE' => $this->translator->translate('two_factor', 'account')]
+			['MODULE' => 'two_factor', 'LANG_MODULE' => $this->translator->translate('two_factor', 'account')],
+			['MODULE' => 'llm', 'LANG_MODULE' => $this->translator->translate('llm', 'account')]
 		];
 		$page['this_layout']['data']['two_factor'] = $twoFactorTab;
+		$page['this_layout']['data']['llm']        = $llmTab;
 
 		return $page;
 	}

@@ -73,18 +73,20 @@ class TemplatePreparerTest extends TestCase
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testTheAccountHasATabForThePasswordAndOneForTheSecondFactor(): void
+	public function testTheAccountHasTabsForThePasswordTheSecondFactorAndTheLlm(): void
 	{
 		$twoFactorTab = ['CSRF_TOKEN' => 'token', 'enabled' => []];
-		$page = $this->preparer->preparePasswordForm($this->form, $twoFactorTab);
+		$llmTab       = ['CSRF_TOKEN' => 'token', 'can_delete' => []];
+		$page = $this->preparer->preparePasswordForm($this->form, $twoFactorTab, $llmTab);
 		$data = $this->data($page, 'account/settings');
 
 		static::assertSame('menu.my_account', $page['main_layout']['LANG_PAGE_TITLE']);
 		static::assertSame(['/css/account/password.css', '/css/account/settings.css'], $page['main_layout']['additional_css']);
 		static::assertSame(['/js/account/password/init.js'], $page['main_layout']['footer_modules']);
 		static::assertSame('menu.my_account', $data['LANG_PAGE_HEADER']);
-		static::assertSame([['MODULE' => 'password', 'LANG_MODULE' => 'account.password'], ['MODULE' => 'two_factor', 'LANG_MODULE' => 'account.two_factor']], $data['tabs']);
+		static::assertSame(['password', 'two_factor', 'llm'], array_column($data['tabs'], 'MODULE'));
 		static::assertSame($twoFactorTab, $data['two_factor']);
+		static::assertSame($llmTab, $data['llm']);
 		static::assertSame('/account/password', $data['FORM_ACTION']);
 		static::assertSame('account.password_explanation', $data['LANG_FORM_EXPLANATION']);
 		static::assertSame($this->form['hidden'], $data['element_hidden']);

@@ -26,18 +26,24 @@ use App\Framework\Helper\Json;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\UserException;
+use App\Modules\Auth\UserSession;
+use App\Shared\Llm\LlmResolver;
+use Doctrine\DBAL\Exception;
 
 readonly class TemplatePreparer
 {
-	public function __construct(private Translator $translator) {}
+	public function __construct(private Translator $translator, private LlmResolver $llmResolver, private UserSession $userSession) {}
 
 	/**
 	 * Language and template data for the composer. Playlist items get export formats and a reset,
-	 * templates themselves get the lock/selectable options.
+	 * templates themselves get the lock/selectable options. A user with an LLM can correct the texts.
 	 *
 	 * @return array<string,mixed>
 	 * @throws CoreException
+	 * @throws Exception
 	 * @throws FrameworkException
+	 * @throws UserException
 	 */
 	public function replace(int $templateId, int $itemId = 0, int $playlistId = 0): array
 	{
@@ -110,10 +116,14 @@ readonly class TemplatePreparer
 				'confirm_close' => $this->translator->translate('confirm_close_composer', 'templates'),
 				'confirm_reset' => $this->translator->translate('confirm_reset', 'templates'),
 				'add_image'     => $this->translator->translate('insert_image', 'templates'),
-				'replace_image' => $this->translator->translate('replace_image', 'templates')
+				'replace_image' => $this->translator->translate('replace_image', 'templates'),
+				'text_corrected' => $this->translator->translate('text_corrected', 'templates')
 			]),
 			'TEMPLATE_ID' => $templateId
 		];
+
+		if ($this->llmResolver->isAvailable($this->userSession->getUID()))
+			$templateComposer['text_correction'] = ['LANG_CORRECT_TEXT' => $this->translator->translate('correct_text', 'templates')];
 
 		if ($itemId > 0 && $playlistId > 0)
 		{

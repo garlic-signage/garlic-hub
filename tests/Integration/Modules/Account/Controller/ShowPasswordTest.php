@@ -126,9 +126,9 @@ class ShowPasswordTest extends ContainerTestCase
 
 		$page = $this->page($this->controller->showPasswordForm(new ServerRequestFactory()->createServerRequest('GET', '/account/password'), new Response()));
 
-		// the account: the password and the second factor, which is not set up yet
+		// the account: the password, the second factor, which is not set up yet, and the own LLM
 		static::assertSame('account/settings', $page->getTemplate());
-		static::assertSame(['password', 'two_factor'], array_column($page->getTemplateData()['tabs'], 'MODULE'));
+		static::assertSame(['password', 'two_factor', 'llm'], array_column($page->getTemplateData()['tabs'], 'MODULE'));
 		static::assertStringStartsWith('<svg', $page->getTemplateData()['two_factor']['setup']['QR_CODE']);
 		static::assertSame('/account/password', $page->getTemplateData()['FORM_ACTION']);
 		static::assertSame(['password', 'password_confirm'], array_column($page->getTemplateData()['form_element'], 'LANG_ELEMENT_NAME'));

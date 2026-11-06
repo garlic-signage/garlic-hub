@@ -5,3 +5,7 @@
 #accountSettings .two-factor-required, #accountSettings .two-factor-codes {font-weight: bold;}
 #accountSettings .two-factor-codes ul {display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: 0.25rem 1rem; list-style: none; padding: 0;}
 #accountSettings .two-factor-enabled {color: var(--gh-success-color); font-weight: bold;}
+/* the tab of the own LLM */
+#accountSettings .llm form {display: grid; grid-template-columns: max-content minmax(0, 30rem); gap: 0.5rem 1rem; align-items: center; margin: 1rem 0;}
+#accountSettings .llm form button {grid-column: 2; justify-self: start;}
+@media (max-width: 600px) {#accountSettings .llm form {grid-template-columns: minmax(0, 1fr);} #accountSettings .llm form button {grid-column: 1;}}

@@ -63,6 +63,7 @@ import {TextPropertiesController} from "./Controller/Properties/TextPropertiesCo
 import {ContextMenuView} from "./Views/ContextMenuView.js";
 import {ContextMenuService} from "./Services/ContextMenuService.js";
 import {ContextMenuController} from "./Controller/ContextMenuController.js";
+import {TextCorrectionService} from "./Services/TextCorrectionService.js";
 import {TransformService} from "./Services/TransformService.js";
 import {ComposerKeyboardController} from "./Controller/ComposerKeyboardController.js";
 import {ComposerKeyboardView} from "./Views/ComposerKeyboardView.js";
@@ -142,7 +143,8 @@ document.addEventListener("DOMContentLoaded", async function ()
 
 	const contextMenuView = new ContextMenuView();
 	const contextMenuService  = new ContextMenuService(fabricWrapper);
-	const contextMenuController = new ContextMenuController(contextMenuView, contextMenuService, mediaDialogController);
+	const textCorrectionService = new TextCorrectionService(fabricWrapper, templateService, waitOverlay, composerContext);
+	const contextMenuController = new ContextMenuController(contextMenuView, contextMenuService, mediaDialogController, textCorrectionService);
 
 	const propertiesController = new PropertiesController(
 		globalPropertiesController,

@@ -30,6 +30,7 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Account\Helper\Password\Orchestrator;
 use App\Modules\Account\Helper\Password\TemplatePreparer;
+use App\Modules\Account\Helper\Llm\Orchestrator as LlmOrchestrator;
 use App\Modules\Account\Helper\TwoFactor\Orchestrator as TwoFactorOrchestrator;
 use DateMalformedStringException;
 use Doctrine\DBAL\Exception;
@@ -47,7 +48,8 @@ readonly class ShowPasswordController
 								private TemplatePreparer $templatePreparer,
 								private Translator       $translator,
 								private Messages         $flash,
-								private TwoFactorOrchestrator $twoFactorOrchestrator)
+								private TwoFactorOrchestrator $twoFactorOrchestrator,
+								private LlmOrchestrator $llmOrchestrator)
 	{}
 
 	/**
@@ -137,7 +139,7 @@ readonly class ShowPasswordController
 	private function outputRenderedForm(): ResponseInterface
 	{
 		$formData     = $this->orchestrator->buildForm();
-		$templateData = $this->templatePreparer->preparePasswordForm($formData, $this->twoFactorOrchestrator->buildTab());
+		$templateData = $this->templatePreparer->preparePasswordForm($formData, $this->twoFactorOrchestrator->buildTab(), $this->llmOrchestrator->buildTab());
 
 		return $this->writeHtml($templateData);
 	}

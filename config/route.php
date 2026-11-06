@@ -122,6 +122,8 @@ $app->group('', function (RouteCollectorProxy $group) use ($container)
 	$group->post('/account/two-factor', resolve([\App\Modules\Account\Controller\TwoFactorController::class, 'confirm'], $container));
 	$group->post('/account/two-factor/recovery-codes', resolve([\App\Modules\Account\Controller\TwoFactorController::class, 'createRecoveryCodes'], $container));
 	$group->post('/account/two-factor/disable', resolve([\App\Modules\Account\Controller\TwoFactorController::class, 'disable'], $container));
+	$group->post('/account/llm', resolve([\App\Modules\Account\Controller\LlmController::class, 'store'], $container));
+	$group->post('/account/llm/delete', resolve([\App\Modules\Account\Controller\LlmController::class, 'delete'], $container));
 	$group->get('/account/password', resolve([ShowPasswordController::class, 'showPasswordForm'], $container));
 	$group->post('/account/password', resolve([ShowPasswordController::class, 'store'], $container));
 	$group->get('/force-password', resolve([ShowPasswordController::class, 'showForcedPasswordForm'], $container));
@@ -229,6 +231,7 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 	$group->get('/templates/find', resolve([TemplatesController::class, 'find'], $container));
 	$group->patch('/templates', resolve([TemplatesController::class, 'save'], $container));
 	$group->post('/templates/pack', resolve([\App\Modules\Templates\Controller\TemplatePackController::class, 'install'], $container));
+	$group->post('/templates/correct-text', resolve([\App\Modules\Templates\Controller\TextCorrectionController::class, 'correct'], $container));
 
 
 });

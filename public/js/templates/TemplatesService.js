@@ -57,6 +57,11 @@ export class TemplatesService extends BaseService
 		return await this._sendRequest(TemplatesApiConfig.PACK_URI, "POST");
 	}
 
+	async correctText(text)
+	{
+		return await this._sendRequest(TemplatesApiConfig.CORRECT_TEXT_URI, "POST", {text: text});
+	}
+
 	determineRights(templateId)
 	{
 		const url = TemplatesApiConfig.ACLS_URI + "/" + templateId;

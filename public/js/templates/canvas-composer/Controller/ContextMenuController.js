@@ -25,12 +25,14 @@ export class ContextMenuController
 	#contextMenuView;
 	#contextMenuService;
 	#mediaDialogController;
+	#textCorrectionService;
 
-	constructor(contextMenuView, contextMenuService, mediaDialogController)
+	constructor(contextMenuView, contextMenuService, mediaDialogController, textCorrectionService)
 	{
 		this.#contextMenuView = contextMenuView;
 		this.#contextMenuService = contextMenuService;
 		this.#mediaDialogController = mediaDialogController;
+		this.#textCorrectionService = textCorrectionService;
 		this.#initEvents();
 	}
 
@@ -77,6 +79,8 @@ export class ContextMenuController
 			else
 				this.#contextMenuView.showReplaceImage();
 
+			this.#contextMenuView.showCorrectText(this.#textCorrectionService.isText(object));
+
 			const mouseup = e.detail.e;
 			this.#contextMenuView.show(mouseup.clientX, mouseup.clientY);
 		});
@@ -86,6 +90,14 @@ export class ContextMenuController
 			ComposerEventBus.dispatchEvent(new CustomEvent("openMediaDialogForReplace"));
 			this.#contextMenuView.hide();
 		});
+		if (this.#contextMenuView.correctText !== null)
+		{
+			this.#contextMenuView.correctText.addEventListener("click", async () =>
+			{
+				this.#contextMenuView.hide();
+				await this.#textCorrectionService.correctActiveText();
+			});
+		}
 		this.#contextMenuView.duplicate.addEventListener("click", () =>
 		{
 			this.#contextMenuService.duplicate();

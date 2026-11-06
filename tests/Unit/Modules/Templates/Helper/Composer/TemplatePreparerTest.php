@@ -24,7 +24,9 @@ namespace Tests\Unit\Modules\Templates\Helper\Composer;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Modules\Auth\UserSession;
 use App\Modules\Templates\Helper\Composer\TemplatePreparer;
+use App\Shared\Llm\LlmResolver;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
@@ -35,12 +37,19 @@ class TemplatePreparerTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
+		$this->preparer = $this->preparer(false);
+	}
+
+	private function preparer(bool $hasLlm): TemplatePreparer
+	{
 		$translatorStub = $this->createStub(Translator::class);
 		$translatorStub->method('translate')
 			->willReturnCallback(fn(string $key, string $module): string => $module . '.' . $key);
 		$translatorStub->method('translateArrayForOptions')->willReturn(['jpg' => 'JPEG', 'png' => 'PNG']);
+		$llmResolver = $this->createStub(LlmResolver::class);
+		$llmResolver->method('isAvailable')->willReturn($hasLlm);
 
-		$this->preparer = new TemplatePreparer($translatorStub);
+		return new TemplatePreparer($translatorStub, $llmResolver, $this->createStub(UserSession::class));
 	}
 
 	/**
@@ -63,6 +72,7 @@ class TemplatePreparerTest extends TestCase
 		static::assertArrayNotHasKey('reset', $result);
 		static::assertArrayNotHasKey('save_formats', $result);
 		static::assertArrayNotHasKey('is_playlist_item', $result);
+		static::assertArrayNotHasKey('text_correction', $result);
 		foreach (array_keys($result) as $key)
 		{
 			static::assertMatchesRegularExpression('/^[A-Za-z_]+$/', $key);
@@ -102,6 +112,18 @@ class TemplatePreparerTest extends TestCase
 
 		static::assertArrayHasKey('is_selectable', $result);
 		static::assertArrayNotHasKey('is_playlist_item', $result);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testAUserWithAnLlmCorrectsTexts(): void
+	{
+		$result = $this->preparer(true)->replace(12);
+
+		static::assertSame(['LANG_CORRECT_TEXT' => 'templates.correct_text'], $result['text_correction']);
 	}
 
 	/**
