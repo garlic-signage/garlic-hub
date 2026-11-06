@@ -44,6 +44,14 @@ readonly class LoginThrottle
 	}
 
 	/**
+	 * The codes of the second factor are counted per user, in the login and in the account together.
+	 */
+	public static function secondFactor(int $UID): string
+	{
+		return 'two_factor_' . $UID;
+	}
+
+	/**
 	 * @throws InvalidArgumentException
 	 */
 	public function isBlocked(string $identifier, string $ip): bool

@@ -31,6 +31,7 @@ use Defuse\Crypto\Exception\CryptoException;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\SimpleCache\InvalidArgumentException;
 use Slim\Flash\Messages;
 use Throwable;
 
@@ -79,15 +80,17 @@ readonly class TwoFactorController
 	 * @throws CryptoException
 	 * @throws Exception
 	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
 	 * @throws Throwable
 	 * @throws UserException
 	 */
 	public function disable(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		if ($this->orchestrator->disable(RequestInput::of($request->getParsedBody())->text('code')))
+		$error = $this->orchestrator->disable(RequestInput::of($request->getParsedBody())->text('code'));
+		if ($error === '')
 			$this->flash->addMessage('success', $this->translator->translate('two_factor_turned_off', 'account'));
 		else
-			$this->flash->addMessage('error', $this->translator->translate('two_factor_wrong_code', 'account'));
+			$this->flash->addMessage('error', $this->translator->translate($error, 'account'));
 
 		return $this->backToTab($response);
 	}

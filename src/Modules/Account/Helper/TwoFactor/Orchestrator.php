@@ -28,10 +28,12 @@ use App\Framework\Exceptions\UserException;
 use App\Framework\Http\Session;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Security\CsrfToken;
+use App\Modules\Auth\LoginThrottle;
 use App\Modules\Auth\UserSession;
 use App\Shared\User\TwoFactor\TwoFactorService;
 use Defuse\Crypto\Exception\CryptoException;
 use Doctrine\DBAL\Exception;
+use Psr\SimpleCache\InvalidArgumentException;
 use Throwable;
 
 /**
@@ -49,7 +51,8 @@ readonly class Orchestrator
 		private Session $session,
 		private Config $config,
 		private Translator $translator,
-		private CsrfToken $csrfToken
+		private CsrfToken $csrfToken,
+		private LoginThrottle $loginThrottle
 	) {}
 
 	/**
@@ -114,19 +117,37 @@ readonly class Orchestrator
 	}
 
 	/**
+	 * Wrong codes are limited like in the login and count together with it: a stolen session does not
+	 * help to guess a code.
+	 *
+	 * @return string the key of the error, empty when it is off
 	 * @throws CryptoException
 	 * @throws Exception
+	 * @throws InvalidArgumentException
 	 * @throws Throwable
 	 * @throws UserException
 	 */
-	public function disable(string $code): bool
+	public function disable(string $code): string
 	{
-		if ($this->isRequired() || !$this->twoFactorService->disable($this->userSession->getUID(), $code))
-			return false;
+		if ($this->isRequired())
+			return 'two_factor_wrong_code';
 
+		$UID        = $this->userSession->getUID();
+		$identifier = LoginThrottle::secondFactor($UID);
+		$ip         = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+		if ($this->loginThrottle->isBlocked($identifier, $ip))
+			return 'two_factor_blocked';
+
+		if (!$this->twoFactorService->disable($UID, $code))
+		{
+			$this->loginThrottle->registerFailure($identifier, $ip);
+			return $this->loginThrottle->isBlocked($identifier, $ip) ? 'two_factor_blocked' : 'two_factor_wrong_code';
+		}
+
+		$this->loginThrottle->reset($identifier, $ip);
 		$this->userSession->setTwoFactor(false);
 
-		return true;
+		return '';
 	}
 
 	/**

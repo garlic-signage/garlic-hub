@@ -135,7 +135,7 @@ class AuthService
 	{
 		$this->errorMessage = '';
 		$ip         = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-		$identifier = 'two_factor_' . $UID;
+		$identifier = LoginThrottle::secondFactor($UID);
 		if ($this->loginThrottle->isBlocked($identifier, $ip))
 		{
 			$this->errorMessage = 'two_factor_blocked';

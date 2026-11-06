@@ -192,4 +192,20 @@ class TwoFactorFlowTest extends BlackboxTestCase
 		$browser->get('/logout');
 		static::assertSame('/', $browser->login('anna', self::PASSWORD)->getHeaderLine('Location'));
 	}
+
+	public function testTooManyWrongCodesBlockTurningItOff(): void
+	{
+		$browser = $this->browser();
+		$codes   = $this->setUpSecondFactor($browser);
+		$browser->login('anna', self::PASSWORD);
+		$this->secondStep($browser, $this->codeOf(2, 30));
+
+		for ($i = 0; $i < 5; $i++)
+			$browser->post('/account/two-factor/disable', ['code' => '000000', 'csrf_token' => $browser->csrfToken('/account/settings')]);
+
+		// the right recovery code does not help now
+		$browser->post('/account/two-factor/disable', ['code' => $codes[0], 'csrf_token' => $browser->csrfToken('/account/settings')]);
+		static::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_two_factor WHERE UID = 2 AND enabled_at IS NOT NULL'));
+		static::assertSame(10, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_recovery_codes WHERE UID = 2 AND used_at IS NULL'), 'the code is not used up');
+	}
 }

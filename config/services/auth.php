@@ -75,13 +75,17 @@ $dependencies[TwoFactorService::class] = DI\factory(function (ContainerInterface
 		$issuer !== '' ? $issuer : 'Garlic-Hub'
 	);
 });
+$dependencies[LoginThrottle::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new LoginThrottle($container->get(Psr16Adapter::class));
+});
 $dependencies[AuthService::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new AuthService(
 		$container->get(UsersService::class),
 		$container->get(AutoLoginService::class),
 		$container->get('ModuleLogger'),
-		new LoginThrottle($container->get(Psr16Adapter::class)),
+		$container->get(LoginThrottle::class),
 		$container->get(AuditLog::class),
 		$container->get(TwoFactorService::class)
 	);

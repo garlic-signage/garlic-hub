@@ -76,5 +76,6 @@ Modules differ in the details:
   once, also one time slot before and after the current one.
 - The module admin of `users` requires it for everybody in the settings (`[TwoFactor] required`, off by default),
   effective at once: a user without it reaches only his account and the logout (`Auth\AuthMiddleware`). While it is
-  required, a user can not turn it off himself.
+  required, a user can not turn it off himself. Turning it off needs a code, the wrong ones count together with
+  the ones of the login.
 - Players and OAuth2 tokens are not affected.
