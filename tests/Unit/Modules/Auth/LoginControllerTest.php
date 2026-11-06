@@ -39,6 +39,8 @@ use Slim\Psr7\Factory\ServerRequestFactory;
 use Slim\Psr7\Response;
 use Tests\Support\MemorySession;
 use App\Modules\Auth\UserSession;
+use App\Modules\Auth\SsoLogin;
+use App\Shared\User\Sso\SsoRefusedException;
 
 /**
  * Session, CSRF token and flash messages are the real ones. The AuthService is a stub which knows one
@@ -49,6 +51,7 @@ class LoginControllerTest extends TestCase
 	private MemorySession $session;
 	private CsrfToken $csrfToken;
 	private AuthService&Stub $authService;
+	private SsoLogin&Stub $ssoLogin;
 	private LoginController $controller;
 	/** @var array<mixed>|\ArrayAccess<string,mixed>|null the session array of the flash messages */
 	private array|\ArrayAccess|null $flashStorage = [];
@@ -70,7 +73,7 @@ class LoginControllerTest extends TestCase
 		$translator = $this->createStub(Translator::class);
 		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
 
-		$this->controller = new LoginController($this->authService, $this->csrfToken, $this->session, new Messages($this->flashStorage), $translator, new UserSession($this->session));
+		$this->controller = new LoginController($this->authService, $this->csrfToken, $this->session, new Messages($this->flashStorage), $translator, new UserSession($this->session), $this->ssoLogin = $this->createStub(SsoLogin::class));
 	}
 
 	/**
@@ -236,5 +239,81 @@ class LoginControllerTest extends TestCase
 		$response = $this->controller->logout(new ServerRequestFactory()->createServerRequest('GET', '/logout'), new Response());
 
 		$this->assertRedirect($response, '/login');
+	}
+
+	#[Group('units')]
+	public function testTheLoginPageOffersTheSsoOnlyWhenItIsOn(): void
+	{
+		$page = $this->controller->showLogin(new ServerRequestFactory()->createServerRequest('GET', '/login'), new Response());
+		static::assertInstanceOf(PageResponse::class, $page);
+		static::assertSame([], $page->getTemplateData()['sso']);
+
+		$this->ssoLogin->method('isEnabled')->willReturn(true);
+		$this->ssoLogin->method('providerName')->willReturn('Example');
+		$page = $this->controller->showLogin(new ServerRequestFactory()->createServerRequest('GET', '/login'), new Response());
+		static::assertInstanceOf(PageResponse::class, $page);
+		static::assertSame(['LANG_OR' => 'login.or', 'LANG_SSO' => 'login.sso_login'], $page->getTemplateData()['sso']);
+	}
+
+	#[Group('units')]
+	public function testTheSsoGoesToTheProviderWithTheAddressBack(): void
+	{
+		$this->ssoLogin->method('isEnabled')->willReturn(true);
+		$this->ssoLogin->method('authorizationUri')->willReturnCallback(static fn(string $redirectUri): string => 'https://idp.example.test/authorize?redirect_uri=' . urlencode($redirectUri));
+
+		$response = $this->controller->startSso(new ServerRequestFactory()->createServerRequest('GET', 'http://hub.example.test:8080/login/sso'), new Response());
+
+		$this->assertRedirect($response, 'https://idp.example.test/authorize?redirect_uri=' . urlencode('http://hub.example.test:8080/login/sso/callback'));
+	}
+
+	#[Group('units')]
+	public function testTheSsoWhichIsOffOrBrokenLeadsToTheLogin(): void
+	{
+		$this->assertRedirect($this->controller->startSso(new ServerRequestFactory()->createServerRequest('GET', '/login/sso'), new Response()), '/login');
+
+		$this->ssoLogin->method('isEnabled')->willReturn(true);
+		$this->ssoLogin->method('authorizationUri')->willThrowException(new \RuntimeException('provider down'));
+		$this->assertRedirect($this->controller->startSso(new ServerRequestFactory()->createServerRequest('GET', '/login/sso'), new Response()), '/login');
+		static::assertSame(['login.sso_failed'], $this->flashErrors());
+	}
+
+	#[Group('units')]
+	public function testTheSsoLogsInWithoutRememberMeAndWithoutOurSecondFactor(): void
+	{
+		$this->ssoLogin->method('finish')->willReturn(2);
+		$this->authService->method('loginBySso')->willReturn(new UserEntity(['UID' => 2, 'username' => 'anna', 'locale' => 'de_DE'], [], [], [], []));
+
+		$response = $this->controller->finishSso(new ServerRequestFactory()->createServerRequest('GET', '/login/sso/finish'), new Response());
+
+		$this->assertRedirect($response, '/');
+		static::assertSame(2, $this->session->get('user')['UID'] ?? null);
+		static::assertSame(1, $this->session->regenerations);
+		// the provider asked for the second factor
+		static::assertSame('1', $this->session->get('two_factor'));
+		static::assertNull($this->session->get('oauth_redirect_params'));
+	}
+
+	#[Group('units')]
+	public function testARefusedSsoLeadsToTheLoginWithTheReason(): void
+	{
+		$this->ssoLogin->method('finish')->willThrowException(new SsoRefusedException('sso_domain'));
+
+		$response = $this->controller->finishSso(new ServerRequestFactory()->createServerRequest('GET', '/login/sso/finish'), new Response());
+
+		$this->assertRedirect($response, '/login');
+		static::assertSame(['login.sso_domain'], $this->flashErrors());
+		static::assertNull($this->session->get('user'));
+	}
+
+	#[Group('units')]
+	public function testABlockedUserDoesNotGetInBySso(): void
+	{
+		$this->ssoLogin->method('finish')->willReturn(2);
+		$this->authService->method('loginBySso')->willReturn(null);
+
+		$response = $this->controller->finishSso(new ServerRequestFactory()->createServerRequest('GET', '/login/sso/finish'), new Response());
+
+		$this->assertRedirect($response, '/login');
+		static::assertNull($this->session->get('user'));
 	}
 }

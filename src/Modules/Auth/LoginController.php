@@ -28,7 +28,10 @@ use App\Framework\Security\CsrfToken;
 use App\Framework\Http\Session;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
+use App\Framework\Http\Https;
+use App\Shared\User\Sso\SsoRefusedException;
 use Exception;
+use Throwable;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -50,10 +53,12 @@ readonly class LoginController
 	private Messages $flash;
 	private Translator $translator;
 	private UserSession $userSession;
+	private SsoLogin $ssoLogin;
 
-	public function __construct(AuthService $authService, CsrfToken $csrfToken, Session $session, Messages $flash, Translator $translator, UserSession $userSession)
+	public function __construct(AuthService $authService, CsrfToken $csrfToken, Session $session, Messages $flash, Translator $translator, UserSession $userSession, SsoLogin $ssoLogin)
 	{
 		$this->userSession = $userSession;
+		$this->ssoLogin    = $ssoLogin;
 		$this->authService = $authService;
 		$this->csrfToken   = $csrfToken;
 		$this->session     = $session;
@@ -81,8 +86,11 @@ readonly class LoginController
 					'LANG_PASSWORD' => $this->translator->translate('password', 'login'),
 					'CSRF_TOKEN' => $this->csrfToken->getToken(),
 					'LANG_SUBMIT' => $page_name,
-					'LANG_AUTOLOGIN' => $this->translator->translate('autologin', 'login')
-
+					'LANG_AUTOLOGIN' => $this->translator->translate('autologin', 'login'),
+					'sso' => $this->ssoLogin->isEnabled() ? [
+						'LANG_OR'  => $this->translator->translate('or', 'login'),
+						'LANG_SSO' => sprintf($this->translator->translate('sso_login', 'login'), $this->ssoLogin->providerName())
+					] : []
 				]
 			]
 		];
@@ -189,6 +197,67 @@ readonly class LoginController
 		$this->session->delete(self::PENDING_SECOND_FACTOR);
 
 		return $this->completeLogin($response, $userEntity->getMain(), $pending['autologin'], true);
+	}
+
+	/**
+	 * The browser goes to the provider of the SSO.
+	 *
+	 * @throws Exception
+	 */
+	public function startSso(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	{
+		if (!$this->ssoLogin->isEnabled())
+			return $this->redirect($response, '/login');
+
+		try
+		{
+			return $this->redirect($response, $this->ssoLogin->authorizationUri($this->ssoRedirectUri($request)));
+		}
+		catch (Throwable $e)
+		{
+			// the provider is not reachable or the settings are wrong
+			$this->flash->addMessage('error', $this->translator->translate('sso_failed', 'login'));
+			return $this->redirect($response, '/login');
+		}
+	}
+
+	/**
+	 * Logged in by the provider: no remember-me, a user blocked at the provider must not stay in until a cookie expires.
+	 *
+	 * @throws FrameworkException
+	 * @throws Exception
+	 */
+	public function finishSso(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	{
+		try
+		{
+			$UID = $this->ssoLogin->finish($request, $this->ssoRedirectUri($request));
+		}
+		catch (SsoRefusedException $e)
+		{
+			$this->flash->addMessage('error', $this->translator->translate($e->getMessage(), 'login'));
+			return $this->redirect($response, '/login');
+		}
+
+		$userEntity = $this->authService->loginBySso($UID);
+		if ($userEntity === null)
+		{
+			$this->flash->addMessage('error', $this->authService->getErrorMessage());
+			return $this->redirect($response, '/login');
+		}
+
+		return $this->completeLogin($response, $userEntity->getMain(), false, true);
+	}
+
+	/**
+	 * The address the provider sends the browser back to, registered there. Behind a proxy the scheme comes from it.
+	 */
+	private function ssoRedirectUri(ServerRequestInterface $request): string
+	{
+		$uri  = $request->getUri();
+		$port = $uri->getPort();
+
+		return (Https::isActive() ? 'https' : 'http') . '://' . $uri->getHost() . ($port !== null ? ':' . $port : '') . '/login/sso/callback';
 	}
 
 	/**

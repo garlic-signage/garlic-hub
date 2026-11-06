@@ -15,6 +15,7 @@
 }
 #login_form button, #two_factor_form button{margin-top:0.5em; width:100%;}
 #two_factor_form a {text-align: center;}
+#login_form .sso-login {display: flex; flex-direction: column; gap: 0.5rem; padding: 0 2rem; text-align: center;}
 
 form label:last-child {display: flex; flex-direction:row; gap:0.5em;margin:1em 0; align-items: center;}
 

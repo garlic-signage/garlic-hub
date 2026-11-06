@@ -52,6 +52,9 @@ use App\Modules\Users\Services\UsersAdminCreateService;
 use App\Modules\Users\Services\UsersAdminService;
 use App\Modules\Users\Services\UsersDatatableService;
 use App\Shared\User\TwoFactor\TwoFactorService;
+use App\Shared\User\Repositories\Core\UserSsoRepository;
+use App\Shared\User\Sso\SsoUserProvisioning;
+use App\Modules\Users\Services\SsoUserProvisioningService;
 use App\Shared\User\UsersService;
 use Slim\Flash\Messages;
 use Phpfastcache\Helper\Psr16Adapter;
@@ -219,6 +222,19 @@ $dependencies[UsersAdminCreateService::class] = DI\factory(function (ContainerIn
 		$container->get('ModuleLogger')
 	);
 });
+// the login (module Auth) knows only the interface, the user administration creates the users
+$dependencies[SsoUserProvisioning::class] = DI\factory(function (ContainerInterface $container)
+{
+	$factory      = $container->get(UserRepositoryFactory::class);
+	$repositories = $factory->create();
 
+	return new SsoUserProvisioningService(
+		new UserSsoRepository($container->get('SqlConnection')),
+		$repositories['main'],
+		$container->get(NodesService::class),
+		$container->get(Transactions::class),
+		$container->get(AuditLog::class)
+	);
+});
 
 return $dependencies;

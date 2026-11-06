@@ -19,6 +19,9 @@
 				{{#is_text}}
 				<input type="text" id="{{ID}}" name="settings[{{NAME}}]" value="{{VALUE}}" data-depends-on="{{DEPENDS_ON}}" {{DISABLED}}>
 				{{/is_text}}
+				{{#is_secret}}
+				<input type="password" id="{{ID}}" name="settings[{{NAME}}]" value="" placeholder="{{PLACEHOLDER}}" autocomplete="new-password" data-depends-on="{{DEPENDS_ON}}" {{DISABLED}}>
+				{{/is_secret}}
 				{{#is_select}}
 				<select id="{{ID}}" name="settings[{{NAME}}]" data-depends-on="{{DEPENDS_ON}}" {{DISABLED}}>
 					{{#options}}

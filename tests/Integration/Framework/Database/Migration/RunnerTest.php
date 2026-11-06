@@ -80,7 +80,7 @@ class RunnerTest extends TestCase
 
 		static::assertTrue($runner->isApplied());
 		static::assertSame([1, 2, 3, 4, 5, 6, 7], $this->versions());
-		foreach (['user_main', 'user_acl', 'player', 'playlists', 'playlists_items', 'mediapool_nodes', 'mediapool_files', 'templates', 'user_vip', 'user_two_factor', 'user_recovery_codes'] as $table)
+		foreach (['user_main', 'user_acl', 'player', 'playlists', 'playlists_items', 'mediapool_nodes', 'mediapool_files', 'templates', 'user_vip', 'user_two_factor', 'user_recovery_codes', 'user_sso'] as $table)
 			static::assertContains($table, $this->tables());
 	}
 

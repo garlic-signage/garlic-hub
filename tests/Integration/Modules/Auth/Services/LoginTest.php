@@ -155,6 +155,31 @@ class LoginTest extends ContainerTestCase
 		static::assertStringStartsWith('login//account_', $this->authService->getErrorMessage());
 	}
 
+	/**
+	 * @return array<string,array{int}>
+	 */
+	public static function notAllowedUIDs(): array
+	{
+		return ['deleted' => [11], 'blocked' => [12], 'not verified' => [13]];
+	}
+
+	public function testTheProviderOfTheSsoConfirmedTheUserOnlyHisStatusCounts(): void
+	{
+		$user = $this->newAuthService()->loginBySso(10);
+
+		static::assertNotNull($user);
+		static::assertSame('regular', $user->getMain()['username']);
+	}
+
+	#[DataProvider('notAllowedUIDs')]
+	public function testDeletedBlockedAndNotVerifiedUsersCanNotLoginBySso(int $UID): void
+	{
+		$this->authService = $this->newAuthService();
+
+		static::assertNull($this->authService->loginBySso($UID));
+		static::assertStringStartsWith('login//account_', $this->authService->getErrorMessage());
+	}
+
 	public function testLockedAfterTooManyFailuresEvenWithTheRightPassword(): void
 	{
 		for ($i = 0; $i < LoginThrottle::MAX_FAILURES_PER_USER_AND_IP; $i++)

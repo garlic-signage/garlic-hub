@@ -16,3 +16,13 @@ CREATE TABLE `user_recovery_codes` (
                                        UNIQUE (`UID`, `code_hash`),
                                        FOREIGN KEY (`UID`) REFERENCES `user_main` (`UID`) ON DELETE CASCADE
 );
+
+-- the identity of a user at his OpenID Connect provider: the subject is stable, the email may change
+CREATE TABLE `user_sso` (
+                            `UID` INTEGER NOT NULL,
+                            `issuer` VARCHAR(255) NOT NULL,
+                            `subject` VARCHAR(255) NOT NULL,
+                            `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            UNIQUE (`issuer`, `subject`),
+                            FOREIGN KEY (`UID`) REFERENCES `user_main` (`UID`) ON DELETE CASCADE
+);

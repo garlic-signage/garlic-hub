@@ -27,4 +27,6 @@ enum SettingType: string
 	case NUMBER = 'number';
 	case TEXT   = 'text';
 	case SELECT = 'select';
+	// a password or key: stored encrypted, never shown again, an empty field keeps it
+	case SECRET = 'secret';
 }

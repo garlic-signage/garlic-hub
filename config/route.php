@@ -22,6 +22,7 @@ declare(strict_types=1);
 use App\Controller\HomeController;
 use App\Framework\Middleware\FinalRenderMiddleware;
 use App\Modules\Auth\LoginController;
+use App\Modules\Auth\SsoCallbackController;
 use App\Modules\Auth\OAuth2Controller;
 use App\Modules\Mediapool\Controller\MediaController;
 use App\Modules\Mediapool\Controller\NodesController;
@@ -93,6 +94,9 @@ $app->group('', function (RouteCollectorProxy $group) use ($container)
 	$group->post('/login', resolve([LoginController::class, 'login'], $container));
 	$group->get('/login/two-factor', resolve([LoginController::class, 'showSecondFactor'], $container));
 	$group->post('/login/two-factor', resolve([LoginController::class, 'loginWithSecondFactor'], $container));
+	$group->get('/login/sso', resolve([LoginController::class, 'startSso'], $container));
+	$group->get('/login/sso/callback', resolve([SsoCallbackController::class, 'callback'], $container));
+	$group->get('/login/sso/finish', resolve([LoginController::class, 'finishSso'], $container));
 	$group->get('/logout', resolve([LoginController::class, 'logout'], $container));
 	$group->get('/set-locales/{locale}', resolve([EditLocalesController::class, 'setLocales'], $container));
 

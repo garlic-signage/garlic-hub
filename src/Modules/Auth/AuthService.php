@@ -160,6 +160,26 @@ class AuthService
 		return $this->errorMessage === '' ? $entity : null;
 	}
 
+	/**
+	 * The login by the provider of the SSO, which confirmed the user: only his status counts here.
+	 * The provider asks for the second factor, so there is none of ours.
+	 *
+	 * @throws Exception
+	 */
+	public function loginBySso(int $UID): ?UserEntity
+	{
+		$this->errorMessage = '';
+		$this->userService->invalidateCache($UID);
+		$entity = $this->getCurrentUser($UID);
+		$this->validateUserStatus((int) $entity->getMain()['status']);
+		if ($this->errorMessage !== '')
+			return null;
+
+		$this->logger->info('SSO login for user ' . $UID);
+
+		return $entity;
+	}
+
 	private function recordFailedSecondFactor(int $UID, string $ip): void
 	{
 		try

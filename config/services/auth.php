@@ -32,6 +32,9 @@ use App\Modules\Auth\AuthService;
 use App\Modules\Auth\AutoLoginService;
 use App\Modules\Auth\LoginController;
 use App\Modules\Auth\LoginThrottle;
+use App\Modules\Auth\SsoLogin;
+use App\Shared\User\Sso\SsoUserProvisioning;
+use GuzzleHttp\Client;
 use App\Modules\Auth\OAuth2Controller;
 use App\Modules\Auth\UserSession;
 use Phpfastcache\Helper\Psr16Adapter;
@@ -98,7 +101,21 @@ $dependencies[LoginController::class] = DI\factory(function (ContainerInterface 
 		$container->get(Session::class),
 		$container->get(Messages::class),
 		$container->get(Translator::class),
-		$container->get(UserSession::class)
+		$container->get(UserSession::class),
+		$container->get(SsoLogin::class)
+	);
+});
+$dependencies[SsoLogin::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new SsoLogin(
+		$container->get(Config::class),
+		$container->get(Session::class),
+		$container->get(Crypt::class),
+		$container->get(SsoUserProvisioning::class),
+		// the provider must answer quickly, the login page waits for it
+		new Client(['timeout' => 10, 'connect_timeout' => 5]),
+		$container->get(Psr16Adapter::class),
+		$container->get('ModuleLogger')
 	);
 });
 

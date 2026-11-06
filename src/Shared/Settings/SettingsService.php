@@ -28,14 +28,19 @@ use App\Framework\Config\IniConfigLoader;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\TranslatableModuleException;
+use App\Framework\Security\Crypt;
 use App\Shared\Acl\AclHelper;
 use App\Shared\Audit\AuditAction;
 use App\Shared\Audit\AuditLog;
+use Defuse\Crypto\Crypto;
+use Defuse\Crypto\Exception\EnvironmentIsBrokenException;
 use Doctrine\DBAL\Exception;
 
 /**
  * The settings page: the defaults are in config/settings, the changes of the admin in var/settings.
  * Only the module admin of a module changes its settings, and only the ones of its schema.
+ * A secret is stored encrypted with the key of the installation and never leaves the server again:
+ * the form shows it empty, the audit log does not show it.
  */
 class SettingsService
 {
@@ -49,8 +54,19 @@ class SettingsService
 		private readonly ConfigLoaderInterface $defaults,
 		private readonly ConfigOverrides $overrides,
 		private readonly array $schemas,
-		private readonly AuditLog $auditLog
+		private readonly AuditLog $auditLog,
+		private readonly Crypt $crypt
 	) {}
+
+	/**
+	 * The clear text of a secret setting, empty when it is not set.
+	 *
+	 * @throws \Defuse\Crypto\Exception\CryptoException
+	 */
+	public static function decryptSecret(string $stored, Crypt $crypt): string
+	{
+		return $stored === '' ? '' : Crypto::decrypt($stored, $crypt->getEncryptionKey());
+	}
 
 	/**
 	 * The modules whose settings the user may change: the tabs of the settings page.
@@ -81,7 +97,10 @@ class SettingsService
 		{
 			$default  = $this->valueOf($defaults, $field);
 			$override = $this->valueOf($overrides, $field);
-			$settings[] = ['field' => $field, 'value' => $this->toUnit($field, $override ?? $default ?? ''), 'default' => $this->toUnit($field, $default ?? ''), 'changed' => $override !== null];
+			if ($field->type === SettingType::SECRET)
+				$settings[] = ['field' => $field, 'value' => '', 'default' => '', 'changed' => $override !== null];
+			else
+				$settings[] = ['field' => $field, 'value' => $this->toUnit($field, $override ?? $default ?? ''), 'default' => $this->toUnit($field, $default ?? ''), 'changed' => $override !== null];
 		}
 
 		return $settings;
@@ -93,6 +112,7 @@ class SettingsService
 	 *
 	 * @param array<string,mixed> $values "section.key" => value, a switch which is not sent is off
 	 * @throws AccessDeniedException
+	 * @throws EnvironmentIsBrokenException
 	 * @throws TranslatableModuleException
 	 * @throws CoreException
 	 * @throws Exception
@@ -109,6 +129,10 @@ class SettingsService
 			$name = $field->section . '.' . $field->key;
 			// the form does not send a setting whose switch is off: it keeps its value
 			if ($field->dependsOn !== null && !$this->isOn($values[$field->dependsOn] ?? null))
+				continue;
+
+			// an empty secret is not sent again by the form: the stored one stays
+			if ($field->type === SettingType::SECRET && in_array($values[$name] ?? '', ['', null], true))
 				continue;
 
 			unset($sections[$field->section][$field->key]);
@@ -179,7 +203,7 @@ class SettingsService
 			$default  = $this->valueOf($defaults, $field) ?? '';
 			$newValue = $this->valueOf($after, $field) ?? $default;
 			if (($this->valueOf($before, $field) ?? $default) !== $newValue)
-				$changed[$field->section . '.' . $field->key] = $newValue;
+				$changed[$field->section . '.' . $field->key] = $field->type === SettingType::SECRET ? '***' : $newValue;
 		}
 
 		if ($changed !== [])
@@ -188,6 +212,7 @@ class SettingsService
 
 	/**
 	 * @throws TranslatableModuleException
+	 * @throws EnvironmentIsBrokenException
 	 */
 	private function validate(SettingField $field, mixed $value): string
 	{
@@ -199,6 +224,7 @@ class SettingsService
 			SettingType::NUMBER => $this->validateNumber($field, $value) ?? throw $invalid,
 			SettingType::TEXT   => is_string($value) && ConfigOverrides::isStorable($value) ? trim($value) : throw $invalid,
 			SettingType::SELECT => is_string($value) && in_array($value, $field->options, true) ? $value : throw $invalid,
+			SettingType::SECRET => is_string($value) ? Crypto::encrypt(trim($value), $this->crypt->getEncryptionKey()) : throw $invalid,
 		};
 	}
 

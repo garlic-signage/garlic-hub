@@ -156,6 +156,8 @@ readonly class ShowSettingsController
 				'is_number'     => $field->type === SettingType::NUMBER ? ['MIN' => $field->min ?? '', 'MAX' => $field->max ?? ''] : [],
 				'is_text'       => $field->type === SettingType::TEXT ? [[]] : [],
 				'is_select'     => $field->type === SettingType::SELECT ? ['options' => $this->prepareOptions($field->options, $setting['value'])] : [],
+				// a stored secret is never shown: the field stays empty, typing replaces it
+				'is_secret'     => $field->type === SettingType::SECRET ? ['PLACEHOLDER' => $setting['changed'] ? $this->translator->translate('secret_stored', self::MODULE_NAME) : ''] : [],
 				'LANG_DEFAULT'  => $this->translator->translate('default_value', self::MODULE_NAME) . ': ' . $this->formatDefault($field->type, $setting['default']),
 				'is_changed'    => $setting['changed'] ? [['LANG_CHANGED' => $this->translator->translate('changed', self::MODULE_NAME)]] : []
 			];

@@ -79,3 +79,24 @@ Modules differ in the details:
   required, a user can not turn it off himself. Turning it off needs a code, the wrong ones count together with
   the ones of the login.
 - Players and OAuth2 tokens are not affected.
+- A user who logs in by SSO is not asked for this second factor: his provider asks for its own.
+
+## Single sign-on (SSO)
+
+- The module admin of `users` turns it on in the settings (`[Sso]`, off by default) with the issuer URL of the
+  provider, client ID and client secret. Every OpenID Connect provider works, the hub finds its endpoints and keys by
+  the discovery (`/.well-known/openid-configuration`). The secret is stored encrypted and is never shown again.
+- At the provider the app is registered with the redirect URI `https://<your hub>/login/sso/callback`.
+- Issuer URLs: Google `https://accounts.google.com`, Entra ID `https://login.microsoftonline.com/<tenant id>/v2.0`,
+  Okta `https://<your org>.okta.com`, Keycloak `https://<host>/realms/<realm>`.
+- The login page shows the button "Log in with ...". The login checks the signed ID token (signature, issuer,
+  audience, expiry, nonce), the state and PKCE (`Auth\SsoLogin`, library facile-it/php-openid-client).
+- The first login creates the user without rights and without password, with his media folder. The admin grants
+  the rights. The user is found again by issuer and subject of the provider, not by his email, which may change.
+- An existing account with the same email is linked only when the provider verified the email (`email_verified`, with
+  Entra ID `xms_edov`). Otherwise the login is refused: an email which anybody may enter at the provider would take
+  over the account.
+- Allowed domains limit who gets in by the domain of the email. With Google they are needed: everybody has a Google
+  account. Entra ID and Okta let in only the users of the directory.
+- There is no remember-me: a user blocked at the provider is out with the end of his session. Blocking or deleting
+  him in the hub ends his access at once. The password login stays, e.g. for the admin when the provider is down.
