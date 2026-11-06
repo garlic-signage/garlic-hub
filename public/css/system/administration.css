@@ -1,0 +1,6 @@
+/* the administration page: an area per tile, the tiles wrap on small screens */
+#administration {flex-wrap: wrap;}
+#administration .administration-area {width: 20rem; text-decoration: none; color: inherit;}
+#administration .administration-area h2 {margin: 0 0 0.5rem 0;}
+#administration .administration-area p {margin: 0;}
+#administration .administration-area:hover h2 {text-decoration: underline;}
