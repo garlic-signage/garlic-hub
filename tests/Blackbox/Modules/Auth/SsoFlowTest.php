@@ -75,6 +75,10 @@ class SsoFlowTest extends BlackboxTestCase
 		$browser = $this->browser();
 		$browser->login('admin', 'Test1234!');
 
+		// from the menu over the administration page
+		static::assertStringContainsString('href="/administration"', (string) $browser->get('/')->getBody());
+		static::assertStringContainsString('href="/users/sso"', (string) $browser->get('/administration')->getBody());
+
 		$list = $browser->get('/users/sso');
 		static::assertSame(200, $list->getStatusCode());
 		static::assertStringContainsString('/login/sso/callback', (string) $list->getBody());

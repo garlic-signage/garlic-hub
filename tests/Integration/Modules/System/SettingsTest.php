@@ -225,6 +225,18 @@ class SettingsTest extends ContainerTestCase
 		static::assertSame(['slice'], array_column(array_filter($fit, static fn(array $option): bool => $option['SELECTED'] === 'selected'), 'OPTION'));
 	}
 
+	/**
+	 * Only the module admin of system changes the settings, also those of the other modules.
+	 */
+	public function testTheModuleAdminOfAnotherModuleChangesNoSettings(): void
+	{
+		$this->connection->executeStatement("INSERT INTO user_acl (UID, acl, module) VALUES (2, 8, 'playlists')");
+
+		static::assertSame([], $this->service->findEditableModules(2));
+		$this->expectException(AccessDeniedException::class);
+		$this->service->save(2, 'playlists', []);
+	}
+
 	public function testAUserWithoutRightsChangesNothing(): void
 	{
 		$this->expectException(AccessDeniedException::class);

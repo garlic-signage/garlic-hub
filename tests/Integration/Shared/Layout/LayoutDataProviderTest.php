@@ -31,6 +31,7 @@ use App\Shared\Layout\LanguageSelectBuilder;
 use App\Shared\Layout\LayoutDataProvider;
 use App\Shared\Layout\MainMenuBuilder;
 use App\Shared\Layout\UserMenuBuilder;
+use App\Shared\Layout\AdministrationLinks;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Slim\Flash\Messages;
@@ -78,48 +79,52 @@ class LayoutDataProviderTest extends ContainerTestCase
 		static::assertSame([], $data['user_menu'][0]['has_user_access']);
 	}
 
-	public function testTheAdminGetsTheLinksToTheAdministration(): void
+	public function testTheAdminGetsTheSettingsAndTheAdministration(): void
 	{
 		$this->actingAs(1);
 
 		$access = $this->layout()['user_menu'][0]['has_user_access'];
 
-		static::assertSame(['/users', '/users/sso', '/templates', '/system/settings', '/system/audit'], array_column($access, 'LINK_USER_ACCESS'));
-		static::assertSame(['User Management', 'SSO providers', 'Template overview', 'Settings', 'Audit log'], array_column($access, 'LANG_USER_ACCESS'));
+		static::assertSame(['/system/settings', '/administration'], array_column($access, 'LINK_USER_ACCESS'));
+		static::assertSame(['Settings', 'Administration'], array_column($access, 'LANG_USER_ACCESS'));
+		static::assertSame(['/users', '/users/sso', '/templates', '/system/audit'], array_column($this->container->get(AdministrationLinks::class)->build(1), 'LINK'));
 	}
 
 	/**
-	 * @return array<string,array{list<array{string,int}>,list<string>}> the rights of the user (module and bits) and the links
+	 * @return array<string,array{list<array{string,int}>,list<string>,list<string>}> the rights of the user (module and bits),
+	 *         the links of the user menu and the areas of the administration page
 	 */
 	public static function rights(): array
 	{
 		return [
-			'sub admin of the users'     => [[['users', 1]], ['/users']],
-			// the users module has settings: whether everybody needs the second factor
-			// and the SSO providers of the company
-			'module admin of the users'  => [[['users', 2]], ['/users', '/users/sso', '/system/settings']],
-			'sub admin of the templates' => [[['templates', 4]], ['/templates']],
-			'module admin of templates'  => [[['templates', 8]], ['/templates']],
-			'both'                       => [[['users', 1], ['templates', 8]], ['/users', '/templates']],
-			'editor of the templates'    => [[['templates', 2]], []],
-			'a player admin'             => [[['player', 8]], []],
-			// he changes the settings of his module, not the audit log
-			'module admin of mediapool'  => [[['mediapool', 8]], ['/system/settings']],
+			'sub admin of the users'     => [[['users', 1]], ['/administration'], ['/users']],
+			// the providers belong to the company
+			'module admin of the users'  => [[['users', 2]], ['/administration'], ['/users', '/users/sso']],
+			'sub admin of the templates' => [[['templates', 4]], ['/administration'], ['/templates']],
+			'module admin of templates'  => [[['templates', 8]], ['/administration'], ['/templates']],
+			'both'                       => [[['users', 1], ['templates', 8]], ['/administration'], ['/users', '/templates']],
+			'editor of the templates'    => [[['templates', 2]], [], []],
+			'a player admin'             => [[['player', 8]], [], []],
+			// only the module admin of system changes the settings, of every module
+			'module admin of mediapool'  => [[['mediapool', 8]], [], []],
+			'module admin of system'     => [[['system', 8]], ['/system/settings', '/administration'], ['/system/audit']],
 		];
 	}
 
 	/**
 	 * @param list<array{string,int}> $rights
 	 * @param list<string> $links
+	 * @param list<string> $areas
 	 */
 	#[DataProvider('rights')]
-	public function testTheLinksAreThoseOfTheModulesTheUserAdministrates(array $rights, array $links): void
+	public function testTheLinksAreThoseOfTheModulesTheUserAdministrates(array $rights, array $links, array $areas): void
 	{
 		foreach ($rights as [$module, $bits])
 			$this->connection->executeStatement('INSERT INTO user_acl (UID, acl, module) VALUES (2, ?, ?)', [$bits, $module]);
 		$this->actingAs(2);
 
 		static::assertSame($links, array_column($this->layout()['user_menu'][0]['has_user_access'], 'LINK_USER_ACCESS'));
+		static::assertSame($areas, array_column($this->container->get(AdministrationLinks::class)->build(2), 'LINK'));
 	}
 
 	public function testTheLanguageSwitchOffersTheLanguagesWhichAreTranslated(): void

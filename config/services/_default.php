@@ -94,6 +94,7 @@ use App\Shared\Layout\LanguageSelectBuilder;
 use App\Shared\Layout\LayoutDataProvider;
 use App\Shared\Layout\MainMenuBuilder;
 use App\Shared\Layout\UserMenuBuilder;
+use App\Shared\Layout\AdministrationLinks;
 use App\Shared\User\UsersService;
 use Defuse\Crypto\Key;
 use Doctrine\DBAL\Configuration;
@@ -155,7 +156,7 @@ $dependencies[LayoutDataProviderInterface::class] = DI\factory(function (Contain
 
 	return new LayoutDataProvider(
 		new MainMenuBuilder($session, $translator),
-		new UserMenuBuilder($session, $translator, $container->get(AclHelper::class), $container->get(SettingsService::class)),
+		new UserMenuBuilder($session, $translator, $container->get(SettingsService::class), new AdministrationLinks($container->get(AclHelper::class), $translator)),
 		new LanguageSelectBuilder($translator, $locales),
 		new FlashMessagesBuilder($flash),
 		$container->get(CsrfToken::class),

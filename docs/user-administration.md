@@ -20,7 +20,7 @@ Every module with rights derives its validator from
 | system    |        |        |           | ✓            |
 
 - **Module admin**: everything in the module. Grants the roles of the module and shares its units.
-  The module admin of `system` changes the settings and reads the audit log.
+  The module admin of `system` changes the settings of every module (`/system/settings`) and reads the audit log.
 - **Sub admin**: Enterprise only, the same within his companies. The Core edition does not offer the role.
 - **Editor**: may use and edit the units which are shared with him, but not delete or share them.
 - **Viewer**: may use the units which are shared with him, e.g. a playlist in a zone or a template in a playlist.
@@ -56,6 +56,14 @@ Modules differ in the details:
 - Removing a role bit removes the shared units of this role, too.
 - Grants and shares are written to the audit log, when it is enabled.
 
+## User menu and administration
+
+- The user menu has "Settings" for the module admin of `system` and "Administration" for everybody who
+  administers an area. The administration page (`/administration`, `Shared\Layout\AdministrationLinks`) shows only
+  the areas whose rights the user has: user management (module and sub admin of `users`), SSO providers (module admin
+  of `users`), templates (module and sub admin of `templates`), audit log (module admin of `system`).
+  New areas go onto this page, not into the menu.
+
 ## Users
 
 - **Delete** anonymizes the user: the row stays, so the UID is never given to somebody else and his content
@@ -74,7 +82,7 @@ Modules differ in the details:
 - The login asks for the code after the password (`/login/two-factor`). The session counts as logged in and the
   remember-me cookie is created only after it. Wrong codes are limited like wrong passwords, a code is accepted
   once, also one time slot before and after the current one.
-- The module admin of `users` requires it for everybody in the settings (`[TwoFactor] required`, off by default),
+- The module admin of `system` requires it for everybody in the settings (`[TwoFactor] required`, off by default),
   effective at once: a user without it reaches only his account and the logout (`Auth\AuthMiddleware`). While it is
   required, a user can not turn it off himself. Turning it off needs a code, the wrong ones count together with
   the ones of the login.

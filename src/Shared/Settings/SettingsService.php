@@ -35,7 +35,7 @@ use Doctrine\DBAL\Exception;
 
 /**
  * The settings page: the defaults are in config/settings, the changes of the admin in var/settings.
- * Only the module admin of a module changes its settings, and only the ones of its schema.
+ * Only the module admin of system changes them, the settings of every module, and only the ones of its schema.
  */
 class SettingsService
 {
@@ -61,7 +61,7 @@ class SettingsService
 	 */
 	public function findEditableModules(int $UID): array
 	{
-		return array_values(array_filter(array_keys($this->schemas), fn(string $module) => $this->aclHelper->isModuleAdmin($UID, $module)));
+		return $this->aclHelper->isModuleAdmin($UID, self::MODULE_NAME) ? array_keys($this->schemas) : [];
 	}
 
 	/**
@@ -249,7 +249,7 @@ class SettingsService
 	 */
 	private function assertMayChange(int $UID, string $module): void
 	{
-		if (!isset($this->schemas[$module]) || !$this->aclHelper->isModuleAdmin($UID, $module))
+		if (!isset($this->schemas[$module]) || !$this->aclHelper->isModuleAdmin($UID, self::MODULE_NAME))
 			throw new AccessDeniedException(self::MODULE_NAME, 'settings_not_changeable', ['module' => $module]);
 	}
 }

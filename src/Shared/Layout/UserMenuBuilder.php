@@ -25,7 +25,6 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Http\Session;
 use App\Framework\Localization\Translate\Translator;
-use App\Shared\Acl\AclHelper;
 use App\Shared\Settings\SettingsService;
 use Doctrine\DBAL\Exception;
 
@@ -34,7 +33,7 @@ use Doctrine\DBAL\Exception;
  */
 readonly class UserMenuBuilder
 {
-	public function __construct(private Session $session, private Translator $translator, private AclHelper $aclHelper, private SettingsService $settingsService)
+	public function __construct(private Session $session, private Translator $translator, private SettingsService $settingsService, private AdministrationLinks $administrationLinks)
 	{
 	}
 
@@ -60,6 +59,8 @@ readonly class UserMenuBuilder
 	}
 
 	/**
+	 * The settings and the administration, the areas of the administration are on its page.
+	 *
 	 * @return list<array{LINK_USER_ACCESS: string, LANG_USER_ACCESS: string}>
 	 * @throws CoreException
 	 * @throws FrameworkException
@@ -68,34 +69,12 @@ readonly class UserMenuBuilder
 	private function buildAdminMenuPoints(int $UID): array
 	{
 		$points = [];
-		if ($this->isAdminOf($UID, 'users'))
-			$points[] = ['LINK_USER_ACCESS' => '/users', 'LANG_USER_ACCESS' => $this->translator->translate('management', 'users')];
-
-		// the providers belong to the company, a sub admin may not change them
-		if ($this->aclHelper->isModuleAdmin($UID, 'users'))
-			$points[] = ['LINK_USER_ACCESS' => '/users/sso', 'LANG_USER_ACCESS' => $this->translator->translate('sso_providers', 'users')];
-
-		if ($this->isAdminOf($UID, 'templates'))
-			$points[] = ['LINK_USER_ACCESS' => '/templates', 'LANG_USER_ACCESS' => $this->translator->translate('overview', 'templates')];
-
-		// the module admin of mediapool or playlists has a tab there, too
 		if ($this->settingsService->findEditableModules($UID) !== [])
 			$points[] = ['LINK_USER_ACCESS' => '/system/settings', 'LANG_USER_ACCESS' => $this->translator->translate('settings', 'system')];
 
-		if ($this->isAdminOf($UID, 'system'))
-			$points[] = ['LINK_USER_ACCESS' => '/system/audit', 'LANG_USER_ACCESS' => $this->translator->translate('audit_log', 'system')];
+		if ($this->administrationLinks->build($UID) !== [])
+			$points[] = ['LINK_USER_ACCESS' => '/administration', 'LANG_USER_ACCESS' => $this->translator->translate('administration', 'system')];
 
 		return $points;
-	}
-
-	/**
-	 * The same rights which open the list of the module.
-	 *
-	 * @throws CoreException
-	 * @throws Exception
-	 */
-	private function isAdminOf(int $UID, string $module): bool
-	{
-		return $this->aclHelper->isModuleAdmin($UID, $module) || $this->aclHelper->isSubAdmin($UID, $module);
 	}
 }
