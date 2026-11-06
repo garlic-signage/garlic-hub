@@ -87,7 +87,7 @@ class LayoutDataProviderTest extends ContainerTestCase
 
 		static::assertSame(['/system/settings', '/administration'], array_column($access, 'LINK_USER_ACCESS'));
 		static::assertSame(['Settings', 'Administration'], array_column($access, 'LANG_USER_ACCESS'));
-		static::assertSame(['/users', '/users/sso', '/templates', '/system/audit'], array_column($this->container->get(AdministrationLinks::class)->build(1), 'LINK'));
+		static::assertSame(['/users', '/users/sso', '/users/llm', '/templates', '/system/audit'], array_column($this->container->get(AdministrationLinks::class)->build(1), 'LINK'));
 	}
 
 	/**
@@ -99,7 +99,7 @@ class LayoutDataProviderTest extends ContainerTestCase
 		return [
 			'sub admin of the users'     => [[['users', 1]], ['/administration'], ['/users']],
 			// the providers belong to the company
-			'module admin of the users'  => [[['users', 2]], ['/administration'], ['/users', '/users/sso']],
+			'module admin of the users'  => [[['users', 2]], ['/administration'], ['/users', '/users/sso', '/users/llm']],
 			'sub admin of the templates' => [[['templates', 4]], ['/administration'], ['/templates']],
 			'module admin of templates'  => [[['templates', 8]], ['/administration'], ['/templates']],
 			'both'                       => [[['users', 1], ['templates', 8]], ['/administration'], ['/users', '/templates']],

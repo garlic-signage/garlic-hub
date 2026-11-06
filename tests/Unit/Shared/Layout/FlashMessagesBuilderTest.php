@@ -33,14 +33,15 @@ class FlashMessagesBuilderTest extends TestCase
 	 * @throws Exception
 	 */
 	#[Group('units')]
-	public function testBuildReturnsErrorsWithCloseButtonAndSuccesses(): void
+	public function testBuildReturnsErrorsAndInformationWithCloseButtonAndSuccesses(): void
 	{
 		$flashStub = $this->createStub(Messages::class);
-		$flashStub->method('hasMessage')->willReturnMap([['error', true], ['success', true]]);
-		$flashStub->method('getMessage')->willReturnMap([['error', ['Failed']], ['success', ['Saved', 'Done']]]);
+		$flashStub->method('hasMessage')->willReturnMap([['error', true], ['information', true], ['success', true]]);
+		$flashStub->method('getMessage')->willReturnMap([['error', ['Failed']], ['information', ['Note']], ['success', ['Saved', 'Done']]]);
 
 		static::assertSame([
 			['MESSAGE_TYPE' => 'error', 'has_close_button' => true, 'MESSAGE_TEXT' => 'Failed'],
+			['MESSAGE_TYPE' => 'information', 'has_close_button' => true, 'MESSAGE_TEXT' => 'Note'],
 			['MESSAGE_TYPE' => 'success', 'has_close_button' => false, 'MESSAGE_TEXT' => 'Saved'],
 			['MESSAGE_TYPE' => 'success', 'has_close_button' => false, 'MESSAGE_TEXT' => 'Done']
 		], new FlashMessagesBuilder($flashStub)->build());

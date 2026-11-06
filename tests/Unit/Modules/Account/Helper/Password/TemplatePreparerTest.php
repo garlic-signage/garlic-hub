@@ -81,7 +81,7 @@ class TemplatePreparerTest extends TestCase
 		$data = $this->data($page, 'account/settings');
 
 		static::assertSame('menu.my_account', $page['main_layout']['LANG_PAGE_TITLE']);
-		static::assertSame(['/css/account/password.css', '/css/account/settings.css'], $page['main_layout']['additional_css']);
+		static::assertSame(['/css/account/password.css', '/css/account/settings.css', '/css/llm_form.css'], $page['main_layout']['additional_css']);
 		static::assertSame(['/js/account/password/init.js'], $page['main_layout']['footer_modules']);
 		static::assertSame('menu.my_account', $data['LANG_PAGE_HEADER']);
 		static::assertSame(['password', 'two_factor', 'llm'], array_column($data['tabs'], 'MODULE'));

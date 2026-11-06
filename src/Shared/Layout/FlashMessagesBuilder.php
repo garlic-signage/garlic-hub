@@ -29,7 +29,7 @@ use Slim\Flash\Messages;
  */
 readonly class FlashMessagesBuilder
 {
-	private const array TYPES = ['error' => true, 'success' => false];
+	private const array TYPES = ['error' => true, 'information' => true, 'success' => false];
 
 	public function __construct(private Messages $flash)
 	{

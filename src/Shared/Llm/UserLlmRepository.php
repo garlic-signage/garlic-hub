@@ -21,34 +21,12 @@ declare(strict_types=1);
 
 namespace App\Shared\Llm;
 
-use App\Framework\Database\BaseRepositories\SqlBase;
-use App\Framework\Database\BaseRepositories\Traits\CrudTraits;
-use App\Framework\Database\BaseRepositories\Traits\FindOperationsTrait;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Exception;
 
-/**
- * The own LLM of a user, see UserLlmService.
- */
-class UserLlmRepository extends SqlBase
+class UserLlmRepository extends LlmRepository
 {
-	use CrudTraits;
-	use FindOperationsTrait;
-
 	public function __construct(Connection $connection)
 	{
 		parent::__construct($connection, 'user_llm', 'UID');
-	}
-
-	/**
-	 * @param array<string,string> $fields
-	 * @throws Exception
-	 */
-	public function store(int $UID, array $fields): void
-	{
-		if ($this->findFirstById($UID) === [])
-			$this->insert(['UID' => $UID] + $fields);
-		else
-			$this->update($UID, $fields);
 	}
 }

@@ -48,7 +48,7 @@ class AdministrationTest extends ContainerTestCase
 
 		static::assertInstanceOf(PageResponse::class, $page);
 		static::assertSame('system/administration', $page->getTemplate());
-		static::assertSame(['/users', '/users/sso', '/templates', '/system/audit'], array_column($page->getTemplateData()['areas'], 'LINK'));
+		static::assertSame(['/users', '/users/sso', '/users/llm', '/templates', '/system/audit'], array_column($page->getTemplateData()['areas'], 'LINK'));
 	}
 
 	public function testAUserWithoutAnAreaIsSentHome(): void

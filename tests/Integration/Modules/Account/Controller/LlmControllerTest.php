@@ -85,6 +85,15 @@ class LlmControllerTest extends ContainerTestCase
 		static::assertNotSame([], $tab['can_delete']);
 	}
 
+	public function testWhileTheCompanyHasAnLlmTheTabSaysSoInsteadOfTheForm(): void
+	{
+		$this->connection->executeStatement("INSERT INTO company_llm (company_id, base_url, model) VALUES (1, 'http://localhost:11434/v1', 'a')");
+
+		$tab = $this->container->get(Orchestrator::class)->buildTab();
+
+		static::assertSame($this->container->get(Translator::class)->translate('llm_of_company', 'account'), $tab['company_llm']['LANG_COMPANY_LLM']);
+	}
+
 	public function testWrongInputShowsTheErrors(): void
 	{
 		$response = $this->store(['api_type' => 'openai', 'base_url' => 'ftp://example.com', 'model' => 'gpt-5']);

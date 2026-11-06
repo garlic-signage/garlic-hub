@@ -1,0 +1,4 @@
+/* the form of an LLM (templates/generic/llm_form.mustache): in the account and for the company */
+.llm-form {display: grid; grid-template-columns: max-content minmax(0, 30rem); gap: 0.5rem 1rem; align-items: center; margin: 1rem 0;}
+.llm-form button {grid-column: 2; justify-self: start;}
+@media (max-width: 600px) {.llm-form {grid-template-columns: minmax(0, 1fr);} .llm-form button {grid-column: 1;}}

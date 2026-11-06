@@ -48,9 +48,12 @@ readonly class AdministrationLinks
 		if ($this->isAdminOf($UID, 'users'))
 			$links[] = $this->link('/users', $this->translator->translate('management', 'users'), 'administration_users');
 
-		// the providers belong to the company, a sub admin may not change them
+		// the providers and the LLM belong to the company, a sub admin may not change them
 		if ($this->aclHelper->isModuleAdmin($UID, 'users'))
+		{
 			$links[] = $this->link('/users/sso', $this->translator->translate('sso_providers', 'users'), 'administration_sso');
+			$links[] = $this->link('/users/llm', $this->translator->translate('company_llm', 'users'), 'administration_llm');
+		}
 
 		if ($this->isAdminOf($UID, 'templates'))
 			$links[] = $this->link('/templates', $this->translator->translate('overview', 'templates'), 'administration_templates');

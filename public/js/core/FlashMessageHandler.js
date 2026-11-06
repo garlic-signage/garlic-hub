@@ -62,7 +62,8 @@ export class FlashMessageHandler
 
 		span.textContent = message;
 
-		if (type !== 'error' && closeButton)
+		// errors and information are closed by the user, successes fade out (theme-base.css)
+		if (type === 'success' && closeButton)
 			closeButton.remove();
 
 		return messageBar;

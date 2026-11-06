@@ -50,6 +50,7 @@ readonly class TemplatePreparer
 
 		$page = $this->prepare($dataSections, 'account/settings');
 		$page['main_layout']['additional_css'][] = '/css/account/settings.css';
+		$page['main_layout']['additional_css'][] = '/css/llm_form.css';
 		$page['this_layout']['data']['tabs'] = [
 			['MODULE' => 'password', 'LANG_MODULE' => $this->translator->translate('password', 'account')],
 			['MODULE' => 'two_factor', 'LANG_MODULE' => $this->translator->translate('two_factor', 'account')],

@@ -28,6 +28,7 @@ use App\Shared\Audit\AuditLog;
 use App\Shared\Audit\AuditLogRepository;
 use App\Shared\Audit\DatabaseAuditLog;
 use App\Shared\Audit\NullAuditLog;
+use App\Shared\Llm\CompanyLlmRepository;
 use App\Shared\Llm\UserLlmRepository;
 use App\Framework\Llm\LlmClientFactory;
 use App\Shared\Scheduler\ScheduledTasks;
@@ -439,6 +440,10 @@ $dependencies[AuditLog::class] = DI\factory(function (ContainerInterface $contai
 $dependencies[UserLlmRepository::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new UserLlmRepository($container->get('SqlConnection'));
+});
+$dependencies[CompanyLlmRepository::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new CompanyLlmRepository($container->get('SqlConnection'));
 });
 $dependencies[LlmClientFactory::class] = DI\factory(function ()
 {

@@ -112,6 +112,9 @@ $app->group('', function (RouteCollectorProxy $group) use ($container)
 	$group->get('/users/edit/{UID:\d+}', resolve([ShowAdminController::class, 'editUserForm'], $container));
 	$group->get('/users/rights/{UID:\d+}', resolve([UserRightsController::class, 'show'], $container));
 	$group->get('/users/sso', resolve([SsoProvidersController::class, 'show'], $container));
+	$group->get('/users/llm', resolve([\App\Modules\Users\Controller\CompanyLlmController::class, 'show'], $container));
+	$group->post('/users/llm', resolve([\App\Modules\Users\Controller\CompanyLlmController::class, 'store'], $container));
+	$group->post('/users/llm/delete', resolve([\App\Modules\Users\Controller\CompanyLlmController::class, 'delete'], $container));
 	$group->get('/users/sso/new', resolve([SsoProvidersController::class, 'newForm'], $container));
 	$group->get('/users/sso/edit/{id:\d+}', resolve([SsoProvidersController::class, 'editForm'], $container));
 	$group->post('/users/sso/edit', resolve([SsoProvidersController::class, 'store'], $container));
