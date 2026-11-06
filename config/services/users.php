@@ -55,6 +55,9 @@ use App\Shared\User\TwoFactor\TwoFactorService;
 use App\Shared\User\Repositories\Core\UserSsoRepository;
 use App\Shared\User\Sso\SsoUserProvisioning;
 use App\Modules\Users\Services\SsoUserProvisioningService;
+use App\Modules\Users\Services\SsoProvidersService;
+use App\Framework\Security\Crypt;
+use App\Shared\User\Repositories\Core\SsoProvidersRepository;
 use App\Shared\User\UsersService;
 use Slim\Flash\Messages;
 use Phpfastcache\Helper\Psr16Adapter;
@@ -232,6 +235,18 @@ $dependencies[SsoUserProvisioning::class] = DI\factory(function (ContainerInterf
 		new UserSsoRepository($container->get('SqlConnection')),
 		$repositories['main'],
 		$container->get(NodesService::class),
+		$container->get(Transactions::class),
+		$container->get(AuditLog::class)
+	);
+});
+$dependencies[SsoProvidersService::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new SsoProvidersService(
+		new SsoProvidersRepository($container->get('SqlConnection')),
+		new UserSsoRepository($container->get('SqlConnection')),
+		$container->get(AclValidator::class),
+		$container->get(UsersService::class),
+		$container->get(Crypt::class),
 		$container->get(Transactions::class),
 		$container->get(AuditLog::class)
 	);

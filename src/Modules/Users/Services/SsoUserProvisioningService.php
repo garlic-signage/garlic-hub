@@ -36,9 +36,10 @@ use Throwable;
 
 /**
  * The user of a login by SSO. A known identity is its user. Otherwise an account with the same email is linked,
- * but only when the provider verified the email: an email which anybody may enter at the provider would
- * take over the account. Without one the first login creates the user, without rights and without
- * password, with his media folder. The admin grants the rights later.
+ * of the company of the provider, but only when the provider verified the email: an email which anybody
+ * may enter at the provider would take over the account. Without one the first login creates the user in
+ * the company of the provider, without rights and without password, with his media folder.
+ * The admin grants the rights later.
  */
 class SsoUserProvisioningService implements SsoUserProvisioning
 {
@@ -58,7 +59,7 @@ class SsoUserProvisioningService implements SsoUserProvisioning
 	 */
 	public function provide(SsoIdentity $identity): int
 	{
-		$UID = $this->userSsoRepository->findUID($identity->issuer, $identity->subject);
+		$UID = $this->userSsoRepository->findUID($identity->provider->id, $identity->subject);
 		if ($UID !== null)
 			return $UID;
 
@@ -71,7 +72,8 @@ class SsoUserProvisioningService implements SsoUserProvisioning
 			$existing = $this->userMainRepository->findByIdentifier($identity->email);
 			if ($existing !== [])
 			{
-				if (!$identity->emailVerified)
+				// the provider of one company does not log in the user of another one
+				if (!$identity->emailVerified || (int) ($existing['company_id'] ?? 0) !== $identity->provider->companyId)
 					throw new SsoRefusedException('sso_account_exists');
 
 				$UID = (int) $existing['UID'];
@@ -79,7 +81,7 @@ class SsoUserProvisioningService implements SsoUserProvisioning
 			else
 				$UID = $this->createUser($identity);
 
-			$this->userSsoRepository->link($UID, $identity->issuer, $identity->subject);
+			$this->userSsoRepository->link($UID, $identity->provider->id, $identity->subject);
 			$this->transactions->commit();
 
 			return $UID;
@@ -97,12 +99,17 @@ class SsoUserProvisioningService implements SsoUserProvisioning
 	private function createUser(SsoIdentity $identity): int
 	{
 		$username = $this->uniqueUsername($identity->email);
-		$UID      = (int) $this->userMainRepository->insert(['username' => $username, 'email' => $identity->email, 'status' => UserStatus::REGISTERED->value]);
+		$UID      = (int) $this->userMainRepository->insert([
+			'company_id' => $identity->provider->companyId,
+			'username'   => $username,
+			'email'      => $identity->email,
+			'status'     => UserStatus::REGISTERED->value
+		]);
 		if ($UID === 0)
 			throw new ModuleException(self::MODULE_NAME, 'Insert failed.');
 
 		$this->nodesService->addUserDirectory($UID, $username);
-		$this->auditLog->record($UID, self::MODULE_NAME, AuditAction::USER_CREATED, null, $UID, ['username' => $username, 'sso' => $identity->issuer]);
+		$this->auditLog->record($UID, self::MODULE_NAME, AuditAction::USER_CREATED, null, $UID, ['username' => $username, 'sso' => $identity->provider->name]);
 
 		return $UID;
 	}

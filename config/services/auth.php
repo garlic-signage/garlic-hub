@@ -34,6 +34,7 @@ use App\Modules\Auth\LoginController;
 use App\Modules\Auth\LoginThrottle;
 use App\Modules\Auth\SsoLogin;
 use App\Shared\User\Sso\SsoUserProvisioning;
+use App\Shared\User\Repositories\Core\SsoProvidersRepository;
 use GuzzleHttp\Client;
 use App\Modules\Auth\OAuth2Controller;
 use App\Modules\Auth\UserSession;
@@ -108,7 +109,7 @@ $dependencies[LoginController::class] = DI\factory(function (ContainerInterface 
 $dependencies[SsoLogin::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new SsoLogin(
-		$container->get(Config::class),
+		new SsoProvidersRepository($container->get('SqlConnection')),
 		$container->get(Session::class),
 		$container->get(Crypt::class),
 		$container->get(SsoUserProvisioning::class),

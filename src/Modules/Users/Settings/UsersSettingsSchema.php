@@ -32,13 +32,6 @@ final readonly class UsersSettingsSchema implements SettingsSchema
 		return [
 			// a user without the second factor reaches only his account until he sets it up (see AuthMiddleware)
 			new SettingField('TwoFactor', 'required', SettingType::SWITCH, 'two_factor_required'),
-			// the login with OpenID Connect: the first login creates the user without rights (see Auth\SsoLogin)
-			new SettingField('Sso', 'enabled', SettingType::SWITCH, 'sso_enabled'),
-			new SettingField('Sso', 'name', SettingType::TEXT, 'sso_name', dependsOn: 'Sso.enabled'),
-			new SettingField('Sso', 'issuer', SettingType::TEXT, 'sso_issuer', dependsOn: 'Sso.enabled'),
-			new SettingField('Sso', 'client_id', SettingType::TEXT, 'sso_client_id', dependsOn: 'Sso.enabled'),
-			new SettingField('Sso', 'client_secret', SettingType::SECRET, 'sso_client_secret', dependsOn: 'Sso.enabled'),
-			new SettingField('Sso', 'allowed_domains', SettingType::TEXT, 'sso_allowed_domains', dependsOn: 'Sso.enabled'),
 		];
 	}
 }

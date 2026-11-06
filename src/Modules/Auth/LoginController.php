@@ -28,7 +28,6 @@ use App\Framework\Security\CsrfToken;
 use App\Framework\Http\Session;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
-use App\Framework\Http\Https;
 use App\Shared\User\Sso\SsoRefusedException;
 use Exception;
 use Throwable;
@@ -87,10 +86,7 @@ readonly class LoginController
 					'CSRF_TOKEN' => $this->csrfToken->getToken(),
 					'LANG_SUBMIT' => $page_name,
 					'LANG_AUTOLOGIN' => $this->translator->translate('autologin', 'login'),
-					'sso' => $this->ssoLogin->isEnabled() ? [
-						'LANG_OR'  => $this->translator->translate('or', 'login'),
-						'LANG_SSO' => sprintf($this->translator->translate('sso_login', 'login'), $this->ssoLogin->providerName())
-					] : []
+					'sso' => $this->buildSsoButtons()
 				]
 			]
 		];
@@ -200,18 +196,36 @@ readonly class LoginController
 	}
 
 	/**
-	 * The browser goes to the provider of the SSO.
+	 * A button per provider of the SSO, under the form of the password.
 	 *
+	 * @return list<array<string,mixed>>
 	 * @throws Exception
 	 */
-	public function startSso(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	private function buildSsoButtons(): array
 	{
-		if (!$this->ssoLogin->isEnabled())
-			return $this->redirect($response, '/login');
+		$buttons = [];
+		foreach ($this->ssoLogin->providers() as $provider)
+			$buttons[] = ['ID' => $provider->id, 'LANG_SSO' => sprintf($this->translator->translate('sso_login', 'login'), $provider->name)];
 
+		return $buttons === [] ? [] : [['LANG_OR' => $this->translator->translate('or', 'login'), 'providers' => $buttons]];
+	}
+
+	/**
+	 * The browser goes to the provider of the SSO.
+	 *
+	 * @param array<string,string> $args
+	 * @throws Exception
+	 */
+	public function startSso(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+	{
 		try
 		{
-			return $this->redirect($response, $this->ssoLogin->authorizationUri($this->ssoRedirectUri($request)));
+			$uri = $this->ssoLogin->authorizationUri((int) ($args['id'] ?? 0), SsoLogin::redirectUri($request));
+			// a provider which is unknown or off
+			if ($uri === null)
+				return $this->redirect($response, '/login');
+
+			return $this->redirect($response, $uri);
 		}
 		catch (Throwable $e)
 		{
@@ -231,7 +245,7 @@ readonly class LoginController
 	{
 		try
 		{
-			$UID = $this->ssoLogin->finish($request, $this->ssoRedirectUri($request));
+			$UID = $this->ssoLogin->finish($request, SsoLogin::redirectUri($request));
 		}
 		catch (SsoRefusedException $e)
 		{
@@ -247,17 +261,6 @@ readonly class LoginController
 		}
 
 		return $this->completeLogin($response, $userEntity->getMain(), false, true);
-	}
-
-	/**
-	 * The address the provider sends the browser back to, registered there. Behind a proxy the scheme comes from it.
-	 */
-	private function ssoRedirectUri(ServerRequestInterface $request): string
-	{
-		$uri  = $request->getUri();
-		$port = $uri->getPort();
-
-		return (Https::isActive() ? 'https' : 'http') . '://' . $uri->getHost() . ($port !== null ? ':' . $port : '') . '/login/sso/callback';
 	}
 
 	/**

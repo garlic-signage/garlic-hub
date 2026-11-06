@@ -28,7 +28,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
 /**
- * Which user an identity of an OpenID Connect provider is: issuer and subject, see Auth\SsoLogin.
+ * Which user an identity at an OpenID Connect provider is: provider and subject, see Auth\SsoLogin.
  */
 class UserSsoRepository extends SqlBase
 {
@@ -43,14 +43,14 @@ class UserSsoRepository extends SqlBase
 	/**
 	 * @throws Exception
 	 */
-	public function findUID(string $issuer, string $subject): ?int
+	public function findUID(int $providerId, string $subject): ?int
 	{
 		$queryBuilder = $this->connection->createQueryBuilder();
 		$queryBuilder->select('UID')
 			->from($this->table)
-			->where('issuer = :issuer')
+			->where('provider_id = :provider_id')
 			->andWhere('subject = :subject')
-			->setParameter('issuer', $issuer)
+			->setParameter('provider_id', $providerId)
 			->setParameter('subject', $subject);
 
 		$UID = $queryBuilder->executeQuery()->fetchOne();
@@ -61,8 +61,16 @@ class UserSsoRepository extends SqlBase
 	/**
 	 * @throws Exception
 	 */
-	public function link(int $UID, string $issuer, string $subject): void
+	public function link(int $UID, int $providerId, string $subject): void
 	{
-		$this->connection->insert($this->table, ['UID' => $UID, 'issuer' => $issuer, 'subject' => $subject]);
+		$this->connection->insert($this->table, ['UID' => $UID, 'provider_id' => $providerId, 'subject' => $subject]);
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function removeOfProvider(int $providerId): void
+	{
+		$this->deleteBy(['provider_id' => $providerId]);
 	}
 }

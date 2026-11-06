@@ -21,9 +21,9 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Modules\Auth\Services;
 
-use App\Framework\Config\Config;
 use App\Framework\Security\Crypt;
 use App\Modules\Auth\SsoLogin;
+use App\Shared\User\Repositories\Core\SsoProvidersRepository;
 use App\Shared\User\Sso\SsoRefusedException;
 use App\Shared\User\Sso\SsoUserProvisioning;
 use Defuse\Crypto\Crypto;
@@ -38,7 +38,7 @@ use Tests\Support\MemorySession;
 
 /**
  * The login by SSO against a provider in memory, with the real database: the user administration creates
- * or links the users. Users: 1 admin, 2 anna (anna@example.com), 3 bernd.
+ * or links the users. Users: 1 admin, 2 anna (anna@example.com), 3 bernd. The provider is the one with id 1.
  */
 #[Group('auth')]
 class SsoLoginTest extends ContainerTestCase
@@ -49,8 +49,6 @@ class SsoLoginTest extends ContainerTestCase
 
 	private FakeOidcProvider $provider;
 	private MemorySession $session;
-	/** @var array<string,string> the settings of the section Sso */
-	private array $settings;
 
 	protected function setUp(): void
 	{
@@ -58,23 +56,26 @@ class SsoLoginTest extends ContainerTestCase
 		$this->loadFixture('acl/users.sql');
 		$this->provider = new FakeOidcProvider(self::CLIENT_ID, self::CLIENT_SECRET);
 		$this->session  = new MemorySession();
-		$this->settings = [
-			'enabled'         => '1',
-			'name'            => 'Example',
-			'issuer'          => FakeOidcProvider::ISSUER,
-			'client_id'       => self::CLIENT_ID,
-			'client_secret'   => Crypto::encrypt(self::CLIENT_SECRET, $this->container->get(Crypt::class)->getEncryptionKey()),
-			'allowed_domains' => ''
-		];
+		$this->connection->insert('sso_providers', [
+			'provider_id'   => 1,
+			'name'          => 'Example',
+			'issuer'        => FakeOidcProvider::ISSUER,
+			'client_id'     => self::CLIENT_ID,
+			'client_secret' => Crypto::encrypt(self::CLIENT_SECRET, $this->container->get(Crypt::class)->getEncryptionKey())
+		]);
+	}
+
+	/**
+	 * @param array<string,mixed> $fields
+	 */
+	private function changeProvider(array $fields): void
+	{
+		$this->connection->update('sso_providers', $fields, ['provider_id' => 1]);
 	}
 
 	private function ssoLogin(): SsoLogin
 	{
-		$config = $this->createStub(Config::class);
-		$config->method('isSwitchOn')->willReturnCallback(fn(string $key): bool => ($this->settings[$key] ?? '') === '1');
-		$config->method('getConfigValue')->willReturnCallback(fn(string $key): string => $this->settings[$key] ?? '');
-
-		return new SsoLogin($config, $this->session, $this->container->get(Crypt::class), $this->container->get(SsoUserProvisioning::class), $this->provider, new ArrayCache(), new NullLogger());
+		return new SsoLogin(new SsoProvidersRepository($this->connection), $this->session, $this->container->get(Crypt::class), $this->container->get(SsoUserProvisioning::class), $this->provider, new ArrayCache(), new NullLogger());
 	}
 
 	/**
@@ -84,7 +85,10 @@ class SsoLoginTest extends ContainerTestCase
 	 */
 	private function answerOfProvider(SsoLogin $ssoLogin): array
 	{
-		return $this->provider->authorize($ssoLogin->authorizationUri(self::REDIRECT));
+		$uri = $ssoLogin->authorizationUri(1, self::REDIRECT);
+		static::assertNotNull($uri);
+
+		return $this->provider->authorize($uri);
 	}
 
 	/**
@@ -115,17 +119,53 @@ class SsoLoginTest extends ContainerTestCase
 		}
 	}
 
-	public function testItIsOffWithoutTheSettings(): void
+	public function testOnlyTheEnabledProvidersAreOffered(): void
 	{
-		static::assertTrue($this->ssoLogin()->isEnabled());
-		static::assertSame('Example', $this->ssoLogin()->providerName());
+		$this->connection->insert('sso_providers', ['provider_id' => 2, 'name' => 'Another', 'issuer' => 'https://other.example.test', 'client_id' => 'x', 'client_secret' => '']);
+		static::assertSame(['Another', 'Example'], array_map(static fn($provider) => $provider->name, $this->ssoLogin()->providers()));
 
-		$this->settings['enabled'] = '0';
-		static::assertFalse($this->ssoLogin()->isEnabled());
+		$this->changeProvider(['enabled' => 0]);
+		static::assertSame(['Another'], array_map(static fn($provider) => $provider->name, $this->ssoLogin()->providers()));
+		static::assertNull($this->ssoLogin()->authorizationUri(1, self::REDIRECT));
+		static::assertNull($this->ssoLogin()->authorizationUri(99, self::REDIRECT));
+	}
 
-		$this->settings['enabled']   = '1';
-		$this->settings['client_id'] = '';
-		static::assertFalse($this->ssoLogin()->isEnabled());
+	public function testAProviderTurnedOffMeanwhileLogsNobodyIn(): void
+	{
+		$ssoLogin = $this->ssoLogin();
+		$answer   = $this->answerOfProvider($ssoLogin);
+		$this->changeProvider(['enabled' => 0]);
+
+		$this->assertRefused('sso_failed', fn() => $this->finish($ssoLogin, $answer));
+	}
+
+	/**
+	 * The same Google account at the provider of another company (Enterprise) does not log into the user of the first one.
+	 */
+	public function testTheIdentityBelongsToTheProviderNotToTheIssuer(): void
+	{
+		$UID = $this->login();
+		$this->connection->insert('sso_providers', ['provider_id' => 2, 'company_id' => 2, 'name' => 'Other company', 'issuer' => FakeOidcProvider::ISSUER, 'client_id' => self::CLIENT_ID,
+			'client_secret' => Crypto::encrypt(self::CLIENT_SECRET, $this->container->get(Crypt::class)->getEncryptionKey())]);
+
+		$ssoLogin = $this->ssoLogin();
+		$uri      = $ssoLogin->authorizationUri(2, self::REDIRECT);
+		static::assertNotNull($uri);
+		$answer = $this->provider->authorize($uri);
+
+		$this->assertRefused('sso_account_exists', fn() => $this->finish($ssoLogin, $answer));
+		static::assertSame([['UID' => $UID, 'provider_id' => 1]], $this->connection->fetchAllAssociative('SELECT UID, provider_id FROM user_sso'));
+	}
+
+	public function testANewUserGetsTheCompanyOfTheProviderAndAnAccountOfAnotherCompanyIsNotLinked(): void
+	{
+		$this->changeProvider(['company_id' => 2]);
+		$UID = $this->login();
+		static::assertSame(2, (int) $this->connection->fetchOne('SELECT company_id FROM user_main WHERE UID = ?', [$UID]));
+
+		// anna is of company 1
+		$this->provider->claims = ['sub' => 'subject-anna', 'email' => 'anna@example.com', 'email_verified' => true];
+		$this->assertRefused('sso_account_exists', fn() => $this->login());
 	}
 
 	public function testTheFirstLoginCreatesTheUserWithoutRightsAndTheNextOneFindsHim(): void
@@ -176,10 +216,10 @@ class SsoLoginTest extends ContainerTestCase
 
 	public function testOnlyTheAllowedDomainsGetIn(): void
 	{
-		$this->settings['allowed_domains'] = 'example.org, Example.com';
+		$this->changeProvider(['allowed_domains' => 'example.org, Example.com']);
 		static::assertGreaterThan(3, $this->login());
 
-		$this->settings['allowed_domains'] = 'example.org';
+		$this->changeProvider(['allowed_domains' => 'example.org']);
 		$this->provider->claims = ['sub' => 'subject-dora', 'email' => 'dora@example.com'];
 		$this->assertRefused('sso_domain', fn() => $this->login());
 		static::assertSame(4, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_main'));

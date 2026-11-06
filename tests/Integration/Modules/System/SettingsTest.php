@@ -26,14 +26,9 @@ use App\Framework\Config\ConfigOverrides;
 use App\Framework\Config\OverridingConfigLoader;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\TranslatableModuleException;
-use App\Framework\Security\Crypt;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Modules\System\Controller\ShowSettingsController;
 use App\Shared\Settings\SettingsService;
-use App\Modules\Users\Settings\UsersSettingsSchema;
-use App\Shared\Acl\AclHelper;
-use App\Shared\Audit\DatabaseAuditLog;
-use App\Shared\Audit\AuditLogRepository;
 use PHPUnit\Framework\Attributes\Group;
 use Slim\Flash\Messages;
 use Slim\Psr7\Factory\ServerRequestFactory;
@@ -189,14 +184,8 @@ class SettingsTest extends ContainerTestCase
 	{
 		foreach ($this->service->findEditableModules(1) as $module)
 		{
-			// a text or a secret may be empty by default, the key must be there
-			$defaults = $this->container->get('ConfigDefaults')->load($module);
-			foreach ($this->service->findSettings(1, $module) as $setting)
-			{
-				$field = $setting['field'];
-				static::assertIsArray($defaults[$field->section] ?? null, $module . ': [' . $field->section . '] is not in config_' . $module . '.ini');
-				static::assertArrayHasKey($field->key, $defaults[$field->section], $module . ': ' . $field->section . '.' . $field->key . ' is not in config_' . $module . '.ini');
-			}
+			foreach ($this->settings(1, $module) as $name => $setting)
+				static::assertNotSame('', $setting['default'], $module . ': ' . $name . ' is not in config_' . $module . '.ini');
 		}
 	}
 
@@ -300,72 +289,6 @@ class SettingsTest extends ContainerTestCase
 		$this->controller()->store($request, new Response());
 
 		static::assertSame(['Scheduler' => ['enabled' => '1'], 'Audit' => ['enabled' => '1']], $this->overrides->load('system'));
-	}
-
-	/**
-	 * The form of the users sends every field.
-	 *
-	 * @return array<string,string>
-	 */
-	private function ssoForm(string $secret): array
-	{
-		return ['Sso.enabled' => '1', 'Sso.name' => '', 'Sso.issuer' => '', 'Sso.client_id' => '', 'Sso.client_secret' => $secret, 'Sso.allowed_domains' => ''];
-	}
-
-	public function testASecretIsStoredEncryptedAndNeverShown(): void
-	{
-		$this->service->save(1, 'users', $this->ssoForm(' very-secret '));
-
-		$stored = $this->overrides->load('users')['Sso']['client_secret'] ?? '';
-		static::assertIsString($stored);
-		static::assertStringNotContainsString('very-secret', $stored);
-		static::assertSame('very-secret', SettingsService::decryptSecret($stored, $this->container->get(Crypt::class)));
-		static::assertSame(['value' => '', 'default' => '', 'changed' => true], $this->settings(1, 'users')['Sso.client_secret']);
-	}
-
-	public function testAnEmptySecretKeepsTheStoredOne(): void
-	{
-		$this->service->save(1, 'users', $this->ssoForm('very-secret'));
-		$stored = $this->overrides->load('users')['Sso']['client_secret'] ?? '';
-
-		// the form shows the secret empty and sends it empty
-		$this->service->save(1, 'users', $this->ssoForm(''));
-		static::assertSame($stored, $this->overrides->load('users')['Sso']['client_secret'] ?? '');
-
-		$this->service->save(1, 'users', $this->ssoForm('new-secret'));
-		static::assertSame('new-secret', SettingsService::decryptSecret($this->overrides->load('users')['Sso']['client_secret'] ?? '', $this->container->get(Crypt::class)));
-
-		$this->service->reset(1, 'users', 'Sso.client_secret');
-		$sso = $this->overrides->load('users')['Sso'] ?? [];
-		static::assertIsArray($sso);
-		static::assertArrayNotHasKey('client_secret', $sso);
-	}
-
-	public function testTheAuditLogDoesNotShowTheSecret(): void
-	{
-		// the audit log is off by default
-		$service = new SettingsService($this->container->get(AclHelper::class), $this->container->get('ConfigDefaults'), $this->overrides, ['users' => new UsersSettingsSchema()],
-			new DatabaseAuditLog($this->container->get(AuditLogRepository::class)), $this->container->get(Crypt::class));
-
-		$service->save(1, 'users', $this->ssoForm('very-secret'));
-
-		$details = (string) $this->connection->fetchOne("SELECT details FROM audit_log WHERE action = 'settings_changed'");
-		static::assertStringContainsString('Sso.client_secret', $details);
-		static::assertStringNotContainsString('very-secret', $details);
-		static::assertStringNotContainsString((string) ($this->overrides->load('users')['Sso']['client_secret'] ?? ''), $details);
-	}
-
-	public function testTheSecretFieldIsEmptyOnThePage(): void
-	{
-		$this->service->save(1, 'users', $this->ssoForm('very-secret'));
-		$this->actingAs(1);
-
-		$response = $this->controller()->show(new ServerRequestFactory()->createServerRequest('GET', '/system/settings'), new Response());
-
-		static::assertInstanceOf(PageResponse::class, $response);
-		$fields = array_column($response->getTemplateData()['tabs'][0]['fields'], null, 'NAME');
-		static::assertSame('', $fields['Sso.client_secret']['VALUE']);
-		static::assertNotSame('', $fields['Sso.client_secret']['is_secret']['PLACEHOLDER'] ?? '', 'the field says that a secret is stored');
 	}
 
 	private function controller(): ShowSettingsController

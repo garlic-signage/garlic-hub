@@ -71,6 +71,10 @@ readonly class UserMenuBuilder
 		if ($this->isAdminOf($UID, 'users'))
 			$points[] = ['LINK_USER_ACCESS' => '/users', 'LANG_USER_ACCESS' => $this->translator->translate('management', 'users')];
 
+		// the providers belong to the company, a sub admin may not change them
+		if ($this->aclHelper->isModuleAdmin($UID, 'users'))
+			$points[] = ['LINK_USER_ACCESS' => '/users/sso', 'LANG_USER_ACCESS' => $this->translator->translate('sso_providers', 'users')];
+
 		if ($this->isAdminOf($UID, 'templates'))
 			$points[] = ['LINK_USER_ACCESS' => '/templates', 'LANG_USER_ACCESS' => $this->translator->translate('overview', 'templates')];
 

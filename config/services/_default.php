@@ -380,7 +380,7 @@ $dependencies[SettingsService::class] = DI\factory(function (ContainerInterface 
 			$schemas[$module] = $container->get($class);
 	}
 
-	return new SettingsService($container->get(AclHelper::class), $container->get('ConfigDefaults'), $container->get(ConfigOverrides::class), $schemas, $container->get(AuditLog::class), $container->get(Crypt::class));
+	return new SettingsService($container->get(AclHelper::class), $container->get('ConfigDefaults'), $container->get(ConfigOverrides::class), $schemas, $container->get(AuditLog::class));
 });
 $dependencies[AclHelper::class] = DI\factory(function (ContainerInterface $container)
 {

@@ -17,7 +17,9 @@
 	{{#sso}}
 	<div class="sso-login">
 		<span>{{LANG_OR}}</span>
-		<a href="/login/sso" class="button">{{LANG_SSO}}</a>
+		{{#providers}}
+		<a href="/login/sso/{{ID}}" class="button">{{LANG_SSO}}</a>
+		{{/providers}}
 	</div>
 	{{/sso}}
 </form>

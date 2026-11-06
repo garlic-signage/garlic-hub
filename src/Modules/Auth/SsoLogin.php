@@ -21,14 +21,15 @@ declare(strict_types=1);
 
 namespace App\Modules\Auth;
 
-use App\Framework\Config\Config;
-use App\Framework\Config\IniConfigLoader;
+use App\Framework\Http\Https;
 use App\Framework\Http\Session;
 use App\Framework\Security\Crypt;
-use App\Shared\Settings\SettingsService;
+use App\Shared\User\Repositories\Core\SsoProvidersRepository;
 use App\Shared\User\Sso\SsoIdentity;
+use App\Shared\User\Sso\SsoProvider;
 use App\Shared\User\Sso\SsoRefusedException;
 use App\Shared\User\Sso\SsoUserProvisioning;
+use Defuse\Crypto\Crypto;
 use Facile\JoseVerifier\JWK\JwksProviderBuilder;
 use Facile\OpenIDClient\Client\ClientBuilder;
 use Facile\OpenIDClient\Client\ClientInterface;
@@ -46,15 +47,13 @@ use Psr\SimpleCache\CacheInterface;
 use Throwable;
 
 /**
- * The login with an OpenID Connect provider (Google, Entra ID, Okta, Keycloak ...), set in the settings of
- * the users module. The library checks the signed ID token: signature, issuer, audience, expiry and nonce.
+ * The login with an OpenID Connect provider (Google, Entra ID, Okta, Keycloak ...), which the module admin of
+ * users sets up (table sso_providers). The library checks the signed ID token: signature, issuer, audience, expiry and nonce.
  * Here: the state against forged answers, PKCE against a stolen code, and the allowed domains.
  * The provider answers within 10 minutes, the answer counts once.
  */
 readonly class SsoLogin
 {
-	private const string MODULE_NAME = 'users';
-	private const string SECTION = 'Sso';
 	private const string PENDING = 'sso_pending';
 	private const int PENDING_SECONDS = 600;
 	// discovery and keys of the provider change rarely
@@ -63,7 +62,7 @@ readonly class SsoLogin
 	private const int CLOCK_TOLERANCE = 60;
 
 	public function __construct(
-		private Config $config,
+		private SsoProvidersRepository $providers,
 		private Session $session,
 		private Crypt $crypt,
 		private SsoUserProvisioning $provisioning,
@@ -72,31 +71,46 @@ readonly class SsoLogin
 		private LoggerInterface $logger
 	) {}
 
-	public function isEnabled(): bool
+	/**
+	 * The address the provider sends the browser back to, registered there. Behind a proxy the scheme comes from it.
+	 */
+	public static function redirectUri(ServerRequestInterface $request): string
 	{
-		return $this->config->isSwitchOn('enabled', self::MODULE_NAME, self::SECTION) && $this->setting('issuer') !== '' && $this->setting('client_id') !== '';
-	}
+		$uri  = $request->getUri();
+		$port = $uri->getPort();
 
-	public function providerName(): string
-	{
-		$name = $this->setting('name');
-
-		return $name !== '' ? $name : (string) parse_url($this->setting('issuer'), PHP_URL_HOST);
+		return (Https::isActive() || $uri->getScheme() === 'https' ? 'https' : 'http') . '://' . $uri->getHost() . ($port !== null ? ':' . $port : '') . '/login/sso/callback';
 	}
 
 	/**
-	 * The address of the provider to which the browser goes. State, nonce and the verifier of PKCE wait in the session.
+	 * The buttons of the login page.
+	 *
+	 * @return list<SsoProvider>
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	public function providers(): array
+	{
+		return $this->providers->findEnabled();
+	}
+
+	/**
+	 * The address of the provider to which the browser goes, null for a provider which is unknown or off.
+	 * Provider, state, nonce and the verifier of PKCE wait in the session.
 	 *
 	 * @throws Throwable
 	 */
-	public function authorizationUri(string $redirectUri): string
+	public function authorizationUri(int $providerId, string $redirectUri): ?string
 	{
+		$provider = $this->enabledProvider($providerId);
+		if ($provider === null)
+			return null;
+
 		$state    = $this->randomToken();
 		$nonce    = $this->randomToken();
 		$verifier = $this->randomToken();
-		$this->session->set(self::PENDING, ['state' => $state, 'nonce' => $nonce, 'code_verifier' => $verifier, 'expires' => time() + self::PENDING_SECONDS]);
+		$this->session->set(self::PENDING, ['provider_id' => $provider->id, 'state' => $state, 'nonce' => $nonce, 'code_verifier' => $verifier, 'expires' => time() + self::PENDING_SECONDS]);
 
-		return $this->authorizationService()->getAuthorizationUri($this->client($redirectUri), [
+		return $this->authorizationService()->getAuthorizationUri($this->client($provider, $redirectUri), [
 			'scope'                 => 'openid email profile',
 			'state'                 => $state,
 			'nonce'                 => $nonce,
@@ -119,16 +133,21 @@ readonly class SsoLogin
 		if ($pending === null || !is_string($state) || !hash_equals($pending['state'], $state))
 			throw new SsoRefusedException('sso_expired');
 
+		// the admin may have turned it off since
+		$provider = $this->enabledProvider($pending['provider_id']);
+		if ($provider === null)
+			throw new SsoRefusedException('sso_failed');
+
 		try
 		{
-			$client  = $this->client($redirectUri);
+			$client  = $this->client($provider, $redirectUri);
 			$service = $this->authorizationService();
 			$session = AuthSession::fromArray(['state' => $pending['state'], 'nonce' => $pending['nonce'], 'code_verifier' => $pending['code_verifier']]);
 			$tokens  = $service->callback($client, $service->getCallbackParams($request, $client), $redirectUri, $session);
 			if ($tokens->getIdToken() === null)
 				throw new SsoRefusedException('sso_failed');
 
-			$identity = $this->identityOf($tokens->claims());
+			$identity = $this->identityOf($provider, $tokens->claims());
 		}
 		catch (SsoRefusedException $e)
 		{
@@ -141,7 +160,7 @@ readonly class SsoLogin
 			throw new SsoRefusedException('sso_failed');
 		}
 
-		if (!$this->isAllowedDomain($identity->email))
+		if (!$this->isAllowedDomain($provider, $identity->email))
 		{
 			$this->logger->warning('SSO login refused for the domain of ' . $identity->email);
 			throw new SsoRefusedException('sso_domain');
@@ -151,16 +170,26 @@ readonly class SsoLogin
 	}
 
 	/**
+	 * @throws \Doctrine\DBAL\Exception
+	 */
+	private function enabledProvider(int $providerId): ?SsoProvider
+	{
+		$provider = $this->providers->findProvider($providerId);
+
+		return $provider !== null && $provider->enabled ? $provider : null;
+	}
+
+	/**
 	 * @param array<string,mixed> $claims
 	 */
-	private function identityOf(array $claims): SsoIdentity
+	private function identityOf(SsoProvider $provider, array $claims): SsoIdentity
 	{
 		$text = static fn(string $claim): string => is_string($claims[$claim] ?? null) ? trim($claims[$claim]) : '';
 		if ($text('iss') === '' || $text('sub') === '')
 			throw new SsoRefusedException('sso_failed');
 
 		return new SsoIdentity(
-			$text('iss'),
+			$provider,
 			$text('sub'),
 			strtolower($text('email')),
 			// Entra ID sends no email_verified, but xms_edov when the domain of the email is verified
@@ -172,25 +201,24 @@ readonly class SsoLogin
 	/**
 	 * Without a list everybody whom the provider lets in. With Google a list is needed: everybody has a Google account.
 	 */
-	private function isAllowedDomain(string $email): bool
+	private function isAllowedDomain(SsoProvider $provider, string $email): bool
 	{
-		$allowed = array_filter(array_map(static fn(string $domain): string => strtolower(trim($domain)), explode(',', $this->setting('allowed_domains'))));
-		if ($allowed === [])
+		if ($provider->allowedDomains === [])
 			return true;
 
 		$at = strrpos($email, '@');
 
-		return $at !== false && in_array(substr($email, $at + 1), $allowed, true);
+		return $at !== false && in_array(substr($email, $at + 1), $provider->allowedDomains, true);
 	}
 
 	/**
-	 * @return array{state:string, nonce:string, code_verifier:string}|null
+	 * @return array{provider_id:int, state:string, nonce:string, code_verifier:string}|null
 	 */
 	private function takePending(): ?array
 	{
 		$pending = $this->session->get(self::PENDING);
 		$this->session->delete(self::PENDING);
-		if (!is_array($pending) || !is_int($pending['expires'] ?? null) || $pending['expires'] < time())
+		if (!is_array($pending) || !is_int($pending['expires'] ?? null) || $pending['expires'] < time() || !is_int($pending['provider_id'] ?? null))
 			return null;
 
 		foreach (['state', 'nonce', 'code_verifier'] as $key)
@@ -199,20 +227,20 @@ readonly class SsoLogin
 				return null;
 		}
 
-		return ['state' => $pending['state'], 'nonce' => $pending['nonce'], 'code_verifier' => $pending['code_verifier']];
+		return ['provider_id' => $pending['provider_id'], 'state' => $pending['state'], 'nonce' => $pending['nonce'], 'code_verifier' => $pending['code_verifier']];
 	}
 
 	/**
 	 * @throws Throwable
 	 */
-	private function client(string $redirectUri): ClientInterface
+	private function client(SsoProvider $provider, string $redirectUri): ClientInterface
 	{
 		$issuer = (new IssuerBuilder())
 			->setMetadataProviderBuilder((new MetadataProviderBuilder())->setHttpClient($this->httpClient)->setCache($this->cache)->setCacheTtl(self::CACHE_SECONDS))
 			->setJwksProviderBuilder((new JwksProviderBuilder())->withHttpClient($this->httpClient)->withCache($this->cache)->withCacheTtl(self::CACHE_SECONDS))
-			->build($this->setting('issuer'));
+			->build($provider->issuer);
 
-		$clientId = $this->setting('client_id');
+		$clientId = $provider->clientId;
 		if ($clientId === '' || $redirectUri === '')
 			throw new SsoRefusedException('sso_failed');
 
@@ -224,7 +252,7 @@ readonly class SsoLogin
 			->setIssuer($issuer)
 			->setClientMetadata(ClientMetadata::fromArray([
 				'client_id'                  => $clientId,
-				'client_secret'              => SettingsService::decryptSecret($this->setting('client_secret'), $this->crypt),
+				'client_secret'              => $provider->encryptedSecret === '' ? '' : Crypto::decrypt($provider->encryptedSecret, $this->crypt->getEncryptionKey()),
 				'token_endpoint_auth_method' => $authMethod,
 				'redirect_uris'              => [$redirectUri]
 			]))
@@ -238,11 +266,6 @@ readonly class SsoLogin
 		$builder->setHttpClient($this->httpClient);
 
 		return $builder->build();
-	}
-
-	private function setting(string $key): string
-	{
-		return IniConfigLoader::withoutComment($this->config->getConfigValue($key, self::MODULE_NAME, self::SECTION));
 	}
 
 	private function randomToken(): string

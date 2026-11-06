@@ -83,16 +83,23 @@ Modules differ in the details:
 
 ## Single sign-on (SSO)
 
-- The module admin of `users` turns it on in the settings (`[Sso]`, off by default) with the issuer URL of the
-  provider, client ID and client secret. Every OpenID Connect provider works, the hub finds its endpoints and keys by
-  the discovery (`/.well-known/openid-configuration`). The secret is stored encrypted and is never shown again.
-- At the provider the app is registered with the redirect URI `https://<your hub>/login/sso/callback`.
+- The module admin of `users` sets up the providers of his company on the page "SSO providers" (`/users/sso`,
+  table `sso_providers`): name, issuer URL, client ID, client secret and allowed domains, each provider can be
+  turned off. Without a provider there is no SSO. Every OpenID Connect provider works, the hub finds its endpoints and
+  keys by the discovery (`/.well-known/openid-configuration`). The secret is stored encrypted and is never shown
+  again, an empty field keeps it.
+- At the provider the app is registered with the redirect URI `https://<your hub>/login/sso/callback`, the page
+  shows it.
+- The providers have a `company_id`: in Enterprise every customer gets his own. A user is linked to the provider
+  (`user_sso`), not to the issuer, a new user gets the company of the provider, and an account of another company is
+  never linked.
 - Issuer URLs: Google `https://accounts.google.com`, Entra ID `https://login.microsoftonline.com/<tenant id>/v2.0`,
   Okta `https://<your org>.okta.com`, Keycloak `https://<host>/realms/<realm>`.
-- The login page shows the button "Log in with ...". The login checks the signed ID token (signature, issuer,
+- The login page shows a button "Log in with ..." per provider. The login checks the signed ID token (signature, issuer,
   audience, expiry, nonce), the state and PKCE (`Auth\SsoLogin`, library facile-it/php-openid-client).
 - The first login creates the user without rights and without password, with his media folder. The admin grants
-  the rights. The user is found again by issuer and subject of the provider, not by his email, which may change.
+  the rights. The user is found again by the provider and his subject there, not by his email, which may change.
+- Deleting a provider keeps its users: they log in by password, or by the provider again when it is set up once more.
 - An existing account with the same email is linked only when the provider verified the email (`email_verified`, with
   Entra ID `xms_edov`). Otherwise the login is refused: an email which anybody may enter at the provider would take
   over the account.

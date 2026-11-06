@@ -84,8 +84,8 @@ class LayoutDataProviderTest extends ContainerTestCase
 
 		$access = $this->layout()['user_menu'][0]['has_user_access'];
 
-		static::assertSame(['/users', '/templates', '/system/settings', '/system/audit'], array_column($access, 'LINK_USER_ACCESS'));
-		static::assertSame(['User Management', 'Template overview', 'Settings', 'Audit log'], array_column($access, 'LANG_USER_ACCESS'));
+		static::assertSame(['/users', '/users/sso', '/templates', '/system/settings', '/system/audit'], array_column($access, 'LINK_USER_ACCESS'));
+		static::assertSame(['User Management', 'SSO providers', 'Template overview', 'Settings', 'Audit log'], array_column($access, 'LANG_USER_ACCESS'));
 	}
 
 	/**
@@ -96,7 +96,8 @@ class LayoutDataProviderTest extends ContainerTestCase
 		return [
 			'sub admin of the users'     => [[['users', 1]], ['/users']],
 			// the users module has settings: whether everybody needs the second factor
-			'module admin of the users'  => [[['users', 2]], ['/users', '/system/settings']],
+			// and the SSO providers of the company
+			'module admin of the users'  => [[['users', 2]], ['/users', '/users/sso', '/system/settings']],
 			'sub admin of the templates' => [[['templates', 4]], ['/templates']],
 			'module admin of templates'  => [[['templates', 8]], ['/templates']],
 			'both'                       => [[['users', 1], ['templates', 8]], ['/users', '/templates']],

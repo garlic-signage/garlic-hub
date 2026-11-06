@@ -1,0 +1,22 @@
+<h1>{{LANG_PAGE_HEADER}}</h1>
+<section id="ssoProviders" class="main-element-group">
+	<p>{{LANG_REDIRECT_URI}} <code>{{REDIRECT_URI}}</code></p>
+	{{#has_providers}}
+	<table>
+		<thead>
+			<tr><th>{{LANG_NAME}}</th><th>{{LANG_ISSUER}}</th><th>{{LANG_ENABLED}}</th><th></th></tr>
+		</thead>
+		<tbody>
+			{{#providers}}
+			<tr><td>{{NAME}}</td><td>{{ISSUER}}</td><td>{{ENABLED}}</td><td><a href="/users/sso/edit/{{ID}}">{{LANG_EDIT}}</a></td></tr>
+			{{/providers}}
+		</tbody>
+	</table>
+	{{/has_providers}}
+	{{^has_providers}}
+	<p>{{LANG_NO_PROVIDERS}}</p>
+	{{/has_providers}}
+	<div class="form-submits">
+		<a href="/users/sso/new" class="button primary">{{LANG_ADD}}</a>
+	</div>
+</section>

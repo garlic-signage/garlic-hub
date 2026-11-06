@@ -22,12 +22,12 @@ declare(strict_types=1);
 namespace App\Shared\User\Sso;
 
 /**
- * The user as the OpenID Connect provider confirmed him in a signed ID token.
+ * The user as an OpenID Connect provider confirmed him in a signed ID token.
  */
 final readonly class SsoIdentity
 {
 	public function __construct(
-		public string $issuer,
+		public SsoProvider $provider,
 		public string $subject,
 		public string $email,
 		// the provider checked that the user owns the email: only then an existing account is linked by it

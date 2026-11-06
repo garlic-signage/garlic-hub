@@ -33,17 +33,17 @@ class SsoFlowTest extends BlackboxTestCase
 {
 	private function turnOn(): void
 	{
-		$this->deployment()->changeSettings('users', ['Sso' => ['enabled' => '1', 'name' => 'Example', 'issuer' => 'https://idp.example.test', 'client_id' => 'garlic-hub']]);
+		$this->connection->insert('sso_providers', ['provider_id' => 4, 'name' => 'Example', 'issuer' => 'https://idp.example.test', 'client_id' => 'garlic-hub', 'client_secret' => '']);
 	}
 
 	public function testTheLoginPageOffersTheSsoOnlyWhenItIsOn(): void
 	{
 		$browser = $this->browser();
-		static::assertStringNotContainsString('href="/login/sso"', (string) $browser->get('/login')->getBody());
-		static::assertSame('/login', $browser->get('/login/sso')->getHeaderLine('Location'));
+		static::assertStringNotContainsString('href="/login/sso/', (string) $browser->get('/login')->getBody());
+		static::assertSame('/login', $browser->get('/login/sso/4')->getHeaderLine('Location'));
 
 		$this->turnOn();
-		static::assertStringContainsString('href="/login/sso"', (string) $browser->get('/login')->getBody());
+		static::assertStringContainsString('href="/login/sso/4"', (string) $browser->get('/login')->getBody());
 	}
 
 	/**
@@ -67,5 +67,27 @@ class SsoFlowTest extends BlackboxTestCase
 
 		static::assertSame('/login', $browser->get('/login/sso/finish?code=abc&state=xyz')->getHeaderLine('Location'));
 		static::assertSame('/login', $browser->get('/')->getHeaderLine('Location'));
+	}
+
+	public function testTheAdminSetsUpAProvider(): void
+	{
+		$this->loadFixture('acl/users.sql');
+		$browser = $this->browser();
+		$browser->login('admin', 'Test1234!');
+
+		$list = $browser->get('/users/sso');
+		static::assertSame(200, $list->getStatusCode());
+		static::assertStringContainsString('/login/sso/callback', (string) $list->getBody());
+
+		$form = (string) $browser->get('/users/sso/new')->getBody();
+		static::assertStringContainsString('name="client_secret"', $form);
+
+		$saved = $browser->post('/users/sso/edit', ['provider_id' => '0', 'name' => 'Google', 'issuer' => 'https://accounts.google.com', 'client_id' => 'the-client',
+			'client_secret' => 'very-secret', 'allowed_domains' => 'example.com', 'enabled' => '1', 'csrf_token' => $browser->csrfToken('/users/sso/new')]);
+		static::assertSame('/users/sso', $saved->getHeaderLine('Location'));
+		static::assertStringContainsString('accounts.google.com', (string) $browser->get('/users/sso')->getBody());
+
+		$browser->get('/logout');
+		static::assertStringContainsString('href="/login/sso/', (string) $browser->get('/login')->getBody());
 	}
 }

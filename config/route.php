@@ -23,6 +23,7 @@ use App\Controller\HomeController;
 use App\Framework\Middleware\FinalRenderMiddleware;
 use App\Modules\Auth\LoginController;
 use App\Modules\Auth\SsoCallbackController;
+use App\Modules\Users\Controller\SsoProvidersController;
 use App\Modules\Auth\OAuth2Controller;
 use App\Modules\Mediapool\Controller\MediaController;
 use App\Modules\Mediapool\Controller\NodesController;
@@ -94,7 +95,7 @@ $app->group('', function (RouteCollectorProxy $group) use ($container)
 	$group->post('/login', resolve([LoginController::class, 'login'], $container));
 	$group->get('/login/two-factor', resolve([LoginController::class, 'showSecondFactor'], $container));
 	$group->post('/login/two-factor', resolve([LoginController::class, 'loginWithSecondFactor'], $container));
-	$group->get('/login/sso', resolve([LoginController::class, 'startSso'], $container));
+	$group->get('/login/sso/{id:\d+}', resolve([LoginController::class, 'startSso'], $container));
 	$group->get('/login/sso/callback', resolve([SsoCallbackController::class, 'callback'], $container));
 	$group->get('/login/sso/finish', resolve([LoginController::class, 'finishSso'], $container));
 	$group->get('/logout', resolve([LoginController::class, 'logout'], $container));
@@ -109,6 +110,10 @@ $app->group('', function (RouteCollectorProxy $group) use ($container)
 	$group->get('/users/new', resolve([ShowAdminController::class, 'newUserForm'], $container));
 	$group->get('/users/edit/{UID:\d+}', resolve([ShowAdminController::class, 'editUserForm'], $container));
 	$group->get('/users/rights/{UID:\d+}', resolve([UserRightsController::class, 'show'], $container));
+	$group->get('/users/sso', resolve([SsoProvidersController::class, 'show'], $container));
+	$group->get('/users/sso/new', resolve([SsoProvidersController::class, 'newForm'], $container));
+	$group->get('/users/sso/edit/{id:\d+}', resolve([SsoProvidersController::class, 'editForm'], $container));
+	$group->post('/users/sso/edit', resolve([SsoProvidersController::class, 'store'], $container));
 
 	// for later profile call
 //	$group->get('/user/{UID:\d}', createControllerCallable([xxxx::class, 'profile'], $container));

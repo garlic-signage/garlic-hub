@@ -40,6 +40,7 @@ use Slim\Psr7\Response;
 use Tests\Support\MemorySession;
 use App\Modules\Auth\UserSession;
 use App\Modules\Auth\SsoLogin;
+use App\Shared\User\Sso\SsoProvider;
 use App\Shared\User\Sso\SsoRefusedException;
 
 /**
@@ -248,20 +249,21 @@ class LoginControllerTest extends TestCase
 		static::assertInstanceOf(PageResponse::class, $page);
 		static::assertSame([], $page->getTemplateData()['sso']);
 
-		$this->ssoLogin->method('isEnabled')->willReturn(true);
-		$this->ssoLogin->method('providerName')->willReturn('Example');
+		$this->ssoLogin->method('providers')->willReturn([
+			new SsoProvider(3, 1, 'Google', 'https://accounts.google.com', 'id', '', [], true),
+			new SsoProvider(5, 1, 'Okta', 'https://example.okta.com', 'id', '', [], true)
+		]);
 		$page = $this->controller->showLogin(new ServerRequestFactory()->createServerRequest('GET', '/login'), new Response());
 		static::assertInstanceOf(PageResponse::class, $page);
-		static::assertSame(['LANG_OR' => 'login.or', 'LANG_SSO' => 'login.sso_login'], $page->getTemplateData()['sso']);
+		static::assertSame([['LANG_OR' => 'login.or', 'providers' => [['ID' => 3, 'LANG_SSO' => 'login.sso_login'], ['ID' => 5, 'LANG_SSO' => 'login.sso_login']]]], $page->getTemplateData()['sso']);
 	}
 
 	#[Group('units')]
 	public function testTheSsoGoesToTheProviderWithTheAddressBack(): void
 	{
-		$this->ssoLogin->method('isEnabled')->willReturn(true);
-		$this->ssoLogin->method('authorizationUri')->willReturnCallback(static fn(string $redirectUri): string => 'https://idp.example.test/authorize?redirect_uri=' . urlencode($redirectUri));
+		$this->ssoLogin->method('authorizationUri')->willReturnCallback(static fn(int $providerId, string $redirectUri): ?string => $providerId === 3 ? 'https://idp.example.test/authorize?redirect_uri=' . urlencode($redirectUri) : null);
 
-		$response = $this->controller->startSso(new ServerRequestFactory()->createServerRequest('GET', 'http://hub.example.test:8080/login/sso'), new Response());
+		$response = $this->controller->startSso(new ServerRequestFactory()->createServerRequest('GET', 'http://hub.example.test:8080/login/sso/3'), new Response(), ['id' => '3']);
 
 		$this->assertRedirect($response, 'https://idp.example.test/authorize?redirect_uri=' . urlencode('http://hub.example.test:8080/login/sso/callback'));
 	}
@@ -269,11 +271,12 @@ class LoginControllerTest extends TestCase
 	#[Group('units')]
 	public function testTheSsoWhichIsOffOrBrokenLeadsToTheLogin(): void
 	{
-		$this->assertRedirect($this->controller->startSso(new ServerRequestFactory()->createServerRequest('GET', '/login/sso'), new Response()), '/login');
+		// unknown or off
+		$this->assertRedirect($this->controller->startSso(new ServerRequestFactory()->createServerRequest('GET', '/login/sso/9'), new Response(), ['id' => '9']), '/login');
+		static::assertSame([], $this->flashErrors());
 
-		$this->ssoLogin->method('isEnabled')->willReturn(true);
 		$this->ssoLogin->method('authorizationUri')->willThrowException(new \RuntimeException('provider down'));
-		$this->assertRedirect($this->controller->startSso(new ServerRequestFactory()->createServerRequest('GET', '/login/sso'), new Response()), '/login');
+		$this->assertRedirect($this->controller->startSso(new ServerRequestFactory()->createServerRequest('GET', '/login/sso/3'), new Response(), ['id' => '3']), '/login');
 		static::assertSame(['login.sso_failed'], $this->flashErrors());
 	}
 
