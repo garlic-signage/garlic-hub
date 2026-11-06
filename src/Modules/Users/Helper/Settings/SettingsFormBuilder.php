@@ -98,8 +98,13 @@ readonly class SettingsFormBuilder
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
-	public function buildButtons(): array
+	public function buildButtons(bool $hasTwoFactor): array
 	{
-		return [$this->formElementsCreator->addResetPasswordButton()];
+		$buttons = [$this->formElementsCreator->addResetPasswordButton()];
+		// only a user with the second factor has something to reset
+		if ($hasTwoFactor)
+			$buttons[] = $this->formElementsCreator->addResetTwoFactorButton();
+
+		return $buttons;
 	}
 }

@@ -25,9 +25,11 @@ use App\Framework\Exceptions\AuthException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Shared\Audit\AuditAction;
 use App\Shared\Audit\AuditLog;
+use App\Shared\User\TwoFactor\TwoFactorService;
 use App\Shared\User\UserEntity;
 use App\Shared\User\UsersService;
 use DateMalformedStringException;
+use Defuse\Crypto\Exception\CryptoException;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
 use Psr\SimpleCache\InvalidArgumentException;
@@ -48,7 +50,8 @@ class AuthService
 								private readonly AutoLoginService   $autoLoginService,
 								private readonly LoggerInterface    $logger,
 								private readonly LoginThrottle      $loginThrottle,
-								private readonly AuditLog           $auditLog)
+								private readonly AuditLog           $auditLog,
+								private readonly TwoFactorService   $twoFactorService)
 	{}
 
 	public function getErrorMessage(): string
@@ -108,6 +111,65 @@ class AuthService
 		$this->logger->info('Entity created for: '. implode('|', $entity->getMain()));
 
 		return $entity;
+	}
+
+	/**
+	 * Whether the login needs the second step: the user turned the second factor on.
+	 *
+	 * @throws Exception
+	 */
+	public function needsSecondFactor(int $UID): bool
+	{
+		return $this->twoFactorService->isEnabled($UID);
+	}
+
+	/**
+	 * The second step of the login, after the password: a code of the app or a recovery code.
+	 * The failures are counted like the ones of the password, per user and IP address.
+	 *
+	 * @throws CryptoException
+	 * @throws Exception
+	 * @throws InvalidArgumentException
+	 */
+	public function loginWithSecondFactor(int $UID, string $code): ?UserEntity
+	{
+		$this->errorMessage = '';
+		$ip         = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+		$identifier = 'two_factor_' . $UID;
+		if ($this->loginThrottle->isBlocked($identifier, $ip))
+		{
+			$this->errorMessage = 'two_factor_blocked';
+			$this->logger->warning('Second factor blocked', ['UID' => $UID, 'ip_address' => $ip]);
+			return null;
+		}
+
+		if (!$this->twoFactorService->verify($UID, $code))
+		{
+			$this->loginThrottle->registerFailure($identifier, $ip);
+			$this->errorMessage = $this->loginThrottle->isBlocked($identifier, $ip) ? 'two_factor_blocked' : 'two_factor_wrong';
+			$this->logger->error('Second factor failed', ['UID' => $UID, 'ip_address' => $ip]);
+			$this->recordFailedSecondFactor($UID, $ip);
+			return null;
+		}
+
+		$this->loginThrottle->reset($identifier, $ip);
+		// an admin may have blocked the user since the password was checked
+		$entity = $this->getCurrentUser($UID);
+		$this->validateUserStatus((int) $entity->getMain()['status']);
+
+		return $this->errorMessage === '' ? $entity : null;
+	}
+
+	private function recordFailedSecondFactor(int $UID, string $ip): void
+	{
+		try
+		{
+			$this->auditLog->record(0, 'auth', AuditAction::TWO_FACTOR_FAILED, null, $UID, ['ip_address' => $ip]);
+		}
+		catch (Throwable $e)
+		{
+			$this->logger->error('Failed second factor could not be audited: ' . $e->getMessage());
+		}
 	}
 
 	/**

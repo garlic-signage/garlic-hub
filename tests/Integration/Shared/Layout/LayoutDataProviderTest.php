@@ -95,7 +95,8 @@ class LayoutDataProviderTest extends ContainerTestCase
 	{
 		return [
 			'sub admin of the users'     => [[['users', 1]], ['/users']],
-			'module admin of the users'  => [[['users', 2]], ['/users']],
+			// the users module has settings: whether everybody needs the second factor
+			'module admin of the users'  => [[['users', 2]], ['/users', '/system/settings']],
 			'sub admin of the templates' => [[['templates', 4]], ['/templates']],
 			'module admin of templates'  => [[['templates', 8]], ['/templates']],
 			'both'                       => [[['users', 1], ['templates', 8]], ['/users', '/templates']],

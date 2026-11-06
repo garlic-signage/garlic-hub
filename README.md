@@ -51,6 +51,7 @@ The demo is deleted and rebuilt regularly.
 | **Push**                  | ✅      | Push a playlist directly to players reachable over their REST API, e.g. in the intranet                               |
 | **User management**       | ✅      | Basic user management with roles per module; initial admin user set up after installation                             |
 | **Authentication**        | ✅      | Session login with remember-me and basic OAuth2 token authorization                                                    |
+| **Two-factor authentication** | 🧪 | TOTP with Aegis and compatible apps, recovery codes, reset by the admin; can be required for all users |
 | **Internationalization**  | ✅      | UI in English, German, Spanish, French, Greek and Russian                                                              |
 | **Preview player**        | 🧪      | Preview playlists in the browser with the WASM player in a resizable overlay                                           |
 | **Thumbnail preview**     | 🧪      | Enlarged thumbnail of playlist items on hover and touch                                                                |

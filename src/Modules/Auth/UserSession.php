@@ -31,6 +31,8 @@ use App\Framework\Exceptions\UserException;
  */
 readonly class UserSession
 {
+	private const string TWO_FACTOR = 'two_factor';
+
 	private Session $session;
 
 	public function __construct(Session $session)
@@ -76,6 +78,22 @@ readonly class UserSession
 		$user = $this->checkUser();
 		$user['last_password_change'] = $lastPasswordChange;
 		$this->session->set('user', $user);
+	}
+
+	/**
+	 * Whether the user of the session has the second factor, null when the session does not know it
+	 * (it is older than the second factor).
+	 */
+	public function hasTwoFactor(): ?bool
+	{
+		$twoFactor = $this->session->get(self::TWO_FACTOR);
+
+		return $twoFactor === null ? null : $twoFactor === '1';
+	}
+
+	public function setTwoFactor(bool $enabled): void
+	{
+		$this->session->set(self::TWO_FACTOR, $enabled ? '1' : '0');
 	}
 
 	/**

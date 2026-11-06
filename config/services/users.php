@@ -51,6 +51,7 @@ use App\Modules\Users\Services\AclValidator;
 use App\Modules\Users\Services\UsersAdminCreateService;
 use App\Modules\Users\Services\UsersAdminService;
 use App\Modules\Users\Services\UsersDatatableService;
+use App\Shared\User\TwoFactor\TwoFactorService;
 use App\Shared\User\UsersService;
 use Slim\Flash\Messages;
 use Phpfastcache\Helper\Psr16Adapter;
@@ -201,7 +202,8 @@ $dependencies[UsersAdminService::class] = DI\factory(function (ContainerInterfac
 		$container->get(Transactions::class),
 		$container->get(UserSession::class),
 		$container->get(UsersService::class),
-		$container->get(AuditLog::class)
+		$container->get(AuditLog::class),
+		$container->get(TwoFactorService::class)
 	);
 });
 $dependencies[UsersAdminCreateService::class] = DI\factory(function (ContainerInterface $container)

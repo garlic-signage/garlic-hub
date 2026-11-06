@@ -42,6 +42,8 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Slim\Psr7\Factory\ServerRequestFactory;
 use Slim\Psr7\Response;
 use Tests\Integration\Support\ContainerTestCase;
+use App\Shared\User\TwoFactor\TwoFactorService;
+use App\Framework\Config\Config;
 
 /**
  * Which paths a guest, a logged-in user and a user with a remember-me cookie can reach.
@@ -62,10 +64,13 @@ class AuthMiddlewareTest extends ContainerTestCase
 				$this->container->get(AutoLoginService::class),
 				$this->container->get('ModuleLogger'),
 				new LoginThrottle($this->container->get(Psr16Adapter::class)),
-			$this->container->get(AuditLog::class)
+			$this->container->get(AuditLog::class),
+			$this->container->get(TwoFactorService::class)
 			),
 			$this->container->get(Session::class),
-			$this->container->get(Cookie::class)
+			$this->container->get(Cookie::class),
+			$this->container->get(UserSession::class),
+			$this->container->get(Config::class)
 		);
 	}
 

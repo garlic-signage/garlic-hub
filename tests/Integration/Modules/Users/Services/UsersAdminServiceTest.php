@@ -38,6 +38,7 @@ use App\Shared\User\UserTokenService;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Integration\Support\ContainerTestCase;
+use App\Shared\User\TwoFactor\TwoFactorService;
 
 /**
  * What the admin service stores, with the real database. Fixtures: 1 admin, 2 anna, 3 bernd.
@@ -256,6 +257,39 @@ class UsersAdminServiceTest extends ContainerTestCase
 		}
 	}
 
+	/**
+	 * A user with the second factor and his recovery codes, as the setup in the account leaves them.
+	 */
+	private function giveSecondFactor(int $UID): void
+	{
+		$this->connection->insert('user_two_factor', ['UID' => $UID, 'secret' => 'encrypted', 'enabled_at' => '2026-01-01 00:00:00']);
+		$this->connection->insert('user_recovery_codes', ['UID' => $UID, 'code_hash' => str_repeat('a', 64)]);
+	}
+
+	public function testTheAdminResetsTheSecondFactorOfAUser(): void
+	{
+		$this->giveSecondFactor(2);
+		$this->giveSecondFactor(3);
+		$service = $this->serviceWith();
+		static::assertTrue($service->hasTwoFactor(2));
+
+		$service->resetTwoFactor(2);
+
+		static::assertFalse($service->hasTwoFactor(2));
+		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_recovery_codes WHERE UID = 2'));
+		static::assertTrue($service->hasTwoFactor(3), 'the others keep theirs');
+	}
+
+	public function testTheSecondFactorGoesWithTheDeletedUser(): void
+	{
+		$this->giveSecondFactor(3);
+
+		$this->serviceWith()->deleteUser(3);
+
+		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_two_factor WHERE UID = 3'));
+		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_recovery_codes WHERE UID = 3'));
+	}
+
 	private function serviceWith(?NodesService $nodes = null, ?UserMainRepository $users = null, ?UserTokenService $tokens = null): UsersAdminService
 	{
 		return new UsersAdminService(
@@ -268,7 +302,8 @@ class UsersAdminServiceTest extends ContainerTestCase
 			$this->container->get(Transactions::class),
 			$this->container->get(UserSession::class),
 			$this->container->get(UsersService::class),
-			$this->container->get(AuditLog::class)
+			$this->container->get(AuditLog::class),
+			$this->container->get(TwoFactorService::class)
 		);
 	}
 }

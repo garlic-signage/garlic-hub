@@ -80,7 +80,7 @@ class SettingsTest extends ContainerTestCase
 
 	public function testOnlyTheModuleAdminGetsTheTabsOfTheModulesWithASchema(): void
 	{
-		static::assertSame(['mediapool', 'playlists', 'system'], $this->service->findEditableModules(1));
+		static::assertSame(['users', 'mediapool', 'playlists', 'system'], $this->service->findEditableModules(1));
 		static::assertSame([], $this->service->findEditableModules(2));
 	}
 
@@ -139,7 +139,7 @@ class SettingsTest extends ContainerTestCase
 		$response = $this->controller()->show(new ServerRequestFactory()->createServerRequest('GET', '/system/settings'), new Response());
 
 		static::assertInstanceOf(PageResponse::class, $response);
-		$fields = $response->getTemplateData()['tabs'][2]['fields'];
+		$fields = $response->getTemplateData()['tabs'][3]['fields'];
 		static::assertSame(['setting_system_Scheduler_enabled', 'disabled'], [$fields[1]['DEPENDS_ON'], $fields[1]['DISABLED']]);
 		static::assertSame(['setting_system_Audit_enabled', 'disabled'], [$fields[2]['DEPENDS_ON'], $fields[2]['DISABLED']]);
 	}
@@ -153,7 +153,7 @@ class SettingsTest extends ContainerTestCase
 		$response = $this->controller()->show(new ServerRequestFactory()->createServerRequest('GET', '/system/settings'), new Response());
 
 		static::assertInstanceOf(PageResponse::class, $response);
-		static::assertSame('disabled', $response->getTemplateData()['tabs'][2]['fields'][2]['DISABLED']);
+		static::assertSame('disabled', $response->getTemplateData()['tabs'][3]['fields'][2]['DISABLED']);
 	}
 
 	public function testASettingIsResetToItsDefault(): void
@@ -221,7 +221,7 @@ class SettingsTest extends ContainerTestCase
 		$response = $this->controller()->show(new ServerRequestFactory()->createServerRequest('GET', '/system/settings'), new Response());
 
 		static::assertInstanceOf(PageResponse::class, $response);
-		$fit = $response->getTemplateData()['tabs'][1]['fields'][2]['is_select']['options'];
+		$fit = $response->getTemplateData()['tabs'][2]['fields'][2]['is_select']['options'];
 		static::assertSame(['slice'], array_column(array_filter($fit, static fn(array $option): bool => $option['SELECTED'] === 'selected'), 'OPTION'));
 	}
 
@@ -251,8 +251,8 @@ class SettingsTest extends ContainerTestCase
 
 		static::assertInstanceOf(PageResponse::class, $response);
 		$data = $response->getTemplateData();
-		static::assertSame(['mediapool', 'playlists', 'system'], array_column($data['tabs'], 'MODULE'));
-		static::assertSame(['Scheduler.enabled', 'Audit.enabled', 'Audit.retention_days', 'Versioning.enabled', 'Versioning.max_versions'], array_column($data['tabs'][2]['fields'], 'NAME'));
+		static::assertSame(['users', 'mediapool', 'playlists', 'system'], array_column($data['tabs'], 'MODULE'));
+		static::assertSame(['Scheduler.enabled', 'Audit.enabled', 'Audit.retention_days', 'Versioning.enabled', 'Versioning.max_versions'], array_column($data['tabs'][3]['fields'], 'NAME'));
 	}
 
 	public function testAUserWithoutRightsIsSentBack(): void

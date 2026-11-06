@@ -58,11 +58,11 @@ class TemplatePreparerTest extends TestCase
 	 * @param array<string,mixed> $page
 	 * @return array<string,mixed>
 	 */
-	private function data(array $page): array
+	private function data(array $page, string $template = 'account/edit'): array
 	{
 		$layout = $page['this_layout'];
 		static::assertIsArray($layout);
-		static::assertSame('account/edit', $layout['template']);
+		static::assertSame($template, $layout['template']);
 		static::assertIsArray($layout['data']);
 
 		return $layout['data'];
@@ -73,15 +73,18 @@ class TemplatePreparerTest extends TestCase
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testThePageToChangeTheOwnPassword(): void
+	public function testTheAccountHasATabForThePasswordAndOneForTheSecondFactor(): void
 	{
-		$page = $this->preparer->preparePasswordForm($this->form);
-		$data = $this->data($page);
+		$twoFactorTab = ['CSRF_TOKEN' => 'token', 'enabled' => []];
+		$page = $this->preparer->preparePasswordForm($this->form, $twoFactorTab);
+		$data = $this->data($page, 'account/settings');
 
-		static::assertSame('account.edit_password', $page['main_layout']['LANG_PAGE_TITLE']);
-		static::assertSame(['/css/account/password.css'], $page['main_layout']['additional_css']);
+		static::assertSame('menu.my_account', $page['main_layout']['LANG_PAGE_TITLE']);
+		static::assertSame(['/css/account/password.css', '/css/account/settings.css'], $page['main_layout']['additional_css']);
 		static::assertSame(['/js/account/password/init.js'], $page['main_layout']['footer_modules']);
-		static::assertSame('account.edit_password', $data['LANG_PAGE_HEADER']);
+		static::assertSame('menu.my_account', $data['LANG_PAGE_HEADER']);
+		static::assertSame([['MODULE' => 'password', 'LANG_MODULE' => 'account.password'], ['MODULE' => 'two_factor', 'LANG_MODULE' => 'account.two_factor']], $data['tabs']);
+		static::assertSame($twoFactorTab, $data['two_factor']);
 		static::assertSame('/account/password', $data['FORM_ACTION']);
 		static::assertSame('account.password_explanation', $data['LANG_FORM_EXPLANATION']);
 		static::assertSame($this->form['hidden'], $data['element_hidden']);

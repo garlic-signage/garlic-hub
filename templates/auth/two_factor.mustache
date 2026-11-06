@@ -1,0 +1,13 @@
+<form id="two_factor_form" method="POST" action="/login/two-factor" class="main-element-group">
+	<fieldset>
+		<legend>{{LANG_PAGE_HEADER}}</legend>
+		<p>{{LANG_EXPLANATION}}</p>
+		<label for="code">{{LANG_CODE}}:
+			<input type="text" id="code" name="code" autocomplete="one-time-code" inputmode="text" maxlength="20" required autofocus>
+		</label>
+		<input type="hidden" name="csrf_token" value="{{CSRF_TOKEN}}">
+
+		<button type="submit" class="primary">{{LANG_SUBMIT}}</button>
+		<a href="/login">{{LANG_CANCEL}}</a>
+	</fieldset>
+</form>

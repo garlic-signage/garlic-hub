@@ -32,6 +32,7 @@ use App\Modules\Users\UserStatus;
 use App\Shared\User\TokenPurposes;
 use App\Modules\Users\Services\UsersAdminService;
 use Doctrine\DBAL\Exception;
+use Throwable;
 
 /**
  * Handles orchestration of validation, fetching, and saving of users by an admin.
@@ -136,7 +137,7 @@ class Orchestrator
 		$this->settingsParametersPolicy->addEditFormElements($this->getLoadedUser());
 
 		$form = $this->settingsFormBuilder->buildForm($userInput !== [] ? $userInput : $this->user);
-		$form['additional_buttons'] = $this->settingsFormBuilder->buildButtons();
+		$form['additional_buttons'] = $this->settingsFormBuilder->buildButtons($this->usersAdminService->hasTwoFactor((int) $this->getLoadedUser()['UID']));
 
 		return $form;
 	}
@@ -234,6 +235,29 @@ class Orchestrator
 
 		// Todo: Eliminate this workaround with a better process
 		$this->session->set(TokenPurposes::PASSWORD_RESET->value.'_token', bin2hex($token));
+
+		return ['success' => true];
+	}
+
+	/**
+	 * The user must be loaded with loadUserForEdit() before, so the ACL is checked.
+	 *
+	 * @param array<string,mixed> $post
+	 * @return array{success: bool, errors?: string[]}
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws Throwable
+	 * @throws UserException
+	 */
+	public function resetTwoFactor(int $UID, array $post): array
+	{
+		$errors = $this->validateEdit($post);
+		if ($errors !== [])
+			return ['success' => false, 'errors' => $errors];
+
+		$this->usersAdminService->resetTwoFactor($UID);
 
 		return ['success' => true];
 	}

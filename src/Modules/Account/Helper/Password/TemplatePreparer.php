@@ -34,17 +34,28 @@ readonly class TemplatePreparer
 	{}
 
 	/**
+	 * The account of the user: a tab for the password and one for the second factor.
+	 *
 	 * @param array<string,mixed> $dataSections
+	 * @param array<string,mixed> $twoFactorTab
 	 * @return array<string,mixed>
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
-	public function preparePasswordForm(array $dataSections): array
+	public function preparePasswordForm(array $dataSections, array $twoFactorTab): array
 	{
-		$dataSections['title']       = $this->translator->translate('edit_password', 'account');
+		$dataSections['title']       = $this->translator->translate('my_account', 'menu');
 		$dataSections['form_action'] = '/account/password';
 
-		return $this->prepare($dataSections);
+		$page = $this->prepare($dataSections, 'account/settings');
+		$page['main_layout']['additional_css'][] = '/css/account/settings.css';
+		$page['this_layout']['data']['tabs'] = [
+			['MODULE' => 'password', 'LANG_MODULE' => $this->translator->translate('password', 'account')],
+			['MODULE' => 'two_factor', 'LANG_MODULE' => $this->translator->translate('two_factor', 'account')]
+		];
+		$page['this_layout']['data']['two_factor'] = $twoFactorTab;
+
+		return $page;
 	}
 
 	/**
@@ -64,7 +75,7 @@ readonly class TemplatePreparer
 		$dataSections['title']       = sprintf($title, $tokenUser['username']);
 		$dataSections['form_action'] = '/force-password';
 
-		return $this->prepare($dataSections);
+		return $this->prepare($dataSections, 'account/edit');
 	}
 
 	/**
@@ -73,12 +84,12 @@ readonly class TemplatePreparer
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
-	private function prepare(array $dataSections): array
+	private function prepare(array $dataSections, string $templateName): array
 	{
 		$dataSections['explanations']      = $this->translator->translate('password_explanation', 'account');
 		$dataSections['additional_css']    = ['/css/account/password.css'];
 		$dataSections['footer_modules']    = ['/js/account/password/init.js'];
-		$dataSections['template_name']     = 'account/edit';
+		$dataSections['template_name']     = $templateName;
 		$dataSections['save_button_label'] = $this->translator->translate('save', 'main');
 
 		return $this->formTemplatePreparer->prepareUITemplate($dataSections);

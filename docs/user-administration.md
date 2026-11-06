@@ -59,7 +59,22 @@ Modules differ in the details:
 ## Users
 
 - **Delete** anonymizes the user: the row stays, so the UID is never given to somebody else and his content
-  keeps an owner. Email, password and session are cleared, tokens and rights are removed, his media folder is
-  deleted.
+  keeps an owner. Email, password and session are cleared, tokens, rights and the second factor are removed, his
+  media folder is deleted.
 - **Password reset** by an admin clears the password, ends the running sessions and the autologin and creates a
   link with which the user sets a new password.
+- **2FA reset** by an admin turns the second factor of a user off (lost device). The button is shown only for a
+  user who has it. The user sets it up again, at once after his next login while it is required.
+
+## Two-factor authentication
+
+- Every user sets it up in his account (tab 2FA) with an authenticator app such as Aegis: TOTP with SHA1, 6 digits
+  and 30 seconds (`Shared\User\TwoFactor\TwoFactorService`, library spomky-labs/otphp). It counts only after the
+  first valid code, which also gives 10 recovery codes. They are shown once and stored as hashes.
+- The login asks for the code after the password (`/login/two-factor`). The session counts as logged in and the
+  remember-me cookie is created only after it. Wrong codes are limited like wrong passwords, a code is accepted
+  once, also one time slot before and after the current one.
+- The module admin of `users` requires it for everybody in the settings (`[TwoFactor] required`, off by default),
+  effective at once: a user without it reaches only his account and the logout (`Auth\AuthMiddleware`). While it is
+  required, a user can not turn it off himself.
+- Players and OAuth2 tokens are not affected.

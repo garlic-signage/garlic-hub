@@ -34,6 +34,7 @@ use PHPUnit\Framework\Attributes\Group;
 use Phpfastcache\Helper\Psr16Adapter;
 use Tests\Integration\Support\ContainerTestCase;
 use Tests\Integration\Support\InMemoryCookie;
+use App\Shared\User\TwoFactor\TwoFactorService;
 
 /**
  * Login by the autologin cookie ("remember me"). The cookie holds a random token, the database
@@ -301,7 +302,8 @@ class AutoLoginTest extends ContainerTestCase
 			$this->container->get(AutoLoginService::class),
 			$this->container->get('ModuleLogger'),
 			new LoginThrottle($this->container->get(Psr16Adapter::class)),
-			$this->container->get(AuditLog::class)
+			$this->container->get(AuditLog::class),
+			$this->container->get(TwoFactorService::class)
 		);
 	}
 }

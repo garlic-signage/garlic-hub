@@ -34,6 +34,7 @@ use App\Shared\User\TokenPurposes;
 use App\Shared\User\UserTokenService;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Integration\Support\ContainerTestCase;
+use App\Shared\User\TwoFactor\TwoFactorService;
 
 /**
  * Change of the own password and the password change by a link token (initial password or reset).
@@ -218,7 +219,8 @@ class PasswordTest extends ContainerTestCase
 			$this->container->get(AutoLoginService::class),
 			$this->container->get('ModuleLogger'),
 			new LoginThrottle($this->container->get(Psr16Adapter::class)),
-			$this->container->get(AuditLog::class)
+			$this->container->get(AuditLog::class),
+			$this->container->get(TwoFactorService::class)
 		);
 
 		static::assertNull($authService->loginByCookie());

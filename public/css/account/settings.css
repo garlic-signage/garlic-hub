@@ -1,0 +1,7 @@
+/* the tab of the second factor in the account (.page-tabs in theme-base.css) */
+#accountSettings .two-factor form {display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin: 1rem 0;}
+#accountSettings .two-factor-qr-code svg {width: 200px; height: 200px; background: #fff; padding: 0.5rem;}
+#accountSettings .two-factor-secret {word-break: break-all;}
+#accountSettings .two-factor-required, #accountSettings .two-factor-codes {font-weight: bold;}
+#accountSettings .two-factor-codes ul {display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: 0.25rem 1rem; list-style: none; padding: 0;}
+#accountSettings .two-factor-enabled {color: var(--gh-success-color); font-weight: bold;}

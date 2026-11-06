@@ -40,6 +40,7 @@ use Psr\Http\Message\ResponseInterface;
 use Slim\Psr7\Factory\ServerRequestFactory;
 use Slim\Psr7\Response;
 use Tests\Integration\Support\ContainerTestCase;
+use App\Shared\User\TwoFactor\TwoFactorService;
 
 /**
  * Who sees which users, who may delete users and handle their tokens.
@@ -179,7 +180,8 @@ class UserAccessTest extends ContainerTestCase
 				$this->container->get(AutoLoginService::class),
 				$this->container->get('ModuleLogger'),
 				new LoginThrottle($this->container->get(Psr16Adapter::class)),
-			$this->container->get(AuditLog::class)
+			$this->container->get(AuditLog::class),
+			$this->container->get(TwoFactorService::class)
 			);
 			static::assertNull($authService->login('bernd', $password));
 		}

@@ -1,10 +1,6 @@
 <h1>{{LANG_PAGE_HEADER}}</h1>
 <section id="systemSettings" class="main-element-group page-tabs">
-	<nav class="tab-header">
-		{{#tabs}}
-		<button type="button" class="tab-button" data-tab="{{MODULE}}">{{LANG_MODULE}}</button>
-		{{/tabs}}
-	</nav>
+	{{> page_tabs_header}}
 
 	{{#tabs}}
 	<section class="tab-content" data-module="{{MODULE}}">

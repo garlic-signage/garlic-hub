@@ -88,6 +88,23 @@ class ShowAdminControllerTest extends UsersControllerTestCase
 		static::assertSame(['bernd', 'bernd@example.com', '3'], [$fields['username']['value'], $fields['email']['value'], $fields['UID']['value']]);
 		static::assertSame('User core data: bernd', $page->getTemplateData()['LANG_PAGE_HEADER']);
 		static::assertSame('resetPassword', $page->getTemplateData()['additional_buttons'][0]['ADDITIONAL_BUTTON_NAME']);
+		// bernd has no second factor: nothing to reset
+		static::assertCount(1, $page->getTemplateData()['additional_buttons']);
+	}
+
+	public function testTheAdminResetsTheSecondFactorOfAUserWhoHasIt(): void
+	{
+		$this->actingAs(1);
+		$this->connection->insert('user_two_factor', ['UID' => 3, 'secret' => 'encrypted', 'enabled_at' => '2026-01-01 00:00:00']);
+		$buttons = $this->page($this->edit('3'))->getTemplateData()['additional_buttons'];
+		static::assertSame(['resetPassword', 'resetTwoFactor'], array_column($buttons, 'ADDITIONAL_BUTTON_NAME'));
+
+		$response = $this->store(['UID' => '3', 'resetTwoFactor' => '1', 'username' => 'bernd', 'email' => 'bernd@example.com']);
+
+		$this->assertRedirect($response, '/users/edit/3');
+		static::assertSame(0, (int) $this->databaseValue('SELECT COUNT(*) FROM user_two_factor WHERE UID = 3'));
+		// the password stays
+		static::assertNotSame('', $this->databaseValue('SELECT password FROM user_main WHERE UID = 3'));
 	}
 
 	public function testTheFormHasTheRulesOfTheFields(): void
@@ -335,6 +352,7 @@ class ShowAdminControllerTest extends UsersControllerTestCase
 			'create'         => [['UID' => '0', 'username' => 'evil', 'email' => 'evil@example.com', 'status' => '3', 'locale' => 'en_US']],
 			'change another' => [['UID' => '1', 'username' => 'hacked', 'email' => 'hacked@example.com', 'status' => '0', 'locale' => 'de_DE']],
 			'reset another'  => [['UID' => '1', 'resetPassword' => '1', 'username' => 'admin', 'email' => 'admin@example.com']],
+			'reset the 2FA'  => [['UID' => '1', 'resetTwoFactor' => '1', 'username' => 'admin', 'email' => 'admin@example.com']],
 		];
 	}
 

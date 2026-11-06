@@ -32,6 +32,7 @@ use App\Modules\Users\UserStatus;
 use App\Shared\Audit\AuditAction;
 use App\Shared\Audit\AuditLog;
 use App\Shared\User\TokenPurposes;
+use App\Shared\User\TwoFactor\TwoFactorService;
 use App\Shared\User\UsersService;
 use App\Shared\User\UserTokenService;
 use App\Shared\User\Repositories\Core\UserAclRepository;
@@ -61,7 +62,8 @@ class UsersAdminService
 		private readonly Transactions $transactions,
 		private readonly UserSession $userSession,
 		private readonly UsersService $usersService,
-		private readonly AuditLog $auditLog
+		private readonly AuditLog $auditLog,
+		private readonly TwoFactorService $twoFactorService
 	) {}
 
 	public function getToken(): string
@@ -175,6 +177,7 @@ class UsersAdminService
 			]);
 
 			$this->userTokenService->deleteAllUserTokens($UID);
+			$this->twoFactorService->remove($UID);
 			// the rights must not outlive the user: SQLite does not cascade without a pragma
 			$this->userAclRepository->delete($UID);
 			$this->userVipRepository->delete($UID);
@@ -229,6 +232,26 @@ class UsersAdminService
 			$this->transactions->rollBack();
 			throw $e;
 		}
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function hasTwoFactor(int $UID): bool
+	{
+		return $this->twoFactorService->isEnabled($UID);
+	}
+
+	/**
+	 * For a user who lost his device: the second factor is off, the user sets it up again
+	 * (while the admin requires it, at once after his next login).
+	 *
+	 * @throws Exception
+	 * @throws Throwable
+	 */
+	public function resetTwoFactor(int $UID): void
+	{
+		$this->twoFactorService->reset($UID, $this->userSession->getUID());
 	}
 
 	/**

@@ -36,6 +36,8 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Slim\Psr7\Factory\ServerRequestFactory;
 use Slim\Psr7\Response;
 use Tests\Support\MemorySession;
+use App\Modules\Auth\UserSession;
+use App\Framework\Config\Config;
 
 /**
  * Which paths a guest may open, what he gets instead, and the login by the remember me cookie.
@@ -64,7 +66,7 @@ class AuthMiddlewareTest extends TestCase
 				return new Response(200)->withHeader('X-Handled', $request->getUri()->getPath());
 			}
 		};
-		$this->middleware = new AuthMiddleware($this->authService, $this->session, new Cookie());
+		$this->middleware = new AuthMiddleware($this->authService, $this->session, new Cookie(), new UserSession($this->session), $this->createStub(Config::class));
 	}
 
 	protected function tearDown(): void

@@ -38,6 +38,7 @@ use Slim\Flash\Messages;
 use Slim\Psr7\Factory\ServerRequestFactory;
 use Slim\Psr7\Response;
 use Tests\Support\MemorySession;
+use App\Modules\Auth\UserSession;
 
 /**
  * Session, CSRF token and flash messages are the real ones. The AuthService is a stub which knows one
@@ -69,7 +70,7 @@ class LoginControllerTest extends TestCase
 		$translator = $this->createStub(Translator::class);
 		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
 
-		$this->controller = new LoginController($this->authService, $this->csrfToken, $this->session, new Messages($this->flashStorage), $translator);
+		$this->controller = new LoginController($this->authService, $this->csrfToken, $this->session, new Messages($this->flashStorage), $translator, new UserSession($this->session));
 	}
 
 	/**

@@ -23,7 +23,7 @@ namespace App\Shared\Audit;
 
 /**
  * What the audit log records: the changes of rights, shares, settings and users, failed logins,
- * restored versions and deleted units.
+ * restored versions, deleted units and the changes of the second factor.
  */
 enum AuditAction: string
 {
@@ -40,4 +40,9 @@ enum AuditAction: string
 	case LOGIN_FAILED           = 'login_failed';
 	case VERSION_RESTORED       = 'version_restored';
 	case UNIT_DELETED           = 'unit_deleted';
+	case TWO_FACTOR_ENABLED     = 'two_factor_enabled';
+	case TWO_FACTOR_DISABLED    = 'two_factor_disabled';
+	case TWO_FACTOR_RESET       = 'two_factor_reset';
+	case RECOVERY_CODES_CREATED = 'recovery_codes_created';
+	case TWO_FACTOR_FAILED      = 'two_factor_failed';
 }

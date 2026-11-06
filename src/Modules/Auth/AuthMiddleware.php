@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Auth;
 
+use App\Framework\Config\Config;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Http\Cookie;
 use App\Framework\Http\Session;
@@ -38,6 +39,9 @@ use Slim\Psr7\Response;
  * Secure by default: a new route is protected automatically and has to be
  * released here explicitly. Users without session are logged in by their
  * auto login cookie when they have one.
+ *
+ * While the admin requires the second factor (settings of the users module), a user without it reaches only his
+ * account, where he sets it up, and the logout.
  */
 readonly class AuthMiddleware implements MiddlewareInterface
 {
@@ -56,8 +60,9 @@ readonly class AuthMiddleware implements MiddlewareInterface
 	];
 	private const string LOGIN_SECTION = 'login';
 	private const array API_SECTIONS = ['api', 'async'];
+	private const array SECTIONS_WITHOUT_SECOND_FACTOR = ['account', 'logout'];
 
-	public function __construct(private AuthService $authService, private Session $session, private Cookie $cookie)
+	public function __construct(private AuthService $authService, private Session $session, private Cookie $cookie, private UserSession $userSession, private Config $config)
 	{
 	}
 
@@ -77,6 +82,9 @@ readonly class AuthMiddleware implements MiddlewareInterface
 		// the login page is for guests only
 		if ($section === self::LOGIN_SECTION)
 			return $isLoggedIn ? $this->redirect('/') : $handler->handle($request);
+
+		if ($isLoggedIn && $this->mustSetUpSecondFactor($section))
+			return $this->isApiRequest($section, $request) ? $this->secondFactorMissing() : $this->redirect('/account/settings#two_factor');
 
 		if ($isLoggedIn)
 			return $handler->handle($request);
@@ -136,6 +144,37 @@ readonly class AuthMiddleware implements MiddlewareInterface
 		$this->session->regenerateID();
 
 		return true;
+	}
+
+	/**
+	 * A session which is older than the second factor does not know whether the user has it: it is looked up once.
+	 *
+	 * @throws FrameworkException
+	 * @throws Exception
+	 */
+	private function mustSetUpSecondFactor(string $section): bool
+	{
+		if (in_array($section, self::SECTIONS_WITHOUT_SECOND_FACTOR, true) || !$this->config->isSwitchOn('required', 'users', 'TwoFactor'))
+			return false;
+
+		$hasTwoFactor = $this->userSession->hasTwoFactor();
+		if ($hasTwoFactor === null)
+		{
+			$user         = $this->session->get('user');
+			$UID          = is_array($user) && is_numeric($user['UID'] ?? null) ? (int) $user['UID'] : 0;
+			$hasTwoFactor = $this->authService->needsSecondFactor($UID);
+			$this->userSession->setTwoFactor($hasTwoFactor);
+		}
+
+		return !$hasTwoFactor;
+	}
+
+	private function secondFactorMissing(): ResponseInterface
+	{
+		$response = new Response(403);
+		$response->getBody()->write('{"success":false,"message":"Set up the two-factor authentication first."}');
+
+		return $response->withHeader('Content-Type', 'application/json');
 	}
 
 	private function isApiRequest(string $section, ServerRequestInterface $request): bool

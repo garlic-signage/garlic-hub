@@ -220,6 +220,8 @@ dialog .close-button {color: #fff;}
 .page-tabs .tab-button.active {font-weight: bold; border-bottom: 2px solid var(--gh-secondary-color);}
 .page-tabs .tab-content {display: none; padding: 1rem 0;}
 .page-tabs .tab-content.active {display: block;}
+/* a form inside a tab: the tabs are the box already */
+.page-tabs .tab-content .main-element-group {box-shadow: none; padding: 0; margin: 0;}
 
 /* the share dialog of a unit (/js/core/UnitShareDialog.js): a compact list, not a datatable */
 dialog.unit-share {width: min(28rem, 92vw); padding: 0; border: 1px solid var(--gh-secondary-color); border-radius: var(--gh-border-radius);}

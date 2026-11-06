@@ -32,6 +32,8 @@ use App\Framework\Middleware\LocaleMiddleware;
 use App\Framework\Middleware\SecurityHeadersMiddleware;
 use App\Modules\Auth\AuthMiddleware;
 use App\Modules\Auth\AuthService;
+use App\Modules\Auth\UserSession;
+use App\Framework\Config\Config;
 use Slim\Flash\Messages;
 
 return function (ContainerInterface $container, $start_time, $start_memory): App
@@ -56,7 +58,9 @@ return function (ContainerInterface $container, $start_time, $start_memory): App
 	$app->add(new AuthMiddleware(
 		$container->get(AuthService::class),
 		$container->get(Session::class),
-		$container->get(Cookie::class)));
+		$container->get(Cookie::class),
+		$container->get(UserSession::class),
+		$container->get(Config::class)));
 
 	// Timing Middleware
 	$app->add(function ($request, $handler) use ($start_time, $start_memory) {

@@ -30,6 +30,7 @@ use Phpfastcache\Helper\Psr16Adapter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Integration\Support\ContainerTestCase;
+use App\Shared\User\TwoFactor\TwoFactorService;
 
 /**
  * Login with username/email and password. All users of the fixture have the password Test1234!
@@ -60,7 +61,8 @@ class LoginTest extends ContainerTestCase
 			$this->container->get(AutoLoginService::class),
 			$this->container->get('ModuleLogger'),
 			new LoginThrottle($this->container->get(Psr16Adapter::class)),
-			$this->container->get(AuditLog::class)
+			$this->container->get(AuditLog::class),
+			$this->container->get(TwoFactorService::class)
 		);
 	}
 

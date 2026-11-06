@@ -1,0 +1,56 @@
+<h1>{{LANG_PAGE_HEADER}}</h1>
+<section id="accountSettings" class="main-element-group page-tabs">
+	{{> page_tabs_header}}
+
+	<section class="tab-content" data-module="password">
+		{{> edit_form}}
+	</section>
+
+	{{#two_factor}}
+	<section class="tab-content two-factor" data-module="two_factor">
+		{{#is_required}}
+		<p class="two-factor-required">{{LANG_REQUIRED}}</p>
+		{{/is_required}}
+
+		{{#new_codes}}
+		<div class="two-factor-codes">
+			<p>{{LANG_NEW_CODES}}</p>
+			<ul>
+				{{#codes}}
+				<li><code>{{CODE}}</code></li>
+				{{/codes}}
+			</ul>
+		</div>
+		{{/new_codes}}
+
+		{{#setup}}
+		<p>{{LANG_SETUP}}</p>
+		<div class="two-factor-qr-code">{{{QR_CODE}}}</div>
+		<p>{{LANG_SECRET}} <code class="two-factor-secret">{{SECRET}}</code></p>
+		<form action="/account/two-factor" method="post">
+			<input type="hidden" name="csrf_token" value="{{CSRF_TOKEN}}">
+			<label for="two_factor_code">{{LANG_CODE}}</label>
+			<input type="text" id="two_factor_code" name="code" autocomplete="one-time-code" maxlength="20" required>
+			<button type="submit" class="primary">{{LANG_ENABLE}}</button>
+		</form>
+		{{/setup}}
+
+		{{#enabled}}
+		<p class="two-factor-enabled">{{LANG_ENABLED}}</p>
+		<p>{{LANG_RECOVERY_LEFT}}</p>
+		<form action="/account/two-factor/recovery-codes" method="post">
+			<input type="hidden" name="csrf_token" value="{{CSRF_TOKEN}}">
+			<button type="submit">{{LANG_NEW_RECOVERY_CODES}}</button>
+		</form>
+		{{#can_disable}}
+		<form action="/account/two-factor/disable" method="post">
+			<input type="hidden" name="csrf_token" value="{{CSRF_TOKEN}}">
+			<label for="two_factor_disable_code">{{LANG_CODE}}</label>
+			<input type="text" id="two_factor_disable_code" name="code" autocomplete="one-time-code" maxlength="20" required>
+			<button type="submit">{{LANG_DISABLE}}</button>
+		</form>
+		{{/can_disable}}
+		{{/enabled}}
+	</section>
+	{{/two_factor}}
+</section>

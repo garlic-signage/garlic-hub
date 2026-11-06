@@ -33,9 +33,16 @@ use App\Modules\Auth\AutoLoginService;
 use App\Modules\Auth\LoginController;
 use App\Modules\Auth\LoginThrottle;
 use App\Modules\Auth\OAuth2Controller;
+use App\Modules\Auth\UserSession;
 use Phpfastcache\Helper\Psr16Adapter;
 use App\Shared\Audit\AuditLog;
 use App\Shared\User\UserTokenService;
+use App\Framework\Database\BaseRepositories\Transactions;
+use App\Framework\Security\Crypt;
+use App\Framework\System\SystemClock;
+use App\Shared\User\Repositories\Core\UserRecoveryCodesRepository;
+use App\Shared\User\Repositories\Core\UserTwoFactorRepository;
+use App\Shared\User\TwoFactor\TwoFactorService;
 use App\Shared\User\UsersService;
 use Defuse\Crypto\Key;
 use League\OAuth2\Server\AuthorizationServer;
@@ -53,6 +60,21 @@ $dependencies[AutoLoginService::class] = DI\factory(function (ContainerInterface
 		$container->get('ModuleLogger')
 	);
 });
+$dependencies[TwoFactorService::class] = DI\factory(function (ContainerInterface $container)
+{
+	// the name in the app of the user
+	$issuer = $container->get(Config::class)->getEnv('APP_NAME');
+
+	return new TwoFactorService(
+		new UserTwoFactorRepository($container->get('SqlConnection')),
+		new UserRecoveryCodesRepository($container->get('SqlConnection')),
+		$container->get(Crypt::class),
+		new SystemClock(),
+		$container->get(Transactions::class),
+		$container->get(AuditLog::class),
+		$issuer !== '' ? $issuer : 'Garlic-Hub'
+	);
+});
 $dependencies[AuthService::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new AuthService(
@@ -60,7 +82,8 @@ $dependencies[AuthService::class] = DI\factory(function (ContainerInterface $con
 		$container->get(AutoLoginService::class),
 		$container->get('ModuleLogger'),
 		new LoginThrottle($container->get(Psr16Adapter::class)),
-		$container->get(AuditLog::class)
+		$container->get(AuditLog::class),
+		$container->get(TwoFactorService::class)
 	);
 });
 $dependencies[LoginController::class] = DI\factory(function (ContainerInterface $container)
@@ -70,7 +93,8 @@ $dependencies[LoginController::class] = DI\factory(function (ContainerInterface 
 		$container->get(CsrfToken::class),
 		$container->get(Session::class),
 		$container->get(Messages::class),
-		$container->get(Translator::class)
+		$container->get(Translator::class),
+		$container->get(UserSession::class)
 	);
 });
 

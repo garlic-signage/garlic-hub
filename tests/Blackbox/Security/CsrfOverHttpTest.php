@@ -98,11 +98,12 @@ class CsrfOverHttpTest extends BlackboxTestCase
 	}
 
 	/**
-	 * A logged-in user is sent away from the login before any check: the login is tried by a guest with a session.
+	 * A logged-in user is sent away from the login (and its second step) before any check: the login is tried by a
+	 * guest with a session.
 	 */
 	private function visitorFor(string $path): Browser
 	{
-		if ($path !== '/login')
+		if (!in_array($path, ['/login', '/login/two-factor'], true))
 			return $this->admin;
 
 		$guest = $this->browser();

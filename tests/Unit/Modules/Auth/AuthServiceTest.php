@@ -37,6 +37,7 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Tests\Support\ArrayCache;
+use App\Shared\User\TwoFactor\TwoFactorService;
 
 /**
  * The service works with the real LoginThrottle. The stubs are the borders: the database (UsersService)
@@ -80,7 +81,7 @@ class AuthServiceTest extends TestCase
 		$this->autoLoginService->method('removeAutoLogin')->willReturnCallback(function (): void { $this->removedCookies++; });
 
 		$this->logs        = new TestHandler();
-		$this->authService = new AuthService($this->userService, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new ArrayCache()), new NullAuditLog());
+		$this->authService = new AuthService($this->userService, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new ArrayCache()), new NullAuditLog(), $this->createStub(TwoFactorService::class));
 	}
 
 	protected function tearDown(): void
@@ -369,7 +370,7 @@ class AuthServiceTest extends TestCase
 		$users->method('findUser')->willReturn($this->users['user@example.com']);
 		$users->method('getUserById')->willReturn($this->entity(1));
 		$users->method('updatePasswordHash')->willThrowException(new DbalException('database is read only'));
-		$service = new AuthService($users, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new ArrayCache()), new NullAuditLog());
+		$service = new AuthService($users, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new ArrayCache()), new NullAuditLog(), $this->createStub(TwoFactorService::class));
 
 		static::assertNotNull($service->login('user@example.com', self::PASSWORD));
 		static::assertTrue($this->logs->hasWarningThatContains('could not be renewed'));
@@ -425,7 +426,7 @@ class AuthServiceTest extends TestCase
 	{
 		$auditLog = $this->createStub(AuditLog::class);
 		$auditLog->method('record')->willThrowException(new DbalException('database is locked'));
-		$service = new AuthService($this->userService, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new ArrayCache()), $auditLog);
+		$service = new AuthService($this->userService, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new ArrayCache()), $auditLog, $this->createStub(TwoFactorService::class));
 
 		static::assertNull($service->login('user@example.com', 'wrong'));
 		static::assertSame('Invalid credentials.', $service->getErrorMessage());

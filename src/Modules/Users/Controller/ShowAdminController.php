@@ -33,6 +33,8 @@ use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Flash\Messages;
+use Throwable;
+use App\Framework\Localization\Translate\Translator;
 
 /**
  * Handles the administrative user interface for creating and editing users,
@@ -42,7 +44,8 @@ readonly class ShowAdminController
 {
 	public function __construct(private Orchestrator     $orchestrator,
 								private TemplatePreparer $templatePreparer,
-								private Messages         $flash)
+								private Messages         $flash,
+								private Translator       $translator)
 	{}
 
 	/**
@@ -122,6 +125,9 @@ readonly class ShowAdminController
 		if (isset($input->all()['resetPassword']))
 			return $this->resetPassword($response, $UID, $post);
 
+		if (isset($input->all()['resetTwoFactor']))
+			return $this->resetTwoFactor($response, $UID, $post);
+
 		return $this->update($response, $UID, $user['username'], $post);
 	}
 
@@ -178,6 +184,29 @@ readonly class ShowAdminController
 		$result = $this->orchestrator->resetPassword($UID, $post);
 		if ($result['success'])
 			$this->flash->addMessage('success', 'User “' . $this->getUsername($post) . '“ Password reset was successfully.');
+
+		foreach ($result['errors'] ?? [] as $errorText)
+		{
+			$this->flash->addMessage('error', $errorText);
+		}
+
+		return $response->withHeader('Location', '/users/edit/' . $UID)->withStatus(302);
+	}
+
+	/**
+	 * @param array<string,mixed> $post
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws Throwable
+	 * @throws UserException
+	 */
+	private function resetTwoFactor(ResponseInterface $response, int $UID, array $post): ResponseInterface
+	{
+		$result = $this->orchestrator->resetTwoFactor($UID, $post);
+		if ($result['success'])
+			$this->flash->addMessage('success', sprintf($this->translator->translate('two_factor_reset_done', 'users'), $this->getUsername($post)));
 
 		foreach ($result['errors'] ?? [] as $errorText)
 		{

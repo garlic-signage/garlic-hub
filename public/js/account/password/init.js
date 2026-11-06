@@ -17,9 +17,15 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 import {PasswordToggler} from "./PasswordToggler.js";
+import {PageTabs} from "../../core/PageTabs.js";
 
 document.addEventListener('DOMContentLoaded', function()
 {
+	// the account has tabs, the form for a forced password has none
+	const page = document.getElementById("accountSettings");
+	if (page !== null)
+		PageTabs.init(page);
+
 	const password = new PasswordToggler(
 		document.getElementById('password'),
 		document.getElementById('toggle_password')

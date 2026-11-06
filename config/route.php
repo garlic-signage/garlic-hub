@@ -91,6 +91,8 @@ $app->group('', function (RouteCollectorProxy $group) use ($container)
 	$group->get('/legals', resolve([HomeController::class, 'legals'], $container));
 	$group->get('/login', resolve([LoginController::class, 'showLogin'], $container));
 	$group->post('/login', resolve([LoginController::class, 'login'], $container));
+	$group->get('/login/two-factor', resolve([LoginController::class, 'showSecondFactor'], $container));
+	$group->post('/login/two-factor', resolve([LoginController::class, 'loginWithSecondFactor'], $container));
 	$group->get('/logout', resolve([LoginController::class, 'logout'], $container));
 	$group->get('/set-locales/{locale}', resolve([EditLocalesController::class, 'setLocales'], $container));
 
@@ -106,7 +108,10 @@ $app->group('', function (RouteCollectorProxy $group) use ($container)
 
 	// for later profile call
 //	$group->get('/user/{UID:\d}', createControllerCallable([xxxx::class, 'profile'], $container));
-	$group->get('/account/settings', resolve([\App\Modules\Account\Controller\ShowSettingsController::class, 'show'], $container));
+	$group->get('/account/settings', resolve([ShowPasswordController::class, 'showPasswordForm'], $container));
+	$group->post('/account/two-factor', resolve([\App\Modules\Account\Controller\TwoFactorController::class, 'confirm'], $container));
+	$group->post('/account/two-factor/recovery-codes', resolve([\App\Modules\Account\Controller\TwoFactorController::class, 'createRecoveryCodes'], $container));
+	$group->post('/account/two-factor/disable', resolve([\App\Modules\Account\Controller\TwoFactorController::class, 'disable'], $container));
 	$group->get('/account/password', resolve([ShowPasswordController::class, 'showPasswordForm'], $container));
 	$group->post('/account/password', resolve([ShowPasswordController::class, 'store'], $container));
 	$group->get('/force-password', resolve([ShowPasswordController::class, 'showForcedPasswordForm'], $container));
