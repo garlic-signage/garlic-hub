@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Template generator</title>
+	<script src="../../public/js/external/fabric.min.js"></script>
+	<script src="templates.js"></script>
+</head>
+<body>
+<pre id="out"></pre>
+<script>
+	'use strict';
+
+	// the same properties as TemplateFabricWrapper.toTemplateJSON()
+	const PROPERTIES = ["mediaId", "fileName", "lockMovementX", "lockMovementY", "lockRotation", "lockScalingX", "lockScalingY"];
+	const FORMATS    = [['landscape', 1920, 1080], ['portrait', 1080, 1920]];
+
+	async function loadFonts()
+	{
+		for (const [name, path] of Object.entries(FONTS))
+		{
+			const fontFace = new FontFace(name, 'url(../../public/fonts/' + path + ')');
+			await fontFace.load();
+			document.fonts.add(fontFace);
+		}
+	}
+
+	// the image is rendered from the loaded JSON, so the JSON is checked the way the composer loads it
+	async function renderImage(json, width, height)
+	{
+		const canvas = new fabric.StaticCanvas(null, {width: width, height: height});
+		await new Promise(resolve => canvas.loadFromJSON(JSON.stringify(json), resolve));
+		canvas.backgroundColor = '#ffffff';
+		return canvas.toDataURL({format: 'jpeg', quality: 0.9});
+	}
+
+	async function generate()
+	{
+		await loadFonts();
+		const result = [];
+		for (const template of TEMPLATES)
+		{
+			for (const [orientation, width, height] of FORMATS)
+			{
+				const canvas = new fabric.StaticCanvas(null, {width: width, height: height});
+				template.build(width, height).forEach(object => canvas.add(object));
+
+				const json    = canvas.toJSON(PROPERTIES);
+				json.viewport = {width: width, height: height, scale: 100};
+
+				result.push({
+					key: template.key + '_' + orientation,
+					name: template.name + ' (' + orientation + ')',
+					description: template.description,
+					content: json,
+					image: await renderImage(json, width, height)
+				});
+			}
+		}
+		return result;
+	}
+
+	generate()
+		.then(result => document.getElementById('out').textContent = JSON.stringify(result))
+		.catch(error => document.getElementById('out').textContent = 'ERROR ' + error.stack)
+		.finally(() => document.title = 'done');
+</script>
+</body>
+</html>
