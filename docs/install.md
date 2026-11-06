@@ -70,6 +70,15 @@ DB_MASTER_DRIVER="PDO_SQLITE"
 DB_MASTER_PATH="/var/www/html/var/garlic-hub.sqlite"
 ```
 
+SQLite runs in WAL mode: beside `garlic-hub.sqlite` there are the files `garlic-hub.sqlite-wal` and
+`garlic-hub.sqlite-shm`, the directory must be writable by the web server. A copy of the `.sqlite` file
+alone while the system runs is no backup, it can miss the latest changes. Stop the system and copy
+all three files, or let SQLite write the backup while it runs:
+
+```bash
+sqlite3 var/garlic-hub.sqlite ".backup var/garlic-hub-backup.sqlite"
+```
+
 **MariaDB** of DDEV (DDEV's default credentials). The project's `.ddev/config.yaml` disables the
 db container with `omit_containers: [db]`, remove it there and run `ddev restart` first:
 
