@@ -135,6 +135,7 @@ ddev exec vendor/bin/phpstan analyze
 **How-tos**
 - [Paginator](docs/paginator.md)
 - [Connect a Media Player](docs/connect-media-player.md)
+- [Multizone Presets](docs/multizone-presets.md) — the fixed layouts of the zone editor and their file
 
 ## Security
 
