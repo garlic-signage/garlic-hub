@@ -67,18 +67,18 @@ class TemplatesDatatableService extends AbstractUnitDatatableService
 	 */
 	public function loadDatatable(): void
 	{
-		$this->fetchForRoles($this->aclValidator, $this->filterDefinition, $this->parameters, $this->userSession->getUID(), 'template_id', AclSections::EDITOR);
+		$this->fetchForRoles($this->aclValidator, $this->filterDefinition, $this->parameters, $this->userSession->getUID(), 'template_id', [AclSections::EDITOR]);
 	}
 
 	/**
-	 * For the selections: the units shared for using, too.
+	 * For the selections: the units shared for using and the global ones, too.
 	 *
 	 * @throws CoreException
 	 * @throws Exception
 	 */
 	public function loadForSelection(): void
 	{
-		$this->fetchForRoles($this->aclValidator, $this->filterDefinition, $this->parameters, $this->userSession->getUID(), 'template_id', ...AclSections::UNIT_ROLES);
+		$this->fetchForRoles($this->aclValidator, $this->filterDefinition, $this->parameters, $this->userSession->getUID(), 'template_id', AclSections::UNIT_ROLES, AclValidator::VISIBILITY_GLOBAL);
 	}
 
 	/**

@@ -75,7 +75,8 @@ UID). The modules with units which can be shared (player, playlists, templates) 
 `Shared\Acl\AbstractUnitDatatableService`: its `fetchForRoles()` loads all rows for the module admin,
 nothing for a sub admin (Enterprise) and for everybody else the own rows plus the units shared with him
 (`SharedUnits`, from `user_vip`). The list shows the units shared for editing, a selection (e.g. a
-template for a playlist) the ones shared for using, too.
+template for a playlist) the ones shared for using, too. A selection can pass a visibility: the units
+with it are shown to everybody, to a sub admin, too (the global templates).
 
 The `FilterDefinition` describes the query for the `DatatableQuery`:
 

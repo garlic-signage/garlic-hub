@@ -57,6 +57,24 @@ class TemplateVisibilityTest extends ContainerTestCase
 		static::assertSame(['Annas Vorlage'], $this->namesVisibleFor(2));
 	}
 
+	public function testAGlobalTemplateIsSelectableForEverybodyButNotInTheList(): void
+	{
+		$this->connection->executeStatement("UPDATE templates SET visibility = 'global' WHERE template_id = 3");
+
+		static::assertSame(['Annas Vorlage', 'Bernds Vorlage'], $this->namesSelectableFor(2));
+		static::assertSame(['Annas Vorlage'], $this->namesVisibleFor(2));
+	}
+
+	public function testASubAdminSelectsTheGlobalTemplates(): void
+	{
+		$this->connection->executeStatement("UPDATE templates SET visibility = 'global' WHERE template_id = 3");
+		$this->connection->executeStatement("INSERT INTO user_acl (UID, acl, module) VALUES (2, 4, 'templates')");
+
+		// the list first: a sub admin loads nothing there, the service would keep the selection
+		static::assertSame([], $this->namesVisibleFor(2));
+		static::assertSame(['Annas Vorlage', 'Bernds Vorlage'], $this->namesSelectableFor(2));
+	}
+
 	public function testOnlyAdminsMayOpenTheTemplateList(): void
 	{
 		$this->actingAs(1);
@@ -86,6 +104,18 @@ class TemplateVisibilityTest extends ContainerTestCase
 		$this->actingAs($UID);
 		$service = $this->container->get(TemplatesDatatableService::class);
 		$service->loadDatatable();
+
+		return array_column($service->getCurrentFilterResults(), 'name');
+	}
+
+	/**
+	 * @return list<string>
+	 */
+	private function namesSelectableFor(int $UID): array
+	{
+		$this->actingAs($UID);
+		$service = $this->container->get(TemplatesDatatableService::class);
+		$service->loadForSelection();
 
 		return array_column($service->getCurrentFilterResults(), 'name');
 	}

@@ -24,6 +24,7 @@ namespace App\Framework\Database\Datatable;
 /**
  * The units which are shared with the user besides his own: the rows of user_vip with one
  * of the names, e.g. playlists_editor. The id field is the column of the unit table.
+ * The units with the visibility, e.g. the global templates, are shared with every user.
  */
 final readonly class SharedUnits
 {
@@ -32,6 +33,7 @@ final readonly class SharedUnits
 	 */
 	public function __construct(
 		public string $idField,
-		public array $vipNames
+		public array $vipNames,
+		public ?string $visibility = null
 	) {}
 }

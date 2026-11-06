@@ -33,6 +33,8 @@ use Doctrine\DBAL\Exception;
 class AclValidator extends AbstractAclValidator
 {
 	protected const string UNIT_NAME = 'template';
+	/** a global template may be used by everybody, in every company */
+	public const string VISIBILITY_GLOBAL = 'global';
 
 	public function __construct(AclHelper $aclHelper)
 	{

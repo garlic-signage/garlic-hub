@@ -193,7 +193,7 @@ class TemplatesService
 	}
 
 	/**
-	 * A template which goes into a playlist: a viewer may use it, too.
+	 * A template which goes into a playlist: a viewer may use it, too, everybody a global one.
 	 *
 	 * @return array<int|string,mixed>
 	 * @throws AccessDeniedException
@@ -211,10 +211,11 @@ class TemplatesService
 		}
 		catch (AccessDeniedException)
 		{
-			if (!$this->aclValidator->isViewerWithAccessOnUnit($this->userSession->getUID(), $templateId))
+			$template = $this->templatesRepository->findFirstWithUserName($templateId);
+			if (($template['visibility'] ?? null) !== AclValidator::VISIBILITY_GLOBAL && !$this->aclValidator->isViewerWithAccessOnUnit($this->userSession->getUID(), $templateId))
 				throw new AccessDeniedException(self::MODULE_NAME, 'template_not_usable', ['template_id' => $templateId]);
 
-			return $this->templatesRepository->findFirstWithUserName($templateId);
+			return $template;
 		}
 	}
 

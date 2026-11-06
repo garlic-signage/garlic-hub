@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace Tests\Integration\Framework\Database\Datatable;
 
 use App\Framework\Database\Datatable\DatatableQuery;
+use App\Framework\Database\Datatable\SharedUnits;
 use App\Framework\Database\Where;
 use App\Framework\Database\Datatable\FilterConditions;
 use App\Framework\Database\Datatable\FilterDefinition;
@@ -125,6 +126,22 @@ class DatatableQueryTest extends RepositoryTestCase
 	{
 		static::assertEqualsCanonicalizing([2, 4], $this->ids($this->query->findForModuleAdmin($this->definition, $this->fields(['username' => 'ann']))));
 		static::assertSame([5], $this->ids($this->query->findForModuleAdmin($this->definition, $this->fields(['company_id' => 2]))));
+	}
+
+	/**
+	 * The units with the visibility of the shared units are seen by every user, the filters still apply.
+	 *
+	 * @throws Exception
+	 */
+	public function testAUserSeesTheUnitsWithTheSharedVisibility(): void
+	{
+		$this->connection->executeStatement("UPDATE templates SET visibility = 'global' WHERE template_id IN (3, 5)");
+		$global = new SharedUnits('template_id', [], 'global');
+
+		static::assertEqualsCanonicalizing([2, 3, 4, 5], $this->ids($this->query->findForUser($this->definition, $this->fields(), 2, $global)));
+		static::assertSame(4, $this->query->countForUser($this->definition, $this->fields(), 2, $global));
+		static::assertSame([3], $this->ids($this->query->findForUser($this->definition, $this->fields(['name' => 'Bernd']), 2, $global)));
+		static::assertEqualsCanonicalizing([2, 4], $this->ids($this->query->findForUser($this->definition, $this->fields(), 2)));
 	}
 
 	/**

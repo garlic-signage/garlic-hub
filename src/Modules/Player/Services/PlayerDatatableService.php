@@ -64,6 +64,6 @@ class PlayerDatatableService extends AbstractUnitDatatableService
 	 */
 	public function loadDatatable(): void
 	{
-		$this->fetchForRoles($this->aclValidator, $this->filterDefinition, $this->parameters, $this->userSession->getUID(), 'player_id', AclSections::EDITOR);
+		$this->fetchForRoles($this->aclValidator, $this->filterDefinition, $this->parameters, $this->userSession->getUID(), 'player_id', [AclSections::EDITOR]);
 	}
 }

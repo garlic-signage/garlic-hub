@@ -43,7 +43,6 @@ use Throwable;
 class TemplatePackService
 {
 	private const string MODULE_NAME = 'templates';
-	private const string VISIBILITY  = 'global';
 	/** the directories of the pack and the type of their templates */
 	private const array DIRECTORY_TYPES = ['fabric' => 'canvas'];
 
@@ -134,7 +133,7 @@ class TemplatePackService
 		{
 			$templateId = (int) $this->templatesRepository->insert([
 				'UID'         => $this->userSession->getUID(),
-				'visibility'  => self::VISIBILITY,
+				'visibility'  => AclValidator::VISIBILITY_GLOBAL,
 				'type'        => $type,
 				'name'        => $template['name'],
 				'description' => $template['description'],

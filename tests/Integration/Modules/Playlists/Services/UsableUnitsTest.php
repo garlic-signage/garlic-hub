@@ -66,6 +66,13 @@ class UsableUnitsTest extends ContainerTestCase
 		static::assertSame('Bernds Vorlage', $this->container->get(TemplatesService::class)->loadUsableById(3)['name']);
 	}
 
+	public function testEverybodyUsesAGlobalTemplate(): void
+	{
+		$this->connection->executeStatement("UPDATE templates SET visibility = 'global' WHERE template_id = 1");
+
+		static::assertSame('Admin Vorlage', $this->container->get(TemplatesService::class)->loadUsableById(1)['name']);
+	}
+
 	public function testATemplateWhichIsNotSharedIsNotUsable(): void
 	{
 		$this->expectException(AccessDeniedException::class);

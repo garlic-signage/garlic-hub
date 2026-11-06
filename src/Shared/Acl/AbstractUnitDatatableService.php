@@ -38,10 +38,13 @@ use Doctrine\DBAL\Exception;
 abstract class AbstractUnitDatatableService extends AbstractDatatableService
 {
 	/**
+	 * The units with the visibility (e.g. the global templates) are shown to everybody, to a sub admin, too.
+	 *
+	 * @param list<AclSections> $roles
 	 * @throws CoreException
 	 * @throws Exception
 	 */
-	protected function fetchForRoles(AbstractAclValidator $aclValidator, FilterDefinition $definition, BaseParameters $parameters, int $UID, string $idField, AclSections ...$roles): void
+	protected function fetchForRoles(AbstractAclValidator $aclValidator, FilterDefinition $definition, BaseParameters $parameters, int $UID, string $idField, array $roles, ?string $visibility = null): void
 	{
 		if ($aclValidator->isModuleAdmin($UID))
 		{
@@ -49,10 +52,14 @@ abstract class AbstractUnitDatatableService extends AbstractDatatableService
 			return;
 		}
 
-		// the scope of a sub admin comes with the Enterprise edition
+		// the scope of a sub admin comes with the Enterprise edition, until then his own units and the visible ones
 		if ($aclValidator->isSubAdmin($UID))
+		{
+			if ($visibility !== null)
+				$this->fetchForUser($definition, $parameters, $UID, new SharedUnits($idField, [], $visibility));
 			return;
+		}
 
-		$this->fetchForUser($definition, $parameters, $UID, new SharedUnits($idField, $aclValidator->getVipNames(...$roles)));
+		$this->fetchForUser($definition, $parameters, $UID, new SharedUnits($idField, $aclValidator->getVipNames(...$roles), $visibility));
 	}
 }

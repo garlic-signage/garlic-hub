@@ -131,21 +131,27 @@ readonly class DatatableQuery
 
 	/**
 	 * The own units of the user and the ones shared with him. In brackets like the reseller scope:
-	 * filters AND (UID = x OR id IN (shared units))
+	 * filters AND (UID = x OR id IN (shared units) OR visibility = y)
 	 */
 	private function applyUserScope(QueryBuilder $queryBuilder, string $table, int $UID, ?SharedUnits $sharedUnits): void
 	{
 		$parameterName = str_replace('.', '', $table).'UID';
-		$scope         = $table.'.UID = :'.$parameterName;
+		$scope         = [$table.'.UID = :'.$parameterName];
 		$queryBuilder->setParameter($parameterName, $UID);
 
 		if ($sharedUnits !== null && $sharedUnits->vipNames !== [])
 		{
-			$scope = '('.$scope.' OR '.$table.'.'.$sharedUnits->idField.' IN (SELECT user_vip.unit_id FROM user_vip WHERE user_vip.UID = :'.$parameterName.' AND user_vip.vip_name IN (:shared_vip_names)))';
+			$scope[] = $table.'.'.$sharedUnits->idField.' IN (SELECT user_vip.unit_id FROM user_vip WHERE user_vip.UID = :'.$parameterName.' AND user_vip.vip_name IN (:shared_vip_names))';
 			$queryBuilder->setParameter('shared_vip_names', $sharedUnits->vipNames, ArrayParameterType::STRING);
 		}
 
-		$queryBuilder->andWhere($scope);
+		if ($sharedUnits?->visibility !== null)
+		{
+			$scope[] = $table.'.visibility = :shared_visibility';
+			$queryBuilder->setParameter('shared_visibility', $sharedUnits->visibility);
+		}
+
+		$queryBuilder->andWhere(count($scope) === 1 ? $scope[0] : '('.implode(' OR ', $scope).')');
 	}
 
 	/**
