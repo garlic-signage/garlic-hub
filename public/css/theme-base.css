@@ -288,9 +288,15 @@ footer nav ul #compile_time {margin-left: auto;}
     font-weight: bold;
     color: #fff;
 }
-.message-bar--success     { background-color: var(--gh-success-color); }
+.message-bar--success     { background-color: var(--gh-success-color); animation: fade-out 5s forwards; }
 .message-bar--error       { background-color: var(--gh-danger-color); }
 .message-bar--information  { background-color: var(--gh-info-color); }
+/* successes disappear by themselves, errors and information have a close button */
+@keyframes fade-out {
+    0%   { opacity: 1; }
+    80%  { opacity: 1; }
+    100% { opacity: 0; display: none; }
+}
 .close-button {background: none;border:none;padding:0;font-size:1rem;cursor:pointer;margin-left:auto;}
 .close-button:hover {border: none;}
 .close-button i {font-size: 28px;}
