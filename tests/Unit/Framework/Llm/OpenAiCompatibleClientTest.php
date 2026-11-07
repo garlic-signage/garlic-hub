@@ -257,4 +257,55 @@ class OpenAiCompatibleClientTest extends TestCase
 			static::assertStringNotContainsString('internal secret', $e->getMessage());
 		}
 	}
+
+	/**
+	 * @param array<string,string> $data
+	 */
+	private static function imageAnswer(array $data): Response
+	{
+		return new Response(200, ['Content-Type' => 'application/json'], (string) json_encode(['created' => 1, 'data' => [$data]]));
+	}
+
+	#[Group('units')]
+	public function testAnImageComesWithItsDataFromTheImagesApi(): void
+	{
+		$client = $this->factory([self::imageAnswer(['b64_json' => base64_encode('PNG-BYTES')])])->create(new LlmConnection('openai', 'http://ollama:11434/v1', 'flux-schnell'));
+
+		static::assertSame('PNG-BYTES', $client->generateImage('A beach', '1536x1024'));
+		static::assertSame('http://ollama:11434/v1/images/generations', (string) $this->sent()->getUri());
+		static::assertSame(['model' => 'flux-schnell', 'prompt' => 'A beach', 'size' => '1536x1024', 'n' => 1, 'response_format' => 'b64_json'], $this->sentBody());
+	}
+
+	/**
+	 * The gpt-image models refuse the response format, they always answer with the image.
+	 */
+	#[Group('units')]
+	public function testTheGptImageModelsGetNoResponseFormat(): void
+	{
+		$client = $this->factory([self::imageAnswer(['b64_json' => base64_encode('PNG')])])->create(new LlmConnection('openai', 'https://api.openai.com/v1', 'gpt-image-1', 'sk-1'));
+
+		$client->generateImage('A beach', '1024x1024');
+
+		static::assertArrayNotHasKey('response_format', $this->sentBody());
+	}
+
+	/**
+	 * A url of the image is not loaded: the server would fetch an address which the endpoint chose.
+	 */
+	#[Group('units')]
+	public function testAnImageOnlyAsUrlIsNoAnswer(): void
+	{
+		$client = $this->factory([self::imageAnswer(['url' => 'http://169.254.169.254/latest/meta-data'])])->create(new LlmConnection('openai', 'http://ollama:11434/v1', 'flux'));
+
+		$this->assertLlmError('llm_no_answer', static fn() => $client->generateImage('A beach', '1024x1024'));
+		static::assertCount(0, $this->endpoint);
+	}
+
+	#[Group('units')]
+	public function testAFailingImagesApiIsNotReachable(): void
+	{
+		$client = $this->factory([new Response(404, [], 'internal secret')])->create(new LlmConnection('openai', 'http://lmstudio:1234/v1', 'flux'));
+
+		$this->assertLlmError('llm_not_reachable', static fn() => $client->generateImage('A beach', '1024x1024'));
+	}
 }

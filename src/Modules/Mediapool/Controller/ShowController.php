@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Mediapool\Controller;
 
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Helper\Json;
 use App\Framework\Middleware\SecurityHeadersMiddleware;
 use App\Framework\Localization\Translate\Translator;
@@ -29,6 +31,7 @@ use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Config\Config;
 use App\Modules\Mediapool\Services\MediaTaggingService;
 use App\Modules\Mediapool\Services\NodesService;
+use App\Shared\Llm\ImageGeneration;
 use Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -45,14 +48,39 @@ class ShowController
 	private Translator $translator;
 	private Config $config;
 	private MediaTaggingService $mediaTaggingService;
+	private ImageGeneration $imageGeneration;
 
-	public function __construct(NodesService $nodesService, UserSession $userSession, Translator $translator, Config $config, MediaTaggingService $mediaTaggingService)
+	public function __construct(NodesService $nodesService, UserSession $userSession, Translator $translator, Config $config, MediaTaggingService $mediaTaggingService, ImageGeneration $imageGeneration)
 	{
+		$this->imageGeneration = $imageGeneration;
 		$this->nodesService = $nodesService;
 		$this->userSession  = $userSession;
 		$this->translator   = $translator;
 		$this->config       = $config;
 		$this->mediaTaggingService = $mediaTaggingService;
+	}
+
+	/**
+	 * The tab of the uploader for an image of the AI.
+	 *
+	 * @return array<string,mixed>
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	private function buildImageGeneration(): array
+	{
+		$formats = [];
+		foreach (array_keys(ImageGeneration::SIZES) as $format)
+			$formats[] = ['VALUE' => $format, 'LANG_VALUE' => $this->translator->translate('image_format_' . $format, 'mediapool')];
+
+		return [
+			'LANG_UPLOAD_AI_IMAGE'  => $this->translator->translate('upload_ai_image', 'mediapool'),
+			'LANG_DESCRIBE_IMAGE'   => $this->translator->translate('describe_image', 'mediapool'),
+			'LANG_IMAGE_FORMAT'     => $this->translator->translate('image_format', 'mediapool'),
+			'LANG_GENERATE_IMAGE'   => $this->translator->translate('generate_image', 'mediapool'),
+			'MAX_PROMPT_LENGTH'     => ImageGeneration::MAX_PROMPT_LENGTH,
+			'image_formats'         => $formats
+		];
 	}
 
 	/**
@@ -169,6 +197,9 @@ class ShowController
 				'LANG_SUGGEST_TAGS' => $this->translator->translate('suggest_tags', 'mediapool'),
 				'LANG_TAG_FOLDER'   => $this->translator->translate('tag_folder', 'mediapool')
 			];
+
+		if ($this->imageGeneration->isAvailable($this->userSession->getUID()))
+			$data['this_layout']['data']['image_generation'] = $this->buildImageGeneration();
 
 		$data['this_layout']['data']['LANG_JS'] = Json::encodeForScript([
 			'add_root_folder'    => $this->translator->translate('add_root_folder', 'mediapool'),

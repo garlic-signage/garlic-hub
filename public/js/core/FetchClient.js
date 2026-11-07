@@ -22,13 +22,22 @@ export class FetchClient
     #xhr = null;
 	#timeout = 6000;
 
+	/**
+	 * Milliseconds for a request to the AI: the server waits up to 60 seconds for the answer of the model.
+	 */
+	static LLM_TIMEOUT = 65000;
+
+	/**
+	 * @param options the options of fetch(), and timeout in milliseconds when a request may take longer than usual
+	 */
     async fetchData(url, options = {})
     {
+		const {timeout, ...fetchOptions} = options;
 		const controller = new AbortController();
-		const timeoutId = setTimeout(() => controller.abort(), this.#timeout);
+		const timeoutId = setTimeout(() => controller.abort(), timeout ?? this.#timeout);
 
 		const defaultHeaders = { 'Accept': 'application/json', 'Cache-Control': 'no-cache' };
-		const config         = { method: 'GET', ...options, headers: { ...defaultHeaders, ...options.headers }, signal: controller.signal };
+		const config         = { method: 'GET', ...fetchOptions, headers: { ...defaultHeaders, ...fetchOptions.headers }, signal: controller.signal };
 
 		try
 		{

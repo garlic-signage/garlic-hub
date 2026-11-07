@@ -19,6 +19,7 @@
 
 import {MediaApiConfig} from "./MediaApiConfig.js";
 import {BaseService}    from "../../core/Base/BaseService.js";
+import {FetchClient}    from "../../core/FetchClient.js";
 
 /**
  * @typedef {Object} ResultType
@@ -78,7 +79,7 @@ export class MediaService extends BaseService
 	 */
 	async suggestTags(mediaId)
 	{
-		const result = await this._sendRequest(MediaApiConfig.TAGS_URI, "POST", {"media_id": mediaId});
+		const result = await this._sendRequest(MediaApiConfig.TAGS_URI, "POST", {"media_id": mediaId}, FetchClient.LLM_TIMEOUT);
 		this.#ensureSuccess(result);
 
 		return {description: result.description, tags: result.tags};

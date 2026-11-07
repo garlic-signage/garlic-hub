@@ -49,6 +49,7 @@ use App\Modules\Mediapool\Utils\ImagickFactory;
 use App\Modules\Mediapool\Utils\MediaHandlerFactory;
 use App\Modules\Mediapool\Utils\SsrfValidator;
 use App\Modules\Mediapool\Utils\TaggingImage;
+use App\Shared\Llm\ImageGeneration;
 use App\Shared\Llm\MediaTagging;
 use App\Modules\Mediapool\Utils\ZipFilesystemFactory;
 use GuzzleHttp\Client;
@@ -96,7 +97,8 @@ $dependencies[ShowController::class] = DI\factory(function (ContainerInterface $
 		$container->get(UserSession::class),
 		$container->get(Translator::class),
 		$container->get(Config::class),
-		$container->get(MediaTaggingService::class)
+		$container->get(MediaTaggingService::class),
+		$container->get(ImageGeneration::class)
 	);
 });
 $dependencies[MediaHandlerFactory::class] = DI\factory(function (ContainerInterface $container)

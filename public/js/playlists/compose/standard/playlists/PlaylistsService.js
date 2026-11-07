@@ -19,6 +19,7 @@
 
 import {PlaylistsApiConfig} from "./PlaylistsApiConfig.js";
 import {BaseService}        from "../../../../core/Base/BaseService.js";
+import {FetchClient}        from "../../../../core/FetchClient.js";
 import {ItemsApiConfig}     from "../items/ItemsApiConfig.js";
 
 export class PlaylistsService extends BaseService
@@ -29,7 +30,8 @@ export class PlaylistsService extends BaseService
 	 */
 	async suggestWithAi(playlistId, theme, minutes)
 	{
-		const result = await this._sendRequest(PlaylistsApiConfig.AI_SUGGEST_URI, "POST", {playlist_id: playlistId, theme: theme, minutes: minutes});
+		// two questions to the AI: the search terms, then the choice
+		const result = await this._sendRequest(PlaylistsApiConfig.AI_SUGGEST_URI, "POST", {playlist_id: playlistId, theme: theme, minutes: minutes}, 2 * FetchClient.LLM_TIMEOUT);
 		if (result.success !== true)
 			throw new Error(result.error_message);
 

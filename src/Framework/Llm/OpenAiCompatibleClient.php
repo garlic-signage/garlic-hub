@@ -64,6 +64,33 @@ readonly class OpenAiCompatibleClient implements LlmClient
 	}
 
 	/**
+	 * The images API. The image has to come in the answer: a url of it is not loaded, the server would fetch an
+	 * address which the endpoint chose.
+	 */
+	public function generateImage(string $prompt, string $size): string
+	{
+		$parameters = ['model' => $this->model, 'prompt' => $prompt, 'size' => $size, 'n' => 1];
+		// the gpt-image models always answer with the image and refuse the parameter, the others answer with a url without it
+		if (!str_starts_with($this->model, 'gpt-image'))
+			$parameters['response_format'] = 'b64_json';
+
+		try
+		{
+			$encoded = $this->client->images()->create($parameters)->data[0]->b64_json ?? '';
+		}
+		catch (Throwable $e)
+		{
+			throw new LlmException('llm_not_reachable', $e instanceof \Exception ? $e : null);
+		}
+
+		$image = base64_decode($encoded, true);
+		if ($image === false || $image === '')
+			throw new LlmException('llm_no_answer');
+
+		return $image;
+	}
+
+	/**
 	 * Unlike the answer of the model, the failure tells the reason: the user is filling in the form and has to
 	 * know what is wrong. Still only the reason, never the answer of the endpoint.
 	 */

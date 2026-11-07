@@ -20,5 +20,6 @@
 export const UploadApiConfig = {
 	UPLOAD_LOCAL_FILE: "/async/mediapool/uploadLocalFile",
 	UPLOAD_FROM_URL: "/async/mediapool/uploadFromUrl",
+	GENERATE_IMAGE: "/async/mediapool/generateImage",
 	SEARCH_STOCK_IMAGES: "/async/mediapool/searchStockImages"
 };

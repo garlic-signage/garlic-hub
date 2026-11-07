@@ -59,6 +59,9 @@ import { StockPlatformElements } from "./uploads/StockPlatform/StockPlatformElem
 import { StockPlatformFactory } from "./uploads/StockPlatform/Platforms/StockPlatformFactory.js";
 import { StockPlatformUploader } from "./uploads/StockPlatform/StockPlatformUploader.js";
 import {ContextMenuTreeViewFactory} from "./treeview/ContextMenuTreeViewFactory.js";
+import { AiImageElements } from "./uploads/AiImage/AiImageElements.js";
+import { AiImageUploader } from "./uploads/AiImage/AiImageUploader.js";
+import { BasePreviewHandler } from "./uploads/Preview/BasePreviewHandler.js";
 import {UnitShareDialog} from "../core/UnitShareDialog.js";
 
 document.addEventListener("DOMContentLoaded", function()
@@ -176,6 +179,14 @@ document.addEventListener("DOMContentLoaded", function()
 		uploaderDialog,
 		fetchClient
 	);
+
+	// Section for images of the AI, only there when the user has an AI for images
+	if (AiImageElements.isAvailable())
+	{
+		const aiImageElements = new AiImageElements();
+		const aiImagePreviews = new BasePreviewHandler(aiImageElements.previewArea, previewFactory);
+		aiImagePreviews.fileUploader = new AiImageUploader(aiImagePreviews, aiImageElements, directoryView, uploaderDialog, fetchClient);
+	}
 
 	// Section for 3rd Party StockPlatforms
 	const stockPlatformElements = new StockPlatformElements();

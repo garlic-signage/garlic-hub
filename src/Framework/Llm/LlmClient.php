@@ -40,4 +40,12 @@ interface LlmClient
 	 * @throws LlmException
 	 */
 	public function listModels(): array;
+
+	/**
+	 * An image of the model for the description, e.g. "1536x1024" as size.
+	 *
+	 * @return string the image as it is, e.g. a png
+	 * @throws LlmException
+	 */
+	public function generateImage(string $prompt, string $size): string;
 }

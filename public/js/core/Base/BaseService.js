@@ -33,11 +33,13 @@ export class BaseService
 	 * Never throws: a timeout, a network or a server error comes back like the errors of the server,
 	 * as {success: false, error_message}. The caller shows the message.
 	 */
-	async _sendRequest(url, method, data = {})
+	async _sendRequest(url, method, data = {}, timeout = null)
 	{
 		try
 		{
 			const options = {method, headers: { 'Content-Type': 'application/json' }};
+			if (timeout !== null)
+				options.timeout = timeout;
 			if (method !== "GET")
 				options.body = JSON.stringify({...data, csrf_token: Utils.csrfToken()});
 

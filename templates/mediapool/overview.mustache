@@ -76,6 +76,9 @@
 					<button class="tab-button" data-tab="webcamTab">{{LANG_UPLOAD_CAMERA}}</button>
 					<button class="tab-button" data-tab="screencastTab">{{LANG_UPLOAD_SCREENCAST}}</button>
 					<button class="tab-button" data-tab="stockPlatformsTab">{{LANG_UPLOAD_STOCK_LIBRARIES}}</button>
+					{{#image_generation}}
+					<button class="tab-button" data-tab="aiImageTab">{{LANG_UPLOAD_AI_IMAGE}}</button>
+					{{/image_generation}}
 				</nav>
 
 				<section class="tab-content active" id="dragDropTab">
@@ -192,6 +195,25 @@
 					</template>
 
 				</section>
+
+				{{#image_generation}}
+				<section class="tab-content" id="aiImageTab">
+					<h3>{{LANG_UPLOAD_AI_IMAGE}}</h3>
+					<form id="aiImageForm" class="ai-image-form">
+						<label for="aiImagePrompt">{{LANG_DESCRIBE_IMAGE}}</label>
+						<textarea id="aiImagePrompt" maxlength="{{MAX_PROMPT_LENGTH}}" rows="3" required></textarea>
+						<label for="aiImageFormat">{{LANG_IMAGE_FORMAT}}</label>
+						<select id="aiImageFormat">
+							{{#image_formats}}
+							<option value="{{VALUE}}">{{LANG_VALUE}}</option>
+							{{/image_formats}}
+						</select>
+						<button type="submit" id="generateAiImage" class="primary">{{LANG_GENERATE_IMAGE}}</button>
+					</form>
+					<div id="previewAiImagesArea" class="preview-media"></div>
+					<button id="startAiImagesUpload" class="upload-button">{{LANG_START_UPLOAD}}</button>
+				</section>
+				{{/image_generation}}
 
 				<footer>
 					<button id="closeDialog">{{LANG_CLOSE}}</button>

@@ -32,6 +32,7 @@ use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Controller\ShowController;
 use App\Modules\Mediapool\Services\MediaTaggingService;
 use App\Modules\Mediapool\Services\NodesService;
+use App\Shared\Llm\ImageGeneration;
 use App\Shared\Llm\LlmTask;
 use App\Shared\Llm\UserLlmService;
 use PHPUnit\Framework\Attributes\Group;
@@ -53,7 +54,8 @@ class ShowControllerTest extends ControllerTestCase
 				$this->container->get(UserSession::class),
 				$this->container->get(Translator::class),
 				new Config(new IniConfigLoader($root . '/config/settings'), ['systemDir' => $root], ['APP_PLATFORM_EDITION' => $edition]),
-				$this->container->get(MediaTaggingService::class)
+				$this->container->get(MediaTaggingService::class),
+				$this->container->get(ImageGeneration::class)
 			);
 		}
 		$response = $controller->show($this->request('GET'), $this->newResponse());
@@ -143,6 +145,26 @@ class ShowControllerTest extends ControllerTestCase
 
 		static::assertNotSame('', $dialog['LANG_FOLDER_VISIBILITY']);
 		static::assertNotSame([], $dialog['visibility_options']);
+	}
+
+	/**
+	 * The tab of the uploader for an image of the AI is there when the user has an AI for images.
+	 */
+	public function testTheTabForAnImageOfTheAiNeedsAnAiForImages(): void
+	{
+		$this->actingAs(2);
+		static::assertStringNotContainsString('id="aiImageTab"', $this->html($this->show()));
+
+		$this->connection->executeStatement("INSERT INTO company_llm_tasks (company_id, task, mode) VALUES (1, ?, 'user_own')", [LlmTask::IMAGE_GENERATION]);
+		$service = $this->container->get(UserLlmService::class);
+		$service->saveConnection(2, 0, ['name' => 'Ollama', 'api_type' => 'openai', 'base_url' => 'http://localhost:11434/v1', 'api_key' => '']);
+		$service->saveTasks(2, [LlmTask::IMAGE_GENERATION => ['connection_id' => $service->findConnections(2)[0]['connection_id'], 'model' => 'flux-schnell']]);
+
+		$page = $this->show();
+		static::assertSame(['landscape', 'portrait', 'square'], array_column($page->getTemplateData()['image_generation']['image_formats'], 'VALUE'));
+		$html = $this->html($page);
+		static::assertStringContainsString('id="aiImageTab"', $html);
+		static::assertStringContainsString('data-tab="aiImageTab"', $html);
 	}
 
 	/**

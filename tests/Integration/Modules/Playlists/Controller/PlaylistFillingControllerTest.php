@@ -156,7 +156,7 @@ class PlaylistFillingControllerTest extends PlaylistsControllerTestCase
 		$this->actingAs(2);
 		$this->withLlm(2);
 
-		$this->assertError($this->suggest(['playlist_id' => 3, 'theme' => str_repeat('a', 301)]), $this->text('llm_text_too_long', 'main'));
+		$this->assertError($this->suggest(['playlist_id' => 3, 'theme' => str_repeat('a', 301)]), $this->text('llm_input_too_long', 'main'));
 		static::assertNull($this->endpoint?->getLastRequest());
 	}
 

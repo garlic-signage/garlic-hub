@@ -25,6 +25,7 @@ use App\Modules\Auth\LoginController;
 use App\Modules\Auth\SsoCallbackController;
 use App\Modules\Users\Controller\SsoProvidersController;
 use App\Modules\Auth\OAuth2Controller;
+use App\Modules\Mediapool\Controller\ImageGenerationController;
 use App\Modules\Mediapool\Controller\MediaController;
 use App\Modules\Mediapool\Controller\MediaTaggingController;
 use App\Modules\Mediapool\Controller\NodesController;
@@ -178,6 +179,7 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 	$group->post('/mediapool/uploadLocalFile', resolve([UploadController::class, 'uploadLocalFile'], $container));
 	$group->post('/mediapool/uploadFromUrl', resolve([UploadController::class, 'uploadFromUrl'], $container));
 	$group->post('/mediapool/searchStockImages', resolve([UploadController::class, 'searchStockImages'], $container));
+	$group->post('/mediapool/generateImage', resolve([ImageGenerationController::class, 'generate'], $container));
 	$group->get('/mediapool/media/list/{node_id:\d+}',resolve( [MediaController::class, 'list'], $container));
 	$group->get('/mediapool/media/search', resolve([MediaController::class, 'search'], $container));
 	$group->get('/mediapool/media/{media_id}', resolve([MediaController::class, 'getInfo'], $container));

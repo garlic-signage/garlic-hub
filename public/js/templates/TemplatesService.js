@@ -18,6 +18,7 @@
 */
 
 import {BaseService}        from "../core/Base/BaseService.js";
+import {FetchClient}        from "../core/FetchClient.js";
 import {TemplatesApiConfig} from "./TemplatesApiConfig.js";
 import {PlayerApiConfig}    from "../player/PlayerApiConfig.js";
 
@@ -59,7 +60,7 @@ export class TemplatesService extends BaseService
 
 	async correctText(text)
 	{
-		return await this._sendRequest(TemplatesApiConfig.CORRECT_TEXT_URI, "POST", {text: text});
+		return await this._sendRequest(TemplatesApiConfig.CORRECT_TEXT_URI, "POST", {text: text}, FetchClient.LLM_TIMEOUT);
 	}
 
 	determineRights(templateId)

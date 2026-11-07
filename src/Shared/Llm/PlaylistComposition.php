@@ -76,7 +76,7 @@ readonly class PlaylistComposition
 	{
 		$theme = trim($theme);
 		if (mb_strlen($theme) > self::MAX_THEME_LENGTH)
-			throw new LlmException('llm_text_too_long');
+			throw new LlmException('llm_input_too_long');
 
 		$answer = $this->ask($UID, sprintf(self::TERMS_INSTRUCTIONS, $locale), $theme);
 		$terms  = [];
