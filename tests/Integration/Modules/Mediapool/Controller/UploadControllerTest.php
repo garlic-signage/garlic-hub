@@ -182,6 +182,21 @@ class UploadControllerTest extends ControllerTestCase
 		static::assertArrayNotHasKey('a', $stored);
 	}
 
+	/**
+	 * The tags of a stock platform (Pixabay: "beach, sea, sand") go into the field of the tags, not into the metadata.
+	 */
+	public function testTheTagsOfAStockPlatformHaveTheirOwnField(): void
+	{
+		$this->actingAs(2);
+
+		$this->uploadLocal($this->controller(), ['node_id' => '8', 'metadata' => '{"tags":"Strand, Meer, strand","origin":"Pixabay"}'], ['file' => $this->pngUpload()]);
+
+		static::assertSame(',Strand,Meer,', $this->databaseValue('SELECT tags FROM mediapool_files WHERE filename = ?', 'bild.png'));
+		$stored = json_decode((string) $this->databaseValue('SELECT metadata FROM mediapool_files WHERE filename = ?', 'bild.png'), true);
+		static::assertArrayNotHasKey('tags', $stored);
+		static::assertSame('Pixabay', $stored['origin']);
+	}
+
 	public function testListsAndObjectsAsMetadataAreNotStored(): void
 	{
 		$this->actingAs(2);

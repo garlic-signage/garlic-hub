@@ -183,7 +183,7 @@ export class StockPlatformUploader extends BaseUploader
 		const container = document.getElementById("resultMediaTemplate").content.cloneNode(true).firstElementChild;
 		const img = container.querySelector(".result-thumbnail");
 		img.src = item.thumb;
-		img.alt = item.metadata.description;
+		img.alt = item.metadata.description || item.metadata.tags || "";
 		let preview = null;
 		if (item.type === "image")
 		{
@@ -207,7 +207,7 @@ export class StockPlatformUploader extends BaseUploader
 		preview.className = "result-preview";
 
 		preview.src = item.preview;
-		preview.alt = item.metadata.description;
+		preview.alt = item.metadata.description || item.metadata.tags || "";
 		container.append(preview);
 
 		const hoverPreview = container.querySelector(".media-view-detail");

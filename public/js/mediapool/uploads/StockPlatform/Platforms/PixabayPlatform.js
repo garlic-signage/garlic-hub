@@ -110,7 +110,8 @@ export class PixabayPlatform extends AbstractStockPlatform
 				downloadUrl: item.largeImageURL || null,
 				metadata: {
 					origin: "Pixabay",
-					description: item.tags || null,
+					description: null,
+					tags: item.tags || null,
 					page_url: item.pageURL || null,
 					user: {
 						username: item.username || null,
@@ -138,7 +139,8 @@ export class PixabayPlatform extends AbstractStockPlatform
 				downloadUrl: item.videos.large.url || null,
 				metadata: {
 					origin: "Pixabay",
-					description: item.tags || null,
+					description: null,
+					tags: item.tags || null,
 					page_url: item.pageURL || null,
 					user: {
 						username: item.user_id || null,

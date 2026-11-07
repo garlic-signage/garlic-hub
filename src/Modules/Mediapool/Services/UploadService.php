@@ -199,6 +199,9 @@ readonly class UploadService
 				$description = '';
 				if (array_key_exists('description', $metadata))
 					$description = $metadata['description'];
+				// the tags of a stock platform, e.g. "beach, sea, sand", have their own field
+				$tags = is_string($metadata['tags'] ?? null) ? MediaService::encodeTags(explode(',', $metadata['tags'])) : '';
+				unset($metadata['tags']);
 				$metadata  = json_encode($metadata);
 				$extension = pathinfo($newFilePath, PATHINFO_EXTENSION);
 				$thumbExtension = $mediaHandler->getThumbExtension();
@@ -220,6 +223,7 @@ readonly class UploadService
 			$metadata       = $dataSet['metadata'];
 			$extension      = $dataSet['extension'];
 			$description    = $dataSet['media_description'];
+			$tags           = $dataSet['tags'] ?? '';
 			$thumbExtension = $dataSet['thumb_extension'];
 		}
 		// the upload has its place in the storage now (or was there already), the directory of the upload is not needed
@@ -236,7 +240,8 @@ readonly class UploadService
 			'extension' => $extension,
 			'thumb_extension' => $thumbExtension,
 			'config_data' => $configData,
-			'media_description' => $description
+			'media_description' => $description,
+			'tags'              => $tags
 		];
 		$this->mediaRepository->insert($fileData);
 
