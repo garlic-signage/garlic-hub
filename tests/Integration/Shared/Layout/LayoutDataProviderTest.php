@@ -86,7 +86,7 @@ class LayoutDataProviderTest extends ContainerTestCase
 		$access = $this->layout()['user_menu'][0]['has_user_access'];
 
 		static::assertSame(['/system/settings', '/administration'], array_column($access, 'LINK_USER_ACCESS'));
-		static::assertSame(['Settings', 'Administration'], array_column($access, 'LANG_USER_ACCESS'));
+		static::assertSame(['System settings', 'Administration'], array_column($access, 'LANG_USER_ACCESS'));
 		static::assertSame(['/users', '/users/sso', '/users/llm', '/templates', '/system/audit'], array_column($this->container->get(AdministrationLinks::class)->build(1), 'LINK'));
 	}
 
