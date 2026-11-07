@@ -20,6 +20,7 @@
 export const MediaApiConfig = {
 	BASE_URI: "/async/mediapool/media",
 	LIST_URI: "/async/mediapool/media/list",
+	SEARCH_URI: "/async/mediapool/media/search",
 	MOVE_URI: "/async/mediapool/media/move",
 	EDIT_URI: "/async/mediapool/media/edit",
 	CLONE_URI: "/async/mediapool/media/clone",

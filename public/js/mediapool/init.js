@@ -35,6 +35,7 @@ import { ContextMenuMediaFactory } from "./media/ContextMenuMediaFactory.js";
 import { MediaFactory } from "./media/MediaFactory.js";
 import { MediaEditDialog } from "./media/MediaEditDialog.js";
 import { MediaInfoDialog } from "./media/MediaInfoDialog.js";
+import { MediaSearch } from "./media/MediaSearch.js";
 
 import { UploadDialogElements } from "./uploads/UploadDialogElements.js";
 import { LocalFilesElements } from "./uploads/Local/LocalFilesElements.js";
@@ -102,6 +103,16 @@ document.addEventListener("DOMContentLoaded", function()
 		UnitShareDialog.create("mediapool")
 	);
 	directoryView.addContextMenu(contextMenuTreeViewFactory);
+
+	new MediaSearch(
+		document.getElementById("mediaSearch"),
+		mediaService,
+		mediaList,
+		directoryView,
+		treeViewElements.currentPath,
+		flashMessageHandler,
+		lang
+	).init();
 
 	const addRootFolder = document.getElementById('addRootFolder');
 	if (addRootFolder !== null)

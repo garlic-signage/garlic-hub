@@ -58,6 +58,21 @@ readonly class MediaController
 	}
 
 	/**
+	 * The media of all directories the user may read, found by tags, file name or description.
+	 *
+	 * @throws Exception
+	 * @throws UserException
+	 */
+	public function search(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	{
+		$answer = $this->orchestrator->setInput($request->getQueryParams())->validateSearch($response);
+		if ($answer !== null)
+			return $answer;
+
+		return $this->orchestrator->search($response);
+	}
+
+	/**
 	 * @param array<string,mixed> $args
 	 * @throws DatabaseException
 	 * @throws UserException

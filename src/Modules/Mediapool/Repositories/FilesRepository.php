@@ -107,4 +107,32 @@ class FilesRepository extends SqlBase
 		return $this->findAllByWithFields($select, $where, $join, [], '', $order_by);
 	}
 
+	/**
+	 * The media whose tags, file name or description contain the term, the newest first.
+	 *
+	 * @param Where|null $readable the directories the user may read, null for all
+	 * @return list<array<string,mixed>>
+	 * @throws Exception
+	 */
+	public function search(string $term, string $filter, ?Where $readable, int $max): array
+	{
+		$select = ['user_main.username', 'company_id', 'media_id', $this->table.'.node_id', $this->table.'.UID', 'upload_time', 'checksum', 'mimetype', 'metadata', 'tags', 'filename', 'extension', 'thumb_extension', 'media_description'];
+		$join   = [
+			'user_main'       => 'user_main.UID=' . $this->table . '.UID',
+			'mediapool_nodes' => 'mediapool_nodes.node_id=' . $this->table . '.node_id'
+		];
+		$where  = [
+			'deleted' => 0,
+			Where::anyOf(Where::contains('tags', $term), Where::contains('filename', $term), Where::contains('media_description', $term))
+		];
+		if ($filter !== '')
+			$where[] = Where::startsWith('mimetype', $filter);
+		if ($readable !== null)
+			$where[] = $readable;
+
+		$orderBy = [['sort' => 'upload_time', 'order' => 'DESC']];
+
+		return $this->findAllByWithFields($select, $where, $join, ['first' => 0, 'max' => $max], '', $orderBy);
+	}
+
 }

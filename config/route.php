@@ -178,6 +178,7 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 	$group->post('/mediapool/uploadFromUrl', resolve([UploadController::class, 'uploadFromUrl'], $container));
 	$group->post('/mediapool/searchStockImages', resolve([UploadController::class, 'searchStockImages'], $container));
 	$group->get('/mediapool/media/list/{node_id:\d+}',resolve( [MediaController::class, 'list'], $container));
+	$group->get('/mediapool/media/search', resolve([MediaController::class, 'search'], $container));
 	$group->get('/mediapool/media/{media_id}', resolve([MediaController::class, 'getInfo'], $container));
 	$group->delete('/mediapool/media', resolve([MediaController::class, 'delete'], $container));
 	$group->post('/mediapool/media/edit', resolve([MediaController::class, 'edit'], $container));

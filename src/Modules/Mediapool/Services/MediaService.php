@@ -22,13 +22,16 @@ declare(strict_types=1);
 namespace App\Modules\Mediapool\Services;
 
 use App\Framework\Exceptions\AccessDeniedException;
+use App\Framework\Database\Where;
 use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Repositories\FilesRepository;
 use App\Modules\Mediapool\Repositories\NodesRepository;
+use App\Shared\Acl\AclSections;
 use Ramsey\Uuid\Uuid;
 use Doctrine\DBAL\Exception;
 
@@ -42,6 +45,7 @@ use Doctrine\DBAL\Exception;
 class MediaService
 {
 	public const int MAX_TAG_LENGTH = 50;
+	public const int MAX_SEARCH_RESULTS = 100;
 
 	private readonly FilesRepository $mediaRepository;
 	private readonly NodesRepository $nodesRepository;
@@ -123,6 +127,39 @@ class MediaService
 		$media['tags']     = self::decodeTags($media['tags']);
 
 		return $this->addFileLocations($media);
+	}
+
+	/**
+	 * The media of all directories the user may read whose tags, file name or description contain the term.
+	 * Each one knows the path of its directory and whether the user may edit it.
+	 *
+	 * @return list<array<string,mixed>>
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws ModuleException
+	 * @throws UserException
+	 */
+	public function searchMedia(string $term, string $filter = ''): array
+	{
+		$UID    = $this->userSession->getUID();
+		$result = $this->mediaRepository->search($term, $filter, $this->readableDirectories($UID), self::MAX_SEARCH_RESULTS);
+
+		$nodeIds  = array_values(array_unique(array_map(static fn(array $media): int => (int) $media['node_id'], $result)));
+		$paths    = $this->nodesRepository->findPaths($nodeIds);
+		$editable = [];
+		foreach ($nodeIds as $nodeId)
+			$editable[$nodeId] = $this->aclValidator->checkDirectoryPermissions($UID, $this->nodesRepository->findNodeOwner($nodeId))['edit'];
+
+		foreach ($result as &$media)
+		{
+			$media['metadata'] = json_decode((string) $media['metadata'], true);
+			$media['tags']     = self::decodeTags(is_string($media['tags']) ? $media['tags'] : null);
+			$media['path']     = '/ ' . implode(' / ', $paths[(string) $media['node_id']] ?? []);
+			$media['editable'] = $editable[(int) $media['node_id']];
+			$media = $this->addFileLocations($media);
+		}
+
+		return $result;
 	}
 
 	/**
@@ -322,6 +359,34 @@ class MediaService
 			throw new NotFoundException('mediapool', 'media_not_found', ['media_id' => $mediaId]);
 
 		return $media;
+	}
+
+	/**
+	 * The directories which the user may read, as condition on mediapool_nodes, like checkDirectoryPermissions():
+	 * his own ones, the public ones and the ones shared with him. Rights are not inherited by subdirectories.
+	 * null for the module admin, who reads all. The sub admin of the Enterprise edition is not part of it yet:
+	 * he finds less, never more.
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 */
+	private function readableDirectories(int $UID): ?Where
+	{
+		if ($this->aclValidator->isModuleAdmin($UID))
+			return null;
+
+		$roles = [];
+		if ($this->aclValidator->isEditor($UID))
+			$roles[] = AclSections::EDITOR;
+		if ($this->aclValidator->isViewer($UID))
+			$roles[] = AclSections::VIEWER;
+		$shared = $roles === [] ? [] : array_map(intval(...), $this->aclValidator->findSharedUnitIds($UID, ...$roles));
+
+		return Where::anyOf(
+			Where::equals('mediapool_nodes.UID', $UID),
+			Where::raw('(mediapool_nodes.visibility & ' . AclValidator::VISIBILITY_PUBLIC . ') > 0'),
+			Where::in('mediapool_nodes.node_id', $shared)
+		);
 	}
 
 	/**

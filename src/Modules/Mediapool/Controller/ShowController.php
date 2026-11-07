@@ -101,6 +101,7 @@ class ShowController
 					'LANG_FILENAME' => $this->translator->translate('filename', 'mediapool'),
 					'LANG_DESCRIPTION' => $this->translator->translate('description', 'mediapool'),
 					'LANG_TAGS' => $this->translator->translate('tags', 'mediapool'),
+					'LANG_SEARCH_MEDIA' => $this->translator->translate('search_media', 'mediapool'),
 					'LANG_TAGS_HINT' => $this->translator->translate('tags_hint', 'mediapool'),
 					'LANG_MIMETYPE' => $this->translator->translate('mimetype', 'mediapool'),
 					'LANG_FILESIZE' => $this->translator->translate('filesize', 'mediapool'),
@@ -155,7 +156,8 @@ class ShowController
 			'add_sub_folder'     => $this->translator->translate('add_sub_folder', 'mediapool'),
 			'edit_folder'        => $this->translator->translate('edit_folder', 'mediapool'),
 			'start_record_video' => $this->translator->translate('start_record_video', 'mediapool'),
-			'stop_record_video'  => $this->translator->translate('stop_record_video', 'mediapool')
+			'stop_record_video'  => $this->translator->translate('stop_record_video', 'mediapool'),
+			'search_results'     => $this->translator->translate('search_results', 'mediapool')
 		]);
 		if ($this->config->getEdition() === Config::PLATFORM_EDITION_ENTERPRISE)
 		{

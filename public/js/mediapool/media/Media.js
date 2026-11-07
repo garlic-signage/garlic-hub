@@ -120,6 +120,15 @@ export class Media
         this.#mediaElement.querySelector(".media-filesize").textContent = this.#filesize;
         this.#mediaElement.querySelector(".media-mimetype").textContent = this.#mimetype;
 
+        // a result of the search: it shows its directory and knows whether the user may edit it
+        if (this.#mediaData.path !== undefined)
+        {
+            const pathElement = this.#mediaElement.querySelector(".media-path");
+            pathElement.textContent = this.#mediaData.path;
+            pathElement.parentElement.style.display = "block";
+            this.#mediaElement.querySelector(".media-item").setAttribute("data-editable", this.#mediaData.editable ? "true" : "false");
+        }
+
         const dimensionsElement = this.#mediaElement.querySelector(".media-dimensions");
         if (this.#dimensions !== "")
         {

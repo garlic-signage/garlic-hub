@@ -197,6 +197,7 @@
 
 			<div class="list-actions main-element-group">
 				<button id="openUploadDialog" class="primary" disabled><i class="bi bi-upload"></i> Uploader</button>
+				<input type="search" id="mediaSearch" placeholder="{{LANG_SEARCH_MEDIA}}" aria-label="{{LANG_SEARCH_MEDIA}}">
 				<button id="setListView" style="margin-left:auto;"><i class="bi bi-list-stars"></i> </button>
 				<button id="setGridView"><i class="bi bi-grid"></i> </button>
 			</div>
@@ -266,6 +267,7 @@
 						<figcaption class="media-info" draggable="false">
 							<p class="wrap-media-filename"><span class="media-filename"></span></p>
 							<p class="wrap-media-owner"><span class="media-owner"></span></p>
+							<p class="wrap-media-path" style="display: none;"><span class="media-path"></span></p>
 							<p class="wrap-media-mimetype"><span class="media-mimetype"></span></p>
 							<p class="wrap-media-filesize"><span class="media-filesize"></span></p>
 							<p  class="wrap-media-dimensions" style="display: none;"><span

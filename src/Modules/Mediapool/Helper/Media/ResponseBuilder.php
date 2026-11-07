@@ -34,6 +34,11 @@ class ResponseBuilder extends BaseResponseBuilder
 		return $this->jsonResponseHandler->jsonError($response, 'node is missing');
 	}
 
+	public function missingSearchTerm(ResponseInterface $response): ResponseInterface
+	{
+		return $this->jsonResponseHandler->jsonError($response, 'Search term is missing');
+	}
+
 	public function missingMediaId(ResponseInterface $response): ResponseInterface
 	{
 		return $this->jsonResponseHandler->jsonError($response, 'Media id is missing');

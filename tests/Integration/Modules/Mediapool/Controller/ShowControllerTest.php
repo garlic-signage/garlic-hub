@@ -122,7 +122,7 @@ class ShowControllerTest extends ControllerTestCase
 		$json = $this->show()->getTemplateData()['LANG_JS'];
 
 		static::assertIsArray(json_decode($json, true));
-		static::assertEqualsCanonicalizing(['add_root_folder', 'add_sub_folder', 'edit_folder', 'start_record_video', 'stop_record_video'], array_keys(json_decode($json, true)));
+		static::assertEqualsCanonicalizing(['add_root_folder', 'add_sub_folder', 'edit_folder', 'start_record_video', 'stop_record_video', 'search_results'], array_keys(json_decode($json, true)));
 		static::assertStringNotContainsString('<', $json);
 		static::assertStringNotContainsString('>', $json);
 	}

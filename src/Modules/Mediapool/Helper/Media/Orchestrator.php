@@ -46,6 +46,8 @@ class Orchestrator
 		'documents' => 'application/pdf',
 	];
 
+	public const int MIN_SEARCH_LENGTH = 2;
+
 	private int $nodeId = 0;
 
 	public function __construct(
@@ -71,6 +73,26 @@ class Orchestrator
 		$filter = self::FILTER_MAP[$this->text('filter')] ?? '';
 
 		$mediaList = $this->mediaService->listMedia($this->nodeId, $filter);
+
+		return $this->responseBuilder->generalSuccess($response, ['media_list' => $mediaList]);
+	}
+
+	public function validateSearch(ResponseInterface $response): ?ResponseInterface
+	{
+		if (mb_strlen(trim($this->text('term'))) < self::MIN_SEARCH_LENGTH)
+			return $this->responseBuilder->missingSearchTerm($response);
+
+		return null;
+	}
+
+	/**
+	 * @throws Exception
+	 * @throws UserException
+	 */
+	public function search(ResponseInterface $response): ResponseInterface
+	{
+		$filter    = self::FILTER_MAP[$this->text('filter')] ?? '';
+		$mediaList = $this->mediaService->searchMedia(trim($this->text('term')), $filter);
 
 		return $this->responseBuilder->generalSuccess($response, ['media_list' => $mediaList]);
 	}

@@ -48,6 +48,24 @@ export class MediaList
 
 		this.render(results);
 		this.#initDrag();
+		// a search which was shown before is over
+		this.#mediaListElement.dispatchEvent(new CustomEvent("directoryloaded"));
+	}
+
+	/**
+	 * The results of a search instead of a directory: each one knows whether the user may edit it.
+	 */
+	showSearchResults(results)
+	{
+		this.#rights = null;
+
+		this.render(results);
+		this.#initDrag();
+	}
+
+	get element()
+	{
+		return this.#mediaListElement;
 	}
 
     render(data)
@@ -111,7 +129,7 @@ export class MediaList
 			const clone  = document.getElementById("cloneMedia");
 			// only there when the user has an AI for the tagging
 			const suggestTags = document.getElementById("suggestTags");
-			if (this.#rights.create !== null && this.#rights.create === true)
+			if (this.#canEdit(mediaItem))
 			{
 				contextMenu.addRemoveEvent(remove);
 				contextMenu.addEditEvent(edit);
@@ -131,6 +149,14 @@ export class MediaList
 			}
         });
     }
+
+	#canEdit(mediaItem)
+	{
+		if (mediaItem.hasAttribute("data-editable"))
+			return mediaItem.getAttribute("data-editable") === "true";
+
+		return this.#rights?.create === true;
+	}
 
 	/**
 	 * The AI sees an image: pictures, a frame of videos, the first page of PDFs (like TaggingImage::supports()).

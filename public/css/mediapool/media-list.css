@@ -144,6 +144,7 @@
 
     .media-list-list-view .media-item .wrap-media-filename{width:40%; max-width:400px;}
     .media-list-list-view .media-item .wrap-media-owner{width:20%;}
+    .media-list-list-view .media-item .wrap-media-path{width:20%;}
     .media-list-list-view .media-item .wrap-media-mimetype{width:10%;}
     .media-list-list-view .media-item .wrap-media-filesize{width:10%;}
     .media-list-list-view .media-item .wrap-media-dimensions{width:10%;}
