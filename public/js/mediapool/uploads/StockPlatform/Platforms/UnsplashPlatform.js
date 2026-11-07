@@ -117,6 +117,8 @@ export class UnsplashPlatform extends AbstractStockPlatform
 				metadata: {
 					origin: "Unsplash",
 					description: item.description || null,
+					// the server takes the tags as text separated by commas, like the ones of Pixabay
+					tags: (item.tags ?? []).map(tag => tag.title).filter(title => typeof title === "string" && title !== "").join(", ") || null,
 					page_url: item.links?.html || null,
 					user: {
 						username: item.user?.username || null,
