@@ -42,6 +42,7 @@ use App\Modules\Playlists\Controller\ShowComposeController;
 use App\Modules\Playlists\Controller\ShowDatatableController;
 use App\Modules\Playlists\Controller\ShowSettingsController;
 use App\Modules\Playlists\Controller\ShowTemplateComposer;
+use App\Modules\Playlists\Controller\PlaylistFillingController;
 use App\Modules\Playlists\Controller\TriggerController;
 use App\Modules\Playlists\Controller\WidgetsController;
 use App\Modules\Account\Controller\EditLocalesController;
@@ -202,6 +203,7 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 
 	$group->get('/playlists/items/load/{playlist_id:\d+}', resolve([ItemsController::class, 'loadItems'], $container));
 	$group->post('/playlists/items/insert', resolve([ItemsController::class, 'insert'], $container));
+	$group->post('/playlists/ai/suggest', resolve([PlaylistFillingController::class, 'suggest'], $container));
 	$group->delete('/playlists/items', resolve([ItemsController::class, 'delete'], $container));
 	$group->patch('/playlists/items', resolve([ItemsController::class, 'updateItemOrders'], $container));
 	$group->get('/playlists/item/{item_id:\d+}', resolve([ItemsController::class, 'fetch'], $container));

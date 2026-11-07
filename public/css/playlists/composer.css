@@ -146,3 +146,11 @@ div:has(#shufflePicking){display: none;}
 #editItemContent{padding:1rem;}
 #editItemContent ul{list-style: none;padding:0;margin:0;}
 #editItemErrorMessage {color:red;}
+/* fill with AI: the theme and the suggestion with ticks */
+.ai-fill {display: grid; grid-template-columns: auto 1fr; gap: 0.5rem; align-items: center; padding: 0.5rem;}
+    .ai-fill button {grid-column: 2; justify-self: start;}
+.ai-suggestion {list-style: none; margin: 0; padding: 0 0.5rem; max-height: 55vh; overflow-y: auto;}
+    .ai-suggestion label {display: flex; gap: 0.5rem; align-items: center; padding: 0.25rem 0;}
+    .ai-suggestion img {width: 60px; height: 40px; object-fit: cover;}
+    .ai-suggestion .ai-suggestion-name {flex: 1;}
+#aiInsertChecked {margin: 0.5rem;}

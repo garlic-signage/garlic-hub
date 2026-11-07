@@ -81,6 +81,7 @@ use App\Modules\Playlists\Repositories\PlaylistsRepository;
 use App\Modules\Playlists\Services\AclValidator;
 use App\Modules\Playlists\Services\ConditionalPlayService;
 use App\Modules\Playlists\Services\ExportItemsLoader;
+use App\Modules\Playlists\Services\PlaylistFillingService;
 use App\Modules\Playlists\Services\ExportService;
 use App\Modules\Playlists\Services\InsertItems\InsertItemFactory;
 use App\Modules\Playlists\Services\ItemsService;
@@ -245,7 +246,8 @@ $dependencies[ShowComposeController::class] = DI\factory(function (ContainerInte
 			$container->get(PlaylistRelease::class),
 			new MultizonePresets($container->get(Config::class)->getPaths('configDir') . '/multizone_presets.json', new \App\Modules\Playlists\Helper\Playlists\ZonesSchema())
 		),
-		$container->get(Messages::class)
+		$container->get(Messages::class),
+		$container->get(PlaylistFillingService::class)
 	);
 });
 $dependencies[PlaylistsController::class] = DI\factory(function (ContainerInterface $container)

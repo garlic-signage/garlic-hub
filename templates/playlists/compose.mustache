@@ -21,6 +21,9 @@
 						{{#can_channels}}
 							<option value="insertChannels">{{LANG_INSERT_CHANNELS}}</option>
 						{{/can_channels}}
+						{{#can_fill_with_ai}}
+							<option value="fillWithAi">{{LANG_FILL_WITH_AI}}</option>
+						{{/can_fill_with_ai}}
 					</select>
 					</label>
 			</div>
@@ -54,6 +57,30 @@
 			</section>
 			<ul id="thePlaylist">
 			</ul>
+
+			{{#can_fill_with_ai}}
+			<template id="aiFillTemplate">
+				<form class="ai-fill" id="aiFillForm">
+					<label for="aiTheme">{{LANG_AI_THEME}}</label>
+					<input type="text" id="aiTheme" maxlength="300" placeholder="{{LANG_AI_THEME_HINT}}" required>
+					<label for="aiMinutes">{{LANG_AI_MINUTES}}</label>
+					<input type="number" id="aiMinutes" min="1" max="120" value="5" required>
+					<button type="submit" class="primary">{{LANG_AI_SUGGEST}}</button>
+				</form>
+				<ul class="ai-suggestion" id="aiSuggestion"></ul>
+				<button type="button" id="aiInsertChecked" hidden>{{LANG_AI_INSERT_CHECKED}}</button>
+			</template>
+			<template id="aiSuggestionItemTemplate">
+				<li>
+					<label>
+						<input type="checkbox" checked>
+						<img src="" alt="">
+						<span class="ai-suggestion-name"></span>
+						<span class="ai-suggestion-duration"></span>
+					</label>
+				</li>
+			</template>
+			{{/can_fill_with_ai}}
 
 			<template id="playlistItemTemplate">
 				<li class="playlist-item" draggable="true" id="">

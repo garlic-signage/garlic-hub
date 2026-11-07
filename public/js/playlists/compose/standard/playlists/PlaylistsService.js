@@ -24,6 +24,18 @@ import {ItemsApiConfig}     from "../items/ItemsApiConfig.js";
 export class PlaylistsService extends BaseService
 {
 
+	/**
+	 * The media which the AI suggests on a theme, nothing is inserted.
+	 */
+	async suggestWithAi(playlistId, theme, minutes)
+	{
+		const result = await this._sendRequest(PlaylistsApiConfig.AI_SUGGEST_URI, "POST", {playlist_id: playlistId, theme: theme, minutes: minutes});
+		if (result.success !== true)
+			throw new Error(result.error_message);
+
+		return result.items;
+	}
+
 	async findPlaylists(playlistMode, playlistName)
 	{
 		const url     = `${PlaylistsApiConfig.FIND_URI}/${playlistMode}/${playlistName}`;

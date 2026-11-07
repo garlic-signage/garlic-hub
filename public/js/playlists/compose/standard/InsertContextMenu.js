@@ -5,10 +5,16 @@ export class InsertContextMenu
 	#dragDropHandler         = null;
 	#itemSelectContainer     = document.getElementById("itemSelectContainer");
 
-	constructor(selectorFactory, dragDropHandler)
+	#aiFiller = null;
+
+	/**
+	 * @param aiFiller the filling with the AI, null when the user has no AI for texts
+	 */
+	constructor(selectorFactory, dragDropHandler, aiFiller = null)
 	{
 		this.#selectorFactory = selectorFactory;
 		this.#dragDropHandler = dragDropHandler;
+		this.#aiFiller        = aiFiller;
 	}
 
 	init()
@@ -37,6 +43,9 @@ export class InsertContextMenu
 					break
 				case "insertChannels":
 					this.#insertChannels();
+					break;
+				case "fillWithAi":
+					this.#aiFiller?.show(this.#itemSelectContainer);
 					break;
 				default:
 					throw new Error("Unknown insert menu option");

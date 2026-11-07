@@ -29,6 +29,7 @@ use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Playlists\Helper\Compose\UiTemplatesPreparer;
 use App\Modules\Playlists\Helper\PlaylistMode;
+use App\Modules\Playlists\Services\PlaylistFillingService;
 use App\Modules\Playlists\Services\PlaylistsService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -41,7 +42,8 @@ class ShowComposeController
 {
 	public function __construct(private readonly PlaylistsService $playlistsService,
 								private readonly UiTemplatesPreparer $uiTemplatesPreparer,
-								private readonly Messages $flash)
+								private readonly Messages $flash,
+								private readonly PlaylistFillingService $playlistFillingService)
 	{}
 
 	/**
@@ -82,7 +84,7 @@ class ShowComposeController
 			case PlaylistMode::CHANNEL->value:
 			case PlaylistMode::INTERNAL->value:
 			case PlaylistMode::MASTER->value:
-				$data = $this->uiTemplatesPreparer->buildCircularEditor($playlist);
+				$data = $this->uiTemplatesPreparer->buildCircularEditor($playlist, $this->playlistFillingService->isAvailable());
 				break;
 			default:
 				return $this->redirectWithErrors($response, 'Unsupported playlist mode: '.$playlist['playlist_mode']);

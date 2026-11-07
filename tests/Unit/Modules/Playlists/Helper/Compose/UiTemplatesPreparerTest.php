@@ -223,6 +223,31 @@ class UiTemplatesPreparerTest extends TestCase
 	}
 
 	/**
+	 * A user with an AI for texts gets "fill with AI" in the insert menu.
+	 *
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testBuildCircularEditorOffersTheFillingWithAi(): void
+	{
+		$playlist = ['playlist_id' => 789, 'playlist_name' => 'Circular Playlist', 'time_limit' => 3600];
+		$this->playlistReleaseStub->method('mayExport')->willReturn(true);
+		$this->stubCircularEditor($playlist);
+
+		$result = $this->preparer->buildCircularEditor($playlist, true);
+
+		static::assertSame([
+			'LANG_FILL_WITH_AI' => 'Fill with AI',
+			'LANG_AI_THEME' => 'Theme',
+			'LANG_AI_THEME_HINT' => 'e.g. summer',
+			'LANG_AI_MINUTES' => 'Minutes',
+			'LANG_AI_SUGGEST' => 'Suggest',
+			'LANG_AI_INSERT_CHECKED' => 'Insert ticked'
+		], $result['this_layout']['data']['can_fill_with_ai']);
+	}
+
+	/**
 	 * While the release is on, a user who may not export asks for the release with the export button.
 	 *
 	 * @throws CoreException
@@ -284,7 +309,14 @@ class UiTemplatesPreparerTest extends TestCase
 				['item_name', UiTemplatesPreparer::MODULE_NAME, [], 'Item Name'],
 				['preview', UiTemplatesPreparer::MODULE_NAME, [], 'Playlist Preview'],
 				['save', 'main', [], 'Save'],
-				['cancel', 'main', [], 'Cancel']
+				['cancel', 'main', [], 'Cancel'],
+				['ai_inserted', UiTemplatesPreparer::MODULE_NAME, [], 'Inserted'],
+				['fill_with_ai', UiTemplatesPreparer::MODULE_NAME, [], 'Fill with AI'],
+				['ai_theme', UiTemplatesPreparer::MODULE_NAME, [], 'Theme'],
+				['ai_theme_hint', UiTemplatesPreparer::MODULE_NAME, [], 'e.g. summer'],
+				['ai_minutes', UiTemplatesPreparer::MODULE_NAME, [], 'Minutes'],
+				['ai_suggest', UiTemplatesPreparer::MODULE_NAME, [], 'Suggest'],
+				['ai_insert_checked', UiTemplatesPreparer::MODULE_NAME, [], 'Insert ticked']
 			]);
 
 		$this->rightsCheckerStub->method('getEdition')
@@ -342,12 +374,13 @@ class UiTemplatesPreparerTest extends TestCase
 					'can_external_playlists' => [],
 					'can_templates' => [],
 					'can_channels' => [],
+					'can_fill_with_ai' => [],
 					'LANG_PLAYLIST_DURATION' => 'Duration',
 					'LANG_TOTAL' => 'Total Media',
 					'LANG_TOTAL_FILESIZE' => 'Total Filesize',
 					'has_time_limit' => [],
 					'LANG_SHUFFLE' => 'Shuffle',
-					'LANG_JS' => '{"picking_all":"All","request_release":"Ready for release","release_requested":"Waiting for release","released":"Released"}',
+					'LANG_JS' => '{"picking_all":"All","request_release":"Ready for release","release_requested":"Waiting for release","released":"Released","ai_inserted":"Inserted"}',
 					'LANG_PICKING_MEDIA_PER_CYCLE' => 'Picking Media Per Cycle',
 					'LANG_PLAYER_EXPORT' => $exportLabel,
 					'RELEASE_REQUEST' => $releaseRequest,

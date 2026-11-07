@@ -155,12 +155,13 @@ readonly class UiTemplatesPreparer
 
 	/**
 	 * @param array<string,mixed> $playlist
+	 * @param bool $canFillWithAi the user has an AI for texts: it suggests media on a theme
 	 * @return array<string,mixed>
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 */
-	public function buildCircularEditor(array $playlist): array
+	public function buildCircularEditor(array $playlist, bool $canFillWithAi = false): array
 	{
 		$title = $this->translator->translate('composer', self::MODULE_NAME). ' ('.$playlist['playlist_name'].')';
 		// while the release is on, a user who may not export asks for the release with the same button,
@@ -196,6 +197,14 @@ readonly class UiTemplatesPreparer
 					'can_external_playlists' => $this->rightsChecker->checkInsertExternalPlaylist($playlist['time_limit']),
 					'can_templates' => $this->rightsChecker->checkInsertTemplates(),
 					'can_channels' => $this->rightsChecker->checkInsertChannels(),
+					'can_fill_with_ai' => $canFillWithAi ? [
+						'LANG_FILL_WITH_AI' => $this->translator->translate('fill_with_ai', self::MODULE_NAME),
+						'LANG_AI_THEME' => $this->translator->translate('ai_theme', self::MODULE_NAME),
+						'LANG_AI_THEME_HINT' => $this->translator->translate('ai_theme_hint', self::MODULE_NAME),
+						'LANG_AI_MINUTES' => $this->translator->translate('ai_minutes', self::MODULE_NAME),
+						'LANG_AI_SUGGEST' => $this->translator->translate('ai_suggest', self::MODULE_NAME),
+						'LANG_AI_INSERT_CHECKED' => $this->translator->translate('ai_insert_checked', self::MODULE_NAME)
+					] : [],
 					'LANG_PLAYLIST_DURATION' => $this->translator->translate('duration', self::MODULE_NAME),
 					'LANG_TOTAL' => $this->translator->translate('total_media', self::MODULE_NAME),
 					'LANG_TOTAL_FILESIZE' => $this->translator->translate('total_filesize', self::MODULE_NAME),
@@ -205,7 +214,8 @@ readonly class UiTemplatesPreparer
 						'picking_all' => $this->translator->translate('all', self::MODULE_NAME),
 						'request_release' => $this->translator->translate('request_release', self::MODULE_NAME),
 						'release_requested' => $this->translator->translate('release_requested', self::MODULE_NAME),
-						'released' => $this->translator->translateArrayForOptions('release_status_selects', self::MODULE_NAME)['released'] ?? ''
+						'released' => $this->translator->translateArrayForOptions('release_status_selects', self::MODULE_NAME)['released'] ?? '',
+						'ai_inserted' => $this->translator->translate('ai_inserted', self::MODULE_NAME)
 					]),
 					'LANG_PICKING_MEDIA_PER_CYCLE' => $this->translator->translate('picking_media_per_cycle', self::MODULE_NAME),
 					'LANG_PLAYER_EXPORT' => $this->translator->translate($requestRelease ? 'request_release' : 'player_export', self::MODULE_NAME),

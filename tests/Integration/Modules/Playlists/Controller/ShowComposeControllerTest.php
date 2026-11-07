@@ -23,6 +23,8 @@ namespace Tests\Integration\Modules\Playlists\Controller;
 
 use App\Framework\TemplateEngine\PageResponse;
 use App\Modules\Playlists\Controller\ShowComposeController;
+use App\Shared\Llm\LlmTask;
+use App\Shared\Llm\UserLlmService;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Psr\Http\Message\ResponseInterface;
@@ -113,6 +115,24 @@ class ShowComposeControllerTest extends PlaylistsControllerTestCase
 		static::assertNotSame([], $data['can_templates']);
 		static::assertSame([], $data['can_external_media']);
 		static::assertSame([], $data['has_time_limit']);
+	}
+
+	/**
+	 * "Fill with AI" is in the insert menu when the user has an AI for texts.
+	 */
+	public function testTheFillingWithAiNeedsAnAiForTexts(): void
+	{
+		$this->actingAs(2);
+		$withoutAi = $this->page('1')->getTemplateData();
+		static::assertSame([], $withoutAi['can_fill_with_ai']);
+
+		$this->connection->executeStatement("INSERT INTO company_llm_tasks (company_id, task, mode) VALUES (1, ?, 'user_own')", [LlmTask::TEXT]);
+		$service = $this->container->get(UserLlmService::class);
+		$service->saveConnection(2, 0, ['name' => 'Ollama', 'api_type' => 'openai', 'base_url' => 'http://localhost:11434/v1', 'api_key' => '']);
+		$service->saveTasks(2, [LlmTask::TEXT => ['connection_id' => $service->findConnections(2)[0]['connection_id'], 'model' => 'qwen3']]);
+
+		$withAi = $this->page('1')->getTemplateData();
+		static::assertSame($this->text('fill_with_ai'), $withAi['can_fill_with_ai']['LANG_FILL_WITH_AI']);
 	}
 
 	public function testAPlaylistWithATimeLimitCanNotContainPlaylists(): void

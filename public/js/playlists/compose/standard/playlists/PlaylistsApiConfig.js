@@ -23,5 +23,6 @@ export const PlaylistsApiConfig = {
 	SHUFFLE_URI: "/async/playlists/shuffle",
 	PICKING_URI: "/async/playlists/picking",
 	RELEASE_URI: "/async/playlists/release",
-	FIND_URI: "/async/playlists/find"
+	FIND_URI: "/async/playlists/find",
+	AI_SUGGEST_URI: "/async/playlists/ai/suggest"
 };

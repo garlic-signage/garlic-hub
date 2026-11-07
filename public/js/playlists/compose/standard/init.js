@@ -33,6 +33,7 @@ import {WidgetFactory} from "./editors/WidgetFactory.js";
 import {ConditionalPlayFactory} from "./editors/ConditionalPlayFactory.js";
 import {TriggerFactory} from "./editors/TriggerFactory.js";
 import {TemplatesService} from "../../../templates/TemplatesService.js";
+import {AiFiller} from "./ai/AiFiller.js";
 
 document.addEventListener("DOMContentLoaded", async function ()
 {
@@ -48,7 +49,10 @@ document.addEventListener("DOMContentLoaded", async function ()
 	dragDropHandler.playlistId = playlistId;
 
 	const templatesService = new TemplatesService(new FetchClient());
-	const insertContextMenu = new InsertContextMenu(new SelectorFactory(playlistsService, templatesService), dragDropHandler);
+	// only there when the user has an AI for texts
+	const aiFiller = document.getElementById("aiFillTemplate") === null ? null :
+		new AiFiller(playlistsService, itemsService, itemsList, dropTarget, playlistId, new FlashMessageHandler(), lang);
+	const insertContextMenu = new InsertContextMenu(new SelectorFactory(playlistsService, templatesService), dragDropHandler, aiFiller);
 
 	insertContextMenu.init();
 	new ThumbnailPreview(dropTarget).init();
