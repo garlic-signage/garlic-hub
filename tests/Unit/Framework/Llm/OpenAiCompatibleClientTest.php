@@ -28,6 +28,7 @@ use App\Framework\Llm\LlmMessage;
 use App\Framework\Llm\LlmRequest;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\ConnectTimeoutException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Request;
@@ -198,5 +199,62 @@ class OpenAiCompatibleClientTest extends TestCase
 	public function testAnUnknownApiHasNoAdapter(): void
 	{
 		$this->assertLlmError('llm_unknown_api', fn() => $this->factory([])->create(new LlmConnection('anthropic', 'https://api.anthropic.com', 'claude')));
+	}
+
+	/**
+	 * Like MLX, a local server may leave out owned_by and lists a model twice.
+	 */
+	#[Group('units')]
+	public function testTheModelsOfTheEndpointComeSortedAndOnce(): void
+	{
+		$list   = new Response(200, ['Content-Type' => 'application/json'], (string) json_encode(['object' => 'list', 'data' => [
+			['id' => 'qwen3-30b', 'object' => 'model', 'created' => 1],
+			['id' => 'Llama-3.2-3B', 'object' => 'model', 'created' => 1],
+			['id' => 'qwen3-30b', 'object' => 'model', 'created' => 1, 'owned_by' => 'me']
+		]]));
+		$client = $this->factory([$list])->create(new LlmConnection('openai', 'http://192.168.10.251:8080/v1', '', 'sk-1'), LlmClientFactory::MODELS_TIMEOUT);
+
+		static::assertSame(['Llama-3.2-3B', 'qwen3-30b'], $client->listModels());
+		static::assertSame('GET', $this->sent()->getMethod());
+		static::assertSame('http://192.168.10.251:8080/v1/models', (string) $this->sent()->getUri());
+		static::assertSame('Bearer sk-1', $this->sent()->getHeaderLine('Authorization'));
+	}
+
+	/**
+	 * @return array<string,array{Response|Throwable, string}>
+	 */
+	public static function modelsFailureProvider(): array
+	{
+		$request = new Request('GET', 'http://10.0.0.1/v1/models');
+
+		return [
+			'wrong key'        => [new Response(401, ['Content-Type' => 'application/json'], '{"error":{"message":"internal secret","type":"auth"}}'), 'llm_unauthorized'],
+			'forbidden'        => [new Response(403, ['Content-Type' => 'text/plain'], 'internal secret'), 'llm_unauthorized'],
+			'no models route'  => [new Response(404, ['Content-Type' => 'application/json'], '{"error":{"message":"internal secret","type":"not_found"}}'), 'llm_no_models'],
+			'an internal page' => [new Response(200, ['Content-Type' => 'text/html'], '<html>internal secret</html>'), 'llm_no_models'],
+			'refused'          => [new ConnectException('internal secret', $request), 'llm_connection_failed'],
+			'too slow'         => [new ConnectTimeoutException('internal secret', $request), 'llm_timeout'],
+		];
+	}
+
+	/**
+	 * The user gets the reason for the form, but still nothing of what the address answers.
+	 */
+	#[DataProvider('modelsFailureProvider')]
+	#[Group('units')]
+	public function testAFailingModelListTellsOnlyTheReason(Response|Throwable $failure, string $reason): void
+	{
+		$client = $this->factory([$failure])->create(new LlmConnection('openai', 'http://10.0.0.1/v1', ''));
+
+		try
+		{
+			$client->listModels();
+			static::fail('No LlmException');
+		}
+		catch (LlmException $e)
+		{
+			static::assertSame($reason, $e->getTranslationKey());
+			static::assertStringNotContainsString('internal secret', $e->getMessage());
+		}
 	}
 }

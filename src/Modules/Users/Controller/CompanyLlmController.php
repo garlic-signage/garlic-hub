@@ -21,10 +21,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Controller;
 
+use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Controller\RequestInput;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
+use App\Framework\Llm\LlmException;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Modules\Auth\UserSession;
@@ -32,6 +34,7 @@ use App\Modules\Users\Services\AclValidator;
 use App\Shared\Llm\CompanyLlmService;
 use App\Shared\Llm\LlmFormBuilder;
 use App\Shared\User\UsersService;
+use Defuse\Crypto\Exception\CryptoException;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -53,7 +56,8 @@ readonly class CompanyLlmController
 		private UsersService $usersService,
 		private UserSession $userSession,
 		private Translator $translator,
-		private Messages $flash
+		private Messages $flash,
+		private JsonResponseHandler $responseHandler
 	) {}
 
 	/**
@@ -76,7 +80,7 @@ readonly class CompanyLlmController
 		);
 
 		return new PageResponse([
-			'main_layout' => ['LANG_PAGE_TITLE' => $title, 'additional_css' => ['/css/llm_form.css'], 'footer_modules' => []],
+			'main_layout' => ['LANG_PAGE_TITLE' => $title, 'additional_css' => ['/css/llm_form.css'], 'footer_modules' => ['/js/users/llm/init.js']],
 			'this_layout' => [
 				'template' => 'users/llm',
 				'data'     => $form + [
@@ -132,6 +136,38 @@ readonly class CompanyLlmController
 		$this->flash->addMessage('success', $this->translator->translate('company_llm_deleted', self::MODULE_NAME));
 
 		return $response->withHeader('Location', self::PAGE)->withStatus(302);
+	}
+
+	/**
+	 * The models for the selection in the form, as JSON.
+	 *
+	 * @throws CoreException
+	 * @throws CryptoException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws UserException
+	 */
+	public function models(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	{
+		$companyId = $this->companyOfManager();
+		if ($companyId === null)
+			return $this->responseHandler->jsonError($response, 'No rights', 403);
+
+		$input = RequestInput::of($request->getParsedBody());
+		try
+		{
+			$models = $this->companyLlmService->findModels($companyId, [
+				'api_type' => $input->text('api_type'),
+				'base_url' => $input->text('base_url'),
+				'api_key'  => $input->text('api_key')
+			]);
+		}
+		catch (LlmException $e)
+		{
+			return $this->responseHandler->jsonError($response, $this->translator->translateException($e));
+		}
+
+		return $this->responseHandler->jsonSuccess($response, ['models' => $models]);
 	}
 
 	/**

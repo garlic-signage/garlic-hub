@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Shared\Llm;
 
+use App\Framework\Llm\LlmClientFactory;
 use App\Framework\Security\Crypt;
 use Doctrine\DBAL\Exception;
 
@@ -34,9 +35,9 @@ readonly class CompanyLlmService extends LlmSettings
 	public const string RELEASED_FOR_ALL    = 'all';
 	public const array RELEASES             = [self::RELEASED_FOR_ADMINS, self::RELEASED_FOR_ALL];
 
-	public function __construct(CompanyLlmRepository $repository, Crypt $crypt)
+	public function __construct(CompanyLlmRepository $repository, Crypt $crypt, LlmClientFactory $clientFactory)
 	{
-		parent::__construct($repository, $crypt);
+		parent::__construct($repository, $crypt, $clientFactory);
 	}
 
 	/**

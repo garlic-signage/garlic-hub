@@ -21,7 +21,13 @@ declare(strict_types=1);
 
 namespace App\Framework\Llm;
 
+use GuzzleHttp\Exception\ConnectTimeoutException;
+use GuzzleHttp\Exception\NetworkException;
+use GuzzleHttp\Exception\NetworkTimeoutException;
+use GuzzleHttp\Exception\ResponseTimeoutException;
 use OpenAI\Client;
+use OpenAI\Exceptions\ErrorException;
+use OpenAI\Exceptions\UnserializableResponse;
 use Throwable;
 
 /**
@@ -55,6 +61,51 @@ readonly class OpenAiCompatibleClient implements LlmClient
 			throw new LlmException('llm_no_answer');
 
 		return $content;
+	}
+
+	/**
+	 * Unlike the answer of the model, the failure tells the reason: the user is filling in the form and has to
+	 * know what is wrong. Still only the reason, never the answer of the endpoint.
+	 */
+	public function listModels(): array
+	{
+		try
+		{
+			$models = [];
+			foreach ($this->client->models()->list()->data as $model)
+				$models[] = $model->id;
+		}
+		catch (Throwable $e)
+		{
+			throw new LlmException(self::reasonOf($e), $e instanceof \Exception ? $e : null);
+		}
+
+		$models = array_values(array_unique($models));
+		natcasesort($models);
+
+		return array_values($models);
+	}
+
+	/**
+	 * The translation key of the reason why the endpoint gives no models.
+	 */
+	private static function reasonOf(Throwable $e): string
+	{
+		$cause = $e->getPrevious() ?? $e;
+		if ($cause instanceof ConnectTimeoutException || $cause instanceof NetworkTimeoutException || $cause instanceof ResponseTimeoutException)
+			return 'llm_timeout';
+		if ($cause instanceof NetworkException)
+			return 'llm_connection_failed';
+
+		// an error status with a JSON error or with an answer which is no JSON
+		$status = match (true)
+		{
+			$e instanceof ErrorException         => $e->getStatusCode(),
+			$e instanceof UnserializableResponse => $e->response->getStatusCode(),
+			default                              => 0
+		};
+
+		return in_array($status, [401, 403], true) ? 'llm_unauthorized' : 'llm_no_models';
 	}
 
 	/**

@@ -29,7 +29,8 @@ use App\Framework\Security\CsrfToken;
 
 /**
  * The data of the form of an LLM (templates/generic/llm_form.mustache), of the account and of the company.
- * The key is never shown, the field tells only whether one is stored.
+ * The key is never shown, the field tells only whether one is stored. The models of the address are offered
+ * in a dialog (/js/core/LlmModelsDialog.js), the field stays free for an endpoint without a list.
  */
 readonly class LlmFormBuilder
 {
@@ -56,6 +57,14 @@ readonly class LlmFormBuilder
 			'BASE_URL'      => $settings['base_url'] ?? '',
 			'LANG_MODEL'    => $this->translate('llm_model'),
 			'MODEL'         => $settings['model'] ?? '',
+			'models'        => [
+				'MODELS_ACTION'      => $formAction . '/models',
+				'LANG_LOAD_MODELS'   => $this->translate('llm_load_models'),
+				'LANG_MODELS_TITLE'  => $this->translate('llm_models_title'),
+				'LANG_MODELS_FILTER' => $this->translate('llm_models_filter'),
+				'LANG_MODELS_EMPTY'  => $this->translate('llm_models_empty'),
+				'LANG_CLOSE'         => $this->translate('close')
+			],
 			'LANG_API_KEY'  => $this->translate('llm_api_key'),
 			'API_KEY_HINT'  => $this->translate(($settings['has_key'] ?? false) ? 'llm_api_key_stored' : 'llm_api_key_optional'),
 			'release'       => $releasedFor === null ? [] : [

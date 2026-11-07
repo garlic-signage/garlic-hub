@@ -21,7 +21,13 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Shared\Llm;
 
+use App\Framework\Llm\LlmClientFactory;
 use App\Shared\Llm\UserLlmService;
+use DI\Container;
+use GuzzleHttp\Client;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Integration\Support\ContainerTestCase;
 
@@ -33,12 +39,32 @@ use Tests\Integration\Support\ContainerTestCase;
 class UserLlmServiceTest extends ContainerTestCase
 {
 	private UserLlmService $service;
+	private MockHandler $endpoint;
 
 	protected function setUp(): void
 	{
 		parent::setUp();
 		$this->loadFixture('acl/users.sql');
-		$this->service = $this->container->get(UserLlmService::class);
+		$this->endpoint = new MockHandler();
+		$container      = $this->container;
+		static::assertInstanceOf(Container::class, $container);
+		$container->set(LlmClientFactory::class, new LlmClientFactory(new Client(['handler' => HandlerStack::create($this->endpoint)])));
+		$this->service = $container->get(UserLlmService::class);
+	}
+
+	/**
+	 * @return list<string>
+	 */
+	private function findModels(string $baseUrl, string $apiKey = ''): array
+	{
+		$this->endpoint->append(new Response(200, ['Content-Type' => 'application/json'], '{"object":"list","data":[{"id":"gpt-5","object":"model"}]}'));
+
+		return $this->service->findModels(2, ['api_type' => 'openai', 'base_url' => $baseUrl, 'api_key' => $apiKey]);
+	}
+
+	private function sentAuthorization(): string
+	{
+		return (string) $this->endpoint->getLastRequest()?->getHeaderLine('Authorization');
 	}
 
 	/**
@@ -83,6 +109,30 @@ class UserLlmServiceTest extends ContainerTestCase
 
 		static::assertSame('', $this->service->findConnection(2)?->apiKey);
 		static::assertFalse($this->service->findSettings(2)['has_key'] ?? true);
+	}
+
+	/**
+	 * The form does not show the stored key: an empty field means it, like on saving.
+	 */
+	public function testTheModelsAreLoadedWithTheStoredKeyOfTheSameAddress(): void
+	{
+		$this->service->save(2, $this->input());
+
+		static::assertSame(['gpt-5'], $this->findModels('https://api.openai.com/v1/'));
+		static::assertSame('Bearer sk-secret', $this->sentAuthorization());
+
+		$this->findModels('https://api.openai.com/v1', 'sk-typed');
+		static::assertSame('Bearer sk-typed', $this->sentAuthorization());
+	}
+
+	public function testTheStoredKeyDoesNotGoToAnotherAddress(): void
+	{
+		$this->service->save(2, $this->input());
+
+		$this->findModels('http://evil.test/v1');
+
+		static::assertSame('', $this->sentAuthorization());
+		static::assertSame('http://evil.test/v1/models', (string) $this->endpoint->getLastRequest()?->getUri());
 	}
 
 	public function testWrongInputIsNotStored(): void

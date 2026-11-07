@@ -21,24 +21,28 @@ declare(strict_types=1);
 
 namespace App\Modules\Account\Controller;
 
+use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
+use App\Framework\Llm\LlmException;
 use App\Framework\Localization\Translate\Translator;
 use App\Modules\Account\Helper\Llm\Orchestrator;
+use Defuse\Crypto\Exception\CryptoException;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Flash\Messages;
 
 /**
- * The forms of the tab of the own LLM in the account. Every form leads back to the tab.
+ * The forms of the tab of the own LLM in the account. Every form leads back to the tab, the models for the
+ * selection come as JSON.
  */
 readonly class LlmController
 {
 	private const string TAB = '/account/settings#llm';
 
-	public function __construct(private Orchestrator $orchestrator, private Translator $translator, private Messages $flash)
+	public function __construct(private Orchestrator $orchestrator, private Translator $translator, private Messages $flash, private JsonResponseHandler $responseHandler)
 	{}
 
 	/**
@@ -71,6 +75,27 @@ readonly class LlmController
 		$this->flash->addMessage('success', $this->translator->translate('llm_deleted', 'account'));
 
 		return $this->backToTab($response);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws CryptoException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws UserException
+	 */
+	public function models(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	{
+		try
+		{
+			$models = $this->orchestrator->findModels($request->getParsedBody());
+		}
+		catch (LlmException $e)
+		{
+			return $this->responseHandler->jsonError($response, $this->translator->translateException($e));
+		}
+
+		return $this->responseHandler->jsonSuccess($response, ['models' => $models]);
 	}
 
 	private function backToTab(ResponseInterface $response): ResponseInterface

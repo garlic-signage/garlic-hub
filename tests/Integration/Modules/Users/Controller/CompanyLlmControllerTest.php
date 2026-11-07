@@ -100,4 +100,18 @@ class CompanyLlmControllerTest extends ContainerTestCase
 		static::assertSame(['/', '/'], [$response->getHeaderLine('Location'), $deleted->getHeaderLine('Location')]);
 		static::assertSame('http://localhost:11434/v1', $this->connection->fetchOne('SELECT base_url FROM company_llm'));
 	}
+
+	/**
+	 * Otherwise he could send the stored key of the company to an address of his own.
+	 */
+	public function testAUserWithoutTheRightLoadsNoModels(): void
+	{
+		$this->actingAs(2);
+
+		$request  = new ServerRequestFactory()->createServerRequest('POST', '/users/llm/models')->withParsedBody(['api_type' => 'openai', 'base_url' => 'http://evil.test/v1', 'api_key' => '']);
+		$response = $this->controller->models($request, new Response());
+
+		static::assertSame(403, $response->getStatusCode());
+		static::assertFalse(json_decode((string) $response->getBody(), true)['success'] ?? true);
+	}
 }

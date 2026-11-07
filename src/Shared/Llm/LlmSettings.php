@@ -23,6 +23,7 @@ namespace App\Shared\Llm;
 
 use App\Framework\Llm\LlmClientFactory;
 use App\Framework\Llm\LlmConnection;
+use App\Framework\Llm\LlmException;
 use App\Framework\Security\Crypt;
 use Defuse\Crypto\Crypto;
 use Defuse\Crypto\Exception\CryptoException;
@@ -38,7 +39,7 @@ abstract readonly class LlmSettings
 	private const int MAX_URL_LENGTH   = 255;
 	private const int MAX_MODEL_LENGTH = 100;
 
-	public function __construct(protected LlmRepository $repository, private Crypt $crypt)
+	public function __construct(protected LlmRepository $repository, private Crypt $crypt, private LlmClientFactory $clientFactory)
 	{}
 
 	/**
@@ -94,6 +95,32 @@ abstract readonly class LlmSettings
 		$this->repository->store($ownerId, $fields);
 
 		return [];
+	}
+
+	/**
+	 * The models at the address of the form, for the selection. Without a key in the form the stored one is
+	 * used, but like on saving only for the address it was entered for.
+	 *
+	 * @param array{api_type:string, base_url:string, api_key:string} $input
+	 * @return list<string>
+	 * @throws CryptoException
+	 * @throws Exception
+	 * @throws LlmException
+	 */
+	public function findModels(int $ownerId, array $input): array
+	{
+		$baseUrl = rtrim(trim($input['base_url']), '/');
+		$apiKey  = trim($input['api_key']);
+		if ($apiKey === '')
+		{
+			$stored = $this->findConnection($ownerId);
+			if ($stored !== null && $stored->baseUrl === $baseUrl)
+				$apiKey = $stored->apiKey;
+		}
+
+		$connection = new LlmConnection(trim($input['api_type']), $baseUrl, '', $apiKey);
+
+		return $this->clientFactory->create($connection, LlmClientFactory::MODELS_TIMEOUT)->listModels();
 	}
 
 	/**

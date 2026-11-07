@@ -103,6 +103,18 @@ class LlmControllerTest extends ContainerTestCase
 		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_llm'));
 	}
 
+	public function testTheModelsOfAWrongAddressComeAsJsonError(): void
+	{
+		$request  = new ServerRequestFactory()->createServerRequest('POST', '/account/llm/models')->withParsedBody(['api_type' => 'openai', 'base_url' => 'file:///etc/passwd', 'api_key' => '']);
+		$response = $this->controller->models($request, new Response());
+
+		static::assertSame(400, $response->getStatusCode());
+		static::assertSame(
+			['success' => false, 'error_message' => $this->container->get(Translator::class)->translate('llm_invalid_url', 'main')],
+			json_decode((string) $response->getBody(), true)
+		);
+	}
+
 	public function testDeleteRemovesTheLlmOfTheUserOnly(): void
 	{
 		$this->connection->executeStatement("INSERT INTO user_llm (UID, base_url, model) VALUES (2, 'http://localhost:11434/v1', 'a'), (3, 'http://localhost:11434/v1', 'b')");

@@ -18,13 +18,17 @@
 */
 import {PasswordToggler} from "./PasswordToggler.js";
 import {PageTabs} from "../../core/PageTabs.js";
+import {LlmModelsDialog} from "../../core/LlmModelsDialog.js";
 
 document.addEventListener('DOMContentLoaded', function()
 {
 	// the account has tabs, the form for a forced password has none
 	const page = document.getElementById("accountSettings");
 	if (page !== null)
+	{
 		PageTabs.init(page);
+		LlmModelsDialog.attachTo(page);
+	}
 
 	const password = new PasswordToggler(
 		document.getElementById('password'),

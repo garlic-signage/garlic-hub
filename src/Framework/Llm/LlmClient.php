@@ -32,4 +32,12 @@ interface LlmClient
 	 * @throws LlmException
 	 */
 	public function complete(LlmRequest $request): string;
+
+	/**
+	 * The models the endpoint offers, for the selection in the form of an LLM.
+	 *
+	 * @return list<string>
+	 * @throws LlmException
+	 */
+	public function listModels(): array;
 }

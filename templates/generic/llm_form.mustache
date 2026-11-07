@@ -9,7 +9,12 @@
 	<label for="llm_base_url">{{LANG_BASE_URL}}</label>
 	<input type="url" id="llm_base_url" name="base_url" value="{{BASE_URL}}" maxlength="255" placeholder="https://api.openai.com/v1" required>
 	<label for="llm_model">{{LANG_MODEL}}</label>
-	<input type="text" id="llm_model" name="model" value="{{MODEL}}" maxlength="100" required>
+	<div class="llm-model">
+		<input type="text" id="llm_model" name="model" value="{{MODEL}}" maxlength="100" required>
+		{{#models}}
+		<button type="button" class="llm-models-button" data-action="{{MODELS_ACTION}}" data-title="{{LANG_MODELS_TITLE}}" data-filter="{{LANG_MODELS_FILTER}}" data-empty="{{LANG_MODELS_EMPTY}}" data-close="{{LANG_CLOSE}}">{{LANG_LOAD_MODELS}}</button>
+		{{/models}}
+	</div>
 	<label for="llm_api_key">{{LANG_API_KEY}}</label>
 	<input type="password" id="llm_api_key" name="api_key" autocomplete="off" placeholder="{{API_KEY_HINT}}">
 	{{#release}}

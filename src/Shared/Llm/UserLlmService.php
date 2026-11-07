@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Shared\Llm;
 
+use App\Framework\Llm\LlmClientFactory;
 use App\Framework\Security\Crypt;
 
 /**
@@ -28,8 +29,8 @@ use App\Framework\Security\Crypt;
  */
 readonly class UserLlmService extends LlmSettings
 {
-	public function __construct(UserLlmRepository $repository, Crypt $crypt)
+	public function __construct(UserLlmRepository $repository, Crypt $crypt, LlmClientFactory $clientFactory)
 	{
-		parent::__construct($repository, $crypt);
+		parent::__construct($repository, $crypt, $clientFactory);
 	}
 }

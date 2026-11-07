@@ -34,21 +34,24 @@ class LlmClientFactory
 {
 	private const int CONNECT_TIMEOUT = 5;
 	private const int TIMEOUT         = 60;
+	/** the selection of a model waits shorter than an answer of the model */
+	public const int MODELS_TIMEOUT   = 5;
 
 	public function __construct(private readonly ?ClientInterface $httpClient = null)
 	{}
 
 	/**
+	 * @param int $timeout seconds for the whole request
 	 * @throws LlmException
 	 */
-	public function create(LlmConnection $connection): LlmClient
+	public function create(LlmConnection $connection, int $timeout = self::TIMEOUT): LlmClient
 	{
 		if (!self::isValidUrl($connection->baseUrl))
 			throw new LlmException('llm_invalid_url');
 
 		return match ($connection->apiType)
 		{
-			LlmConnection::API_OPENAI => $this->createOpenAi($connection),
+			LlmConnection::API_OPENAI => $this->createOpenAi($connection, $timeout),
 			default                   => throw new LlmException('llm_unknown_api')
 		};
 	}
@@ -61,13 +64,13 @@ class LlmClientFactory
 		return in_array($scheme, ['http', 'https'], true) && is_string($host) && $host !== '';
 	}
 
-	private function createOpenAi(LlmConnection $connection): LlmClient
+	private function createOpenAi(LlmConnection $connection, int $timeout): LlmClient
 	{
 		$factory = OpenAI::factory()
 			->withBaseUri(rtrim($connection->baseUrl, '/'))
 			->withHttpClient($this->httpClient ?? new GuzzleClient([
-				RequestOptions::CONNECT_TIMEOUT => self::CONNECT_TIMEOUT,
-				RequestOptions::TIMEOUT         => self::TIMEOUT,
+				RequestOptions::CONNECT_TIMEOUT => min(self::CONNECT_TIMEOUT, $timeout),
+				RequestOptions::TIMEOUT         => $timeout,
 				RequestOptions::ALLOW_REDIRECTS => false
 			]));
 		if ($connection->apiKey !== '')

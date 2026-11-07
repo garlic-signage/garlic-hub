@@ -25,11 +25,13 @@ use App\Framework\Controller\RequestInput;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
+use App\Framework\Llm\LlmException;
 use App\Framework\Localization\Translate\Translator;
 use App\Modules\Auth\UserSession;
 use App\Shared\Llm\LlmFormBuilder;
 use App\Shared\Llm\LlmResolver;
 use App\Shared\Llm\UserLlmService;
+use Defuse\Crypto\Exception\CryptoException;
 use Doctrine\DBAL\Exception;
 
 /**
@@ -78,6 +80,24 @@ readonly class Orchestrator
 			'api_type' => $input->text('api_type'),
 			'base_url' => $input->text('base_url'),
 			'model'    => $input->text('model'),
+			'api_key'  => $input->text('api_key')
+		]);
+	}
+
+	/**
+	 * @return list<string>
+	 * @throws CryptoException
+	 * @throws Exception
+	 * @throws LlmException
+	 * @throws UserException
+	 */
+	public function findModels(mixed $post): array
+	{
+		$input = RequestInput::of($post);
+
+		return $this->userLlmService->findModels($this->userSession->getUID(), [
+			'api_type' => $input->text('api_type'),
+			'base_url' => $input->text('base_url'),
 			'api_key'  => $input->text('api_key')
 		]);
 	}
