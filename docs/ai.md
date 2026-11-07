@@ -30,15 +30,15 @@ The module admin of `users` decides per task on `/users/llm` (link on the admini
 
 | Mode                                | Effect                                                                 |
 |-------------------------------------|------------------------------------------------------------------------|
-| models of the company for all users | everybody works with the provider and model of the company             |
-| models of the company for administrators only | only admins (module admin or sub admin of any module) get the helper  |
-| users use their own models          | every user sets up his own provider and model in his account           |
+| for all users                       | everybody works with the provider and model of the company             |
+| for administrators only             | only admins (module admin or sub admin of any module) get the helper  |
+| own models of the users             | every user sets up his own provider and model in his account           |
 | off (default)                       | nobody gets the helper                                                 |
 
 The Core edition has one company (`company_id` 1), so the models of the company are the ones of the installation. In the
 Enterprise edition every customer sets up his own.
 
-With "users use their own models" the user enters his providers and models in the tab **Language and image
+With "own models of the users" the user enters his providers and models in the tab **Language and image
 models** of his account
 (`/account/settings#llm`). Tasks which the company provides appear there as provided, tasks which are off do not
 appear.
