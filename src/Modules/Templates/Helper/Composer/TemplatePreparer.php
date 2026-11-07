@@ -29,6 +29,7 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\UserSession;
 use App\Shared\Llm\LlmResolver;
+use App\Shared\Llm\LlmTask;
 use Doctrine\DBAL\Exception;
 
 readonly class TemplatePreparer
@@ -122,7 +123,7 @@ readonly class TemplatePreparer
 			'TEMPLATE_ID' => $templateId
 		];
 
-		if ($this->llmResolver->isAvailable($this->userSession->getUID()))
+		if ($this->llmResolver->isAvailable($this->userSession->getUID(), LlmTask::TEXT))
 			$templateComposer['text_correction'] = ['LANG_CORRECT_TEXT' => $this->translator->translate('correct_text', 'templates')];
 
 		if ($itemId > 0 && $playlistId > 0)

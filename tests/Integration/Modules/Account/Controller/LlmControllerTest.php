@@ -24,14 +24,18 @@ namespace Tests\Integration\Modules\Account\Controller;
 use App\Framework\Localization\Translate\Translator;
 use App\Modules\Account\Controller\LlmController;
 use App\Modules\Account\Helper\Llm\Orchestrator;
+use App\Shared\Llm\CompanyLlmService;
+use App\Shared\Llm\LlmTask;
 use PHPUnit\Framework\Attributes\Group;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Slim\Psr7\Factory\ServerRequestFactory;
 use Slim\Psr7\Response;
 use Tests\Integration\Support\ContainerTestCase;
 
 /**
- * The tab of the own LLM in the account: store, errors, delete. The key never comes back to the page.
+ * The tab of the own AI in the account: providers, tasks, errors, delete. The key never comes back to the page.
+ * Anna (2) sets up only the tasks her company leaves to her.
  */
 #[Group('auth')]
 class LlmControllerTest extends ContainerTestCase
@@ -49,11 +53,29 @@ class LlmControllerTest extends ContainerTestCase
 	/**
 	 * @param array<string,string> $post
 	 */
-	private function store(array $post): ResponseInterface
+	private function request(string $path, array $post = []): ServerRequestInterface
 	{
-		$request = new ServerRequestFactory()->createServerRequest('POST', '/account/llm')->withParsedBody($post);
+		return new ServerRequestFactory()->createServerRequest('POST', $path)->withParsedBody($post);
+	}
 
-		return $this->controller->store($request, new Response());
+	/**
+	 * @param array<string,string> $post
+	 */
+	private function storeConnection(array $post): ResponseInterface
+	{
+		return $this->controller->storeConnection($this->request('/account/llm/connection', $post), new Response());
+	}
+
+	private function companyDecides(string $task, string $mode): void
+	{
+		$this->connection->executeStatement('INSERT INTO company_llm_tasks (company_id, task, mode) VALUES (1, ?, ?)', [$task, $mode]);
+	}
+
+	private function addOwnProvider(int $UID): int
+	{
+		$this->connection->executeStatement("INSERT INTO user_llm_connections (UID, name, base_url) VALUES (?, 'Ollama', 'http://localhost:11434/v1')", [$UID]);
+
+		return (int) $this->connection->lastInsertId();
 	}
 
 	/**
@@ -67,60 +89,96 @@ class LlmControllerTest extends ContainerTestCase
 		return $flash[$type] ?? [];
 	}
 
+	private function text(string $key, string $module = 'main'): string
+	{
+		return $this->container->get(Translator::class)->translate($key, $module);
+	}
+
 	private function assertBackToTab(ResponseInterface $response): void
 	{
 		static::assertSame(302, $response->getStatusCode());
 		static::assertSame('/account/settings#llm', $response->getHeaderLine('Location'));
 	}
 
-	public function testTheLlmIsStoredAndTheTabShowsItWithoutTheKey(): void
+	public function testTheProviderIsStoredAndTheTabShowsItWithoutTheKey(): void
 	{
-		$response = $this->store(['api_type' => 'openai', 'base_url' => 'https://api.openai.com/v1', 'model' => 'gpt-5', 'api_key' => 'sk-secret']);
+		$response = $this->storeConnection(['connection_id' => '0', 'name' => 'OpenAI', 'api_type' => 'openai', 'base_url' => 'https://api.openai.com/v1', 'api_key' => 'sk-secret']);
 
 		$this->assertBackToTab($response);
-		static::assertSame([$this->container->get(Translator::class)->translate('llm_saved', 'account')], $this->flash('success'));
+		static::assertSame([$this->text('llm_connection_saved')], $this->flash('success'));
 		$tab = $this->container->get(Orchestrator::class)->buildTab();
-		static::assertSame(['https://api.openai.com/v1', 'gpt-5'], [$tab['BASE_URL'], $tab['MODEL']]);
+		static::assertSame(['OpenAI', 'https://api.openai.com/v1', true], [$tab['connections'][0]['NAME'], $tab['connections'][0]['BASE_URL'], $tab['connections'][0]['can_delete']]);
 		static::assertStringNotContainsString('sk-secret', (string) json_encode($tab));
-		static::assertNotSame([], $tab['can_delete']);
 	}
 
-	public function testWhileTheCompanyHasAnLlmTheTabSaysSoInsteadOfTheForm(): void
+	/**
+	 * The task the company provides is shown without a choice, the one which is off not at all.
+	 */
+	public function testTheTabShowsTheTasksAsTheCompanyDecided(): void
 	{
-		$this->connection->executeStatement("INSERT INTO company_llm (company_id, base_url, model) VALUES (1, 'http://localhost:11434/v1', 'a')");
+		$this->companyDecides(LlmTask::TEXT, CompanyLlmService::MODE_COMPANY_ALL);
+		$this->companyDecides(LlmTask::IMAGE_TAGGING, CompanyLlmService::MODE_USER_OWN);
 
+		$tasks = $this->container->get(Orchestrator::class)->buildTab()['tasks'];
+
+		static::assertSame([LlmTask::TEXT, LlmTask::IMAGE_TAGGING], array_column($tasks, 'TASK'));
+		static::assertSame([$this->text('llm_task_of_company')], [$tasks[0]['locked']['LANG_LOCKED'] ?? '']);
+		static::assertSame([[], []], [$tasks[0]['editable'], $tasks[1]['locked']]);
+	}
+
+	public function testWithoutReleasedTasksTheTabSaysSo(): void
+	{
 		$tab = $this->container->get(Orchestrator::class)->buildTab();
 
-		static::assertSame($this->container->get(Translator::class)->translate('llm_of_company', 'account'), $tab['company_llm']['LANG_COMPANY_LLM']);
+		static::assertFalse($tab['has_tasks']);
+		static::assertSame($this->text('llm_no_tasks', 'account'), $tab['LANG_NO_TASKS']);
+	}
+
+	/**
+	 * A task the company provides or switched off is not stored, even when the request has it.
+	 */
+	public function testOnlyTheTasksOfTheUserAreStored(): void
+	{
+		$this->companyDecides(LlmTask::TEXT, CompanyLlmService::MODE_COMPANY_ALL);
+		$this->companyDecides(LlmTask::IMAGE_TAGGING, CompanyLlmService::MODE_USER_OWN);
+		$connectionId = (string) $this->addOwnProvider(2);
+
+		$response = $this->controller->storeTasks($this->request('/account/llm/tasks', [
+			'connection_text'  => $connectionId, 'model_text'  => 'qwen3',
+			'connection_image_tagging'    => $connectionId, 'model_image_tagging'    => 'qwen3-vl',
+			'connection_image_generation' => $connectionId, 'model_image_generation' => 'flux'
+		]), new Response());
+
+		$this->assertBackToTab($response);
+		static::assertSame([$this->text('llm_tasks_saved')], $this->flash('success'));
+		static::assertSame([[LlmTask::IMAGE_TAGGING, 'qwen3-vl']], $this->connection->fetchAllNumeric('SELECT task, model FROM user_llm_tasks'));
 	}
 
 	public function testWrongInputShowsTheErrors(): void
 	{
-		$response = $this->store(['api_type' => 'openai', 'base_url' => 'ftp://example.com', 'model' => 'gpt-5']);
+		$response = $this->storeConnection(['connection_id' => '0', 'api_type' => 'openai', 'base_url' => 'ftp://example.com']);
 
 		$this->assertBackToTab($response);
-		static::assertSame([$this->container->get(Translator::class)->translate('llm_invalid_url', 'main')], $this->flash('error'));
-		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_llm'));
+		static::assertSame([$this->text('llm_invalid_url')], $this->flash('error'));
+		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_llm_connections'));
 	}
 
 	public function testTheModelsOfAWrongAddressComeAsJsonError(): void
 	{
-		$request  = new ServerRequestFactory()->createServerRequest('POST', '/account/llm/models')->withParsedBody(['api_type' => 'openai', 'base_url' => 'file:///etc/passwd', 'api_key' => '']);
-		$response = $this->controller->models($request, new Response());
+		$response = $this->controller->models($this->request('/account/llm/models', ['connection_id' => '0', 'api_type' => 'openai', 'base_url' => 'file:///etc/passwd', 'api_key' => '']), new Response());
 
 		static::assertSame(400, $response->getStatusCode());
-		static::assertSame(
-			['success' => false, 'error_message' => $this->container->get(Translator::class)->translate('llm_invalid_url', 'main')],
-			json_decode((string) $response->getBody(), true)
-		);
+		static::assertSame(['success' => false, 'error_message' => $this->text('llm_invalid_url')], json_decode((string) $response->getBody(), true));
 	}
 
-	public function testDeleteRemovesTheLlmOfTheUserOnly(): void
+	public function testDeleteRemovesTheProviderOfTheUserOnly(): void
 	{
-		$this->connection->executeStatement("INSERT INTO user_llm (UID, base_url, model) VALUES (2, 'http://localhost:11434/v1', 'a'), (3, 'http://localhost:11434/v1', 'b')");
+		$own     = $this->addOwnProvider(2);
+		$foreign = $this->addOwnProvider(3);
 
-		$this->assertBackToTab($this->controller->delete(new ServerRequestFactory()->createServerRequest('POST', '/account/llm/delete'), new Response()));
+		$this->assertBackToTab($this->controller->deleteConnection($this->request('/account/llm/connection/delete', ['connection_id' => (string) $foreign]), new Response()));
+		$this->controller->deleteConnection($this->request('/account/llm/connection/delete', ['connection_id' => (string) $own]), new Response());
 
-		static::assertSame([3], array_map('intval', $this->connection->fetchFirstColumn('SELECT UID FROM user_llm')));
+		static::assertSame([$foreign], array_map('intval', $this->connection->fetchFirstColumn('SELECT connection_id FROM user_llm_connections')));
 	}
 }

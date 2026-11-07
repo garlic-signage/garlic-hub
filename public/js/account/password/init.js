@@ -19,6 +19,7 @@
 import {PasswordToggler} from "./PasswordToggler.js";
 import {PageTabs} from "../../core/PageTabs.js";
 import {LlmModelsDialog} from "../../core/LlmModelsDialog.js";
+import {LlmSettingsForm} from "../../core/LlmSettingsForm.js";
 
 document.addEventListener('DOMContentLoaded', function()
 {
@@ -28,6 +29,7 @@ document.addEventListener('DOMContentLoaded', function()
 	{
 		PageTabs.init(page);
 		LlmModelsDialog.attachTo(page);
+		LlmSettingsForm.attachTo(page);
 	}
 
 	const password = new PasswordToggler(

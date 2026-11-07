@@ -23,14 +23,56 @@ namespace App\Shared\Llm;
 
 use App\Framework\Llm\LlmClientFactory;
 use App\Framework\Security\Crypt;
+use Doctrine\DBAL\Exception;
 
 /**
- * The own LLM of a user. It is used only while his company has none, see LlmResolver.
+ * The own AI of a user. It is used for a task only while his company allows it, see LlmResolver.
  */
 readonly class UserLlmService extends LlmSettings
 {
-	public function __construct(UserLlmRepository $repository, Crypt $crypt, LlmClientFactory $clientFactory)
+	public function __construct(
+		UserLlmConnectionRepository $connectionRepository,
+		UserLlmTaskRepository $taskRepository,
+		Crypt $crypt,
+		LlmClientFactory $clientFactory
+	) {
+		parent::__construct($connectionRepository, $taskRepository, $crypt, $clientFactory);
+	}
+
+	/**
+	 * Only the tasks of the form: the ones the company does not allow are not in it and stay as they are.
+	 *
+	 * @param array<string,array{connection_id:int, model:string}> $tasks by task
+	 * @return list<string> the translation keys of the errors
+	 * @throws Exception
+	 */
+	public function saveTasks(int $UID, array $tasks): array
 	{
-		parent::__construct($repository, $crypt, $clientFactory);
+		$errors = [];
+		foreach ($tasks as $task => $input)
+		{
+			$model      = trim($input['model']);
+			$taskErrors  = in_array($task, LlmTask::TASKS, true) ? $this->validateModel($UID, $input['connection_id'], $model) : ['llm_unknown_task'];
+			if ($taskErrors !== [])
+			{
+				$errors = array_merge($errors, $taskErrors);
+				continue;
+			}
+
+			if ($input['connection_id'] === 0)
+				$this->taskRepository->deleteTask($UID, $task);
+			else
+				$this->taskRepository->storeTask($UID, $task, ['connection_id' => $input['connection_id'], 'model' => $model]);
+		}
+
+		return array_values(array_unique($errors));
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	protected function releaseTasks(int $ownerId, int $connectionId): void
+	{
+		$this->taskRepository->deleteWithConnection($ownerId, $connectionId);
 	}
 }

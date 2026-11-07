@@ -33,6 +33,7 @@ use App\Modules\Auth\UserSession;
 use App\Modules\Users\Services\AclValidator;
 use App\Shared\Llm\CompanyLlmService;
 use App\Shared\Llm\LlmFormBuilder;
+use App\Shared\Llm\LlmTask;
 use App\Shared\User\UsersService;
 use Defuse\Crypto\Exception\CryptoException;
 use Doctrine\DBAL\Exception;
@@ -41,8 +42,8 @@ use Psr\Http\Message\ServerRequestInterface;
 use Slim\Flash\Messages;
 
 /**
- * The LLM of the company for the module admin of users, like the SSO providers: while it is there, the users of the
- * company work with it instead of their own ones. In Core it is the LLM of the installation.
+ * The AI of the company for the module admin of users, like the SSO providers: its providers and for each task who
+ * works with which AI. In Core it is the AI of the installation.
  */
 readonly class CompanyLlmController
 {
@@ -73,11 +74,7 @@ readonly class CompanyLlmController
 			return $this->noRights($response);
 
 		$title = $this->translator->translate('company_llm', self::MODULE_NAME);
-		$form  = $this->formBuilder->build(
-			$this->companyLlmService->findSettings($companyId),
-			self::PAGE,
-			$this->companyLlmService->findReleasedFor($companyId) ?? CompanyLlmService::RELEASED_FOR_ALL
-		);
+		$form  = $this->formBuilder->build(self::PAGE, $this->companyLlmService->findConnections($companyId), $this->companyLlmService->findTasks($companyId));
 
 		return new PageResponse([
 			'main_layout' => ['LANG_PAGE_TITLE' => $title, 'additional_css' => ['/css/llm_form.css'], 'footer_modules' => ['/js/users/llm/init.js']],
@@ -97,27 +94,21 @@ readonly class CompanyLlmController
 	 * @throws FrameworkException
 	 * @throws UserException
 	 */
-	public function store(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	public function storeConnection(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
 		$companyId = $this->companyOfManager();
 		if ($companyId === null)
 			return $this->noRights($response);
 
 		$input  = RequestInput::of($request->getParsedBody());
-		$errors = $this->companyLlmService->saveWithRelease($companyId, [
+		$errors = $this->companyLlmService->saveConnection($companyId, $input->id('connection_id'), [
+			'name'     => $input->text('name'),
 			'api_type' => $input->text('api_type'),
 			'base_url' => $input->text('base_url'),
-			'model'    => $input->text('model'),
 			'api_key'  => $input->text('api_key')
-		], $input->text('released_for'));
+		]);
 
-		if ($errors === [])
-			$this->flash->addMessage('success', $this->translator->translate('company_llm_saved', self::MODULE_NAME));
-
-		foreach ($errors as $error)
-			$this->flash->addMessage('error', $this->translator->translate($error, 'main'));
-
-		return $response->withHeader('Location', self::PAGE)->withStatus(302);
+		return $this->withMessages($response, $errors, 'llm_connection_saved');
 	}
 
 	/**
@@ -126,16 +117,38 @@ readonly class CompanyLlmController
 	 * @throws FrameworkException
 	 * @throws UserException
 	 */
-	public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	public function deleteConnection(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
 		$companyId = $this->companyOfManager();
 		if ($companyId === null)
 			return $this->noRights($response);
 
-		$this->companyLlmService->delete($companyId);
-		$this->flash->addMessage('success', $this->translator->translate('company_llm_deleted', self::MODULE_NAME));
+		$this->companyLlmService->deleteConnection($companyId, RequestInput::of($request->getParsedBody())->id('connection_id'));
 
-		return $response->withHeader('Location', self::PAGE)->withStatus(302);
+		return $this->withMessages($response, [], 'llm_connection_deleted');
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws UserException
+	 */
+	public function storeTasks(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	{
+		$companyId = $this->companyOfManager();
+		if ($companyId === null)
+			return $this->noRights($response);
+
+		$input = RequestInput::of($request->getParsedBody());
+		$tasks = [];
+		foreach (LlmTask::TASKS as $task)
+		{
+			if ($input->text('mode_' . $task) !== '')
+				$tasks[$task] = ['mode' => $input->text('mode_' . $task), 'connection_id' => $input->id('connection_' . $task), 'model' => $input->text('model_' . $task)];
+		}
+
+		return $this->withMessages($response, $this->companyLlmService->saveTasks($companyId, $tasks), 'llm_tasks_saved');
 	}
 
 	/**
@@ -157,9 +170,10 @@ readonly class CompanyLlmController
 		try
 		{
 			$models = $this->companyLlmService->findModels($companyId, [
-				'api_type' => $input->text('api_type'),
-				'base_url' => $input->text('base_url'),
-				'api_key'  => $input->text('api_key')
+				'connection_id' => $input->id('connection_id'),
+				'api_type'      => $input->text('api_type'),
+				'base_url'      => $input->text('base_url'),
+				'api_key'       => $input->text('api_key')
 			]);
 		}
 		catch (LlmException $e)
@@ -171,7 +185,7 @@ readonly class CompanyLlmController
 	}
 
 	/**
-	 * The LLM belongs to the company, only its module admin of users manages it, like the SSO providers.
+	 * The AI belongs to the company, only its module admin of users manages it, like the SSO providers.
 	 *
 	 * @return int|null the company, null without the right
 	 * @throws CoreException
@@ -187,6 +201,22 @@ readonly class CompanyLlmController
 		$companyId = $this->usersService->getUserById($UID)->getMain()['company_id'] ?? 1;
 
 		return is_numeric($companyId) ? (int) $companyId : 1;
+	}
+
+	/**
+	 * @param list<string> $errors the translation keys of the errors
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	private function withMessages(ResponseInterface $response, array $errors, string $success): ResponseInterface
+	{
+		if ($errors === [])
+			$this->flash->addMessage('success', $this->translator->translate($success, 'main'));
+
+		foreach ($errors as $error)
+			$this->flash->addMessage('error', $this->translator->translate($error, 'main'));
+
+		return $response->withHeader('Location', self::PAGE)->withStatus(302);
 	}
 
 	private function noRights(ResponseInterface $response): ResponseInterface

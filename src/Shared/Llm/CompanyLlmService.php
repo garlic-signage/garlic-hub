@@ -26,41 +26,91 @@ use App\Framework\Security\Crypt;
 use Doctrine\DBAL\Exception;
 
 /**
- * The LLM of a company, which its admin sets up for the admins or for all users. In Core it is the one of the
- * installation (company 1).
+ * The AI of a company, which its admin sets up. For each task he decides who works with which AI: the company with
+ * its model for all users or only for the admins, every user with his own one, or nobody. A task without a decision
+ * is off. In Core it is the AI of the installation (company 1).
  */
 readonly class CompanyLlmService extends LlmSettings
 {
-	public const string RELEASED_FOR_ADMINS = 'admins';
-	public const string RELEASED_FOR_ALL    = 'all';
-	public const array RELEASES             = [self::RELEASED_FOR_ADMINS, self::RELEASED_FOR_ALL];
+	public const string MODE_COMPANY_ALL    = 'company_all';
+	public const string MODE_COMPANY_ADMINS = 'company_admins';
+	public const string MODE_USER_OWN       = 'user_own';
+	public const string MODE_DISABLED       = 'disabled';
+	public const array MODES                = [self::MODE_COMPANY_ALL, self::MODE_COMPANY_ADMINS, self::MODE_USER_OWN, self::MODE_DISABLED];
 
-	public function __construct(CompanyLlmRepository $repository, Crypt $crypt, LlmClientFactory $clientFactory)
+	public function __construct(
+		CompanyLlmConnectionRepository $connectionRepository,
+		CompanyLlmTaskRepository $taskRepository,
+		Crypt $crypt,
+		LlmClientFactory $clientFactory
+	) {
+		parent::__construct($connectionRepository, $taskRepository, $crypt, $clientFactory);
+	}
+
+	public static function isCompanyMode(string $mode): bool
 	{
-		parent::__construct($repository, $crypt, $clientFactory);
+		return $mode === self::MODE_COMPANY_ALL || $mode === self::MODE_COMPANY_ADMINS;
 	}
 
 	/**
-	 * @param array{api_type:string, base_url:string, model:string, api_key:string} $input
+	 * @return array<string,string> the mode of every task
+	 * @throws Exception
+	 */
+	public function findModes(int $companyId): array
+	{
+		$rows  = $this->taskRepository->findAllOfOwner($companyId);
+		$modes = [];
+		foreach (LlmTask::TASKS as $task)
+			$modes[$task] = (string) ($rows[$task]['mode'] ?? self::MODE_DISABLED);
+
+		return $modes;
+	}
+
+	/**
+	 * Only the AI of the company needs a provider and a model, the other modes forget them.
+	 *
+	 * @param array<string,array{mode:string, connection_id:int, model:string}> $tasks by task
 	 * @return list<string> the translation keys of the errors
 	 * @throws Exception
 	 */
-	public function saveWithRelease(int $companyId, array $input, string $releasedFor): array
+	public function saveTasks(int $companyId, array $tasks): array
 	{
-		if (!in_array($releasedFor, self::RELEASES, true))
-			return ['llm_invalid_release'];
+		$errors = [];
+		foreach ($tasks as $task => $input)
+		{
+			$mode  = $input['mode'];
+			$model = trim($input['model']);
+			if (!in_array($task, LlmTask::TASKS, true) || !in_array($mode, self::MODES, true))
+			{
+				$errors[] = 'llm_invalid_mode';
+				continue;
+			}
 
-		return $this->save($companyId, $input, ['released_for' => $releasedFor]);
+			$fields = ['mode' => $mode, 'connection_id' => null, 'model' => ''];
+			if (self::isCompanyMode($mode))
+			{
+				$taskErrors = $input['connection_id'] === 0 ? ['llm_missing_connection'] : $this->validateModel($companyId, $input['connection_id'], $model);
+				if ($taskErrors !== [])
+				{
+					$errors = array_merge($errors, $taskErrors);
+					continue;
+				}
+				$fields = ['mode' => $mode, 'connection_id' => $input['connection_id'], 'model' => $model];
+			}
+
+			$this->taskRepository->storeTask($companyId, $task, $fields);
+		}
+
+		return array_values(array_unique($errors));
 	}
 
 	/**
-	 * @return string|null null when the company has no LLM
+	 * The task keeps its mode: the AI of the company has no model then until the admin chooses another one.
+	 *
 	 * @throws Exception
 	 */
-	public function findReleasedFor(int $companyId): ?string
+	protected function releaseTasks(int $ownerId, int $connectionId): void
 	{
-		$row = $this->repository->findFirstById($companyId);
-
-		return $row === [] ? null : (string) $row['released_for'];
+		$this->taskRepository->updateWithConnection($ownerId, $connectionId, ['connection_id' => null, 'model' => '']);
 	}
 }

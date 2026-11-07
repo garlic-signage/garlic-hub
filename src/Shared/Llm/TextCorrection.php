@@ -28,7 +28,7 @@ use Defuse\Crypto\Exception\CryptoException;
 use Doctrine\DBAL\Exception;
 
 /**
- * Corrects the spelling, grammar and punctuation of a text with the LLM of the user.
+ * Corrects the spelling, grammar and punctuation of a text with the AI of the user for this task.
  */
 readonly class TextCorrection
 {
@@ -54,7 +54,7 @@ readonly class TextCorrection
 		if (mb_strlen($text) > self::MAX_LENGTH)
 			throw new LlmException('llm_text_too_long');
 
-		$answer = $this->llmResolver->forUser($UID)->complete(new LlmRequest(self::INSTRUCTIONS, [LlmMessage::user($text)]));
+		$answer = $this->llmResolver->forUser($UID, LlmTask::TEXT)->complete(new LlmRequest(self::INSTRUCTIONS, [LlmMessage::user($text)]));
 
 		// reasoning models of a local server may put their thoughts in front of the answer
 		$corrected = trim((string) preg_replace('#<think>.*?</think>#s', '', $answer));

@@ -33,12 +33,16 @@ use Defuse\Crypto\Exception\CryptoException;
 use Doctrine\DBAL\Exception;
 
 /**
- * Which LLM a user works with. While his company has one, only this one counts: for its admins or for all users,
- * as it is released. The own LLMs of the users are not used then. Without an LLM of the company, the own one.
+ * Which AI a user works with for a task, as the admin of his company decided for it: the AI of the company for all
+ * users or only for its admins, the own AI of the user, or none. A task without a decision is off.
  * An admin is a module admin or sub admin of any module.
  */
 readonly class LlmResolver
 {
+	public const string ACCESS_COMPANY = 'company';
+	public const string ACCESS_OWN     = 'own';
+	public const string ACCESS_OFF     = 'off';
+
 	public function __construct(
 		private UserLlmService $userLlmService,
 		private CompanyLlmService $companyLlmService,
@@ -48,24 +52,45 @@ readonly class LlmResolver
 	) {}
 
 	/**
+	 * Whether the helper of the task appears.
+	 *
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws UserException
 	 */
-	public function isAvailable(int $UID): bool
+	public function isAvailable(int $UID, string $task): bool
 	{
-		return $this->resolve($UID) !== null;
+		return match ($this->findAccess($UID)[$task] ?? self::ACCESS_OFF)
+		{
+			self::ACCESS_COMPANY => $this->companyLlmService->hasModelForTask($this->companyOf($UID), $task),
+			self::ACCESS_OWN     => $this->userLlmService->hasModelForTask($UID, $task),
+			default              => false
+		};
 	}
 
 	/**
-	 * For the account: the own LLM is not used while the company has one.
+	 * For the account: which tasks the company provides, which the user sets up himself and which are off for him.
 	 *
+	 * @return array<string,string> the access of every task
+	 * @throws CoreException
 	 * @throws Exception
 	 * @throws UserException
 	 */
-	public function hasCompanyLlm(int $UID): bool
+	public function findAccess(int $UID): array
 	{
-		return $this->companyLlmService->findReleasedFor($this->companyOf($UID)) !== null;
+		$access = [];
+		foreach ($this->companyLlmService->findModes($this->companyOf($UID)) as $task => $mode)
+		{
+			$access[$task] = match ($mode)
+			{
+				CompanyLlmService::MODE_COMPANY_ALL    => self::ACCESS_COMPANY,
+				CompanyLlmService::MODE_COMPANY_ADMINS => $this->isAdmin($UID) ? self::ACCESS_COMPANY : self::ACCESS_OFF,
+				CompanyLlmService::MODE_USER_OWN       => self::ACCESS_OWN,
+				default                                => self::ACCESS_OFF
+			};
+		}
+
+		return $access;
 	}
 
 	/**
@@ -75,30 +100,18 @@ readonly class LlmResolver
 	 * @throws LlmException
 	 * @throws UserException
 	 */
-	public function forUser(int $UID): LlmClient
+	public function forUser(int $UID, string $task): LlmClient
 	{
-		$resolved = $this->resolve($UID);
-		$connection = $resolved === null ? null : $resolved[0]->findConnection($resolved[1]);
+		$connection = match ($this->findAccess($UID)[$task] ?? self::ACCESS_OFF)
+		{
+			self::ACCESS_COMPANY => $this->companyLlmService->findConnectionOfTask($this->companyOf($UID), $task),
+			self::ACCESS_OWN     => $this->userLlmService->findConnectionOfTask($UID, $task),
+			default              => null
+		};
 		if ($connection === null)
 			throw new LlmException('llm_not_configured');
 
 		return $this->clientFactory->create($connection);
-	}
-
-	/**
-	 * @return array{LlmSettings, int}|null the settings and the owner of the LLM
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws UserException
-	 */
-	private function resolve(int $UID): ?array
-	{
-		$companyId   = $this->companyOf($UID);
-		$releasedFor = $this->companyLlmService->findReleasedFor($companyId);
-		if ($releasedFor !== null)
-			return $releasedFor === CompanyLlmService::RELEASED_FOR_ALL || $this->isAdmin($UID) ? [$this->companyLlmService, $companyId] : null;
-
-		return $this->userLlmService->findSettings($UID) === null ? null : [$this->userLlmService, $UID];
 	}
 
 	/**

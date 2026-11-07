@@ -1,0 +1,23 @@
+<form action="{{CONNECTION_ACTION}}" method="post" class="llm-form">
+	<input type="hidden" name="csrf_token" value="{{CSRF_TOKEN}}">
+	<input type="hidden" name="connection_id" value="{{CONNECTION_ID}}">
+	<label for="llm_name_{{CONNECTION_ID}}">{{LANG_NAME}}</label>
+	<input type="text" id="llm_name_{{CONNECTION_ID}}" name="name" value="{{NAME}}" maxlength="100" placeholder="{{LANG_NAME_HINT}}">
+	<label for="llm_api_type_{{CONNECTION_ID}}">{{LANG_API_TYPE}}</label>
+	<select id="llm_api_type_{{CONNECTION_ID}}" name="api_type">
+		{{#api_types}}
+		<option value="{{VALUE}}"{{#is_selected}} selected{{/is_selected}}>{{LANG_VALUE}}</option>
+		{{/api_types}}
+	</select>
+	<label for="llm_base_url_{{CONNECTION_ID}}">{{LANG_BASE_URL}}</label>
+	<input type="url" id="llm_base_url_{{CONNECTION_ID}}" name="base_url" value="{{BASE_URL}}" maxlength="255" placeholder="https://api.openai.com/v1" required>
+	<label for="llm_api_key_{{CONNECTION_ID}}">{{LANG_API_KEY}}</label>
+	<input type="password" id="llm_api_key_{{CONNECTION_ID}}" name="api_key" autocomplete="off" placeholder="{{API_KEY_HINT}}">
+	<div class="llm-buttons">
+		<button type="submit" class="primary">{{LANG_SAVE}}</button>
+		<button type="button" class="llm-models-button" data-action="{{MODELS_ACTION}}" data-title="{{LANG_TEST_TITLE}}" data-filter="{{LANG_MODELS_FILTER}}" data-empty="{{LANG_MODELS_EMPTY}}" data-close="{{LANG_CLOSE}}">{{LANG_TEST}}</button>
+		{{#can_delete}}
+		<button type="submit" formaction="{{DELETE_ACTION}}" formnovalidate class="llm-delete-button" data-confirm="{{LANG_CONFIRM_DELETE}}">{{LANG_DELETE}}</button>
+		{{/can_delete}}
+	</div>
+</form>

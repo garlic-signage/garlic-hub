@@ -22,6 +22,8 @@ declare(strict_types=1);
 namespace Tests\Integration\Shared\Llm;
 
 use App\Framework\Llm\LlmClientFactory;
+use App\Framework\Llm\LlmException;
+use App\Shared\Llm\LlmTask;
 use App\Shared\Llm\UserLlmService;
 use DI\Container;
 use GuzzleHttp\Client;
@@ -32,8 +34,8 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Integration\Support\ContainerTestCase;
 
 /**
- * The own LLM of a user in the database: validation and the key, which is stored encrypted and goes only
- * to the address it was entered for.
+ * The own AI of a user in the database: the providers with their key, which is stored encrypted and goes only to the
+ * address it was entered for, and the model of a provider for each task.
  */
 #[Group('auth')]
 class UserLlmServiceTest extends ContainerTestCase
@@ -55,11 +57,11 @@ class UserLlmServiceTest extends ContainerTestCase
 	/**
 	 * @return list<string>
 	 */
-	private function findModels(string $baseUrl, string $apiKey = ''): array
+	private function findModels(int $connectionId, string $baseUrl, string $apiKey = ''): array
 	{
 		$this->endpoint->append(new Response(200, ['Content-Type' => 'application/json'], '{"object":"list","data":[{"id":"gpt-5","object":"model"}]}'));
 
-		return $this->service->findModels(2, ['api_type' => 'openai', 'base_url' => $baseUrl, 'api_key' => $apiKey]);
+		return $this->service->findModels(2, ['connection_id' => $connectionId, 'api_type' => 'openai', 'base_url' => $baseUrl, 'api_key' => $apiKey]);
 	}
 
 	private function sentAuthorization(): string
@@ -68,34 +70,56 @@ class UserLlmServiceTest extends ContainerTestCase
 	}
 
 	/**
-	 * @return array{api_type:string, base_url:string, model:string, api_key:string}
+	 * @return array{name:string, api_type:string, base_url:string, api_key:string}
 	 */
-	private function input(string $baseUrl = 'https://api.openai.com/v1/', string $apiKey = 'sk-secret', string $model = 'gpt-5'): array
+	private function input(string $baseUrl = 'https://api.openai.com/v1/', string $apiKey = 'sk-secret', string $name = 'OpenAI'): array
 	{
-		return ['api_type' => 'openai', 'base_url' => $baseUrl, 'model' => $model, 'api_key' => $apiKey];
+		return ['name' => $name, 'api_type' => 'openai', 'base_url' => $baseUrl, 'api_key' => $apiKey];
 	}
 
-	public function testTheKeyIsStoredEncryptedAndComesBackForTheConnection(): void
+	/**
+	 * @return int the new provider of anna
+	 */
+	private function addProvider(): int
 	{
-		static::assertSame([], $this->service->save(2, $this->input()));
+		static::assertSame([], $this->service->saveConnection(2, 0, $this->input()));
 
-		static::assertStringNotContainsString('sk-secret', (string) $this->connection->fetchOne('SELECT api_key FROM user_llm WHERE UID = 2'));
-		static::assertSame(['api_type' => 'openai', 'base_url' => 'https://api.openai.com/v1', 'model' => 'gpt-5', 'has_key' => true], $this->service->findSettings(2));
-		$connection = $this->service->findConnection(2);
-		static::assertNotNull($connection);
-		static::assertSame('sk-secret', $connection->apiKey);
-		static::assertNull($this->service->findConnection(3));
+		return (int) $this->connection->fetchOne('SELECT MAX(connection_id) FROM user_llm_connections');
+	}
+
+	private function storedKey(int $connectionId): string
+	{
+		$this->service->saveTasks(2, [LlmTask::TEXT => ['connection_id' => $connectionId, 'model' => 'gpt-5']]);
+
+		return (string) $this->service->findConnectionOfTask(2, LlmTask::TEXT)?->apiKey;
+	}
+
+	public function testTheKeyIsStoredEncryptedAndComesBackForTheTask(): void
+	{
+		$connectionId = $this->addProvider();
+
+		static::assertStringNotContainsString('sk-secret', (string) $this->connection->fetchOne('SELECT api_key FROM user_llm_connections'));
+		static::assertSame([['connection_id' => $connectionId, 'name' => 'OpenAI', 'api_type' => 'openai', 'base_url' => 'https://api.openai.com/v1', 'has_key' => true]], $this->service->findConnections(2));
+		static::assertSame('sk-secret', $this->storedKey($connectionId));
+		static::assertSame('gpt-5', $this->service->findConnectionOfTask(2, LlmTask::TEXT)?->model);
+		static::assertNull($this->service->findConnectionOfTask(3, LlmTask::TEXT));
+	}
+
+	public function testAProviderWithoutNameIsCalledLikeItsHost(): void
+	{
+		$this->service->saveConnection(2, 0, $this->input('http://localhost:11434/v1', '', ''));
+
+		static::assertSame('localhost', $this->service->findConnections(2)[0]['name']);
 	}
 
 	public function testAnEmptyKeyKeepsTheStoredOneForTheSameAddress(): void
 	{
-		$this->service->save(2, $this->input());
+		$connectionId = $this->addProvider();
 
-		$this->service->save(2, $this->input(apiKey: '', model: 'gpt-5-mini'));
+		$this->service->saveConnection(2, $connectionId, $this->input(apiKey: '', name: 'Renamed'));
 
-		$connection = $this->service->findConnection(2);
-		static::assertNotNull($connection);
-		static::assertSame(['gpt-5-mini', 'sk-secret'], [$connection->model, $connection->apiKey]);
+		static::assertSame('Renamed', $this->service->findConnections(2)[0]['name']);
+		static::assertSame('sk-secret', $this->storedKey($connectionId));
 	}
 
 	/**
@@ -103,43 +127,90 @@ class UserLlmServiceTest extends ContainerTestCase
 	 */
 	public function testANewAddressWithoutKeyDropsTheStoredOne(): void
 	{
-		$this->service->save(2, $this->input());
+		$connectionId = $this->addProvider();
 
-		$this->service->save(2, $this->input('http://localhost:11434/v1', ''));
+		$this->service->saveConnection(2, $connectionId, $this->input('http://localhost:11434/v1', ''));
 
-		static::assertSame('', $this->service->findConnection(2)?->apiKey);
-		static::assertFalse($this->service->findSettings(2)['has_key'] ?? true);
+		static::assertSame('', $this->storedKey($connectionId));
+		static::assertFalse($this->service->findConnections(2)[0]['has_key']);
 	}
 
 	/**
 	 * The form does not show the stored key: an empty field means it, like on saving.
 	 */
-	public function testTheModelsAreLoadedWithTheStoredKeyOfTheSameAddress(): void
+	public function testTheTestOfAProviderUsesTheStoredKeyOfTheSameAddress(): void
 	{
-		$this->service->save(2, $this->input());
+		$connectionId = $this->addProvider();
 
-		static::assertSame(['gpt-5'], $this->findModels('https://api.openai.com/v1/'));
+		static::assertSame(['gpt-5'], $this->findModels($connectionId, 'https://api.openai.com/v1/'));
 		static::assertSame('Bearer sk-secret', $this->sentAuthorization());
 
-		$this->findModels('https://api.openai.com/v1', 'sk-typed');
+		$this->findModels($connectionId, 'https://api.openai.com/v1', 'sk-typed');
 		static::assertSame('Bearer sk-typed', $this->sentAuthorization());
 	}
 
 	public function testTheStoredKeyDoesNotGoToAnotherAddress(): void
 	{
-		$this->service->save(2, $this->input());
+		$connectionId = $this->addProvider();
 
-		$this->findModels('http://evil.test/v1');
+		$this->findModels($connectionId, 'http://evil.test/v1');
 
 		static::assertSame('', $this->sentAuthorization());
 		static::assertSame('http://evil.test/v1/models', (string) $this->endpoint->getLastRequest()?->getUri());
 	}
 
+	/**
+	 * The selection of a model in the row of a task names only the provider.
+	 */
+	public function testTheModelsOfAStoredProvider(): void
+	{
+		$connectionId = $this->addProvider();
+
+		static::assertSame(['gpt-5'], $this->findModels($connectionId, ''));
+		static::assertSame('https://api.openai.com/v1/models', (string) $this->endpoint->getLastRequest()?->getUri());
+		static::assertSame('Bearer sk-secret', $this->sentAuthorization());
+	}
+
+	/**
+	 * Otherwise a user could send the key of somebody else to an address of his own or work with it.
+	 */
+	public function testTheProviderOfAnotherUserIsNotUsable(): void
+	{
+		$this->service->saveConnection(3, 0, $this->input());
+		$foreign = (int) $this->connection->fetchOne('SELECT connection_id FROM user_llm_connections WHERE UID = 3');
+
+		static::assertSame(['llm_unknown_connection'], $this->service->saveTasks(2, [LlmTask::TEXT => ['connection_id' => $foreign, 'model' => 'gpt-5']]));
+		static::assertSame(['llm_unknown_connection'], $this->service->saveConnection(2, $foreign, $this->input('http://evil.test/v1', '')));
+		$this->findModels($foreign, 'https://api.openai.com/v1');
+		static::assertSame('', $this->sentAuthorization());
+
+		$this->expectException(LlmException::class);
+		$this->findModels($foreign, '');
+	}
+
+	public function testATaskWithoutProviderIsOffAndADeletedProviderTakesItsTasks(): void
+	{
+		$connectionId = $this->addProvider();
+		$this->service->saveTasks(2, [LlmTask::TEXT => ['connection_id' => $connectionId, 'model' => 'gpt-5'], LlmTask::IMAGE_TAGGING => ['connection_id' => $connectionId, 'model' => 'gpt-5']]);
+
+		$this->service->saveTasks(2, [LlmTask::TEXT => ['connection_id' => 0, 'model' => '']]);
+		static::assertSame([LlmTask::IMAGE_TAGGING], array_keys($this->service->findTasks(2)));
+
+		$this->service->deleteConnection(2, $connectionId);
+		static::assertSame([], $this->service->findTasks(2));
+	}
+
 	public function testWrongInputIsNotStored(): void
 	{
-		$errors = $this->service->save(2, ['api_type' => 'other', 'base_url' => 'file:///etc/passwd', 'model' => ' ', 'api_key' => '']);
+		$errors = $this->service->saveConnection(2, 0, ['name' => str_repeat('a', 101), 'api_type' => 'other', 'base_url' => 'file:///etc/passwd', 'api_key' => '']);
+		$connectionId = $this->addProvider();
 
-		static::assertSame(['llm_unknown_api', 'llm_invalid_url', 'llm_invalid_model'], $errors);
-		static::assertNull($this->service->findSettings(2));
+		static::assertSame(['llm_unknown_api', 'llm_invalid_url', 'llm_invalid_name'], $errors);
+		static::assertSame(['llm_invalid_model', 'llm_unknown_task'], $this->service->saveTasks(2, [
+			LlmTask::TEXT => ['connection_id' => $connectionId, 'model' => ' '],
+			'chat'                   => ['connection_id' => $connectionId, 'model' => 'gpt-5']
+		]));
+		static::assertCount(1, $this->service->findConnections(2));
+		static::assertSame([], $this->service->findTasks(2));
 	}
 }

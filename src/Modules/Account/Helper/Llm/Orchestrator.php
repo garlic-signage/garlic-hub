@@ -35,8 +35,8 @@ use Defuse\Crypto\Exception\CryptoException;
 use Doctrine\DBAL\Exception;
 
 /**
- * The tab of the own LLM in the account. While the company has an LLM, the own one is not used: the tab says so
- * instead of the form.
+ * The tab of the own AI in the account: the providers of the user and the tasks his company lets him set up
+ * himself. The tasks the company provides are shown without a choice, the ones which are off not at all.
  */
 readonly class Orchestrator
 {
@@ -59,11 +59,18 @@ readonly class Orchestrator
 	 */
 	public function buildTab(): array
 	{
-		$UID = $this->userSession->getUID();
+		$UID    = $this->userSession->getUID();
+		$access = $this->llmResolver->findAccess($UID);
 
-		return $this->formBuilder->build($this->userLlmService->findSettings($UID), '/account/llm') + [
+		return $this->formBuilder->build(
+			'/account/llm',
+			$this->userLlmService->findConnections($UID),
+			$this->userLlmService->findTasks($UID),
+			array_keys($access, LlmResolver::ACCESS_COMPANY, true),
+			array_keys($access, LlmResolver::ACCESS_OWN, true)
+		) + [
 			'LANG_EXPLANATION' => $this->translator->translate('llm_explanation', self::MODULE_NAME),
-			'company_llm'      => $this->llmResolver->hasCompanyLlm($UID) ? ['LANG_COMPANY_LLM' => $this->translator->translate('llm_of_company', self::MODULE_NAME)] : []
+			'LANG_NO_TASKS'    => $this->translator->translate('llm_no_tasks', self::MODULE_NAME)
 		];
 	}
 
@@ -72,16 +79,47 @@ readonly class Orchestrator
 	 * @throws Exception
 	 * @throws UserException
 	 */
-	public function save(mixed $post): array
+	public function saveConnection(mixed $post): array
 	{
 		$input = RequestInput::of($post);
 
-		return $this->userLlmService->save($this->userSession->getUID(), [
+		return $this->userLlmService->saveConnection($this->userSession->getUID(), $input->id('connection_id'), [
+			'name'     => $input->text('name'),
 			'api_type' => $input->text('api_type'),
 			'base_url' => $input->text('base_url'),
-			'model'    => $input->text('model'),
 			'api_key'  => $input->text('api_key')
 		]);
+	}
+
+	/**
+	 * @throws Exception
+	 * @throws UserException
+	 */
+	public function deleteConnection(mixed $post): void
+	{
+		$this->userLlmService->deleteConnection($this->userSession->getUID(), RequestInput::of($post)->id('connection_id'));
+	}
+
+	/**
+	 * Only the tasks the user sets up himself: a task the company provides or switched off stays as it is.
+	 *
+	 * @return list<string> the translation keys of the errors
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws UserException
+	 */
+	public function saveTasks(mixed $post): array
+	{
+		$UID   = $this->userSession->getUID();
+		$input = RequestInput::of($post);
+		$tasks = [];
+		foreach (array_keys($this->llmResolver->findAccess($UID), LlmResolver::ACCESS_OWN, true) as $task)
+		{
+			if ($input->hasId('connection_' . $task))
+				$tasks[$task] = ['connection_id' => $input->id('connection_' . $task), 'model' => $input->text('model_' . $task)];
+		}
+
+		return $this->userLlmService->saveTasks($UID, $tasks);
 	}
 
 	/**
@@ -96,18 +134,10 @@ readonly class Orchestrator
 		$input = RequestInput::of($post);
 
 		return $this->userLlmService->findModels($this->userSession->getUID(), [
-			'api_type' => $input->text('api_type'),
-			'base_url' => $input->text('base_url'),
-			'api_key'  => $input->text('api_key')
+			'connection_id' => $input->id('connection_id'),
+			'api_type'      => $input->text('api_type'),
+			'base_url'      => $input->text('base_url'),
+			'api_key'       => $input->text('api_key')
 		]);
-	}
-
-	/**
-	 * @throws Exception
-	 * @throws UserException
-	 */
-	public function delete(): void
-	{
-		$this->userLlmService->delete($this->userSession->getUID());
 	}
 }

@@ -23,10 +23,10 @@ namespace App\Shared\Llm;
 
 use Doctrine\DBAL\Connection;
 
-class CompanyLlmRepository extends LlmRepository
+class UserLlmTaskRepository extends LlmTaskRepository
 {
 	public function __construct(Connection $connection)
 	{
-		parent::__construct($connection, 'company_llm', 'company_id');
+		parent::__construct($connection, 'user_llm_tasks', 'UID');
 	}
 }

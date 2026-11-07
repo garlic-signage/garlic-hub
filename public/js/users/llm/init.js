@@ -18,8 +18,10 @@
 */
 "use strict";
 import {LlmModelsDialog} from "../../core/LlmModelsDialog.js";
+import {LlmSettingsForm} from "../../core/LlmSettingsForm.js";
 
 document.addEventListener("DOMContentLoaded", function()
 {
 	LlmModelsDialog.attachTo(document);
+	LlmSettingsForm.attachTo(document);
 });

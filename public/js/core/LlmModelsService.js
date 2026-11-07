@@ -19,12 +19,13 @@
 import {BaseService} from "./Base/BaseService.js";
 
 /**
- * The models at the address of an LLM form: <action of the form>/models.
+ * The models of an AI provider: <base of the forms>/models. A stored provider by its id, or the address, the type
+ * and the key of the form of a provider.
  */
 export class LlmModelsService extends BaseService
 {
-	load(url, apiType, baseUrl, apiKey)
+	load(url, provider)
 	{
-		return this._sendRequest(url, "POST", {api_type: apiType, base_url: baseUrl, api_key: apiKey});
+		return this._sendRequest(url, "POST", provider);
 	}
 }

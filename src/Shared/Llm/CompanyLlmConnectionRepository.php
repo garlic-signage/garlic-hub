@@ -21,28 +21,12 @@ declare(strict_types=1);
 
 namespace App\Shared\Llm;
 
-use App\Framework\Database\BaseRepositories\SqlBase;
-use App\Framework\Database\BaseRepositories\Traits\CrudTraits;
-use App\Framework\Database\BaseRepositories\Traits\FindOperationsTrait;
-use Doctrine\DBAL\Exception;
+use Doctrine\DBAL\Connection;
 
-/**
- * An LLM per owner (a user or a company), see LlmSettings.
- */
-abstract class LlmRepository extends SqlBase
+class CompanyLlmConnectionRepository extends LlmConnectionRepository
 {
-	use CrudTraits;
-	use FindOperationsTrait;
-
-	/**
-	 * @param array<string,string> $fields
-	 * @throws Exception
-	 */
-	public function store(int $ownerId, array $fields): void
+	public function __construct(Connection $connection)
 	{
-		if ($this->findFirstById($ownerId) === [])
-			$this->insert([$this->idField => $ownerId] + $fields);
-		else
-			$this->update($ownerId, $fields);
+		parent::__construct($connection, 'company_llm_connections', 'company_id');
 	}
 }

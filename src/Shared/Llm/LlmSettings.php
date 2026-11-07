@@ -30,78 +30,99 @@ use Defuse\Crypto\Exception\CryptoException;
 use Doctrine\DBAL\Exception;
 
 /**
- * The LLM of an owner: an OpenAI compatible endpoint, the model and the key. The key is stored encrypted and
- * never shown again: an empty field keeps it, as long as the address stays the same. A key does not go to
- * another address.
+ * The AI providers of an owner and the model of a provider for each task. A provider is an OpenAI compatible
+ * endpoint with its key. The key is stored encrypted and never shown again: an empty field keeps it, as long as
+ * the address stays the same. A key does not go to another address.
  */
 abstract readonly class LlmSettings
 {
+	private const int MAX_NAME_LENGTH  = 100;
 	private const int MAX_URL_LENGTH   = 255;
 	private const int MAX_MODEL_LENGTH = 100;
 
-	public function __construct(protected LlmRepository $repository, private Crypt $crypt, private LlmClientFactory $clientFactory)
-	{}
+	public function __construct(
+		protected LlmConnectionRepository $connectionRepository,
+		protected LlmTaskRepository $taskRepository,
+		private Crypt $crypt,
+		private LlmClientFactory $clientFactory
+	) {}
 
 	/**
-	 * @return array{api_type:string, base_url:string, model:string, has_key:bool}|null
+	 * @return list<array{connection_id:int, name:string, api_type:string, base_url:string, has_key:bool}>
 	 * @throws Exception
 	 */
-	public function findSettings(int $ownerId): ?array
+	public function findConnections(int $ownerId): array
 	{
-		$row = $this->repository->findFirstById($ownerId);
-		if ($row === [])
-			return null;
+		$connections = [];
+		foreach ($this->connectionRepository->findAllOfOwner($ownerId) as $row)
+		{
+			$connections[] = [
+				'connection_id' => (int) $row['connection_id'],
+				'name'          => (string) $row['name'],
+				'api_type'      => (string) $row['api_type'],
+				'base_url'      => (string) $row['base_url'],
+				'has_key'       => $row['api_key'] !== ''
+			];
+		}
 
-		return [
-			'api_type' => (string) $row['api_type'],
-			'base_url' => (string) $row['base_url'],
-			'model'    => (string) $row['model'],
-			'has_key'  => $row['api_key'] !== ''
-		];
+		return $connections;
 	}
 
 	/**
-	 * The translation keys of the errors, none when it is stored. The fields are the ones of the owner which are
-	 * checked already, e.g. the release of a company.
+	 * Stores a provider, a new one without $connectionId. Without a name it is called like its host.
 	 *
-	 * @param array{api_type:string, base_url:string, model:string, api_key:string} $input
-	 * @param array<string,string> $fields
-	 * @return list<string>
+	 * @param array{name:string, api_type:string, base_url:string, api_key:string} $input
+	 * @return list<string> the translation keys of the errors, none when it is stored
 	 * @throws Exception
 	 */
-	public function save(int $ownerId, array $input, array $fields = []): array
+	public function saveConnection(int $ownerId, int $connectionId, array $input): array
 	{
+		$name    = trim($input['name']);
 		$apiType = trim($input['api_type']);
 		$baseUrl = rtrim(trim($input['base_url']), '/');
-		$model   = trim($input['model']);
 		$apiKey  = trim($input['api_key']);
+		$stored  = $connectionId === 0 ? [] : $this->connectionRepository->findOfOwner($ownerId, $connectionId);
 
 		$errors = [];
+		if ($connectionId !== 0 && $stored === [])
+			return ['llm_unknown_connection'];
 		if (!in_array($apiType, LlmConnection::API_TYPES, true))
 			$errors[] = 'llm_unknown_api';
 		if (!LlmClientFactory::isValidUrl($baseUrl) || strlen($baseUrl) > self::MAX_URL_LENGTH)
 			$errors[] = 'llm_invalid_url';
-		if ($model === '' || strlen($model) > self::MAX_MODEL_LENGTH)
-			$errors[] = 'llm_invalid_model';
+		if (mb_strlen($name) > self::MAX_NAME_LENGTH)
+			$errors[] = 'llm_invalid_name';
 		if ($errors !== [])
 			return $errors;
 
-		$fields = ['api_type' => $apiType, 'base_url' => $baseUrl, 'model' => $model] + $fields;
+		$fields = ['name' => $name === '' ? (string) parse_url($baseUrl, PHP_URL_HOST) : $name, 'api_type' => $apiType, 'base_url' => $baseUrl];
 		if ($apiKey !== '')
 			$fields['api_key'] = Crypto::encrypt($apiKey, $this->crypt->getEncryptionKey());
-		elseif (($this->findSettings($ownerId)['base_url'] ?? '') !== $baseUrl)
+		elseif (($stored['base_url'] ?? '') !== $baseUrl)
 			$fields['api_key'] = '';
 
-		$this->repository->store($ownerId, $fields);
+		$this->connectionRepository->store($ownerId, $connectionId, $fields);
 
 		return [];
 	}
 
 	/**
-	 * The models at the address of the form, for the selection. Without a key in the form the stored one is
-	 * used, but like on saving only for the address it was entered for.
+	 * The tasks with this provider lose it.
 	 *
-	 * @param array{api_type:string, base_url:string, api_key:string} $input
+	 * @throws Exception
+	 */
+	public function deleteConnection(int $ownerId, int $connectionId): void
+	{
+		if ($this->connectionRepository->deleteOfOwner($ownerId, $connectionId) > 0)
+			$this->releaseTasks($ownerId, $connectionId);
+	}
+
+	/**
+	 * The models of a provider, for the selection of a task and for the test of a provider. Without an address the
+	 * stored provider is asked. With an address, from the form of a provider, the stored key is used when the field
+	 * is empty, but like on saving only for the address it was entered for.
+	 *
+	 * @param array{connection_id:int, api_type:string, base_url:string, api_key:string} $input
 	 * @return list<string>
 	 * @throws CryptoException
 	 * @throws Exception
@@ -109,35 +130,95 @@ abstract readonly class LlmSettings
 	 */
 	public function findModels(int $ownerId, array $input): array
 	{
+		$stored  = $input['connection_id'] === 0 ? null : $this->findConnection($ownerId, $input['connection_id']);
 		$baseUrl = rtrim(trim($input['base_url']), '/');
-		$apiKey  = trim($input['api_key']);
-		if ($apiKey === '')
+		if ($baseUrl === '')
 		{
-			$stored = $this->findConnection($ownerId);
-			if ($stored !== null && $stored->baseUrl === $baseUrl)
-				$apiKey = $stored->apiKey;
-		}
+			if ($stored === null)
+				throw new LlmException('llm_unknown_connection');
 
-		$connection = new LlmConnection(trim($input['api_type']), $baseUrl, '', $apiKey);
+			$connection = $stored;
+		}
+		else
+		{
+			$apiKey = trim($input['api_key']);
+			if ($apiKey === '' && $stored !== null && $stored->baseUrl === $baseUrl)
+				$apiKey = $stored->apiKey;
+
+			$connection = new LlmConnection(trim($input['api_type']), $baseUrl, '', $apiKey);
+		}
 
 		return $this->clientFactory->create($connection, LlmClientFactory::MODELS_TIMEOUT)->listModels();
 	}
 
 	/**
+	 * @return array<string,array<string,mixed>> the rows by task
 	 * @throws Exception
 	 */
-	public function delete(int $ownerId): void
+	public function findTasks(int $ownerId): array
 	{
-		$this->repository->delete($ownerId);
+		return $this->taskRepository->findAllOfOwner($ownerId);
+	}
+
+	/**
+	 * The provider of the task with its model, null when the task has none.
+	 *
+	 * @throws CryptoException
+	 * @throws Exception
+	 */
+	public function findConnectionOfTask(int $ownerId, string $task): ?LlmConnection
+	{
+		$row = $this->taskRepository->findTask($ownerId, $task);
+		if (!is_numeric($row['connection_id'] ?? null) || ($row['model'] ?? '') === '')
+			return null;
+
+		return $this->findConnection($ownerId, (int) $row['connection_id'], (string) $row['model']);
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function hasModelForTask(int $ownerId, string $task): bool
+	{
+		$row = $this->taskRepository->findTask($ownerId, $task);
+		if (!is_numeric($row['connection_id'] ?? null) || ($row['model'] ?? '') === '')
+			return false;
+
+		return $this->connectionRepository->findOfOwner($ownerId, (int) $row['connection_id']) !== [];
+	}
+
+	/**
+	 * The tasks of a deleted provider: the database does not take care of it, SQLite checks no foreign keys.
+	 *
+	 * @throws Exception
+	 */
+	abstract protected function releaseTasks(int $ownerId, int $connectionId): void;
+
+	/**
+	 * The provider and the model of a task from a form: no provider means the task has none.
+	 *
+	 * @return list<string> the translation keys of the errors
+	 * @throws Exception
+	 */
+	protected function validateModel(int $ownerId, int $connectionId, string $model): array
+	{
+		if ($connectionId === 0)
+			return [];
+		if ($this->connectionRepository->findOfOwner($ownerId, $connectionId) === [])
+			return ['llm_unknown_connection'];
+		if ($model === '' || strlen($model) > self::MAX_MODEL_LENGTH)
+			return ['llm_invalid_model'];
+
+		return [];
 	}
 
 	/**
 	 * @throws CryptoException
 	 * @throws Exception
 	 */
-	public function findConnection(int $ownerId): ?LlmConnection
+	private function findConnection(int $ownerId, int $connectionId, string $model = ''): ?LlmConnection
 	{
-		$row = $this->repository->findFirstById($ownerId);
+		$row = $this->connectionRepository->findOfOwner($ownerId, $connectionId);
 		if ($row === [])
 			return null;
 
@@ -145,6 +226,6 @@ abstract readonly class LlmSettings
 		if ($apiKey !== '')
 			$apiKey = Crypto::decrypt($apiKey, $this->crypt->getEncryptionKey());
 
-		return new LlmConnection((string) $row['api_type'], (string) $row['base_url'], (string) $row['model'], $apiKey);
+		return new LlmConnection((string) $row['api_type'], (string) $row['base_url'], $model, $apiKey);
 	}
 }

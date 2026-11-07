@@ -113,8 +113,9 @@ $app->group('', function (RouteCollectorProxy $group) use ($container)
 	$group->get('/users/rights/{UID:\d+}', resolve([UserRightsController::class, 'show'], $container));
 	$group->get('/users/sso', resolve([SsoProvidersController::class, 'show'], $container));
 	$group->get('/users/llm', resolve([\App\Modules\Users\Controller\CompanyLlmController::class, 'show'], $container));
-	$group->post('/users/llm', resolve([\App\Modules\Users\Controller\CompanyLlmController::class, 'store'], $container));
-	$group->post('/users/llm/delete', resolve([\App\Modules\Users\Controller\CompanyLlmController::class, 'delete'], $container));
+	$group->post('/users/llm/connection', resolve([\App\Modules\Users\Controller\CompanyLlmController::class, 'storeConnection'], $container));
+	$group->post('/users/llm/connection/delete', resolve([\App\Modules\Users\Controller\CompanyLlmController::class, 'deleteConnection'], $container));
+	$group->post('/users/llm/tasks', resolve([\App\Modules\Users\Controller\CompanyLlmController::class, 'storeTasks'], $container));
 	$group->post('/users/llm/models', resolve([\App\Modules\Users\Controller\CompanyLlmController::class, 'models'], $container));
 	$group->get('/users/sso/new', resolve([SsoProvidersController::class, 'newForm'], $container));
 	$group->get('/users/sso/edit/{id:\d+}', resolve([SsoProvidersController::class, 'editForm'], $container));
@@ -126,8 +127,9 @@ $app->group('', function (RouteCollectorProxy $group) use ($container)
 	$group->post('/account/two-factor', resolve([\App\Modules\Account\Controller\TwoFactorController::class, 'confirm'], $container));
 	$group->post('/account/two-factor/recovery-codes', resolve([\App\Modules\Account\Controller\TwoFactorController::class, 'createRecoveryCodes'], $container));
 	$group->post('/account/two-factor/disable', resolve([\App\Modules\Account\Controller\TwoFactorController::class, 'disable'], $container));
-	$group->post('/account/llm', resolve([\App\Modules\Account\Controller\LlmController::class, 'store'], $container));
-	$group->post('/account/llm/delete', resolve([\App\Modules\Account\Controller\LlmController::class, 'delete'], $container));
+	$group->post('/account/llm/connection', resolve([\App\Modules\Account\Controller\LlmController::class, 'storeConnection'], $container));
+	$group->post('/account/llm/connection/delete', resolve([\App\Modules\Account\Controller\LlmController::class, 'deleteConnection'], $container));
+	$group->post('/account/llm/tasks', resolve([\App\Modules\Account\Controller\LlmController::class, 'storeTasks'], $container));
 	$group->post('/account/llm/models', resolve([\App\Modules\Account\Controller\LlmController::class, 'models'], $container));
 	$group->get('/account/password', resolve([ShowPasswordController::class, 'showPasswordForm'], $container));
 	$group->post('/account/password', resolve([ShowPasswordController::class, 'store'], $container));

@@ -35,7 +35,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Slim\Flash\Messages;
 
 /**
- * The forms of the tab of the own LLM in the account. Every form leads back to the tab, the models for the
+ * The forms of the tab of the own AI in the account. Every form leads back to the tab, the models for the
  * selection come as JSON.
  */
 readonly class LlmController
@@ -51,16 +51,9 @@ readonly class LlmController
 	 * @throws FrameworkException
 	 * @throws UserException
 	 */
-	public function store(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	public function storeConnection(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		$errors = $this->orchestrator->save($request->getParsedBody());
-		if ($errors === [])
-			$this->flash->addMessage('success', $this->translator->translate('llm_saved', 'account'));
-
-		foreach ($errors as $error)
-			$this->flash->addMessage('error', $this->translator->translate($error, 'main'));
-
-		return $this->backToTab($response);
+		return $this->withMessages($response, $this->orchestrator->saveConnection($request->getParsedBody()), 'llm_connection_saved');
 	}
 
 	/**
@@ -69,12 +62,22 @@ readonly class LlmController
 	 * @throws FrameworkException
 	 * @throws UserException
 	 */
-	public function delete(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	public function deleteConnection(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		$this->orchestrator->delete();
-		$this->flash->addMessage('success', $this->translator->translate('llm_deleted', 'account'));
+		$this->orchestrator->deleteConnection($request->getParsedBody());
 
-		return $this->backToTab($response);
+		return $this->withMessages($response, [], 'llm_connection_deleted');
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws UserException
+	 */
+	public function storeTasks(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	{
+		return $this->withMessages($response, $this->orchestrator->saveTasks($request->getParsedBody()), 'llm_tasks_saved');
 	}
 
 	/**
@@ -98,8 +101,19 @@ readonly class LlmController
 		return $this->responseHandler->jsonSuccess($response, ['models' => $models]);
 	}
 
-	private function backToTab(ResponseInterface $response): ResponseInterface
+	/**
+	 * @param list<string> $errors the translation keys of the errors
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	private function withMessages(ResponseInterface $response, array $errors, string $success): ResponseInterface
 	{
+		if ($errors === [])
+			$this->flash->addMessage('success', $this->translator->translate($success, 'main'));
+
+		foreach ($errors as $error)
+			$this->flash->addMessage('error', $this->translator->translate($error, 'main'));
+
 		return $response->withHeader('Location', self::TAB)->withStatus(302);
 	}
 }

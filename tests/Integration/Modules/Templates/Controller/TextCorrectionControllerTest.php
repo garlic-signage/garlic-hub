@@ -23,6 +23,7 @@ namespace Tests\Integration\Modules\Templates\Controller;
 
 use App\Framework\Llm\LlmClientFactory;
 use App\Modules\Templates\Controller\TextCorrectionController;
+use App\Shared\Llm\LlmTask;
 use App\Shared\Llm\TextCorrection;
 use App\Shared\Llm\UserLlmService;
 use DI\Container;
@@ -65,7 +66,10 @@ class TextCorrectionControllerTest extends TemplatesControllerTestCase
 
 	private function withLlm(int $UID): void
 	{
-		$this->container->get(UserLlmService::class)->save($UID, ['api_type' => 'openai', 'base_url' => 'http://localhost:11434/v1', 'model' => 'qwen3', 'api_key' => '']);
+		$this->connection->executeStatement("INSERT INTO company_llm_tasks (company_id, task, mode) VALUES (1, ?, 'user_own')", [LlmTask::TEXT]);
+		$service = $this->container->get(UserLlmService::class);
+		$service->saveConnection($UID, 0, ['name' => 'Ollama', 'api_type' => 'openai', 'base_url' => 'http://localhost:11434/v1', 'api_key' => '']);
+		$service->saveTasks($UID, [LlmTask::TEXT => ['connection_id' => $service->findConnections($UID)[0]['connection_id'], 'model' => 'qwen3']]);
 	}
 
 	public function testTheTextComesBackCorrected(): void

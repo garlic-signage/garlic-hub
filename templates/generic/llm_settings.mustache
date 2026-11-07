@@ -1,0 +1,54 @@
+{{#has_tasks}}
+<h2>{{LANG_CONNECTIONS}}</h2>
+<p>{{LANG_CONNECTIONS_HINT}}</p>
+{{#connections}}
+<details class="llm-connection">
+	<summary>{{NAME}} <span class="llm-address">{{BASE_URL}}</span></summary>
+	{{> llm_connection_form}}
+</details>
+{{/connections}}
+<details class="llm-connection"{{#no_connections}} open{{/no_connections}}>
+	<summary>{{LANG_NEW_CONNECTION}}</summary>
+	{{#new_connection}}
+	{{> llm_connection_form}}
+	{{/new_connection}}
+</details>
+
+<h2>{{LANG_TASKS}}</h2>
+<form action="{{TASKS_ACTION}}" method="post" class="llm-tasks">
+	<input type="hidden" name="csrf_token" value="{{CSRF_TOKEN}}">
+	{{#tasks}}
+	<fieldset class="llm-task">
+		<legend>{{LANG_TASK}}</legend>
+		<p class="llm-task-hint">{{LANG_TASK_HINT}}</p>
+		<div class="llm-form">
+			{{#company}}
+			<label for="llm_mode_{{TASK}}">{{LANG_MODE}}</label>
+			<select id="llm_mode_{{TASK}}" name="mode_{{TASK}}" class="llm-task-mode">
+				{{#modes}}
+				<option value="{{VALUE}}"{{#is_selected}} selected{{/is_selected}}>{{LANG_VALUE}}</option>
+				{{/modes}}
+			</select>
+			{{/company}}
+			{{#locked}}
+			<p class="llm-task-locked">{{LANG_LOCKED}}</p>
+			{{/locked}}
+			{{#editable}}
+			<label for="llm_connection_{{TASK}}">{{LANG_PROVIDER}}</label>
+			<select id="llm_connection_{{TASK}}" name="connection_{{TASK}}" class="llm-task-provider">
+				{{#providers}}
+				<option value="{{VALUE}}"{{#is_selected}} selected{{/is_selected}}>{{LANG_VALUE}}</option>
+				{{/providers}}
+			</select>
+			<label for="llm_model_{{TASK}}">{{LANG_MODEL}}</label>
+			<div class="llm-model">
+				<input type="text" id="llm_model_{{TASK}}" name="model_{{TASK}}" value="{{MODEL}}" maxlength="100" class="llm-task-model">
+				<button type="button" class="llm-models-button" data-action="{{MODELS_ACTION}}" data-connection-field="llm_connection_{{TASK}}" data-model-field="llm_model_{{TASK}}" data-title="{{LANG_MODELS_TITLE}}" data-filter="{{LANG_MODELS_FILTER}}" data-empty="{{LANG_MODELS_EMPTY}}" data-close="{{LANG_CLOSE}}">{{LANG_LOAD_MODELS}}</button>
+			</div>
+			{{/editable}}
+		</div>
+	</fieldset>
+	{{/tasks}}
+	<button type="submit" class="primary">{{LANG_SAVE}}</button>
+</form>
+{{/has_tasks}}

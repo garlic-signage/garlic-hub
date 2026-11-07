@@ -1,16 +1,25 @@
-/* the form of an LLM (templates/generic/llm_form.mustache): in the account and for the company */
-.llm-form {display: grid; grid-template-columns: max-content minmax(0, 30rem); gap: 0.5rem 1rem; align-items: center; margin: 1rem 0;}
-.llm-form > button {grid-column: 2; justify-self: start;}
+/* the AI forms (templates/generic/llm_settings.mustache): in the account and for the company */
+.llm-form {display: grid; grid-template-columns: 10rem minmax(0, 30rem); gap: 0.5rem 1rem; align-items: center; margin: 1rem 0;}
+.llm-form .llm-buttons {grid-column: 2; display: flex; flex-wrap: wrap; gap: 0.5rem;}
+.llm-connection {margin: 0.5rem 0; padding: 0.5rem 0.75rem; border: 1px solid var(--gh-secondary-color); border-radius: var(--gh-border-radius);}
+.llm-connection summary {cursor: pointer; font-weight: bold;}
+.llm-connection .llm-address {margin-left: 0.5rem; font-weight: normal; opacity: 0.7; overflow-wrap: anywhere;}
+.llm-tasks .llm-task {margin: 0 0 1rem; border: 1px solid var(--gh-secondary-color); border-radius: var(--gh-border-radius);}
+.llm-tasks .llm-task legend {font-weight: bold; padding: 0 0.25rem;}
+.llm-tasks .llm-task-hint {margin: 0.25rem 0;}
+.llm-tasks .llm-task .llm-form {margin: 0.5rem 0;}
+.llm-tasks .llm-task-locked {grid-column: 1 / -1; margin: 0; font-style: italic;}
 .llm-form .llm-model {display: flex; gap: 0.5rem; align-items: center;}
 .llm-form .llm-model input {flex: 1; min-width: 0;}
 .llm-form .llm-model button {white-space: nowrap;}
-@media (max-width: 600px) {.llm-form {grid-template-columns: minmax(0, 1fr);} .llm-form > button {grid-column: 1;}}
+@media (max-width: 600px) {.llm-form {grid-template-columns: minmax(0, 1fr);} .llm-form .llm-buttons {grid-column: 1;}}
 
 /* the selection of a model (/js/core/LlmModelsDialog.js) */
 dialog.llm-models {width: min(28rem, 92vw); padding: 0; border: 1px solid var(--gh-secondary-color); border-radius: var(--gh-border-radius);}
 .llm-models .llm-models-filter {display: block; width: calc(100% - 1.5rem); margin: 0.75rem; box-sizing: border-box;}
 .llm-models .llm-models-list {list-style: none; margin: 0; padding: 0 0.75rem 0.75rem; max-height: 60vh; overflow-y: auto;}
 .llm-models .llm-models-list li:nth-child(odd) {background-color: var(--gh-primary-bgcolor);}
+.llm-models .llm-models-list > li:not(:has(button)) {padding: 0.35rem 0.5rem; border-left: 3px solid var(--gh-third-color); overflow-wrap: anywhere;}
 .llm-models .llm-models-list button {display: block; width: 100%; padding: 0.35rem 0.5rem; border: 0; border-left: 3px solid var(--gh-third-color); background: none; text-align: start; cursor: pointer; overflow-wrap: anywhere;}
 .llm-models .llm-models-list button:hover {background-color: var(--gh-secondary-color); color: #fff;}
 .llm-models .llm-models-message {margin: 0.75rem;}

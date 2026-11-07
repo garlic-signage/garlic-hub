@@ -21,12 +21,14 @@ declare(strict_types=1);
 
 namespace App\Shared\Llm;
 
-use Doctrine\DBAL\Connection;
-
-class UserLlmRepository extends LlmRepository
+/**
+ * The tasks the AI helps with. Each has its own model, e.g. a small local one for the texts and another one which
+ * sees images. A task without a model is off, its helper does not appear.
+ */
+final class LlmTask
 {
-	public function __construct(Connection $connection)
-	{
-		parent::__construct($connection, 'user_llm', 'UID');
-	}
+	public const string TEXT             = 'text';
+	public const string IMAGE_TAGGING    = 'image_tagging';
+	public const string IMAGE_GENERATION = 'image_generation';
+	public const array TASKS             = [self::TEXT, self::IMAGE_TAGGING, self::IMAGE_GENERATION];
 }

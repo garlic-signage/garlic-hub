@@ -20,9 +20,10 @@ import {LlmModelsService} from "./LlmModelsService.js";
 import {FetchClient}      from "./FetchClient.js";
 
 /**
- * The selection of a model in the form of an LLM (templates/generic/llm_form.mustache): the server asks the
- * address of the form for its models, a click takes one into the field. When the address has no list, the
- * dialog tells why and the model is entered by hand.
+ * The models of an AI provider (templates/generic/llm_settings.mustache). In the row of a task the server asks the
+ * chosen provider, a click takes a model into the field of the task. In the form of a provider it is the test of
+ * the connection: the server asks the address of the form, the dialog only lists the models. When the address has
+ * no list, the dialog tells why and the model is entered by hand.
  */
 export class LlmModelsDialog
 {
@@ -47,20 +48,29 @@ export class LlmModelsDialog
 
 	async open()
 	{
-		const form = this.#button.form;
 		this.#button.disabled = true;
-		const result = await this.#service.load(
-			this.#button.dataset.action,
-			form.elements.namedItem("api_type").value,
-			form.elements.namedItem("base_url").value,
-			form.elements.namedItem("api_key").value
-		);
+		const result = await this.#service.load(this.#button.dataset.action, this.#collectProvider());
 		this.#button.disabled = false;
 
 		this.#dialog?.remove();
 		this.#dialog = this.#build(result);
 		document.body.appendChild(this.#dialog);
 		this.#dialog.showModal();
+	}
+
+	#collectProvider()
+	{
+		const providerField = this.#button.dataset.connectionField;
+		if (providerField !== undefined)
+			return {connection_id: document.getElementById(providerField).value};
+
+		const fields = this.#button.form.elements;
+		return {
+			connection_id: fields.namedItem("connection_id").value,
+			api_type:      fields.namedItem("api_type").value,
+			base_url:      fields.namedItem("base_url").value,
+			api_key:       fields.namedItem("api_key").value
+		};
 	}
 
 	#build(result)
@@ -107,13 +117,20 @@ export class LlmModelsDialog
 
 	#buildModel(model, dialog)
 	{
-		const item   = document.createElement("li");
+		const item       = document.createElement("li");
+		const modelField = this.#button.dataset.modelField;
+		if (modelField === undefined)
+		{
+			item.textContent = model;
+			return item;
+		}
+
 		const choose = document.createElement("button");
 		choose.type        = "button";
 		choose.textContent = model;
 		choose.addEventListener("click", () =>
 		{
-			const field = this.#button.form.elements.namedItem("model");
+			const field = document.getElementById(modelField);
 			field.value = model;
 			dialog.close();
 			field.focus();

@@ -57,12 +57,10 @@
 	{{#llm}}
 	<section class="tab-content llm" data-module="llm">
 		<p>{{LANG_EXPLANATION}}</p>
-		{{#company_llm}}
-		<p class="llm-company">{{LANG_COMPANY_LLM}}</p>
-		{{/company_llm}}
-		{{^company_llm}}
-		{{> llm_form}}
-		{{/company_llm}}
+		{{^has_tasks}}
+		<p class="llm-company">{{LANG_NO_TASKS}}</p>
+		{{/has_tasks}}
+		{{> llm_settings}}
 	</section>
 	{{/llm}}
 </section>
