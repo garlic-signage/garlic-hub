@@ -46,9 +46,9 @@ export class MediaService extends BaseService
 	/**
 	 * The media of all directories the user may read, found by tags, file name or description.
 	 */
-	async searchMedia(term)
+	async searchMedia(term, filter = "")
 	{
-		const url    = MediaApiConfig.SEARCH_URI + "?term=" + encodeURIComponent(term);
+		const url    = MediaApiConfig.SEARCH_URI + "?term=" + encodeURIComponent(term) + "&filter=" + encodeURIComponent(filter);
 		const result = await this._sendRequest(url, "GET", null);
 
 		return this.#ensureSuccess(result).media_list;

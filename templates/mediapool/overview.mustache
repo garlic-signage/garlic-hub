@@ -198,6 +198,11 @@
 			<div class="list-actions main-element-group">
 				<button id="openUploadDialog" class="primary" disabled><i class="bi bi-upload"></i> Uploader</button>
 				<input type="search" id="mediaSearch" placeholder="{{LANG_SEARCH_MEDIA}}" aria-label="{{LANG_SEARCH_MEDIA}}">
+				<select id="mediaTypeFilter" aria-label="{{LANG_MEDIA_TYPE}}">
+					{{#media_type_filter}}
+					<option value="{{VALUE}}">{{LANG_VALUE}}</option>
+					{{/media_type_filter}}
+				</select>
 				<button id="setListView" style="margin-left:auto;"><i class="bi bi-list-stars"></i> </button>
 				<button id="setGridView"><i class="bi bi-grid"></i> </button>
 			</div>

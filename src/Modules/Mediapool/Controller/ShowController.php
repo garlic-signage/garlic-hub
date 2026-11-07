@@ -56,6 +56,20 @@ class ShowController
 	}
 
 	/**
+	 * The kinds of media of the list and the search, the values of the filter of the media endpoints.
+	 *
+	 * @return list<array{VALUE: string, LANG_VALUE: string}>
+	 */
+	private function buildTypeFilter(): array
+	{
+		$options = [];
+		foreach (['', 'images', 'videos', 'audios', 'documents'] as $value)
+			$options[] = ['VALUE' => $value, 'LANG_VALUE' => $this->translator->translate('media_type_' . ($value === '' ? 'all' : $value), 'mediapool')];
+
+		return $options;
+	}
+
+	/**
 	 * @throws Exception
 	 * @throws \Doctrine\DBAL\Exception
 	 */
@@ -102,6 +116,8 @@ class ShowController
 					'LANG_DESCRIPTION' => $this->translator->translate('description', 'mediapool'),
 					'LANG_TAGS' => $this->translator->translate('tags', 'mediapool'),
 					'LANG_SEARCH_MEDIA' => $this->translator->translate('search_media', 'mediapool'),
+					'LANG_MEDIA_TYPE' => $this->translator->translate('media_type', 'mediapool'),
+					'media_type_filter' => $this->buildTypeFilter(),
 					'LANG_TAGS_HINT' => $this->translator->translate('tags_hint', 'mediapool'),
 					'LANG_MIMETYPE' => $this->translator->translate('mimetype', 'mediapool'),
 					'LANG_FILESIZE' => $this->translator->translate('filesize', 'mediapool'),

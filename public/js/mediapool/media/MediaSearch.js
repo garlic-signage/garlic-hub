@@ -22,6 +22,7 @@ import {UploadDialogElements} from "../uploads/UploadDialogElements.js";
 /**
  * The search field above the media list: from two letters on the list shows the results of all directories the
  * user may read, an empty field brings the directory back. Choosing a directory in the tree ends the search.
+ * The filter of the kind of media beside it counts for both.
  */
 export class MediaSearch
 {
@@ -29,6 +30,7 @@ export class MediaSearch
 	static DELAY_MS   = 300;
 
 	#inputElement;
+	#filterElement;
 	#mediaService;
 	#mediaList;
 	#directoryView;
@@ -39,9 +41,10 @@ export class MediaSearch
 	#requestId   = 0;
 	#isSearching = false;
 
-	constructor(inputElement, mediaService, mediaList, directoryView, currentPathElement, flashMessageHandler, lang)
+	constructor(inputElement, filterElement, mediaService, mediaList, directoryView, currentPathElement, flashMessageHandler, lang)
 	{
 		this.#inputElement        = inputElement;
+		this.#filterElement       = filterElement;
 		this.#mediaService        = mediaService;
 		this.#mediaList           = mediaList;
 		this.#directoryView       = directoryView;
@@ -55,6 +58,16 @@ export class MediaSearch
 		this.#inputElement.addEventListener("input", () => {
 			clearTimeout(this.#timer);
 			this.#timer = setTimeout(() => this.#search(), MediaSearch.DELAY_MS);
+		});
+
+		// the kind of media counts for the search and for the directory
+		this.#filterElement.addEventListener("change", () => {
+			this.#mediaList.filter = this.#filterElement.value;
+			clearTimeout(this.#timer);
+			if (this.#isSearching)
+				this.#search();
+			else
+				this.#directoryView.reloadCurrentNode();
 		});
 
 		// a directory of the tree was chosen during a search
@@ -84,7 +97,7 @@ export class MediaSearch
 
 		try
 		{
-			const results = await this.#mediaService.searchMedia(term);
+			const results = await this.#mediaService.searchMedia(term, this.#mediaList.filter);
 			if (requestId !== this.#requestId)
 				return;
 

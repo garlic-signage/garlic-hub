@@ -146,6 +146,21 @@ class ShowControllerTest extends ControllerTestCase
 	}
 
 	/**
+	 * The filter of the kind of media offers the values which the list and the search of the media understand.
+	 */
+	public function testTheFilterOfTheKindOfMediaOffersTheKindsOfTheEndpoints(): void
+	{
+		$this->actingAs(2);
+		$page = $this->show();
+
+		$options = $page->getTemplateData()['media_type_filter'];
+		static::assertSame(['', 'images', 'videos', 'audios', 'documents'], array_column($options, 'VALUE'));
+		foreach ($options as $option)
+			static::assertNotSame('', $option['LANG_VALUE']);
+		static::assertStringContainsString('<option value="videos">', $this->html($page));
+	}
+
+	/**
 	 * The menu item of a medium for the tagging is there when the user has an AI for it.
 	 */
 	public function testTheSuggestionOfTagsNeedsAnAiForTheTask(): void

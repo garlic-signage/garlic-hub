@@ -190,6 +190,10 @@ export class DirectoryView
 
     reloadCurrentNode()
     {
+        // e.g. the filter of the kind of media before a directory was chosen
+        if (this.#activeNode === null)
+            return;
+
         this.#loadMediaInDirectory(this.#activeNode);
     }
 

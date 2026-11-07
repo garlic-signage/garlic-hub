@@ -47,6 +47,7 @@ main
 [draggable="true"]:active { cursor: grabbing; }
 .list-actions {display: flex; gap: 0.5em;}
 #mediaSearch {flex: 0 1 24em; min-width: 0;}
+#mediaTypeFilter {flex: 0 0 auto;}
 
 #editInfoDialog {width:50%; }
     #editInfoDialog ul {list-style-type: none; padding:1em; margin:0;}

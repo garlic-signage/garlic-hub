@@ -106,6 +106,7 @@ document.addEventListener("DOMContentLoaded", function()
 
 	new MediaSearch(
 		document.getElementById("mediaSearch"),
+		document.getElementById("mediaTypeFilter"),
 		mediaService,
 		mediaList,
 		directoryView,

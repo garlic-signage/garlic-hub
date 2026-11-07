@@ -29,6 +29,7 @@ export class MediaList
 	#setGridView = document.getElementById("setGridView");
 	#rights = null;
 	#lightbox = null;
+	#filter = "";
 
     constructor(mediaListElement, mediaFactory, contextMenuFactory, mediaService)
     {
@@ -44,7 +45,7 @@ export class MediaList
 	{
 		this.#rights = rights;
 
-		const results = await this.#mediaService.loadMediaByNodeId(nodeId);
+		const results = await this.#mediaService.loadFilteredMediaByNodeId(nodeId, encodeURIComponent(this.#filter));
 
 		this.render(results);
 		this.#initDrag();
@@ -66,6 +67,19 @@ export class MediaList
 	get element()
 	{
 		return this.#mediaListElement;
+	}
+
+	/**
+	 * The kind of media the directories and the search show: images, videos, audios, documents or "" for all.
+	 */
+	get filter()
+	{
+		return this.#filter;
+	}
+
+	set filter(value)
+	{
+		this.#filter = value;
 	}
 
     render(data)
