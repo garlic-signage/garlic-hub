@@ -52,6 +52,11 @@
 					<li id="share_node">
 						<i class="bi bi-share"></i> {{LANG_SHARE}}
 					</li>
+					{{#media_tagging}}
+					<li id="tag_node">
+						<i class="bi bi-tags"></i> {{LANG_TAG_FOLDER}}
+					</li>
+					{{/media_tagging}}
 					<li id="remove_node">
 						<i class="bi bi-trash"></i> {{LANG_REMOVE}}
 					</li>
@@ -233,6 +238,18 @@
 					</fieldset>
 				</form>
 			</dialog>
+			{{#media_tagging}}
+			<dialog id="folderTaggingDialog">
+				<header>
+					<span class="dialog-name">{{LANG_TAG_FOLDER}}</span>
+				</header>
+				<p id="folderTaggingStatus"></p>
+				<progress id="folderTaggingProgress" value="0" max="1"></progress>
+				<footer>
+					<button id="cancelFolderTagging" type="button">{{LANG_CANCEL}}</button>
+				</footer>
+			</dialog>
+			{{/media_tagging}}
 			<dialog id="editInfoDialog">
 				<header>
 					<span class="dialog-name">{{LANG_INFORMATION}} </span>

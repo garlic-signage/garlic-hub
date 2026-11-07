@@ -36,6 +36,7 @@ import { MediaFactory } from "./media/MediaFactory.js";
 import { MediaEditDialog } from "./media/MediaEditDialog.js";
 import { MediaInfoDialog } from "./media/MediaInfoDialog.js";
 import { MediaSearch } from "./media/MediaSearch.js";
+import { FolderTagging } from "./media/FolderTagging.js";
 
 import { UploadDialogElements } from "./uploads/UploadDialogElements.js";
 import { LocalFilesElements } from "./uploads/Local/LocalFilesElements.js";
@@ -100,7 +101,9 @@ document.addEventListener("DOMContentLoaded", function()
 		treeViewService,
 		flashMessageHandler,
 		lang,
-		UnitShareDialog.create("mediapool")
+		UnitShareDialog.create("mediapool"),
+		// only there when the user has an AI for the tagging
+		document.getElementById("folderTaggingDialog") === null ? null : new FolderTagging(mediaService, flashMessageHandler, lang)
 	);
 	directoryView.addContextMenu(contextMenuTreeViewFactory);
 

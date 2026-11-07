@@ -165,7 +165,10 @@ class ShowController
 			$data['this_layout']['data']['LANG_ADD_ROOT_FOLDER'] = $this->translator->translate('add_root_folder', 'mediapool');
 		}
 		if ($this->mediaTaggingService->isAvailable())
-			$data['this_layout']['data']['media_tagging'] = ['LANG_SUGGEST_TAGS' => $this->translator->translate('suggest_tags', 'mediapool')];
+			$data['this_layout']['data']['media_tagging'] = [
+				'LANG_SUGGEST_TAGS' => $this->translator->translate('suggest_tags', 'mediapool'),
+				'LANG_TAG_FOLDER'   => $this->translator->translate('tag_folder', 'mediapool')
+			];
 
 		$data['this_layout']['data']['LANG_JS'] = Json::encodeForScript([
 			'add_root_folder'    => $this->translator->translate('add_root_folder', 'mediapool'),
@@ -173,7 +176,11 @@ class ShowController
 			'edit_folder'        => $this->translator->translate('edit_folder', 'mediapool'),
 			'start_record_video' => $this->translator->translate('start_record_video', 'mediapool'),
 			'stop_record_video'  => $this->translator->translate('stop_record_video', 'mediapool'),
-			'search_results'     => $this->translator->translate('search_results', 'mediapool')
+			'search_results'     => $this->translator->translate('search_results', 'mediapool'),
+			'tag_folder_status'  => $this->translator->translate('tag_folder_status', 'mediapool'),
+			'tag_folder_done'    => $this->translator->translate('tag_folder_done', 'mediapool'),
+			'tag_folder_nothing' => $this->translator->translate('tag_folder_nothing', 'mediapool'),
+			'tag_folder_failed'  => $this->translator->translate('tag_folder_failed', 'mediapool')
 		]);
 		if ($this->config->getEdition() === Config::PLATFORM_EDITION_ENTERPRISE)
 		{

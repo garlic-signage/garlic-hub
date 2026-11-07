@@ -60,3 +60,7 @@ main
 
 #editMediaDialog {width:40%; }
     #editMediaDialog textarea {height:200px;}
+
+/* tagging of a folder: the progress */
+#folderTaggingDialog {min-width: 20em;}
+    #folderTaggingDialog progress {width: 100%;}

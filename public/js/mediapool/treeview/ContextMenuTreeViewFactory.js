@@ -26,9 +26,11 @@ export class ContextMenuTreeViewFactory
 	#flashMessageHandler = null;
 	#lang            = null;
 	#shareDialog     = null;
+	#folderTagging   = null;
 
-	constructor(treeViewElement, treeViewDialog, treeViewService, flashMessageHandler, lang, shareDialog)
+	constructor(treeViewElement, treeViewDialog, treeViewService, flashMessageHandler, lang, shareDialog, folderTagging = null)
 	{
+		this.#folderTagging   = folderTagging;
 		this.#shareDialog     = shareDialog;
 		this.#treeViewElement = treeViewElement;
 		this.#treeViewDialog  = treeViewDialog;
@@ -45,7 +47,8 @@ export class ContextMenuTreeViewFactory
 			this.#treeViewService,
 			this.#flashMessageHandler,
 			this.#lang,
-			this.#shareDialog
+			this.#shareDialog,
+			this.#folderTagging
 		);
 	}
 }

@@ -180,12 +180,24 @@ export class DirectoryView
 
             contextMenu.addShareEvent(document.getElementById("share_node"), currentTreeNode);
 
+            // only there when the user has an AI for the tagging, the tags are saved: the right to edit
+            const tagNodeElement = document.getElementById("tag_node");
+            if (tagNodeElement !== null && rights.edit && contextMenu.canTagFolders && currentTreeNode.data.virtual !== true)
+                contextMenu.addTagEvent(tagNodeElement, currentTreeNode, this);
+            else if (tagNodeElement !== null)
+                tagNodeElement.remove();
+
             const removeNodeElement = document.getElementById("remove_node");
             if (rights.delete)
                 contextMenu.addRemoveEvent(removeNodeElement, currentTreeNode);
             else
                 removeNodeElement.remove();
         });
+    }
+
+    isActiveNode(node)
+    {
+        return this.#activeNode !== null && this.#activeNode.key === node.key;
     }
 
     reloadCurrentNode()

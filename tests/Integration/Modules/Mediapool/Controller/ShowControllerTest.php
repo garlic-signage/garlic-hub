@@ -122,7 +122,7 @@ class ShowControllerTest extends ControllerTestCase
 		$json = $this->show()->getTemplateData()['LANG_JS'];
 
 		static::assertIsArray(json_decode($json, true));
-		static::assertEqualsCanonicalizing(['add_root_folder', 'add_sub_folder', 'edit_folder', 'start_record_video', 'stop_record_video', 'search_results'], array_keys(json_decode($json, true)));
+		static::assertEqualsCanonicalizing(['add_root_folder', 'add_sub_folder', 'edit_folder', 'start_record_video', 'stop_record_video', 'search_results', 'tag_folder_status', 'tag_folder_done', 'tag_folder_nothing', 'tag_folder_failed'], array_keys(json_decode($json, true)));
 		static::assertStringNotContainsString('<', $json);
 		static::assertStringNotContainsString('>', $json);
 	}
@@ -166,7 +166,10 @@ class ShowControllerTest extends ControllerTestCase
 	public function testTheSuggestionOfTagsNeedsAnAiForTheTask(): void
 	{
 		$this->actingAs(2);
-		static::assertStringNotContainsString('id="suggestTags"', $this->html($this->show()));
+		$withoutAi = $this->html($this->show());
+		static::assertStringNotContainsString('id="suggestTags"', $withoutAi);
+		static::assertStringNotContainsString('id="tag_node"', $withoutAi);
+		static::assertStringNotContainsString('id="folderTaggingDialog"', $withoutAi);
 
 		$this->connection->executeStatement("INSERT INTO company_llm_tasks (company_id, task, mode) VALUES (1, ?, 'user_own')", [LlmTask::IMAGE_TAGGING]);
 		$service = $this->container->get(UserLlmService::class);
@@ -174,8 +177,15 @@ class ShowControllerTest extends ControllerTestCase
 		$service->saveTasks(2, [LlmTask::IMAGE_TAGGING => ['connection_id' => $service->findConnections(2)[0]['connection_id'], 'model' => 'gemma3']]);
 
 		$page = $this->show();
-		static::assertSame(['LANG_SUGGEST_TAGS' => $this->container->get(Translator::class)->translate('suggest_tags', 'mediapool')], $page->getTemplateData()['media_tagging']);
-		static::assertStringContainsString('id="suggestTags"', $this->html($page));
+		$translator = $this->container->get(Translator::class);
+		static::assertSame([
+			'LANG_SUGGEST_TAGS' => $translator->translate('suggest_tags', 'mediapool'),
+			'LANG_TAG_FOLDER'   => $translator->translate('tag_folder', 'mediapool')
+		], $page->getTemplateData()['media_tagging']);
+		$html = $this->html($page);
+		static::assertStringContainsString('id="suggestTags"', $html);
+		static::assertStringContainsString('id="tag_node"', $html);
+		static::assertStringContainsString('id="folderTaggingDialog"', $html);
 	}
 
 	public function testThePageIsRenderedWithTheTextsOfTheController(): void

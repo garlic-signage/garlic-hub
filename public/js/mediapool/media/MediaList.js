@@ -18,6 +18,7 @@
 */
 
 import {MediaApiConfig} from "./MediaApiConfig.js";
+import {FolderTagging}  from "./FolderTagging.js";
 
 export class MediaList
 {
@@ -148,7 +149,7 @@ export class MediaList
 				contextMenu.addRemoveEvent(remove);
 				contextMenu.addEditEvent(edit);
 				contextMenu.addCloneEvent(clone, this.#addMediaToList.bind(this));
-				if (suggestTags !== null && this.#isTaggable(mediaItem.getAttribute("data-mimetype") ?? ""))
+				if (suggestTags !== null && FolderTagging.isTaggable(mediaItem.getAttribute("data-mimetype") ?? ""))
 					contextMenu.addSuggestTagsEvent(suggestTags);
 				else if (suggestTags !== null)
 					suggestTags.remove();
@@ -170,17 +171,6 @@ export class MediaList
 			return mediaItem.getAttribute("data-editable") === "true";
 
 		return this.#rights?.create === true;
-	}
-
-	/**
-	 * The AI sees an image: pictures, a frame of videos, the first page of PDFs (like TaggingImage::supports()).
-	 */
-	#isTaggable(mimetype)
-	{
-		if (mimetype === "image/svg+xml")
-			return false;
-
-		return mimetype.startsWith("image/") || mimetype.startsWith("video/") || mimetype === "application/pdf";
 	}
 
 	#initDrag()

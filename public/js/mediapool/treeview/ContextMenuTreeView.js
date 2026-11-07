@@ -27,9 +27,11 @@ export class ContextMenuTreeView
 	#flashMessageHandler = null;
 	#lang  = null;
 	#shareDialog = null;
+	#folderTagging = null;
 
-    constructor(treeViewElements, treeDialog, treeViewService, flashMessageHandler, lang, shareDialog)
+    constructor(treeViewElements, treeDialog, treeViewService, flashMessageHandler, lang, shareDialog, folderTagging = null)
     {
+		this.#folderTagging   = folderTagging;
 		this.#shareDialog     = shareDialog;
         this.#menu            = treeViewElements.menuTemplate.content.cloneNode(true).firstElementChild;
         this.#treeDialog      = treeDialog;
@@ -68,6 +70,28 @@ export class ContextMenuTreeView
     addShareEvent(shareNodeElement, currentTreeNode)
     {
 		this.#shareDialog.attachTo(shareNodeElement, currentTreeNode.key, currentTreeNode.data.rights.share_unit === true);
+    }
+
+    get canTagFolders()
+    {
+        return this.#folderTagging !== null;
+    }
+
+    addTagEvent(tagNodeElement, currentTreeNode, directoryView)
+    {
+        tagNodeElement.addEventListener("click", async () => {
+			try
+			{
+				const tagged = await this.#folderTagging.run(currentTreeNode.key);
+				// the media of the folder show their tags in the information
+				if (tagged > 0 && directoryView.isActiveNode(currentTreeNode))
+					directoryView.reloadCurrentNode();
+			}
+			catch (err)
+			{
+				this.#flashMessageHandler.showError(err.message);
+			}
+        });
     }
 
     addRemoveEvent(removeNodeElement, currentTreeNode)
