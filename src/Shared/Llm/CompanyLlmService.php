@@ -89,7 +89,7 @@ readonly class CompanyLlmService extends LlmSettings
 			$fields = ['mode' => $mode, 'connection_id' => null, 'model' => ''];
 			if (self::isCompanyMode($mode))
 			{
-				$taskErrors = $input['connection_id'] === 0 ? ['llm_missing_connection'] : $this->validateModel($companyId, $input['connection_id'], $model);
+				$taskErrors = $input['connection_id'] === 0 ? ['llm_missing_connection'] : $this->validateModel($companyId, $input['connection_id'], $model, $task);
 				if ($taskErrors !== [])
 				{
 					$errors = array_merge($errors, $taskErrors);

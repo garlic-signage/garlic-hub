@@ -168,11 +168,13 @@ abstract readonly class LlmSettings
 	 */
 	public function findConnectionOfTask(int $ownerId, string $task): ?LlmConnection
 	{
-		$row = $this->taskRepository->findTask($ownerId, $task);
-		if (!is_numeric($row['connection_id'] ?? null) || ($row['model'] ?? '') === '')
+		// the same rules as for showing the helper: a provider which serves the task, a model where one is needed
+		if (!$this->hasModelForTask($ownerId, $task))
 			return null;
 
-		return $this->findConnection($ownerId, (int) $row['connection_id'], (string) $row['model']);
+		$row = $this->taskRepository->findTask($ownerId, $task);
+
+		return $this->findConnection($ownerId, (int) $row['connection_id'], (string) ($row['model'] ?? ''));
 	}
 
 	/**
@@ -181,10 +183,33 @@ abstract readonly class LlmSettings
 	public function hasModelForTask(int $ownerId, string $task): bool
 	{
 		$row = $this->taskRepository->findTask($ownerId, $task);
-		if (!is_numeric($row['connection_id'] ?? null) || ($row['model'] ?? '') === '')
+		if (!is_numeric($row['connection_id'] ?? null))
 			return false;
 
-		return $this->connectionRepository->findOfOwner($ownerId, (int) $row['connection_id']) !== [];
+		$connection = $this->connectionRepository->findOfOwner($ownerId, (int) $row['connection_id']);
+		if ($connection === [])
+			return false;
+
+		$apiType = (string) $connection['api_type'];
+
+		return self::servesTask($apiType, $task) && (($row['model'] ?? '') !== '' || self::mayOmitModel($apiType));
+	}
+
+	/**
+	 * Automatic1111 works with the model which the program has loaded: a task may leave it out.
+	 */
+	private static function mayOmitModel(string $apiType): bool
+	{
+		return $apiType === LlmConnection::API_AUTOMATIC1111;
+	}
+
+	/**
+	 * A provider of Automatic1111 makes images only: a task of texts on it is off, also when the type of the
+	 * provider was changed after the task was set.
+	 */
+	private static function servesTask(string $apiType, string $task): bool
+	{
+		return $apiType !== LlmConnection::API_AUTOMATIC1111 || $task === LlmTask::IMAGE_GENERATION;
 	}
 
 	/**
@@ -200,14 +225,18 @@ abstract readonly class LlmSettings
 	 * @return list<string> the translation keys of the errors
 	 * @throws Exception
 	 */
-	protected function validateModel(int $ownerId, int $connectionId, string $model): array
+	protected function validateModel(int $ownerId, int $connectionId, string $model, string $task): array
 	{
 		if ($connectionId === 0)
 			return [];
-		if ($this->connectionRepository->findOfOwner($ownerId, $connectionId) === [])
+		$connection = $this->connectionRepository->findOfOwner($ownerId, $connectionId);
+		if ($connection === [])
 			return ['llm_unknown_connection'];
-		if ($model === '' || strlen($model) > self::MAX_MODEL_LENGTH)
+		$apiType = (string) $connection['api_type'];
+		if (($model === '' && !self::mayOmitModel($apiType)) || strlen($model) > self::MAX_MODEL_LENGTH)
 			return ['llm_invalid_model'];
+		if (!self::servesTask($apiType, $task))
+			return ['llm_api_images_only'];
 
 		return [];
 	}

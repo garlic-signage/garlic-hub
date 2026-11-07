@@ -52,7 +52,7 @@ readonly class UserLlmService extends LlmSettings
 		foreach ($tasks as $task => $input)
 		{
 			$model      = trim($input['model']);
-			$taskErrors  = in_array($task, LlmTask::TASKS, true) ? $this->validateModel($UID, $input['connection_id'], $model) : ['llm_unknown_task'];
+			$taskErrors  = in_array($task, LlmTask::TASKS, true) ? $this->validateModel($UID, $input['connection_id'], $model, $task) : ['llm_unknown_task'];
 			if ($taskErrors !== [])
 			{
 				$errors = array_merge($errors, $taskErrors);

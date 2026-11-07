@@ -27,8 +27,10 @@ namespace App\Framework\Llm;
  */
 final readonly class LlmConnection
 {
-	public const string API_OPENAI = 'openai';
-	public const array API_TYPES   = [self::API_OPENAI];
+	public const string API_OPENAI      = 'openai';
+	/** the web API of Automatic1111 for images, also offered by Draw Things, Forge and SD.Next */
+	public const string API_AUTOMATIC1111 = 'automatic1111';
+	public const array API_TYPES        = [self::API_OPENAI, self::API_AUTOMATIC1111];
 
 	public function __construct(
 		public string $apiType,

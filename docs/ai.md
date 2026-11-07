@@ -5,7 +5,8 @@ playlist on a theme and make an image from a description. There is no chat and n
 suggestion, the user decides. All helpers are off until an AI is set up for their task.
 
 The AI is any endpoint of the **OpenAI compatible API**: a local server such as Ollama, or a provider such as
-OpenAI, Gemini or DeepInfra. The calls go from the server, never from the browser, so the keys stay on the server
+OpenAI, Gemini or DeepInfra. For images there is a second type, the **web API of Automatic1111**, which Draw
+Things, Stable Diffusion WebUI Forge and SD.Next offer. The calls go from the server, never from the browser, so the keys stay on the server
 and providers which block calls from a browser work, too.
 
 ## Setting up
@@ -56,8 +57,24 @@ stored encrypted (`Crypt`) and never shown again: an empty field keeps it, as lo
 | Gemini (OpenAI compatibility)| ✓     | ✓                       | not confirmed                      |
 | DeepInfra, Together AI, Fireworks | ✓ | ✓ depending on the model | ✓ Flux and others               |
 | Claude (OpenAI compatibility)| ✓     | ✓                       | –                                  |
+| Draw Things, Forge, SD.Next (type Automatic1111) | – | –       | ✓ the models of the program        |
 
-Draw Things and ComfyUI offer no OpenAI compatible images API. An image made there is uploaded like any file.
+"OpenAI compatible" means the same addresses and the same form of the requests as OpenAI, not the models of
+OpenAI. OpenAI itself offers only its own models (gpt-image); Flux and Stable Diffusion are open models which
+other servers offer behind this API: Ollama, LocalAI or `sd-server` on the own machine, DeepInfra, Together AI or
+Fireworks in the cloud. The provider is then such a server, with its address and its model name, e.g.
+`flux-schnell`. The API knows no settings special to these models (steps, guidance, negative prompt): the
+server uses its defaults.
+
+A provider of the type **Automatic1111** makes images only (`/sdapi/v1/txt2img`), the forms refuse it for the
+other tasks. Its address is the one of the API server of the program, e.g. `http://mac.local:7860` for Draw
+Things with its API server switched on. The model may stay empty: then the program uses the model it has loaded. Or it is the
+checkpoint: the button lists them where the program offers the list (`/sdapi/v1/sd-models`), otherwise enter the
+file name, e.g. `flux_1_schnell_q5p.ckpt`. A key
+`user:password` is sent as basic authentication (`--api-auth` of Automatic1111). Steps, guidance and sampler
+are the defaults of the program.
+
+ComfyUI is not supported: its API takes whole workflows. An image made there is uploaded like any file.
 
 ## The helpers
 
@@ -171,7 +188,9 @@ Modules (controllers, MediaTaggingService, PlaylistFillingService)
 
 - **`Framework/Llm`** knows the API and nothing of users. `LlmClient` is the interface the helpers use
   (`complete()`, `listModels()`, `generateImage()`). `OpenAiCompatibleClient` is the only class which knows the
-  library `openai-php/client`; another API is a new class and a new `api_type`. `LlmClientFactory` builds the
+  library `openai-php/client`; `Automatic1111Client` speaks the web API of Automatic1111 and makes images only.
+  Another API is a new class and a new `api_type` (`LlmConnection::API_TYPES`, `[llm_api_type_selects]` in
+  `main.ini`); `LlmSettings::servesTask()` decides which tasks a type serves. `LlmClientFactory` builds the
   client with Guzzle: http/https only, no redirects, timeouts.
 - **`Shared/Llm`** decides which AI a user gets: `LlmResolver::isAvailable($UID, $task)` for showing a helper,
   `forUser($UID, $task)` for the client (throws `llm_not_configured`). `LlmTask` lists the tasks. The settings are

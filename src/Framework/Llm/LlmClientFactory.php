@@ -51,8 +51,9 @@ class LlmClientFactory
 
 		return match ($connection->apiType)
 		{
-			LlmConnection::API_OPENAI => $this->createOpenAi($connection, $timeout),
-			default                   => throw new LlmException('llm_unknown_api')
+			LlmConnection::API_OPENAI        => $this->createOpenAi($connection, $timeout),
+			LlmConnection::API_AUTOMATIC1111 => new Automatic1111Client($this->createHttpClient($timeout), $connection->baseUrl, $connection->model, $connection->apiKey),
+			default                          => throw new LlmException('llm_unknown_api')
 		};
 	}
 
@@ -68,14 +69,19 @@ class LlmClientFactory
 	{
 		$factory = OpenAI::factory()
 			->withBaseUri(rtrim($connection->baseUrl, '/'))
-			->withHttpClient($this->httpClient ?? new GuzzleClient([
-				RequestOptions::CONNECT_TIMEOUT => min(self::CONNECT_TIMEOUT, $timeout),
-				RequestOptions::TIMEOUT         => $timeout,
-				RequestOptions::ALLOW_REDIRECTS => false
-			]));
+			->withHttpClient($this->createHttpClient($timeout));
 		if ($connection->apiKey !== '')
 			$factory = $factory->withApiKey($connection->apiKey);
 
 		return new OpenAiCompatibleClient($factory->make(), $connection->model);
+	}
+
+	private function createHttpClient(int $timeout): ClientInterface
+	{
+		return $this->httpClient ?? new GuzzleClient([
+			RequestOptions::CONNECT_TIMEOUT => min(self::CONNECT_TIMEOUT, $timeout),
+			RequestOptions::TIMEOUT         => $timeout,
+			RequestOptions::ALLOW_REDIRECTS => false
+		]);
 	}
 }

@@ -200,6 +200,34 @@ class UserLlmServiceTest extends ContainerTestCase
 		static::assertSame([], $this->service->findTasks(2));
 	}
 
+	/**
+	 * A provider of Automatic1111 (Draw Things) makes images only: it serves no other task, also not after its type
+	 * was changed while a task of texts used it.
+	 */
+	public function testAProviderOfAutomatic1111ServesOnlyTheImages(): void
+	{
+		$this->service->saveConnection(2, 0, ['name' => 'Draw Things', 'api_type' => 'automatic1111', 'base_url' => 'http://localhost:7860', 'api_key' => '']);
+		$drawThings = (int) $this->connection->fetchOne('SELECT MAX(connection_id) FROM user_llm_connections');
+
+		static::assertSame(['llm_api_images_only'], $this->service->saveTasks(2, [
+			LlmTask::TEXT             => ['connection_id' => $drawThings, 'model' => 'flux'],
+			LlmTask::IMAGE_GENERATION => ['connection_id' => $drawThings, 'model' => 'flux']
+		]));
+		static::assertSame([LlmTask::IMAGE_GENERATION], array_keys($this->service->findTasks(2)));
+		static::assertTrue($this->service->hasModelForTask(2, LlmTask::IMAGE_GENERATION));
+
+		// the model which the program has loaded: none is needed, unlike for the OpenAI compatible ones
+		static::assertSame([], $this->service->saveTasks(2, [LlmTask::IMAGE_GENERATION => ['connection_id' => $drawThings, 'model' => ' ']]));
+		static::assertTrue($this->service->hasModelForTask(2, LlmTask::IMAGE_GENERATION));
+		static::assertSame('', $this->service->findConnectionOfTask(2, LlmTask::IMAGE_GENERATION)?->model);
+
+		$openAi = $this->addProvider();
+		static::assertSame(['llm_invalid_model'], $this->service->saveTasks(2, [LlmTask::IMAGE_GENERATION => ['connection_id' => $openAi, 'model' => '']]));
+		$this->service->saveTasks(2, [LlmTask::TEXT => ['connection_id' => $openAi, 'model' => 'gpt-5']]);
+		$this->connection->executeStatement("UPDATE user_llm_connections SET api_type = 'automatic1111' WHERE connection_id = ?", [$openAi]);
+		static::assertFalse($this->service->hasModelForTask(2, LlmTask::TEXT));
+	}
+
 	public function testWrongInputIsNotStored(): void
 	{
 		$errors = $this->service->saveConnection(2, 0, ['name' => str_repeat('a', 101), 'api_type' => 'other', 'base_url' => 'file:///etc/passwd', 'api_key' => '']);
