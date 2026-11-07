@@ -20,7 +20,7 @@ company can have several providers, e.g. a local Ollama for the texts and OpenAI
 |---------------------|-------------------------------------|------------------------------------------------|
 | Texts               | text, JSON answers                  | text correction, fill a playlist with AI       |
 | Tag images          | understand images (vision model)    | suggest tags, tag a folder                     |
-| Generate images     | make images (`/v1/images/generations`) | AI image in the uploader                    |
+| Generate images     | make images (`/v1/images/generations`) | Generate image in the uploader              |
 
 A task without a model is off: its helper does not appear.
 
@@ -30,15 +30,16 @@ The module admin of `users` decides per task on `/users/llm` (link on the admini
 
 | Mode                                | Effect                                                                 |
 |-------------------------------------|------------------------------------------------------------------------|
-| global AI for all users             | everybody works with the provider and model of the company             |
-| global AI for administrators only   | only admins (module admin or sub admin of any module) get the helper  |
-| users use their own AI              | every user sets up his own provider and model in his account           |
+| models of the company for all users | everybody works with the provider and model of the company             |
+| models of the company for administrators only | only admins (module admin or sub admin of any module) get the helper  |
+| users use their own models          | every user sets up his own provider and model in his account           |
 | off (default)                       | nobody gets the helper                                                 |
 
-The Core edition has one company (`company_id` 1), so its global AI is the AI of the installation. In the
+The Core edition has one company (`company_id` 1), so the models of the company are the ones of the installation. In the
 Enterprise edition every customer sets up his own.
 
-With "users use their own AI" the user enters his providers and models in the tab **AI** of his account
+With "users use their own models" the user enters his providers and models in the tab **Language and image
+models** of his account
 (`/account/settings#llm`). Tasks which the company provides appear there as provided, tasks which are off do not
 appear.
 
@@ -83,8 +84,8 @@ ComfyUI is not supported: its API takes whole workflows. An image made there is 
 | Correct text            | template composer, context menu of a text box    | Texts           | in the composer, undo works   |
 | Suggest tags            | mediapool, context menu of a medium              | Tag images      | after the user saves the edit dialog |
 | Tag folder              | mediapool, context menu of a folder              | Tag images      | at once, file by file         |
-| Fill with AI            | playlist composer, insert menu                   | Texts           | the media the user ticks      |
-| AI image                | mediapool, uploader tab "AI image"               | Generate images | when the user uploads it      |
+| Fill by theme           | playlist composer, insert menu                   | Texts           | the media the user ticks      |
+| Generate image          | mediapool, uploader tab "Generate image"         | Generate images | when the user uploads it      |
 
 ### Correct text
 
@@ -127,7 +128,7 @@ The rule which folders a user may read is a condition of the query (`MediaServic
 own folders, the public ones and the ones shared with him in his role; the module admin reads all. It must give
 the same as `AclValidator::checkDirectoryPermissions()` for single folders; `MediaSearchTest` compares both.
 
-### Fill a playlist with AI
+### Fill a playlist by theme
 
 In the composer of master and internal playlists the user enters a theme and a duration in minutes. Two
 questions go to the AI:
@@ -141,7 +142,7 @@ so it can not invent media. The suggestion is a list with ticks; the ticked medi
 dropped media, with the rights and the time limit of the playlist. Media with good tags and descriptions are found
 better.
 
-### AI image
+### Generate image
 
 The user describes the image (at most 1000 characters) and chooses landscape (1536×1024), portrait (1024×1536) or
 square. The image comes into the previews of the uploader like a photo of the camera and is uploaded from there
