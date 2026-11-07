@@ -43,3 +43,14 @@ CREATE TABLE `company_llm_tasks` (
                                      PRIMARY KEY (`company_id`, `task`),
                                      FOREIGN KEY (`connection_id`) REFERENCES `company_llm_connections` (`connection_id`) ON DELETE SET NULL
 );
+
+-- the media of Pixabay had its tags ("beach, sea, sand") as description, they have their own field now:
+-- ",beach,sea,sand,". A description which the user changed since stays
+UPDATE mediapool_files
+SET tags              = ',' || replace(replace(trim(json_extract(metadata, '$.description')), ', ', ','), ' ,', ',') || ',',
+    media_description = CASE WHEN media_description = json_extract(metadata, '$.description') THEN '' ELSE media_description END,
+    metadata          = json_remove(metadata, '$.description')
+WHERE json_valid(metadata)
+  AND json_extract(metadata, '$.origin') = 'Pixabay'
+  AND trim(coalesce(json_extract(metadata, '$.description'), '')) != ''
+  AND coalesce(tags, '') = '';
