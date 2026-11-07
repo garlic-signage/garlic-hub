@@ -17,6 +17,8 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+import {WaitOverlay} from "../../core/WaitOverlay.js";
+
 export class ContextMenuMedia
 {
     #menuElement  = null;
@@ -60,6 +62,30 @@ export class ContextMenuMedia
             this.#mediaEditDialog.show(this.#currentMedia);
         });
     }
+
+	/**
+	 * The AI looks at the medium, its suggestion opens in the edit dialog: saved only when the user saves.
+	 */
+	addSuggestTagsEvent(suggestTagsMenuElement)
+	{
+		suggestTagsMenuElement.addEventListener("click", async () => {
+			const waitOverlay = new WaitOverlay();
+			waitOverlay.start();
+			try
+			{
+				const suggestion = await this.#mediaService.suggestTags(this.#currentMedia.getAttribute("data-media-id"));
+				this.#mediaEditDialog.show(this.#currentMedia, suggestion);
+			}
+			catch (err)
+			{
+				this.#flashMessageHandler.showError(err.message);
+			}
+			finally
+			{
+				waitOverlay.stop();
+			}
+		});
+	}
 
     addCloneEvent(cloneMediaMenuElement, callback)
     {

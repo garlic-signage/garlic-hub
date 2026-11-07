@@ -159,10 +159,14 @@ export class Media
 		// consumers like the template composer need the original, not the displayed thumbnail
 		mediaItem.setAttribute("data-original-url", this.#originalUrl);
 		mediaItem.setAttribute("data-file-name", this.#fileName);
+		mediaItem.setAttribute("data-mimetype", this.#mimetype);
 		const img = this.#mediaElement.querySelector("img");
 		img.src = this.#thumbnailUrl;
 		img.alt = "Thumbnail: " + this.#filename;
 		img.setAttribute("data-title", this.#filename);
+		// the edit dialog starts with them
+		img.setAttribute("data-description", this.#description ?? "");
+		img.setAttribute("data-tags", (this.#mediaData.tags ?? []).join(", "));
 	}
 
 	#hasDetailedView(mimetype)

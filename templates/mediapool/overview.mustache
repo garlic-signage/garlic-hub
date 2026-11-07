@@ -217,6 +217,9 @@
 							<textarea id="editDescription" name="editDescription">
 							</textarea>
 						</label>
+						<label for="editTags">{{LANG_TAGS}}:
+							<input type="text" id="editTags" name="editTags" placeholder="{{LANG_TAGS_HINT}}">
+						</label>
 						<footer>
 							<button id="submitEditMedia" type="submit" class="primary">{{LANG_SAVE}}</button>
 							<button value="cancel" formnovalidate autofocus>{{LANG_CANCEL}}</button>
@@ -238,6 +241,7 @@
 					<li><span class="info-parameter">{{LANG_UPLOADED_AT}}:</span> <span class="media-uploaded-at"></span></li>
 					<li><span class="info-parameter">{{LANG_FILESIZE}}:</span> <span class="media-filesize"></span></li>
 					<li><span class="info-parameter">{{LANG_DESCRIPTION}}:</span> <span class="media-description"></span></li>
+					<li><span class="info-parameter">{{LANG_TAGS}}:</span> <span class="media-tags"></span></li>
 					<li><span class="info-parameter">{{LANG_MEDIA_ORIGIN}}:</span> <span class="stock-name"></span></li>
 					<li><span class="info-parameter"></span><a class="stock-page-url" target="_blank">{{LANG_PAGE_URL}}</a></li>
 					<li><span class="info-parameter">{{LANG_STOCK_DESCRIPTION}}:</span> <span class="stock-description"></span></li>
@@ -280,6 +284,11 @@
 					<li id="editMedia">
 						<i class="bi bi-pencil"></i> {{LANG_EDIT}}
 					</li>
+					{{#media_tagging}}
+					<li id="suggestTags">
+						<i class="bi bi-tags"></i> {{LANG_SUGGEST_TAGS}}
+					</li>
+					{{/media_tagging}}
 					<li id="cloneMedia">
 						<i class="bi bi-clipboard-plus"></i> {{LANG_CLONE}}
 					</li>

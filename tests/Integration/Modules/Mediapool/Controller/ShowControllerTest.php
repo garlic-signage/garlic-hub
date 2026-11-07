@@ -30,7 +30,10 @@ use App\Framework\TemplateEngine\MustacheEngineFactory;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Modules\Auth\UserSession;
 use App\Modules\Mediapool\Controller\ShowController;
+use App\Modules\Mediapool\Services\MediaTaggingService;
 use App\Modules\Mediapool\Services\NodesService;
+use App\Shared\Llm\LlmTask;
+use App\Shared\Llm\UserLlmService;
 use PHPUnit\Framework\Attributes\Group;
 
 /**
@@ -49,7 +52,8 @@ class ShowControllerTest extends ControllerTestCase
 				$this->container->get(NodesService::class),
 				$this->container->get(UserSession::class),
 				$this->container->get(Translator::class),
-				new Config(new IniConfigLoader($root . '/config/settings'), ['systemDir' => $root], ['APP_PLATFORM_EDITION' => $edition])
+				new Config(new IniConfigLoader($root . '/config/settings'), ['systemDir' => $root], ['APP_PLATFORM_EDITION' => $edition]),
+				$this->container->get(MediaTaggingService::class)
 			);
 		}
 		$response = $controller->show($this->request('GET'), $this->newResponse());
@@ -139,6 +143,24 @@ class ShowControllerTest extends ControllerTestCase
 
 		static::assertNotSame('', $dialog['LANG_FOLDER_VISIBILITY']);
 		static::assertNotSame([], $dialog['visibility_options']);
+	}
+
+	/**
+	 * The menu item of a medium for the tagging is there when the user has an AI for it.
+	 */
+	public function testTheSuggestionOfTagsNeedsAnAiForTheTask(): void
+	{
+		$this->actingAs(2);
+		static::assertStringNotContainsString('id="suggestTags"', $this->html($this->show()));
+
+		$this->connection->executeStatement("INSERT INTO company_llm_tasks (company_id, task, mode) VALUES (1, ?, 'user_own')", [LlmTask::IMAGE_TAGGING]);
+		$service = $this->container->get(UserLlmService::class);
+		$service->saveConnection(2, 0, ['name' => 'Ollama', 'api_type' => 'openai', 'base_url' => 'http://localhost:11434/v1', 'api_key' => '']);
+		$service->saveTasks(2, [LlmTask::IMAGE_TAGGING => ['connection_id' => $service->findConnections(2)[0]['connection_id'], 'model' => 'gemma3']]);
+
+		$page = $this->show();
+		static::assertSame(['LANG_SUGGEST_TAGS' => $this->container->get(Translator::class)->translate('suggest_tags', 'mediapool')], $page->getTemplateData()['media_tagging']);
+		static::assertStringContainsString('id="suggestTags"', $this->html($page));
 	}
 
 	public function testThePageIsRenderedWithTheTextsOfTheController(): void

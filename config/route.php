@@ -26,6 +26,7 @@ use App\Modules\Auth\SsoCallbackController;
 use App\Modules\Users\Controller\SsoProvidersController;
 use App\Modules\Auth\OAuth2Controller;
 use App\Modules\Mediapool\Controller\MediaController;
+use App\Modules\Mediapool\Controller\MediaTaggingController;
 use App\Modules\Mediapool\Controller\NodesController;
 use App\Modules\Mediapool\Controller\ShowController;
 use App\Modules\Mediapool\Controller\UploadController;
@@ -182,6 +183,7 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 	$group->post('/mediapool/media/edit', resolve([MediaController::class, 'edit'], $container));
 	$group->post('/mediapool/media/move', resolve([MediaController::class, 'move'], $container));
 	$group->post('/mediapool/media/clone', resolve([MediaController::class, 'clone'], $container));
+	$group->post('/mediapool/media/tags', resolve([MediaTaggingController::class, 'suggest'], $container));
 
 	$group->get('/playlists/find/{playlist_mode:master|internal|external|multizone|channel}[/{playlist_name}]', resolve([PlaylistsController::class, 'findByName'], $container));
 	$group->get('/playlists/find/for-player[/{playlist_name}]', resolve([PlaylistsController::class, 'findForPlayerAssignment'], $container));

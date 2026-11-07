@@ -51,14 +51,26 @@ export class MediaService extends BaseService
 	}
 
 
-	async editMedia(mediaId, filename, description)
+	async editMedia(mediaId, filename, description, tags)
 	{
 		const data = {
 			"media_id": mediaId,
 			"filename": filename,
-			"description": description
+			"description": description,
+			"tags": tags
 		};
 		return this.#ensureSuccess(await this._sendRequest(MediaApiConfig.EDIT_URI, "POST",  data));
+	}
+
+	/**
+	 * The suggestion of the AI for the description and the tags, nothing is stored.
+	 */
+	async suggestTags(mediaId)
+	{
+		const result = await this._sendRequest(MediaApiConfig.TAGS_URI, "POST", {"media_id": mediaId});
+		this.#ensureSuccess(result);
+
+		return {description: result.description, tags: result.tags};
 	}
 
     async moveMedia(mediaId, nodeId)

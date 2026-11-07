@@ -42,11 +42,14 @@ use App\Modules\Mediapool\Repositories\FilesRepository;
 use App\Modules\Mediapool\Repositories\NodesRepository;
 use App\Modules\Mediapool\Services\AclValidator;
 use App\Modules\Mediapool\Services\MediaService;
+use App\Modules\Mediapool\Services\MediaTaggingService;
 use App\Modules\Mediapool\Services\NodesService;
 use App\Modules\Mediapool\Services\UploadService;
 use App\Modules\Mediapool\Utils\ImagickFactory;
 use App\Modules\Mediapool\Utils\MediaHandlerFactory;
 use App\Modules\Mediapool\Utils\SsrfValidator;
+use App\Modules\Mediapool\Utils\TaggingImage;
+use App\Shared\Llm\MediaTagging;
 use App\Modules\Mediapool\Utils\ZipFilesystemFactory;
 use GuzzleHttp\Client;
 use Psr\Container\ContainerInterface;
@@ -92,7 +95,8 @@ $dependencies[ShowController::class] = DI\factory(function (ContainerInterface $
 		$container->get(NodesService::class),
 		$container->get(UserSession::class),
 		$container->get(Translator::class),
-		$container->get(Config::class)
+		$container->get(Config::class),
+		$container->get(MediaTaggingService::class)
 	);
 });
 $dependencies[MediaHandlerFactory::class] = DI\factory(function (ContainerInterface $container)
@@ -154,6 +158,25 @@ $dependencies[MediaController::class] = DI\factory(function (ContainerInterface 
 			new \App\Modules\Mediapool\Helper\Media\ResponseBuilder($container->get(JsonResponseHandler::class), $container->get(Translator::class)),
 			$container->get(MediaService::class)
 		)
+	);
+});
+$dependencies[MediaTaggingService::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new MediaTaggingService(
+		$container->get(MediaService::class),
+		new TaggingImage(
+			$container->get(Config::class),
+			$container->get('LocalFileSystem'),
+			new ImagickFactory(),
+			new Ffmpeg(
+				$container->get(Config::class),
+				$container->get('LocalFileSystem'),
+				new MediaProperties(),
+				$container->get(ShellExecutor::class)
+			)
+		),
+		$container->get(MediaTagging::class),
+		$container->get(UserSession::class)
 	);
 });
 

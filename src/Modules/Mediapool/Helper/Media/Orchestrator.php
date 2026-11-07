@@ -118,9 +118,21 @@ class Orchestrator
 	 */
 	public function edit(ResponseInterface $response): ResponseInterface
 	{
-		$this->mediaService->updateMedia($this->text('media_id'), $this->text('filename'), $this->text('description'));
+		$this->mediaService->updateMedia($this->text('media_id'), $this->text('filename'), $this->text('description'), $this->tags());
 
 		return $this->responseBuilder->generalSuccess($response, []);
+	}
+
+	/**
+	 * @return list<string>|null null without a list: the tags stay as they are
+	 */
+	private function tags(): ?array
+	{
+		$tags = $this->input['tags'] ?? null;
+		if (!is_array($tags))
+			return null;
+
+		return array_values(array_filter($tags, is_string(...)));
 	}
 
 	/**

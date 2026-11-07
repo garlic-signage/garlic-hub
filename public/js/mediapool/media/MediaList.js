@@ -109,20 +109,39 @@ export class MediaList
 			const remove = document.getElementById("removeMedia");
 			const edit   = document.getElementById("editMedia");
 			const clone  = document.getElementById("cloneMedia");
+			// only there when the user has an AI for the tagging
+			const suggestTags = document.getElementById("suggestTags");
 			if (this.#rights.create !== null && this.#rights.create === true)
 			{
 				contextMenu.addRemoveEvent(remove);
 				contextMenu.addEditEvent(edit);
 				contextMenu.addCloneEvent(clone, this.#addMediaToList.bind(this));
+				if (suggestTags !== null && this.#isTaggable(mediaItem.getAttribute("data-mimetype") ?? ""))
+					contextMenu.addSuggestTagsEvent(suggestTags);
+				else if (suggestTags !== null)
+					suggestTags.remove();
 			}
 			else
 			{
 				remove.remove();
 				edit.remove();
 				clone.remove();
+				if (suggestTags !== null)
+					suggestTags.remove();
 			}
         });
     }
+
+	/**
+	 * The AI sees an image: pictures, a frame of videos, the first page of PDFs (like TaggingImage::supports()).
+	 */
+	#isTaggable(mimetype)
+	{
+		if (mimetype === "image/svg+xml")
+			return false;
+
+		return mimetype.startsWith("image/") || mimetype.startsWith("video/") || mimetype === "application/pdf";
+	}
 
 	#initDrag()
 	{

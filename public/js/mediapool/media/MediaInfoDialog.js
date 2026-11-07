@@ -64,6 +64,10 @@ export class MediaInfoDialog
 				this.#dialogElement.querySelector(".media-uploaded-at").textContent = media.upload_time;
 				this.#dialogElement.querySelector(".media-filesize").textContent = Utils.formatBytes(media.metadata.size);
 				this.#dialogElement.querySelector(".media-description").textContent = media.media_description;
+				if (media.tags.length > 0)
+					this.#dialogElement.querySelector(".media-tags").textContent = media.tags.join(", ");
+				else
+					this.#hide(".media-tags");
 				this.#dialogElement.querySelector(".stock-name").textContent = media.metadata.origin;
 
 				if (media.metadata.page_url !== undefined && media.metadata.page_url !== "")

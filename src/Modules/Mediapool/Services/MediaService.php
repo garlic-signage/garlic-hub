@@ -41,6 +41,8 @@ use Doctrine\DBAL\Exception;
  */
 class MediaService
 {
+	public const int MAX_TAG_LENGTH = 50;
+
 	private readonly FilesRepository $mediaRepository;
 	private readonly NodesRepository $nodesRepository;
 	private readonly AclValidator $aclValidator;
@@ -97,6 +99,7 @@ class MediaService
 		foreach ($result as &$media)
 		{
 			$media['metadata'] = json_decode($media['metadata'], true);
+			$media['tags']     = self::decodeTags($media['tags']);
 			$media = $this->addFileLocations($media);
 		}
 
@@ -117,6 +120,25 @@ class MediaService
 		$this->checkPermission($this->nodesRepository->findNodeOwner($media['node_id']), 'read');
 
 		$media['metadata'] = json_decode($media['metadata'], true);
+		$media['tags']     = self::decodeTags($media['tags']);
+
+		return $this->addFileLocations($media);
+	}
+
+	/**
+	 * A medium which the user may change, e.g. for the suggestion of its tags.
+	 *
+	 * @return array<string,mixed>
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws NotFoundException
+	 * @throws UserException
+	 */
+	public function fetchEditableMedia(string $mediaId): array
+	{
+		$media = $this->fetchMediaById($mediaId);
+		$this->checkPermission($this->nodesRepository->findNodeOwner($media['node_id']), 'edit');
 
 		return $this->addFileLocations($media);
 	}
@@ -139,18 +161,50 @@ class MediaService
 	}
 
 	/**
+	 * @param list<string>|null $tags null keeps the tags
 	 * @throws AccessDeniedException
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws NotFoundException
 	 * @throws UserException
 	 */
-	public function updateMedia(string $mediaId, string $filename, string $description): int
+	public function updateMedia(string $mediaId, string $filename, string $description, ?array $tags = null): int
 	{
 		$media = $this->fetchMediaById($mediaId);
 		$this->checkPermission($this->nodesRepository->findNodeOwner($media['node_id']), 'edit');
 
-		return $this->mediaRepository->update($mediaId, ['filename' => $filename, 'media_description' => $description]);
+		$fields = ['filename' => $filename, 'media_description' => $description];
+		if ($tags !== null)
+			$fields['tags'] = self::encodeTags($tags);
+
+		return $this->mediaRepository->update($mediaId, $fields);
+	}
+
+	/**
+	 * The tags are stored with commas around each one, ",canteen,product,": a search for ",canteen," finds the
+	 * tag and not a longer word which contains it. A tag has no comma, the same tag is stored once.
+	 *
+	 * @param list<string> $tags
+	 */
+	public static function encodeTags(array $tags): string
+	{
+		$unique = [];
+		foreach ($tags as $tag)
+		{
+			$tag = trim((string) preg_replace('/\s+/u', ' ', str_replace(',', ' ', $tag)));
+			if ($tag !== '' && !isset($unique[mb_strtolower($tag)]))
+				$unique[mb_strtolower($tag)] = mb_substr($tag, 0, self::MAX_TAG_LENGTH);
+		}
+
+		return $unique === [] ? '' : ',' . implode(',', $unique) . ',';
+	}
+
+	/**
+	 * @return list<string>
+	 */
+	private static function decodeTags(?string $tags): array
+	{
+		return array_values(array_filter(explode(',', (string) $tags), static fn(string $tag): bool => $tag !== ''));
 	}
 
 	/**
@@ -223,6 +277,7 @@ class MediaService
 		$dataSet['UID']      = $this->userSession->getUID();
 
 		$dataSet['uuid']     = $this->mediaRepository->insert($dataSet);
+		$dataSet['tags']     = self::decodeTags(is_string($dataSet['tags'] ?? null) ? $dataSet['tags'] : null);
 
 		return $this->addFileLocations($dataSet);
 	}

@@ -27,6 +27,7 @@ use App\Framework\Localization\Translate\Translator;
 use App\Modules\Auth\UserSession;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Config\Config;
+use App\Modules\Mediapool\Services\MediaTaggingService;
 use App\Modules\Mediapool\Services\NodesService;
 use Exception;
 use Psr\Http\Message\ResponseInterface;
@@ -43,13 +44,15 @@ class ShowController
 	private UserSession $userSession;
 	private Translator $translator;
 	private Config $config;
+	private MediaTaggingService $mediaTaggingService;
 
-	public function __construct(NodesService $nodesService, UserSession $userSession, Translator $translator, Config $config)
+	public function __construct(NodesService $nodesService, UserSession $userSession, Translator $translator, Config $config, MediaTaggingService $mediaTaggingService)
 	{
 		$this->nodesService = $nodesService;
 		$this->userSession  = $userSession;
 		$this->translator   = $translator;
 		$this->config       = $config;
+		$this->mediaTaggingService = $mediaTaggingService;
 	}
 
 	/**
@@ -97,6 +100,8 @@ class ShowController
 					'LANG_UPLOADER' => $this->translator->translate('uploader', 'mediapool'),
 					'LANG_FILENAME' => $this->translator->translate('filename', 'mediapool'),
 					'LANG_DESCRIPTION' => $this->translator->translate('description', 'mediapool'),
+					'LANG_TAGS' => $this->translator->translate('tags', 'mediapool'),
+					'LANG_TAGS_HINT' => $this->translator->translate('tags_hint', 'mediapool'),
 					'LANG_MIMETYPE' => $this->translator->translate('mimetype', 'mediapool'),
 					'LANG_FILESIZE' => $this->translator->translate('filesize', 'mediapool'),
 					'LANG_DIMENSIONS' => $this->translator->translate('dimensions', 'mediapool'),
@@ -142,6 +147,9 @@ class ShowController
 				];
 			$data['this_layout']['data']['LANG_ADD_ROOT_FOLDER'] = $this->translator->translate('add_root_folder', 'mediapool');
 		}
+		if ($this->mediaTaggingService->isAvailable())
+			$data['this_layout']['data']['media_tagging'] = ['LANG_SUGGEST_TAGS' => $this->translator->translate('suggest_tags', 'mediapool')];
+
 		$data['this_layout']['data']['LANG_JS'] = Json::encodeForScript([
 			'add_root_folder'    => $this->translator->translate('add_root_folder', 'mediapool'),
 			'add_sub_folder'     => $this->translator->translate('add_sub_folder', 'mediapool'),

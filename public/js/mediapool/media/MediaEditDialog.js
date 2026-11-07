@@ -24,6 +24,7 @@ export class MediaEditDialog
     #mediaService     = null;
 	#editFilename     = document.getElementById("editFilename");
 	#editDescription  = document.getElementById("editDescription");
+	#editTags         = document.getElementById("editTags");
 	#currentMedia     = null;
 	#submitEditMedia = document.getElementById("submitEditMedia");
 	#flashMessageHandler = null;
@@ -36,14 +37,35 @@ export class MediaEditDialog
         this.#addSaveEvent();
     }
 
-    show(currentMedia)
+    /**
+     * With a suggestion of the AI its description is added to the one of the medium and its tags to the ones
+     * of the medium. The user changes them and saves, or cancels and nothing changed.
+     */
+    show(currentMedia, suggestion = null)
     {
 		this.#currentMedia = currentMedia;
-		this.#editFilename.value    = currentMedia.querySelector("img").getAttribute("data-title");
-		this.#editDescription.value = currentMedia.querySelector("img").getAttribute("data-description");
+		const img   = currentMedia.querySelector("img");
+		let description = img.getAttribute("data-description") ?? "";
+		let tags        = this.#splitTags(img.getAttribute("data-tags") ?? "");
+		if (suggestion !== null)
+		{
+			if (suggestion.description !== "")
+				description = description.trim() === "" ? suggestion.description : description.trim() + "\n" + suggestion.description;
+
+			const known = tags.map(tag => tag.toLowerCase());
+			tags = tags.concat(suggestion.tags.filter(tag => !known.includes(tag.toLowerCase())));
+		}
+		this.#editFilename.value    = img.getAttribute("data-title");
+		this.#editDescription.value = description;
+		this.#editTags.value        = tags.join(", ");
         this.#dialogElement.showModal();
 
     }
+
+	#splitTags(text)
+	{
+		return text.split(",").map(tag => tag.trim()).filter(tag => tag !== "");
+	}
 
     #addSaveEvent()
     {
@@ -53,7 +75,8 @@ export class MediaEditDialog
 				await this.#mediaService.editMedia(
 					this.#currentMedia.getAttribute("data-media-id"),
 					this.#editFilename.value,
-					this.#editDescription.value
+					this.#editDescription.value,
+					this.#splitTags(this.#editTags.value)
 				)
 			}
 			catch (err)
@@ -64,6 +87,7 @@ export class MediaEditDialog
 			this.#currentMedia.querySelector(".media-filename").textContent = this.#editFilename.value;
 			this.#currentMedia.querySelector("img").setAttribute("data-title", this.#editFilename.value);
 			this.#currentMedia.querySelector("img").setAttribute("data-description", this.#editDescription.value);
+			this.#currentMedia.querySelector("img").setAttribute("data-tags", this.#splitTags(this.#editTags.value).join(", "));
 
         });
     }

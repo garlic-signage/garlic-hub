@@ -189,6 +189,36 @@ class MediaControllerTest extends ControllerTestCase
 		static::assertSame('Am Meer', $this->field(self::PHOTO, 'media_description'));
 	}
 
+	/**
+	 * Each tag with commas around it, so a search for ",meer," finds no longer word. Commas in a tag, spaces
+	 * and the same tag twice are cleaned up.
+	 */
+	public function testTheTagsAreStoredWithCommasAroundEach(): void
+	{
+		$this->actingAs(2);
+
+		$body = ['media_id' => self::PHOTO, 'filename' => 'a.jpg', 'description' => '', 'tags' => [' Meer ', 'Strand,Sand', 'meer', '', 'blauer   Himmel', 7]];
+		$this->assertSuccess($this->controller->edit($this->request('PATCH', $body), $this->newResponse()));
+
+		static::assertSame(',Meer,Strand Sand,blauer Himmel,', $this->field(self::PHOTO, 'tags'));
+
+		$response = $this->controller->getInfo($this->request('GET'), $this->newResponse(), ['media_id' => self::PHOTO]);
+		static::assertSame(['Meer', 'Strand Sand', 'blauer Himmel'], $this->json($response)['media']['tags']);
+		static::assertSame([['Meer', 'Strand Sand', 'blauer Himmel']], array_column($this->json($this->controller->list($this->request('GET', [], ['filter' => 'images']), $this->newResponse(), ['node_id' => '8']))['media_list'], 'tags'));
+	}
+
+	public function testWithoutTagsTheTagsStayAndAnEmptyListRemovesThem(): void
+	{
+		$this->actingAs(2);
+		$this->connection->executeStatement("UPDATE mediapool_files SET tags = ',Meer,' WHERE media_id = ?", [self::PHOTO]);
+
+		$this->controller->edit($this->request('PATCH', ['media_id' => self::PHOTO, 'filename' => 'a.jpg', 'description' => '']), $this->newResponse());
+		static::assertSame(',Meer,', $this->field(self::PHOTO, 'tags'));
+
+		$this->controller->edit($this->request('PATCH', ['media_id' => self::PHOTO, 'filename' => 'a.jpg', 'description' => '', 'tags' => []]), $this->newResponse());
+		static::assertSame('', $this->field(self::PHOTO, 'tags'));
+	}
+
 	public function testAnEmptyDescriptionIsAllowed(): void
 	{
 		$this->actingAs(2);

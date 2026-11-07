@@ -23,6 +23,7 @@ export const MediaApiConfig = {
 	MOVE_URI: "/async/mediapool/media/move",
 	EDIT_URI: "/async/mediapool/media/edit",
 	CLONE_URI: "/async/mediapool/media/clone",
+	TAGS_URI: "/async/mediapool/media/tags",
 	PYR_CSS_PATH: "/css/external/plyr.css",
 	PYR_JS_PATH: "/js/external/plyr.js"
 };
