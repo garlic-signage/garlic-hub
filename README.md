@@ -41,6 +41,7 @@ The demo is deleted and rebuilt regularly.
 | Feature                   | Status | Description                                                                                                             |
 |---------------------------|--------|-------------------------------------------------------------------------------------------------------------------------|
 | **Media management**      | ✅      | Hierarchical folders, uploads from local files, external links, screencasts, camera and stock platforms (with API key) |
+| **Media search**          | 🧪      | Search by tags, name and description in all readable folders, filter by kind of media                                  |
 | **SMIL playlists**        | ✅      | Create playlists and export them in the industry-standard SMIL format                                                  |
 | **Multi-zone content**    | ✅      | Graphical editor for display zones                                                                                     |
 | **Template editor**       | ✅      | Image templates based on fabric.js                                                                                     |
@@ -62,6 +63,7 @@ The demo is deleted and rebuilt regularly.
 | **System settings**       | 🧪      | Settings per module, e.g. playlist defaults and mediapool file sizes                                                   |
 | **Audit log**             | 🧪      | Log of rights, shares, settings, users, deletions and failed logins; off by default                                   |
 | **Scheduler**             | 🧪      | Background jobs run by cron every 5 minutes; off by default                                                            |
+| **AI helpers**            | 🧪      | Correct texts, tag media and whole folders, fill a playlist on a theme, generate images; with a local model (e.g. Ollama) or a provider over the OpenAI compatible API, per company or per user; off by default, see [AI Helpers](docs/ai.md) |
 
 ✅ released · 🧪 in testing on `main`, not yet in a release
 
@@ -131,6 +133,7 @@ ddev exec vendor/bin/phpstan analyze
 - [User Administration](docs/user-administration.md) — roles and access levels
 - [API and OAuth2](docs/oauth2.md)
 - [CLI](docs/cli.md)
+- [AI Helpers](docs/ai.md) — setting up the AI, the helpers, security and how to add one
 
 **How-tos**
 - [Paginator](docs/paginator.md)
