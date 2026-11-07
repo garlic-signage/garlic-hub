@@ -35,6 +35,8 @@ use finfo;
 readonly class ImageGeneration
 {
 	public const int MAX_PROMPT_LENGTH = 1000;
+	/** seconds: a local model takes often more than a minute for an image, the browser waits as long (FetchClient) */
+	public const int TIMEOUT = 180;
 
 	/** the formats of the form and their sizes, which the gpt-image models and the Flux models accept */
 	public const array SIZES = [
@@ -74,7 +76,7 @@ readonly class ImageGeneration
 		if (mb_strlen($prompt) > self::MAX_PROMPT_LENGTH)
 			throw new LlmException('llm_input_too_long');
 
-		$image = $this->llmResolver->forUser($UID, LlmTask::IMAGE_GENERATION)->generateImage($prompt, self::SIZES[$format] ?? self::SIZES['landscape']);
+		$image = $this->llmResolver->forUser($UID, LlmTask::IMAGE_GENERATION, self::TIMEOUT)->generateImage($prompt, self::SIZES[$format] ?? self::SIZES['landscape']);
 
 		// only an image goes into the browser and from there into the mediapool
 		$mimetype = (string) new finfo(FILEINFO_MIME_TYPE)->buffer($image);

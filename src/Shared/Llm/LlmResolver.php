@@ -100,7 +100,10 @@ readonly class LlmResolver
 	 * @throws LlmException
 	 * @throws UserException
 	 */
-	public function forUser(int $UID, string $task): LlmClient
+	/**
+	 * @param int|null $timeout seconds to wait for the answer, null for the usual time
+	 */
+	public function forUser(int $UID, string $task, ?int $timeout = null): LlmClient
 	{
 		$connection = match ($this->findAccess($UID)[$task] ?? self::ACCESS_OFF)
 		{
@@ -111,7 +114,7 @@ readonly class LlmResolver
 		if ($connection === null)
 			throw new LlmException('llm_not_configured');
 
-		return $this->clientFactory->create($connection);
+		return $timeout === null ? $this->clientFactory->create($connection) : $this->clientFactory->create($connection, $timeout);
 	}
 
 	/**

@@ -21,7 +21,9 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Modules\Mediapool\Controller;
 
+use App\Framework\Llm\LlmClient;
 use App\Framework\Llm\LlmClientFactory;
+use App\Framework\Llm\LlmConnection;
 use App\Framework\Localization\Translate\Translator;
 use App\Modules\Mediapool\Controller\ImageGenerationController;
 use App\Shared\Llm\ImageGeneration;
@@ -99,6 +101,32 @@ class ImageGenerationControllerTest extends ControllerTestCase
 		$sent = json_decode((string) $this->endpoint?->getLastRequest()?->getBody(), true);
 		static::assertIsArray($sent);
 		static::assertSame(['flux-schnell', 'Ein Strand', ImageGeneration::SIZES['portrait']], [$sent['model'], $sent['prompt'], $sent['size']]);
+	}
+
+	/**
+	 * A local model takes often more than a minute for an image: it gets three, the texts one.
+	 */
+	public function testTheModelHasThreeMinutesForTheImage(): void
+	{
+		$this->actingAs(2);
+		$this->withLlm(2);
+		$factory = new class(new Client(['handler' => HandlerStack::create(new MockHandler([self::answer(self::png())]))])) extends LlmClientFactory
+		{
+			public int $timeout = 0;
+
+			public function create(LlmConnection $connection, int $timeout = 60): LlmClient
+			{
+				$this->timeout = $timeout;
+				return parent::create($connection, $timeout);
+			}
+		};
+		$container = $this->container;
+		static::assertInstanceOf(Container::class, $container);
+		$container->set(LlmClientFactory::class, $factory);
+
+		$this->assertSuccess($container->get(ImageGenerationController::class)->generate($this->request('POST', ['prompt' => 'Strand']), $this->newResponse()));
+
+		static::assertSame(ImageGeneration::TIMEOUT, $factory->timeout);
 	}
 
 	public function testAnUnknownFormatIsLandscape(): void

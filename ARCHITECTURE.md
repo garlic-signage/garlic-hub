@@ -134,6 +134,7 @@ Technical building blocks without business knowledge.
 | `Exceptions/`      | Exception hierarchy, incl. `TranslatableModuleException`, `NotFoundException`, `AccessDeniedException` |
 | `Helper/`          | Small helpers, e.g. secure (un)serialization                                |
 | `Http/`            | `Session` and `Cookie`                                                      |
+| `Llm/`             | The AI behind the OpenAI compatible API: `LlmClient`, `OpenAiCompatibleClient` (the only class which knows `openai-php/client`), `LlmClientFactory`, see [AI Helpers](docs/ai.md) |
 | `Localization/`    | `Locales/` (current and available locales) and `Translate/` (translator, INI loader, ICU formatter) |
 | `Media/`           | Mime types, ffmpeg, media properties, signed media URLs, `FileResponse` for `media.php` and `delivery.php` |
 | `Middleware/`      | PSR-15 middleware: locale, CSRF, security headers, JSON errors, final render |
@@ -156,6 +157,7 @@ Business code every module needs.
 - `Acl/` — uniform access levels (module admin, sub admin, editor, viewer) used by all modules. `AclGrantService` is the only place which writes rights: the role bits in `user_acl` and the units shared with a role in `user_vip`. `AbstractUnitDatatableService` lists the own and the shared units, see [User Administration](docs/user-administration.md).
 - `Audit/` — the audit log: `AuditLog::record()` for rights, shares, settings, users, password changes and resets, deleted units, restored versions and failed logins, into `audit_log`. The container gives the `NullAuditLog` unless `Audit.enabled` and `Scheduler.enabled` are on; the task `audit.cleanup` of the module System deletes the entries older than `Audit.retention_days`.
 - `Layout/` — data of the main layout: main menu, user menu, language switch, flash messages.
+- `Llm/` — which AI a user gets for a task (`LlmResolver`: the AI of the company for all or for the admins, the own one of the user, or none), the settings of the providers and tasks of users and companies, and the helpers `TextCorrection`, `MediaTagging`, `PlaylistComposition` and `ImageGeneration`, see [AI Helpers](docs/ai.md).
 - `Versioning/` — `UnitVersions`: the earlier states of units in `unit_versions` (templates: the content of the composer; playlists: the exported state, restored with the item ids, items whose media or nested playlist is gone are left out), off by default (`Versioning.enabled`), the newest `max_versions` per unit stay. The module records the state it replaces and restores it itself; the dialog is `public/js/core/UnitVersionsDialog.js`.
 - `Scheduler/` — runs the `ScheduledTask`s which are due (hourly or daily), remembers their last run in `scheduler_runs`. A module has its tasks in `App\Modules\<Module>\Scheduler\<Module>ScheduledTasks`.
 - `Settings/` — the settings page: `SettingsSchema`, `SettingField` and `SettingsService`.

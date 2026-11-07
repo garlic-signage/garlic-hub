@@ -60,7 +60,7 @@ export class AiImageUploader extends LocalFilesUploader
 		this.domElements.generateButton.disabled = true;
 		try
 		{
-			const result = await this.fetchClient.fetchData(UploadApiConfig.GENERATE_IMAGE, {method: "POST", body: formData, timeout: FetchClient.LLM_TIMEOUT});
+			const result = await this.fetchClient.fetchData(UploadApiConfig.GENERATE_IMAGE, {method: "POST", body: formData, timeout: FetchClient.IMAGE_TIMEOUT});
 			if (!result?.success)
 				throw new Error(result?.error_message ?? "");
 

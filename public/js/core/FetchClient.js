@@ -28,6 +28,11 @@ export class FetchClient
 	static LLM_TIMEOUT = 65000;
 
 	/**
+	 * Milliseconds for an image of the AI: the server waits up to 180 seconds (ImageGeneration::TIMEOUT).
+	 */
+	static IMAGE_TIMEOUT = 185000;
+
+	/**
 	 * @param options the options of fetch(), and timeout in milliseconds when a request may take longer than usual
 	 */
     async fetchData(url, options = {})
