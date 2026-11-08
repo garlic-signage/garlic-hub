@@ -173,3 +173,6 @@ div:has(#shufflePicking){display: none;}
     }
     .preview-nested-playlist img{width:80px;height:50px;object-fit:contain;}
     .preview-nested-playlist .preview-nested-duration{margin-left:auto;}
+/* GLightbox gives the title "flex: 1 0 100%": an iframe (widget, pdf) has no size of its own and would shrink to 0 */
+.glightbox-container .ginner-container:has(.gslide-external) .gslide-description{flex:0 0 auto;}
+.glightbox-container .gslide-external{flex:1 1 auto;}

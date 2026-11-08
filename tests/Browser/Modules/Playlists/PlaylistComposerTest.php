@@ -97,10 +97,13 @@ class PlaylistComposerTest extends BrowserTestCase
 		$driver->wait(10)->until(fn() => count($driver->findElements(WebDriverBy::cssSelector('.gslide.current .preview-nested-playlist li'))) === 2);
 		static::assertStringContainsString('Annas leere Liste', $this->text('.gslide.current .preview-nested-playlist'));
 
-		// forward to the pdf (the fixture has no file: the iframe is there, but without a size) and back again.
-		// The video is left out: without its file the browser complains about the interrupted autoplay
+		// forward to the pdf and back again. The video is left out: without its file the browser complains about
+		// the interrupted autoplay
 		$driver->getKeyboard()->sendKeys(WebDriverKeys::ARROW_RIGHT);
 		$driver->wait(10)->until(fn() => str_contains((string) $driver->executeScript('return document.querySelector(".gslide.current iframe")?.src ?? ""'), '/media.php/orig/checksum-pdf.pdf'));
+		// an iframe has no size of its own: beside the title it must still fill the lightbox
+		$height = (int) $driver->executeScript('return document.querySelector(".gslide.current iframe").getBoundingClientRect().height');
+		static::assertGreaterThan(400, $height);
 		$driver->getKeyboard()->sendKeys(WebDriverKeys::ARROW_LEFT);
 		$this->waitForVisible('.gslide.current .preview-nested-playlist');
 

@@ -38,12 +38,14 @@ class WidgetDeliveryTest extends MediapoolTestCase
 	private const string SCRIPT = 'document.title = "widget";';
 	private const string CONFIG = <<<'XML'
 		<?xml version="1.0" encoding="UTF-8"?>
-		<widget xmlns="http://www.w3.org/ns/widgets" id="http://example.com/feed" version="1.0">
+		<widget xmlns="http://www.w3.org/ns/widgets" xmlns:ia="http://schemas.iawidget.org/widgetconfig-1.0" id="http://example.com/feed" version="1.0">
 			<name>Feed</name>
 			<icon src="icon.png"/>
 			<content src="start.html"/>
 			<preference name="feedUrl" value="https://example.com/rss"/>
 			<preference name="font_size" value="30"/>
+			<preference name="color" ia:types="color" ia:default="#ffffff"/>
+			<preference name="fetch_rss" ia:types="text"/>
 		</widget>
 		XML;
 
@@ -92,7 +94,7 @@ class WidgetDeliveryTest extends MediapoolTestCase
 		$response = $this->fetch($address);
 
 		static::assertSame(302, $response->getStatusCode());
-		static::assertSame('start.html?feedUrl=https%3A%2F%2Fexample.com%2Frss&font_size=30', $response->getHeaderLine('Location'));
+		static::assertSame('start.html?feedUrl=https%3A%2F%2Fexample.com%2Frss&font_size=30&color=%23ffffff', $response->getHeaderLine('Location'));
 	}
 
 	public function testValuesOfTheQueryWinOverConfigXml(): void
@@ -101,7 +103,7 @@ class WidgetDeliveryTest extends MediapoolTestCase
 
 		$response = $this->fetch($address . '?font_size=12');
 
-		static::assertSame('start.html?font_size=12&feedUrl=https%3A%2F%2Fexample.com%2Frss', $response->getHeaderLine('Location'));
+		static::assertSame('start.html?font_size=12&feedUrl=https%3A%2F%2Fexample.com%2Frss&color=%23ffffff', $response->getHeaderLine('Location'));
 	}
 
 	public function testAFileOfTheWidgetIsDeliveredSandboxed(): void

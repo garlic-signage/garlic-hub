@@ -25,7 +25,7 @@
  * Called as widget.php/<checksum>/<exp>/<sig>/<path inside the widget>?<preferences> (PATH_INFO).
  * Expiry and signature are part of the path, so the relative urls of the widget are signed, too.
  * Without a path it redirects to the start file of config.xml. Preferences the query does not set
- * get the value of config.xml.
+ * get the value of config.xml (value or ia:default).
  *
  * The widget is foreign code: the CSP sandbox gives it an own, opaque origin, so it reaches neither the
  * session nor the pages of the hub, wherever it is opened. Signature handling: see MediaUrlSigner::widgetUrl
@@ -112,10 +112,15 @@ function determineStart(ZipArchive $zip, array $query): array
 		if (isWidgetPath($configXml->getContent()))
 			$start = $configXml->getContent();
 
+		// W3C: value, IAdea: ia:default
 		foreach ($configXml->getPreferences() as $name => $preference)
 		{
-			if (!array_key_exists($name, $query) && is_array($preference) && isset($preference['value']))
-				$query[$name] = $preference['value'];
+			if (array_key_exists($name, $query) || !is_array($preference))
+				continue;
+
+			$default = $preference['value'] ?? $preference['default'] ?? null;
+			if (is_string($default) && $default !== '')
+				$query[$name] = $default;
 		}
 	}
 	catch (Throwable)
