@@ -437,6 +437,29 @@ class TemplateComposerTest extends BrowserTestCase
 		static::assertArrayNotHasKey('src', $images[0]);
 	}
 
+	public function testHoveringAPictureOfTheMediaDialogShowsItsThumbnailAboveTheDialog(): void
+	{
+		$this->createTemplate(self::GROUP_CONTENT);
+		$this->createPicture();
+		$this->login('admin');
+		$this->openComposer();
+		$driver = $this->client()->getWebDriver();
+
+		$this->click('#insertImage');
+		$this->chooseStrandInTheMediaDialog();
+		// the click on the picture hid the preview: the mouse leaves it and comes back
+		$this->actions()->moveToElement($driver->findElement(WebDriverBy::cssSelector('#mediaSelectorDialog .dialog-name')))->perform();
+		$this->actions()->moveToElement($driver->findElement(WebDriverBy::cssSelector('#mediaSelectorDialog .media-thumbnail')))->perform();
+
+		// inside the modal dialog, otherwise it would lie below it
+		$this->waitForVisible('#mediaSelectorDialog .thumbnail-preview.visible');
+		static::assertStringContainsString('/media.php/thumb/' . $this->checksum, (string) $driver->findElement(WebDriverBy::cssSelector('.thumbnail-preview.visible'))->getAttribute('src'));
+
+		$this->actions()->moveToElement($driver->findElement(WebDriverBy::cssSelector('#mediaSelectorDialog .dialog-name')))->perform();
+		$this->waitForGone('.thumbnail-preview.visible');
+		$this->assertNoErrors();
+	}
+
 	/**
 	 * The template of a playlist item: its content is saved at the item and its picture exported for the players.
 	 * Item 5 of the playlist 1 of anna.

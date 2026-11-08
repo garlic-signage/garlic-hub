@@ -25,7 +25,7 @@ import {FetchClient}       from "../../../core/FetchClient.js";
 import {FlashMessageHandler} from "../../../core/FlashMessageHandler.js";
 import {ItemList}          from "./items/ItemList.js";
 import {ItemFactory}       from "./items/ItemFactory.js";
-import {ThumbnailPreview}  from "./items/ThumbnailPreview.js";
+import {ThumbnailPreview}  from "../../../core/ThumbnailPreview.js";
 import {PlaylistPreview}   from "./items/PlaylistPreview.js";
 import {DragDropHandler}   from "./DragDropHandler.js";
 import {PlaylistsProperties} from "./playlists/PlaylistsProperties.js";

@@ -31,6 +31,7 @@ import {WunderbaumWrapper}   from "../../mediapool/treeview/WunderbaumWrapper.js
 import {TreeViewElements} from "../../mediapool/treeview/TreeViewElements.js";
 import {MediaService} from "../../mediapool/media/MediaService.js";
 import {MediaSelectorView} from "../../mediapool/selector/MediaSelectorView.js";
+import {ThumbnailPreview} from "../../core/ThumbnailPreview.js";
 import {MediaFactory}     from "../../mediapool/media/MediaFactory.js";
 import {BmpDitherFactory}   from "./Formats/BmpDitherFactory.js";
 import {TemplateFabricWrapper} from "./Utils/TemplateFabricWrapper.js";
@@ -124,6 +125,8 @@ document.addEventListener("DOMContentLoaded", async function ()
 		new MediaSelectorView(new MediaFactory(document.getElementById('mediaTemplate')))
 	);
 	mediaSelector.filter = "images";
+	// the selector is built into the dialog when it opens
+	new ThumbnailPreview(document.getElementById("mediaSelectorInstance"), "media-thumbnail").init();
 
 	const insertView         = new InsertView();
 	const fabricShapefactory = new FabricShapeFactory();

@@ -503,3 +503,19 @@ footer nav ul #compile_time {margin-left: auto;}
     }
 }
 
+/* the thumbnail in its original size while hovering it, see js/core/ThumbnailPreview.js */
+.thumbnail-preview
+{
+    display:none;
+    position:fixed;
+    z-index:1000;
+    width:300px;
+    height:200px;
+    object-fit: contain;
+    padding:0.25rem;
+    background-color:var(--gh-button-bg);
+    border:1px solid var(--gh-border-color);
+    box-shadow:0 4px 12px rgba(0, 0, 0, 0.3);
+    pointer-events:none;
+}
+.thumbnail-preview.visible {display:block;}

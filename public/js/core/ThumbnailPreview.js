@@ -21,6 +21,7 @@
  * Shows a thumbnail uncropped in its original size while hovering it or while a finger rests on it:
  * the items of the playlist and the media and templates of the selectors.
  * One shared preview element per container, events are delegated to the container.
+ * Inside a modal dialog the preview belongs to the dialog: on the body it would lie below the dialog.
  */
 export class ThumbnailPreview
 {
@@ -46,7 +47,7 @@ export class ThumbnailPreview
 		this.#preview = document.createElement("img");
 		this.#preview.classList.add("thumbnail-preview");
 		this.#preview.alt = "";
-		document.body.appendChild(this.#preview);
+		(this.#container.closest("dialog") ?? document.body).appendChild(this.#preview);
 
 		this.#container.addEventListener("mouseover", (event) => {
 			if (!this.#isTouch)
