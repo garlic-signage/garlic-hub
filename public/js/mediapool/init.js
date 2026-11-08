@@ -37,6 +37,7 @@ import { MediaEditDialog } from "./media/MediaEditDialog.js";
 import { MediaInfoDialog } from "./media/MediaInfoDialog.js";
 import { MediaSearch } from "./media/MediaSearch.js";
 import { FolderTagging } from "./media/FolderTagging.js";
+import { UploadedMedia } from "./uploads/UploadedMedia.js";
 
 import { UploadDialogElements } from "./uploads/UploadDialogElements.js";
 import { LocalFilesElements } from "./uploads/Local/LocalFilesElements.js";
@@ -98,6 +99,9 @@ document.addEventListener("DOMContentLoaded", function()
 		flashMessageHandler
 	);
 
+	// only there when the user has a model for the tagging
+	const folderTagging = document.getElementById("folderTaggingDialog") === null ? null : new FolderTagging(mediaService, flashMessageHandler, lang);
+
 	const contextMenuTreeViewFactory = new ContextMenuTreeViewFactory(
 		treeViewElements,
 		treeDialog,
@@ -105,8 +109,7 @@ document.addEventListener("DOMContentLoaded", function()
 		flashMessageHandler,
 		lang,
 		UnitShareDialog.create("mediapool"),
-		// only there when the user has an AI for the tagging
-		document.getElementById("folderTaggingDialog") === null ? null : new FolderTagging(mediaService, flashMessageHandler, lang)
+		folderTagging
 	);
 	directoryView.addContextMenu(contextMenuTreeViewFactory);
 
@@ -133,6 +136,7 @@ document.addEventListener("DOMContentLoaded", function()
 	/**************** uploader ******************/
 
 	const uploaderDialog = new UploaderDialog(new UploadDialogElements(), directoryView);
+	initTaggingAfterUpload(folderTagging, directoryView, flashMessageHandler);
 
 	// Section for local file uploads
 	const localFilesElements = new LocalFilesElements();
@@ -199,3 +203,50 @@ document.addEventListener("DOMContentLoaded", function()
 		fetchClient
 	);
 });
+
+/**
+ * With the switch of the uploader the media uploaded since it was opened are tagged when it closes, like a folder:
+ * only the ones without tags, saved at once. The switch is remembered in the browser.
+ */
+function initTaggingAfterUpload(folderTagging, directoryView, flashMessageHandler)
+{
+	const toggle = document.getElementById("tagAfterUpload");
+	if (folderTagging === null || toggle === null)
+		return;
+
+	try
+	{
+		toggle.checked = localStorage.getItem("tag-after-upload") === "1";
+	}
+	catch
+	{
+		// no storage in this browser: the switch starts off
+	}
+	toggle.addEventListener("change", () => {
+		try
+		{
+			localStorage.setItem("tag-after-upload", toggle.checked ? "1" : "0");
+		}
+		catch
+		{
+			// the switch counts for this page only
+		}
+	});
+
+	document.getElementById("uploaderDialog").addEventListener("close", async () => {
+		const mediaIds = UploadedMedia.take();
+		if (!toggle.checked || mediaIds.length === 0 || directoryView.getActiveNodeId() === 0)
+			return;
+
+		try
+		{
+			const tagged = await folderTagging.run(directoryView.getActiveNodeId(), mediaIds);
+			if (tagged > 0)
+				directoryView.reloadCurrentNode();
+		}
+		catch (err)
+		{
+			flashMessageHandler.showError(err.message);
+		}
+	});
+}

@@ -202,8 +202,10 @@ class ShowControllerTest extends ControllerTestCase
 		$translator = $this->container->get(Translator::class);
 		static::assertSame([
 			'LANG_SUGGEST_TAGS' => $translator->translate('suggest_tags', 'mediapool'),
-			'LANG_TAG_FOLDER'   => $translator->translate('tag_folder', 'mediapool')
+			'LANG_TAG_FOLDER'   => $translator->translate('tag_folder', 'mediapool'),
+			'LANG_TAG_AFTER_UPLOAD' => $translator->translate('tag_after_upload', 'mediapool')
 		], $page->getTemplateData()['media_tagging']);
+		static::assertStringContainsString('id="tagAfterUpload"', $this->html($page));
 		$html = $this->html($page);
 		static::assertStringContainsString('id="suggestTags"', $html);
 		static::assertStringContainsString('id="tag_node"', $html);

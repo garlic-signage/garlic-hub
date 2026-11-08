@@ -86,6 +86,7 @@ ComfyUI is not supported: its API takes whole workflows. An image made there is 
 | Correct, shorten, translate text | template composer, context menu of a text box | Texts    | in the composer, undo works   |
 | Suggest tags            | mediapool, context menu of a medium              | Tag images      | after the user saves the edit dialog |
 | Tag folder              | mediapool, context menu of a folder              | Tag images      | at once, file by file         |
+| Tag after upload        | mediapool, switch in the uploader                | Tag images      | at once, when the uploader closes |
 | Fill by theme           | playlist composer, insert menu                   | Texts           | the media the user ticks      |
 | Generate image          | mediapool, uploader tab "Generate image"         | Generate images | when the user uploads it      |
 
@@ -116,7 +117,9 @@ The answer is a short description and up to 10 tags in the language of the user.
 the edit dialog: the description is added to the one there, the tags join the ones there; the user changes them
 and saves. **Tag folder** works on the pictures, videos and PDFs of the folder which have no tags yet, one after
 the other from the browser, and saves each suggestion at once. A dialog shows the progress and cancels after the
-file in work. Subfolders are not part of it, like rights are not inherited. Both need the right to edit the medium.
+file in work. Subfolders are not part of it, like rights are not inherited. With the switch
+**Suggest tags after closing** in the uploader the same happens with the files uploaded since it was opened,
+when it closes; the upload answers with the `media_id` of the new file for it. Both need the right to edit the medium.
 
 ### Tags
 

@@ -140,7 +140,9 @@ class UploadControllerTest extends ControllerTestCase
 		$response = $this->uploadLocal($this->controller(), ['node_id' => '8', 'metadata' => '{"description":"Am Meer"}'], ['file' => $this->pngUpload()]);
 
 		static::assertSame(200, $response->getStatusCode());
-		static::assertSame(['success' => true, 'message' => 'bild.png successful uploaded'], $this->json($response));
+		$answer = $this->json($response);
+		static::assertSame(['success' => true, 'message' => 'bild.png successful uploaded'], array_diff_key($answer, ['media_id' => true]));
+		static::assertSame($answer['media_id'], $this->databaseValue('SELECT media_id FROM mediapool_files WHERE filename = ?', 'bild.png'));
 		static::assertSame($before + 1, $this->mediaCount());
 		static::assertSame('Am Meer', $this->databaseValue('SELECT media_description FROM mediapool_files WHERE filename = ?', 'bild.png'));
 		static::assertSame(2, (int) $this->databaseValue('SELECT UID FROM mediapool_files WHERE filename = ?', 'bild.png'));
@@ -263,7 +265,9 @@ class UploadControllerTest extends ControllerTestCase
 
 		$response = $controller->uploadFromUrl($this->request('POST', ['node_id' => '8', 'external_link' => 'https://media.example.com/img/katze.png', 'metadata' => '{"description":"Katze"}']), $this->newResponse());
 
-		static::assertSame(['success' => true, 'message' => 'katze.png successful uploaded'], $this->json($response));
+		$answer = $this->json($response);
+		static::assertSame(['success' => true, 'message' => 'katze.png successful uploaded'], array_diff_key($answer, ['media_id' => true]));
+		static::assertSame($answer['media_id'], $this->databaseValue('SELECT media_id FROM mediapool_files WHERE filename = ?', 'katze.png'));
 		static::assertSame('Katze', $this->databaseValue('SELECT media_description FROM mediapool_files WHERE filename = ?', 'katze.png'));
 		static::assertCount(2, $this->sent);
 	}

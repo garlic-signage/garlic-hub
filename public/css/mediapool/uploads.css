@@ -232,3 +232,6 @@ label:has(input:disabled)
 }
 /* the tab for an image of a model: the hint under the negative prompt */
 .ai-image-form .ai-image-hint {display: block; font-size: 0.85em; opacity: 0.8;}
+
+/* the switch for the tags after the upload, beside the close button */
+#uploaderDialog footer .tag-after-upload {margin-right: auto;}

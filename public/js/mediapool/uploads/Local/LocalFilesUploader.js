@@ -20,6 +20,7 @@
 import { BaseUploader } from "../BaseUploader.js";
 import { UploadApiConfig } from '../UploadApiConfig.js';
 import {Utils} from "../../../core/Utils.js";
+import {UploadedMedia} from "../UploadedMedia.js";
 
 export class LocalFilesUploader extends BaseUploader
 {
@@ -89,7 +90,10 @@ export class LocalFilesUploader extends BaseUploader
 					if (!results.success)
 						console.error('Error for file:', file.name, results.error_message || 'Unknown error');
 					else
+					{
+						UploadedMedia.add(results.media_id);
 						this.#filePreviews.removeFromPreview(id);
+					}
 
 				}
 				catch(error)

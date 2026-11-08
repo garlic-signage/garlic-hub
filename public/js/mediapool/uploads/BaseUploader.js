@@ -19,6 +19,7 @@
 
 import { UploadApiConfig } from './UploadApiConfig.js';
 import {Utils} from "../../core/Utils.js";
+import {UploadedMedia} from "./UploadedMedia.js";
 
 export class BaseUploader
 {
@@ -62,7 +63,10 @@ export class BaseUploader
 			if (!result || !result.success)
 				console.error('Error for file:', filePath, result?.error_message || 'Unknown error');
 			else
+			{
+				UploadedMedia.add(result.media_id);
 				this.disableUploadButton();
+			}
 		}
 		catch(error)
 		{

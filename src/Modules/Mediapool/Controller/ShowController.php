@@ -197,7 +197,8 @@ class ShowController
 		if ($this->mediaTaggingService->isAvailable())
 			$data['this_layout']['data']['media_tagging'] = [
 				'LANG_SUGGEST_TAGS' => $this->translator->translate('suggest_tags', 'mediapool'),
-				'LANG_TAG_FOLDER'   => $this->translator->translate('tag_folder', 'mediapool')
+				'LANG_TAG_FOLDER'   => $this->translator->translate('tag_folder', 'mediapool'),
+				'LANG_TAG_AFTER_UPLOAD' => $this->translator->translate('tag_after_upload', 'mediapool')
 			];
 
 		if ($this->imageGeneration->isAvailable($this->userSession->getUID()))

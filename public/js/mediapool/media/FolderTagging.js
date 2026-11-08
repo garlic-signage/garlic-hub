@@ -48,11 +48,13 @@ export class FolderTagging
 	}
 
 	/**
+	 * @param onlyMediaIds the media of the folder to tag, e.g. the ones just uploaded, null for all
 	 * @return {Promise<number>} the number of tagged files
 	 */
-	async run(nodeId)
+	async run(nodeId, onlyMediaIds = null)
 	{
 		const media = (await this.#mediaService.loadMediaByNodeId(nodeId))
+			.filter(medium => onlyMediaIds === null || onlyMediaIds.includes(medium.media_id))
 			.filter(medium => medium.tags.length === 0 && FolderTagging.isTaggable(medium.mimetype));
 		if (media.length === 0)
 		{

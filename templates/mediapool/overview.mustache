@@ -221,6 +221,9 @@
 				{{/image_generation}}
 
 				<footer>
+					{{#media_tagging}}
+					<label for="tagAfterUpload" class="tag-after-upload"><input type="checkbox" id="tagAfterUpload"> {{LANG_TAG_AFTER_UPLOAD}}</label>
+					{{/media_tagging}}
 					<button id="closeDialog">{{LANG_CLOSE}}</button>
 				</footer>
 			</dialog>

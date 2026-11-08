@@ -245,7 +245,8 @@ readonly class UploadService
 		];
 		$this->mediaRepository->insert($fileData);
 
-		return ['success' => true, 'message' => $pathInfo['basename'].' successful uploaded'];
+		// the browser tags the new media after the upload with their ids
+		return ['success' => true, 'message' => $pathInfo['basename'].' successful uploaded', 'media_id' => $fileData['media_id']];
 	}
 
 	/**
