@@ -118,7 +118,7 @@ the edit dialog: the description is added to the one there, the tags join the on
 and saves. **Tag folder** works on the pictures, videos and PDFs of the folder which have no tags yet, one after
 the other from the browser, and saves each suggestion at once. A dialog shows the progress and cancels after the
 file in work. Subfolders are not part of it, like rights are not inherited. With the switch
-**Suggest tags after closing** in the uploader the same happens with the files uploaded since it was opened,
+**Tag after closing** in the uploader the same happens with the files uploaded since it was opened,
 when it closes; the upload answers with the `media_id` of the new file for it. Both need the right to edit the medium.
 
 ### Tags
