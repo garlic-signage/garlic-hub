@@ -135,7 +135,7 @@ label:has(+ input:disabled), input:disabled{opacity: 0.5; pointer-events: none;}
 /* the check of the design: the number of hints on the button, the list below it */
 #designCheckButton {position: relative;}
 #designCheckButton .design-check-count {position: absolute; top: -6px; right: -6px; min-width: 1.2em; padding: 0 0.25em; border-radius: 0.6em; background: #d97706; color: #fff; font-size: 0.7rem; line-height: 1.2em;}
-.design-check-list {width: 22rem; padding: 0.75rem;}
+.design-check-list {width: 34rem; padding: 0.75rem;}
 .design-check-list p {margin: 0;}
 .design-check-list ul {margin: 0; padding: 0 0 0 1rem;}
 .design-check-list li {margin: 0.25rem 0;}

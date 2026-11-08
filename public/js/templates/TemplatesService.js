@@ -58,6 +58,14 @@ export class TemplatesService extends BaseService
 		return await this._sendRequest(TemplatesApiConfig.PACK_URI, "POST");
 	}
 
+	/**
+	 * @return {Promise<{success: boolean, template_id?: number, error_message?: string}>}
+	 */
+	async copy(templateId)
+	{
+		return await this._sendRequest(TemplatesApiConfig.COPY_URI, "POST", {template_id: templateId});
+	}
+
 	async correctText(text)
 	{
 		return await this._sendRequest(TemplatesApiConfig.CORRECT_TEXT_URI, "POST", {text: text}, FetchClient.LLM_TIMEOUT);

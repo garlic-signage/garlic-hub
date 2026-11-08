@@ -245,6 +245,7 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 	$group->post('/templates/versions/{template_id:\d+}', resolve([\App\Modules\Templates\Controller\TemplateVersionsController::class, 'restore'], $container));
 	$group->get('/templates/find', resolve([TemplatesController::class, 'find'], $container));
 	$group->patch('/templates', resolve([TemplatesController::class, 'save'], $container));
+	$group->post('/templates/copy', resolve([TemplatesController::class, 'copy'], $container));
 	$group->post('/templates/pack', resolve([\App\Modules\Templates\Controller\TemplatePackController::class, 'install'], $container));
 	$group->post('/templates/shorten-text', resolve([TextCorrectionController::class, 'shorten'], $container));
 	$group->post('/templates/translate-text', resolve([TextCorrectionController::class, 'translate'], $container));

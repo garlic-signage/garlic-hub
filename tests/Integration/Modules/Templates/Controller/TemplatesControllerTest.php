@@ -33,6 +33,11 @@ use App\Modules\Templates\Helper\Composer\ExportImage;
 use App\Modules\Templates\Helper\Composer\Orchestrator;
 use App\Modules\Templates\Helper\Composer\TemplatePreparer;
 use App\Modules\Templates\Helper\Datatable\Parameters;
+use App\Framework\Database\BaseRepositories\Transactions;
+use App\Framework\Localization\Translate\Translator;
+use App\Modules\Templates\Repositories\TemplatesRepository;
+use App\Modules\Templates\Services\AclValidator;
+use App\Modules\Templates\Services\TemplateCopyService;
 use App\Modules\Templates\Services\TemplatesDatatableService;
 use App\Modules\Templates\Services\TemplatesService;
 use App\Modules\Templates\Services\TemplatesUsageService;
@@ -76,7 +81,16 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 			$this->container->get(JsonResponseHandler::class),
 			$this->container->get(MediaUrlSigner::class),
 			$this->container->get(AclGrantService::class),
-			$this->container->get(UserSession::class)
+			$this->container->get(UserSession::class),
+			new TemplateCopyService(
+				$this->container->get(TemplatesRepository::class),
+				$this->container->get(AclValidator::class),
+				$this->container->get(UserSession::class),
+				$this->container->get(Translator::class),
+				$this->workspace->filesystem,
+				$this->workspace->config,
+				$this->container->get(Transactions::class)
+			)
 		);
 	}
 
@@ -163,7 +177,7 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 
 		$rights = $this->json($this->controller->determineRights($this->request('GET'), $this->newResponse(), ['template_id' => '2']));
 
-		static::assertSame(['success' => true, 'can_edit' => true, 'can_delete' => true, 'can_share' => true, 'can_version' => false, 'template_id' => 2], $rights);
+		static::assertSame(['success' => true, 'can_edit' => true, 'can_delete' => true, 'can_share' => true, 'can_version' => false, 'can_copy' => true, 'template_id' => 2], $rights);
 	}
 
 	public function testAnEditorOfASharedTemplateMayEditButNotDeleteIt(): void
@@ -176,6 +190,8 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 		$rights = $this->json($this->controller->determineRights($this->request('GET'), $this->newResponse(), ['template_id' => '3']));
 		static::assertTrue($rights['can_edit']);
 		static::assertFalse($rights['can_delete']);
+		// copying is for the admin only
+		static::assertFalse($rights['can_copy']);
 
 		$this->expectException(AccessDeniedException::class);
 		try
@@ -195,7 +211,7 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 
 		$rights = $this->json($this->controller->determineRights($this->request('GET'), $this->newResponse(), ['template_id' => '2']));
 
-		static::assertSame(['success' => true, 'can_edit' => true, 'can_delete' => false, 'can_share' => true, 'can_version' => false, 'template_id' => 2], $rights);
+		static::assertSame(['success' => true, 'can_edit' => true, 'can_delete' => false, 'can_share' => true, 'can_version' => false, 'can_copy' => true, 'template_id' => 2], $rights);
 	}
 
 	/**
@@ -223,7 +239,65 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 
 		$this->assertSuccess($this->controller->determineRights($this->request('GET'), $this->newResponse(), $args));
 
-		static::assertSame(['success' => true, 'can_edit' => false, 'can_delete' => false, 'can_share' => false, 'can_version' => false], $this->json($this->controller->determineRights($this->request('GET'), $this->newResponse(), $args)));
+		static::assertSame(['success' => true, 'can_edit' => false, 'can_delete' => false, 'can_share' => false, 'can_version' => false, 'can_copy' => false], $this->json($this->controller->determineRights($this->request('GET'), $this->newResponse(), $args)));
+	}
+
+	/**
+	 * The copy belongs to the admin, is private and has the content and the image, not the key of the pack.
+	 */
+	public function testTheAdminCopiesATemplateWithItsImage(): void
+	{
+		$this->actingAs(1);
+		$this->connection->executeStatement("UPDATE templates SET visibility = 'global', seed_key = 'fabric/quote_landscape' WHERE template_id = 2");
+		foreach (['originals', 'thumbs'] as $sub)
+			file_put_contents($this->workspace->dir . '/var/storage/templates/' . $sub . '/2.jpg', 'image of ' . $sub);
+
+		$response = $this->controller->copy($this->request('POST', body: ['template_id' => '2']), $this->newResponse());
+
+		$this->assertSuccess($response);
+		$copyId = (int) $this->json($response)['template_id'];
+		$copy   = $this->connection->fetchAssociative('SELECT * FROM templates WHERE template_id = ?', [$copyId]);
+		static::assertIsArray($copy);
+		static::assertSame([1, 'private', 'fabric.js', 'Copy of Annas Vorlage', '{"objects":[]}', null], [(int) $copy['UID'], $copy['visibility'], $copy['type'], $copy['name'], $copy['content'], $copy['seed_key']]);
+		foreach (['originals', 'thumbs'] as $sub)
+			static::assertSame('image of ' . $sub, file_get_contents($this->workspace->dir . '/var/storage/templates/' . $sub . '/' . $copyId . '.jpg'));
+	}
+
+	public function testATemplateWithoutImageIsCopiedWithoutImage(): void
+	{
+		$this->actingAs(1);
+
+		$response = $this->controller->copy($this->request('POST', body: ['template_id' => '3']), $this->newResponse());
+
+		$this->assertSuccess($response);
+		static::assertSame([], array_diff((array) scandir($this->workspace->dir . '/var/storage/templates/originals'), ['.', '..']));
+	}
+
+	/**
+	 * Only an admin of the template copies it: also not the owner without admin rights.
+	 */
+	public function testAUserMayNotCopyHisTemplate(): void
+	{
+		$this->actingAs(2);
+		$before = $this->countTemplates();
+
+		try
+		{
+			$this->controller->copy($this->request('POST', body: ['template_id' => '2']), $this->newResponse());
+			static::fail('A user must not copy.');
+		}
+		catch (AccessDeniedException)
+		{
+			static::assertSame($before, $this->countTemplates());
+		}
+	}
+
+	public function testAnUnknownTemplateIsNotCopied(): void
+	{
+		$this->actingAs(1);
+
+		$this->expectException(NotFoundException::class);
+		$this->controller->copy($this->request('POST', body: ['template_id' => '99']), $this->newResponse());
 	}
 
 	public function testTheContentIsLoadedWithFreshSignedUrls(): void

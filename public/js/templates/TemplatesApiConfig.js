@@ -22,6 +22,7 @@ export const TemplatesApiConfig = {
 	ACLS_URI: "/async/templates/acls",
 	FIND_URI: "/async/templates/find",
 	PACK_URI: "/async/templates/pack",
+	COPY_URI: "/async/templates/copy",
 	CORRECT_TEXT_URI: "/async/templates/correct-text",
 	SHORTEN_TEXT_URI: "/async/templates/shorten-text",
 	TRANSLATE_TEXT_URI: "/async/templates/translate-text",

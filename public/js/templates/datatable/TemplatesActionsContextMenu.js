@@ -44,5 +44,29 @@ export class TemplatesActionsContextMenu extends ActionsContextMenu
 		this.#shareDialog.attachTo(this.view.item("share"), this.unitId, rights.can_share);
 		this.#versionsDialog.attachTo(this.view.item("versions"), this.unitId, rights.can_version);
 		this.addDelete(rights.can_delete, (templateId) => this.#templatesService.delete(templateId));
+		this.#addCopy(rights.can_copy === true);
+	}
+
+	/**
+	 * Only for an admin of the template: the copy opens in the composer.
+	 */
+	#addCopy(canCopy)
+	{
+		const item = this.view.item("copy");
+		if (!canCopy)
+		{
+			item.remove();
+			return;
+		}
+
+		item.addEventListener("click", async (event) =>
+		{
+			event.preventDefault();
+			const result = await this.#templatesService.copy(this.unitId);
+			if (result.success)
+				window.location.href = "/templates/composer/" + result.template_id;
+			else
+				this.flashMessageHandler.showError(result.error_message);
+		}, {signal: this.signal});
 	}
 }

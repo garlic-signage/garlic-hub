@@ -24,16 +24,21 @@ namespace App\Modules\Templates\Controller;
 
 use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Controller\RequestInput;
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\UserException;
 use App\Framework\Media\MediaUrlSigner;
 use App\Modules\Auth\UserSession;
 use App\Modules\Templates\Helper\Composer\Orchestrator;
 use App\Modules\Templates\Helper\Datatable\Parameters;
+use App\Modules\Templates\Services\TemplateCopyService;
 use App\Modules\Templates\Services\TemplatesDatatableService;
 use App\Shared\Acl\AclGrantService;
 use Doctrine\DBAL\Exception;
+use League\Flysystem\FilesystemException;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -46,8 +51,29 @@ readonly class TemplatesController
 		private JsonResponseHandler $responseHandler,
 		private MediaUrlSigner      $mediaUrlSigner,
 		private AclGrantService     $aclGrantService,
-		private UserSession         $userSession
+		private UserSession         $userSession,
+		private TemplateCopyService $templateCopyService
 	) {}
+
+	/**
+	 * A copy of the template, which the composer opens next.
+	 *
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FilesystemException
+	 * @throws FrameworkException
+	 * @throws NotFoundException
+	 * @throws UserException
+	 */
+	public function copy(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	{
+		$templateId = RequestInput::of($request->getParsedBody())->id('template_id');
+		if ($templateId === 0)
+			return $this->responseHandler->jsonError($response, 'No template Id');
+
+		return $this->responseHandler->jsonSuccess($response, ['template_id' => $this->templateCopyService->copy($templateId)]);
+	}
 
     /**
      * @throws Exception
@@ -77,7 +103,7 @@ readonly class TemplatesController
 	public function determineRights(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
 		$templateId = (int) ($args['template_id'] ?? 0);
-		$responseData = ['can_edit' => false, 'can_delete' => false, 'can_share' => false, 'can_version' => false];
+		$responseData = ['can_edit' => false, 'can_delete' => false, 'can_share' => false, 'can_version' => false, 'can_copy' => false];
 		if ($templateId === 0 || !$this->orchestrator->checkEditRights($templateId))
 			return $this->responseHandler->jsonSuccess($response, $responseData);
 
@@ -86,6 +112,7 @@ readonly class TemplatesController
 		$responseData['template_id']   = $templateId;
 		$responseData['can_share']     = $this->aclGrantService->canShareUnit($this->userSession->getUID(), 'templates', $templateId);
 		$responseData['can_version']   = $this->orchestrator->isVersioningEnabled();
+		$responseData['can_copy']      = $this->templateCopyService->canCopy($templateId);
 
 		if ($inUse === [] && $this->orchestrator->isDeletable($templateId))
 			$responseData['can_delete'] = true;

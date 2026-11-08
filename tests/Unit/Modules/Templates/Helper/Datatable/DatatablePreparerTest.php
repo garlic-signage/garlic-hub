@@ -179,7 +179,7 @@ class DatatablePreparerTest extends TestCase
 	public function testTheContextMenuTexts(): void
 	{
 		static::assertSame(
-			['LANG_COMPOSE' => 'templates.composer', 'LANG_SETTINGS' => 'main.settings', 'LANG_SHARE' => 'users.share_unit', 'LANG_VERSIONS' => 'main.versions', 'LANG_TEMPLATE_DELETE' => 'main.delete', 'LANG_TEMPLATE_DELETE_CONFIRM' => 'templates.confirm_delete'],
+			['LANG_COMPOSE' => 'templates.composer', 'LANG_SETTINGS' => 'main.settings', 'LANG_COPY' => 'templates.copy', 'LANG_SHARE' => 'users.share_unit', 'LANG_VERSIONS' => 'main.versions', 'LANG_TEMPLATE_DELETE' => 'main.delete', 'LANG_TEMPLATE_DELETE_CONFIRM' => 'templates.confirm_delete'],
 			$this->preparer->formatContextMenu()
 		);
 	}

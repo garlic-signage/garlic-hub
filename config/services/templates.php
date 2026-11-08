@@ -64,6 +64,7 @@ use App\Modules\Templates\Services\TemplatesService;
 use App\Modules\Templates\Contracts\TemplateUsageCounterInterface;
 use App\Modules\Templates\Services\TemplatesUsageService;
 use App\Modules\Templates\Services\TemplatePackService;
+use App\Modules\Templates\Services\TemplateCopyService;
 use Psr\Container\ContainerInterface;
 use Slim\Flash\Messages;
 
@@ -265,5 +266,17 @@ $dependencies[ShowDatatableController::class] = DI\factory(function (ContainerIn
 	);
 });
 
+$dependencies[TemplateCopyService::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new TemplateCopyService(
+		$container->get(TemplatesRepository::class),
+		$container->get(AclValidator::class),
+		$container->get(UserSession::class),
+		$container->get(Translator::class),
+		$container->get('LocalFileSystem'),
+		$container->get(Config::class),
+		$container->get(Transactions::class)
+	);
+});
 
 return $dependencies;
