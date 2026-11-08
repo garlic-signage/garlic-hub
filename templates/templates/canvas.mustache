@@ -2,6 +2,9 @@
 
 	<ul id="composerContextMenu"  class="context-menu">
 		<li id="replaceImage" class="bi-image"> {{LANG_REPLACE_IMAGE}}</li>
+		{{#text_correction}}
+		<li id="suggestImage" class="bi-stars"> {{LANG_SUGGEST_IMAGE}}</li>
+		{{/text_correction}}
 		<li id="duplicate" class="bi-copy">{{LANG_DUPLICATE}}</li>
 		<li id="delete" class="bi-trash">{{LANG_DELETE}}</li>
 		{{#text_correction}}
@@ -45,6 +48,17 @@
 		<button id="closeDialogButton" type="button">{{LANG_CANCEL}}</button>
 	</footer>
 </dialog>
+
+{{#text_correction}}
+<dialog id="imageSuggestionDialog">
+	<header>
+		<span class="dialog-name">{{LANG_IMAGE_SUGGESTION}}</span>
+		<button type="button" class="close-button bi bi-x" aria-label="Close"></button>
+	</header>
+	<p>{{LANG_CHOOSE_IMAGE}}</p>
+	<ul class="image-suggestions"></ul>
+</dialog>
+{{/text_correction}}
 
 <ul id="canvas_toolbar">
     <li id="inserts">

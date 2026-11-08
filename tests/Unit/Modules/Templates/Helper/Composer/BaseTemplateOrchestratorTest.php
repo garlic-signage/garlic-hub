@@ -151,6 +151,28 @@ class BaseTemplateOrchestratorTest extends TestCase
 		static::assertSame('a.png', $restored[0]['fileName']);
 	}
 
+	/**
+	 * An image placeholder has no file of the mediapool, its picture comes from the hub. A replaced placeholder
+	 * has a file name and gets the file.
+	 */
+	#[Group('units')]
+	public function testRestoreSrcOfPlaceholders(): void
+	{
+		$objects = [
+			['type' => 'image', 'placeholder' => true],
+			['type' => 'group', 'objects' => [['type' => 'image', 'placeholder' => true]]],
+			['type' => 'image', 'placeholder' => true, 'fileName' => 'a.png'],
+			['type' => 'image', 'placeholder' => 'true'],
+		];
+
+		$restored = $this->createOrchestrator('https://cdn')->callRestoreSrc($objects);
+
+		static::assertSame('/images/templates/placeholder.png', $restored[0]['src']);
+		static::assertSame('/images/templates/placeholder.png', $restored[1]['objects'][0]['src']);
+		static::assertStringStartsWith('https://cdn/media.php/orig/a.png', $restored[2]['src']);
+		static::assertArrayNotHasKey('src', $restored[3]);
+	}
+
 	#[Group('units')]
 	public function testValidateRemovesSrcRecursively(): void
 	{

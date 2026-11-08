@@ -138,6 +138,9 @@ class TemplatePreparerTest extends TestCase
 			'LANG_CORRECT_TEXT'   => 'templates.correct_text',
 			'LANG_SHORTEN_TEXT'   => 'templates.shorten_text',
 			'LANG_TRANSLATE_TEXT' => 'templates.translate_text',
+			'LANG_SUGGEST_IMAGE'  => 'templates.suggest_image',
+			'LANG_IMAGE_SUGGESTION' => 'templates.image_suggestion',
+			'LANG_CHOOSE_IMAGE'   => 'templates.choose_image',
 			'translation_languages' => [
 				['LOCALE' => 'de_DE', 'LANG_LANGUAGE' => 'Deutsch'],
 				['LOCALE' => 'en_US', 'LANG_LANGUAGE' => 'English']

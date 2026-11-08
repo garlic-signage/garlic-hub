@@ -26,6 +26,7 @@ export const TemplatesApiConfig = {
 	CORRECT_TEXT_URI: "/async/templates/correct-text",
 	SHORTEN_TEXT_URI: "/async/templates/shorten-text",
 	TRANSLATE_TEXT_URI: "/async/templates/translate-text",
+	SUGGEST_IMAGES_URI: "/async/templates/suggest-images",
 	LOAD_PLAYLIST_ITEM_URI: "/async/playlist-item/composer/load",
 	SAVE_PLAYLIST_ITEM_URI: "/async/playlist-item/composer/save"
 };

@@ -24,6 +24,8 @@ export class ContextMenuView
 
 	// menu points
 	#replaceImage = document.getElementById("replaceImage");
+	// only with an LLM of the user
+	#suggestImage = document.getElementById("suggestImage");
 	#duplicate = document.getElementById("duplicate");
 	#delete = document.getElementById("delete");
 	// only with an LLM of the user
@@ -106,14 +108,23 @@ export class ContextMenuView
 		return this.#replaceImage;
 	}
 
+	get suggestImage()
+	{
+		return this.#suggestImage;
+	}
+
 	hideReplaceImage()
 	{
 		this.#replaceImage.style.display = "none";
+		if (this.#suggestImage !== null)
+			this.#suggestImage.style.display = "none";
 	}
 
 	showReplaceImage()
 	{
 		this.#replaceImage.style.display = "block";
+		if (this.#suggestImage !== null)
+			this.#suggestImage.style.display = "block";
 	}
 
 	get duplicate()

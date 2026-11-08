@@ -81,6 +81,14 @@ export class TemplatesService extends BaseService
 		return await this._sendRequest(TemplatesApiConfig.TRANSLATE_TEXT_URI, "POST", {text: text, locale: locale}, FetchClient.LLM_TIMEOUT);
 	}
 
+	/**
+	 * @return {Promise<{success: boolean, images?: {media_id: string, filename: string, file_name: string, original: string, thumbnail: string}[], error_message?: string}>}
+	 */
+	async suggestImages(texts)
+	{
+		return await this._sendRequest(TemplatesApiConfig.SUGGEST_IMAGES_URI, "POST", {texts: texts}, FetchClient.LLM_TIMEOUT);
+	}
+
 	determineRights(templateId)
 	{
 		const url = TemplatesApiConfig.ACLS_URI + "/" + templateId;

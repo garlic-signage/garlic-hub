@@ -12,7 +12,7 @@
 	'use strict';
 
 	// the same properties as TemplateFabricWrapper.toTemplateJSON()
-	const PROPERTIES = ["mediaId", "fileName", "lockMovementX", "lockMovementY", "lockRotation", "lockScalingX", "lockScalingY"];
+	const PROPERTIES = ["mediaId", "fileName", "placeholder", "lockMovementX", "lockMovementY", "lockRotation", "lockScalingX", "lockScalingY"];
 	const FORMATS    = [['landscape', 1920, 1080], ['portrait', 1080, 1920]];
 
 	async function loadFonts()
@@ -34,9 +34,33 @@
 		return canvas.toDataURL({format: 'jpeg', quality: 0.9});
 	}
 
+	async function loadPlaceholder()
+	{
+		placeholderElement = await new Promise((resolve, reject) =>
+		{
+			const image   = new Image();
+			image.onload  = () => resolve(image);
+			image.onerror = () => reject(new Error('placeholder not loaded: ' + image.src));
+			image.src     = '../../public' + PLACEHOLDER_SRC;
+		});
+	}
+
+	// the composer gets the picture of a placeholder from the server, not the path of the generator
+	function setPlaceholderSrc(objects)
+	{
+		for (const object of objects)
+		{
+			if (object.placeholder === true)
+				object.src = PLACEHOLDER_SRC;
+			if (Array.isArray(object.objects))
+				setPlaceholderSrc(object.objects);
+		}
+	}
+
 	async function generate()
 	{
 		await loadFonts();
+		await loadPlaceholder();
 		const result = [];
 		for (const template of TEMPLATES)
 		{
@@ -55,6 +79,7 @@
 					content: json,
 					image: await renderImage(json, width, height)
 				});
+				setPlaceholderSrc(json.objects);
 			}
 		}
 		return result;

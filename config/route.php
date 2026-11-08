@@ -250,6 +250,7 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 	$group->post('/templates/shorten-text', resolve([TextCorrectionController::class, 'shorten'], $container));
 	$group->post('/templates/translate-text', resolve([TextCorrectionController::class, 'translate'], $container));
 	$group->post('/templates/correct-text', resolve([TextCorrectionController::class, 'correct'], $container));
+	$group->post('/templates/suggest-images', resolve([\App\Modules\Templates\Controller\ImageSuggestionController::class, 'suggest'], $container));
 
 
 });

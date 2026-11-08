@@ -27,6 +27,9 @@ use App\Framework\Media\MediaUrlSigner;
 
 class BaseTemplateOrchestrator
 {
+	/** the picture of an image placeholder of the bundled templates, from the hub itself, not the content server */
+	public const string PLACEHOLDER_SRC = '/images/templates/placeholder.png';
+
 	protected string $baseUrl;
 
 	public function __construct(protected readonly Config $config, protected readonly MediaUrlSigner $mediaUrlSigner)
@@ -53,6 +56,8 @@ class BaseTemplateOrchestrator
 		{
 			if (isset($obj['fileName']) && is_string($obj['fileName']))
 				$obj['src'] = $this->buildMediaUrl($obj['fileName']);
+			elseif (($obj['placeholder'] ?? false) === true)
+				$obj['src'] = self::PLACEHOLDER_SRC;
 
 			if (isset($obj['objects']) && is_array($obj['objects']))
 				$this->restoreSrc($obj['objects']);

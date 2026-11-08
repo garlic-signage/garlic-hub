@@ -41,6 +41,10 @@ export class InsertService
 		this.#addObject(img);
 	}
 
+	/**
+	 * The new picture fills the area of the old one: scaled until it covers it and cut centered (cropX/cropY), so
+	 * the layout of the template stays. A round clip path keeps its size. A placeholder is no longer one.
+	 */
 	async replaceImage(mediaId, url, fileName)
 	{
 		return new Promise((resolve, reject) =>
@@ -48,25 +52,50 @@ export class InsertService
 			const object = this.#fabricWrapper.getActiveObject();
 			const w = object.width  * object.scaleX;
 			const h = object.height * object.scaleY;
+			const oldScale = object.scaleX;
 
-			this.#fabricWrapper.historySaveAction();
-			this.#fabricWrapper.fireObjectModified(object);
-			this.#fabricWrapper.renderAll();
+			// object:modified after the change saves it as one step of the history
 			object.setSrc(url, () =>
 				{
-					object.scaleX = 1;
-					object.scaleY = 1;
+					const crop = InsertService.coverCrop(object.getElement(), w, h);
+					object.set(crop);
+					if (object.clipPath)
+						object.clipPath.set({
+							scaleX: object.clipPath.scaleX * oldScale / crop.scaleX,
+							scaleY: object.clipPath.scaleY * oldScale / crop.scaleY
+						});
 					object.mediaId = mediaId;
 					// only the plain file name is stored, the signed url is rebuilt on every load
 					object.fileName = fileName;
-					object.scaleToWidth(w, true);
-					object.scaleToHeight(h, true);
+					object.placeholder = false;
+					object.setCoords();
+					this.#fabricWrapper.fireObjectModified(object);
 					this.#fabricWrapper.renderAll();
 					resolve();
 				},
 				(err) => reject(err),
 				{ crossOrigin: 'anonymous' });
 		});
+	}
+
+	/**
+	 * The part of a picture which covers an area of the width and height, cut centered.
+	 *
+	 * @return {{width: number, height: number, cropX: number, cropY: number, scaleX: number, scaleY: number}}
+	 */
+	static coverCrop(element, width, height)
+	{
+		const naturalWidth  = element.naturalWidth  || element.width;
+		const naturalHeight = element.naturalHeight || element.height;
+		const scale         = Math.max(width / naturalWidth, height / naturalHeight);
+		const cropWidth     = Math.min(naturalWidth,  width / scale);
+		const cropHeight    = Math.min(naturalHeight, height / scale);
+
+		return {
+			width: cropWidth, height: cropHeight,
+			cropX: (naturalWidth - cropWidth) / 2, cropY: (naturalHeight - cropHeight) / 2,
+			scaleX: scale, scaleY: scale
+		};
 	}
 
 	insertText()

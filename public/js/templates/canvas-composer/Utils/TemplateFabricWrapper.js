@@ -58,6 +58,7 @@ export class TemplateFabricWrapper extends FabricWrapper
 		return this.fabricCanvas.toJSON([
 			"mediaId",
 			"fileName",
+			"placeholder",
 			"lockMovementX",
 			"lockMovementY",
 			"lockRotation",

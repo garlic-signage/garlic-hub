@@ -133,7 +133,8 @@ readonly class TemplatePreparer
 				'text_translated' => $this->translator->translate('text_translated', 'templates'),
 				'design_low_contrast' => $this->translator->translate('design_low_contrast', 'templates'),
 				'design_small_font' => $this->translator->translate('design_small_font', 'templates'),
-				'design_reading_time' => $this->translator->translate('design_reading_time', 'templates')
+				'design_reading_time' => $this->translator->translate('design_reading_time', 'templates'),
+				'design_placeholder' => $this->translator->translate('design_placeholder', 'templates')
 			]),
 			'TEMPLATE_ID' => $templateId,
 			'design_check' => [
@@ -148,6 +149,9 @@ readonly class TemplatePreparer
 				'LANG_CORRECT_TEXT'   => $this->translator->translate('correct_text', 'templates'),
 				'LANG_SHORTEN_TEXT'   => $this->translator->translate('shorten_text', 'templates'),
 				'LANG_TRANSLATE_TEXT' => $this->translator->translate('translate_text', 'templates'),
+				'LANG_SUGGEST_IMAGE'  => $this->translator->translate('suggest_image', 'templates'),
+				'LANG_IMAGE_SUGGESTION' => $this->translator->translate('image_suggestion', 'templates'),
+				'LANG_CHOOSE_IMAGE'   => $this->translator->translate('choose_image', 'templates'),
 				// the languages of the interface are the ones a text is translated into
 				'translation_languages' => array_map(
 					static fn(array $language): array => ['LOCALE' => $language['LOCALE_LONG'], 'LANG_LANGUAGE' => $language['LANGUAGE_NAME']],

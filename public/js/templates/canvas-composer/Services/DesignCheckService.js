@@ -19,10 +19,11 @@
 'use strict';
 
 /**
- * Three rules for screens which the composer can measure, as hints, nothing is blocked:
+ * Rules for screens which the composer can measure, as hints, nothing is blocked:
  * - the contrast of a text to what is behind it (WCAG: 4.5:1, 3:1 for large text),
  * - the font size against the shorter side of the template (seen from a distance), a turned screen has the same pixels,
- * - the time to read all texts against the duration of the item.
+ * - the time to read all texts against the duration of the item,
+ * - an image placeholder of a template which was not replaced.
  * All sizes are in the units of the template, without the zoom of the composer.
  */
 export class DesignCheckService
@@ -67,6 +68,12 @@ export class DesignCheckService
 			const minContrast = fontSize >= side * DesignCheckService.LARGE_FONT_SHARE ? DesignCheckService.MIN_CONTRAST_LARGE : DesignCheckService.MIN_CONTRAST;
 			if (ratio !== null && ratio < minContrast)
 				hints.push({object: text, key: "design_low_contrast", values: {ratio: ratio.toFixed(1), min: minContrast}});
+		}
+
+		for (const object of this.#fabricWrapper.getObjects())
+		{
+			if (object.placeholder === true && object.visible !== false)
+				hints.push({object: object, key: "design_placeholder", values: {}});
 		}
 
 		const words  = texts.reduce((sum, text) => sum + text.text.split(/\s+/).filter(word => word !== "").length, 0);

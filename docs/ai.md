@@ -88,6 +88,7 @@ ComfyUI is not supported: its API takes whole workflows. An image made there is 
 | Tag folder              | mediapool, context menu of a folder              | Tag images      | at once, file by file         |
 | Tag after upload        | mediapool, switch in the uploader                | Tag images      | at once, when the uploader closes |
 | Fill by theme           | playlist composer, insert menu                   | Texts           | the media the user ticks      |
+| Suggest image           | template composer, context menu of an image      | Texts           | the picture the user clicks, undo works |
 | Generate image          | mediapool, uploader tab "Generate image"         | Generate images | when the user uploads it      |
 
 ### Correct, shorten and translate text
@@ -154,6 +155,19 @@ The AI sees only the media the user may read, and only their descriptions. It an
 so it can not invent media. The suggestion is a list with ticks; the ticked media are inserted at the end like
 dropped media, with the rights and the time limit of the playlist. Media with good tags and descriptions are found
 better.
+
+### Suggest an image for a template
+
+In the template composer the context menu of an image offers a matching picture for the texts of the template, e.g.
+for an image placeholder of the bundled templates. Two questions go to the AI, like for filling a playlist:
+
+1. The AI gets the visible texts of the template (at most 3000 characters) and gives up to 6 search terms in the
+   language of the user.
+2. The search of the mediapool finds the pictures for them (at most 40, no videos). The AI chooses up to 8 by
+   name, tags and description, the best first.
+
+The user clicks one and it replaces the image: it fills the area of the old one, cut centered. The AI sees only
+the pictures the user may read and only their descriptions.
 
 ### Generate image
 

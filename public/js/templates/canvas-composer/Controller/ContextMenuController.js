@@ -90,6 +90,11 @@ export class ContextMenuController
 			ComposerEventBus.dispatchEvent(new CustomEvent("openMediaDialogForReplace"));
 			this.#contextMenuView.hide();
 		});
+		this.#contextMenuView.suggestImage?.addEventListener("click", () =>
+		{
+			ComposerEventBus.dispatchEvent(new CustomEvent("suggestImageForReplace"));
+			this.#contextMenuView.hide();
+		});
 		if (this.#contextMenuView.correctText !== null)
 		{
 			this.#contextMenuView.correctText.addEventListener("click", async () =>

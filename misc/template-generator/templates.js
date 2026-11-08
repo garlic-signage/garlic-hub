@@ -82,13 +82,29 @@ function grad(w, h, stops, dir = 'v')
 		colorStops: stops.map(([offset, color]) => ({offset, color}))});
 }
 
-function imagePlaceholder(l, t, w, h, color, label = 'Your image', fill = 'rgba(255,255,255,0.08)')
+// The placeholder of an image is a real image, marked as placeholder: it is replaced like every image and the design
+// check of the composer reports it while it is there. Its picture is loaded by generate.html, the composer loads it
+// from PLACEHOLDER_SRC (BaseTemplateOrchestrator::restoreSrc()).
+const PLACEHOLDER_SRC = '/images/templates/placeholder.png';
+let placeholderElement = null;
+
+// fills the area centered, like the composer replaces an image
+function imagePlaceholder(l, t, w, h, o = {})
 {
-	const size = Math.round(Math.max(36, Math.min(w, h) / 12));
-	return [
-		rect(l, t, w, h, fill, {stroke: color, strokeWidth: 4, strokeDashArray: [20, 14], rx: 16, ry: 16}),
-		text(label, l, t + h / 2, w, size, 'Poppins-Regular', color, {align: 'center', anchor: 'middle'})
-	];
+	const nw = placeholderElement.naturalWidth, nh = placeholderElement.naturalHeight;
+	const scale = Math.max(w / nw, h / nh), cw = w / scale, ch = h / scale;
+	return [new fabric.Image(placeholderElement, {
+		left: l, top: t, width: cw, height: ch, cropX: (nw - cw) / 2, cropY: (nh - ch) / 2,
+		scaleX: scale, scaleY: scale, placeholder: true, ...o
+	})];
+}
+
+// a round placeholder, e.g. for a photo of a person
+function roundImagePlaceholder(cx, cy, r)
+{
+	const [image] = imagePlaceholder(cx - r, cy - r, 2 * r, 2 * r);
+	image.set('clipPath', new fabric.Circle({radius: r / image.scaleX, originX: 'center', originY: 'center'}));
+	return [image];
 }
 
 const TEMPLATES = [
@@ -128,7 +144,7 @@ const TEMPLATES = [
 			circ(P ? W - 40 : W - 160, P ? H - 300 : 380, P ? 380 : 460, '#E07A5F'),
 			circ(P ? 120 : W - 520, P ? H - 140 : H - 40, P ? 160 : 170, '#81B29A'),
 			circ(P ? W - 260 : W - 160, P ? H - 620 : 120, 60, '#F2CC8F'),
-			...imagePlaceholder(P ? (W - 360) / 2 : pad, pad, 360, 140, '#3D405B', 'Your logo', 'rgba(61,64,91,0.04)'),
+			...imagePlaceholder(P ? (W - 360) / 2 : pad, pad, 360, 140),
 		];
 		const h1   = text('Welcome', pad, P ? 520 : 330, tw, P ? 200 : 230, 'PlayfairDisplay', '#3D405B', {align, lh: 1});
 		const sub  = text('to Company Name', pad, below(h1, 20), tw, 60, 'Poppins-Regular', '#3D405B', {align});
@@ -154,9 +170,9 @@ const TEMPLATES = [
 		const sub   = text('FRESH FROM OUR KITCHEN', listX, below(title, 10), listW, 36, 'Poppins-Regular', '#C8B88A', {cs: 300, align: P ? 'center' : 'left'});
 		o.push(title, sub);
 		if (P)
-			o.push(...imagePlaceholder(pad, below(sub, 60), W - 2 * pad, 520, '#C8B88A', 'Your image', 'rgba(242,232,207,0.05)'));
+			o.push(...imagePlaceholder(pad, below(sub, 60), W - 2 * pad, 520));
 		else
-			o.push(...imagePlaceholder(1200, 120, 600, 840, '#C8B88A', 'Your image', 'rgba(242,232,207,0.05)'));
+			o.push(...imagePlaceholder(1200, 120, 600, 840));
 
 		const dishes = [
 			['Tomato Soup', 'with basil and croutons', '4.50'],
@@ -197,9 +213,9 @@ const TEMPLATES = [
 
 		const tagW = 560, tagX = P ? (W - tagW) / 2 : pad, tagY = P ? H - 260 : below(sub, 50);
 		if (P)
-			o.push(...imagePlaceholder(pad, below(sub, 60), W - 2 * pad, tagY - below(sub, 60) - 70, '#FFFFFF'));
+			o.push(...imagePlaceholder(pad, below(sub, 60), W - 2 * pad, tagY - below(sub, 60) - 70));
 		else
-			o.push(...imagePlaceholder(1100, 140, 680, 800, '#FFFFFF'));
+			o.push(...imagePlaceholder(1100, 140, 680, 800));
 		o.push(
 			rect(tagX, tagY, tagW, 110, '#FFD60A', {rx: 55, ry: 55}),
 			text('Only until Nov 30', tagX, tagY + 55, tagW, 44, 'Poppins-Bold', '#1D1D1D', {align: 'center', anchor: 'middle'}),
@@ -301,10 +317,10 @@ const TEMPLATES = [
 		const v2 = text('welcome2026', ix, below(l2, 10), iw, P ? 64 : 56, 'RobotoMono', '#0F4C5C');
 		o.push(l1, v1, l2, v2);
 		if (P)
-			o.push(...imagePlaceholder((W - 340) / 2, below(v2, 70), 340, 340, '#0F4C5C', 'QR code', 'rgba(10,147,150,0.05)'));
+			o.push(...imagePlaceholder((W - 340) / 2, below(v2, 70), 340, 340));
 		else
 		{
-			o.push(...imagePlaceholder(cX + cW - 70 - 340, cY + 90, 340, 340, '#0F4C5C', 'QR code', 'rgba(10,147,150,0.05)'));
+			o.push(...imagePlaceholder(cX + cW - 70 - 340, cY + 90, 340, 340));
 			o.push(text('Scan the code or enter the password manually.', ix, cY + cH - 140, cW - 140, 36, 'Poppins-Regular', '#4A6A70'));
 		}
 		return o;
@@ -321,11 +337,11 @@ const TEMPLATES = [
 		let y = P ? 120 : 110;
 		if (P)
 		{
-			o.push(...imagePlaceholder(pad, y, W - 2 * pad, 720, '#111111', 'Your image', 'rgba(0,0,0,0.04)'));
+			o.push(...imagePlaceholder(pad, y, W - 2 * pad, 720));
 			y += 790;
 		}
 		else
-			o.push(...imagePlaceholder(1140, 140, 640, 800, '#111111', 'Your image', 'rgba(0,0,0,0.04)'));
+			o.push(...imagePlaceholder(1140, 140, 640, 800));
 		const h1   = text("WE'RE HIRING!", pad, y, tw, P ? 190 : 200, 'BebasNeue-Regular', '#111111', {lh: 1});
 		const job  = text('Sales Assistant (m/f/d)', pad, below(h1, 10), tw, 64, 'Poppins-Bold', '#111111');
 		const list = text('•  Full-time or part-time\n•  Friendly team\n•  Fair pay and training', pad, below(job, 40), tw, 46, 'Poppins-Regular', '#222222', {lh: 1.5});
@@ -350,8 +366,7 @@ const TEMPLATES = [
 			circ(P ? 60 : 80, P ? 80 : H - 60, 200, 'rgba(255,255,255,0.10)')];
 		const cx = P ? W / 2 : 820, cy = P ? 760 : H / 2, r = P ? 280 : 300;
 		o.push(circ(cx, cy, r, '#FFFFFF'),
-			circ(cx, cy, r - 20, '#E4E9FF', {stroke: '#3651D4', strokeWidth: 4, strokeDashArray: [20, 14]}),
-			text('Photo', cx - r, cy, 2 * r, 48, 'Poppins-Regular', '#3651D4', {align: 'center', anchor: 'middle'}));
+			...roundImagePlaceholder(cx, cy, r - 20));
 		const tx = P ? pad : 1200, tw = P ? W - 2 * pad : W - 1200 - pad, align = P ? 'center' : 'left';
 		const label = text('PLEASE WELCOME', tx, P ? 1100 : 300, tw, 38, 'Poppins-Bold', '#3651D4', {cs: 300, align});
 		const name  = text('Jane Doe', tx, below(label, 20), tw, 110, 'Poppins-Bold', '#1B1F3B', {align, lh: 1.05});
