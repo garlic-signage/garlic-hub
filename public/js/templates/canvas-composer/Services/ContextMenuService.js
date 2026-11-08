@@ -22,8 +22,12 @@ import {TemplateFabricWrapper} from "../Utils/TemplateFabricWrapper.js";
 
 export class ContextMenuService
 {
+	/** the distance of a copy to the one before */
+	static PASTE_OFFSET = 20;
+
 	#fabricWrapper;
-	#clipboard = {};
+	#clipboard  = null;
+	#pasteCount = 0;
 
 	constructor(fabricWrapper)
 	{
@@ -37,9 +41,34 @@ export class ContextMenuService
 		if (!object)
 			return;
 
-		// with the properties of the template, e.g. the file of an image
-		this.#clipboard = await object.clone(TemplateFabricWrapper.PROPERTIES);
-		await this.#pasteFromClipboardToPos();
+		await this.copy();
+		await this.paste();
+	}
+
+	/**
+	 * Ctrl+C: a copy of the selected object in the clipboard of the composer, with the properties of the template,
+	 * e.g. the file of an image.
+	 */
+	async copy()
+	{
+		const object = this.#fabricWrapper.getActiveObject();
+		if (!object)
+			return;
+
+		this.#clipboard  = await object.clone(TemplateFabricWrapper.PROPERTIES);
+		this.#pasteCount = 0;
+	}
+
+	/**
+	 * Ctrl+V: every paste a little further, so the copies do not lie on each other.
+	 */
+	async paste()
+	{
+		if (this.#clipboard === null)
+			return;
+
+		this.#pasteCount++;
+		await this.#pasteFromClipboardToPos(this.#pasteCount * ContextMenuService.PASTE_OFFSET);
 	}
 
 	remove()
@@ -101,13 +130,13 @@ export class ContextMenuService
 	}
 
 
-	async #pasteFromClipboardToPos()
+	async #pasteFromClipboardToPos(offset)
 	{
 		const cloned = await this.#clipboard.clone(TemplateFabricWrapper.PROPERTIES);
 		this.#fabricWrapper.discardActiveObject();
 		cloned.set({
-			left: this.#clipboard.left + 20,
-			top: this.#clipboard.top + 20,
+			left: this.#clipboard.left + offset,
+			top: this.#clipboard.top + offset,
 			evented: true,
 		});
 		if (cloned instanceof fabric.ActiveSelection)

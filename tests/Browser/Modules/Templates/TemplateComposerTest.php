@@ -717,6 +717,52 @@ class TemplateComposerTest extends BrowserTestCase
 		$this->assertNoErrors();
 	}
 
+	/**
+	 * Ctrl+C and twice Ctrl+V: two copies with the file of the image, each a little further.
+	 */
+	public function testAnImageIsCopiedAndPastedTwice(): void
+	{
+		$this->openMenuWithPicture();
+
+		$this->clickCanvas(1500, 540);
+		$this->actions()->keyDown(null, \Facebook\WebDriver\WebDriverKeys::CONTROL)->sendKeys(null, 'c')->keyUp(null, \Facebook\WebDriver\WebDriverKeys::CONTROL)->perform();
+		usleep(200000);
+		for ($i = 0; $i < 2; $i++)
+		{
+			$this->actions()->keyDown(null, \Facebook\WebDriver\WebDriverKeys::CONTROL)->sendKeys(null, 'v')->keyUp(null, \Facebook\WebDriver\WebDriverKeys::CONTROL)->perform();
+			usleep(200000);
+		}
+		$images = self::objectsOfType($this->save(), 'image');
+
+		$this->assertNoErrors();
+		static::assertCount(3, $images);
+		static::assertSame(array_fill(0, 3, self::MEDIA_ID), array_column($images, 'mediaId'));
+		static::assertEqualsWithDelta([1200, 1220, 1240], array_map(static fn(array $image): float => (float) $image['left'], $images), 1);
+	}
+
+	/**
+	 * While a text is edited, Delete removes the selected word, not the text box.
+	 */
+	public function testTheKeysBelongToAnEditedText(): void
+	{
+		$this->createTemplate('{"objects":[{"type":"textbox","left":100,"top":100,"width":800,"text":"Hallo Welt","fontFamily":"Arial","fontSize":80,"fill":"#000000","scaleX":1,"scaleY":1,"styles":[]}],'
+			. '"viewport":{"width":1920,"height":1080,"scale":100}}');
+		$this->login('admin');
+		$this->openComposer();
+
+		// the first click selects, the double click edits and selects the word "Hallo"
+		$this->clickCanvas(150, 140);
+		[$dx, $dy] = $this->canvasOffset(150, 140);
+		$this->actions()->moveToElement($this->upperCanvas(), $dx, $dy)->doubleClick()->perform();
+		$this->pressKey(\Facebook\WebDriver\WebDriverKeys::DELETE);
+		$this->pressKey(\Facebook\WebDriver\WebDriverKeys::ESCAPE);
+		$texts = self::objectsOfType($this->save(), 'textbox');
+
+		$this->assertNoErrors();
+		static::assertCount(1, $texts, 'The text box was deleted instead of the word.');
+		static::assertSame(' Welt', $texts[0]['text']);
+	}
+
 	public function testEscapeCancelsTheCrop(): void
 	{
 		$this->openMenuWithPicture();

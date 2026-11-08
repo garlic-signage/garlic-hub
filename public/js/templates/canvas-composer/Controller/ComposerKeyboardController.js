@@ -42,6 +42,10 @@ export class ComposerKeyboardController
 	{
 		this.#composerKeyboardView.canvasWrap.addEventListener("keydown", (event) =>
 		{
+			// while a text is edited the keys belong to the text: Delete, the arrows, Ctrl+C/V
+			if (this.#fabricWrapper.getActiveObject()?.isEditing === true)
+				return;
+
 			if (event.shiftKey &&
 				(event.key === "ArrowLeft" || event.key === "ArrowRight" || event.key === "ArrowUp" || event.key === "ArrowDown"))
 			{
@@ -60,7 +64,17 @@ export class ComposerKeyboardController
 			}
 			else if (event.ctrlKey && event.key.toUpperCase() === "D")
 			{
+				// not the bookmark of the browser
+				event.preventDefault();
 				this.#contextMenuService.duplicate()
+			}
+			else if (event.ctrlKey && event.key.toUpperCase() === "C")
+			{
+				this.#contextMenuService.copy();
+			}
+			else if (event.ctrlKey && event.key.toUpperCase() === "V")
+			{
+				this.#contextMenuService.paste();
 			}
 			else
 			{
