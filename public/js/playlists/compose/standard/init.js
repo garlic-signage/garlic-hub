@@ -58,6 +58,10 @@ document.addEventListener("DOMContentLoaded", async function ()
 
 	insertContextMenu.init();
 	new ThumbnailPreview(dropTarget).init();
+	// the selectors are built into this container when they are opened
+	const itemSelectContainer = document.getElementById("itemSelectContainer");
+	new ThumbnailPreview(itemSelectContainer, "media-thumbnail").init();
+	new ThumbnailPreview(itemSelectContainer, "template-thumbnail").init();
 	await itemsList.buildPlaylist(playlistId);
 
 	playlistsProperties.init(playlistId);

@@ -112,4 +112,25 @@ class PlaylistComposerTest extends BrowserTestCase
 
 		$this->assertNoErrors();
 	}
+
+	public function testHoveringATemplateOfTheSelectorShowsItsThumbnail(): void
+	{
+		$this->loadFixture('templates/templates.sql');
+		$this->login('admin');
+		$this->visit('/playlists/compose/1');
+		$this->waitForVisible('#thePlaylist li.playlist-item');
+		$driver = $this->client()->getWebDriver();
+
+		new WebDriverSelect($driver->findElement(WebDriverBy::id('insertMenuSelect')))->selectByValue('insertTemplates');
+		$this->waitForVisible('#templatesList .template-thumbnail');
+		$this->actions()->moveToElement($driver->findElement(WebDriverBy::cssSelector('#templatesList .template-thumbnail')))->perform();
+
+		// only the preview of the templates appears, the one of the media and the one of the playlist stay hidden
+		$this->waitForVisible('.thumbnail-preview.visible');
+		static::assertCount(1, $driver->findElements(WebDriverBy::cssSelector('.thumbnail-preview.visible')));
+		static::assertStringContainsString('/media.php/tpl-thumb/', (string) $driver->findElement(WebDriverBy::cssSelector('.thumbnail-preview.visible'))->getAttribute('src'));
+
+		$this->actions()->moveToElement($driver->findElement(WebDriverBy::cssSelector('#playlistDuration')))->perform();
+		$this->waitForGone('.thumbnail-preview.visible');
+	}
 }

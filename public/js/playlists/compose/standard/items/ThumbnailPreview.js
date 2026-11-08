@@ -18,21 +18,27 @@
 */
 
 /**
- * Shows the thumbnail of a playlist item uncropped in its original size
- * while hovering it or while a finger rests on it.
- * One shared preview element, events are delegated to the playlist.
+ * Shows a thumbnail uncropped in its original size while hovering it or while a finger rests on it:
+ * the items of the playlist and the media and templates of the selectors.
+ * One shared preview element per container, events are delegated to the container.
  */
 export class ThumbnailPreview
 {
 	static #GAP = 8;
 
-	#playlist = null;
-	#preview  = null;
-	#isTouch  = false;
+	#container      = null;
+	#thumbnailClass = "";
+	#preview        = null;
+	#isTouch        = false;
 
-	constructor(playlist)
+	/**
+	 * @param {HTMLElement} container      the thumbnails are inside, now or later
+	 * @param {string}      thumbnailClass the class of the images which are previewed
+	 */
+	constructor(container, thumbnailClass = "thumbnail")
 	{
-		this.#playlist = playlist;
+		this.#container      = container;
+		this.#thumbnailClass = thumbnailClass;
 	}
 
 	init()
@@ -42,31 +48,32 @@ export class ThumbnailPreview
 		this.#preview.alt = "";
 		document.body.appendChild(this.#preview);
 
-		this.#playlist.addEventListener("mouseover", (event) => {
+		this.#container.addEventListener("mouseover", (event) => {
 			if (!this.#isTouch)
 				this.#show(event.target);
 		});
-		this.#playlist.addEventListener("mouseout", (event) => {
+		this.#container.addEventListener("mouseout", (event) => {
 			if (!this.#isTouch && this.#isThumbnail(event.target))
 				this.#hide();
 		});
 
-		this.#playlist.addEventListener("touchstart", (event) => {
+		this.#container.addEventListener("touchstart", (event) => {
 			this.#isTouch = true;
 			this.#show(event.target);
 		}, {passive: true});
-		this.#playlist.addEventListener("touchmove", () => this.#hide(), {passive: true}); // dragging or scrolling begins
-		this.#playlist.addEventListener("touchend", () => this.#endTouch());
-		this.#playlist.addEventListener("touchcancel", () => this.#endTouch());
+		this.#container.addEventListener("touchmove", () => this.#hide(), {passive: true}); // dragging or scrolling begins
+		this.#container.addEventListener("touchend", () => this.#endTouch());
+		this.#container.addEventListener("touchcancel", () => this.#endTouch());
 
 		// long press would open the browser's image menu
-		this.#playlist.addEventListener("contextmenu", (event) => {
+		this.#container.addEventListener("contextmenu", (event) => {
 			if (this.#isTouch && this.#isThumbnail(event.target))
 				event.preventDefault();
 		});
 
-		this.#playlist.addEventListener("mousedown", () => this.#hide()); // dragula starts dragging
-		this.#playlist.addEventListener("scroll", () => this.#hide());
+		this.#container.addEventListener("mousedown", () => this.#hide()); // dragula starts dragging
+		// capture: a list inside the container scrolls, too (scroll does not bubble)
+		this.#container.addEventListener("scroll", () => this.#hide(), true);
 	}
 
 	#show(target)
@@ -114,6 +121,6 @@ export class ThumbnailPreview
 
 	#isThumbnail(target)
 	{
-		return target instanceof HTMLImageElement && target.classList.contains("thumbnail");
+		return target instanceof HTMLImageElement && target.classList.contains(this.#thumbnailClass);
 	}
 }
