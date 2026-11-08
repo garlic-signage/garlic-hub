@@ -244,6 +244,15 @@
     </li>
     <li style="margin-left: auto;">
         <ul class="action-group">
+			{{#design_check}}
+			<li class="template_edit_dropdown" id="designCheck" data-duration="{{DURATION}}">
+				<button id="designCheckButton" class="bi bi-clipboard-check" title="{{LANG_DESIGN_CHECK}}"><span id="designCheckCount" class="design-check-count" hidden></span></button>
+				<div class="template_edit_dropdown_content design-check-list">
+					<p id="designCheckOk">{{LANG_DESIGN_CHECK_OK}}</p>
+					<ul id="designCheckHints"></ul>
+				</div>
+			</li>
+			{{/design_check}}
 			<li>
 				<select id="snapToGrid" title="{{LANG_SNAP_TO_GRID}}">
 					<option value="0">{{LANG_NO_GRID}}</option>

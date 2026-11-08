@@ -64,6 +64,8 @@ import {ContextMenuView} from "./Views/ContextMenuView.js";
 import {ContextMenuService} from "./Services/ContextMenuService.js";
 import {ContextMenuController} from "./Controller/ContextMenuController.js";
 import {TextCorrectionService} from "./Services/TextCorrectionService.js";
+import {DesignCheckService} from "./Services/DesignCheckService.js";
+import {DesignCheckController} from "./Controller/DesignCheckController.js";
 import {TransformService} from "./Services/TransformService.js";
 import {ComposerKeyboardController} from "./Controller/ComposerKeyboardController.js";
 import {ComposerKeyboardView} from "./Views/ComposerKeyboardView.js";
@@ -145,6 +147,13 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const contextMenuService  = new ContextMenuService(fabricWrapper);
 	const textCorrectionService = new TextCorrectionService(fabricWrapper, templateService, waitOverlay, composerContext, viewportService);
 	const contextMenuController = new ContextMenuController(contextMenuView, contextMenuService, mediaDialogController, textCorrectionService);
+
+	const designCheckElement = document.getElementById("designCheck");
+	if (designCheckElement !== null)
+	{
+		const designCheckService = new DesignCheckService(fabricWrapper, viewportService, Number(designCheckElement.getAttribute("data-duration")));
+		new DesignCheckController(designCheckService, fabricWrapper, composerContext).init();
+	}
 
 	const propertiesController = new PropertiesController(
 		globalPropertiesController,

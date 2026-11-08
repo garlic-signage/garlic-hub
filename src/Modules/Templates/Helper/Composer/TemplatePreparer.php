@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Helper\Composer;
 
+use App\Framework\Config\Config;
 use App\Framework\Helper\Json;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
@@ -39,20 +40,23 @@ readonly class TemplatePreparer
 		private Translator $translator,
 		private LlmResolver $llmResolver,
 		private UserSession $userSession,
-		private LanguageSelectBuilder $languageSelectBuilder
+		private LanguageSelectBuilder $languageSelectBuilder,
+		private Config $config
 	) {}
 
 	/**
 	 * Language and template data for the composer. Playlist items get export formats and a reset,
 	 * templates themselves get the lock/selectable options. A user with an LLM can correct the texts.
 	 *
+	 * @param int $itemDuration the seconds the item plays, 0 for a template: the check of the reading time takes
+	 *                          the default duration of the playlists then
 	 * @return array<string,mixed>
 	 * @throws CoreException
 	 * @throws Exception
 	 * @throws FrameworkException
 	 * @throws UserException
 	 */
-	public function replace(int $templateId, int $itemId = 0, int $playlistId = 0): array
+	public function replace(int $templateId, int $itemId = 0, int $playlistId = 0, int $itemDuration = 0): array
 	{
 		$templateComposer = [
 			'LANG_MOVE_BACKGROUND' => $this->translator->translate('move_background', 'templates'),
@@ -126,9 +130,17 @@ readonly class TemplatePreparer
 				'replace_image' => $this->translator->translate('replace_image', 'templates'),
 				'text_corrected' => $this->translator->translate('text_corrected', 'templates'),
 				'text_shortened' => $this->translator->translate('text_shortened', 'templates'),
-				'text_translated' => $this->translator->translate('text_translated', 'templates')
+				'text_translated' => $this->translator->translate('text_translated', 'templates'),
+				'design_low_contrast' => $this->translator->translate('design_low_contrast', 'templates'),
+				'design_small_font' => $this->translator->translate('design_small_font', 'templates'),
+				'design_reading_time' => $this->translator->translate('design_reading_time', 'templates')
 			]),
-			'TEMPLATE_ID' => $templateId
+			'TEMPLATE_ID' => $templateId,
+			'design_check' => [
+				'LANG_DESIGN_CHECK' => $this->translator->translate('design_check', 'templates'),
+				'LANG_DESIGN_CHECK_OK' => $this->translator->translate('design_check_ok', 'templates'),
+				'DURATION' => $itemDuration > 0 ? $itemDuration : (int) $this->config->getConfigValue('duration', 'playlists', 'Defaults')
+			]
 		];
 
 		if ($this->llmResolver->isAvailable($this->userSession->getUID(), LlmTask::TEXT))

@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Templates\Helper\Composer;
 
+use App\Framework\Config\Config;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -56,7 +57,10 @@ class TemplatePreparerTest extends TestCase
 			['LOCALE_LONG' => 'en_US', 'LOCALE_SMALL' => 'en', 'LANGUAGE_NAME' => 'English']
 		]);
 
-		return new TemplatePreparer($translatorStub, $llmResolver, $this->createStub(UserSession::class), $languages);
+		$config = $this->createStub(Config::class);
+		$config->method('getConfigValue')->willReturnMap([['duration', 'playlists', 'Defaults', '15']]);
+
+		return new TemplatePreparer($translatorStub, $llmResolver, $this->createStub(UserSession::class), $languages, $config);
 	}
 
 	/**
@@ -139,6 +143,20 @@ class TemplatePreparerTest extends TestCase
 				['LOCALE' => 'en_US', 'LANG_LANGUAGE' => 'English']
 			]
 		], $result['text_correction']);
+	}
+
+	/**
+	 * The check of the reading time compares with the duration of the item, a template with the default duration.
+	 *
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testTheDesignCheckKnowsTheDurationToReadIn(): void
+	{
+		static::assertSame(15, $this->preparer->replace(12)['design_check']['DURATION']);
+		static::assertSame(8, $this->preparer->replace(12, 5, 7, 8)['design_check']['DURATION']);
+		static::assertSame('templates.design_check', $this->preparer->replace(12)['design_check']['LANG_DESIGN_CHECK']);
 	}
 
 	/**

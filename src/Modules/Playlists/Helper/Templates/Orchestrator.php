@@ -89,7 +89,8 @@ class Orchestrator extends BaseTemplateOrchestrator
 		$replaced = $this->templatePreparer->replace(
 			(int) $this->item['file_resource'],
 			(int) $this->item['item_id'],
-			(int) $this->item['playlist_id']
+			(int) $this->item['playlist_id'],
+			(int) $this->item['item_duration']
 		);
 		return $this->templatePreparer->prepare($this->item['playlist_name'].' / '.$this->item['item_name'], $replaced);
 	}

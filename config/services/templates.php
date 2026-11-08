@@ -102,7 +102,8 @@ $dependencies[\App\Modules\Templates\Helper\Composer\TemplatePreparer::class] = 
 		$container->get(Translator::class),
 		$container->get(\App\Shared\Llm\LlmResolver::class),
 		$container->get(UserSession::class),
-		$container->get(\App\Shared\Layout\LanguageSelectBuilder::class)
+		$container->get(\App\Shared\Layout\LanguageSelectBuilder::class),
+		$container->get(Config::class)
 	);
 });
 $dependencies[ExportImage::class] = DI\factory(function (ContainerInterface $container)
