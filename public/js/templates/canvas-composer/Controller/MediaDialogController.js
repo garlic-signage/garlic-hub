@@ -19,6 +19,7 @@
 'use strict';
 
 import {ComposerEventBus} from "../Utils/ComposerEventBus.js";
+import {FlashMessageHandler} from "../../../core/FlashMessageHandler.js";
 
 export class MediaDialogController
 {
@@ -72,7 +73,14 @@ export class MediaDialogController
 			if (selectedMedia === undefined)
 				return;
 
-			await this.#insertService.replaceImage(selectedMedia.id, selectedMedia.src, selectedMedia.fileName);
+			try
+			{
+				await this.#insertService.replaceImage(selectedMedia.id, selectedMedia.src, selectedMedia.fileName);
+			}
+			catch (e)
+			{
+				new FlashMessageHandler().showError(e.message);
+			}
 			this.remove();
 		});
 

@@ -115,7 +115,8 @@ export class LoadService
 
 	#migrateScaleToPixel(obj)
 	{
-		if (obj.scaleY !== 1  && obj.scaleY === obj.scaleX)
+		// a text without a scale (not saved by fabric.js) has nothing to migrate
+		if (typeof obj.scaleY === "number" && obj.scaleY !== 1 && obj.scaleY === obj.scaleX)
 		{
 			obj.fontSize = Math.round(obj.fontSize * obj.scaleY);
 			obj.width = obj.width * obj.scaleX;

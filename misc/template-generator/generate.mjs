@@ -43,10 +43,11 @@ if (!out.startsWith('['))
 	process.exit(1);
 }
 
-// fabric writes coordinates like 1183.5899999999, two decimals are enough
-const round = value => Array.isArray(value) ? value.map(round)
-	: value !== null && typeof value === 'object' ? Object.fromEntries(Object.entries(value).map(([k, v]) => [k, round(v)]))
-	: typeof value === 'number' ? Math.round(value * 100) / 100
+// fabric writes coordinates like 1183.5899999999, two decimals are enough; a scale needs more, a picture of
+// 1600 px scaled by 0.525 would be 8 px larger with 0.53
+const round = (value, key = '') => Array.isArray(value) ? value.map(v => round(v))
+	: value !== null && typeof value === 'object' ? Object.fromEntries(Object.entries(value).map(([k, v]) => [k, round(v, k)]))
+	: typeof value === 'number' ? (key === 'scaleX' || key === 'scaleY' ? Math.round(value * 1e6) / 1e6 : Math.round(value * 100) / 100)
 	: value;
 
 mkdirSync(targetDir, {recursive: true});

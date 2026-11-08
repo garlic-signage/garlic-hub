@@ -21,42 +21,457 @@ declare(strict_types=1);
 
 namespace Tests\Browser\Modules\Templates;
 
+use Facebook\WebDriver\WebDriverBy;
+use Imagick;
+use ImagickPixel;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Browser\Support\BrowserTestCase;
 
 /**
- * The canvas composer of a template: it loads a template with a group and saves it.
+ * The canvas composer of a template, used like a user does: the mouse on the canvas, the menus, the dialogs and the
+ * keyboard. The results are read from the saved content in the database, never from the objects of fabric.js, so
+ * the tests stay the same when fabric.js changes (e.g. the update from 5 to 7).
+ *
+ * The bundled templates of resources/templates/fabric are the content of fabric.js 5.4.2 which must still load.
+ * The admin uses the templates (core edition); the picture "Strand" (400 x 200) lies in the folder Fotos (8) of anna.
  */
 #[Group('browser')]
 class TemplateComposerTest extends BrowserTestCase
 {
-	private const string CONTENT = '{"objects":[{"type":"group","left":10,"top":10,"objects":['
+	private const string GROUP_CONTENT = '{"objects":[{"type":"group","left":10,"top":10,"objects":['
 		. '{"type":"rect","left":0,"top":0,"width":100,"height":50,"fill":"#ff0000"},'
 		. '{"type":"textbox","left":0,"top":60,"width":200,"text":"Hallo","fontFamily":"Arial","styles":[]}]}],'
 		. '"viewport":{"width":1920,"height":1080,"scale":100}}';
+
+	private const string MEDIA_ID = 'media-id-strand0';
+
+	/** media.php serves only names of hexadecimal checksums */
+	private string $checksum = '';
+
+	/** the size of the template in the composer, read from its content */
+	private int $templateWidth = 1920;
 
 	protected function setUp(): void
 	{
 		parent::setUp();
 		$this->loadFixture('acl/users.sql');
-		$this->connection->insert('templates', ['template_id' => 4, 'UID' => 1, 'visibility' => 'private', 'type' => 'fabric.js', 'name' => 'Gruppe', 'content' => self::CONTENT]);
+		$this->loadFixture('mediapool/nodes.sql');
 	}
 
-	public function testATemplateWithAGroupIsLoadedAndSaved(): void
+	// ---------------------------------------------------------------------------------------------------------------
+	// the helpers
+
+	/**
+	 * The content of a bundled template, as the pack installs it.
+	 */
+	private static function packContent(string $key): string
 	{
-		$this->login('admin');
-		$this->visit('/templates/composer/4');
+		$pack = json_decode((string) file_get_contents(dirname(__DIR__, 4) . '/resources/templates/fabric/' . $key . '.json'), true);
+		static::assertIsArray($pack);
+
+		return (string) json_encode($pack['content']);
+	}
+
+	private function createTemplate(string $content, int $templateId = 4): void
+	{
+		$this->connection->insert('templates', ['template_id' => $templateId, 'UID' => 1, 'visibility' => 'private', 'type' => 'fabric.js', 'name' => 'Test', 'content' => $content]);
+		$json = json_decode($content, true);
+		static::assertIsArray($json);
+		$this->templateWidth = (int) $json['viewport']['width'];
+	}
+
+	/**
+	 * A real picture in the storage of the deployment, so that the composer can load it.
+	 */
+	private function createPicture(): void
+	{
+		$image = new Imagick();
+		$image->newImage(400, 200, new ImagickPixel('#2a9d8f'));
+		$image->setImageFormat('png');
+		$this->checksum = hash('sha256', $image->getImageBlob());
+		$storage = $this->deployment()->directory() . '/var/storage/mediapool';
+		file_put_contents($storage . '/originals/' . $this->checksum . '.png', $image->getImageBlob());
+		file_put_contents($storage . '/thumbs/' . $this->checksum . '.png', $image->getImageBlob());
+
+		$this->connection->insert('mediapool_files', [
+			'media_id' => self::MEDIA_ID, 'node_id' => 8, 'UID' => 2, 'checksum' => $this->checksum, 'mimetype' => 'image/png',
+			'filename' => 'strand.png', 'extension' => 'png', 'thumb_extension' => 'png',
+			'metadata' => '{"size":1000,"dimensions":{"width":400,"height":200}}'
+		]);
+	}
+
+	private function openComposer(string $path = '/templates/composer/4'): void
+	{
+		$this->visit($path);
 		$this->waitForVisible('#save');
 		// the overlay stops when the template is loaded
 		$this->waitForGone('#waitOverlay');
+	}
 
+	/**
+	 * The offset of a point of the template from the middle of the canvas, as WebDriver counts it.
+	 *
+	 * @return array{int, int}
+	 */
+	private function canvasOffset(float $x, float $y): array
+	{
+		$size = $this->client()->executeScript('const r = document.querySelector(".upper-canvas").getBoundingClientRect(); return [r.width, r.height];');
+		static::assertIsArray($size);
+		$zoom = (float) $size[0] / $this->templateWidth;
+
+		return [(int) round($x * $zoom - (float) $size[0] / 2), (int) round($y * $zoom - (float) $size[1] / 2)];
+	}
+
+	private function clickCanvas(float $x, float $y): void
+	{
+		[$dx, $dy] = $this->canvasOffset($x, $y);
+		$this->actions()->moveToElement($this->upperCanvas(), $dx, $dy)->click()->perform();
+	}
+
+	private function contextClickCanvas(float $x, float $y): void
+	{
+		[$dx, $dy] = $this->canvasOffset($x, $y);
+		$this->actions()->moveToElement($this->upperCanvas(), $dx, $dy)->contextClick()->perform();
+	}
+
+	private function upperCanvas(): \Facebook\WebDriver\WebDriverElement
+	{
+		return $this->client()->getWebDriver()->findElement(WebDriverBy::cssSelector('.upper-canvas'));
+	}
+
+	private function content(int $templateId = 4): string
+	{
+		return (string) $this->connection->fetchOne('SELECT content FROM templates WHERE template_id = ?', [$templateId]);
+	}
+
+	/**
+	 * Saves and waits until the content is in the database: the content there is replaced by a mark before, so an
+	 * unchanged template is seen as saved, too. The composer has its content already.
+	 *
+	 * @return array<string,mixed> the saved content
+	 */
+	private function save(): array
+	{
+		$this->connection->update('templates', ['content' => 'not saved'], ['template_id' => 4]);
 		$this->click('#save');
 		$this->waitForGone('#waitOverlay');
-		$this->client()->getWebDriver()->wait(10)->until(fn() => (string) $this->connection->fetchOne('SELECT content FROM templates WHERE template_id = 4') !== self::CONTENT);
+		$this->client()->getWebDriver()->wait(10)->until(fn() => $this->content() !== 'not saved');
 
-		$content = (string) $this->connection->fetchOne('SELECT content FROM templates WHERE template_id = 4');
-		static::assertStringContainsString('"Hallo"', $content);
-		static::assertStringContainsString('"group"', $content);
+		$json = json_decode($this->content(), true);
+		static::assertIsArray($json);
+
+		return $json;
+	}
+
+	/**
+	 * @param array<string,mixed> $content
+	 * @return list<array<string,mixed>>
+	 */
+	private static function objectsOfType(array $content, string $type): array
+	{
+		return array_values(array_filter($content['objects'], static fn(array $object): bool => $object['type'] === $type || strtolower((string) $object['type']) === $type));
+	}
+
+	/**
+	 * Replaces the image at the point with the picture "Strand" by "replace image" of its context menu.
+	 */
+	private function replaceImageAt(float $x, float $y): void
+	{
+		$this->clickCanvas($x, $y);
+		$this->contextClickCanvas($x, $y);
+		$this->click('#replaceImage');
+		$this->chooseStrandInTheMediaDialog();
+		$this->click('#applyMedia');
+		$this->waitForGone('#mediaSelectorDialog');
+	}
+
+	/**
+	 * The picture "Strand" in the folder Fotos of anna, selected in the open media dialog.
+	 */
+	private function chooseStrandInTheMediaDialog(): void
+	{
+		$this->waitForVisible('#mediaSelectorDialog');
+		$driver = $this->client()->getWebDriver();
+		$folder = "//dialog[@id='mediaSelectorDialog']//span[contains(@class, 'wb-title') and text()='%s']";
+		$this->client()->waitFor(sprintf($folder, 'anna'), 10);
+		$driver->findElement(WebDriverBy::xpath(sprintf($folder, 'anna') . "/preceding-sibling::i[contains(@class, 'wb-expander')]"))->click();
+		$this->client()->waitFor(sprintf($folder, 'Fotos'), 10);
+		$driver->findElement(WebDriverBy::xpath(sprintf($folder, 'Fotos')))->click();
+		$this->click('#mediaSelectorDialog .media-item');
+	}
+
+	/**
+	 * The number of hints of the design check, after it ran a moment after the last change.
+	 */
+	private function designHints(): int
+	{
+		usleep(900000);
+		$count = trim($this->text('#designCheckCount'));
+		$shown = (bool) $this->client()->executeScript('return !document.getElementById("designCheckCount").hidden;');
+
+		return $shown ? (int) $count : 0;
+	}
+
+	/**
+	 * The characters of a text with the color: fabric.js 5 stores the styles per line and character, 6 and later as
+	 * ranges.
+	 *
+	 * @param array<mixed> $styles
+	 */
+	private static function charactersWithFill(array $styles, string $fill): int
+	{
+		$count = 0;
+		foreach ($styles as $key => $value)
+		{
+			if (!is_array($value))
+				continue;
+			if (isset($value['start'], $value['end']))
+				$count += ($value['style']['fill'] ?? '') === $fill ? (int) $value['end'] - (int) $value['start'] : 0;
+			else
+				foreach ($value as $style)
+					$count += is_array($style) && ($style['fill'] ?? '') === $fill ? 1 : 0;
+		}
+
+		return $count;
+	}
+
+	/**
+	 * The size of an image on the template, whatever the format of fabric.js stores.
+	 *
+	 * @param array<string,mixed> $image
+	 * @return array{float, float}
+	 */
+	private static function displaySize(array $image): array
+	{
+		return [(float) $image['width'] * (float) ($image['scaleX'] ?? 1), (float) $image['height'] * (float) ($image['scaleY'] ?? 1)];
+	}
+
+	// ---------------------------------------------------------------------------------------------------------------
+	// the tests
+
+	public function testATemplateWithAGroupIsLoadedAndSaved(): void
+	{
+		$this->createTemplate(self::GROUP_CONTENT);
+		$this->login('admin');
+		$this->openComposer();
+
+		$content = $this->save();
+
+		$this->assertNoErrors();
+		$group = self::objectsOfType($content, 'group')[0];
+		static::assertSame(['rect', 'textbox'], array_map(static fn(array $object): string => strtolower((string) $object['type']), $group['objects']));
+		static::assertSame('Hallo', $group['objects'][1]['text']);
+	}
+
+	/**
+	 * A template of fabric.js 5.4.2 keeps its objects, texts, fonts, colors and the marks of its placeholders.
+	 */
+	public function testABundledTemplateIsLoadedAndSavedWithoutLosses(): void
+	{
+		$original = json_decode(self::packContent('menu_landscape'), true);
+		static::assertIsArray($original);
+		$this->createTemplate(self::packContent('menu_landscape'));
+		$this->login('admin');
+		$this->openComposer();
+
+		$content = $this->save();
+
+		$this->assertNoErrors();
+		$summary = static fn(array $object): array => [
+			strtolower((string) $object['type']), $object['text'] ?? null, $object['fontFamily'] ?? null, $object['fontSize'] ?? null,
+			is_string($object['fill'] ?? null) ? $object['fill'] : null, round((float) $object['left']), round((float) $object['top'])
+		];
+		static::assertSame(array_map($summary, $original['objects']), array_map($summary, $content['objects']));
+		$image = self::objectsOfType($content, 'image')[0];
+		static::assertTrue($image['placeholder']);
+		// the server stores no address of a picture, it builds it on every load
+		static::assertArrayNotHasKey('src', $image);
+	}
+
+	/**
+	 * The colors of single characters of a text of fabric.js 5 stay.
+	 */
+	public function testTheStylesOfCharactersAreKept(): void
+	{
+		$this->createTemplate('{"objects":[{"type":"textbox","left":100,"top":100,"width":600,"text":"Rot und blau","fontFamily":"Arial","fontSize":60,'
+			. '"fill":"#0000ff","styles":{"0":{"0":{"fill":"#ff0000"},"1":{"fill":"#ff0000"},"2":{"fill":"#ff0000"}}}}],'
+			. '"viewport":{"width":1920,"height":1080,"scale":100}}');
+		$this->login('admin');
+		$this->openComposer();
+
+		$content = $this->save();
+
+		$this->assertNoErrors();
+		$text = self::objectsOfType($content, 'textbox')[0];
+		static::assertSame('Rot und blau', $text['text']);
+		static::assertSame(3, self::charactersWithFill($text['styles'], '#ff0000'), 'The red characters are lost: ' . json_encode($text['styles']));
+	}
+
+	public function testAnInsertedTextIsSaved(): void
+	{
+		$this->createTemplate(self::GROUP_CONTENT);
+		$this->login('admin');
+		$this->openComposer();
+
+		$this->click('#insertText');
+		$content = $this->save();
+
+		$this->assertNoErrors();
+		static::assertCount(1, self::objectsOfType($content, 'textbox'));
+	}
+
+	/**
+	 * The picture fills the area of the placeholder, cut in the middle; the design check has one hint less.
+	 * Menu landscape: the placeholder is 600 x 840 at 1200, 120.
+	 */
+	public function testAPlaceholderIsReplacedAndFilled(): void
+	{
+		$this->createTemplate(self::packContent('menu_landscape'));
+		$this->createPicture();
+		$this->login('admin');
+		$this->openComposer();
+		$hintsBefore = $this->designHints();
+		static::assertGreaterThanOrEqual(1, $hintsBefore);
+
+		$this->replaceImageAt(1500, 540);
+		static::assertSame($hintsBefore - 1, $this->designHints());
+		$content = $this->save();
+
+		$this->assertNoErrors();
+		$image = self::objectsOfType($content, 'image')[0];
+		static::assertSame(self::MEDIA_ID, $image['mediaId']);
+		static::assertSame($this->checksum . '.png', $image['fileName']);
+		static::assertFalse($image['placeholder']);
+		[$width, $height] = self::displaySize($image);
+		static::assertEqualsWithDelta(600, $width, 1);
+		static::assertEqualsWithDelta(840, $height, 1);
+		static::assertEqualsWithDelta(1200, (float) $image['left'], 1);
+		static::assertEqualsWithDelta(120, (float) $image['top'], 1);
+		// 400 x 200 covers 600 x 840 with the factor 4.2: 143 x 200 of the middle
+		static::assertEqualsWithDelta(4.2, (float) $image['scaleX'], 0.01);
+		static::assertEqualsWithDelta((400 - 600 / 4.2) / 2, (float) $image['cropX'], 1);
+		static::assertEqualsWithDelta(0, (float) $image['cropY'], 1);
+	}
+
+	/**
+	 * The round placeholder of "New colleague" keeps its circle of 280 radius at 820, 540.
+	 */
+	public function testARoundPlaceholderKeepsItsCircle(): void
+	{
+		$this->createTemplate(self::packContent('new_colleague_landscape'));
+		$this->createPicture();
+		$this->login('admin');
+		$this->openComposer();
+
+		$this->replaceImageAt(820, 540);
+		$content = $this->save();
+
+		$this->assertNoErrors();
+		$image = self::objectsOfType($content, 'image')[0];
+		[$width, $height] = self::displaySize($image);
+		static::assertEqualsWithDelta(560, $width, 1);
+		static::assertEqualsWithDelta(560, $height, 1);
+		$clip   = $image['clipPath'];
+		$radius = (float) $clip['radius'] * (float) ($clip['scaleX'] ?? 1) * (float) $image['scaleX'];
+		static::assertEqualsWithDelta(280, $radius, 1);
+	}
+
+	/**
+	 * Undo brings the placeholder back, redo the picture; the cut stays after the template is opened again.
+	 */
+	public function testAReplacementIsOneStepOfTheHistoryAndStays(): void
+	{
+		$this->createTemplate(self::packContent('menu_landscape'));
+		$this->createPicture();
+		$this->login('admin');
+		$this->openComposer();
+
+		$this->replaceImageAt(1500, 540);
+		$this->click('#undo');
+		static::assertTrue(self::objectsOfType($this->save(), 'image')[0]['placeholder']);
+
+		$this->click('#redo');
+		$replaced = self::objectsOfType($this->save(), 'image')[0];
+		static::assertSame(self::MEDIA_ID, $replaced['mediaId']);
+
+		// opened again: the picture with its cut, from the signed address of the server
+		$this->openComposer();
+		$again = self::objectsOfType($this->save(), 'image')[0];
+		static::assertSame(self::MEDIA_ID, $again['mediaId']);
+		static::assertEqualsWithDelta((float) $replaced['cropX'], (float) $again['cropX'], 0.5);
+		static::assertEqualsWithDelta((float) $replaced['scaleX'], (float) $again['scaleX'], 0.001);
+		$this->assertNoErrors();
+	}
+
+	public function testAnImageIsInsertedFromTheMediapool(): void
+	{
+		$this->createTemplate(self::GROUP_CONTENT);
+		$this->createPicture();
+		$this->login('admin');
+		$this->openComposer();
+
+		$this->click('#insertImage');
+		$this->chooseStrandInTheMediaDialog();
+		$this->click('#addMedia');
+		$this->waitForGone('#mediaSelectorDialog');
+		$content = $this->save();
+
+		$this->assertNoErrors();
+		$images = self::objectsOfType($content, 'image');
+		static::assertCount(1, $images);
+		static::assertSame(self::MEDIA_ID, $images[0]['mediaId']);
+		static::assertSame($this->checksum . '.png', $images[0]['fileName']);
+		static::assertArrayNotHasKey('src', $images[0]);
+	}
+
+	/**
+	 * The template of a playlist item: its content is saved at the item and its picture exported for the players.
+	 * Item 5 of the playlist 1 of anna.
+	 */
+	public function testAPlaylistItemIsComposedAndExported(): void
+	{
+		$this->loadFixture('playlists/playlists.sql');
+		$this->loadFixture('playlists/items.sql');
+		$this->connection->update('playlists_items', ['content_data' => self::packContent('welcome_landscape')], ['item_id' => 5]);
+		$exports = $this->deployment()->directory() . '/var/storage/playlists/items/originals';
+		$this->login('admin');
+		$this->openComposer('/playlist-item/composer/5');
+
+		$this->connection->update('playlists_items', ['content_data' => 'not saved'], ['item_id' => 5]);
+		$this->click('#save');
+		$this->waitForGone('#waitOverlay');
+		$this->client()->getWebDriver()->wait(10)->until(fn() => $this->connection->fetchOne('SELECT content_data FROM playlists_items WHERE item_id = 5') !== 'not saved');
+
+		$this->assertNoErrors();
+		$content = json_decode((string) $this->connection->fetchOne('SELECT content_data FROM playlists_items WHERE item_id = 5'), true);
+		static::assertIsArray($content);
+		static::assertSame(['Welcome', 'to Company Name'], array_slice(array_column(self::objectsOfType($content, 'textbox'), 'text'), 0, 2));
+		static::assertNotSame([], glob($exports . '/5*'), 'No picture was exported for the players.');
+	}
+
+	/**
+	 * A font size set without a selection belongs to the text itself: the design check sees it at once.
+	 * The text has no scale, like a content which was not saved by fabric.js.
+	 */
+	public function testAFontSizeOfTheTextClearsTheHintOfTheDesignCheck(): void
+	{
+		$this->createTemplate('{"objects":[{"type":"textbox","left":100,"top":100,"width":800,"text":"Klein","fontFamily":"Arial","fontSize":30,"fill":"#000000","styles":{}}],'
+			. '"viewport":{"width":1920,"height":1080,"scale":100}}');
+		$this->login('admin');
+		$this->openComposer();
+		static::assertSame(1, $this->designHints());
+
+		// the middle of the first line
+		$this->clickCanvas(130, 117);
+		$this->waitForVisible('#fontSize');
+		$input = $this->client()->getWebDriver()->findElement(WebDriverBy::id('fontSize'));
+		$input->clear();
+		$input->sendKeys('40');
+		static::assertSame(0, $this->designHints());
+
+		$text = self::objectsOfType($this->save(), 'textbox')[0];
+		static::assertSame(40, (int) $text['fontSize']);
+		static::assertStringNotContainsString('fontSize', (string) json_encode($text['styles']));
 		$this->assertNoErrors();
 	}
 }

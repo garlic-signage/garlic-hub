@@ -126,12 +126,6 @@ class Orchestrator extends BaseTemplateOrchestrator
 		if (!is_string($content) || $content === '')
 			return '';
 
-		$json = json_decode($content, true);
-		if (!is_array($json) || !isset($json['objects']) || !is_array($json['objects']))
-			return '';
-
-		$this->restoreSrc($json['objects']);
-
-		return json_encode($json) ?: '';
+		return $this->restoreContent($content);
 	}
 }

@@ -37,13 +37,18 @@ class TestableTemplateOrchestrator extends BaseTemplateOrchestrator
 	}
 
 	/**
-	 * @param array<mixed> $objects
-	 * @return array<mixed>
+	 * @param list<array<string,mixed>> $objects
+	 * @return array<mixed> the objects of the restored content
 	 */
 	public function callRestoreSrc(array $objects): array
 	{
-		$this->restoreSrc($objects);
-		return $objects;
+		$restored = json_decode($this->restoreContent((string) json_encode(['objects' => $objects])), true);
+		return is_array($restored) ? $restored['objects'] : [];
+	}
+
+	public function callRestoreContent(string $content): string
+	{
+		return $this->restoreContent($content);
 	}
 
 	public function callValidate(string $content): string
@@ -191,6 +196,31 @@ class BaseTemplateOrchestratorTest extends TestCase
 			]]),
 			$this->createOrchestrator('https://cdn')->callValidate($content)
 		);
+	}
+
+	/**
+	 * The styles of a text of fabric.js 5 are an object of lines and characters. With sequential keys it would become a
+	 * list when decoded as an array, which fabric.js reads as ranges: the text lost its size and colors.
+	 */
+	#[Group('units')]
+	public function testTheObjectsOfTheContentStayObjects(): void
+	{
+		$content = '{"objects":[{"type":"textbox","text":"Rot","styles":{"0":{"0":{"fill":"#ff0000"},"1":{"fill":"#ff0000"}}}},'
+			. '{"type":"textbox","text":"x","styles":{}},{"type":"textbox","text":"y","styles":[]}],"viewport":{"width":1920,"height":1080,"scale":100}}';
+		$orchestrator = $this->createOrchestrator('https://cdn');
+
+		static::assertSame($content, $orchestrator->callValidate($content));
+		static::assertSame($content, $orchestrator->callRestoreContent($content));
+	}
+
+	#[Group('units')]
+	public function testRestoreContentRejectsInvalidContent(): void
+	{
+		$orchestrator = $this->createOrchestrator('https://cdn');
+
+		static::assertSame('', $orchestrator->callRestoreContent('no json'));
+		static::assertSame('', $orchestrator->callRestoreContent('[]'));
+		static::assertSame('', $orchestrator->callRestoreContent('{"objects":{"a":1}}'));
 	}
 
 	#[Group('units')]

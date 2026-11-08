@@ -48,19 +48,59 @@ class BaseTemplateOrchestrator
 	}
 
 	/**
-	 * @param array<string, mixed> $objects
+	 * The content for the composer with fresh signed media urls, '' when it is no content of the composer.
 	 */
-	protected function restoreSrc(array &$objects): void
+	protected function restoreContent(string $content): string
 	{
-		foreach ($objects as &$obj)
-		{
-			if (isset($obj['fileName']) && is_string($obj['fileName']))
-				$obj['src'] = $this->buildMediaUrl($obj['fileName']);
-			elseif (($obj['placeholder'] ?? false) === true)
-				$obj['src'] = self::PLACEHOLDER_SRC;
+		$json = $this->decodeContent($content);
+		if ($json === null)
+			return '';
 
-			if (isset($obj['objects']) && is_array($obj['objects']))
-				$this->restoreSrc($obj['objects']);
+		$this->restoreSrc(self::objectsOf($json));
+
+		return json_encode($json) ?: '';
+	}
+
+	/**
+	 * The JSON objects stay objects: decoded as arrays, e.g. the styles of a text {"0": {"0": {...}}} (line and
+	 * character of fabric.js 5) would come back as a list, which fabric.js reads as another format and breaks the text.
+	 *
+	 * @return \stdClass|null with the list objects
+	 */
+	protected function decodeContent(string $content): ?\stdClass
+	{
+		$json = json_decode($content);
+		if (!$json instanceof \stdClass || !isset($json->objects) || !is_array($json->objects))
+			return null;
+
+		return $json;
+	}
+
+	/**
+	 * @return array<mixed>
+	 */
+	private static function objectsOf(\stdClass $json): array
+	{
+		return isset($json->objects) && is_array($json->objects) ? $json->objects : [];
+	}
+
+	/**
+	 * @param array<mixed> $objects
+	 */
+	protected function restoreSrc(array $objects): void
+	{
+		foreach ($objects as $obj)
+		{
+			if (!$obj instanceof \stdClass)
+				continue;
+
+			if (isset($obj->fileName) && is_string($obj->fileName))
+				$obj->src = $this->buildMediaUrl($obj->fileName);
+			elseif (($obj->placeholder ?? false) === true)
+				$obj->src = self::PLACEHOLDER_SRC;
+
+			if (isset($obj->objects) && is_array($obj->objects))
+				$this->restoreSrc($obj->objects);
 		}
 	}
 
@@ -79,32 +119,36 @@ class BaseTemplateOrchestrator
 	}
 
 	/**
-     * @param array<string, mixed> $objects
-     */
-	protected function removeSrc(array &$objects): void
+	 * @param array<mixed> $objects
+	 */
+	protected function removeSrc(array $objects): void
 	{
-		foreach ($objects as &$obj)
+		foreach ($objects as $obj)
 		{
-			unset($obj['src']);
-			if (isset($obj['objects']) && is_array($obj['objects']))
-				$this->removeSrc($obj['objects']);
+			if (!$obj instanceof \stdClass)
+				continue;
+
+			unset($obj->src);
+			if (isset($obj->objects) && is_array($obj->objects))
+				$this->removeSrc($obj->objects);
 		}
 	}
 
 	protected function validate(string $content): string
 	{
 		// Scheme validation is not necessary
-		$JSON = json_decode($content, true);
-		if (!is_array($JSON) || !isset($JSON['objects']) || !is_array($JSON['objects']))
+		$json = $this->decodeContent($content);
+		if ($json === null)
 			return '';
 
-		if (count($JSON['objects']) > 1000)
+		$objects = self::objectsOf($json);
+		if (count($objects) > 1000)
 			return '';
 
 		// remove src for security reasons XSS etc.
-		$this->removeSrc($JSON['objects']);
+		$this->removeSrc($objects);
 
-		return json_encode($JSON) ?: '';
+		return json_encode($json) ?: '';
 	}
 
 }

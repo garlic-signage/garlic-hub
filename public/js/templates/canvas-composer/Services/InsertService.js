@@ -47,35 +47,39 @@ export class InsertService
 	 */
 	async replaceImage(mediaId, url, fileName)
 	{
-		return new Promise((resolve, reject) =>
-		{
-			const object = this.#fabricWrapper.getActiveObject();
-			const w = object.width  * object.scaleX;
-			const h = object.height * object.scaleY;
-			const oldScale = object.scaleX;
+		const object = this.#fabricWrapper.getActiveObject();
+		const w = object.width  * object.scaleX;
+		const h = object.height * object.scaleY;
+		const oldScale = object.scaleX;
 
-			// object:modified after the change saves it as one step of the history
-			object.setSrc(url, () =>
-				{
-					const crop = InsertService.coverCrop(object.getElement(), w, h);
-					object.set(crop);
-					if (object.clipPath)
-						object.clipPath.set({
-							scaleX: object.clipPath.scaleX * oldScale / crop.scaleX,
-							scaleY: object.clipPath.scaleY * oldScale / crop.scaleY
-						});
-					object.mediaId = mediaId;
-					// only the plain file name is stored, the signed url is rebuilt on every load
-					object.fileName = fileName;
-					object.placeholder = false;
-					object.setCoords();
-					this.#fabricWrapper.fireObjectModified(object);
-					this.#fabricWrapper.renderAll();
-					resolve();
-				},
-				(err) => reject(err),
-				{ crossOrigin: 'anonymous' });
+		// loaded first: a picture which can not be loaded leaves the image as it is
+		const element = await new Promise((resolve, reject) =>
+		{
+			fabric.util.loadImage(url, (img, isError) =>
+			{
+				if (isError || !img || !(img.naturalWidth || img.width))
+					reject(new Error("The image could not be loaded: " + fileName));
+				else
+					resolve(img);
+			}, null, "anonymous");
 		});
+
+		object.setElement(element);
+		const crop = InsertService.coverCrop(element, w, h);
+		object.set(crop);
+		if (object.clipPath)
+			object.clipPath.set({
+				scaleX: object.clipPath.scaleX * oldScale / crop.scaleX,
+				scaleY: object.clipPath.scaleY * oldScale / crop.scaleY
+			});
+		object.mediaId = mediaId;
+		// only the plain file name is stored, the signed url is rebuilt on every load
+		object.fileName = fileName;
+		object.placeholder = false;
+		object.setCoords();
+		// object:modified after the change saves it as one step of the history
+		this.#fabricWrapper.fireObjectModified(object);
+		this.#fabricWrapper.renderAll();
 	}
 
 	/**

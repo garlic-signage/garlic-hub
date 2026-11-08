@@ -20,6 +20,10 @@
 
 import {FabricWrapper} from "../../../core/canvas/FabricWrapper.js";
 
+// fabric.js stores numbers with 2 decimals: a picture of 4000 px scaled by 0.123 would change its size by up to 4 %
+// with every save. Same in misc/template-generator/generate.html.
+fabric.Object.NUM_FRACTION_DIGITS = 6;
+
 /**
  * The canvas of the template composer: a new size counts as a change, the history of fabric-history,
  * the JSON of a template and its image.
