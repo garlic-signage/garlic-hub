@@ -76,6 +76,8 @@ class ShowController
 		return [
 			'LANG_UPLOAD_AI_IMAGE'  => $this->translator->translate('upload_ai_image', 'mediapool'),
 			'LANG_DESCRIBE_IMAGE'   => $this->translator->translate('describe_image', 'mediapool'),
+			'LANG_NEGATIVE_PROMPT'  => $this->translator->translate('negative_prompt', 'mediapool'),
+			'LANG_NEGATIVE_PROMPT_HINT' => $this->translator->translate('negative_prompt_hint', 'mediapool'),
 			'LANG_IMAGE_FORMAT'     => $this->translator->translate('image_format', 'mediapool'),
 			'LANG_GENERATE_IMAGE'   => $this->translator->translate('generate_image', 'mediapool'),
 			'MAX_PROMPT_LENGTH'     => ImageGeneration::MAX_PROMPT_LENGTH,

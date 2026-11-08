@@ -21,6 +21,7 @@ export class AiImageElements
 {
 	#form            = document.getElementById("aiImageForm");
 	#prompt          = document.getElementById("aiImagePrompt");
+	#negativePrompt  = document.getElementById("aiImageNegativePrompt");
 	#format          = document.getElementById("aiImageFormat");
 	#generateButton  = document.getElementById("generateAiImage");
 	#previewArea     = document.getElementById("previewAiImagesArea");
@@ -37,6 +38,8 @@ export class AiImageElements
 	get form() { return this.#form; }
 
 	get prompt() { return this.#prompt; }
+
+	get negativePrompt() { return this.#negativePrompt; }
 
 	get format() { return this.#format; }
 

@@ -66,7 +66,7 @@ readonly class ImageGenerationController
 			if (!$this->imageGeneration->isAvailable($UID))
 				throw new LlmException('llm_not_configured');
 
-			$image = $this->imageGeneration->generate($UID, $input->text('prompt'), $input->text('format'));
+			$image = $this->imageGeneration->generate($UID, $input->text('prompt'), $input->text('format'), $input->text('negative_prompt'));
 		}
 		catch (LlmException $e)
 		{

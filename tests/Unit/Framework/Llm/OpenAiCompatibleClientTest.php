@@ -277,6 +277,21 @@ class OpenAiCompatibleClientTest extends TestCase
 	}
 
 	/**
+	 * The images API has no negative prompt: it is left out, also not written into the description.
+	 */
+	#[Group('units')]
+	public function testTheImagesApiGetsNoNegativePrompt(): void
+	{
+		$client = $this->factory([self::imageAnswer(['b64_json' => base64_encode('PNG')])])->create(new LlmConnection('openai', 'http://ollama:11434/v1', 'flux'));
+
+		$client->generateImage('A beach', '1024x1024', 'people');
+
+		$body = $this->sentBody();
+		static::assertSame('A beach', $body['prompt']);
+		static::assertArrayNotHasKey('negative_prompt', $body);
+	}
+
+	/**
 	 * The gpt-image models refuse the response format, they always answer with the image.
 	 */
 	#[Group('units')]

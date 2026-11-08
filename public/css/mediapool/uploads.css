@@ -230,3 +230,5 @@ label:has(input:disabled)
         opacity: 1;
     }
 }
+/* the tab for an image of a model: the hint under the negative prompt */
+.ai-image-form .ai-image-hint {display: block; font-size: 0.85em; opacity: 0.8;}

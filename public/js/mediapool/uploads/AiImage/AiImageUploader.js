@@ -51,6 +51,7 @@ export class AiImageUploader extends LocalFilesUploader
 
 		const formData = new FormData();
 		formData.append("prompt", prompt);
+		formData.append("negative_prompt", this.domElements.negativePrompt.value.trim());
 		formData.append("format", this.domElements.format.value);
 		formData.append("csrf_token", Utils.csrfToken());
 

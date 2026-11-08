@@ -112,6 +112,16 @@ class Automatic1111ClientTest extends TestCase
 		static::assertSame('Basic ' . base64_encode('anna:secret'), $this->sent()->getHeaderLine('Authorization'));
 	}
 
+	#[Group('units')]
+	public function testWhatShouldNotBeInTheImageIsTheNegativePrompt(): void
+	{
+		$client = $this->client([new Response(200, [], (string) json_encode(['images' => [base64_encode('PNG')]]))], '');
+
+		$client->generateImage('A beach', '1024x1024', 'people, text');
+
+		static::assertSame('people, text', json_decode((string) $this->sent()->getBody(), true)['negative_prompt'] ?? null);
+	}
+
 	/**
 	 * Without a model the program takes the one it has loaded.
 	 */

@@ -73,7 +73,9 @@ Things with its API server switched on. The model may stay empty: then the progr
 checkpoint: the button lists them where the program offers the list (`/sdapi/v1/sd-models`), otherwise enter the
 file name, e.g. `flux_1_schnell_q5p.ckpt`. A key
 `user:password` is sent as basic authentication (`--api-auth` of Automatic1111). Steps, guidance and sampler
-are the defaults of the program.
+are the defaults of the program. The field "What should not be in the image" of the tab goes to it as
+`negative_prompt`; the OpenAI compatible API has no such field, it is left out there (not added to the
+description, where Flux and SD would draw just that). Flux ignores a negative prompt in its default settings.
 
 ComfyUI is not supported: its API takes whole workflows. An image made there is uploaded like any file.
 

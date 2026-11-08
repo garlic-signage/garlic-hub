@@ -68,15 +68,16 @@ readonly class ImageGeneration
 	 * @throws LlmException
 	 * @throws UserException
 	 */
-	public function generate(int $UID, string $prompt, string $format): string
+	public function generate(int $UID, string $prompt, string $format, string $negativePrompt = ''): string
 	{
-		$prompt = trim($prompt);
+		$prompt         = trim($prompt);
+		$negativePrompt = trim($negativePrompt);
 		if ($prompt === '')
 			throw new LlmException('llm_prompt_missing');
-		if (mb_strlen($prompt) > self::MAX_PROMPT_LENGTH)
+		if (mb_strlen($prompt) > self::MAX_PROMPT_LENGTH || mb_strlen($negativePrompt) > self::MAX_PROMPT_LENGTH)
 			throw new LlmException('llm_input_too_long');
 
-		$image = $this->llmResolver->forUser($UID, LlmTask::IMAGE_GENERATION, self::TIMEOUT)->generateImage($prompt, self::SIZES[$format] ?? self::SIZES['landscape']);
+		$image = $this->llmResolver->forUser($UID, LlmTask::IMAGE_GENERATION, self::TIMEOUT)->generateImage($prompt, self::SIZES[$format] ?? self::SIZES['landscape'], $negativePrompt);
 
 		// only an image goes into the browser and from there into the mediapool
 		$mimetype = (string) new finfo(FILEINFO_MIME_TYPE)->buffer($image);

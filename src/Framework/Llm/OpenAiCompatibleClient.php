@@ -63,8 +63,9 @@ readonly class OpenAiCompatibleClient implements LlmClient
 	 * The images API. The image has to come in the answer: a url of it is not loaded, the server would fetch an
 	 * address which the endpoint chose.
 	 */
-	public function generateImage(string $prompt, string $size): string
+	public function generateImage(string $prompt, string $size, string $negativePrompt = ''): string
 	{
+		// the images API has no negative prompt; written into the description, Flux and SD would draw just that
 		$parameters = ['model' => $this->model, 'prompt' => $prompt, 'size' => $size, 'n' => 1];
 		// the gpt-image models always answer with the image and refuse the parameter, the others answer with a url without it
 		if (!str_starts_with($this->model, 'gpt-image'))

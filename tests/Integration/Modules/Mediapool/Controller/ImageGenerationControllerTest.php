@@ -167,6 +167,7 @@ class ImageGenerationControllerTest extends ControllerTestCase
 
 		$this->assertError($this->generate(['prompt' => '   ']), $this->text('llm_prompt_missing'));
 		$this->assertError($this->generate(['prompt' => str_repeat('a', ImageGeneration::MAX_PROMPT_LENGTH + 1)]), $this->text('llm_input_too_long'));
+		$this->assertError($this->generate(['prompt' => 'Strand', 'negative_prompt' => str_repeat('a', ImageGeneration::MAX_PROMPT_LENGTH + 1)]), $this->text('llm_input_too_long'));
 		static::assertNull($this->endpoint?->getLastRequest());
 	}
 }

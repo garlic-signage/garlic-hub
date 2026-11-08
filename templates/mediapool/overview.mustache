@@ -202,6 +202,11 @@
 					<form id="aiImageForm" class="ai-image-form">
 						<label for="aiImagePrompt">{{LANG_DESCRIBE_IMAGE}}</label>
 						<textarea id="aiImagePrompt" maxlength="{{MAX_PROMPT_LENGTH}}" rows="3" required></textarea>
+						<label for="aiImageNegativePrompt">{{LANG_NEGATIVE_PROMPT}}</label>
+						<div>
+							<textarea id="aiImageNegativePrompt" maxlength="{{MAX_PROMPT_LENGTH}}" rows="2" aria-describedby="aiImageNegativePromptHint"></textarea>
+							<small id="aiImageNegativePromptHint" class="ai-image-hint">{{LANG_NEGATIVE_PROMPT_HINT}}</small>
+						</div>
 						<label for="aiImageFormat">{{LANG_IMAGE_FORMAT}}</label>
 						<select id="aiImageFormat">
 							{{#image_formats}}

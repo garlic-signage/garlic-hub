@@ -79,10 +79,12 @@ readonly class Automatic1111Client implements LlmClient
 		return array_values($models);
 	}
 
-	public function generateImage(string $prompt, string $size): string
+	public function generateImage(string $prompt, string $size, string $negativePrompt = ''): string
 	{
 		[$width, $height] = array_map(intval(...), explode('x', $size) + [1 => '0']);
 		$parameters = ['prompt' => $prompt, 'width' => $width, 'height' => $height, 'batch_size' => 1, 'n_iter' => 1];
+		if ($negativePrompt !== '')
+			$parameters['negative_prompt'] = $negativePrompt;
 		if ($this->model !== '')
 		{
 			// Automatic1111 changes the checkpoint with the override, Draw Things reads the model of its configuration

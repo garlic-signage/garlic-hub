@@ -42,10 +42,11 @@ interface LlmClient
 	public function listModels(): array;
 
 	/**
-	 * An image of the model for the description, e.g. "1536x1024" as size.
+	 * An image of the model for the description, e.g. "1536x1024" as size. What should not be in the image goes
+	 * only to an API which knows a negative prompt, the others leave it out.
 	 *
 	 * @return string the image as it is, e.g. a png
 	 * @throws LlmException
 	 */
-	public function generateImage(string $prompt, string $size): string;
+	public function generateImage(string $prompt, string $size, string $negativePrompt = ''): string;
 }
