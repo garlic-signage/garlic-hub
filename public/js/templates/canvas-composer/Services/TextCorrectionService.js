@@ -21,22 +21,27 @@
 import {FlashMessageHandler} from "../../../core/FlashMessageHandler.js";
 
 /**
- * Corrects the text of the selected textbox with the own LLM of the user. The correction is one step of
- * the history: undo brings the old text back.
+ * Corrects, shortens or translates the text of the selected textbox with the model of the user for texts. The new
+ * text is one step of the history: undo brings the old text back.
  */
 export class TextCorrectionService
 {
+	/** the width of an average character in relation to the font size, enough for an estimate */
+	static CHARACTER_WIDTH = 0.55;
+
 	#fabricWrapper;
 	#templatesService;
 	#waitOverlay;
 	#composerContext;
+	#viewportService;
 
-	constructor(fabricWrapper, templatesService, waitOverlay, composerContext)
+	constructor(fabricWrapper, templatesService, waitOverlay, composerContext, viewportService)
 	{
 		this.#fabricWrapper    = fabricWrapper;
 		this.#templatesService = templatesService;
 		this.#waitOverlay      = waitOverlay;
 		this.#composerContext  = composerContext;
+		this.#viewportService  = viewportService;
 	}
 
 	isText(object)
@@ -46,6 +51,45 @@ export class TextCorrectionService
 
 	async correctActiveText()
 	{
+		await this.#rewriteActiveText((text) => this.#templatesService.correctText(text), "text_corrected");
+	}
+
+	/**
+	 * Shortens the text so that it fits from its top to the bottom edge of the template in the width of its box.
+	 */
+	async shortenActiveText()
+	{
+		const object = this.#fabricWrapper.getActiveObject();
+		if (!object || !this.isText(object))
+			return;
+
+		const maxLength = this.#estimateCapacity(object);
+		await this.#rewriteActiveText((text) => this.#templatesService.shortenText(text, maxLength), "text_shortened");
+	}
+
+	async translateActiveText(locale)
+	{
+		await this.#rewriteActiveText((text) => this.#templatesService.translateText(text, locale), "text_translated");
+	}
+
+	/**
+	 * The characters which fit: the lines between the top of the box and the bottom edge of the template, times the
+	 * characters of a line of the box. The box itself grows with the text, it has no height of its own.
+	 */
+	#estimateCapacity(object)
+	{
+		const fontSize       = object.fontSize * (object.scaleY ?? 1);
+		const lineHeight     = fontSize * (object.lineHeight ?? 1.16);
+		const charsPerLine   = Math.max(1, Math.floor((object.width * (object.scaleX ?? 1)) / (fontSize * TextCorrectionService.CHARACTER_WIDTH)));
+		// in the units of the template, without the zoom of the composer
+		const availableSpace = Math.max(lineHeight, this.#viewportService.height - object.getBoundingRect(true).top);
+		const lines          = Math.max(1, Math.floor(availableSpace / lineHeight));
+
+		return charsPerLine * lines;
+	}
+
+	async #rewriteActiveText(request, successKey)
+	{
 		const object = this.#fabricWrapper.getActiveObject();
 		if (!object || !this.isText(object) || object.text.trim() === "")
 			return;
@@ -53,7 +97,7 @@ export class TextCorrectionService
 		this.#waitOverlay.start();
 		try
 		{
-			const result = await this.#templatesService.correctText(object.text);
+			const result = await request(object.text);
 			if (result.success === false)
 				throw new Error(result.error_message);
 
@@ -67,7 +111,7 @@ export class TextCorrectionService
 			object.set({text: result.text, styles: {}});
 			this.#fabricWrapper.historySaveAction();
 			this.#fabricWrapper.renderAll();
-			new FlashMessageHandler().showSuccess(this.#composerContext.getLangByKey("text_corrected"));
+			new FlashMessageHandler().showSuccess(this.#composerContext.getLangByKey(successKey));
 		}
 		catch (e)
 		{

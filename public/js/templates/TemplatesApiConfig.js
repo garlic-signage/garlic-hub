@@ -23,6 +23,8 @@ export const TemplatesApiConfig = {
 	FIND_URI: "/async/templates/find",
 	PACK_URI: "/async/templates/pack",
 	CORRECT_TEXT_URI: "/async/templates/correct-text",
+	SHORTEN_TEXT_URI: "/async/templates/shorten-text",
+	TRANSLATE_TEXT_URI: "/async/templates/translate-text",
 	LOAD_PLAYLIST_ITEM_URI: "/async/playlist-item/composer/load",
 	SAVE_PLAYLIST_ITEM_URI: "/async/playlist-item/composer/save"
 };

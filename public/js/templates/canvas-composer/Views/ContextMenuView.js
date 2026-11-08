@@ -28,6 +28,8 @@ export class ContextMenuView
 	#delete = document.getElementById("delete");
 	// only with an LLM of the user
 	#correctText = document.getElementById("correctText");
+	#shortenText = document.getElementById("shortenText");
+	#translateText = document.getElementById("translateText");
 	#toggleLock = document.getElementById("toggleLock");
 	#lock = document.getElementById("lock");
 	#unlock = document.getElementById("unlock");
@@ -129,10 +131,26 @@ export class ContextMenuView
 		return this.#correctText;
 	}
 
+	get shortenText()
+	{
+		return this.#shortenText;
+	}
+
+	/**
+	 * The entries of the languages in the submenu of "translate", each with its locale in data-locale.
+	 */
+	get translationLanguages()
+	{
+		return this.#translateText === null ? [] : [...this.#translateText.querySelectorAll("li[data-locale]")];
+	}
+
 	showCorrectText(isShown)
 	{
-		if (this.#correctText !== null)
-			this.#correctText.style.display = isShown ? "block" : "none";
+		for (const entry of [this.#correctText, this.#shortenText, this.#translateText])
+		{
+			if (entry !== null)
+				entry.style.display = isShown ? "" : "none";
+		}
 	}
 
 	get toggleLock()

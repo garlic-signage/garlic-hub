@@ -6,6 +6,14 @@
 		<li id="delete" class="bi-trash">{{LANG_DELETE}}</li>
 		{{#text_correction}}
 		<li id="correctText" class="bi-spellcheck"> {{LANG_CORRECT_TEXT}}</li>
+		<li id="shortenText" class="bi-arrows-collapse"> {{LANG_SHORTEN_TEXT}}</li>
+		<li id="translateText" class="bi-translate context-menu-parent"> {{LANG_TRANSLATE_TEXT}}
+			<ul class="context-submenu">
+				{{#translation_languages}}
+				<li data-locale="{{LOCALE}}">{{LANG_LANGUAGE}}</li>
+				{{/translation_languages}}
+			</ul>
+		</li>
 		{{/text_correction}}
 		{{#is_selectable}}
 		<li>

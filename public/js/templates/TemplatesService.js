@@ -63,6 +63,16 @@ export class TemplatesService extends BaseService
 		return await this._sendRequest(TemplatesApiConfig.CORRECT_TEXT_URI, "POST", {text: text}, FetchClient.LLM_TIMEOUT);
 	}
 
+	async shortenText(text, maxLength)
+	{
+		return await this._sendRequest(TemplatesApiConfig.SHORTEN_TEXT_URI, "POST", {text: text, max_length: maxLength}, FetchClient.LLM_TIMEOUT);
+	}
+
+	async translateText(text, locale)
+	{
+		return await this._sendRequest(TemplatesApiConfig.TRANSLATE_TEXT_URI, "POST", {text: text, locale: locale}, FetchClient.LLM_TIMEOUT);
+	}
+
 	determineRights(templateId)
 	{
 		const url = TemplatesApiConfig.ACLS_URI + "/" + templateId;

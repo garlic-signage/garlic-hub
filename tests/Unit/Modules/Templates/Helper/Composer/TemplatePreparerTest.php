@@ -26,6 +26,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Modules\Auth\UserSession;
 use App\Modules\Templates\Helper\Composer\TemplatePreparer;
+use App\Shared\Layout\LanguageSelectBuilder;
 use App\Shared\Llm\LlmResolver;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
@@ -49,7 +50,13 @@ class TemplatePreparerTest extends TestCase
 		$llmResolver = $this->createStub(LlmResolver::class);
 		$llmResolver->method('isAvailable')->willReturn($hasLlm);
 
-		return new TemplatePreparer($translatorStub, $llmResolver, $this->createStub(UserSession::class));
+		$languages = $this->createStub(LanguageSelectBuilder::class);
+		$languages->method('build')->willReturn([
+			['LOCALE_LONG' => 'de_DE', 'LOCALE_SMALL' => 'de', 'LANGUAGE_NAME' => 'Deutsch'],
+			['LOCALE_LONG' => 'en_US', 'LOCALE_SMALL' => 'en', 'LANGUAGE_NAME' => 'English']
+		]);
+
+		return new TemplatePreparer($translatorStub, $llmResolver, $this->createStub(UserSession::class), $languages);
 	}
 
 	/**
@@ -123,7 +130,15 @@ class TemplatePreparerTest extends TestCase
 	{
 		$result = $this->preparer(true)->replace(12);
 
-		static::assertSame(['LANG_CORRECT_TEXT' => 'templates.correct_text'], $result['text_correction']);
+		static::assertSame([
+			'LANG_CORRECT_TEXT'   => 'templates.correct_text',
+			'LANG_SHORTEN_TEXT'   => 'templates.shorten_text',
+			'LANG_TRANSLATE_TEXT' => 'templates.translate_text',
+			'translation_languages' => [
+				['LOCALE' => 'de_DE', 'LANG_LANGUAGE' => 'Deutsch'],
+				['LOCALE' => 'en_US', 'LANG_LANGUAGE' => 'English']
+			]
+		], $result['text_correction']);
 	}
 
 	/**

@@ -28,13 +28,19 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\UserSession;
+use App\Shared\Layout\LanguageSelectBuilder;
 use App\Shared\Llm\LlmResolver;
 use App\Shared\Llm\LlmTask;
 use Doctrine\DBAL\Exception;
 
 readonly class TemplatePreparer
 {
-	public function __construct(private Translator $translator, private LlmResolver $llmResolver, private UserSession $userSession) {}
+	public function __construct(
+		private Translator $translator,
+		private LlmResolver $llmResolver,
+		private UserSession $userSession,
+		private LanguageSelectBuilder $languageSelectBuilder
+	) {}
 
 	/**
 	 * Language and template data for the composer. Playlist items get export formats and a reset,
@@ -118,13 +124,24 @@ readonly class TemplatePreparer
 				'confirm_reset' => $this->translator->translate('confirm_reset', 'templates'),
 				'add_image'     => $this->translator->translate('insert_image', 'templates'),
 				'replace_image' => $this->translator->translate('replace_image', 'templates'),
-				'text_corrected' => $this->translator->translate('text_corrected', 'templates')
+				'text_corrected' => $this->translator->translate('text_corrected', 'templates'),
+				'text_shortened' => $this->translator->translate('text_shortened', 'templates'),
+				'text_translated' => $this->translator->translate('text_translated', 'templates')
 			]),
 			'TEMPLATE_ID' => $templateId
 		];
 
 		if ($this->llmResolver->isAvailable($this->userSession->getUID(), LlmTask::TEXT))
-			$templateComposer['text_correction'] = ['LANG_CORRECT_TEXT' => $this->translator->translate('correct_text', 'templates')];
+			$templateComposer['text_correction'] = [
+				'LANG_CORRECT_TEXT'   => $this->translator->translate('correct_text', 'templates'),
+				'LANG_SHORTEN_TEXT'   => $this->translator->translate('shorten_text', 'templates'),
+				'LANG_TRANSLATE_TEXT' => $this->translator->translate('translate_text', 'templates'),
+				// the languages of the interface are the ones a text is translated into
+				'translation_languages' => array_map(
+					static fn(array $language): array => ['LOCALE' => $language['LOCALE_LONG'], 'LANG_LANGUAGE' => $language['LANGUAGE_NAME']],
+					$this->languageSelectBuilder->build()
+				)
+			];
 
 		if ($itemId > 0 && $playlistId > 0)
 		{

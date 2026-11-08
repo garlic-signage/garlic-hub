@@ -127,3 +127,7 @@ hr{height: 2px; width:100%; background: #000;padding:0; margin:0;}
 .canvas-container{background-color:#fff;}
 label:has(+ input:disabled), input:disabled{opacity: 0.5; pointer-events: none;}
 #zoomSlider {width:100px;}
+/* the languages of "translate text" in a submenu beside the context menu */
+#composerContextMenu .context-menu-parent {position: relative;}
+#composerContextMenu .context-submenu {display: none; position: absolute; left: 100%; top: 0; list-style: none; margin: 0; padding: 0; background: var(--gh-surface-color); border: 1px solid var(--gh-border-color); box-shadow: var(--gh-box-shadow);}
+#composerContextMenu .context-menu-parent:hover > .context-submenu {display: block;}

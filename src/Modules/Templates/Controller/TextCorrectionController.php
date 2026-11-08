@@ -30,18 +30,20 @@ use App\Framework\Llm\LlmException;
 use App\Framework\Localization\Translate\Translator;
 use App\Modules\Auth\UserSession;
 use App\Shared\Llm\TextCorrection;
+use App\Shared\Llm\TextRewriting;
 use Defuse\Crypto\Exception\CryptoException;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
- * Corrects the text of a textbox of the composer with the own LLM of the user.
+ * Corrects, shortens and translates the text of a textbox of the composer with the model of the user for texts.
  */
 readonly class TextCorrectionController
 {
 	public function __construct(
 		private TextCorrection $textCorrection,
+		private TextRewriting $textRewriting,
 		private UserSession $userSession,
 		private JsonResponseHandler $responseHandler,
 		private Translator $translator
@@ -68,5 +70,52 @@ readonly class TextCorrectionController
 		}
 
 		return $this->responseHandler->jsonSuccess($response, ['text' => $corrected]);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws CryptoException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws UserException
+	 */
+	public function shorten(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	{
+		$input = RequestInput::of($request->getParsedBody());
+
+		return $this->answer($response, fn(): string => $this->textRewriting->shorten($this->userSession->getUID(), $input->text('text'), $input->id('max_length')));
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws CryptoException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws UserException
+	 */
+	public function translate(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	{
+		$input = RequestInput::of($request->getParsedBody());
+
+		return $this->answer($response, fn(): string => $this->textRewriting->translate($this->userSession->getUID(), $input->text('text'), $input->text('locale')));
+	}
+
+	/**
+	 * @param callable(): string $rewrite
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	private function answer(ResponseInterface $response, callable $rewrite): ResponseInterface
+	{
+		try
+		{
+			$text = $rewrite();
+		}
+		catch (LlmException $e)
+		{
+			return $this->responseHandler->jsonError($response, $this->translator->translateException($e));
+		}
+
+		return $this->responseHandler->jsonSuccess($response, ['text' => $text]);
 	}
 }

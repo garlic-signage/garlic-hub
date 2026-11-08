@@ -50,6 +50,7 @@ use App\Modules\Account\Controller\EditLocalesController;
 use App\Modules\Account\Controller\ShowPasswordController;
 use App\Modules\Templates\Controller\ShowComposerController;
 use App\Modules\Templates\Controller\TemplatesController;
+use App\Modules\Templates\Controller\TextCorrectionController;
 use App\Modules\Users\Controller\ShowAdminController;
 use App\Modules\Users\Controller\ShowInitialAdminController;
 use App\Modules\Users\Controller\UsersController;
@@ -245,7 +246,9 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 	$group->get('/templates/find', resolve([TemplatesController::class, 'find'], $container));
 	$group->patch('/templates', resolve([TemplatesController::class, 'save'], $container));
 	$group->post('/templates/pack', resolve([\App\Modules\Templates\Controller\TemplatePackController::class, 'install'], $container));
-	$group->post('/templates/correct-text', resolve([\App\Modules\Templates\Controller\TextCorrectionController::class, 'correct'], $container));
+	$group->post('/templates/shorten-text', resolve([TextCorrectionController::class, 'shorten'], $container));
+	$group->post('/templates/translate-text', resolve([TextCorrectionController::class, 'translate'], $container));
+	$group->post('/templates/correct-text', resolve([TextCorrectionController::class, 'correct'], $container));
 
 
 });

@@ -98,6 +98,24 @@ export class ContextMenuController
 				await this.#textCorrectionService.correctActiveText();
 			});
 		}
+		if (this.#contextMenuView.shortenText !== null)
+		{
+			this.#contextMenuView.shortenText.addEventListener("click", async () =>
+			{
+				this.#contextMenuView.hide();
+				await this.#textCorrectionService.shortenActiveText();
+			});
+		}
+		for (const language of this.#contextMenuView.translationLanguages)
+		{
+			language.addEventListener("click", async (event) =>
+			{
+				// the entry "translate" around it is no action of its own
+				event.stopPropagation();
+				this.#contextMenuView.hide();
+				await this.#textCorrectionService.translateActiveText(language.getAttribute("data-locale"));
+			});
+		}
 		this.#contextMenuView.duplicate.addEventListener("click", () =>
 		{
 			this.#contextMenuService.duplicate();

@@ -143,7 +143,7 @@ document.addEventListener("DOMContentLoaded", async function ()
 
 	const contextMenuView = new ContextMenuView();
 	const contextMenuService  = new ContextMenuService(fabricWrapper);
-	const textCorrectionService = new TextCorrectionService(fabricWrapper, templateService, waitOverlay, composerContext);
+	const textCorrectionService = new TextCorrectionService(fabricWrapper, templateService, waitOverlay, composerContext, viewportService);
 	const contextMenuController = new ContextMenuController(contextMenuView, contextMenuService, mediaDialogController, textCorrectionService);
 
 	const propertiesController = new PropertiesController(

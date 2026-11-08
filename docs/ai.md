@@ -83,16 +83,24 @@ ComfyUI is not supported: its API takes whole workflows. An image made there is 
 
 | Helper                  | Where                                            | Task            | Saved                         |
 |-------------------------|--------------------------------------------------|-----------------|-------------------------------|
-| Correct text            | template composer, context menu of a text box    | Texts           | in the composer, undo works   |
+| Correct, shorten, translate text | template composer, context menu of a text box | Texts    | in the composer, undo works   |
 | Suggest tags            | mediapool, context menu of a medium              | Tag images      | after the user saves the edit dialog |
 | Tag folder              | mediapool, context menu of a folder              | Tag images      | at once, file by file         |
 | Fill by theme           | playlist composer, insert menu                   | Texts           | the media the user ticks      |
 | Generate image          | mediapool, uploader tab "Generate image"         | Generate images | when the user uploads it      |
 
-### Correct text
+### Correct, shorten and translate text
 
-Corrects spelling, grammar and punctuation of the selected text box (at most 5000 characters) and keeps its
-language, wording and line breaks. The styles of single characters are removed, because their positions change.
+Three entries in the context menu of a text box (at most 5000 characters). The answer replaces the text, undo
+brings the old one back; the styles of single characters are removed, because their positions change.
+
+- **Correct** fixes spelling, grammar and punctuation and keeps language, wording and line breaks.
+- **Shorten** brings the text to the characters which fit from the top of the box to the bottom edge of the
+  template, in the width of the box (`TextCorrectionService.js` estimates them from font size and line height; a
+  text box has no height of its own, it grows with the text). A text which fits already becomes a little tighter.
+  The estimate is rough: shorten again if it is still too long.
+- **Translate** offers the languages of the interface in a submenu. For a text in two languages, duplicate the
+  text box and translate the copy.
 
 ### Suggest tags and tag a folder
 

@@ -56,6 +56,28 @@ class TextCorrectionControllerTest extends TemplatesControllerTestCase
 		return $container->get(TextCorrectionController::class)->correct($this->request('POST', '/async/templates/correct-text', ['text' => $text]), $this->newResponse());
 	}
 
+	/**
+	 * @param array<string,mixed> $body
+	 * @param list<Response> $answers
+	 */
+	private function rewrite(string $action, array $body, array $answers = []): ResponseInterface
+	{
+		$this->endpoint = new MockHandler($answers);
+		$container = $this->container;
+		static::assertInstanceOf(Container::class, $container);
+		$container->set(LlmClientFactory::class, new LlmClientFactory(new Client(['handler' => HandlerStack::create($this->endpoint)])));
+
+		return $container->get(TextCorrectionController::class)->$action($this->request('POST', '/async/templates/' . $action . '-text', $body), $this->newResponse());
+	}
+
+	private function sentInstructions(): string
+	{
+		$body = json_decode((string) $this->endpoint?->getLastRequest()?->getBody(), true);
+		static::assertIsArray($body);
+
+		return (string) $body['messages'][0]['content'];
+	}
+
 	private static function answer(string $content): Response
 	{
 		return new Response(200, ['Content-Type' => 'application/json'], (string) json_encode([
@@ -110,5 +132,69 @@ class TextCorrectionControllerTest extends TemplatesControllerTestCase
 		$this->withLlm(2);
 
 		$this->assertError($this->correct('Text', [new Response(500, [], 'internal')]), $this->text('llm_not_reachable', 'main'));
+	}
+
+	public function testATextWhichDoesNotFitIsShortenedToTheCharactersWhichFit(): void
+	{
+		$this->actingAs(2);
+		$this->withLlm(2);
+
+		$response = $this->rewrite('shorten', ['text' => str_repeat('Sommerfest ', 10), 'max_length' => 40], [self::answer('<think>short</think>Sommerfest am Freitag')]);
+
+		$this->assertSuccess($response);
+		static::assertSame('Sommerfest am Freitag', $this->json($response)['text']);
+		static::assertStringContainsString('at most 40 characters', $this->sentInstructions());
+	}
+
+	public function testATextWhichFitsIsOnlyTightened(): void
+	{
+		$this->actingAs(2);
+		$this->withLlm(2);
+
+		$this->rewrite('shorten', ['text' => 'Sommerfest', 'max_length' => 400], [self::answer('Fest')]);
+
+		static::assertStringNotContainsString('at most', $this->sentInstructions());
+	}
+
+	/**
+	 * A box for a few letters asks for ten at least: fewer are no text any more.
+	 */
+	public function testATinyBoxAsksForTenCharactersAtLeast(): void
+	{
+		$this->actingAs(2);
+		$this->withLlm(2);
+
+		$this->rewrite('shorten', ['text' => 'Sommerfest am Freitag', 'max_length' => 3], [self::answer('Fest')]);
+
+		static::assertStringContainsString('at most 10 characters', $this->sentInstructions());
+	}
+
+	public function testATextIsTranslatedIntoALanguageOfTheInterface(): void
+	{
+		$this->actingAs(2);
+		$this->withLlm(2);
+
+		$response = $this->rewrite('translate', ['text' => "Willkommen\nim Büro", 'locale' => 'en_US'], [self::answer("Welcome\nto the office")]);
+
+		$this->assertSuccess($response);
+		static::assertSame("Welcome\nto the office", $this->json($response)['text']);
+		static::assertStringContainsString('locale en_US', $this->sentInstructions());
+	}
+
+	public function testAnotherLanguageIsNotSent(): void
+	{
+		$this->actingAs(2);
+		$this->withLlm(2);
+
+		$this->assertError($this->rewrite('translate', ['text' => 'Willkommen', 'locale' => 'tlh_KL']), $this->text('llm_unknown_language', 'main'));
+		static::assertNull($this->endpoint?->getLastRequest());
+	}
+
+	public function testWithoutAnLlmNothingIsShortenedOrTranslated(): void
+	{
+		$this->actingAs(3);
+
+		$this->assertError($this->rewrite('shorten', ['text' => 'Willkommen', 'max_length' => 5]), $this->text('llm_not_configured', 'main'));
+		$this->assertError($this->rewrite('translate', ['text' => 'Willkommen', 'locale' => 'en_US']), $this->text('llm_not_configured', 'main'));
 	}
 }
