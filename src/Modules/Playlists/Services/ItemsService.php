@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Playlists\Services;
 
+use App\Framework\Config\Config;
 use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
@@ -31,6 +32,7 @@ use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Services\AbstractBaseService;
 use App\Modules\Mediapool\Services\MediaService;
+use App\Modules\Playlists\Helper\Compose\ItemPreviewResolver;
 use App\Modules\Playlists\Helper\Compose\ItemThumbnailResolver;
 use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Repositories\ItemsRepository;
@@ -52,6 +54,7 @@ class ItemsService extends AbstractBaseService
 								private readonly PlaylistsService          $playlistsService,
 								private readonly PlaylistMetricsCalculator $playlistMetricsCalculator,
 								private readonly ItemThumbnailResolver     $itemThumbnailResolver,
+								private readonly ItemPreviewResolver       $itemPreviewResolver,
 								LoggerInterface                            $logger)
 	{
 		parent::__construct($logger);
@@ -137,6 +140,45 @@ class ItemsService extends AbstractBaseService
 		$playlistMetrics = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlistData)->toFrontendArray();
 
 		return ['playlist_metrics' =>  $playlistMetrics, 'playlist' => $playlistData, 'items' => $items];
+	}
+
+	/**
+	 * What the preview of the playlist shows, in the order of the playlist. Called when the preview opens:
+	 * the order, the widget values and the signatures are the current ones.
+	 *
+	 * @return list<array{item_id:int, item_name:string, thumbnail:string, type:string, url:string, playlist_id:int}>
+	 * @throws ModuleException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 */
+	public function loadPreviewByPlaylistId(int $playlistId): array
+	{
+		$this->playlistsService->loadPureById($playlistId); // checks rights, too
+
+		$preview = [];
+		// with the extension of the mediapool file, the preview needs no channel data: the edition without channels
+		foreach ($this->itemsRepository->findAllByPlaylistIdWithJoins($playlistId, Config::PLATFORM_EDITION_CORE) as $item)
+		{
+			$thumbnail = $this->itemThumbnailResolver->resolve($item);
+			if ($thumbnail === null) // the composer does not show it either
+				continue;
+
+			$item['paths']['thumbnail'] = $thumbnail['path'];
+			$item['urls']['thumbnail']  = $thumbnail['url'];
+			$resolved = $this->itemPreviewResolver->resolve($item);
+
+			$preview[] = [
+				'item_id'     => (int) $item['item_id'],
+				'item_name'   => (string) $item['item_name'],
+				'thumbnail'   => $thumbnail['url'],
+				'type'        => $resolved['type'],
+				'url'         => $resolved['url'],
+				'playlist_id' => $item['item_type'] === ItemType::PLAYLIST->value ? (int) $item['file_resource'] : 0,
+			];
+		}
+
+		return $preview;
 	}
 
 	/**

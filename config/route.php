@@ -205,6 +205,7 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 	$group->patch('/playlists/picking', resolve([PlaylistsController::class, 'shufflePicking'], $container));
 
 	$group->get('/playlists/items/load/{playlist_id:\d+}', resolve([ItemsController::class, 'loadItems'], $container));
+	$group->get('/playlists/items/preview/{playlist_id:\d+}', resolve([ItemsController::class, 'loadPreview'], $container));
 	$group->post('/playlists/items/insert', resolve([ItemsController::class, 'insert'], $container));
 	$group->post('/playlists/ai/suggest', resolve([PlaylistFillingController::class, 'suggest'], $container));
 	$group->delete('/playlists/items', resolve([ItemsController::class, 'delete'], $container));

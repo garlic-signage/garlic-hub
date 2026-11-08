@@ -101,6 +101,7 @@ Everything that is neither code nor documentation.
 Web root. Only what the browser or a player may fetch directly.
 - `index.php` — entry point of the web application.
 - `media.php` — delivers mediapool files to browsers via signed, expiring URLs (no bootstrap).
+- `widget.php` — delivers the files inside a mediapool widget for the preview, signed and sandboxed (no bootstrap).
 - `delivery.php` — delivers original media and rendered template items to players (no bootstrap).
 - `css/`, `js/` — styles and ES modules, one folder per module; `external/` holds third-party libraries, `js/core/` shared JS.
 - `fonts/` — web fonts for the template editor.

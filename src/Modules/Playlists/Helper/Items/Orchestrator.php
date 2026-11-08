@@ -68,6 +68,19 @@ class Orchestrator
 		return $this->responseBuilder->generalSuccess($response, ['data' => $list]);
 	}
 
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 */
+	public function loadPreview(ResponseInterface $response): ResponseInterface
+	{
+		$preview = $this->itemsService->loadPreviewByPlaylistId($this->playlistId);
+
+		return $this->responseBuilder->generalSuccess($response, ['data' => $preview]);
+	}
+
 	public function validateInsert(ResponseInterface $response): ?ResponseInterface
 	{
 		$answer = $this->validatePlaylistId($response);

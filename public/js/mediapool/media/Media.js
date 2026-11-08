@@ -108,7 +108,13 @@ export class Media
 		this.#createThumbnail()
 
 		const a = this.#mediaElement.querySelector("a");
-		if (this.#hasDetailedView(this.#mimetype))
+		if (this.#mimetype === "application/widget" && this.#mediaData.urls.preview !== undefined)
+		{
+			// widget.php runs the widget sandboxed, in an iframe of the lightbox
+			a.href = this.#mediaData.urls.preview;
+			a.dataset.type = "external";
+		}
+		else if (this.#hasDetailedView(this.#mimetype))
 			a.href  = this.#originalUrl;
 		else
 		{

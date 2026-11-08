@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Modules\Playlists\Services;
 
+use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Playlists\Helper\TemplateItemName;
@@ -143,6 +144,50 @@ class ItemsServiceTest extends ContainerTestCase
 
 		static::assertSame([], $result['items']);
 		static::assertSame(0, $result['playlist_metrics']['count_items']);
+	}
+
+	public function testThePreviewHasTheItemsInTheOrderOfThePlaylist(): void
+	{
+		$this->actingAs(2);
+
+		$preview = $this->itemsService->loadPreviewByPlaylistId(1);
+
+		static::assertSame([1, 2, 3, 4, 5], array_column($preview, 'item_id'));
+		static::assertSame(['image', 'video', 'playlist', 'pdf', 'image'], array_column($preview, 'type'));
+		static::assertStringStartsWith('/media.php/orig/checksum-image.jpg?', $preview[0]['url']);
+		static::assertStringStartsWith('/media.php/orig/checksum-video.mp4?', $preview[1]['url']);
+		// a nested playlist is only listed, the preview knows which one
+		static::assertSame(['', 2], [$preview[2]['url'], $preview[2]['playlist_id']]);
+		static::assertSame('/images/icons/playlist.svg', $preview[2]['thumbnail']);
+		static::assertSame(0, $preview[0]['playlist_id']);
+	}
+
+	public function testThePreviewOfAWidgetHasTheValuesOfTheItem(): void
+	{
+		$this->actingAs(2);
+		$this->connection->executeStatement("UPDATE mediapool_files SET mimetype = 'application/widget', extension = 'wgt' WHERE checksum = 'checksum-pdf'");
+		$this->connection->executeStatement("UPDATE playlists_items SET mimetype = 'application/widget', content_data = ? WHERE item_id = 4", [serialize(['feedUrl' => 'https://example.com/rss'])]);
+
+		$preview = $this->itemsService->loadPreviewByPlaylistId(1);
+
+		static::assertSame('widget', $preview[3]['type']);
+		static::assertMatchesRegularExpression('#^/widget\.php/checksum-pdf/\d+/[0-9a-f]{64}/\?feedUrl=https%3A%2F%2Fexample\.com%2Frss$#', $preview[3]['url']);
+	}
+
+	public function testThePreviewSkipsItemsWithoutThumbnail(): void
+	{
+		$this->actingAs(2);
+		$this->connection->executeStatement("UPDATE playlists_items SET item_type = 'channel' WHERE item_id = 4");
+
+		static::assertSame([1, 2, 3, 5], array_column($this->itemsService->loadPreviewByPlaylistId(1), 'item_id'));
+	}
+
+	public function testThePreviewOfAPlaylistOfAnotherUserIsDenied(): void
+	{
+		$this->actingAs(3);
+
+		$this->expectException(AccessDeniedException::class);
+		$this->itemsService->loadPreviewByPlaylistId(1);
 	}
 
 	public function testUpdateFieldStoresTheValueAsString(): void

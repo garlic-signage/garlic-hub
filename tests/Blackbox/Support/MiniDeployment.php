@@ -58,7 +58,7 @@ final class MiniDeployment
 			$this->copyDirectory($root . '/' . $folder, $this->directory . '/' . $folder);
 
 		mkdir($this->directory . '/public');
-		foreach (['index.php', 'media.php', 'delivery.php'] as $script)
+		foreach (['index.php', 'media.php', 'widget.php', 'delivery.php'] as $script)
 			copy($root . '/public/' . $script, $this->directory . '/public/' . $script);
 		$this->copyDirectory($root . '/public/smil', $this->directory . '/public/smil');
 		if ($this->withAssets)
@@ -211,8 +211,8 @@ $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 if ($path !== '/' && is_file(__DIR__ . '/public' . $path))
 	return false;
 
-// media.php/<variant>/<name>.<ext> and delivery.php/...: the web server sets PATH_INFO (decoded) for them
-foreach (['/media.php', '/delivery.php'] as $script)
+// media.php/<variant>/<name>.<ext>, widget.php/... and delivery.php/...: the web server sets PATH_INFO (decoded) for them
+foreach (['/media.php', '/widget.php', '/delivery.php'] as $script)
 {
 	if (str_starts_with($path, $script . '/'))
 	{

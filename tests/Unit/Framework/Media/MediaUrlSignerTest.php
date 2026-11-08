@@ -232,4 +232,35 @@ class MediaUrlSignerTest extends TestCase
 
 		static::assertFalse(MediaUrlSigner::verify($query, self::SECRET, self::NOW));
 	}
+
+	#[Group('units')]
+	public function testItemOriginalUrlUsesItsOwnVariant(): void
+	{
+		$query = $this->queryOf($this->mediaUrlSigner->itemOriginalUrl('34-0123456789abcdef0123456789abcdef', 'png', self::NOW));
+
+		static::assertSame(['34-0123456789abcdef0123456789abcdef', 'png', 'item-orig'], [$query['c'], $query['ext'], $query['v']]);
+		static::assertTrue(MediaUrlSigner::verify($query, self::SECRET, self::NOW));
+	}
+
+	#[Group('units')]
+	public function testWidgetUrlHasExpiryAndSignatureInThePath(): void
+	{
+		$url = $this->mediaUrlSigner->widgetUrl(self::CHECKSUM, [], self::NOW);
+
+		static::assertMatchesRegularExpression('#^/widget\.php/' . self::CHECKSUM . '/1760004000/[0-9a-f]{64}/$#', $url);
+		[, , , $exp, $sig] = explode('/', rtrim($url, '/'));
+		static::assertTrue(MediaUrlSigner::verify(['c' => self::CHECKSUM, 'ext' => 'wgt', 'v' => 'widget', 'exp' => $exp, 'sig' => $sig], self::SECRET, self::NOW));
+		// an url of the original cannot be used for the files inside the widget
+		static::assertFalse(MediaUrlSigner::verify(['c' => self::CHECKSUM, 'ext' => 'wgt', 'v' => 'orig', 'exp' => $exp, 'sig' => $sig], self::SECRET, self::NOW));
+	}
+
+	#[Group('units')]
+	public function testWidgetUrlHandsThePreferencesAsQuery(): void
+	{
+		$url = $this->mediaUrlSigner->widgetUrl(self::CHECKSUM, ['feedUrl' => 'https://example.com/rss?a=1&b=2', 'font_size' => 30], self::NOW);
+
+		$query = [];
+		parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
+		static::assertSame(['feedUrl' => 'https://example.com/rss?a=1&b=2', 'font_size' => '30'], $query);
+	}
 }

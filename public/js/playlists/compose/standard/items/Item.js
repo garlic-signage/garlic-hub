@@ -31,6 +31,7 @@ export class Item
 	#playlistItem = null;
 	#cmsEdition = document.getElementById("cms_edition").value;
 	#belongsToMasterPlaylist = false;
+	#previewAction         = null;
 	#linkPlaylistAction    = null;
 	#editTemplateAction    = null;
 	#conditionalPlayAction = null;
@@ -58,6 +59,11 @@ export class Item
 	set belongsToMasterPlaylist(value)
 	{
 		this.#belongsToMasterPlaylist = value;
+	}
+
+	get previewAction()
+	{
+		return this.#previewAction;
 	}
 
 	get linkPlaylistAction()
@@ -249,6 +255,8 @@ export class Item
 
 	#initActions()
 	{
+		this.#previewAction = this.#playlistItem.querySelector('.item-preview');
+
 		if (this.#itemData.item_type === "playlist")
 		{
 			this.#linkPlaylistAction = this.#playlistItem.querySelector('.link-playlist');

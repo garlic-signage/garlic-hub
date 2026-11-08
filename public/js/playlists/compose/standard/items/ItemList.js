@@ -27,9 +27,11 @@ export class ItemList
 	#itemsList   = {};
 	#playlistProperties = null;
 	#playlistId = 0;
+	#playlistPreview = null;
 
-	constructor(itemFactory, itemsService, dropTarget, playlistProperties)
+	constructor(itemFactory, itemsService, dropTarget, playlistProperties, playlistPreview)
 	{
+		this.#playlistPreview = playlistPreview;
 		this.#itemFactory  = itemFactory;
 		this.#dropTarget   = dropTarget;
 		this.#itemsService = itemsService;
@@ -80,6 +82,14 @@ export class ItemList
 
 	#createActions(item)
 	{
+		if (item.previewAction !== null)
+		{
+			item.previewAction.addEventListener('click', () => {
+				const id = item.previewAction.parentElement.getAttribute('data-item-id');
+				this.#playlistPreview.open(this.#playlistId, id);
+			});
+		}
+
 		if (item.deleteItemAction !== null)
 		{
 			item.deleteItemAction.addEventListener('click', async () => {

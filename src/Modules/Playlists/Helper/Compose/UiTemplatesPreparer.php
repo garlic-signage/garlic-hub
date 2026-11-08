@@ -180,8 +180,10 @@ readonly class UiTemplatesPreparer
 					'/css/external/nouislider.min.css',
 					'/css/playlists/composer.css',
 					'/css/playlists/trigger.css',
-					'/css/playlists/conditional-play.css'
+					'/css/playlists/conditional-play.css',
+					'/css/external/glightbox.min.css'
 				],
+				'footer_scripts' => ['/js/external/glightbox.min.js'],
 				'footer_modules' => ['/js/external/dragula.min.js','/js/playlists/compose/standard/init.js']
 			],
 			'this_layout' => [

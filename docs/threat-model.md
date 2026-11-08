@@ -60,6 +60,10 @@ by a direct URL, only through the delivery scripts described in section 3.
    to the administrative interface. URLs are HMAC-signed with `APP_SECRET` and
    expire. The signature covers checksum, extension, variant and expiry, so a
    thumbnail URL cannot be edited into an original one.
+   `widget.php` serves the files inside a widget for the preview in the same
+   way, with expiry and signature in the path. A widget is foreign code: the
+   response header `Content-Security-Policy: sandbox allow-scripts` gives it an
+   opaque origin, so it cannot read the session or call the hub as the user.
 4. **Player media delivery (`delivery.php`)** — serves the files referenced from
    a playlist to players. It deliberately runs without the application
    bootstrap (no container, session or database). Its current access check is
@@ -257,8 +261,10 @@ security issues:
 
 - Retrieval of an account's playlist or schedule data without possession of a
   corresponding player UUID.
-- Retrieval of a file through `media.php` without a valid signature, or by
-  altering a signed URL.
+- Retrieval of a file through `media.php` or `widget.php` without a valid
+  signature, or by altering a signed URL.
+- Widget code previewed through `widget.php` that reaches the session, cookies
+  or same-origin pages of the hub.
 - Retrieval of a file through either delivery script that is not referenced by
   the documented checksum or item id schemes, and path traversal in either
   script.

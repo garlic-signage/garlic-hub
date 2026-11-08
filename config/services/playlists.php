@@ -56,6 +56,7 @@ use App\Modules\Playlists\Dashboard\PlaylistsDashboard;
 use App\Modules\Playlists\Controller\ShowDatatableController;
 use App\Modules\Playlists\Controller\TriggerController;
 use App\Modules\Playlists\Controller\WidgetsController;
+use App\Modules\Playlists\Helper\Compose\ItemPreviewResolver;
 use App\Modules\Playlists\Helper\Compose\ItemThumbnailResolver;
 use App\Modules\Playlists\Helper\Compose\RightsChecker;
 use App\Modules\Playlists\Helper\Compose\MultizonePresets;
@@ -322,6 +323,7 @@ $dependencies[ItemsService::class] = DI\factory(function (ContainerInterface $co
 			$container->get(MediaUrlSigner::class),
 			$container->get(TemplateItemName::class)
 		),
+		new ItemPreviewResolver($container->get(Config::class), $container->get(MediaUrlSigner::class)),
 		$container->get('ModuleLogger')
 	);
 });

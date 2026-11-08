@@ -39,8 +39,11 @@ class MediaUrlSigner
     public const string VARIANT_ORIGINAL = 'orig';
     public const string VARIANT_TEMPLATE_THUMB = 'tpl-thumb';  // templates/thumbs, named by template id
     public const string VARIANT_ITEM_THUMB     = 'item-thumb'; // playlists/items/thumbs, named by item id and content
+    public const string VARIANT_ITEM_ORIGINAL  = 'item-orig';  // playlists/items/originals, named like the thumbs
+    public const string VARIANT_WIDGET         = 'widget';     // the files inside a mediapool widget (widget.php)
 
     private const string ENDPOINT = '/media.php';
+    private const string WIDGET_ENDPOINT = '/widget.php';
 
     private string $secret;
     private int $ttl;
@@ -72,6 +75,28 @@ class MediaUrlSigner
     public function itemThumbUrl(string $name, string $extension, ?int $now = null): string
     {
         return $this->buildUrl($name, $extension, self::VARIANT_ITEM_THUMB, $now);
+    }
+
+    public function itemOriginalUrl(string $name, string $extension, ?int $now = null): string
+    {
+        return $this->buildUrl($name, $extension, self::VARIANT_ITEM_ORIGINAL, $now);
+    }
+
+    /**
+     * Url form: /widget.php/<checksum>/<exp>/<sig>/?<preferences>. Expiry and signature are part of the path,
+     * so the relative urls of the widget (js/app.js, css/...) are signed, too. widget.php redirects to the start
+     * file of the widget, the preferences stay the query, like a player calls a widget.
+     *
+     * @param array<string, scalar> $preferences
+     */
+    public function widgetUrl(string $checksum, array $preferences = [], ?int $now = null): string
+    {
+        $signature = $this->sign($checksum, 'wgt', self::VARIANT_WIDGET, $now);
+        $url       = self::WIDGET_ENDPOINT . '/' . $checksum . '/' . $signature['exp'] . '/' . $signature['sig'] . '/';
+        if ($preferences === [])
+            return $url;
+
+        return $url . '?' . http_build_query($preferences, '', '&', PHP_QUERY_RFC3986);
     }
 
     public function buildUrl(string $checksum, string $extension, string $variant, ?int $now = null): string

@@ -26,6 +26,7 @@ import {FlashMessageHandler} from "../../../core/FlashMessageHandler.js";
 import {ItemList}          from "./items/ItemList.js";
 import {ItemFactory}       from "./items/ItemFactory.js";
 import {ThumbnailPreview}  from "./items/ThumbnailPreview.js";
+import {PlaylistPreview}   from "./items/PlaylistPreview.js";
 import {DragDropHandler}   from "./DragDropHandler.js";
 import {PlaylistsProperties} from "./playlists/PlaylistsProperties.js";
 import {PlaylistsService} from "./playlists/PlaylistsService.js";
@@ -44,7 +45,8 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const itemsService        = new ItemsService(new FetchClient());
 	const playlistsProperties = new PlaylistsProperties(playlistsService, new FlashMessageHandler(), lang);
 	const itemFactory         = new ItemFactory(new WidgetFactory(), new ConditionalPlayFactory(), new TriggerFactory());
-	const itemsList           = new ItemList(itemFactory, itemsService, dropTarget, playlistsProperties);
+	const playlistPreview     = new PlaylistPreview(itemsService, new FlashMessageHandler());
+	const itemsList           = new ItemList(itemFactory, itemsService, dropTarget, playlistsProperties, playlistPreview);
 	const dragDropHandler     = new DragDropHandler(dropTarget, itemsService, itemsList);
 	dragDropHandler.playlistId = playlistId;
 

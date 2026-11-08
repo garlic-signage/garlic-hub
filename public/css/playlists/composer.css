@@ -154,3 +154,22 @@ div:has(#shufflePicking){display: none;}
     .ai-suggestion img {width: 60px; height: 40px; object-fit: cover;}
     .ai-suggestion .ai-suggestion-name {flex: 1;}
 #aiInsertChecked {margin: 0.5rem;}
+
+/* lightbox of the playlist preview */
+.preview-audio{width:100%;margin-top:2rem;}
+.preview-nested-playlist
+{
+    list-style:none;
+    margin:0;
+    padding:0;
+}
+    .preview-nested-playlist li
+    {
+        display:flex;
+        gap:1rem;
+        align-items:center;
+        padding:0.25rem 0;
+        border-bottom:1px solid var(--gh-border-color);
+    }
+    .preview-nested-playlist img{width:80px;height:50px;object-fit:contain;}
+    .preview-nested-playlist .preview-nested-duration{margin-left:auto;}

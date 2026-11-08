@@ -56,6 +56,22 @@ readonly class ItemsController
 	}
 
 	/**
+	 * @param array<string,mixed> $args
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 */
+	public function loadPreview(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+	{
+		$answer = $this->orchestrator->setInput($args)->validateLoadItems($response);
+		if ($answer !== null)
+			return $answer;
+
+		return $this->orchestrator->loadPreview($response);
+	}
+
+	/**
 	 * @throws UserException
 	 */
 	public function insert(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface

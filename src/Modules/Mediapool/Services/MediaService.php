@@ -339,6 +339,9 @@ class MediaService
 
 		$media['urls']['original']  = $this->mediaUrlSigner->originalUrl($checksum, $extension);
 		$media['urls']['thumbnail'] = $this->mediaUrlSigner->thumbUrl($checksum, $thumbExtension);
+		// the preview runs the widget from its archive, with the values of config.xml (see widget.php)
+		if (($media['mimetype'] ?? '') === 'application/widget')
+			$media['urls']['preview'] = $this->mediaUrlSigner->widgetUrl($checksum);
 
 		return $media;
 	}

@@ -92,6 +92,12 @@ export class ItemsService extends BaseService
 		return await this._sendRequest(url, "DELETE", data);
 	}
 
+	async loadPreview(playlistId)
+	{
+		const url = ItemsApiConfig.PREVIEW_URI + "/" + playlistId;
+		return await this._sendRequest(url, "GET",  []);
+	}
+
 	async loadByPlaylistId(playlistId)
 	{
 		const url = ItemsApiConfig.LOAD_PLAYLIST_ITEMS_URI + "/" + playlistId;
