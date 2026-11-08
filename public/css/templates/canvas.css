@@ -45,7 +45,7 @@ hr{height: 2px; width:100%; background: #000;padding:0; margin:0;}
         letter-spacing: 0.08em;
         color: #666;
         white-space: nowrap;
-        background: #F7FAFC;
+        background: var(--gh-body-bg);
         padding: 0 4px;
         z-index: 1;
     }
@@ -82,7 +82,7 @@ hr{height: 2px; width:100%; background: #000;padding:0; margin:0;}
 {
 	display:          none;
 	position:         absolute;
-	background-color: #f9f9f9;
+	background-color: var(--gh-body-bg);
 	min-width:        120px;
 	box-shadow:       0 8px 16px 0 rgba(0, 0, 0, 0.2);
 	z-index:          1;
@@ -90,7 +90,7 @@ hr{height: 2px; width:100%; background: #000;padding:0; margin:0;}
 
 .template_edit_dropdown_content_font
 {
-	color:           black;
+	background-color: var(--gh-surface-color);
 	padding:         12px 16px;
 	text-decoration: none;
 	display:         block;
@@ -99,7 +99,7 @@ hr{height: 2px; width:100%; background: #000;padding:0; margin:0;}
 
 .template_edit_dropdown_content_hover:hover
 {
-	background-color: #f1f1f1;
+	background-color: var(--gh-body-bg);
 }
 
 .template_edit_dropdown:hover .template_edit_dropdown_content
@@ -124,10 +124,19 @@ hr{height: 2px; width:100%; background: #000;padding:0; margin:0;}
 	color:  #000;
 	border: 1px solid #000;
 }
-.canvas-container{background-color:#fff;}
+.canvas-container{var(--gh-body-bg);}
 label:has(+ input:disabled), input:disabled{opacity: 0.5; pointer-events: none;}
 #zoomSlider {width:100px;}
 /* the languages of "translate text" in a submenu beside the context menu */
 #composerContextMenu .context-menu-parent {position: relative;}
 #composerContextMenu .context-submenu {display: none; position: absolute; left: 100%; top: 0; list-style: none; margin: 0; padding: 0; background: var(--gh-surface-color); border: 1px solid var(--gh-border-color); box-shadow: var(--gh-box-shadow);}
 #composerContextMenu .context-menu-parent:hover > .context-submenu {display: block;}
+
+/* the check of the design: the number of hints on the button, the list below it */
+#designCheckButton {position: relative;}
+#designCheckButton .design-check-count {position: absolute; top: -6px; right: -6px; min-width: 1.2em; padding: 0 0.25em; border-radius: 0.6em; background: #d97706; color: #fff; font-size: 0.7rem; line-height: 1.2em;}
+.design-check-list {width: 22rem; padding: 0.75rem;}
+.design-check-list p {margin: 0;}
+.design-check-list ul {margin: 0; padding: 0 0 0 1rem;}
+.design-check-list li {margin: 0.25rem 0;}
+.design-check-list li.design-check-element {cursor: pointer; text-decoration: underline dotted;}
