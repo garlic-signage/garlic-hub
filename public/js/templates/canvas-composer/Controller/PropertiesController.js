@@ -42,14 +42,17 @@ export class PropertiesController
 		this.#selectivePropertiesController = selectivePropertiesController;
 		this.#textPropertiesController      = textPropertiesController;
 
-		ComposerEventBus.addEventListener('mouseLeftUp', (e) =>
-		{
-			const object = e.detail.target;
-			this.deactivateAllProperties();
-			if (object)
-				this.activateCurrent(object);
-		});
+		ComposerEventBus.addEventListener('mouseLeftUp', (e) => this.#showFor(e.detail.target));
+		// selected without the mouse on the canvas, e.g. by a hint of the design check
+		ComposerEventBus.addEventListener('objectSelected', (e) => this.#showFor(e.detail.target));
 
+	}
+
+	#showFor(object)
+	{
+		this.deactivateAllProperties();
+		if (object)
+			this.activateCurrent(object);
 	}
 
 	activateCurrent(object)

@@ -18,6 +18,8 @@
 */
 'use strict';
 
+import {ComposerEventBus} from "../Utils/ComposerEventBus.js";
+
 /**
  * Runs the design check a moment after every change and shows the hints: as a list in the toolbar, which selects
  * the element of a hint, and as a mark at the element on the canvas.
@@ -90,6 +92,7 @@ export class DesignCheckController
 			{
 				this.#fabricWrapper.setActiveObject(hint.object);
 				this.#fabricWrapper.renderAll();
+				ComposerEventBus.dispatchEvent(new CustomEvent("objectSelected", {detail: {target: hint.object}}));
 			});
 		}
 

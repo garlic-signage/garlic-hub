@@ -660,6 +660,63 @@ class TemplateComposerTest extends BrowserTestCase
 		static::assertEqualsWithDelta(280, (float) $clip['radius'] * (float) $clip['scaleX'] * (float) $image['scaleX'], 1);
 	}
 
+	/**
+	 * Moved near the left edge of the template, the rectangle snaps to it.
+	 */
+	public function testAnObjectSnapsToTheEdgeOfTheTemplate(): void
+	{
+		$this->createTemplate(self::TWO_RECTS);
+		$this->login('admin');
+		$this->openComposer();
+
+		// the red one 95 to the left: 5 from the edge
+		$this->clickCanvas(150, 150);
+		$this->dragCanvas(150, 150, 55, 150);
+		$red = $this->save()['objects'][0];
+
+		$this->assertNoErrors();
+		static::assertSame(0.0, (float) $red['left']);
+		static::assertEqualsWithDelta(100, (float) $red['top'], 2);
+	}
+
+	/**
+	 * The right edge of an image changes its frame: the picture fills it, cut in the middle, not distorted.
+	 */
+	public function testTheEdgeOfAnImageChangesItsFrameWithoutDistortion(): void
+	{
+		$this->openMenuWithPicture();
+
+		$this->clickCanvas(1500, 540);
+		$this->dragCanvas(1800, 540, 1600, 540);
+		$image = self::objectsOfType($this->save(), 'image')[0];
+
+		$this->assertNoErrors();
+		[$width, $height] = self::displaySize($image);
+		static::assertEqualsWithDelta(400, $width, 3);
+		static::assertEqualsWithDelta(840, $height, 1);
+		static::assertEqualsWithDelta(1200, (float) $image['left'], 1);
+		static::assertEqualsWithDelta((float) $image['scaleX'], (float) $image['scaleY'], 0.0001, 'The picture is distorted.');
+	}
+
+	/**
+	 * A click on a hint of the design check selects the element and shows its properties.
+	 */
+	public function testAHintOfTheDesignCheckShowsThePropertiesOfTheElement(): void
+	{
+		$this->createTemplate('{"objects":[{"type":"textbox","left":100,"top":100,"width":800,"text":"Klein","fontFamily":"Arial","fontSize":30,"fill":"#000000","styles":{}}],'
+			. '"viewport":{"width":1920,"height":1080,"scale":100}}');
+		$this->login('admin');
+		$this->openComposer();
+		static::assertSame(1, $this->designHints());
+
+		$this->click('#designCheckButton');
+		$this->click('#designCheckHints .design-check-element');
+
+		$this->waitForVisible('#fontSize');
+		static::assertSame('30', $this->client()->getWebDriver()->findElement(\Facebook\WebDriver\WebDriverBy::id('fontSize'))->getAttribute('value'));
+		$this->assertNoErrors();
+	}
+
 	public function testEscapeCancelsTheCrop(): void
 	{
 		$this->openMenuWithPicture();

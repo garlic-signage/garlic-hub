@@ -18,15 +18,20 @@
 */
 'use strict';
 
+import {TemplateGuidelines} from "../Utils/TemplateGuidelines.js";
+
 export class SnapService
 {
 	#fabricWrapper;
 	#gridSize = 10;
 	#isGridEnabled = false;
+	/** the guidelines are off while the grid is on: both would pull the object */
+	#guidelines = null;
 
 	constructor(fabricWrapper)
 	{
 		this.#fabricWrapper = fabricWrapper;
+		this.#guidelines    = new TemplateGuidelines(fabricWrapper.fabricCanvas);
 	}
 
 	get isGridEnabled()
@@ -38,11 +43,14 @@ export class SnapService
 	{
 		this.#gridSize = gridSize;
 		this.#isGridEnabled = true;
+		this.#guidelines?.dispose();
+		this.#guidelines = null;
 	}
 
 	disable()
 	{
 		this.#isGridEnabled = false;
+		this.#guidelines ??= new TemplateGuidelines(this.#fabricWrapper.fabricCanvas);
 	}
 
 	getCanvasvaluesForGrid()

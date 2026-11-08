@@ -19,6 +19,7 @@
 
 // first: the defaults of fabric.js before an object is made
 import "../../core/canvas/fabricDefaults.js";
+import "./Utils/templateFabricDefaults.js";
 import {TemplatesService} from "../TemplatesService.js";
 import {FetchClient}      from "../../core/FetchClient.js";
 import {WaitOverlay}      from "../../core/WaitOverlay.js";

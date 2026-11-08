@@ -78,6 +78,8 @@ export class CropService
 		this.#onMoving = (event) => CropService.#panInFrame(event);
 		this.#onRender = (event) => this.#renderGhost(image, event.ctx);
 		image.set({padding: 0, lockMovementX: false, lockMovementY: false});
+		// not saved: toObject() takes only the properties of the template
+		image.isCropping = true;
 		image.controls = fabricExtensions.createImageCroppingControls();
 		image.on("moving", this.#onMoving);
 		image.on("before:render", this.#onRender);
@@ -124,6 +126,7 @@ export class CropService
 		image.off("moving", this.#onMoving);
 		image.off("before:render", this.#onRender);
 		image.controls = this.#saved.controls;
+		image.isCropping = false;
 		image.set({padding: this.#saved.padding, lockMovementX: this.#saved.lockMovementX, lockMovementY: this.#saved.lockMovementY});
 		image.setCoords();
 		this.#image = null;
