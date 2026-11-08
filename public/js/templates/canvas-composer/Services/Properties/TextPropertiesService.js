@@ -51,7 +51,7 @@ export class TextPropertiesService extends BasePropertyService
 	setTextFontSize(fontSize)
 	{
 		const object = this._getActiveObject();
-		object.setSelectionStyles({ fontSize: fontSize }, object.selectionStart === object.selectionEnd ? 0 : object.selectionStart, object.selectionStart === object.selectionEnd ? object.text.length : object.selectionEnd)
+		this._setTextStyle(object, "fontSize", fontSize);
 		this._updateCanvas(object);
 	}
 

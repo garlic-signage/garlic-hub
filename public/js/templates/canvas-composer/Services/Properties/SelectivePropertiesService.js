@@ -43,7 +43,7 @@ export class SelectivePropertiesService extends BasePropertyService
 		const object = this._getActiveObject();
 		if (object.type === "i-text" || object.type === "text" || object.type === "textbox")
 		{
-			object.setSelectionStyles({ fill: color }, object.selectionStart === object.selectionEnd ? 0 : object.selectionStart, object.selectionStart === object.selectionEnd ? object.text.length : object.selectionEnd)
+			this._setTextStyle(object, "fill", color);
 		}
 		else
 		{

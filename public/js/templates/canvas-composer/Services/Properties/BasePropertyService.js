@@ -47,6 +47,21 @@ export class BasePropertyService
 		return object;
 	}
 
+	/**
+	 * A style of a text: without a selection for the whole text on the object itself, so that its property is the
+	 * real value, with a selection only for the selected characters.
+	 */
+	_setTextStyle(object, property, value)
+	{
+		if (object.selectionStart === object.selectionEnd)
+		{
+			object.removeStyle(property);
+			object.set(property, value);
+		}
+		else
+			object.setSelectionStyles({[property]: value}, object.selectionStart, object.selectionEnd);
+	}
+
 	_updateCanvas(object)
 	{
 		this.#fabricWrapper.fireObjectModified(object);
