@@ -20,6 +20,10 @@
 
 // The designs of the bundled templates in resources/templates/fabric. Each one is built in landscape and portrait.
 // Only fonts of the composer may be used, they are listed here with their path below public/fonts.
+// The designs keep the rules of the design check of the composer: a font of at least 1/30 of the shorter side (36 px),
+// a contrast of 4.5:1, from 1/20 of the shorter side (54 px) 3:1. A text box is not wider than its text needs when
+// something else lies behind it, because the check measures the whole box. All texts together can be read within the
+// default duration of a playlist item (15 s): two seconds to look and three words a second, so at most 39 words.
 const FONTS = {
 	'BebasNeue-Regular':      'Bebas_Neue/BebasNeue-Regular.ttf',
 	'DejaVuSans':             'Dejavu_Sans/DejaVuSans.ttf',
@@ -80,7 +84,7 @@ function grad(w, h, stops, dir = 'v')
 
 function imagePlaceholder(l, t, w, h, color, label = 'Your image', fill = 'rgba(255,255,255,0.08)')
 {
-	const size = Math.round(Math.max(30, Math.min(w, h) / 12));
+	const size = Math.round(Math.max(36, Math.min(w, h) / 12));
 	return [
 		rect(l, t, w, h, fill, {stroke: color, strokeWidth: 4, strokeDashArray: [20, 14], rx: 16, ry: 16}),
 		text(label, l, t + h / 2, w, size, 'Poppins-Regular', color, {align: 'center', anchor: 'middle'})
@@ -107,8 +111,8 @@ const TEMPLATES = [
 			pad, below(h1, 50), tw, P ? 46 : 46, 'Poppins-Regular', '#C9D6E8', {lh: 1.4});
 		o.push(label, bar, h1, body,
 			rect(pad, H - (P ? 220 : 160), W - 2 * pad, 2, 'rgba(255,255,255,0.25)'),
-			text('Company Name', pad, H - (P ? 180 : 120), (W - 2 * pad) / 2, 34, 'Poppins-Bold', '#FFFFFF'),
-			text('November 2026', W / 2, H - (P ? 180 : 120), (W - 2 * pad) / 2, 34, 'Poppins-Regular', '#C9D6E8', {align: 'right'}));
+			text('Company Name', pad, H - (P ? 180 : 120), (W - 2 * pad) / 2, 36, 'Poppins-Bold', '#FFFFFF'),
+			text('November 2026', W / 2, H - (P ? 180 : 120), (W - 2 * pad) / 2, 36, 'Poppins-Regular', '#C9D6E8', {align: 'right'}));
 		return o;
 	}
 },
@@ -130,7 +134,7 @@ const TEMPLATES = [
 		const sub  = text('to Company Name', pad, below(h1, 20), tw, 60, 'Poppins-Regular', '#3D405B', {align});
 		const bar  = rect(P ? (W - 160) / 2 : pad, below(sub, 50), 160, 6, '#E07A5F');
 		const body = text('Today we are delighted to welcome\nJane Doe and the team of Example Ltd.', pad, below(bar, 50), tw, 44,
-			'Poppins-Regular', '#6B6F80', {align, lh: 1.4});
+			'Poppins-Regular', '#5C6070', {align, lh: 1.4});
 		o.push(h1, sub, bar, body);
 		return o;
 	}
@@ -147,7 +151,7 @@ const TEMPLATES = [
 		];
 		const listX = pad, listW = P ? W - 2 * pad : 960;
 		const title = text("Today's Menu", listX, P ? 110 : 90, listW, P ? 120 : 110, 'PlayfairDisplay', '#F2E8CF', {align: P ? 'center' : 'left'});
-		const sub   = text('FRESH FROM OUR KITCHEN', listX, below(title, 10), listW, 32, 'Poppins-Regular', '#C8B88A', {cs: 300, align: P ? 'center' : 'left'});
+		const sub   = text('FRESH FROM OUR KITCHEN', listX, below(title, 10), listW, 36, 'Poppins-Regular', '#C8B88A', {cs: 300, align: P ? 'center' : 'left'});
 		o.push(title, sub);
 		if (P)
 			o.push(...imagePlaceholder(pad, below(sub, 60), W - 2 * pad, 520, '#C8B88A', 'Your image', 'rgba(242,232,207,0.05)'));
@@ -156,9 +160,9 @@ const TEMPLATES = [
 
 		const dishes = [
 			['Tomato Soup', 'with basil and croutons', '4.50'],
-			['Chicken Curry', 'basmati rice, mango chutney', '9.80'],
-			['Vegetable Lasagna', 'spinach, ricotta, tomato sauce', '8.90'],
-			['Caesar Salad', 'romaine, parmesan, croutons', '7.50'],
+			['Chicken Curry', 'with basmati rice', '9.80'],
+			['Vegetable Lasagna', 'spinach and ricotta', '8.90'],
+			['Caesar Salad', 'with parmesan', '7.50'],
 			['Apple Strudel', 'with vanilla sauce', '3.90'],
 		];
 		const start = P ? 1000 : 330, rowH = P ? 160 : 132;
@@ -166,7 +170,7 @@ const TEMPLATES = [
 			const y = start + i * rowH;
 			o.push(
 				text(name, listX, y, listW - 220, 46, 'Poppins-Bold', '#F2E8CF'),
-				text(desc, listX, y + 60, listW - 220, 30, 'Poppins-Regular', '#A9B3A6'),
+				text(desc, listX, y + 60, listW - 220, 36, 'Poppins-Regular', '#A9B3A6'),
 				text(price, listX + listW - 220, y, 220, 46, 'Poppins-Bold', '#E9C46A', {align: 'right'}),
 			);
 			if (i < dishes.length - 1)
@@ -233,7 +237,7 @@ const TEMPLATES = [
 			text('Time\nPlace\nDress code', ix, iy, lw, 44, 'Poppins-Bold', '#C77DFF', {lh: 1.6}),
 			text('6:00 pm – 11:00 pm\nRooftop terrace, 5th floor\nCasual', ix + lw, iy, W - ix - lw - pad, 44, 'Poppins-Regular', '#FFFFFF', {lh: 1.6}),
 			rect(pad, H - (P ? 260 : 190), W - 2 * pad, 2, 'rgba(255,255,255,0.2)'),
-			text('Please register at the reception by November 20.', pad, H - (P ? 220 : 150), W - 2 * pad, P ? 34 : 38, 'Poppins-Regular', '#E0AAFF', {align}),
+			text('Please register at the reception by November 20.', pad, H - (P ? 220 : 150), W - 2 * pad, 38, 'Poppins-Regular', '#E0AAFF', {align}),
 		);
 		return o;
 	}
@@ -249,16 +253,16 @@ const TEMPLATES = [
 		let tx, ty, tw;
 		if (P)
 		{
-			o.push(rect(0, 0, W, 620, '#2A9D8F'), circ(W - 80, 80, 220, 'rgba(255,255,255,0.10)'));
+			o.push(rect(0, 0, W, 620, '#1F766C'), circ(W - 80, 80, 220, 'rgba(255,255,255,0.10)'));
 			const h1 = text('Opening Hours', pad, 300, W - 2 * pad, 110, 'Poppins-Bold', '#FFFFFF', {anchor: 'middle', lh: 1.05});
-			o.push(h1, text('We look forward to your visit', pad, below(h1, 30), W - 2 * pad, 44, 'Poppins-Regular', '#D8F3EF'));
+			o.push(h1, text('We look forward to your visit', pad, below(h1, 30), W - 2 * pad, 44, 'Poppins-Regular', '#E3F6F2'));
 			tx = pad; ty = 780; tw = W - 2 * pad;
 		}
 		else
 		{
-			o.push(rect(0, 0, 700, H, '#2A9D8F'), circ(80, H - 80, 260, 'rgba(255,255,255,0.10)'));
+			o.push(rect(0, 0, 700, H, '#1F766C'), circ(80, H - 80, 260, 'rgba(255,255,255,0.10)'));
 			const h1 = text('Opening\nHours', pad, H / 2 - 60, 700 - 2 * pad, 120, 'Poppins-Bold', '#FFFFFF', {anchor: 'middle', lh: 1.05});
-			o.push(h1, text('We look forward to your visit', pad, below(h1, 30), 700 - 2 * pad, 40, 'Poppins-Regular', '#D8F3EF', {lh: 1.3}));
+			o.push(h1, text('We look forward to your visit', pad, below(h1, 30), 700 - 2 * pad, 40, 'Poppins-Regular', '#E3F6F2', {lh: 1.3}));
 			tx = 840; ty = 150; tw = W - tx - pad;
 		}
 		const size = P ? 58 : 52, lh = P ? 1.95 : 1.6;
@@ -291,17 +295,17 @@ const TEMPLATES = [
 		const cX = P ? pad : 820, cY = P ? 900 : 160, cW = P ? W - 2 * pad : W - 820 - pad, cH = P ? 880 : 760;
 		o.push(rect(cX, cY, cW, cH, '#FFFFFF', {rx: 32, ry: 32}));
 		const ix = cX + 70, iw = P ? cW - 140 : cW - 140 - 380;
-		const l1 = text('NETWORK', ix, cY + 90, iw, 32, 'Poppins-Bold', '#5C7C82', {cs: 200});
+		const l1 = text('NETWORK', ix, cY + 90, iw, 36, 'Poppins-Bold', '#4A6A70', {cs: 200});
 		const v1 = text('Guest-WiFi', ix, below(l1, 10), iw, P ? 64 : 56, 'RobotoMono', '#0F4C5C');
-		const l2 = text('PASSWORD', ix, below(v1, 60), iw, 32, 'Poppins-Bold', '#5C7C82', {cs: 200});
+		const l2 = text('PASSWORD', ix, below(v1, 60), iw, 36, 'Poppins-Bold', '#4A6A70', {cs: 200});
 		const v2 = text('welcome2026', ix, below(l2, 10), iw, P ? 64 : 56, 'RobotoMono', '#0F4C5C');
 		o.push(l1, v1, l2, v2);
 		if (P)
-			o.push(...imagePlaceholder((W - 340) / 2, below(v2, 70), 340, 340, '#0A9396', 'QR code', 'rgba(10,147,150,0.05)'));
+			o.push(...imagePlaceholder((W - 340) / 2, below(v2, 70), 340, 340, '#0F4C5C', 'QR code', 'rgba(10,147,150,0.05)'));
 		else
 		{
-			o.push(...imagePlaceholder(cX + cW - 70 - 340, cY + 90, 340, 340, '#0A9396', 'QR code', 'rgba(10,147,150,0.05)'));
-			o.push(text('Scan the code or enter the password manually.', ix, cY + cH - 140, cW - 140, 36, 'Poppins-Regular', '#5C7C82'));
+			o.push(...imagePlaceholder(cX + cW - 70 - 340, cY + 90, 340, 340, '#0F4C5C', 'QR code', 'rgba(10,147,150,0.05)'));
+			o.push(text('Scan the code or enter the password manually.', ix, cY + cH - 140, cW - 140, 36, 'Poppins-Regular', '#4A6A70'));
 		}
 		return o;
 	}
@@ -342,17 +346,17 @@ const TEMPLATES = [
 	{
 		const P = H > W, pad = P ? 100 : 140;
 		const o = [bg(W, H, '#EEF2FF'),
-			P ? rect(0, 0, W, 760, '#4361EE') : rect(0, 0, 820, H, '#4361EE'),
+			P ? rect(0, 0, W, 760, '#3651D4') : rect(0, 0, 820, H, '#3651D4'),
 			circ(P ? 60 : 80, P ? 80 : H - 60, 200, 'rgba(255,255,255,0.10)')];
 		const cx = P ? W / 2 : 820, cy = P ? 760 : H / 2, r = P ? 280 : 300;
 		o.push(circ(cx, cy, r, '#FFFFFF'),
-			circ(cx, cy, r - 20, '#E4E9FF', {stroke: '#4361EE', strokeWidth: 4, strokeDashArray: [20, 14]}),
-			text('Photo', cx - r, cy, 2 * r, 48, 'Poppins-Regular', '#4361EE', {align: 'center', anchor: 'middle'}));
+			circ(cx, cy, r - 20, '#E4E9FF', {stroke: '#3651D4', strokeWidth: 4, strokeDashArray: [20, 14]}),
+			text('Photo', cx - r, cy, 2 * r, 48, 'Poppins-Regular', '#3651D4', {align: 'center', anchor: 'middle'}));
 		const tx = P ? pad : 1200, tw = P ? W - 2 * pad : W - 1200 - pad, align = P ? 'center' : 'left';
-		const label = text('PLEASE WELCOME', tx, P ? 1100 : 300, tw, 38, 'Poppins-Bold', '#4361EE', {cs: 300, align});
+		const label = text('PLEASE WELCOME', tx, P ? 1100 : 300, tw, 38, 'Poppins-Bold', '#3651D4', {cs: 300, align});
 		const name  = text('Jane Doe', tx, below(label, 20), tw, 110, 'Poppins-Bold', '#1B1F3B', {align, lh: 1.05});
-		const role  = text('Marketing Manager', tx, below(name, 10), tw, 52, 'Poppins-Regular', '#4361EE', {align});
-		const bar   = rect(P ? (W - 120) / 2 : tx, below(role, 50), 120, 6, '#4361EE');
+		const role  = text('Marketing Manager', tx, below(name, 10), tw, 52, 'Poppins-Regular', '#3651D4', {align});
+		const bar   = rect(P ? (W - 120) / 2 : tx, below(role, 50), 120, 6, '#3651D4');
 		const body  = text('Jane joins our marketing team on November 1. Say hello and give a warm welcome!', tx, below(bar, 50), tw, 42,
 			'Poppins-Regular', '#4A4E69', {align, lh: 1.45});
 		o.push(label, name, role, bar, body);
@@ -397,10 +401,10 @@ const TEMPLATES = [
 		const h1 = text('Directions', pad, P ? 140 : 90, W - 2 * pad, P ? 110 : 90, 'Poppins-Bold', '#FFFFFF');
 		o.push(h1, rect(pad, below(h1, 20), 120, 6, '#10B981'));
 		const rows = [
-			['→', '#10B981', 'Meeting Rooms', 'Floor 1 · Rooms 101–104'],
-			['←', '#3B82F6', 'Reception', 'Ground floor'],
-			['↑', '#F59E0B', 'Cafeteria', 'Floor 2 · open 11:30 – 14:00'],
-			['↓', '#EF4444', 'Parking', 'Level -1 · Visitors'],
+			['→', '#047857', 'Meeting Rooms', 'Floor 1 · Rooms 101–104'],
+			['←', '#2563EB', 'Reception', 'Ground floor'],
+			['↑', '#B45309', 'Cafeteria', 'Floor 2 · open 11:30 – 14:00'],
+			['↓', '#DC2626', 'Parking', 'Level -1 · Visitors'],
 		];
 		const start = P ? 500 : 270, rowH = P ? 350 : 190, box = P ? 220 : 150;
 		rows.forEach(([arrow, color, dest, info], i) => {
@@ -409,7 +413,7 @@ const TEMPLATES = [
 				rect(pad, y, box, box, color, {rx: 24, ry: 24}),
 				text(arrow, pad, cyRow, box, P ? 150 : 110, 'DejaVuSans', '#FFFFFF', {align: 'center', anchor: 'middle', lh: 1}),
 				text(dest, pad + box + 50, cyRow - 6, W - 2 * pad - box - 50, P ? 70 : 60, 'Poppins-Bold', '#FFFFFF', {anchor: 'bottom'}),
-				text(info, pad + box + 50, cyRow + 6, W - 2 * pad - box - 50, P ? 40 : 34, 'Poppins-Regular', '#9CA3AF'),
+				text(info, pad + box + 50, cyRow + 6, W - 2 * pad - box - 50, 40, 'Poppins-Regular', '#9CA3AF'),
 			);
 			if (i < rows.length - 1)
 				o.push(rect(pad, y + box + (rowH - box) / 2, W - 2 * pad, 2, 'rgba(255,255,255,0.10)'));
@@ -439,7 +443,7 @@ const TEMPLATES = [
 
 		const tri = P ? 520 : 480, tx = P ? (W - tri) / 2 : pad, ty = P ? 260 : (H - tri * 0.88) / 2;
 		o.push(new fabric.Triangle({left: tx, top: ty, width: tri, height: tri * 0.88, fill: '#111111', strokeWidth: 0}),
-			text('!', tx, ty + tri * 0.56, tri, tri * 0.6, 'BebasNeue-Regular', '#FFC300', {align: 'center', anchor: 'middle', lh: 1}));
+			text('!', tx + tri * 0.35, ty + tri * 0.56, tri * 0.3, tri * 0.6, 'BebasNeue-Regular', '#FFC300', {align: 'center', anchor: 'middle', lh: 1}));
 		const x = P ? pad : tx + tri + 100, w = P ? W - 2 * pad : W - x - pad, align = P ? 'center' : 'left';
 		const label = text('SAFETY NOTICE', x, P ? ty + tri * 0.88 + 100 : 260, w, 40, 'Poppins-Bold', '#111111', {cs: 300, align});
 		const h1    = text('Protective Equipment Required', x, below(label, 20), w, P ? 96 : 92, 'Poppins-Bold', '#111111', {align, lh: 1.08});

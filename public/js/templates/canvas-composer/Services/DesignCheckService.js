@@ -21,7 +21,7 @@
 /**
  * Three rules for screens which the composer can measure, as hints, nothing is blocked:
  * - the contrast of a text to what is behind it (WCAG: 4.5:1, 3:1 for large text),
- * - the font size against the height of the template (seen from a distance),
+ * - the font size against the shorter side of the template (seen from a distance), a turned screen has the same pixels,
  * - the time to read all texts against the duration of the item.
  * All sizes are in the units of the template, without the zoom of the composer.
  */
@@ -29,7 +29,7 @@ export class DesignCheckService
 {
 	static MIN_CONTRAST       = 4.5;
 	static MIN_CONTRAST_LARGE = 3;
-	/** a text of at least this part of the height counts as large */
+	/** a text of at least this part of the shorter side counts as large */
 	static LARGE_FONT_SHARE   = 1 / 20;
 	/** smaller is hard to read from a few meters */
 	static MIN_FONT_SHARE     = 1 / 30;
@@ -54,16 +54,17 @@ export class DesignCheckService
 	check()
 	{
 		const hints = [];
+		const side  = Math.min(this.#viewportService.width, this.#viewportService.height);
 		const texts = this.#fabricWrapper.getObjects().filter(object => DesignCheckService.isText(object) && object.visible !== false && object.text.trim() !== "");
 		for (const text of texts)
 		{
 			const fontSize = Math.round(text.fontSize * (text.scaleY ?? 1));
-			const minSize  = Math.ceil(this.#viewportService.height * DesignCheckService.MIN_FONT_SHARE);
+			const minSize  = Math.ceil(side * DesignCheckService.MIN_FONT_SHARE);
 			if (fontSize < minSize)
 				hints.push({object: text, key: "design_small_font", values: {size: fontSize, min: minSize}});
 
 			const ratio       = this.#contrastRatio(text);
-			const minContrast = fontSize >= this.#viewportService.height * DesignCheckService.LARGE_FONT_SHARE ? DesignCheckService.MIN_CONTRAST_LARGE : DesignCheckService.MIN_CONTRAST;
+			const minContrast = fontSize >= side * DesignCheckService.LARGE_FONT_SHARE ? DesignCheckService.MIN_CONTRAST_LARGE : DesignCheckService.MIN_CONTRAST;
 			if (ratio !== null && ratio < minContrast)
 				hints.push({object: text, key: "design_low_contrast", values: {ratio: ratio.toFixed(1), min: minContrast}});
 		}
