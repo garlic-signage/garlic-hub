@@ -560,6 +560,153 @@ class TemplateComposerTest extends BrowserTestCase
 	}
 
 	/**
+	 * The picture "Strand" in the placeholder of the menu (600 x 840 at 1200, 120): 400 x 200 scaled by 4.2, the
+	 * middle 142.86 x 200 is shown from cropX 128.57.
+	 */
+	private function openMenuWithPicture(): void
+	{
+		$this->createTemplate(self::packContent('menu_landscape'));
+		$this->createPicture();
+		$this->login('admin');
+		$this->openComposer();
+		$this->replaceImageAt(1500, 540);
+	}
+
+	/**
+	 * Drags with the left mouse button on the canvas, in units of the template.
+	 */
+	private function dragCanvas(float $fromX, float $fromY, float $toX, float $toY): void
+	{
+		[$x1, $y1] = $this->canvasOffset($fromX, $fromY);
+		[$x2, $y2] = $this->canvasOffset($toX, $toY);
+		$this->actions()->moveToElement($this->upperCanvas(), $x1, $y1)->clickAndHold()
+			->moveByOffset(intdiv($x2 - $x1, 2), intdiv($y2 - $y1, 2))
+			->moveByOffset($x2 - $x1 - intdiv($x2 - $x1, 2), $y2 - $y1 - intdiv($y2 - $y1, 2))
+			->release()->perform();
+	}
+
+	private function pressKey(string $key): void
+	{
+		$this->actions()->sendKeys(null, $key)->perform();
+	}
+
+	/**
+	 * In the crop mode the picture moves in its frame: the frame stays, the cut changes.
+	 */
+	public function testAPictureIsMovedInItsFrame(): void
+	{
+		$this->openMenuWithPicture();
+
+		$this->contextClickCanvas(1500, 540);
+		$this->click('#cropImage');
+		// to the left: more of the right part of the picture
+		$this->dragCanvas(1500, 540, 1440, 540);
+		$this->pressKey(\Facebook\WebDriver\WebDriverKeys::ENTER);
+		$image = self::objectsOfType($this->save(), 'image')[0];
+
+		$this->assertNoErrors();
+		static::assertEqualsWithDelta(1200, (float) $image['left'], 1);
+		static::assertEqualsWithDelta(120, (float) $image['top'], 1);
+		[$width, $height] = self::displaySize($image);
+		static::assertEqualsWithDelta(600, $width, 1);
+		static::assertEqualsWithDelta(840, $height, 1);
+		static::assertEqualsWithDelta(128.57 + 60 / 4.2, (float) $image['cropX'], 2);
+		static::assertEqualsWithDelta(0, (float) $image['cropY'], 0.5);
+	}
+
+	/**
+	 * The picture can not leave its frame empty: dragged far, it stops at its edge.
+	 */
+	public function testAPictureStopsAtItsEdge(): void
+	{
+		$this->openMenuWithPicture();
+
+		$this->contextClickCanvas(1500, 540);
+		$this->click('#cropImage');
+		// 600 on the template are 143 of the picture, only 128 are left
+		$this->dragCanvas(1500, 540, 900, 540);
+		$this->pressKey(\Facebook\WebDriver\WebDriverKeys::ENTER);
+		$image = self::objectsOfType($this->save(), 'image')[0];
+
+		static::assertEqualsWithDelta(400 - 600 / 4.2, (float) $image['cropX'], 1);
+		static::assertEqualsWithDelta(1200, (float) $image['left'], 1);
+	}
+
+	/**
+	 * A corner of the whole picture zooms it in the frame; the round frame of "New colleague" keeps its size.
+	 * After the replace the picture is 1120 x 560 from 260, 260 behind the circle of 560 at 540, 260.
+	 */
+	public function testACornerZoomsThePictureAndTheCircleStays(): void
+	{
+		$this->createTemplate(self::packContent('new_colleague_landscape'));
+		$this->createPicture();
+		$this->login('admin');
+		$this->openComposer();
+		$this->replaceImageAt(820, 540);
+
+		$this->contextClickCanvas(820, 540);
+		$this->click('#cropImage');
+		// the anchor is the opposite corner 260, 260: (1520 - 260) / 400 = (890 - 260) / 200 = 3.15
+		$this->dragCanvas(1380, 820, 1520, 890);
+		$this->pressKey(\Facebook\WebDriver\WebDriverKeys::ENTER);
+		$image = self::objectsOfType($this->save(), 'image')[0];
+
+		$this->assertNoErrors();
+		static::assertEqualsWithDelta(3.15, (float) $image['scaleX'], 0.05);
+		[$width, $height] = self::displaySize($image);
+		static::assertEqualsWithDelta(560, $width, 2);
+		static::assertEqualsWithDelta(560, $height, 2);
+		$clip = $image['clipPath'];
+		static::assertEqualsWithDelta(280, (float) $clip['radius'] * (float) $clip['scaleX'] * (float) $image['scaleX'], 1);
+	}
+
+	public function testEscapeCancelsTheCrop(): void
+	{
+		$this->openMenuWithPicture();
+
+		$this->contextClickCanvas(1500, 540);
+		$this->click('#cropImage');
+		$this->dragCanvas(1500, 540, 1440, 540);
+		$this->pressKey(\Facebook\WebDriver\WebDriverKeys::ESCAPE);
+		$image = self::objectsOfType($this->save(), 'image')[0];
+
+		$this->assertNoErrors();
+		static::assertEqualsWithDelta(128.57, (float) $image['cropX'], 0.5);
+		static::assertEqualsWithDelta(1200, (float) $image['left'], 1);
+	}
+
+	/**
+	 * A double click starts the crop mode, the edge of the frame cuts it without changing the picture; undo takes
+	 * back the whole crop in one step.
+	 */
+	public function testAFrameIsCutAndTheCropIsOneStepOfTheHistory(): void
+	{
+		$this->openMenuWithPicture();
+
+		[$dx, $dy] = $this->canvasOffset(1500, 540);
+		$this->actions()->moveToElement($this->upperCanvas(), $dx, $dy)->doubleClick()->perform();
+		// the right edge 100 to the left, and the picture a little to the left
+		$this->dragCanvas(1800, 540, 1700, 540);
+		$this->dragCanvas(1450, 540, 1420, 540);
+		$this->pressKey(\Facebook\WebDriver\WebDriverKeys::ENTER);
+		$cut = self::objectsOfType($this->save(), 'image')[0];
+
+		[$width, $height] = self::displaySize($cut);
+		static::assertEqualsWithDelta(500, $width, 3);
+		static::assertEqualsWithDelta(840, $height, 1);
+		static::assertEqualsWithDelta(1200, (float) $cut['left'], 1);
+		static::assertEqualsWithDelta(4.2, (float) $cut['scaleX'], 0.01);
+
+		$this->click('#undo');
+		$undone = self::objectsOfType($this->save(), 'image')[0];
+		$this->assertNoErrors();
+		static::assertSame(self::MEDIA_ID, $undone['mediaId'], 'Undo went back further than the crop.');
+		[$width] = self::displaySize($undone);
+		static::assertEqualsWithDelta(600, $width, 1);
+		static::assertEqualsWithDelta(128.57, (float) $undone['cropX'], 0.5);
+	}
+
+	/**
 	 * A font size set without a selection belongs to the text itself: the design check sees it at once.
 	 * The text has no scale, like a content which was not saved by fabric.js.
 	 */

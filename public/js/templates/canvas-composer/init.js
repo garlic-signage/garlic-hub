@@ -69,6 +69,8 @@ import {TextCorrectionService} from "./Services/TextCorrectionService.js";
 import {DesignCheckService} from "./Services/DesignCheckService.js";
 import {DesignCheckController} from "./Controller/DesignCheckController.js";
 import {ImageSuggestionController} from "./Controller/ImageSuggestionController.js";
+import {CropService} from "./Services/CropService.js";
+import {CropController} from "./Controller/CropController.js";
 import {TransformService} from "./Services/TransformService.js";
 import {ComposerKeyboardController} from "./Controller/ComposerKeyboardController.js";
 import {ComposerKeyboardView} from "./Views/ComposerKeyboardView.js";
@@ -151,6 +153,7 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const textCorrectionService = new TextCorrectionService(fabricWrapper, templateService, waitOverlay, composerContext, viewportService);
 	const contextMenuController = new ContextMenuController(contextMenuView, contextMenuService, mediaDialogController, textCorrectionService);
 	new ImageSuggestionController(fabricWrapper, templateService, insertService, waitOverlay).init();
+	new CropController(new CropService(fabricWrapper), fabricWrapper).init();
 
 	const designCheckElement = document.getElementById("designCheck");
 	if (designCheckElement !== null)

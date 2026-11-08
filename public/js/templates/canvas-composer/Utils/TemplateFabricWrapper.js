@@ -20,6 +20,7 @@
 
 import {FabricWrapper} from "../../../core/canvas/FabricWrapper.js";
 import {CanvasHistory} from "./CanvasHistory.js";
+import {ComposerEventBus} from "./ComposerEventBus.js";
 
 /**
  * The canvas of the template composer: a new size counts as a change, the history of fabric-history,
@@ -50,19 +51,34 @@ export class TemplateFabricWrapper extends FabricWrapper
 		this.markChanged();
 	}
 
+	/**
+	 * beforeHistory: e.g. an image in the crop mode keeps its cut first.
+	 */
 	async undo()
 	{
+		ComposerEventBus.dispatchEvent(new CustomEvent("beforeHistory"));
 		await this.#history.undo();
 	}
 
 	async redo()
 	{
+		ComposerEventBus.dispatchEvent(new CustomEvent("beforeHistory"));
 		await this.#history.redo();
 	}
 
 	historySaveAction()
 	{
 		this.#history.save();
+	}
+
+	pauseHistory()
+	{
+		this.#history.pause();
+	}
+
+	resumeHistory()
+	{
+		this.#history.resume();
 	}
 
 	/**

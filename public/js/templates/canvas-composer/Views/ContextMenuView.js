@@ -24,6 +24,7 @@ export class ContextMenuView
 
 	// menu points
 	#replaceImage = document.getElementById("replaceImage");
+	#cropImage = document.getElementById("cropImage");
 	// only with an LLM of the user
 	#suggestImage = document.getElementById("suggestImage");
 	#duplicate = document.getElementById("duplicate");
@@ -106,6 +107,16 @@ export class ContextMenuView
 	get replaceImage()
 	{
 		return this.#replaceImage;
+	}
+
+	get cropImage()
+	{
+		return this.#cropImage;
+	}
+
+	showCropImage(isShown)
+	{
+		this.#cropImage.style.display = isShown ? "block" : "none";
 	}
 
 	get suggestImage()

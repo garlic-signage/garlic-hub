@@ -109,6 +109,7 @@ readonly class TemplatePreparer
 			'LANG_FONT_SIZE' => $this->translator->translate('font_size', 'templates'),
 			'LANG_DELETE' => $this->translator->translate('delete', 'main'),
 			'LANG_REPLACE_IMAGE' => $this->translator->translate('replace_image', 'templates'),
+			'LANG_CROP_IMAGE' => $this->translator->translate('crop_image', 'templates'),
 			'LANG_INSERT' => $this->translator->translate('insert', 'main'),
 			'LANG_HISTORY' => $this->translator->translate('history', 'main'),
 			'LANG_OUTLINE' => $this->translator->translate('outline', 'templates'),
@@ -213,6 +214,7 @@ readonly class TemplatePreparer
 				],
 				'footer_scripts' => [
 					'/js/external/fabric.min.js',
+					'/js/external/fabric-extensions.min.js',
 					'/js/templates/canvas-composer/Fonts/fonts_preview.js',
 					'/js/templates/canvas-composer/Fonts/fontfaceobserver.js'
 				],

@@ -32,6 +32,7 @@ export class CanvasHistory
 	#redo       = [];
 	#nextState  = "";
 	#processing = false;
+	#paused     = false;
 
 	/**
 	 * @param {fabric.Canvas} canvas
@@ -55,9 +56,22 @@ export class CanvasHistory
 		this.#nextState = this.#state();
 	}
 
+	/**
+	 * No steps until resume(), e.g. while an image is cropped: the cut becomes one step at the end.
+	 */
+	pause()
+	{
+		this.#paused = true;
+	}
+
+	resume()
+	{
+		this.#paused = false;
+	}
+
 	save()
 	{
-		if (this.#processing)
+		if (this.#processing || this.#paused)
 			return;
 
 		this.#undo.push(this.#nextState);

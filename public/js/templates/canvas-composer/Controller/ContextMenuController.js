@@ -80,6 +80,7 @@ export class ContextMenuController
 				this.#contextMenuView.showReplaceImage();
 
 			this.#contextMenuView.showCorrectText(this.#textCorrectionService.isText(object));
+			this.#contextMenuView.showCropImage(object instanceof fabric.FabricImage);
 
 			const mouseup = e.detail.e;
 			this.#contextMenuView.show(mouseup.clientX, mouseup.clientY);
@@ -88,6 +89,11 @@ export class ContextMenuController
 		this.#contextMenuView.replaceImage.addEventListener("click", () =>
 		{
 			ComposerEventBus.dispatchEvent(new CustomEvent("openMediaDialogForReplace"));
+			this.#contextMenuView.hide();
+		});
+		this.#contextMenuView.cropImage.addEventListener("click", () =>
+		{
+			ComposerEventBus.dispatchEvent(new CustomEvent("cropImage"));
 			this.#contextMenuView.hide();
 		});
 		this.#contextMenuView.suggestImage?.addEventListener("click", () =>
