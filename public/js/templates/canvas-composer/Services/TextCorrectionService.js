@@ -109,7 +109,8 @@ export class TextCorrectionService
 
 			// the styles of single characters belong to positions in the old text
 			object.set({text: result.text, styles: {}});
-			this.#fabricWrapper.historySaveAction();
+			// saves the step of the history and runs the design check again
+			this.#fabricWrapper.fireObjectModified(object);
 			this.#fabricWrapper.renderAll();
 			new FlashMessageHandler().showSuccess(this.#composerContext.getLangByKey(successKey));
 		}
