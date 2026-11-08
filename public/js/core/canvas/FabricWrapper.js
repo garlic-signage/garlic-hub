@@ -42,12 +42,12 @@ export class FabricWrapper
 
 	setWidth(width)
 	{
-		this.#fabricCanvas.setWidth(width);
+		this.#fabricCanvas.setDimensions({width: width});
 	}
 
 	setHeight(height)
 	{
-		this.#fabricCanvas.setHeight(height);
+		this.#fabricCanvas.setDimensions({height: height});
 	}
 
 	getWidth()
@@ -133,6 +133,48 @@ export class FabricWrapper
 		return this.#fabricCanvas.discardActiveObject();
 	}
 
+	/**
+	 * The order of the objects: the canvas owns it since fabric.js 6.
+	 */
+	sendToBack(object)
+	{
+		this.#fabricCanvas.sendObjectToBack(object);
+	}
+
+	sendBackwards(object)
+	{
+		this.#fabricCanvas.sendObjectBackwards(object);
+	}
+
+	bringForward(object)
+	{
+		this.#fabricCanvas.bringObjectForward(object);
+	}
+
+	bringToFront(object)
+	{
+		this.#fabricCanvas.bringObjectToFront(object);
+	}
+
+	/**
+	 * The bounding box of an object on the canvas element, with the zoom and the position of the view. fabric.js
+	 * gives it in the units of the template.
+	 *
+	 * @return {{left: number, top: number, width: number, height: number}}
+	 */
+	getViewportBoundingRect(object)
+	{
+		const rect = object.getBoundingRect();
+		const vpt  = this.#fabricCanvas.viewportTransform;
+
+		return {
+			left: rect.left * vpt[0] + vpt[4],
+			top: rect.top * vpt[3] + vpt[5],
+			width: rect.width * vpt[0],
+			height: rect.height * vpt[3]
+		};
+	}
+
 	setZoom(factor)
 	{
 		this.#fabricCanvas.setZoom(factor);
@@ -165,7 +207,7 @@ export class FabricWrapper
 
 	getContext()
 	{
-		return this.#fabricCanvas.getContext("2d");
+		return this.#fabricCanvas.getContext();
 	}
 
 	/**
@@ -213,13 +255,15 @@ export class FabricWrapper
 
 	#initMouseEvents()
 	{
+		// the button of the browser: 0 left, 2 right
 		this.#fabricCanvas.on('mouse:up', (options) => {
-			if (options.button === 1)
+			const button = options.e?.button ?? 0;
+			if (button === 0)
 			{
 				ComposerEventBus.dispatchEvent(new CustomEvent('mouseLeftUp', { detail: options }));
 				this.#isObjectMoving = false;
 			}
-			else if (options.button === 3)
+			else if (button === 2)
 			{
 				ComposerEventBus.dispatchEvent(new CustomEvent('mouseRightUp', { detail: options }));
 			}

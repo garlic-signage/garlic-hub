@@ -136,21 +136,21 @@ export class ZoneService
 
 	sendToBack()
 	{
-		this.#fabricWrapper.getActiveObject().sendToBack();
+		this.#fabricWrapper.sendToBack(this.#fabricWrapper.getActiveObject());
 	}
 
 	sendBackwards()
 	{
-		this.#fabricWrapper.getActiveObject().sendBackwards();
+		this.#fabricWrapper.sendBackwards(this.#fabricWrapper.getActiveObject());
 	}
 
 	bringForward()
 	{
-		this.#fabricWrapper.getActiveObject().bringForward();
+		this.#fabricWrapper.bringForward(this.#fabricWrapper.getActiveObject());
 	}
 
 	bringToFront()
 	{
-		this.#fabricWrapper.getActiveObject().bringToFront();
+		this.#fabricWrapper.bringToFront(this.#fabricWrapper.getActiveObject());
 	}
 }

@@ -114,7 +114,8 @@ export class GlobalPropertiesService extends BasePropertyService
 			}
 		}
 
-		const bound = object.getBoundingRect(true);
+		// in the units of the template
+		const bound = object.getBoundingRect();
 		const s = bound.height;
 		const a = bound.width;
 

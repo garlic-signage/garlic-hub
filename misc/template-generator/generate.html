@@ -11,11 +11,13 @@
 <script>
 	'use strict';
 
-	// the same properties as TemplateFabricWrapper.toTemplateJSON()
+	// the same properties as TemplateFabricWrapper.PROPERTIES
 	const PROPERTIES = ["mediaId", "fileName", "placeholder", "lockMovementX", "lockMovementY", "lockRotation", "lockScalingX", "lockScalingY"];
 	const FORMATS    = [['landscape', 1920, 1080], ['portrait', 1080, 1920]];
-	// like the composer, see TemplateFabricWrapper.js
-	fabric.Object.NUM_FRACTION_DIGITS = 6;
+	// the defaults of the composer, see public/js/core/canvas/fabricDefaults.js
+	fabric.FabricObject.ownDefaults.originX = 'left';
+	fabric.FabricObject.ownDefaults.originY = 'top';
+	fabric.config.configure({NUM_FRACTION_DIGITS: 6});
 
 	async function loadFonts()
 	{
@@ -30,8 +32,8 @@
 	// the image is rendered from the loaded JSON, so the JSON is checked the way the composer loads it
 	async function renderImage(json, width, height)
 	{
-		const canvas = new fabric.StaticCanvas(null, {width: width, height: height});
-		await new Promise(resolve => canvas.loadFromJSON(JSON.stringify(json), resolve));
+		const canvas = new fabric.StaticCanvas(undefined, {width: width, height: height});
+		await canvas.loadFromJSON(JSON.stringify(json));
 		canvas.backgroundColor = '#ffffff';
 		return canvas.toDataURL({format: 'jpeg', quality: 0.9});
 	}
@@ -68,10 +70,10 @@
 		{
 			for (const [orientation, width, height] of FORMATS)
 			{
-				const canvas = new fabric.StaticCanvas(null, {width: width, height: height});
+				const canvas = new fabric.StaticCanvas(undefined, {width: width, height: height});
 				template.build(width, height).forEach(object => canvas.add(object));
 
-				const json    = canvas.toJSON(PROPERTIES);
+				const json    = canvas.toObject(PROPERTIES);
 				json.viewport = {width: width, height: height, scale: 100};
 
 				result.push({

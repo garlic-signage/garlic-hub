@@ -27,16 +27,35 @@ export class GroupPropertiesService extends BasePropertyService
 		super(fabricWrapper);
 	}
 
-	toGroup(object)
+	/**
+	 * The selected objects become a group at the place of the topmost of them (fabric.js 6 has no toGroup()).
+	 */
+	toGroup(selection)
 	{
-		object.toGroup()
-		this._updateCanvas(object);
+		const canvas  = this.fabricWrapper.fabricCanvas;
+		const objects = selection.removeAll();
+		const index   = Math.max(...objects.map(object => canvas.getObjects().indexOf(object)));
+		canvas.discardActiveObject();
+		const group = new fabric.Group(objects);
+		canvas.remove(...objects);
+		canvas.insertAt(Math.min(index, canvas.getObjects().length), group);
+		canvas.setActiveObject(group);
+		this._updateCanvas(group);
 	}
 
-	toActiveSelection(object)
+	/**
+	 * The objects of the group take its place on the canvas and are selected (fabric.js 6 has no
+	 * toActiveSelection()).
+	 */
+	toActiveSelection(group)
 	{
-		object.toActiveSelection()
-		this._updateCanvas(object);
+		const canvas  = this.fabricWrapper.fabricCanvas;
+		const index   = canvas.getObjects().indexOf(group);
+		const objects = group.removeAll();
+		canvas.remove(group);
+		canvas.insertAt(index, ...objects);
+		canvas.setActiveObject(new fabric.ActiveSelection(objects, {canvas: canvas}));
+		this._updateCanvas(objects[0]);
 	}
 
 

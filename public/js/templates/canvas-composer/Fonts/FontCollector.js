@@ -29,37 +29,34 @@ export class FontCollector
 		this.#fontLoader = fontLoader;
 	}
 
+	/**
+	 * The font of a text and the fonts of its characters. The styles of the characters are stored as ranges since
+	 * fabric.js 6 ([{start, end, style}]), before per line and character ({line: {char: style}}).
+	 */
 	collectUsedFontsFromSelection(object)
 	{
-		if (object.fontFamily !== undefined && !this.used_fonts.includes(object.fontFamily))
-			this.used_fonts.push(object.fontFamily);
+		this.#addFont(object.fontFamily);
 
-		let styles_length =  Object.entries(object.styles).length;
-
-		for (let i = 0; i < styles_length; i++)
+		const styles = object.styles ?? {};
+		for (const entry of Object.values(styles))
 		{
-			if (object.styles[i] !== undefined &&
-				object.styles[i].style !== undefined &&
-				object.styles[i].style.fontFamily !== undefined &&
-				!this.used_fonts.includes(object.styles[i].style.fontFamily)
-			)
-			{
-				this.used_fonts.push(object.styles[i].style.fontFamily);
-			}
+			if (entry === null || typeof entry !== "object")
+				continue;
 
-			// probably for compatibility
-			let styles_inner_length =  Object.entries(object.styles[i]).length;
-			for (let j = 0; j < styles_inner_length; j++)
+			if (entry.style !== undefined)
+				this.#addFont(entry.style.fontFamily);
+			else
 			{
-				if (object.styles[i][j] !== undefined &&
-					object.styles[i][j].style !== undefined &&
-					object.styles[i][j].style.fontFamily !== undefined &&
-					!this.used_fonts.includes(object.styles[i][j].style.fontFamily))
-				{
-					this.used_fonts.push(object.styles[i][j].style.fontFamily);
-				}
+				for (const style of Object.values(entry))
+					this.#addFont(style?.fontFamily);
 			}
 		}
+	}
+
+	#addFont(fontFamily)
+	{
+		if (typeof fontFamily === "string" && fontFamily !== "" && !this.used_fonts.includes(fontFamily))
+			this.used_fonts.push(fontFamily);
 	}
 
 	async preloadUsedFonts()

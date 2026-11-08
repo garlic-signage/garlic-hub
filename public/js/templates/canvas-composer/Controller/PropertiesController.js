@@ -57,8 +57,9 @@ export class PropertiesController
 		this.#currentType = object.type;
 		switch (this.#currentType)
 		{
+			// the type of fabric.js 7 is lower case
 			case "group":
-			case "activeSelection":
+			case "activeselection":
 				 this.#groupPropertiesController.activate(object);
 				break;
 			case "text":

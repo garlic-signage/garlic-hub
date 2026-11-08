@@ -99,7 +99,8 @@ export class DesignCheckService
 			return null;
 
 		const canvas = this.#fabricWrapper.fabricCanvas;
-		const rect   = text.getBoundingRect();
+		// toCanvasElement() cuts on the canvas element: with the zoom of the composer
+		const rect   = this.#fabricWrapper.getViewportBoundingRect(text);
 		let pixels;
 		text.visible = false;
 		try

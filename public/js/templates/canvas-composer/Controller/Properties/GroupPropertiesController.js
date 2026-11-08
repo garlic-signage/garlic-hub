@@ -31,12 +31,12 @@ export class GroupPropertiesController
 		this.#groupPropertiesView.group.getElement().addEventListener("click", () =>
 		{
 			let object = this.#groupPropertiesService._getActiveObject();
-			if (object.type === 'activeSelection')
+			if (object instanceof fabric.ActiveSelection)
 			{
 				this.#groupPropertiesService.toGroup(object);
 				this.#groupPropertiesView.ungrouping();
 			}
-			else if (object.type === 'group')
+			else if (object instanceof fabric.Group)
 			{
 				this.#groupPropertiesService.toActiveSelection(object);
 				this.#groupPropertiesView.grouping();
@@ -47,7 +47,7 @@ export class GroupPropertiesController
 
 	activate(object)
 	{
-		this.#groupPropertiesView.show(object.type);
+		this.#groupPropertiesView.show(object instanceof fabric.ActiveSelection ? 'activeSelection' : 'group');
 	}
 
 	deactivate()

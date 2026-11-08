@@ -214,8 +214,7 @@ readonly class TemplatePreparer
 				'footer_scripts' => [
 					'/js/external/fabric.min.js',
 					'/js/templates/canvas-composer/Fonts/fonts_preview.js',
-					'/js/templates/canvas-composer/Fonts/fontfaceobserver.js',
-					'/js/templates/canvas-composer/Utils/UndoRedo.js'
+					'/js/templates/canvas-composer/Fonts/fontfaceobserver.js'
 				],
 				'footer_modules'   => ['/js/templates/canvas-composer/init.js']
 			],

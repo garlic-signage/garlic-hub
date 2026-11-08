@@ -18,6 +18,8 @@
 */
 'use strict';
 
+// first: the defaults of fabric.js before an object is made
+import "../../../core/canvas/fabricDefaults.js";
 import {FabricWrapper}            from "../../../core/canvas/FabricWrapper.js";
 import {AutocompleteFactory}      from "../../../core/AutocompleteFactory.js";
 import {FetchClient}              from "../../../core/FetchClient.js";

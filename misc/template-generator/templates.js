@@ -93,7 +93,7 @@ function imagePlaceholder(l, t, w, h, o = {})
 {
 	const nw = placeholderElement.naturalWidth, nh = placeholderElement.naturalHeight;
 	const scale = Math.max(w / nw, h / nh), cw = w / scale, ch = h / scale;
-	return [new fabric.Image(placeholderElement, {
+	return [new fabric.FabricImage(placeholderElement, {
 		left: l, top: t, width: cw, height: ch, cropX: (nw - cw) / 2, cropY: (nh - ch) / 2,
 		scaleX: scale, scaleY: scale, placeholder: true, ...o
 	})];

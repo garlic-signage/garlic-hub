@@ -53,16 +53,17 @@ export class InsertService
 		const oldScale = object.scaleX;
 
 		// loaded first: a picture which can not be loaded leaves the image as it is
-		const element = await new Promise((resolve, reject) =>
+		let element;
+		try
 		{
-			fabric.util.loadImage(url, (img, isError) =>
-			{
-				if (isError || !img || !(img.naturalWidth || img.width))
-					reject(new Error("The image could not be loaded: " + fileName));
-				else
-					resolve(img);
-			}, null, "anonymous");
-		});
+			element = await fabric.util.loadImage(url, {crossOrigin: "anonymous"});
+		}
+		catch
+		{
+			element = null;
+		}
+		if (!element || !(element.naturalWidth || element.width))
+			throw new Error("The image could not be loaded: " + fileName);
 
 		object.setElement(element);
 		const crop = InsertService.coverCrop(element, w, h);

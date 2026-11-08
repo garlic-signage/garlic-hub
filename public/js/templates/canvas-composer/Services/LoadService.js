@@ -102,12 +102,14 @@ export class LoadService
 		for (let i = 0; i < objects.length; i++)
 		{
 			const obj = objects[i];
-			if (obj.type === "textbox")
+			// fabric.js 6 and later store "Textbox", 5 "textbox"
+			const type = String(obj.type).toLowerCase();
+			if (type === "textbox")
 			{
 				this.#fontCollector.collectUsedFontsFromSelection(obj);
 				this.#migrateScaleToPixel(objects[i]);
 			}
-			else if (obj.type === "group" && obj.objects)
+			else if (type === "group" && obj.objects)
 				this.#traverseObjects(obj.objects);
 		}
 	}

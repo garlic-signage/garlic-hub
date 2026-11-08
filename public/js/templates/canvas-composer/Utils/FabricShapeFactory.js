@@ -25,29 +25,24 @@ export class FabricShapeFactory
 	static #DEFAULT_FILL = "#000000";
 
 
-	createImage(mediaId, url, fileName, count)
+	async createImage(mediaId, url, fileName, count)
 	{
-		return new Promise((resolve) =>
-		{
-			fabric.Image.fromURL(url, (img) =>
-			{
-				img.set({
-					mediaId: mediaId,
-					// only the plain file name is stored, the signed url is rebuilt on every load
-					fileName: fileName,
-					left: count * FabricShapeFactory.#DEFAULT_LEFT,
-					top: count * FabricShapeFactory.#DEFAULT_TOP
-				});
-				img.bringToFront();
-				resolve(img);
-			}, { crossOrigin: 'anonymous' });
+		const img = await fabric.FabricImage.fromURL(url, {crossOrigin: 'anonymous'});
+		img.set({
+			mediaId: mediaId,
+			// only the plain file name is stored, the signed url is rebuilt on every load
+			fileName: fileName,
+			left: count * FabricShapeFactory.#DEFAULT_LEFT,
+			top: count * FabricShapeFactory.#DEFAULT_TOP
 		});
+
+		return img;
 	}
 
 	createText()
 	{
 		const text = "Lorem ipsum";
-		return  new fabric.Textbox(text, { ...this.#defaultProperties(), lockUniScaling: true, width: 400, fontFamily: 'Arial', fontSize: 64});
+		return  new fabric.Textbox(text, { ...this.#defaultProperties(), width: 400, fontFamily: 'Arial', fontSize: 64});
 	}
 
 	createCircle()

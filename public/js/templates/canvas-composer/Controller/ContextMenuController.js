@@ -53,7 +53,7 @@ export class ContextMenuController
 				return;
 			}
 
-			if (object.type === "activeSelection" || object.type === "group")
+			if (object instanceof fabric.Group)
 				return;
 
 			const isShape = ["text", "i-text", "textbox", "circle", "rect", "triangle", "polygon"]

@@ -82,7 +82,7 @@ export class TextCorrectionService
 		const lineHeight     = fontSize * (object.lineHeight ?? 1.16);
 		const charsPerLine   = Math.max(1, Math.floor((object.width * (object.scaleX ?? 1)) / (fontSize * TextCorrectionService.CHARACTER_WIDTH)));
 		// in the units of the template, without the zoom of the composer
-		const availableSpace = Math.max(lineHeight, this.#viewportService.height - object.getBoundingRect(true).top);
+		const availableSpace = Math.max(lineHeight, this.#viewportService.height - object.getBoundingRect().top);
 		const lines          = Math.max(1, Math.floor(availableSpace / lineHeight));
 
 		return charsPerLine * lines;

@@ -19,10 +19,7 @@
 'use strict';
 
 import {FabricWrapper} from "../../../core/canvas/FabricWrapper.js";
-
-// fabric.js stores numbers with 2 decimals: a picture of 4000 px scaled by 0.123 would change its size by up to 4 %
-// with every save. Same in misc/template-generator/generate.html.
-fabric.Object.NUM_FRACTION_DIGITS = 6;
+import {CanvasHistory} from "./CanvasHistory.js";
 
 /**
  * The canvas of the template composer: a new size counts as a change, the history of fabric-history,
@@ -30,6 +27,17 @@ fabric.Object.NUM_FRACTION_DIGITS = 6;
  */
 export class TemplateFabricWrapper extends FabricWrapper
 {
+	/** the properties of a template besides the ones of fabric.js, same in misc/template-generator/generate.html */
+	static PROPERTIES = ["mediaId", "fileName", "placeholder", "lockMovementX", "lockMovementY", "lockRotation", "lockScalingX", "lockScalingY"];
+
+	#history;
+
+	constructor(fabricCanvas)
+	{
+		super(fabricCanvas);
+		this.#history = new CanvasHistory(fabricCanvas, [...TemplateFabricWrapper.PROPERTIES, "evented", "selectable"]);
+	}
+
 	setWidth(width)
 	{
 		super.setWidth(width);
@@ -42,46 +50,35 @@ export class TemplateFabricWrapper extends FabricWrapper
 		this.markChanged();
 	}
 
-	undo()
+	async undo()
 	{
-		this.fabricCanvas.undo();
+		await this.#history.undo();
 	}
 
-	redo()
+	async redo()
 	{
-		this.fabricCanvas.redo();
+		await this.#history.redo();
 	}
 
 	historySaveAction()
 	{
-		this.fabricCanvas._historySaveAction();
+		this.#history.save();
 	}
 
+	/**
+	 * The content of the template: toJSON() of fabric.js takes no own properties since version 6.
+	 */
 	toTemplateJSON()
 	{
-		return this.fabricCanvas.toJSON([
-			"mediaId",
-			"fileName",
-			"placeholder",
-			"lockMovementX",
-			"lockMovementY",
-			"lockRotation",
-			"lockScalingX",
-			"lockScalingY",
-		]);
+		return this.fabricCanvas.toObject(TemplateFabricWrapper.PROPERTIES);
 	}
 
-	load(jsonContent)
+	async load(jsonContent)
 	{
-		return new Promise((resolve) => {
-			this.fabricCanvas.loadFromJSON(jsonContent, () => {
-				fabric.util.clearFabricFontCache();
-				fabric.charWidthsCache = {};
-				fabric.Canvas.prototype.historyUndo = [];
-				fabric.Canvas.prototype.historyRedo = [];
-				resolve();
-			});
-		});
+		await this.fabricCanvas.loadFromJSON(jsonContent);
+		// the widths of the characters of the fonts loaded before
+		fabric.cache.clearFontCache();
+		this.#history.reset();
 	}
 
 	toBase64Image(format, quality, backgroundColor)

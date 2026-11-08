@@ -103,7 +103,7 @@ export class DesignCheckController
 			if (!this.#fabricWrapper.getObjects().includes(object))
 				continue;
 
-			const rect = object.getBoundingRect();
+			const rect = this.#fabricWrapper.getViewportBoundingRect(object);
 			ctx.save();
 			ctx.font         = "bold 22px sans-serif";
 			ctx.textBaseline = "top";

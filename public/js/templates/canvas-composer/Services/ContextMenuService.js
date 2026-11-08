@@ -18,6 +18,8 @@
 */
 'use strict';
 
+import {TemplateFabricWrapper} from "../Utils/TemplateFabricWrapper.js";
+
 export class ContextMenuService
 {
 	#fabricWrapper;
@@ -28,18 +30,16 @@ export class ContextMenuService
 		this.#fabricWrapper = fabricWrapper;
 	}
 
-	duplicate()
+	async duplicate()
 	{
 		const object = this.#fabricWrapper.getActiveObject();
 		// Ctrl+D while nothing is selected
 		if (!object)
 			return;
 
-		object.clone(cloned =>
-		{
-			this.#clipboard = cloned;
-			this.#pasteFromClipboardToPos();
-		});
+		// with the properties of the template, e.g. the file of an image
+		this.#clipboard = await object.clone(TemplateFabricWrapper.PROPERTIES);
+		await this.#pasteFromClipboardToPos();
 	}
 
 	remove()
@@ -101,55 +101,53 @@ export class ContextMenuService
 	}
 
 
-	#pasteFromClipboardToPos()
+	async #pasteFromClipboardToPos()
 	{
-		this.#clipboard.clone(cloned =>
-		{
-			this.#fabricWrapper.discardActiveObject();
-			cloned.set({
-				left: this.#clipboard.left + 20,
-				top: this.#clipboard.top + 20,
-				evented: true,
-			});
-			if (cloned.type === 'activeSelection')
-			{
-				cloned.canvas = this.#fabricWrapper;
-				cloned.forEachObject((obj) =>
-				{
-					this.#fabricWrapper.add(obj);
-				});
-				// this should solve the unselectability
-				cloned.setCoords();
-			}
-			else
-				this.#fabricWrapper.add(cloned);
-
-			this.#fabricWrapper.setActiveObject(cloned);
-			this.#handleFabric();
+		const cloned = await this.#clipboard.clone(TemplateFabricWrapper.PROPERTIES);
+		this.#fabricWrapper.discardActiveObject();
+		cloned.set({
+			left: this.#clipboard.left + 20,
+			top: this.#clipboard.top + 20,
+			evented: true,
 		});
+		if (cloned instanceof fabric.ActiveSelection)
+		{
+			// the objects of a selection go on the canvas one by one
+			cloned.canvas = this.#fabricWrapper.fabricCanvas;
+			cloned.forEachObject((obj) =>
+			{
+				this.#fabricWrapper.add(obj);
+			});
+			cloned.setCoords();
+		}
+		else
+			this.#fabricWrapper.add(cloned);
+
+		this.#fabricWrapper.setActiveObject(cloned);
+		this.#handleFabric();
 	}
 
 	sendToBack()
 	{
-		this.#fabricWrapper.getActiveObject().sendToBack();
+		this.#fabricWrapper.sendToBack(this.#fabricWrapper.getActiveObject());
 		this.#handleFabric();
 	}
 
 	sendBackwards()
 	{
-		this.#fabricWrapper.getActiveObject().sendBackwards();
+		this.#fabricWrapper.sendBackwards(this.#fabricWrapper.getActiveObject());
 		this.#handleFabric();
 	}
 
 	bringForward()
 	{
-		this.#fabricWrapper.getActiveObject().bringForward();
+		this.#fabricWrapper.bringForward(this.#fabricWrapper.getActiveObject());
 		this.#handleFabric();
 	}
 
 	bringToFront()
 	{
-		this.#fabricWrapper.getActiveObject().bringToFront();
+		this.#fabricWrapper.bringToFront(this.#fabricWrapper.getActiveObject());
 		this.#handleFabric();
 	}
 

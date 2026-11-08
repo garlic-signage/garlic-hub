@@ -62,11 +62,13 @@ class TemplateComposerTest extends BrowserTestCase
 	// the helpers
 
 	/**
-	 * The content of a bundled template, as the pack installs it.
+	 * The content of a bundled template, as the pack installs it. With $fabric5 the same template as fabric.js
+	 * 5.4.2 saved it, as it is in the database of older installations.
 	 */
-	private static function packContent(string $key): string
+	private static function packContent(string $key, bool $fabric5 = false): string
 	{
-		$pack = json_decode((string) file_get_contents(dirname(__DIR__, 4) . '/resources/templates/fabric/' . $key . '.json'), true);
+		$directory = $fabric5 ? dirname(__DIR__, 3) . '/resources/templates/fabric5/' : dirname(__DIR__, 4) . '/resources/templates/fabric/';
+		$pack      = json_decode((string) file_get_contents($directory . $key . '.json'), true);
 		static::assertIsArray($pack);
 
 		return (string) json_encode($pack['content']);
@@ -264,13 +266,23 @@ class TemplateComposerTest extends BrowserTestCase
 	}
 
 	/**
-	 * A template of fabric.js 5.4.2 keeps its objects, texts, fonts, colors and the marks of its placeholders.
+	 * @return array<string, array{bool}>
 	 */
-	public function testABundledTemplateIsLoadedAndSavedWithoutLosses(): void
+	public static function formatProvider(): array
 	{
-		$original = json_decode(self::packContent('menu_landscape'), true);
+		return ['fabric.js 5.4.2' => [true], 'the bundled one' => [false]];
+	}
+
+	/**
+	 * A template keeps its objects, texts, fonts, colors and the marks of its placeholders, also one of fabric.js
+	 * 5.4.2.
+	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider('formatProvider')]
+	public function testABundledTemplateIsLoadedAndSavedWithoutLosses(bool $fabric5): void
+	{
+		$original = json_decode(self::packContent('menu_landscape', $fabric5), true);
 		static::assertIsArray($original);
-		$this->createTemplate(self::packContent('menu_landscape'));
+		$this->createTemplate(self::packContent('menu_landscape', $fabric5));
 		$this->login('admin');
 		$this->openComposer();
 
@@ -358,7 +370,8 @@ class TemplateComposerTest extends BrowserTestCase
 	 */
 	public function testARoundPlaceholderKeepsItsCircle(): void
 	{
-		$this->createTemplate(self::packContent('new_colleague_landscape'));
+		// the circle of fabric.js 5 is loaded, too
+		$this->createTemplate(self::packContent('new_colleague_landscape', true));
 		$this->createPicture();
 		$this->login('admin');
 		$this->openComposer();
@@ -447,6 +460,103 @@ class TemplateComposerTest extends BrowserTestCase
 		static::assertIsArray($content);
 		static::assertSame(['Welcome', 'to Company Name'], array_slice(array_column(self::objectsOfType($content, 'textbox'), 'text'), 0, 2));
 		static::assertNotSame([], glob($exports . '/5*'), 'No picture was exported for the players.');
+	}
+
+	/**
+	 * Two rectangles: red 100..500 x 100..400, blue 300..700 x 200..500 above it.
+	 */
+	private const string TWO_RECTS = '{"objects":['
+		. '{"type":"rect","left":100,"top":100,"width":400,"height":300,"fill":"#ff0000","scaleX":1,"scaleY":1},'
+		. '{"type":"rect","left":300,"top":200,"width":400,"height":300,"fill":"#0000ff","scaleX":1,"scaleY":1}],'
+		. '"viewport":{"width":1920,"height":1080,"scale":100}}';
+
+	/**
+	 * A copy of an image keeps its file, otherwise it would have no picture after the next load.
+	 */
+	public function testADuplicatedImageKeepsItsFile(): void
+	{
+		$this->createTemplate(self::packContent('menu_landscape'));
+		$this->createPicture();
+		$this->login('admin');
+		$this->openComposer();
+		$this->replaceImageAt(1500, 540);
+
+		$this->contextClickCanvas(1500, 540);
+		$this->click('#duplicate');
+		$images = self::objectsOfType($this->save(), 'image');
+
+		$this->assertNoErrors();
+		static::assertCount(2, $images);
+		static::assertSame([self::MEDIA_ID, self::MEDIA_ID], array_column($images, 'mediaId'));
+		static::assertSame([$this->checksum . '.png', $this->checksum . '.png'], array_column($images, 'fileName'));
+		static::assertEqualsWithDelta((float) $images[0]['left'] + 20, (float) $images[1]['left'], 1);
+	}
+
+	public function testAnObjectIsMovedToTheBackground(): void
+	{
+		$this->createTemplate(self::TWO_RECTS);
+		$this->login('admin');
+		$this->openComposer();
+
+		$this->clickCanvas(600, 450);
+		$this->contextClickCanvas(600, 450);
+		$this->click('#moveBackground');
+		$content = $this->save();
+
+		$this->assertNoErrors();
+		static::assertSame(['#0000ff', '#ff0000'], array_column($content['objects'], 'fill'));
+	}
+
+	/**
+	 * Two objects selected with the shift key become a group, the group becomes the two objects again at their
+	 * places.
+	 */
+	public function testObjectsAreGroupedAndUngrouped(): void
+	{
+		$this->createTemplate(self::TWO_RECTS);
+		$this->login('admin');
+		$this->openComposer();
+
+		$this->clickCanvas(150, 150);
+		[$dx, $dy] = $this->canvasOffset(650, 450);
+		$this->actions()->keyDown(null, \Facebook\WebDriver\WebDriverKeys::SHIFT)->moveToElement($this->upperCanvas(), $dx, $dy)->click()->keyUp(null, \Facebook\WebDriver\WebDriverKeys::SHIFT)->perform();
+		$this->click('#object_group');
+		$grouped = $this->save();
+
+		static::assertCount(1, $grouped['objects']);
+		static::assertSame('group', strtolower((string) $grouped['objects'][0]['type']));
+		static::assertCount(2, $grouped['objects'][0]['objects']);
+
+		$this->clickCanvas(400, 300);
+		$this->click('#object_group');
+		$ungrouped = $this->save();
+
+		$this->assertNoErrors();
+		static::assertSame(['#ff0000', '#0000ff'], array_column($ungrouped['objects'], 'fill'));
+		static::assertEqualsWithDelta(100, (float) $ungrouped['objects'][0]['left'], 1);
+		static::assertEqualsWithDelta(200, (float) $ungrouped['objects'][1]['top'], 1);
+	}
+
+	/**
+	 * The contrast is measured on what is drawn behind the text: grey on white is too weak, on black it is enough.
+	 */
+	public function testTheContrastIsMeasuredBehindTheText(): void
+	{
+		$this->createTemplate('{"objects":['
+			. '{"type":"rect","left":1000,"top":0,"width":920,"height":1080,"fill":"#000000","scaleX":1,"scaleY":1},'
+			. '{"type":"textbox","left":100,"top":100,"width":600,"text":"Grau","fontFamily":"Arial","fontSize":80,"fill":"#bbbbbb","scaleX":1,"scaleY":1,"styles":[]}],'
+			. '"viewport":{"width":1920,"height":1080,"scale":100}}');
+		$this->login('admin');
+		$this->openComposer();
+		static::assertSame(1, $this->designHints());
+
+		// the text onto the black area
+		[$fromX, $fromY] = $this->canvasOffset(150, 140);
+		[$toX, $toY]     = $this->canvasOffset(1250, 140);
+		$this->actions()->moveToElement($this->upperCanvas(), $fromX, $fromY)->clickAndHold()->moveByOffset(($toX - $fromX) / 2, 0)->moveByOffset(($toX - $fromX) / 2, 0)->release()->perform();
+
+		static::assertSame(0, $this->designHints());
+		$this->assertNoErrors();
 	}
 
 	/**
