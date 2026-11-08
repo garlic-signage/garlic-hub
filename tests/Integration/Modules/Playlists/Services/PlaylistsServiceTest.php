@@ -263,7 +263,7 @@ class PlaylistsServiceTest extends ContainerTestCase
 	 */
 	private function storeSmil(array $playlistIds): string
 	{
-		$directory = sys_get_temp_dir() . '/garlic-hub-tests/system/' . $this->container->get(Config::class)->getConfigValue('path_playlists', 'playlists');
+		$directory = self::runtimeDir() . '/system/' . $this->container->get(Config::class)->getConfigValue('path_playlists', 'playlists');
 		foreach ($playlistIds as $playlistId)
 		{
 			if (!is_dir($directory . '/' . $playlistId))
@@ -281,7 +281,7 @@ class PlaylistsServiceTest extends ContainerTestCase
 	 */
 	private function storeImages(string $key, array $names): string
 	{
-		$directory = sys_get_temp_dir() . '/garlic-hub-tests/system/' . $this->container->get(Config::class)->getConfigValue($key, 'playlists', 'directories');
+		$directory = self::runtimeDir() . '/system/' . $this->container->get(Config::class)->getConfigValue($key, 'playlists', 'directories');
 		if (!is_dir($directory))
 			mkdir($directory, 0775, true);
 		foreach (glob($directory . '/*') ?: [] as $file)

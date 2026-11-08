@@ -45,8 +45,17 @@ abstract class ContainerTestCase extends DatabaseTestCase
 		$_COOKIE         = [];
 		// built into urls, a command line run has no host
 		$_SERVER['HTTP_HOST'] = 'garlic-hub.test';
-		$this->container = TestContainerFactory::create($this->connection, sys_get_temp_dir() . '/garlic-hub-tests');
+		$this->container = TestContainerFactory::create($this->connection, self::runtimeDir());
 		$this->container->get(Psr16Adapter::class)->clear();
+	}
+
+	/**
+	 * Runtime directory of the container. Parallel runs (Infection threads) set TEST_TOKEN, so each
+	 * process gets its own directory: keys, settings overrides and system files are not shared.
+	 */
+	protected static function runtimeDir(): string
+	{
+		return sys_get_temp_dir() . '/garlic-hub-tests' . (string) getenv('TEST_TOKEN');
 	}
 
 	protected function tearDown(): void

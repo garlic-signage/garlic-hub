@@ -50,7 +50,8 @@
     },
     "allow-plugins": {
       "php-http/discovery": true,
-      "cyclonedx/cyclonedx-php-composer": true
+      "cyclonedx/cyclonedx-php-composer": true,
+      "infection/extension-installer": false
     }
   },
   "require-dev": {
@@ -61,6 +62,7 @@
     "php-mock/php-mock": "^2.6",
     "php-mock/php-mock-phpunit": "^2.13",
     "cyclonedx/cyclonedx-php-composer": "^6.2",
-    "symfony/panther": "^2.4"
+    "symfony/panther": "^2.4",
+    "infection/infection": "^0.35.10"
   }
 }

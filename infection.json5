@@ -1,0 +1,19 @@
+{
+	"$schema": "vendor/infection/infection/resources/schema.json",
+	"source": {
+		"directories": ["src"]
+	},
+	// the coverage comes from Xdebug, bin/infection.sh loads it (also for tests in separate processes)
+	// seconds per mutant; a mutant which loops is counted as timed out
+	"timeout": 30,
+	"tmpDir": "var/infection/tmp",
+	"logs": {
+		"text": "var/infection/infection.log",
+		"html": "var/infection/infection.html",
+		"summary": "var/infection/summary.log",
+		"json": "var/infection/infection.json"
+	},
+	"mutators": {
+		"@default": true
+	}
+}

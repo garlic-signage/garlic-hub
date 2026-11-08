@@ -46,7 +46,7 @@ class ItemThumbnailResolverTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->thumbnailPath = sys_get_temp_dir() . '/item_thumbnail_resolver_test';
+		$this->thumbnailPath = sys_get_temp_dir() . '/item_thumbnail_resolver_test' . (string) getenv('TEST_TOKEN');
 		if (!is_dir($this->thumbnailPath))
 			mkdir($this->thumbnailPath);
 
@@ -153,7 +153,7 @@ class ItemThumbnailResolverTest extends TestCase
 	public function testTemplateFindsTheThumbnailInTheFormatWhichWasSaved(): void
 	{
 		$names = new TemplateItemName('unit-test-secret');
-		$dir   = sys_get_temp_dir() . '/item_thumbs_resolver_test';
+		$dir   = sys_get_temp_dir() . '/item_thumbs_resolver_test' . (string) getenv('TEST_TOKEN');
 		mkdir($dir);
 		touch($dir . '/' . $names->build(17, 'content') . '.png');
 		touch($dir . '/18.webp');
@@ -188,7 +188,7 @@ class ItemThumbnailResolverTest extends TestCase
 	public function testTemplatePrefersTheThumbnailOfTheSavedContent(): void
 	{
 		$names = new TemplateItemName('unit-test-secret');
-		$dir   = sys_get_temp_dir() . '/item_thumbs_resolver_test';
+		$dir   = sys_get_temp_dir() . '/item_thumbs_resolver_test' . (string) getenv('TEST_TOKEN');
 		mkdir($dir);
 		touch($dir . '/17.jpg');
 		touch($dir . '/' . $names->build(17, 'old') . '.jpg');

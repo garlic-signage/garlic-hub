@@ -45,7 +45,7 @@ class ItemPreviewResolverTest extends TestCase
 	protected function setUp(): void
 	{
 		parent::setUp();
-		$this->originalsPath = sys_get_temp_dir() . '/item_preview_resolver_test';
+		$this->originalsPath = sys_get_temp_dir() . '/item_preview_resolver_test' . (string) getenv('TEST_TOKEN');
 		if (!is_dir($this->originalsPath))
 			mkdir($this->originalsPath);
 
