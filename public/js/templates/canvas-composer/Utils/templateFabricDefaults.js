@@ -23,12 +23,15 @@
  *
  * The edges of an image change its frame and the picture keeps filling it, cut in the middle, instead of being
  * distorted (extension of fabric.js). The corners scale the image as before.
+ *
+ * The controls of the extension take the names of the edges ml, mr, mt and mb: only for these fabric.js gives the
+ * fixed opposite side as "right" or "bottom", which the handler of the extension compares with. With its own names
+ * (mle, mte ...) the left and the top edge shrank the image to 10 px at the first click.
  */
 fabric.FabricImage.createControls = function ()
 {
 	const {controls} = fabric.FabricObject.createControls();
-	for (const edge of ["ml", "mr", "mt", "mb"])
-		delete controls[edge];
+	const edges      = fabricExtensions.createImageResizeControlsWithScaleToCover();
 
-	return {controls: {...controls, ...fabricExtensions.createImageResizeControlsWithScaleToCover()}};
+	return {controls: {...controls, ml: edges.mle, mr: edges.mre, mt: edges.mte, mb: edges.mbe}};
 };

@@ -680,22 +680,65 @@ class TemplateComposerTest extends BrowserTestCase
 	}
 
 	/**
-	 * The right edge of an image changes its frame: the picture fills it, cut in the middle, not distorted.
+	 * @return array<string, array{float, float, float, float, float, float, float, float}>
 	 */
-	public function testTheEdgeOfAnImageChangesItsFrameWithoutDistortion(): void
+	public static function edgeProvider(): array
+	{
+		// the frame 600 x 840 at 1200, 120: the edge from - to, then left, top, width, height
+		return [
+			'right'  => [1800, 540, 1600, 540, 1200, 120, 400, 840],
+			'left'   => [1200, 540, 1400, 540, 1400, 120, 400, 840],
+			'bottom' => [1500, 960, 1500, 760, 1200, 120, 600, 640],
+			'top'    => [1500, 120, 1500, 320, 1200, 320, 600, 640],
+		];
+	}
+
+	/**
+	 * An edge of an image changes its frame, the opposite edge stays: the picture fills it, cut in the middle, not
+	 * distorted.
+	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider('edgeProvider')]
+	public function testTheEdgeOfAnImageChangesItsFrameWithoutDistortion(float $fromX, float $fromY, float $toX, float $toY, float $left, float $top, float $width, float $height): void
 	{
 		$this->openMenuWithPicture();
 
 		$this->clickCanvas(1500, 540);
-		$this->dragCanvas(1800, 540, 1600, 540);
+		$this->dragCanvas($fromX, $fromY, $toX, $toY);
+		$image = self::objectsOfType($this->save(), 'image')[0];
+
+		$this->assertNoErrors();
+		[$savedWidth, $savedHeight] = self::displaySize($image);
+		static::assertEqualsWithDelta($width, $savedWidth, 3);
+		static::assertEqualsWithDelta($height, $savedHeight, 3);
+		static::assertEqualsWithDelta($left, (float) $image['left'], 3);
+		static::assertEqualsWithDelta($top, (float) $image['top'], 3);
+		static::assertEqualsWithDelta((float) $image['scaleX'], (float) $image['scaleY'], 0.0001, 'The picture is distorted.');
+	}
+
+	/**
+	 * In the crop mode the left and the top edge cut the frame, too, the picture stays where it is.
+	 */
+	public function testTheLeftAndTopEdgeCutTheFrameInTheCropMode(): void
+	{
+		$this->openMenuWithPicture();
+
+		$this->contextClickCanvas(1500, 540);
+		$this->click('#cropImage');
+		$this->dragCanvas(1200, 540, 1300, 540);
+		// the middle of the top edge of the frame 1300 to 1800
+		$this->dragCanvas(1550, 120, 1550, 220);
+		$this->pressKey(\Facebook\WebDriver\WebDriverKeys::ENTER);
 		$image = self::objectsOfType($this->save(), 'image')[0];
 
 		$this->assertNoErrors();
 		[$width, $height] = self::displaySize($image);
-		static::assertEqualsWithDelta(400, $width, 3);
-		static::assertEqualsWithDelta(840, $height, 1);
-		static::assertEqualsWithDelta(1200, (float) $image['left'], 1);
-		static::assertEqualsWithDelta((float) $image['scaleX'], (float) $image['scaleY'], 0.0001, 'The picture is distorted.');
+		static::assertEqualsWithDelta(500, $width, 3);
+		static::assertEqualsWithDelta(740, $height, 3);
+		static::assertEqualsWithDelta(1300, (float) $image['left'], 3);
+		static::assertEqualsWithDelta(220, (float) $image['top'], 3);
+		static::assertEqualsWithDelta(4.2, (float) $image['scaleX'], 0.01);
+		// the picture did not move: 100 more of the left are cut away
+		static::assertEqualsWithDelta(128.57 + 100 / 4.2, (float) $image['cropX'], 2);
 	}
 
 	/**
