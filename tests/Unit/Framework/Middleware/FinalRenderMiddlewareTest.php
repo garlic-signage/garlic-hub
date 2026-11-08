@@ -177,6 +177,50 @@ class FinalRenderMiddlewareTest extends TestCase
 	}
 
 	/**
+	 * With the fragment header only the content comes back, the data of the layout is not collected.
+	 *
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testRendersOnlyTheContentForAFragmentRequest(): void
+	{
+		$requestStub = $this->createStub(ServerRequestInterface::class);
+		$requestStub->method('getHeaderLine')->willReturnMap([['X-Page-Fragment', 'content']]);
+		$this->handlerStub->method('handle')->willReturn(new PageResponse([
+			'main_layout' => ['LANG_PAGE_TITLE' => 'Page title'],
+			'this_layout' => ['template' => 'module/page', 'data' => ['key' => 'value']]
+		], 201));
+		$layoutDataProviderMock = $this->createMock(LayoutDataProviderInterface::class);
+		$layoutDataProviderMock->expects($this->never())->method('collect');
+		$middleware = new FinalRenderMiddleware($this->templateEngineStub, $layoutDataProviderMock, new StreamFactory());
+
+		$response = $middleware->process($requestStub, $this->handlerStub);
+
+		static::assertSame('module/page:{"key":"value","CSP_NONCE":""}', (string) $response->getBody());
+		static::assertSame('text/html', $response->getHeaderLine('Content-Type'));
+		static::assertSame('X-Page-Fragment', $response->getHeaderLine('Vary'));
+		static::assertSame(201, $response->getStatusCode());
+	}
+
+	/**
+	 * The page and the fragment have the same URL.
+	 *
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testThePageVariesByTheFragmentHeader(): void
+	{
+		$this->handlerStub->method('handle')->willReturn(
+			new PageResponse(['main_layout' => [], 'this_layout' => ['template' => 'module/page', 'data' => []]])
+		);
+		$this->layoutDataProviderStub->method('collect')->willReturn([]);
+
+		$response = $this->middleware->process($this->requestStub, $this->handlerStub);
+
+		static::assertSame('X-Page-Fragment', $response->getHeaderLine('Vary'));
+	}
+
+	/**
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]

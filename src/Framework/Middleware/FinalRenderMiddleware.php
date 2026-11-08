@@ -33,10 +33,15 @@ use Slim\Psr7\Factory\StreamFactory;
 /**
  * Last step for HTML pages: renders the content of a PageResponse into the main layout.
  * Every other response (redirects, JSON ...) passes unchanged.
+ *
+ * With the header X-Page-Fragment: content only the content is rendered, without the layout and its data, e.g. for
+ * the JS which replaces the rows of a datatable after a delete.
  */
 readonly class FinalRenderMiddleware implements MiddlewareInterface
 {
-	private const string MAIN_LAYOUT = 'layouts/main_layout';
+	public const string FRAGMENT_HEADER  = 'X-Page-Fragment';
+	public const string FRAGMENT_CONTENT = 'content';
+	private const string MAIN_LAYOUT     = 'layouts/main_layout';
 
 	public function __construct(
 		private AdapterInterface $templateEngine,
@@ -53,6 +58,11 @@ readonly class FinalRenderMiddleware implements MiddlewareInterface
 		// inline scripts of the content and of the layout carry the nonce of the CSP
 		$nonce       = ['CSP_NONCE' => (string) $request->getAttribute(SecurityHeadersMiddleware::NONCE_ATTRIBUTE, '')];
 		$mainContent = $this->templateEngine->render($response->getTemplate(), $response->getTemplateData() + $nonce);
+		// the same URL answers with the page or the fragment, a cache has to keep them apart
+		$response    = $response->withHeader('Vary', self::FRAGMENT_HEADER);
+		if ($request->getHeaderLine(self::FRAGMENT_HEADER) === self::FRAGMENT_CONTENT)
+			return $response->withBody($this->streamFactory->createStream($mainContent))->withHeader('Content-Type', 'text/html');
+
 		$layoutData  = array_merge(
 			$this->layoutDataProvider->collect($request),
 			$nonce,

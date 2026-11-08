@@ -19,7 +19,7 @@
 			<div>
 				<button type="submit" id="submit_search" value="{{LANG_ELEMENTS_FILTER}}">{{LANG_ELEMENTS_FILTER}}</button>
 			</div>
-			<div>
+			<div class="results-count">
 				{{LANG_COUNT_SEARCH_RESULTS}}
 			</div>
 			<div>
@@ -34,7 +34,7 @@
 			<div>
 				{{LANG_ELEMENTS_PER_PAGE}}
 			</div>
-			<div>
+			<div class="results-pager">
 				{{#elements_pager}}
 					<a href="{{ELEMENTS_PAGELINK}}" class="page_numbers {{ELEMENTS_ACTIVE_PAGE}}" id="{{ELEMENTS_PAGE_ID}}">{{ELEMENTS_PAGENAME}}</a>&nbsp;
 				{{/elements_pager}}

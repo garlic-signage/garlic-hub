@@ -18,6 +18,7 @@
 */
 'use strict';
 import {Utils} from "../Utils.js";
+import {DatatableRefresher} from "../DatatableRefresher.js";
 
 /**
  * The context menu of a row in a datatable: it asks the server what the user may do with the unit,
@@ -41,18 +42,20 @@ export class ActionsContextMenu
 	}
 
 	/**
-	 * One context menu per click on the buttons with the class, e.g. "player-contextmenu".
+	 * One context menu per click on the buttons with the class, e.g. "player-contextmenu". The listener sits on the
+	 * document, so the buttons of rows which are loaded again after a delete work too.
 	 */
 	static bindTo(className, createMenu)
 	{
-		for (const button of document.getElementsByClassName(className))
+		document.addEventListener("click", async (event) =>
 		{
-			button.addEventListener("click", async (event) =>
-			{
-				event.preventDefault();
-				await createMenu().init(event);
-			});
-		}
+			const button = event.target.closest("." + className);
+			if (button === null)
+				return;
+
+			event.preventDefault();
+			await createMenu().init(event, button);
+		});
 	}
 
 	get view()
@@ -78,9 +81,9 @@ export class ActionsContextMenu
 		return this.#controller.signal;
 	}
 
-	async init(event)
+	async init(event, button = event.target)
 	{
-		this.#unitId = Number(event.target.dataset.actionId);
+		this.#unitId = Number(button.dataset.actionId);
 		const rights = await this.determineRights(this.#unitId);
 		if (rights.success === false)
 		{
@@ -130,7 +133,8 @@ export class ActionsContextMenu
 	}
 
 	/**
-	 * The delete entry (class "delete"): asks, deletes and removes the row of the unit.
+	 * The delete entry (class "delete"): asks, deletes and loads the rows of the page again, so the next one moves
+	 * up and count and pager are right. Without the reload only the row of the unit goes.
 	 *
 	 * @param {boolean} canDelete
 	 * @param {function(number): Promise<{success: boolean, error_message?: string}>} deleteUnit
@@ -153,7 +157,10 @@ export class ActionsContextMenu
 
 			const result = await deleteUnit(this.#unitId);
 			if (result.success)
-				document.querySelector(`ul[data-id="${this.#unitId}"]`)?.closest("li")?.remove();
+			{
+				if (!await DatatableRefresher.refresh())
+					document.querySelector(`ul[data-id="${this.#unitId}"]`)?.closest("li")?.remove();
+			}
 			else
 				this.#flashMessageHandler.showError(result.error_message);
 		}, {signal: this.#controller.signal});
