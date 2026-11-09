@@ -125,7 +125,7 @@ class AuthService
 
 	/**
 	 * The second step of the login, after the password: a code of the app or a recovery code.
-	 * The failures are counted like the ones of the password, per user and IP address.
+	 * The failures are counted per user and IP address and per user (LoginThrottle::isSecondFactorBlocked()).
 	 *
 	 * @throws CryptoException
 	 * @throws Exception
@@ -135,8 +135,7 @@ class AuthService
 	{
 		$this->errorMessage = '';
 		$ip         = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-		$identifier = LoginThrottle::secondFactor($UID);
-		if ($this->loginThrottle->isBlocked($identifier, $ip))
+		if ($this->loginThrottle->isSecondFactorBlocked($UID, $ip))
 		{
 			$this->errorMessage = 'two_factor_blocked';
 			$this->logger->warning('Second factor blocked', ['UID' => $UID, 'ip_address' => $ip]);
@@ -145,14 +144,14 @@ class AuthService
 
 		if (!$this->twoFactorService->verify($UID, $code))
 		{
-			$this->loginThrottle->registerFailure($identifier, $ip);
-			$this->errorMessage = $this->loginThrottle->isBlocked($identifier, $ip) ? 'two_factor_blocked' : 'two_factor_wrong';
+			$locked = $this->loginThrottle->registerSecondFactorFailure($UID, $ip);
+			$this->errorMessage = $this->loginThrottle->isSecondFactorBlocked($UID, $ip) ? 'two_factor_blocked' : 'two_factor_wrong';
 			$this->logger->error('Second factor failed', ['UID' => $UID, 'ip_address' => $ip]);
-			$this->recordFailedSecondFactor($UID, $ip);
+			$this->recordFailedSecondFactor($UID, $ip, $locked);
 			return null;
 		}
 
-		$this->loginThrottle->reset($identifier, $ip);
+		$this->loginThrottle->resetSecondFactor($UID, $ip);
 		// an admin may have blocked the user since the password was checked
 		$entity = $this->getCurrentUser($UID);
 		$this->validateUserStatus((int) $entity->getMain()['status']);
@@ -180,11 +179,13 @@ class AuthService
 		return $entity;
 	}
 
-	private function recordFailedSecondFactor(int $UID, string $ip): void
+	private function recordFailedSecondFactor(int $UID, string $ip, bool $locked): void
 	{
 		try
 		{
 			$this->auditLog->record(0, 'auth', AuditAction::TWO_FACTOR_FAILED, null, $UID, ['ip_address' => $ip]);
+			if ($locked)
+				$this->auditLog->record(0, 'auth', AuditAction::TWO_FACTOR_LOCKED, null, $UID, ['ip_address' => $ip]);
 		}
 		catch (Throwable $e)
 		{

@@ -30,6 +30,8 @@ use App\Framework\Localization\Translate\Translator;
 use App\Framework\Security\CsrfToken;
 use App\Modules\Auth\LoginThrottle;
 use App\Modules\Auth\UserSession;
+use App\Shared\Audit\AuditAction;
+use App\Shared\Audit\AuditLog;
 use App\Shared\User\TwoFactor\TwoFactorService;
 use Defuse\Crypto\Exception\CryptoException;
 use Doctrine\DBAL\Exception;
@@ -52,7 +54,8 @@ readonly class Orchestrator
 		private Config $config,
 		private Translator $translator,
 		private CsrfToken $csrfToken,
-		private LoginThrottle $loginThrottle
+		private LoginThrottle $loginThrottle,
+		private AuditLog $auditLog
 	) {}
 
 	/**
@@ -116,20 +119,16 @@ readonly class Orchestrator
 	 */
 	public function createRecoveryCodes(string $code): string
 	{
-		$UID        = $this->userSession->getUID();
-		$identifier = LoginThrottle::secondFactor($UID);
-		$ip         = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-		if ($this->loginThrottle->isBlocked($identifier, $ip))
+		$UID = $this->userSession->getUID();
+		$ip  = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+		if ($this->loginThrottle->isSecondFactorBlocked($UID, $ip))
 			return 'two_factor_blocked';
 
 		$codes = $this->twoFactorService->createRecoveryCodes($UID, $code);
 		if ($codes === [])
-		{
-			$this->loginThrottle->registerFailure($identifier, $ip);
-			return $this->loginThrottle->isBlocked($identifier, $ip) ? 'two_factor_blocked' : 'two_factor_wrong_code';
-		}
+			return $this->failSecondFactor($UID, $ip);
 
-		$this->loginThrottle->reset($identifier, $ip);
+		$this->loginThrottle->resetSecondFactor($UID, $ip);
 		$this->session->set(self::NEW_CODES, ['codes' => $codes]);
 
 		return '';
@@ -151,19 +150,15 @@ readonly class Orchestrator
 		if ($this->isRequired())
 			return 'two_factor_wrong_code';
 
-		$UID        = $this->userSession->getUID();
-		$identifier = LoginThrottle::secondFactor($UID);
-		$ip         = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-		if ($this->loginThrottle->isBlocked($identifier, $ip))
+		$UID = $this->userSession->getUID();
+		$ip  = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+		if ($this->loginThrottle->isSecondFactorBlocked($UID, $ip))
 			return 'two_factor_blocked';
 
 		if (!$this->twoFactorService->disable($UID, $code))
-		{
-			$this->loginThrottle->registerFailure($identifier, $ip);
-			return $this->loginThrottle->isBlocked($identifier, $ip) ? 'two_factor_blocked' : 'two_factor_wrong_code';
-		}
+			return $this->failSecondFactor($UID, $ip);
 
-		$this->loginThrottle->reset($identifier, $ip);
+		$this->loginThrottle->resetSecondFactor($UID, $ip);
 		$this->userSession->setTwoFactor(false);
 
 		return '';
@@ -235,5 +230,17 @@ readonly class Orchestrator
 	private function translate(string $key): string
 	{
 		return $this->translator->translate($key, self::MODULE_NAME);
+	}
+
+	/**
+	 * @return string the key of the error
+	 * @throws InvalidArgumentException
+	 */
+	private function failSecondFactor(int $UID, string $ip): string
+	{
+		if ($this->loginThrottle->registerSecondFactorFailure($UID, $ip))
+			$this->auditLog->record($UID, self::MODULE_NAME, AuditAction::TWO_FACTOR_LOCKED, null, $UID, ['ip_address' => $ip]);
+
+		return $this->loginThrottle->isSecondFactorBlocked($UID, $ip) ? 'two_factor_blocked' : 'two_factor_wrong_code';
 	}
 }

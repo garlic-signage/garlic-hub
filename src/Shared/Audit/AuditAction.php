@@ -45,6 +45,7 @@ enum AuditAction: string
 	case TWO_FACTOR_RESET       = 'two_factor_reset';
 	case RECOVERY_CODES_CREATED = 'recovery_codes_created';
 	case TWO_FACTOR_FAILED      = 'two_factor_failed';
+	case TWO_FACTOR_LOCKED      = 'two_factor_locked';
 	case SSO_PROVIDER_SAVED     = 'sso_provider_saved';
 	case SSO_PROVIDER_DELETED   = 'sso_provider_deleted';
 }

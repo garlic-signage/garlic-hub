@@ -25,6 +25,7 @@ use App\Framework\Exceptions\AuthException;
 use App\Modules\Auth\AuthService;
 use App\Modules\Auth\AutoLoginService;
 use App\Modules\Auth\LoginThrottle;
+use App\Shared\Audit\AuditAction;
 use App\Shared\Audit\AuditLog;
 use App\Shared\Audit\NullAuditLog;
 use App\Shared\User\UserEntity;
@@ -431,5 +432,38 @@ class AuthServiceTest extends TestCase
 		static::assertNull($service->login('user@example.com', 'wrong'));
 		static::assertSame('Invalid credentials.', $service->getErrorMessage());
 		static::assertTrue($this->logs->hasErrorThatContains('could not be audited'));
+	}
+
+	/**
+	 * Who has the password guesses the code from many addresses: after ten wrong codes the user is locked on all
+	 * of them, also for the right code, and the audit log gets the lock once.
+	 *
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testWrongCodesFromManyAddressesLockTheSecondFactorOfTheUser(): void
+	{
+		$recorded = [];
+		$auditLog = $this->createStub(AuditLog::class);
+		$auditLog->method('record')->willReturnCallback(static function (int $UID, string $module, AuditAction $action) use (&$recorded): void
+		{
+			$recorded[] = $action;
+		});
+		$twoFactor = $this->createStub(TwoFactorService::class);
+		$twoFactor->method('verify')->willReturnCallback(static fn(int $UID, string $code): bool => $code === '123456');
+		$service = new AuthService($this->userService, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new ArrayCache()), $auditLog, $twoFactor);
+
+		for ($i = 1; $i <= LoginThrottle::MAX_SECOND_FACTOR_FAILURES_PER_USER; $i++)
+		{
+			$_SERVER['REMOTE_ADDR'] = '10.0.1.' . $i;
+			static::assertNull($service->loginWithSecondFactor(1, '000000'));
+		}
+		static::assertSame('two_factor_blocked', $service->getErrorMessage());
+
+		$_SERVER['REMOTE_ADDR'] = '10.0.2.1';
+		static::assertNull($service->loginWithSecondFactor(1, '123456'));
+		static::assertSame('two_factor_blocked', $service->getErrorMessage());
+		static::assertSame([AuditAction::TWO_FACTOR_LOCKED], array_values(array_filter($recorded, static fn(AuditAction $action): bool => $action === AuditAction::TWO_FACTOR_LOCKED)));
+		static::assertCount(LoginThrottle::MAX_SECOND_FACTOR_FAILURES_PER_USER + 1, $recorded, 'every wrong code and the lock');
 	}
 }

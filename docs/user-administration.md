@@ -89,8 +89,11 @@ Modules differ in the details:
   and 30 seconds (`Shared\User\TwoFactor\TwoFactorService`, library spomky-labs/otphp). It counts only after the
   first valid code, which also gives 10 recovery codes. They are shown once and stored as hashes.
 - The login asks for the code after the password (`/login/two-factor`). The session counts as logged in and the
-  remember-me cookie is created only after it. Wrong codes are limited like wrong passwords, a code is accepted
-  once, also one time slot before and after the current one.
+  remember-me cookie is created only after it. Wrong codes are limited like wrong passwords (5 per user and
+  address) and additionally per user from all addresses: after 10 in 15 minutes the second factor of the user is
+  locked everywhere for the window, also for the right code, and the audit log gets `two_factor_locked`. Who
+  guesses codes has the password already, so this lock of the user is accepted (the password login has none).
+  A code is accepted once, also one time slot before and after the current one.
 - The module admin of `system` requires it for everybody in the settings (`[TwoFactor] required`, off by default),
   effective at once: a user without it reaches only his account and the logout (`Auth\AuthMiddleware`). While it is
   required, a user can not turn it off himself. Turning it off and new recovery codes need a code (of the app or a

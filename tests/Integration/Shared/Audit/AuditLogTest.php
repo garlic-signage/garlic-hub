@@ -34,6 +34,8 @@ use App\Shared\Audit\AuditLog;
 use App\Shared\Audit\DatabaseAuditLog;
 use App\Shared\Audit\NullAuditLog;
 use App\Shared\Settings\SettingsService;
+use App\Modules\Account\Helper\TwoFactor\Orchestrator as TwoFactorOrchestrator;
+use App\Modules\Auth\LoginThrottle;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Integration\Support\ContainerTestCase;
 
@@ -230,5 +232,25 @@ class AuditLogTest extends ContainerTestCase
 			$task->run();
 
 		static::assertSame(['user_created'], array_column($this->entries(), 'action'));
+	}
+
+	/**
+	 * Wrong codes in the account from many addresses lock the second factor of the user: recorded once.
+	 */
+	public function testTheLockOfTheSecondFactorIsRecorded(): void
+	{
+		$this->enable();
+		$this->actingAs(2);
+		$orchestrator = $this->container->get(TwoFactorOrchestrator::class);
+
+		for ($i = 1; $i <= LoginThrottle::MAX_SECOND_FACTOR_FAILURES_PER_USER; $i++)
+		{
+			$_SERVER['REMOTE_ADDR'] = '10.0.1.' . $i;
+			$orchestrator->createRecoveryCodes('000000');
+		}
+		$_SERVER['REMOTE_ADDR'] = '10.0.2.1';
+
+		static::assertSame('two_factor_blocked', $orchestrator->disable('000000'));
+		static::assertSame([['UID' => 2, 'module' => 'account', 'action' => 'two_factor_locked', 'unit_id' => null, 'target_UID' => 2, 'details' => ['ip_address' => '10.0.1.10']]], $this->entries());
 	}
 }

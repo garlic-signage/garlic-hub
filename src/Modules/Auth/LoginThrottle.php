@@ -38,17 +38,60 @@ readonly class LoginThrottle
 	public const int MAX_FAILURES_PER_USER_AND_IP = 5;
 	public const int MAX_FAILURES_PER_IP          = 30;
 	public const int LOCK_WINDOW_SECONDS          = 900;
+	/** the codes of the second factor of a user from all addresses: who has the password tries from many */
+	public const int MAX_SECOND_FACTOR_FAILURES_PER_USER = 10;
 
 	public function __construct(private CacheInterface $cache)
 	{
 	}
 
 	/**
-	 * The codes of the second factor are counted per user, in the login and in the account together.
+	 * The codes of the second factor count in the login and in the account together: per user and IP address like
+	 * a password, and per user from all addresses. Who guesses them has the password already, so the user may be
+	 * locked out for the window: the password login does not lock the user alone on purpose.
+	 *
+	 * @throws InvalidArgumentException
 	 */
-	public static function secondFactor(int $UID): string
+	public function isSecondFactorBlocked(int $UID, string $ip): bool
+	{
+		return $this->isBlocked(self::secondFactor($UID), $ip)
+			|| $this->count(self::secondFactorUserKey($UID)) >= self::MAX_SECOND_FACTOR_FAILURES_PER_USER;
+	}
+
+	/**
+	 * @return bool true when this failure locks the user on all addresses (for the audit log)
+	 * @throws InvalidArgumentException
+	 * @phpstan-impure it counts the failure, a check before is outdated afterwards
+	 */
+	public function registerSecondFactorFailure(int $UID, string $ip): bool
+	{
+		$this->registerFailure(self::secondFactor($UID), $ip);
+		$key   = self::secondFactorUserKey($UID);
+		$count = $this->count($key) + 1;
+		$this->cache->set($key, $count, self::LOCK_WINDOW_SECONDS);
+
+		return $count === self::MAX_SECOND_FACTOR_FAILURES_PER_USER;
+	}
+
+	/**
+	 * A valid code ends the lock of this address. The count of the user stays until the window ends: the valid code
+	 * of the user must not give the one who guesses new tries.
+	 *
+	 * @throws InvalidArgumentException
+	 */
+	public function resetSecondFactor(int $UID, string $ip): void
+	{
+		$this->reset(self::secondFactor($UID), $ip);
+	}
+
+	private static function secondFactor(int $UID): string
 	{
 		return 'two_factor_' . $UID;
+	}
+
+	private static function secondFactorUserKey(int $UID): string
+	{
+		return 'two_factor_fail_user_' . $UID;
 	}
 
 	/**
