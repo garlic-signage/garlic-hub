@@ -191,7 +191,10 @@ readonly class TemplatesController
 		if (!$this->orchestrator->checkEditRights($templateId))
 			return $this->responseHandler->jsonError($response, 'No rights');
 
-		if ($this->orchestrator->saveTemplate($templateId, $input->text('content'), $input->text('image')) === 0)
+		$saved = $this->orchestrator->saveTemplate($templateId, $input->text('content'), $input->text('image'));
+		if ($saved === Orchestrator::MEDIA_REFUSED)
+			return $this->responseHandler->jsonError($response, 'An image of the template is not readable for you.');
+		if ($saved === 0)
 			return $this->responseHandler->jsonError($response, 'Save failed');
 
 		return $this->responseHandler->jsonSuccess($response);

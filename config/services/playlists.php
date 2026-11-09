@@ -460,7 +460,8 @@ $dependencies[\App\Modules\Playlists\Helper\Templates\Orchestrator::class] = DI\
 		$container->get(\App\Modules\Templates\Helper\Composer\TemplatePreparer::class),
 		$container->get(TemplateItemName::class),
 		$container->get(Config::class),
-		$container->get(MediaUrlSigner::class)
+		$container->get(MediaUrlSigner::class),
+		$container->get(\App\Modules\Mediapool\Services\MediaService::class)
 	);
 });
 

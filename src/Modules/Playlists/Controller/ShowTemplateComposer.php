@@ -73,7 +73,10 @@ class ShowTemplateComposer
 		if (!$this->orchestrator->isTemplateItem())
 			return $this->responseHandler->jsonError($response, 'Item is not a template.');
 
-		if ($this->orchestrator->save($itemId, $content, $image) === 0)
+		$saved = $this->orchestrator->save($itemId, $content, $image);
+		if ($saved === Orchestrator::MEDIA_REFUSED)
+			return $this->responseHandler->jsonError($response, 'An image of the template is not readable for you.');
+		if ($saved === 0)
 			return $this->responseHandler->jsonError($response, 'Save failed');
 
 		return $this->responseHandler->jsonSuccess($response);

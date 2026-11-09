@@ -108,6 +108,22 @@ class FilesRepository extends SqlBase
 	}
 
 	/**
+	 * A medium with the file which is not deleted and in a directory the user may read.
+	 *
+	 * @param Where|null $readable the directories the user may read, null for all
+	 * @throws Exception
+	 */
+	public function existsReadable(string $checksum, string $extension, ?Where $readable): bool
+	{
+		$join  = ['mediapool_nodes' => 'mediapool_nodes.node_id=' . $this->table . '.node_id'];
+		$where = ['deleted' => 0, 'checksum' => $checksum, 'extension' => $extension];
+		if ($readable !== null)
+			$where[] = $readable;
+
+		return $this->findAllByWithFields([$this->table . '.media_id'], $where, $join, ['first' => 0, 'max' => 1]) !== [];
+	}
+
+	/**
 	 * The media whose tags, file name or description contain the term, the newest first.
 	 *
 	 * @param Where|null $readable the directories the user may read, null for all

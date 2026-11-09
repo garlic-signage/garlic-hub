@@ -24,15 +24,18 @@ namespace App\Modules\Templates\Helper\Composer;
 
 use App\Framework\Config\Config;
 use App\Framework\Media\MediaUrlSigner;
+use App\Modules\Mediapool\Services\MediaService;
 
 class BaseTemplateOrchestrator
 {
 	/** the picture of an image placeholder of the bundled templates, from the hub itself, not the content server */
 	public const string PLACEHOLDER_SRC = '/images/templates/placeholder.png';
+	/** the result of a save which has an image the user may not use */
+	public const int MEDIA_REFUSED = -1;
 
 	protected string $baseUrl;
 
-	public function __construct(protected readonly Config $config, protected readonly MediaUrlSigner $mediaUrlSigner)
+	public function __construct(protected readonly Config $config, protected readonly MediaUrlSigner $mediaUrlSigner, protected readonly MediaService $mediaService)
 	{
 		$url = $this->config->getConfigValue('url', 'mediapool', 'content_server');
 		if ($url === '')
@@ -151,4 +154,57 @@ class BaseTemplateOrchestrator
 		return json_encode($json) ?: '';
 	}
 
+	/**
+	 * Loading a template signs a url for every file name in it, for everybody who uses the template. So a new file
+	 * name must be one which the user may read: otherwise a known checksum would give him any file of the mediapool.
+	 * The ones which were in the content before stay, an editor keeps the images of another one.
+	 *
+	 * @throws \App\Framework\Exceptions\CoreException
+	 * @throws \Doctrine\DBAL\Exception
+	 * @throws \App\Framework\Exceptions\UserException
+	 */
+	protected function hasForeignFiles(string $newContent, string $oldContent): bool
+	{
+		$before = self::fileNamesOf($oldContent);
+		foreach (self::fileNamesOf($newContent) as $fileName)
+		{
+			if (!in_array($fileName, $before, true) && !$this->mediaService->isReadableFile($fileName))
+				return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * @return list<string>
+	 */
+	private static function fileNamesOf(string $content): array
+	{
+		$json = json_decode($content);
+		if (!$json instanceof \stdClass)
+			return [];
+
+		$names = [];
+		self::collectFileNames(self::objectsOf($json), $names);
+
+		return array_values(array_unique($names));
+	}
+
+	/**
+	 * @param array<mixed> $objects
+	 * @param list<string> $names
+	 */
+	private static function collectFileNames(array $objects, array &$names): void
+	{
+		foreach ($objects as $obj)
+		{
+			if (!$obj instanceof \stdClass)
+				continue;
+
+			if (isset($obj->fileName) && is_string($obj->fileName))
+				$names[] = $obj->fileName;
+			if (isset($obj->objects) && is_array($obj->objects))
+				self::collectFileNames($obj->objects, $names);
+		}
+	}
 }

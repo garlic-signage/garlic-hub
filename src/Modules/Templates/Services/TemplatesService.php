@@ -220,6 +220,21 @@ class TemplatesService
 	}
 
 	/**
+	 * Before anything else of a deletion: an unknown template is not found, a foreign one denied.
+	 *
+	 * @throws AccessDeniedException
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws NotFoundException
+	 * @throws UserException
+	 */
+	public function assertDeletable(int $templateId): void
+	{
+		$this->loadCheckedTemplate($templateId, true);
+	}
+
+	/**
 	 * For the context menu: may the user delete the template?
 	 *
 	 * @throws CoreException

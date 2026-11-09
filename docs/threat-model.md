@@ -60,6 +60,13 @@ by a direct URL, only through the delivery scripts described in section 3.
    to the administrative interface. URLs are HMAC-signed with `APP_SECRET` and
    expire. The signature covers checksum, extension, variant and expiry, so a
    thumbnail URL cannot be edited into an original one.
+   A template stores only the file names (`<checksum>.<ext>`) of its images and
+   gets fresh signed URLs on every load, for everybody who uses it (a global
+   template shows its images to users without rights on the folder). So saving a
+   template or a template item accepts a new file name only when the user may
+   read the medium; the ones which were in the content before stay
+   (`BaseTemplateOrchestrator::hasForeignFiles()`). A known checksum alone gives
+   no file.
    `widget.php` serves the files inside a widget for the preview in the same
    way, with expiry and signature in the path. A widget is foreign code: the
    response header `Content-Security-Policy: sandbox allow-scripts` gives it an

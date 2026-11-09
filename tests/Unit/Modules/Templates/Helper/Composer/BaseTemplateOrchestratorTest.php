@@ -23,6 +23,7 @@ namespace Tests\Unit\Modules\Templates\Helper\Composer;
 
 use App\Framework\Config\Config;
 use App\Framework\Media\MediaUrlSigner;
+use App\Modules\Mediapool\Services\MediaService;
 use App\Modules\Templates\Helper\Composer\BaseTemplateOrchestrator;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Exception;
@@ -246,6 +247,6 @@ class BaseTemplateOrchestratorTest extends TestCase
 	{
 		$this->configStub->method('getConfigValue')->willReturnMap([['url', 'mediapool', 'content_server', $configuredUrl]]);
 
-		return new TestableTemplateOrchestrator($this->configStub, $this->signer);
+		return new TestableTemplateOrchestrator($this->configStub, $this->signer, $this->createStub(MediaService::class));
 	}
 }

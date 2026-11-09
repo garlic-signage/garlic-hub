@@ -30,6 +30,7 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\UserException;
 use App\Framework\Media\MediaUrlSigner;
+use App\Modules\Mediapool\Services\MediaService;
 use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Helper\TemplateItemName;
 use App\Modules\Playlists\Services\ItemsService;
@@ -48,10 +49,11 @@ class Orchestrator extends BaseTemplateOrchestrator
 		private readonly TemplatePreparer    $templatePreparer,
 		private readonly TemplateItemName    $templateItemName,
 		Config $config,
-		MediaUrlSigner $mediaUrlSigner
+		MediaUrlSigner $mediaUrlSigner,
+		MediaService $mediaService
 	)
 	{
-		parent::__construct($config, $mediaUrlSigner);
+		parent::__construct($config, $mediaUrlSigner, $mediaService);
 	}
 
 	/**
@@ -106,6 +108,10 @@ class Orchestrator extends BaseTemplateOrchestrator
 		$content = $this->validate($content);
 		if ($content === '')
 			return 0;
+
+		// the item starts with the content of the template, see InsertItems\Template
+		if ($this->hasForeignFiles($content, (string) ($this->item['content_data'] ?? '')))
+			return self::MEDIA_REFUSED;
 
 		// an image which is no valid data url is not exported
 		// the image of the former content stays for the players until the export, see ExportService

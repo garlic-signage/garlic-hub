@@ -122,7 +122,8 @@ $dependencies[\App\Modules\Templates\Helper\Composer\Orchestrator::class] = DI\f
 		$container->get(ExportImage::class),
 		$container->get(TemplatesService::class),
 		$container->get(Config::class),
-		$container->get(MediaUrlSigner::class)
+		$container->get(MediaUrlSigner::class),
+		$container->get(\App\Modules\Mediapool\Services\MediaService::class)
 	);
 });
 

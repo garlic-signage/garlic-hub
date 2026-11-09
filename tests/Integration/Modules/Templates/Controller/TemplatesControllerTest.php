@@ -28,6 +28,7 @@ use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Media\DataUrlDecoder;
 use App\Framework\Media\MediaUrlSigner;
+use App\Modules\Mediapool\Services\MediaService;
 use App\Modules\Templates\Controller\TemplatesController;
 use App\Modules\Templates\Helper\Composer\ExportImage;
 use App\Modules\Templates\Helper\Composer\Orchestrator;
@@ -74,7 +75,8 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 				new ExportImage($this->container->get(DataUrlDecoder::class), $this->workspace->handlerFactory()),
 				$this->container->get(TemplatesService::class),
 				$this->container->get(Config::class),
-				$this->container->get(MediaUrlSigner::class)
+				$this->container->get(MediaUrlSigner::class),
+				$this->container->get(MediaService::class)
 			),
 			$this->container->get(TemplatesDatatableService::class),
 			$this->container->get(Parameters::class),
@@ -362,6 +364,18 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 		static::assertSame([2, 3], array_map('intval', array_column($templates, 'id')));
 	}
 
+	/**
+	 * Whoever may not delete a template must not learn whether it is used: template 1 is in a playlist.
+	 */
+	public function testAForeignTemplateIsDeniedBeforeItsUseIsChecked(): void
+	{
+		$this->connection->executeStatement("UPDATE playlists_items SET item_type = 'template', file_resource = '1' WHERE item_id = 5");
+		$this->actingAs(2);
+
+		$this->expectException(AccessDeniedException::class);
+		$this->controller->delete($this->request('DELETE', body: ['template_id' => '1']), $this->newResponse());
+	}
+
 	public function testTheNumberOfTheFoundTemplatesCanBeLimited(): void
 	{
 		$this->actingAs(1);
@@ -374,12 +388,37 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 	public function testTheContentAndTheImageAreSavedWithoutTheSourcesOfTheImages(): void
 	{
 		$this->actingAs(1);
-		$content = '{"objects":[{"type":"image","fileName":"abc123.jpg","src":"http://evil.example/x.jpg"}]}';
+		$content = '{"objects":[{"type":"image","fileName":"checksum-image.jpg","src":"http://evil.example/x.jpg"}]}';
 
 		$this->assertSuccess($this->save(['template_id' => '3', 'content' => $content, 'image' => self::PNG]));
 
-		static::assertSame(['objects' => [['type' => 'image', 'fileName' => 'abc123.jpg']]], json_decode((string) $this->databaseValue('SELECT content FROM templates WHERE template_id = 3'), true));
+		static::assertSame(['objects' => [['type' => 'image', 'fileName' => 'checksum-image.jpg']]], json_decode((string) $this->databaseValue('SELECT content FROM templates WHERE template_id = 3'), true));
 		static::assertSame(['3.png'], array_map(static fn(mixed $path): string => basename((string) $path), (array) glob($this->workspace->dir . '/var/storage/templates/originals/*')));
+	}
+
+	/**
+	 * Loading signs a url for every file name of the content: a new one must be a medium the user may read, an
+	 * unknown or foreign checksum would give any file of the mediapool.
+	 */
+	public function testANewImageWhichTheUserMayNotReadIsRefused(): void
+	{
+		$this->connection->executeStatement("INSERT INTO mediapool_nodes (node_id, root_id, parent_id, level, root_order, lft, rgt, UID, visibility, name) VALUES (50, 50, 0, 1, 2, 1, 2, 3, 0, 'bernd privat')");
+		$this->connection->executeStatement("INSERT INTO mediapool_files (media_id, node_id, UID, checksum, mimetype, filename, extension) VALUES ('media-id-0000050', 50, 3, 'checksum-secret', 'image/jpeg', 'geheim.jpg', 'jpg')");
+		$this->connection->executeStatement("INSERT INTO user_acl (UID, acl, module) VALUES (2, 2, 'templates')");
+		$this->connection->executeStatement("INSERT INTO user_vip (UID, vip_name, unit_id) VALUES (2, 'templates_editor', '3')");
+		$this->connection->executeStatement('UPDATE templates SET content = ? WHERE template_id = 3', ['{"objects":[{"type":"image","fileName":"checksum-secret.jpg"}]}']);
+		$this->actingAs(2);
+
+		foreach (['abc123.jpg', 'checksum-secret.png', '../checksum-image.jpg'] as $fileName)
+		{
+			$content = '{"objects":[{"type":"image","fileName":"checksum-secret.jpg"},{"type":"group","objects":[{"type":"image","fileName":"' . $fileName . '"}]}]}';
+			$this->assertError($this->save(['template_id' => '3', 'content' => $content, 'image' => self::PNG]), 'An image of the template is not readable for you.');
+		}
+		static::assertSame('{"objects":[{"type":"image","fileName":"checksum-secret.jpg"}]}', $this->databaseValue('SELECT content FROM templates WHERE template_id = 3'));
+
+		// the image of bernd which was in the template stays, a readable one is added
+		$content = '{"objects":[{"type":"image","fileName":"checksum-secret.jpg"},{"type":"image","fileName":"checksum-image.jpg"}]}';
+		$this->assertSuccess($this->save(['template_id' => '3', 'content' => $content, 'image' => self::PNG]));
 	}
 
 	/**

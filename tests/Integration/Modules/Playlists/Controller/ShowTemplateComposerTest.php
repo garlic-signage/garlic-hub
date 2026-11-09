@@ -25,6 +25,7 @@ use App\Framework\Config\Config;
 use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Media\DataUrlDecoder;
 use App\Framework\Media\MediaUrlSigner;
+use App\Modules\Mediapool\Services\MediaService;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Modules\Playlists\Controller\ShowTemplateComposer;
 use App\Modules\Playlists\Helper\TemplateItemName;
@@ -62,7 +63,8 @@ class ShowTemplateComposerTest extends PlaylistsControllerTestCase
 				$this->container->get(TemplatePreparer::class),
 				$this->container->get(TemplateItemName::class),
 				$this->container->get(Config::class),
-				$this->container->get(MediaUrlSigner::class)
+				$this->container->get(MediaUrlSigner::class),
+				$this->container->get(MediaService::class)
 			),
 			$this->container->get(JsonResponseHandler::class),
 			$this->container->get(Messages::class)
@@ -176,7 +178,7 @@ class ShowTemplateComposerTest extends PlaylistsControllerTestCase
 	public function testTheContentAndTheImageAreSaved(): void
 	{
 		$this->actingAs(2);
-		$content = '{"objects":[{"type":"image","fileName":"abc123.jpg","src":"http://evil.example/x.jpg"}]}';
+		$content = '{"objects":[{"type":"image","fileName":"checksum-image.jpg","src":"http://evil.example/x.jpg"}]}';
 
 		$response = $this->save(['item_id' => '5', 'content' => $content, 'image' => self::PNG]);
 
@@ -185,8 +187,20 @@ class ShowTemplateComposerTest extends PlaylistsControllerTestCase
 		static::assertIsArray($row);
 		static::assertSame('image/png', $row['mimetype']);
 		// the sources of the images are built on loading, they come never from the client
-		static::assertSame(['objects' => [['type' => 'image', 'fileName' => 'abc123.jpg']]], json_decode($row['content_data'], true));
+		static::assertSame(['objects' => [['type' => 'image', 'fileName' => 'checksum-image.jpg']]], json_decode($row['content_data'], true));
 		static::assertSame([$this->nameOfItem(5) . '.png'], $this->files('originals'));
+	}
+
+	/**
+	 * The item starts with the content of its template: its images stay, a new one must be readable for the user.
+	 */
+	public function testANewImageOfTheItemMustBeReadable(): void
+	{
+		$this->connection->executeStatement('UPDATE playlists_items SET content_data = ? WHERE item_id = 5', ['{"objects":[{"type":"image","fileName":"of-the-template.jpg"}]}']);
+		$this->actingAs(2);
+
+		$this->assertError($this->save(['item_id' => '5', 'content' => '{"objects":[{"type":"image","fileName":"unknown.jpg"}]}', 'image' => self::PNG]), 'An image of the template is not readable for you.');
+		$this->assertSuccess($this->save(['item_id' => '5', 'content' => '{"objects":[{"type":"image","fileName":"of-the-template.jpg"}]}', 'image' => self::PNG]));
 	}
 
 	/**

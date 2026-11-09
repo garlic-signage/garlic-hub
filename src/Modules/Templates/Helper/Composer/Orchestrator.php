@@ -24,6 +24,7 @@ namespace App\Modules\Templates\Helper\Composer;
 
 use App\Framework\Config\Config;
 use App\Framework\Media\MediaUrlSigner;
+use App\Modules\Mediapool\Services\MediaService;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -50,10 +51,11 @@ class Orchestrator extends BaseTemplateOrchestrator
 		private readonly ExportImage         $exportImage,
 		private readonly TemplatesService    $templatesService,
 		Config $config,
-		MediaUrlSigner $mediaUrlSigner
+		MediaUrlSigner $mediaUrlSigner,
+		MediaService $mediaService
 	)
 	{
-		parent::__construct($config, $mediaUrlSigner);
+		parent::__construct($config, $mediaUrlSigner, $mediaService);
 	}
 
 	/**
@@ -105,6 +107,9 @@ class Orchestrator extends BaseTemplateOrchestrator
 		if ($content === '' )
 			return 0;
 
+		if ($this->hasForeignFiles($content, (string) ($this->template['content'] ?? '')))
+			return self::MEDIA_REFUSED;
+
 		$this->exportImage->decode($imageBase64);
 		if ($this->exportImage->exportBase64($templateId) === false)
 			return 0;
@@ -124,6 +129,9 @@ class Orchestrator extends BaseTemplateOrchestrator
 	 */
 	public function delete(int $templateId): void
 	{
+		// the rights first: whoever may not delete it must not learn whether it exists and is used
+		$this->templatesService->assertDeletable($templateId);
+
 		if ($this->templatesUsageService->determineTemplatesInUse([$templateId]) !== [])
 			throw new TranslatableModuleException('templates', 'template_in_use', ['template_id' => $templateId]);
 

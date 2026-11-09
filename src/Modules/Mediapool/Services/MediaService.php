@@ -163,6 +163,23 @@ class MediaService
 	}
 
 	/**
+	 * Whether the user may read a file of the mediapool, given as <checksum>.<extension> like in a template.
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws UserException
+	 */
+	public function isReadableFile(string $fileName): bool
+	{
+		$checksum  = pathinfo($fileName, PATHINFO_FILENAME);
+		$extension = pathinfo($fileName, PATHINFO_EXTENSION);
+		if ($checksum === '' || $extension === '' || basename($fileName) !== $fileName)
+			return false;
+
+		return $this->mediaRepository->existsReadable($checksum, $extension, $this->readableDirectories($this->userSession->getUID()));
+	}
+
+	/**
 	 * A medium which the user may change, e.g. for the suggestion of its tags.
 	 *
 	 * @return array<string,mixed>
