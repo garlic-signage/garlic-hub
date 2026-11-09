@@ -72,8 +72,8 @@ Modules differ in the details:
 - **Password reset** by an admin clears the password, ends the running sessions and the autologin and creates a
   link with which the user sets a new password.
 - **Switch to SSO** by an admin: see Single sign-on below.
-- **2FA reset** by an admin turns the second factor of a user off (lost device). The button is shown only for a
-  user who has it. The user sets it up again, at once after his next login while it is required.
+- **2FA reset** by an admin turns the second factor of a user off (lost device) and ends his sessions. The button
+  is shown only for a user who has it. The user sets it up again, at once after his next login while it is required.
 
 ## Own password
 
@@ -89,8 +89,9 @@ Modules differ in the details:
 - Every user sets it up in his account (tab 2FA) with an authenticator app such as Aegis: TOTP with SHA1, 6 digits
   and 30 seconds (`Shared\User\TwoFactor\TwoFactorService`, library spomky-labs/otphp). It counts only after the
   first valid code, which also gives 10 recovery codes. They are shown once and stored as hashes. Turning it on
-  ends the other sessions and the remember-me logins of the user: they had only the password. The session which
-  turns it on stays.
+  ends the other sessions and the remember-me logins of the user: they had only the password. Turning it off ends
+  the other sessions, too: a session remembers whether the user has it, none may keep an old "has it" when the
+  admin requires it later. The session which makes the change stays.
 - The login asks for the code after the password (`/login/two-factor`). The session counts as logged in and the
   remember-me cookie is created only after it. Wrong codes are limited like wrong passwords (5 per user and
   address) and additionally per user from all addresses: after 10 in 15 minutes the second factor of the user is
@@ -98,7 +99,9 @@ Modules differ in the details:
   guesses codes has the password already, so this lock of the user is accepted (the password login has none).
   A code is accepted once, also one time slot before and after the current one.
 - The module admin of `system` requires it for everybody in the settings (`[TwoFactor] required`, off by default),
-  effective at once: a user without it reaches only his account and the logout (`Auth\AuthMiddleware`). While it is
+  effective at once: a user without it reaches only the page of his account, setting it up (`POST
+  /account/two-factor`) and the logout (`Auth\AuthMiddleware`); the other forms of the account (password, own
+  models) wait for it. While it is
   required, a user can not turn it off himself. Turning it off and new recovery codes need a code (of the app or a
   recovery code), the wrong ones count together with the ones of the login: a session which somebody took over is
   not enough.

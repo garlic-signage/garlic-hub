@@ -169,6 +169,13 @@ class TwoFactorFlowTest extends BlackboxTestCase
 
 		$account = (string) $browser->get('/account/settings')->getBody();
 		static::assertStringContainsString('<svg', $account);
+		// only the page of the account and setting it up: the other forms of the account wait for the second factor
+		$csrf = $browser->csrfToken('/account/settings');
+		static::assertSame('/account/settings#two_factor', $browser->post('/account/password', ['current_password' => self::PASSWORD, 'password' => 'New-Pass1234', 'password_confirm' => 'New-Pass1234', 'csrf_token' => $csrf])->getHeaderLine('Location'));
+		static::assertSame('/account/settings#two_factor', $browser->post('/account/llm/connection', ['connection_id' => '0', 'api_type' => 'openai', 'base_url' => 'http://10.0.0.1/v1', 'csrf_token' => $csrf])->getHeaderLine('Location'));
+		static::assertSame(403, $browser->request('POST', '/account/llm/models', ['form_params' => ['base_url' => 'http://10.0.0.1/v1', 'csrf_token' => $csrf], 'headers' => ['Accept' => 'application/json']])->getStatusCode());
+		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_llm_connections'));
+		static::assertTrue(password_verify(self::PASSWORD, (string) $this->connection->fetchOne('SELECT password FROM user_main WHERE UID = 3')));
 		// he can not turn it off himself while it is required: there is no form for it
 		static::assertStringNotContainsString('/account/two-factor/disable', $account);
 
@@ -257,5 +264,52 @@ class TwoFactorFlowTest extends BlackboxTestCase
 		$thief = $this->browser()->request('GET', '/player', ['headers' => ['Cookie' => 'UserLogin=' . $cookie]]);
 		static::assertSame('/login', $thief->getHeaderLine('Location'), 'the remember-me cookie from before does not log in');
 		static::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM user_tokens WHERE UID = 2 AND purpose = 'autologin'"));
+	}
+
+	/**
+	 * The admin resets the second factor of a user who lost his device: his sessions end, so none of them keeps
+	 * "has it" while the admin requires it. After the next login he sets it up again.
+	 */
+	public function testAResetByTheAdminEndsTheSessionsOfTheUser(): void
+	{
+		$anna = $this->browser();
+		$this->setUpSecondFactor($anna);
+		$anna->login('anna', self::PASSWORD);
+		$this->secondStep($anna, $this->codeOf(2, 30));
+		static::assertSame(200, $anna->get('/player')->getStatusCode());
+		sleep(1);
+
+		$admin = $this->browser();
+		$admin->login('admin', self::PASSWORD);
+		$admin->post('/users/edit', ['UID' => 2, 'username' => 'anna', 'email' => 'anna@example.com', 'status' => 3, 'locale' => 'en_US', 'resetTwoFactor' => 1, 'csrf_token' => $admin->csrfToken('/users/edit/2')]);
+		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_two_factor WHERE UID = 2'));
+		// the admin has no second factor himself: required only from now on
+		$this->deployment()->changeSettings('users', ['TwoFactor' => ['required' => '1']]);
+
+		static::assertSame('/login', $anna->get('/player')->getHeaderLine('Location'), 'the session ends');
+		$anna->login('anna', self::PASSWORD);
+		static::assertSame('/account/settings#two_factor', $anna->get('/player')->getHeaderLine('Location'), 'she sets it up again');
+	}
+
+	/**
+	 * Turned off in one browser, before the admin requires it: the other browser must not keep "has it".
+	 */
+	public function testTurningItOffEndsTheOtherSessions(): void
+	{
+		$laptop = $this->browser();
+		$codes  = $this->setUpSecondFactor($laptop);
+		$laptop->login('anna', self::PASSWORD);
+		$this->secondStep($laptop, $this->codeOf(2, 30));
+		// the codes of the app are used in this half minute: recovery codes
+		$phone = $this->browser();
+		$phone->login('anna', self::PASSWORD);
+		$this->secondStep($phone, $codes[0]);
+		sleep(1);
+
+		$phone->post('/account/two-factor/disable', ['code' => $codes[1], 'csrf_token' => $phone->csrfToken('/account/settings')]);
+		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_two_factor WHERE UID = 2'));
+
+		static::assertSame(200, $phone->get('/player')->getStatusCode(), 'the own session stays');
+		static::assertSame('/login', $laptop->get('/player')->getHeaderLine('Location'), 'the other session ends');
 	}
 }

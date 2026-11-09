@@ -44,6 +44,7 @@ use Slim\Psr7\Response;
 use Tests\Integration\Support\ContainerTestCase;
 use App\Shared\User\TwoFactor\TwoFactorService;
 use App\Framework\Config\Config;
+use App\Framework\Config\ConfigOverrides;
 
 /**
  * Which paths a guest, a logged-in user and a user with a remember-me cookie can reach.
@@ -156,6 +157,43 @@ class AuthMiddlewareTest extends ContainerTestCase
 
 		static::assertSame(200, $this->process('GET', '/player')->getStatusCode());
 		static::assertSame(200, $this->process('GET', '/async/player/push')->getStatusCode());
+	}
+
+	/**
+	 * @return array<string,array{string,string,bool}> method, path, reached
+	 */
+	public static function pathsWhileTheSecondFactorIsMissing(): array
+	{
+		return [
+			'the account'          => ['GET', '/account/settings', true],
+			'its old address'      => ['GET', '/account/password', true],
+			'setting it up'        => ['POST', '/account/two-factor', true],
+			'logout'               => ['GET', '/logout', true],
+			'with a slash'         => ['GET', '/account/settings/', true],
+			'the password'         => ['POST', '/account/password', false],
+			'new recovery codes'   => ['POST', '/account/two-factor/recovery-codes', false],
+			'own models'           => ['POST', '/account/llm/connection', false],
+			'the models of an url' => ['POST', '/account/llm/models', false],
+			'set up by GET'        => ['GET', '/account/two-factor', false],
+			'the player'           => ['GET', '/player', false],
+		];
+	}
+
+	/**
+	 * While the admin requires the second factor, a user without it reaches only the page of his account, setting it
+	 * up and the logout.
+	 */
+	#[DataProvider('pathsWhileTheSecondFactorIsMissing')]
+	public function testWithoutTheRequiredSecondFactorOnlyItsSetupIsReached(string $method, string $path, bool $reached): void
+	{
+		$this->container->get(ConfigOverrides::class)->save('users', ['TwoFactor' => ['required' => '1']]);
+		$this->actingAs(10);
+
+		$response = $this->process($method, $path);
+
+		static::assertSame($reached ? 200 : 302, $response->getStatusCode());
+		if (!$reached)
+			static::assertSame('/account/settings#two_factor', $response->getHeaderLine('Location'));
 	}
 
 	public function testLoggedInUserIsSentAwayFromTheLoginPage(): void

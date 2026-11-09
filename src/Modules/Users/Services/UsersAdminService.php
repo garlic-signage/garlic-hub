@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Services;
 
+use App\Framework\Exceptions\CoreException;
 use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\ModuleException;
@@ -245,15 +246,18 @@ class UsersAdminService
 	}
 
 	/**
-	 * For a user who lost his device: the second factor is off, the user sets it up again
+	 * For a user who lost his device: the second factor is off, his sessions end, the user sets it up again
 	 * (while the admin requires it, at once after his next login).
 	 *
+	 * @throws CoreException
 	 * @throws Exception
 	 * @throws Throwable
 	 */
 	public function resetTwoFactor(int $UID): void
 	{
 		$this->twoFactorService->reset($UID, $this->userSession->getUID());
+		// the sessions know that he had it: after the next login he sets it up again while it is required
+		$this->usersService->endSessions($UID);
 	}
 
 	/**

@@ -60,7 +60,16 @@ readonly class AuthMiddleware implements MiddlewareInterface
 	];
 	private const string LOGIN_SECTION = 'login';
 	private const array API_SECTIONS = ['api', 'async'];
-	private const array SECTIONS_WITHOUT_SECOND_FACTOR = ['account', 'logout'];
+	/**
+	 * While the admin requires the second factor, a user without it gets only these: the page of the account, setting
+	 * it up and the logout. Not the other forms of the account (password, own models): they wait for the second factor.
+	 */
+	private const array PATHS_WITHOUT_SECOND_FACTOR = [
+		'/account/settings'   => ['GET'],
+		'/account/password'   => ['GET'],
+		'/account/two-factor' => ['POST'],
+		'/logout'             => ['GET', 'POST']
+	];
 
 	public function __construct(private AuthService $authService, private Session $session, private Cookie $cookie, private UserSession $userSession, private Config $config)
 	{
@@ -83,7 +92,7 @@ readonly class AuthMiddleware implements MiddlewareInterface
 		if ($section === self::LOGIN_SECTION)
 			return $isLoggedIn ? $this->redirect('/') : $handler->handle($request);
 
-		if ($isLoggedIn && $this->mustSetUpSecondFactor($section))
+		if ($isLoggedIn && $this->mustSetUpSecondFactor($request))
 			return $this->isApiRequest($section, $request) ? $this->secondFactorMissing() : $this->redirect('/account/settings#two_factor');
 
 		if ($isLoggedIn)
@@ -148,13 +157,16 @@ readonly class AuthMiddleware implements MiddlewareInterface
 
 	/**
 	 * A session which is older than the second factor does not know whether the user has it: it is looked up once.
+	 * The ones which remove it (reset by the admin, turning it off) end the other sessions, so a session never keeps
+	 * an old "has it".
 	 *
 	 * @throws FrameworkException
 	 * @throws Exception
 	 */
-	private function mustSetUpSecondFactor(string $section): bool
+	private function mustSetUpSecondFactor(ServerRequestInterface $request): bool
 	{
-		if (in_array($section, self::SECTIONS_WITHOUT_SECOND_FACTOR, true) || !$this->config->isSwitchOn('required', 'users', 'TwoFactor'))
+		$path = '/' . trim($request->getUri()->getPath(), '/');
+		if (in_array($request->getMethod(), self::PATHS_WITHOUT_SECOND_FACTOR[$path] ?? [], true) || !$this->config->isSwitchOn('required', 'users', 'TwoFactor'))
 			return false;
 
 		$hasTwoFactor = $this->userSession->hasTwoFactor();

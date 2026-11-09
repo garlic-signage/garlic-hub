@@ -151,6 +151,7 @@ readonly class Orchestrator
 	 * help to guess a code.
 	 *
 	 * @return string the key of the error, empty when it is off
+	 * @throws CoreException
 	 * @throws CryptoException
 	 * @throws Exception
 	 * @throws InvalidArgumentException
@@ -171,6 +172,8 @@ readonly class Orchestrator
 			return $this->failSecondFactor($UID, $ip);
 
 		$this->loginThrottle->resetSecondFactor($UID, $ip);
+		// the other sessions know that he had it: one of them must not keep it when the admin requires it later
+		$this->userSession->keepAfterPasswordChange($this->usersService->endSessions($UID));
 		$this->userSession->setTwoFactor(false);
 
 		return '';
