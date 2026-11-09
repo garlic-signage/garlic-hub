@@ -124,7 +124,7 @@ h3, h4, h5, h6{font-size: 1.0rem; font-family: var(--gh-font-bold), sans-serif;}
 form {margin: 0 auto;}
 fieldset{border: 0; border-radius:var(--gh-border-radius); background-color: var(--gh-primary-bgcolor); padding: 1rem; margin: 0 0 1rem 0;}
 /* floated, the legend is a normal heading inside the box instead of sitting in its border */
-fieldset legend {float: left; width: 100%; padding: 0; margin: 0 0 0.75rem 0; font-size: 1.05rem; font-family: var(--gh-font-bold), sans-serif;}
+fieldset legend {float: left; width: 100%; padding: 0; margin: 0 0 0.25rem 0; font-size: 1.05rem; font-family: var(--gh-font-bold), sans-serif;}
 fieldset legend + * {clear: both;}
 form label {display: flex; flex-direction:column; gap:0.25em;margin: 0 0 0.25rem 0;}
 input:not([type='checkbox'], [type='radio']), textarea, select, button, a.button, .add-unit

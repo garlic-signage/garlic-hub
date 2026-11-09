@@ -103,6 +103,7 @@ readonly class TemplatePreparer
 			'LANG_BACKGROUND_COLOR' => $this->translator->translate('background_color', 'templates'),
 			'LANG_TRANSPARENT_BACKGROUND' => $this->translator->translate('transparent_background', 'templates'),
 			'LANG_OBJECTS' => $this->translator->translate('objects', 'templates'),
+			'LANG_OBJECT_PROPERTIES' => $this->translator->translate('object_properties', 'templates'),
 			'LANG_TOGGLE_OBJECT_PANEL' => $this->translator->translate('toggle_object_panel', 'templates'),
 			'LANG_OBJECT_WIDTH' => $this->translator->translate('object_width', 'templates'),
 			'LANG_OBJECT_HEIGHT' => $this->translator->translate('object_height', 'templates'),

@@ -317,22 +317,25 @@
 
 <div id="composerWorkspace">
 <aside id="objectPanel">
-	<header>
-		<button id="toggleObjectPanel" type="button" class="bi bi-layout-sidebar" title="{{LANG_TOGGLE_OBJECT_PANEL}}"></button>
-		<span>{{LANG_OBJECTS}}</span>
-	</header>
-	<ul id="objectList"></ul>
+	<button id="toggleObjectPanel" type="button" class="bi bi-layout-sidebar" title="{{LANG_TOGGLE_OBJECT_PANEL}}"></button>
 	<fieldset id="objectGeometry" disabled>
-		<label for="objectLeft">X</label>
-		<input type="number" id="objectLeft" step="1">
-		<label for="objectTop">Y</label>
-		<input type="number" id="objectTop" step="1">
-		<label for="objectWidth">{{LANG_OBJECT_WIDTH}}</label>
-		<input type="number" id="objectWidth" min="1" step="1">
-		<label for="objectHeight">{{LANG_OBJECT_HEIGHT}}</label>
-		<input type="number" id="objectHeight" min="1" step="1">
-		<label for="objectAngle">{{LANG_ROTATION}}</label>
-		<input type="number" id="objectAngle" min="-360" max="360" step="1">
+		<legend>{{LANG_OBJECT_PROPERTIES}}</legend>
+		<div class="object-geometry-fields">
+			<label for="objectLeft">X</label>
+			<input type="number" id="objectLeft" step="1">
+			<label for="objectTop">Y</label>
+			<input type="number" id="objectTop" step="1">
+			<label for="objectWidth">{{LANG_OBJECT_WIDTH}}</label>
+			<input type="number" id="objectWidth" min="1" step="1">
+			<label for="objectHeight">{{LANG_OBJECT_HEIGHT}}</label>
+			<input type="number" id="objectHeight" min="1" step="1">
+			<label for="objectAngle">{{LANG_ROTATION}}</label>
+			<input type="number" id="objectAngle" min="-360" max="360" step="1">
+		</div>
+	</fieldset>
+	<fieldset id="objectsContainer">
+		<legend>{{LANG_OBJECTS}}</legend>
+		<ul id="objectList"></ul>
 	</fieldset>
 </aside>
 <div id="canvasWrap" tabIndex="1000">
