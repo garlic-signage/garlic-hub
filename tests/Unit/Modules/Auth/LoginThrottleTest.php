@@ -198,6 +198,36 @@ class LoginThrottleTest extends TestCase
 	}
 
 	/**
+	 * Wrong codes of one user lock only him on this address: the others behind it (an office) go on.
+	 *
+	 * @throws InvalidArgumentException
+	 */
+	#[Group('units')]
+	public function testWrongCodesOfAUserDoNotLockAnotherOneOnTheSameAddress(): void
+	{
+		for ($i = 0; $i < LoginThrottle::MAX_FAILURES_PER_USER_AND_IP; $i++)
+			$this->throttle->registerSecondFactorFailure(7, '10.0.0.1');
+
+		static::assertTrue($this->throttle->isSecondFactorBlocked(7, '10.0.0.1'));
+		static::assertFalse($this->throttle->isSecondFactorBlocked(8, '10.0.0.1'));
+	}
+
+	/**
+	 * @throws InvalidArgumentException
+	 */
+	#[Group('units')]
+	public function testAValidCodeStartsTheCountOfTheAddressAgain(): void
+	{
+		for ($i = 1; $i < LoginThrottle::MAX_FAILURES_PER_USER_AND_IP; $i++)
+			$this->throttle->registerSecondFactorFailure(7, '10.0.0.1');
+		$this->throttle->resetSecondFactor(7, '10.0.0.1');
+
+		$this->throttle->registerSecondFactorFailure(7, '10.0.0.1');
+
+		static::assertFalse($this->throttle->isSecondFactorBlocked(7, '10.0.0.1'));
+	}
+
+	/**
 	 * The valid code frees the address, but the count of the user stays: the user who logs in meanwhile must not
 	 * give the one who guesses new tries.
 	 *

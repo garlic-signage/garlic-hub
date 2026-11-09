@@ -56,6 +56,8 @@ class LoginControllerTest extends TestCase
 	private LoginController $controller;
 	/** @var array<mixed>|\ArrayAccess<string,mixed>|null the session array of the flash messages */
 	private array|\ArrayAccess|null $flashStorage = [];
+	/** @var list<int> the users who got the remember-me cookie */
+	private array $autologins = [];
 
 	protected function setUp(): void
 	{
@@ -70,6 +72,7 @@ class LoginControllerTest extends TestCase
 				: null
 		);
 		$this->authService->method('getErrorMessage')->willReturn('Invalid credentials.');
+		$this->authService->method('createAutologin')->willReturnCallback(function (int $UID): void { $this->autologins[] = $UID; });
 
 		$translator = $this->createStub(Translator::class);
 		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
@@ -150,6 +153,21 @@ class LoginControllerTest extends TestCase
 	{
 		$this->assertRedirect($this->login(['autologin' => 'on']), '/');
 		static::assertSame(2, $this->session->get('user')['UID'] ?? null);
+		static::assertSame([2], $this->autologins);
+	}
+
+	/**
+	 * A user without a second factor is marked so in the session: while the second factor is required, the
+	 * AuthMiddleware sends him to its setup by this mark.
+	 */
+	#[Group('units')]
+	public function testALoginByPasswordWithoutSecondFactorMarksTheSessionSo(): void
+	{
+		$this->assertRedirect($this->login(), '/');
+
+		static::assertSame('0', $this->session->get('two_factor'));
+		static::assertFalse(new UserSession($this->session)->hasTwoFactor());
+		static::assertSame([], $this->autologins, 'no remember-me without the box');
 	}
 
 	/**
@@ -293,6 +311,7 @@ class LoginControllerTest extends TestCase
 		static::assertSame(1, $this->session->regenerations);
 		// the provider asked for the second factor
 		static::assertSame('1', $this->session->get('two_factor'));
+		static::assertSame([], $this->autologins, 'the SSO sets no remember-me cookie');
 		static::assertNull($this->session->get('oauth_redirect_params'));
 	}
 

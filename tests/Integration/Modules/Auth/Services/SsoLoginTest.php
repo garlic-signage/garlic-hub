@@ -203,7 +203,8 @@ class SsoLoginTest extends ContainerTestCase
 
 		// Entra ID: the domain of the email is verified; anna was switched to SSO, she has no password
 		$this->connection->executeStatement("UPDATE user_main SET password = '' WHERE UID = 2");
-		$this->provider->claims = ['sub' => 'subject-anna', 'email' => 'anna@example.com', 'email_verified' => null, 'xms_edov' => true];
+		// the provider writes the email as the user typed it
+		$this->provider->claims = ['sub' => 'subject-anna', 'email' => ' Anna@Example.COM ', 'email_verified' => null, 'xms_edov' => true];
 		static::assertSame(2, $this->login());
 	}
 

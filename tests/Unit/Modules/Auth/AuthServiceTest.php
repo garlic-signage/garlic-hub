@@ -449,6 +449,32 @@ class AuthServiceTest extends TestCase
 	}
 
 	/**
+	 * The audit log gets the user and the address of every wrong code, the system (0) did it.
+	 *
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testAWrongCodeIsAuditedWithTheUserAndTheAddress(): void
+	{
+		$recorded = [];
+		$auditLog = $this->createStub(AuditLog::class);
+		$auditLog->method('record')->willReturnCallback(static function (int $UID, string $module, AuditAction $action, int|string|null $unitId = null, ?int $targetUID = null, array $details = []) use (&$recorded): void
+		{
+			$recorded[] = [$UID, $module, $action, $unitId, $targetUID, $details];
+		});
+		$service = new AuthService($this->userService, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new ArrayCache()), $auditLog, $this->createStub(TwoFactorService::class));
+
+		for ($i = 1; $i <= LoginThrottle::MAX_SECOND_FACTOR_FAILURES_PER_USER; $i++)
+		{
+			$_SERVER['REMOTE_ADDR'] = '10.0.1.' . $i;
+			$service->loginWithSecondFactor(1, '000000');
+		}
+
+		static::assertSame([0, 'auth', AuditAction::TWO_FACTOR_FAILED, null, 1, ['ip_address' => '10.0.1.1']], $recorded[0]);
+		static::assertSame([0, 'auth', AuditAction::TWO_FACTOR_LOCKED, null, 1, ['ip_address' => '10.0.1.10']], $recorded[count($recorded) - 1]);
+	}
+
+	/**
 	 * Who has the password guesses the code from many addresses: after ten wrong codes the user is locked on all
 	 * of them, also for the right code, and the audit log gets the lock once.
 	 *
