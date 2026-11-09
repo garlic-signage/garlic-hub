@@ -97,13 +97,24 @@ export class TemplateFabricWrapper extends FabricWrapper
 		this.#history.reset();
 	}
 
+	/** a template without a background color stays white like before, a transparent one has this value */
+	static TRANSPARENT = "transparent";
+
 	/**
-	 * The color of the template behind all objects, white without one.
+	 * The color of the template behind all objects, white without one or when it is transparent.
 	 */
 	getBackgroundColor()
 	{
 		const color = this.fabricCanvas.backgroundColor;
-		return (typeof color === "string" && color !== "") ? color : "#ffffff";
+		if (typeof color !== "string" || color === "" || color === TemplateFabricWrapper.TRANSPARENT)
+			return "#ffffff";
+
+		return color;
+	}
+
+	isTransparentBackground()
+	{
+		return this.fabricCanvas.backgroundColor === TemplateFabricWrapper.TRANSPARENT;
 	}
 
 	/**
@@ -122,13 +133,16 @@ export class TemplateFabricWrapper extends FabricWrapper
 	}
 
 	/**
-	 * The image with the background color of the template, the given color only for a template without one.
+	 * The image with the background color of the template, the given color for a template without one and for a
+	 * transparent one in a format without transparency (jpeg).
 	 * The canvas keeps its own color: else the next save had the fallback in the content.
 	 */
 	toBase64Image(format, quality, fallbackBackgroundColor)
 	{
-		const ownColor = this.fabricCanvas.backgroundColor;
-		if (typeof ownColor !== "string" || ownColor === "")
+		const ownColor      = this.fabricCanvas.backgroundColor;
+		const hasNoColor    = typeof ownColor !== "string" || ownColor === "";
+		const lacksAlpha    = !["png", "webp"].includes(format);
+		if (hasNoColor || (this.isTransparentBackground() && lacksAlpha))
 			this.fabricCanvas.backgroundColor = fallbackBackgroundColor;
 
 		try

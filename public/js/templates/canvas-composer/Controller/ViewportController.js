@@ -73,9 +73,17 @@ export class ViewportController
 			this.#viewportService.setBackgroundColor(this.#viewportView.getBackgroundColorValue());
 			this.#viewportService.commitBackgroundColor();
 		});
+		this.#viewportView.transparentBackground.addEventListener('change', () =>
+		{
+			this.#viewportService.setTransparentBackground(
+				this.#viewportView.isTransparentBackgroundChecked(),
+				this.#viewportView.getBackgroundColorValue()
+			);
+			this.#showBackground();
+		});
 		this.#viewportService.onHistoryRestored(() =>
 		{
-			this.#viewportView.setBackgroundColor(this.#viewportService.getBackgroundColor());
+			this.#showBackground();
 		});
 
 		this.#viewportView.zoomSlider.addEventListener('input', () =>
@@ -105,7 +113,7 @@ export class ViewportController
 		this.#viewportService.initializeFromCanvas()
 		this.#viewportView.setResolutionWidth(this.#viewportService.width)
 		this.#viewportView.setResolutionHeight(this.#viewportService.height)
-		this.#viewportView.setBackgroundColor(this.#viewportService.getBackgroundColor());
+		this.#showBackground();
 		this.zoomToViewPort();
 	}
 
@@ -126,6 +134,14 @@ export class ViewportController
 		this.#viewportView.setZoomPercentHtml(this.#viewportView.getZoomSliderValue() + ' %');
 	}
 
-
-
+	/**
+	 * A transparent template keeps the last color in the input: switched off it comes back.
+	 */
+	#showBackground()
+	{
+		const isTransparent = this.#viewportService.isTransparentBackground();
+		this.#viewportView.setTransparentBackground(isTransparent);
+		if (!isTransparent)
+			this.#viewportView.setBackgroundColor(this.#viewportService.getBackgroundColor());
+	}
 }

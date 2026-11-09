@@ -75,6 +75,7 @@ class TemplatePreparerTest extends TestCase
 		static::assertSame(12, $result['TEMPLATE_ID']);
 		static::assertSame('templates.opacity', $result['LANG_OPACITY']);
 		static::assertSame('templates.background_color', $result['LANG_BACKGROUND_COLOR']);
+		static::assertSame('templates.transparent_background', $result['LANG_TRANSPARENT_BACKGROUND']);
 		static::assertSame([
 			'LANG_LOCK' => 'templates.lock',
 			'LANG_UNLOCK' => 'templates.unlock',

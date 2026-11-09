@@ -18,6 +18,8 @@
 */
 'use strict';
 
+import {TemplateFabricWrapper} from "../Utils/TemplateFabricWrapper.js";
+
 export class ViewportService
 {
 	#fabricWrapper;
@@ -69,6 +71,20 @@ export class ViewportService
 
 	commitBackgroundColor()
 	{
+		this.#fabricWrapper.commitBackgroundColor();
+	}
+
+	isTransparentBackground()
+	{
+		return this.#fabricWrapper.isTransparentBackground();
+	}
+
+	/**
+	 * Off again: the color of the input.
+	 */
+	setTransparentBackground(isTransparent, color)
+	{
+		this.#fabricWrapper.setBackgroundColor(isTransparent ? TemplateFabricWrapper.TRANSPARENT : color);
 		this.#fabricWrapper.commitBackgroundColor();
 	}
 

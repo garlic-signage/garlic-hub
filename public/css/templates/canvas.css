@@ -148,3 +148,7 @@ label:has(+ input:disabled), input:disabled{opacity: 0.5; pointer-events: none;}
 #imageSuggestionDialog .image-suggestions button {display: block; width: 100%; padding: 0; border: 2px solid transparent; border-radius: 4px; background: none; cursor: pointer;}
 #imageSuggestionDialog .image-suggestions button:hover, #imageSuggestionDialog .image-suggestions button:focus-visible {border-color: var(--gh-primary-color, #d97706);}
 #imageSuggestionDialog .image-suggestions img {display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 2px;}
+
+/* the transparent background of a template: a checkerboard behind the objects, a toggle beside the color */
+#canvas.transparent-background {background-color: #fff; background-image: conic-gradient(#ccc 25%, #fff 0 50%, #ccc 0 75%, #fff 0); background-size: 20px 20px;}
+.transparent_toggle {display: flex; align-items: center; gap: 2px; cursor: pointer;}

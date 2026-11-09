@@ -25,6 +25,8 @@ export class ViewportView
 	#resolutionWidth = document.getElementById("imageWidth");
 	#resolutionHeight = document.getElementById("imageHeight");
 	#backgroundColor = document.getElementById("backgroundColor");
+	#transparentBackground = document.getElementById("transparentBackground");
+	#canvas = document.getElementById("canvas");
 
 	constructor() {}
 
@@ -96,5 +98,25 @@ export class ViewportView
 	setBackgroundColor(value)
 	{
 		this.#backgroundColor.value = value;
+	}
+
+	get transparentBackground()
+	{
+		return this.#transparentBackground;
+	}
+
+	isTransparentBackgroundChecked()
+	{
+		return this.#transparentBackground.checked;
+	}
+
+	/**
+	 * A transparent template: no color to choose, a checkerboard behind the objects.
+	 */
+	setTransparentBackground(isTransparent)
+	{
+		this.#transparentBackground.checked = isTransparent;
+		this.#backgroundColor.disabled      = isTransparent;
+		this.#canvas.classList.toggle("transparent-background", isTransparent);
 	}
 }
