@@ -72,7 +72,10 @@ class ExportService extends AbstractBaseService
 	}
 
 	/**
-	 * @return int number of exported playlists, more than one for a multizone playlist
+	 * A multizone playlist exports nothing of its zones: the players get the zone playlists as they were exported
+	 * last, with their own export (and release) only. A zone playlist which was never exported stops the export,
+	 * see docs/multizone-export.md.
+	 *
 	 * @throws AccessDeniedException
 	 * @throws CoreException
 	 * @throws Exception
@@ -81,7 +84,7 @@ class ExportService extends AbstractBaseService
 	 * @throws ModuleException
 	 * @throws UserException
 	 */
-	public function exportToSmil(int $playlistId): int
+	public function exportToSmil(int $playlistId): void
 	{
 		$this->transactions->begin();
 		try
@@ -92,35 +95,27 @@ class ExportService extends AbstractBaseService
 			if (!$this->playlistRelease->mayExport($playlist))
 				throw new AccessDeniedException('playlists', 'playlist_export_not_allowed', ['playlist_id' => $playlistId]);
 
-			$count = 0;
 			$layout = Serialization::unserializeSecure($playlist['layout'] ?? null);
 			if (($playlist['playlist_mode'] ?? '') === PlaylistMode::MULTIZONE->value && !empty($layout['zones']))
 			{
-				$zones = $layout['zones'];
 				$metrics = ['filesize' => 0, 'duration' => 0, 'owner_duration' => 0];
-				foreach ($zones as $zone)
+				foreach ($layout['zones'] as $zone)
 				{
-					// a zone without a playlist has nothing to export
 					if ((int) ($zone['zone_playlist_id'] ?? 0) === 0)
 						continue;
 
-					// a viewer of a zone playlist may use it in his multizone playlist
+					// a viewer of a zone playlist may use it in his multizone playlist, but not export or release it
 					$zonePlaylist = $this->playlistsService->loadUsableById((int) $zone['zone_playlist_id']);
-					$tmp          = $this->export($zonePlaylist);
-					$this->playlistVersionsService->recordExport($zonePlaylist);
-					$this->playlistsService->update((int) $zonePlaylist['playlist_id'], ['release_status' => ReleaseStatus::RELEASED->value]);
-					$count++;
-					// use the highest values for the duration of multizone.
-					$metrics['filesize'] = max($metrics['filesize'], $tmp['filesize']);
-					$metrics['duration'] = max($metrics['duration'], $tmp['duration']);
-					$metrics['owner_duration'] = max($metrics['owner_duration'], $tmp['owner_duration']);
+					if (!$this->localSmilWriter->isExported((int) $zonePlaylist['playlist_id']))
+						throw new TranslatableModuleException('playlists', 'zone_playlist_not_exported', ['playlist_name' => (string) $zonePlaylist['playlist_name']]);
+
+					// the highest values of the zones as they were exported
+					foreach (array_keys($metrics) as $key)
+						$metrics[$key] = max($metrics[$key], (int) $zonePlaylist[$key]);
 				}
 			}
 			else
-			{
 				$metrics = $this->export($playlist);
-				$count++;
-			}
 
 			$metrics['release_status'] = ReleaseStatus::RELEASED->value;
 			if ($this->playlistsService->updateExport($playlistId, $metrics) === 0)
@@ -129,7 +124,6 @@ class ExportService extends AbstractBaseService
 			// the exported state is a version (while the versioning is on)
 			$this->playlistVersionsService->recordExport($playlist);
 			$this->transactions->commit();
-			return $count;
 		}
 		catch (Throwable $e)
 		{

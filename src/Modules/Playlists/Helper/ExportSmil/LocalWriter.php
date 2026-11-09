@@ -55,6 +55,16 @@ class LocalWriter
 	}
 
 	/**
+	 * The files of the players exist: the playlist was exported at least once.
+	 *
+	 * @throws FilesystemException
+	 */
+	public function isExported(int $playlistId): bool
+	{
+		return $this->fileSystem->fileExists($this->playlistBasePath . '/' . $playlistId . '/items.smil');
+	}
+
+	/**
 	 * @throws FilesystemException
 	 */
 	public function writeSMILFiles(PlaylistContent $playlistContent): void

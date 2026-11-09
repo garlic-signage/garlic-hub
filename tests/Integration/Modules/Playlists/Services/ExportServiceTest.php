@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace Tests\Integration\Modules\Playlists\Services;
 
 use App\Framework\Exceptions\AccessDeniedException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Playlists\Collector\Builder\BuildHelper;
 use App\Modules\Playlists\Collector\ContentReader;
 use App\Modules\Playlists\Collector\ExternalContentReader;
@@ -69,7 +70,7 @@ class ExportServiceTest extends ContainerTestCase
 	{
 		$this->actingAs(2);
 
-		static::assertSame(1, $this->exportService->exportToSmil(1));
+		$this->exportService->exportToSmil(1);
 
 		foreach (['prefetch', 'items', 'exclusive'] as $file)
 			static::assertFileExists($this->workspace->absolute('/var/smil/playlists/1/' . $file . '.smil'));
@@ -170,12 +171,68 @@ class ExportServiceTest extends ContainerTestCase
 		}
 	}
 
-	public function testTheZonesOfAMultizonePlaylistAreExported(): void
+	private function makeMultizone(int $playlistId, int $zonePlaylistId): void
+	{
+		$this->connection->executeStatement("UPDATE playlists SET playlist_mode = 'multizone', layout = ? WHERE playlist_id = ?", [serialize(['resolution' => '1920x1080', 'zones' => ['screen1' => ['zone_playlist_id' => $zonePlaylistId], 'screen2' => ['zone_playlist_id' => 0]]]), $playlistId]);
+	}
+
+	/**
+	 * The players get the zone playlists as they were exported: the export of the multizone playlist does not write
+	 * their files again, it takes their stored metrics.
+	 */
+	public function testAMultizonePlaylistTakesItsZonesAsTheyWereExported(): void
 	{
 		$this->actingAs(2);
-		$this->connection->executeStatement("UPDATE playlists SET playlist_mode = 'multizone', layout = ? WHERE playlist_id = 3", [serialize(['resolution' => '1920x1080', 'zones' => ['screen1' => ['zone_playlist_id' => 1]]])]);
+		$this->exportService->exportToSmil(1);
+		$file = $this->workspace->absolute('/var/smil/playlists/1/items.smil');
+		file_put_contents($file, 'as exported before');
+		$this->makeMultizone(3, 1);
 
-		static::assertSame(1, $this->exportService->exportToSmil(3)); // one zone
-		static::assertFileExists($this->workspace->absolute('/var/smil/playlists/1/items.smil'));
+		$this->exportService->exportToSmil(3);
+
+		static::assertSame('as exported before', file_get_contents($file));
+		static::assertSame([68, 1170, 63], array_map(intval(...), (array) $this->connection->fetchNumeric('SELECT duration, filesize, owner_duration FROM playlists WHERE playlist_id = 3')));
+		static::assertSame('released', $this->connection->fetchOne('SELECT release_status FROM playlists WHERE playlist_id = 3'));
+	}
+
+	/**
+	 * A viewer may use a shared playlist as zone, but its export and release stay with its editors.
+	 */
+	public function testTheZonePlaylistOfAViewerIsNeitherExportedNorReleased(): void
+	{
+		$this->connection->executeStatement("INSERT INTO user_acl (UID, acl, module) VALUES (2, 1, 'playlists')");
+		$this->connection->executeStatement("INSERT INTO user_vip (UID, vip_name, unit_id) VALUES (2, 'playlists_viewer', '2')");
+		$this->actingAs(3);
+		$this->exportService->exportToSmil(2);
+		$this->connection->executeStatement("UPDATE playlists SET release_status = 'ready' WHERE playlist_id = 2");
+		$exportTime = $this->connection->fetchOne('SELECT export_time FROM playlists WHERE playlist_id = 2');
+		$file = $this->workspace->absolute('/var/smil/playlists/2/items.smil');
+		file_put_contents($file, 'released state of bernd');
+		$this->actingAs(2);
+		$this->makeMultizone(3, 2);
+
+		$this->exportService->exportToSmil(3);
+
+		static::assertSame('released state of bernd', file_get_contents($file));
+		static::assertSame(['ready', $exportTime], array_values((array) $this->connection->fetchNumeric('SELECT release_status, export_time FROM playlists WHERE playlist_id = 2')));
+	}
+
+	public function testAZonePlaylistWhichWasNeverExportedStopsTheExport(): void
+	{
+		$this->actingAs(2);
+		$this->makeMultizone(3, 1);
+
+		try
+		{
+			$this->exportService->exportToSmil(3);
+			static::fail('Expected TranslatableModuleException');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertSame('zone_playlist_not_exported', $e->getTranslationKey());
+			static::assertSame(['playlist_name' => 'Annas Lobby'], $e->getReplacements());
+			static::assertFileDoesNotExist($this->workspace->absolute('/var/smil/playlists/1/items.smil'));
+			static::assertSame('0000-00-00 00:00:00', $this->connection->fetchOne('SELECT export_time FROM playlists WHERE playlist_id = 3'));
+		}
 	}
 }

@@ -210,7 +210,10 @@ class PlaylistVersionsTest extends ContainerTestCase
 		static::assertSame([1, 2, 3, 4], array_column($this->items(1), 'item_order'));
 	}
 
-	public function testTheExportOfAMultizonePlaylistRecordsItsZones(): void
+	/**
+	 * The zones are exported (and recorded) by their own export only, see docs/multizone-export.md.
+	 */
+	public function testTheExportOfAMultizonePlaylistRecordsItselfButNotItsZones(): void
 	{
 		$this->enable();
 		$this->actingAs(2);
@@ -219,7 +222,9 @@ class PlaylistVersionsTest extends ContainerTestCase
 
 		try
 		{
-			$this->buildExportService($workspace)->exportToSmil(3);
+			$exportService = $this->buildExportService($workspace);
+			$exportService->exportToSmil(1);
+			$exportService->exportToSmil(3);
 		}
 		finally
 		{
