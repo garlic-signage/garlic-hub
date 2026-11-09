@@ -61,7 +61,8 @@ $dependencies[AutoLoginService::class] = DI\factory(function (ContainerInterface
 	return new AutoLoginService(
 		$container->get(UserTokenService::class),
 		$container->get(Cookie::class),
-		$container->get('ModuleLogger')
+		$container->get('ModuleLogger'),
+		$container->get(UsersService::class)
 	);
 });
 $dependencies[TwoFactorService::class] = DI\factory(function (ContainerInterface $container)

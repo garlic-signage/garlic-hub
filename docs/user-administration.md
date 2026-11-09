@@ -88,7 +88,9 @@ Modules differ in the details:
 
 - Every user sets it up in his account (tab 2FA) with an authenticator app such as Aegis: TOTP with SHA1, 6 digits
   and 30 seconds (`Shared\User\TwoFactor\TwoFactorService`, library spomky-labs/otphp). It counts only after the
-  first valid code, which also gives 10 recovery codes. They are shown once and stored as hashes.
+  first valid code, which also gives 10 recovery codes. They are shown once and stored as hashes. Turning it on
+  ends the other sessions and the remember-me logins of the user: they had only the password. The session which
+  turns it on stays.
 - The login asks for the code after the password (`/login/two-factor`). The session counts as logged in and the
   remember-me cookie is created only after it. Wrong codes are limited like wrong passwords (5 per user and
   address) and additionally per user from all addresses: after 10 in 15 minutes the second factor of the user is

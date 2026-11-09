@@ -111,6 +111,26 @@ class AutoLoginTest extends ContainerTestCase
 		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_tokens WHERE UID = 10'));
 	}
 
+	/**
+	 * Whoever came first with the cookie may be the thief: his session ends, too, not only the tokens.
+	 */
+	public function testReplayEndsTheSessionsOfTheUser(): void
+	{
+		$this->autoLoginFor(10)->createAutologinCookie(10);
+		$stolen = (string) $this->cookie->getCookie(AutoLoginService::COOKIE_NAME_AUTO_LOGIN);
+		$this->loginByCookie();
+		$sessionVersion = $this->connection->fetchOne('SELECT last_password_change FROM user_main WHERE UID = 10');
+		$other          = $this->connection->fetchOne('SELECT last_password_change FROM user_main WHERE UID = 14');
+		static::assertTrue($this->newAuthService()->isUserActive(10, is_string($sessionVersion) ? $sessionVersion : null));
+		sleep(1);
+
+		$_COOKIE[AutoLoginService::COOKIE_NAME_AUTO_LOGIN] = $stolen;
+		$this->loginByCookie();
+
+		static::assertFalse($this->newAuthService()->isUserActive(10, is_string($sessionVersion) ? $sessionVersion : null));
+		static::assertSame($other, $this->connection->fetchOne('SELECT last_password_change FROM user_main WHERE UID = 14'));
+	}
+
 	public function testReplayDoesNotTouchTheTokensOfOtherUsers(): void
 	{
 		$this->autoLoginFor(14)->createAutologinCookie(14);

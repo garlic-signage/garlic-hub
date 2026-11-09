@@ -85,6 +85,25 @@ class UsersService extends AbstractBaseService
 	}
 
 	/**
+	 * Ends all running sessions of the user. The column last_password_change is the version of his sessions: a
+	 * session stays valid only while it is unchanged (AuthService::isUserActive()). A password change sets it, and
+	 * so do turning on the second factor and a stolen remember-me cookie, without a new password.
+	 * The session which does the change keeps itself alive with UserSession::keepAfterPasswordChange().
+	 *
+	 * @return string the new version, for the session which stays
+	 * @throws CoreException
+	 * @throws Exception
+	 */
+	public function endSessions(int $UID): string
+	{
+		$now = date('Y-m-d H:i:s');
+		$this->userRepositories['main']->update($UID, ['last_password_change' => $now]);
+		$this->invalidateCache($UID);
+
+		return $now;
+	}
+
+	/**
 	 * Replaces the stored hash, e.g. after the hashing algorithm of PHP has changed.
 	 *
 	 * @throws Exception

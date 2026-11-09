@@ -232,4 +232,30 @@ class TwoFactorFlowTest extends BlackboxTestCase
 		static::assertCount(10, $matches[1]);
 		static::assertNotSame($hashes, $this->connection->fetchFirstColumn('SELECT code_hash FROM user_recovery_codes WHERE UID = 2 ORDER BY code_hash'));
 	}
+
+	/**
+	 * A session and a remember-me cookie from before had only the password: turning the second factor on ends them,
+	 * the session which turns it on stays.
+	 */
+	public function testTurningItOnEndsTheLoginsFromBefore(): void
+	{
+		$laptop = $this->browser();
+		$laptop->login('anna', self::PASSWORD, true);
+		$cookie = (string) $laptop->cookie('UserLogin')?->getValue();
+		static::assertNotSame('', $cookie);
+		$phone = $this->browser();
+		$phone->login('anna', self::PASSWORD);
+		static::assertSame(200, $phone->get('/player')->getStatusCode());
+		sleep(1);
+
+		$phone->get('/account/settings');
+		$confirm = $phone->post('/account/two-factor', ['code' => $this->codeOf(2), 'csrf_token' => $phone->csrfToken('/account/settings')]);
+		static::assertSame('/account/settings#two_factor', $confirm->getHeaderLine('Location'));
+
+		static::assertSame(200, $phone->get('/player')->getStatusCode(), 'the own session stays');
+		static::assertSame('/login', $laptop->get('/player')->getHeaderLine('Location'), 'the other session ends');
+		$thief = $this->browser()->request('GET', '/player', ['headers' => ['Cookie' => 'UserLogin=' . $cookie]]);
+		static::assertSame('/login', $thief->getHeaderLine('Location'), 'the remember-me cookie from before does not log in');
+		static::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM user_tokens WHERE UID = 2 AND purpose = 'autologin'"));
+	}
 }

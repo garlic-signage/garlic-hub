@@ -32,6 +32,9 @@ use App\Modules\Auth\LoginThrottle;
 use App\Modules\Auth\UserSession;
 use App\Shared\Audit\AuditAction;
 use App\Shared\Audit\AuditLog;
+use App\Shared\User\TokenPurposes;
+use App\Shared\User\UserTokenService;
+use App\Shared\User\UsersService;
 use App\Shared\User\TwoFactor\TwoFactorService;
 use Defuse\Crypto\Exception\CryptoException;
 use Doctrine\DBAL\Exception;
@@ -55,7 +58,9 @@ readonly class Orchestrator
 		private Translator $translator,
 		private CsrfToken $csrfToken,
 		private LoginThrottle $loginThrottle,
-		private AuditLog $auditLog
+		private AuditLog $auditLog,
+		private UsersService $usersService,
+		private UserTokenService $userTokenService
 	) {}
 
 	/**
@@ -90,6 +95,7 @@ readonly class Orchestrator
 	}
 
 	/**
+	 * @throws CoreException
 	 * @throws CryptoException
 	 * @throws Exception
 	 * @throws Throwable
@@ -97,9 +103,15 @@ readonly class Orchestrator
 	 */
 	public function confirm(string $code): bool
 	{
-		$codes = $this->twoFactorService->confirmSetup($this->userSession->getUID(), $code);
+		$UID   = $this->userSession->getUID();
+		$codes = $this->twoFactorService->confirmSetup($UID, $code);
 		if ($codes === null)
 			return false;
+
+		// a session or remember-me cookie from before had only the password: it must not get past the new second
+		// factor. This session stays.
+		$this->userTokenService->deleteByUserPurpose($UID, TokenPurposes::AUTOLOGIN->value);
+		$this->userSession->keepAfterPasswordChange($this->usersService->endSessions($UID));
 
 		$this->session->set(self::NEW_CODES, ['codes' => $codes]);
 		$this->userSession->setTwoFactor(true);

@@ -26,6 +26,7 @@ use App\Framework\Exceptions\AuthException;
 use App\Framework\Http\Cookie;
 use App\Modules\Auth\AutoLoginService;
 use App\Shared\User\UserTokenService;
+use App\Shared\User\UsersService;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
@@ -44,7 +45,7 @@ class AutoLoginServiceTest extends TestCase
 	{
 		parent::setUp();
 		$this->cookie           = $this->createStub(Cookie::class);
-		$this->autoLoginService = new AutoLoginService($this->createStub(UserTokenService::class), $this->cookie, new NullLogger());
+		$this->autoLoginService = new AutoLoginService($this->createStub(UserTokenService::class), $this->cookie, new NullLogger(), $this->createStub(UsersService::class));
 	}
 
 	#[Group('units')]

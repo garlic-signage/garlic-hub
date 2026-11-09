@@ -94,7 +94,15 @@ The controls in the application:
   (`LoginThrottle`).
 - **Sessions**: the session id is renewed on login and autologin. The session
   cookie is `HttpOnly` and `SameSite=Strict`, other cookies `HttpOnly` and
-  `SameSite=Lax`, both `Secure` under HTTPS.
+  `SameSite=Lax`, both `Secure` under HTTPS. All sessions of a user end at once
+  when `user_main.last_password_change` changes, the version of his sessions
+  (`UsersService::endSessions()`, `AuthService::isUserActive()`): on a password
+  change or reset, a switch to SSO, turning on the second factor and a stolen
+  remember-me cookie. The session which makes the change stays.
+- **Remember-me**: the token is replaced at every use. A used token which comes
+  again means a copied cookie: all tokens and all sessions of the user end, also
+  the one which the thief opened with it. Two tabs which log in with the same
+  cookie at the same moment look the same and log the user out, accepted.
 - **Tokens** for autologin, password links and the initial password are stored
   as HMAC-SHA256, never in plain text. They expire: autologin after 28 days, an
   initial password link after 24 hours, other links after 2 hours. A link token

@@ -27,6 +27,7 @@ use App\Framework\Exceptions\AuthException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Shared\User\TokenPurposes;
 use App\Shared\User\UserTokenService;
+use App\Shared\User\UsersService;
 use DateMalformedStringException;
 use DateTime;
 use Doctrine\DBAL\Exception;
@@ -37,7 +38,8 @@ class AutoLoginService
 	public const string COOKIE_NAME_AUTO_LOGIN = 'UserLogin';
 	public function __construct(private readonly UserTokenService   $userTokenService,
 								private readonly Cookie             $cookie,
-								private readonly LoggerInterface    $logger)
+								private readonly LoggerInterface    $logger,
+								private readonly UsersService       $usersService)
 	{
 	}
 
@@ -79,9 +81,12 @@ class AutoLoginService
 			$this->userTokenService->deleteExpiredToken();
 			throw new AuthException('Autologin expired.');
 		}
+		// a used token comes again: one of the two cookies is stolen. Whoever came first with it may be the thief,
+		// so all tokens and all sessions of the user end, the owner logs in again.
 		if ($dbToken['used_at']  !== null)
 		{
 			$this->userTokenService->deleteAllUserTokens($dbToken['UID']);
+			$this->usersService->endSessions((int) $dbToken['UID']);
 			throw new AuthException('Cookie manipulation. Contact administrator.');
 		}
 
