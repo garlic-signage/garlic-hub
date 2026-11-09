@@ -42,17 +42,6 @@ use Psr\SimpleCache\CacheException;
  */
 class UsersService extends AbstractBaseService
 {
-	const int USER_STATUS_DELETED       = 0;
-	const int USER_STATUS_LOCKED        = 1;
-	const int USER_STATUS_REGISTERED    = 2;
-	const int USER_STATUS_REGULAR       = 3;
-/*	const int USER_STATUS_PREMIUM_A     = 4;
-	const int USER_STATUS_PREMIUM_B     = 5;
-	const int USER_STATUS_PREMIUM_C     = 6;
-	const int USER_STATUS_PREMIUM_D     = 7;
-	const int USER_STATUS_PREMIUM_E     = 8;
-	const int USER_STATUS_ADMIN         = 9;
-*/
 	private UserEntityFactory $userEntityFactory;
 	private UserRepositoryFactory $userRepositoryFactory;
 

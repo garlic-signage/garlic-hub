@@ -28,7 +28,7 @@ use App\Framework\Utils\Forms\AbstractBaseFormElementsCreator;
 use App\Framework\Utils\Html\ClipboardTextField;
 use App\Framework\Utils\Html\FieldInterface;
 use App\Framework\Utils\Html\FieldType;
-use App\Modules\Users\UserStatus;
+use App\Shared\User\UserStatus;
 
 /**
  * This class is responsible for creating and managing form elements.

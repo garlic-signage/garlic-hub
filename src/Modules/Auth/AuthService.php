@@ -23,6 +23,7 @@ namespace App\Modules\Auth;
 
 use App\Framework\Exceptions\AuthException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Shared\User\UserStatus;
 use App\Shared\Audit\AuditAction;
 use App\Shared\Audit\AuditLog;
 use App\Shared\User\TwoFactor\TwoFactorService;
@@ -319,7 +320,7 @@ class AuthService
 		if (!is_numeric($status))
 			return false;
 
-		if (in_array((int) $status, [UsersService::USER_STATUS_DELETED, UsersService::USER_STATUS_LOCKED, UsersService::USER_STATUS_REGISTERED], true))
+		if (in_array((int) $status, [UserStatus::DELETED->value, UserStatus::BLOCKED->value, UserStatus::NOT_VERIFIED->value], true))
 			return false;
 
 		return ($main['last_password_change'] ?? null) === $passwordChangeOfSession;
@@ -331,15 +332,15 @@ class AuthService
 
 		switch ($status)
 		{
-			case UsersService::USER_STATUS_DELETED:
+			case UserStatus::DELETED->value:
 				$this->errorMessage = 'login//account_deleted';
 				break;
 
-			case UsersService::USER_STATUS_LOCKED:
+			case UserStatus::BLOCKED->value:
 				$this->errorMessage = 'login//account_locked';
 				break;
 
-			case UsersService::USER_STATUS_REGISTERED:
+			case UserStatus::NOT_VERIFIED->value:
 				$this->errorMessage = 'login//account_inactive';
 				break;
 		}

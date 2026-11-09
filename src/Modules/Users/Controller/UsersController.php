@@ -30,7 +30,7 @@ use App\Framework\Utils\FormParameters\ScalarType;
 use App\Modules\Users\Helper\Datatable\Parameters;
 use App\Modules\Users\Services\UsersAdminService;
 use App\Modules\Users\Services\UsersDatatableService;
-use App\Modules\Users\UserStatus;
+use App\Shared\User\UserStatus;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;

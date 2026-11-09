@@ -26,7 +26,7 @@ use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Security\Crypt;
 use App\Modules\Account\Services\AccountService;
-use App\Modules\Users\UserStatus;
+use App\Shared\User\UserStatus;
 use App\Shared\Audit\NullAuditLog;
 use App\Shared\User\Repositories\Core\UserMainRepository;
 use App\Shared\User\UsersService;

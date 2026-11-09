@@ -25,7 +25,7 @@ use App\Framework\Validation\Sanitizer;
 use App\Framework\Http\Session;
 use App\Framework\Utils\FormParameters\BaseEditParameters;
 use App\Framework\Utils\FormParameters\ScalarType;
-use App\Modules\Users\UserStatus;
+use App\Shared\User\UserStatus;
 
 /**
  * Represents a class for managing user-related parameters in a module.

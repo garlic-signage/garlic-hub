@@ -27,7 +27,7 @@ use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Mediapool\Services\NodesService;
 use App\Modules\Users\Services\UsersAdminCreateService;
-use App\Modules\Users\UserStatus;
+use App\Shared\User\UserStatus;
 use App\Shared\User\Repositories\Core\UserAclRepository;
 use App\Shared\User\Repositories\Core\UserMainRepository;
 use PHPUnit\Framework\Attributes\Group;

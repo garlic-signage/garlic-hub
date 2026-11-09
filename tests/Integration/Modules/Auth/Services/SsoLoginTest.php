@@ -23,6 +23,7 @@ namespace Tests\Integration\Modules\Auth\Services;
 
 use App\Framework\Security\Crypt;
 use App\Modules\Auth\SsoLogin;
+use App\Shared\User\UserStatus;
 use App\Shared\User\Repositories\Core\SsoProvidersRepository;
 use App\Shared\User\Sso\SsoRefusedException;
 use App\Shared\User\Sso\SsoUserProvisioning;
@@ -173,7 +174,7 @@ class SsoLoginTest extends ContainerTestCase
 		$UID = $this->login();
 
 		$user = $this->connection->fetchAssociative('SELECT username, email, password, status FROM user_main WHERE UID = ?', [$UID]);
-		static::assertSame(['username' => 'carla', 'email' => 'carla@example.com', 'password' => null, 'status' => 3], $user);
+		static::assertSame(['username' => 'carla', 'email' => 'carla@example.com', 'password' => null, 'status' => UserStatus::REGISTERED->value], $user, 'active at once: the provider verified the email, a status NOT_VERIFIED would wait for a password');
 		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_acl WHERE UID = ?', [$UID]), 'no rights until the admin grants them');
 		static::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM mediapool_nodes WHERE UID = ? AND parent_id = 0', [$UID]), 'his media folder');
 		static::assertSame('Basic ' . base64_encode(self::CLIENT_ID . ':' . self::CLIENT_SECRET), $this->provider->tokenAuthorization, 'the secret is decrypted for the provider');

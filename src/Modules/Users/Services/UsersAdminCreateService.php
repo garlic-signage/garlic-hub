@@ -28,7 +28,7 @@ use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Mediapool\Services\NodesService;
 use App\Shared\User\Repositories\Core\UserAclRepository;
 use App\Shared\User\Repositories\Core\UserMainRepository;
-use App\Modules\Users\UserStatus;
+use App\Shared\User\UserStatus;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
 use Throwable;

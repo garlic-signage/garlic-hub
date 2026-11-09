@@ -33,7 +33,7 @@ use App\Modules\Account\Helper\Password\SettingsFormBuilder;
 use App\Modules\Account\Services\AccountService;
 use App\Modules\Auth\LoginThrottle;
 use App\Modules\Auth\UserSession;
-use App\Modules\Users\UserStatus;
+use App\Shared\User\UserStatus;
 use App\Shared\User\TokenPurposes;
 use App\Shared\User\UserTokenService;
 use PHPUnit\Framework\Attributes\DataProvider;

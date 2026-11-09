@@ -19,7 +19,7 @@
 */
 declare(strict_types=1);
 
-namespace App\Modules\Users;
+namespace App\Shared\User;
 
 /**
  * Represents the various statuses that can be assigned to a user.

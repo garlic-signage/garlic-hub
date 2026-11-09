@@ -30,7 +30,7 @@ use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\LoginThrottle;
 use App\Modules\Auth\UserSession;
-use App\Modules\Users\UserStatus;
+use App\Shared\User\UserStatus;
 use App\Shared\User\TokenPurposes;
 use App\Modules\Account\Services\AccountService;
 use App\Shared\User\UserTokenService;

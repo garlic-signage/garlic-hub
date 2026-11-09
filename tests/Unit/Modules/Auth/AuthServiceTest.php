@@ -25,6 +25,7 @@ use App\Framework\Exceptions\AuthException;
 use App\Modules\Auth\AuthService;
 use App\Modules\Auth\AutoLoginService;
 use App\Modules\Auth\LoginThrottle;
+use App\Shared\User\UserStatus;
 use App\Shared\Audit\AuditAction;
 use App\Shared\Audit\AuditLog;
 use App\Shared\Audit\NullAuditLog;
@@ -67,7 +68,7 @@ class AuthServiceTest extends TestCase
 		$this->remoteAddress = $_SERVER['REMOTE_ADDR'] ?? null;
 		$_SERVER['REMOTE_ADDR'] = '10.0.0.1';
 
-		$this->users = ['user@example.com' => ['UID' => 1, 'password' => $this->hash(self::PASSWORD), 'status' => UsersService::USER_STATUS_REGULAR]];
+		$this->users = ['user@example.com' => ['UID' => 1, 'password' => $this->hash(self::PASSWORD), 'status' => UserStatus::REGISTERED->value]];
 
 		$this->userService = $this->createStub(UsersService::class);
 		$this->userService->method('findUser')->willReturnCallback(fn(string $identifier): array => $this->users[$identifier] ?? []);
@@ -106,7 +107,7 @@ class AuthServiceTest extends TestCase
 
 	private function entity(int $UID): UserEntity
 	{
-		$status = UsersService::USER_STATUS_REGULAR;
+		$status = UserStatus::REGISTERED->value;
 		foreach ($this->users as $user)
 		{
 			if ($user['UID'] === $UID)
@@ -161,10 +162,10 @@ class AuthServiceTest extends TestCase
 	public static function statusProvider(): array
 	{
 		return [
-			'deleted'        => [UsersService::USER_STATUS_DELETED, 'login//account_deleted'],
-			'locked'         => [UsersService::USER_STATUS_LOCKED, 'login//account_locked'],
-			'not verified'   => [UsersService::USER_STATUS_REGISTERED, 'login//account_inactive'],
-			'regular'        => [UsersService::USER_STATUS_REGULAR, ''],
+			'deleted'        => [UserStatus::DELETED->value, 'login//account_deleted'],
+			'locked'         => [UserStatus::BLOCKED->value, 'login//account_locked'],
+			'not verified'   => [UserStatus::NOT_VERIFIED->value, 'login//account_inactive'],
+			'regular'        => [UserStatus::REGISTERED->value, ''],
 			'premium'        => [5, ''],
 			'technician'     => [8, ''],
 			'admin'          => [9, ''],
@@ -187,6 +188,18 @@ class AuthServiceTest extends TestCase
 	}
 
 	/**
+	 * A running session ends with the same statuses which stop the login.
+	 */
+	#[Group('units')]
+	#[DataProvider('statusProvider')]
+	public function testOnlyUsersWithAnAllowedStatusKeepTheirSession(int $status, string $error): void
+	{
+		$this->users['user@example.com']['status'] = $status;
+
+		static::assertSame($error === '', $this->authService->isUserActive(1, null));
+	}
+
+	/**
 	 * A user who can not log in learns that only after the password was right: the status is no hint for a stranger.
 	 *
 	 * @throws \Exception
@@ -194,7 +207,7 @@ class AuthServiceTest extends TestCase
 	#[Group('units')]
 	public function testTheStatusOfAUserIsNotToldWithAWrongPassword(): void
 	{
-		$this->users['user@example.com']['status'] = UsersService::USER_STATUS_DELETED;
+		$this->users['user@example.com']['status'] = UserStatus::DELETED->value;
 
 		static::assertNull($this->authService->login('user@example.com', 'wrong'));
 		static::assertSame('Invalid credentials.', $this->authService->getErrorMessage());

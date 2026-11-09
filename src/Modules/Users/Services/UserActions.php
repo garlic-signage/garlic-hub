@@ -23,7 +23,7 @@ namespace App\Modules\Users\Services;
 
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
-use App\Modules\Users\UserStatus;
+use App\Shared\User\UserStatus;
 use App\Shared\Acl\AclGrantService;
 use Doctrine\DBAL\Exception;
 

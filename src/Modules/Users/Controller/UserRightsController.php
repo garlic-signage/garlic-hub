@@ -27,7 +27,7 @@ use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Modules\Auth\UserSession;
-use App\Modules\Users\UserStatus;
+use App\Shared\User\UserStatus;
 use App\Shared\Acl\AclGrantService;
 use App\Shared\Acl\AclSections;
 use App\Shared\User\UsersService;

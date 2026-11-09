@@ -29,7 +29,7 @@ use App\Framework\Utils\Datatable\AbstractDatatablePreparer;
 use App\Framework\Utils\Datatable\PrepareService;
 use App\Framework\Utils\Datatable\Results\HeaderField;
 use App\Modules\Users\Services\AclValidator;
-use App\Modules\Users\UserStatus;
+use App\Shared\User\UserStatus;
 use Doctrine\DBAL\Exception;
 use App\Modules\Users\Services\UserActions;
 

@@ -32,7 +32,7 @@ use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Shared\User\Repositories\Core\UserMainRepository;
-use App\Modules\Users\UserStatus;
+use App\Shared\User\UserStatus;
 use Doctrine\DBAL\Exception;
 use Throwable;
 

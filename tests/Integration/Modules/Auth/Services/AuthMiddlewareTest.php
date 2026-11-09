@@ -23,6 +23,7 @@ namespace Tests\Integration\Modules\Auth\Services;
 
 use App\Framework\Http\Cookie;
 use App\Framework\Http\Session;
+use App\Shared\User\UserStatus;
 use App\Shared\Audit\AuditLog;
 use Tests\Integration\Support\ArraySession;
 use App\Modules\Account\Services\AccountService;
@@ -215,7 +216,7 @@ class AuthMiddlewareTest extends ContainerTestCase
 		$this->actingAs(10);
 		static::assertSame(200, $this->process('GET', '/player')->getStatusCode());
 
-		$this->container->get(UsersAdminService::class)->updateUser(10, ['username' => 'regular', 'email' => 'Regular@Example.com', 'status' => UsersService::USER_STATUS_LOCKED]);
+		$this->container->get(UsersAdminService::class)->updateUser(10, ['username' => 'regular', 'email' => 'Regular@Example.com', 'status' => UserStatus::BLOCKED->value]);
 
 		$response = $this->process('GET', '/player');
 		static::assertSame(302, $response->getStatusCode());
