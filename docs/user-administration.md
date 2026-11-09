@@ -71,6 +71,7 @@ Modules differ in the details:
   media folder is deleted.
 - **Password reset** by an admin clears the password, ends the running sessions and the autologin and creates a
   link with which the user sets a new password.
+- **Switch to SSO** by an admin: see Single sign-on below.
 - **2FA reset** by an admin turns the second factor of a user off (lost device). The button is shown only for a
   user who has it. The user sets it up again, at once after his next login while it is required.
 
@@ -128,7 +129,14 @@ Modules differ in the details:
 - **Entra ID** sends no `email_verified`. Add the optional claim `xms_edov` to the ID token in the app registration
   (Token configuration → Add optional claim → ID → `xms_edov`), without it every Entra login is refused.
   Keycloak verifies an email only with the email verification of the realm (or an admin marks it as verified).
-- An existing account with the same email is linked on the first login by SSO.
+- An existing account with the same email (of the company of the provider) is taken over by the first SSO login
+  only when it has **no password** and no identity at this provider yet; otherwise the login is refused
+  (`sso_account_exists`). Whoever has the email of an admin at the provider does not get his account, and an email
+  given anew to the next employee does not give him the account of the former one.
+- **Switch to SSO**: the button on the edit page of a user with a password, shown when his company has a provider
+  which is on. It deletes the password and the password links and ends the running sessions and remember-me logins
+  (audit `switched_to_sso`). The next SSO login with the verified email takes over the account with its content and
+  rights. An account which the admin created and whose first password is not set yet is taken over as well.
 - Allowed domains limit who gets in by the domain of the email. With Google they are needed: everybody has a Google
   account. With allowed domains Google lets in only the accounts of the company's Workspace (claim `hd`): a private
   Google account with an email of the domain, e.g. of a former employee, is refused. Entra ID and Okta let in only

@@ -61,6 +61,14 @@ class UserSsoRepository extends SqlBase
 	/**
 	 * @throws Exception
 	 */
+	public function hasLink(int $UID, int $providerId): bool
+	{
+		return $this->connection->fetchOne('SELECT 1 FROM ' . $this->table . ' WHERE UID = ? AND provider_id = ?', [$UID, $providerId]) !== false;
+	}
+
+	/**
+	 * @throws Exception
+	 */
 	public function link(int $UID, int $providerId, string $subject): void
 	{
 		$this->connection->insert($this->table, ['UID' => $UID, 'provider_id' => $providerId, 'subject' => $subject]);

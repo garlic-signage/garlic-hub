@@ -200,7 +200,8 @@ class SsoLoginTest extends ContainerTestCase
 		$this->assertRefused('sso_email_not_verified', fn() => $this->login());
 		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_sso'));
 
-		// Entra ID: the domain of the email is verified
+		// Entra ID: the domain of the email is verified; anna was switched to SSO, she has no password
+		$this->connection->executeStatement("UPDATE user_main SET password = '' WHERE UID = 2");
 		$this->provider->claims = ['sub' => 'subject-anna', 'email' => 'anna@example.com', 'email_verified' => null, 'xms_edov' => true];
 		static::assertSame(2, $this->login());
 	}
@@ -251,6 +252,33 @@ class SsoLoginTest extends ContainerTestCase
 		$this->changeProvider(['allowed_domains' => '']);
 		$this->provider->claims = ['sub' => 'subject-private', 'email' => 'private@gmail.example'];
 		static::assertGreaterThan(4, $this->login());
+	}
+
+	/**
+	 * Whoever has the email of an admin at the provider must not get his account: an account with a password logs in
+	 * by it. The admin switches a user to SSO, which removes the password.
+	 */
+	public function testAnAccountWithAPasswordIsNotTakenOver(): void
+	{
+		$this->provider->claims = ['sub' => 'subject-admin', 'email' => 'admin@example.com'];
+		$this->assertRefused('sso_account_exists', fn() => $this->login());
+
+		$this->connection->executeStatement('UPDATE user_main SET password = NULL WHERE UID = 1');
+		static::assertSame(1, $this->login());
+	}
+
+	/**
+	 * The email of a former employee is given to the next one, who gets another subject at the provider: he does
+	 * not get the account of the former one.
+	 */
+	public function testAnAccountWithAnIdentityAtTheProviderIsNotTakenOverByAnother(): void
+	{
+		$UID = $this->login();
+		static::assertNull($this->connection->fetchOne('SELECT password FROM user_main WHERE UID = ?', [$UID]));
+
+		$this->provider->claims = ['sub' => 'subject-successor', 'email' => 'carla@example.com'];
+		$this->assertRefused('sso_account_exists', fn() => $this->login());
+		static::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_sso WHERE UID = ?', [$UID]));
 	}
 
 	public function testAUsernameWhichExistsGetsANumber(): void

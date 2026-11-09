@@ -48,4 +48,5 @@ enum AuditAction: string
 	case TWO_FACTOR_LOCKED      = 'two_factor_locked';
 	case SSO_PROVIDER_SAVED     = 'sso_provider_saved';
 	case SSO_PROVIDER_DELETED   = 'sso_provider_deleted';
+	case SWITCHED_TO_SSO        = 'switched_to_sso';
 }

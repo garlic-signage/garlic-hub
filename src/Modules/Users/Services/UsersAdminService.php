@@ -34,6 +34,7 @@ use App\Shared\Audit\AuditLog;
 use App\Shared\User\TokenPurposes;
 use App\Shared\User\TwoFactor\TwoFactorService;
 use App\Shared\User\UsersService;
+use App\Shared\User\Repositories\Core\SsoProvidersRepository;
 use App\Shared\User\UserTokenService;
 use App\Shared\User\Repositories\Core\UserAclRepository;
 use App\Shared\User\Repositories\Core\UserMainRepository;
@@ -63,7 +64,8 @@ class UsersAdminService
 		private readonly UserSession $userSession,
 		private readonly UsersService $usersService,
 		private readonly AuditLog $auditLog,
-		private readonly TwoFactorService $twoFactorService
+		private readonly TwoFactorService $twoFactorService,
+		private readonly SsoProvidersRepository $ssoProvidersRepository
 	) {}
 
 	public function getToken(): string
@@ -252,6 +254,57 @@ class UsersAdminService
 	public function resetTwoFactor(int $UID): void
 	{
 		$this->twoFactorService->reset($UID, $this->userSession->getUID());
+	}
+
+	/**
+	 * A user with a password can be switched to SSO when his company has a provider which is on.
+	 *
+	 * @throws Exception
+	 */
+	public function canSwitchToSso(int $UID, int $companyId): bool
+	{
+		if ($this->userMainRepository->findPasswordHash($UID) === null)
+			return false;
+
+		foreach ($this->ssoProvidersRepository->findAllOfCompany($companyId) as $provider)
+		{
+			if ($provider->enabled)
+				return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * The user logs in by SSO from now on: the password and the links to set one are gone, the running sessions
+	 * and remember-me logins end. His next SSO login with the verified email takes over the account with its
+	 * content and rights (SsoUserProvisioningService): only an account without password is taken over.
+	 *
+	 * @throws Exception
+	 * @throws Throwable
+	 * @throws TranslatableModuleException
+	 */
+	public function switchToSso(int $UID): void
+	{
+		$this->transactions->begin();
+		try
+		{
+			// the time of the change ends the running sessions of the user, see AuthService::isUserActive()
+			if ($this->userMainRepository->update($UID, ['password' => '', 'last_password_change' => date('Y-m-d H:i:s')]) === 0)
+				throw new TranslatableModuleException('users', 'sso_switch_failed', ['UID' => $UID]);
+
+			foreach ([TokenPurposes::AUTOLOGIN, TokenPurposes::PASSWORD_RESET, TokenPurposes::INITIAL_PASSWORD] as $purpose)
+				$this->userTokenService->deleteByUserPurpose($UID, $purpose->value);
+			$this->usersService->invalidateCache($UID);
+			$this->auditLog->record($this->userSession->getUID(), self::MODULE_NAME, AuditAction::SWITCHED_TO_SSO, null, $UID);
+
+			$this->transactions->commit();
+		}
+		catch (Throwable $e)
+		{
+			$this->transactions->rollBack();
+			throw $e;
+		}
 	}
 
 	/**

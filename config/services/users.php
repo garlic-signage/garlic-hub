@@ -209,7 +209,8 @@ $dependencies[UsersAdminService::class] = DI\factory(function (ContainerInterfac
 		$container->get(UserSession::class),
 		$container->get(UsersService::class),
 		$container->get(AuditLog::class),
-		$container->get(TwoFactorService::class)
+		$container->get(TwoFactorService::class),
+		new SsoProvidersRepository($container->get('SqlConnection'))
 	);
 });
 $dependencies[UsersAdminCreateService::class] = DI\factory(function (ContainerInterface $container)

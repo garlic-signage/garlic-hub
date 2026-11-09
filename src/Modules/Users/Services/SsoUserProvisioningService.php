@@ -76,6 +76,13 @@ class SsoUserProvisioningService implements SsoUserProvisioning
 				if (!$identity->emailVerified || (int) ($existing['company_id'] ?? 0) !== $identity->provider->companyId)
 					throw new SsoRefusedException('sso_account_exists');
 
+				// an account with a password logs in by it: whoever has the email at the provider must not take it
+				// over (an admin switches it to SSO, which removes the password). An account with an identity at
+				// this provider already is someone else: an email given anew to the next employee.
+				$hash = $existing['password'] ?? null;
+				if ((is_string($hash) && $hash !== '') || $this->userSsoRepository->hasLink((int) $existing['UID'], $identity->provider->id))
+					throw new SsoRefusedException('sso_account_exists');
+
 				$UID = (int) $existing['UID'];
 			}
 			else

@@ -128,6 +128,9 @@ readonly class ShowAdminController
 		if (isset($input->all()['resetTwoFactor']))
 			return $this->resetTwoFactor($response, $UID, $post);
 
+		if (isset($input->all()['switchToSso']))
+			return $this->switchToSso($response, $UID, $post);
+
 		return $this->update($response, $UID, $user['username'], $post);
 	}
 
@@ -207,6 +210,29 @@ readonly class ShowAdminController
 		$result = $this->orchestrator->resetTwoFactor($UID, $post);
 		if ($result['success'])
 			$this->flash->addMessage('success', sprintf($this->translator->translate('two_factor_reset_done', 'users'), $this->getUsername($post)));
+
+		foreach ($result['errors'] ?? [] as $errorText)
+		{
+			$this->flash->addMessage('error', $errorText);
+		}
+
+		return $response->withHeader('Location', '/users/edit/' . $UID)->withStatus(302);
+	}
+
+	/**
+	 * @param array<string,mixed> $post
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws Throwable
+	 * @throws UserException
+	 */
+	private function switchToSso(ResponseInterface $response, int $UID, array $post): ResponseInterface
+	{
+		$result = $this->orchestrator->switchToSso($UID, $post);
+		if ($result['success'])
+			$this->flash->addMessage('success', sprintf($this->translator->translate('sso_switch_done', 'users'), $this->getUsername($post)));
 
 		foreach ($result['errors'] ?? [] as $errorText)
 		{

@@ -107,6 +107,31 @@ class ShowAdminControllerTest extends UsersControllerTestCase
 		static::assertNotSame('', $this->databaseValue('SELECT password FROM user_main WHERE UID = 3'));
 	}
 
+	public function testTheAdminSwitchesAUserWithPasswordToSso(): void
+	{
+		$this->actingAs(1);
+		$this->connection->insert('sso_providers', ['company_id' => 1, 'name' => 'Entra', 'issuer' => 'https://idp.example.test', 'client_id' => 'x', 'client_secret' => '']);
+		$buttons = $this->page($this->edit('3'))->getTemplateData()['additional_buttons'];
+		static::assertSame(['resetPassword', 'switchToSso'], array_column($buttons, 'ADDITIONAL_BUTTON_NAME'));
+
+		$response = $this->store(['UID' => '3', 'switchToSso' => '1', 'username' => 'bernd', 'email' => 'bernd@example.com']);
+
+		$this->assertRedirect($response, '/users/edit/3');
+		static::assertSame('', $this->databaseValue('SELECT password FROM user_main WHERE UID = 3'));
+		// switched: no password, nothing to switch any more
+		static::assertSame(['resetPassword'], array_column($this->page($this->edit('3'))->getTemplateData()['additional_buttons'], 'ADDITIONAL_BUTTON_NAME'));
+	}
+
+	public function testWithoutAProviderAUserIsNotSwitchedToSso(): void
+	{
+		$this->actingAs(1);
+		$before = $this->databaseValue('SELECT password FROM user_main WHERE UID = 3');
+
+		$this->assertRedirect($this->store(['UID' => '3', 'switchToSso' => '1', 'username' => 'bernd', 'email' => 'bernd@example.com']), '/users/edit/3');
+
+		static::assertSame($before, $this->databaseValue('SELECT password FROM user_main WHERE UID = 3'));
+	}
+
 	public function testTheFormHasTheRulesOfTheFields(): void
 	{
 		$this->actingAs(1);
@@ -353,6 +378,7 @@ class ShowAdminControllerTest extends UsersControllerTestCase
 			'change another' => [['UID' => '1', 'username' => 'hacked', 'email' => 'hacked@example.com', 'status' => '0', 'locale' => 'de_DE']],
 			'reset another'  => [['UID' => '1', 'resetPassword' => '1', 'username' => 'admin', 'email' => 'admin@example.com']],
 			'reset the 2FA'  => [['UID' => '1', 'resetTwoFactor' => '1', 'username' => 'admin', 'email' => 'admin@example.com']],
+			'switch to SSO'  => [['UID' => '1', 'switchToSso' => '1', 'username' => 'admin', 'email' => 'admin@example.com']],
 		];
 	}
 

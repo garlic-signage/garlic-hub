@@ -137,7 +137,11 @@ class Orchestrator
 		$this->settingsParametersPolicy->addEditFormElements($this->getLoadedUser());
 
 		$form = $this->settingsFormBuilder->buildForm($userInput !== [] ? $userInput : $this->user);
-		$form['additional_buttons'] = $this->settingsFormBuilder->buildButtons($this->usersAdminService->hasTwoFactor((int) $this->getLoadedUser()['UID']));
+		$user = $this->getLoadedUser();
+		$form['additional_buttons'] = $this->settingsFormBuilder->buildButtons(
+			$this->usersAdminService->hasTwoFactor((int) $user['UID']),
+			$this->usersAdminService->canSwitchToSso((int) $user['UID'], (int) ($user['company_id'] ?? 0))
+		);
 
 		return $form;
 	}
@@ -258,6 +262,40 @@ class Orchestrator
 			return ['success' => false, 'errors' => $errors];
 
 		$this->usersAdminService->resetTwoFactor($UID);
+
+		return ['success' => true];
+	}
+
+	/**
+	 * The user must be loaded with loadUserForEdit() before, so the ACL is checked.
+	 *
+	 * @param array<string,mixed> $post
+	 * @return array{success: bool, errors?: string[]}
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 * @throws Throwable
+	 * @throws UserException
+	 */
+	public function switchToSso(int $UID, array $post): array
+	{
+		$errors = $this->validateEdit($post);
+		if ($errors !== [])
+			return ['success' => false, 'errors' => $errors];
+
+		$user = $this->getLoadedUser();
+		if (!$this->usersAdminService->canSwitchToSso($UID, (int) ($user['company_id'] ?? 0)))
+			return ['success' => false, 'errors' => [$this->translator->translate('sso_switch_failed', 'users')]];
+
+		try
+		{
+			$this->usersAdminService->switchToSso($UID);
+		}
+		catch (TranslatableModuleException $e)
+		{
+			return $this->formError($e);
+		}
 
 		return ['success' => true];
 	}

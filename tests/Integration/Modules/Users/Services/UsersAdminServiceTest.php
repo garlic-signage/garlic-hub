@@ -34,6 +34,7 @@ use App\Shared\User\Repositories\Core\UserVipRepository;
 use App\Shared\User\Repositories\Core\UserMainRepository;
 use App\Shared\User\TokenPurposes;
 use App\Shared\User\UsersService;
+use App\Shared\User\Repositories\Core\SsoProvidersRepository;
 use App\Shared\User\UserTokenService;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
@@ -280,6 +281,48 @@ class UsersAdminServiceTest extends ContainerTestCase
 		static::assertTrue($service->hasTwoFactor(3), 'the others keep theirs');
 	}
 
+	private function addProvider(int $companyId, int $enabled, string $name): void
+	{
+		$this->connection->insert('sso_providers', ['company_id' => $companyId, 'name' => $name, 'issuer' => 'https://' . $name . '.example.test', 'client_id' => 'x', 'client_secret' => '', 'enabled' => $enabled]);
+	}
+
+	/**
+	 * Only a user with a password, in a company with a provider which is on.
+	 */
+	public function testAUserCanBeSwitchedToSsoWhenHisCompanyHasAProvider(): void
+	{
+		$service = $this->serviceWith();
+		static::assertFalse($service->canSwitchToSso(3, 1), 'no provider');
+
+		$this->addProvider(1, 0, 'off');
+		static::assertFalse($service->canSwitchToSso(3, 1), 'the provider is off');
+
+		$this->addProvider(2, 1, 'other');
+		static::assertFalse($service->canSwitchToSso(3, 1), 'the provider of another company');
+
+		$this->addProvider(1, 1, 'entra');
+		static::assertTrue($service->canSwitchToSso(3, 1));
+
+		$this->connection->executeStatement("UPDATE user_main SET password = '' WHERE UID = 3");
+		static::assertFalse($service->canSwitchToSso(3, 1), 'without password there is nothing to switch');
+	}
+
+	public function testSwitchingToSsoRemovesThePasswordAndEndsTheLogins(): void
+	{
+		$tokens = $this->container->get(UserTokenService::class);
+		foreach ([TokenPurposes::AUTOLOGIN, TokenPurposes::PASSWORD_RESET, TokenPurposes::INITIAL_PASSWORD, TokenPurposes::EMAIL_VERIFICATION] as $purpose)
+			$tokens->insertToken(3, $tokens->generateToken(), $purpose);
+		$before = $this->connection->fetchOne('SELECT last_password_change FROM user_main WHERE UID = 3');
+		$other  = $this->connection->fetchOne('SELECT password FROM user_main WHERE UID = 2');
+
+		$this->serviceWith()->switchToSso(3);
+
+		static::assertSame('', $this->connection->fetchOne('SELECT password FROM user_main WHERE UID = 3'));
+		static::assertNotSame($before, $this->connection->fetchOne('SELECT last_password_change FROM user_main WHERE UID = 3'), 'the running sessions end');
+		static::assertSame([TokenPurposes::EMAIL_VERIFICATION->value], $this->connection->fetchFirstColumn('SELECT purpose FROM user_tokens WHERE UID = 3'));
+		static::assertSame($other, $this->connection->fetchOne('SELECT password FROM user_main WHERE UID = 2'));
+	}
+
 	public function testTheSecondFactorGoesWithTheDeletedUser(): void
 	{
 		$this->giveSecondFactor(3);
@@ -303,7 +346,8 @@ class UsersAdminServiceTest extends ContainerTestCase
 			$this->container->get(UserSession::class),
 			$this->container->get(UsersService::class),
 			$this->container->get(AuditLog::class),
-			$this->container->get(TwoFactorService::class)
+			$this->container->get(TwoFactorService::class),
+			new SsoProvidersRepository($this->connection)
 		);
 	}
 }

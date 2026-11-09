@@ -180,4 +180,18 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 		];
 	}
 
+	/**
+	 * @return array<string,string>
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	public function addSwitchToSsoButton(): array
+	{
+		return [
+			'ADDITIONAL_BUTTON_TYPE' => 'submit',
+			'ADDITIONAL_BUTTON_NAME' => 'switchToSso',
+			'LANG_ADDITIONAL_BUTTON' => $this->translator->translate('sso_switch', 'users')
+		];
+	}
+
 }
