@@ -99,15 +99,15 @@ class PlaylistComposerTest extends BrowserTestCase
 
 		// forward to the pdf and back again. The video is left out: without its file the browser complains about
 		// the interrupted autoplay
-		$driver->getKeyboard()->sendKeys(WebDriverKeys::ARROW_RIGHT);
-		$driver->wait(10)->until(fn() => str_contains((string) $driver->executeScript('return document.querySelector(".gslide.current iframe")?.src ?? ""'), '/media.php/orig/checksum-pdf.pdf'));
+		$this->client()->getKeyboard()->sendKeys(WebDriverKeys::ARROW_RIGHT);
+		$driver->wait(10)->until(fn() => str_contains((string) $this->client()->executeScript('return document.querySelector(".gslide.current iframe")?.src ?? ""'), '/media.php/orig/checksum-pdf.pdf'));
 		// an iframe has no size of its own: beside the title it must still fill the lightbox
-		$height = (int) $driver->executeScript('return document.querySelector(".gslide.current iframe").getBoundingClientRect().height');
+		$height = (int) $this->client()->executeScript('return document.querySelector(".gslide.current iframe").getBoundingClientRect().height');
 		static::assertGreaterThan(400, $height);
-		$driver->getKeyboard()->sendKeys(WebDriverKeys::ARROW_LEFT);
+		$this->client()->getKeyboard()->sendKeys(WebDriverKeys::ARROW_LEFT);
 		$this->waitForVisible('.gslide.current .preview-nested-playlist');
 
-		$driver->getKeyboard()->sendKeys(WebDriverKeys::ESCAPE);
+		$this->client()->getKeyboard()->sendKeys(WebDriverKeys::ESCAPE);
 		$this->waitForGone('.glightbox-container');
 
 		$this->assertNoErrors();

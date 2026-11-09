@@ -10,6 +10,7 @@ paths = [
 	'''tests/Unit/Framework/Security/CryptTest\.php''',
 	'''tests/Unit/Modules/Player/Services/PlayerTokenServiceTest\.php''',
 	'''tests/Integration/Modules/Account/Controller/ShowPasswordTest\.php''',
+	'''tests/Blackbox/Modules/Auth/PasswordFlowTest\.php''',
 	# the test vector of RFC 6238, no secret
 	'''tests/Integration/Shared/User/TwoFactor/TwoFactorServiceTest\.php''',
 	# old paths, only 1in the history of git
