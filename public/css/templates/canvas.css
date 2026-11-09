@@ -152,3 +152,21 @@ label:has(+ input:disabled), input:disabled{opacity: 0.5; pointer-events: none;}
 /* the transparent background of a template: a checkerboard behind the objects, a toggle beside the color */
 #canvas.transparent-background {background-color: #fff; background-image: conic-gradient(#ccc 25%, #fff 0 50%, #ccc 0 75%, #fff 0); background-size: 20px 20px;}
 .transparent_toggle {display: flex; align-items: center; gap: 2px; cursor: pointer;}
+
+/* the panel of the objects left of the canvas: the list and the fields of the selected object */
+#composerWorkspace {display: flex; gap: 0.5em; height: 93%;}
+#canvasWrap {flex: 1; min-width: 0; height: 100%; padding: 0.5%; overflow: hidden;}
+#objectPanel {flex: 0 0 220px; display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--gh-border-color); font-size: 0.85rem;}
+#objectPanel header {display: flex; align-items: center; gap: 0.5em; padding: 4px;}
+#objectPanel header button {width: 30px; height: 26px; padding: 0;}
+#objectPanel.collapsed {flex-basis: 40px;}
+#objectPanel.collapsed header span, #objectPanel.collapsed #objectList, #objectPanel.collapsed #objectGeometry {display: none;}
+#objectList {flex: 1; min-height: 0; overflow-y: auto; list-style: none; margin: 0; padding: 0;}
+#objectList li {display: flex; align-items: center; gap: 0.4em; padding: 3px 6px; cursor: pointer; white-space: nowrap;}
+#objectList li span {flex: 1; overflow: hidden; text-overflow: ellipsis;}
+#objectList li:hover {background: var(--gh-surface-color);}
+#objectList li.active {background: var(--gh-primary-color); color: #fff;}
+#objectList li.unselectable {opacity: 0.5; cursor: default;}
+#objectList li.object-list-empty {cursor: default; opacity: 0.6;}
+#objectGeometry {display: grid; grid-template-columns: auto 1fr; gap: 4px 8px; align-items: center; margin: 0; padding: 0.5em; border: 0; border-top: 1px solid var(--gh-border-color);}
+#objectGeometry input {width: 100%; min-width: 0;}

@@ -128,6 +128,14 @@ export class FabricWrapper
 		return this.#fabricCanvas.getActiveObject();
 	}
 
+	/**
+	 * The selected objects: one, the ones of a selection of several or none.
+	 */
+	getActiveObjects()
+	{
+		return this.#fabricCanvas.getActiveObjects();
+	}
+
 	discardActiveObject()
 	{
 		return this.#fabricCanvas.discardActiveObject();

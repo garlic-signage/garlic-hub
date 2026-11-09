@@ -102,6 +102,11 @@ readonly class TemplatePreparer
 			'LANG_RESOLUTION' => $this->translator->translate('resolution', 'templates'),
 			'LANG_BACKGROUND_COLOR' => $this->translator->translate('background_color', 'templates'),
 			'LANG_TRANSPARENT_BACKGROUND' => $this->translator->translate('transparent_background', 'templates'),
+			'LANG_OBJECTS' => $this->translator->translate('objects', 'templates'),
+			'LANG_TOGGLE_OBJECT_PANEL' => $this->translator->translate('toggle_object_panel', 'templates'),
+			'LANG_OBJECT_WIDTH' => $this->translator->translate('object_width', 'templates'),
+			'LANG_OBJECT_HEIGHT' => $this->translator->translate('object_height', 'templates'),
+			'LANG_ROTATION' => $this->translator->translate('rotation', 'templates'),
 			'LANG_SNAP_TO_GRID' => $this->translator->translate('snap_to_grid', 'templates'),
 			'LANG_NO_GRID' => $this->translator->translate('no_grid', 'templates'),
 			'LANG_ZOOM' => $this->translator->translate('zoom', 'main'),
@@ -137,7 +142,12 @@ readonly class TemplatePreparer
 				'design_low_contrast' => $this->translator->translate('design_low_contrast', 'templates'),
 				'design_small_font' => $this->translator->translate('design_small_font', 'templates'),
 				'design_reading_time' => $this->translator->translate('design_reading_time', 'templates'),
-				'design_placeholder' => $this->translator->translate('design_placeholder', 'templates')
+				'design_placeholder' => $this->translator->translate('design_placeholder', 'templates'),
+				'object_text' => $this->translator->translate('object_text', 'templates'),
+				'object_image' => $this->translator->translate('object_image', 'templates'),
+				'object_shape' => $this->translator->translate('object_shape', 'templates'),
+				'object_group' => $this->translator->translate('object_group', 'templates'),
+				'no_objects' => $this->translator->translate('no_objects', 'templates')
 			]),
 			'TEMPLATE_ID' => $templateId,
 			'design_check' => [

@@ -19,6 +19,7 @@
 'use strict';
 
 import {TemplateFabricWrapper} from "../Utils/TemplateFabricWrapper.js";
+import {ComposerEventBus} from "../Utils/ComposerEventBus.js";
 
 export class ContextMenuService
 {
@@ -180,9 +181,13 @@ export class ContextMenuService
 		this.#handleFabric();
 	}
 
+	/**
+	 * objectsChanged: the order or a lock changed, fabric.js has no event of its own for it.
+	 */
 	#handleFabric()
 	{
 		this.#fabricWrapper.historySaveAction();
 		this.#fabricWrapper.renderAll();
+		ComposerEventBus.dispatchEvent(new CustomEvent("objectsChanged"));
 	}
 }

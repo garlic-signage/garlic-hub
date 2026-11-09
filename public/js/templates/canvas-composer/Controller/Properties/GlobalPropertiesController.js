@@ -34,8 +34,6 @@ export class GlobalPropertiesController
 		this.#globalPropertiesView.setStrokeColorValue(this.#globalPropertiesService.getStrokeColor())
 		this.#globalPropertiesView.setStrokeWidthValue(this.#globalPropertiesService.getStrokeWidth());
 		this.#globalPropertiesView.setOpacityValue(this.#globalPropertiesService.getOpacity());
-		this.#globalPropertiesView.setScaleXValue(this.#globalPropertiesService.getScaleX());
-		this.#globalPropertiesView.setScaleYValue(this.#globalPropertiesService.getScaleY());
 
 		this.#globalPropertiesView.showGlobalProperties();
 	}
@@ -90,16 +88,6 @@ export class GlobalPropertiesController
 		this.#globalPropertiesView.alignBottom.addEventListener("click", () =>
 		{
 			this.#globalPropertiesService.setPosition("bottom")
-		});
-		this.#globalPropertiesView.scaleX.addEventListener("input", () =>
-		{
-			const value = parseFloat(this.#globalPropertiesView.getScaleXValue());
-			this.#globalPropertiesService.setScaleX(value);
-		});
-		this.#globalPropertiesView.scaleY.addEventListener("input", () =>
-		{
-			const value = parseFloat(this.#globalPropertiesView.getScaleYValue());
-			this.#globalPropertiesService.setScaleY(value);
 		});
 
 	}

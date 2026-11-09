@@ -193,10 +193,6 @@
 				</div>
 			</div>
 			</li>
-            <li class="action-group" data-label="{{LANG_SCALING}}">
-                <input type="number" id="scaleX" class="scaler" style="width:70px" min="0.1" max="10" step="0.1" title="{{LANG_SCALE_X}}" />
-                <input type="number" id="scaleY" class="scaler" style="width:70px" min="0.1" max="10" step="0.1" title="{{LANG_SCALE_Y}}" />
-            </li>
             <li>
                 <input type="color" id="fillColor" class="color_button" style="display: none;" title="{{LANG_SELECT_COLOR}}" />
             </li>
@@ -319,13 +315,34 @@
     </li>
 </ul>
 
-<div id="canvasWrap" tabIndex="1000" style="width:100%;height:93%;padding:0.5%;overflow:hidden;">
+<div id="composerWorkspace">
+<aside id="objectPanel">
+	<header>
+		<button id="toggleObjectPanel" type="button" class="bi bi-layout-sidebar" title="{{LANG_TOGGLE_OBJECT_PANEL}}"></button>
+		<span>{{LANG_OBJECTS}}</span>
+	</header>
+	<ul id="objectList"></ul>
+	<fieldset id="objectGeometry" disabled>
+		<label for="objectLeft">X</label>
+		<input type="number" id="objectLeft" step="1">
+		<label for="objectTop">Y</label>
+		<input type="number" id="objectTop" step="1">
+		<label for="objectWidth">{{LANG_OBJECT_WIDTH}}</label>
+		<input type="number" id="objectWidth" min="1" step="1">
+		<label for="objectHeight">{{LANG_OBJECT_HEIGHT}}</label>
+		<input type="number" id="objectHeight" min="1" step="1">
+		<label for="objectAngle">{{LANG_ROTATION}}</label>
+		<input type="number" id="objectAngle" min="-360" max="360" step="1">
+	</fieldset>
+</aside>
+<div id="canvasWrap" tabIndex="1000">
 	<input type="hidden" id="template_id" value="{{TEMPLATE_ID}}">
 	{{#is_playlist_item}}
 	<input type="hidden" id="item_id" value="{{ITEM_ID}}">
 	<input type="hidden" id="playlist_id" value="{{PLAYLIST_ID}}">
 	{{/is_playlist_item}}
     <canvas id="canvas" style="box-shadow: 0 2px 6px 0 #666, 0 2px 6px 0 #666;"></canvas>
+</div>
 </div>
 <script nonce="{{CSP_NONCE}}">
     let lang = {{{LANG_JS}}};

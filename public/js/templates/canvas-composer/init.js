@@ -82,6 +82,9 @@ import {SnapController} from "./Controller/SnapController.js";
 import {ShadowPropertiesView} from "./Views/Properties/ShadowPropertiesView.js";
 import {ShadowPropertiesService} from "./Services/Properties/ShadowPropertiesService.js";
 import {ShadowPropertiesController} from "./Controller/Properties/ShadowPropertiesController.js";
+import {ObjectPanelView} from "./Views/ObjectPanelView.js";
+import {ObjectPanelService} from "./Services/ObjectPanelService.js";
+import {ObjectPanelController} from "./Controller/ObjectPanelController.js";
 
 document.addEventListener("DOMContentLoaded", async function ()
 {
@@ -181,6 +184,8 @@ document.addEventListener("DOMContentLoaded", async function ()
 	const snapView = new SnapView(fabricWrapper.getContext());
 	const snapService = new SnapService(fabricWrapper);
 	const snapController = new SnapController(snapView, snapService);
+
+	new ObjectPanelController(new ObjectPanelView(), new ObjectPanelService(fabricWrapper), fabricWrapper, composerContext).init();
 
 
 	if (composerContext.itemId !== 0)

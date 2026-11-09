@@ -101,6 +101,11 @@ export class ViewportController
 			if (this.#isAutoresize)
 				this.zoomToViewPort();
 		});
+		// the panel of the objects collapsed or opened
+		ComposerEventBus.addEventListener("workspaceResized", () => {
+			if (this.#isAutoresize)
+				this.zoomToViewPort();
+		});
 	}
 
 	initializeCanvas()
@@ -119,7 +124,7 @@ export class ViewportController
 
 	zoomToViewPort()
 	{
-		const browserWidth = document.documentElement.clientWidth - 180;
+		const browserWidth = document.documentElement.clientWidth - 180 - this.#viewportView.getObjectPanelWidth();
 		const browserHeight = document.documentElement.clientHeight - 180;
 		const zoom          = this.#viewportService.calculateZoomByBrowserViewPort(browserWidth, browserHeight);
 

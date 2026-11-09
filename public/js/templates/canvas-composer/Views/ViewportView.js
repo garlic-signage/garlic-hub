@@ -27,6 +27,7 @@ export class ViewportView
 	#backgroundColor = document.getElementById("backgroundColor");
 	#transparentBackground = document.getElementById("transparentBackground");
 	#canvas = document.getElementById("canvas");
+	#objectPanel = document.getElementById("objectPanel");
 
 	constructor() {}
 
@@ -83,6 +84,14 @@ export class ViewportView
 	setResolutionHeight(value)
 	{
 		this.#resolutionHeight.value = value;
+	}
+
+	/**
+	 * The width of the panel of the objects left of the canvas, small when it is collapsed.
+	 */
+	getObjectPanelWidth()
+	{
+		return this.#objectPanel?.offsetWidth ?? 0;
 	}
 
 	get backgroundColor()
