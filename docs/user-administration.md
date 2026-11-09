@@ -108,10 +108,17 @@ Modules differ in the details:
 - The first login creates the user without rights and without password, with his media folder. The admin grants
   the rights. The user is found again by the provider and his subject there, not by his email, which may change.
 - Deleting a provider keeps its users: they log in by password, or by the provider again when it is set up once more.
-- An existing account with the same email is linked only when the provider verified the email (`email_verified`, with
-  Entra ID `xms_edov`). Otherwise the login is refused: an email which anybody may enter at the provider would take
-  over the account.
+- Every SSO login needs an email which the provider verified (`email_verified`, with Entra ID `xms_edov`), otherwise
+  it is refused (`sso_email_not_verified`), before the allowed domains and before an account is created or linked. An
+  email which the user may enter himself at the provider would pass the allowed domains and take over an account
+  with the same email. There is no switch per provider to trust unverified emails.
+- **Entra ID** sends no `email_verified`. Add the optional claim `xms_edov` to the ID token in the app registration
+  (Token configuration → Add optional claim → ID → `xms_edov`), without it every Entra login is refused.
+  Keycloak verifies an email only with the email verification of the realm (or an admin marks it as verified).
+- An existing account with the same email is linked on the first login by SSO.
 - Allowed domains limit who gets in by the domain of the email. With Google they are needed: everybody has a Google
-  account. Entra ID and Okta let in only the users of the directory.
+  account. With allowed domains Google lets in only the accounts of the company's Workspace (claim `hd`): a private
+  Google account with an email of the domain, e.g. of a former employee, is refused. Entra ID and Okta let in only
+  the users of the directory.
 - There is no remember-me: a user blocked at the provider is out with the end of his session. Blocking or deleting
   him in the hub ends his access at once. The password login stays, e.g. for the admin when the provider is down.

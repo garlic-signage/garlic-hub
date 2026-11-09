@@ -54,6 +54,7 @@ use Throwable;
  */
 readonly class SsoLogin
 {
+	private const string GOOGLE_ISSUER = 'https://accounts.google.com';
 	private const string PENDING = 'sso_pending';
 	private const int PENDING_SECONDS = 600;
 	// discovery and keys of the provider change rarely
@@ -147,7 +148,8 @@ readonly class SsoLogin
 			if ($tokens->getIdToken() === null)
 				throw new SsoRefusedException('sso_failed');
 
-			$identity = $this->identityOf($provider, $tokens->claims());
+			$claims   = $tokens->claims();
+			$identity = $this->identityOf($provider, $claims);
 		}
 		catch (SsoRefusedException $e)
 		{
@@ -160,7 +162,14 @@ readonly class SsoLogin
 			throw new SsoRefusedException('sso_failed');
 		}
 
-		if (!$this->isAllowedDomain($provider, $identity->email))
+		// an email which the user may enter himself at the provider would pass the domains and take over an account
+		if (!$identity->emailVerified)
+		{
+			$this->logger->warning('SSO login refused, the provider did not verify the email ' . $identity->email);
+			throw new SsoRefusedException('sso_email_not_verified');
+		}
+
+		if (!$this->isAllowedDomain($provider, $identity->email) || !$this->isGoogleWorkspaceOfTheDomains($provider, $claims))
 		{
 			$this->logger->warning('SSO login refused for the domain of ' . $identity->email);
 			throw new SsoRefusedException('sso_domain');
@@ -209,6 +218,20 @@ readonly class SsoLogin
 		$at = strrpos($email, '@');
 
 		return $at !== false && in_array(substr($email, $at + 1), $provider->allowedDomains, true);
+	}
+
+	/**
+	 * Google verifies the email of a private Google account, too: also one of the company domain, e.g. of a former
+	 * employee. With allowed domains only the accounts of the company's Workspace get in, their claim hd is the domain.
+	 *
+	 * @param array<string,mixed> $claims
+	 */
+	private function isGoogleWorkspaceOfTheDomains(SsoProvider $provider, array $claims): bool
+	{
+		if ($provider->allowedDomains === [] || rtrim($provider->issuer, '/') !== self::GOOGLE_ISSUER)
+			return true;
+
+		return is_string($claims['hd'] ?? null) && in_array(strtolower($claims['hd']), $provider->allowedDomains, true);
 	}
 
 	/**

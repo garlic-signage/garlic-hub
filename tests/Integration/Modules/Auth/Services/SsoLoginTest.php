@@ -191,18 +191,66 @@ class SsoLoginTest extends ContainerTestCase
 
 		// another subject with the email of carla is not carla
 		$this->provider->claims = ['sub' => 'subject-other', 'email' => 'carla@example.com', 'email_verified' => false];
-		$this->assertRefused('sso_account_exists', fn() => $this->login());
+		$this->assertRefused('sso_email_not_verified', fn() => $this->login());
 	}
 
 	public function testAnAccountWithTheSameEmailIsLinkedOnlyWhenTheProviderVerifiedIt(): void
 	{
 		$this->provider->claims = ['sub' => 'subject-anna', 'email' => 'Anna@Example.com', 'email_verified' => null];
-		$this->assertRefused('sso_account_exists', fn() => $this->login());
+		$this->assertRefused('sso_email_not_verified', fn() => $this->login());
 		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_sso'));
 
 		// Entra ID: the domain of the email is verified
 		$this->provider->claims = ['sub' => 'subject-anna', 'email' => 'anna@example.com', 'email_verified' => null, 'xms_edov' => true];
 		static::assertSame(2, $this->login());
+	}
+
+	/**
+	 * Without a verified email nobody gets in: no new account (it would pass the allowed domains with any email) and
+	 * no linked one. Entra ID needs the optional claim xms_edov for it.
+	 */
+	public function testALoginWithoutAVerifiedEmailIsRefused(): void
+	{
+		$this->changeProvider(['allowed_domains' => 'example.com']);
+		foreach ([false, null, 'true'] as $verified)
+		{
+			$this->provider->claims = ['email_verified' => $verified];
+			$this->assertRefused('sso_email_not_verified', fn() => $this->login());
+		}
+		static::assertSame(3, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_main'));
+
+		// a user who logged in before is refused as well when the provider no longer verifies his email
+		$this->provider->claims = [];
+		$UID = $this->login();
+		$this->provider->claims = ['email_verified' => false];
+		$this->assertRefused('sso_email_not_verified', fn() => $this->login());
+		$this->provider->claims = [];
+		static::assertSame($UID, $this->login());
+	}
+
+	/**
+	 * Google verifies the email of a private account, too. With allowed domains only the Workspace of the company
+	 * gets in: the claim hd.
+	 */
+	public function testWithGoogleOnlyTheWorkspaceOfTheAllowedDomainsGetsIn(): void
+	{
+		$this->provider = new FakeOidcProvider(self::CLIENT_ID, self::CLIENT_SECRET, 'https://accounts.google.com');
+		$this->changeProvider(['issuer' => 'https://accounts.google.com', 'allowed_domains' => 'example.com']);
+
+		foreach ([null, 'other.example', ['example.com']] as $hd)
+		{
+			$this->provider->claims = ['hd' => $hd];
+			$this->assertRefused('sso_domain', fn() => $this->login());
+		}
+		static::assertSame(3, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_main'));
+
+		$this->provider->claims = ['hd' => 'Example.com'];
+		static::assertGreaterThan(3, $this->login());
+
+		// without allowed domains the admin lets in every Google account
+		$this->changeProvider(['allowed_domains' => '']);
+		$this->provider->claims = ['sub' => 'subject-private', 'email' => 'private@gmail.example'];
+		static::assertGreaterThan(4, $this->login());
 	}
 
 	public function testAUsernameWhichExistsGetsANumber(): void
