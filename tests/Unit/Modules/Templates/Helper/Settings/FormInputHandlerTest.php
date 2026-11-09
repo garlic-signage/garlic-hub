@@ -26,6 +26,8 @@ use App\Framework\Validation\Sanitizer;
 use App\Modules\Templates\Helper\Settings\FormInputHandler;
 use App\Modules\Templates\Helper\Settings\Parameters;
 use App\Modules\Templates\Helper\Settings\SettingsParametersPolicy;
+use App\Modules\Templates\Services\AclValidator;
+use App\Modules\Auth\UserSession;
 use App\Modules\Templates\Helper\Settings\Validator;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
@@ -47,7 +49,7 @@ class FormInputHandlerTest extends TestCase
 		$translator->method('translateArrayForOptions')->willReturnMap([['types_selects', 'templates', ['canvas' => 'Canvas']]]);
 
 		$parameters   = new Parameters(new Sanitizer(), new MemorySession());
-		$this->policy  = new SettingsParametersPolicy($parameters);
+		$this->policy  = new SettingsParametersPolicy($parameters, $this->adminAcl(), $this->createStub(UserSession::class));
 		$this->handler = new FormInputHandler($parameters, new Validator($translator, $parameters));
 	}
 
@@ -65,7 +67,7 @@ class FormInputHandlerTest extends TestCase
 	#[Group('units')]
 	public function testAnEditNeedsNoType(): void
 	{
-		$this->policy->addEditFormElements();
+		$this->policy->addEditFormElements(['UID' => 2, 'company_id' => 1]);
 
 		static::assertSame([], $this->handler->validateEdit(['name' => 'Lobby']));
 	}
@@ -73,7 +75,7 @@ class FormInputHandlerTest extends TestCase
 	#[Group('units')]
 	public function testAMissingNameIsAnError(): void
 	{
-		$this->policy->addEditFormElements();
+		$this->policy->addEditFormElements(['UID' => 2, 'company_id' => 1]);
 
 		static::assertSame(['templates.name_noexists'], $this->handler->validateEdit(['name' => '']));
 	}
@@ -101,5 +103,16 @@ class FormInputHandlerTest extends TestCase
 		$this->policy->addCreateFormElements();
 
 		static::assertSame(['templates.name_noexists'], $this->handler->validateCreate(['name' => ['Lobby'], 'type' => 'canvas']));
+	}
+
+	/**
+	 * Only admins create templates, the admin of a template changes owner and visibility.
+	 */
+	private function adminAcl(): AclValidator
+	{
+		$acl = $this->createStub(AclValidator::class);
+		$acl->method('isAdmin')->willReturn(true);
+
+		return $acl;
 	}
 }

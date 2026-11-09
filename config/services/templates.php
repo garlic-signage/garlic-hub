@@ -156,7 +156,9 @@ $dependencies[\App\Modules\Templates\Helper\Settings\Parameters::class] = DI\fac
 $dependencies[SettingsParametersPolicy::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new SettingsParametersPolicy(
-		$container->get(\App\Modules\Templates\Helper\Settings\Parameters::class)
+		$container->get(\App\Modules\Templates\Helper\Settings\Parameters::class),
+		$container->get(AclValidator::class),
+		$container->get(UserSession::class)
 	);
 });
 $dependencies[Validator::class] = DI\factory(function (ContainerInterface $container)

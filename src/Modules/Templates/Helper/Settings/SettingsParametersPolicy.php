@@ -22,20 +22,49 @@ declare(strict_types=1);
 
 namespace App\Modules\Templates\Helper\Settings;
 
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\UserException;
+use App\Modules\Auth\UserSession;
+use App\Modules\Templates\Services\AclValidator;
+use Doctrine\DBAL\Exception;
+
+/**
+ * Owner and visibility are for the admins: an editor of a template works on its content and name. Making it global
+ * shares it with everybody, which only an admin may do. Creating a template is for the admins only (canCreate).
+ */
 readonly class SettingsParametersPolicy
 {
-	public function __construct(private Parameters $parameters)
+	public function __construct(private Parameters   $parameters,
+								private AclValidator $aclValidator,
+								private UserSession  $userSession)
 	{}
 
-	public function addEditFormElements(): void
+	/**
+	 * @param array<string,mixed> $template with UID and company_id
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws UserException
+	 */
+	public function addEditFormElements(array $template): void
 	{
-		$this->parameters->addOwner();
-		$this->parameters->addVisibility();
+		$owner = ['UID' => (int) ($template['UID'] ?? 0), 'company_id' => (int) ($template['company_id'] ?? 0)];
+		if (!$this->aclValidator->isAdmin($this->userSession->getUID(), $owner))
+			return;
+
+		$this->addAdminFormElements();
 	}
 
 	public function addCreateFormElements(): void
 	{
-		$this->addEditFormElements();
+		$this->addAdminFormElements();
 		$this->parameters->addType();
+	}
+
+	private function addAdminFormElements(): void
+	{
+		$this->parameters->addOwner();
+		$this->parameters->addVisibility();
 	}
 }

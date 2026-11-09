@@ -198,6 +198,39 @@ class ShowSettingsControllerTest extends TemplatesControllerTestCase
 		static::assertSame('Annas Vorlage', $this->databaseValue('SELECT name FROM templates WHERE template_id = 2'));
 	}
 
+	private function grantEditor(int $UID, int $templateId): void
+	{
+		$this->connection->executeStatement("INSERT INTO user_acl (UID, acl, module) VALUES (?, 2, 'templates')", [$UID]);
+		$this->connection->executeStatement("INSERT INTO user_vip (UID, vip_name, unit_id) VALUES (?, 'templates_editor', ?)", [$UID, (string) $templateId]);
+	}
+
+	/**
+	 * An editor works on name and content. Owner and visibility are for the admin: global shares it with everybody.
+	 */
+	public function testAnEditorGetsNoFieldsForOwnerAndVisibility(): void
+	{
+		$this->grantEditor(3, 2);
+		$this->actingAs(3);
+
+		$fields = $this->fields($this->page($this->controller->edit($this->request('GET'), $this->newResponse(), ['template_id' => '2'])));
+
+		static::assertArrayHasKey('name', $fields);
+		static::assertArrayNotHasKey('UID', $fields);
+		static::assertArrayNotHasKey('visibility', $fields);
+	}
+
+	public function testAnEditorChangesTheNameButNeitherOwnerNorVisibility(): void
+	{
+		$this->grantEditor(3, 2);
+		$this->actingAs(3);
+
+		$this->assertRedirect($this->store(['template_id' => '2', 'name' => 'Umbenannt', 'visibility' => 'global', 'UID' => '3']), '/templates');
+
+		$row = $this->connection->fetchAssociative('SELECT UID, visibility, name FROM templates WHERE template_id = 2');
+		static::assertIsArray($row);
+		static::assertSame([2, 'private', 'Umbenannt'], [(int) $row['UID'], $row['visibility'], $row['name']]);
+	}
+
 	public function testATemplateOfAnotherUserCanNotBeStoredByAUser(): void
 	{
 		$this->actingAs(2);

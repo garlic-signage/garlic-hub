@@ -23,7 +23,9 @@ namespace Tests\Unit\Modules\Templates\Helper\Settings;
 
 use App\Framework\Validation\Sanitizer;
 use App\Modules\Templates\Helper\Settings\Parameters;
+use App\Modules\Auth\UserSession;
 use App\Modules\Templates\Helper\Settings\SettingsParametersPolicy;
+use App\Modules\Templates\Services\AclValidator;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Tests\Support\MemorySession;
@@ -33,11 +35,23 @@ class SettingsParametersPolicyTest extends TestCase
 	private Parameters $parameters;
 	private SettingsParametersPolicy $policy;
 
+	private const array TEMPLATE = ['UID' => 2, 'company_id' => 1];
+
 	protected function setUp(): void
 	{
 		parent::setUp();
 		$this->parameters = new Parameters(new Sanitizer(), new MemorySession());
-		$this->policy     = new SettingsParametersPolicy($this->parameters);
+		$this->policy     = $this->policyFor(true);
+	}
+
+	private function policyFor(bool $isAdmin): SettingsParametersPolicy
+	{
+		$session = $this->createStub(UserSession::class);
+		$session->method('getUID')->willReturn(7);
+		$acl = $this->createMock(AclValidator::class);
+		$acl->method('isAdmin')->with(7, self::TEMPLATE)->willReturn($isAdmin);
+
+		return new SettingsParametersPolicy($this->parameters, $acl, $session);
 	}
 
 	/**
@@ -49,11 +63,22 @@ class SettingsParametersPolicyTest extends TestCase
 	}
 
 	#[Group('units')]
-	public function testTheEditFormHasTheOwnerAndTheVisibility(): void
+	public function testTheEditFormOfTheAdminHasTheOwnerAndTheVisibility(): void
 	{
-		$this->policy->addEditFormElements();
+		$this->policy->addEditFormElements(self::TEMPLATE);
 
 		static::assertSame(['UID', 'visibility'], $this->added());
+	}
+
+	/**
+	 * An editor works on the template, making it global would share it with everybody.
+	 */
+	#[Group('units')]
+	public function testTheEditFormOfAnEditorHasNeitherOwnerNorVisibility(): void
+	{
+		$this->policyFor(false)->addEditFormElements(self::TEMPLATE);
+
+		static::assertSame([], $this->added());
 	}
 
 	#[Group('units')]

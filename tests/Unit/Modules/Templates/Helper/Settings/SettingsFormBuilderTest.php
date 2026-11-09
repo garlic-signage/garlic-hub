@@ -33,6 +33,7 @@ use App\Modules\Templates\Helper\Settings\FormElementsCreator;
 use App\Modules\Templates\Helper\Settings\Parameters;
 use App\Modules\Templates\Helper\Settings\SettingsFormBuilder;
 use App\Modules\Templates\Helper\Settings\SettingsParametersPolicy;
+use App\Modules\Templates\Services\AclValidator;
 use Defuse\Crypto\Key;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
@@ -63,7 +64,7 @@ class SettingsFormBuilderTest extends TestCase
 
 		$formBuilder  = new FormBuilder(new FieldsFactory(), new FieldsRenderFactory(), new CsrfToken(new Crypt(Key::createNewRandomKey()), $session));
 		$parameters   = new Parameters(new Sanitizer(), $session);
-		$this->policy  = new SettingsParametersPolicy($parameters);
+		$this->policy  = new SettingsParametersPolicy($parameters, $this->adminAcl(), $this->createStub(UserSession::class));
 		$this->builder = new SettingsFormBuilder($parameters, $userSession, new FormElementsCreator($formBuilder, $translator));
 	}
 
@@ -91,7 +92,7 @@ class SettingsFormBuilderTest extends TestCase
 	#[Group('units')]
 	public function testTheFormOfAnExistingTemplateHasItsValuesAndItsId(): void
 	{
-		$this->policy->addEditFormElements();
+		$this->policy->addEditFormElements(['UID' => 2, 'company_id' => 1]);
 		$template = ['template_id' => 12, 'name' => 'Lobby', 'UID' => 3, 'username' => 'owner', 'visibility' => 'public'];
 
 		$fields = $this->build($template);
@@ -116,5 +117,16 @@ class SettingsFormBuilderTest extends TestCase
 	public function testWithoutOwnerAndVisibilityThereAreNoSuchFields(): void
 	{
 		static::assertSame(['name', 'type', 'csrf_token'], array_keys($this->build([])));
+	}
+
+	/**
+	 * Only admins create templates, the admin of a template changes owner and visibility.
+	 */
+	private function adminAcl(): AclValidator
+	{
+		$acl = $this->createStub(AclValidator::class);
+		$acl->method('isAdmin')->willReturn(true);
+
+		return $acl;
 	}
 }

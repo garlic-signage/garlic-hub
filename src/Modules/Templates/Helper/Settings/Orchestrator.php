@@ -98,7 +98,7 @@ class Orchestrator
 	 */
 	public function buildEditForm(array $post = []): array
 	{
-		$this->settingsParametersPolicy->addEditFormElements();
+		$this->settingsParametersPolicy->addEditFormElements($this->template);
 		// the input of the user first, what the request does not bring (template id, owner) comes from the template
 		unset($post[BaseParameters::PARAMETER_UID]);
 
@@ -140,7 +140,7 @@ class Orchestrator
 	 */
 	public function storeEditSettings(int $templateId, array $post): array
 	{
-		$this->settingsParametersPolicy->addEditFormElements();
+		$this->settingsParametersPolicy->addEditFormElements($this->template);
 		$errors = $this->formInputHandler->validateEdit($post);
 		if ($errors !== [])
 			return ['success' => false, 'errors' => $errors];
