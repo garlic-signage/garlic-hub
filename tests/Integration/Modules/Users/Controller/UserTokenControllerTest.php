@@ -153,6 +153,18 @@ class UserTokenControllerTest extends UsersControllerTestCase
 	}
 
 	#[DataProvider('actions')]
+	public function testTheAdminCanNotTakeOverTheRememberMeTokenOfAUser(string $action): void
+	{
+		$this->actingAs(1);
+		$this->createToken(3, TokenPurposes::AUTOLOGIN);
+		$before = $this->connection->fetchOne('SELECT token FROM user_tokens WHERE UID = 3');
+
+		$this->assertError($this->send($action, ['UID' => '3', 'purpose' => 'autologin']), 'Token not editable.');
+
+		static::assertSame($before, $this->connection->fetchOne('SELECT token FROM user_tokens WHERE UID = 3'));
+	}
+
+	#[DataProvider('actions')]
 	public function testAUserWithoutTokenOfThePurposeHasNothingToEdit(string $action): void
 	{
 		$this->actingAs(1);

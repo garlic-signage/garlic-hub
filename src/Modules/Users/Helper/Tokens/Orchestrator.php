@@ -26,6 +26,7 @@ use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\UserException;
 use App\Modules\Auth\UserSession;
+use App\Shared\User\TokenPurposes;
 use App\Shared\User\UserTokenService;
 use App\Modules\Users\Services\AclValidator;
 use Doctrine\DBAL\Exception;
@@ -69,6 +70,10 @@ class Orchestrator
 		$this->purpose = $this->text('purpose');
 		if ($this->purpose === '')
 			return $this->responseBuilder->missingPurpose($response);
+
+		// the remember-me token belongs to the user's browser: a new one would log the admin in as this user
+		if ($this->purpose === TokenPurposes::AUTOLOGIN->value)
+			return $this->responseBuilder->tokenNotEditable($response);
 
 		return null;
 	}
