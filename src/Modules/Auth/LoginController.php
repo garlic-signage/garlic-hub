@@ -220,6 +220,7 @@ readonly class LoginController
 	{
 		try
 		{
+			// @infection-ignore-all the route always has the id
 			$uri = $this->ssoLogin->authorizationUri((int) ($args['id'] ?? 0), SsoLogin::redirectUri($request));
 			// a provider which is unknown or off
 			if ($uri === null)
@@ -287,6 +288,7 @@ readonly class LoginController
 		if (!$this->session->exists('oauth_redirect_params'))
 		{
 			$this->csrfToken->generateToken();
+			// @infection-ignore-all without it the check below leads to the same redirect
 			return $this->redirect($response);
 		}
 

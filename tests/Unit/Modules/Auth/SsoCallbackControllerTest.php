@@ -45,7 +45,9 @@ class SsoCallbackControllerTest extends TestCase
 		static::assertSame(200, $response->getStatusCode());
 		static::assertSame('no-store', $response->getHeaderLine('Cache-Control'));
 		$body = (string) $response->getBody();
-		static::assertStringContainsString('<meta http-equiv="refresh" content="0;url=/login/sso/finish?code=a%22%3E%3Cscript%3E&amp;state=s%26t">', $body);
+		$url = '/login/sso/finish?code=a%22%3E%3Cscript%3E&amp;state=s%26t';
+		static::assertSame('<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=' . $url . '">'
+			. '<meta name="referrer" content="no-referrer"><title>SSO</title></head><body><a href="' . $url . '">Continue</a></body></html>', $body);
 		static::assertStringNotContainsString('<script>', $body);
 	}
 }

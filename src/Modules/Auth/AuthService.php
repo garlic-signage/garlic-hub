@@ -80,13 +80,14 @@ class AuthService
 		}
 
 		// a user created by an admin has no password (NULL) until he sets one: he can not log in, like an unknown user
-		$hash = $userData['password'] ?? '';
-		if (!is_string($hash) || $hash === '')
-		{
-			// hashing costs as much as verifying, so the response time does not reveal whether the user exists
+		$hash = is_string($userData['password'] ?? null) ? $userData['password'] : '';
+		// hashing costs as much as verifying, so the response time does not reveal whether the user exists
+		// @infection-ignore-all only the time differs, no test can see it reliably
+		if ($hash === '')
 			password_hash($password, PASSWORD_DEFAULT);
-		}
-		if (!is_string($hash) || $hash === '' || !password_verify($password, $hash))
+
+		// an empty hash matches no password
+		if (!password_verify($password, $hash))
 		{
 			$this->loginThrottle->registerFailure($identifier, $ip);
 			$this->errorMessage = 'Invalid credentials.';

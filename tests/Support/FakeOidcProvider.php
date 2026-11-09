@@ -47,6 +47,10 @@ class FakeOidcProvider implements ClientInterface
 	public bool $signWithForeignKey = false;
 	/** the Authorization header of the last token request */
 	public string $tokenAuthorization = '';
+	/** @var list<string> how the provider takes the secret: in the header (basic) or in the body (post) */
+	public array $authMethods = ['client_secret_basic'];
+	/** the scope of the last authorization */
+	public string $scope = '';
 
 	private static ?JWK $key = null;
 	private static ?JWK $foreignKey = null;
@@ -72,6 +76,7 @@ class FakeOidcProvider implements ClientInterface
 		if (!str_starts_with($authorizationUri, $this->issuer . '/authorize?') || $text('code_challenge_method') !== 'S256')
 			throw new RuntimeException('unexpected authorization: ' . $authorizationUri);
 
+		$this->scope = $text('scope');
 		$code = bin2hex(random_bytes(8));
 		$this->codes[$code] = ['nonce' => $text('nonce'), 'challenge' => $text('code_challenge'), 'client_id' => $text('client_id')];
 
@@ -92,7 +97,7 @@ class FakeOidcProvider implements ClientInterface
 				'response_types_supported'              => ['code'],
 				'subject_types_supported'               => ['public'],
 				'id_token_signing_alg_values_supported' => ['RS256'],
-				'token_endpoint_auth_methods_supported' => ['client_secret_basic'],
+				'token_endpoint_auth_methods_supported' => $this->authMethods,
 				'code_challenge_methods_supported'      => ['S256']
 			]),
 			$this->issuer . '/jwks'  => $this->json(['keys' => [$this->key()->toPublic()->all()]]),
@@ -112,11 +117,21 @@ class FakeOidcProvider implements ClientInterface
 		unset($this->codes[$code]);
 
 		$challenge = rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '=');
-		if ($asked === null || !hash_equals($asked['challenge'], $challenge)
-			|| $this->tokenAuthorization !== 'Basic ' . base64_encode(urlencode($this->clientId) . ':' . urlencode($this->clientSecret)))
+		if ($asked === null || !hash_equals($asked['challenge'], $challenge) || !$this->isClientAuthenticated($params))
 			return $this->json(['error' => 'invalid_grant'], 400);
 
 		return $this->json(['access_token' => 'access', 'token_type' => 'Bearer', 'expires_in' => 300, 'id_token' => $this->idToken($asked)]);
+	}
+
+	/**
+	 * @param array<mixed> $params the body of the token request
+	 */
+	private function isClientAuthenticated(array $params): bool
+	{
+		if (in_array('client_secret_basic', $this->authMethods, true))
+			return $this->tokenAuthorization === 'Basic ' . base64_encode(urlencode($this->clientId) . ':' . urlencode($this->clientSecret));
+
+		return $this->tokenAuthorization === '' && ($params['client_id'] ?? null) === $this->clientId && ($params['client_secret'] ?? null) === $this->clientSecret;
 	}
 
 	/**

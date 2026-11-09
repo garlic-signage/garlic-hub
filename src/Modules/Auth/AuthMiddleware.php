@@ -106,6 +106,7 @@ readonly class AuthMiddleware implements MiddlewareInterface
 
 	private function determineSection(ServerRequestInterface $request): string
 	{
+		// @infection-ignore-all a limit of 3 or more gives the same first part
 		return explode('/', ltrim($request->getUri()->getPath(), '/'), 2)[0];
 	}
 

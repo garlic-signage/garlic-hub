@@ -86,11 +86,13 @@ readonly class LoginThrottle
 
 	private static function secondFactor(int $UID): string
 	{
+		// @infection-ignore-all any order of the parts gives a key of its own
 		return 'two_factor_' . $UID;
 	}
 
 	private static function secondFactorUserKey(int $UID): string
 	{
+		// @infection-ignore-all any order of the parts gives a key of its own
 		return 'two_factor_fail_user_' . $UID;
 	}
 
@@ -127,6 +129,7 @@ readonly class LoginThrottle
 	{
 		$value = $this->cache->get($key, 0);
 
+		// @infection-ignore-all only a foreign value in the cache, the throttle writes integers
 		return is_int($value) ? $value : 0;
 	}
 
@@ -137,6 +140,7 @@ readonly class LoginThrottle
 
 	private function ipKey(string $ip): string
 	{
+		// @infection-ignore-all the prefix only separates it from the other keys, which are hashes, too
 		return 'login_fail_ip_' . hash('sha256', $ip);
 	}
 }

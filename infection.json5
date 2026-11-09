@@ -14,6 +14,11 @@
 		"json": "var/infection/infection.json"
 	},
 	"mutators": {
-		"@default": true
+		"@default": true,
+		// log lines are no behaviour: their mutants would only ask for tests of the log texts. The audit log
+		// (AuditLog::record) is behaviour and stays in.
+		"global-ignoreSourceCodeByRegex": [
+			"\\$this->logger->.*"
+		]
 	}
 }

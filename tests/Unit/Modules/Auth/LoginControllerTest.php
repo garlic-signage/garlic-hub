@@ -131,6 +131,7 @@ class LoginControllerTest extends TestCase
 		static::assertSame('main.username / main.email', $data['LANG_USERNAME']);
 		static::assertSame('login.password', $data['LANG_PASSWORD']);
 		static::assertSame('login.autologin', $data['LANG_AUTOLOGIN']);
+		static::assertSame(['LANG_PAGE_TITLE' => 'login.login', 'additional_css' => ['/css/user/login.css']], $response->getMainLayoutData());
 	}
 
 	#[Group('units')]
@@ -248,8 +249,10 @@ class LoginControllerTest extends TestCase
 		static::assertNull($this->session->get('user'));
 		static::assertNull($this->session->get('locale'));
 		static::assertSame(1, $this->session->regenerations);
-		static::assertNotSame('', $this->session->get('csrf_token'));
-		static::assertNotSame($tokenBefore, $this->session->get('csrf_token'));
+		$token = $this->session->get('csrf_token');
+		static::assertIsString($token, 'the login page after the logout needs a token');
+		static::assertNotSame('', $token);
+		static::assertNotSame($tokenBefore, $token);
 	}
 
 	#[Group('units')]
@@ -337,5 +340,6 @@ class LoginControllerTest extends TestCase
 
 		$this->assertRedirect($response, '/login');
 		static::assertNull($this->session->get('user'));
+		static::assertSame(['Invalid credentials.'], $this->flashErrors(), 'the reason of the AuthService');
 	}
 }

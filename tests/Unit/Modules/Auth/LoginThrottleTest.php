@@ -198,6 +198,21 @@ class LoginThrottleTest extends TestCase
 	}
 
 	/**
+	 * Name and address are kept apart in the key: "anna1" from 1.2.3.4 is not "anna" from 11.2.3.4.
+	 *
+	 * @throws InvalidArgumentException
+	 */
+	#[Group('units')]
+	public function testNameAndAddressDoNotRunIntoEachOther(): void
+	{
+		for ($i = 0; $i < LoginThrottle::MAX_FAILURES_PER_USER_AND_IP; $i++)
+			$this->throttle->registerFailure('anna1', '1.2.3.4');
+
+		static::assertTrue($this->throttle->isBlocked('anna1', '1.2.3.4'));
+		static::assertFalse($this->throttle->isBlocked('anna', '11.2.3.4'));
+	}
+
+	/**
 	 * Wrong codes of one user lock only him on this address: the others behind it (an office) go on.
 	 *
 	 * @throws InvalidArgumentException

@@ -55,7 +55,7 @@ class AuthServiceTest extends TestCase
 	private TestHandler $logs;
 	private AuthService $authService;
 
-	/** @var array<string,array{UID:int,password:string,status:int}> users by identifier */
+	/** @var array<string,array{UID:int|string,password:string,status:int}> users by identifier */
 	private array $users = [];
 	/** @var list<array{int,string}> the hashes which were stored */
 	private array $storedHashes = [];
@@ -523,6 +523,70 @@ class AuthServiceTest extends TestCase
 		static::assertStringNotContainsString('Secret-Pass', implode("\n", $logged));
 		static::assertTrue($this->hasLoggedUsername('Sec…'));
 		static::assertTrue($this->hasLoggedUsername('user@example.com'));
+	}
+
+	/**
+	 * Characters, not bytes: a name of umlauts is not cut in the middle of one.
+	 */
+	#[Group('units')]
+	public function testTheLoggedNamesAreCutByCharacters(): void
+	{
+		$long = str_repeat('ü', 70);
+		$this->users[$long] = ['UID' => 3, 'password' => $this->hash(self::PASSWORD), 'status' => UserStatus::REGISTERED->value];
+
+		$this->authService->login($long, 'wrong');
+		$this->authService->login('abc', 'wrong');
+		$this->authService->login('äöü', 'wrong');
+		$this->authService->login('äöüß', 'wrong');
+
+		static::assertTrue($this->hasLoggedUsername(str_repeat('ü', 64)), 'a user up to 64 characters');
+		static::assertTrue($this->hasLoggedUsername('abc'), 'three characters are the beginning already');
+		static::assertTrue($this->hasLoggedUsername('äöü'));
+		static::assertTrue($this->hasLoggedUsername('äöü…'));
+	}
+
+	/**
+	 * The database may give the id as text: the failed login is still audited for the user.
+	 *
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testAFailedLoginIsAuditedForTheUserAlsoWithTheIdAsText(): void
+	{
+		$targets  = [];
+		$auditLog = $this->createStub(AuditLog::class);
+		$auditLog->method('record')->willReturnCallback(static function (int $UID, string $module, AuditAction $action, int|string|null $unitId = null, ?int $targetUID = null) use (&$targets): void
+		{
+			$targets[] = $targetUID;
+		});
+		$this->users['user@example.com']['UID'] = '1';
+		$service = new AuthService($this->userService, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new ArrayCache()), $auditLog, $this->createStub(TwoFactorService::class));
+
+		static::assertNull($service->login('user@example.com', 'wrong'));
+		static::assertSame([1], $targets);
+	}
+
+	/**
+	 * An admin may have blocked the user meanwhile: the SSO login reads him fresh, not from the cache.
+	 *
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testTheSsoLoginReadsTheUserWithoutTheCache(): void
+	{
+		$events = [];
+		$users  = $this->createStub(UsersService::class);
+		$users->method('invalidateCache')->willReturnCallback(static function (int $UID) use (&$events): void { $events[] = 'invalidate ' . $UID; });
+		$users->method('getUserById')->willReturnCallback(function (int $UID) use (&$events): UserEntity
+		{
+			$events[] = 'read ' . $UID;
+
+			return $this->entity($UID);
+		});
+		$service = new AuthService($users, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new ArrayCache()), new NullAuditLog(), $this->createStub(TwoFactorService::class));
+
+		static::assertNotNull($service->loginBySso(1));
+		static::assertSame(['invalidate 1', 'read 1'], $events);
 	}
 
 	private function hasLoggedUsername(string $username): bool

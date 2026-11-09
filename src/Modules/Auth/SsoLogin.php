@@ -136,6 +136,7 @@ readonly class SsoLogin
 
 		// the admin may have turned it off since
 		$provider = $this->enabledProvider($pending['provider_id']);
+		// @infection-ignore-all without it the client of a missing provider fails in the try below the same way
 		if ($provider === null)
 			throw new SsoRefusedException('sso_failed');
 
@@ -143,10 +144,13 @@ readonly class SsoLogin
 		{
 			$client  = $this->client($provider, $redirectUri);
 			$service = $this->authorizationService();
+			// @infection-ignore-all the state was compared above already, here the library compares it a second time
 			$session = AuthSession::fromArray(['state' => $pending['state'], 'nonce' => $pending['nonce'], 'code_verifier' => $pending['code_verifier']]);
 			// only the code and the state: an id_token or access_token in the address would skip the code
 			// exchange with the secret and PKCE
+			// @infection-ignore-all the filter and the check of the code protect each other: one of them is enough
 			$params = array_intersect_key($service->getCallbackParams($request, $client), ['code' => true, 'state' => true]);
+			// @infection-ignore-all see above, without a code the library refuses as well
 			if (!is_string($params['code'] ?? null) || $params['code'] === '')
 				throw new SsoRefusedException('sso_failed');
 
@@ -200,6 +204,7 @@ readonly class SsoLogin
 	private function identityOf(SsoProvider $provider, array $claims): SsoIdentity
 	{
 		$text = static fn(string $claim): string => is_string($claims[$claim] ?? null) ? trim($claims[$claim]) : '';
+		// @infection-ignore-all the library requires both claims already
 		if ($text('iss') === '' || $text('sub') === '')
 			throw new SsoRefusedException('sso_failed');
 
@@ -234,6 +239,7 @@ readonly class SsoLogin
 	 */
 	private function isGoogleWorkspaceOfTheDomains(SsoProvider $provider, array $claims): bool
 	{
+		// @infection-ignore-all the slash is stripped on saving already
 		if ($provider->allowedDomains === [] || rtrim($provider->issuer, '/') !== self::GOOGLE_ISSUER)
 			return true;
 
@@ -270,6 +276,7 @@ readonly class SsoLogin
 			->build($provider->issuer);
 
 		$clientId = $provider->clientId;
+		// @infection-ignore-all without a client id the provider refuses the code as well
 		if ($clientId === '' || $redirectUri === '')
 			throw new SsoRefusedException('sso_failed');
 
@@ -292,6 +299,7 @@ readonly class SsoLogin
 	private function authorizationService(): AuthorizationService
 	{
 		$builder = (new AuthorizationServiceBuilder())->setIdTokenVerifierBuilder((new IdTokenVerifierBuilder())->setClockTolerance(self::CLOCK_TOLERANCE));
+		// @infection-ignore-all the token request goes through the client of client(), this one stays for other calls
 		$builder->setHttpClient($this->httpClient);
 
 		return $builder->build();
@@ -299,6 +307,7 @@ readonly class SsoLogin
 
 	private function randomToken(): string
 	{
+		// @infection-ignore-all a byte more or less is as random
 		return $this->base64Url(random_bytes(32));
 	}
 

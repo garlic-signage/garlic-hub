@@ -183,6 +183,59 @@ class SsoLoginTest extends ContainerTestCase
 		static::assertSame(4, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_main'));
 	}
 
+	public function testTheProviderIsAskedForTheEmailAndTheName(): void
+	{
+		$this->login();
+
+		static::assertSame('openid email profile', $this->provider->scope);
+	}
+
+	public function testANewUserGetsTheEmailInSmallLetters(): void
+	{
+		$this->provider->claims = ['email' => ' Carla@Example.COM '];
+		$UID = $this->login();
+
+		static::assertSame('carla@example.com', $this->connection->fetchOne('SELECT email FROM user_main WHERE UID = ?', [$UID]));
+	}
+
+	/**
+	 * A provider which takes the secret only in the body (client_secret_post), not in the header.
+	 */
+	public function testTheSecretGoesInTheBodyWhenTheProviderWantsIt(): void
+	{
+		$this->provider->authMethods = ['client_secret_post'];
+
+		static::assertGreaterThan(0, $this->login());
+		static::assertSame('', $this->provider->tokenAuthorization);
+	}
+
+	/**
+	 * @return array<string,array{mixed}>
+	 */
+	public static function brokenPendings(): array
+	{
+		return [
+			'no array'           => ['garbage'],
+			'without state'      => [['provider_id' => 1, 'nonce' => 'n', 'code_verifier' => 'v', 'expires' => time() + 60]],
+			'empty nonce'        => [['provider_id' => 1, 'state' => 's', 'nonce' => '', 'code_verifier' => 'v', 'expires' => time() + 60]],
+			'nonce not text'     => [['provider_id' => 1, 'state' => 's', 'nonce' => 5, 'code_verifier' => 'v', 'expires' => time() + 60]],
+			'provider not an id' => [['provider_id' => '1', 'state' => 's', 'nonce' => 'n', 'code_verifier' => 'v', 'expires' => time() + 60]],
+		];
+	}
+
+	/**
+	 * What waits in the session is checked before it is used: a broken one is as if nothing waited.
+	 */
+	#[DataProvider('brokenPendings')]
+	public function testABrokenPendingLoginInTheSessionIsRefused(mixed $pending): void
+	{
+		$ssoLogin = $this->ssoLogin();
+		$answer   = $this->answerOfProvider($ssoLogin);
+		$this->session->data['sso_pending'] = $pending;
+
+		$this->assertRefused('sso_expired', fn() => $this->finish($ssoLogin, ['state' => 's'] + $answer));
+	}
+
 	public function testTheSubjectCountsNotTheEmail(): void
 	{
 		$UID = $this->login();

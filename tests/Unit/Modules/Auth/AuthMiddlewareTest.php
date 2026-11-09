@@ -208,6 +208,44 @@ class AuthMiddlewareTest extends TestCase
 		static::assertSame(0, $this->session->regenerations);
 	}
 
+	/**
+	 * The database gives the id as text, the session keeps it so.
+	 */
+	#[Group('units')]
+	public function testAUserIdAsTextIsAUserIdToo(): void
+	{
+		$this->session->set('user', ['UID' => '1']);
+
+		$this->assertHandled($this->process('/playlists'), '/playlists');
+	}
+
+	/**
+	 * While the second factor is required, the first request asks whether the user has one and the session keeps
+	 * the answer: further requests do not ask the database again.
+	 */
+	#[Group('units')]
+	public function testTheSecondFactorOfTheUserIsAskedOnceAndKeptInTheSession(): void
+	{
+		$config = $this->createStub(Config::class);
+		$config->method('isSwitchOn')->willReturn(true);
+		$asked = [];
+		$this->authService->method('needsSecondFactor')->willReturnCallback(static function (int $UID) use (&$asked): bool
+		{
+			$asked[] = $UID;
+
+			return $UID === 5;
+		});
+		$middleware = new AuthMiddleware($this->authService, $this->session, new Cookie(), new UserSession($this->session), $config);
+		$this->session->set('user', ['UID' => '5']);
+
+		$request = new ServerRequestFactory()->createServerRequest('GET', '/playlists');
+		$this->assertHandled($middleware->process($request, $this->handler), '/playlists');
+		$this->assertHandled($middleware->process($request, $this->handler), '/playlists');
+
+		static::assertSame([5], $asked);
+		static::assertSame('1', $this->session->get('two_factor'));
+	}
+
 	#[Group('units')]
 	public function testALoggedInUserIsSentAwayFromTheLoginPage(): void
 	{
