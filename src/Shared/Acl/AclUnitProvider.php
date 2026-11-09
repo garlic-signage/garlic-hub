@@ -31,7 +31,9 @@ use Doctrine\DBAL\Exception;
 interface AclUnitProvider
 {
 	/**
-	 * @return array{UID:int, company_id:int}|array<empty,empty> the owner and his company, empty when the unit does not exist
+	 * The id comes back as the table stores it: '05' finds unit 5, its rights belong to '5'.
+	 *
+	 * @return array{id:string, UID:int, company_id:int}|array{} the id, the owner and his company, empty when the unit does not exist
 	 * @throws Exception
 	 */
 	public function findUnit(int|string $unitId): array;

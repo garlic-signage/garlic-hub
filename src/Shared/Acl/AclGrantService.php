@@ -148,13 +148,13 @@ class AclGrantService
 		{
 			foreach ($unitRoles as $unitRole)
 			{
-				$this->userVipRepository->deleteBy(['UID' => $UID, 'vip_name' => $this->aclHelper->getVipName($module, $unitRole), 'unit_id' => (string) $unitId]);
+				$this->userVipRepository->deleteBy(['UID' => $UID, 'vip_name' => $this->aclHelper->getVipName($module, $unitRole), 'unit_id' => $unit['id']]);
 			}
 
 			if ($role !== null)
-				$this->userVipRepository->insert(['UID' => $UID, 'vip_name' => $this->aclHelper->getVipName($module, $role), 'unit_id' => (string) $unitId]);
+				$this->userVipRepository->insert(['UID' => $UID, 'vip_name' => $this->aclHelper->getVipName($module, $role), 'unit_id' => $unit['id']]);
 
-			$this->auditLog->record($granterUID, $module, $role !== null ? AuditAction::UNIT_SHARED : AuditAction::UNIT_UNSHARED, $unitId, $UID, $role !== null ? ['role' => $role->value] : []);
+			$this->auditLog->record($granterUID, $module, $role !== null ? AuditAction::UNIT_SHARED : AuditAction::UNIT_UNSHARED, $unit['id'], $UID, $role !== null ? ['role' => $role->value] : []);
 			$this->usersService->invalidateCache($UID);
 			$this->transactions->commit();
 		}
@@ -382,7 +382,7 @@ class AclGrantService
 			throw new AccessDeniedException(self::MODULE_NAME, 'rights_not_grantable', ['module' => $module]);
 
 		$users = [];
-		foreach ($this->userVipRepository->findUsersOfUnit(array_keys($roles), (string) $unitId) as $row)
+		foreach ($this->userVipRepository->findUsersOfUnit(array_keys($roles), $unit['id']) as $row)
 		{
 			$users[] = ['UID' => $row['UID'], 'role' => $roles[$row['vip_name']]];
 		}
@@ -504,7 +504,9 @@ class AclGrantService
 	}
 
 	/**
-	 * @return array{UID:int, company_id:int}
+	 * The id as the table stores it: the rights are stored and searched under it, not under '05' from an address.
+	 *
+	 * @return array{id:string, UID:int, company_id:int}
 	 * @throws NotFoundException
 	 * @throws ModuleException
 	 * @throws Exception
@@ -518,7 +520,7 @@ class AclGrantService
 		if ($unit === [])
 			throw new NotFoundException(self::MODULE_NAME, 'unit_not_found', ['module' => $module, 'unit_id' => (string) $unitId]);
 
-		return ['UID' => (int) $unit['UID'], 'company_id' => (int) $unit['company_id']];
+		return $unit;
 	}
 
 	/**

@@ -164,7 +164,7 @@ class AclGrantServiceSubAdminTest extends TestCase
 
 		$units = $this->createStub(AclUnitProvider::class);
 		$units->method('findUnit')->willReturnCallback(
-			fn(int|string $unitId) => ['UID' => 9, 'company_id' => (int) $unitId === 20 ? 5 : 6]
+			fn(int|string $unitId) => ['id' => (string) $unitId, 'UID' => 9, 'company_id' => (int) $unitId === 20 ? 5 : 6]
 		);
 
 		return new AclGrantService(

@@ -60,7 +60,12 @@ class TableUnitProviderTest extends ContainerTestCase
 	#[DataProvider('unitsOfAnna')]
 	public function testFindsTheOwnerAndHisCompany(string $module, int|string $unitId): void
 	{
-		static::assertSame(['UID' => 2, 'company_id' => 7], $this->provider($module)->findUnit($unitId));
+		static::assertSame(['id' => (string) $unitId, 'UID' => 2, 'company_id' => 7], $this->provider($module)->findUnit($unitId));
+	}
+
+	public function testAnIdWithALeadingZeroGivesTheStoredId(): void
+	{
+		static::assertSame(['id' => '1', 'UID' => 2, 'company_id' => 7], $this->provider('playlists')->findUnit('01'));
 	}
 
 	/**

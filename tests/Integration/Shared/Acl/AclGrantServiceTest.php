@@ -152,6 +152,19 @@ class AclGrantServiceTest extends ContainerTestCase
 		static::assertSame(1, $this->countVips(2));
 	}
 
+	public function testAUnitIdWithALeadingZeroIsStoredAsTheTableStoresIt(): void
+	{
+		$this->service->setRole(1, 2, 'playlists', AclSections::EDITOR, true);
+
+		$this->service->setUnitRole(1, 2, 'playlists', '01', AclSections::EDITOR);
+
+		static::assertTrue($this->aclHelper->hasEditorAccessOnUnit(2, 1, 'playlists'));
+		static::assertSame([['UID' => 2, 'role' => AclSections::EDITOR]], $this->service->findUsersOfUnit(1, 'playlists', '01'));
+
+		$this->service->removeUnitShares('playlists', [1]);
+		static::assertSame(0, $this->countVips(2));
+	}
+
 	public function testAnUnknownUnitIsNotFound(): void
 	{
 		$this->service->setRole(1, 2, 'playlists', AclSections::EDITOR, true);

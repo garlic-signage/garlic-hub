@@ -42,7 +42,7 @@ class TableUnitProvider implements AclUnitProvider
 	{
 		$table        = $this->repository->getTable();
 		$queryBuilder = $this->connection->createQueryBuilder();
-		$queryBuilder->select('user_main.UID', 'user_main.company_id')
+		$queryBuilder->select($table . '.' . $this->repository->getIdField() . ' AS id', 'user_main.UID', 'user_main.company_id')
 			->from($table)
 			->innerJoin($table, 'user_main', 'user_main', 'user_main.UID = ' . $table . '.UID')
 			->where($table . '.' . $this->repository->getIdField() . ' = :id')
@@ -52,7 +52,7 @@ class TableUnitProvider implements AclUnitProvider
 		if ($unit === false)
 			return [];
 
-		return ['UID' => (int) $unit['UID'], 'company_id' => (int) $unit['company_id']];
+		return ['id' => (string) $unit['id'], 'UID' => (int) $unit['UID'], 'company_id' => (int) $unit['company_id']];
 	}
 
 	public function searchUnits(string $search, int $limit): array
