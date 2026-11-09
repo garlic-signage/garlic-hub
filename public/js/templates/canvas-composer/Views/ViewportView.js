@@ -24,6 +24,7 @@ export class ViewportView
 	#zoomSlider = document.getElementById("zoomSlider");
 	#resolutionWidth = document.getElementById("imageWidth");
 	#resolutionHeight = document.getElementById("imageHeight");
+	#backgroundColor = document.getElementById("backgroundColor");
 
 	constructor() {}
 
@@ -80,5 +81,20 @@ export class ViewportView
 	setResolutionHeight(value)
 	{
 		this.#resolutionHeight.value = value;
+	}
+
+	get backgroundColor()
+	{
+		return this.#backgroundColor;
+	}
+
+	getBackgroundColorValue()
+	{
+		return this.#backgroundColor.value;
+	}
+
+	setBackgroundColor(value)
+	{
+		this.#backgroundColor.value = value;
 	}
 }

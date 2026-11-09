@@ -97,12 +97,50 @@ export class TemplateFabricWrapper extends FabricWrapper
 		this.#history.reset();
 	}
 
-	toBase64Image(format, quality, backgroundColor)
+	/**
+	 * The color of the template behind all objects, white without one.
+	 */
+	getBackgroundColor()
 	{
-		this.fabricCanvas.backgroundColor = backgroundColor;
-		return this.fabricCanvas.toDataURL({
-			format: format,
-			quality: quality
-		});
+		const color = this.fabricCanvas.backgroundColor;
+		return (typeof color === "string" && color !== "") ? color : "#ffffff";
+	}
+
+	/**
+	 * While the color is chosen: no step in the history yet, see commitBackgroundColor().
+	 */
+	setBackgroundColor(color)
+	{
+		this.fabricCanvas.backgroundColor = color;
+		this.renderAll();
+	}
+
+	commitBackgroundColor()
+	{
+		this.historySaveAction();
+		this.changed();
+	}
+
+	/**
+	 * The image with the background color of the template, the given color only for a template without one.
+	 * The canvas keeps its own color: else the next save had the fallback in the content.
+	 */
+	toBase64Image(format, quality, fallbackBackgroundColor)
+	{
+		const ownColor = this.fabricCanvas.backgroundColor;
+		if (typeof ownColor !== "string" || ownColor === "")
+			this.fabricCanvas.backgroundColor = fallbackBackgroundColor;
+
+		try
+		{
+			return this.fabricCanvas.toDataURL({
+				format: format,
+				quality: quality
+			});
+		}
+		finally
+		{
+			this.fabricCanvas.backgroundColor = ownColor;
+		}
 	}
 }

@@ -54,6 +54,33 @@ export class ViewportService
 		this.#fabricWrapper.setHeight(height);
 	}
 
+	/**
+	 * The background color of the template for the color input: #rrggbb.
+	 */
+	getBackgroundColor()
+	{
+		return "#" + new fabric.Color(this.#fabricWrapper.getBackgroundColor()).toHex().toLowerCase();
+	}
+
+	setBackgroundColor(color)
+	{
+		this.#fabricWrapper.setBackgroundColor(color);
+	}
+
+	commitBackgroundColor()
+	{
+		this.#fabricWrapper.commitBackgroundColor();
+	}
+
+	/**
+	 * Undo and redo load the content again, with the background color of that step.
+	 */
+	onHistoryRestored(handler)
+	{
+		this.#fabricWrapper.on("history:undo", handler);
+		this.#fabricWrapper.on("history:redo", handler);
+	}
+
 	scaleCanvas(zoom)
 	{
 		this.#fabricWrapper.setZoom(zoom / 100);

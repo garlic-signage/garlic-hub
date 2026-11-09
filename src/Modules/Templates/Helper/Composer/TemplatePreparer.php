@@ -100,6 +100,7 @@ readonly class TemplatePreparer
 			'LANG_ALIGN_MIDDLE' => $this->translator->translate('align_middle', 'templates'),
 			'LANG_ALIGN_BOTTOM' => $this->translator->translate('align_bottom', 'templates'),
 			'LANG_RESOLUTION' => $this->translator->translate('resolution', 'templates'),
+			'LANG_BACKGROUND_COLOR' => $this->translator->translate('background_color', 'templates'),
 			'LANG_SNAP_TO_GRID' => $this->translator->translate('snap_to_grid', 'templates'),
 			'LANG_NO_GRID' => $this->translator->translate('no_grid', 'templates'),
 			'LANG_ZOOM' => $this->translator->translate('zoom', 'main'),

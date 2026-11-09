@@ -63,6 +63,21 @@ export class ViewportController
 			this.#viewportService.scaleCanvas(this.#viewportView.getZoomSliderValue());
 		});
 
+		// input shows the color while it is chosen, change makes one step in the history
+		this.#viewportView.backgroundColor.addEventListener('input', () =>
+		{
+			this.#viewportService.setBackgroundColor(this.#viewportView.getBackgroundColorValue());
+		});
+		this.#viewportView.backgroundColor.addEventListener('change', () =>
+		{
+			this.#viewportService.setBackgroundColor(this.#viewportView.getBackgroundColorValue());
+			this.#viewportService.commitBackgroundColor();
+		});
+		this.#viewportService.onHistoryRestored(() =>
+		{
+			this.#viewportView.setBackgroundColor(this.#viewportService.getBackgroundColor());
+		});
+
 		this.#viewportView.zoomSlider.addEventListener('input', () =>
 		{
 			this.#isAutoresize = false;
@@ -90,6 +105,7 @@ export class ViewportController
 		this.#viewportService.initializeFromCanvas()
 		this.#viewportView.setResolutionWidth(this.#viewportService.width)
 		this.#viewportView.setResolutionHeight(this.#viewportService.height)
+		this.#viewportView.setBackgroundColor(this.#viewportService.getBackgroundColor());
 		this.zoomToViewPort();
 	}
 
