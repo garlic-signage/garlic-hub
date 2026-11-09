@@ -131,6 +131,17 @@ class PasswordFlowTest extends BlackboxTestCase
 		return $guest->post('/force-password', $fields + ['token' => $token, 'csrf_token' => $csrf]);
 	}
 
+	/**
+	 * The link: its token goes into the session, the form has an address without it.
+	 */
+	private function openLink(Browser $guest, string $token): ResponseInterface
+	{
+		$redirect = $guest->get('/force-password?token=' . $token);
+		static::assertSame('/force-password', $redirect->getHeaderLine('Location'));
+
+		return $guest->get('/force-password');
+	}
+
 	private function submitPassword(string $token, string $password): ResponseInterface
 	{
 		return $this->submitLink($this->browser(), $token, ['password' => $password, 'password_confirm' => $password]);
@@ -151,7 +162,7 @@ class PasswordFlowTest extends BlackboxTestCase
 		static::assertSame('', $this->hashOf($this->uidOf('carla')));
 
 		$guest = $this->browser();
-		$page  = $guest->get('/force-password?token=' . $token);
+		$page  = $this->openLink($guest, $token);
 		static::assertSame(200, $page->getStatusCode());
 		static::assertStringContainsString('carla', (string) $page->getBody());
 
@@ -180,7 +191,8 @@ class PasswordFlowTest extends BlackboxTestCase
 	{
 		$token = $this->createUserAndLink();
 		$guest = $this->browser();
-		$csrf  = $guest->csrfToken('/force-password?token=' . $token);
+		$this->openLink($guest, $token);
+		$csrf  = $guest->csrfToken('/force-password');
 		$this->connection->executeStatement("UPDATE user_tokens SET expires_at = '2000-01-01 00:00:00'");
 
 		$this->assertRefusedToLogin($guest->get('/force-password?token=' . $token));
@@ -337,7 +349,7 @@ class PasswordFlowTest extends BlackboxTestCase
 	{
 		$token = $this->createUserAndLink();
 
-		$html = (string) $this->browser()->get('/force-password?token=' . $token)->getBody();
+		$html = (string) $this->openLink($this->browser(), $token)->getBody();
 
 		static::assertSame(1, preg_match('/<input[^>]*name="token"[^>]*>/', $html, $field));
 		static::assertStringContainsString('value="' . $token . '"', $field[0]);
@@ -362,7 +374,7 @@ class PasswordFlowTest extends BlackboxTestCase
 	{
 		$token  = $this->createUserAndLink();
 		$guest  = $this->browser();
-		$guest->get('/force-password?token=' . $token);
+		$this->openLink($guest, $token);
 		$fields = ['token' => $token, 'password' => self::NEW_PASSWORD, 'password_confirm' => self::NEW_PASSWORD];
 		if ($variant === 'forged')
 			$fields['csrf_token'] = 'forged';

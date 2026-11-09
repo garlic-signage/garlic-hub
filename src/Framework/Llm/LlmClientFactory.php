@@ -22,9 +22,12 @@ declare(strict_types=1);
 namespace App\Framework\Llm;
 
 use GuzzleHttp\Client as GuzzleClient;
+use GuzzleHttp\HandlerStack;
 use GuzzleHttp\RequestOptions;
 use OpenAI;
 use Psr\Http\Client\ClientInterface;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * The adapter for the API of a connection. The address comes from the user: no redirects, only http(s)
@@ -36,6 +39,8 @@ class LlmClientFactory
 	private const int TIMEOUT         = 60;
 	/** the selection of a model waits shorter than an answer of the model */
 	public const int MODELS_TIMEOUT   = 5;
+	/** the largest answer: an image fits easily, a huge one would fill memory or disk */
+	public const int MAX_ANSWER_BYTES = 20 * 1024 * 1024;
 
 	private LlmAddress $address;
 
@@ -88,7 +93,27 @@ class LlmClientFactory
 		return $this->httpClient ?? new GuzzleClient([
 			RequestOptions::CONNECT_TIMEOUT => min(self::CONNECT_TIMEOUT, $timeout),
 			RequestOptions::TIMEOUT         => $timeout,
-			RequestOptions::ALLOW_REDIRECTS => false
+			RequestOptions::ALLOW_REDIRECTS => false,
+			// an answer above the limit: refused by its Content-Length, or stopped while it comes (LimitedSink)
+			RequestOptions::ON_HEADERS      => static function (ResponseInterface $response): void
+			{
+				if ((int) $response->getHeaderLine('Content-Length') > self::MAX_ANSWER_BYTES)
+					throw new LlmException('llm_answer_too_large');
+			},
+			'handler'                       => self::limitedHandler()
 		]);
+	}
+
+	/**
+	 * Every request gets its own sink with the limit.
+	 *
+	 * @return HandlerStack<callable(RequestInterface, array<mixed>): \GuzzleHttp\Promise\PromiseInterface<ResponseInterface, mixed>>
+	 */
+	private static function limitedHandler(): HandlerStack
+	{
+		$stack = HandlerStack::create();
+		$stack->push(static fn(callable $handler): callable => static fn(RequestInterface $request, array $options) => $handler($request, ['sink' => new LimitedSink(self::MAX_ANSWER_BYTES)] + $options));
+
+		return $stack;
 	}
 }

@@ -303,6 +303,28 @@ class ShowAdminControllerTest extends UsersControllerTestCase
 		static::assertStringContainsString((string) $this->databaseValue("SELECT expires_at FROM user_tokens WHERE purpose = 'password_reset'"), $html);
 	}
 
+	/**
+	 * Behind a proxy which ends TLS the hub gets http, the link must be https anyway: it carries the token.
+	 */
+	public function testTheLinkIsHttpsBehindAProxyWithTls(): void
+	{
+		$this->actingAs(1);
+		$tokens = $this->container->get(UserTokenService::class);
+		$tokens->insertToken(3, $tokens->generateToken(), TokenPurposes::PASSWORD_RESET);
+		$_SERVER['HTTP_X_FORWARDED_PROTO'] = 'https';
+
+		try
+		{
+			$fields = $this->fields($this->page($this->edit('3')));
+		}
+		finally
+		{
+			unset($_SERVER['HTTP_X_FORWARDED_PROTO']);
+		}
+
+		static::assertSame('https://garlic-hub.test/force-password?token=', $fields['password_reset']['value']);
+	}
+
 	public function testTheLinkOfANewPasswordIsShownOnceInTheFormAfterTheReset(): void
 	{
 		$this->actingAs(1);

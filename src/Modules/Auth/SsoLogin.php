@@ -144,7 +144,13 @@ readonly class SsoLogin
 			$client  = $this->client($provider, $redirectUri);
 			$service = $this->authorizationService();
 			$session = AuthSession::fromArray(['state' => $pending['state'], 'nonce' => $pending['nonce'], 'code_verifier' => $pending['code_verifier']]);
-			$tokens  = $service->callback($client, $service->getCallbackParams($request, $client), $redirectUri, $session);
+			// only the code and the state: an id_token or access_token in the address would skip the code
+			// exchange with the secret and PKCE
+			$params = array_intersect_key($service->getCallbackParams($request, $client), ['code' => true, 'state' => true]);
+			if (!is_string($params['code'] ?? null) || $params['code'] === '')
+				throw new SsoRefusedException('sso_failed');
+
+			$tokens  = $service->callback($client, $params, $redirectUri, $session);
 			if ($tokens->getIdToken() === null)
 				throw new SsoRefusedException('sso_failed');
 

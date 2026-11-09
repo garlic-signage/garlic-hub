@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Users\Helper\Settings;
 
+use App\Framework\Http\Https;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Utils\Forms\AbstractBaseFormElementsCreator;
@@ -96,7 +97,8 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 	 */
 	public function createClipboardTextField(string $value, string $purpose, string $expiresAt): ClipboardTextField
 	{
-		$http = isset($_SERVER['HTTPS']) ? 'https://': 'http://';
+		// behind a proxy which ends TLS the hub itself gets http
+		$http = Https::isActive() ? 'https://': 'http://';
 		$host = $_SERVER['HTTP_HOST'] ?? '';
 
 		$purposeStr = $this->translator->translateArrayForOptions('purposes_selects', 'users')[$purpose];

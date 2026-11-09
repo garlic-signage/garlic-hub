@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace App\Modules\Account\Controller;
 
 use App\Framework\Controller\RequestInput;
+use App\Framework\Http\Session;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
@@ -44,12 +45,16 @@ use Slim\Flash\Messages;
  */
 readonly class ShowPasswordController
 {
+	/** the token of the link waits in the session: the address of the form has none */
+	private const string LINK_TOKEN = 'password_link_token';
+
 	public function __construct(private Orchestrator     $orchestrator,
 								private TemplatePreparer $templatePreparer,
 								private Translator       $translator,
 								private Messages         $flash,
 								private TwoFactorOrchestrator $twoFactorOrchestrator,
-								private LlmOrchestrator $llmOrchestrator)
+								private LlmOrchestrator $llmOrchestrator,
+								private Session $session)
 	{}
 
 	/**
@@ -69,7 +74,24 @@ readonly class ShowPasswordController
 	 */
 	public function showForcedPasswordForm(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		$passwordToken = RequestInput::of($request->getQueryParams())->text('token');
+		// the link: its token goes into the session and out of the address, so it stays in the logs of web
+		// server and proxies and in the history of the browser only with this one request
+		if (array_key_exists('token', $request->getQueryParams()))
+		{
+			$passwordToken = RequestInput::of($request->getQueryParams())->text('token');
+			if ($passwordToken === '')
+				return $this->redirectToLoginWithError($response, 'no_token');
+
+			if ($this->orchestrator->loadTokenUser($passwordToken) === [])
+				return $this->redirectToLoginWithError($response, 'token_error');
+
+			$this->session->set(self::LINK_TOKEN, $passwordToken);
+
+			return $response->withHeader('Location', '/force-password')->withStatus(302);
+		}
+
+		$stored        = $this->session->get(self::LINK_TOKEN);
+		$passwordToken = is_string($stored) ? $stored : '';
 		if ($passwordToken === '')
 			return $this->redirectToLoginWithError($response, 'no_token');
 
@@ -106,6 +128,7 @@ readonly class ShowPasswordController
 			return $this->outputRenderedForcedForm($passwordToken, $tokenUser);
 		}
 
+		$this->session->delete(self::LINK_TOKEN);
 		$this->flash->addMessage('success', $this->translator->translate('forced_password_changed', 'account'));
 		return $response->withHeader('Location', '/login')->withStatus(302);
 	}

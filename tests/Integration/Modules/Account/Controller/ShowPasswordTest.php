@@ -244,14 +244,26 @@ class ShowPasswordTest extends ContainerTestCase
 		}
 	}
 
+	/**
+	 * The link brings the token in the address: it goes into the session and the page of the form has an address
+	 * without it, for the logs of web server and proxies and the history of the browser.
+	 */
+	private function openLink(string $link): ResponseInterface
+	{
+		$response = $this->controller->showForcedPasswordForm(
+			new ServerRequestFactory()->createServerRequest('GET', '/force-password')->withQueryParams(['token' => $link]),
+			new Response()
+		);
+		$this->assertRedirect($response, '/force-password');
+
+		return $this->controller->showForcedPasswordForm(new ServerRequestFactory()->createServerRequest('GET', '/force-password'), new Response());
+	}
+
 	public function testTheFormOfALinkNamesTheUserAndCarriesTheToken(): void
 	{
 		$link = $this->createLink(13, TokenPurposes::INITIAL_PASSWORD);
 
-		$page = $this->page($this->controller->showForcedPasswordForm(
-			new ServerRequestFactory()->createServerRequest('GET', '/force-password')->withQueryParams(['token' => $link]),
-			new Response()
-		));
+		$page = $this->page($this->openLink($link));
 
 		static::assertSame('/force-password', $page->getTemplateData()['FORM_ACTION']);
 		static::assertStringContainsString('unverified', $page->getTemplateData()['LANG_PAGE_HEADER']);
@@ -265,10 +277,7 @@ class ShowPasswordTest extends ContainerTestCase
 	{
 		$this->connection->executeStatement("UPDATE user_main SET username = ? WHERE UID = 13", ['<b>x</b>"<script>']);
 		$link = $this->createLink(13, TokenPurposes::INITIAL_PASSWORD);
-		$page = $this->page($this->controller->showForcedPasswordForm(
-			new ServerRequestFactory()->createServerRequest('GET', '/force-password')->withQueryParams(['token' => $link]),
-			new Response()
-		));
+		$page = $this->page($this->openLink($link));
 
 		$adapter = new MustacheAdapter(new MustacheEngineFactory()->create(__DIR__ . '/../../../../../templates'));
 		$html    = $adapter->render($page->getTemplate(), $page->getTemplateData());
@@ -296,13 +305,39 @@ class ShowPasswordTest extends ContainerTestCase
 	public function testALinkWithoutAUsableTokenLeadsToTheLogin(string $token): void
 	{
 		$response = $this->controller->showForcedPasswordForm(
-			new ServerRequestFactory()->createServerRequest('GET', '/force-password')->withQueryParams($token === '' ? [] : ['token' => $token]),
+			new ServerRequestFactory()->createServerRequest('GET', '/force-password')->withQueryParams(['token' => $token]),
 			new Response()
 		);
 
 		$this->assertRedirect($response, '/login');
 		static::assertCount(1, $this->flash('error'));
 		static::assertSame([$this->translate($token === '' ? 'no_token' : 'token_error')], $this->flash('error'));
+	}
+
+	/**
+	 * Without a link opened before, the form has no token: also after the password was set by it.
+	 */
+	public function testTheFormWithoutALinkInTheSessionLeadsToTheLogin(): void
+	{
+		$this->assertRedirect($this->controller->showForcedPasswordForm(new ServerRequestFactory()->createServerRequest('GET', '/force-password'), new Response()), '/login');
+
+		$link = $this->createLink(13, TokenPurposes::INITIAL_PASSWORD);
+		$this->openLink($link);
+		$this->assertRedirect($this->postForcedPassword($this->forcedPost($link)), '/login');
+
+		$this->assertRedirect($this->controller->showForcedPasswordForm(new ServerRequestFactory()->createServerRequest('GET', '/force-password'), new Response()), '/login');
+	}
+
+	/**
+	 * A link opened before which was used or expired since: the token of the session is checked again.
+	 */
+	public function testAStoredLinkWhichIsUsedMeanwhileLeadsToTheLogin(): void
+	{
+		$link = $this->createLink(10);
+		$this->openLink($link);
+		$this->tokenService->useToken((string) hex2bin($link));
+
+		$this->assertRedirect($this->controller->showForcedPasswordForm(new ServerRequestFactory()->createServerRequest('GET', '/force-password'), new Response()), '/login');
 	}
 
 	/**

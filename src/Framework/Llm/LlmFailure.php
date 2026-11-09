@@ -38,6 +38,13 @@ final class LlmFailure
 	 */
 	public static function reasonOf(Throwable $e, int $status = 0): string
 	{
+		// the limit of the answer, see LlmClientFactory: Guzzle wraps the exception of on_headers
+		for ($inner = $e; $inner !== null; $inner = $inner->getPrevious())
+		{
+			if ($inner instanceof LlmException && $inner->getTranslationKey() === 'llm_answer_too_large')
+				return 'llm_answer_too_large';
+		}
+
 		$cause = $e->getPrevious() ?? $e;
 		if ($cause instanceof ConnectTimeoutException || $cause instanceof NetworkTimeoutException || $cause instanceof ResponseTimeoutException)
 			return 'llm_timeout';

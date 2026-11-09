@@ -210,6 +210,8 @@ requests of the browser stop after 6 seconds (`FetchClient`).
   - No redirects, a connect timeout of 5 seconds, and the user never sees the answer of the endpoint, only a
     translated message (`LlmException`). The messages stay distinct (timeout, no connection, key refused), a user
     with own models can tell open from closed ports in the network: the admin accepts this with the release.
+  - An answer has at most 20 MB (`LlmClientFactory::MAX_ANSWER_BYTES`): a larger Content-Length is refused before
+    the answer comes (`llm_answer_too_large`), without one the transfer stops at the limit (`LimitedSink`).
   Image URLs of an answer are not loaded.
 - **Keys** are encrypted in the database and never sent to the browser.
 - **Suggestions** are confirmed by the user, except "tag folder", which the user starts for a folder and can

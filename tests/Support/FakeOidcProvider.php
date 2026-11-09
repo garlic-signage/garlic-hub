@@ -116,6 +116,26 @@ class FakeOidcProvider implements ClientInterface
 			|| $this->tokenAuthorization !== 'Basic ' . base64_encode(urlencode($this->clientId) . ':' . urlencode($this->clientSecret)))
 			return $this->json(['error' => 'invalid_grant'], 400);
 
+		return $this->json(['access_token' => 'access', 'token_type' => 'Bearer', 'expires_in' => 300, 'id_token' => $this->idToken($asked)]);
+	}
+
+	/**
+	 * A valid ID token for the login of a code, signed by the provider: what a thief of a token of the browser has.
+	 */
+	public function idTokenFor(string $code): string
+	{
+		$asked = $this->codes[$code] ?? null;
+		if ($asked === null)
+			throw new RuntimeException('unknown code');
+
+		return $this->idToken($asked);
+	}
+
+	/**
+	 * @param array{nonce:string, challenge:string, client_id:string} $asked
+	 */
+	private function idToken(array $asked): string
+	{
 		$claims = array_merge([
 			'iss'            => $this->issuer,
 			'sub'            => 'subject-carla',
@@ -128,7 +148,7 @@ class FakeOidcProvider implements ClientInterface
 			'name'           => 'Carla'
 		], $this->claims);
 
-		return $this->json(['access_token' => 'access', 'token_type' => 'Bearer', 'expires_in' => 300, 'id_token' => $this->sign(array_filter($claims, static fn(mixed $value): bool => $value !== null))]);
+		return $this->sign(array_filter($claims, static fn(mixed $value): bool => $value !== null));
 	}
 
 	/**

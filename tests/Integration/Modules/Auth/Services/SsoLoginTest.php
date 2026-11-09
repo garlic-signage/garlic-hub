@@ -360,6 +360,19 @@ class SsoLoginTest extends ContainerTestCase
 		static::assertSame(3, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_main'));
 	}
 
+	/**
+	 * An ID token in the address instead of the code: without the code exchange the secret and PKCE would not count.
+	 */
+	public function testAnIdTokenInTheAddressIsNoLogin(): void
+	{
+		$ssoLogin = $this->ssoLogin();
+		$answer   = $this->answerOfProvider($ssoLogin);
+		$idToken  = $this->provider->idTokenFor($answer['code']);
+
+		$this->assertRefused('sso_failed', fn() => $this->finish($ssoLogin, ['state' => $answer['state'], 'id_token' => $idToken]));
+		static::assertSame(3, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_main'));
+	}
+
 	public function testAWrongCodeVerifierIsRefusedByTheProvider(): void
 	{
 		$ssoLogin = $this->ssoLogin();

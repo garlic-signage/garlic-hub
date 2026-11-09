@@ -113,7 +113,15 @@ The controls in the application:
 - **Tokens** for autologin, password links and the initial password are stored
   as HMAC-SHA256, never in plain text. They expire: autologin after 28 days, an
   initial password link after 24 hours, other links after 2 hours. A link token
-  can not be used for an autologin.
+  can not be used for an autologin. The link is built with https when the hub is
+  behind a proxy which ends TLS (`Https::isActive()`). Opening it moves the token
+  from the address into the session and redirects to `/force-password` without
+  it: logs of web server and proxies and the history of the browser keep it only
+  for this one request.
+- **Logs of failed logins**: a typed name which is no user may be a password in
+  the wrong field, the log of the application gets only its first 3 characters.
+  A user is logged by his name. The audit log keeps the typed name (64
+  characters) for the admin.
 - **Passwords**: a reset by an admin clears the password and ends the running
   sessions and the autologin. A user can be forced to change the password.
 - **CSRF**: every POST, PUT, PATCH and DELETE needs the token of the session

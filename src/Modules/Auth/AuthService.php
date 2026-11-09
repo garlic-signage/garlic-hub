@@ -44,6 +44,8 @@ class AuthService
 {
 	// the audit log shows what was typed in: nobody fills it with huge strings
 	private const int MAX_LOGGED_IDENTIFIER = 64;
+	// of a name which is no user, maybe a password in the wrong field, the log of the application gets the beginning
+	private const int LOGGED_UNKNOWN_PREFIX = 3;
 	private string $errorMessage = '';
 
 	public function __construct(private readonly UsersService 		$userService,
@@ -68,15 +70,14 @@ class AuthService
 		// the service lives for the whole request: a failed login by cookie before must not stop this one
 		$this->errorMessage = '';
 		$ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-		$this->logger->info('Login attempt from: '. $identifier);
+		$userData = $this->userService->findUser($identifier);
 		if ($this->loginThrottle->isBlocked($identifier, $ip))
 		{
 			$this->errorMessage = 'Too many failed login attempts. Please try again later.';
-			$this->logger->warning('Login blocked', ['username' => mb_substr($identifier, 0, self::MAX_LOGGED_IDENTIFIER), 'ip_address' => $ip]);
+			$this->logger->warning('Login blocked', ['username' => self::loggableIdentifier($identifier, $userData !== []), 'ip_address' => $ip]);
 			return null;
 		}
 
-		$userData = $this->userService->findUser($identifier);
 		// a user created by an admin has no password (NULL) until he sets one: he can not log in, like an unknown user
 		$hash = $userData['password'] ?? '';
 		if (!is_string($hash) || $hash === '')
@@ -89,7 +90,7 @@ class AuthService
 			$this->loginThrottle->registerFailure($identifier, $ip);
 			$this->errorMessage = 'Invalid credentials.';
 			$this->logger->error('Login failed', [
-				'username' => $identifier,
+				'username' => self::loggableIdentifier($identifier, $userData !== []),
 				'ip_address' => $ip,
 				'time' => date('Y-m-d H:i:s'),
 				'reason' => 'Invalid credentials.',
@@ -191,6 +192,18 @@ class AuthService
 		{
 			$this->logger->error('Failed second factor could not be audited: ' . $e->getMessage());
 		}
+	}
+
+	/**
+	 * What the log of the application gets of a typed user name. A name which is no user may be a password typed
+	 * into the wrong field: only its beginning is logged. The audit log keeps more, see recordFailedLogin().
+	 */
+	private static function loggableIdentifier(string $identifier, bool $isUser): string
+	{
+		if ($isUser)
+			return mb_substr($identifier, 0, self::MAX_LOGGED_IDENTIFIER);
+
+		return mb_strlen($identifier) <= self::LOGGED_UNKNOWN_PREFIX ? $identifier : mb_substr($identifier, 0, self::LOGGED_UNKNOWN_PREFIX) . '…';
 	}
 
 	/**

@@ -123,7 +123,9 @@ Modules differ in the details:
 - Issuer URLs: Google `https://accounts.google.com`, Entra ID `https://login.microsoftonline.com/<tenant id>/v2.0`,
   Okta `https://<your org>.okta.com`, Keycloak `https://<host>/realms/<realm>`.
 - The login page shows a button "Log in with ..." per provider. The login checks the signed ID token (signature, issuer,
-  audience, expiry, nonce), the state and PKCE (`Auth\SsoLogin`, library facile-it/php-openid-client).
+  audience, expiry, nonce), the state and PKCE (`Auth\SsoLogin`, library facile-it/php-openid-client). The
+  callback takes only `code` and `state`: an `id_token` or `access_token` in the address would skip the code exchange
+  with the secret and PKCE.
 - The first login creates the user without rights and without password, with his media folder. The admin grants
   the rights. The user is found again by the provider and his subject there, not by his email, which may change.
 - Deleting a provider keeps its users: they log in by password, or by the provider again when it is set up once more.

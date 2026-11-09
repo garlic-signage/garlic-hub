@@ -32,6 +32,7 @@ use App\Shared\User\UserEntity;
 use App\Shared\User\UsersService;
 use Doctrine\DBAL\Exception\InvalidArgumentException as DbalException;
 use Monolog\Handler\TestHandler;
+use Monolog\LogRecord;
 use Monolog\Logger;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
@@ -465,5 +466,34 @@ class AuthServiceTest extends TestCase
 		static::assertSame('two_factor_blocked', $service->getErrorMessage());
 		static::assertSame([AuditAction::TWO_FACTOR_LOCKED], array_values(array_filter($recorded, static fn(AuditAction $action): bool => $action === AuditAction::TWO_FACTOR_LOCKED)));
 		static::assertCount(LoginThrottle::MAX_SECOND_FACTOR_FAILURES_PER_USER + 1, $recorded, 'every wrong code and the lock');
+	}
+
+	/**
+	 * A password typed into the field of the user name must not end in the log: of a name which is no user only the
+	 * beginning is logged, a user is logged by his name.
+	 *
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testTheLogGetsOnlyTheBeginningOfANameWhichIsNoUser(): void
+	{
+		$this->authService->login('Secret-Pass-123', 'anything');
+		$this->authService->login('user@example.com', 'wrong');
+
+		$logged = array_map(static fn(LogRecord $record): string => (string) json_encode($record->context) . $record->message, $this->logs->getRecords());
+		static::assertStringNotContainsString('Secret-Pass', implode("\n", $logged));
+		static::assertTrue($this->hasLoggedUsername('Sec…'));
+		static::assertTrue($this->hasLoggedUsername('user@example.com'));
+	}
+
+	private function hasLoggedUsername(string $username): bool
+	{
+		foreach ($this->logs->getRecords() as $record)
+		{
+			if (($record->context['username'] ?? null) === $username)
+				return true;
+		}
+
+		return false;
 	}
 }
