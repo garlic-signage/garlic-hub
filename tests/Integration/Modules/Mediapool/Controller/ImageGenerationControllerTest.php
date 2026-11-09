@@ -56,7 +56,7 @@ class ImageGenerationControllerTest extends ControllerTestCase
 		$this->endpoint = new MockHandler($answers);
 		$container = $this->container;
 		static::assertInstanceOf(Container::class, $container);
-		$container->set(LlmClientFactory::class, new LlmClientFactory(new Client(['handler' => HandlerStack::create($this->endpoint)])));
+		$container->set(LlmClientFactory::class, new LlmClientFactory(new Client(['handler' => HandlerStack::create($this->endpoint)]), static fn(string $host): array => []));
 
 		return $container->get(ImageGenerationController::class)->generate($this->request('POST', $body), $this->newResponse());
 	}
@@ -110,7 +110,7 @@ class ImageGenerationControllerTest extends ControllerTestCase
 	{
 		$this->actingAs(2);
 		$this->withLlm(2);
-		$factory = new class(new Client(['handler' => HandlerStack::create(new MockHandler([self::answer(self::png())]))])) extends LlmClientFactory
+		$factory = new class(new Client(['handler' => HandlerStack::create(new MockHandler([self::answer(self::png())]))]), static fn(string $host): array => []) extends LlmClientFactory
 		{
 			public int $timeout = 0;
 

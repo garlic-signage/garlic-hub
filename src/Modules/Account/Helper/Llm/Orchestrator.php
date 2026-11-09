@@ -76,11 +76,15 @@ readonly class Orchestrator
 
 	/**
 	 * @return list<string> the translation keys of the errors
+	 * @throws CoreException
 	 * @throws Exception
 	 * @throws UserException
 	 */
 	public function saveConnection(mixed $post): array
 	{
+		if (!$this->hasOwnTasks())
+			return ['llm_own_not_released'];
+
 		$input = RequestInput::of($post);
 
 		return $this->userLlmService->saveConnection($this->userSession->getUID(), $input->id('connection_id'), [
@@ -124,6 +128,7 @@ readonly class Orchestrator
 
 	/**
 	 * @return list<string>
+	 * @throws CoreException
 	 * @throws CryptoException
 	 * @throws Exception
 	 * @throws LlmException
@@ -131,6 +136,9 @@ readonly class Orchestrator
 	 */
 	public function findModels(mixed $post): array
 	{
+		if (!$this->hasOwnTasks())
+			throw new LlmException('llm_own_not_released');
+
 		$input = RequestInput::of($post);
 
 		return $this->userLlmService->findModels($this->userSession->getUID(), [
@@ -139,5 +147,18 @@ readonly class Orchestrator
 			'base_url'      => $input->text('base_url'),
 			'api_key'       => $input->text('api_key')
 		]);
+	}
+
+	/**
+	 * The own connections are for the tasks which the company lets the user set up himself. Without such a task
+	 * he could not use them: then the server does not ask any address for him.
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws UserException
+	 */
+	private function hasOwnTasks(): bool
+	{
+		return in_array(LlmResolver::ACCESS_OWN, $this->llmResolver->findAccess($this->userSession->getUID()), true);
 	}
 }

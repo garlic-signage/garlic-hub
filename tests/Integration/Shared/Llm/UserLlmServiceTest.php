@@ -50,7 +50,7 @@ class UserLlmServiceTest extends ContainerTestCase
 		$this->endpoint = new MockHandler();
 		$container      = $this->container;
 		static::assertInstanceOf(Container::class, $container);
-		$container->set(LlmClientFactory::class, new LlmClientFactory(new Client(['handler' => HandlerStack::create($this->endpoint)])));
+		$container->set(LlmClientFactory::class, new LlmClientFactory(new Client(['handler' => HandlerStack::create($this->endpoint)]), static fn(string $host): array => []));
 		$this->service = $container->get(UserLlmService::class);
 	}
 

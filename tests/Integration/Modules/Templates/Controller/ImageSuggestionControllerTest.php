@@ -61,7 +61,7 @@ class ImageSuggestionControllerTest extends TemplatesControllerTestCase
 		$this->endpoint = new MockHandler($answers);
 		$container = $this->container;
 		static::assertInstanceOf(Container::class, $container);
-		$container->set(LlmClientFactory::class, new LlmClientFactory(new Client(['handler' => HandlerStack::create($this->endpoint)])));
+		$container->set(LlmClientFactory::class, new LlmClientFactory(new Client(['handler' => HandlerStack::create($this->endpoint)]), static fn(string $host): array => []));
 
 		return $container->get(ImageSuggestionController::class)->suggest($this->request('POST', '/async/templates/suggest-images', $body), $this->newResponse());
 	}

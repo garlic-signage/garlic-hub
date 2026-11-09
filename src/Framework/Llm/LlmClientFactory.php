@@ -37,8 +37,15 @@ class LlmClientFactory
 	/** the selection of a model waits shorter than an answer of the model */
 	public const int MODELS_TIMEOUT   = 5;
 
-	public function __construct(private readonly ?ClientInterface $httpClient = null)
-	{}
+	private LlmAddress $address;
+
+	/**
+	 * @param (\Closure(string):list<string>)|null $resolve the addresses of a host name, for tests, by default the DNS
+	 */
+	public function __construct(private readonly ?ClientInterface $httpClient = null, ?\Closure $resolve = null)
+	{
+		$this->address = new LlmAddress($resolve);
+	}
 
 	/**
 	 * @param int $timeout seconds for the whole request
@@ -48,6 +55,9 @@ class LlmClientFactory
 	{
 		if (!self::isValidUrl($connection->baseUrl))
 			throw new LlmException('llm_invalid_url');
+
+		if ($this->address->isBlocked($connection->baseUrl))
+			throw new LlmException('llm_blocked_address');
 
 		return match ($connection->apiType)
 		{
@@ -59,10 +69,7 @@ class LlmClientFactory
 
 	public static function isValidUrl(string $url): bool
 	{
-		$scheme = parse_url($url, PHP_URL_SCHEME);
-		$host   = parse_url($url, PHP_URL_HOST);
-
-		return in_array($scheme, ['http', 'https'], true) && is_string($host) && $host !== '';
+		return LlmAddress::isValidUrl($url);
 	}
 
 	private function createOpenAi(LlmConnection $connection, int $timeout): LlmClient

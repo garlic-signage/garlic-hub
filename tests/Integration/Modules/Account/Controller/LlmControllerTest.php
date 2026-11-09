@@ -26,6 +26,7 @@ use App\Modules\Account\Controller\LlmController;
 use App\Modules\Account\Helper\Llm\Orchestrator;
 use App\Shared\Llm\CompanyLlmService;
 use App\Shared\Llm\LlmTask;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -102,6 +103,7 @@ class LlmControllerTest extends ContainerTestCase
 
 	public function testTheProviderIsStoredAndTheTabShowsItWithoutTheKey(): void
 	{
+		$this->companyDecides(LlmTask::TEXT, CompanyLlmService::MODE_USER_OWN);
 		$response = $this->storeConnection(['connection_id' => '0', 'name' => 'OpenAI', 'api_type' => 'openai', 'base_url' => 'https://api.openai.com/v1', 'api_key' => 'sk-secret']);
 
 		$this->assertBackToTab($response);
@@ -156,6 +158,7 @@ class LlmControllerTest extends ContainerTestCase
 
 	public function testWrongInputShowsTheErrors(): void
 	{
+		$this->companyDecides(LlmTask::TEXT, CompanyLlmService::MODE_USER_OWN);
 		$response = $this->storeConnection(['connection_id' => '0', 'api_type' => 'openai', 'base_url' => 'ftp://example.com']);
 
 		$this->assertBackToTab($response);
@@ -165,10 +168,49 @@ class LlmControllerTest extends ContainerTestCase
 
 	public function testTheModelsOfAWrongAddressComeAsJsonError(): void
 	{
+		$this->companyDecides(LlmTask::TEXT, CompanyLlmService::MODE_USER_OWN);
 		$response = $this->controller->models($this->request('/account/llm/models', ['connection_id' => '0', 'api_type' => 'openai', 'base_url' => 'file:///etc/passwd', 'api_key' => '']), new Response());
 
 		static::assertSame(400, $response->getStatusCode());
 		static::assertSame(['success' => false, 'error_message' => $this->text('llm_invalid_url')], json_decode((string) $response->getBody(), true));
+	}
+
+	/**
+	 * Without a task for own models the user could not use a provider: the server asks no address for him.
+	 *
+	 * @return array<string,array{string}>
+	 */
+	public static function modesWithoutOwnModels(): array
+	{
+		return [
+			'no decision'         => [''],
+			'company for all'     => [CompanyLlmService::MODE_COMPANY_ALL],
+			'company for admins'  => [CompanyLlmService::MODE_COMPANY_ADMINS],
+			'off'                 => [CompanyLlmService::MODE_DISABLED]
+		];
+	}
+
+	#[DataProvider('modesWithoutOwnModels')]
+	public function testWithoutOwnModelsNoProviderIsStoredAndNoAddressAsked(string $mode): void
+	{
+		if ($mode !== '')
+			$this->companyDecides(LlmTask::TEXT, $mode);
+
+		$this->assertBackToTab($this->storeConnection(['connection_id' => '0', 'name' => 'Intern', 'api_type' => 'openai', 'base_url' => 'http://10.0.0.1/v1']));
+		static::assertSame([$this->text('llm_own_not_released')], $this->flash('error'));
+		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_llm_connections'));
+
+		$response = $this->controller->models($this->request('/account/llm/models', ['connection_id' => '0', 'api_type' => 'openai', 'base_url' => 'http://10.0.0.1/v1', 'api_key' => '']), new Response());
+		static::assertSame(['success' => false, 'error_message' => $this->text('llm_own_not_released')], json_decode((string) $response->getBody(), true));
+	}
+
+	public function testTheModelsOfALinkLocalAddressAreNotAsked(): void
+	{
+		$this->companyDecides(LlmTask::TEXT, CompanyLlmService::MODE_USER_OWN);
+
+		$response = $this->controller->models($this->request('/account/llm/models', ['connection_id' => '0', 'api_type' => 'automatic1111', 'base_url' => 'http://169.254.169.254', 'api_key' => '']), new Response());
+
+		static::assertSame(['success' => false, 'error_message' => $this->text('llm_blocked_address')], json_decode((string) $response->getBody(), true));
 	}
 
 	public function testDeleteRemovesTheProviderOfTheUserOnly(): void

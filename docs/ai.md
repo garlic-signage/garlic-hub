@@ -199,8 +199,17 @@ requests of the browser stop after 6 seconds (`FetchClient`).
 - **Rights:** a helper works only on what the user may edit (text box, medium, playlist) and offers only media the
   user may read.
 - **The address of a provider** may be any http or https address, also in the intranet, because local servers are
-  the main use. To keep it from being a tool to look into the intranet: no redirects, a connect timeout of
-  5 seconds, and the user never sees the answer of the endpoint, only a translated message (`LlmException`).
+  the main use. To keep it from being a tool to look into the intranet:
+  - A user stores own providers and loads their models only when the company lets him set up at least one task
+    himself ("own models of the users"), otherwise the server asks no address for him (`llm_own_not_released`).
+  - No credentials, query or fragment in the address (`?`, `#`, `@`): the path of the API is appended to it, so
+    no other path of another service can be asked and read back as list of models.
+  - No link-local address (`169.254.0.0/16`, `fe80::/10`, the IPv6 metadata address of AWS), also not by a name
+    which resolves to one: the metadata service of a cloud server gives its credentials (`LlmAddress`,
+    `llm_blocked_address`). The address is resolved again for the request, it is not pinned.
+  - No redirects, a connect timeout of 5 seconds, and the user never sees the answer of the endpoint, only a
+    translated message (`LlmException`). The messages stay distinct (timeout, no connection, key refused), a user
+    with own models can tell open from closed ports in the network: the admin accepts this with the release.
   Image URLs of an answer are not loaded.
 - **Keys** are encrypted in the database and never sent to the browser.
 - **Suggestions** are confirmed by the user, except "tag folder", which the user starts for a folder and can
@@ -219,7 +228,7 @@ Modules (controllers, MediaTaggingService, PlaylistFillingService)
   library `openai-php/client`; `Automatic1111Client` speaks the web API of Automatic1111 and makes images only.
   Another API is a new class and a new `api_type` (`LlmConnection::API_TYPES`, `[llm_api_type_selects]` in
   `main.ini`); `LlmSettings::servesTask()` decides which tasks a type serves. `LlmClientFactory` builds the
-  client with Guzzle: http/https only, no redirects, timeouts.
+  client with Guzzle: http/https only, no redirects, timeouts, no link-local addresses (`LlmAddress`).
 - **`Shared/Llm`** decides which AI a user gets: `LlmResolver::isAvailable($UID, $task)` for showing a helper,
   `forUser($UID, $task)` for the client (throws `llm_not_configured`). `LlmTask` lists the tasks. The settings are
   in `user_llm_connections`, `user_llm_tasks`, `company_llm_connections` and `company_llm_tasks`. The helpers are

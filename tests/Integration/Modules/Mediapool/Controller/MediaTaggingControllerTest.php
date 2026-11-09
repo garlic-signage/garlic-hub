@@ -87,7 +87,7 @@ class MediaTaggingControllerTest extends ControllerTestCase
 		$this->endpoint = new MockHandler($answers);
 		$container = $this->container;
 		static::assertInstanceOf(Container::class, $container);
-		$container->set(LlmClientFactory::class, new LlmClientFactory(new Client(['handler' => HandlerStack::create($this->endpoint)])));
+		$container->set(LlmClientFactory::class, new LlmClientFactory(new Client(['handler' => HandlerStack::create($this->endpoint)]), static fn(string $host): array => []));
 		$service = new MediaTaggingService(
 			$this->container->get(MediaService::class),
 			new TaggingImage(

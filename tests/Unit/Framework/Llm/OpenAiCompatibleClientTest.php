@@ -54,7 +54,7 @@ class OpenAiCompatibleClientTest extends TestCase
 	{
 		$this->endpoint = new MockHandler($answers);
 
-		return new LlmClientFactory(new Client(['handler' => HandlerStack::create($this->endpoint)]));
+		return new LlmClientFactory(new Client(['handler' => HandlerStack::create($this->endpoint)]), static fn(string $host): array => []);
 	}
 
 	private static function answer(string $content): Response

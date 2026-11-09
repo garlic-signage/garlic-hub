@@ -61,7 +61,7 @@ class PlaylistFillingControllerTest extends PlaylistsControllerTestCase
 		$this->endpoint = new MockHandler($answers);
 		$container = $this->container;
 		static::assertInstanceOf(Container::class, $container);
-		$container->set(LlmClientFactory::class, new LlmClientFactory(new Client(['handler' => HandlerStack::create($this->endpoint)])));
+		$container->set(LlmClientFactory::class, new LlmClientFactory(new Client(['handler' => HandlerStack::create($this->endpoint)]), static fn(string $host): array => []));
 
 		return $container->get(PlaylistFillingController::class)->suggest($this->request('POST', '/async/playlists/ai/suggest', $body), $this->newResponse());
 	}

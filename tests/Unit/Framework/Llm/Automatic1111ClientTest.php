@@ -52,7 +52,7 @@ class Automatic1111ClientTest extends TestCase
 	private function client(array $answers, string $model = 'flux_1_schnell_q5p.ckpt', string $apiKey = ''): Automatic1111Client
 	{
 		$this->endpoint = new MockHandler($answers);
-		$client = new LlmClientFactory(new Client(['handler' => HandlerStack::create($this->endpoint)]))
+		$client = new LlmClientFactory(new Client(['handler' => HandlerStack::create($this->endpoint)]), static fn(string $host): array => [])
 			->create(new LlmConnection(LlmConnection::API_AUTOMATIC1111, 'http://drawthings:7860/', $model, $apiKey));
 		static::assertInstanceOf(Automatic1111Client::class, $client);
 

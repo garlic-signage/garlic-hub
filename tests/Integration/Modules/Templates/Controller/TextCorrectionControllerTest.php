@@ -51,7 +51,7 @@ class TextCorrectionControllerTest extends TemplatesControllerTestCase
 		$this->endpoint = new MockHandler($answers);
 		$container = $this->container;
 		static::assertInstanceOf(Container::class, $container);
-		$container->set(LlmClientFactory::class, new LlmClientFactory(new Client(['handler' => HandlerStack::create($this->endpoint)])));
+		$container->set(LlmClientFactory::class, new LlmClientFactory(new Client(['handler' => HandlerStack::create($this->endpoint)]), static fn(string $host): array => []));
 
 		return $container->get(TextCorrectionController::class)->correct($this->request('POST', '/async/templates/correct-text', ['text' => $text]), $this->newResponse());
 	}
@@ -65,7 +65,7 @@ class TextCorrectionControllerTest extends TemplatesControllerTestCase
 		$this->endpoint = new MockHandler($answers);
 		$container = $this->container;
 		static::assertInstanceOf(Container::class, $container);
-		$container->set(LlmClientFactory::class, new LlmClientFactory(new Client(['handler' => HandlerStack::create($this->endpoint)])));
+		$container->set(LlmClientFactory::class, new LlmClientFactory(new Client(['handler' => HandlerStack::create($this->endpoint)]), static fn(string $host): array => []));
 
 		return $container->get(TextCorrectionController::class)->$action($this->request('POST', '/async/templates/' . $action . '-text', $body), $this->newResponse());
 	}
