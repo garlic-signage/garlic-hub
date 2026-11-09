@@ -28,6 +28,7 @@ export class SaveController
 	#loadService;
 	#viewportService;
 	#redirectUrl;
+	#isClosing = false;
 
 	constructor(saveView, composerContext, saveService, loadService, viewportService)
 	{
@@ -78,8 +79,19 @@ export class SaveController
 			if (this.#saveService.hasChanged() && confirm(this.#composerContext.getLangByKey('confirm_close')) === false)
 				return;
 
+			// already confirmed: the browser must not ask a second time
+			this.#isClosing = true;
 			window.location.href = this.#redirectUrl;
 
+		});
+		// leaving by the browser (back, reload, a link of the menu, closing the tab) with unsaved changes
+		window.addEventListener('beforeunload', (event) =>
+		{
+			if (this.#isClosing || !this.#saveService.hasChanged())
+				return;
+
+			event.preventDefault();
+			event.returnValue = ''; // older browsers
 		});
 	}
 }
