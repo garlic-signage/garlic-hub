@@ -169,9 +169,10 @@ class TwoFactorService
 	 * @throws Exception
 	 * @throws Throwable
 	 */
-	public function createRecoveryCodes(int $UID): array
+	public function createRecoveryCodes(int $UID, string $code): array
 	{
-		if (!$this->isEnabled($UID))
+		// only with a valid code: with new codes a session which somebody took over would get past the second factor
+		if (!$this->verify($UID, $code))
 			return [];
 
 		$this->transactions->begin();

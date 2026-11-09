@@ -489,7 +489,22 @@ class PasswordFlowTest extends BlackboxTestCase
 	 */
 	private function changeOwnPassword(Browser $user, string $password, array $extra = []): ResponseInterface
 	{
-		return $user->post('/account/password', $extra + ['password' => $password, 'password_confirm' => $password, 'csrf_token' => $user->csrfToken('/account/password')]);
+		return $user->post('/account/password', $extra + ['current_password' => self::PASSWORD, 'password' => $password, 'password_confirm' => $password, 'csrf_token' => $user->csrfToken('/account/password')]);
+	}
+
+	/**
+	 * A session which somebody took over is not enough: without the current password nothing changes.
+	 */
+	public function testTheOwnPasswordChangesOnlyWithTheCurrentOne(): void
+	{
+		$anna = $this->browser();
+		$anna->login('anna', self::PASSWORD);
+
+		$response = $this->changeOwnPassword($anna, self::NEW_PASSWORD, ['current_password' => 'Wrong-Pass1234']);
+
+		static::assertSame(200, $response->getStatusCode());
+		static::assertTrue($this->hasPassword('anna', self::PASSWORD));
+		static::assertTrue($this->canLogin('anna', self::PASSWORD));
 	}
 
 	public function testAUserChangesOnlyTheOwnPassword(): void
@@ -529,7 +544,7 @@ class PasswordFlowTest extends BlackboxTestCase
 		$anna = $this->browser();
 		$anna->login('anna', self::PASSWORD);
 		$anna->get('/account/password');
-		$fields = ['password' => self::NEW_PASSWORD, 'password_confirm' => self::NEW_PASSWORD];
+		$fields = ['current_password' => self::PASSWORD, 'password' => self::NEW_PASSWORD, 'password_confirm' => self::NEW_PASSWORD];
 		if ($variant === 'forged')
 			$fields['csrf_token'] = 'forged';
 		if ($variant === 'other')

@@ -74,6 +74,15 @@ Modules differ in the details:
 - **2FA reset** by an admin turns the second factor of a user off (lost device). The button is shown only for a
   user who has it. The user sets it up again, at once after his next login while it is required.
 
+## Own password
+
+- A logged-in user changes his password in his account (tab password) only with his current password. Wrong ones
+  count like wrong logins (`Auth\LoginThrottle`): a session which somebody took over can not change it and lock the
+  owner out. The change ends all other sessions and remember-me logins.
+- A link (initial password, reset) needs no current password: the link proves it.
+- A user without password, who logs in only by SSO, gets no password tab: a local password would be a second way
+  into his account past the MFA of his provider.
+
 ## Two-factor authentication
 
 - Every user sets it up in his account (tab 2FA) with an authenticator app such as Aegis: TOTP with SHA1, 6 digits
@@ -84,8 +93,9 @@ Modules differ in the details:
   once, also one time slot before and after the current one.
 - The module admin of `system` requires it for everybody in the settings (`[TwoFactor] required`, off by default),
   effective at once: a user without it reaches only his account and the logout (`Auth\AuthMiddleware`). While it is
-  required, a user can not turn it off himself. Turning it off needs a code, the wrong ones count together with
-  the ones of the login.
+  required, a user can not turn it off himself. Turning it off and new recovery codes need a code (of the app or a
+  recovery code), the wrong ones count together with the ones of the login: a session which somebody took over is
+  not enough.
 - Players and OAuth2 tokens are not affected.
 - A user who logs in by SSO is not asked for this second factor: his provider asks for its own.
 

@@ -31,6 +31,7 @@ use App\Modules\Account\Helper\Password\FormInputHandler;
 use App\Modules\Account\Helper\Password\Orchestrator;
 use App\Modules\Account\Helper\Password\SettingsFormBuilder;
 use App\Modules\Account\Services\AccountService;
+use App\Modules\Auth\LoginThrottle;
 use App\Modules\Auth\UserSession;
 use App\Modules\Users\UserStatus;
 use App\Shared\User\TokenPurposes;
@@ -39,6 +40,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Tests\Support\ArrayCache;
 use Tests\Support\RecordingConfigLoader;
 
 /**
@@ -74,6 +76,7 @@ class OrchestratorTest extends TestCase
 		$this->userTokenService->method('findByToken')->willReturn($this->tokenUser);
 		$this->accountService = $this->createStub(AccountService::class);
 		$this->accountService->method('updatePassword')->willReturn(1);
+		$this->accountService->method('checkPassword')->willReturnCallback(static fn(int $UID, string $password): bool => $password === 'Current123');
 
 		$this->fixture->session->set('user', ['UID' => 7, 'username' => 'regular', 'locale' => 'de_DE']);
 		$config = new Config(new RecordingConfigLoader(['main' => ['password_pattern' => PasswordFixture::PATTERN]]));
@@ -85,7 +88,8 @@ class OrchestratorTest extends TestCase
 			new FormInputHandler($this->fixture->parameters, $this->fixture->validator),
 			new SettingsFormBuilder(new FormElementsCreator($this->fixture->formBuilder, $translator)),
 			$config,
-			$translator
+			$translator,
+			new LoginThrottle(new ArrayCache())
 		);
 	}
 
@@ -204,7 +208,7 @@ class OrchestratorTest extends TestCase
 	{
 		$form = $this->orchestrator->buildForm();
 
-		static::assertSame(PasswordFixture::PATTERN, PasswordFixture::element($form['visible'][0]['HTML_ELEMENT'])?->getAttribute('pattern'));
+		static::assertSame(PasswordFixture::PATTERN, PasswordFixture::element($form['visible'][1]['HTML_ELEMENT'])?->getAttribute('pattern'));
 		static::assertCount(1, $form['hidden']);
 	}
 
@@ -226,7 +230,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testStorePasswordSucceedsForValidInput(): void
 	{
-		static::assertSame(['success' => true], $this->orchestrator->storePassword($this->fixture->post()));
+		static::assertSame(['success' => true], $this->orchestrator->storePassword($this->fixture->post(['current_password' => 'Current123'])));
 	}
 
 	/**
@@ -239,7 +243,7 @@ class OrchestratorTest extends TestCase
 	{
 		$this->accountService->method('findLastPasswordChange')->willReturn('2026-11-02 12:00:00');
 
-		$this->orchestrator->storePassword($this->fixture->post());
+		$this->orchestrator->storePassword($this->fixture->post(['current_password' => 'Current123']));
 
 		static::assertSame(
 			['UID' => 7, 'username' => 'regular', 'locale' => 'de_DE', 'last_password_change' => '2026-11-02 12:00:00'],
@@ -253,7 +257,7 @@ class OrchestratorTest extends TestCase
 	#[Group('units')]
 	public function testStorePasswordReturnsTheErrorsOfTheValidation(): void
 	{
-		$result = $this->orchestrator->storePassword($this->fixture->post(['password' => 'weak', 'password_confirm' => 'weak']));
+		$result = $this->orchestrator->storePassword($this->fixture->post(['current_password' => 'Current123', 'password' => 'weak', 'password_confirm' => 'weak']));
 
 		static::assertSame(['success' => false, 'errors' => ['account.password_explanation']], $result);
 	}
@@ -266,10 +270,75 @@ class OrchestratorTest extends TestCase
 	{
 		$accountService = $this->createStub(AccountService::class);
 		$accountService->method('updatePassword')->willReturn(0);
+		$accountService->method('checkPassword')->willReturn(true);
 
-		$result = $this->orchestratorWith($this->userTokenService, $accountService)->storePassword($this->fixture->post());
+		$result = $this->orchestratorWith($this->userTokenService, $accountService)->storePassword($this->fixture->post(['current_password' => 'Current123']));
 
 		static::assertSame(['success' => false, 'errors' => ['account.password_update_failed']], $result);
+	}
+
+	/**
+	 * @return array<string,array{array<string,mixed>}>
+	 */
+	public static function wrongCurrentPasswords(): array
+	{
+		return [
+			'missing' => [[]],
+			'empty'   => [['current_password' => '']],
+			'wrong'   => [['current_password' => 'Wrong1234']],
+			'list'    => [['current_password' => ['Current123']]]
+		];
+	}
+
+	/**
+	 * A session which somebody took over is not enough to change the password and lock the owner out.
+	 *
+	 * @param array<string,mixed> $current
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	#[DataProvider('wrongCurrentPasswords')]
+	public function testStorePasswordNeedsTheCurrentPassword(array $current): void
+	{
+		$accountService = $this->createMock(AccountService::class);
+		$accountService->method('checkPassword')->willReturnCallback(static fn(int $UID, string $password): bool => $UID === 7 && $password === 'Current123');
+		$accountService->expects($this->never())->method('updatePassword');
+
+		$result = $this->orchestratorWith($this->userTokenService, $accountService)->storePassword($this->fixture->post($current));
+
+		static::assertSame(['success' => false, 'errors' => ['account.wrong_current_password']], $result);
+	}
+
+	/**
+	 * Wrong current passwords count like wrong logins: after five the right one is refused, too.
+	 *
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testGuessingTheCurrentPasswordIsBlocked(): void
+	{
+		for ($i = 1; $i <= LoginThrottle::MAX_FAILURES_PER_USER_AND_IP; $i++)
+			$this->orchestrator->storePassword($this->fixture->post(['current_password' => 'Wrong' . $i]));
+
+		$result = $this->orchestrator->storePassword($this->fixture->post(['current_password' => 'Current123']));
+
+		static::assertSame(['success' => false, 'errors' => ['account.current_password_blocked']], $result);
+	}
+
+	/**
+	 * A user who logs in only by SSO has no password and gets no tab for it.
+	 *
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testHasPasswordAsksForTheLoggedInUser(): void
+	{
+		$accountService = $this->createStub(AccountService::class);
+		$accountService->method('hasPassword')->willReturnCallback(static fn(int $UID): bool => $UID === 7);
+		static::assertTrue($this->orchestratorWith($this->userTokenService, $accountService)->hasPassword());
+
+		$this->fixture->session->set('user', ['UID' => 8, 'username' => 'sso', 'locale' => 'de_DE']);
+		static::assertFalse($this->orchestratorWith($this->userTokenService, $accountService)->hasPassword());
 	}
 
 	/**
@@ -283,7 +352,7 @@ class OrchestratorTest extends TestCase
 		$this->fixture->session->clear();
 		$this->expectException(UserException::class);
 
-		$this->orchestrator->storePassword($this->fixture->post());
+		$this->orchestrator->storePassword($this->fixture->post(['current_password' => 'Current123']));
 	}
 
 	/**
@@ -383,7 +452,8 @@ class OrchestratorTest extends TestCase
 			new FormInputHandler($this->fixture->parameters, $this->fixture->validator),
 			new SettingsFormBuilder(new FormElementsCreator($this->fixture->formBuilder, $translator)),
 			new Config(new RecordingConfigLoader(['main' => ['password_pattern' => PasswordFixture::PATTERN]])),
-			$translator
+			$translator,
+			new LoginThrottle(new ArrayCache())
 		);
 	}
 }

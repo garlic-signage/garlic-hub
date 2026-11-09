@@ -85,6 +85,7 @@ class TemplatePreparerTest extends TestCase
 		static::assertSame(['/js/account/password/init.js'], $page['main_layout']['footer_modules']);
 		static::assertSame('menu.my_account', $data['LANG_PAGE_HEADER']);
 		static::assertSame(['password', 'two_factor', 'llm'], array_column($data['tabs'], 'MODULE'));
+		static::assertTrue($data['has_password']);
 		static::assertSame($twoFactorTab, $data['two_factor']);
 		static::assertSame($llmTab, $data['llm']);
 		static::assertSame('/account/password', $data['FORM_ACTION']);
@@ -92,6 +93,21 @@ class TemplatePreparerTest extends TestCase
 		static::assertSame($this->form['hidden'], $data['element_hidden']);
 		static::assertSame($this->form['visible'], $data['form_element']);
 		static::assertSame('main.save', $data['form_button'][0]['LANG_ELEMENT_BUTTON']);
+	}
+
+	/**
+	 * A user who logs in only by SSO has no password: no tab and no form for it.
+	 *
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testAUserWithoutPasswordGetsNoTabForIt(): void
+	{
+		$data = $this->data($this->preparer->preparePasswordForm($this->form, ['enabled' => []], ['can_delete' => []], false), 'account/settings');
+
+		static::assertSame(['two_factor', 'llm'], array_column($data['tabs'], 'MODULE'));
+		static::assertFalse($data['has_password']);
 	}
 
 	/**

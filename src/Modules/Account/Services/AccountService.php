@@ -123,6 +123,28 @@ class AccountService
 	}
 
 	/**
+	 * A user who logs in only by SSO has no password: he has none to change either.
+	 *
+	 * @throws Exception
+	 */
+	public function hasPassword(int $UID): bool
+	{
+		return $this->userMainRepository->findPasswordHash($UID) !== null;
+	}
+
+	/**
+	 * The current password of the user: a session which somebody took over is not enough to change it.
+	 *
+	 * @throws Exception
+	 */
+	public function checkPassword(int $UID, string $password): bool
+	{
+		$hash = $this->userMainRepository->findPasswordHash($UID);
+
+		return $hash !== null && $this->crypt->checkPassword($password, $hash);
+	}
+
+	/**
 	 * The session in which the password was changed takes this time over to stay logged in.
 	 *
 	 * @throws Exception

@@ -64,13 +64,19 @@ readonly class TwoFactorController
 	}
 
 	/**
+	 * @throws CoreException
+	 * @throws CryptoException
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws InvalidArgumentException
 	 * @throws Throwable
 	 * @throws UserException
 	 */
 	public function createRecoveryCodes(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		$this->orchestrator->createRecoveryCodes();
+		$error = $this->orchestrator->createRecoveryCodes(RequestInput::of($request->getParsedBody())->text('code'));
+		if ($error !== '')
+			$this->flash->addMessage('error', $this->translator->translate($error, 'account'));
 
 		return $this->backToTab($response);
 	}

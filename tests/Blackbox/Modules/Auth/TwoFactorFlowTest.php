@@ -208,4 +208,28 @@ class TwoFactorFlowTest extends BlackboxTestCase
 		static::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_two_factor WHERE UID = 2 AND enabled_at IS NOT NULL'));
 		static::assertSame(10, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_recovery_codes WHERE UID = 2 AND used_at IS NULL'), 'the code is not used up');
 	}
+
+	/**
+	 * A session which somebody took over must not get new recovery codes: they would get him past the second factor.
+	 */
+	public function testNewRecoveryCodesOnlyWithACode(): void
+	{
+		$browser = $this->browser();
+		$codes   = $this->setUpSecondFactor($browser);
+		$browser->login('anna', self::PASSWORD);
+		$this->secondStep($browser, $this->codeOf(2, 30));
+		$hashes = $this->connection->fetchFirstColumn('SELECT code_hash FROM user_recovery_codes WHERE UID = 2 ORDER BY code_hash');
+
+		$response = $browser->post('/account/two-factor/recovery-codes', ['csrf_token' => $browser->csrfToken('/account/settings')]);
+		static::assertSame('/account/settings#two_factor', $response->getHeaderLine('Location'));
+		$browser->post('/account/two-factor/recovery-codes', ['code' => '000000', 'csrf_token' => $browser->csrfToken('/account/settings')]);
+		static::assertSame($hashes, $this->connection->fetchFirstColumn('SELECT code_hash FROM user_recovery_codes WHERE UID = 2 ORDER BY code_hash'), 'no new codes');
+		static::assertDoesNotMatchRegularExpression('#<code>[a-z2-9]{5}-[a-z2-9]{5}</code>#', (string) $browser->get('/account/settings')->getBody());
+
+		// the codes of the app are used in this half minute: a recovery code
+		$browser->post('/account/two-factor/recovery-codes', ['code' => $codes[0], 'csrf_token' => $browser->csrfToken('/account/settings')]);
+		preg_match_all('#<code>([a-z2-9]{5}-[a-z2-9]{5})</code>#', (string) $browser->get('/account/settings')->getBody(), $matches);
+		static::assertCount(10, $matches[1]);
+		static::assertNotSame($hashes, $this->connection->fetchFirstColumn('SELECT code_hash FROM user_recovery_codes WHERE UID = 2 ORDER BY code_hash'));
+	}
 }

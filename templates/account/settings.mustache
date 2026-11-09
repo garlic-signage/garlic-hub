@@ -2,9 +2,11 @@
 <section id="accountSettings" class="main-element-group page-tabs">
 	{{> page_tabs_header}}
 
+	{{#has_password}}
 	<section class="tab-content" data-module="password">
 		{{> edit_form}}
 	</section>
+	{{/has_password}}
 
 	{{#two_factor}}
 	<section class="tab-content two-factor" data-module="two_factor">
@@ -40,6 +42,8 @@
 		<p>{{LANG_RECOVERY_LEFT}}</p>
 		<form action="/account/two-factor/recovery-codes" method="post">
 			<input type="hidden" name="csrf_token" value="{{CSRF_TOKEN}}">
+			<label for="two_factor_recovery_code">{{LANG_CODE}}</label>
+			<input type="text" id="two_factor_recovery_code" name="code" autocomplete="one-time-code" maxlength="20" required>
 			<button type="submit">{{LANG_NEW_RECOVERY_CODES}}</button>
 		</form>
 		{{#can_disable}}

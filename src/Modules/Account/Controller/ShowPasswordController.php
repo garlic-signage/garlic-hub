@@ -139,7 +139,7 @@ readonly class ShowPasswordController
 	private function outputRenderedForm(): ResponseInterface
 	{
 		$formData     = $this->orchestrator->buildForm();
-		$templateData = $this->templatePreparer->preparePasswordForm($formData, $this->twoFactorOrchestrator->buildTab(), $this->llmOrchestrator->buildTab());
+		$templateData = $this->templatePreparer->preparePasswordForm($formData, $this->twoFactorOrchestrator->buildTab(), $this->llmOrchestrator->buildTab(), $this->orchestrator->hasPassword());
 
 		return $this->writeHtml($templateData);
 	}

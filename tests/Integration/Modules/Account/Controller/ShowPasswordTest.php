@@ -131,8 +131,47 @@ class ShowPasswordTest extends ContainerTestCase
 		static::assertSame(['password', 'two_factor', 'llm'], array_column($page->getTemplateData()['tabs'], 'MODULE'));
 		static::assertStringStartsWith('<svg', $page->getTemplateData()['two_factor']['setup']['QR_CODE']);
 		static::assertSame('/account/password', $page->getTemplateData()['FORM_ACTION']);
-		static::assertSame(['password', 'password_confirm'], array_column($page->getTemplateData()['form_element'], 'LANG_ELEMENT_NAME'));
+		static::assertSame(['current_password', 'password', 'password_confirm'], array_column($page->getTemplateData()['form_element'], 'LANG_ELEMENT_NAME'));
 		static::assertCount(1, $page->getTemplateData()['element_hidden'], 'only the CSRF token');
+	}
+
+	/**
+	 * A user who logs in only by SSO has no password: the account shows no tab for it.
+	 */
+	public function testAUserWithoutPasswordGetsNoTabForIt(): void
+	{
+		$this->connection->executeStatement('UPDATE user_main SET password = NULL WHERE UID = 10');
+		$this->actingAs(10);
+
+		$page = $this->page($this->controller->showPasswordForm(new ServerRequestFactory()->createServerRequest('GET', '/account/password'), new Response()));
+
+		static::assertSame(['two_factor', 'llm'], array_column($page->getTemplateData()['tabs'], 'MODULE'));
+		static::assertFalse($page->getTemplateData()['has_password']);
+	}
+
+	/**
+	 * Posted anyway: he has no current password, so nothing is stored.
+	 */
+	public function testAUserWithoutPasswordCanNotSetOne(): void
+	{
+		$this->connection->executeStatement('UPDATE user_main SET password = NULL WHERE UID = 10');
+		$this->actingAs(10);
+
+		$this->page($this->controller->store(
+			new ServerRequestFactory()->createServerRequest('POST', '/account/password')->withParsedBody($this->ownPost(['current_password' => ''])),
+			new Response()
+		));
+
+		static::assertNull($this->connection->fetchOne('SELECT password FROM user_main WHERE UID = 10'));
+	}
+
+	/**
+	 * @param array<string,mixed> $changes
+	 * @return array<string,mixed>
+	 */
+	private function ownPost(array $changes = []): array
+	{
+		return array_merge(['current_password' => 'Test1234!', 'password' => self::NEW_PASSWORD, 'password_confirm' => self::NEW_PASSWORD], $changes);
 	}
 
 	public function testALoggedInUserChangesThePassword(): void
@@ -141,7 +180,7 @@ class ShowPasswordTest extends ContainerTestCase
 		$other = $this->passwordOf(14);
 
 		$response = $this->controller->store(
-			new ServerRequestFactory()->createServerRequest('POST', '/account/password')->withParsedBody($this->forcedPost('', ['token' => null])),
+			new ServerRequestFactory()->createServerRequest('POST', '/account/password')->withParsedBody($this->ownPost()),
 			new Response()
 		);
 
@@ -161,6 +200,8 @@ class ShowPasswordTest extends ContainerTestCase
 			'password too weak'   => [['password' => 'weak', 'password_confirm' => 'weak']],
 			'nothing entered'     => [['password' => '', 'password_confirm' => '']],
 			'arrays'              => [['password' => ['x'], 'password_confirm' => ['x']]],
+			'no current password' => [['current_password' => null]],
+			'wrong current'       => [['current_password' => 'Wrong1234!']],
 		];
 	}
 
@@ -174,7 +215,7 @@ class ShowPasswordTest extends ContainerTestCase
 		$before = $this->passwordOf(10);
 
 		$response = $this->controller->store(
-			new ServerRequestFactory()->createServerRequest('POST', '/account/password')->withParsedBody($this->forcedPost('', ['token' => null] + $changes)),
+			new ServerRequestFactory()->createServerRequest('POST', '/account/password')->withParsedBody(array_filter($this->ownPost($changes), static fn(mixed $value): bool => $value !== null)),
 			new Response()
 		);
 

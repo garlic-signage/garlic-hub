@@ -64,13 +64,28 @@ class SettingsFormBuilderTest extends TestCase
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testTheFormHasBothPasswordsAndTheCsrfToken(): void
+	public function testTheFormOfTheLoggedInUserAsksForTheCurrentPassword(): void
 	{
 		$form = $this->builder->buildForm('.{8,}');
 
-		static::assertSame(['password', 'password_confirm'], $this->namesOf($form['visible'], 'HTML_ELEMENT'));
+		static::assertSame(['current_password', 'password', 'password_confirm'], $this->namesOf($form['visible'], 'HTML_ELEMENT'));
 		static::assertSame(['csrf_token'], $this->namesOf($form['hidden'], 'HIDDEN_HTML_ELEMENT'));
-		static::assertSame(['password', 'password_confirm'], array_column($form['visible'], 'LANG_ELEMENT_NAME'));
+		static::assertSame(['current_password', 'password', 'password_confirm'], array_column($form['visible'], 'LANG_ELEMENT_NAME'));
+		static::assertSame('password', PasswordFixture::element($form['visible'][0]['HTML_ELEMENT'])?->getAttribute('type'));
+	}
+
+	/**
+	 * With a link the link proves it: the user has no current password to give.
+	 *
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testTheFormOfALinkHasOnlyTheNewPasswords(): void
+	{
+		$form = $this->builder->buildForm('.{8,}', 'abcd');
+
+		static::assertSame(['password', 'password_confirm'], $this->namesOf($form['visible'], 'HTML_ELEMENT'));
 	}
 
 	/**
@@ -113,7 +128,8 @@ class SettingsFormBuilderTest extends TestCase
 	{
 		$form = $this->builder->buildForm('(?=.*\d).{8,}');
 
-		static::assertSame('(?=.*\d).{8,}', PasswordFixture::element($form['visible'][0]['HTML_ELEMENT'])?->getAttribute('pattern'));
-		static::assertFalse(PasswordFixture::element($form['visible'][1]['HTML_ELEMENT'])?->hasAttribute('pattern'));
+		static::assertFalse(PasswordFixture::element($form['visible'][0]['HTML_ELEMENT'])?->hasAttribute('pattern'));
+		static::assertSame('(?=.*\d).{8,}', PasswordFixture::element($form['visible'][1]['HTML_ELEMENT'])?->getAttribute('pattern'));
+		static::assertFalse(PasswordFixture::element($form['visible'][2]['HTML_ELEMENT'])?->hasAttribute('pattern'));
 	}
 }

@@ -35,6 +35,7 @@ readonly class TemplatePreparer
 
 	/**
 	 * The account of the user: a tab for the password, one for the second factor and one for the own LLM.
+	 * A user who logs in only by SSO has no password and gets no tab for it.
 	 *
 	 * @param array<string,mixed> $dataSections
 	 * @param array<string,mixed> $twoFactorTab
@@ -43,7 +44,7 @@ readonly class TemplatePreparer
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
-	public function preparePasswordForm(array $dataSections, array $twoFactorTab, array $llmTab): array
+	public function preparePasswordForm(array $dataSections, array $twoFactorTab, array $llmTab, bool $hasPassword = true): array
 	{
 		$dataSections['title']       = $this->translator->translate('my_account', 'menu');
 		$dataSections['form_action'] = '/account/password';
@@ -51,11 +52,11 @@ readonly class TemplatePreparer
 		$page = $this->prepare($dataSections, 'account/settings');
 		$page['main_layout']['additional_css'][] = '/css/account/settings.css';
 		$page['main_layout']['additional_css'][] = '/css/llm_form.css';
-		$page['this_layout']['data']['tabs'] = [
-			['MODULE' => 'password', 'LANG_MODULE' => $this->translator->translate('password', 'account')],
-			['MODULE' => 'two_factor', 'LANG_MODULE' => $this->translator->translate('two_factor', 'account')],
-			['MODULE' => 'llm', 'LANG_MODULE' => $this->translator->translate('llm', 'account')]
-		];
+		$tabs = $hasPassword ? [['MODULE' => 'password', 'LANG_MODULE' => $this->translator->translate('password', 'account')]] : [];
+		$tabs[] = ['MODULE' => 'two_factor', 'LANG_MODULE' => $this->translator->translate('two_factor', 'account')];
+		$tabs[] = ['MODULE' => 'llm', 'LANG_MODULE' => $this->translator->translate('llm', 'account')];
+		$page['this_layout']['data']['tabs']         = $tabs;
+		$page['this_layout']['data']['has_password'] = $hasPassword;
 		$page['this_layout']['data']['two_factor'] = $twoFactorTab;
 		$page['this_layout']['data']['llm']        = $llmTab;
 

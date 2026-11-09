@@ -82,6 +82,23 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 	}
 
 	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	public function createCurrentPasswordField(): FieldInterface
+	{
+		return $this->formBuilder->createField([
+			'type' => FieldType::PASSWORD,
+			'id' => SettingsFormBuilder::CURRENT_PASSWORD,
+			'name' => SettingsFormBuilder::CURRENT_PASSWORD,
+			'label' => $this->translator->translate('current_password', 'account'),
+			'value' => '',
+			'rules' => ['required' => true],
+			'default_value' => ''
+		]);
+	}
+
+	/**
 	 * @throws FrameworkException
 	 */
 	public function createPasswordTokenField(string $value): FieldInterface

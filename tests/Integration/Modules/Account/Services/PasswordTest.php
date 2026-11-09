@@ -64,6 +64,27 @@ class PasswordTest extends ContainerTestCase
 		static::assertFalse(password_verify('Test1234!', $stored));
 	}
 
+	public function testTheCurrentPasswordIsCheckedAgainstTheStoredOne(): void
+	{
+		static::assertTrue($this->accountService->checkPassword(10, 'Test1234!'));
+		static::assertFalse($this->accountService->checkPassword(10, 'test1234!'));
+		static::assertFalse($this->accountService->checkPassword(10, ''));
+		static::assertFalse($this->accountService->checkPassword(99, 'Test1234!'), 'an unknown user');
+	}
+
+	/**
+	 * A user who logs in only by SSO has no password: none to check, none to change.
+	 */
+	public function testAUserWithoutPasswordHasNone(): void
+	{
+		static::assertTrue($this->accountService->hasPassword(10));
+		$this->connection->executeStatement('UPDATE user_main SET password = NULL WHERE UID = 10');
+
+		static::assertFalse($this->accountService->hasPassword(10));
+		static::assertFalse($this->accountService->checkPassword(10, ''));
+		static::assertFalse($this->accountService->hasPassword(99));
+	}
+
 	public function testUpdatePasswordChangesOnlyTheGivenUser(): void
 	{
 		$before = $this->passwordOf(14);

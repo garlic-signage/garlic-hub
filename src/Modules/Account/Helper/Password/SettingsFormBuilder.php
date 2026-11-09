@@ -27,11 +27,14 @@ use App\Framework\Utils\FormParameters\BaseEditParameters;
 
 readonly class SettingsFormBuilder
 {
+	// not a parameter of the form input: it is checked against the stored password, never stored
+	public const string CURRENT_PASSWORD = 'current_password';
+
 	public function __construct(private FormElementsCreator $formElementsCreator)
 	{}
 
 	/**
-	 * Builds the form for a forced password change when a token is given.
+	 * Builds the form for a forced password change when a token is given, otherwise for the logged-in user.
 	 *
 	 * @return array{hidden:list<array<string,string>>, visible: list<array<string,string>>}
 	 * @throws CoreException
@@ -40,6 +43,9 @@ readonly class SettingsFormBuilder
 	public function buildForm(string $passwordPattern, string $passwordToken = ''): array
 	{
 		$form = [];
+		// with a link the link proves it, logged in the user proves it by his current password
+		if ($passwordToken === '')
+			$form[self::CURRENT_PASSWORD] = $this->formElementsCreator->createCurrentPasswordField();
 		$form[Parameters::PARAMETER_PASSWORD]         = $this->formElementsCreator->createPasswordField('', $passwordPattern);
 		$form[Parameters::PARAMETER_PASSWORD_CONFIRM] = $this->formElementsCreator->createPasswordConfirmField('');
 		$form[BaseEditParameters::PARAMETER_CSRF_TOKEN] = $this->formElementsCreator->createCSRFTokenField();

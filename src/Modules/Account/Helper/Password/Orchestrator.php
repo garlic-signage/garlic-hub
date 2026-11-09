@@ -28,6 +28,7 @@ use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Exceptions\UserException;
+use App\Modules\Auth\LoginThrottle;
 use App\Modules\Auth\UserSession;
 use App\Modules\Users\UserStatus;
 use App\Shared\User\TokenPurposes;
@@ -49,8 +50,17 @@ readonly class Orchestrator
 		private FormInputHandler    $formInputHandler,
 		private SettingsFormBuilder $settingsFormBuilder,
 		private Config              $config,
-		private Translator          $translator
+		private Translator          $translator,
+		private LoginThrottle       $loginThrottle
 	) {}
+
+	/**
+	 * @throws Exception
+	 */
+	public function hasPassword(): bool
+	{
+		return $this->accountService->hasPassword($this->userSession->getUID());
+	}
 
 	/**
 	 * Returns an empty array when the token is invalid, not meant for a password change or the user is blocked or deleted.
@@ -101,11 +111,25 @@ readonly class Orchestrator
 	 */
 	public function storePassword(array $post): array
 	{
+		$UID = $this->userSession->getUID();
+		// wrong current passwords count together with the login: a stolen session does not help to guess it
+		$identifier = $this->userSession->getUsername();
+		$ip         = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+		if ($this->loginThrottle->isBlocked($identifier, $ip))
+			return ['success' => false, 'errors' => [$this->translator->translate('current_password_blocked', 'account')]];
+
+		$current = is_string($post[SettingsFormBuilder::CURRENT_PASSWORD] ?? null) ? $post[SettingsFormBuilder::CURRENT_PASSWORD] : '';
+		if (!$this->accountService->checkPassword($UID, $current))
+		{
+			$this->loginThrottle->registerFailure($identifier, $ip);
+			return ['success' => false, 'errors' => [$this->translator->translate('wrong_current_password', 'account')]];
+		}
+		$this->loginThrottle->reset($identifier, $ip);
+
 		$errors = $this->formInputHandler->validate($post, $this->getPasswordPattern());
 		if ($errors !== [])
 			return ['success' => false, 'errors' => $errors];
 
-		$UID = $this->userSession->getUID();
 		if ($this->accountService->updatePassword($UID, $this->getParsedPassword()) === 0)
 			return ['success' => false, 'errors' => [$this->translator->translate('password_update_failed', 'account')]];
 

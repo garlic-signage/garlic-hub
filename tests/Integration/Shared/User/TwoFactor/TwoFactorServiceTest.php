@@ -187,11 +187,25 @@ class TwoFactorServiceTest extends ContainerTestCase
 	{
 		$old = $this->enable();
 
-		$new = $this->service->createRecoveryCodes(2);
+		$new = $this->service->createRecoveryCodes(2, $old[0]);
 
 		static::assertCount(TwoFactorService::RECOVERY_CODES, $new);
-		static::assertFalse($this->service->verify(2, $old[0]));
+		static::assertFalse($this->service->verify(2, $old[1]));
 		static::assertTrue($this->service->verify(2, $new[0]));
+	}
+
+	/**
+	 * With new codes a session which somebody took over would get past the second factor for good.
+	 */
+	public function testNewRecoveryCodesOnlyWithAValidCode(): void
+	{
+		$old = $this->enable();
+
+		static::assertSame([], $this->service->createRecoveryCodes(2, ''));
+		static::assertSame([], $this->service->createRecoveryCodes(2, '000000'));
+		static::assertTrue($this->service->verify(2, $old[0]), 'the old codes still work');
+
+		static::assertCount(TwoFactorService::RECOVERY_CODES, $this->service->createRecoveryCodes(2, $this->codeOf($this->secretOf(2))));
 	}
 
 	public function testWithoutTheSecondFactorNothingIsVerified(): void
@@ -199,7 +213,7 @@ class TwoFactorServiceTest extends ContainerTestCase
 		$this->service->prepareSetup(2, 'anna');
 
 		static::assertFalse($this->service->verify(2, $this->codeOf($this->secretOf(2))));
-		static::assertSame([], $this->service->createRecoveryCodes(2));
+		static::assertSame([], $this->service->createRecoveryCodes(2, $this->codeOf($this->secretOf(2))));
 	}
 
 	public function testTheUserTurnsItOffOnlyWithACode(): void

@@ -68,6 +68,18 @@ class UserMainRepository extends SqlBase
 	}
 
 	/**
+	 * Only to check the password: findById() leaves it out on purpose.
+	 *
+	 * @throws Exception
+	 */
+	public function findPasswordHash(int $UID): ?string
+	{
+		$hash = $this->connection->fetchOne('SELECT password FROM ' . $this->table . ' WHERE UID = ?', [$UID]);
+
+		return is_string($hash) && $hash !== '' ? $hash : null;
+	}
+
+	/**
 	 * @param string $identifier
 	 *
 	 * @return array<string,mixed>|array<empty,empty>

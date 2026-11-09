@@ -105,15 +105,34 @@ readonly class Orchestrator
 	}
 
 	/**
+	 * Wrong codes are limited like in the login and count together with it.
+	 *
+	 * @return string the key of the error, empty when the new codes are in the session
+	 * @throws CryptoException
 	 * @throws Exception
+	 * @throws InvalidArgumentException
 	 * @throws Throwable
 	 * @throws UserException
 	 */
-	public function createRecoveryCodes(): void
+	public function createRecoveryCodes(string $code): string
 	{
-		$codes = $this->twoFactorService->createRecoveryCodes($this->userSession->getUID());
-		if ($codes !== [])
-			$this->session->set(self::NEW_CODES, ['codes' => $codes]);
+		$UID        = $this->userSession->getUID();
+		$identifier = LoginThrottle::secondFactor($UID);
+		$ip         = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+		if ($this->loginThrottle->isBlocked($identifier, $ip))
+			return 'two_factor_blocked';
+
+		$codes = $this->twoFactorService->createRecoveryCodes($UID, $code);
+		if ($codes === [])
+		{
+			$this->loginThrottle->registerFailure($identifier, $ip);
+			return $this->loginThrottle->isBlocked($identifier, $ip) ? 'two_factor_blocked' : 'two_factor_wrong_code';
+		}
+
+		$this->loginThrottle->reset($identifier, $ip);
+		$this->session->set(self::NEW_CODES, ['codes' => $codes]);
+
+		return '';
 	}
 
 	/**
