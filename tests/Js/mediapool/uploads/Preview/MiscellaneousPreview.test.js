@@ -31,7 +31,7 @@ Deno.test('data files show the database icon', () =>
 {
 	using _dom = createDom();
 
-	for (const name of ['prices.csv', 'feed.json', 'feed.xml'])
+	for (const name of ['prices.csv', 'feed.json', 'feed.xml', 'PRICES.CSV', 'Feed.Json', 'feed.XML'])
 	{
 		const image = previewOf(name);
 		assertEquals(image.tagName, 'IMG', name);

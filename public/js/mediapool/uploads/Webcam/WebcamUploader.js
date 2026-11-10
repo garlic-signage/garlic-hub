@@ -24,11 +24,16 @@ export class WebcamUploader extends LocalFilesUploader
 {
     #webcam         = null;
     #capture        = new MediaCapture();
+    #lang           = null;
 
-    constructor(webcam, filePreviews, domElements, directoryView, uploaderDialog, fetchClient)
+    /**
+     * @param {Object} lang the texts of the page, start_record_video and stop_record_video for the record button
+     */
+    constructor(webcam, filePreviews, domElements, directoryView, uploaderDialog, fetchClient, lang)
     {
 		super(filePreviews, domElements, directoryView, uploaderDialog, fetchClient);
         this.#webcam       = webcam;
+        this.#lang         = lang;
 
 		this.domElements.detectCameras.addEventListener("click", () => this.#detectCameras());
         this.domElements.capturePhotoButton.addEventListener("click", () => this.#capturePhoto());
@@ -87,9 +92,9 @@ export class WebcamUploader extends LocalFilesUploader
 		this.#capture.start(
 			this.domElements.webcamVideo.srcObject,
 			(file, duration) => this.filePreviews.addFile(file, {"duration": duration, "origin": "Camera video", "page_url": ""}),
-			() => button.textContent = "Start Aufnahme"
+			() => button.textContent = this.#lang.start_record_video
 		);
-		button.textContent = "Stop Aufnahme";
+		button.textContent = this.#lang.stop_record_video;
 	}
 
 	#capturePhoto()

@@ -26,6 +26,9 @@ import {replaceGlobals}  from "@support/globals.js";
 import {WebcamElements}  from "@js/mediapool/uploads/Webcam/WebcamElements.js";
 import {WebcamUploader}  from "@js/mediapool/uploads/Webcam/WebcamUploader.js";
 
+// the texts of the page (LANG_JS of the ShowController)
+const LANG = {start_record_video: 'Start recording', stop_record_video: 'Stop recording'};
+
 // the camera tab of templates/mediapool/overview.mustache
 const PAGE = `
 	<video id="webcamVideo" autoplay playsinline></video>
@@ -126,7 +129,7 @@ function createPage(nodeId = 5)
 	const previews = new FakePreviews();
 	const elements = new WebcamElements();
 	const uploader = new WebcamUploader(camera, previews, elements, {getActiveNodeId: () => nodeId},
-		{disableActions() {}, enableActions() {}}, new FakeFetchClient({success: true}));
+		{disableActions() {}, enableActions() {}}, new FakeFetchClient({success: true}), LANG);
 
 	return {
 		document, camera, previews, elements, uploader,
@@ -300,13 +303,13 @@ Deno.test('the record button starts and stops a video of the camera', async () =
 	const button = page.elements.startRecordingButton;
 
 	click(button);
-	assertEquals(button.textContent, 'Stop Aufnahme');
+	assertEquals(button.textContent, 'Stop recording');
 	assertEquals(FakeMediaRecorder.last.stream, stream);
 
 	time.tick(4000);
 	click(button);
 
-	assertEquals(button.textContent, 'Start Aufnahme');
+	assertEquals(button.textContent, 'Start recording');
 	const [{file, metadata}] = page.previews.added;
 	assertEquals([file.name, await file.text()], ['recorded-video.webm', 'video']);
 	assertEquals(metadata, {duration: 4, origin: 'Camera video', page_url: ''});

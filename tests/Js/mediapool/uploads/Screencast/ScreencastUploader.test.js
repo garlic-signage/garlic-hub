@@ -26,6 +26,9 @@ import {replaceGlobals}     from "@support/globals.js";
 import {ScreencastElements} from "@js/mediapool/uploads/Screencast/ScreencastElements.js";
 import {ScreencastUploader} from "@js/mediapool/uploads/Screencast/ScreencastUploader.js";
 
+// the texts of the page (LANG_JS of the ShowController)
+const LANG = {start_record_video: 'Start recording', stop_record_video: 'Stop recording'};
+
 // the screencast tab of templates/mediapool/overview.mustache
 const PAGE = `
 	<video id="screencastVideo" autoplay playsinline></video>
@@ -52,9 +55,13 @@ class FakeScreencast
 			throw this.startError;
 	}
 
+	stopError  = null;
+
 	stopScreencast()
 	{
 		this.calls.push(['stopScreencast']);
+		if (this.stopError !== null)
+			throw this.stopError;
 	}
 
 	capturePhoto(canvas)
@@ -111,7 +118,7 @@ function createPage()
 	const previews   = new FakePreviews();
 	const elements   = new ScreencastElements();
 	const uploader   = new ScreencastUploader(screencast, previews, elements, {getActiveNodeId: () => 0},
-		{disableActions() {}, enableActions() {}}, new FakeFetchClient({success: true}));
+		{disableActions() {}, enableActions() {}}, new FakeFetchClient({success: true}), LANG);
 
 	return {
 		document: dom.document, screencast, previews, elements, uploader,
@@ -124,18 +131,11 @@ function click(element)
 	element.dispatchEvent(new Event('click'));
 }
 
-/**
- * The handler reads event.target after an await: linkedom clears it at the end of the dispatch, the browser does not.
- */
 async function switchScreencast(page, on)
 {
 	const toggle = page.elements.toggleScreencast;
 	toggle.checked = on;
-	toggle.dispatchEvent(new (class extends Event
-	{
-		get target() { return toggle; }
-		set target(value) {}
-	})('click'));
+	toggle.dispatchEvent(new Event('click'));
 	await new Promise(resolve => setTimeout(resolve, 0));
 }
 
@@ -170,7 +170,7 @@ Deno.test('the stopped screencast disables screenshot and recording', async () =
 	assertEquals(page.elements.recordingScreencast.disabled, true);
 });
 
-Deno.test('a screencast that cannot be started is logged and enables nothing', async () =>
+Deno.test('a screencast that cannot be started is logged, unchecked and enables nothing', async () =>
 {
 	using page      = createPage();
 	using errorStub = stub(console, 'error');
@@ -179,7 +179,23 @@ Deno.test('a screencast that cannot be started is logged and enables nothing', a
 
 	await switchScreencast(page, true);
 
-	assertEquals(errorStub.calls[0].args, ['Error during start / stop of screencasts:', error]);
+	assertEquals(errorStub.calls[0].args, ['Screencast can not be started:', error]);
+	assertEquals(page.elements.toggleScreencast.checked, false);
+	assertEquals(page.elements.captureScreenshot.disabled, true);
+	assertEquals(page.elements.recordingScreencast.disabled, true);
+});
+
+Deno.test('a screencast that cannot be stopped is logged and disables screenshot and recording', async () =>
+{
+	using page      = createPage();
+	using errorStub = stub(console, 'error');
+	await switchScreencast(page, true);
+	const error     = new Error('already ended');
+	page.screencast.stopError = error;
+
+	await switchScreencast(page, false);
+
+	assertEquals(errorStub.calls[0].args, ['Screencast can not be stopped:', error]);
 	assertEquals(page.elements.captureScreenshot.disabled, true);
 	assertEquals(page.elements.recordingScreencast.disabled, true);
 });
@@ -205,13 +221,13 @@ Deno.test('the record button starts and stops a video of the screen', async () =
 	const button = page.elements.recordingScreencast;
 
 	click(button);
-	assertEquals(button.textContent, 'Stop Aufnahme');
+	assertEquals(button.textContent, 'Stop recording');
 	assertEquals(FakeMediaRecorder.last.stream, stream);
 
 	time.tick(2500);
 	click(button);
 
-	assertEquals(button.textContent, 'Start Aufnahme');
+	assertEquals(button.textContent, 'Start recording');
 	const [{file, metadata}] = page.previews.added;
 	assertEquals([file.name, await file.text()], ['recorded-video.webm', 'video']);
 	assertEquals(metadata, {duration: 2.5, origin: 'Screencast video', page_url: ''});

@@ -28,8 +28,9 @@ export class MiscellaneousPreview extends AbstractPreview
 
 	createPreviewElement()
 	{
-		const img = document.createElement("img");
-		if(this.getFile().name.endsWith(".csv") || this.getFile().name.endsWith(".json") || this.getFile().name.endsWith(".xml"))
+		const img  = document.createElement("img");
+		const name = this.getFile().name.toLowerCase();
+		if (name.endsWith(".csv") || name.endsWith(".json") || name.endsWith(".xml"))
 			img.src = "./images/icons/database.svg";
 		else
 			img.src = "./images/icons/file.svg";

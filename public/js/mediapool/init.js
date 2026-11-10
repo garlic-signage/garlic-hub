@@ -169,7 +169,8 @@ document.addEventListener("DOMContentLoaded", function()
         webcamElements,
         directoryView,
         uploaderDialog,
-        fetchClient
+        fetchClient,
+        lang
     );
 
 	// Section for uploads from screencasts
@@ -181,7 +182,8 @@ document.addEventListener("DOMContentLoaded", function()
 		screencastElements,
 		directoryView,
 		uploaderDialog,
-		fetchClient
+		fetchClient,
+		lang
 	);
 
 	// Section for images of the AI, only there when the user has an AI for images

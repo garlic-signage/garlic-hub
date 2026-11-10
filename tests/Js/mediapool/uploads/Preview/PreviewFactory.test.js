@@ -52,6 +52,14 @@ Deno.test('widgets and data files are known by their extension, whatever the bro
 		assertInstanceOf(create(`data.${extension}`), MiscellaneousPreview, extension);
 });
 
+Deno.test('the extension is known in capitals too', () =>
+{
+	assertInstanceOf(create('CLOCK.WGT', 'application/octet-stream'), WidgetPreview);
+
+	for (const name of ['DATA.CSV', 'Feed.Json', 'feed.XML', 'Show.SMIL', 'ARCHIVE.ZIP'])
+		assertInstanceOf(create(name), MiscellaneousPreview, name);
+});
+
 Deno.test('the preview gets the file', () =>
 {
 	const file = {name: 'lobby.jpg', type: 'image/jpeg', size: 1};

@@ -28,6 +28,8 @@ export class PreviewFactory
 {
     create(file)
     {
+        // DATA.CSV or Clock.WGT from another system are the same files
+        const name = file.name.toLowerCase();
         if (file.type.startsWith("image/"))
         {
             return new ImagePreview(file);
@@ -44,14 +46,14 @@ export class PreviewFactory
         {
             return new PdfPreview(file);
         }
-        else if (file.type === "application/wgt" || file.type === "application/widget" || file.name.endsWith(".wgt"))
+        else if (file.type === "application/wgt" || file.type === "application/widget" || name.endsWith(".wgt"))
         {
             return new WidgetPreview(file);
         }
-		else if (file.name.endsWith(".csv") || file.name.endsWith(".json") || file.name.endsWith(".xml") ||
-			file.name.endsWith(".dmg") || file.name.endsWith(".rss") || file.name.endsWith(".atom") ||
-			file.name.endsWith(".pkg") || file.name.endsWith(".apk") || file.name.endsWith(".zip") ||
-			file.name.endsWith(".smil")
+		else if (name.endsWith(".csv") || name.endsWith(".json") || name.endsWith(".xml") ||
+			name.endsWith(".dmg") || name.endsWith(".rss") || name.endsWith(".atom") ||
+			name.endsWith(".pkg") || name.endsWith(".apk") || name.endsWith(".zip") ||
+			name.endsWith(".smil")
 		)
         {
             return new MiscellaneousPreview(file);

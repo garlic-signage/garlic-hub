@@ -24,11 +24,16 @@ export class ScreencastUploader extends LocalFilesUploader
 {
     #screencast     = null;
     #capture        = new MediaCapture();
+    #lang           = null;
 
-    constructor(screencast, filePreviews, domElements, directoryView, uploaderDialog, fetchClient)
+    /**
+     * @param {Object} lang the texts of the page, start_record_video and stop_record_video for the record button
+     */
+    constructor(screencast, filePreviews, domElements, directoryView, uploaderDialog, fetchClient, lang)
     {
 		super(filePreviews, domElements, directoryView, uploaderDialog, fetchClient);
 		this.#screencast = screencast;
+		this.#lang       = lang;
 
 		this.domElements.toggleScreencast.addEventListener("click", (event) => this.#toggleScreencast(event));
 		this.domElements.captureScreenshot.addEventListener("click", () => this.#captureScreenshot());
@@ -37,26 +42,35 @@ export class ScreencastUploader extends LocalFilesUploader
 
 	async #toggleScreencast(event)
 	{
-		try
+		const checkbox = event.target;
+		if (checkbox.checked)
 		{
-			if(event.target.checked)
+			try
 			{
 				await this.#screencast.startScreencast();
-				this.domElements.captureScreenshot.disabled = false;
-				this.domElements.recordingScreencast.disabled = false;
-
 			}
-			else
+			catch (error)
+			{
+				// e.g. the sharing is denied: the box shows that no screen is shared
+				checkbox.checked = false;
+				console.error("Screencast can not be started:", error);
+				return;
+			}
+			this.domElements.captureScreenshot.disabled = false;
+			this.domElements.recordingScreencast.disabled = false;
+		}
+		else
+		{
+			try
 			{
 				this.#screencast.stopScreencast();
-				this.domElements.captureScreenshot.disabled = true;
-				this.domElements.recordingScreencast.disabled = true;
 			}
-
-		}
-		catch (err)
-		{
-			console.error("Error during start / stop of screencasts:", err);
+			catch (error)
+			{
+				console.error("Screencast can not be stopped:", error);
+			}
+			this.domElements.captureScreenshot.disabled = true;
+			this.domElements.recordingScreencast.disabled = true;
 		}
 	}
 
@@ -73,9 +87,9 @@ export class ScreencastUploader extends LocalFilesUploader
 		this.#capture.start(
 			this.domElements.screencastVideo.srcObject,
 			(file, duration) => this.filePreviews.addFile(file, {"duration": duration, "origin": "Screencast video", "page_url": ""}),
-			() => button.textContent = "Start Aufnahme"
+			() => button.textContent = this.#lang.start_record_video
 		);
-		button.textContent = "Stop Aufnahme";
+		button.textContent = this.#lang.stop_record_video;
 	}
 
 	#captureScreenshot()
