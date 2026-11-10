@@ -68,7 +68,11 @@ export class MediaInfoDialog
 					this.#dialogElement.querySelector(".media-tags").textContent = media.tags.join(", ");
 				else
 					this.#hide(".media-tags");
-				this.#dialogElement.querySelector(".stock-name").textContent = media.metadata.origin;
+				// only stock platforms and the camera set an origin
+				if (media.metadata.origin !== undefined && media.metadata.origin !== "")
+					this.#dialogElement.querySelector(".stock-name").textContent = media.metadata.origin;
+				else
+					this.#hide(".stock-name");
 
 				if (media.metadata.page_url !== undefined && media.metadata.page_url !== "")
 					this.#dialogElement.querySelector(".stock-page-url").href = media.metadata.page_url;
