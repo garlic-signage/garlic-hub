@@ -326,6 +326,49 @@ class OrchestratorTest extends TestCase
 	}
 
 	/**
+	 * The block is per address: from another one the right password is accepted.
+	 *
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testTheBlockIsPerAddress(): void
+	{
+		$server = $_SERVER;
+		try
+		{
+			$_SERVER['REMOTE_ADDR'] = '10.0.0.1';
+			for ($i = 1; $i <= LoginThrottle::MAX_FAILURES_PER_USER_AND_IP; $i++)
+				$this->orchestrator->storePassword($this->fixture->post(['current_password' => 'Wrong' . $i]));
+
+			$_SERVER['REMOTE_ADDR'] = '10.0.0.2';
+			$result = $this->orchestrator->storePassword($this->fixture->post(['current_password' => 'Current123']));
+		}
+		finally
+		{
+			$_SERVER = $server;
+		}
+
+		static::assertSame(['success' => true], $result);
+	}
+
+	/**
+	 * The right current password ends the count of the wrong ones before.
+	 *
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testTheRightCurrentPasswordResetsTheCount(): void
+	{
+		foreach ([1, 2] as $round)
+		{
+			for ($i = 1; $i < LoginThrottle::MAX_FAILURES_PER_USER_AND_IP; $i++)
+				$this->orchestrator->storePassword($this->fixture->post(['current_password' => 'Wrong' . $i]));
+
+			static::assertSame(['success' => true], $this->orchestrator->storePassword($this->fixture->post(['current_password' => 'Current123'])), 'round ' . $round);
+		}
+	}
+
+	/**
 	 * A user who logs in only by SSO has no password and gets no tab for it.
 	 *
 	 * @throws \Exception

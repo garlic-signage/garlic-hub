@@ -67,9 +67,9 @@ class EditLocalesControllerTest extends TestCase
 	/**
 	 * @throws Exception
 	 */
-	private function setLocale(string $locale, string $referer = ''): Response
+	private function setLocale(string $locale, string $referer = '', string $host = 'garlic-hub.test'): Response
 	{
-		$request = new ServerRequestFactory()->createServerRequest('GET', '/set-locales/' . $locale)->withHeader('Host', 'garlic-hub.test');
+		$request = new ServerRequestFactory()->createServerRequest('GET', '/set-locales/' . $locale)->withHeader('Host', $host);
 		if ($referer !== '')
 			$request = $request->withHeader('Referer', $referer);
 
@@ -178,5 +178,31 @@ class EditLocalesControllerTest extends TestCase
 
 		static::assertSame(302, $response->getStatusCode());
 		static::assertSame($expected, $response->getHeaderLine('Location'));
+	}
+
+	/**
+	 * @return array<string,array{string,string,string}>
+	 */
+	public static function portProvider(): array
+	{
+		return [
+			'same port'             => ['https://garlic-hub.test:8443/playlists', 'garlic-hub.test:8443', '/playlists'],
+			'other port'            => ['https://garlic-hub.test:9000/playlists', 'garlic-hub.test:8443', '/'],
+			'port only in referer'  => ['https://garlic-hub.test:8443/playlists', 'garlic-hub.test', '/'],
+			'port only in the host' => ['https://garlic-hub.test/playlists', 'garlic-hub.test:8443', '/'],
+			'port as host'          => ['https://8443:garlic-hub.test/playlists', 'garlic-hub.test:8443', '/'],
+		];
+	}
+
+	/**
+	 * A site on another port of the same host is another site.
+	 *
+	 * @throws Exception
+	 */
+	#[Group('units')]
+	#[DataProvider('portProvider')]
+	public function testThePortBelongsToTheSite(string $referer, string $host, string $expected): void
+	{
+		static::assertSame($expected, $this->setLocale('de_DE', $referer, $host)->getHeaderLine('Location'));
 	}
 }

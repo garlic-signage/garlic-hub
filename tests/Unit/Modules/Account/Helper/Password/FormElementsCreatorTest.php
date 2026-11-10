@@ -91,6 +91,20 @@ class FormElementsCreatorTest extends TestCase
 	 * @throws \Exception
 	 */
 	#[Group('units')]
+	public function testTheCurrentPasswordIsRequired(): void
+	{
+		$field = $this->creator->createCurrentPasswordField();
+
+		static::assertSame('account.current_password', $field->getLabel());
+		static::assertSame(['required' => true], $field->getValidationRules());
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws \Exception
+	 */
+	#[Group('units')]
 	public function testThePasswordConfirmFieldHasNoPattern(): void
 	{
 		$field = $this->creator->createPasswordConfirmField('');

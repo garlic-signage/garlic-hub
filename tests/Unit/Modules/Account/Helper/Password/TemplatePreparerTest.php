@@ -84,7 +84,11 @@ class TemplatePreparerTest extends TestCase
 		static::assertSame(['/css/account/password.css', '/css/account/settings.css', '/css/llm_form.css'], $page['main_layout']['additional_css']);
 		static::assertSame(['/js/account/password/init.js'], $page['main_layout']['footer_modules']);
 		static::assertSame('menu.my_account', $data['LANG_PAGE_HEADER']);
-		static::assertSame(['password', 'two_factor', 'llm'], array_column($data['tabs'], 'MODULE'));
+		static::assertSame([
+			['MODULE' => 'password', 'LANG_MODULE' => 'account.password'],
+			['MODULE' => 'two_factor', 'LANG_MODULE' => 'account.two_factor'],
+			['MODULE' => 'llm', 'LANG_MODULE' => 'account.llm']
+		], $data['tabs']);
 		static::assertTrue($data['has_password']);
 		static::assertSame($twoFactorTab, $data['two_factor']);
 		static::assertSame($llmTab, $data['llm']);

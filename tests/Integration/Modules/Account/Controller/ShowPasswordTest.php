@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace Tests\Integration\Modules\Account\Controller;
 
 use App\Framework\Exceptions\UserException;
+use App\Framework\Http\Session;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\TemplateEngine\MustacheAdapter;
 use App\Framework\TemplateEngine\MustacheEngineFactory;
@@ -374,6 +375,7 @@ class ShowPasswordTest extends ContainerTestCase
 	{
 		$link  = $this->createLink(13, TokenPurposes::INITIAL_PASSWORD);
 		$other = $this->passwordOf(14);
+		$this->container->get(Session::class)->set('password_link_token', $link);
 
 		$response = $this->postForcedPassword($this->forcedPost(strtoupper($link)));
 
@@ -383,6 +385,7 @@ class ShowPasswordTest extends ContainerTestCase
 		static::assertSame(3, (int) $this->connection->fetchOne('SELECT status FROM user_main WHERE UID = 13'));
 		static::assertSame([$this->translate('forced_password_changed')], $this->flash('success'));
 		static::assertNull($this->tokenService->findByToken((string) hex2bin($link)), 'The link works once.');
+		static::assertNull($this->container->get(Session::class)->get('password_link_token'), 'The session forgets the link.');
 	}
 
 	public function testALinkWorksOnlyOnce(): void
