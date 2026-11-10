@@ -26,6 +26,11 @@ jobs:
         with:
           coverage: pcov
 
+      # Imagick reads a pdf with Ghostscript: without it the process of the tests ended at the first pdf.
+      # ffmpeg for the tests of audio and video, which are skipped without it.
+      - name: Tools of the media
+        run: sudo apt-get update -q && sudo apt-get install -y -q ghostscript ffmpeg
+
       # the configuration writes the reports to var/infection/
       - name: Infection
         run: |
