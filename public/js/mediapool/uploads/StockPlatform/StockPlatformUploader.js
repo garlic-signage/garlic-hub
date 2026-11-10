@@ -76,9 +76,19 @@ export class StockPlatformUploader extends BaseUploader
 			this.domElements.downloadStatus.textContent = "Start downloading: " + filename;
 
 			const mediaUrl = await this.#stockPlatform.determineMediaDownloadUrl(uri);
+			// the mark stays after a failure for a second try
+			if (!mediaUrl)
+			{
+				this.domElements.downloadStatus.textContent = "Download failed: " + filename;
+				continue;
+			}
 
 			let metadata   = this.#stockPlatform.resultList[checkbox.id].metadata;
-			await this.uploadExternalFile(mediaUrl, metadata);
+			if (!await this.uploadExternalFile(mediaUrl, metadata))
+			{
+				this.domElements.downloadStatus.textContent = "Download failed: " + filename;
+				continue;
+			}
 
 			this.domElements.downloadStatus.textContent = "Finish downloading: " + filename;
 

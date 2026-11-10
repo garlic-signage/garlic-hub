@@ -79,6 +79,8 @@ class FakePlatform
 	searchAnswer = {};
 	pages        = [];
 	nextPage     = null;
+	/** the ids of the results without a download address */
+	noDownload   = [];
 
 	constructor(hasVideos = false, token = '')
 	{
@@ -130,6 +132,9 @@ class FakePlatform
 	async determineMediaDownloadUrl(uri)
 	{
 		this.calls.push(['determineMediaDownloadUrl', uri]);
+		if (this.noDownload.some(id => uri.endsWith(`/${id}.jpg`)))
+			return null;
+
 		return uri + '?w=1920';
 	}
 }
@@ -140,7 +145,8 @@ class FakeUploaderDialog
 	enableActions()  {}
 }
 
-function createPage({lastPlatform = null, platforms = {Pexels: new FakePlatform(true, 'secret'), Unsplash: new FakePlatform()}} = {})
+function createPage({lastPlatform = null, platforms = {Pexels: new FakePlatform(true, 'secret'), Unsplash: new FakePlatform()},
+	answer = {success: true, media_id: 'new'}} = {})
 {
 	const dom      = createDom(PAGE);
 	const storage  = new MemoryStorage();
@@ -148,7 +154,7 @@ function createPage({lastPlatform = null, platforms = {Pexels: new FakePlatform(
 		storage.setItem('lastPlatform', lastPlatform);
 	const globals  = replaceGlobals({localStorage: storage});
 	const document = dom.document;
-	const client   = new FakeFetchClient({success: true, media_id: 'new'});
+	const client   = new FakeFetchClient(answer);
 	const elements = new StockPlatformElements();
 	// like the StockPlatformFactory: an unknown platform is an error
 	const factory  = {platforms, selectPlatform: (name) => {
@@ -509,6 +515,40 @@ Deno.test('the marked results are uploaded with their metadata and unmarked', as
 	assertEquals(UploadedMedia.take(), ['new', 'new']);
 	assertEquals(page.document.getElementById('downloadStatus').textContent, 'Finish downloading: 3.jpg');
 	assertEquals([...page.document.querySelectorAll('.result-checkbox')].map(checkbox => checkbox.checked === true), [false, false, false]);
+});
+
+Deno.test('a result without a download address is not sent, stays marked and the status says so', async () =>
+{
+	using page = createPage();
+	page.platforms.Pexels.searchAnswer = {1: image(1), 2: image(2)};
+	page.platforms.Pexels.noDownload   = ['2'];
+	await search(page);
+	mark(page, '1');
+	mark(page, '2');
+
+	click(page, 'startPlatformsUpload');
+	await wait();
+
+	const bodies = page.client.requests.map(request => Object.fromEntries(request.options.body.entries()));
+	assertEquals(bodies.map(body => body.external_link), ['https://stock.example.com/files/1.jpg?w=1920']);
+	assertEquals(page.document.getElementById('downloadStatus').textContent, 'Download failed: 2.jpg');
+	assertEquals([...page.document.querySelectorAll('.result-checkbox')].map(checkbox => checkbox.checked === true), [false, true]);
+});
+
+Deno.test('a refused upload stays marked and the status says so', async () =>
+{
+	using page      = createPage({answer: {success: false, error_message: 'Not allowed'}});
+	using _errorLog = stub(console, 'error');
+	page.platforms.Pexels.searchAnswer = {1: image(1)};
+	await search(page);
+	mark(page, '1');
+
+	click(page, 'startPlatformsUpload');
+	await wait();
+
+	assertEquals(page.document.getElementById('downloadStatus').textContent, 'Download failed: 1.jpg');
+	assertEquals(page.document.getElementById('1').checked, true);
+	assertEquals(UploadedMedia.take(), []);
 });
 
 Deno.test('a marked element that is no result is not uploaded', async () =>

@@ -137,16 +137,21 @@ Deno.test('the download asks Unsplash for the address and limits it to 1920 x 19
 	assertEquals(url, 'https://images.unsplash.com/photo-abc?ixid=1&fit=clip&w=1920&h=1920&client_id=secret');
 });
 
-Deno.test('a failed download address is logged and gives nothing', async () =>
+Deno.test('a failed download address is logged and gives null', async () =>
 {
 	using errorStub = stub(console, 'error');
 	using logStub   = stub(console, 'log');
+	const download  = (answer) => createPlatform(answer).platform.determineMediaDownloadUrl('https://api.unsplash.com/d?x=1');
 
-	assertEquals(await createPlatform(null).platform.determineMediaDownloadUrl('https://api.unsplash.com/d?x=1'), undefined);
-	assertEquals(await createPlatform(new Error('HTTP error: 403')).platform.determineMediaDownloadUrl('https://api.unsplash.com/d?x=1'), undefined);
+	assertEquals(await download(null), null);
+	assertEquals(await download({errors: ['Rate Limit Exceeded']}), null);
+	assertEquals(await download({}), null);
+	assertEquals(await download(new Error('HTTP error: 403')), null);
 
-	assertEquals(errorStub.calls[0].args, ['Error:', 'Unknown error']);
-	assertEquals(logStub.calls[0].args, ['Search error:', 'HTTP error: 403']);
+	assertEquals(errorStub.calls.map(call => call.args), [
+		['Error:', 'Unknown error'], ['Error:', 'Rate Limit Exceeded'], ['Error:', 'Unknown error']
+	]);
+	assertEquals(logStub.calls[0].args, ['Download error:', 'HTTP error: 403']);
 });
 
 Deno.test('the token is saved in the browser and read again', () =>

@@ -47,6 +47,9 @@ export class UnsplashPlatform extends AbstractStockPlatform
 	}
 
 
+	/**
+	 * @return {Promise<string|null>} null when Unsplash gives no address
+	 */
 	async determineMediaDownloadUrl(downloadUri)
 	{
 		try
@@ -54,17 +57,18 @@ export class UnsplashPlatform extends AbstractStockPlatform
 			const apiUrl = downloadUri + "&client_id=" +this.apiToken;
 			const result = await this.fetchClient.fetchData(apiUrl);
 
-			if (!result)
+			if (!result?.url)
 			{
-				console.error('Error:', result || 'Unknown error');
-				return;
+				console.error('Error:', result?.errors?.join(", ") || 'Unknown error');
+				return null;
 			}
 
 			return this.#prepareDownloadMediaUrl(result.url);
 		}
 		catch(error)
 		{
-			console.log('Search error:', error.message);
+			console.log('Download error:', error.message);
+			return null;
 		}
 	}
 
