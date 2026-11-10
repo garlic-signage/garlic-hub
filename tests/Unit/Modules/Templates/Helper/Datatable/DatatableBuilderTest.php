@@ -61,7 +61,7 @@ class DatatableBuilderTest extends TestCase
 		parent::setUp();
 		$translator = $this->createStub(Translator::class);
 		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
-		$translator->method('translateArrayForOptions')->willReturn(['canvas' => 'Canvas']);
+		$translator->method('translateArrayForOptions')->willReturnCallback(static fn(string $key, string $module): array => $key === 'types_selects' && $module === 'templates' ? ['canvas' => 'Canvas'] : []);
 		$session = new MemorySession();
 
 		$this->parameters       = new Parameters(new Sanitizer(), $session);
@@ -164,13 +164,20 @@ class DatatableBuilderTest extends TestCase
 	{
 		$this->parameters->addOwner();
 		$this->parseRequest();
+		$this->parameters->setValueOfParameter('name', 'Lobby');
+		$this->parameters->setValueOfParameter('type', 'canvas');
+		$this->parameters->setValueOfParameter('UID', 3);
 
 		$this->builder->collectFormElements();
 
 		$form = $this->builder->getDatatableStructure()['form'];
 		static::assertSame(['name', 'type', 'UID'], array_keys($form));
 		static::assertSame([FieldType::TEXT, FieldType::DROPDOWN, FieldType::AUTOCOMPLETE], array_map(static fn($field): FieldType => $field->getType(), array_values($form)));
-		static::assertSame('templates.name', $form['name']->getLabel());
+		static::assertSame([
+			['templates.name', 'templates.name', 'Lobby'],
+			['templates.type', 'templates.type', 'canvas'],
+			['main.owner', 'main.owner', '3']
+		], array_map(static fn($field): array => [$field->getTitle(), $field->getLabel(), $field->getValue()], array_values($form)));
 		static::assertInstanceOf(DropdownField::class, $form['type']);
 		static::assertSame(['canvas' => 'Canvas'], $form['type']->getOptions());
 	}
@@ -202,6 +209,7 @@ class DatatableBuilderTest extends TestCase
 		$this->builder->createTableFields();
 
 		static::assertSame(['name', 'type', 'UID', 'used'], array_map(static fn($field): string => $field->getName(), $this->buildService->getDatatableFields()));
+		static::assertSame([true, false, true, false], array_map(static fn($field): bool => $field->isSortable(), $this->buildService->getDatatableFields()));
 		static::assertCount(4, $this->builder->getDatatableStructure()['header']);
 	}
 }

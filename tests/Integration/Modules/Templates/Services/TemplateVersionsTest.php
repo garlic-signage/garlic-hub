@@ -218,6 +218,51 @@ class TemplateVersionsTest extends ContainerTestCase
 		static::assertSame(self::CONTENT_A, $this->content(2));
 	}
 
+	public function testWithoutTemplateThereAreNoVersions(): void
+	{
+		$this->enable();
+		$this->actingAs(1);
+		$this->save(1, self::CONTENT_A);
+		$controller = $this->container->get(TemplateVersionsController::class);
+
+		$list    = $this->json($controller->list(new ServerRequestFactory()->createServerRequest('GET', '/async/templates/versions'), new Response(), []));
+		$restore = $this->json($controller->restore(new ServerRequestFactory()->createServerRequest('POST', '/async/templates/versions')->withParsedBody(['version' => '1']), new Response(), []));
+
+		static::assertFalse($list['success']);
+		static::assertFalse($restore['success']);
+		static::assertSame(self::CONTENT_A, $this->content(1));
+	}
+
+	public function testARestoreNeedsAVersion(): void
+	{
+		$this->enable();
+		$this->actingAs(1);
+		$this->save(2, self::CONTENT_A);
+
+		$json = $this->json($this->container->get(TemplateVersionsController::class)->restore(
+			new ServerRequestFactory()->createServerRequest('POST', '/async/templates/versions/2')->withParsedBody([]), new Response(), ['template_id' => '2']));
+
+		static::assertFalse($json['success']);
+		static::assertSame(self::CONTENT_A, $this->content(2));
+	}
+
+	/**
+	 * The versions stay readable while the versioning is off, but nothing is restored.
+	 */
+	public function testNothingIsRestoredWhileTheVersioningIsOff(): void
+	{
+		$this->connection->insert('unit_versions', ['module' => 'templates', 'unit_id' => '2', 'version' => 1, 'UID' => 1,
+			'created_at' => '2026-11-01 10:00:00', 'snapshot' => json_encode(['content' => self::CONTENT_A])]);
+		$this->actingAs(1);
+
+		$json = $this->json($this->container->get(TemplateVersionsController::class)->restore(
+			new ServerRequestFactory()->createServerRequest('POST', '/async/templates/versions/2')->withParsedBody(['version' => '1']), new Response(), ['template_id' => '2']));
+
+		static::assertFalse($json['success']);
+		static::assertSame([1], $this->versions(2));
+		static::assertSame('{"objects":[]}', $this->content(2));
+	}
+
 	public function testTheRestoreOpensTheComposer(): void
 	{
 		$this->enable();

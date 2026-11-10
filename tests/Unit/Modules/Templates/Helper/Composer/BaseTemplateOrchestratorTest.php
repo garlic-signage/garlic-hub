@@ -61,6 +61,11 @@ class TestableTemplateOrchestrator extends BaseTemplateOrchestrator
 	{
 		return $this->buildMediaUrl($fileName);
 	}
+
+	public function callHasForeignFiles(string $newContent, string $oldContent): bool
+	{
+		return $this->hasForeignFiles($newContent, $oldContent);
+	}
 }
 
 class BaseTemplateOrchestratorTest extends TestCase
@@ -113,6 +118,38 @@ class BaseTemplateOrchestratorTest extends TestCase
 		$_SERVER['HTTP_X_FORWARDED_PROTO'] = 'https';
 
 		static::assertSame('https://hub.example.com', $this->createOrchestrator('')->getBaseUrl());
+	}
+
+	#[Group('units')]
+	public function testBaseUrlBehindAProxyWithSsl(): void
+	{
+		unset($_SERVER['HTTPS'], $_SERVER['HTTP_X_FORWARDED_HOST'], $_SERVER['HTTP_X_FORWARDED_PROTO']);
+		$_SERVER['HTTP_HOST']            = 'hub.example.com';
+		$_SERVER['HTTP_X_FORWARDED_SSL'] = 'on';
+
+		static::assertSame('https://hub.example.com', $this->createOrchestrator('')->getBaseUrl());
+	}
+
+	/**
+	 * Each new file name is checked once, the ones of the content before not at all.
+	 */
+	#[Group('units')]
+	public function testOnlyTheNewFilesAreChecked(): void
+	{
+		$mediaServiceMock = $this->createMock(MediaService::class);
+		$mediaServiceMock->expects($this->once())->method('isReadableFile')->with('new.jpg')->willReturn(true);
+		$orchestrator = $this->createOrchestrator('https://cdn.example.com', $mediaServiceMock);
+
+		$old = '{"objects":[{"type":"image","fileName":"old.jpg"}]}';
+		$new = '{"objects":[{"type":"image","fileName":"new.jpg"},{"type":"image","fileName":"old.jpg"},{"type":"image","fileName":"new.jpg"}]}';
+
+		static::assertFalse($orchestrator->callHasForeignFiles($new, $old));
+	}
+
+	#[Group('units')]
+	public function testAContentWithoutObjectsHasNoFiles(): void
+	{
+		static::assertFalse($this->createOrchestrator('https://cdn.example.com')->callHasForeignFiles('{"version":"5"}', 'no json'));
 	}
 
 	#[Group('units')]
@@ -243,10 +280,10 @@ class BaseTemplateOrchestratorTest extends TestCase
 		static::assertSame($content, $this->createOrchestrator('https://cdn')->callValidate($content));
 	}
 
-	private function createOrchestrator(string $configuredUrl): TestableTemplateOrchestrator
+	private function createOrchestrator(string $configuredUrl, ?MediaService $mediaService = null): TestableTemplateOrchestrator
 	{
 		$this->configStub->method('getConfigValue')->willReturnMap([['url', 'mediapool', 'content_server', $configuredUrl]]);
 
-		return new TestableTemplateOrchestrator($this->configStub, $this->signer, $this->createStub(MediaService::class));
+		return new TestableTemplateOrchestrator($this->configStub, $this->signer, $mediaService ?? $this->createStub(MediaService::class));
 	}
 }

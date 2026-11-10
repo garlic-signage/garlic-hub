@@ -122,6 +122,21 @@ class ImageSuggestionControllerTest extends TemplatesControllerTestCase
 		], $pictures);
 	}
 
+	/**
+	 * The video and the pdf of a term are skipped, its pictures after them are still found.
+	 */
+	public function testAPictureAfterAVideoOfTheSameTermIsFound(): void
+	{
+		$this->connection->executeStatement("UPDATE mediapool_files SET tags = ',Meer,' WHERE filename = 'bild2.jpg'");
+		$this->actingAs(2);
+		$this->withLlm(2);
+
+		$response = $this->suggest(['texts' => 'Urlaub'], [self::answer('{"terms": ["Meer"]}'), self::answer('{"pictures": [1]}')]);
+
+		$this->assertSuccess($response);
+		static::assertSame(['bild2.jpg'], array_column($this->json($response)['images'], 'filename'));
+	}
+
 	public function testTheTermsAreAskedForTheTextsOnly(): void
 	{
 		$this->actingAs(2);

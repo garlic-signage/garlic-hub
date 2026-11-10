@@ -77,16 +77,17 @@ class AuditDatatableServiceTest extends TestCase
 	{
 		$results = $this->load([
 			['target_UID' => 3, 'unit_id' => '5', 'module' => 'playlists'],
-			['target_UID' => '4', 'unit_id' => '6', 'module' => 'playlists'],
 			['target_UID' => 3, 'unit_id' => '5', 'module' => 'playlists'],
+			['target_UID' => '4', 'unit_id' => '6', 'module' => 'playlists'],
 			['target_UID' => null, 'unit_id' => '7', 'module' => 'mediapool'],
 		]);
 
+		// as a list: the repository and the providers bind the ids by position
 		static::assertSame(['users' => [3, 4], 'playlists' => ['5', '6']], $this->askedFor);
 		static::assertSame([
 			['bernd', 'Lobby'],
-			[null, null],
 			['bernd', 'Lobby'],
+			[null, null],
 			[null, null]
 		], array_map(static fn(array $entry): array => [$entry['target_username'], $entry['unit_name']], $results));
 	}

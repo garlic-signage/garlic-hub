@@ -96,6 +96,7 @@ class TemplateAccessTest extends ContainerTestCase
 
 		static::assertSame(1, $this->templatesService->delete(3));
 		static::assertSame([1, 2], $this->remainingTemplateIds());
+		static::assertFalse($this->connection->isTransactionActive(), 'The delete is committed.');
 	}
 
 	public function testUserMayNotDeleteATemplate(): void
@@ -114,6 +115,64 @@ class TemplateAccessTest extends ContainerTestCase
 				static::assertSame([1, 2, 3], $this->remainingTemplateIds());
 			}
 		}
+	}
+
+	/**
+	 * anna edits the template of bernd: she opens it and its versions, but she does not delete it.
+	 */
+	private function annaEditsTheTemplateOfBernd(): void
+	{
+		$this->connection->executeStatement("INSERT INTO user_acl (UID, acl, module) VALUES (2, 2, 'templates')");
+		$this->connection->executeStatement("INSERT INTO user_vip (UID, vip_name, unit_id) VALUES (2, 'templates_editor', '3')");
+		$this->actingAs(2);
+	}
+
+	public function testAnEditorOfASharedTemplateOpensItAndItsVersions(): void
+	{
+		$this->annaEditsTheTemplateOfBernd();
+
+		static::assertSame('Bernds Vorlage', $this->templatesService->loadWithUserById(3)['name']);
+		static::assertSame('Bernds Vorlage', $this->templatesService->loadUsableById(3)['name']);
+		static::assertSame([], $this->templatesService->findVersions(3));
+
+		// she may restore: only the version is unknown
+		try
+		{
+			$this->templatesService->restoreVersion(3, 1);
+			static::fail('Expected NotFoundException');
+		}
+		catch (NotFoundException $e)
+		{
+			static::assertSame('version_not_found', $e->getTranslationKey());
+		}
+	}
+
+	public function testAnEditorOfASharedTemplateMayNotDeleteIt(): void
+	{
+		$this->annaEditsTheTemplateOfBernd();
+
+		static::assertFalse($this->templatesService->isDeletable(3));
+		foreach (['assertDeletable', 'delete'] as $method)
+		{
+			try
+			{
+				$this->templatesService->$method(3);
+				static::fail('Expected AccessDeniedException of ' . $method);
+			}
+			catch (AccessDeniedException $e)
+			{
+				static::assertSame('template_not_deletable', $e->getTranslationKey());
+			}
+		}
+		static::assertSame([1, 2, 3], $this->remainingTemplateIds());
+	}
+
+	public function testOnlyAKnownTemplateIsDeletable(): void
+	{
+		$this->actingAs(1);
+
+		static::assertTrue($this->templatesService->isDeletable(3));
+		static::assertFalse($this->templatesService->isDeletable(99));
 	}
 
 	public function testATemplateInUseCanNotBeDeleted(): void

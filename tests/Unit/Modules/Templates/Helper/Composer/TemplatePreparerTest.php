@@ -78,6 +78,13 @@ class TemplatePreparerTest extends TestCase
 		static::assertSame('templates.transparent_background', $result['LANG_TRANSPARENT_BACKGROUND']);
 		static::assertSame('templates.objects', $result['LANG_OBJECTS']);
 		static::assertSame('templates.rotation', $result['LANG_ROTATION']);
+		static::assertSame('templates.move_background', $result['LANG_MOVE_BACKGROUND']);
+		$keys = ['confirm_close' => 'confirm_close_composer', 'confirm_reset' => 'confirm_reset', 'add_image' => 'insert_image', 'replace_image' => 'replace_image',
+			'text_corrected' => 'text_corrected', 'text_shortened' => 'text_shortened', 'text_translated' => 'text_translated',
+			'design_low_contrast' => 'design_low_contrast', 'design_small_font' => 'design_small_font', 'design_reading_time' => 'design_reading_time',
+			'design_placeholder' => 'design_placeholder', 'object_text' => 'object_text', 'object_image' => 'object_image', 'object_shape' => 'object_shape',
+			'object_group' => 'object_group', 'no_objects' => 'no_objects'];
+		static::assertSame(array_map(static fn(string $key): string => 'templates.' . $key, $keys), json_decode($result['LANG_JS'], true));
 		static::assertSame([
 			'LANG_LOCK' => 'templates.lock',
 			'LANG_UNLOCK' => 'templates.unlock',
@@ -123,10 +130,13 @@ class TemplatePreparerTest extends TestCase
 	#[Group('units')]
 	public function testReplaceWithItemButWithoutPlaylistIsTemplate(): void
 	{
-		$result = $this->preparer->replace(12, 34);
+		foreach ([[34, 0], [0, 56]] as [$itemId, $playlistId])
+		{
+			$result = $this->preparer->replace(12, $itemId, $playlistId);
 
-		static::assertArrayHasKey('is_selectable', $result);
-		static::assertArrayNotHasKey('is_playlist_item', $result);
+			static::assertArrayHasKey('is_selectable', $result);
+			static::assertArrayNotHasKey('is_playlist_item', $result);
+		}
 	}
 
 	/**
@@ -163,7 +173,7 @@ class TemplatePreparerTest extends TestCase
 	{
 		static::assertSame(15, $this->preparer->replace(12)['design_check']['DURATION']);
 		static::assertSame(8, $this->preparer->replace(12, 5, 7, 8)['design_check']['DURATION']);
-		static::assertSame('templates.design_check', $this->preparer->replace(12)['design_check']['LANG_DESIGN_CHECK']);
+		static::assertSame(['LANG_DESIGN_CHECK' => 'templates.design_check', 'LANG_DESIGN_CHECK_OK' => 'templates.design_check_ok', 'DURATION' => 15], $this->preparer->replace(12)['design_check']);
 	}
 
 	/**
@@ -177,6 +187,7 @@ class TemplatePreparerTest extends TestCase
 
 		static::assertSame('templates.composer: Tpl', $result['main_layout']['LANG_PAGE_TITLE']);
 		static::assertSame(['/js/templates/canvas-composer/init.js'], $result['main_layout']['footer_modules']);
+		static::assertSame(['/css/templates/canvas.css', '/css/external/wunderbaum.css', '/css/mediapool/selector.css'], $result['main_layout']['additional_css']);
 		static::assertContains('/js/external/fabric.min.js', $result['main_layout']['footer_scripts']);
 		static::assertSame('templates/canvas', $result['this_layout']['template']);
 		static::assertSame(

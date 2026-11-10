@@ -32,6 +32,7 @@ use App\Modules\Templates\Helper\Composer\ExportImage;
 use App\Modules\Templates\Repositories\TemplatesRepository;
 use App\Modules\Templates\Services\AclValidator;
 use App\Modules\Templates\Services\TemplatePackService;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Slim\Flash\Messages;
 use Tests\Integration\Support\MediaWorkspace;
@@ -130,6 +131,7 @@ class TemplatePackControllerTest extends TemplatesControllerTestCase
 		$result = $this->install();
 
 		static::assertSame(2, $result['installed']);
+		static::assertFalse($this->connection->isTransactionActive(), 'Every template is committed.');
 		static::assertSame([$result['message']], $this->flash('success'));
 		static::assertStringContainsString('2', (string) $result['message']);
 
@@ -180,6 +182,67 @@ class TemplatePackControllerTest extends TemplatesControllerTestCase
 
 		static::assertSame(2, $result['installed']);
 		static::assertSame(['fabric/wifi_portrait', 'fabric/menu_landscape', 'fabric/quote_landscape'], array_column($this->packTemplates(), 'seed_key'));
+	}
+
+	public function testTheTemplatesAfterAnInstalledOneAreInstalledToo(): void
+	{
+		$this->actingAs(1);
+		$this->install();
+		$this->connection->executeStatement("DELETE FROM templates WHERE seed_key = 'fabric/wifi_portrait'");
+
+		$result = $this->install();
+
+		static::assertSame(1, $result['installed']);
+		static::assertSame(['fabric/quote_landscape', 'fabric/wifi_portrait'], array_column($this->packTemplates(), 'seed_key'));
+	}
+
+	public function testTheContentIsStoredWithSlashesAndUmlautsAsTheyAre(): void
+	{
+		$this->actingAs(1);
+		$packDir = $this->workspace->dir . '/own_pack';
+		mkdir($packDir . '/fabric', 0775, true);
+		file_put_contents($packDir . '/fabric/greeting.json', '{"name":"Grüße","content":{"src":"/images/a.jpg","text":"Grüße"}}');
+		copy(self::BUNDLED_PACK . '/fabric/quote_landscape.jpg', $packDir . '/fabric/greeting.jpg');
+
+		$this->install($packDir);
+
+		$templates = $this->packTemplates();
+		static::assertSame('{"src":"/images/a.jpg","text":"Grüße"}', $templates[0]['content']);
+		static::assertSame('', $templates[0]['description']);
+	}
+
+	/**
+	 * @return array<string,array{string}>
+	 */
+	public static function incompleteTemplates(): array
+	{
+		return [
+			'no name'    => ['{"content":{}}'],
+			'no content' => ['{"name":"Greeting"}'],
+			'no object'  => ['"Greeting"'],
+		];
+	}
+
+	#[DataProvider('incompleteTemplates')]
+	public function testATemplateWithoutNameOrContentIsNotInstalled(string $json): void
+	{
+		$this->actingAs(1);
+		$packDir = $this->workspace->dir . '/own_pack';
+		mkdir($packDir . '/fabric', 0775, true);
+		file_put_contents($packDir . '/fabric/greeting.json', $json);
+		copy(self::BUNDLED_PACK . '/fabric/quote_landscape.jpg', $packDir . '/fabric/greeting.jpg');
+
+		$this->expectException(ModuleException::class);
+		$this->expectExceptionMessage('The template fabric/greeting of the pack has no name or content.');
+
+		try
+		{
+			$this->controller($packDir)->install($this->request('POST', '/async/templates/pack'), $this->newResponse());
+		}
+		finally
+		{
+			static::assertSame([], $this->packTemplates());
+		}
 	}
 
 	public function testOnlyAModuleAdminInstallsThePack(): void

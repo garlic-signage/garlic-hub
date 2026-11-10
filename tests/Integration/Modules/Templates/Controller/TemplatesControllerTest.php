@@ -265,6 +265,21 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 			static::assertSame('image of ' . $sub, file_get_contents($this->workspace->dir . '/var/storage/templates/' . $sub . '/' . $copyId . '.jpg'));
 	}
 
+	/**
+	 * The name is cut after 100 characters, not in the middle of an umlaut.
+	 */
+	public function testTheCopyHasTheDescriptionAndAShortenedName(): void
+	{
+		$this->actingAs(1);
+		$this->connection->executeStatement('UPDATE templates SET name = ? WHERE template_id = 1', [str_repeat('ä', 95)]);
+
+		$response = $this->controller->copy($this->request('POST', body: ['template_id' => '1']), $this->newResponse());
+
+		$copy = $this->connection->fetchAssociative('SELECT name, description FROM templates WHERE template_id = ?', [(int) $this->json($response)['template_id']]);
+		static::assertSame(['name' => 'Copy of ' . str_repeat('ä', 92), 'description' => 'von Admin'], $copy);
+		static::assertFalse($this->connection->isTransactionActive(), 'The copy is committed.');
+	}
+
 	public function testATemplateWithoutImageIsCopiedWithoutImage(): void
 	{
 		$this->actingAs(1);
@@ -292,6 +307,15 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 		{
 			static::assertSame($before, $this->countTemplates());
 		}
+	}
+
+	public function testWithoutTemplateNothingIsCopied(): void
+	{
+		$this->actingAs(1);
+		$before = $this->countTemplates();
+
+		$this->assertError($this->controller->copy($this->request('POST', body: []), $this->newResponse()), 'No template Id');
+		static::assertSame($before, $this->countTemplates());
 	}
 
 	public function testAnUnknownTemplateIsNotCopied(): void
@@ -330,6 +354,13 @@ class TemplatesControllerTest extends TemplatesControllerTestCase
 
 		$this->assertError($this->controller->load($this->request('GET'), $this->newResponse(), ['template_id' => '1']), 'No rights');
 		$this->assertError($this->controller->load($this->request('GET'), $this->newResponse(), ['template_id' => '99']), 'No rights');
+		$this->assertError($this->controller->load($this->request('GET'), $this->newResponse(), []), 'No rights');
+	}
+
+	public function testWithoutTemplateTheAdminLoadsNothing(): void
+	{
+		$this->actingAs(1);
+
 		$this->assertError($this->controller->load($this->request('GET'), $this->newResponse(), []), 'No rights');
 	}
 
