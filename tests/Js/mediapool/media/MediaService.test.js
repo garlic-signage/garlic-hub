@@ -100,9 +100,9 @@ Deno.test('an edit is posted with the CSRF token', async () =>
 Deno.test('the suggested tags wait as long as the AI and return only description and tags', async () =>
 {
 	using _dom   = createDom(CSRF_META);
-	const client = new FakeFetchClient({success: true, description: 'A lobby', tags: 'lobby, hall', other: 'x'});
+	const client = new FakeFetchClient({success: true, description: 'A lobby', tags: ['lobby', 'hall'], other: 'x'});
 
-	assertEquals(await new MediaService(client).suggestTags('abc'), {description: 'A lobby', tags: 'lobby, hall'});
+	assertEquals(await new MediaService(client).suggestTags('abc'), {description: 'A lobby', tags: ['lobby', 'hall']});
 
 	const request = client.requests[0];
 	assertEquals(request.url, '/async/mediapool/media/tags');

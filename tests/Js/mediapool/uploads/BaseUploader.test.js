@@ -19,7 +19,7 @@
 
 import {assertEquals, assertStrictEquals} from "@std/assert";
 import {stub}                             from "@std/testing/mock";
-import {createDom}                        from "@support/dom.js";
+import {assertSameElement, createDom}     from "@support/dom.js";
 import {FakeFetchClient}                  from "@support/FakeFetchClient.js";
 import {BaseUploader}                     from "@js/mediapool/uploads/BaseUploader.js";
 import {UploadedMedia}                    from "@js/mediapool/uploads/UploadedMedia.js";
@@ -116,7 +116,7 @@ Deno.test('a progress bar is added to the container', () =>
 	const progressBar = uploader.createProgressbar(container);
 
 	assertEquals(container.innerHTML, '<div id="progressContainer"><progress id="progressBar"></progress></div>');
-	assertStrictEquals(container.querySelector('#progressBar'), progressBar);
+	assertSameElement(container.querySelector('#progressBar'), progressBar);
 });
 
 Deno.test('an external file without a chosen directory is not uploaded', async () =>

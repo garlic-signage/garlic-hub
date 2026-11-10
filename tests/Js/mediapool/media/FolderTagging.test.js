@@ -42,7 +42,7 @@ function medium(mediaId, mimetype = 'image/jpeg', tags = [], description = '')
 }
 
 /**
- * Answers every suggestion with "Suggested <id>" and the tags "a, b"; failures and waiting are set per medium.
+ * Answers every suggestion with "Suggested <id>" and the tags a and b; failures and waiting are set per medium.
  */
 class FakeMediaService
 {
@@ -71,7 +71,7 @@ class FakeMediaService
 		if (this.failSuggestion.includes(mediaId))
 			throw new Error('The AI did not answer');
 
-		return this.suggestions[mediaId] ?? {description: 'Suggested ' + mediaId, tags: 'a, b'};
+		return this.suggestions[mediaId] ?? {description: 'Suggested ' + mediaId, tags: ['a', 'b']};
 	}
 
 	editMedia(mediaId, filename, description, tags)
@@ -146,8 +146,8 @@ Deno.test('the untagged media are tagged one after the other and the dialog show
 	assertEquals(await page.tagging.run(5), 2);
 
 	assertEquals(page.mediaService.edits, [
-		['a', 'a.file', 'Suggested a', 'a, b'],
-		['b', 'b.file', 'Suggested b', 'a, b'],
+		['a', 'a.file', 'Suggested a', ['a', 'b']],
+		['b', 'b.file', 'Suggested b', ['a', 'b']],
 	]);
 	assertEquals(page.progress.max, 2);
 	assertEquals(statusAtSuggestion, [['0 of 2', 0], ['1 of 2', 1]]);
@@ -164,7 +164,7 @@ Deno.test('the suggested description is added to the one there', async () =>
 		Object.assign(medium('none'), {media_description: null}),
 		medium('empty-suggestion', 'image/jpeg', [], 'Kept'),
 	];
-	page.mediaService.suggestions = {'empty-suggestion': {description: '', tags: 'c'}};
+	page.mediaService.suggestions = {'empty-suggestion': {description: '', tags: ['c']}};
 
 	await page.tagging.run(5);
 

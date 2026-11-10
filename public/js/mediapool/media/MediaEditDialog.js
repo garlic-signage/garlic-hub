@@ -69,7 +69,9 @@ export class MediaEditDialog
 
     #addSaveEvent()
     {
-        this.#submitEditMedia.addEventListener('click', async () => {
+        this.#submitEditMedia.addEventListener('click', async (event) => {
+			// the form would close the dialog at once: after a failed save the input would be lost
+			event.preventDefault();
 			try
 			{
 				await this.#mediaService.editMedia(
@@ -88,7 +90,7 @@ export class MediaEditDialog
 			this.#currentMedia.querySelector("img").setAttribute("data-title", this.#editFilename.value);
 			this.#currentMedia.querySelector("img").setAttribute("data-description", this.#editDescription.value);
 			this.#currentMedia.querySelector("img").setAttribute("data-tags", this.#splitTags(this.#editTags.value).join(", "));
-
+			this.#dialogElement.close();
         });
     }
 

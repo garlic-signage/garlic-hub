@@ -23,6 +23,7 @@ namespace App\Shared\Llm;
 
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\UserException;
+use App\Framework\Llm\LlmAnswer;
 use App\Framework\Llm\LlmException;
 use App\Framework\Llm\LlmMessage;
 use App\Framework\Llm\LlmRequest;
@@ -71,10 +72,7 @@ readonly class MediaTagging
 		$request = new LlmRequest(sprintf(self::INSTRUCTIONS, $locale), [LlmMessage::user('Describe this medium.', [$image])], true);
 		$answer  = $this->llmResolver->forUser($UID, LlmTask::IMAGE_TAGGING)->complete($request);
 
-		// reasoning models of a local server may put their thoughts in front of the answer
-		$suggestion = json_decode(trim((string) preg_replace('#<think>.*?</think>#s', '', $answer)), true);
-		if (!is_array($suggestion))
-			throw new LlmException('llm_no_answer');
+		$suggestion = LlmAnswer::json($answer);
 
 		$description = is_string($suggestion['description'] ?? null) ? trim($suggestion['description']) : '';
 		$tags        = [];

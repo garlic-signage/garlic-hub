@@ -17,9 +17,9 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import {assertEquals, assertNotStrictEquals, assertStrictEquals} from "@std/assert";
-import {createDom}               from "@support/dom.js";
-import {ContextMenuMediaFactory} from "@js/mediapool/media/ContextMenuMediaFactory.js";
+import {assertEquals, assertNotStrictEquals} from "@std/assert";
+import {assertSameElement, createDom}        from "@support/dom.js";
+import {ContextMenuMediaFactory}             from "@js/mediapool/media/ContextMenuMediaFactory.js";
 
 // the template of templates/mediapool/overview.mustache
 const PAGE = `
@@ -40,7 +40,7 @@ const PAGE = `
 class FakeMediaService
 {
 	calls      = [];
-	suggestion = {description: 'A lobby', tags: 'lobby, hall'};
+	suggestion = {description: 'A lobby', tags: ['lobby', 'hall']};
 	newMedia   = {media_id: 'def'};
 	removed    = {success: true};
 	waitForSuggestion = null;
@@ -166,9 +166,9 @@ Deno.test('information and edit open their dialogs for the medium', async () =>
 	await click(page, 'editMedia');
 
 	assertEquals(page.infoDialog.shown.length, 1);
-	assertStrictEquals(page.infoDialog.shown[0][0], page.medium);
+	assertSameElement(page.infoDialog.shown[0][0], page.medium);
 	assertEquals(page.editDialog.shown.length, 1);
-	assertStrictEquals(page.editDialog.shown[0][0], page.medium);
+	assertSameElement(page.editDialog.shown[0][0], page.medium);
 	assertEquals(page.editDialog.shown[0].length, 1);
 });
 
@@ -186,8 +186,8 @@ Deno.test('the suggestion of the AI opens in the edit dialog, an overlay waits m
 	await new Promise(resolve => setTimeout(resolve, 0));
 
 	assertEquals(page.mediaService.calls, [['suggestTags', 'abc']]);
-	assertStrictEquals(page.editDialog.shown[0][0], page.medium);
-	assertEquals(page.editDialog.shown[0][1], {description: 'A lobby', tags: 'lobby, hall'});
+	assertSameElement(page.editDialog.shown[0][0], page.medium);
+	assertEquals(page.editDialog.shown[0][1], {description: 'A lobby', tags: ['lobby', 'hall']});
 	assertEquals(page.document.getElementById('waitOverlay'), null);
 });
 
@@ -249,5 +249,5 @@ Deno.test('a medium that could not be removed stays and the error is shown', asy
 	await click(page, 'removeMedia');
 
 	assertEquals(page.errors, ['Still in a playlist']);
-	assertStrictEquals(page.document.querySelector('.media-item'), page.medium);
+	assertSameElement(page.document.querySelector('.media-item'), page.medium);
 });

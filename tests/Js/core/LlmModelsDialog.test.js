@@ -17,8 +17,8 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import {assertEquals} from "@std/assert";
-import {createDom}    from "@support/dom.js";
+import {assertEquals}    from "@std/assert";
+import {createDom}       from "@support/dom.js";
 import {LlmModelsDialog} from "@js/core/LlmModelsDialog.js";
 
 const LABELS = 'data-title="Models" data-filter="Filter models" data-empty="No list here" data-close="Close"';

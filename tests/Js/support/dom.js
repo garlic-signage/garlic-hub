@@ -17,7 +17,8 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import {parseHTML} from "linkedom";
+import {AssertionError} from "@std/assert";
+import {parseHTML}      from "linkedom";
 import "css.escape"; // sets CSS.escape(), Deno has no CSS object
 
 /**
@@ -119,4 +120,20 @@ function addSelectValue(document)
 	});
 
 	return () => Object.defineProperty(prototype, 'value', original);
+}
+
+/**
+ * Compares two elements with ===. assertStrictEquals() would print the difference of two elements of linkedom,
+ * which takes minutes and the memory.
+ */
+export function assertSameElement(actual, expected, message = '')
+{
+	if (actual === expected)
+		return;
+
+	const describe = (element) => element?.tagName === undefined
+		? String(element)
+		: `<${element.tagName.toLowerCase()}${element.id ? ' id="' + element.id + '"' : ''}${element.className ? ' class="' + element.className + '"' : ''}>`;
+
+	throw new AssertionError(`${message ? message + ': ' : ''}expected the element ${describe(expected)}, got ${describe(actual)}`);
 }

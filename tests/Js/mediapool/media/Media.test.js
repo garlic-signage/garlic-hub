@@ -17,8 +17,8 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import {assertEquals, assertStrictEquals} from "@std/assert";
-import {createDom}                        from "@support/dom.js";
+import {assertEquals}                 from "@std/assert";
+import {assertSameElement, createDom} from "@support/dom.js";
 
 // Media imports the DirectoryView, it loads UploadDialogElements, which reads the document when it is loaded
 let Media, DirectoryView;
@@ -116,7 +116,7 @@ Deno.test('the article carries the data the consumers need', () =>
 
 	const item = page.media.renderForDisplayInMediaPool();
 
-	assertStrictEquals(page.media.mediaItem, item);
+	assertSameElement(page.media.mediaItem, item);
 	assertEquals(item.getAttribute('data-media-id'), 'abc');
 	assertEquals(item.getAttribute('data-original-url'), '/media.php?original=abc');
 	assertEquals(item.getAttribute('data-file-name'), 'f00d.jpg');
@@ -249,7 +249,7 @@ Deno.test('the simple view for the selectors has only the thumbnail and the data
 
 	const item = page.media.renderSimple();
 
-	assertStrictEquals(page.media.mediaItem, item);
+	assertSameElement(page.media.mediaItem, item);
 	assertEquals(item.getAttribute('data-media-id'), 'abc');
 	assertEquals(item.querySelector('img').getAttribute('src'), '/media.php?thumb=abc');
 	assertEquals(text(item, '.media-filename'), '');

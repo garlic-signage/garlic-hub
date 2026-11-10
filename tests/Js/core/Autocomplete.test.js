@@ -17,11 +17,11 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import {assertEquals, assertStrictEquals} from "@std/assert";
-import {stub}                             from "@std/testing/mock";
-import {FakeTime}                         from "@std/testing/time";
-import {createDom}                        from "@support/dom.js";
-import {Autocomplete}                     from "@js/core/Autocomplete.js";
+import {assertEquals}                 from "@std/assert";
+import {stub}                         from "@std/testing/mock";
+import {FakeTime}                     from "@std/testing/time";
+import {assertSameElement, createDom} from "@support/dom.js";
+import {Autocomplete}                 from "@js/core/Autocomplete.js";
 
 const ENDPOINT = '/async/playlists/find/';
 
@@ -327,8 +327,8 @@ Deno.test('the elements and restore() come from the view', () =>
 	const view         = new FakeView(dom.document);
 	const autocomplete = createAutocomplete(view);
 
-	assertStrictEquals(autocomplete.getHiddenIdElement(), view.hiddenElement);
-	assertStrictEquals(autocomplete.getEditFieldElement(), view.inputElement);
+	assertSameElement(autocomplete.getHiddenIdElement(), view.hiddenElement);
+	assertSameElement(autocomplete.getEditFieldElement(), view.inputElement);
 	assertEquals(autocomplete.restore('New name'), 'restored');
 	assertEquals(view.calls[1], ['restore', 'New name']);
 });

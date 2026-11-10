@@ -17,10 +17,10 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import {assertEquals, assertRejects, assertStrictEquals} from "@std/assert";
-import {createDom}                                       from "@support/dom.js";
-import {MemoryStorage, replaceGlobals}                   from "@support/globals.js";
-import {MediaList}                                       from "@js/mediapool/media/MediaList.js";
+import {assertEquals, assertRejects}   from "@std/assert";
+import {assertSameElement, createDom}  from "@support/dom.js";
+import {MemoryStorage, replaceGlobals} from "@support/globals.js";
+import {MediaList}                     from "@js/mediapool/media/MediaList.js";
 
 const PAGE = `
 	<button id="setListView"></button>
@@ -273,7 +273,7 @@ Deno.test('the context menu of an editable picture has all actions', async () =>
 	const {menu, event} = openContextMenu(page, 'a');
 
 	assertEquals(event.defaultPrevented, true);
-	assertStrictEquals(menu.mediaItem, page.element.querySelector('[data-media-id="a"]'));
+	assertSameElement(menu.mediaItem, page.element.querySelector('[data-media-id="a"]'));
 	assertEquals(menu.calls, [
 		['show', 'contextmenu'], ['info', 'infoMedia'], ['remove', 'removeMedia'], ['edit', 'editMedia'],
 		['clone', 'cloneMedia'], ['suggestTags', 'suggestTags']
@@ -370,7 +370,7 @@ Deno.test('the drag icon drags the whole medium', () =>
 
 	assertEquals(article.getAttribute('draggable'), 'true');
 	assertEquals(dataTransfer.data, ['text/plain', '']);
-	assertStrictEquals(dataTransfer.image[0], article);
+	assertSameElement(dataTransfer.image[0], article);
 	assertEquals(dataTransfer.image.slice(1), [0, 0]);
 
 	icon.dispatchEvent(new Event('dragend'));

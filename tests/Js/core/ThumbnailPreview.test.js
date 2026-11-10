@@ -17,11 +17,11 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import {assertEquals, assertStrictEquals} from "@std/assert";
-import {FakeTime}                         from "@std/testing/time";
-import {createDom}                        from "@support/dom.js";
-import {replaceGlobals}                   from "@support/globals.js";
-import {ThumbnailPreview}                 from "@js/core/ThumbnailPreview.js";
+import {assertEquals}                 from "@std/assert";
+import {FakeTime}                     from "@std/testing/time";
+import {assertSameElement, createDom} from "@support/dom.js";
+import {replaceGlobals}               from "@support/globals.js";
+import {ThumbnailPreview}             from "@js/core/ThumbnailPreview.js";
 
 const PAGE = `
 	<div id="list">
@@ -84,12 +84,12 @@ Deno.test('the preview is added to the body, inside a dialog to the dialog', () 
 {
 	{
 		using page = createPreview();
-		assertStrictEquals(page.preview.parentElement, page.document.body);
+		assertSameElement(page.preview.parentElement, page.document.body);
 		assertEquals(page.preview.getAttribute('alt'), '');
 	}
 	{
 		using page = createPreview('dialogList');
-		assertStrictEquals(page.preview.parentElement, page.document.getElementById('dialog'));
+		assertSameElement(page.preview.parentElement, page.document.getElementById('dialog'));
 	}
 });
 
