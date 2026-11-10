@@ -117,4 +117,84 @@ class UserRightsControllerTest extends UsersControllerTestCase
 		$this->expectException(AccessDeniedException::class);
 		$this->updateRole(3, ['module' => 'playlists', 'role' => 'viewer', 'granted' => '1']);
 	}
+	/**
+	 * The texts of the page, its title and the files of the page, and a tab with all its parts: the roles with their
+	 * texts, the units with the roles a unit can get and the role of the unit selected.
+	 */
+	public function testThePageHasItsTextsAndATabWithAllParts(): void
+	{
+		$grants = $this->container->get(AclGrantService::class);
+		$grants->setRole(1, 2, 'playlists', AclSections::EDITOR, true);
+		$grants->setRole(1, 2, 'playlists', AclSections::VIEWER, true);
+		$grants->setUnitRole(1, 2, 'playlists', 3, AclSections::VIEWER);
+		$grants->setUnitRole(1, 2, 'playlists', 4, AclSections::EDITOR);
+		$this->actingAs(1);
+
+		$page  = $this->page($this->show(2));
+		$data  = $page->getTemplateData();
+		$title = $this->text('rights') . ': anna';
+
+		static::assertSame('users/rights', $page->getTemplate());
+		static::assertSame(['LANG_PAGE_TITLE' => $title, 'additional_css' => ['/css/users/rights.css'], 'footer_modules' => ['/js/users/rights/init.js']], $page->getMainLayoutData());
+		$tabs = $data['tabs'];
+		unset($data['tabs']);
+		static::assertSame([
+			'LANG_PAGE_HEADER'         => $title,
+			'UID'                      => 2,
+			'LANG_ADD_UNIT'            => $this->text('add_unit'),
+			'LANG_UNITS'               => $this->text('units'),
+			'LANG_NO_UNITS'            => $this->text('no_units'),
+			'LANG_CONFIRM_REMOVE_ROLE' => $this->text('confirm_remove_role'),
+			'LANG_ROLE_NONE'           => $this->text('role_none'),
+		], $data);
+
+		$editor = fn(string $selected): array => ['VALUE' => 'editor', 'LANG_ROLE' => $this->text('role_editor'), 'SELECTED' => $selected];
+		$viewer = fn(string $selected): array => ['VALUE' => 'viewer', 'LANG_ROLE' => $this->text('role_viewer'), 'SELECTED' => $selected];
+		static::assertIsArray($tabs);
+		static::assertSame([
+			'MODULE'      => 'playlists',
+			'LANG_MODULE' => $this->text('playlists', 'menu'),
+			'roles'       => [
+				['ROLE' => 'moduleadmin', 'LANG_ROLE' => $this->text('role_moduleadmin'), 'CHECKED' => ''],
+				['ROLE' => 'editor', 'LANG_ROLE' => $this->text('role_editor'), 'CHECKED' => 'checked'],
+				['ROLE' => 'viewer', 'LANG_ROLE' => $this->text('role_viewer'), 'CHECKED' => 'checked'],
+			],
+			'has_units'   => true,
+			'units'       => [
+				['UNIT_ID' => '4', 'UNIT_NAME' => 'Admin Playlist', 'unit_roles' => [$viewer(''), $editor('selected')]],
+				['UNIT_ID' => '3', 'UNIT_NAME' => 'Bernds Playlist', 'unit_roles' => [$viewer('selected'), $editor('')]],
+			],
+			'NO_UNITS'    => 'hidden',
+			'unit_roles'  => [$viewer(''), $editor('')],
+		], $tabs[3]);
+	}
+
+	/**
+	 * Without units the hint "no unit" is shown.
+	 */
+	public function testATabWithoutUnitsShowsTheHint(): void
+	{
+		$this->container->get(AclGrantService::class)->setRole(1, 2, 'playlists', AclSections::VIEWER, true);
+		$this->actingAs(1);
+
+		$tab = $this->page($this->show(2))->getTemplateData()['tabs'][3];
+
+		static::assertSame([], $tab['units']);
+		static::assertSame('', $tab['NO_UNITS']);
+	}
+
+	public function testUserZeroIsSentBack(): void
+	{
+		$this->actingAs(1);
+
+		$this->assertRedirect($this->show(0), '/users', $this->text('rights_not_grantable'));
+	}
+
+	public function testADeletedUserHasNoRightsPage(): void
+	{
+		$this->connection->update('user_main', ['status' => 0], ['UID' => 2]);
+		$this->actingAs(1);
+
+		$this->assertRedirect($this->show(2), '/users', $this->text('rights_not_grantable'));
+	}
 }

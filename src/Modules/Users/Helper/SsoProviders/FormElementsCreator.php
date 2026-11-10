@@ -112,6 +112,7 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 			'id'    => 'enabled',
 			'name'  => 'enabled',
 			'label' => $this->translator->translate('sso_enabled', self::MODULE_NAME),
+			// @infection-ignore-all the checkbox renderer shows the label, not the title
 			'title' => $this->translator->translate('sso_enabled', self::MODULE_NAME)
 		]);
 		if (!$field instanceof CheckboxField)

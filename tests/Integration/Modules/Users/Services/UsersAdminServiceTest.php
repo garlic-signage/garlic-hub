@@ -29,6 +29,8 @@ use App\Modules\Mediapool\Services\NodesService;
 use App\Modules\Users\Services\AclValidator;
 use App\Modules\Users\Services\UsersAdminService;
 use App\Shared\Audit\AuditLog;
+use App\Shared\Audit\AuditLogRepository;
+use App\Shared\Audit\DatabaseAuditLog;
 use App\Shared\User\Repositories\Core\UserAclRepository;
 use App\Shared\User\Repositories\Core\UserVipRepository;
 use App\Shared\User\Repositories\Core\UserMainRepository;
@@ -333,7 +335,124 @@ class UsersAdminServiceTest extends ContainerTestCase
 		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_recovery_codes WHERE UID = 3'));
 	}
 
-	private function serviceWith(?NodesService $nodes = null, ?UserMainRepository $users = null, ?UserTokenService $tokens = null): UsersAdminService
+	/**
+	 * The admin is the user 1: a new user must not get his name either.
+	 */
+	public function testANewUserCanNotTakeTheNameOfTheAdmin(): void
+	{
+		try
+		{
+			$this->service->insertNewUser(['username' => 'admin', 'email' => 'new@example.com']);
+			static::fail('The name is taken by the admin.');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertSame('username_exists', $e->getTranslationKey());
+			static::assertSame(3, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_main'));
+		}
+	}
+
+	/**
+	 * Every change of the admin ends its transaction: an open one would be rolled back with the connection.
+	 */
+	public function testEveryChangeIsCommitted(): void
+	{
+		$UID = $this->service->insertNewUser(['username' => 'carla', 'email' => 'carla@example.com']);
+		static::assertFalse($this->connection->isTransactionActive(), 'create');
+
+		$this->service->createPasswordResetToken(3);
+		static::assertFalse($this->connection->isTransactionActive(), 'password reset');
+
+		$this->service->switchToSso(2);
+		static::assertFalse($this->connection->isTransactionActive(), 'switch to SSO');
+
+		$this->service->deleteUser($UID);
+		static::assertFalse($this->connection->isTransactionActive(), 'delete');
+	}
+
+	/**
+	 * The user is cached for a day: a deleted user must not stay active from the cache.
+	 */
+	public function testADeletedUserIsDeletedAtOnceAlsoInTheCache(): void
+	{
+		$users = $this->container->get(UsersService::class);
+		static::assertSame(3, (int) $users->getUserById(3)->getMain()['status']);
+
+		$this->service->deleteUser(3);
+
+		static::assertSame(0, (int) $users->getUserById(3)->getMain()['status']);
+	}
+
+	/**
+	 * After the reset the running sessions end, also those which read the user from the cache.
+	 */
+	public function testTheResetOfTheSecondFactorEndsTheSessions(): void
+	{
+		$this->giveSecondFactor(3);
+		$users  = $this->container->get(UsersService::class);
+		$before = $users->getUserById(3)->getMain()['last_password_change'] ?? null;
+
+		$this->serviceWith()->resetTwoFactor(3);
+
+		$now = $this->connection->fetchOne('SELECT last_password_change FROM user_main WHERE UID = 3');
+		static::assertIsString($now);
+		static::assertNotSame($before, $now);
+		static::assertSame($now, $users->getUserById(3)->getMain()['last_password_change'] ?? null);
+	}
+
+	public function testTheSwitchToSsoCountsAtOnceAndIsInTheAuditLog(): void
+	{
+		$users = $this->container->get(UsersService::class);
+		$users->getUserById(3);
+
+		$this->serviceWith(audit: new DatabaseAuditLog($this->container->get(AuditLogRepository::class)))->switchToSso(3);
+
+		static::assertSame($this->connection->fetchOne('SELECT last_password_change FROM user_main WHERE UID = 3'), $users->getUserById(3)->getMain()['last_password_change'] ?? null);
+		$row = $this->connection->fetchAssociative('SELECT UID, module, action, target_UID FROM audit_log');
+		static::assertIsArray($row);
+		static::assertSame([1, 'users', 'switched_to_sso', 3], [(int) $row['UID'], $row['module'], $row['action'], (int) $row['target_UID']]);
+	}
+
+	/**
+	 * A link which expires in this second is no usable link anymore: the admin may create a new one.
+	 */
+	public function testALinkWhichExpiresNowIsNoReasonToRefuseAReset(): void
+	{
+		$tokens = $this->createStub(UserTokenService::class);
+		$tokens->method('findTokensByUID')->willReturn([['token' => 'old', 'UID' => 3, 'purpose' => TokenPurposes::PASSWORD_RESET->value, 'expires_at' => date('Y-m-d H:i:s'), 'used_at' => null]]);
+		$tokens->method('generateToken')->willReturn('new');
+		$tokens->method('insertToken')->willReturn('new');
+
+		static::assertSame('new', $this->serviceWith(tokens: $tokens)->createPasswordResetToken(3));
+	}
+
+	/**
+	 * Only the names of the changed fields are logged: a status which comes as number and is the same is no change.
+	 */
+	public function testAnUnchangedNumberIsNoChangeInTheAuditLog(): void
+	{
+		$this->serviceWith(audit: new DatabaseAuditLog($this->container->get(AuditLogRepository::class)))
+			->updateUser(3, ['username' => 'bernd', 'email' => 'bernd@example.org', 'locale' => 'en_US', 'status' => 3]);
+
+		static::assertSame('{"fields":["email"]}', $this->connection->fetchOne("SELECT details FROM audit_log WHERE action = 'user_updated'"));
+	}
+
+	/**
+	 * A database may give the UID as text: the own name and email are still no names of another.
+	 */
+	public function testTheOwnNameIsFoundAlsoWithTheUidAsText(): void
+	{
+		$users = $this->createStub(UserMainRepository::class);
+		$users->method('findExistingUser')->willReturn([
+			['UID' => '3', 'username' => 'bernd', 'email' => 'old@example.com'],
+			['UID' => '3', 'username' => 'old', 'email' => 'bernd@example.com'],
+		]);
+		$users->method('update')->willReturn(1);
+
+		static::assertSame(1, $this->serviceWith(users: $users)->updateUser(3, ['username' => 'bernd', 'email' => 'bernd@example.com']));
+	}
+
+	private function serviceWith(?NodesService $nodes = null, ?UserMainRepository $users = null, ?UserTokenService $tokens = null, ?AuditLog $audit = null): UsersAdminService
 	{
 		return new UsersAdminService(
 			$users ?? new UserMainRepository($this->connection),
@@ -345,7 +464,7 @@ class UsersAdminServiceTest extends ContainerTestCase
 			$this->container->get(Transactions::class),
 			$this->container->get(UserSession::class),
 			$this->container->get(UsersService::class),
-			$this->container->get(AuditLog::class),
+			$audit ?? $this->container->get(AuditLog::class),
 			$this->container->get(TwoFactorService::class),
 			new SsoProvidersRepository($this->connection)
 		);

@@ -35,6 +35,8 @@ use App\Shared\User\UserStatus;
  */
 class FormElementsCreator extends AbstractBaseFormElementsCreator
 {
+	/** A user is deleted with the delete button: deleted is no status to choose. */
+	private const array NOT_SELECTABLE_STATUSES = [UserStatus::DELETED->value => true];
 
 	/**
 	 * @throws CoreException
@@ -67,8 +69,7 @@ class FormElementsCreator extends AbstractBaseFormElementsCreator
 			'title' => $this->translator->translate(Parameters::PARAMETER_USER_STATUS, 'users'),
 			'label' => $this->translator->translate(Parameters::PARAMETER_USER_STATUS, 'users'),
 			'value' => $value,
-			// a user is deleted with the delete button
-			'options' => array_diff_key($this->translator->translateArrayForOptions(Parameters::PARAMETER_USER_STATUS.'_selects', 'users'), [UserStatus::DELETED->value => true]),
+			'options' => array_diff_key($this->translator->translateArrayForOptions(Parameters::PARAMETER_USER_STATUS.'_selects', 'users'), self::NOT_SELECTABLE_STATUSES),
 			'options_zero' => false
 		]);
 	}

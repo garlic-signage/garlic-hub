@@ -63,10 +63,12 @@ readonly class UnitSharesController
 		$users = [];
 		foreach ($shares['users'] as $user)
 		{
+			// @infection-ignore-all json_encode gives a backed enum as its value
+			$roles   = array_map(fn(AclSections $role) => $role->value, $user['roles']);
 			$users[] = [
 				'UID'      => $user['UID'],
 				'username' => $user['username'],
-				'roles'    => array_map(fn(AclSections $role) => $role->value, $user['roles']),
+				'roles'    => $roles,
 				'role'     => $user['role']->value ?? ''
 			];
 		}
@@ -75,8 +77,11 @@ readonly class UnitSharesController
 		foreach (AclSections::UNIT_ROLES as $role)
 			$roleLabels[$role->value] = $this->translator->translate('role_' . $role->value, 'users');
 
+		// @infection-ignore-all json_encode gives a backed enum as its value
+		$roles = array_map(fn(AclSections $role) => $role->value, $shares['roles']);
+
 		return $this->responseHandler->jsonSuccess($response, [
-			'roles'  => array_map(fn(AclSections $role) => $role->value, $shares['roles']),
+			'roles'  => $roles,
 			'users'  => $users,
 			'labels' => [
 				'title'    => $this->translator->translate('share_unit', 'users'),

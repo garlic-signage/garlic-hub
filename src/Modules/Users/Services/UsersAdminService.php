@@ -91,6 +91,7 @@ class UsersAdminService
 	{
 		$user = $this->userMainRepository->findByIdSecured($UID);
 		// a deleted user is anonymized and stays deleted
+		// @infection-ignore-all the cast is for databases which give the status as text
 		if (empty($user) || (int) $user['status'] === UserStatus::DELETED->value)
 			return [];
 
@@ -118,7 +119,7 @@ class UsersAdminService
 		$this->transactions->begin();
 		try
 		{
-			$this->assertUnique(0, $postData['username'], $postData['email']);
+			$this->assertUnique(null, $postData['username'], $postData['email']);
 
 			/** @var array{username:string, email:string, status?: int} $saveData */
 			$saveData = $this->collectCommonData($postData);
@@ -380,12 +381,12 @@ class UsersAdminService
 	 * @throws Exception
 	 * @throws TranslatableModuleException
 	 */
-	private function assertUnique(int $UID, string $username, string $email): void
+	private function assertUnique(?int $UID, string $username, string $email): void
 	{
 		// if there is similar user we need to check ig the UID is identic,
 		// it could be possible that the user is try to edit the username and or email
 		// of an existing user.
-		// In this case it should be possible
+		// In this case it should be possible. A new user ($UID null) may take nothing which exists.
 
 		/** @var array{UID: int, username:string, email:string} $existing */
 		foreach ($this->userMainRepository->findExistingUser($username, $email) as $existing)

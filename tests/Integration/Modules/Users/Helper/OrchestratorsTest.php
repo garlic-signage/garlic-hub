@@ -89,4 +89,71 @@ class OrchestratorsTest extends ContainerTestCase
 		static::assertCount(1, $result['errors'] ?? []);
 		static::assertSame($this->container->get(Translator::class)->translateException(new TranslatableModuleException('users', 'admin_exists')), $result['errors'][0] ?? '');
 	}
+	/**
+	 * The admin edits bernd (UID 3) with a valid form.
+	 *
+	 * @return array<string,string>
+	 */
+	private function berndsForm(): array
+	{
+		return ['username' => 'bernd', 'email' => 'bernd@example.com'];
+	}
+
+	private function loadedBernd(): SettingsOrchestrator
+	{
+		$orchestrator = $this->container->get(SettingsOrchestrator::class);
+		$orchestrator->loadUserForEdit(3);
+
+		return $orchestrator;
+	}
+
+	public function testTheResetOfTheSecondFactorSucceeds(): void
+	{
+		$this->connection->insert('user_two_factor', ['UID' => 3, 'secret' => 'encrypted', 'enabled_at' => '2026-01-01 00:00:00']);
+
+		static::assertSame(['success' => true], $this->loadedBernd()->resetTwoFactor(3, $this->berndsForm()));
+		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_two_factor WHERE UID = 3'));
+	}
+
+	/**
+	 * @return array<string,array{string}>
+	 */
+	public static function actionsWithAForm(): array
+	{
+		return ['reset of the second factor' => ['resetTwoFactor'], 'switch to SSO' => ['switchToSso']];
+	}
+
+	#[DataProvider('actionsWithAForm')]
+	public function testAFormWithErrorsIsNoSuccess(string $action): void
+	{
+		$this->connection->insert('user_two_factor', ['UID' => 3, 'secret' => 'encrypted', 'enabled_at' => '2026-01-01 00:00:00']);
+		$orchestrator = $this->loadedBernd();
+
+		$result = $action === 'resetTwoFactor'
+			? $orchestrator->resetTwoFactor(3, ['username' => '', 'email' => 'bernd@example.com'])
+			: $orchestrator->switchToSso(3, ['username' => '', 'email' => 'bernd@example.com']);
+
+		static::assertFalse($result['success']);
+		static::assertNotSame([], $result['errors'] ?? []);
+		static::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_two_factor WHERE UID = 3'));
+	}
+
+	public function testWithoutAProviderTheSwitchToSsoFails(): void
+	{
+		$before = $this->connection->fetchOne('SELECT password FROM user_main WHERE UID = 3');
+
+		$result = $this->loadedBernd()->switchToSso(3, $this->berndsForm());
+
+		static::assertSame(['success' => false, 'errors' => [$this->container->get(Translator::class)->translate('sso_switch_failed', 'users')]], $result);
+		static::assertNotSame('', $result['errors'][0]);
+		static::assertSame($before, $this->connection->fetchOne('SELECT password FROM user_main WHERE UID = 3'));
+	}
+
+	public function testWithAProviderTheSwitchToSsoSucceeds(): void
+	{
+		$this->connection->insert('sso_providers', ['company_id' => 1, 'name' => 'Entra', 'issuer' => 'https://idp.example.test', 'client_id' => 'x', 'client_secret' => '']);
+
+		static::assertSame(['success' => true], $this->loadedBernd()->switchToSso(3, $this->berndsForm()));
+		static::assertSame('', $this->connection->fetchOne('SELECT password FROM user_main WHERE UID = 3'));
+	}
 }

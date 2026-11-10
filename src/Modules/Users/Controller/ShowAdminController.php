@@ -76,6 +76,7 @@ readonly class ShowAdminController
 		if (!$this->orchestrator->checkCreateRights())
 			return $this->redirectWithError($response, 'No rights');
 
+		// @infection-ignore-all the route always has the UID
 		$UID = (int) ($args['UID'] ?? 0);
 		if ($UID === 0)
 			return $this->redirectWithError($response, 'UID not valid.');

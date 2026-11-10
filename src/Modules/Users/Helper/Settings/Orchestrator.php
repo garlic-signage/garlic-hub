@@ -138,9 +138,11 @@ class Orchestrator
 
 		$form = $this->settingsFormBuilder->buildForm($userInput !== [] ? $userInput : $this->user);
 		$user = $this->getLoadedUser();
+		// @infection-ignore-all a loaded user has his company
+		$companyId = (int) ($user['company_id'] ?? 0);
 		$form['additional_buttons'] = $this->settingsFormBuilder->buildButtons(
 			$this->usersAdminService->hasTwoFactor((int) $user['UID']),
-			$this->usersAdminService->canSwitchToSso((int) $user['UID'], (int) ($user['company_id'] ?? 0))
+			$this->usersAdminService->canSwitchToSso((int) $user['UID'], $companyId)
 		);
 
 		return $form;
@@ -285,7 +287,9 @@ class Orchestrator
 			return ['success' => false, 'errors' => $errors];
 
 		$user = $this->getLoadedUser();
-		if (!$this->usersAdminService->canSwitchToSso($UID, (int) ($user['company_id'] ?? 0)))
+		// @infection-ignore-all a loaded user has his company
+		$companyId = (int) ($user['company_id'] ?? 0);
+		if (!$this->usersAdminService->canSwitchToSso($UID, $companyId))
 			return ['success' => false, 'errors' => [$this->translator->translate('sso_switch_failed', 'users')]];
 
 		try

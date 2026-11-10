@@ -75,7 +75,34 @@ class UnitSharesControllerTest extends UsersControllerTestCase
 			['UID' => 2, 'username' => 'anna', 'roles' => ['viewer', 'editor'], 'role' => ''],
 			['UID' => 3, 'username' => 'bernd', 'roles' => ['viewer'], 'role' => 'viewer'],
 		], $data['users']);
-		static::assertArrayHasKey('title', $data['labels']);
+		static::assertSame([
+			'title'    => $this->text('share_unit'),
+			'filter'   => $this->text('share_filter'),
+			'no_users' => $this->text('share_no_users'),
+			'none'     => $this->text('role_none'),
+			'close'    => $this->text('close', 'main'),
+			'viewer'   => $this->text('role_viewer'),
+			'editor'   => $this->text('role_editor'),
+		], $data['labels']);
+	}
+
+	/**
+	 * A role which does not exist at all is refused before anything is changed.
+	 */
+	public function testARoleWhichDoesNotExistIsRefused(): void
+	{
+		$this->actingAs(1);
+
+		try
+		{
+			$this->update('4', ['UID' => '2', 'role' => 'boss']);
+			static::fail('The role is not refused.');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertSame('role_not_available', $e->getTranslationKey());
+		}
+		static::assertSame(0, (int) $this->databaseValue('SELECT COUNT(*) FROM user_vip WHERE UID = 2'));
 	}
 
 	public function testTheAdminSetsAndRemovesARole(): void

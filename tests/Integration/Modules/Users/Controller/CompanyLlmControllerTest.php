@@ -160,4 +160,43 @@ class CompanyLlmControllerTest extends ContainerTestCase
 		static::assertSame(403, $response->getStatusCode());
 		static::assertFalse(json_decode((string) $response->getBody(), true)['success'] ?? true);
 	}
+	public function testThePageHasItsTitleTextsAndFiles(): void
+	{
+		$this->actingAs(1);
+
+		$page = $this->controller->show(new ServerRequestFactory()->createServerRequest('GET', '/users/llm'), new Response());
+
+		static::assertInstanceOf(PageResponse::class, $page);
+		$translator = $this->container->get(Translator::class);
+		$title      = $translator->translate('company_llm', 'users');
+		static::assertSame('users/llm', $page->getTemplate());
+		static::assertSame(['LANG_PAGE_TITLE' => $title, 'additional_css' => ['/css/llm_form.css'], 'footer_modules' => ['/js/users/llm/init.js']], $page->getMainLayoutData());
+		$data = $page->getTemplateData();
+		static::assertSame($title, $data['LANG_PAGE_HEADER']);
+		static::assertSame($translator->translate('company_llm_explanation', 'users'), $data['LANG_EXPLANATION']);
+		static::assertArrayHasKey('tasks', $data);
+	}
+
+	public function testAStoreAnswersWithARedirectToThePage(): void
+	{
+		$this->actingAs(1);
+
+		$response = $this->controller->deleteConnection($this->request('/users/llm/connection/delete', ['connection_id' => $this->addProvider()]), new Response());
+
+		static::assertSame(302, $response->getStatusCode());
+		static::assertSame('/users/llm', $response->getHeaderLine('Location'));
+		static::assertSame([$this->text('llm_connection_deleted')], $this->flash('success'));
+		static::assertSame([], $this->flash('error'));
+	}
+
+	public function testWithoutTheRightTheStartPageWithAnError(): void
+	{
+		$this->actingAs(2);
+
+		$response = $this->controller->show(new ServerRequestFactory()->createServerRequest('GET', '/users/llm'), new Response());
+
+		static::assertSame(302, $response->getStatusCode());
+		static::assertSame('/', $response->getHeaderLine('Location'));
+		static::assertSame(['No rights'], $this->flash('error'));
+	}
 }

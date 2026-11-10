@@ -27,6 +27,7 @@ use App\Framework\Utils\Datatable\BuildService;
 use App\Framework\Utils\Datatable\PrepareService;
 use App\Framework\Utils\FormParameters\BaseFilterParametersInterface;
 use App\Framework\Utils\FormParameters\ScalarType;
+use App\Framework\Utils\Html\FieldInterface;
 use App\Framework\Utils\Html\FormBuilder;
 use App\Modules\Users\Helper\Datatable\DatatableBuilder;
 use App\Modules\Users\Helper\Datatable\DatatablePreparer;
@@ -166,5 +167,60 @@ class DatatableEditionsTest extends ContainerTestCase
 
 		static::assertSame(['username', 'email', 'firstname', 'surname', 'company_name', 'status'], array_keys($form));
 		static::assertSame('Anna', HtmlFields::attributesOf($this->container->get(FormBuilder::class), $form)['firstname']['value']);
+	}
+	/**
+	 * Every filter has its text and shows the value of the request. The translator gives the key, so a missing text
+	 * shows: some keys have no translation yet.
+	 */
+	public function testTheFieldsOfTheFilterHaveTheirTextsAndValues(): void
+	{
+		$parameters = $this->container->get(Parameters::class);
+		foreach ([Parameters::PARAMETER_FIRSTNAME, Parameters::PARAMETER_SURNAME, Parameters::PARAMETER_COMPANY_NAME] as $name)
+			$parameters->addParameter($name, ScalarType::STRING, '');
+		$translator = $this->createStub(Translator::class);
+		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
+		$translator->method('translateArrayForOptions')->willReturn(['3' => 'Registered']);
+		$builder = new DatatableBuilder($this->container->get(BuildService::class), $parameters, $this->aclOf(Config::PLATFORM_EDITION_ENTERPRISE), $translator);
+		$builder->configureParameters(1);
+		$builder->determineParameters(['username' => 'ber', 'email' => '@example', 'firstname' => 'Anna', 'surname' => 'Meier', 'company_name' => 'ACME', 'company_id' => '1', 'status' => '3']);
+		$builder->collectFormElements();
+
+		$fields = array_map(
+			static fn(FieldInterface $field): array => [$field->getTitle(), $field->getLabel(), (string) $field->getValue()],
+			$builder->getDatatableStructure()['form']
+		);
+
+		static::assertSame([
+			'username'     => ['main.username', 'main.username', 'ber'],
+			'email'        => ['users.email', 'users.email', '@example'],
+			'firstname'    => ['users.firstname', 'users.firstname', 'Anna'],
+			'surname'      => ['users.surname', 'users.surname', 'Meier'],
+			'company_name' => ['users.company_name', 'users.company_name', 'ACME'],
+			BaseFilterParametersInterface::PARAMETER_COMPANY_ID => ['main.belongs_company', 'main.belongs_company', '1'],
+			'status'       => ['users.status', 'users.status', '3'],
+		], $fields);
+	}
+
+	#[DataProvider('editions')]
+	public function testTheColumnsOfTheEditionShowTheirValues(string $edition): void
+	{
+		$this->builder($edition)->createTableFields();
+		$row = ['firstname' => 'Anna', 'surname' => 'Meier', 'company_name' => 'ACME'] + $this->rows()[0];
+
+		$cells = $this->preparer($edition)->prepareTableBody([$row], $this->container->get(BuildService::class)->getDatatableFields(), 1)[0]['elements_result_element'];
+
+		static::assertSame(['Anna', 'Meier', 'ACME'], array_map(static fn(array $cell): string => $cell['is_text']['CONTROL_ELEMENT_VALUE_TEXT'], array_slice($cells, 3)));
+	}
+
+	public function testTheContextMenuHasItsTexts(): void
+	{
+		$translator = $this->container->get(Translator::class);
+
+		static::assertSame([
+			'LANG_EDIT'           => $translator->translate('edit', 'main'),
+			'LANG_RIGHTS'         => $translator->translate('rights', 'users'),
+			'LANG_DELETE'         => $translator->translate('delete', 'main'),
+			'LANG_CONFIRM_DELETE' => $translator->translate('confirm_delete', 'users'),
+		], $this->preparer(Config::PLATFORM_EDITION_ENTERPRISE)->formatContextMenu());
 	}
 }

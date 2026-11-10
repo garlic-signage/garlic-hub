@@ -25,6 +25,10 @@ use App\Framework\Config\Config;
 use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\TranslatableModuleException;
+use App\Framework\Localization\Translate\Translator;
+use App\Modules\Users\Helper\InitialAdmin\FormInputHandler;
+use App\Modules\Users\Helper\InitialAdmin\Orchestrator;
+use App\Modules\Users\Helper\InitialAdmin\SettingsFormBuilder;
 use App\Modules\Mediapool\Services\NodesService;
 use App\Modules\Users\Services\UsersAdminCreateService;
 use App\Shared\User\UserStatus;
@@ -207,5 +211,51 @@ class UsersAdminCreateServiceTest extends ContainerTestCase
 		$this->service->logAlarm();
 
 		static::assertSame(['Logfile was removed. Create a new one.'], $this->logger->messages['error']);
+	}
+
+	public function testOnlyTheUserOneIsTheAdmin(): void
+	{
+		$this->insertUser(2);
+
+		static::assertFalse($this->service->hasAdminUser());
+	}
+
+	public function testTheAdminIsCommitted(): void
+	{
+		$this->service->insertNewAdminUser(self::admin(), $this->container->get(Config::class));
+
+		static::assertFalse($this->connection->isTransactionActive());
+	}
+
+	/**
+	 * The admin is the user 1 also when the counter of the table is further, e.g. after an import.
+	 */
+	public function testTheAdminGetsTheUidOneAlsoWhenOtherUsersExist(): void
+	{
+		$this->insertUser(7);
+
+		static::assertSame(1, $this->service->insertNewAdminUser(self::admin(), $this->container->get(Config::class)));
+		static::assertSame('root', $this->connection->fetchOne('SELECT username FROM user_main WHERE UID = 1'));
+	}
+
+	/**
+	 * An admin without lock file means the lock file was removed: the form is closed, the file is written again and
+	 * the removal is logged.
+	 */
+	public function testTheFormIsClosedAndTheAlarmLoggedWhenTheLockFileOfAnInstallationIsMissing(): void
+	{
+		$service = $this->createMock(UsersAdminCreateService::class);
+		$service->method('hasAdminUser')->willReturn(true);
+		$service->expects($this->once())->method('creatLockfile')->willReturn(true);
+		$service->expects($this->once())->method('logAlarm');
+		$orchestrator = new Orchestrator($service, $this->container->get(FormInputHandler::class), $this->container->get(SettingsFormBuilder::class),
+			$this->container->get(Config::class), $this->container->get(Translator::class));
+
+		static::assertFalse($orchestrator->isFunctionAllowed());
+	}
+
+	private function insertUser(int $UID): void
+	{
+		$this->connection->insert('user_main', ['UID' => $UID, 'company_id' => 1, 'status' => 3, 'locale' => 'en_US', 'username' => 'user' . $UID, 'email' => 'user' . $UID . '@example.com']);
 	}
 }

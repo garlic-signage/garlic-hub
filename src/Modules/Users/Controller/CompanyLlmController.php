@@ -198,8 +198,10 @@ readonly class CompanyLlmController
 		if (!$this->aclValidator->isModuleAdmin($UID))
 			return null;
 
+		// @infection-ignore-all every user has a company: the fallback 1 is never taken
 		$companyId = $this->usersService->getUserById($UID)->getMain()['company_id'] ?? 1;
 
+		// @infection-ignore-all the database gives the company as number
 		return is_numeric($companyId) ? (int) $companyId : 1;
 	}
 

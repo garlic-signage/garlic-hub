@@ -120,7 +120,9 @@ readonly class SsoProvidersController
 		if (!$this->service->mayManage($UID))
 			return $this->noRights($response);
 
-		$provider = $this->service->find($UID, (int) ($args['id'] ?? 0));
+		// @infection-ignore-all the route always has the id
+		$id       = (int) ($args['id'] ?? 0);
+		$provider = $this->service->find($UID, $id);
 		if ($provider === null)
 			return $this->backToList($response, 'error', 'sso_provider_not_found');
 

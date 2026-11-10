@@ -53,4 +53,14 @@ class ParametersTest extends TestCase
 		static::assertSame('users', $this->parameters->getModuleName());
 	}
 
+	/**
+	 * Without a sort of the user the list is sorted by the id: the oldest users first.
+	 *
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testTheListIsSortedByTheIdOfTheUser(): void
+	{
+		static::assertSame('UID', $this->parameters->getDefaultValueOfParameter(Parameters::PARAMETER_SORT_COLUMN));
+	}
 }

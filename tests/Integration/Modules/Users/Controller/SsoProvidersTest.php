@@ -36,22 +36,16 @@ use Defuse\Crypto\Crypto;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Slim\Psr7\Factory\ServerRequestFactory;
 use Slim\Psr7\Response;
-use Tests\Integration\Support\ContainerTestCase;
 
 /**
  * The page of the SSO providers. Users: 1 admin (module admin of users), 2 anna and 3 bernd without rights.
  */
 #[Group('acl')]
-class SsoProvidersTest extends ContainerTestCase
+class SsoProvidersTest extends UsersControllerTestCase
 {
-	protected function setUp(): void
-	{
-		parent::setUp();
-		$this->loadFixture('acl/users.sql');
-	}
-
 	private function controller(): SsoProvidersController
 	{
 		return $this->container->get(SsoProvidersController::class);
@@ -220,5 +214,163 @@ class SsoProvidersTest extends ContainerTestCase
 		static::assertStringContainsString('accounts.google.com', $details);
 		static::assertStringNotContainsString('very-secret', $details);
 		static::assertStringNotContainsString((string) $this->stored()['client_secret'], $details);
+	}
+	private function get(string $path): ServerRequestInterface
+	{
+		return new ServerRequestFactory()->createServerRequest('GET', 'https://hub.example.test' . $path);
+	}
+
+	/**
+	 * The list with all its texts: an active and an inactive provider.
+	 */
+	public function testTheListHasAllItsTextsAndTheProviders(): void
+	{
+		$this->actingAs(1);
+		$this->store();
+		$this->store(['name' => 'Microsoft', 'issuer' => 'https://login.microsoftonline.com', 'enabled' => null]);
+		$_SESSION['slimFlash'] = [];
+
+		$page = $this->page($this->controller()->show($this->get('/users/sso'), new Response()));
+
+		static::assertSame('users/sso_providers', $page->getTemplate());
+		static::assertSame(['LANG_PAGE_TITLE' => $this->text('sso_providers'), 'additional_css' => [], 'footer_modules' => []], $page->getMainLayoutData());
+		static::assertSame([
+			'LANG_PAGE_HEADER'  => $this->text('sso_providers'),
+			'LANG_REDIRECT_URI' => $this->text('sso_redirect_uri'),
+			'REDIRECT_URI'      => 'https://hub.example.test/login/sso/callback',
+			'LANG_NAME'         => $this->text('sso_name'),
+			'LANG_ISSUER'       => $this->text('sso_issuer'),
+			'LANG_ENABLED'      => $this->text('sso_enabled'),
+			'LANG_EDIT'         => $this->text('edit', 'main'),
+			'LANG_ADD'          => $this->text('add', 'main'),
+			'LANG_NO_PROVIDERS' => $this->text('sso_no_providers'),
+			'has_providers'     => [['providers' => [
+				['ID' => 1, 'NAME' => 'Google', 'ISSUER' => 'https://accounts.google.com', 'ENABLED' => $this->text('sso_on')],
+				['ID' => 2, 'NAME' => 'Microsoft', 'ISSUER' => 'https://login.microsoftonline.com', 'ENABLED' => $this->text('sso_off')],
+			]]]
+		], $page->getTemplateData());
+	}
+
+	public function testAnEmptyListHasNoProviders(): void
+	{
+		$this->actingAs(1);
+
+		static::assertSame([], $this->page($this->controller()->show($this->get('/users/sso'), new Response()))->getTemplateData()['has_providers']);
+	}
+
+	/**
+	 * A new provider: its own title, no delete button, id 0 and the secret is needed.
+	 */
+	public function testTheFormOfANewProvider(): void
+	{
+		$this->actingAs(1);
+
+		$page = $this->page($this->controller()->newForm($this->get('/users/sso/new'), new Response()));
+
+		static::assertSame('users/edit', $page->getTemplate());
+		static::assertSame(['LANG_PAGE_TITLE' => $this->text('sso_provider_new'), 'additional_css' => [], 'footer_modules' => ['/js/users/sso/init.js']], $page->getMainLayoutData());
+		$data = $page->getTemplateData();
+		static::assertSame($this->text('sso_provider_new'), $data['LANG_PAGE_HEADER']);
+		static::assertSame('/users/sso/edit', $data['FORM_ACTION']);
+		static::assertSame($this->text('sso_redirect_uri') . ' https://hub.example.test/login/sso/callback', $data['LANG_FORM_EXPLANATION']);
+		static::assertSame($this->text('save', 'main'), $data['form_button'][0]['LANG_ELEMENT_BUTTON']);
+		static::assertSame([], $data['additional_buttons']);
+		$fields = $this->fields($page);
+		static::assertSame('0', $fields['provider_id']['value']);
+		static::assertArrayHasKey('required', $fields['client_secret']);
+		static::assertSame('', $fields['client_secret']['placeholder'] ?? '');
+	}
+
+	/**
+	 * A stored provider: its name in the title, the delete button and the stored secret is not needed again.
+	 */
+	public function testTheFormOfAStoredProvider(): void
+	{
+		$this->actingAs(1);
+		$this->store();
+
+		$page = $this->page($this->controller()->editForm($this->get('/users/sso/edit/1'), new Response(), ['id' => '1']));
+
+		static::assertSame($this->text('sso_provider') . ': Google', $page->getMainLayoutData()['LANG_PAGE_TITLE']);
+		$data = $page->getTemplateData();
+		static::assertSame($this->text('sso_provider') . ': Google', $data['LANG_PAGE_HEADER']);
+		static::assertSame(['ADDITIONAL_BUTTON_TYPE' => 'submit', 'ADDITIONAL_BUTTON_NAME' => 'delete', 'LANG_ADDITIONAL_BUTTON' => $this->text('delete', 'main'),
+			'ADDITIONAL_BUTTON_CONFIRM' => $this->text('sso_delete_confirm')], $data['additional_buttons'][0] ?? null);
+		$fields = $this->fields($page);
+		static::assertSame('1', $fields['provider_id']['value']);
+		static::assertArrayNotHasKey('required', $fields['client_secret']);
+		static::assertSame($this->text('sso_secret_stored'), $fields['client_secret']['placeholder']);
+	}
+
+	/**
+	 * A stored provider without a secret (left over from an old version) needs one.
+	 */
+	public function testAStoredProviderWithoutSecretNeedsOne(): void
+	{
+		$this->connection->insert('sso_providers', ['provider_id' => 5, 'company_id' => 1, 'name' => 'Old', 'issuer' => 'https://old.example.test', 'client_id' => 'x', 'client_secret' => '']);
+		$this->actingAs(1);
+
+		$fields = $this->fields($this->page($this->controller()->editForm($this->get('/users/sso/edit/5'), new Response(), ['id' => '5'])));
+
+		static::assertArrayHasKey('required', $fields['client_secret']);
+	}
+
+	public function testSavingRedirectsToTheListWithAMessage(): void
+	{
+		$this->actingAs(1);
+
+		$this->assertRedirect($this->store(), '/users/sso');
+		static::assertSame([$this->text('sso_provider_saved')], $this->flash('success'));
+	}
+
+	public function testDeletingRedirectsToTheListWithAMessage(): void
+	{
+		$this->actingAs(1);
+		$this->store();
+		$_SESSION['slimFlash'] = [];
+
+		$this->assertRedirect($this->store(['provider_id' => '1', 'delete' => '1']), '/users/sso');
+		static::assertSame([$this->text('sso_provider_deleted')], $this->flash('success'));
+	}
+
+	public function testAnUnknownProviderRedirectsWithAnError(): void
+	{
+		$this->actingAs(1);
+
+		$this->assertRedirect($this->controller()->editForm($this->get('/users/sso/edit/9'), new Response(), ['id' => '9']), '/users/sso', $this->text('sso_provider_not_found'));
+	}
+
+	public function testAnUnknownProviderIsNotStored(): void
+	{
+		$this->actingAs(1);
+
+		$this->assertRedirect($this->store(['provider_id' => '9']), '/users/sso', $this->text('sso_provider_not_found'));
+	}
+
+	public function testWithoutRightsTheStartPageWithAnError(): void
+	{
+		$this->actingAs(2);
+
+		$this->assertRedirect($this->controller()->show($this->get('/users/sso'), new Response()), '/', 'No rights');
+	}
+
+	public function testWithoutRightsNoFormOfAStoredProvider(): void
+	{
+		$this->actingAs(2);
+
+		$this->assertRedirect($this->controller()->editForm($this->get('/users/sso/edit/1'), new Response(), ['id' => '1']), '/', 'No rights');
+	}
+
+	/**
+	 * Every error of the input once, for this request: the form is shown again.
+	 */
+	public function testEveryErrorIsShownOnce(): void
+	{
+		$this->actingAs(1);
+
+		$page = $this->page($this->store(['name' => '', 'client_id' => '']));
+
+		static::assertSame([$this->text('sso_name_invalid'), $this->text('sso_client_id_invalid')], $this->flash('error'));
+		static::assertSame('', $this->fields($page)['name']['value'] ?? '');
 	}
 }

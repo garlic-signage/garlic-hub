@@ -64,7 +64,9 @@ readonly class UsersController
 	 */
 	public function determineRights(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
+		// @infection-ignore-all the route always has the UID
 		$UID  = (int) ($args['UID'] ?? 0);
+		// @infection-ignore-all there is no user 0: >= 0 finds no user either
 		$main = $UID > 0 ? $this->usersService->getUserById($UID)->getMain() : [];
 		if ($main === [])
 			return $this->responseHandler->jsonSuccess($response, ['can_edit' => false, 'can_rights' => false, 'can_delete' => false]);

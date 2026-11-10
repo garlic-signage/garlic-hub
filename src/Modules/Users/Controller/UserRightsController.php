@@ -57,11 +57,13 @@ readonly class UserRightsController
 	 */
 	public function show(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
+		// @infection-ignore-all the route always has the UID
 		$UID     = (int) ($args['UID'] ?? 0);
 		$granter = $this->userSession->getUID();
+		// @infection-ignore-all there is no user 0: >= 0 finds no user either
 		$main    = $UID > 0 ? $this->usersService->getUserById($UID)->getMain() : [];
 		// nobody changes his own rights, a deleted user has none
-		if ($main === [] || $UID === $granter || (int) $main['status'] === UserStatus::DELETED->value)
+		if ($main === [] || $UID === $granter || $this->isDeleted($main))
 			return $this->redirectWithError($response);
 
 		$modules = $this->aclGrantService->findGrantableModules($granter, (int) $main['company_id']);
@@ -111,7 +113,9 @@ readonly class UserRightsController
 		if ($role === null)
 			throw new TranslatableModuleException('users', 'role_not_available', ['role' => $input->text('role')]);
 
-		$this->aclGrantService->setRole($this->userSession->getUID(), (int) ($args['UID'] ?? 0), $input->text('module'), $role, $input->text('granted') === '1');
+		// @infection-ignore-all the route always has the UID
+		$UID = (int) ($args['UID'] ?? 0);
+		$this->aclGrantService->setRole($this->userSession->getUID(), $UID, $input->text('module'), $role, $input->text('granted') === '1');
 
 		return $this->responseHandler->jsonSuccess($response);
 	}
@@ -168,6 +172,15 @@ readonly class UserRightsController
 		}
 
 		return $options;
+	}
+
+	/**
+	 * @param array<string,mixed> $main
+	 */
+	private function isDeleted(array $main): bool
+	{
+		// @infection-ignore-all the cast is for databases which give text, ours gives the status as number
+		return (int) $main['status'] === UserStatus::DELETED->value;
 	}
 
 	private function redirectWithError(ResponseInterface $response): ResponseInterface

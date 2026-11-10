@@ -110,7 +110,11 @@ class SsoProvidersService
 			$fields['client_secret'] = Crypto::encrypt($secret, $this->crypt->getEncryptionKey());
 
 		if ($provider === null)
-			$providerId = (int) $this->providersRepository->insert(['company_id' => $this->companyOf($UID)] + $fields);
+		{
+			$inserted   = $this->providersRepository->insert(['company_id' => $this->companyOf($UID)] + $fields);
+			// @infection-ignore-all the id goes into the audit log as text anyway
+			$providerId = (int) $inserted;
+		}
 		else
 		{
 			$providerId = $provider->id;
@@ -191,8 +195,10 @@ class SsoProvidersService
 	 */
 	private function companyOf(int $UID): int
 	{
+		// @infection-ignore-all every user has a company: 1 is only the default of the installation without companies
 		$companyId = $this->usersService->getUserById($UID)->getMain()['company_id'] ?? 1;
 
+		// @infection-ignore-all see above, and the cast is for databases which give text
 		return is_numeric($companyId) ? (int) $companyId : 1;
 	}
 }

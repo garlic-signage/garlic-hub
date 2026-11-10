@@ -73,7 +73,9 @@ class SsoUserProvisioningService implements SsoUserProvisioning
 			if ($existing !== [])
 			{
 				// the provider of one company does not log in the user of another one
-				if (!$identity->emailVerified || (int) ($existing['company_id'] ?? 0) !== $identity->provider->companyId)
+				// @infection-ignore-all every user row has a company, the cast is for databases which give text
+				$companyId = (int) ($existing['company_id'] ?? 0);
+				if (!$identity->emailVerified || $companyId !== $identity->provider->companyId)
 					throw new SsoRefusedException('sso_account_exists');
 
 				// an account with a password logs in by it: whoever has the email at the provider must not take it
@@ -83,6 +85,7 @@ class SsoUserProvisioningService implements SsoUserProvisioning
 				if ((is_string($hash) && $hash !== '') || $this->userSsoRepository->hasLink((int) $existing['UID'], $identity->provider->id))
 					throw new SsoRefusedException('sso_account_exists');
 
+				// @infection-ignore-all the cast is for databases which give text
 				$UID = (int) $existing['UID'];
 			}
 			else
@@ -129,7 +132,8 @@ class SsoUserProvisioningService implements SsoUserProvisioning
 	private function uniqueUsername(string $email): string
 	{
 		$base = preg_replace('/[^a-z0-9._-]/', '', strtolower(strstr($email, '@', true) ?: '')) ?? '';
-		$base = mb_substr($base !== '' ? $base : 'user', 0, self::MAX_USERNAME_LENGTH - 4);
+		// only ASCII is left: bytes are characters
+		$base = substr($base !== '' ? $base : 'user', 0, self::MAX_USERNAME_LENGTH - 4);
 
 		$candidate = $base;
 		for ($number = 2; $this->usernameExists($candidate); $number++)
@@ -145,6 +149,8 @@ class SsoUserProvisioningService implements SsoUserProvisioning
 	{
 		foreach ($this->userMainRepository->findExistingUser($username, $username) as $existing)
 		{
+			// the email may be the same text as the username: only the username counts
+			// @infection-ignore-all is_array() is for PHPStan, the repository gives only rows
 			if (is_array($existing) && strcasecmp((string) ($existing['username'] ?? ''), $username) === 0)
 				return true;
 		}

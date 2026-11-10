@@ -102,6 +102,8 @@ class ShowAdminControllerTest extends UsersControllerTestCase
 		$response = $this->store(['UID' => '3', 'resetTwoFactor' => '1', 'username' => 'bernd', 'email' => 'bernd@example.com']);
 
 		$this->assertRedirect($response, '/users/edit/3');
+		static::assertSame([sprintf($this->text('two_factor_reset_done'), 'bernd')], $this->flash('success'));
+		static::assertSame([], $this->flash('error'));
 		static::assertSame(0, (int) $this->databaseValue('SELECT COUNT(*) FROM user_two_factor WHERE UID = 3'));
 		// the password stays
 		static::assertNotSame('', $this->databaseValue('SELECT password FROM user_main WHERE UID = 3'));
@@ -117,6 +119,8 @@ class ShowAdminControllerTest extends UsersControllerTestCase
 		$response = $this->store(['UID' => '3', 'switchToSso' => '1', 'username' => 'bernd', 'email' => 'bernd@example.com']);
 
 		$this->assertRedirect($response, '/users/edit/3');
+		static::assertSame([sprintf($this->text('sso_switch_done'), 'bernd')], $this->flash('success'));
+		static::assertSame([], $this->flash('error'));
 		static::assertSame('', $this->databaseValue('SELECT password FROM user_main WHERE UID = 3'));
 		// switched: no password, nothing to switch any more
 		static::assertSame(['resetPassword'], array_column($this->page($this->edit('3'))->getTemplateData()['additional_buttons'], 'ADDITIONAL_BUTTON_NAME'));
@@ -127,9 +131,37 @@ class ShowAdminControllerTest extends UsersControllerTestCase
 		$this->actingAs(1);
 		$before = $this->databaseValue('SELECT password FROM user_main WHERE UID = 3');
 
-		$this->assertRedirect($this->store(['UID' => '3', 'switchToSso' => '1', 'username' => 'bernd', 'email' => 'bernd@example.com']), '/users/edit/3');
+		$this->assertRedirect($this->store(['UID' => '3', 'switchToSso' => '1', 'username' => 'bernd', 'email' => 'bernd@example.com']), '/users/edit/3', $this->text('sso_switch_failed'));
 
+		static::assertSame([], $this->flash('success'));
 		static::assertSame($before, $this->databaseValue('SELECT password FROM user_main WHERE UID = 3'));
+	}
+
+	/**
+	 * Every error of the form is shown after the redirect, and no success.
+	 */
+	public function testAResetOfTheSecondFactorWithWrongInputShowsTheErrors(): void
+	{
+		$this->actingAs(1);
+		$this->connection->insert('user_two_factor', ['UID' => 3, 'secret' => 'encrypted', 'enabled_at' => '2026-01-01 00:00:00']);
+
+		$this->assertRedirect($this->store(['UID' => '3', 'resetTwoFactor' => '1', 'username' => 'bernd', 'email' => 'no-mail']), '/users/edit/3');
+
+		static::assertSame([$this->text('no_email')], $this->flash('error'));
+		static::assertSame([], $this->flash('success'));
+		static::assertSame(1, (int) $this->databaseValue('SELECT COUNT(*) FROM user_two_factor WHERE UID = 3'));
+	}
+
+	public function testASwitchToSsoWithWrongInputShowsTheErrors(): void
+	{
+		$this->actingAs(1);
+		$this->connection->insert('sso_providers', ['company_id' => 1, 'name' => 'Entra', 'issuer' => 'https://idp.example.test', 'client_id' => 'x', 'client_secret' => '']);
+
+		$this->assertRedirect($this->store(['UID' => '3', 'switchToSso' => '1', 'username' => 'bernd', 'email' => 'no-mail']), '/users/edit/3');
+
+		static::assertSame([$this->text('no_email')], $this->flash('error'));
+		static::assertSame([], $this->flash('success'));
+		static::assertNotSame('', $this->databaseValue('SELECT password FROM user_main WHERE UID = 3'));
 	}
 
 	public function testTheFormHasTheRulesOfTheFields(): void
