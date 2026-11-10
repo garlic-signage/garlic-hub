@@ -24,7 +24,8 @@ import {MediaCapture}               from "@js/mediapool/uploads/MediaCapture.js"
 
 /**
  * The MediaRecorder of the browser: start() records, stop() delivers the last chunk and then calls onstop.
- * The test hands the chunks in with deliver().
+ * The test hands the chunks in with deliver(). With stopsLater the browser ends the recording only with finish(),
+ * as it does a little later in a task of its own.
  */
 class FakeMediaRecorder
 {
@@ -35,6 +36,7 @@ class FakeMediaRecorder
 	timeslice = null;
 	ondataavailable = null;
 	onstop          = null;
+	stopsLater      = false;
 
 	constructor(stream)
 	{
@@ -56,6 +58,12 @@ class FakeMediaRecorder
 	stop()
 	{
 		this.state = 'inactive';
+		if (!this.stopsLater)
+			this.finish();
+	}
+
+	finish()
+	{
 		this.deliver('end');
 		this.onstop();
 	}
@@ -168,6 +176,45 @@ Deno.test('the next recording starts with new chunks', async () =>
 	page.capture.stop();
 
 	assertEquals(await page.results.recorded[1].file.text(), 'new end');
+});
+
+Deno.test('a recording started before the last one has ended keeps both videos apart', async () =>
+{
+	using time = new FakeTime();
+	using page = createCapture();
+	const first = page.start(page.capture);
+	first.stopsLater = true;
+	first.deliver('old ');
+	page.capture.stop();
+
+	const second = page.start(page.capture);
+	second.deliver('new ');
+	first.finish();
+
+	assertEquals(await page.results.recorded[0].file.text(), 'old end');
+	assertEquals(page.capture.isRecording(), true);
+	// the button of the new recording stays a stop button
+	assertEquals(page.results.stopped, 0);
+
+	page.capture.stop();
+	assertEquals(await page.results.recorded[1].file.text(), 'new end');
+});
+
+Deno.test('the late end of the last recording leaves the timer of the next one', () =>
+{
+	using time = new FakeTime();
+	using page = createCapture();
+	const first = page.start(page.capture);
+	first.stopsLater = true;
+	page.capture.stop();
+	page.start(page.capture);
+
+	first.finish();
+	time.tick(MediaCapture.MAX_RECORD_SECONDS * 1000);
+
+	assertEquals(page.capture.isRecording(), false);
+	assertEquals(page.results.stopped, 1);
+	assertEquals(page.results.recorded.length, 2);
 });
 
 Deno.test('a recording that ended by the browser leaves the capture ready for the next', () =>

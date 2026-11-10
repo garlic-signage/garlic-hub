@@ -28,7 +28,6 @@ export class MediaCapture
 	static MAX_RECORD_SECONDS = 300; // 5 min
 
 	#recorder  = null;
-	#chunks    = [];
 	#stopTimer = null;
 
 	isRecording()
@@ -41,33 +40,38 @@ export class MediaCapture
 	 *
 	 * @param {MediaStream} stream
 	 * @param {function(File, number)} onRecorded the video and its duration in seconds
-	 * @param {function()} onStopped also when the time is up
+	 * @param {function()} onStopped also when the time is up, not when a new recording has begun already
 	 */
 	start(stream, onRecorded, onStopped)
 	{
 		const recorder  = new MediaRecorder(stream);
 		const startTime = Date.now();
-		this.#chunks    = [];
+		// chunks and timer of this recording: the browser calls onstop later, a new recording may have begun then
+		const chunks    = [];
+		let stopTimer   = null;
 		this.#recorder  = recorder;
 
-		recorder.ondataavailable = (event) => this.#chunks.push(event.data);
+		recorder.ondataavailable = (event) => chunks.push(event.data);
 		recorder.onstop = () =>
 		{
-			clearTimeout(this.#stopTimer);
-			const blob = new Blob(this.#chunks, { type: "video/webm;" });
+			clearTimeout(stopTimer);
+			const blob = new Blob(chunks, { type: "video/webm;" });
 			onRecorded(new File([blob], "recorded-video.webm", { type: blob.type }), (Date.now() - startTime) / 1000);
+			// the new recording keeps its state, e.g. the stop button
+			if (this.#recorder !== recorder)
+				return;
+
+			this.#recorder = null;
 			onStopped();
-			if (this.#recorder === recorder)
-				this.#recorder = null;
 		};
 
 		recorder.start(1000); // 1000ms = 1 sec per chunk
-		// the timer of this recording: a later recording has its own
-		this.#stopTimer = setTimeout(() =>
+		stopTimer = setTimeout(() =>
 		{
 			if (recorder.state === "recording")
 				recorder.stop();
 		}, MediaCapture.MAX_RECORD_SECONDS * 1000);
+		this.#stopTimer = stopTimer;
 	}
 
 	stop()
