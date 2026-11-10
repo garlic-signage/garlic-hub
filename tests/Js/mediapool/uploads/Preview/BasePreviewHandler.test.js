@@ -140,8 +140,8 @@ Deno.test('the tooltip is shown while the mouse is over the preview', () =>
 Deno.test('the close button removes the file, the last one disables the upload', () =>
 {
 	using page = createPage();
-	page.handler.addFile(LOBBY, null);
-	page.handler.addFile({...LOBBY, name: 'hall.jpg'}, null);
+	page.handler.addFile(LOBBY, {origin: 'File upload'});
+	page.handler.addFile({...LOBBY, name: 'hall.jpg'}, {origin: 'File upload'});
 	const [first, second] = previews(page);
 
 	first.querySelector('.closeButton').dispatchEvent(new Event('click'));
@@ -153,6 +153,7 @@ Deno.test('the close button removes the file, the last one disables the upload',
 	second.querySelector('.closeButton').dispatchEvent(new Event('click'));
 	assertEquals(previews(page), []);
 	assertEquals(page.handler.fileList, {});
+	assertEquals(page.handler.metaDataList, {});
 	assertEquals(page.uploader.calls, ['enable', 'enable', 'disable']);
 });
 

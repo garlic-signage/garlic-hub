@@ -38,8 +38,9 @@ export class LocalFilesUploader extends BaseUploader
 
 	uploadFiles()
 	{
+		// an object of the files by the ids of their previews
 		const fileList = this.#filePreviews.fileList;
-		if (fileList.length === 0)
+		if (Object.keys(fileList).length === 0)
 		{
 			alert("No files selected for upload.");
 			return;
@@ -62,13 +63,11 @@ export class LocalFilesUploader extends BaseUploader
 				{
 
 					this.uploaderDialog.disableActions();
-					let metadata = {};
-					if (this.#filePreviews.metaDataList[id])
-						metadata = this.#filePreviews.metaDataList[id];
+					const metadata = this.#filePreviews.metaDataList[id] ?? {};
 					const formData = new FormData();
 					formData.append("file", file);
 					formData.append("node_id", this.directoryView.getActiveNodeId());
-					formData.append("metadata", JSON.stringify(this.#filePreviews.metaDataList[id]));
+					formData.append("metadata", JSON.stringify(metadata));
 					formData.append("csrf_token", Utils.csrfToken());
 
 					const options  = {method: "POST", body: formData};
@@ -105,7 +104,6 @@ export class LocalFilesUploader extends BaseUploader
 						console.log('Upload failed for file:', file.name, '\n', error.message);
 						container.className = "previewContainerError";
 					}
-					this.uploaderDialog.enableActions()
 				}
 				finally
 				{

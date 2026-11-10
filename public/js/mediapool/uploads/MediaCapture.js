@@ -55,7 +55,7 @@ export class MediaCapture
 		recorder.onstop = () =>
 		{
 			clearTimeout(stopTimer);
-			const blob = new Blob(chunks, { type: "video/webm;" });
+			const blob = new Blob(chunks, { type: "video/webm" });
 			onRecorded(new File([blob], "recorded-video.webm", { type: blob.type }), (Date.now() - startTime) / 1000);
 			// the new recording keeps its state, e.g. the stop button
 			if (this.#recorder !== recorder)

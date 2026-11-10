@@ -124,7 +124,7 @@ Deno.test('the stopped recording becomes a webm video with its duration', async 
 	assertEquals(page.results.stopped, 1);
 	const [{file, duration}] = page.results.recorded;
 	assertEquals(file.name, 'recorded-video.webm');
-	assertEquals(file.type.startsWith('video/webm'), true);
+	assertEquals(file.type, 'video/webm');
 	assertEquals(await file.text(), 'first end');
 	assertEquals(duration, 12.5);
 });

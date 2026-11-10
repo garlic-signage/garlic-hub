@@ -115,6 +115,7 @@ export class BasePreviewHandler
 			this.#xhrUpload.abort();
 
 		delete this.#fileList[id];
+		delete this.#metaDataList[id];
 		document.querySelector(`[data-preview-id="${id}"]`).remove();
 
 		if (Object.keys(this.#fileList).length === 0)

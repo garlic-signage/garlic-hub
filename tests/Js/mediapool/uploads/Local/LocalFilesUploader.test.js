@@ -185,15 +185,14 @@ Deno.test('the start button uploads the files', async () =>
 	assertEquals(page.client.uploads.length, 1);
 });
 
-Deno.test('without files nothing is uploaded', async () =>
+Deno.test('without files nothing is uploaded and a hint is shown', async () =>
 {
 	using alertStub = stub(globalThis, 'alert');
 	using page      = createPage({});
 
 	await uploadAll(page);
 
-	// the alert is never shown: the fileList is an object without length, the start button is disabled anyway
-	assertEquals(alertStub.calls, []);
+	assertEquals(alertStub.calls[0].args, ['No files selected for upload.']);
 	assertEquals(page.client.uploads, []);
 	assertEquals(page.dialog.calls, []);
 });
@@ -222,6 +221,16 @@ Deno.test('every file is posted with the directory, its metadata and the CSRF to
 	const metadata = JSON.stringify({origin: 'File upload', page_url: ''});
 	assertEquals(page.client.fieldsOf(0), [['file', 'lobby.jpg'], ['node_id', '5'], ['metadata', metadata], ['csrf_token', 'the-token']]);
 	assertEquals(page.client.fieldsOf(1)[0], ['file', 'hall.jpg']);
+});
+
+Deno.test('a file without metadata is posted with empty metadata', async () =>
+{
+	using page = createPage({a: 'lobby.jpg'});
+	delete page.previews.metaDataList.a;
+
+	await uploadAll(page);
+
+	assertEquals(page.client.fieldsOf(0)[2], ['metadata', '{}']);
 });
 
 Deno.test('the previews get the handle of the running upload to abort it', async () =>
@@ -300,7 +309,8 @@ Deno.test('a failed upload marks its preview, the next one is uploaded', async (
 	assertEquals(logStub.calls[0].args, ['Upload failed for file:', 'lobby.jpg', '\n', 'Timeout: Server did not respond.']);
 	assertEquals(page.container('a').className, 'previewContainerError');
 	assertEquals(page.previews.removed, ['b']);
-	assertEquals(page.dialog.calls.at(-1), 'enableActions');
+	// every upload locks and unlocks the dialog once
+	assertEquals(page.dialog.calls, ['disableActions', 'enableActions', 'disableActions', 'enableActions']);
 });
 
 Deno.test('an aborted upload is only logged', async () =>
