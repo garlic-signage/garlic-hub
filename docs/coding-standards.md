@@ -257,3 +257,25 @@ The following are the guidelines for writing templates:
 **Groups are not inherited by PHPUnit.** Every concrete test class needs its own attribute, for example `#[Group('db')]` above the class. A class without it is not selected by `--group`.
 
 After writing a test, break the code on purpose (remove a `WHERE`, flip a comparison) and check that the test fails.
+
+### Mutation Tests
+
+Infection does this breaking automatically: it changes the code in small steps (a mutant) and runs the tests against
+every change. A mutant which no test notices has escaped. Run `ddev exec bin/infection.sh` regularly, at least before
+a release, or with a git ref for the lines changed since then (see the README). The configuration is in
+`infection.json5`, the reports go to `var/infection/`.
+
+- At least 90% of the mutants of a module must be killed.
+- Log lines (`$this->logger->...`) are not mutated: their texts are no behaviour. The audit log is.
+- An escaped mutant is first a missing test. Write the test.
+- A mutant which cannot change the behaviour (equivalent mutant) gets a marker with the reason in the line above,
+  for example a cast of a value which the database already gives as a number:
+
+  ```php
+  // @infection-ignore-all the database gives the id as a number
+  $id = (int) $row['id'];
+  ```
+
+  The marker covers every mutant of the next statement. Never put it above a `throw` or an `if` which wraps a throw:
+  it would hide the mutant which removes the throw. Move the equivalent part into its own line instead.
+- The detail arrays of exceptions and internal, untranslated messages may stay escaped.

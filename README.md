@@ -108,6 +108,17 @@ ddev exec vendor/bin/phpstan analyze
 
 `bin/check-code.sh` runs the tests with coverage and the static analysis.
 
+Mutation tests with [Infection](https://infection.github.io) show tests which run the code but would not notice a
+change of it. Run them regularly, at least before a release:
+
+```bash
+ddev exec bin/infection.sh           # the whole code base
+ddev exec bin/infection.sh v1.2.0    # only the lines changed since this git ref
+```
+
+The report is in `var/infection/infection.html`. The rules for the tests and the markers are in
+[docs/coding-standards.md](docs/coding-standards.md#mutation-tests).
+
 ### Tech Stack
 
 - PHP 8.4 with strict types, PHPStan level 8, PHPUnit 12
