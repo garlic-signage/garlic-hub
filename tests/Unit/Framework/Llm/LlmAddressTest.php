@@ -87,6 +87,8 @@ class LlmAddressTest extends TestCase
 			'aws ipv6 metadata'   => ['fd00:ec2::254', true],
 			'mapped metadata'     => ['::ffff:169.254.169.254', true],
 			'mapped lan'          => ['::ffff:10.0.0.1', false],
+			// all four bytes count: from the 13th byte on it would look like fe80::/10
+			'mapped fe 80'        => ['::ffff:10.254.128.1', false],
 			'no address'          => ['ollama', false],
 		];
 	}

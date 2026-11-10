@@ -323,4 +323,38 @@ class OpenAiCompatibleClientTest extends TestCase
 
 		$this->assertLlmError('llm_not_reachable', static fn() => $client->generateImage('A beach', '1024x1024'));
 	}
+
+	#[Group('units')]
+	public function testEveryMessageOfTheConversationIsSent(): void
+	{
+		$client = $this->factory([self::answer('ok')])->create(new LlmConnection('openai', 'http://ollama:11434/v1', 'qwen3'));
+
+		$client->complete(new LlmRequest('', [LlmMessage::user('eins'), new LlmMessage(LlmMessage::ROLE_ASSISTANT, 'zwei'), LlmMessage::user('drei')]));
+
+		static::assertSame([['role' => 'user', 'content' => 'eins'], ['role' => 'assistant', 'content' => 'zwei'], ['role' => 'user', 'content' => 'drei']], $this->sentBody()['messages'] ?? null);
+		static::assertArrayNotHasKey('response_format', $this->sentBody(), 'a request is text unless it asks for JSON');
+	}
+
+	/**
+	 * The user gets only the key, the log the cause.
+	 */
+	#[Group('units')]
+	public function testAnUnreachableEndpointKeepsTheCause(): void
+	{
+		$refused = static fn(): ConnectException => new ConnectException('refused', new Request('POST', 'http://ollama:11434/v1'));
+		$client  = $this->factory([$refused(), $refused()])->create(new LlmConnection('openai', 'http://ollama:11434/v1', 'qwen3'));
+
+		foreach ([static fn() => $client->complete(new LlmRequest('', [LlmMessage::user('Hi')])), static fn() => $client->generateImage('A beach', '1024x1024')] as $call)
+		{
+			try
+			{
+				$call();
+				static::fail('No LlmException');
+			}
+			catch (LlmException $e)
+			{
+				static::assertInstanceOf(\Exception::class, $e->getPrevious());
+			}
+		}
+	}
 }

@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Shared\Llm;
 
+use App\Framework\Llm\LlmAnswer;
 use App\Framework\Llm\LlmException;
 use App\Framework\Llm\LlmMessage;
 use App\Framework\Llm\LlmRequest;
@@ -57,7 +58,7 @@ readonly class TextCorrection
 		$answer = $this->llmResolver->forUser($UID, LlmTask::TEXT)->complete(new LlmRequest(self::INSTRUCTIONS, [LlmMessage::user($text)]));
 
 		// reasoning models of a local server may put their thoughts in front of the answer
-		$corrected = trim((string) preg_replace('#<think>.*?</think>#s', '', $answer));
+		$corrected = LlmAnswer::text($answer);
 		if ($corrected === '')
 			throw new LlmException('llm_no_answer');
 

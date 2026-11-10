@@ -56,6 +56,7 @@ abstract readonly class LlmSettings
 		$connections = [];
 		foreach ($this->connectionRepository->findAllOfOwner($ownerId) as $row)
 		{
+			// @infection-ignore-all the casts are for databases which give text, ours gives numbers
 			$connections[] = [
 				'connection_id' => (int) $row['connection_id'],
 				'name'          => (string) $row['name'],
@@ -81,6 +82,7 @@ abstract readonly class LlmSettings
 		$apiType = trim($input['api_type']);
 		$baseUrl = rtrim(trim($input['base_url']), '/');
 		$apiKey  = trim($input['api_key']);
+		// @infection-ignore-all no provider has the id 0, asking for it gives none as well
 		$stored  = $connectionId === 0 ? [] : $this->connectionRepository->findOfOwner($ownerId, $connectionId);
 
 		$errors = [];
@@ -95,6 +97,7 @@ abstract readonly class LlmSettings
 		if ($errors !== [])
 			return $errors;
 
+		// @infection-ignore-all a valid address has a host
 		$fields = ['name' => $name === '' ? (string) parse_url($baseUrl, PHP_URL_HOST) : $name, 'api_type' => $apiType, 'base_url' => $baseUrl];
 		if ($apiKey !== '')
 			$fields['api_key'] = Crypto::encrypt($apiKey, $this->crypt->getEncryptionKey());
@@ -113,6 +116,7 @@ abstract readonly class LlmSettings
 	 */
 	public function deleteConnection(int $ownerId, int $connectionId): void
 	{
+		// @infection-ignore-all without the provider no task of the owner has it
 		if ($this->connectionRepository->deleteOfOwner($ownerId, $connectionId) > 0)
 			$this->releaseTasks($ownerId, $connectionId);
 	}
@@ -130,6 +134,7 @@ abstract readonly class LlmSettings
 	 */
 	public function findModels(int $ownerId, array $input): array
 	{
+		// @infection-ignore-all no provider has the id 0, asking for it gives none as well
 		$stored  = $input['connection_id'] === 0 ? null : $this->findConnection($ownerId, $input['connection_id']);
 		$baseUrl = rtrim(trim($input['base_url']), '/');
 		if ($baseUrl === '')
@@ -190,6 +195,7 @@ abstract readonly class LlmSettings
 		if ($connection === [])
 			return false;
 
+		// @infection-ignore-all the casts are for databases which give text, ours gives numbers
 		$apiType = (string) $connection['api_type'];
 
 		return self::servesTask($apiType, $task) && (($row['model'] ?? '') !== '' || self::mayOmitModel($apiType));
@@ -232,6 +238,7 @@ abstract readonly class LlmSettings
 		$connection = $this->connectionRepository->findOfOwner($ownerId, $connectionId);
 		if ($connection === [])
 			return ['llm_unknown_connection'];
+		// @infection-ignore-all the casts are for databases which give text, ours gives numbers
 		$apiType = (string) $connection['api_type'];
 		if (($model === '' && !self::mayOmitModel($apiType)) || strlen($model) > self::MAX_MODEL_LENGTH)
 			return ['llm_invalid_model'];
@@ -251,6 +258,7 @@ abstract readonly class LlmSettings
 		if ($row === [])
 			return null;
 
+		// @infection-ignore-all the casts are for databases which give text, ours gives numbers
 		$apiKey = (string) $row['api_key'];
 		if ($apiKey !== '')
 			$apiKey = Crypto::decrypt($apiKey, $this->crypt->getEncryptionKey());

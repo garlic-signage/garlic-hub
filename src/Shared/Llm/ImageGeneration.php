@@ -80,6 +80,7 @@ readonly class ImageGeneration
 		$image = $this->llmResolver->forUser($UID, LlmTask::IMAGE_GENERATION, self::TIMEOUT)->generateImage($prompt, self::SIZES[$format] ?? self::SIZES['landscape'], $negativePrompt);
 
 		// only an image goes into the browser and from there into the mediapool
+		// @infection-ignore-all false is no image type either
 		$mimetype = (string) new finfo(FILEINFO_MIME_TYPE)->buffer($image);
 		if (!in_array($mimetype, self::MIMETYPES, true))
 			throw new LlmException('llm_no_answer');

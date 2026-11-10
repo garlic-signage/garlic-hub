@@ -180,4 +180,47 @@ class Automatic1111ClientTest extends TestCase
 
 		$this->assertLlmError('llm_api_images_only', static fn() => $client->complete(new LlmRequest('', [LlmMessage::user('Hello')])));
 	}
+
+	#[Group('units')]
+	public function testEveryCheckpointOnceAndOnlyWithAName(): void
+	{
+		$client = $this->client([new Response(200, [], (string) json_encode([
+			['model_name' => 'flux'], ['model_name' => 'flux'], ['model_name' => ''], ['title' => 'b'], ['other' => 'x'], 'text'
+		]))]);
+
+		static::assertSame(['b', 'flux'], $client->listModels());
+	}
+
+	#[Group('units')]
+	public function testTheRequestsAskForJsonAndOnlyAPostSendsIt(): void
+	{
+		$client = $this->client([new Response(200, [], '[{"model_name": "flux"}]'), new Response(200, [], (string) json_encode(['images' => [base64_encode('PNG')]]))]);
+
+		$client->listModels();
+		static::assertSame('application/json', $this->sent()->getHeaderLine('Accept'));
+		static::assertFalse($this->sent()->hasHeader('Content-Type'));
+
+		$client->generateImage('A beach', '1024x1024');
+		static::assertSame('application/json', $this->sent()->getHeaderLine('Accept'));
+		static::assertSame('application/json', $this->sent()->getHeaderLine('Content-Type'));
+	}
+
+	#[Group('units')]
+	public function testAnUnreachableServerKeepsTheCause(): void
+	{
+		$refused = static fn(): ConnectException => new ConnectException('refused', new Request('GET', 'http://drawthings:7860'));
+
+		foreach ([fn() => $this->client([$refused()])->listModels(), fn() => $this->client([$refused()])->generateImage('A beach', '1024x1024')] as $call)
+		{
+			try
+			{
+				$call();
+				static::fail('No LlmException');
+			}
+			catch (LlmException $e)
+			{
+				static::assertInstanceOf(ConnectException::class, $e->getPrevious());
+			}
+		}
+	}
 }

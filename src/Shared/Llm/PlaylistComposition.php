@@ -23,6 +23,7 @@ namespace App\Shared\Llm;
 
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\UserException;
+use App\Framework\Llm\LlmAnswer;
 use App\Framework\Llm\LlmException;
 use App\Framework\Llm\LlmMessage;
 use App\Framework\Llm\LlmRequest;
@@ -79,16 +80,8 @@ readonly class PlaylistComposition
 			throw new LlmException('llm_input_too_long');
 
 		$answer = $this->ask($UID, sprintf(self::TERMS_INSTRUCTIONS, $locale), $theme);
-		$terms  = [];
-		foreach (is_array($answer['terms'] ?? null) ? $answer['terms'] : [] as $term)
-		{
-			if (is_string($term) && mb_strlen(trim($term)) >= 2 && !in_array(mb_strtolower(trim($term)), array_map(mb_strtolower(...), $terms), true))
-				$terms[] = mb_substr(trim($term), 0, 50);
-		}
-		if ($terms === [])
-			throw new LlmException('llm_no_answer');
 
-		return array_slice($terms, 0, self::MAX_TERMS);
+		return LlmAnswer::terms($answer['terms'] ?? null, self::MAX_TERMS);
 	}
 
 	/**
@@ -110,15 +103,7 @@ readonly class PlaylistComposition
 		$text   = 'Theme: ' . trim($theme) . "\nMedia: " . json_encode($list, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 		$answer = $this->ask($UID, sprintf(self::CHOICE_INSTRUCTIONS, $seconds), $text);
 
-		$chosen = [];
-		foreach (is_array($answer['items'] ?? null) ? $answer['items'] : [] as $number)
-		{
-			$index = is_int($number) || (is_string($number) && ctype_digit($number)) ? (int) $number - 1 : -1;
-			if (isset($candidates[$index]) && !in_array($index, $chosen, true))
-				$chosen[] = $index;
-		}
-
-		return $chosen;
+		return LlmAnswer::chosen($answer['items'] ?? null, count($candidates));
 	}
 
 	/**
@@ -131,13 +116,6 @@ readonly class PlaylistComposition
 	 */
 	private function ask(int $UID, string $instructions, string $text): array
 	{
-		$answer = $this->llmResolver->forUser($UID, LlmTask::TEXT)->complete(new LlmRequest($instructions, [LlmMessage::user($text)], true));
-
-		// reasoning models of a local server may put their thoughts in front of the answer
-		$decoded = json_decode(trim((string) preg_replace('#<think>.*?</think>#s', '', $answer)), true);
-		if (!is_array($decoded))
-			throw new LlmException('llm_no_answer');
-
-		return $decoded;
+		return LlmAnswer::json($this->llmResolver->forUser($UID, LlmTask::TEXT)->complete(new LlmRequest($instructions, [LlmMessage::user($text)], true)));
 	}
 }

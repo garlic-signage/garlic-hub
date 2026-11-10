@@ -61,6 +61,7 @@ readonly class CompanyLlmService extends LlmSettings
 		$rows  = $this->taskRepository->findAllOfOwner($companyId);
 		$modes = [];
 		foreach (LlmTask::TASKS as $task)
+			// @infection-ignore-all the column is text
 			$modes[$task] = (string) ($rows[$task]['mode'] ?? self::MODE_DISABLED);
 
 		return $modes;

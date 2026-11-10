@@ -48,6 +48,7 @@ abstract class LlmTaskRepository extends SqlBase
 	{
 		$tasks = [];
 		foreach ($this->findAllBy([$this->idField => $ownerId]) as $row)
+			// @infection-ignore-all the column is text
 			$tasks[(string) $row['task']] = $row;
 
 		return $tasks;

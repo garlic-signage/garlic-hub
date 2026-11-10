@@ -73,6 +73,7 @@ readonly class Automatic1111Client implements LlmClient
 		if ($models === [])
 			throw new LlmException('llm_no_models');
 
+		// @infection-ignore-all the list is sorted and renumbered below
 		$models = array_values(array_unique($models));
 		natcasesort($models);
 
@@ -81,6 +82,7 @@ readonly class Automatic1111Client implements LlmClient
 
 	public function generateImage(string $prompt, string $size, string $negativePrompt = ''): string
 	{
+		// @infection-ignore-all the sizes come from ImageGeneration::SIZES, always with an x
 		[$width, $height] = array_map(intval(...), explode('x', $size) + [1 => '0']);
 		$parameters = ['prompt' => $prompt, 'width' => $width, 'height' => $height, 'batch_size' => 1, 'n_iter' => 1];
 		if ($negativePrompt !== '')
@@ -104,6 +106,7 @@ readonly class Automatic1111Client implements LlmClient
 			throw new LlmException('llm_not_reachable');
 
 		$answer = json_decode((string) $response->getBody(), true);
+		// @infection-ignore-all an answer which is no object has no images either
 		$image  = base64_decode((string) (is_array($answer) && is_array($answer['images'] ?? null) && is_string($answer['images'][0] ?? null) ? $answer['images'][0] : ''), true);
 		if ($image === false || $image === '')
 			throw new LlmException('llm_no_answer');
@@ -123,6 +126,7 @@ readonly class Automatic1111Client implements LlmClient
 		if ($this->apiKey !== '')
 			$headers['Authorization'] = 'Basic ' . base64_encode($this->apiKey);
 
+		// @infection-ignore-all the parameters are always encodable
 		$request = new Request($method, rtrim($this->baseUrl, '/') . $path, $headers, $body === null ? null : (string) json_encode($body));
 
 		return $this->httpClient->sendRequest($request);

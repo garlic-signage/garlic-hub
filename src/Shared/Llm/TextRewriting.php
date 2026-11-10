@@ -23,6 +23,7 @@ namespace App\Shared\Llm;
 
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\UserException;
+use App\Framework\Llm\LlmAnswer;
 use App\Framework\Llm\LlmException;
 use App\Framework\Llm\LlmMessage;
 use App\Framework\Llm\LlmRequest;
@@ -107,8 +108,7 @@ readonly class TextRewriting
 
 		$answer = $this->llmResolver->forUser($UID, LlmTask::TEXT)->complete(new LlmRequest($instructions, [LlmMessage::user($text)]));
 
-		// reasoning models of a local server may put their thoughts in front of the answer
-		$rewritten = trim((string) preg_replace('#<think>.*?</think>#s', '', $answer));
+		$rewritten = LlmAnswer::text($answer);
 		if ($rewritten === '')
 			throw new LlmException('llm_no_answer');
 

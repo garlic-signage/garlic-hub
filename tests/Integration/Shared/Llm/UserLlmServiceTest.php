@@ -241,4 +241,50 @@ class UserLlmServiceTest extends ContainerTestCase
 		static::assertCount(1, $this->service->findConnections(2));
 		static::assertSame([], $this->service->findTasks(2));
 	}
+
+	public function testTheInputIsTrimmedAndTheLimitsCountCharacters(): void
+	{
+		$url = 'https://llm.example.test/' . str_repeat('v', 255 - strlen('https://llm.example.test/'));
+		static::assertSame([], $this->service->saveConnection(2, 0, ['name' => ' ' . str_repeat('ü', 100) . ' ', 'api_type' => ' openai ', 'base_url' => ' ' . $url . '/ ', 'api_key' => ' sk-secret ']));
+		$connectionId = (int) $this->connection->fetchOne('SELECT MAX(connection_id) FROM user_llm_connections');
+
+		static::assertSame(['connection_id' => $connectionId, 'name' => str_repeat('ü', 100), 'api_type' => 'openai', 'base_url' => $url, 'has_key' => true], $this->service->findConnections(2)[0]);
+		static::assertSame('sk-secret', $this->storedKey($connectionId));
+		static::assertSame(['llm_invalid_url'], $this->service->saveConnection(2, 0, $this->input($url . 'v')));
+
+		static::assertSame([], $this->service->saveTasks(2, [LlmTask::TEXT => ['connection_id' => $connectionId, 'model' => ' ' . str_repeat('m', 100) . ' ']]));
+		static::assertSame(str_repeat('m', 100), $this->service->findConnectionOfTask(2, LlmTask::TEXT)?->model);
+		static::assertSame(['llm_invalid_model'], $this->service->saveTasks(2, [LlmTask::TEXT => ['connection_id' => $connectionId, 'model' => str_repeat('m', 101)]]));
+	}
+
+	public function testEveryProviderOfTheUserIsListed(): void
+	{
+		$this->addProvider();
+		$this->service->saveConnection(2, 0, $this->input('http://localhost:11434/v1', '', 'Ollama'));
+
+		static::assertSame(['Ollama', 'OpenAI'], array_column($this->service->findConnections(2), 'name'));
+	}
+
+	/**
+	 * The form of a stored provider sends its address with spaces and an empty key field: the stored key goes along.
+	 */
+	public function testTheTestOfAStoredProviderTrimsTheForm(): void
+	{
+		$connectionId = $this->addProvider();
+		$this->endpoint->append(new Response(200, ['Content-Type' => 'application/json'], '{"object":"list","data":[{"id":"gpt-5","object":"model"}]}'));
+
+		static::assertSame(['gpt-5'], $this->service->findModels(2, ['connection_id' => $connectionId, 'api_type' => ' openai ', 'base_url' => ' https://api.openai.com/v1/ ', 'api_key' => ' ']));
+		static::assertSame('Bearer sk-secret', $this->sentAuthorization());
+	}
+
+	public function testEveryErrorIsReportedOnce(): void
+	{
+		$connectionId = $this->addProvider();
+
+		static::assertSame(['llm_invalid_model', 'llm_unknown_task'], $this->service->saveTasks(2, [
+			LlmTask::TEXT          => ['connection_id' => $connectionId, 'model' => ''],
+			LlmTask::IMAGE_TAGGING => ['connection_id' => $connectionId, 'model' => ''],
+			'chat'                 => ['connection_id' => $connectionId, 'model' => 'gpt-5']
+		]));
+	}
 }

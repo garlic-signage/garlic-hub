@@ -155,6 +155,15 @@ class LlmResolverTest extends ContainerTestCase
 		static::assertSame([self::COMPANY, self::OWN, ''], [$this->usedBy(2, self::TEXT), $this->usedBy(2, self::IMAGES), $this->usedBy(2, LlmTask::IMAGE_GENERATION)]);
 	}
 
+	public function testAUserWorksWithTheAiOfHisCompany(): void
+	{
+		$this->connection->executeStatement('UPDATE user_main SET company_id = 2 WHERE UID = 2');
+		$this->companyDecides(CompanyLlmService::MODE_COMPANY_ALL, self::TEXT, 2);
+
+		static::assertSame(self::COMPANY, $this->usedBy(2));
+		static::assertSame('', $this->usedBy(3), 'a user of company 1');
+	}
+
 	public function testTheDecisionOfAnotherCompanyDoesNotCount(): void
 	{
 		$this->ownLlm(2);
