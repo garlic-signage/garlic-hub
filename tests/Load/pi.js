@@ -12,6 +12,9 @@
 
  BASE_URL must be an IP or a host name of the Pi, localhost or *.ddev.site are taken for the local player.
  Optional: PLAYERS (200), USERS (10), DURATION (15m).
+
+ On the data of seed.js: add -e PLAYLIST_ID=<id> -e NODE_ID=<id> from its output. Then the setup creates nothing,
+ every player keeps its own playlist and the users work in the seeded playlist and folder.
 */
 import http from 'k6/http';
 import { check, fail, sleep } from 'k6';
@@ -21,6 +24,7 @@ const PLAYERS  = parseInt(__ENV.PLAYERS || '200', 10);
 const USERS    = parseInt(__ENV.USERS || '10', 10);
 const DURATION = __ENV.DURATION || '15m';
 const POLL     = 300;
+const SEEDED   = __ENV.PLAYLIST_ID !== undefined && __ENV.NODE_ID !== undefined;
 
 const MEDIA = [
 	...Array.from({ length: 10 }, (_, i) => ({ name: `picture-${i + 1}.jpg`, mime: 'image/jpeg' })),
@@ -28,7 +32,7 @@ const MEDIA = [
 ];
 
 // only the setup uploads: VU 0 runs it, the other VUs must not hold 170 MB each
-const files = __VU === 0 ? MEDIA.map((m) => ({ ...m, bytes: open(`./media/${m.name}`, 'b') })) : [];
+const files = __VU === 0 && !SEEDED ? MEDIA.map((m) => ({ ...m, bytes: open(`./media/${m.name}`, 'b') })) : [];
 
 export const options = {
 	setupTimeout: '15m',
@@ -84,6 +88,9 @@ export function setup() {
 		fail('BASE_URL, USERNAME and PASSWORD are needed');
 
 	login();
+	if (SEEDED)
+		return { playlistId: __ENV.PLAYLIST_ID, nodeId: __ENV.NODE_ID };
+
 	const token = csrfToken('/mediapool');
 	const name  = `loadtest-${Date.now()}`;
 
