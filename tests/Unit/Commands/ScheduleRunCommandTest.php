@@ -65,6 +65,18 @@ class ScheduleRunCommandTest extends TestCase
 		$tester->execute([], ['verbosity' => OutputInterface::VERBOSITY_VERBOSE]);
 
 		static::assertSame(Command::SUCCESS, $tester->getStatusCode());
-		static::assertStringContainsString('audit.cleanup', $tester->getDisplay());
+		static::assertSame("Tasks run: audit.cleanup\n", $tester->getDisplay());
+	}
+
+	#[Group('units')]
+	public function testWithoutDueTasksNoneIsShown(): void
+	{
+		$scheduler = $this->createStub(Scheduler::class);
+		$scheduler->method('runDueTasks')->willReturn([]);
+		$tester = $this->command('1', $scheduler);
+
+		$tester->execute([], ['verbosity' => OutputInterface::VERBOSITY_VERBOSE]);
+
+		static::assertSame("Tasks run: -\n", $tester->getDisplay());
 	}
 }

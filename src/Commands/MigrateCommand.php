@@ -55,6 +55,7 @@ class MigrateCommand extends Command
 
 	protected function configure(): void
 	{
+		// @infection-ignore-all the configure() of the Command of Symfony is empty
 		parent::configure();
 		$this->addOption('rollback', 'r', InputOption::VALUE_NONE, 'Revert migrations (rollback)');
 		$this->addArgument('version', InputArgument::OPTIONAL, 'Target version for migration');

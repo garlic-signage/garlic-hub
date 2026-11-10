@@ -112,6 +112,19 @@ class MigrateCommandTest extends TestCase
 		static::assertStringContainsString('Migration failed: Test Exception', $this->tester->getDisplay());
 	}
 
+	/**
+	 * The whole message is red, the message of the exception, too.
+	 */
+	#[Group('units')]
+	public function testTheWholeErrorIsShownAsError(): void
+	{
+		$this->runnerMock->expects($this->once())->method('execute')->willThrowException(new DatabaseException('Test Exception'));
+
+		$this->tester->execute([], ['decorated' => true]);
+
+		static::assertSame("\e[37;41mMigration failed: Test Exception\e[39;49m\n", $this->tester->getDisplay());
+	}
+
 	#[Group('units')]
 	#[DataProvider('migrationExceptionProvider')]
 	public function testRollbackFailsWithException(Throwable $exception): void
