@@ -22,132 +22,20 @@ import {UnitShareService}    from "../../core/UnitShareService.js";
 import {FetchClient}         from "../../core/FetchClient.js";
 import {FlashMessageHandler} from "../../core/FlashMessageHandler.js";
 import {AutocompleteFactory} from "../../core/AutocompleteFactory.js";
-import {Utils}               from "../../core/Utils.js";
 import {PageTabs}            from "../../core/PageTabs.js";
+import {UserRightsPage}      from "./UserRightsPage.js";
 
-/**
- * The rights page of a user: a tab per module with the roles and the units of the user.
- * A change is saved at once. A changed role reloads the page, because the role decides
- * which units and unit roles are shown.
- */
 document.addEventListener("DOMContentLoaded", function()
 {
-	const page                = document.getElementById("userRights");
-	const UID                 = page.dataset.uid;
-	const userService         = new UserService(new FetchClient());
-	const unitShareService    = new UnitShareService(new FetchClient());
-	const flashMessageHandler = new FlashMessageHandler();
-	const autocompleteFactory = new AutocompleteFactory();
+	const page = document.getElementById("userRights");
 
 	PageTabs.init(page);
 
-	for (const tab of page.querySelectorAll(".tab-content"))
-	{
-		const module = tab.dataset.module;
-		initRoles(tab, module);
-
-		const list = tab.querySelector(".rights-unit-list");
-		if (list === null)
-			continue;
-
-		for (const item of list.children)
-			initUnitRole(tab, module, item);
-
-		initAddUnit(tab, module, list);
-	}
-
-	function initRoles(tab, module)
-	{
-		for (const checkbox of tab.querySelectorAll(".rights-role"))
-		{
-			checkbox.addEventListener("change", async () =>
-			{
-				// removing editor or viewer removes the units of the role, too
-				const units = tab.querySelectorAll(`.rights-unit-role option[value="${checkbox.value}"]:checked`);
-				if (!checkbox.checked && units.length > 0 && !await Utils.confirmAction(page.dataset.confirmRemoveRole))
-				{
-					checkbox.checked = true;
-					return;
-				}
-
-				const result = await userService.setRole(UID, module, checkbox.value, checkbox.checked);
-				if (!result.success)
-				{
-					checkbox.checked = !checkbox.checked;
-					flashMessageHandler.showError(result.error_message);
-					return;
-				}
-
-				location.reload();
-			});
-		}
-	}
-
-	function initUnitRole(tab, module, item)
-	{
-		const select = item.querySelector(".rights-unit-role");
-		let saved    = select.value;
-
-		select.addEventListener("change", async () =>
-		{
-			select.disabled = true;
-			const result = await unitShareService.save(module, item.dataset.unitId, UID, select.value);
-			select.disabled = false;
-			if (!result.success)
-			{
-				select.value = saved;
-				flashMessageHandler.showError(result.error_message);
-				return;
-			}
-
-			saved = select.value;
-			if (saved === "")
-			{
-				item.remove();
-				showNoUnits(tab);
-			}
-		});
-	}
-
-	function initAddUnit(tab, module, list)
-	{
-		const autocomplete = autocompleteFactory.create("unit_" + module, UnitShareService.findUrl(module));
-		autocomplete.initWithExistingFields();
-
-		autocomplete.getHiddenIdElement().addEventListener("selectedFromDataList", async (event) =>
-		{
-			const unitId = event.target.value;
-			const name   = autocomplete.getEditFieldElement().value;
-			autocomplete.setInputFields("", "");
-
-			if (list.querySelector(`li[data-unit-id="${CSS.escape(unitId)}"]`) !== null)
-				return;
-
-			const item   = tab.querySelector(".rights-unit-template").content.firstElementChild.cloneNode(true);
-			const select = item.querySelector(".rights-unit-role");
-			// the first role the user has, viewer before editor
-			select.selectedIndex = 1;
-
-			// in the list before the request: a second select of the unit while it runs finds it
-			item.dataset.unitId = unitId;
-			item.querySelector(".rights-unit-name").textContent = name;
-			list.prepend(item);
-
-			const result = await unitShareService.save(module, unitId, UID, select.value);
-			if (!result.success)
-			{
-				item.remove();
-				flashMessageHandler.showError(result.error_message);
-				return;
-			}
-
-			initUnitRole(tab, module, item);
-			showNoUnits(tab);
-		});
-	}
-
-	function showNoUnits(tab)
-	{
-		tab.querySelector(".rights-no-units").hidden = tab.querySelector(".rights-unit-list").children.length > 0;
-	}
+	new UserRightsPage(
+		page,
+		new UserService(new FetchClient()),
+		new UnitShareService(new FetchClient()),
+		new FlashMessageHandler(),
+		new AutocompleteFactory()
+	).init();
 });

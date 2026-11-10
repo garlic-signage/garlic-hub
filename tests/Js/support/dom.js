@@ -26,7 +26,8 @@ import "css.escape"; // sets CSS.escape(), Deno has no CSS object
  * Event and CustomEvent come from linkedom too: its elements cannot dispatch the events of Deno.
  * HTMLImageElement for the checks with instanceof.
  * The dialogs get showModal() and close(), linkedom has none.
- * The selects get a value to set and Option() is there, both like in the browser.
+ * The selects get a value and a selectedIndex to set and Option() is there, both like in the browser.
+ * The checkboxes get checked: from the attribute until it is set, like in the browser.
  * Use it with "using", then the globals are restored after the test.
  */
 export function createDom(body = '')
@@ -43,6 +44,7 @@ export function createDom(body = '')
 
 	const removeDialogMethods = addDialogMethods(dom.document);
 	const removeSelectValue   = addSelectValue(dom.document);
+	const removeChecked       = addChecked(dom.document);
 	const originalOption      = globalThis.Option;
 	globalThis.Option = function (text = '', value = undefined)
 	{
@@ -59,6 +61,7 @@ export function createDom(body = '')
 		{
 			removeDialogMethods();
 			removeSelectValue();
+			removeChecked();
 			globalThis.Option = originalOption;
 			Object.assign(globalThis, originals);
 		}
@@ -119,7 +122,51 @@ function addSelectValue(document)
 		}
 	});
 
-	return () => Object.defineProperty(prototype, 'value', original);
+	Object.defineProperty(prototype, 'selectedIndex', {
+		configurable: true,
+		get()
+		{
+			const options = [...this.querySelectorAll('option')];
+			const index   = options.findIndex(option => option.hasAttribute('selected'));
+			return index < 0 && options.length > 0 ? 0 : index;
+		},
+		set(index)
+		{
+			this.querySelectorAll('option').forEach((option, i) => option.toggleAttribute('selected', i === index));
+		}
+	});
+
+	return () =>
+	{
+		Object.defineProperty(prototype, 'value', original);
+		delete prototype.selectedIndex;
+	};
+}
+
+/**
+ * Like the browser: checked comes from the attribute until it is set, then it is the state of the element.
+ * linkedom has no checked.
+ */
+function addChecked(document)
+{
+	const prototype = Object.getPrototypeOf(document.createElement('input'));
+	if (Object.getOwnPropertyDescriptor(prototype, 'checked') !== undefined)
+		return () => {};
+
+	const states = new WeakMap();
+	Object.defineProperty(prototype, 'checked', {
+		configurable: true,
+		get()
+		{
+			return states.has(this) ? states.get(this) : this.hasAttribute('checked');
+		},
+		set(checked)
+		{
+			states.set(this, Boolean(checked));
+		}
+	});
+
+	return () => delete prototype.checked;
 }
 
 /**
