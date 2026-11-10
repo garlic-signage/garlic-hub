@@ -19,7 +19,7 @@
 
 import {assertEquals, assertInstanceOf} from "@std/assert";
 import {stub}                           from "@std/testing/mock";
-import {createDom}                      from "@support/dom.js";
+import {assertSameElement, createDom}   from "@support/dom.js";
 import {replaceGlobals}                 from "@support/globals.js";
 import {UnitVersionsDialog}             from "@js/core/UnitVersionsDialog.js";
 
@@ -102,7 +102,7 @@ Deno.test('the menu entry is removed while the versioning is off', () =>
 
 	page.dialog.attachTo(page.document.getElementById('versions'), 7, false);
 
-	assertEquals(page.document.getElementById('versions'), null);
+	assertSameElement(page.document.getElementById('versions'), null);
 });
 
 Deno.test('the menu entry opens the versions of its unit', async () =>
@@ -127,7 +127,7 @@ Deno.test('the dialog lists the versions with a restore button each', async () =
 	assertEquals(dialog.querySelector('header span').textContent, 'Versions');
 	assertEquals(dialog.querySelector('header button').getAttribute('aria-label'), 'Close');
 	assertEquals(versionRows(page), [['3 · 2026-11-10 09:30 · admin', 'Restore'], ['2 · 2026-11-09 17:00 · jdoe', 'Restore']]);
-	assertEquals(dialog.querySelector('.unit-versions-empty'), null);
+	assertSameElement(dialog.querySelector('.unit-versions-empty'), null);
 });
 
 Deno.test('without versions the dialog says so', async () =>
@@ -139,7 +139,7 @@ Deno.test('without versions the dialog says so', async () =>
 
 	const [dialog] = openDialogs(page);
 	assertEquals(dialog.querySelector('.unit-versions-empty').textContent, 'No versions yet');
-	assertEquals(dialog.querySelector('.unit-versions-list'), null);
+	assertSameElement(dialog.querySelector('.unit-versions-list'), null);
 });
 
 Deno.test('a failed load shows the error and no dialog', async () =>

@@ -17,11 +17,11 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import {assertEquals, assertMatch} from "@std/assert";
-import {createDom}                 from "@support/dom.js";
-import {FakeFetchClient}           from "@support/FakeFetchClient.js";
-import {AiImageElements}           from "@js/mediapool/uploads/AiImage/AiImageElements.js";
-import {AiImageUploader}           from "@js/mediapool/uploads/AiImage/AiImageUploader.js";
+import {assertEquals, assertMatch}    from "@std/assert";
+import {assertSameElement, createDom} from "@support/dom.js";
+import {FakeFetchClient}              from "@support/FakeFetchClient.js";
+import {AiImageElements}              from "@js/mediapool/uploads/AiImage/AiImageElements.js";
+import {AiImageUploader}              from "@js/mediapool/uploads/AiImage/AiImageUploader.js";
 
 // the tab of templates/mediapool/overview.mustache and the flash messages of the layout
 const PAGE = `
@@ -196,7 +196,7 @@ Deno.test('during the generation the uploader and the button are locked and an o
 
 	assertEquals(page.elements.generateButton.disabled, false);
 	assertEquals(page.dialog.calls, ['disableActions', 'enableActions']);
-	assertEquals(page.document.getElementById('waitOverlay'), null);
+	assertSameElement(page.document.getElementById('waitOverlay'), null);
 });
 
 Deno.test('a refused generation shows the message of the backend and adds no image', async () =>
@@ -210,7 +210,7 @@ Deno.test('a refused generation shows the message of the backend and adds no ima
 	assertEquals(page.previews.added, []);
 	assertEquals(page.elements.generateButton.disabled, false);
 	assertEquals(page.dialog.calls, ['disableActions', 'enableActions']);
-	assertEquals(page.document.getElementById('waitOverlay'), null);
+	assertSameElement(page.document.getElementById('waitOverlay'), null);
 });
 
 Deno.test('a timeout shows its message and unlocks everything', async () =>

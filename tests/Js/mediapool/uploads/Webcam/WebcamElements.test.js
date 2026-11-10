@@ -54,7 +54,9 @@ Deno.test('a page without the camera tab has no elements', () =>
 
 	const elements = new WebcamElements();
 
-	assertEquals(Object.keys(IDS).map(getter => elements[getter]), Object.keys(IDS).map(() => null));
+	for (const getter of Object.keys(IDS))
+
+		assertSameElement(elements[getter], null, getter);
 });
 
 Deno.test('a camera is added to the choice with its id and name as text', () =>

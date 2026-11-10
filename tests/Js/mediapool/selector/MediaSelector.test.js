@@ -130,7 +130,7 @@ Deno.test('the selector replaces the content of the element and starts the tree'
 	await showSelector(page);
 
 	const dialog = page.document.getElementById('dialog');
-	assertEquals(dialog.querySelector('p'), null);
+	assertSameElement(dialog.querySelector('p'), null);
 	assertEquals(dialog.querySelectorAll('.media-item').length, 3);
 	assertEquals(page.tree.initialised, 1);
 });

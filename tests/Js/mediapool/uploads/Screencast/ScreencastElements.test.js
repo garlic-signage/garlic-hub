@@ -17,7 +17,6 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import {assertEquals}                 from "@std/assert";
 import {assertSameElement, createDom} from "@support/dom.js";
 import {ScreencastElements}           from "@js/mediapool/uploads/Screencast/ScreencastElements.js";
 
@@ -52,5 +51,7 @@ Deno.test('a page without the screencast tab has no elements', () =>
 
 	const elements = new ScreencastElements();
 
-	assertEquals(Object.keys(IDS).map(getter => elements[getter]), Object.keys(IDS).map(() => null));
+	for (const getter of Object.keys(IDS))
+
+		assertSameElement(elements[getter], null, getter);
 });

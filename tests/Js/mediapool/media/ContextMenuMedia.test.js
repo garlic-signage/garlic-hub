@@ -188,7 +188,7 @@ Deno.test('the suggestion of the AI opens in the edit dialog, an overlay waits m
 	assertEquals(page.mediaService.calls, [['suggestTags', 'abc']]);
 	assertSameElement(page.editDialog.shown[0][0], page.medium);
 	assertEquals(page.editDialog.shown[0][1], {description: 'A lobby', tags: ['lobby', 'hall']});
-	assertEquals(page.document.getElementById('waitOverlay'), null);
+	assertSameElement(page.document.getElementById('waitOverlay'), null);
 });
 
 Deno.test('a failed suggestion shows the error, removes the overlay and opens no dialog', async () =>
@@ -201,7 +201,7 @@ Deno.test('a failed suggestion shows the error, removes the overlay and opens no
 
 	assertEquals(page.errors, ['The AI did not answer']);
 	assertEquals(page.editDialog.shown, []);
-	assertEquals(page.document.getElementById('waitOverlay'), null);
+	assertSameElement(page.document.getElementById('waitOverlay'), null);
 });
 
 Deno.test('a clone is handed to the list', async () =>
@@ -237,7 +237,7 @@ Deno.test('a removed medium leaves the list', async () =>
 	await click(page, 'removeMedia');
 
 	assertEquals(page.mediaService.calls, [['removeMedia', 'abc']]);
-	assertEquals(page.document.querySelector('.media-item'), null);
+	assertSameElement(page.document.querySelector('.media-item'), null);
 });
 
 Deno.test('a medium that could not be removed stays and the error is shown', async () =>

@@ -17,7 +17,6 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import {assertEquals}                 from "@std/assert";
 import {assertSameElement, createDom} from "@support/dom.js";
 import {ExternalFileElements}         from "@js/mediapool/uploads/External/ExternalFileElements.js";
 
@@ -44,5 +43,6 @@ Deno.test('without a page the elements are null', () =>
 
 	const elements = new ExternalFileElements();
 
-	assertEquals([elements.externalLinkField, elements.startFileUpload], [null, null]);
+	assertSameElement(elements.externalLinkField, null);
+	assertSameElement(elements.startFileUpload, null);
 });

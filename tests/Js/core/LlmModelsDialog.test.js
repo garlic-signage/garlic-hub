@@ -17,9 +17,9 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import {assertEquals}    from "@std/assert";
-import {createDom}       from "@support/dom.js";
-import {LlmModelsDialog} from "@js/core/LlmModelsDialog.js";
+import {assertEquals}                 from "@std/assert";
+import {assertSameElement, createDom} from "@support/dom.js";
+import {LlmModelsDialog}              from "@js/core/LlmModelsDialog.js";
 
 const LABELS = 'data-title="Models" data-filter="Filter models" data-empty="No list here" data-close="Close"';
 
@@ -204,8 +204,8 @@ Deno.test('an address without a list says so', async () =>
 
 	const [dialog] = openDialogs(page);
 	assertEquals(dialog.querySelector('.llm-models-message').textContent, 'No list here');
-	assertEquals(dialog.querySelector('.llm-models-error'), null);
-	assertEquals(dialog.querySelector('.llm-models-filter'), null);
+	assertSameElement(dialog.querySelector('.llm-models-error'), null);
+	assertSameElement(dialog.querySelector('.llm-models-filter'), null);
 });
 
 Deno.test('a failed connection shows its error in the dialog', async () =>
@@ -217,7 +217,7 @@ Deno.test('a failed connection shows its error in the dialog', async () =>
 
 	const [dialog] = openDialogs(page);
 	assertEquals(dialog.querySelector('.llm-models-error').textContent, 'The key was refused');
-	assertEquals(dialog.querySelector('.llm-models-list'), null);
+	assertSameElement(dialog.querySelector('.llm-models-list'), null);
 });
 
 Deno.test('opening again replaces the dialog before, closing removes it', async () =>

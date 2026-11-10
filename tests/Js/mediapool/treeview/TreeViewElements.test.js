@@ -17,7 +17,6 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import {assertEquals}                 from "@std/assert";
 import {assertSameElement, createDom} from "@support/dom.js";
 import {TreeViewElements}             from "@js/mediapool/treeview/TreeViewElements.js";
 
@@ -51,7 +50,8 @@ Deno.test('a selector reads its tree again after it was put into the page', () =
 {
 	using dom      = createDom('<div id="dialog"></div>');
 	const elements = new TreeViewElements();
-	assertEquals(Object.keys(IDS).map(getter => elements[getter]), [null, null, null, null, null, null]);
+	for (const getter of Object.keys(IDS))
+		assertSameElement(elements[getter], null, getter);
 
 	dom.document.getElementById('dialog').innerHTML = TREE;
 	elements.initialize();
@@ -68,6 +68,6 @@ Deno.test('a selector without the parts of the mediapool has only the tree and t
 
 	assertSameElement(elements.mediapoolTree, dom.document.getElementById('mediapoolTree'));
 	assertSameElement(elements.treeViewFilter, dom.document.getElementById('treeViewFilter'));
-	assertEquals([elements.currentPath, elements.editFolderDialog, elements.closeEditDialog, elements.menuTemplate],
-		[null, null, null, null]);
+	for (const getter of ['currentPath', 'editFolderDialog', 'closeEditDialog', 'menuTemplate'])
+		assertSameElement(elements[getter], null, getter);
 });

@@ -17,7 +17,6 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import {assertEquals}                 from "@std/assert";
 import {assertSameElement, createDom} from "@support/dom.js";
 import {LocalFilesElements}           from "@js/mediapool/uploads/Local/LocalFilesElements.js";
 
@@ -48,6 +47,7 @@ Deno.test('a page without the tab has no elements', () =>
 
 	const elements = new LocalFilesElements();
 
-	assertEquals([elements.startFileUpload, elements.dropzone, elements.dropzonePreview, elements.fileInput],
-		[null, null, null, null]);
+	for (const getter of ['startFileUpload', 'dropzone', 'dropzonePreview', 'fileInput'])
+
+		assertSameElement(elements[getter], null, getter);
 });

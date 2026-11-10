@@ -82,7 +82,7 @@ Deno.test('a page without the tab has no elements', () =>
 	const elements = new StockPlatformElements();
 
 	for (const getter of Object.keys(GETTERS))
-		assertEquals(elements[getter], null, getter);
+		assertSameElement(elements[getter], null, getter);
 });
 
 Deno.test('the search or the configuration of the platform is shown', () =>

@@ -85,8 +85,10 @@ Deno.test('a page without the uploader has no elements and no tabs', async () =>
 
 	const elements = new UploadDialogElements();
 
-	assertEquals(UploadDialogElements.openUploadDialog, null);
-	assertEquals([elements.uploaderDialog, elements.closeDialog, elements.closeUploadDialog], [null, null, null]);
+	assertSameElement(UploadDialogElements.openUploadDialog, null);
+	assertSameElement(elements.uploaderDialog, null);
+	assertSameElement(elements.closeDialog, null);
+	assertSameElement(elements.closeUploadDialog, null);
 	assertEquals([elements.tabButtons.length, elements.tabContents.length], [0, 0]);
-	assertEquals(elements.getTargetTab('linkTab'), null);
+	assertSameElement(elements.getTargetTab('linkTab'), null);
 });

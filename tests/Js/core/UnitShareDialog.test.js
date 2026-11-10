@@ -18,7 +18,7 @@
 */
 
 import {assertEquals, assertInstanceOf} from "@std/assert";
-import {createDom}                      from "@support/dom.js";
+import {assertSameElement, createDom}   from "@support/dom.js";
 import {UnitShareDialog}                from "@js/core/UnitShareDialog.js";
 
 const LABELS = {
@@ -109,7 +109,7 @@ Deno.test('the menu entry is removed without the right to share', () =>
 
 	page.dialog.attachTo(page.document.getElementById('share'), 7, false);
 
-	assertEquals(page.document.getElementById('share'), null);
+	assertSameElement(page.document.getElementById('share'), null);
 });
 
 Deno.test('the menu entry opens the users of its unit', async () =>
@@ -157,8 +157,8 @@ Deno.test('without users with a role the dialog says so', async () =>
 
 	const [dialog] = openDialogs(page);
 	assertEquals(dialog.querySelector('.unit-share-empty').textContent, 'No users with a role');
-	assertEquals(dialog.querySelector('.unit-share-filter'), null);
-	assertEquals(dialog.querySelector('.unit-share-users'), null);
+	assertSameElement(dialog.querySelector('.unit-share-filter'), null);
+	assertSameElement(dialog.querySelector('.unit-share-users'), null);
 });
 
 Deno.test('a failed load shows the error and no dialog', async () =>
