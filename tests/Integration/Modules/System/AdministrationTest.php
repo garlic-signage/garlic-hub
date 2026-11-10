@@ -48,6 +48,8 @@ class AdministrationTest extends ContainerTestCase
 
 		static::assertInstanceOf(PageResponse::class, $page);
 		static::assertSame('system/administration', $page->getTemplate());
+		static::assertSame(['LANG_PAGE_TITLE' => 'Administration', 'additional_css' => ['/css/system/administration.css'], 'footer_modules' => []], $page->getMainLayoutData());
+		static::assertSame('Administration', $page->getTemplateData()['LANG_PAGE_HEADER']);
 		static::assertSame(['/users', '/users/sso', '/users/llm', '/templates', '/system/audit'], array_column($page->getTemplateData()['areas'], 'LINK'));
 	}
 

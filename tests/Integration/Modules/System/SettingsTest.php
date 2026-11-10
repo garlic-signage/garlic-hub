@@ -29,6 +29,7 @@ use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\TemplateEngine\PageResponse;
 use App\Modules\System\Controller\ShowSettingsController;
 use App\Shared\Settings\SettingsService;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Slim\Flash\Messages;
 use Slim\Psr7\Factory\ServerRequestFactory;
@@ -177,6 +178,39 @@ class SettingsTest extends ContainerTestCase
 		{
 			static::assertSame('setting_invalid', $e->getTranslationKey());
 			static::assertSame([], $this->overrides->load('system'));
+		}
+	}
+
+	/**
+	 * @return array<string,array{string,string,bool}>
+	 */
+	public static function limits(): array
+	{
+		return [
+			'one day'           => ['Audit.retention_days', '1', true],
+			'ten years'         => ['Audit.retention_days', '3650', true],
+			'over ten years'    => ['Audit.retention_days', '3651', false],
+			'one version'       => ['Versioning.max_versions', '1', true],
+			'no version'        => ['Versioning.max_versions', '0', false],
+			'100 versions'      => ['Versioning.max_versions', '100', true],
+			'over 100 versions' => ['Versioning.max_versions', '101', false],
+		];
+	}
+
+	#[DataProvider('limits')]
+	public function testTheLimitsOfTheNumbers(string $name, string $value, bool $valid): void
+	{
+		$values = ['Scheduler.enabled' => '1', 'Audit.enabled' => '1', 'Audit.retention_days' => '365', 'Versioning.enabled' => '1', 'Versioning.max_versions' => '20'];
+		$values[$name] = $value;
+		try
+		{
+			$this->service->save(1, 'system', $values);
+			static::assertTrue($valid, $value . ' must be refused for ' . $name);
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertFalse($valid, $value . ' must be valid for ' . $name);
+			static::assertSame('setting_invalid', $e->getTranslationKey());
 		}
 	}
 

@@ -6,7 +6,8 @@
 set -e
 
 threads=$(( $(nproc) * 3 / 4 ))
-args=(--threads="$threads" --no-progress)
+# --no-progress for scripts
+args=(--threads="$threads")
 
 if [ -n "$1" ]; then
 	args+=(--git-diff-lines --git-diff-base="$1")

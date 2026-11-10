@@ -102,6 +102,7 @@ class AuditListTest extends ContainerTestCase
 
 		static::assertSame(302, $response->getStatusCode());
 		static::assertSame('/', $response->getHeaderLine('Location'));
+		static::assertSame(['You are not allowed to see the audit log.'], $_SESSION['slimFlash']['error'] ?? []);
 	}
 
 	public function testTheEntriesShowTheNamesOfUsersAndUnits(): void
@@ -160,7 +161,11 @@ class AuditListTest extends ContainerTestCase
 	public function testThePageSaysWhenTheLogIsOff(): void
 	{
 		$this->actingAs(1);
-		static::assertNotSame([], $this->data($this->show())['audit_disabled']);
+		$response = $this->show();
+
+		static::assertSame([['LANG_AUDIT_DISABLED' => 'The audit log is disabled. Only older entries are shown.']], $this->data($response)['audit_disabled']);
+		static::assertInstanceOf(PageResponse::class, $response);
+		static::assertSame(['/css/system/audit.css'], $response->getMainLayoutData()['additional_css']);
 	}
 
 	public function testThePageSaysNothingWhenTheLogIsOn(): void
