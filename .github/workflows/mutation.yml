@@ -19,7 +19,7 @@ jobs:
   infection:
     name: infection
     runs-on: ubuntu-latest
-    timeout-minutes: 300
+    timeout-minutes: 90 # a run takes about 45 minutes
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-app
