@@ -36,10 +36,6 @@ export class TouchEdit extends BaseTypes
 		this.addRemoveListener();
 
 		this.#valueField = this.node.querySelector(".edit-touch-item");
-		this.node.querySelector(".remove").addEventListener("click", function(event)
-		{
-			event.target.closest('ul').remove();
-		});
 
 		for (const item of this.#touchableMedialist)
 		{

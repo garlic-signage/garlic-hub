@@ -16,9 +16,9 @@
  You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-import {assertEquals, assertThrows} from "@std/assert";
-import {createDom}                  from "@support/dom.js";
-import {TouchEdit}                  from "@js/playlists/compose/standard/editors/types/TouchEdit.js";
+import {assertEquals} from "@std/assert";
+import {createDom}    from "@support/dom.js";
+import {TouchEdit}    from "@js/playlists/compose/standard/editors/types/TouchEdit.js";
 
 // the template of templates/playlists/trigger.mustache
 const PAGE = `
@@ -95,14 +95,13 @@ Deno.test('a playlist without touchable items offers only the empty choice', () 
 	assertEquals(options(page.select), [['0', '-']]);
 });
 
-Deno.test('the remove button takes the touch away, its second listener fails without a list around it', () =>
+Deno.test('the remove button takes the touch away without an error', () =>
 {
 	using page = createEditor({touch_item_id: 11});
 	const button = page.container.querySelector('.remove');
 
-	// the second listener of TouchEdit looks for an <ul>, the template has none: null.remove() throws,
-	// the browser reports it as uncaught error, linkedom throws it from dispatchEvent()
-	assertThrows(() => button.dispatchEvent(new Event('click', {bubbles: true})), TypeError);
+	// linkedom throws the error of a listener from dispatchEvent(), the browser would report it as uncaught
+	button.dispatchEvent(new Event('click', {bubbles: true}));
 
 	assertEquals(page.editor.exists, false);
 	assertEquals(page.container.querySelector('.trigger-form'), null);
