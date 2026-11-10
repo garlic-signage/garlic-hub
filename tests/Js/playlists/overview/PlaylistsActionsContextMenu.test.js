@@ -228,7 +228,7 @@ Deno.test('a confirmed delete removes the playlist and its row', async () =>
 	await clickDelete(page);
 
 	assertEquals(page.service.calls, [['determineRights', 7], ['delete', 7]]);
-	assertEquals(page.document.querySelector('ul[data-id="7"]'), null);
+	assertSameElement(page.document.querySelector('ul[data-id="7"]'), null);
 });
 
 Deno.test('a refused delete shows the error and keeps the row', async () =>

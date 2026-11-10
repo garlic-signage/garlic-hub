@@ -174,7 +174,9 @@ Deno.test('a medium of the core edition has preview, conditional play and delete
 	assertSameElement(page.item.previewAction, page.find('.item-preview'));
 	assertSameElement(page.item.conditionalPlayAction, page.find('.conditional-play'));
 	assertSameElement(page.item.deleteItemAction, page.find('.delete-item'));
-	assertEquals([page.item.editTriggerAction, page.item.editSettingsAction, page.item.copyItemAction], [null, null, null]);
+	assertSameElement(page.item.editTriggerAction, null);
+	assertSameElement(page.item.editSettingsAction, null);
+	assertSameElement(page.item.copyItemAction, null);
 });
 
 Deno.test('a nested playlist links to its composer', () =>
@@ -225,7 +227,8 @@ Deno.test('a widget with content data can be edited', () =>
 	}
 	{
 		using page = createItem({mimetype: 'application/widget', content_data: ''});
-		assertEquals([page.item.editWidgetAction, page.find('.edit-widget')], [null, null]);
+		assertSameElement(page.item.editWidgetAction, null);
+		assertSameElement(page.find('.edit-widget'), null);
 	}
 });
 
@@ -235,11 +238,12 @@ Deno.test('the other editions have settings and copy nested playlists and templa
 		using page = createItem({item_type: 'template'}, {edition: 'enterprise'});
 		assertSameElement(page.item.editSettingsAction, page.find('.edit-settings'));
 		assertSameElement(page.item.copyItemAction, page.find('.copy-item'));
-		assertEquals(page.item.conditionalPlayAction, null);
+		assertSameElement(page.item.conditionalPlayAction, null);
 	}
 	{
 		using page = createItem({item_type: 'mediapool'}, {edition: 'enterprise'});
-		assertEquals([page.item.copyItemAction, page.find('.copy-item')], [null, null]);
+		assertSameElement(page.item.copyItemAction, null);
+		assertSameElement(page.find('.copy-item'), null);
 	}
 });
 
@@ -343,7 +347,7 @@ Deno.test('a click on the duration opens a field with the seconds', async () =>
 
 	assertEquals([field.type, field.value], ['number', '75']);
 	assertEquals(reset.classList.contains('bi-arrow-clockwise'), true);
-	assertEquals(page.find('.item-duration'), null);
+	assertSameElement(page.find('.item-duration'), null);
 });
 
 Deno.test('the duration is saved with Enter and shown again', async () =>
@@ -355,7 +359,7 @@ Deno.test('the duration is saved with Enter and shown again', async () =>
 	await fire(field, 'keydown', {key: 'Enter'});
 
 	assertEquals(page.service.calls, [['editItem', 12, 'item_duration', '90']]);
-	assertEquals(page.find('.item-duration-input'), null);
+	assertSameElement(page.find('.item-duration-input'), null);
 	assertEquals([page.find('.item-duration').textContent, page.find('.item-duration').dataset.seconds], ['00:01:30', '90']);
 	assertEquals(isNotified(page), true);
 });
@@ -439,7 +443,7 @@ Deno.test('after Enter without a blur the next duration is saved when its field 
 
 	assertEquals(page.service.calls.map(call => call[3]), ['90', '30']);
 	assertEquals(page.find('.item-duration').textContent, '00:00:30');
-	assertEquals(page.find('.item-duration-input'), null);
+	assertSameElement(page.find('.item-duration-input'), null);
 });
 
 Deno.test('the duration is saved once while its save is running', async () =>

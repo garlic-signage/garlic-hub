@@ -91,7 +91,7 @@ Deno.test('the selector replaces the content of the container and shows the inte
 
 	await page.selector.showSelector(page.container);
 
-	assertEquals(page.container.querySelector('p'), null);
+	assertSameElement(page.container.querySelector('p'), null);
 	assertSameElement(page.selector.getItemsContainer(), page.container.querySelector('#playlistsList'));
 	assertEquals(page.service.calls, [['internal', '']]);
 	assertEquals(page.view.displayed, [[{id: 4, name: 'Lobby'}]]);

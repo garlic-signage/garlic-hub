@@ -16,9 +16,9 @@
  You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-import {assertEquals}  from "@std/assert";
-import {createDom}     from "@support/dom.js";
-import {WallclockEdit} from "@js/playlists/compose/standard/editors/types/WallclockEdit.js";
+import {assertEquals}                 from "@std/assert";
+import {assertSameElement, createDom} from "@support/dom.js";
+import {WallclockEdit}                from "@js/playlists/compose/standard/editors/types/WallclockEdit.js";
 
 // the template of templates/playlists/trigger.mustache, with two weekdays
 const PAGE = `
@@ -236,5 +236,5 @@ Deno.test('the remove button takes the wallclock away', () =>
 	click(page.container.querySelector('.remove'));
 
 	assertEquals(wallclock.editor.exists, false);
-	assertEquals(page.container.querySelector('.trigger-form'), null);
+	assertSameElement(page.container.querySelector('.trigger-form'), null);
 });

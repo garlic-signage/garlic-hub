@@ -269,7 +269,7 @@ Deno.test('a copy dropped at the end becomes the last item', async () =>
 	assertEquals(page.itemList.calls, [
 		['createPlaylistItem', {item_id: 9}, 3], ['displayPlaylistMetrics', {duration: 60}]
 	]);
-	assertEquals(copy.parentElement, null);
+	assertSameElement(copy.parentElement, null);
 	assertEquals(isSaveNotified(page), true);
 });
 
@@ -295,7 +295,7 @@ Deno.test('a refused insert removes the copy and shows the error', async () =>
 
 	await drake.fire('drop', copy, page.target, page.source, null);
 
-	assertEquals(copy.parentElement, null);
+	assertSameElement(copy.parentElement, null);
 	assertEquals(errors(page), ['The playlist is full']);
 	assertEquals(page.itemList.calls, []);
 	assertEquals(isSaveNotified(page), false);

@@ -16,9 +16,9 @@
  You should have received a copy of the GNU Affero General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-import {assertEquals} from "@std/assert";
-import {createDom}    from "@support/dom.js";
-import {NotifyEdit}   from "@js/playlists/compose/standard/editors/types/NotifyEdit.js";
+import {assertEquals}                 from "@std/assert";
+import {assertSameElement, createDom} from "@support/dom.js";
+import {NotifyEdit}                   from "@js/playlists/compose/standard/editors/types/NotifyEdit.js";
 
 // the template of templates/playlists/trigger.mustache
 const PAGE = `
@@ -98,5 +98,5 @@ Deno.test('the remove button takes the notification away', () =>
 	page.container.querySelector('.remove').dispatchEvent(new Event('click', {bubbles: true}));
 
 	assertEquals(page.editor.exists, false);
-	assertEquals(page.container.querySelector('.trigger-form'), null);
+	assertSameElement(page.container.querySelector('.trigger-form'), null);
 });

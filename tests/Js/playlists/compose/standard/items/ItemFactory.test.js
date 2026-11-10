@@ -19,7 +19,7 @@
 
 
 import {assertEquals, assertInstanceOf} from "@std/assert";
-import {createDom}                      from "@support/dom.js";
+import {assertSameElement, createDom}   from "@support/dom.js";
 import {ItemFactory}                    from "@js/playlists/compose/standard/items/ItemFactory.js";
 import {Item}                           from "@js/playlists/compose/standard/items/Item.js";
 
@@ -33,5 +33,6 @@ Deno.test('the factory builds an item with its data, the service and the editors
 	const item = new ItemFactory(editors, editors, editors).create({item_id: 12}, {});
 
 	assertInstanceOf(item, Item);
-	assertEquals([item.previewAction, item.deleteItemAction], [null, null]);
+	assertSameElement(item.previewAction, null);
+	assertSameElement(item.deleteItemAction, null);
 });

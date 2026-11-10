@@ -17,11 +17,11 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import {assertEquals}   from "@std/assert";
-import {createDom}      from "@support/dom.js";
-import {replaceGlobals} from "@support/globals.js";
-import {LayoutSettings} from "@js/playlists/compose/multizone/Utils/LayoutSettings.js";
-import {SaveService}    from "@js/playlists/compose/multizone/Services/SaveService.js";
+import {assertEquals}                 from "@std/assert";
+import {assertSameElement, createDom} from "@support/dom.js";
+import {replaceGlobals}               from "@support/globals.js";
+import {LayoutSettings}               from "@js/playlists/compose/multizone/Utils/LayoutSettings.js";
+import {SaveService}                  from "@js/playlists/compose/multizone/Services/SaveService.js";
 
 const CSRF_META = '<meta name="csrf-token" content="the-token">';
 
@@ -114,7 +114,7 @@ Deno.test('an overlay waits while the layout is saved', async () =>
 	await page.service.save();
 
 	assertEquals(page.overlays, [true]);
-	assertEquals(page.document.getElementById('waitOverlay'), null);
+	assertSameElement(page.document.getElementById('waitOverlay'), null);
 });
 
 Deno.test('the answer of the server is returned, also a refusal', async () =>
@@ -145,5 +145,5 @@ Deno.test('a failed request is returned as error and removes the overlay', async
 	using page = createService(new TypeError('Failed to fetch'));
 
 	assertEquals(await page.service.save(), {success: false, error_message: 'Failed to fetch'});
-	assertEquals(page.document.getElementById('waitOverlay'), null);
+	assertSameElement(page.document.getElementById('waitOverlay'), null);
 });

@@ -232,7 +232,7 @@ Deno.test('an overlay waits for the AI', async () =>
 	answer.resolve();
 	await suggesting;
 	await wait();
-	assertEquals(page.document.getElementById('waitOverlay'), null);
+	assertSameElement(page.document.getElementById('waitOverlay'), null);
 });
 
 Deno.test('a failed suggestion shows the error and removes the overlay', async () =>
@@ -244,7 +244,7 @@ Deno.test('a failed suggestion shows the error and removes the overlay', async (
 
 	assertEquals(page.messages, [['error', 'The AI did not answer']]);
 	assertEquals(entries(page).length, 0);
-	assertEquals(page.document.getElementById('waitOverlay'), null);
+	assertSameElement(page.document.getElementById('waitOverlay'), null);
 });
 
 Deno.test('the ticked media are added at the end of the playlist', async () =>
@@ -262,7 +262,7 @@ Deno.test('the ticked media are added at the end of the playlist', async () =>
 	assertEquals(insertButton(page).hidden, false);
 	assertEquals(page.messages, [['success', 'The media are inserted.']]);
 	assertEquals(page.document.getElementById('playerExport').classList.contains('notify-save'), true);
-	assertEquals(page.document.getElementById('waitOverlay'), null);
+	assertSameElement(page.document.getElementById('waitOverlay'), null);
 });
 
 Deno.test('when all are inserted the insert is hidden', async () =>

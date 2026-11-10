@@ -34,7 +34,8 @@ Deno.test('a new editor does not exist yet and has the id 0', () =>
 {
 	const editor = new BaseTypes();
 
-	assertEquals([editor.exists, editor.id, editor.node], [false, 0, null]);
+	assertEquals([editor.exists, editor.id], [false, 0]);
+	assertSameElement(editor.node, null);
 });
 
 Deno.test('the id is set by the manager', () =>
@@ -73,5 +74,5 @@ Deno.test('the remove button takes the form out of the page and the editor does 
 	container.querySelector('.remove').dispatchEvent(new Event('click', {bubbles: true}));
 
 	assertEquals(editor.exists, false);
-	assertEquals(container.querySelector('.trigger-form'), null);
+	assertSameElement(container.querySelector('.trigger-form'), null);
 });

@@ -94,7 +94,7 @@ Deno.test('a name is shown as text', () =>
 	page.view.displayList([{id: 4, name: '<b>Lobby</b>'}]);
 
 	assertEquals(shownPlaylists(page), [['4', '<b>Lobby</b>']]);
-	assertEquals(page.document.querySelector('#playlistsList b'), null);
+	assertSameElement(page.document.querySelector('#playlistsList b'), null);
 });
 
 Deno.test('an empty list empties the selector', () =>
