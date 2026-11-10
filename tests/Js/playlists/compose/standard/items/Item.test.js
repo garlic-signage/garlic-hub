@@ -243,6 +243,16 @@ Deno.test('the other editions have settings and copy nested playlists and templa
 	}
 });
 
+Deno.test('the other editions have no conditional play and no trigger, also in a master playlist', () =>
+{
+	using page = createItem({conditional: 'a:1:{s:4:"date";}'}, {edition: 'enterprise', master: true});
+
+	// only whether they exist: a diff of elements would take minutes
+	assertEquals([page.find('.conditional-play') === null, page.find('.edit-trigger') === null], [true, true]);
+	assertEquals([page.item.conditionalPlayAction === null, page.item.editTriggerAction === null], [true, true]);
+	assertEquals(actions(page), ['item-preview', 'edit-settings', 'delete-item']);
+});
+
 Deno.test('the editors of conditional play, trigger and widget open their dialog after loading', async () =>
 {
 	using page = createItem({mimetype: 'application/widget', content_data: 'a:1:{}'}, {master: true});

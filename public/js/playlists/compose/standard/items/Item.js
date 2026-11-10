@@ -281,6 +281,9 @@ export class Item
 		if (this.#cmsEdition !== "core")
 		{
 			this.#editSettingsAction    = this.#playlistItem.querySelector('.edit-settings');
+			// these editors are part of the core edition only: without them the buttons would do nothing
+			this.#playlistItem.querySelector('.conditional-play').remove();
+			this.#playlistItem.querySelector('.edit-trigger').remove();
 		}
 		else
 		{
