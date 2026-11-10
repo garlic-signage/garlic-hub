@@ -134,7 +134,8 @@ Deno.test('the download asks Unsplash for the address and limits it to 1920 x 19
 	const url = await platform.determineMediaDownloadUrl('https://api.unsplash.com/photos/abc/download?ixid=1');
 
 	assertEquals(client.requests[0].url, 'https://api.unsplash.com/photos/abc/download?ixid=1&client_id=secret');
-	assertEquals(url, 'https://images.unsplash.com/photo-abc?ixid=1&fit=clip&w=1920&h=1920&client_id=secret');
+	// the key is needed only for the request to Unsplash, the address of the image goes to the server without it
+	assertEquals(url, 'https://images.unsplash.com/photo-abc?ixid=1&fit=clip&w=1920&h=1920');
 });
 
 Deno.test('a failed download address is logged and gives null', async () =>
