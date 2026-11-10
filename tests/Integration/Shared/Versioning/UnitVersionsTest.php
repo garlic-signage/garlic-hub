@@ -50,4 +50,34 @@ class UnitVersionsTest extends ContainerTestCase
 		static::assertSame('{"content":"first"}', $repository->findSnapshot('templates', '7', 1));
 		static::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM unit_versions'));
 	}
+
+	/**
+	 * The save which lost keeps its hands off the versions: the one which won removes the old ones.
+	 */
+	public function testTheLosingSaveDeletesNoVersion(): void
+	{
+		$repository = new UnitVersionsRepository($this->connection);
+		foreach ([1, 2, 3] as $version)
+			$repository->insertVersion('templates', '7', $version, 1, '{"content":"' . $version . '"}');
+		$late = new class($this->connection) extends UnitVersionsRepository
+		{
+			public function findLastVersion(string $module, string $unitId): int
+			{
+				return 2;
+			}
+		};
+
+		new UnitVersions($late, true, 1)->record('templates', 7, 2, ['content' => 'second']);
+
+		static::assertSame([1, 2, 3], array_map('intval', $this->connection->fetchFirstColumn('SELECT version FROM unit_versions ORDER BY version')));
+	}
+
+	public function testUmlautsAreStoredAsTheyAre(): void
+	{
+		$repository = new UnitVersionsRepository($this->connection);
+
+		new UnitVersions($repository, true, 10)->record('templates', 7, 1, ['content' => 'Grüße']);
+
+		static::assertSame('{"content":"Grüße"}', $repository->findSnapshot('templates', '7', 1));
+	}
 }

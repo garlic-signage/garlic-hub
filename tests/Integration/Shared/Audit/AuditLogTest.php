@@ -30,6 +30,7 @@ use App\Modules\Templates\Services\TemplatesService;
 use App\Modules\Users\Services\UsersAdminService;
 use App\Shared\Acl\AclGrantService;
 use App\Shared\Acl\AclSections;
+use App\Shared\Audit\AuditAction;
 use App\Shared\Audit\AuditLog;
 use App\Shared\Audit\DatabaseAuditLog;
 use App\Shared\Audit\NullAuditLog;
@@ -205,6 +206,16 @@ class AuditLogTest extends ContainerTestCase
 		static::assertNull($this->container->get(AuthService::class)->login("ann\xC3a", 'wrong'));
 
 		static::assertSame(['username' => 'ann?a', 'ip_address' => '10.0.0.1'], $this->entries()[0]['details']);
+	}
+
+	public function testUmlautsOfTheDetailsAreStoredAsTheyAre(): void
+	{
+		$this->enable();
+
+		$this->container->get(AuditLog::class)->record(1, 'playlists', AuditAction::UNIT_DELETED, 5, null, ['name' => 'Grüße']);
+
+		static::assertSame('{"name":"Grüße"}', $this->connection->fetchOne('SELECT details FROM audit_log'));
+		static::assertSame('5', $this->entries()[0]['unit_id']);
 	}
 
 	public function testDeletedPlaylistsAndTemplatesAreRecordedWithTheirName(): void

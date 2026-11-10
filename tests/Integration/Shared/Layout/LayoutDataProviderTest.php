@@ -79,6 +79,26 @@ class LayoutDataProviderTest extends ContainerTestCase
 		static::assertSame([], $data['user_menu'][0]['has_user_access']);
 	}
 
+	public function testTheUserMenuHasItsTexts(): void
+	{
+		$this->actingAs(2);
+
+		static::assertSame(
+			['LANG_LOGIN_AS' => 'Logged in as', 'USERNAME' => 'anna', 'has_user_access' => [], 'LANG_MANAGE_ACCOUNT' => 'My account', 'LANG_LOGOUT' => 'Logout'],
+			$this->layout()['user_menu'][0]
+		);
+	}
+
+	/**
+	 * A session user without id gets no administration: also not the one of the admin, user 1.
+	 */
+	public function testAUserWithoutIdGetsNoAdministration(): void
+	{
+		$this->container->get(Session::class)->set('user', ['username' => 'nobody']);
+
+		static::assertSame([], $this->layout()['user_menu'][0]['has_user_access']);
+	}
+
 	public function testTheAdminGetsTheSettingsAndTheAdministration(): void
 	{
 		$this->actingAs(1);

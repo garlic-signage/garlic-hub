@@ -82,9 +82,12 @@ readonly class LayoutDataProvider implements LayoutDataProviderInterface
 	 */
 	private function collectDebugStats(ServerRequestInterface $request): array
 	{
+		// @infection-ignore-all the numbers of the debug mode change with every request, a test checks only their format
 		$startTime   = (float) $request->getAttribute('start_time', microtime(true));
+		// @infection-ignore-all see above
 		$startMemory = (int) $request->getAttribute('start_memory', 0);
 
+		// @infection-ignore-all see above
 		return [
 			'EXECUTION_TIME'    => number_format(microtime(true) - $startTime, 6) . 'sec',
 			'MEMORY_USAGE'      => round((memory_get_usage() - $startMemory) / 1024, 2) . ' KB',
