@@ -107,7 +107,10 @@ use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Logging\Middleware;
 use League\Flysystem\Filesystem;
 use League\Flysystem\Local\LocalFilesystemAdapter;
+use App\Framework\Database\SlowQueries\Middleware as SlowQueryMiddleware;
+use App\Framework\Database\SlowQueries\SlowQueryLog;
 use Monolog\Handler\StreamHandler;
+use Monolog\Level;
 use Monolog\Logger;
 use Phpfastcache\Helper\Psr16Adapter;
 use Psr\Container\ContainerInterface;
@@ -260,8 +263,17 @@ $dependencies['SqlConnection'] = DI\factory(function (ContainerInterface $contai
 
 	$logger = new Logger('dbal');
 	$logger->pushHandler(new StreamHandler($config->getPaths('logDir') . '/dbal.log', $config->getLogLevel()));
+	$middlewares = [new Middleware($logger)];
+	// off by default: the slow queries of a load test, written also in prod
+	$slowQueryMs = (int) $config->getEnv('DB_SLOW_QUERY_MS');
+	if ($slowQueryMs > 0)
+	{
+		$slowLogger = new Logger('slow_queries');
+		$slowLogger->pushHandler(new StreamHandler($config->getPaths('logDir') . '/slow-queries.log', Level::Warning));
+		$middlewares[] = new SlowQueryMiddleware(new SlowQueryLog($slowLogger, $slowQueryMs));
+	}
 	$dbalConfig = new Configuration();
-	$dbalConfig->setMiddlewares([new Middleware($logger)]);
+	$dbalConfig->setMiddlewares($middlewares);
 
 	$connection = DriverManager::getConnection($connectionParams, $dbalConfig);
 

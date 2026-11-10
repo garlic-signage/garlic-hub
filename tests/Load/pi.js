@@ -15,6 +15,9 @@
 
  On the data of seed.js: add -e PLAYLIST_ID=<id> -e NODE_ID=<id> from its output. Then the setup creates nothing,
  every player keeps its own playlist and the users work in the seeded playlist and folder.
+
+ The slow queries: DB_SLOW_QUERY_MS=100 in the .env of the Pi writes every query which takes longer, with the path
+ of the request, to var/logs/slow-queries.log. Remove it afterwards, it measures every query.
 */
 import http from 'k6/http';
 import { check, fail, sleep } from 'k6';
