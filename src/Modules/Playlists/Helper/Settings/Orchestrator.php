@@ -175,12 +175,22 @@ class Orchestrator
 		if (!array_key_exists(Parameters::PARAMETER_SCREEN_WIDTH, $post) || !array_key_exists(Parameters::PARAMETER_SCREEN_HEIGHT, $post))
 			return $saveData;
 
-		$layout['resolution'] = $post[Parameters::PARAMETER_SCREEN_WIDTH] . 'x' . $post[Parameters::PARAMETER_SCREEN_HEIGHT];
+		// the parsed values: the validator has checked them
+		$layout['resolution'] = $this->pixel($saveData, Parameters::PARAMETER_SCREEN_WIDTH) . 'x' . $this->pixel($saveData, Parameters::PARAMETER_SCREEN_HEIGHT);
 		// complete the layout, so the multizone editor gets a valid structure for new playlists
 		$layout += ['zoom' => 70, 'export_unit' => 'pixel', 'zones' => []];
 		$saveData['layout'] = serialize($layout);
 
 		return $saveData;
+	}
+
+	/**
+	 * @param array<string,mixed> $saveData
+	 */
+	private function pixel(array $saveData, string $field): int
+	{
+		// @infection-ignore-all the parameter is an int parameter, the parser always gives an int
+		return is_int($saveData[$field] ?? null) ? $saveData[$field] : 0;
 	}
 
 	/**

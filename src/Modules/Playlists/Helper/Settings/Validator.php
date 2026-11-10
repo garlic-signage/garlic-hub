@@ -37,6 +37,9 @@ use App\Modules\Playlists\Helper\PlaylistMode;
  */
 class Validator extends BaseValidator
 {
+	// the same limit as the multizone editor (ZonesSchema)
+	private const int MAX_PIXEL = 16384;
+
 	private Parameters $inputEditParameters;
 
 	public function __construct(Translator $translator, Parameters $inputEditParameters)
@@ -70,7 +73,34 @@ class Validator extends BaseValidator
 		if (isset($post[Parameters::PARAMETER_PLAYLIST_MODE]) && !$this->checkPlaylistMode($post))
 			$errors[] = sprintf($this->translator->translate('playlist_mode_unsupported', 'playlists'), is_string($mode) ? $mode : '');
 
+		if ($this->inputEditParameters->hasParameter(Parameters::PARAMETER_SCREEN_WIDTH) && !$this->hasValidResolution($post))
+			$errors[] = sprintf($this->translator->translate('screen_resolution_invalid', 'playlists'), self::MAX_PIXEL);
+
 		return $errors;
+	}
+
+	/**
+	 * A width or height which is not posted keeps the resolution of the playlist.
+	 *
+	 * @param array<string,mixed> $post
+	 */
+	private function hasValidResolution(array $post): bool
+	{
+		foreach ([Parameters::PARAMETER_SCREEN_WIDTH, Parameters::PARAMETER_SCREEN_HEIGHT] as $field)
+		{
+			if (array_key_exists($field, $post) && !$this->isPixel($post[$field]))
+				return false;
+		}
+
+		return true;
+	}
+
+	private function isPixel(mixed $value): bool
+	{
+		if (is_string($value) && preg_match('/^\d{1,5}$/D', $value) === 1)
+			$value = (int) $value;
+
+		return is_int($value) && $value >= 1 && $value <= self::MAX_PIXEL;
 	}
 
 	/**

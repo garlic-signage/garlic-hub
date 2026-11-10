@@ -161,6 +161,40 @@ class ShowSettingsControllerTest extends PlaylistsControllerTestCase
 		static::assertSame('1280x720', unserialize((string) $row['layout'])['resolution']);
 	}
 
+	/**
+	 * A resolution which is no pixel number is shown as error, nothing is stored.
+	 */
+	public function testANewPlaylistWithAnInvalidResolutionIsNotStored(): void
+	{
+		$this->actingAs(2);
+
+		$page = $this->page($this->store(['playlist_mode' => 'master', 'playlist_name' => 'Kaputt', 'screen_width' => 'abc', 'screen_height' => '720']));
+
+		static::assertSame('playlists/edit', $page->getTemplate());
+		static::assertSame(['The screen resolution must be between 1 and 16384 pixels.'], $this->flash('error'));
+		static::assertFalse($this->databaseValue("SELECT playlist_id FROM playlists WHERE playlist_name = 'Kaputt'"));
+	}
+
+	public function testAnExistingPlaylistWithAnInvalidResolutionKeepsItsLayout(): void
+	{
+		$this->actingAs(2);
+		$layout = $this->databaseValue('SELECT layout FROM playlists WHERE playlist_id = 1');
+
+		$this->store(['playlist_id' => '1', 'playlist_name' => 'Annas Lobby', 'screen_width' => '-5', 'screen_height' => '600']);
+
+		static::assertSame(['The screen resolution must be between 1 and 16384 pixels.'], $this->flash('error'));
+		static::assertSame($layout, $this->databaseValue('SELECT layout FROM playlists WHERE playlist_id = 1'));
+	}
+
+	public function testTheResolutionIsStoredAsNumbers(): void
+	{
+		$this->actingAs(2);
+
+		$this->store(['playlist_mode' => 'master', 'playlist_name' => 'Rund', 'screen_width' => '01280', 'screen_height' => '0720']);
+
+		static::assertSame('1280x720', unserialize((string) $this->databaseValue("SELECT layout FROM playlists WHERE playlist_name = 'Rund'"))['resolution']);
+	}
+
 	public function testANewMultizonePlaylistGetsACompleteLayout(): void
 	{
 		$this->actingAs(2);

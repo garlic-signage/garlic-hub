@@ -26,6 +26,7 @@ use App\Framework\Validation\Sanitizer;
 use App\Modules\Playlists\Helper\Settings\FormInputHandler;
 use App\Modules\Playlists\Helper\Settings\Parameters;
 use App\Modules\Playlists\Helper\Settings\Validator;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Tests\Support\MemorySession;
@@ -43,7 +44,7 @@ class FormInputHandlerTest extends TestCase
 	{
 		parent::setUp();
 		$translator = $this->createStub(Translator::class);
-		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $key === 'playlist_mode_unsupported' ? 'Unsupported: %s' : $module . '.' . $key);
+		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $key === 'playlist_mode_unsupported' ? 'Unsupported: %s' : ($key === 'screen_resolution_invalid' ? 'Resolution 1 to %d' : $module . '.' . $key));
 
 		$this->parameters = new Parameters(new Sanitizer(), new MemorySession());
 		$this->validator  = new Validator($translator, $this->parameters);
@@ -130,5 +131,95 @@ class FormInputHandlerTest extends TestCase
 		$errors = $this->handler->validate(['playlist_name' => 'Lobby', 'playlist_id' => ['12']]);
 
 		static::assertSame(['playlists.parameters_missing'], $errors);
+	}
+	/**
+	 * A width or height which is no pixel number between 1 and 16384 is an error, not saved as it is.
+	 *
+	 * @return array<string, array{mixed}>
+	 */
+	public static function invalidPixels(): array
+	{
+		return [
+			'text'           => ['abc'],
+			'negative'       => ['-5'],
+			'zero'           => ['0'],
+			'too large'      => ['16385'],
+			'text after'     => ['800px'],
+			'text before'    => ['x800'],
+			'newline'        => ["800\n"],
+			'decimal'        => ['800.5'],
+			'array'          => [['800']],
+			'zero as int'    => [0],
+			'too large int'  => [16385],
+		];
+	}
+
+	#[Group('units')]
+	#[DataProvider('invalidPixels')]
+	public function testAnInvalidWidthIsAnError(mixed $width): void
+	{
+		$this->parameters->addPlaylistMode();
+		$this->parameters->addResolution();
+
+		$errors = $this->handler->validate(['playlist_name' => 'Lobby', 'playlist_mode' => 'master', 'screen_width' => $width, 'screen_height' => '720']);
+
+		static::assertSame(['Resolution 1 to 16384'], $errors);
+	}
+
+	#[Group('units')]
+	#[DataProvider('invalidPixels')]
+	public function testAnInvalidHeightIsAnError(mixed $height): void
+	{
+		$this->parameters->addPlaylistMode();
+		$this->parameters->addResolution();
+
+		$errors = $this->handler->validate(['playlist_name' => 'Lobby', 'playlist_mode' => 'master', 'screen_width' => '1280', 'screen_height' => $height]);
+
+		static::assertSame(['Resolution 1 to 16384'], $errors);
+	}
+
+	#[Group('units')]
+	public function testBothSizesInvalidAreOneError(): void
+	{
+		$this->parameters->addPlaylistMode();
+		$this->parameters->addResolution();
+
+		$errors = $this->handler->validate(['playlist_name' => 'Lobby', 'playlist_mode' => 'master', 'screen_width' => 'abc', 'screen_height' => '-1']);
+
+		static::assertSame(['Resolution 1 to 16384'], $errors);
+	}
+
+	#[Group('units')]
+	public function testTheBoundsOfTheResolutionAreValid(): void
+	{
+		$this->parameters->addPlaylistMode();
+		$this->parameters->addResolution();
+
+		static::assertSame([], $this->handler->validate(['playlist_name' => 'Lobby', 'playlist_mode' => 'master', 'screen_width' => '1', 'screen_height' => '16384']));
+		static::assertSame([], $this->handler->validate(['playlist_name' => 'Lobby', 'playlist_mode' => 'master', 'screen_width' => 16384, 'screen_height' => 1]));
+	}
+
+	/**
+	 * Without a posted size the resolution of the playlist stays, so the missing size is no error.
+	 */
+	#[Group('units')]
+	public function testAMissingSizeIsNoError(): void
+	{
+		$this->parameters->addPlaylistId();
+		$this->parameters->addResolution();
+
+		static::assertSame([], $this->handler->validate(['playlist_name' => 'Lobby', 'playlist_id' => '1', 'screen_width' => '800']));
+		static::assertSame([], $this->handler->validate(['playlist_name' => 'Lobby', 'playlist_id' => '1', 'screen_height' => '600']));
+	}
+
+	/**
+	 * A playlist mode without resolution ignores a posted size.
+	 */
+	#[Group('units')]
+	public function testASizeIsNotCheckedWithoutResolution(): void
+	{
+		$this->parameters->addPlaylistMode();
+
+		static::assertSame([], $this->handler->validate(['playlist_name' => 'Lobby', 'playlist_mode' => 'master', 'screen_width' => 'abc']));
 	}
 }
