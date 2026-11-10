@@ -164,7 +164,7 @@ class ItemsRepository extends SqlBase
 			'playlists_items.file_resource = nested_playlist.playlist_id'
 		);
 
-		$select = 'item_id, flags, playlists_items.playlist_id, playlists_items.UID, item_type, item_order, file_resource, datasource, item_duration, item_filesize, playlists_items.mimetype, item_name, properties, conditional, categories, content_data, begin_trigger, end_trigger, mediapool_files.extension, nested_playlist.time_limit, nested_playlist.owner_duration';
+		$select = 'item_id, flags, playlists_items.playlist_id, playlists_items.UID, item_type, item_order, file_resource, datasource, item_duration, item_filesize, playlists_items.mimetype, item_name, properties, conditional, categories, content_data, begin_trigger, end_trigger, mediapool_files.extension, mediapool_files.thumb_extension, nested_playlist.time_limit, nested_playlist.owner_duration';
 
 		if ($edition === Config::PLATFORM_EDITION_ENTERPRISE)
 		{

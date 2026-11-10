@@ -134,6 +134,21 @@ class ItemsServiceTest extends ContainerTestCase
 		static::assertStringContainsString('checksum-image.jpg', $result['items'][0]['paths']['thumbnail']);
 	}
 
+	/**
+	 * The thumbnail has the format the upload stored: the icon of a widget is not always a png.
+	 */
+	public function testTheComposerTakesTheThumbnailFormatOfTheMediapool(): void
+	{
+		$this->actingAs(2);
+		$this->connection->executeStatement("UPDATE mediapool_files SET mimetype = 'application/widget', extension = 'wgt', thumb_extension = 'svg' WHERE checksum = 'checksum-pdf'");
+		$this->connection->executeStatement("UPDATE playlists_items SET mimetype = 'application/widget', content_data = 'a:0:{}' WHERE item_id = 4");
+
+		$result = $this->itemsService->loadItemsByPlaylistIdForComposer(1);
+
+		static::assertStringEndsWith('/checksum-pdf.svg', $result['items'][3]['paths']['thumbnail']);
+		static::assertStringStartsWith('/media.php/thumb/checksum-pdf.svg?', $result['items'][3]['urls']['thumbnail']);
+	}
+
 	public function testTheComposerSkipsItemsWithoutThumbnail(): void
 	{
 		$this->actingAs(2);

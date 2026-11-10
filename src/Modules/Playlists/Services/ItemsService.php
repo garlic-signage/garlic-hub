@@ -122,7 +122,8 @@ class ItemsService extends AbstractBaseService
 
 		$playlistData  = $this->playlistsService->loadPureById($playlistId); // checks rights, too
 		$items         = [];
-		$result        = $this->itemsRepository->findAllByPlaylistId($playlistId);
+		// the join brings the thumbnail format of the mediapool files, channels are not built: the core edition
+		$result        = $this->itemsRepository->findAllByPlaylistIdWithJoins($playlistId, Config::PLATFORM_EDITION_CORE);
 
 		foreach($result as $value)
 		{

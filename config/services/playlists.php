@@ -319,7 +319,6 @@ $dependencies[ItemsService::class] = DI\factory(function (ContainerInterface $co
 		$container->get(PlaylistMetricsCalculator::class),
 		new ItemThumbnailResolver(
 			$container->get(Config::class),
-			$container->get(MimeTypeExtensionMapper::class),
 			$container->get(MediaUrlSigner::class),
 			$container->get(TemplateItemName::class)
 		),

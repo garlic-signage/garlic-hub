@@ -24,7 +24,6 @@ namespace Tests\Unit\Modules\Playlists\Helper\Compose;
 use App\Framework\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Media\MediaUrlSigner;
-use App\Framework\Media\MimeTypeExtensionMapper;
 use App\Modules\Playlists\Helper\Compose\ItemThumbnailResolver;
 use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Helper\TemplateItemName;
@@ -36,7 +35,6 @@ use PHPUnit\Framework\TestCase;
 class ItemThumbnailResolverTest extends TestCase
 {
 	private Config&Stub $configStub;
-	private MimeTypeExtensionMapper&Stub $mimeTypeExtensionMapperStub;
 	private ItemThumbnailResolver $resolver;
 	private string $thumbnailPath;
 
@@ -55,11 +53,9 @@ class ItemThumbnailResolverTest extends TestCase
 			['thumbnails', 'mediapool', 'directories', $this->thumbnailPath],
 			['thumbnails', 'playlists', 'directories', '/path/to/item/thumbs'],
 		]);
-		$this->mimeTypeExtensionMapperStub = $this->createStub(MimeTypeExtensionMapper::class);
 
 		$this->resolver = new ItemThumbnailResolver(
 			$this->configStub,
-			$this->mimeTypeExtensionMapperStub,
 			new MediaUrlSigner('unit-test-secret'),
 			new TemplateItemName('unit-test-secret')
 		);
@@ -73,61 +69,72 @@ class ItemThumbnailResolverTest extends TestCase
 	}
 
 	/**
+	 * The format of the thumbnail is the one the upload stored: a widget icon is not always a png.
+	 *
 	 * @throws CoreException
 	 */
 	#[Group('units')]
-	public function testVideoUsesJpgThumbnail(): void
+	public function testMediapoolUsesTheStoredThumbnailExtension(): void
 	{
-
-		$result = $this->resolver->resolve(['item_type' => ItemType::MEDIAPOOL->value, 'mimetype' => 'video/webm', 'file_resource' => 'video_checksum']);
+		$result = $this->resolver->resolve(['item_type' => ItemType::MEDIAPOOL->value, 'mimetype' => 'application/widget', 'file_resource' => 'widget_checksum', 'content_data' => 'a:0:{}', 'thumb_extension' => 'jpg']);
 
 		static::assertNotNull($result);
-		static::assertSame($this->thumbnailPath . '/video_checksum.jpg', $result['path']);
-		static::assertStringStartsWith('/media.php/thumb/video_checksum.jpg?exp=', $result['url']);
+		static::assertSame($this->thumbnailPath . '/widget_checksum.jpg', $result['path']);
+		static::assertStringStartsWith('/media.php/thumb/widget_checksum.jpg?exp=', $result['url']);
 	}
 
 	/**
 	 * @throws CoreException
 	 */
 	#[Group('units')]
-	public function testImageUsesExtensionOfMimetype(): void
+	public function testMediapoolWithoutMediapoolFileUsesJpg(): void
 	{
-		$this->mimeTypeExtensionMapperStub->method('determineExtension')
-			->willReturnMap([['image/png', 'png']]);
+		$withNull  = $this->resolver->resolve(['item_type' => ItemType::MEDIAPOOL->value, 'mimetype' => 'image/png', 'file_resource' => 'gone', 'thumb_extension' => null]);
+		$withEmpty = $this->resolver->resolve(['item_type' => ItemType::MEDIAPOOL->value, 'mimetype' => 'image/png', 'file_resource' => 'gone', 'thumb_extension' => '']);
+		$without   = $this->resolver->resolve(['item_type' => ItemType::MEDIAPOOL->value, 'mimetype' => 'image/png', 'file_resource' => 'gone']);
 
-		$result = $this->resolver->resolve(['item_type' => ItemType::MEDIAPOOL->value, 'mimetype' => 'image/png', 'file_resource' => 'image_checksum']);
-
-		static::assertNotNull($result);
-		static::assertSame($this->thumbnailPath . '/image_checksum.png', $result['path']);
-		static::assertStringStartsWith('/media.php/thumb/image_checksum.png?exp=', $result['url']);
+		static::assertSame(
+			[$this->thumbnailPath . '/gone.jpg', $this->thumbnailPath . '/gone.jpg', $this->thumbnailPath . '/gone.jpg'],
+			[$withNull['path'] ?? '', $withEmpty['path'] ?? '', $without['path'] ?? '']
+		);
 	}
 
 	/**
+	 * The directories of the config are relative to the system dir, not to the working dir of the request.
+	 *
 	 * @throws CoreException
 	 */
 	#[Group('units')]
-	public function testSvgWidgetWithExistingSvgThumbnail(): void
+	public function testRelativeDirectoriesAreBelowTheSystemDir(): void
 	{
-		touch($this->thumbnailPath . '/widget_checksum.svg');
+		$names = new TemplateItemName('unit-test-secret');
+		$relativeDir = 'item_thumbs_relative_test' . (string) getenv('TEST_TOKEN');
+		$dir         = sys_get_temp_dir() . '/' . $relativeDir;
+		mkdir($dir);
+		touch($dir . '/18.png');
+		$config = $this->createStub(Config::class);
+		$config->method('getConfigValue')->willReturnMap([
+			['thumbnails', 'mediapool', 'directories', 'mediapool/thumbs'],
+			['thumbnails', 'playlists', 'directories', $relativeDir],
+		]);
+		$config->method('getPaths')->willReturnMap([['systemDir', sys_get_temp_dir()]]);
+		$resolver = new ItemThumbnailResolver($config, new MediaUrlSigner('unit-test-secret'), $names);
 
-		$result = $this->resolver->resolve(['item_type' => ItemType::MEDIAPOOL->value, 'mimetype' => 'application/widget', 'file_resource' => 'widget_checksum', 'content_data' => '']);
+		try
+		{
+			$media    = $resolver->resolve(['item_type' => ItemType::MEDIAPOOL->value, 'file_resource' => 'checksum', 'thumb_extension' => 'png']);
+			$template = $resolver->resolve(['item_type' => ItemType::TEMPLATE->value, 'item_id' => 18, 'content_data' => 'content']);
+		}
+		finally
+		{
+			array_map('unlink', glob($dir . '/*') ?: []);
+			rmdir($dir);
+		}
 
-		static::assertNotNull($result);
-		static::assertSame($this->thumbnailPath . '/widget_checksum.svg', $result['path']);
-	}
-
-	/**
-	 * @throws CoreException
-	 */
-	#[Group('units')]
-	public function testWidgetFallsBackToPngWithoutThumbnailFile(): void
-	{
-
-		$result = $this->resolver->resolve(['item_type' => ItemType::MEDIAPOOL->value, 'mimetype' => 'application/widget', 'file_resource' => 'widget_checksum', 'content_data' => '']);
-
-		static::assertNotNull($result);
-		static::assertSame($this->thumbnailPath . '/widget_checksum.png', $result['path']);
-		static::assertStringStartsWith('/media.php/thumb/widget_checksum.png?exp=', $result['url']);
+		static::assertSame(
+			[sys_get_temp_dir() . '/mediapool/thumbs/checksum.png', $dir . '/18.png'],
+			[$media['path'] ?? '', $template['path'] ?? '']
+		);
 	}
 
 	/**
@@ -159,7 +166,7 @@ class ItemThumbnailResolverTest extends TestCase
 		touch($dir . '/18.webp');
 		$config = $this->createStub(Config::class);
 		$config->method('getConfigValue')->willReturnMap([['thumbnails', 'playlists', 'directories', $dir]]);
-		$resolver = new ItemThumbnailResolver($config, $this->mimeTypeExtensionMapperStub, new MediaUrlSigner('unit-test-secret'), $names);
+		$resolver = new ItemThumbnailResolver($config, new MediaUrlSigner('unit-test-secret'), $names);
 
 		try
 		{
@@ -195,7 +202,7 @@ class ItemThumbnailResolverTest extends TestCase
 		touch($dir . '/' . $names->build(17, 'new') . '.jpg');
 		$config = $this->createStub(Config::class);
 		$config->method('getConfigValue')->willReturnMap([['thumbnails', 'playlists', 'directories', $dir]]);
-		$resolver = new ItemThumbnailResolver($config, $this->mimeTypeExtensionMapperStub, new MediaUrlSigner('unit-test-secret'), $names);
+		$resolver = new ItemThumbnailResolver($config, new MediaUrlSigner('unit-test-secret'), $names);
 
 		try
 		{
@@ -223,7 +230,7 @@ class ItemThumbnailResolverTest extends TestCase
 		touch($dir . '/' . $names->build(17, 'new') . '.png');
 		$config = $this->createStub(Config::class);
 		$config->method('getConfigValue')->willReturnMap([['thumbnails', 'playlists', 'directories', $dir]]);
-		$resolver = new ItemThumbnailResolver($config, $this->mimeTypeExtensionMapperStub, new MediaUrlSigner('unit-test-secret'), $names);
+		$resolver = new ItemThumbnailResolver($config, new MediaUrlSigner('unit-test-secret'), $names);
 
 		try
 		{

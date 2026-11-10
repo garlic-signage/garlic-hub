@@ -125,6 +125,8 @@ readonly class ItemPreviewResolver
 			return null;
 
 		$originals = $this->config->getConfigValue('originals', 'playlists', 'directories');
+		if (!str_starts_with($originals, '/')) // relative to the system dir, web requests run in public/
+			$originals = $this->config->getPaths('systemDir') . '/' . $originals;
 		if (!file_exists($originals . '/' . $name . '.' . $extension))
 			return null;
 

@@ -24,7 +24,6 @@ namespace App\Modules\Playlists\Helper\Compose;
 use App\Framework\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Media\MediaUrlSigner;
-use App\Framework\Media\MimeTypeExtensionMapper;
 use App\Modules\Playlists\Helper\ItemType;
 use App\Modules\Playlists\Helper\TemplateItemName;
 
@@ -36,7 +35,6 @@ readonly class ItemThumbnailResolver
 {
 	public function __construct(
 		private Config $config,
-		private MimeTypeExtensionMapper $mimeTypeExtensionMapper,
 		private MediaUrlSigner $mediaUrlSigner,
 		private TemplateItemName $templateItemName
 	) {}
@@ -58,31 +56,25 @@ readonly class ItemThumbnailResolver
 	}
 
 	/**
-	 * @param array<string,mixed> $item
+	 * The upload stores the format of the thumbnail (jpg, png, svg, ...) in mediapool_files.thumb_extension.
+	 * Without the mediapool file (deleted) it is the jpg.
+	 *
+	 * @param array<string,mixed> $item with thumb_extension of the joined mediapool file
 	 * @return array{path:string, url:string}
 	 * @throws CoreException
 	 */
 	private function resolveMediapool(array $item): array
 	{
-		$thumbnailPath = $this->config->getConfigValue('thumbnails', 'mediapool', 'directories');
-
-		$ext = 'jpg';
-		if (str_starts_with($item['mimetype'], 'image/'))
-			$ext = $this->mimeTypeExtensionMapper->determineExtension($item['mimetype']);
-
-		$filename    = $item['file_resource'];
-		$isSvgWidget = ($item['mimetype'] === 'application/widget' && $item['content_data'] == '');
-		$finalExt    = $isSvgWidget ? 'svg' : $ext;
-
-		// ugly workaround fix this later.
-		if ($item['mimetype'] === 'application/widget'
-			&& !file_exists($thumbnailPath . '/' . $filename . '.' . $finalExt))
-			$finalExt = 'png';
+		$thumbnailPath = $this->absolutePath($this->config->getConfigValue('thumbnails', 'mediapool', 'directories'));
+		$filename      = (string) $item['file_resource'];
+		$extension     = (string) ($item['thumb_extension'] ?? '');
+		if ($extension === '')
+			$extension = 'jpg';
 
 		return [
-			'path' => $thumbnailPath . '/' . $filename . '.' . $finalExt,
+			'path' => $thumbnailPath . '/' . $filename . '.' . $extension,
 			// mediapool files are stored outside the document root
-			'url'  => $this->mediaUrlSigner->thumbUrl($filename, $finalExt)
+			'url'  => $this->mediaUrlSigner->thumbUrl($filename, $extension)
 		];
 	}
 
@@ -96,7 +88,7 @@ readonly class ItemThumbnailResolver
 	 */
 	private function resolveTemplate(int $itemId, string $content): array
 	{
-		$thumbDir = $this->config->getConfigValue('thumbnails', 'playlists', 'directories');
+		$thumbDir = $this->absolutePath($this->config->getConfigValue('thumbnails', 'playlists', 'directories'));
 		$name     = $this->templateItemName->build($itemId, $content);
 		foreach ([$name, (string) $itemId] as $candidateName)
 		{
@@ -119,5 +111,16 @@ readonly class ItemThumbnailResolver
 			'path' => $thumbDir . '/' . $name . '.' . $extension,
 			'url'  => $this->mediaUrlSigner->itemThumbUrl($name, $extension)
 		];
+	}
+
+	/**
+	 * The directories of the config are relative to the system dir; the web requests run in public/.
+	 */
+	private function absolutePath(string $directory): string
+	{
+		if (str_starts_with($directory, '/'))
+			return $directory;
+
+		return $this->config->getPaths('systemDir') . '/' . $directory;
 	}
 }

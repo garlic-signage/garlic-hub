@@ -218,6 +218,33 @@ class ItemPreviewResolverTest extends TestCase
 	}
 
 	/**
+	 * The originals directory of the config is relative to the system dir, not to the working dir of the request.
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 */
+	#[Group('units')]
+	public function testARelativeOriginalsDirectoryIsBelowTheSystemDir(): void
+	{
+		touch($this->originalsPath . '/35-0123456789abcdef0123456789abcdef.webp');
+		$configStub = $this->createStub(Config::class);
+		$configStub->method('getConfigValue')->willReturnMap([
+			['originals', 'playlists', 'directories', basename($this->originalsPath)],
+		]);
+		$configStub->method('getPaths')->willReturnMap([['systemDir', dirname($this->originalsPath)]]);
+		$resolver = new ItemPreviewResolver($configStub, $this->mediaUrlSigner);
+		$item     = [
+			'item_type' => ItemType::TEMPLATE->value,
+			'paths'     => ['thumbnail' => '/path/to/item/thumbs/35-0123456789abcdef0123456789abcdef.webp'],
+			'urls'      => ['thumbnail' => '/thumbnail.webp'],
+		];
+
+		$preview = $resolver->resolve($item);
+
+		static::assertSame(['type' => ItemPreviewResolver::TYPE_IMAGE, 'url' => $this->mediaUrlSigner->itemOriginalUrl('35-0123456789abcdef0123456789abcdef', 'webp')], $preview);
+	}
+
+	/**
 	 * @throws CoreException
 	 */
 	#[Group('units')]
