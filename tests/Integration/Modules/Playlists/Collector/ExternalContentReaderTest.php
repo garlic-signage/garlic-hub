@@ -96,6 +96,19 @@ class ExternalContentReaderTest extends TestCase
 		}
 	}
 
+	/**
+	 * A newer file is downloaded also when it has the same size.
+	 */
+	public function testANewerFileOfTheSameSizeIsDownloadedAgain(): void
+	{
+		$this->workspace->filesystem->write($this->cachedFile, 'old');
+		$this->http->append(new Response(200, ['Content-Length' => '3', 'Last-Modified' => gmdate('D, d M Y H:i:s', time() + 3600) . ' GMT']), new Response(200, [], 'new'));
+
+		$this->reader->init(self::URL)->loadPlaylistItems();
+
+		static::assertCount(0, $this->http, 'The file was downloaded.');
+	}
+
 	public function testAChangedFileIsDownloadedAgain(): void
 	{
 		$this->workspace->filesystem->write($this->cachedFile, 'old');
@@ -129,8 +142,6 @@ class ExternalContentReaderTest extends TestCase
 
 	public function testAnUnchangedFileIsNotDownloadedAgain(): void
 	{
-		static::markTestSkipped('Known bug: mustUpdate() compares the other way round (remote older than the cache), which is always true after the first download. The file is downloaded on every access. Remove this line when it is fixed.');
-		// @phpstan-ignore deadCode.unreachable
 		$this->workspace->filesystem->write($this->cachedFile, 'cached');
 		$this->http->append(new Response(200, ['Content-Length' => '6', 'Last-Modified' => gmdate('D, d M Y H:i:s', time() - 3600) . ' GMT']));
 

@@ -104,7 +104,8 @@ class ExternalContentReader implements ExternalContentReaderInterface
 		// @infection-ignore-all it is compared with != to a number
 		$contentLength = (int) $this->response->getHeaderLine('Content-Length');
 
-		return $lastModified < $this->fileSystem->lastModified($this->cachedFile) || $contentLength != $this->fileSystem->fileSize($this->cachedFile);
+		// a newer file on the server or another size
+		return $lastModified > $this->fileSystem->lastModified($this->cachedFile) || $contentLength != $this->fileSystem->fileSize($this->cachedFile);
 	}
 
 	/**
