@@ -49,7 +49,6 @@ export class MediaList
 		const results = await this.#mediaService.loadFilteredMediaByNodeId(nodeId, encodeURIComponent(this.#filter));
 
 		this.render(results);
-		this.#initDrag();
 		// a search which was shown before is over
 		this.#mediaListElement.dispatchEvent(new CustomEvent("directoryloaded"));
 	}
@@ -62,7 +61,6 @@ export class MediaList
 		this.#rights = null;
 
 		this.render(results);
-		this.#initDrag();
 	}
 
 	get element()
@@ -126,6 +124,7 @@ export class MediaList
         const mediaItem   = mediaObject.renderForDisplayInMediaPool();
 
         this.#addContextMenu(mediaItem);
+        this.#addDrag(mediaItem);
 
         this.#mediaListElement.appendChild(mediaItem);
     }
@@ -173,9 +172,12 @@ export class MediaList
 		return this.#rights?.create === true;
 	}
 
-	#initDrag()
+	/**
+	 * Per medium, so a clone added to the list can be dragged too.
+	 */
+	#addDrag(mediaItem)
 	{
-		document.querySelectorAll(".media-drag-icon").forEach(icon => {
+		mediaItem.querySelectorAll(".media-drag-icon").forEach(icon => {
 			icon.addEventListener("dragstart", event => {
 				let article = event.target.closest(".media-item"); // Finde das übergeordnete <article>
 				event.dataTransfer.setData("text/plain", ""); // Notwendig für Drag & Drop in manchen Browsern
