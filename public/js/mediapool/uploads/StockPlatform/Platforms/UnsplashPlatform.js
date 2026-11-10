@@ -104,9 +104,12 @@ export class UnsplashPlatform extends AbstractStockPlatform
 		}
 	}
 
+	/**
+	 * The address goes to the server and may be kept there: without the key, the images of Unsplash are public.
+	 */
 	#prepareDownloadMediaUrl(downloadUrl)
 	{
-		return downloadUrl + "&fit=clip&w=" + this.maxWith + "&h=" + this.maxHeight + "&client_id=" + this.apiToken;
+		return downloadUrl + "&fit=clip&w=" + this.maxWith + "&h=" + this.maxHeight;
 	}
 
 	#prepareResults(json)
