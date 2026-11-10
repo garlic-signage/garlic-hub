@@ -105,6 +105,7 @@ ddev exec vendor/bin/phpunit --testsuite architecture                 # layers, 
 ddev exec vendor/bin/phpunit --testsuite blackbox                     # the real application behind a web server, asked over HTTP
 ddev exec vendor/bin/phpunit --testsuite browser                      # the JavaScript in a headless Chromium, not in the default run
 ddev exec vendor/bin/phpstan analyze
+cd tests/Js && deno test                                              # the logic of the JavaScript with Deno, without a browser
 ```
 
 `bin/check-code.sh` runs the tests with coverage and the static analysis.

@@ -2,7 +2,8 @@ name: tests
 
 # Fast checks run in parallel on every push and pull request. Each job has one task, so the
 # failing one tells what is wrong: static analysis, unit tests, integration tests with a real
-# database, the security checks. Coverage is measured on its own.
+# database, the unit tests of the JavaScript, the security checks. Coverage is measured on its own.
+# The browser tests (Panther) are not part of it.
 on:
   pull_request:
   push:
@@ -63,6 +64,20 @@ jobs:
 
       - name: PHPUnit blackbox
         run: vendor/bin/phpunit --testsuite blackbox
+
+  javascript:
+    name: javascript unit tests (Deno)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Deno test
+        working-directory: tests/Js
+        run: deno test
 
   coverage:
     name: coverage
