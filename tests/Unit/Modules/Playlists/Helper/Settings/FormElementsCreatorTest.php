@@ -153,4 +153,22 @@ class FormElementsCreatorTest extends TestCase
 		static::assertCount(1, $form['visible']);
 		static::assertSame('playlists.playlist_name', $form['visible'][0]['LANG_ELEMENT_LABEL']);
 	}
+
+	#[Group('units')]
+	public function testEveryFieldHasItsTitleAndLabel(): void
+	{
+		$fields = [
+			'UID'           => $this->creator->createUIDField(3, 'bernd', 7),
+			'screen_width'  => $this->creator->createScreenWidthField(1920),
+			'screen_height' => $this->creator->createScreenHeightField(1080),
+			'time_limit'    => $this->creator->createTimeLimitField(600, 0),
+		];
+
+		static::assertSame([
+			'UID'           => ['UID', 'main.owner', 'main.owner', '3'],
+			'screen_width'  => ['screen_width', 'playlists.screen_width', 'playlists.screen_width', '1920'],
+			'screen_height' => ['screen_height', 'playlists.screen_height', 'playlists.screen_height', '1080'],
+			'time_limit'    => ['time_limit', 'playlists.time_limit_explanation', 'playlists.time_limit', '600'],
+		], array_map(static fn($field): array => [$field->getId(), $field->getTitle(), $field->getLabel(), $field->getValue()], $fields));
+	}
 }

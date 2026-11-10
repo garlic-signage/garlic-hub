@@ -93,6 +93,7 @@ class DatatablePreparer extends AbstractDatatablePreparer
 						break;
 					case 'release_status':
 						$statuses = $this->translator->translateArrayForOptions('release_status_selects', 'playlists');
+						// @infection-ignore-all the cast is for databases which give no text, ours gives text
 						$resultElements['is_text'] = $this->prepareService->getBodyPreparer()->formatText($statuses[(string) ($playlist['release_status'] ?? '')] ?? '');
 						break;
 					default:

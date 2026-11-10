@@ -149,7 +149,7 @@ class DatatablePreparerTest extends TestCase
 	 */
 	public static function durations(): array
 	{
-		return ['none' => [0, '00:00:00'], 'a minute' => [60, '00:01:00'], 'an hour and more' => [3725, '01:02:05'], 'exactly a day' => [86400, '24:00:00'], 'more than a day' => [100000, '27:46:40'], 'more than 99 hours' => [360000, '100:00:00'], 'a negative duration' => [-5, '00:00:00']];
+		return ['none' => [0, '00:00:00'], 'a minute' => [60, '00:01:00'], 'a second short of an hour' => [3599, '00:59:59'], 'an hour and more' => [3725, '01:02:05'], 'exactly a day' => [86400, '24:00:00'], 'more than a day' => [100000, '27:46:40'], 'more than 99 hours' => [360000, '100:00:00'], 'a negative duration' => [-5, '00:00:00']];
 	}
 
 	#[DataProvider('durations')]

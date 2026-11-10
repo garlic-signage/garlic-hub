@@ -84,4 +84,16 @@ class ParametersTest extends TestCase
 		static::asserttrue($this->parameters->hasParameter(Parameters::PARAMETER_TIME_LIMIT));
 	}
 
+	#[Group('units')]
+	public function testTheDefaultsAreFullHdNoPlaylistAndNoTimeLimit(): void
+	{
+		$this->parameters->addResolution();
+		$this->parameters->addPlaylistId();
+		$this->parameters->addTimeLimit();
+
+		static::assertSame(
+			['playlist_name' => '', 'screen_width' => 1920, 'screen_height' => 1080, 'playlist_id' => 0, 'time_limit' => 0],
+			array_map(static fn(array $parameter): mixed => $parameter['default_value'], $this->parameters->getCurrentParameters())
+		);
+	}
 }

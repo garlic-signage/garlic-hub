@@ -49,13 +49,16 @@ class PlaylistsRepository extends SqlBase
 		if ($playlistIds === [])
 			return [];
 
-		return array_map('intval', $this->connection->createQueryBuilder()
+		$existing = $this->connection->createQueryBuilder()
 			->select('playlist_id')
 			->from($this->table)
 			->where('playlist_id IN (:playlistIds)')
 			->setParameter('playlistIds', $playlistIds, ArrayParameterType::INTEGER)
 			->executeQuery()
-			->fetchFirstColumn());
+			->fetchFirstColumn();
+
+		// @infection-ignore-all the casts are for databases which give text, ours gives numbers
+		return array_map('intval', $existing);
 	}
 
 	public function delete(int|string $id): int

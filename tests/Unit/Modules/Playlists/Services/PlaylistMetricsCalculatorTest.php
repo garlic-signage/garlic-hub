@@ -399,13 +399,154 @@ class PlaylistMetricsCalculatorTest extends TestCase
 	{
 		$playlist = ['UID' => 1, 'shuffle' => 0, 'time_limit' => 0];
 		$items    = [
-			['item_filesize' => 1, 'item_duration' => 10.4, 'UID' => 1],
-			['item_filesize' => 1, 'item_duration' => 10.5, 'UID' => 2],
+			['item_filesize' => 1, 'item_duration' => 10.4, 'UID' => 2],
+			['item_filesize' => 1, 'item_duration' => 10.5, 'UID' => 1],
 		];
 
 		$metrics = $this->calculator->calculateFromItems($playlist, $items);
 
 		static::assertSame(21, $metrics->duration);
+		static::assertSame(11, $metrics->ownerDuration);
+	}
+
+	/**
+	 * Items with default values come without playlist id: no query then.
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testAPlaylistWithoutIdIsNotQueried(): void
+	{
+		$itemsRepositoryMock = $this->createMock(ItemsRepository::class);
+		$itemsRepositoryMock->expects($this->never())->method('sumAndCountMetricsByPlaylistIdAndOwner');
+		$calculator = new PlaylistMetricsCalculator($itemsRepositoryMock, $this->aclValidatorStub, $this->configStub, $this->userSessionStub);
+
+		$metrics = $calculator->calculateFromPlaylistData(['UID' => 1, 'shuffle' => 0, 'time_limit' => 0]);
+
+		static::assertSame(['filesize' => 0, 'duration' => 0, 'owner_duration' => 0], $metrics->toPlaylistTableArray());
+	}
+
+	/**
+	 * Without items the sums are null, and the database may give the numbers as text.
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testSumsOfTheDatabaseAreNumbers(): void
+	{
+		$playlist = ['playlist_id' => 5, 'UID' => 1, 'shuffle' => 0, 'time_limit' => 0];
+		$this->itemsRepositoryStub->method('sumAndCountMetricsByPlaylistIdAndOwner')->willReturnOnConsecutiveCalls(
+			['count_items' => 0, 'count_owner_items' => 0, 'filesize' => null, 'duration' => null, 'owner_duration' => null],
+			['count_items' => '3', 'count_owner_items' => '2', 'filesize' => '450', 'duration' => '120.6', 'owner_duration' => '80'],
+			[]
+		);
+
+		static::assertSame(['count_items' => 0, 'count_owner_items' => 0, 'filesize' => 0, 'duration' => 0, 'owner_duration' => 0], $this->calculator->calculateFromPlaylistData($playlist)->toFrontendArray());
+		static::assertSame(['count_items' => 3, 'count_owner_items' => 2, 'filesize' => 450, 'duration' => 120, 'owner_duration' => 80], $this->calculator->calculateFromPlaylistData($playlist)->toFrontendArray());
+		static::assertSame(['count_items' => 0, 'count_owner_items' => 0, 'filesize' => 0, 'duration' => 0, 'owner_duration' => 0], $this->calculator->calculateFromPlaylistData($playlist)->toFrontendArray());
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testMediaDurationIsRoundedAndZeroTakesTheDefault(): void
+	{
+		$playlist = ['UID' => 1, 'time_limit' => 0];
+		$this->configStub->method('getConfigValue')->willReturnMap([['duration', 'playlists', 'Defaults', '15']]);
+
+		static::assertSame(10, $this->calculator->calculateRemainingMediaDuration($playlist, ['metadata' => ['duration' => 10.4]]));
+		static::assertSame(11, $this->calculator->calculateRemainingMediaDuration($playlist, ['metadata' => ['duration' => 10.5]]));
+		static::assertSame(15, $this->calculator->calculateRemainingMediaDuration($playlist, ['metadata' => ['duration' => 0]]));
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testTheRemainingDurationIsZeroWhenTheLimitIsReached(): void
+	{
+		$playlist = ['playlist_id' => 5, 'UID' => 1, 'shuffle' => 0, 'time_limit' => 100];
+		$this->itemsRepositoryStub->method('sumAndCountMetricsByPlaylistIdAndOwner')
+			->willReturn(['count_items' => 1, 'count_owner_items' => 1, 'filesize' => 1, 'duration' => 100, 'owner_duration' => 100]);
+		$this->userSessionStub->method('getUID')->willReturn(1);
+		$this->aclValidatorStub->method('isSimpleAdmin')->willReturn(false);
+
+		static::assertSame(0, $this->calculator->calculateRemainingDuration($playlist, 0));
+		static::assertSame(0, $this->calculator->calculateRemainingDuration($playlist, 30));
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testAShuffledPlaylistWithoutItemsHasNoDuration(): void
+	{
+		$playlist = ['UID' => 1, 'time_limit' => 0, 'shuffle' => 1, 'shuffle_picking' => 2];
+
+		$metrics = $this->calculator->calculateFromItems($playlist, []);
+
+		static::assertSame(['filesize' => 0, 'duration' => 0, 'owner_duration' => 0], $metrics->toPlaylistTableArray());
+	}
+
+	/**
+	 * Picking 0 plays all items once.
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testShufflePickingZeroPlaysAllItems(): void
+	{
+		$playlist = ['UID' => 1, 'time_limit' => 0, 'shuffle' => 1, 'shuffle_picking' => 0];
+		$items    = [
+			['item_filesize' => 1, 'item_duration' => 10, 'UID' => 1],
+			['item_filesize' => 1, 'item_duration' => 20, 'UID' => 2],
+		];
+
+		$metrics = $this->calculator->calculateFromItems($playlist, $items);
+
+		static::assertSame(30, $metrics->duration);
 		static::assertSame(10, $metrics->ownerDuration);
+	}
+
+	/**
+	 * The shuffled duration is the average per item times the picked items, the owner duration the expected
+	 * share of the owner: one of four items of 30 seconds is picked with 1/4, so 7.5 seconds.
+	 *
+	 * @throws CoreException
+	 * @throws Exception
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testShuffledDurationsAreRounded(): void
+	{
+		$playlist = ['UID' => 1, 'time_limit' => 0, 'shuffle' => 1, 'shuffle_picking' => 1];
+
+		$half  = $this->calculator->calculateFromItems($playlist, [
+			['item_filesize' => 1, 'item_duration' => 10, 'UID' => 2],
+			['item_filesize' => 1, 'item_duration' => 15, 'UID' => 2],
+		]);
+		$owner = $this->calculator->calculateFromItems($playlist, [
+			['item_filesize' => 1, 'item_duration' => 30, 'UID' => 1],
+			['item_filesize' => 1, 'item_duration' => 10, 'UID' => 2],
+			['item_filesize' => 1, 'item_duration' => 10, 'UID' => 2],
+			['item_filesize' => 1, 'item_duration' => 10, 'UID' => 2],
+		]);
+
+		static::assertSame(13, $half->duration);
+		static::assertSame(15, $owner->duration);
+		static::assertSame(8, $owner->ownerDuration);
 	}
 }

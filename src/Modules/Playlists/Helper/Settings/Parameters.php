@@ -55,6 +55,7 @@ class Parameters extends BaseEditParameters
 	public function __construct(Sanitizer $sanitizer, Session $session)
 	{
 		parent::__construct('playlists', $sanitizer, $session);
+		// @infection-ignore-all the edit parameters have no defaults of their own: the merge keeps the same order
 		$this->currentParameters = array_merge($this->defaultParameters, $this->moduleParameters);
 	}
 

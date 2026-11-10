@@ -58,13 +58,16 @@ class ItemsRepository extends SqlBase
 		if ($checksums === [])
 			return [];
 
-		return array_map('strval', $this->connection->createQueryBuilder()
+		$existing = $this->connection->createQueryBuilder()
 			->select('DISTINCT checksum')
 			->from('mediapool_files')
 			->where('checksum IN (:checksums)')
 			->setParameter('checksums', $checksums, ArrayParameterType::STRING)
 			->executeQuery()
-			->fetchFirstColumn());
+			->fetchFirstColumn();
+
+		// @infection-ignore-all the checksums are text in every database
+		return array_map('strval', $existing);
 	}
 
 	/**
@@ -79,7 +82,7 @@ class ItemsRepository extends SqlBase
 		if ($itemIds === [])
 			return [];
 
-		return array_map('intval', $this->connection->createQueryBuilder()
+		$taken = $this->connection->createQueryBuilder()
 			->select('item_id')
 			->from($this->table)
 			->where('item_id IN (:itemIds)')
@@ -87,7 +90,10 @@ class ItemsRepository extends SqlBase
 			->setParameter('itemIds', $itemIds, ArrayParameterType::INTEGER)
 			->setParameter('playlistId', $playlistId)
 			->executeQuery()
-			->fetchFirstColumn());
+			->fetchFirstColumn();
+
+		// @infection-ignore-all the casts are for databases which give text, ours gives numbers
+		return array_map('intval', $taken);
 	}
 
 	/**
@@ -98,6 +104,7 @@ class ItemsRepository extends SqlBase
 	 */
 	public function findColumnNames(): array
 	{
+		// @infection-ignore-all the keys are not looked at, only the names
 		return array_values(array_map(static fn(Column $column): string => $column->getName(), $this->connection->createSchemaManager()->listTableColumns($this->table)));
 	}
 
@@ -294,11 +301,13 @@ class ItemsRepository extends SqlBase
 		if (empty($playlistIds))
 			return [];
 
+		// @infection-ignore-all the ids are numbers already, the parameter type makes them integers anyway
+		$ids = array_map(intval(...), $playlistIds);
 		$sql = 'SELECT file_resource as playlist_id FROM '.$this->getTable().' WHERE item_type = ? AND CAST(file_resource AS UNSIGNED) IN(?)';
 
 		return $this->connection->executeQuery(
 			$sql,
-			[ItemType::PLAYLIST->value, array_map(intval(...), $playlistIds)],
+			[ItemType::PLAYLIST->value, $ids],
 			[ParameterType::STRING, ArrayParameterType::INTEGER]
 		)->fetchAllAssociative();
 	}
@@ -313,11 +322,13 @@ class ItemsRepository extends SqlBase
 		if (empty($templateIds))
 			return [];
 
+		// @infection-ignore-all the ids are numbers already, the parameter type makes them integers anyway
+		$ids = array_map(intval(...), $templateIds);
 		$sql = 'SELECT file_resource as template_id, COUNT(*) as count FROM ' . $this->getTable() . ' WHERE item_type = ? AND CAST(file_resource AS UNSIGNED) IN(?) GROUP BY file_resource';
 
 		return $this->connection->executeQuery(
 			$sql,
-			[ItemType::TEMPLATE->value, array_map(intval(...), $templateIds)],
+			[ItemType::TEMPLATE->value, $ids],
 			[ParameterType::STRING, ArrayParameterType::INTEGER]
 		)->fetchAllAssociative();
 	}

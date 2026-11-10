@@ -102,4 +102,20 @@ class PlaylistsFilterDefinitionTest extends TestCase
 		];
 		static::assertEquals($expected, $this->definition->whereForFiltering($fields));
 	}
+
+	#[Group('units')]
+	public function testTheFieldsAfterAReleaseStatusOrAnEmptyModeAreFilteredToo(): void
+	{
+		$fields = [
+			'release_status' => ['value' => 'ready'],
+			'playlist_mode'  => ['value' => ''],
+			'playlist_name'  => ['value' => 'name']
+		];
+
+		$expected = [
+			'release_status'          => Where::equals('playlists.release_status', 'ready'),
+			'playlists.playlist_name' => Where::contains('playlists.playlist_name', 'name')
+		];
+		static::assertEquals($expected, $this->definition->whereForFiltering($fields));
+	}
 }

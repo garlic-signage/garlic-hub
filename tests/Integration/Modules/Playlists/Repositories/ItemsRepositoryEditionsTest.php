@@ -80,4 +80,21 @@ class ItemsRepositoryEditionsTest extends RepositoryTestCase
 		static::assertArrayHasKey('vendor', $items[0]);
 		static::assertNull($items[0]['channel_type']);
 	}
+
+	/**
+	 * Only channel items get the data of a channel, not a nested playlist with the same number.
+	 *
+	 * @throws Exception
+	 */
+	public function testOnlyChannelItemsGetTheirChannel(): void
+	{
+		$this->connection->insert('channels', ['channel_id' => 2, 'channel_type' => 'stream', 'view_mode' => 'full', 'vendor' => 'acme']);
+		$this->connection->insert('playlists_items', ['item_id' => 8, 'playlist_id' => 1, 'UID' => 2, 'item_order' => 6, 'item_type' => 'channel', 'file_resource' => '2', 'mimetype' => '', 'item_name' => 'Kanal']);
+
+		$items = $this->repository->findAllByPlaylistIdWithJoins(1, Config::PLATFORM_EDITION_ENTERPRISE);
+
+		// item 3 is the nested playlist 2
+		static::assertSame([null, 'stream'], [$items[2]['channel_type'], $items[5]['channel_type']]);
+		static::assertSame('acme', $items[5]['vendor']);
+	}
 }

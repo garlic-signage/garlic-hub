@@ -22,7 +22,11 @@ declare(strict_types=1);
 namespace Tests\Integration\Modules\Playlists\Controller;
 
 use App\Framework\TemplateEngine\PageResponse;
+use App\Modules\Auth\UserSession;
 use App\Modules\Playlists\Controller\ShowDatatableController;
+use App\Modules\Playlists\Services\AclValidator;
+use App\Modules\Playlists\Services\PlaylistRelease;
+use App\Modules\Playlists\Services\PlaylistsService;
 use PHPUnit\Framework\Attributes\Group;
 use App\Shared\Acl\AclGrantService;
 use App\Shared\Acl\AclSections;
@@ -67,6 +71,26 @@ class ShowDatatableControllerTest extends PlaylistsControllerTestCase
 		static::assertSame(['internal', 'master', 'multizone'], array_column($data['create_playlist_contextmenu'], 'CREATE_PLAYLIST_MODE'));
 		foreach ($data['create_playlist_contextmenu'] as $entry)
 			static::assertNotSame('', $entry['LANG_CREATE_PLAYLIST_MODE']);
+		static::assertSame(['/css/playlists/overview.css'], $page->getMainLayoutData()['additional_css']);
+		static::assertSame(['/js/playlists/overview/init.js'], $page->getMainLayoutData()['footer_modules']);
+	}
+
+	/**
+	 * The parameters of the list are configured for the user: while the release is on, the status is a column.
+	 */
+	public function testWhileTheReleaseIsOnTheListHasTheReleaseStatus(): void
+	{
+		$this->container->set(PlaylistRelease::class, new PlaylistRelease(
+			true,
+			$this->container->get(PlaylistsService::class),
+			$this->container->get(AclValidator::class),
+			$this->container->get(UserSession::class)
+		));
+		$this->actingAs(2);
+
+		$data = $this->list()->getTemplateData();
+
+		static::assertSame(['playlist_name', 'playlist_mode', 'duration', 'release_status'], array_column($data['elements_result_header'], 'CONTROL_NAME'));
 	}
 
 	public function testTheAdminSeesAllPlaylistsAndTheUsersTheirOwn(): void

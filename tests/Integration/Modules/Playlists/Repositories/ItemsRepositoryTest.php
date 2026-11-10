@@ -57,6 +57,36 @@ class ItemsRepositoryTest extends RepositoryTestCase
 	/**
 	 * @throws Exception
 	 */
+	public function testTheItemsComeInTheirOrderNotInTheOrderOfTheIds(): void
+	{
+		$this->connection->update('playlists_items', ['item_order' => 9], ['item_id' => 1]);
+
+		static::assertSame([2, 3, 4, 5, 1], $this->ids($this->repository->findAllByPlaylistId(1), 'item_id'));
+		static::assertSame([2, 3, 4, 5, 1], $this->ids($this->repository->findAllByPlaylistIdWithJoins(1, Config::PLATFORM_EDITION_CORE), 'item_id'));
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function testExternalMediaAreMediaToo(): void
+	{
+		$this->connection->insert('playlists_items', ['item_id' => 8, 'playlist_id' => 1, 'UID' => 2, 'item_order' => 6, 'item_type' => 'media_url', 'file_resource' => 'https://example.com/a.png', 'mimetype' => 'image/png', 'item_name' => 'extern.png']);
+
+		static::assertSame([1, 2, 5, 8], $this->ids($this->repository->findMediaInPlaylistId(1), 'item_id'));
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function testFindItemIdsOfOtherPlaylists(): void
+	{
+		static::assertSame([6], $this->repository->findItemIdsOfOtherPlaylists(1, [1, 6, 99]));
+		static::assertSame([], $this->repository->findItemIdsOfOtherPlaylists(1, []));
+	}
+
+	/**
+	 * @throws Exception
+	 */
 	public function testFindMediaInPlaylistIdReturnsOnlyImagesAndVideos(): void
 	{
 		$items = $this->repository->findMediaInPlaylistId(1);
@@ -149,6 +179,18 @@ class ItemsRepositoryTest extends RepositoryTestCase
 		static::assertSame(3, $this->repository->updatePositionsWhenInserted(1, 3));
 
 		static::assertSame([1, 2, 4, 5, 6], $this->orderOf(1));
+		static::assertSame([1, 2], $this->orderOf(2));
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function testThePositionsOfOtherPlaylistsStay(): void
+	{
+		static::assertSame(5, $this->repository->updatePositionsWhenInserted(1, 1));
+		static::assertSame(5, $this->repository->updatePositionsWhenDeleted(1, 1));
+
+		static::assertSame([1, 2, 3, 4, 5], $this->orderOf(1));
 		static::assertSame([1, 2], $this->orderOf(2));
 	}
 

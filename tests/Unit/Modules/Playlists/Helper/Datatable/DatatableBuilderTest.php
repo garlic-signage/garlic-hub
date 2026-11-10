@@ -64,7 +64,12 @@ class DatatableBuilderTest extends TestCase
 		parent::setUp();
 		$translator = $this->createStub(Translator::class);
 		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
-		$translator->method('translateArrayForOptions')->willReturn(['master' => 'Master', 'internal' => 'Internal', 'external' => 'External', 'channel' => 'Channel']);
+		$translator->method('translateArrayForOptions')->willReturnCallback(static fn(string $key): array => match ($key)
+		{
+			'playlist_mode_selects'  => ['master' => 'Master', 'internal' => 'Internal', 'external' => 'External', 'channel' => 'Channel'],
+			'release_status_selects' => ['in_progress' => 'In progress', 'released' => 'Released'],
+			default                  => ['unknown' => $key]
+		});
 		$session = new MemorySession();
 
 		$this->parameters       = new Parameters(new Sanitizer(), $session);
@@ -262,5 +267,27 @@ class DatatableBuilderTest extends TestCase
 		static::assertSame('playlists.release_status', $form['release_status']->getLabel());
 		static::assertSame(['playlist_name', 'playlist_mode', 'duration', 'release_status'], array_map(static fn($field): string => $field->getName(), $this->buildService->getDatatableFields()));
 		static::assertSame([true, true, false, true], array_map(static fn($field): bool => $field->isSortable(), $this->buildService->getDatatableFields()));
+	}
+
+	#[Group('units')]
+	public function testEveryFieldOfTheFormHasItsTitleLabelAndTheValueOfTheRequest(): void
+	{
+		$this->edition(Config::PLATFORM_EDITION_ENTERPRISE);
+		$this->parameters->addOwner();
+		$this->parameters->addReleaseStatus();
+		$this->builder->determineParameters(['playlist_name' => 'Lobby', 'UID' => '7', 'playlist_mode' => 'master', 'release_status' => 'released']);
+
+		$this->builder->collectFormElements();
+
+		$form   = $this->builder->getDatatableStructure()['form'];
+		$fields = array_map(static fn($field): array => [$field->getId(), $field->getName(), $field->getTitle(), $field->getLabel(), $field->getValue()], $form);
+		static::assertSame([
+			'playlist_name'  => ['playlist_name', 'playlist_name', 'playlists.playlist_name', 'playlists.playlist_name', 'Lobby'],
+			'UID'            => ['UID', 'UID', 'main.owner', 'main.owner', '7'],
+			'playlist_mode'  => ['playlist_mode', 'playlist_mode', 'playlists.playlist_mode', 'playlists.playlist_mode', 'master'],
+			'release_status' => ['release_status', 'release_status', 'playlists.release_status', 'playlists.release_status', 'released'],
+		], $fields);
+		static::assertInstanceOf(DropdownField::class, $form['release_status']);
+		static::assertSame(['in_progress' => 'In progress', 'released' => 'Released'], $form['release_status']->getOptions());
 	}
 }

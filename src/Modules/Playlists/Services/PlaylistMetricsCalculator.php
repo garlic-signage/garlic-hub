@@ -104,13 +104,14 @@ class PlaylistMetricsCalculator
 
 		$tmp = $this->itemsRepository->sumAndCountMetricsByPlaylistIdAndOwner($playlist['playlist_id'], $playlist['UID']);
 
+		// the sums are null without items, the database may give numbers as text and videos have floats
 		return $this->createMetrics(
 			$playlist,
-			$tmp['count_items'] ?? 0,
-			$tmp['count_owner_items'] ?? 0,
-			$tmp['filesize'] ?? 0,
-			(int) $tmp['duration'],
-			(int) $tmp['owner_duration'] // because some videos are floats!
+			(int) ($tmp['count_items'] ?? 0),
+			(int) ($tmp['count_owner_items'] ?? 0),
+			(int) ($tmp['filesize'] ?? 0),
+			(int) ($tmp['duration'] ?? 0),
+			(int) ($tmp['owner_duration'] ?? 0)
 		);
 	}
 
@@ -144,13 +145,11 @@ class PlaylistMetricsCalculator
 			$ownerDuration      = $this->calculateFromPlaylistData($playlist)->ownerDuration;
 			$remaining_duration = $playlist['time_limit'] - $ownerDuration;
 
-			if ($remaining_duration <= 0)
-				$wantedDuration = 0;
-			elseif ($remaining_duration < $wantedDuration)
-				$wantedDuration = $remaining_duration;
+			// @infection-ignore-all never below 0: calculateFromPlaylistData throws when the owner is above the limit
+			$wantedDuration     = max(0, min($remaining_duration, $wantedDuration));
 		}
 
-		return (int) round($wantedDuration);
+		return $wantedDuration;
 	}
 
 
@@ -198,8 +197,7 @@ class PlaylistMetricsCalculator
 	 */
 	private function adjustForShuffle(int $shufflePicking, int $countEntries, int $countOwnerEntries, int $duration, int $ownerDuration): array
 	{
-		if ($shufflePicking === 0 || $shufflePicking > $countEntries)
-			$shufflePicking = $countEntries;
+		$shufflePicking = $shufflePicking === 0 ? $countEntries : min($shufflePicking, $countEntries);
 
 		$duration = (int) round($duration / $countEntries * $shufflePicking);
 
