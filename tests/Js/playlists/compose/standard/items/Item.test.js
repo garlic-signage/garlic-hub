@@ -72,10 +72,14 @@ class FakeItemsService
 	calls          = [];
 	editAnswer     = null;
 	defaultSeconds = {success: true, item: {default_duration: 15}};
+	/** a promise the save waits for, to see what happens meanwhile */
+	editWait       = null;
 
 	async editItem(id, name, value)
 	{
 		this.calls.push(['editItem', id, name, value]);
+		if (this.editWait !== null)
+			await this.editWait;
 		return this.editAnswer ?? {success: true, data: Number(value)};
 	}
 
@@ -395,4 +399,82 @@ Deno.test('a default duration which could not be loaded shows the error', async 
 
 	assertEquals(errors(page), ['Not found']);
 	assertEquals(page.service.calls, [['fetchDefaultSeconds', 12]]);
+});
+
+Deno.test('a field which leaves the page after Enter is not saved a second time by its blur', async () =>
+{
+	using page = createItem();
+	const {field} = await openDuration(page);
+
+	field.value = '90';
+	await fire(field, 'keydown', {key: 'Enter'});
+	// e.g. Chrome: the removed field loses its focus
+	await fire(field, 'blur');
+
+	assertEquals(page.service.calls, [['editItem', 12, 'item_duration', '90']]);
+	assertEquals(errors(page), []);
+});
+
+Deno.test('after Enter without a blur the next duration is saved when its field is left', async () =>
+{
+	using page = createItem();
+	// e.g. Firefox: the removed field gets no blur
+	const first = await openDuration(page);
+	first.field.value = '90';
+	await fire(first.field, 'keydown', {key: 'Enter'});
+
+	const second = await openDuration(page);
+	second.field.value = '30';
+	await fire(second.field, 'blur');
+
+	assertEquals(page.service.calls.map(call => call[3]), ['90', '30']);
+	assertEquals(page.find('.item-duration').textContent, '00:00:30');
+	assertEquals(page.find('.item-duration-input'), null);
+});
+
+Deno.test('the duration is saved once while its save is running', async () =>
+{
+	using page   = createItem();
+	const answer = Promise.withResolvers();
+	page.service.editWait = answer.promise;
+	const {field} = await openDuration(page);
+
+	field.value = '90';
+	await fire(field, 'keydown', {key: 'Enter'});
+	await fire(field, 'keydown', {key: 'Enter'});
+	await fire(field, 'blur');
+	answer.resolve();
+	await new Promise(resolve => setTimeout(resolve, 0));
+
+	assertEquals(page.service.calls, [['editItem', 12, 'item_duration', '90']]);
+});
+
+Deno.test('a duration which could not be saved can be saved again', async () =>
+{
+	using page = createItem();
+	page.service.editAnswer = {success: false, error_message: 'Too short'};
+	const {field} = await openDuration(page);
+	field.value = '0';
+	await fire(field, 'keydown', {key: 'Enter'});
+
+	page.service.editAnswer = null;
+	field.value = '20';
+	await fire(field, 'keydown', {key: 'Enter'});
+
+	assertEquals(page.service.calls.map(call => call[3]), ['0', '20']);
+	assertEquals(page.find('.item-duration').textContent, '00:00:20');
+});
+
+Deno.test('after a failed reset the field can still be saved', async () =>
+{
+	using page = createItem();
+	page.service.defaultSeconds = {success: false, error_message: 'Not found'};
+	const {field, reset} = await openDuration(page);
+	await fire(reset, 'click');
+
+	field.value = '40';
+	await fire(field, 'blur');
+
+	assertEquals(page.service.calls, [['fetchDefaultSeconds', 12], ['editItem', 12, 'item_duration', '40']]);
+	assertEquals(page.find('.item-duration').textContent, '00:00:40');
 });

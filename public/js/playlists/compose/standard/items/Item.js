@@ -43,7 +43,6 @@ export class Item
 	#itemName     = null;
 	#editItemName = false;
 	#itemDuration = null;
-	#isItemDurationInProcess = false;
 	#flashMessageHandler     = new FlashMessageHandler();
 
 	constructor(itemData, itemsService, widgetFactory, conditionalPlayFactory, triggerFactory)
@@ -185,11 +184,27 @@ export class Item
 				resetButton.classList.add("bi-arrow-clockwise");
 				inputGroup.appendChild(resetButton);
 
+				// the state of this field: Enter, the reset and the blur when the field leaves the page come
+				// one after the other, only one saves. Browsers differ whether a removed field gets a blur.
+				let state = "editing"; // editing, saving, done
+				const save = async () => {
+					if (state !== "editing")
+						return;
+
+					state = "saving";
+					// a failed save keeps the field for a correction
+					state = await this.#saveDuration(inputField) ? "done" : "editing";
+				};
+
 				// the field keeps the focus: its blur would remove the button before the click
 				resetButton.addEventListener('mousedown', (event) => event.preventDefault());
 				resetButton.addEventListener('click', async () => {
-					this.#isItemDurationInProcess = true;
+					if (state !== "editing")
+						return;
+
+					state = "saving";
 					const result = await this.#itemsService.fetchDefaultSeconds(this.#itemData.item_id);
+					state = "editing";
 					if (!result.success)
 					{
 						this.#flashMessageHandler.showError(result.error_message);
@@ -197,28 +212,14 @@ export class Item
 					}
 
 					inputField.value = result.item.default_duration;
-					await this.#saveDuration(inputField);
-					resetButton.remove();
+					await save();
 				});
 
-				inputField.addEventListener('blur', () => {
-					if (this.#isItemDurationInProcess)
-					{
-						this.#isItemDurationInProcess = false;
-						return;
-					}
-
-					this.#saveDuration(inputField);
-					resetButton.remove();
-				});
+				inputField.addEventListener('blur', () => save());
 
 				inputField.addEventListener('keydown', (event) => {
 					if (event.key === 'Enter')
-					{
-						this.#isItemDurationInProcess = true;
-						this.#saveDuration(inputField);
-						resetButton.remove();
-					}
+						save();
 				});
 
 				target.parentNode.replaceChild(inputGroup, target);
@@ -227,13 +228,16 @@ export class Item
 		});
 	}
 
+	/**
+	 * @return {Promise<boolean>} whether the duration was saved and the field closed
+	 */
 	async #saveDuration(inputElement)
 	{
 		const result = await this.#itemsService.editItem(this.#itemData.item_id, 'item_duration', inputElement.value);
 		if (!result.success)
 		{
 			this.#flashMessageHandler.showError(result.error_message);
-			return;
+			return false;
 		}
 
 		this.#itemDuration.dataset.seconds = result.data;
@@ -242,6 +246,7 @@ export class Item
 		// the whole field with its button goes, not only the input
 		inputElement.closest(".item-duration-input").replaceWith(this.#itemDuration);
 		PlaylistsProperties.notifySave();
+		return true;
 	}
 
 	#isLoaded(result)
