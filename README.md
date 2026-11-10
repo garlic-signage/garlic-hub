@@ -1,6 +1,7 @@
 [![tests](https://github.com/garlic-signage/garlic-hub/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/garlic-signage/garlic-hub/actions/workflows/tests.yml)
 [![docker-hub image](https://github.com/garlic-signage/garlic-hub/actions/workflows/dockerhub-releases.yml/badge.svg?branch=main)](https://github.com/garlic-signage/garlic-hub/actions/workflows/dockerhub-releases.yml)
 [![garlic-hub coverage](https://raw.githubusercontent.com/garlic-signage/garlic-hub/badges/coverage.svg)](https://github.com/garlic-signage/garlic-hub/actions/workflows/tests.yml)
+[![garlic-hub mutation score](https://raw.githubusercontent.com/garlic-signage/garlic-hub/badges/mutation.svg)](https://github.com/garlic-signage/garlic-hub/actions/workflows/mutation.yml)
 [![phpstan level](https://github.com/garlic-signage/garlic-hub/blob/main/misc/phpstan-level.svg)](https://github.com/garlic-signage/garlic-hub/blob/main/misc/phpstan-level.svg)
 [![php version](https://github.com/garlic-signage/garlic-hub/blob/main/misc/php-version.svg)](https://github.com/garlic-signage/garlic-hub/blob/main/misc/php-version.svg)
 
@@ -118,6 +119,9 @@ ddev exec bin/infection.sh v1.2.0    # only the lines changed since this git ref
 
 The report is in `var/infection/infection.html`. The rules for the tests and the markers are in
 [docs/coding-standards.md](docs/coding-standards.md#mutation-tests).
+
+GitHub runs them over the whole code once a month (`.github/workflows/mutation.yml`, also by hand under Actions)
+and shows the mutation score in the badge above; the reports are kept as artifacts of the run.
 
 ### Tech Stack
 

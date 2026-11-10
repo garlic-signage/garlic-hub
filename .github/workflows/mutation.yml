@@ -1,0 +1,89 @@
+name: mutation tests
+
+# Infection over the whole code: once a month and by hand under Actions. It takes too long for
+# every push. The rules for the escaped mutants are in docs/coding-standards.md (Mutation Tests),
+# the mutation score goes into the badge of the README.
+on:
+  schedule:
+    - cron: '0 3 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mutation
+  cancel-in-progress: false
+
+jobs:
+  infection:
+    name: infection
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-app
+        with:
+          coverage: pcov
+
+      # the configuration writes the reports to var/infection/
+      - name: Infection
+        run: |
+          mkdir -p var/infection/tmp
+          vendor/bin/infection --threads="$(nproc)" --no-progress --logger-summary-json=var/infection/summary.json
+
+      - name: Show the numbers on the summary page
+        if: always()
+        run: |
+          {
+            echo '### Mutation tests'
+            echo '```'
+            cat var/infection/summary.log 2>/dev/null || echo 'no summary'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Make the badge
+        run: |
+          mkdir -p badge
+          php .github/scripts/msi-badge.php var/infection/summary.json badge/mutation.svg
+
+      - name: Keep the badge
+        uses: actions/upload-artifact@v7
+        with:
+          name: mutation-badge
+          path: badge/mutation.svg
+
+      # the escaped mutants for the triage; the JSON is too big to keep
+      - name: Keep the reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: infection-reports
+          path: |
+            var/infection/infection.html
+            var/infection/infection.log
+            var/infection/summary.log
+            var/infection/summary.json
+
+  # Only on main, it may write. The branch "badges" keeps the coverage badge of tests.yml as well.
+  badge:
+    name: mutation badge
+    needs: infection
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Load the badge
+        uses: actions/download-artifact@v8
+        with:
+          name: mutation-badge
+          path: badge
+
+      - name: Publish it in the branch "badges"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: .github/scripts/publish-badge.sh badge/mutation.svg
