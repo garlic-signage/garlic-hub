@@ -30,11 +30,11 @@ export class UnsplashPlatform extends AbstractStockPlatform
 
 	async search(query, mediatype = "images")
 	{
-
-		this.currentPage = 1;
+		this.currentPage = 0;
+		this.totalPages  = 0;
 		this.currentSearchQuery = query;
 
-		return await this.#executeSearchQuery();
+		return await this.#executeSearchQuery(1);
 	}
 
 	async loadNextPage()
@@ -42,8 +42,7 @@ export class UnsplashPlatform extends AbstractStockPlatform
 		if (this.currentPage >= this.totalPages)
 			return;
 
-		this.currentPage++;
-		return await this.#executeSearchQuery();
+		return await this.#executeSearchQuery(this.currentPage + 1);
 	}
 
 
@@ -72,12 +71,15 @@ export class UnsplashPlatform extends AbstractStockPlatform
 		}
 	}
 
-	async #executeSearchQuery()
+	/**
+	 * The page counts only when it was loaded: after a failure the next scroll asks for it again.
+	 */
+	async #executeSearchQuery(page)
 	{
 		try
 		{
 			const apiUrl = this.#searchUri + "/?query=" + encodeURIComponent(this.currentSearchQuery) +
-				"&page=" + this.currentPage + "&per_page=" + this.resultsPerPage +
+				"&page=" + page + "&per_page=" + this.resultsPerPage +
 				"&client_id=" + this.apiToken;
 				
 			const results = await this.fetchClient.fetchData(apiUrl);
@@ -93,6 +95,7 @@ export class UnsplashPlatform extends AbstractStockPlatform
 
 			this.#prepareResults(results);
 
+			this.currentPage = page;
 			return this.resultList;
 		}
 		catch(error)

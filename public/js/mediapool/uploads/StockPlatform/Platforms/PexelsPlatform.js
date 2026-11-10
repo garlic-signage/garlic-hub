@@ -32,11 +32,12 @@ export class PexelsPlatform extends AbstractStockPlatform
 
 	async search(query, mediatype)
 	{
-		this.currentPage = 1;
+		this.currentPage = 0;
+		this.totalPages  = 0;
 		this.currentSearchQuery = query;
 		this.#mediatype = mediatype;
 
-		return await this.#executeSearchQuery();
+		return await this.#executeSearchQuery(1);
 	}
 
 	async loadNextPage()
@@ -44,8 +45,7 @@ export class PexelsPlatform extends AbstractStockPlatform
 		if (this.currentPage >= this.totalPages)
 			return;
 
-		this.currentPage++;
-		return await this.#executeSearchQuery();
+		return await this.#executeSearchQuery(this.currentPage + 1);
 	}
 
 	async determineMediaDownloadUrl(downloadUri)
@@ -53,7 +53,10 @@ export class PexelsPlatform extends AbstractStockPlatform
 		return downloadUri + "?auto=compress&cs=tinysrgb&w=" + this.maxWith + "&h=" + this.maxHeight;
 	}
 
-	async #executeSearchQuery()
+	/**
+	 * The page counts only when it was loaded: after a failure the next scroll asks for it again.
+	 */
+	async #executeSearchQuery(page)
 	{
 		try
 		{
@@ -62,21 +65,21 @@ export class PexelsPlatform extends AbstractStockPlatform
 				searchUri = this.#searchVideoUri;
 
 			const apiUrl = searchUri + "/?query=" + encodeURIComponent(this.currentSearchQuery) +
-				"&page=" + this.currentPage + "&per_page=" + this.resultsPerPage;
+				"&page=" + page + "&per_page=" + this.resultsPerPage;
 
 			const dataToSend  = {"api_url": apiUrl, "headers": {"Authorization": this.apiToken}};
 			const results     = await this.requestStockApi(dataToSend);
 
 			if (!results || !results.success)
 			{
-				console.error('Error:', results.error_message || 'Unknown error');
+				console.error('Error:', results?.error_message || 'Unknown error');
 				return;
 			}
 
 			const data = results.data;
 
 			//totalHits => Pixabay API is limited to return a maximum of 500 images per query.
-			this.totalPages   = data.total_results / this.resultsPerPage;
+			this.totalPages   = Math.ceil(data.total_results / this.resultsPerPage);
 			this.totalResults = data.total_results;
 
 			if (this.#mediatype === "images")
@@ -84,6 +87,7 @@ export class PexelsPlatform extends AbstractStockPlatform
 			else
 				this.#prepareVideosResults(data);
 
+			this.currentPage = page;
 			return this.resultList;
 		}
 		catch(error)

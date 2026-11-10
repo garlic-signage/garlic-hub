@@ -33,11 +33,12 @@ export class PixabayPlatform extends AbstractStockPlatform
 
 	async search(query, mediatype = "images")
 	{
-		this.currentPage = 1;
+		this.currentPage = 0;
+		this.totalPages  = 0;
 		this.currentSearchQuery = query;
 		this.#mediatype = mediatype;
 
-		return await this.#executeSearchQuery();
+		return await this.#executeSearchQuery(1);
 	}
 
 	async loadNextPage()
@@ -45,8 +46,7 @@ export class PixabayPlatform extends AbstractStockPlatform
 		if (this.currentPage >= this.totalPages)
 			return;
 
-		this.currentPage++;
-		return await this.#executeSearchQuery();
+		return await this.#executeSearchQuery(this.currentPage + 1);
 	}
 
 	async determineMediaDownloadUrl(downloadUri)
@@ -55,7 +55,10 @@ export class PixabayPlatform extends AbstractStockPlatform
 		return downloadUri;
 	}
 
-	async #executeSearchQuery()
+	/**
+	 * The page counts only when it was loaded: after a failure the next scroll asks for it again.
+	 */
+	async #executeSearchQuery(page)
 	{
 		try
 		{
@@ -64,7 +67,7 @@ export class PixabayPlatform extends AbstractStockPlatform
 				searchUri = this.#searchVideoUri;
 
 			const apiUrl = searchUri + "/?q=" + encodeURIComponent(this.currentSearchQuery) +
-				"&page=" + this.currentPage + "&per_page=" + this.resultsPerPage +
+				"&page=" + page + "&per_page=" + this.resultsPerPage +
 				"&key=" + this.apiToken;
 
 			const dataToSend  = {"api_url": apiUrl};
@@ -72,14 +75,14 @@ export class PixabayPlatform extends AbstractStockPlatform
 
 			if (!results || !results.success)
 			{
-				console.error('Error:', results.error_message || 'Unknown error');
+				console.error('Error:', results?.error_message || 'Unknown error');
 				return;
 			}
 
 			const data = results.data;
 
 			//totalHits => Pixabay API is limited to return a maximum of 500 images per query.
-			this.totalPages   = data.totalHits / this.resultsPerPage;
+			this.totalPages   = Math.ceil(data.totalHits / this.resultsPerPage);
 			this.totalResults = data.total;
 
 			if (this.#mediatype === "images")
@@ -87,6 +90,7 @@ export class PixabayPlatform extends AbstractStockPlatform
 			else
 				this.#prepareVideosResults(data);
 
+			this.currentPage = page;
 			return this.resultList;
 		}
 		catch(error)

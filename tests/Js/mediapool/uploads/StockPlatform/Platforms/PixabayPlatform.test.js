@@ -171,7 +171,7 @@ Deno.test('a refused search is logged and gives nothing', async () =>
 
 Deno.test('a failed request or an answer in another format is logged and gives nothing', async () =>
 {
-	using _dom    = createDom(CSRF_META);
+	using _dom = createDom(CSRF_META);
 	using logStub = stub(console, 'log');
 
 	const failed = createPlatform(new Error('Timeout: Server did not respond.'));
@@ -203,4 +203,57 @@ Deno.test('the token is saved in the browser and read again', () =>
 	assertEquals(localStorage.getItem('PixabayApiToken'), 'secret');
 	assertEquals(platform.apiToken, 'secret');
 	assertEquals(new PixabayPlatform(new FakeFetchClient({})).hasApiToken(), true);
+});
+
+/**
+ * The next request fails once with the given answer, then the client answers as before.
+ */
+function failOnce(client, answer)
+{
+	const fetchData  = client.fetchData.bind(client);
+	client.fetchData = (url, options) =>
+	{
+		client.fetchData = fetchData;
+		client.requests.push({url, options});
+		return answer instanceof Error ? Promise.reject(answer) : Promise.resolve(answer);
+	};
+}
+
+Deno.test('a page that failed to load is asked for again by the next scroll', async () =>
+{
+	using _dom = createDom(CSRF_META);
+	using _log = stub(console, 'log');
+	const {client, platform} = createPlatform(images(45));
+	await platform.search('lobby');
+
+	failOnce(client, new Error('Timeout: Server did not respond.'));
+	assertEquals(await platform.loadNextPage(), undefined);
+	assertEquals(platform.currentPage, 1);
+
+	await platform.loadNextPage();
+	assertEquals(client.bodyOf(2).api_url, 'https://pixabay.com/api/?q=lobby&page=2&per_page=20&key=secret');
+	assertEquals(platform.currentPage, 2);
+});
+
+Deno.test('the last page that is only partly filled is loaded, no empty page after it', async () =>
+{
+	using _dom = createDom(CSRF_META);
+	const {client, platform} = createPlatform(images(41));
+	await platform.search('lobby');
+
+	assertEquals(platform.totalPages, 3);
+	await platform.loadNextPage();
+	await platform.loadNextPage();
+	assertEquals(await platform.loadNextPage(), undefined);
+	assertEquals(client.requests.length, 3);
+});
+
+Deno.test('an empty answer is logged as unknown error', async () =>
+{
+	using _dom      = createDom(CSRF_META);
+	using errorStub = stub(console, 'error');
+
+	assertEquals(await createPlatform(null).platform.search('lobby'), undefined);
+
+	assertEquals(errorStub.calls[0].args, ['Error:', 'Unknown error']);
 });

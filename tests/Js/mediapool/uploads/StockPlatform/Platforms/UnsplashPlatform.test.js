@@ -166,3 +166,32 @@ Deno.test('the token is saved in the browser and read again', () =>
 	assertEquals(platform.apiToken, 'secret');
 	assertEquals(new UnsplashPlatform(new FakeFetchClient({})).hasApiToken(), true);
 });
+
+/**
+ * The next request fails once with the given answer, then the client answers as before.
+ */
+function failOnce(client, answer)
+{
+	const fetchData  = client.fetchData.bind(client);
+	client.fetchData = (url, options) =>
+	{
+		client.fetchData = fetchData;
+		client.requests.push({url, options});
+		return answer instanceof Error ? Promise.reject(answer) : Promise.resolve(answer);
+	};
+}
+
+Deno.test('a page that failed to load is asked for again by the next scroll', async () =>
+{
+	using _log = stub(console, 'log');
+	const {client, platform} = createPlatform(photos(3));
+	await platform.search('lobby');
+
+	failOnce(client, new Error('HTTP error: 403'));
+	assertEquals(await platform.loadNextPage(), undefined);
+	assertEquals(platform.currentPage, 1);
+
+	await platform.loadNextPage();
+	assertEquals(client.requests[2].url, 'https://api.unsplash.com/search/photos/?query=lobby&page=2&per_page=20&client_id=secret');
+	assertEquals(platform.currentPage, 2);
+});

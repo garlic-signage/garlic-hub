@@ -109,7 +109,7 @@ Deno.test('a photo becomes a result with its sizes and its author', async () =>
 			user: {username: 7, name: 'Jane Doe', url: 'https://www.pexels.com/@jane'}
 		}
 	}});
-	assertEquals([platform.totalResults, platform.totalPages, platform.currentPage], [45, 2.25, 1]);
+	assertEquals([platform.totalResults, platform.totalPages, platform.currentPage], [45, 3, 1]);
 });
 
 Deno.test('missing fields of a photo are null', async () =>
@@ -193,7 +193,7 @@ Deno.test('a refused search is logged and gives nothing', async () =>
 
 Deno.test('a failed request or an answer in another format is logged and gives nothing', async () =>
 {
-	using _dom    = createDom(CSRF_META);
+	using _dom = createDom(CSRF_META);
 	using logStub = stub(console, 'log');
 
 	const failed = createPlatform(new Error('Timeout: Server did not respond.'));
@@ -228,4 +228,63 @@ Deno.test('the token is saved in the browser and read again', () =>
 	const other = new PexelsPlatform(new FakeFetchClient({}));
 	assertEquals(other.hasApiToken(), true);
 	assertEquals(other.apiToken, 'secret');
+});
+
+/**
+ * The next request fails once with the given answer, then the client answers as before.
+ */
+function failOnce(client, answer)
+{
+	const fetchData  = client.fetchData.bind(client);
+	client.fetchData = (url, options) =>
+	{
+		client.fetchData = fetchData;
+		client.requests.push({url, options});
+		return answer instanceof Error ? Promise.reject(answer) : Promise.resolve(answer);
+	};
+}
+
+Deno.test('a page that failed to load is asked for again by the next scroll', async () =>
+{
+	using _dom = createDom(CSRF_META);
+	using _log = stub(console, 'log');
+	const {client, platform} = createPlatform(photos(45));
+	await platform.search('lobby', 'images');
+
+	failOnce(client, new Error('Timeout: Server did not respond.'));
+	assertEquals(await platform.loadNextPage(), undefined);
+	assertEquals(platform.currentPage, 1);
+
+	await platform.loadNextPage();
+	assertEquals(apiUrl(client, 2), 'https://api.pexels.com/v1/search/?query=lobby&page=2&per_page=20');
+	assertEquals(platform.currentPage, 2);
+});
+
+Deno.test('the last page that is only partly filled is loaded, no empty page after it', async () =>
+{
+	using _dom = createDom(CSRF_META);
+	const {client, platform} = createPlatform(photos(41));
+	await platform.search('lobby', 'images');
+
+	await platform.loadNextPage();
+	await platform.loadNextPage();
+	assertEquals(await platform.loadNextPage(), undefined);
+
+	assertEquals(client.requests.length, 3);
+	assertEquals(platform.currentPage, 3);
+});
+
+Deno.test('a failed search leaves no page to scroll to', async () =>
+{
+	using _dom      = createDom(CSRF_META);
+	using errorStub = stub(console, 'error');
+	const {client, platform} = createPlatform(photos(100));
+	await platform.search('lobby', 'images');
+
+	failOnce(client, null);
+	assertEquals(await platform.search('hall', 'images'), undefined);
+
+	assertEquals(await platform.loadNextPage(), undefined);
+	assertEquals(client.requests.length, 2);
+	assertEquals(errorStub.calls[0].args, ['Error:', 'Unknown error']);
 });
