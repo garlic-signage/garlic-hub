@@ -109,3 +109,19 @@ Deno.test('the chosen files are shown in the previews', () =>
 
 	assertEquals(page.previews.handled, [files]);
 });
+
+Deno.test('the field is emptied after the choice, the same file can be chosen again', () =>
+{
+	using page  = createPage();
+	const file  = new File(['a'], 'lobby.jpg');
+	// like the browser: the files of the field are gone when its value is emptied
+	let files   = [file];
+	Object.defineProperty(page.fileInput, 'files', {get: () => files});
+	Object.defineProperty(page.fileInput, 'value', {get: () => files.length > 0 ? 'C:\\fakepath\\lobby.jpg' : '',
+		set: (value) => { if (value === '') files = []; }});
+
+	page.fileInput.dispatchEvent(new Event('change'));
+
+	assertEquals(page.fileInput.value, '');
+	assertEquals(page.previews.handled, [[file]]);
+});

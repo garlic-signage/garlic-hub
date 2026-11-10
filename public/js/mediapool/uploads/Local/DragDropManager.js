@@ -35,7 +35,9 @@ export class DragDropManager
 		this.#domElements.dropzone.addEventListener('drop', (e) => this.onDrop(e));
 		this.#domElements.dropzone.addEventListener('click', () => this.#domElements.fileInput.click());
 		this.#domElements.fileInput.addEventListener('change', (event) => {
-            const files = event.target.files;
+            const files = Array.from(event.target.files);
+            // the same file again, e.g. after its preview was removed, is a change only for an empty field
+            event.target.value = "";
             this.#filePreview.handleFiles(files);
         });
     }
