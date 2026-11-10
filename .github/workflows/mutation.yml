@@ -35,7 +35,8 @@ jobs:
       - name: Infection
         run: |
           mkdir -p var/infection/tmp
-          vendor/bin/infection --threads="$(nproc)" --no-progress --logger-summary-json=var/infection/summary.json
+          # without the banner of the logo; pipefail of GitHub keeps the exit code of Infection
+          vendor/bin/infection --threads="$(nproc)" --no-progress --logger-summary-json=var/infection/summary.json | grep -v 'StandWith'
 
       - name: Show the numbers on the summary page
         if: always()
