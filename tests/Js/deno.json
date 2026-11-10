@@ -2,6 +2,8 @@
 	"imports": {
 		"@js/": "../../public/js/",
 		"@support/": "./support/",
+		"../../public/js/external/wunderbaum.esm.min.js": "./support/FakeWunderbaum.js",
+		"/js/external/pdf.min.mjs": "./support/FakePdfjs.js",
 		"@std/assert": "jsr:@std/assert@1",
 		"@std/testing/": "jsr:/@std/testing@1/",
 		"linkedom": "npm:linkedom@0.18",

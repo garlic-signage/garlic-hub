@@ -119,6 +119,10 @@ export class DirectoryView
 					if (e.node.data.virtual === true)
 						return false;
 
+					// a file of the desktop or a text is no medium: no place to drop it
+					if (e.sourceNode === null && DirectoryView.workaroundShitForMediaIdBecauseOfChrome === "")
+						return false;
+
 					// before or after a shared directory would be a place under "shared with me", only into it
 					if (e.sourceNode === null || e.node.parent?.data.virtual === true) // media drag'nDrop
                         return ["appendChild"];
@@ -129,8 +133,9 @@ export class DirectoryView
                     if (e.sourceNode === null) // media drag'nDrop
                     {
 						const mediaId = DirectoryView.workaroundShitForMediaIdBecauseOfChrome;
-                        if (mediaId === null || mediaId === undefined)
-                            throw Error("mediaId is not defined")
+						// no medium was dragged, nothing to move
+						if (mediaId === "")
+							return;
 
                         this.#mediaList.moveMediaTo(mediaId, e.node.key)
 							.catch(err => this.#flashMessageHandler.showError(err.message));

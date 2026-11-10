@@ -73,12 +73,14 @@ export class TreeViewDialog
 
 	#addSaveEvent()
 	{
-		// also for closing the dialog with the cancel button
-		this.#treeViewElements.editFolderDialog.addEventListener('close', async() =>
+		// the submit comes only with a valid name, the other buttons close the dialog as before
+		this.#treeViewElements.editFolderDialog.querySelector("form").addEventListener('submit', async(event) =>
 		{
-			if (this.#treeViewElements.editFolderDialog.returnValue !== "submit")
+			if (event.submitter?.value !== "submit")
 				return;
 
+			// the form would close the dialog at once: after a failed save the input would be lost
+			event.preventDefault();
 			try
 			{
 				await this.#save();
@@ -136,7 +138,7 @@ export class TreeViewDialog
 			default:
 				throw new Error("Unknown action");
 		}
-		this.#treeViewElements.editFolderDialog.close("cancel");
+		this.#treeViewElements.editFolderDialog.close();
 	}
 
 	#addCancelEvent()

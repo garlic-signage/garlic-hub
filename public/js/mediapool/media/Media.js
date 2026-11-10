@@ -153,6 +153,10 @@ export class Media
 		this.#mediaItem .addEventListener("dragstart", (event) => {
 			DirectoryView.workaroundShitForMediaIdBecauseOfChrome = this.#mediaItem.getAttribute("data-media-id");
         });
+		// dropped outside the tree: a file of the desktop dropped later must not move this medium
+		this.#mediaItem.addEventListener("dragend", () => {
+			DirectoryView.workaroundShitForMediaIdBecauseOfChrome = "";
+		});
 
         return this.#mediaItem;
     }

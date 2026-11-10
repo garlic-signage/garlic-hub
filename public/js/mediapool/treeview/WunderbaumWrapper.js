@@ -79,7 +79,7 @@ export class WunderbaumWrapper
 
 	addSubFolder(key, folderName)
 	{
-		this.#activeNode.addChildren({ key:  key, title: folder_name, isFolder: true });
+		this.#activeNode.addChildren({ key:  key, title: folderName, isFolder: true });
 	}
 
 	get treeViewElements()

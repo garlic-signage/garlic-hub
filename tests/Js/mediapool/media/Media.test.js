@@ -243,6 +243,17 @@ Deno.test('dragging the article tells the tree which medium it is', () =>
 	DirectoryView.workaroundShitForMediaIdBecauseOfChrome = '';
 });
 
+Deno.test('the end of the drag forgets the medium, also when it was dropped outside the tree', () =>
+{
+	using page = createMedia();
+	const item = page.media.renderForDisplayInMediaPool();
+
+	item.dispatchEvent(new Event('dragstart'));
+	item.dispatchEvent(new Event('dragend'));
+
+	assertEquals(DirectoryView.workaroundShitForMediaIdBecauseOfChrome, '');
+});
+
 Deno.test('the simple view for the selectors has only the thumbnail and the data', () =>
 {
 	using page = createMedia();
