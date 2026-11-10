@@ -19,11 +19,15 @@
 
 export class Utils
 {
+	/**
+	 * The durations of videos come from ffmpeg with decimals, they are rounded to full seconds.
+	 */
 	static formatSecondsToTime(seconds)
 	{
-		const hours = Math.floor(seconds / 3600);
-		const minutes = Math.floor((seconds % 3600) / 60);
-		const secs = seconds % 60;
+		const rounded = Math.round(seconds);
+		const hours   = Math.floor(rounded / 3600);
+		const minutes = Math.floor((rounded % 3600) / 60);
+		const secs    = rounded % 60;
 
 		const pad = (num) => String(num).padStart(2, '0');
 
@@ -32,11 +36,12 @@ export class Utils
 
 	static formatBytes(bytes)
 	{
-		const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+		const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
 
 		if (bytes === 0) return '0 Bytes';
 
-		const i = Math.floor(Math.log(bytes) / Math.log(1024));
+		// beyond the largest unit the number grows, e.g. 2048.00 PB
+		const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), sizes.length - 1);
 		const size = (bytes / Math.pow(1024, i)).toFixed(2);
 
 		return `${size} ${sizes[i]}`;
