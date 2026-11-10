@@ -28,6 +28,7 @@ import "css.escape"; // sets CSS.escape(), Deno has no CSS object
  * The dialogs get showModal() and close(), linkedom has none.
  * The selects get a value and a selectedIndex to set and Option() is there, both like in the browser.
  * The checkboxes get checked: from the attribute until it is set, like in the browser.
+ * A listener with the option signal ends with its abort, like in the browser: linkedom ignores the option.
  * Use it with "using", then the globals are restored after the test.
  */
 export function createDom(body = '')
@@ -45,6 +46,7 @@ export function createDom(body = '')
 	const removeDialogMethods = addDialogMethods(dom.document);
 	const removeSelectValue   = addSelectValue(dom.document);
 	const removeChecked       = addChecked(dom.document);
+	const removeSignal        = addListenerSignal(dom.document);
 	const originalOption      = globalThis.Option;
 	globalThis.Option = function (text = '', value = undefined)
 	{
@@ -62,6 +64,7 @@ export function createDom(body = '')
 			removeDialogMethods();
 			removeSelectValue();
 			removeChecked();
+			removeSignal();
 			globalThis.Option = originalOption;
 			Object.assign(globalThis, originals);
 		}
@@ -141,6 +144,32 @@ function addSelectValue(document)
 		Object.defineProperty(prototype, 'value', original);
 		delete prototype.selectedIndex;
 	};
+}
+
+/**
+ * Like the browser: a listener added with {signal} is removed when the signal aborts.
+ * The prototype is shared by all documents of linkedom, so the original comes back.
+ */
+function addListenerSignal(document)
+{
+	let prototype = document.createElement('div');
+	while (prototype !== null && !Object.prototype.hasOwnProperty.call(prototype, 'addEventListener'))
+		prototype = Object.getPrototypeOf(prototype);
+	if (prototype === null)
+		return () => {};
+
+	const original = prototype.addEventListener;
+	prototype.addEventListener = function (type, listener, options)
+	{
+		const signal = typeof options === 'object' ? options?.signal : undefined;
+		if (signal?.aborted)
+			return;
+
+		original.call(this, type, listener, options);
+		signal?.addEventListener('abort', () => this.removeEventListener(type, listener, options), {once: true});
+	};
+
+	return () => { prototype.addEventListener = original; };
 }
 
 /**
