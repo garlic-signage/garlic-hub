@@ -180,7 +180,7 @@ Deno.test('the suggestion of the AI opens in the edit dialog, an overlay waits m
 	showMenu(page).addSuggestTagsEvent(page.document.getElementById('suggestTags'));
 
 	await click(page, 'suggestTags');
-	assertEquals(page.document.getElementById('waitOverlay')?.parentElement, page.document.body);
+	assertSameElement(page.document.getElementById('waitOverlay')?.parentElement, page.document.body);
 
 	answer.resolve();
 	await new Promise(resolve => setTimeout(resolve, 0));
