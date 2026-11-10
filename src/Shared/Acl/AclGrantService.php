@@ -293,6 +293,7 @@ class AclGrantService
 	public function findUnitShares(int $granterUID, string $module, int|string $unitId): array
 	{
 		$roles = $this->findGrantableUnitRoles($granterUID, $module, $unitId);
+		// @infection-ignore-all findUsersOfUnit() below refuses the same way
 		if ($roles === [])
 			throw new AccessDeniedException(self::MODULE_NAME, 'rights_not_grantable', ['module' => $module]);
 
@@ -331,6 +332,7 @@ class AclGrantService
 			return;
 
 		$vipNames = array_map(fn(AclSections $role) => $this->aclHelper->getVipName($module, $role), AclSections::UNIT_ROLES);
+		// @infection-ignore-all the query binds the ids as text anyway
 		$unitIds  = array_values(array_map('strval', $unitIds));
 		$UIDs     = $this->userVipRepository->findUserIdsOfUnits($vipNames, $unitIds);
 

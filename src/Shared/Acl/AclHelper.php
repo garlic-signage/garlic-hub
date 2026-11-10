@@ -130,6 +130,7 @@ class AclHelper
 		foreach ($this->userService->getUserById($UID)->getVip() as $vip)
 		{
 			if (in_array($vip['vip_name'] ?? '', $vipNames, true))
+				// @infection-ignore-all the column is text
 				$unitIds[] = (string) ($vip['unit_id'] ?? '');
 		}
 

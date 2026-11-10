@@ -91,6 +91,7 @@ class TableUnitProviderTest extends ContainerTestCase
 	public function testTheNamesOfUnitsByTheirIds(): void
 	{
 		static::assertSame(['3' => ['name' => 'Bernds Player', 'company_id' => 1]], $this->provider('player')->findUnitsByIds(['3', '999']));
+		static::assertSame(['1', '3'], array_map('strval', array_keys($this->provider('player')->findUnitsByIds(['1', '3']))), 'every unit found');
 		static::assertSame([], $this->provider('player')->findUnitsByIds([]));
 	}
 

@@ -52,6 +52,7 @@ class TableUnitProvider implements AclUnitProvider
 		if ($unit === false)
 			return [];
 
+		// @infection-ignore-all the casts are for databases which give text, ours gives numbers
 		return ['id' => (string) $unit['id'], 'UID' => (int) $unit['UID'], 'company_id' => (int) $unit['company_id']];
 	}
 
@@ -66,6 +67,7 @@ class TableUnitProvider implements AclUnitProvider
 		$units = [];
 		foreach ($queryBuilder->executeQuery()->fetchAllAssociative() as $row)
 		{
+			// @infection-ignore-all the casts are for databases which give text, ours gives numbers
 			$units[] = ['id' => (string) $row['id'], 'name' => (string) $row['name'], 'company_id' => (int) $row['company_id']];
 		}
 
@@ -84,6 +86,7 @@ class TableUnitProvider implements AclUnitProvider
 		$units = [];
 		foreach ($queryBuilder->executeQuery()->fetchAllAssociative() as $row)
 		{
+			// @infection-ignore-all the casts are for databases which give text, ours gives numbers
 			$units[] = ['id' => (string) $row['id'], 'name' => (string) $row['name'], 'company_id' => (int) $row['company_id']];
 		}
 

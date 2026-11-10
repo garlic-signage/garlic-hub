@@ -33,6 +33,7 @@ use PHPUnit\Framework\TestCase;
 
 class ConcreteAclValidator extends AbstractAclValidator
 {
+	protected const string UNIT_NAME = 'thing';
 }
 
 /**
@@ -95,6 +96,24 @@ class AbstractAclValidatorTest extends TestCase
 		static::assertSame(in_array('editor', $roles, true), $validator->isEditor(1));
 		static::assertSame(in_array('viewer', $roles, true), $validator->isViewer(1));
 		static::assertSame(in_array('simple', $roles, true), $validator->isSimpleAdmin(1));
+	}
+
+	/**
+	 * The message names the kind of unit (playlist_not_editable): the user reads its translation, with the id.
+	 */
+	#[Group('units')]
+	public function testAUnitWithoutRightsIsRefusedWithTheKeyOfItsKind(): void
+	{
+		try
+		{
+			$this->validator(self::EDITOR)->assertUnitAccess(1, ['UID' => 2, 'company_id' => 1, 'thing_id' => 7], false);
+			static::fail('an editor without the unit');
+		}
+		catch (\App\Framework\Exceptions\AccessDeniedException $e)
+		{
+			static::assertSame('thing_not_editable', $e->getTranslationKey());
+			static::assertSame(['thing_id' => 7], $e->getReplacements());
+		}
 	}
 
 	#[Group('units')]

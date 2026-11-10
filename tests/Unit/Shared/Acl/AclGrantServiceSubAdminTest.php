@@ -44,12 +44,75 @@ class AclGrantServiceSubAdminTest extends TestCase
 {
 	private UserAclRepository $userAclRepository;
 	private UserVipRepository $userVipRepository;
+	private Transactions $transactions;
 
 	protected function setUp(): void
 	{
 		parent::setUp();
 		$this->userAclRepository = $this->createStub(UserAclRepository::class);
 		$this->userVipRepository = $this->createStub(UserVipRepository::class);
+		$this->transactions      = $this->createStub(Transactions::class);
+	}
+
+	/**
+	 * Role and unit are stored for good: the changes are committed, not left to the end of the request.
+	 */
+	#[Group('units')]
+	public function testTheChangesAreCommitted(): void
+	{
+		$userAclRepository = $this->createStub(UserAclRepository::class);
+		$userAclRepository->method('findAcl')->willReturn(2);
+		$this->userAclRepository = $userAclRepository;
+		$transactions = $this->createMock(Transactions::class);
+		$transactions->expects($this->exactly(2))->method('begin');
+		$transactions->expects($this->exactly(2))->method('commit');
+		$transactions->expects($this->never())->method('rollBack');
+		$this->transactions = $transactions;
+		$service = $this->service(Config::PLATFORM_EDITION_ENTERPRISE);
+
+		$service->setRole(1, 2, 'player', AclSections::EDITOR, true);
+		$service->setUnitRole(1, 2, 'player', 20, AclSections::EDITOR);
+	}
+
+	/**
+	 * The unit is of his company, the user is not: both must be his.
+	 */
+	#[Group('units')]
+	public function testSubAdminMayNotGrantAUnitOfHisCompanyToAUserOfAnotherCompany(): void
+	{
+		$userAclRepository = $this->createStub(UserAclRepository::class);
+		$userAclRepository->method('findAcl')->willReturn(2);
+		$this->userAclRepository = $userAclRepository;
+		$userVipRepository = $this->createMock(UserVipRepository::class);
+		$userVipRepository->expects($this->never())->method('insert');
+		$this->userVipRepository = $userVipRepository;
+
+		$this->expectException(AccessDeniedException::class);
+		$this->service(Config::PLATFORM_EDITION_ENTERPRISE)->setUnitRole(1, 3, 'player', 20, AclSections::EDITOR);
+	}
+
+	#[Group('units')]
+	public function testSubAdminSharesOnlyUnitsOfHisCompany(): void
+	{
+		$service = $this->service(Config::PLATFORM_EDITION_ENTERPRISE);
+
+		static::assertTrue($service->canShareUnit(1, 'player', 20));
+		static::assertFalse($service->canShareUnit(1, 'player', 30));
+	}
+
+	/**
+	 * The rights page of a user shows the sub admin only the units of his companies.
+	 */
+	#[Group('units')]
+	public function testTheRightsPageShowsOnlyUnitsOfHisCompanies(): void
+	{
+		$userVipRepository = $this->createStub(UserVipRepository::class);
+		$userVipRepository->method('findUnitIds')->willReturnCallback(static fn(int $UID, string $vipName): array => $vipName === 'player_editor' ? ['20', '30'] : []);
+		$this->userVipRepository = $userVipRepository;
+
+		$rights = $this->service(Config::PLATFORM_EDITION_ENTERPRISE)->findUserRights(1, 2, 'player');
+
+		static::assertSame([['id' => '20', 'name' => 'Lobby', 'role' => AclSections::EDITOR]], $rights['units']);
 	}
 
 	#[Group('units')]
@@ -166,13 +229,16 @@ class AclGrantServiceSubAdminTest extends TestCase
 		$units->method('findUnit')->willReturnCallback(
 			fn(int|string $unitId) => ['id' => (string) $unitId, 'UID' => 9, 'company_id' => (int) $unitId === 20 ? 5 : 6]
 		);
+		$units->method('findUnitsByIds')->willReturnCallback(
+			fn(array $unitIds) => array_intersect_key(['20' => ['name' => 'Lobby', 'company_id' => 5], '30' => ['name' => 'Kantine', 'company_id' => 6]], array_flip($unitIds))
+		);
 
 		return new AclGrantService(
 			$aclHelper,
 			$this->userAclRepository,
 			$this->userVipRepository,
 			$usersService,
-			$this->createStub(Transactions::class),
+			$this->transactions,
 			['player' => $units],
 			new NullAuditLog()
 		);

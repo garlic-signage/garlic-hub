@@ -213,6 +213,67 @@ class AclGrantServiceTest extends ContainerTestCase
 		static::assertSame([['vip_name' => 'playlists_viewer', 'unit_id' => '2']], $this->connection->fetchAllAssociative('SELECT vip_name, unit_id FROM user_vip WHERE UID = 2'));
 	}
 
+	public function testRemovingARoleKeepsTheUnitsOfTheOtherUsers(): void
+	{
+		$this->service->setRole(1, 2, 'playlists', AclSections::EDITOR, true);
+		$this->service->setRole(1, 3, 'playlists', AclSections::EDITOR, true);
+		$this->service->setUnitRole(1, 2, 'playlists', 1, AclSections::EDITOR);
+		$this->service->setUnitRole(1, 3, 'playlists', 1, AclSections::EDITOR);
+
+		$this->service->setRole(1, 2, 'playlists', AclSections::EDITOR, false);
+
+		static::assertSame(0, $this->countVips(2));
+		static::assertSame(1, $this->countVips(3));
+	}
+
+	/**
+	 * A player has no viewer: neither a unit nor the share dialog offers it.
+	 */
+	public function testARoleWhichTheModuleDoesNotHaveHasNoUnits(): void
+	{
+		$this->loadFixture('acl/players.sql');
+
+		try
+		{
+			$this->service->setUnitRole(1, 2, 'player', 1, AclSections::VIEWER);
+			static::fail('a viewer of a player');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertSame('role_not_available', $e->getTranslationKey());
+		}
+
+		try
+		{
+			$this->service->findUsersWithRole(1, 'player', AclSections::VIEWER);
+			static::fail('the viewers of players');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertSame('role_not_available', $e->getTranslationKey());
+			static::assertSame(['module' => 'player', 'role' => 'viewer'], $e->getReplacements());
+		}
+	}
+
+	public function testTheShareDialogListsNoModuleAdmins(): void
+	{
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('role_not_available');
+		$this->service->findUsersWithRole(1, 'playlists', AclSections::MODULEADMIN);
+	}
+
+	/**
+	 * Editor and viewer of the same unit (an old row or a database edited by hand): the unit is listed once.
+	 */
+	public function testAUnitSharedInTwoRolesIsListedOnce(): void
+	{
+		$this->connection->insert('user_vip', ['UID' => 2, 'vip_name' => 'playlists_editor', 'unit_id' => '1']);
+		$this->connection->insert('user_vip', ['UID' => 2, 'vip_name' => 'playlists_viewer', 'unit_id' => '1']);
+		$this->connection->insert('user_vip', ['UID' => 2, 'vip_name' => 'playlists_viewer', 'unit_id' => '2']);
+
+		static::assertSame(['1', '2'], $this->aclHelper->findSharedUnitIds(2, ['playlists_editor', 'playlists_viewer']));
+	}
+
 	public function testTheShareDialogListsOnlyUsersWithTheRoleBit(): void
 	{
 		$this->service->setRole(1, 2, 'playlists', AclSections::EDITOR, true);

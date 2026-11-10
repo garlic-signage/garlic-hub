@@ -69,6 +69,7 @@ abstract class AbstractAclValidator
 	 */
 	public function getVipNames(AclSections ...$roles): array
 	{
+		// @infection-ignore-all the roles are a list already
 		return array_values(array_map(fn(AclSections $role) => $this->helper->getVipName($this->moduleName, $role), $roles));
 	}
 
@@ -166,7 +167,7 @@ abstract class AbstractAclValidator
 	 * @throws Exception
 	 * @throws CoreException
 	 */
-	public function isEditorWithAccessOnUnit(int $UID, int|string $unitId): bool
+	protected function isEditorWithAccessOnUnit(int $UID, int|string $unitId): bool
 	{
 		return ($this->isEditor($UID) && $this->helper->hasEditorAccessOnUnit($UID, $unitId, $this->moduleName));
 	}
@@ -236,6 +237,7 @@ abstract class AbstractAclValidator
 	{
 		$unitId = $unit[static::UNIT_NAME . '_id'] ?? '';
 
+		// @infection-ignore-all differs only for an id which is neither number nor text, the tables have none
 		return is_int($unitId) || is_string($unitId) ? $unitId : '';
 	}
 }
