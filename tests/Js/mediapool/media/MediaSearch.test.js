@@ -81,11 +81,19 @@ class FakeFlashMessageHandler
 	}
 }
 
+function createFilter(document)
+{
+	const select = document.createElement('select');
+	for (const kind of ['', 'images', 'videos'])
+		select.appendChild(new Option(kind, kind));
+	return select;
+}
+
 function createSearch(document)
 {
 	const parts = {
 		input:         document.createElement('input'),
-		filter:        document.createElement('input'), // the select of the page, linkedom cannot set its value
+		filter:        createFilter(document),
 		mediaService:  new FakeMediaService(),
 		mediaList:     new FakeMediaList(document),
 		directoryView: new FakeDirectoryView(),
