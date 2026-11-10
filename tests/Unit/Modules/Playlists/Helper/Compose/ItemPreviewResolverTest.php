@@ -181,6 +181,17 @@ class ItemPreviewResolverTest extends TestCase
 	 * @throws CoreException
 	 */
 	#[Group('units')]
+	public function testAChannelShowsItsThumbnail(): void
+	{
+		$preview = $this->resolver->resolve(['item_type' => ItemType::CHANNEL->value, 'urls' => ['thumbnail' => '/images/icons/channel.svg']]);
+
+		static::assertSame(['type' => ItemPreviewResolver::TYPE_IMAGE, 'url' => '/images/icons/channel.svg'], $preview);
+	}
+
+	/**
+	 * @throws CoreException
+	 */
+	#[Group('units')]
 	public function testANestedPlaylistIsAList(): void
 	{
 		$preview = $this->resolver->resolve(['item_type' => ItemType::PLAYLIST->value, 'urls' => ['thumbnail' => '/images/icons/playlist.svg']]);

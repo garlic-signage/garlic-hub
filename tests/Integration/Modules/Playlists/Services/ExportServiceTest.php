@@ -76,6 +76,21 @@ class ExportServiceTest extends ContainerTestCase
 			static::assertFileExists($this->workspace->absolute('/var/smil/playlists/1/' . $file . '.smil'));
 		static::assertSame([68, 1170, 63], array_map(intval(...), (array) $this->connection->fetchNumeric('SELECT duration, filesize, owner_duration FROM playlists WHERE playlist_id = 1')));
 		static::assertNotSame('0000-00-00 00:00:00', $this->connection->fetchOne('SELECT export_time FROM playlists WHERE playlist_id = 1'));
+		static::assertFalse($this->connection->isTransactionActive());
+	}
+
+	/**
+	 * Only the mode multizone takes the zones, a layout of another playlist is left over from a former mode.
+	 */
+	public function testAPlaylistWhichIsNoMultizoneIsExportedWithItsLayout(): void
+	{
+		$this->actingAs(2);
+		$this->connection->executeStatement('UPDATE playlists SET layout = ? WHERE playlist_id = 1', [serialize(['zones' => ['screen1' => ['zone_playlist_id' => 3]]])]);
+
+		$this->exportService->exportToSmil(1);
+
+		static::assertFileExists($this->workspace->absolute('/var/smil/playlists/1/items.smil'));
+		static::assertSame(68, (int) $this->connection->fetchOne('SELECT duration FROM playlists WHERE playlist_id = 1'));
 	}
 
 	public function testTheExportOfANestedPlaylistUpdatesTheItemsWhichStandForIt(): void
@@ -130,6 +145,25 @@ class ExportServiceTest extends ContainerTestCase
 		static::assertEqualsCanonicalizing(['5-0123456789abcdef0123456789abcdef.png', $name . '.png'], $files);
 		static::assertSame('image', file_get_contents($directory . '/' . $name . '.png'));
 		static::assertStringContainsString('delivery.php/tpl/' . $name . '.png', (string) file_get_contents($this->workspace->absolute('/var/smil/playlists/1/items.smil')));
+	}
+
+	/**
+	 * An image with the name of the content exists already: the image named by the item id does not replace it.
+	 */
+	public function testAnImageOfTheContentIsNotReplacedByTheFormerImage(): void
+	{
+		$this->actingAs(2);
+		$directory = $this->workspace->absolute('/var/storage/playlists/items/originals');
+		mkdir($directory, 0775, true);
+		$name = $this->container->get(TemplateItemName::class)->build(5, (string) $this->connection->fetchOne('SELECT content_data FROM playlists_items WHERE item_id = 5'));
+		file_put_contents($directory . '/5.png', 'former');
+		file_put_contents($directory . '/' . $name . '.jpg', 'current');
+
+		$this->exportService->exportToSmil(1);
+
+		static::assertSame('former', file_get_contents($directory . '/5.png'));
+		static::assertSame('current', file_get_contents($directory . '/' . $name . '.jpg'));
+		static::assertFileDoesNotExist($directory . '/' . $name . '.png');
 	}
 
 	public function testAUserMayNotExportAForeignPlaylist(): void
@@ -234,5 +268,32 @@ class ExportServiceTest extends ContainerTestCase
 			static::assertFileDoesNotExist($this->workspace->absolute('/var/smil/playlists/1/items.smil'));
 			static::assertSame('0000-00-00 00:00:00', $this->connection->fetchOne('SELECT export_time FROM playlists WHERE playlist_id = 3'));
 		}
+	}
+
+	/**
+	 * A zone without a playlist (0 or none at all) is skipped, the zones after it count.
+	 */
+	public function testEmptyZonesAreSkipped(): void
+	{
+		$this->actingAs(2);
+		$this->exportService->exportToSmil(1);
+		$zones = ['screen1' => ['zone_playlist_id' => 0], 'screen2' => [], 'screen3' => ['zone_playlist_id' => 1]];
+		$this->connection->executeStatement("UPDATE playlists SET playlist_mode = 'multizone', layout = ? WHERE playlist_id = 3", [serialize(['resolution' => '1920x1080', 'zones' => $zones])]);
+
+		$this->exportService->exportToSmil(3);
+
+		static::assertSame([68, 1170, 63], array_map(intval(...), (array) $this->connection->fetchNumeric('SELECT duration, filesize, owner_duration FROM playlists WHERE playlist_id = 3')));
+		static::assertFalse($this->connection->isTransactionActive());
+	}
+
+	public function testAMultizonePlaylistWithoutZonePlaylistsHasNoDuration(): void
+	{
+		$this->actingAs(2);
+		$this->connection->executeStatement("UPDATE playlists SET playlist_mode = 'multizone', duration = 5, filesize = 5, owner_duration = 5, layout = ? WHERE playlist_id = 3", [serialize(['resolution' => '1920x1080', 'zones' => ['screen1' => ['zone_playlist_id' => 0]]])]);
+
+		$this->exportService->exportToSmil(3);
+
+		static::assertSame([0, 0, 0], array_map(intval(...), (array) $this->connection->fetchNumeric('SELECT duration, filesize, owner_duration FROM playlists WHERE playlist_id = 3')));
+		static::assertSame('released', $this->connection->fetchOne('SELECT release_status FROM playlists WHERE playlist_id = 3'));
 	}
 }

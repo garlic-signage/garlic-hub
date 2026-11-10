@@ -57,7 +57,9 @@ class ConditionalPlayControllerTest extends PlaylistsControllerTestCase
 			$data['data']['conditional']
 		);
 		static::assertSame('bild.jpg', $data['data']['item_name']);
-		static::assertNotSame('', $data['html']);
+		// the form is filled with the stored settings
+		static::assertStringContainsString('2030-12-31', $data['html']);
+		static::assertStringContainsString('18:30', $data['html']);
 	}
 
 	public function testNoConditionsAreStoredAsNoConditions(): void

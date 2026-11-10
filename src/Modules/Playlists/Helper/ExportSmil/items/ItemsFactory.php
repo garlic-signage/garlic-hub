@@ -76,6 +76,7 @@ class ItemsFactory
 	 */
 	private function createMedia(array $item): Media
 	{
+		// @infection-ignore-all only the part before the first slash is used
 		$mediaType = explode('/', $item['mimetype'], 2)[0];
 
 		return match ($mediaType)

@@ -174,5 +174,15 @@ class MediaTest extends TestCase
 		static::assertEmpty($this->concreteMedia->testLoggable());
 	}
 
+	#[Group('units')]
+	public function testALoggableFileHasTheLogIdBeforeTheCacheControl(): void
+	{
+		$item = ['item_id' => 123, 'datasource' => 'file', 'flags' => ItemFlags::loggable->value];
+		$this->concreteMedia = new ConcreteMedia($this->configStub, $item, $this->propertiesStub, $this->beginStub, $this->endStub, $this->conditionalStub);
 
+		static::assertSame(
+			Base::TABSTOPS_PARAMETER . '<param name="logContentId" value="123" />' . "\n" . Base::TABSTOPS_PARAMETER . '<param name="cacheControl" value="onlyIfCached" />' . "\n",
+			$this->concreteMedia->testCollectParameters()
+		);
+	}
 }

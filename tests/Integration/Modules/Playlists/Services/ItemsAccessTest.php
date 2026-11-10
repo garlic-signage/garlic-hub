@@ -102,6 +102,16 @@ class ItemsAccessTest extends ContainerTestCase
 		static::assertSame(6, $this->itemAtOrder(2, 1));
 	}
 
+	public function testUserMayNotReorderTheItemsOfAForeignPlaylist(): void
+	{
+		$this->actingAs(2);
+
+		$this->expectDenied(fn() => $this->itemsService->updateItemOrder(2, ['7', '6']));
+
+		static::assertSame(6, $this->itemAtOrder(2, 1));
+		static::assertFalse($this->connection->isTransactionActive());
+	}
+
 	public function testOwnerMayReorderTheItemsOfHisPlaylist(): void
 	{
 		$this->actingAs(2);

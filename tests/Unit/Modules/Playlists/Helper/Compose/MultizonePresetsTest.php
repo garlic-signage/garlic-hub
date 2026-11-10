@@ -102,6 +102,9 @@ class MultizonePresetsTest extends TestCase
 			'wider than screen'   => [[['id' => 'wide', 'zones' => [['left' => 50, 'width' => 60] + $zone]]]],
 			'higher than screen'  => [[['id' => 'high', 'zones' => [['top' => 50, 'height' => 60] + $zone]]]],
 			'no width'            => [[['id' => 'thin', 'zones' => [['width' => 0] + $zone]]]],
+			'no height'           => [[['id' => 'flat', 'zones' => [['height' => 0] + $zone]]]],
+			'id with a space'     => [[['id' => 'full screen', 'zones' => [$zone]]]],
+			'id with a line break' => [[['id' => "full\n", 'zones' => [$zone]]]],
 		];
 	}
 
@@ -129,9 +132,20 @@ class MultizonePresetsTest extends TestCase
 	}
 
 	#[Group('units')]
+	public function testAPresetWithoutIdIsNamedByItsPosition(): void
+	{
+		$this->write([['id' => 'fine', 'zones' => [['left' => 0, 'top' => 0, 'width' => 100, 'height' => 100, 'bgcolor' => '#000000']]], 'zone']);
+
+		$this->expectException(CoreException::class);
+		$this->expectExceptionMessage('Multizone preset not valid: #1');
+		$this->load();
+	}
+
+	#[Group('units')]
 	public function testAMissingFileStopsTheLoad(): void
 	{
 		$this->expectException(CoreException::class);
+		$this->expectExceptionMessage('Multizone presets not readable: ' . $this->file . '.missing');
 		(new MultizonePresets($this->file . '.missing', new ZonesSchema()))->load();
 	}
 
@@ -141,6 +155,7 @@ class MultizonePresetsTest extends TestCase
 		file_put_contents($this->file, '[{"id": ');
 
 		$this->expectException(CoreException::class);
+		$this->expectExceptionMessage('Multizone presets are not a list: ' . $this->file);
 		$this->load();
 	}
 

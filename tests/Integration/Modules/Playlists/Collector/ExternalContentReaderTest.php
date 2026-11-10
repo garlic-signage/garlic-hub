@@ -116,6 +116,17 @@ class ExternalContentReaderTest extends TestCase
 		$this->reader->init(self::URL);
 	}
 
+	/**
+	 * Only an answer with 200 can have a newer file, another answer of success keeps the cached file.
+	 */
+	public function testTheCachedFileIsUsedWhenTheServerHasNoContent(): void
+	{
+		$this->workspace->filesystem->write($this->cachedFile, 'cached');
+		$this->http->append(new Response(204, ['Content-Length' => '0']));
+
+		static::assertSame('cached', $this->reader->init(self::URL)->loadPlaylistItems());
+	}
+
 	public function testAnUnchangedFileIsNotDownloadedAgain(): void
 	{
 		static::markTestSkipped('Known bug: mustUpdate() compares the other way round (remote older than the cache), which is always true after the first download. The file is downloaded on every access. Remove this line when it is fixed.');

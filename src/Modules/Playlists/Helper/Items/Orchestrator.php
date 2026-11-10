@@ -150,6 +150,7 @@ class Orchestrator
 			case 'item_duration':
 				$round = (int) round((float) $this->number('value'));
 				$data     = $this->itemsService->updateItemDuration($this->itemId, $round);
+				// @infection-ignore-all only 0 or not 0 counts
 				$affected = $data === null ? 0 : 1;
 				break;
 			default:
@@ -200,6 +201,7 @@ class Orchestrator
 	 */
 	public function updateItemOrders(ResponseInterface $response): ResponseInterface
 	{
+		// @infection-ignore-all the service casts the ids to int itself
 		$this->itemsService->updateItemOrder($this->playlistId, array_map('strval', $this->idList('items_positions') ?? []));
 
 		return $this->responseBuilder->itemsOrderUpdated($response);

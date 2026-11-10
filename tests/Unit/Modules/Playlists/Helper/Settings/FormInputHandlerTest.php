@@ -36,6 +36,7 @@ use Tests\Support\MemorySession;
 class FormInputHandlerTest extends TestCase
 {
 	private Parameters $parameters;
+	private Validator $validator;
 	private FormInputHandler $handler;
 
 	protected function setUp(): void
@@ -45,7 +46,8 @@ class FormInputHandlerTest extends TestCase
 		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $key === 'playlist_mode_unsupported' ? 'Unsupported: %s' : $module . '.' . $key);
 
 		$this->parameters = new Parameters(new Sanitizer(), new MemorySession());
-		$this->handler    = new FormInputHandler($this->parameters, new Validator($translator, $this->parameters));
+		$this->validator  = new Validator($translator, $this->parameters);
+		$this->handler    = new FormInputHandler($this->parameters, $this->validator);
 	}
 
 	#[Group('units')]
@@ -103,6 +105,21 @@ class FormInputHandlerTest extends TestCase
 		$errors = $this->handler->validate(['playlist_name' => 'Lobby', 'playlist_mode' => ['master']]);
 
 		static::assertSame(['playlists.parameters_missing', 'Unsupported: '], $errors);
+	}
+
+	/**
+	 * An id is a positive number or digits as text.
+	 */
+	#[Group('units')]
+	public function testOnlyAPositiveIdIsAnId(): void
+	{
+		$this->parameters->addPlaylistId();
+		$this->handler->validate(['playlist_name' => 'Lobby', 'playlist_id' => '12']);
+
+		static::assertSame([], $this->validator->validateUserInput(['playlist_id' => 1]));
+		static::assertSame([], $this->validator->validateUserInput(['playlist_id' => '1']));
+		static::assertSame(['playlists.parameters_missing'], $this->validator->validateUserInput(['playlist_id' => 0]));
+		static::assertSame(['playlists.parameters_missing'], $this->validator->validateUserInput(['playlist_id' => 'abc']));
 	}
 
 	#[Group('units')]

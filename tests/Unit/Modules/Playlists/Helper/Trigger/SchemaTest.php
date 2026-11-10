@@ -96,6 +96,13 @@ class SchemaTest extends TestCase
 			'a date as array'                       => [$wallclock(['iso_date' => ['2030-01-01T10:00:00']])],
 			'no date'                               => [['wallclocks' => [['weekday' => 1]]]],
 			'a weekday of 8'                        => [$wallclock(['weekday' => '8'])],
+			'a weekday of -8'                       => [$wallclock(['weekday' => -8])],
+			'a date with a text in front'           => [$wallclock(['iso_date' => 'x2030-01-01T10:00:00'])],
+			'a date with a line break at the end'   => [$wallclock(['iso_date' => "2030-01-01T10:00:00\n"])],
+			'a 29th February of no leap year'       => [$wallclock(['iso_date' => '2030-02-29T10:00:00'])],
+			'repeats with a plus'                   => [$wallclock(['repeat_counts' => '+5'])],
+			'an interval with a plus'               => [$wallclock(['repeat_hours' => '+1'])],
+			'an accesskey with a line break'        => [['accesskeys' => [['accesskey' => "a\n"]]]],
 			'a weekday as text'                     => [$wallclock(['weekday' => 'mon'])],
 			'repeats of -2'                         => [$wallclock(['repeat_counts' => '-2'])],
 			'repeats of 10000'                      => [$wallclock(['repeat_counts' => '10000'])],
@@ -131,6 +138,14 @@ class SchemaTest extends TestCase
 	public function testInvalidValuesAreRejected(array $input): void
 	{
 		static::assertNull($this->schema->parse($input));
+	}
+
+	#[Group('units')]
+	public function testTheLimitsAreValid(): void
+	{
+		$result = $this->schema->parse(['wallclocks' => [['iso_date' => '2028-02-29T23:59:59', 'repeat_counts' => 9999, 'repeat_minutes' => 59, 'repeat_years' => '11']]]);
+
+		static::assertSame([9999, 59, 11], [$result['wallclocks'][0]['repeat_counts'] ?? null, $result['wallclocks'][0]['repeat_minutes'] ?? null, $result['wallclocks'][0]['repeat_years'] ?? null]);
 	}
 
 	#[Group('units')]

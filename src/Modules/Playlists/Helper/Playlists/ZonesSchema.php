@@ -43,10 +43,10 @@ class ZonesSchema
 	public function parse(array $input): ?array
 	{
 		$resolution = $input['resolution'] ?? null;
-		if (!is_string($resolution) || preg_match('/^(\d{1,5})x(\d{1,5})$/D', $resolution, $size) !== 1)
+		if (!is_string($resolution) || preg_match('/^(?<width>\d{1,5})x(?<height>\d{1,5})$/D', $resolution, $size) !== 1)
 			return null;
 
-		if (!$this->inRange((int) $size[1], 1, self::MAX_PIXEL) || !$this->inRange((int) $size[2], 1, self::MAX_PIXEL))
+		if (!$this->inRange((int) $size['width'], 1, self::MAX_PIXEL) || !$this->inRange((int) $size['height'], 1, self::MAX_PIXEL))
 			return null;
 
 		$zoom = $this->toInt($input['zoom'] ?? 70, 1, self::MAX_ZOOM);
@@ -68,7 +68,7 @@ class ZonesSchema
 			$parsed[] = $parsedZone;
 		}
 
-		return ['resolution' => $size[1] . 'x' . $size[2], 'zoom' => $zoom, 'export_unit' => $unit, 'zones' => $parsed];
+		return ['resolution' => $size['width'] . 'x' . $size['height'], 'zoom' => $zoom, 'export_unit' => $unit, 'zones' => $parsed];
 	}
 
 	/**

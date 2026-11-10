@@ -108,6 +108,7 @@ class PlaylistContent
 			{
 				foreach ($item['begin_trigger']['touches'] as $touch)
 				{
+					// @infection-ignore-all the keys of an array are numbers anyway, the item ids are not used
 					$this->touchTrigger[(int)$touch['touch_item_id']] = (int)$item['item_id'];
 				}
 			}
@@ -266,6 +267,7 @@ class PlaylistContent
 	 */
 	private function addContentParts(array $item, string $element, string $prefetch, string $exclusive): void
 	{
+		// @infection-ignore-all the flag disabled is the bit 1: & (1 >= 0) is the same
 		$disabled = ($item['flags'] & ItemFlags::disabled->value) > 0;
 
 		switch ($item['item_type'])

@@ -23,6 +23,7 @@ namespace Tests\Integration\Modules\Playlists\Controller;
 
 use App\Framework\TemplateEngine\PageResponse;
 use App\Modules\Auth\UserSession;
+use DI\Container;
 use App\Modules\Playlists\Controller\ShowDatatableController;
 use App\Modules\Playlists\Services\AclValidator;
 use App\Modules\Playlists\Services\PlaylistRelease;
@@ -80,7 +81,9 @@ class ShowDatatableControllerTest extends PlaylistsControllerTestCase
 	 */
 	public function testWhileTheReleaseIsOnTheListHasTheReleaseStatus(): void
 	{
-		$this->container->set(PlaylistRelease::class, new PlaylistRelease(
+		$container = $this->container;
+		static::assertInstanceOf(Container::class, $container);
+		$container->set(PlaylistRelease::class, new PlaylistRelease(
 			true,
 			$this->container->get(PlaylistsService::class),
 			$this->container->get(AclValidator::class),

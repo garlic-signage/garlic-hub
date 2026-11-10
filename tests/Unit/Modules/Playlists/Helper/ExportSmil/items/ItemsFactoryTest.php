@@ -208,4 +208,17 @@ class ItemsFactoryTest extends TestCase
 
 		$this->itemsFactory->createItem($item);
 	}
+
+	/**
+	 * @throws CoreException|ModuleException
+	 */
+	#[Group('units')]
+	public function testWidgetsAndDownloadsAreWidgets(): void
+	{
+		foreach (['widget/wgt', 'download/zip'] as $mimetype)
+		{
+			$item = ['item_type' => ItemType::MEDIAPOOL->value, 'mimetype' => $mimetype, 'properties' => [], 'begin_trigger' => [], 'end_trigger' => [], 'conditional' => []];
+			static::assertInstanceOf(Widget::class, $this->itemsFactory->createItem($item), $mimetype);
+		}
+	}
 }

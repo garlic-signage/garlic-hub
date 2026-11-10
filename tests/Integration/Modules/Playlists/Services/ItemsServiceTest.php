@@ -97,6 +97,14 @@ class ItemsServiceTest extends ContainerTestCase
 		static::assertSame(5, $this->itemsService->fetchItemById(3)['default_duration']);
 	}
 
+	public function testANestedPlaylistWithoutTimeLimitBringsItsFullDuration(): void
+	{
+		$this->actingAs(2);
+		$this->connection->executeStatement('UPDATE playlists SET time_limit = 0 WHERE playlist_id = 2');
+
+		static::assertSame(11, $this->itemsService->fetchItemById(3)['default_duration']);
+	}
+
 	public function testATemplateGetsTheDefaultDurationAndThePlaylistName(): void
 	{
 		$this->actingAs(2);
@@ -254,6 +262,7 @@ class ItemsServiceTest extends ContainerTestCase
 		catch (NotFoundException)
 		{
 			static::assertSame([1, 2, 3, 4, 5], $this->orderOfPlaylist(1));
+			static::assertFalse($this->connection->isTransactionActive());
 		}
 	}
 
@@ -291,6 +300,47 @@ class ItemsServiceTest extends ContainerTestCase
 			static::assertSame(2, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM playlists_items WHERE playlist_id = 2'));
 			static::assertSame([1, 2], $this->orderOfPlaylist(2));
 		}
+	}
+
+	/**
+	 * Every change of an item is a change of the playlist: its release starts again.
+	 */
+	public function testEveryChangeOfAnItemStartsTheReleaseAgain(): void
+	{
+		$this->actingAs(2);
+		$changes = [
+			'update'   => fn() => $this->itemsService->update(1, ['item_name' => 'neu']),
+			'duration' => fn() => $this->itemsService->updateItemDuration(1, 20),
+			'order'    => fn() => $this->itemsService->updateItemOrder(1, ['2', '1', '3', '4', '5']),
+		];
+
+		foreach ($changes as $name => $change)
+		{
+			$this->connection->update('playlists', ['release_status' => 'released'], ['playlist_id' => 1]);
+			$change();
+			static::assertSame('in_progress', $this->connection->fetchOne('SELECT release_status FROM playlists WHERE playlist_id = 1'), $name);
+		}
+	}
+
+	public function testTheNewOrderIsCommitted(): void
+	{
+		$this->actingAs(2);
+
+		$this->itemsService->updateItemOrder(1, ['2', '1', '3', '4', '5']);
+
+		static::assertFalse($this->connection->isTransactionActive());
+		static::assertSame(2, (int) $this->connection->fetchOne('SELECT item_id FROM playlists_items WHERE playlist_id = 1 AND item_order = 0'));
+	}
+
+	public function testADeleteIsCommittedAndBringsTheNewMetrics(): void
+	{
+		$this->actingAs(2);
+
+		$result = $this->itemsService->delete(1, 4);
+
+		static::assertFalse($this->connection->isTransactionActive());
+		static::assertSame(['count_items' => 4, 'count_owner_items' => 3, 'filesize' => 1120, 'duration' => 53, 'owner_duration' => 48], $result['playlist_metrics']);
+		static::assertSame([1, 2, 3, 4], $this->orderOfPlaylist(1));
 	}
 
 	/**

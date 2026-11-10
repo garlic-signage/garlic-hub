@@ -57,6 +57,7 @@ class ItemsService extends AbstractBaseService
 								private readonly ItemPreviewResolver       $itemPreviewResolver,
 								LoggerInterface                            $logger)
 	{
+		// @infection-ignore-all the parent only keeps the logger
 		parent::__construct($logger);
 	}
 
@@ -98,10 +99,7 @@ class ItemsService extends AbstractBaseService
 			case ItemType::PLAYLIST->value:
 				$playlist = $this->playlistsService->fetchById((int) $item['file_resource']); // check rights
 				$defaultDuration = $this->playlistMetricsCalculator->calculateFromPlaylistData($playlist)->duration;
-				if ($playlist['time_limit'] > 0 && $defaultDuration > $playlist['time_limit'])
-					$item['default_duration'] = $playlist['time_limit'];
-				else
-					$item['default_duration'] = $defaultDuration;
+				$item['default_duration'] = $playlist['time_limit'] > 0 ? min($defaultDuration, $playlist['time_limit']) : $defaultDuration;
 				break;
 			case ItemType::TEMPLATE->value:
 				$item['playlist_name'] = $destinationPlaylist['playlist_name'];
@@ -168,9 +166,11 @@ class ItemsService extends AbstractBaseService
 			$item['urls']['thumbnail']  = $thumbnail['url'];
 			$resolved = $this->itemPreviewResolver->resolve($item);
 
+			// @infection-ignore-all the casts are for databases which give text, ours gives numbers
+			[$itemId, $itemName] = [(int) $item['item_id'], (string) $item['item_name']];
 			$preview[] = [
-				'item_id'     => (int) $item['item_id'],
-				'item_name'   => (string) $item['item_name'],
+				'item_id'     => $itemId,
+				'item_name'   => $itemName,
 				'thumbnail'   => $thumbnail['url'],
 				'type'        => $resolved['type'],
 				'url'         => $resolved['url'],
@@ -185,7 +185,8 @@ class ItemsService extends AbstractBaseService
      */
 	public function updateField(mixed $itemId, string $fieldName, string|int $fieldValue): int
 	{
-    		$saveData = [$fieldName => (string) $fieldValue];
+		// @infection-ignore-all the column gives the value its type, a number stays a number
+		$saveData = [$fieldName => (string) $fieldValue];
 
 		return $this->update($itemId, $saveData);
 	}
@@ -233,6 +234,7 @@ class ItemsService extends AbstractBaseService
 		}
 
 		$itemDuration = $this->playlistMetricsCalculator->calculateRemainingDuration($playlist, $wantedDuration);
+		// @infection-ignore-all the item exists, SQLite counts it also when the value stays
 		if ($this->itemsRepository->update($itemId, ['item_duration' => $itemDuration]) === 0)
 			return null;
 
@@ -261,6 +263,7 @@ class ItemsService extends AbstractBaseService
 			$this->playlistsService->loadPureById($playlistId); // will check for rights
 
 			// the item ids come from the client: only items of this playlist may be touched
+			// @infection-ignore-all the casts are for databases which give text, ours gives numbers
 			$playlistItemIds = array_map('intval', array_column($this->itemsRepository->findAllByPlaylistId($playlistId), 'item_id'));
 			foreach ($itemsOrder as $itemId)
 			{

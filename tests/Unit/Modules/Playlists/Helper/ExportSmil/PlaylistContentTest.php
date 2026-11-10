@@ -226,4 +226,78 @@ class PlaylistContentTest extends TestCase
 
 		$this->build([['item_id' => 2, 'item_type' => 'unknown', 'begin_trigger' => []]]);
 	}
+
+	#[Group('units')]
+	public function testAPlaylistWithoutShuffleHasNoMetadata(): void
+	{
+		$content = $this->build([self::video()]);
+
+		static::assertStringStartsWith(Base::TABSTOPS_TAG . '<video title="film.mp4"', $content->getContentElements());
+	}
+
+	#[Group('units')]
+	public function testTheShuffleIsPutBeforeTheItems(): void
+	{
+		$content = $this->build([self::video()], ['shuffle' => 1, 'shuffle_picking' => 0]);
+
+		static::assertStringContainsString('</metadata>' . "\n" . Base::TABSTOPS_TAG . '<video title="film.mp4"', $content->getContentElements());
+	}
+
+	#[Group('units')]
+	public function testEveryItemIsPrefetched(): void
+	{
+		$external = static fn(int $id, string $url): array => self::video(['item_id' => $id, 'item_type' => ItemType::MEDIA_EXTERN->value, 'file_resource' => '', 'content_data' => serialize(['url' => $url])]);
+
+		$content = $this->build([self::video(), self::video(['item_id' => 2, 'file_resource' => 'other']), $external(3, 'https://acme.com/a.mp4'), $external(4, 'https://acme.com/b.mp4')]);
+
+		static::assertSame(
+			Base::TABSTOPS_TAG . '<prefetch src="https://content.server.com/delivery.php/checksum.mp4" />' . "\n"
+			. Base::TABSTOPS_TAG . '<prefetch src="https://content.server.com/delivery.php/other.mp4" />' . "\n"
+			. Base::TABSTOPS_TAG . '<prefetch src="https://acme.com/a.mp4" />' . "\n"
+			. Base::TABSTOPS_TAG . '<prefetch src="https://acme.com/b.mp4" />' . "\n",
+			$content->getContentPrefetch()
+		);
+	}
+
+	#[Group('units')]
+	public function testExternalFilesAndTemplatesCanBeTheTargetOfATouch(): void
+	{
+		$source   = self::video(['item_id' => 1, 'begin_trigger' => ['touches' => [['touch_item_id' => 2], ['touch_item_id' => 3]]]]);
+		$external = self::video(['item_id' => 2, 'item_type' => ItemType::MEDIA_EXTERN->value, 'file_resource' => '', 'content_data' => serialize(['url' => 'https://acme.com/a.mp4'])]);
+		$template = self::video(['item_id' => 3, 'item_type' => ItemType::TEMPLATE->value, 'mimetype' => 'image/jpeg', 'extension' => null, 'content_data' => '{"objects":[]}']);
+
+		$content = $this->build([$source, $external, $template]);
+
+		static::assertStringContainsString('<video xml:id="triggerMediaId-2" title="film.mp4"', $content->getContentElements());
+		static::assertStringContainsString('<img xml:id="triggerMediaId-3" title="film.mp4"', $content->getContentElements());
+	}
+
+	#[Group('units')]
+	public function testOnlyAMasterPlaylistHasTouchTargets(): void
+	{
+		$source = self::video(['item_id' => 1, 'begin_trigger' => ['touches' => [['touch_item_id' => 2]]]]);
+		$target = self::video(['item_id' => 2, 'item_type' => ItemType::MEDIA_EXTERN->value, 'file_resource' => '', 'content_data' => serialize(['url' => 'https://acme.com/a.mp4'])]);
+
+		$content = $this->build([$source, $target], ['playlist_mode' => PlaylistMode::INTERNAL->value]);
+
+		static::assertStringNotContainsString('xml:id', $content->getContentElements() . $content->getContentExclusive());
+	}
+
+	#[Group('units')]
+	public function testANestedPlaylistWithATriggerIsAnExclusiveOfAMasterPlaylist(): void
+	{
+		$item = self::video(['item_type' => ItemType::PLAYLIST->value, 'item_name' => 'Kantine', 'file_resource' => '2', 'mimetype' => '', 'time_limit' => 0, 'owner_duration' => 0,
+			'begin_trigger' => ['accesskeys' => [['accesskey' => 'k']]]]);
+
+		$master    = $this->build([$item]);
+		$elements  = $master->getContentElements();
+		$exclusive = $master->getContentExclusive();
+		// the content is built again for every playlist
+		$internal  = $this->build([$item], ['playlist_mode' => PlaylistMode::INTERNAL->value]);
+
+		static::assertSame('', $elements);
+		static::assertStringContainsString('<seq begin="accesskey(k)" title="Kantine" >', $exclusive);
+		static::assertStringContainsString('<seq title="Kantine" >', $internal->getContentElements());
+		static::assertSame('', $internal->getContentExclusive());
+	}
 }

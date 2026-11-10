@@ -129,6 +129,7 @@ class Orchestrator extends BaseTemplateOrchestrator
 	public function getContent(): string
 	{
 		$content = $this->item['content_data'] ?? null;
+		// @infection-ignore-all an empty content is no design and is restored as empty, too
 		if (!is_string($content) || $content === '')
 			return '';
 

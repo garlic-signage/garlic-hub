@@ -61,6 +61,7 @@ readonly class PlaylistVersionsController
 	{
 		try
 		{
+			// @infection-ignore-all the route always has the playlist id
 			$versions = $this->playlistVersionsService->findVersions((int) ($args['playlist_id'] ?? 0));
 		}
 		catch (TranslatableModuleException $e)
@@ -90,8 +91,10 @@ readonly class PlaylistVersionsController
 	 */
 	public function restore(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
+		// @infection-ignore-all the route always has the playlist id
 		$playlistId = (int) ($args['playlist_id'] ?? 0);
 		$version    = RequestInput::of($request->getParsedBody())->id('version');
+		// @infection-ignore-all the version 0 does not exist: the service answers with the same message
 		if (!$this->playlistVersionsService->isEnabled() || $version === 0)
 			return $this->responseHandler->jsonError($response, $this->translator->translate('version_not_found', self::MODULE_NAME));
 

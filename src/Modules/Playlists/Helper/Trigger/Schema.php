@@ -95,7 +95,8 @@ class Schema
 		foreach (self::REPEAT_LIMITS as $field => $max)
 		{
 			// an emptied number field of the form is no repeat
-			$value = $this->toInt(($entry[$field] ?? 0) === '' ? 0 : ($entry[$field] ?? 0), 0, $max);
+			$sent  = $entry[$field] ?? 0;
+			$value = $this->toInt($sent === '' ? 0 : $sent, 0, $max);
 			if ($value === null)
 				return null;
 
@@ -140,10 +141,10 @@ class Schema
 
 	private function isIsoDate(string $value): bool
 	{
-		if (preg_match('/^(\d{4})-(\d{2})-(\d{2})T([01]\d|2[0-3]):[0-5]\d:[0-5]\d$/D', $value, $m) !== 1)
+		if (preg_match('/^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})T([01]\d|2[0-3]):[0-5]\d:[0-5]\d$/D', $value, $m) !== 1)
 			return false;
 
-		return checkdate((int) $m[2], (int) $m[3], (int) $m[1]);
+		return checkdate((int) $m['month'], (int) $m['day'], (int) $m['year']);
 	}
 
 	/**

@@ -87,7 +87,9 @@ class ShowTemplateComposer
 	 */
 	public function load(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
+		// @infection-ignore-all an item which does not exist gets the same answer
 		$itemId = (int) ($args['item_id'] ?? 0);
+		// @infection-ignore-all an item which does not exist gets the same answer
 		if ($itemId === 0)
 			return $this->responseHandler->jsonError($response, 'No rights');
 

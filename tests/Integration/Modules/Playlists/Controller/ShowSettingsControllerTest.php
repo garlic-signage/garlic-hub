@@ -306,4 +306,53 @@ class ShowSettingsControllerTest extends PlaylistsControllerTestCase
 		static::assertSame('playlists/edit', $page->getTemplate());
 		static::assertCount(1, $this->flash('error'));
 	}
+
+	public function testAPlaylistWhichDoesNotExistHasNoForm(): void
+	{
+		$this->actingAs(2);
+
+		$this->assertRedirect($this->controller->editPlaylistForm($this->request('GET'), $this->newResponse(), ['playlist_id' => '999']));
+
+		static::assertSame(['Playlist not found.'], $this->flash('error'));
+	}
+
+	/**
+	 * The form with errors is the one of the mode: a master playlist has the resolution again.
+	 */
+	public function testTheFormWithErrorsOfANewPlaylistIsTheOneOfItsMode(): void
+	{
+		$this->actingAs(2);
+
+		$page = $this->page($this->store(['playlist_mode' => 'master', 'playlist_name' => '', 'screen_width' => '1280', 'screen_height' => '720']));
+
+		static::assertCount(1, $this->flash('error'));
+		static::assertSame(['csrf_token', 'playlist_mode', 'playlist_name', 'screen_height', 'screen_width'], $this->fields($page));
+		static::assertSame(3, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists'));
+	}
+
+	/**
+	 * The zones of a multizone playlist stay when its resolution changes.
+	 */
+	public function testTheLayoutOfAPlaylistKeepsItsZonesWhenTheResolutionChanges(): void
+	{
+		$zones  = [['zone_name' => 'Links', 'zone_left' => 0, 'zone_top' => 0, 'zone_width' => 960, 'zone_height' => 1080]];
+		$layout = ['resolution' => '1920x1080', 'zoom' => 50, 'export_unit' => 'percent', 'zones' => $zones];
+		$this->connection->executeStatement("UPDATE playlists SET playlist_mode = 'multizone', layout = ? WHERE playlist_id = 1", [serialize($layout)]);
+		$this->actingAs(2);
+
+		$this->assertRedirect($this->store(['playlist_id' => '1', 'playlist_name' => 'Annas Lobby', 'screen_width' => '800', 'screen_height' => '600']));
+
+		static::assertSame(['resolution' => '800x600'] + $layout, unserialize((string) $this->databaseValue('SELECT layout FROM playlists WHERE playlist_id = 1')));
+	}
+
+	public function testWithoutBothSidesTheResolutionStays(): void
+	{
+		$layout = ['resolution' => '1920x1080', 'zoom' => 70, 'export_unit' => 'pixel', 'zones' => []];
+		$this->connection->executeStatement('UPDATE playlists SET layout = ? WHERE playlist_id = 1', [serialize($layout)]);
+		$this->actingAs(2);
+
+		$this->store(['playlist_id' => '1', 'playlist_name' => 'Annas Lobby', 'screen_width' => '800']);
+
+		static::assertSame($layout, unserialize((string) $this->databaseValue('SELECT layout FROM playlists WHERE playlist_id = 1')));
+	}
 }

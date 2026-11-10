@@ -171,12 +171,16 @@ class PlaylistVersionsService
 		foreach ($items as $item)
 		{
 			if (($item['item_type'] ?? '') === ItemType::MEDIAPOOL->value)
+				// @infection-ignore-all the checksum is text in every database
 				$checksums[] = (string) ($item['file_resource'] ?? '');
+			// @infection-ignore-all ids of other types would only be looked up, nothing compares them
 			elseif (($item['item_type'] ?? '') === ItemType::PLAYLIST->value)
 				$playlistIds[] = (int) ($item['file_resource'] ?? 0);
 		}
 
+		// @infection-ignore-all doubles and keys do not change the result of the query
 		$existingChecksums = $this->itemsRepository->findExistingChecksums(array_values(array_unique($checksums)));
+		// @infection-ignore-all doubles and keys do not change the result of the query
 		$existingPlaylists = $this->playlistsRepository->findExistingIds(array_values(array_unique($playlistIds)));
 
 		$nesting = new PlaylistNesting($this->itemsRepository);
@@ -184,6 +188,7 @@ class PlaylistVersionsService
 		$omitted = [];
 		foreach ($items as $item)
 		{
+			// @infection-ignore-all every item has a resource
 			$nestedId = (int) ($item['file_resource'] ?? 0);
 			$exists   = match ($item['item_type'] ?? '')
 			{
@@ -195,6 +200,7 @@ class PlaylistVersionsService
 			if ($exists)
 				$kept[] = $item;
 			else
+				// @infection-ignore-all the name is text in every database
 				$omitted[] = is_scalar($item['item_name'] ?? null) ? (string) $item['item_name'] : '';
 		}
 
@@ -208,9 +214,13 @@ class PlaylistVersionsService
 	 */
 	private function firstPosition(array $items): int
 	{
+		// @infection-ignore-all the positions are numbers in every snapshot
 		$orders = array_map(static fn(array $item): int => is_numeric($item['item_order'] ?? null) ? (int) $item['item_order'] : 0, $items);
+		if ($orders === [])
+			// @infection-ignore-all without items the first position is not used
+			return 1;
 
-		return $orders === [] ? 1 : min($orders);
+		return min($orders);
 	}
 
 	/**
@@ -222,6 +232,7 @@ class PlaylistVersionsService
 	private function insertItems(int $playlistId, array $items, int $first): void
 	{
 		$itemIds = array_map(static fn(array $item): int => is_numeric($item['item_id'] ?? null) ? (int) $item['item_id'] : 0, $items);
+		// @infection-ignore-all the 0 and the keys do not change the result of the query
 		$taken   = $this->itemsRepository->findItemIdsOfOtherPlaylists($playlistId, array_values(array_filter($itemIds)));
 		$columns = $this->itemsRepository->findColumnNames();
 

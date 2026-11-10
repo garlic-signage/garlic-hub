@@ -268,4 +268,83 @@ class TriggerTest extends TestCase
 		$result = $triggers->determineTrigger();
 		static::assertEquals('', $result);
 	}
+
+	/**
+	 * @param array<string,mixed> $wallclock
+	 */
+	private static function wallclock(array $wallclock): string
+	{
+		return (new Trigger(['wallclocks' => [$wallclock + ['iso_date' => '2025-11-03T10:00:00']]]))->determineTrigger();
+	}
+
+	#[Group('units')]
+	public function testEveryUnitOfTheIntervalIsWrittenAlone(): void
+	{
+		$units = ['repeat_years' => 'P2Y', 'repeat_months' => 'P2M', 'repeat_weeks' => 'P2W', 'repeat_days' => 'P2D', 'repeat_hours' => 'PT2H', 'repeat_minutes' => 'PT2M'];
+		foreach ($units as $field => $interval)
+			static::assertSame('wallclock(R3/2025-11-03T10:00:00/' . $interval . ')', self::wallclock(['repeat_counts' => 3, $field => 2]), $field);
+	}
+
+	#[Group('units')]
+	public function testOnlyNumbersOfTheDatabaseReachTheSmilFile(): void
+	{
+		$wallclock = ['repeat_counts' => '3x', 'repeat_years' => '1x', 'repeat_months' => '2x', 'repeat_weeks' => '3x', 'repeat_days' => '4x', 'repeat_hours' => '5x', 'repeat_minutes' => '6x', 'weekday' => '2x'];
+
+		static::assertSame('wallclock(R3/2025-11-03+w2T10:00:00/P1Y2M3W4DT5H6M)', self::wallclock($wallclock));
+	}
+
+	#[Group('units')]
+	public function testNegativeUnitsAreLeftOut(): void
+	{
+		$wallclock = ['repeat_counts' => 0, 'repeat_years' => -1, 'repeat_months' => -1, 'repeat_weeks' => -1, 'repeat_days' => 1, 'repeat_hours' => -1, 'repeat_minutes' => -1];
+
+		static::assertSame('wallclock(R/2025-11-03T10:00:00/P1D)', self::wallclock($wallclock));
+		static::assertSame('wallclock(R/2025-11-03T10:00:00/PT5M)', self::wallclock(['repeat_counts' => 0, 'repeat_hours' => -1, 'repeat_minutes' => 5]));
+		static::assertSame('wallclock(R/2025-11-03T10:00:00/PT5H)', self::wallclock(['repeat_counts' => 0, 'repeat_hours' => 5, 'repeat_minutes' => -1]));
+	}
+
+	#[Group('units')]
+	public function testMissingValuesAreNoRepeatAndNoWeekday(): void
+	{
+		static::assertSame('wallclock(2025-11-03T10:00:00)', self::wallclock(['repeat_weeks' => 1]));
+		static::assertSame('wallclock(R/2025-11-03T10:00:00/P1D)', self::wallclock(['repeat_counts' => 0, 'repeat_days' => 1]));
+		static::assertSame('wallclock(R/2025-11-03T10:00:00/PT15M)', self::wallclock(['repeat_counts' => 0, 'repeat_minutes' => 15]));
+		static::assertSame('wallclock(R/2025-11-03T10:00:00/PT2H)', self::wallclock(['repeat_counts' => 0, 'repeat_hours' => 2]));
+	}
+
+	#[Group('units')]
+	public function testTheWeekdayGoesFromMinus7To7(): void
+	{
+		static::assertSame('wallclock(2025-11-03-w7T10:00:00)', self::wallclock(['weekday' => -7]));
+		static::assertSame('wallclock(2025-11-03+w7T10:00:00)', self::wallclock(['weekday' => 7]));
+		static::assertSame('wallclock(2025-11-03+w1T10:00:00)', self::wallclock(['weekday' => 1]));
+		static::assertSame('wallclock(2025-11-03-w1T10:00:00)', self::wallclock(['weekday' => -1]));
+		static::assertSame('wallclock(2025-11-03T10:00:00)', self::wallclock(['weekday' => 8]));
+		static::assertSame('wallclock(2025-11-03T10:00:00)', self::wallclock(['weekday' => -8]));
+	}
+
+	#[Group('units')]
+	public function testSeveralTriggersOfEveryKindAreJoined(): void
+	{
+		$trigger = new Trigger([
+			'wallclocks' => [['iso_date' => '2025-11-03T10:00:00'], ['iso_date' => '2025-11-04T11:00:00']],
+			'accesskeys' => [['accesskey' => 'a'], ['accesskey' => 'b']],
+			'touches'    => [['touch_item_id' => '1'], ['touch_item_id' => '2']],
+			'notifies'   => [['notify' => 'x'], ['notify' => 'y']],
+		]);
+
+		static::assertSame(
+			'wallclock(2025-11-03T10:00:00);wallclock(2025-11-04T11:00:00);accesskey(a);accesskey(b);'
+			. Base::ID_PREFIX . '1.activateEvent;' . Base::ID_PREFIX . '2.activateEvent;notify(x);notify(y)',
+			$trigger->determineTrigger()
+		);
+	}
+
+	#[Group('units')]
+	public function testUnknownTriggersAreLeftOut(): void
+	{
+		$trigger = new Trigger(['unknown' => [['x' => 'y']], 'notifies' => [['notify' => 'x']]]);
+
+		static::assertSame('notify(x)', $trigger->determineTrigger());
+	}
 }

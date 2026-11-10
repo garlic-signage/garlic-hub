@@ -150,8 +150,13 @@ function createPage({lastPlatform = null, platforms = {Pexels: new FakePlatform(
 	const document = dom.document;
 	const client   = new FakeFetchClient({success: true, media_id: 'new'});
 	const elements = new StockPlatformElements();
-	const uploader = new StockPlatformUploader({platforms, selectPlatform: (name) => platforms[name]}, elements,
-		{getActiveNodeId: () => 5}, new FakeUploaderDialog(), client);
+	// like the StockPlatformFactory: an unknown platform is an error
+	const factory  = {platforms, selectPlatform: (name) => {
+		if (!Object.hasOwn(platforms, name))
+			throw new Error(`Platform ${name} not registered.`);
+		return platforms[name];
+	}};
+	const uploader = new StockPlatformUploader(factory, elements, {getActiveNodeId: () => 5}, new FakeUploaderDialog(), client);
 	UploadedMedia.take();
 
 	return {
@@ -252,6 +257,45 @@ Deno.test('the last platform is chosen again', () =>
 
 	assertEquals(page.document.getElementById('selectStockPlatform').value, 'Pexels');
 	assertEquals(display(page, 'searchInPlatform'), 'block');
+});
+
+Deno.test('a remembered platform that is not registered any more is forgotten', () =>
+{
+	using page = createPage({lastPlatform: 'Shutterstock'});
+
+	assertEquals(page.document.getElementById('selectStockPlatform').value, '-');
+	assertEquals(localStorage.getItem('lastPlatform'), null);
+	for (const id of ['radioSearchConfig', 'radioSelectMediatype', 'searchInPlatform', 'configPlatform'])
+		assertEquals(display(page, id), 'none', id);
+});
+
+Deno.test('the placeholder hides the platform and forgets it', () =>
+{
+	using page = createPage();
+	choose(page, 'Pexels');
+
+	choose(page, '-');
+
+	assertEquals(localStorage.getItem('lastPlatform'), null);
+	for (const id of ['radioSearchConfig', 'radioSelectMediatype', 'searchInPlatform', 'configPlatform'])
+		assertEquals(display(page, id), 'none', id);
+});
+
+Deno.test('without a platform the buttons of a platform do nothing', async () =>
+{
+	using page = createPage();
+	page.platforms.Pexels.searchAnswer = {1: image(1)};
+	await search(page);
+	mark(page, '1');
+	choose(page, '-');
+	page.platforms.Pexels.calls = [];
+
+	for (const id of ['savePlatformApiToken', 'checkConfigPlatform', 'searchStockPlatform', 'startPlatformsUpload'])
+		click(page, id);
+	await wait();
+
+	assertEquals(page.platforms.Pexels.calls, []);
+	assertEquals(page.client.requests, []);
 });
 
 Deno.test('a saved token opens the search', () =>

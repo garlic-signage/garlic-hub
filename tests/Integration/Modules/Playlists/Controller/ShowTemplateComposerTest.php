@@ -147,6 +147,13 @@ class ShowTemplateComposerTest extends PlaylistsControllerTestCase
 		$this->assertRedirect($this->controller->show($this->request('GET'), $this->newResponse(), ['item_id' => '7']), 'No rights');
 	}
 
+	public function testTheComposerOfAnItemWhichDoesNotExistRedirectsToTheList(): void
+	{
+		$this->actingAs(2);
+
+		$this->assertRedirect($this->controller->show($this->request('GET'), $this->newResponse(), ['item_id' => '999']), 'No rights');
+	}
+
 	public function testTheContentIsLoadedWithTheUrlsOfItsImages(): void
 	{
 		$this->actingAs(2);
@@ -173,6 +180,7 @@ class ShowTemplateComposerTest extends PlaylistsControllerTestCase
 
 		$this->assertError($this->controller->load($this->request('GET'), $this->newResponse(), ['item_id' => '7']), 'No rights');
 		$this->assertError($this->controller->load($this->request('GET'), $this->newResponse(), []), 'No rights');
+		$this->assertError($this->controller->load($this->request('GET'), $this->newResponse(), ['item_id' => '999']), 'No rights');
 	}
 
 	public function testTheContentAndTheImageAreSaved(): void
@@ -237,6 +245,8 @@ class ShowTemplateComposerTest extends PlaylistsControllerTestCase
 
 		$this->assertError($this->save(['item_id' => '0'] + $body), 'No item ID');
 		$this->assertError($this->save(['item_id' => '7'] + $body), 'No rights');
+		$this->assertError($this->save(['item_id' => '999'] + $body), 'No rights');
+		$this->assertError($this->save(array_diff_key($body, ['item_id' => 0])), 'No item ID');
 		static::assertSame('image/png', $this->databaseValue('SELECT mimetype FROM playlists_items WHERE item_id = 5'));
 		static::assertSame('', $this->databaseValue('SELECT content_data FROM playlists_items WHERE item_id = 7'));
 	}

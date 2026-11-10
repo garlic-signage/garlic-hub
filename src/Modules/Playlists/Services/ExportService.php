@@ -68,6 +68,7 @@ class ExportService extends AbstractBaseService
 		$this->playlistVersionsService = $playlistVersionsService;
 		$this->playlistRelease = $playlistRelease;
 
+		// @infection-ignore-all the parent only keeps the logger
 		parent::__construct($logger);
 	}
 
@@ -140,7 +141,7 @@ class ExportService extends AbstractBaseService
 	 * @throws FilesystemException
 	 * @throws ModuleException
 	 */
-	public function export(array $playlist): array
+	private function export(array $playlist): array
 	{
 		$results = $this->exportItemsLoader->loadByPlaylist($playlist, $this->config->getEdition());
 		$this->playlistMetricsUpdater->updateItemsMetrics($playlist['playlist_id'], $results['playlist_metrics']);
@@ -179,6 +180,7 @@ class ExportService extends AbstractBaseService
 			if ($item['item_type'] !== ItemType::TEMPLATE->value)
 				continue;
 
+			// @infection-ignore-all the database gives numbers
 			$itemId = (int) $item['item_id'];
 			$name   = $this->templateItemName->build($itemId, (string) $item['content_data']);
 			foreach (['originals', 'thumbnails'] as $key)

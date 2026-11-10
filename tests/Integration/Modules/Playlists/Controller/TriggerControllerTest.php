@@ -59,6 +59,7 @@ class TriggerControllerTest extends PlaylistsControllerTestCase
 		// the image itself can not be touched, the video and the template can
 		static::assertSame([2, 5], array_map(intval(...), array_column($data['touchable_medialist'], 'item_id')));
 		static::assertStringContainsString('trigger-form', $data['html']);
+		static::assertStringContainsString('name="trigger_item_id" id="edit_item_id" value="1"', $data['html']);
 	}
 
 	public function testAnItemWithoutATriggerHasAnEmptyOne(): void

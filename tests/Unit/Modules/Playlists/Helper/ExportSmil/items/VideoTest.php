@@ -27,6 +27,7 @@ use App\Modules\Playlists\Helper\ExportSmil\items\Video;
 use App\Modules\Playlists\Helper\ExportSmil\Utils\Conditional;
 use App\Modules\Playlists\Helper\ExportSmil\Utils\Properties;
 use App\Modules\Playlists\Helper\ExportSmil\Utils\Trigger;
+use App\Modules\Playlists\Helper\ItemFlags;
 use Exception;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -90,6 +91,22 @@ class VideoTest extends TestCase
 		$this->video->setLink('/path/to/video.webm');
 
 		$expected  = Base::TABSTOPS_TAG.'<video title="Sample Item" region="screen" src="path/to/video.webm" dur="500s" soundLevel="100">'."\n";
+		$expected .= Base::TABSTOPS_PARAMETER.'<param name="stream" value="true" />'."\n";
+		$expected .= Base::TABSTOPS_TAG.'</video>'."\n";
+
+		static::assertSame($expected, $this->video->createSmilTag());
+	}
+
+	#[Group('units')]
+	public function testALoggableStreamHasTheLogIdAndTheStream(): void
+	{
+		$this->propertiesStub->method('getVolume')->willReturn('soundLevel="100"');
+		$item = ['item_id' => 7, 'item_name' => 'Live', 'item_duration' => 0, 'flags' => ItemFlags::loggable->value, 'datasource' => 'stream'];
+		$this->video = new Video($this->configStub, $item, $this->propertiesStub, $this->beginStub, $this->endStub, $this->conditionalStub);
+		$this->video->setLink('https://acme.com/live');
+
+		$expected  = Base::TABSTOPS_TAG.'<video title="Live" region="screen" src="https://acme.com/live" soundLevel="100">'."\n";
+		$expected .= Base::TABSTOPS_PARAMETER.'<param name="logContentId" value="7" />'."\n";
 		$expected .= Base::TABSTOPS_PARAMETER.'<param name="stream" value="true" />'."\n";
 		$expected .= Base::TABSTOPS_TAG.'</video>'."\n";
 

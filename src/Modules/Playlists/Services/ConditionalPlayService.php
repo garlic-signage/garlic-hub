@@ -36,6 +36,7 @@ class ConditionalPlayService extends AbstractBaseService
 {
 	public function __construct(private readonly ItemsService $itemService, LoggerInterface $logger)
 	{
+		// @infection-ignore-all the parent only keeps the logger
 		parent::__construct($logger);
 	}
 
@@ -72,6 +73,7 @@ class ConditionalPlayService extends AbstractBaseService
 	 */
 	public function saveConditionalPlay(int $itemId, array $requestData): void
 	{
+		// @infection-ignore-all updateField checks the rights as well
 		$this->itemService->fetchItemById($itemId); // check rights on playlists, too
 		$this->itemService->updateField($itemId, 'conditional', @serialize($requestData));
 	}

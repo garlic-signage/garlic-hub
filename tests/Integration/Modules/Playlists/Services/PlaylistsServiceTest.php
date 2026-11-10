@@ -24,6 +24,8 @@ namespace Tests\Integration\Modules\Playlists\Services;
 use App\Framework\Config\Config;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
+use App\Modules\Playlists\Services\PlaylistFiles;
 use App\Modules\Playlists\Services\PlaylistsService;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Integration\Support\ContainerTestCase;
@@ -136,6 +138,16 @@ class PlaylistsServiceTest extends ContainerTestCase
 		static::assertSame('master', $row['playlist_mode']);
 	}
 
+	public function testAChangeOfTheSettingsStartsTheReleaseAgain(): void
+	{
+		$this->actingAs(2);
+		$this->connection->update('playlists', ['release_status' => 'released'], ['playlist_id' => 1]);
+
+		$this->playlistsService->updateSecure(['playlist_id' => 1, 'playlist_name' => 'Umbenannt']);
+
+		static::assertSame('in_progress', $this->playlist(1)['release_status']);
+	}
+
 	public function testUpdateSecureOfAnUnknownPlaylistIsNotFound(): void
 	{
 		$this->actingAs(2);
@@ -194,6 +206,43 @@ class PlaylistsServiceTest extends ContainerTestCase
 		static::assertArrayNotHasKey('screen_width', $playlist);
 	}
 
+	/**
+	 * A zone without playlist is skipped, the zones after it are checked all the same.
+	 */
+	public function testEveryZoneAfterAnEmptyOneIsChecked(): void
+	{
+		$this->actingAs(2);
+
+		try
+		{
+			$this->playlistsService->saveZones(1, ['resolution' => '1920x1080', 'zones' => [['zone_playlist_id' => 0], ['zone_playlist_id' => 2]]]);
+			static::fail('Expected AccessDeniedException');
+		}
+		catch (AccessDeniedException)
+		{
+			static::assertNull($this->playlist(1)['layout']);
+		}
+	}
+
+	/**
+	 * The ids of the form are text.
+	 */
+	public function testAPlaylistCanNotBeAZoneOfItselfAlsoWithTheIdAsText(): void
+	{
+		$this->actingAs(2);
+
+		try
+		{
+			$this->playlistsService->saveZones(1, ['resolution' => '1920x1080', 'zones' => [['zone_playlist_id' => '3'], ['zone_playlist_id' => '1']]]);
+			static::fail('Expected TranslatableModuleException');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertSame('invalid_zone_data', $e->getTranslationKey());
+			static::assertNull($this->playlist(1)['layout']);
+		}
+	}
+
 	public function testUserMayNotSaveZonesOfAForeignPlaylist(): void
 	{
 		$this->actingAs(2);
@@ -236,6 +285,8 @@ class PlaylistsServiceTest extends ContainerTestCase
 
 		static::assertSame(1, $this->playlistsService->delete(1));
 
+		static::assertFalse($this->connection->isTransactionActive());
+
 		static::assertDirectoryDoesNotExist($smil . '/1');
 		static::assertFileExists($smil . '/3/items.smil');
 	}
@@ -256,6 +307,29 @@ class PlaylistsServiceTest extends ContainerTestCase
 			static::assertSame(['5-0123456789abcdef0123456789abcdef.png'], $this->files($originals));
 			static::assertFileExists($smil . '/1/items.smil');
 		}
+	}
+
+	public function testTheFilesWhichCanNotBeRemovedAreNamed(): void
+	{
+		$originals = $this->storeImages('originals', ['5-0123456789abcdef0123456789abcdef.png']);
+		$this->storeImages('thumbnails', []);
+		// a directory can not be unlinked
+		mkdir($originals . '/5-a.png');
+		mkdir($originals . '/5-b.png');
+
+		try
+		{
+			$failed = $this->container->get(PlaylistFiles::class)->remove(3, [5]);
+			$left   = $this->files($originals);
+		}
+		finally
+		{
+			rmdir($originals . '/5-a.png');
+			rmdir($originals . '/5-b.png');
+		}
+
+		static::assertSame([$originals . '/5-a.png', $originals . '/5-b.png'], $failed);
+		static::assertSame(['5-a.png', '5-b.png'], $left);
 	}
 
 	/**

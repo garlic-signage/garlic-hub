@@ -133,4 +133,14 @@ class ConditionalTest extends TestCase
 
 		static::assertSame($expected, $result);
 	}
+
+	#[Group('units')]
+	public function testTheWeekdaysAreTheBits1To64AndNothingAbove(): void
+	{
+		$conditions = ['date' => [], 'time' => [], 'weekdays' => [64 => ['from' => 4, 'until' => 8], 128 => ['from' => 4, 'until' => 8]]];
+
+		$result = (new Conditional($conditions))->determineExprAttribute();
+
+		static::assertSame('expr="((6=adapi-weekday() and adapi-compare(substring-after(adapi-date(), \'T\'), \'01:00:00\')&gt;=0 and adapi-compare(substring-after(adapi-date(), \'T\'), \'02:00:00\')&lt;=0))" ', $result);
+	}
 }

@@ -36,10 +36,12 @@ export class StockPlatformUploader extends BaseUploader
 			this.domElements.addPlatform(key);
 		}
 
-		if (localStorage.getItem("lastPlatform") !== null)
+		const lastPlatform = localStorage.getItem("lastPlatform");
+		if (lastPlatform !== null)
 		{
-			this.#selectPlatform(localStorage.getItem("lastPlatform"));
-			this.domElements.selectStockPlatform.value = localStorage.getItem("lastPlatform");
+			this.#selectPlatform(lastPlatform);
+			if (this.#stockPlatform !== null)
+				this.domElements.selectStockPlatform.value = lastPlatform;
 		}
 
 		this.domElements.selectStockPlatform.addEventListener("change", (event) => this.#selectPlatform(event.target.value));
@@ -54,6 +56,9 @@ export class StockPlatformUploader extends BaseUploader
 
 	async #startDownload()  //Downlod from Medis-Platform, but upload to us
 	{
+		if (this.#stockPlatform === null)
+			return;
+
 		const checkboxes = document.querySelectorAll('.result-checkbox');
 		for (const checkbox of checkboxes)
 		{
@@ -84,9 +89,16 @@ export class StockPlatformUploader extends BaseUploader
 
 	#selectPlatform(platform)
 	{
-		this.#stockPlatform = this.#stockPlatformFactory.selectPlatform(platform);
-		if (this.#stockPlatform == null)
+		// the placeholder "-" or a platform of an older version, which is not registered any more
+		if (!Object.hasOwn(this.#stockPlatformFactory.platforms, platform))
+		{
+			this.#stockPlatform = null;
+			this.domElements.hidePlatformOptions();
+			localStorage.removeItem("lastPlatform");
 			return;
+		}
+
+		this.#stockPlatform = this.#stockPlatformFactory.selectPlatform(platform);
 
 		this.#configPlatformOptions(this.#stockPlatform.hasApiToken());
 
@@ -95,6 +107,9 @@ export class StockPlatformUploader extends BaseUploader
 
 	#saveApiToken()
 	{
+		if (this.#stockPlatform === null)
+			return;
+
 		this.#stockPlatform.saveToken(this.domElements.platformApiToken.value);
 		this.#configPlatformOptions(this.#stockPlatform.hasApiToken());
 	}
@@ -113,7 +128,7 @@ export class StockPlatformUploader extends BaseUploader
 		else
 			this.domElements.toggleSearchInPlatform(!event.target.checked);
 
-		if (this.#stockPlatform.hasApiToken())
+		if (this.#stockPlatform !== null && this.#stockPlatform.hasApiToken())
 			this.domElements.platformApiToken.value = this.#stockPlatform.apiToken;
 
 	}

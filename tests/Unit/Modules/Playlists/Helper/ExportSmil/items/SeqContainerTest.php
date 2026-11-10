@@ -181,4 +181,13 @@ class SeqContainerTest extends TestCase
 
 		static::assertSame($expected, $this->seqContainer->getPrefetchTag());
 	}
+
+	#[Group('units')]
+	public function testATimeLimitOfTheWholeDurationIsNoLimit(): void
+	{
+		$item = ['item_id' => 1, 'item_name' => 'foo', 'file_resource' => '12345', 'time_limit' => 20, 'owner_duration' => 20];
+		$this->seqContainer = new SeqContainer($this->configStub, $item, $this->propertiesStub, $this->beginStub, $this->endStub, $this->conditionalStub);
+
+		static::assertStringStartsWith(Base::TABSTOPS_TAG . '<seq title="foo" >', $this->seqContainer->createSmilTag());
+	}
 }

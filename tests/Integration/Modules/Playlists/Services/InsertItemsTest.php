@@ -102,6 +102,7 @@ class InsertItemsTest extends ContainerTestCase
 	public function testAMediaTakesItsPositionAndMovesTheFollowingItems(): void
 	{
 		$this->actingAs(2);
+		$this->released(1);
 
 		$result = $this->inserter('mediapool')->insert(1, 'media-id-0000003', 2);
 
@@ -117,6 +118,21 @@ class InsertItemsTest extends ContainerTestCase
 			$result['playlist_metrics']
 		);
 		static::assertArrayHasKey('thumbnail', $result['item']['urls']);
+		$this->assertCommittedAndEdited(1);
+	}
+
+	/**
+	 * Only a widget gets the values of its config, another media with a config does not.
+	 */
+	public function testAMediaWhichIsNoWidgetHasNoValues(): void
+	{
+		$this->actingAs(2);
+		$config = '<?xml version="1.0" encoding="UTF-8"?><widget xmlns="http://www.w3.org/ns/widgets" xmlns:ia="http://schemas.iawidget.org/widgetconfig-1.0"><preference name="urls" ia:types="text" ia:mandatory="true" /></widget>';
+		$this->connection->executeStatement("UPDATE mediapool_files SET config_data = ? WHERE media_id = 'media-id-0000003'", [$config]);
+
+		$result = $this->inserter('mediapool')->insert(1, 'media-id-0000003', 1);
+
+		static::assertSame('', $this->connection->fetchOne('SELECT content_data FROM playlists_items WHERE item_id = ?', [$result['item']['item_id']]));
 	}
 
 	public function testAMediaIsCutByTheTimeLimitOfThePlaylist(): void
@@ -180,6 +196,7 @@ class InsertItemsTest extends ContainerTestCase
 	{
 		$this->actingAs(2);
 		$this->connection->executeStatement('UPDATE playlists SET duration = 12, filesize = 34 WHERE playlist_id = 3');
+		$this->released(1);
 
 		$result = $this->inserter('playlist')->insert(1, 3, 1);
 
@@ -187,6 +204,11 @@ class InsertItemsTest extends ContainerTestCase
 		static::assertSame(['playlist', '3', 'Annas leere Liste', 12, 34, 1], [$item['item_type'], $item['file_resource'], $item['item_name'], (int) $item['item_duration'], (int) $item['item_filesize'], (int) $item['item_order']]);
 		static::assertSame([1, 2, 3, 4, 5, 6], $this->orderOfPlaylist(1));
 		static::assertSame('/images/icons/playlist.svg', $result['item']['urls']['thumbnail']);
+		static::assertSame(
+			['count_items' => 6, 'count_owner_items' => 5, 'filesize' => 1204, 'duration' => 80, 'owner_duration' => 75],
+			$result['playlist_metrics']
+		);
+		$this->assertCommittedAndEdited(1);
 	}
 
 	public function testAPlaylistCanNotBeInsertedIntoItself(): void
@@ -221,12 +243,13 @@ class InsertItemsTest extends ContainerTestCase
 		$this->actingAs(1);
 		$this->workspace->filesystem->write('var/storage/templates/thumbs/2.jpg', 'thumb');
 		$this->workspace->filesystem->write('var/storage/templates/originals/2.jpg', 'original');
+		$this->released(1);
 
 		$result = $this->inserter('template')->insert(1, 2, 3);
 
 		$id   = (int) $result['item']['item_id'];
 		$item = $this->item($id);
-		static::assertSame(['template', '2', 'Annas Vorlage', 15, 3, '{"objects":[]}'], [$item['item_type'], $item['file_resource'], $item['item_name'], (int) $item['item_duration'], (int) $item['item_order'], $item['content_data']]);
+		static::assertSame(['template', '2', 'Annas Vorlage', 15, 0, 3, '{"objects":[]}'], [$item['item_type'], $item['file_resource'], $item['item_name'], (int) $item['item_duration'], (int) $item['item_filesize'], (int) $item['item_order'], $item['content_data']]);
 		// named by the content, the export links to it, see ExportService
 		$name = $this->container->get(TemplateItemName::class)->build($id, $item['content_data']);
 		static::assertSame('thumb', $this->workspace->filesystem->read('var/storage/playlists/items/thumbs/' . $name . '.jpg'));
@@ -234,6 +257,11 @@ class InsertItemsTest extends ContainerTestCase
 		static::assertStringStartsWith('/media.php/item-thumb/' . $name . '.jpg?', $result['item']['urls']['thumbnail']);
 		static::assertSame([1, 2, 3, 4, 5, 6], $this->orderOfPlaylist(1));
 		static::assertSame(1, (int) $item['UID']);
+		static::assertSame(
+			['count_items' => 6, 'count_owner_items' => 4, 'filesize' => 1170, 'duration' => 83, 'owner_duration' => 63],
+			$result['playlist_metrics']
+		);
+		$this->assertCommittedAndEdited(1);
 	}
 
 	public function testAUserMayNotInsertATemplate(): void
@@ -261,7 +289,22 @@ class InsertItemsTest extends ContainerTestCase
 			static::assertInstanceOf($exception, $e, $e::class . ': ' . $e->getMessage());
 			static::assertSame(7, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM playlists_items'));
 			static::assertSame([1, 2, 3, 4, 5], $this->orderOfPlaylist(1));
+			static::assertFalse($this->connection->isTransactionActive());
 		}
+	}
+
+	private function released(int $playlistId): void
+	{
+		$this->connection->update('playlists', ['release_status' => 'released'], ['playlist_id' => $playlistId]);
+	}
+
+	/**
+	 * An insert is a change of the playlist: its release starts again.
+	 */
+	private function assertCommittedAndEdited(int $playlistId): void
+	{
+		static::assertFalse($this->connection->isTransactionActive());
+		static::assertSame('in_progress', $this->connection->fetchOne('SELECT release_status FROM playlists WHERE playlist_id = ?', [$playlistId]));
 	}
 
 	private function inserter(string $source): AbstractInsertItem

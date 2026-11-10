@@ -174,4 +174,21 @@ class ContentDataPreparerTest extends TestCase
 	{
 		static::assertSame(['urls' => '', 'color' => ''], $this->preparer->prepareContentData(self::CONFIG, ['urls' => '', 'color' => ''], true));
 	}
+
+	#[Group('units')]
+	public function testAColorOpacityIsANumberAndAnUnknownTypeIsAText(): void
+	{
+		$config = '<?xml version="1.0"?><widget xmlns="http://www.w3.org/ns/widgets" xmlns:ia="http://schemas.iawidget.org/widgetconfig-1.0">'
+			. '<preference name="opacity" ia:types="colorOpacity" /><preference name="link" ia:types="url" /></widget>';
+
+		static::assertSame(['opacity' => 80, 'link' => '12'], $this->preparer->prepareContentData($config, ['opacity' => '80', 'link' => 12]));
+	}
+
+	#[Group('units')]
+	public function testAnEmptiedMandatoryValueIsNotGiven(): void
+	{
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('widget_field_mandatory');
+		$this->preparer->prepareContentData(self::CONFIG, ['urls' => '']);
+	}
 }

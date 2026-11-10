@@ -36,7 +36,7 @@ class TemplatePreparerTest extends TestCase
 		parent::setUp();
 		$translator = $this->createStub(Translator::class);
 		$translator->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
-		$translator->method('translateArrayForOptions')->willReturn(['master' => 'Master', 'multizone' => 'Multizone']);
+		$translator->method('translateArrayForOptions')->willReturn(['master' => 'Master', 'multizone' => 'Mehrere Zonen']);
 		// the form preparer gives back what it gets: the test sees what the playlist settings hand over
 		$formPreparer = $this->createStub(FormTemplatePreparer::class);
 		$formPreparer->method('prepareUITemplate')->willReturnCallback(static fn(array $sections): array => $sections);
@@ -53,7 +53,7 @@ class TemplatePreparerTest extends TestCase
 			[
 				'hidden'            => [],
 				'visible'           => [],
-				'title'             => 'playlists.settings - Multizone',
+				'title'             => 'playlists.settings - Mehrere Zonen',
 				'additional_css'    => ['/css/playlists/settings.css'],
 				'footer_modules'    => ['/js/playlists/settings/init.js'],
 				'template_name'     => 'playlists/edit',

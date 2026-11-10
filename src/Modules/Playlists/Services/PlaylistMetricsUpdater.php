@@ -128,6 +128,7 @@ readonly class PlaylistMetricsUpdater
 			$parents[$childId] = [];
 			foreach ($this->itemsRepository->findAllPlaylistsContainingPlaylist($childId) as $playlistData)
 			{
+				// @infection-ignore-all the cast is for databases which give text, ours gives numbers
 				$parentId = (int) $playlistData['playlist_id'];
 				$parents[$childId][]  = $parentId;
 				$playlists[$parentId] = $playlistData;

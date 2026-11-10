@@ -37,6 +37,7 @@ class TriggerService extends AbstractBaseService
 {
 	public function __construct(private readonly ItemsService $itemService, LoggerInterface $logger)
 	{
+		// @infection-ignore-all the parent only keeps the logger
 		parent::__construct($logger);
 	}
 
@@ -76,10 +77,11 @@ class TriggerService extends AbstractBaseService
 		$item = $this->itemService->fetchItemById($itemId); // check rights on playlists, too
 
 		// an item can only be touched in the playlist it is in
-		$touchableIds = array_column($this->findTouchableMedia($item['playlist_id'], $itemId), 'item_id');
+		// @infection-ignore-all the casts are for databases which give text, ours gives numbers
+		$touchableIds = array_map('intval', array_column($this->findTouchableMedia($item['playlist_id'], $itemId), 'item_id'));
 		foreach ($requestData['touches'] ?? [] as $touch)
 		{
-			if (!in_array((int) $touch['touch_item_id'], array_map('intval', $touchableIds), true))
+			if (!in_array((int) $touch['touch_item_id'], $touchableIds, true))
 				throw new TranslatableModuleException('playlists', 'invalid_trigger_data', ['item_id' => $itemId]);
 		}
 

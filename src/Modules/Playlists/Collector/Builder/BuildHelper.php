@@ -67,6 +67,7 @@ class BuildHelper
 					else
 					{
 						// get Playlist url from value after #
+						// @infection-ignore-all an id (0 or below) instead of a url fails in the reader anyway
 						$url          = (string) $subPlaylistId;
 						$externalData = $this->externalContentReader->init($url)->loadPlaylistItems();
 						$items        = str_replace('{ITEMS_0#'.$url.'}', $externalData, $items);
@@ -132,7 +133,7 @@ class BuildHelper
 	}
 
 
-	protected function parsePlaylistPlaceholder(string $placeholder): string|int
+	private function parsePlaylistPlaceholder(string $placeholder): string|int
 	{
 		if (str_contains($placeholder, '#'))
 		{

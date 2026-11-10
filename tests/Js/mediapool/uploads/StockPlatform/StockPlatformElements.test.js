@@ -121,6 +121,20 @@ Deno.test('the switch between search and configuration is shown or hidden', () =
 	assertEquals(display(dom.document, 'radioSearchConfig'), 'none');
 });
 
+Deno.test('without a platform everything of a platform is hidden', () =>
+{
+	using dom      = createDom(TAB);
+	const elements = new StockPlatformElements();
+	elements.toggleSearchConfig(true);
+	elements.toggleSearchInPlatform(true);
+	elements.toogleHasVideo(true, true);
+
+	elements.hidePlatformOptions();
+
+	for (const id of ['radioSearchConfig', 'radioSelectMediatype', 'searchInPlatform', 'configPlatform'])
+		assertEquals(display(dom.document, id), 'none', id);
+});
+
 Deno.test('a platform is added to the choice', () =>
 {
 	using dom      = createDom(TAB);

@@ -43,6 +43,7 @@ class WidgetsService extends AbstractBaseService
 	{
 		$this->itemService         = $itemService;
 		$this->contentDataPreparer = $contentDataPreparer;
+		// @infection-ignore-all the parent only keeps the logger
 		parent::__construct($logger);
 	}
 

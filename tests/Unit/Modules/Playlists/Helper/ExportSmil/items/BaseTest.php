@@ -252,4 +252,25 @@ class BaseTest extends TestCase
 		$result = $this->concreteBase->testDetermineDuration();
 		static::assertEmpty($result);
 	}
+
+	#[Group('units')]
+	public function testTheExclusiveIsThePriorityClassAroundTheTag(): void
+	{
+		$this->concreteBase->setBelongsToMasterPlaylist(true);
+		$this->beginStub->method('hasTriggers')->willReturn(true);
+
+		static::assertSame("\t\t\t\t<priorityClass>\nsmilElementTag\t\t\t\t</priorityClass>\n", $this->concreteBase->getExclusive());
+	}
+
+	#[Group('units')]
+	public function testTheAttributesAreIdConditionTriggerAndTitle(): void
+	{
+		$this->conditionalStub->method('determineExprAttribute')->willReturn('expr="x" ');
+		$this->beginStub->method('hasTriggers')->willReturn(true);
+		$this->beginStub->method('determineTrigger')->willReturn('b');
+		$this->concreteBase->setTouches([1 => 12]);
+		$this->concreteBase->setBelongsToMasterPlaylist(true);
+
+		static::assertSame('xml:id="' . Base::ID_PREFIX . '1" expr="x" begin="b" title="Example Title" ', $this->concreteBase->testCollectAttributes());
+	}
 }

@@ -116,12 +116,55 @@ class PlaylistMetricsUpdaterTest extends ContainerTestCase
 	 */
 	public function testANestingCycleIsLoggedAndEnds(): void
 	{
-		$this->connection->executeStatement("INSERT INTO playlists_items (item_id, playlist_id, UID, item_order, item_type, file_resource, item_name) VALUES (8, 3, 2, 1, 'playlist', '2', 'Kantine')");
+		// 3 contains 1 as well, so it closes two cycles and is named once
+		$this->connection->executeStatement(
+			"INSERT INTO playlists_items (item_id, playlist_id, UID, item_order, item_type, file_resource, item_name) VALUES
+			(8, 3, 2, 1, 'playlist', '2', 'Kantine'), (9, 3, 2, 2, 'playlist', '1', 'Lobby')"
+		);
 
 		$this->updater->updateMetricsRecursively(3);
 
-		static::assertCount(1, $this->logger->messages['warning']);
-		static::assertStringStartsWith('Metrics not updated for playlists in a nesting cycle: ', $this->logger->messages['warning'][0]);
+		static::assertSame(['Metrics not updated for playlists in a nesting cycle: 3'], $this->logger->messages['warning']);
+	}
+
+	/**
+	 * 2 and 5 contain each other: 2 waits for 5, 5 for 2 and 1 for 2. None of them is calculated.
+	 */
+	public function testPlaylistsWaitingInACycleAboveAreLogged(): void
+	{
+		$this->connection->executeStatement("INSERT INTO playlists (playlist_id, UID, playlist_mode, playlist_name) VALUES (5, 2, 'master', 'Ring')");
+		$this->connection->executeStatement(
+			"INSERT INTO playlists_items (item_id, playlist_id, UID, item_order, item_type, file_resource, item_name) VALUES
+			(8, 5, 2, 1, 'playlist', '2', 'Kantine'), (9, 2, 3, 3, 'playlist', '5', 'Ring')"
+		);
+
+		$this->updater->updateMetricsRecursively(3);
+
+		static::assertSame(['Metrics not updated for playlists in a nesting cycle: 2, 1, 5'], $this->logger->messages['warning']);
+		static::assertSame([0, 0, 0], $this->playlistMetrics(1));
+	}
+
+	/**
+	 * 1 contains 3 directly and through 2, 4 contains 1 and 5 contains 2. 1 waits for 3 and for 2, and
+	 * every playlist is collected and calculated, although 1 is reached twice.
+	 */
+	public function testEveryPlaylistIsCalculatedAfterAllItsNestedOnes(): void
+	{
+		$this->connection->executeStatement("INSERT INTO playlists (playlist_id, UID, playlist_mode, playlist_name) VALUES (4, 2, 'master', 'Foyer'), (5, 2, 'master', 'Flur')");
+		$this->connection->executeStatement(
+			"INSERT INTO playlists_items (item_id, playlist_id, UID, item_order, item_duration, item_filesize, item_type, file_resource, item_name) VALUES
+			(8, 1, 2, 6, 4, 0, 'playlist', '3', 'Annas leere Liste'),
+			(9, 4, 2, 1, 0, 0, 'playlist', '1', 'Annas Lobby'),
+			(10, 5, 2, 1, 0, 0, 'playlist', '2', 'Bernds Kantine')"
+		);
+
+		$this->updater->updateMetricsRecursively(3);
+
+		// 10 + 30 + 11 for playlist 2 + 15 + 8 + 4 for the empty playlist 3
+		static::assertSame(78, $this->playlistMetrics(1)[0]);
+		static::assertSame(78, $this->playlistMetrics(4)[0]);
+		static::assertSame(11, $this->playlistMetrics(5)[0]);
+		static::assertSame([], $this->logger->messages);
 	}
 
 	/**

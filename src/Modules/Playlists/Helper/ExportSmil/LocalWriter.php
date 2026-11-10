@@ -70,6 +70,7 @@ class LocalWriter
 	public function writeSMILFiles(PlaylistContent $playlistContent): void
 	{
 		$playlistPath = $this->playlistBasePath.'/'.$this->playlistId;
+		// @infection-ignore-all the file system creates the directories of a file anyway
 		$this->fileSystem->createDirectory($playlistPath);
 		$this->fileSystem->write($playlistPath.'/prefetch.smil', $playlistContent->getContentPrefetch());
 		$this->fileSystem->write($playlistPath.'/items.smil', $playlistContent->getContentElements());

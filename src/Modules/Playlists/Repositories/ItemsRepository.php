@@ -243,7 +243,8 @@ class ItemsRepository extends SqlBase
 			$this->table.'.item_type' => ItemType::PLAYLIST->value
 		];
 
-		return $this->findAllByWithFields($fields, $where, $join, [], $this->table.'.playlist_id');
+		// sorted: the order of GROUP BY is not guaranteed by every database
+		return $this->findAllByWithFields($fields, $where, $join, [], $this->table.'.playlist_id', [['sort' => $this->table.'.playlist_id', 'order' => 'ASC']]);
 	}
 
 

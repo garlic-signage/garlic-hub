@@ -122,6 +122,50 @@ class ZonesSchemaTest extends TestCase
 	}
 
 	/**
+	 * @param array<string,mixed> $changes
+	 * @return array<string,mixed> a layout in percent with one zone
+	 */
+	private static function percent(array $changes): array
+	{
+		return self::layout(['export_unit' => 'percent', 'zones' => [self::zone($changes + ['zone_left' => 0, 'zone_top' => 0, 'zone_width' => 50, 'zone_height' => 50])]]);
+	}
+
+	/**
+	 * @return array<string,array{array<string,mixed>}>
+	 */
+	public static function validLayouts(): array
+	{
+		return [
+			'a zoom of 1'                       => [self::layout(['zoom' => 1])],
+			'a name of 100 characters'          => [self::layout(['zones' => [self::zone(['zone_name' => str_repeat('a', 100)])]])],
+			'a name of 100 umlauts'             => [self::layout(['zones' => [self::zone(['zone_name' => str_repeat('ä', 100)])]])],
+			'a zone of 0 pixel'                 => [self::layout(['zones' => [self::zone(['zone_width' => 0, 'zone_height' => '0'])]])],
+			'a left of -100 percent'            => [self::percent(['zone_left' => -100, 'zone_top' => '-100'])],
+			'a width of a half percent'         => [self::percent(['zone_width' => 0.5, 'zone_height' => '0.5'])],
+			'a width of 0 percent'              => [self::percent(['zone_width' => 0, 'zone_height' => '0'])],
+		];
+	}
+
+	/**
+	 * @param array<string,mixed> $layout
+	 */
+	#[DataProvider('validLayouts')]
+	#[Group('units')]
+	public function testValidLayoutsAreAccepted(array $layout): void
+	{
+		static::assertNotNull($this->schema->parse($layout));
+	}
+
+	#[Group('units')]
+	public function testAZoneWithoutPlaylistHasPlaylist0(): void
+	{
+		$zone = self::zone();
+		unset($zone['zone_playlist_id']);
+
+		static::assertSame(0, $this->schema->parse(self::layout(['zones' => [$zone]]))['zones'][0]['zone_playlist_id'] ?? null);
+	}
+
+	/**
 	 * @return array<string,array{array<string,mixed>}>
 	 */
 	public static function invalidLayouts(): array
@@ -131,6 +175,8 @@ class ZonesSchemaTest extends TestCase
 			'a resolution as array'          => [self::layout(['resolution' => ['1920', '1080']])],
 			'a resolution without x'         => [self::layout(['resolution' => '1920'])],
 			'a resolution with a text'       => [self::layout(['resolution' => '1920x1080px'])],
+			'a resolution with a line break' => [self::layout(['resolution' => "1920x1080\n"])],
+			'a height of 0'                  => [self::layout(['resolution' => '1920x0'])],
 			'a width of 0'                   => [self::layout(['resolution' => '0x1080'])],
 			'a height above the limit'       => [self::layout(['resolution' => '1920x16385'])],
 			'a negative width'               => [self::layout(['resolution' => '-1x1080'])],
@@ -149,10 +195,19 @@ class ZonesSchemaTest extends TestCase
 			'a left as text'                 => [self::layout(['zones' => [self::zone(['zone_left' => 'left'])]])],
 			'a top below the limit'          => [self::layout(['zones' => [self::zone(['zone_top' => -16385])]])],
 			'a negative zone width'          => [self::layout(['zones' => [self::zone(['zone_width' => -1])]])],
-			'a left of -101 percent'         => [self::layout(['export_unit' => 'percent', 'zones' => [self::zone(['zone_left' => -101])]])],
+			'a left of -101 percent'         => [self::percent(['zone_left' => -101])],
+			'a left of -100.5 percent'       => [self::percent(['zone_left' => '-100.5'])],
+			'a negative percent width'       => [self::percent(['zone_width' => -1])],
+			'a percent as boolean'           => [self::percent(['zone_width' => true])],
+			'a percent with a text in front' => [self::percent(['zone_width' => 'a5'])],
+			'a percent with a text behind'   => [self::percent(['zone_width' => '5a'])],
+			'a percent with a line break'    => [self::percent(['zone_width' => "5\n"])],
+			'a z-index with a text in front' => [self::layout(['zones' => [self::zone(['zone_z-index' => 'x5'])]])],
+			'a z-index with a line break'    => [self::layout(['zones' => [self::zone(['zone_z-index' => "5\n"])]])],
+			'a name of 101 umlauts'          => [self::layout(['zones' => [self::zone(['zone_name' => str_repeat('ä', 101)])]])],
 			'a fraction in pixel'            => [self::layout(['zones' => [self::zone(['zone_width' => 12.5])]])],
 			'a width above the limit'        => [self::layout(['zones' => [self::zone(['zone_width' => 16385])]])],
-			'a percent above 100'            => [self::layout(['export_unit' => 'percent', 'zones' => [self::zone(['zone_width' => 100.5])]])],
+			'a percent above 100'            => [self::percent(['zone_width' => 100.5])],
 			'a z-index above the limit'      => [self::layout(['zones' => [self::zone(['zone_z-index' => 1000])]])],
 			'a negative z-index'             => [self::layout(['zones' => [self::zone(['zone_z-index' => -1])]])],
 			'no color'                       => [self::layout(['zones' => [self::zone(['zone_bgcolor' => null])]])],

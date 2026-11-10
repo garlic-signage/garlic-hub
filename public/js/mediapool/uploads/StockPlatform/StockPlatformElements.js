@@ -158,6 +158,17 @@ export class StockPlatformElements
 			this.#radioSelectMediatype.style.display = "none";
 	}
 
+	/**
+	 * Without a platform: as the page starts, nothing to configure or search.
+	 */
+	hidePlatformOptions()
+	{
+		this.#radioSearchConfig.style.display    = "none";
+		this.#radioSelectMediatype.style.display = "none";
+		this.#searchInPlatform.style.display     = "none";
+		this.#configPlatform.style.display       = "none";
+	}
+
 	toggleSearchConfig(isVisible)
 	{
 		if (isVisible)

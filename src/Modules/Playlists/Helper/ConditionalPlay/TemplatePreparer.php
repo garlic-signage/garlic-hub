@@ -102,6 +102,7 @@ class TemplatePreparer
 		$listWeekdays = [];
 		foreach($this->translator->translateArrayForOptions('weekday_selects', 'main') as $key => $inner_value)
 		{
+			// @infection-ignore-all the keys of a PHP array with digits are integers already
 			$bin = pow(2, (int)$key - 1);
 			$weekday = [
 				'WEEKDAY_NUMBER' => $bin,

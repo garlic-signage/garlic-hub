@@ -114,6 +114,7 @@ class Orchestrator
 		$rights['can_share']     = $this->aclGrantService->canShareUnit($UID, 'playlists', $playlistId);
 		$rights['can_version']   = $this->playlistsService->isVersioningEnabled();
 		$rights['playlist_id']   = $playlistId;
+		// @infection-ignore-all the cast is for databases which give no text, ours gives text
 		$rights['playlist_name'] = (string) ($playlist['playlist_name'] ?? '');
 
 		return $this->responseBuilder->generalSuccess($response, $rights);

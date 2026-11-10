@@ -40,7 +40,7 @@ class Conditional
 		$this->conditional = $conditional;
 	}
 
-	public function hasConditional(): bool
+	private function hasConditional(): bool
 	{
 		return !empty($this->conditional);
 	}
@@ -53,7 +53,7 @@ class Conditional
 		$expr = '';
 		if (isset($this->conditional['date']['from']) && $this->conditional['date']['from'] != '')
 		{
-			$expr .= "adapi-compare(substring-before(adapi-date(), 'T'), '".Xml::escape($this->conditional['date']['from'])."')&gt;=0";
+			$expr = "adapi-compare(substring-before(adapi-date(), 'T'), '".Xml::escape($this->conditional['date']['from'])."')&gt;=0";
 		}
 		if (isset($this->conditional['date']['until']) && $this->conditional['date']['until'] != '')
 		{

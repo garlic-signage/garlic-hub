@@ -148,6 +148,9 @@ class ItemsControllerTest extends PlaylistsControllerTestCase
 		$this->assertSuccess($response);
 		static::assertSame(13, $this->json($response)['data']);
 		static::assertSame(13, (int) $this->databaseValue('SELECT item_duration FROM playlists_items WHERE item_id = 1'));
+
+		$response = $this->controller->edit($this->request(body: ['item_id' => '1', 'name' => 'item_duration', 'value' => '12.4']), $this->newResponse());
+		static::assertSame(12, $this->json($response)['data']);
 	}
 
 	public function testTheDurationIsCutByTheTimeLimit(): void
@@ -258,6 +261,8 @@ class ItemsControllerTest extends PlaylistsControllerTestCase
 
 		$this->assertError($this->controller->delete($this->request(body: ['item_id' => '1']), $this->newResponse()), 'Playlist ID not valid.');
 		$this->assertError($this->controller->delete($this->request(body: ['playlist_id' => '1']), $this->newResponse()), 'Item ID not valid.');
+		// the playlist is checked first
+		$this->assertError($this->controller->delete($this->request(body: []), $this->newResponse()), 'Playlist ID not valid.');
 		static::assertSame(7, (int) $this->databaseValue('SELECT COUNT(*) FROM playlists_items'));
 	}
 

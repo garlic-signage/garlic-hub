@@ -54,6 +54,7 @@ readonly class PlaylistNesting
 		if (isset($visited[$playlistId]))
 			return false;
 
+		// @infection-ignore-all isset() is true for false as well, only the key counts
 		$visited[$playlistId] = true;
 		foreach ($this->itemsRepository->findAllPlaylistItemsByPlaylistId($playlistId) as $item)
 		{

@@ -106,6 +106,21 @@ class TemplatePreparerTest extends TestCase
 	}
 
 	#[Group('units')]
+	public function testOnlyTheStartOrTheEndOfTheTimeIsChecked(): void
+	{
+		foreach ([['from' => '08:00', 'until' => ''], ['from' => '', 'until' => '18:00']] as $index => $time)
+		{
+			$this->preparer->prepare(1, ['time' => $time]);
+			$this->preparer->render();
+			$data = $this->template->rendered[$index]['data'];
+
+			static::assertSame('checked', $data['TIME_PERIOD_CHECKED'] ?? null);
+			static::assertSame('checked', $data['CONDITIONAL_PLAY_CHECKED'] ?? null);
+			static::assertArrayNotHasKey('DATE_PERIOD_CHECKED', $data);
+		}
+	}
+
+	#[Group('units')]
 	public function testAnItemWithoutConditionsIsNotChecked(): void
 	{
 		$this->preparer->prepare(1, []);

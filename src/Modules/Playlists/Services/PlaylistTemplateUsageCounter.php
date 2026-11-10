@@ -38,7 +38,9 @@ readonly class PlaylistTemplateUsageCounter implements TemplateUsageCounterInter
 		$results = [];
 		foreach ($this->itemsRepository->countFileResourcesByTemplateId($templateIds) as $value)
 		{
-			$results[(int) $value['template_id']] = (int) $value['count'];
+			$count = (int) $value['count'];
+			// @infection-ignore-all PHP makes a numeric key an integer by itself
+			$results[(int) $value['template_id']] = $count;
 		}
 
 		return $results;

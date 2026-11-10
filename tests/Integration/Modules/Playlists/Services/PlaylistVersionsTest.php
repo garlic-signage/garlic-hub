@@ -24,8 +24,10 @@ namespace Tests\Integration\Modules\Playlists\Services;
 use App\Framework\Config\ConfigOverrides;
 use App\Framework\Exceptions\NotFoundException;
 use App\Modules\Playlists\Controller\PlaylistVersionsController;
+use App\Shared\Versioning\UnitVersionsRepository;
 use App\Modules\Playlists\Services\PlaylistsService;
 use App\Modules\Playlists\Services\PlaylistVersionsService;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Psr\Http\Message\ResponseInterface;
 use Slim\Psr7\Factory\ServerRequestFactory;
@@ -113,6 +115,18 @@ class PlaylistVersionsTest extends ContainerTestCase
 		$request = new ServerRequestFactory()->createServerRequest('POST', '/async/playlists/versions/1')->withParsedBody(['version' => (string) $version]);
 
 		return $this->container->get(PlaylistVersionsController::class)->restore($request, new Response(), ['playlist_id' => '1']);
+	}
+
+	/**
+	 * Changes the recorded version 1, like an old one or a broken one would be.
+	 *
+	 * @param callable(array<string,mixed>):array<string,mixed> $change
+	 */
+	private function changeSnapshot(callable $change): void
+	{
+		$snapshot = json_decode((string) $this->connection->fetchOne('SELECT snapshot FROM unit_versions WHERE version = 1'), true);
+		static::assertIsArray($snapshot);
+		$this->connection->update('unit_versions', ['snapshot' => json_encode($change($snapshot))], ['version' => 1]);
 	}
 
 	public function testNothingIsRecordedByDefault(): void
@@ -310,7 +324,24 @@ class PlaylistVersionsTest extends ContainerTestCase
 		static::assertSame(['success' => true, 'redirect' => '/playlists/compose/1', 'omitted' => ['doc.pdf']], $json);
 		// for the composer, the next page
 		static::assertSame(['Not restored as they no longer exist: doc.pdf'], $_SESSION['slimFlash']['error'] ?? []);
-		static::assertSame('restored', $this->connection->fetchOne("SELECT 'restored' FROM audit_log WHERE action = 'version_restored' AND unit_id = '1'"));
+		static::assertCount(1, $_SESSION['slimFlash']['success'] ?? []);
+		static::assertSame('restored',$this->connection->fetchOne("SELECT 'restored' FROM audit_log WHERE action = 'version_restored' AND unit_id = '1'"));
+	}
+
+	/**
+	 * A version recorded before the versioning was switched off is not restored.
+	 */
+	public function testWhileTheVersioningIsOffNothingIsRestored(): void
+	{
+		$this->actingAs(2);
+		$snapshot = ['playlist' => ['shuffle' => 0], 'items' => $this->connection->fetchAllAssociative('SELECT * FROM playlists_items WHERE playlist_id = 1')];
+		new UnitVersionsRepository($this->connection)->insertVersion('playlists', '1', 1, 2, json_encode($snapshot, JSON_THROW_ON_ERROR));
+		$this->connection->executeStatement("UPDATE playlists_items SET item_name = 'geändert' WHERE item_id = 1");
+
+		$json = $this->json($this->restoreRequest(1));
+
+		static::assertFalse($json['success']);
+		static::assertSame('geändert', $this->connection->fetchOne('SELECT item_name FROM playlists_items WHERE item_id = 1'));
 	}
 
 	public function testWhoMayNotEditThePlaylistGetsNoVersions(): void
@@ -325,5 +356,160 @@ class PlaylistVersionsTest extends ContainerTestCase
 
 		static::assertFalse($list['success']);
 		static::assertFalse($this->json($this->restoreRequest(1))['success']);
+	}
+
+	public function testOnlyTheItemsOfThePlaylistAreReplaced(): void
+	{
+		$this->enable();
+		$this->actingAs(2);
+		$this->export(1);
+		$other = $this->items(2);
+
+		$this->service()->restoreVersion(1, 1);
+
+		static::assertSame($other, $this->items(2));
+		static::assertSame([6, 7], array_column($other, 'item_id'));
+	}
+
+	public function testTheRestoreIsCommittedAndInTheAuditLog(): void
+	{
+		$this->enable();
+		$this->actingAs(2);
+		$this->export(1);
+
+		$this->service()->restoreVersion(1, 1);
+
+		static::assertFalse($this->connection->isTransactionActive());
+		static::assertSame(['UID' => 2, 'module' => 'playlists', 'action' => 'version_restored', 'unit_id' => '1', 'details' => '{"version":1}'],
+			$this->connection->fetchAssociative('SELECT UID, module, action, unit_id, details FROM audit_log'));
+	}
+
+	public function testARestoreIsAChangeAndStartsTheReleaseAgain(): void
+	{
+		$this->enable();
+		$this->actingAs(2);
+		$this->export(1);
+		$this->connection->update('playlists', ['release_status' => 'released'], ['playlist_id' => 1]);
+
+		$this->service()->restoreVersion(1, 1);
+
+		static::assertSame('in_progress', $this->connection->fetchOne('SELECT release_status FROM playlists WHERE playlist_id = 1'));
+	}
+
+	public function testAVersionHoldsOnlyTheSettingsOfTheComposer(): void
+	{
+		$this->enable();
+		$this->actingAs(2);
+
+		$this->export(1);
+
+		$snapshot = json_decode((string) $this->connection->fetchOne('SELECT snapshot FROM unit_versions'), true);
+		static::assertIsArray($snapshot);
+		static::assertIsArray($snapshot['playlist']);
+		static::assertEqualsCanonicalizing(['time_limit', 'shuffle', 'shuffle_picking', 'layout', 'external_playlist_link'], array_keys($snapshot['playlist']));
+	}
+
+	public function testOtherFieldsInAVersionDoNotComeBack(): void
+	{
+		$this->enable();
+		$this->actingAs(2);
+		$this->export(1);
+		$this->changeSnapshot(static function (array $snapshot): array
+		{
+			$snapshot['playlist']['playlist_name'] = 'Alt';
+			$snapshot['playlist']['UID'] = 3;
+			return $snapshot;
+		});
+
+		$this->service()->restoreVersion(1, 1);
+
+		static::assertSame(['UID' => 2, 'playlist_name' => 'Annas Lobby'],
+			$this->connection->fetchAssociative('SELECT CAST(UID AS INTEGER) AS UID, playlist_name FROM playlists WHERE playlist_id = 1'));
+	}
+
+	/**
+	 * @return array<string,array{string}>
+	 */
+	public static function brokenParts(): array
+	{
+		return ['without the playlist' => ['playlist'], 'without the items' => ['items']];
+	}
+
+	#[DataProvider('brokenParts')]
+	public function testABrokenVersionIsNotFound(string $part): void
+	{
+		$this->enable();
+		$this->actingAs(2);
+		$this->export(1);
+		$this->changeSnapshot(static function (array $snapshot) use ($part): array
+		{
+			unset($snapshot[$part]);
+			return $snapshot;
+		});
+
+		try
+		{
+			$this->service()->restoreVersion(1, 1);
+			static::fail('A broken version must not be restored.');
+		}
+		catch (NotFoundException $e)
+		{
+			static::assertSame('version_not_found', $e->getTranslationKey());
+		}
+		static::assertSame([1, 2, 3, 4, 5], array_column($this->items(1), 'item_id'));
+	}
+
+	public function testEntriesOfAVersionWhichAreNoItemsAreSkipped(): void
+	{
+		$this->enable();
+		$this->actingAs(2);
+		$this->export(1);
+		$before = $this->items(1);
+		$this->changeSnapshot(static function (array $snapshot): array
+		{
+			array_unshift($snapshot['items'], 'kein Eintrag');
+			return $snapshot;
+		});
+
+		$this->service()->restoreVersion(1, 1);
+
+		static::assertSame($before, $this->items(1));
+	}
+
+	public function testThePositionsCountFromTheFirstOneOfTheVersion(): void
+	{
+		$this->enable();
+		$this->actingAs(2);
+		$this->connection->executeStatement('UPDATE playlists_items SET item_order = item_order + 2 WHERE playlist_id = 1');
+		$this->export(1);
+
+		$this->service()->restoreVersion(1, 1);
+
+		static::assertSame([3, 4, 5, 6, 7], array_column($this->items(1), 'item_order'));
+	}
+
+	/**
+	 * An item id which another playlist has by now, or none at all, gets a new one: the other playlist keeps its item.
+	 */
+	public function testAnItemGetsANewIdWhenItsIdIsTakenOrMissing(): void
+	{
+		$this->enable();
+		$this->actingAs(2);
+		$this->export(1);
+		$this->connection->update('playlists_items', ['playlist_id' => 3], ['item_id' => 1]);
+		$this->changeSnapshot(static function (array $snapshot): array
+		{
+			$snapshot['items'][4]['item_id'] = 0;
+			return $snapshot;
+		});
+
+		$this->service()->restoreVersion(1, 1);
+
+		$items = $this->items(1);
+		static::assertSame(['bild.jpg', 'film.mp4', 'Bernds Kantine', 'doc.pdf', 'Vorlage'], array_column($items, 'item_name'));
+		static::assertSame([2, 3, 4], array_slice(array_column($items, 'item_id'), 1, 3));
+		static::assertGreaterThan(7, $items[0]['item_id']);
+		static::assertGreaterThan(7, $items[4]['item_id']);
+		static::assertSame([1], array_column($this->items(3), 'item_id'));
 	}
 }

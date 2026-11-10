@@ -38,12 +38,12 @@ class Widget extends Media
 		return $ret;
 	}
 
-	protected function collectWidgetAttributes(): string
+	private function collectWidgetAttributes(): string
 	{
 		return parent::collectMediaAttributes().' type="application/widget"';
 	}
 
-	protected function collectWidgetParameters(): string
+	private function collectWidgetParameters(): string
 	{
 		return parent::collectParameters().$this->determineWidgetParameters();
 	}

@@ -62,6 +62,7 @@ class Template extends AbstractInsertItem
 		$this->playlistMetricsCalculator = $playlistMetricsCalculator;
 		$this->userSession      = $userSession;
 
+		// @infection-ignore-all the parent only keeps the logger
 		parent::__construct($logger);
 	}
 

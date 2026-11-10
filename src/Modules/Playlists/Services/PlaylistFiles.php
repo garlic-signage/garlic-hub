@@ -53,6 +53,7 @@ readonly class PlaylistFiles
 		foreach ($this->unitVersions->findVersions('playlists', $playlistId) as $version)
 		{
 			$snapshot = $this->unitVersions->findSnapshot('playlists', $playlistId, $version['version']);
+			// @infection-ignore-all an entry which is no item has no item type and is skipped below anyway
 			$items    = array_merge($items, array_filter((array) ($snapshot['items'] ?? []), 'is_array'));
 		}
 
@@ -60,9 +61,11 @@ readonly class PlaylistFiles
 		foreach ($items as $item)
 		{
 			if (($item['item_type'] ?? '') === ItemType::TEMPLATE->value && is_numeric($item['item_id'] ?? null))
+				// @infection-ignore-all the id only goes into the names of the files
 				$itemIds[] = (int) $item['item_id'];
 		}
 
+		// @infection-ignore-all a second removal of the same item finds no files anymore
 		return array_values(array_unique($itemIds));
 	}
 

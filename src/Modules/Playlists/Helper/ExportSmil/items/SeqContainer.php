@@ -35,7 +35,7 @@ class SeqContainer extends Base implements ItemInterface
 
 	}
 
-	protected function collectPlaylistAttributes(): string
+	private function collectPlaylistAttributes(): string
 	{
 		return $this->collectAttributes().$this->determinePlaylistDuration();
 	}
@@ -51,7 +51,7 @@ class SeqContainer extends Base implements ItemInterface
 	}
 
 
-	protected function determinePlaylistDuration(): string
+	private function determinePlaylistDuration(): string
 	{
 		if ($this->item['time_limit'] !== null && $this->item['time_limit'] > 0 && $this->item['time_limit'] < $this->item['owner_duration'])
 			return 'dur="'.$this->item['time_limit'].'s" ';

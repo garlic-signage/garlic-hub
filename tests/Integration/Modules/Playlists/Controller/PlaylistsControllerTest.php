@@ -423,6 +423,18 @@ class PlaylistsControllerTest extends PlaylistsControllerTestCase
 		static::assertSame([], $this->json($this->controller->findByName($this->request('GET'), $this->newResponse(), ['playlist_mode' => 'internal'])));
 	}
 
+	/**
+	 * The search is no page of the list: every playlist is found.
+	 */
+	public function testTheSearchFindsAllPlaylistsNotOnlyAPage(): void
+	{
+		for ($id = 10; $id < 22; $id++)
+			$this->connection->executeStatement("INSERT INTO playlists (playlist_id, UID, playlist_mode, playlist_name) VALUES (?, 2, 'master', ?)", [$id, 'Liste ' . $id]);
+		$this->actingAs(2);
+
+		static::assertCount(15, $this->json($this->controller->findByName($this->request('GET'), $this->newResponse(), ['playlist_mode' => 'master'])));
+	}
+
 	public function testThePlaylistsAreFoundByAPartOfTheName(): void
 	{
 		$this->actingAs(2);

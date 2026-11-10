@@ -87,9 +87,7 @@ abstract class Base implements ItemInterface
 		if (!$this->belongsToMasterPlaylist)
 			return '';
 
-		$ret = '';
-		if ($this->begin->hasTriggers())
-			$ret .= 'begin="'.$this->begin->determineTrigger().'" ';
+		$ret = $this->begin->hasTriggers() ? 'begin="'.$this->begin->determineTrigger().'" ' : '';
 
 		if ($this->end->hasTriggers())
 			$ret .= 'end="'.$this->end->determineTrigger().'" ';

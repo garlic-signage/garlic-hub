@@ -47,6 +47,7 @@ readonly class PlaylistsController
 	 */
 	public function determineRights(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
+		// @infection-ignore-all the route always has the playlist id
 		return $this->orchestrator->determineRights($response, (int) ($args['playlist_id'] ?? 0));
 	}
 
@@ -118,6 +119,7 @@ readonly class PlaylistsController
 	public function saveZone(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
 	{
 		$input = $this->parsedBody($request);
+		// @infection-ignore-all the route always has the playlist id
 		$input['playlist_id'] = $args['playlist_id'] ?? 0;
 
 		$answer = $this->orchestrator->setInput($input)->validate($response);

@@ -93,6 +93,15 @@ class SchemaTest extends TestCase
 		static::assertArrayNotHasKey('other', $result);
 	}
 
+	#[Group('units')]
+	public function testALeapDayAndARangeOfOneQuarterHourAreValid(): void
+	{
+		$result = $this->schema->parse(['date' => ['from' => '2028-02-29', 'until' => ''], 'weekdays' => [2 => ['from' => 5, 'until' => 5]]]);
+
+		static::assertSame('2028-02-29', $result['date']['from'] ?? null);
+		static::assertSame([2 => ['from' => 5, 'until' => 5]], $result['weekdays'] ?? null);
+	}
+
 	/**
 	 * @param array<mixed> $input
 	 */
@@ -112,6 +121,9 @@ class SchemaTest extends TestCase
 			'date injection'        => [['date' => ['from' => "2026-01-01') or ('1'='1", 'until' => '']]],
 			'date wrong format'     => [['date' => ['from' => '01.02.2026', 'until' => '']]],
 			'date not existing'     => [['date' => ['from' => '2026-02-30', 'until' => '']]],
+			'date no leap year'     => [['date' => ['from' => '2026-02-29', 'until' => '']]],
+			'date text in front'    => [['date' => ['from' => 'x2026-02-01', 'until' => '']]],
+			'time text in front'    => [['time' => ['from' => 'x10:00', 'until' => '']]],
 			'date with trailing nl' => [['date' => ['from' => "2026-02-01\n", 'until' => '']]],
 			'date not a string'     => [['date' => ['from' => 20260201, 'until' => '']]],
 			'date not an array'     => [['date' => '2026-02-01']],

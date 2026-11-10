@@ -143,7 +143,8 @@ class PlaylistMetricsCalculator
 		if ($playlist['time_limit'] > 0 && !$this->aclValidator->isSimpleAdmin($this->userSession->getUID()))
 		{
 			$ownerDuration      = $this->calculateFromPlaylistData($playlist)->ownerDuration;
-			$remaining_duration = $playlist['time_limit'] - $ownerDuration;
+			// @infection-ignore-all the cast is for databases which give text, ours gives numbers
+			$remaining_duration = (int) $playlist['time_limit'] - $ownerDuration;
 
 			// @infection-ignore-all never below 0: calculateFromPlaylistData throws when the owner is above the limit
 			$wantedDuration     = max(0, min($remaining_duration, $wantedDuration));

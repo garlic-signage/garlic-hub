@@ -210,6 +210,34 @@ class ItemThumbnailResolverTest extends TestCase
 		static::assertSame($dir . '/' . $names->build(17, 'new') . '.jpg', $result['path'] ?? '');
 	}
 
+	/**
+	 * The composer saves one format; a jpg next to another format is the one, like the export names it.
+	 */
+	#[Group('units')]
+	public function testTemplateLooksForTheJpgFirst(): void
+	{
+		$names = new TemplateItemName('unit-test-secret');
+		$dir   = sys_get_temp_dir() . '/item_thumbs_resolver_test' . (string) getenv('TEST_TOKEN');
+		mkdir($dir);
+		touch($dir . '/' . $names->build(17, 'new') . '.jpg');
+		touch($dir . '/' . $names->build(17, 'new') . '.png');
+		$config = $this->createStub(Config::class);
+		$config->method('getConfigValue')->willReturnMap([['thumbnails', 'playlists', 'directories', $dir]]);
+		$resolver = new ItemThumbnailResolver($config, $this->mimeTypeExtensionMapperStub, new MediaUrlSigner('unit-test-secret'), $names);
+
+		try
+		{
+			$result = $resolver->resolve(['item_type' => ItemType::TEMPLATE->value, 'item_id' => 17, 'content_data' => 'new']);
+		}
+		finally
+		{
+			array_map('unlink', glob($dir . '/*') ?: []);
+			rmdir($dir);
+		}
+
+		static::assertSame($dir . '/' . $names->build(17, 'new') . '.jpg', $result['path'] ?? '');
+	}
+
 	#[Group('units')]
 	public function testTemplateUsesJpgNamedByItemIdAndContent(): void
 	{

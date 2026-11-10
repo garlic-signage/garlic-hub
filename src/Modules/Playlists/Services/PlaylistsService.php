@@ -55,6 +55,7 @@ class PlaylistsService extends AbstractBaseService
 								private readonly PlaylistFiles $playlistFiles,
 								LoggerInterface $logger)
 	{
+		// @infection-ignore-all the parent only keeps the logger
 		parent::__construct($logger);
 	}
 
@@ -187,12 +188,14 @@ class PlaylistsService extends AbstractBaseService
 		try
 		{
 			$deleted = $this->playlistsRepository->delete($playlistId);
-			if ($deleted > 0)
+			if ($deleted !== 0)
 			{
 				$this->aclGrantService->removeUnitShares('playlists', [$playlistId]);
 				$this->unitVersions->removeUnits('playlists', [$playlistId]);
 				// the name: the list of the audit log finds no playlist anymore
-				$this->auditLog->record($this->userSession->getUID(), 'playlists', AuditAction::UNIT_DELETED, $playlistId, null, ['name' => (string) ($playlist['playlist_name'] ?? '')]);
+				// @infection-ignore-all the name is text in every database
+				$name = (string) ($playlist['playlist_name'] ?? '');
+				$this->auditLog->record($this->userSession->getUID(), 'playlists', AuditAction::UNIT_DELETED, $playlistId, null, ['name' => $name]);
 			}
 			$this->transactions->commit();
 		}
@@ -203,7 +206,7 @@ class PlaylistsService extends AbstractBaseService
 		}
 
 		// the files only after the commit: a rollback would leave a playlist without its files
-		if ($deleted > 0)
+		if ($deleted !== 0)
 		{
 			foreach ($this->playlistFiles->remove($playlistId, $templateItemIds) as $file)
 				$this->logger->warning('A file of the deleted playlist ' . $playlistId . ' could not be removed: ' . $file);

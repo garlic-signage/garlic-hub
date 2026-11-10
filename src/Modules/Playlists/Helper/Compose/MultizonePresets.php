@@ -79,8 +79,9 @@ readonly class MultizonePresets
 			if (!is_array($zone))
 				return null;
 
+			// the schema needs a name, the presets have none
 			$layout['zones'][] = [
-				'zone_name'    => 'Zone ' . ($i + 1),
+				'zone_name'    => 'Zone',
 				'zone_left'    => $zone['left'] ?? null,
 				'zone_top'     => $zone['top'] ?? null,
 				'zone_width'   => $zone['width'] ?? null,
@@ -117,6 +118,7 @@ readonly class MultizonePresets
 	 */
 	private function insideOfScreen(array $zone): bool
 	{
+		// @infection-ignore-all the schema gives numbers in percent, the casts are for the types only
 		[$left, $top, $width, $height] = [(float) $zone['zone_left'], (float) $zone['zone_top'], (float) $zone['zone_width'], (float) $zone['zone_height']];
 
 		return $left >= 0 && $top >= 0 && $width > 0 && $height > 0 && $left + $width <= 100 && $top + $height <= 100;

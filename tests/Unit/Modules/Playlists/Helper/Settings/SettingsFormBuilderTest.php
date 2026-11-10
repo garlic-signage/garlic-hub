@@ -117,6 +117,30 @@ class SettingsFormBuilderTest extends TestCase
 		static::assertStringContainsString('owner', json_encode($this->builder->buildForm(['UID' => 3, 'username' => 'owner', 'playlist_mode' => 'multizone']), JSON_THROW_ON_ERROR));
 	}
 
+	#[Group('units')]
+	public function testTheOwnerOfThePlaylistIsShownNotTheUser(): void
+	{
+		$this->parameters->addOwner();
+
+		$html = json_encode($this->builder->buildForm(['UID' => 3, 'username' => 'owner']), JSON_THROW_ON_ERROR);
+
+		static::assertStringContainsString('name=\\"UID\\" value=\\"3\\"', $html);
+		static::assertStringContainsString('value=\\"owner\\" data-id=\\"3\\"', $html);
+	}
+
+	/**
+	 * Only whole numbers, a text around the digits is no number.
+	 */
+	#[Group('units')]
+	public function testANumberWithATextIsNoNumber(): void
+	{
+		$this->parameters->addResolution();
+
+		foreach (['x1280', '1280x', "1280\n"] as $width)
+			static::assertSame('1920', $this->build(['playlist_mode' => 'master', 'screen_width' => $width])['screen_width']['value'], $width);
+		static::assertSame('-5', $this->build(['playlist_mode' => 'master', 'screen_width' => '-5'])['screen_width']['value']);
+	}
+
 	/**
 	 * The values come from the request of the user: only values of the right kind are shown.
 	 */

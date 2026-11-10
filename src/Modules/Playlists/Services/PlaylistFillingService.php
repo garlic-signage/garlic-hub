@@ -105,6 +105,7 @@ readonly class PlaylistFillingService
 		foreach ($chosen as $index)
 		{
 			$media = $candidates[$index];
+			// @infection-ignore-all the casts are for databases which give text, ours gives strings
 			$suggestion[] = [
 				'media_id'  => (string) $media['media_id'],
 				'filename'  => (string) $media['filename'],
@@ -134,10 +135,12 @@ readonly class PlaylistFillingService
 		{
 			foreach ($this->mediaService->searchMedia($term) as $media)
 			{
+				// @infection-ignore-all the cast is for databases which give text, ours gives strings
 				$mimetype = (string) $media['mimetype'];
 				if (isset($candidates[$media['media_id']]) || (!str_starts_with($mimetype, 'image/') && !str_starts_with($mimetype, 'video/')))
 					continue;
 
+				// @infection-ignore-all the metadata keeps numbers, and without a duration -1 takes the default like 0
 				$duration = (float) ($media['metadata']['duration'] ?? 0);
 				$media['seconds'] = $duration > 0 ? (int) round($duration) : $this->playlistMetricsCalculator->getDefaultDuration();
 				$candidates[$media['media_id']] = $media;

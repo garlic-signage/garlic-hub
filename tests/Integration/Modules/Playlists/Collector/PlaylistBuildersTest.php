@@ -123,6 +123,21 @@ class PlaylistBuildersTest extends TestCase
 	}
 
 	/**
+	 * The layouts of former versions have the ids of the zone playlists as text.
+	 */
+	public function testTheIdOfAZonePlaylistCanBeText(): void
+	{
+		$this->write(11, 'items', '<img region="screen" src="a"/>');
+		$this->write(11, 'prefetch', 'prefetch 11');
+		$this->write(11, 'exclusive', '');
+
+		$structure = $this->factory->createBuilder($this->target(5, 'multizone', ['zones' => [1 => ['zone_playlist_id' => '11']]]))->buildPlaylist();
+
+		static::assertStringContainsString('<img region="screen1" src="a"/>', $structure->getItems());
+		static::assertSame("prefetch 11\n", $structure->getPrefetch());
+	}
+
+	/**
 	 * @param array<string,mixed> $layout
 	 */
 	private function target(int $playlistId, string $mode, array $layout = []): PlaylistTargetInterface

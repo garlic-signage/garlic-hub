@@ -22,8 +22,10 @@ declare(strict_types=1);
 namespace Tests\Integration\Modules\Playlists\Controller;
 
 use App\Framework\Exceptions\AccessDeniedException;
+use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Llm\LlmClientFactory;
 use App\Modules\Playlists\Controller\PlaylistFillingController;
+use App\Modules\Playlists\Services\PlaylistFillingService;
 use App\Shared\Llm\LlmTask;
 use App\Shared\Llm\UserLlmService;
 use DI\Container;
@@ -58,12 +60,20 @@ class PlaylistFillingControllerTest extends PlaylistsControllerTestCase
 	 */
 	private function suggest(array $body, array $answers = []): ResponseInterface
 	{
+		$this->answerWith($answers);
+
+		return $this->container->get(PlaylistFillingController::class)->suggest($this->request('POST', '/async/playlists/ai/suggest', $body), $this->newResponse());
+	}
+
+	/**
+	 * @param list<Response> $answers
+	 */
+	private function answerWith(array $answers): void
+	{
 		$this->endpoint = new MockHandler($answers);
 		$container = $this->container;
 		static::assertInstanceOf(Container::class, $container);
 		$container->set(LlmClientFactory::class, new LlmClientFactory(new Client(['handler' => HandlerStack::create($this->endpoint)]), static fn(string $host): array => []));
-
-		return $container->get(PlaylistFillingController::class)->suggest($this->request('POST', '/async/playlists/ai/suggest', $body), $this->newResponse());
 	}
 
 	private static function answer(string $content): Response
@@ -113,6 +123,107 @@ class PlaylistFillingControllerTest extends PlaylistsControllerTestCase
 		], $media);
 	}
 
+	/**
+	 * @return array<string,mixed> the request of the choice
+	 */
+	private function lastRequest(): array
+	{
+		$body = json_decode((string) $this->endpoint?->getLastRequest()?->getBody(), true);
+		static::assertIsArray($body);
+
+		return $body;
+	}
+
+	/**
+	 * @return list<array<mixed>> the media offered for the choice
+	 */
+	private function offeredMedia(): array
+	{
+		$text  = $this->lastRequest()['messages'][1]['content'];
+		$media = json_decode(substr($text, (int) strpos($text, '[')), true);
+		static::assertIsArray($media);
+
+		$offered = [];
+		foreach ($media as $entry)
+		{
+			static::assertIsArray($entry);
+			$offered[] = $entry;
+		}
+
+		return $offered;
+	}
+
+	public function testThePlaylistTimeIsOneMinuteToTwoHours(): void
+	{
+		$this->actingAs(2);
+		$this->withLlm(2);
+
+		$times = [0 => '60 seconds', 1 => '60 seconds', 2 => '120 seconds', 120 => '7200 seconds', 121 => '7200 seconds'];
+		// the controller is created once, so the endpoint answers all requests
+		$this->answerWith(array_merge(...array_fill(0, count($times), [self::answer('{"terms": ["Meer"]}'), self::answer('{"items": [1]}')])));
+		$controller = $this->container->get(PlaylistFillingController::class);
+		foreach ($times as $minutes => $seconds)
+		{
+			$controller->suggest($this->request('POST', '/async/playlists/ai/suggest', ['playlist_id' => 3, 'theme' => 'Meer', 'minutes' => $minutes]), $this->newResponse());
+			static::assertStringContainsString(' ' . $seconds, $this->lastRequest()['messages'][0]['content'], $minutes . ' minutes');
+		}
+	}
+
+	/**
+	 * The pdf is the newest hit of "Meer" and is skipped, the video after it is offered. Durations are rounded,
+	 * the image has none and gets the default.
+	 */
+	public function testOnlyPicturesAndVideosAreOfferedWithRoundedSeconds(): void
+	{
+		$this->actingAs(2);
+		$this->withLlm(2);
+		$this->connection->executeStatement("UPDATE mediapool_files SET upload_time = '2026-01-02 00:00:00' WHERE filename = 'doc.pdf'");
+		$this->connection->executeStatement("UPDATE mediapool_files SET upload_time = '2026-01-01 00:00:00', metadata = '{\"duration\":40.5}' WHERE filename = 'film.mp4'");
+		$this->connection->executeStatement("UPDATE mediapool_files SET metadata = '{\"duration\":10.4}' WHERE filename = 'bild.jpg'");
+
+		$this->suggest(['playlist_id' => 3, 'theme' => 'Meer'], [self::answer('{"terms": ["Meer", "Strand"]}'), self::answer('{"items": [1]}')]);
+
+		static::assertSame([['film.mp4', 41], ['bild.jpg', 10]], array_map(static fn(array $media): array => [$media['name'], $media['seconds']], $this->offeredMedia()));
+	}
+
+	/**
+	 * The service gives whole seconds, not a rounded float.
+	 */
+	public function testTheSuggestionHasWholeSeconds(): void
+	{
+		$this->actingAs(2);
+		$this->withLlm(2);
+		$this->connection->executeStatement("UPDATE mediapool_files SET metadata = '{\"duration\":40.4}' WHERE filename = 'film.mp4'");
+		$this->answerWith([self::answer('{"terms": ["Meer"]}'), self::answer('{"items": [1]}')]);
+
+		$items = $this->container->get(PlaylistFillingService::class)->suggest(3, 'Meer', 1);
+
+		static::assertSame([['film.mp4', 40]], array_map(static fn(array $item): array => [$item['filename'], $item['seconds']], $items));
+	}
+
+	/**
+	 * Of 61 pictures the 60 newest are offered.
+	 */
+	public function testAtMostSixtyMediaAreOffered(): void
+	{
+		$this->actingAs(2);
+		$this->withLlm(2);
+		for ($i = 1; $i <= 61; $i++)
+		{
+			$this->connection->insert('mediapool_files', [
+				'media_id' => sprintf('media-id-1%06d', $i), 'node_id' => 1, 'UID' => 2, 'checksum' => 'checksum-' . $i, 'mimetype' => 'image/png',
+				'filename' => 'wolke' . $i . '.png', 'extension' => 'png', 'tags' => ',Wolke,', 'upload_time' => sprintf('2026-01-01 00:%02d:00', $i)
+			]);
+		}
+
+		$this->suggest(['playlist_id' => 3, 'theme' => 'Wolken'], [self::answer('{"terms": ["Wolke"]}'), self::answer('{"items": [1]}')]);
+
+		$media = $this->offeredMedia();
+		static::assertCount(PlaylistFillingService::MAX_CANDIDATES, $media);
+		static::assertSame('wolke61.png', $media[0]['name']);
+		static::assertSame('wolke2.png', $media[59]['name']);
+	}
+
 	public function testWithoutMatchingMediaTheAiIsNotAskedToChoose(): void
 	{
 		$this->actingAs(2);
@@ -149,6 +260,25 @@ class PlaylistFillingControllerTest extends PlaylistsControllerTestCase
 
 		$this->expectException(AccessDeniedException::class);
 		$this->suggest(['playlist_id' => 2, 'theme' => 'Meer']);
+	}
+
+	public function testAPlaylistWhichDoesNotExistIsNotFound(): void
+	{
+		$this->actingAs(2);
+		$this->withLlm(2);
+
+		$this->expectException(NotFoundException::class);
+		$this->suggest(['playlist_id' => 999, 'theme' => 'Meer']);
+	}
+
+	public function testWithoutATimeThePlaylistIsFiveMinutes(): void
+	{
+		$this->actingAs(2);
+		$this->withLlm(2);
+
+		$this->suggest(['playlist_id' => 3, 'theme' => 'Meer'], [self::answer('{"terms": ["Meer"]}'), self::answer('{"items": [1]}')]);
+
+		static::assertStringContainsString(' 300 seconds', $this->lastRequest()['messages'][0]['content']);
 	}
 
 	public function testATooLongThemeIsNotSent(): void

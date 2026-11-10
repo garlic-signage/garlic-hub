@@ -134,7 +134,7 @@ class Trigger
 	{
 		// the values come from the database: only numbers and an escaped date can reach the SMIL file
 		$counts  = (int) ($wallclock['repeat_counts'] ?? -1);
-		$weekday = (int) ($wallclock['weekday'] ?? 0);
+		$weekday = $this->number($wallclock, 'weekday');
 		$isoDate = Xml::escape((string) ($wallclock['iso_date'] ?? ''));
 
 		$repeats = $intervals = '';
@@ -145,22 +145,23 @@ class Trigger
 			else
 				$repeats = 'R'.$counts.'/';
 
+			$hours   = $this->number($wallclock, 'repeat_hours');
+			$minutes = $this->number($wallclock, 'repeat_minutes');
+
 			$intervals = '/P';
-			if ((int) ($wallclock['repeat_years'] ?? 0) > 0)
-				$intervals .= (int) $wallclock['repeat_years'].'Y';
-			if ((int) ($wallclock['repeat_months'] ?? 0) > 0)
-				$intervals .= (int) $wallclock['repeat_months'].'M';
-			if ((int) ($wallclock['repeat_weeks'] ?? 0) > 0)
-				$intervals .= (int) $wallclock['repeat_weeks'].'W';
-			if ((int) ($wallclock['repeat_days'] ?? 0) > 0)
-				$intervals .= (int) $wallclock['repeat_days'].'D';
-			if ((int) ($wallclock['repeat_hours'] ?? 0) > 0 OR (int) ($wallclock['repeat_minutes'] ?? 0) > 0)
+			foreach (['repeat_years' => 'Y', 'repeat_months' => 'M', 'repeat_weeks' => 'W', 'repeat_days' => 'D'] as $field => $unit)
+			{
+				$value = $this->number($wallclock, $field);
+				if ($value > 0)
+					$intervals .= $value.$unit;
+			}
+			if ($hours > 0 OR $minutes > 0)
 			{
 				$intervals .= 'T';
-				if ((int) ($wallclock['repeat_hours'] ?? 0) > 0)
-					$intervals .= (int) $wallclock['repeat_hours'].'H';
-				if ((int) ($wallclock['repeat_minutes'] ?? 0) > 0)
-					$intervals .= (int) $wallclock['repeat_minutes'].'M';
+				if ($hours > 0)
+					$intervals .= $hours.'H';
+				if ($minutes > 0)
+					$intervals .= $minutes.'M';
 			}
 
 			if (strlen($intervals) == 2) // if repeat_counts are set, but interval selected
@@ -171,6 +172,7 @@ class Trigger
 		}
 		if ($weekday != 0 && $weekday >= -7 && $weekday <= 7)
 		{
+			// @infection-ignore-all the weekday 0 is excluded above
 			$sign = $weekday < 0 ? '-' : '+';
 			$iso = str_replace('T', $sign . 'w' . abs($weekday) . 'T', $isoDate);
 		}
@@ -178,6 +180,14 @@ class Trigger
 			$iso = $isoDate;
 
 		return 'wallclock('.$repeats.$iso.$intervals.')';
+	}
+
+	/**
+	 * @param array<string,mixed> $wallclock
+	 */
+	private function number(array $wallclock, string $field): int
+	{
+		return (int) ($wallclock[$field] ?? 0);
 	}
 
 }

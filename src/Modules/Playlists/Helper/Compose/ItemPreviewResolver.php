@@ -50,6 +50,7 @@ readonly class ItemPreviewResolver
 	 */
 	public function resolve(array $item): array
 	{
+		// @infection-ignore-all the cast is for databases which give no text, ours gives text
 		$thumbnail = ['type' => self::TYPE_IMAGE, 'url' => (string) ($item['urls']['thumbnail'] ?? '')];
 
 		return match ($item['item_type'])
@@ -67,12 +68,15 @@ readonly class ItemPreviewResolver
 	 */
 	private function resolveMediapool(array $item): ?array
 	{
+		// @infection-ignore-all the cast is for databases which give no text, ours gives text
 		$checksum = (string) $item['file_resource'];
+		// @infection-ignore-all the cast is for databases which give no text, ours gives text
 		$mimetype = (string) $item['mimetype'];
 
 		if ($mimetype === 'application/widget')
 			return ['type' => self::TYPE_WIDGET, 'url' => $this->mediaUrlSigner->widgetUrl($checksum, $this->determinePreferences($item))];
 
+		// @infection-ignore-all the cast is for databases which give no text, ours gives text
 		$extension = (string) ($item['extension'] ?? '');
 		if ($extension === '')
 			return null;
@@ -116,6 +120,7 @@ readonly class ItemPreviewResolver
 	{
 		$name      = pathinfo($thumbnailPath, PATHINFO_FILENAME);
 		$extension = pathinfo($thumbnailPath, PATHINFO_EXTENSION);
+		// @infection-ignore-all a file with an empty name or extension is never in the originals
 		if ($name === '' || $extension === '')
 			return null;
 

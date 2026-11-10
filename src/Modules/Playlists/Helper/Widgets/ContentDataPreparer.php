@@ -70,12 +70,8 @@ readonly class ContentDataPreparer
 				case 'integer':
 					$contentData[$key] = (int)$requestData[$key];
 					break;
+				// text, radio, color, list, combo and the types which are not known
 				default:
-				case 'text':
-				case 'radio':
-				case 'color':
-				case 'list':
-				case 'combo':
 					$contentData[$key] = is_scalar($requestData[$key]) ? (string) $requestData[$key] : '';
 					break;
 			}
