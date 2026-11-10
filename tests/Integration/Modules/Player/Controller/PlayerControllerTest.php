@@ -121,6 +121,20 @@ class PlayerControllerTest extends PlayerControllerTestCase
 		static::assertSame(['success' => true, 'can_edit' => false, 'can_delete' => false, 'can_share' => false], $this->rights($playerId));
 	}
 
+	/**
+	 * Without the id of a player the admin gets nothing: also not the first player.
+	 */
+	public function testWithoutPlayerTheAdminGetsNothing(): void
+	{
+		$this->setPlayer(1, 'status = 2, licence_id = 1');
+		$this->actingAs(1);
+
+		$rights = $this->json($this->controller->determineRights($this->request('GET', '/async/player/rights'), $this->newResponse(), []));
+
+		static::assertSame(['success' => true, 'can_edit' => false, 'can_delete' => false, 'can_share' => false], $rights);
+		$this->assertError($this->controller->fetchPlayer($this->request('GET', '/async/player'), $this->newResponse(), []), 'No playerId');
+	}
+
 	public function testThePlayerIsGivenToWhoMayChangeIt(): void
 	{
 		$this->actingAs(1);

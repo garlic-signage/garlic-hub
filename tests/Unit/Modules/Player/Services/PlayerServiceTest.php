@@ -47,4 +47,17 @@ class PlayerServiceTest extends TestCase
 
 		static::assertSame(['active' => 0, 'inactive' => 0, 'pending' => 0], $service->findAllForDashboard());
 	}
+
+	/**
+	 * The database gives the sums as text, NULL when there is no player of a kind.
+	 */
+	#[Group('units')]
+	public function testTheDashboardHasNumbers(): void
+	{
+		$repository = $this->createStub(PlayerRepository::class);
+		$repository->method('findAllForDashboard')->willReturn(['active' => '2', 'inactive' => null, 'pending' => '1']);
+		$service = new PlayerService($repository, $this->createStub(PlaylistsService::class), $this->createStub(AclValidator::class), $this->createStub(UserSession::class), $this->createStub(AclGrantService::class), $this->createStub(Transactions::class));
+
+		static::assertSame(['active' => 2, 'inactive' => 0, 'pending' => 1], $service->findAllForDashboard());
+	}
 }

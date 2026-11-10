@@ -199,7 +199,31 @@ class PlayerRestApiTest extends ContainerTestCase
 		$body = $this->bodyOf(0);
 		static::assertSame($file, $body['downloadPath']);
 		static::assertSame(20, $body['fileSize']);
-		static::assertStringContainsString("\r\n\r\n<smil>content</smil>\r\n", $body['data']);
+		// one part between two delimiters of the same random boundary
+		$pattern = '/^--(-{13}[0-9a-f]{13})\r\nContent-Disposition: form-data; name="file"; filename="' . preg_quote($file, '/')
+			. '"\r\nContent-Type: text\/plain\r\n\r\n<smil>content<\/smil>\r\n--\1--\r\n$/D';
+		static::assertMatchesRegularExpression($pattern, $body['data']);
+	}
+
+	public function testAnUploadWithoutAnswerIsNotCompleted(): void
+	{
+		$this->giveToken();
+		$file = sys_get_temp_dir() . '/garlic-hub-index-' . bin2hex(random_bytes(3));
+		file_put_contents($file, 'x');
+
+		try
+		{
+			$this->service([$this->json('{}')])->uploadFile(self::BASE, 1, $file, 'index.smil');
+			static::fail('Expected a TranslatableModuleException');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertSame('Upload file failed', $e->getReplacements()['reason']);
+		}
+		finally
+		{
+			unlink($file);
+		}
 	}
 
 	public function testAFileWhichIsNotThereIsAnError(): void

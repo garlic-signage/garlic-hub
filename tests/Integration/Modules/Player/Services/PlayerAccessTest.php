@@ -23,6 +23,7 @@ namespace Tests\Integration\Modules\Player\Services;
 
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\NotFoundException;
+use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Player\Services\PlayerService;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Integration\Support\ContainerTestCase;
@@ -112,6 +113,53 @@ class PlayerAccessTest extends ContainerTestCase
 		static::assertSame(1, $result['affected']);
 		static::assertSame('Bernds Liste', $result['playlist_name']);
 		static::assertSame(7, (int) $this->connection->fetchOne('SELECT playlist_id FROM player WHERE player_id = 3'));
+	}
+
+	public function testTheDeleteIsCommitted(): void
+	{
+		$this->actingAs(1);
+
+		$this->playerService->delete(4);
+
+		static::assertFalse($this->connection->isTransactionActive());
+		static::assertSame([1, 2, 3], $this->remainingPlayerIds());
+	}
+
+	public function testOnlyAMasterPlaylistGoesOntoAPlayer(): void
+	{
+		$this->connection->executeStatement("INSERT INTO playlists (playlist_id, UID, playlist_mode, playlist_name) VALUES (7, 1, 'internal', 'Innen')");
+		$this->actingAs(1);
+
+		try
+		{
+			$this->playerService->replaceMasterPlaylist(3, 7);
+			static::fail('Expected TranslatableModuleException');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertSame('playlist_not_master', $e->getTranslationKey());
+			static::assertSame(['playlist_name' => 'Innen'], $e->getReplacements());
+		}
+		static::assertSame(0, (int) $this->connection->fetchOne('SELECT playlist_id FROM player WHERE player_id = 3'));
+	}
+
+	public function testThePlaylistIsTakenFromAPlayer(): void
+	{
+		$this->connection->executeStatement('UPDATE player SET playlist_id = 5 WHERE player_id = 3');
+		$this->actingAs(1);
+
+		static::assertSame(['affected' => 1, 'playlist_name' => '', 'is_intranet' => 0], $this->playerService->replaceMasterPlaylist(3, 0));
+		static::assertSame(0, (int) $this->connection->fetchOne('SELECT playlist_id FROM player WHERE player_id = 3'));
+	}
+
+	public function testOnlyTheAdminMayDeleteAKnownPlayer(): void
+	{
+		$this->actingAs(1);
+		static::assertTrue($this->playerService->isDeletable(3));
+		static::assertFalse($this->playerService->isDeletable(999));
+
+		$this->actingAs(2);
+		static::assertFalse($this->playerService->isDeletable(1));
 	}
 
 	public function testFetchAclCheckedPlayerDataForAnUnknownPlayer(): void
