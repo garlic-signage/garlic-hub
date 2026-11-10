@@ -23,6 +23,7 @@ namespace Tests\Integration\Shared\User\TwoFactor;
 
 use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Security\Crypt;
+use App\Shared\Audit\AuditAction;
 use App\Shared\Audit\AuditLog;
 use App\Shared\User\Repositories\Core\UserRecoveryCodesRepository;
 use App\Shared\User\Repositories\Core\UserTwoFactorRepository;
@@ -238,7 +239,90 @@ class TwoFactorServiceTest extends ContainerTestCase
 		static::assertFalse($this->service->isEnabled(2));
 		static::assertTrue($this->service->isEnabled(3));
 		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_two_factor WHERE UID = 2'));
+		static::assertSame(0, $this->service->countRecoveryCodes(2));
+		static::assertSame(TwoFactorService::RECOVERY_CODES, $this->service->countRecoveryCodes(3));
 		// a new setup gets a new secret
 		static::assertNotNull($this->service->prepareSetup(2, 'anna'));
+	}
+
+	public function testNewRecoveryCodesAndTurningItOffKeepTheCodesOfOtherUsers(): void
+	{
+		$codes = $this->enable(2);
+		$this->enable(3);
+
+		static::assertCount(TwoFactorService::RECOVERY_CODES, $this->service->createRecoveryCodes(2, $codes[0]));
+		static::assertSame(TwoFactorService::RECOVERY_CODES, $this->service->countRecoveryCodes(3));
+
+		$this->service->disable(2, $this->codeOf($this->secretOf(2)));
+		static::assertSame(TwoFactorService::RECOVERY_CODES, $this->service->countRecoveryCodes(3));
+	}
+
+	/**
+	 * A second confirmation would give new recovery codes past the check of createRecoveryCodes().
+	 */
+	public function testASecondConfirmationIsRefused(): void
+	{
+		$this->enable();
+
+		static::assertNull($this->service->confirmSetup(2, $this->codeOf($this->secretOf(2))));
+	}
+
+	public function testARecoveryCodeMayHaveTabsAndLineBreaksAround(): void
+	{
+		$codes = $this->enable();
+
+		static::assertTrue($this->service->verify(2, "\t" . $codes[0] . "\n"));
+	}
+
+	/**
+	 * Every change is committed and audited: by the user himself, the reset by the admin.
+	 */
+	public function testEveryChangeIsCommittedAndAudited(): void
+	{
+		$recorded = [];
+		$auditLog = $this->createStub(AuditLog::class);
+		$auditLog->method('record')->willReturnCallback(static function (int $UID, string $module, AuditAction $action, int|string|null $unitId = null, ?int $targetUID = null) use (&$recorded): void
+		{
+			$recorded[] = [$UID, $module, $action, $targetUID];
+		});
+		$transactions = $this->createMock(Transactions::class);
+		$transactions->expects($this->exactly(5))->method('begin');
+		$transactions->expects($this->exactly(5))->method('commit');
+		$transactions->expects($this->never())->method('rollBack');
+		$this->service = new TwoFactorService(new UserTwoFactorRepository($this->connection), new UserRecoveryCodesRepository($this->connection), $this->container->get(Crypt::class), $this->clock, $transactions, $auditLog, 'Garlic-Hub');
+
+		$codes = $this->enable(2);
+		$codes = $this->service->createRecoveryCodes(2, $codes[0]);
+		static::assertTrue($this->service->disable(2, $codes[0]));
+		$this->enable(3);
+		$this->service->reset(3, 1);
+
+		static::assertSame([
+			[2, 'account', AuditAction::TWO_FACTOR_ENABLED, 2],
+			[2, 'account', AuditAction::RECOVERY_CODES_CREATED, 2],
+			[2, 'account', AuditAction::TWO_FACTOR_DISABLED, 2],
+			[3, 'account', AuditAction::TWO_FACTOR_ENABLED, 3],
+			[1, 'users', AuditAction::TWO_FACTOR_RESET, 3],
+		], $recorded);
+	}
+
+	/**
+	 * The app shows issuer and user. A colon would separate them in the address, so it is left out.
+	 */
+	public function testTheAddressOfTheQrCodeNamesTheIssuerAndTheUser(): void
+	{
+		$uri = $this->service->provisioningUri(self::RFC_SECRET, 2, 'an:na');
+		static::assertStringStartsWith('otpauth://totp/Garlic-Hub%3Aanna?', $uri);
+		static::assertStringContainsString('issuer=Garlic-Hub', $uri);
+
+		static::assertStringStartsWith('otpauth://totp/Garlic-Hub%3A2?', $this->service->provisioningUri(self::RFC_SECRET, 2, ''), 'without a name the id');
+
+		$withoutIssuer = new TwoFactorService(new UserTwoFactorRepository($this->connection), new UserRecoveryCodesRepository($this->connection), $this->container->get(Crypt::class), $this->clock, $this->container->get(Transactions::class), $this->container->get(AuditLog::class), ':');
+		$uri = $withoutIssuer->provisioningUri(self::RFC_SECRET, 2, 'anna');
+		static::assertStringStartsWith('otpauth://totp/anna?', $uri);
+		static::assertStringNotContainsString('issuer', $uri);
+
+		$colon = new TwoFactorService(new UserTwoFactorRepository($this->connection), new UserRecoveryCodesRepository($this->connection), $this->container->get(Crypt::class), $this->clock, $this->container->get(Transactions::class), $this->container->get(AuditLog::class), 'Garlic:Hub');
+		static::assertStringContainsString('issuer=GarlicHub', $colon->provisioningUri(self::RFC_SECRET, 2, 'anna'));
 	}
 }

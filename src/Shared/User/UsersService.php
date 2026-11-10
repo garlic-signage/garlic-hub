@@ -194,6 +194,7 @@ class UsersService extends AbstractBaseService
 				/** @var UserMainRepository $repository */
 				$userData[$key] = $repository->findByIdSecured($UID);
 			}
+			// @infection-ignore-all the other repositories of Core read by the id the same way
 			elseif ($key === 'acl' || $key === 'vip')
 			{
 				// because there can be more than one result

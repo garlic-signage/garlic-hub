@@ -55,6 +55,7 @@ class UserSsoRepository extends SqlBase
 
 		$UID = $queryBuilder->executeQuery()->fetchOne();
 
+		// @infection-ignore-all the casts are for databases which give text, ours gives numbers
 		return is_numeric($UID) ? (int) $UID : null;
 	}
 

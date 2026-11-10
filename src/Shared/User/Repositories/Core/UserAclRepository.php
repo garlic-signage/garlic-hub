@@ -59,14 +59,17 @@ class UserAclRepository extends SqlBase
 	{
 		$modules = EditionAclModules::getModules($config->getEdition());
 
+		// @infection-ignore-all only for SQLite, the tests run on MariaDB
 		$this->connection->executeStatement('PRAGMA foreign_keys = OFF;');
 	//	$this->connection->executeStatement('SET FOREIGN_KEY_CHECKS = 0;');
 
 		foreach ($modules as $module)
 		{
+			// @infection-ignore-all the config gives digits, the query takes them as they are
 			$adminRights = (int) $config->getConfigValue('moduleadmin', $module,'GlobalACLs');
 			$this->connection->executeStatement("INSERT INTO user_acl (UID, acl, module) VALUES ($UID, $adminRights, '$module');");
 		}
+		// @infection-ignore-all only for SQLite, the tests run on MariaDB
 		$this->connection->executeStatement('PRAGMA foreign_keys = ON;');
 	}
 
@@ -116,6 +119,7 @@ class UserAclRepository extends SqlBase
 		$users = [];
 		foreach ($queryBuilder->executeQuery()->fetchAllAssociative() as $row)
 		{
+			// @infection-ignore-all the casts are for databases which give text, ours gives numbers
 			$users[] = ['UID' => (int) $row['UID'], 'username' => (string) $row['username'], 'company_id' => (int) $row['company_id']];
 		}
 

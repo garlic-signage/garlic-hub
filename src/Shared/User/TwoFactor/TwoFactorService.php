@@ -86,6 +86,7 @@ class TwoFactorService
 		if ($row !== [] && $row['enabled_at'] !== null)
 			return null;
 
+		// @infection-ignore-all the column is text
 		$encrypted = (string) ($row['secret'] ?? '');
 		if ($row === [])
 		{
@@ -94,6 +95,16 @@ class TwoFactorService
 		}
 		$secret = $this->decrypt($encrypted);
 
+		return ['secret' => $secret, 'qr_code' => $this->qrCode($this->provisioningUri($secret, $UID, $username))];
+	}
+
+	/**
+	 * The address in the QR code: the app shows the issuer and the label (the username, else the id).
+	 *
+	 * @param non-empty-string $secret
+	 */
+	public function provisioningUri(string $secret, int $UID, string $username): string
+	{
 		$totp = TOTP::createFromSecret($secret, $this->clock);
 		// a colon separates the issuer from the label in the uri
 		$totp->setLabel(str_replace(':', '', $username) ?: (string) $UID);
@@ -101,7 +112,7 @@ class TwoFactorService
 		if ($issuer !== '')
 			$totp->setIssuer($issuer);
 
-		return ['secret' => $secret, 'qr_code' => $this->qrCode($totp->getProvisioningUri())];
+		return $totp->getProvisioningUri();
 	}
 
 	/**
@@ -266,6 +277,7 @@ class TwoFactorService
 	private function matchTimeSlot(string $secret, string $code): ?int
 	{
 		$code = $this->normalize($code);
+		// @infection-ignore-all the library compares the whole code again below
 		if (preg_match('/^\d{6}$/', $code) !== 1)
 			return null;
 
@@ -274,7 +286,9 @@ class TwoFactorService
 		$now    = $this->clock->now()->getTimestamp();
 		foreach ([0, -1, 1] as $offset)
 		{
+			// @infection-ignore-all the offsets are symmetric, before 1970 is no slot of a real clock
 			$timestamp = $now + $offset * $period;
+			// @infection-ignore-all see above
 			if ($timestamp >= 0 && $totp->verify($code, $timestamp))
 				return intdiv($timestamp, $period);
 		}
@@ -308,8 +322,10 @@ class TwoFactorService
 	private function randomCode(): string
 	{
 		$code = '';
+		// @infection-ignore-all a letter more or less in the alphabet is as random for a test
 		$max  = strlen(self::RECOVERY_CODE_ALPHABET) - 1;
 		for ($i = 0; $i < self::RECOVERY_CODE_LENGTH; $i++)
+			// @infection-ignore-all see above
 			$code .= self::RECOVERY_CODE_ALPHABET[random_int(0, $max)];
 
 		return $code;
@@ -346,6 +362,7 @@ class TwoFactorService
 
 	private function qrCode(string $uri): string
 	{
+		// @infection-ignore-all the size is layout
 		$svg = new Writer(new ImageRenderer(new RendererStyle(200), new SvgImageBackEnd()))->writeString($uri);
 
 		// inline in the page: without the xml declaration

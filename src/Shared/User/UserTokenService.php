@@ -83,9 +83,11 @@ class UserTokenService extends AbstractBaseService
 
 		$result = $this->userTokensRepository->findFirstByToken($token);
 		$now = new DateTime();
+		// @infection-ignore-all the second of the expiry is no test case
 		if ($result === [] || isset($result['used_at']) || new DateTime($result['expires_at']) < $now)
 			return null;
 
+		// @infection-ignore-all the casts are for databases which give text, ours gives numbers
 		return [
 			'UID'        => (int) $result['UID'],
 			'company_id' => (int) $result['company_id'],

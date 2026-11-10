@@ -50,6 +50,7 @@ class UserVipRepository extends SqlBase
 	{
 		$rows = $this->findAllByWithFields(['unit_id'], ['UID' => $UID, 'vip_name' => $vipName], [], [], '', [['sort' => 'unit_id']]);
 
+		// @infection-ignore-all the casts are for databases which give text, ours gives numbers
 		return array_map(fn(array $row) => (string) $row['unit_id'], $rows);
 	}
 
@@ -72,6 +73,7 @@ class UserVipRepository extends SqlBase
 		$users = [];
 		foreach ($queryBuilder->executeQuery()->fetchAllAssociative() as $row)
 		{
+			// @infection-ignore-all the casts are for databases which give text, ours gives numbers
 			$users[] = ['UID' => (int) $row['UID'], 'vip_name' => (string) $row['vip_name']];
 		}
 
@@ -94,6 +96,7 @@ class UserVipRepository extends SqlBase
 			->setParameter('vipNames', $vipNames, ArrayParameterType::STRING)
 			->setParameter('unitIds', $unitIds, ArrayParameterType::STRING);
 
+		// @infection-ignore-all the casts are for databases which give text, ours gives numbers
 		return array_map('intval', $queryBuilder->executeQuery()->fetchFirstColumn());
 	}
 

@@ -137,6 +137,37 @@ class UsersServiceTest extends ContainerTestCase
 		$this->service($this->failingCache())->invalidateCache(10);
 	}
 
+	/**
+	 * Both kinds of errors of a cache end in the error, with the one of the cache as cause.
+	 *
+	 * @return array<string,array{\Throwable}>
+	 */
+	public static function cacheErrors(): array
+	{
+		return [
+			'simple cache'     => [new PhpfastcacheSimpleCacheException('cache down')],
+			'invalid argument' => [new class('bad key') extends \Exception implements \Psr\Cache\InvalidArgumentException {}],
+		];
+	}
+
+	#[\PHPUnit\Framework\Attributes\DataProvider('cacheErrors')]
+	public function testTheErrorOfTheCacheIsTheCause(\Throwable $error): void
+	{
+		$cache = $this->createStub(Psr16Adapter::class);
+		$cache->method('delete')->willThrowException($error);
+
+		try
+		{
+			$this->service($cache)->invalidateCache(10);
+			static::fail('the invalidation must fail');
+		}
+		catch (CoreException $e)
+		{
+			static::assertSame($error, $e->getPrevious());
+			static::assertSame(0, $e->getCode());
+		}
+	}
+
 	public function testALoginIsCountedAndAPasswordHashIsStored(): void
 	{
 		$service = $this->service();
