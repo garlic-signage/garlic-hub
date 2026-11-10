@@ -216,3 +216,23 @@ Deno.test('without CSRF token nothing is sent and the actions are enabled again'
 	assertEquals(logStub.calls[0].args[3], 'No CSRF token found in meta tag');
 	assertEquals(dialog.calls, ['disableActions', 'enableActions']);
 });
+
+Deno.test('the upload tells whether the file was uploaded', async () =>
+{
+	using _dom     = createDom(CSRF_META);
+	using _error   = stub(console, 'error');
+	using _log     = stub(console, 'log');
+	using _alert   = stub(globalThis, 'alert');
+	const answers  = [
+		[{success: true, media_id: 'abc'}, 5, true], [{success: false, error_message: 'Not allowed'}, 5, false],
+		[null, 5, false], [new Error('Upload aborted.'), 5, false], [new Error('Timeout'), 5, false],
+		[{success: true, media_id: 'abc'}, 0, false],
+	];
+
+	for (const [answer, nodeId, uploaded] of answers)
+	{
+		const {uploader} = createUploader(answer, nodeId);
+		assertEquals(await uploader.uploadExternalFile(FILE_URL), uploaded, `${JSON.stringify(answer)} / ${nodeId}`);
+	}
+	UploadedMedia.take();
+});

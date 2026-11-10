@@ -134,7 +134,7 @@ Deno.test('after the upload the field is empty and the upload disabled', async (
 	assertEquals(page.button.disabled, true);
 });
 
-Deno.test('a refused upload is logged and empties the field', async () =>
+Deno.test('a refused upload is logged and keeps the address for a second try', async () =>
 {
 	using page      = createPage({success: false, error_message: 'Not allowed'});
 	using errorStub = stub(console, 'error');
@@ -144,8 +144,19 @@ Deno.test('a refused upload is logged and empties the field', async () =>
 
 	assertEquals(errorStub.calls[0].args, ['Error for file:', FILE_URL, 'Not allowed']);
 	assertEquals(UploadedMedia.take(), []);
-	assertEquals(page.field.value, '');
-	// the button stays enabled for an empty field
+	assertEquals(page.field.value, FILE_URL);
+	assertEquals(page.button.disabled, false);
+});
+
+Deno.test('a failed request keeps the address too', async () =>
+{
+	using page     = createPage(new Error('Timeout: Server did not respond.'));
+	using _logStub = stub(console, 'log');
+	type(page, FILE_URL, true);
+
+	await page.uploader.uploadFile();
+
+	assertEquals(page.field.value, FILE_URL);
 	assertEquals(page.button.disabled, false);
 });
 
@@ -160,4 +171,5 @@ Deno.test('without an active folder nothing is uploaded', async () =>
 
 	assertEquals(alertStub.calls[0].args, ['Choose a directory first.']);
 	assertEquals(page.client.requests, []);
+	assertEquals(page.field.value, FILE_URL);
 });

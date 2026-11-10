@@ -38,12 +38,15 @@ export class BaseUploader
 		this.#domElements.startFileUpload.disabled = true;
 	}
 
+	/**
+	 * @return {Promise<boolean>} whether the file was uploaded
+	 */
 	async uploadExternalFile(filePath, metadata = null)
 	{
 		if (this.directoryView.getActiveNodeId() === 0)
 		{
 			alert("Choose a directory first.");
-			return;
+			return false;
 		}
 
 		try
@@ -61,12 +64,14 @@ export class BaseUploader
 			const result = await this.fetchClient.fetchData(UploadApiConfig.UPLOAD_FROM_URL, options);
 
 			if (!result || !result.success)
-				console.error('Error for file:', filePath, result?.error_message || 'Unknown error');
-			else
 			{
-				UploadedMedia.add(result.media_id);
-				this.disableUploadButton();
+				console.error('Error for file:', filePath, result?.error_message || 'Unknown error');
+				return false;
 			}
+
+			UploadedMedia.add(result.media_id);
+			this.disableUploadButton();
+			return true;
 		}
 		catch(error)
 		{
@@ -74,6 +79,8 @@ export class BaseUploader
 				console.log('Upload aborted for file:', filePath);
 			else
 				console.log('Upload failed for file:', filePath, '\n', error.message);
+
+			return false;
 		}
 		finally
 		{
