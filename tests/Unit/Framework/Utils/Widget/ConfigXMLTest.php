@@ -226,6 +226,7 @@ class ConfigXMLTest extends TestCase
 			'german'                 => ['de', 'Nicht so, mein Freund!'],
 			'german with country'    => ['de-De', 'Nicht so, mein Freund!'],
 			'upper case'             => ['DE', 'Nicht so, mein Freund!'],
+			'greek in upper case'    => ['EL', 'Όχι έτσι, βρε φίλε μου!'],
 			'greek'                  => ['el', 'Όχι έτσι, βρε φίλε μου!'],
 			'long text starting el'  => ['el_should_check only_first_letters', 'Όχι έτσι, βρε φίλε μου!'],
 			'language not there'     => ['fr', 'Nicht so, mein Freund!'],
@@ -264,9 +265,49 @@ class ConfigXMLTest extends TestCase
 	#[Group('units')]
 	public function testTheDefaultLanguageOfTheWidget(): void
 	{
-		$config = (new ConfigXML())->load('<widget ' . self::W3C . ' xml:lang="de-DE"/>')->parseBasic();
+		$config = (new ConfigXML())->load('<widget ' . self::W3C . ' xml:lang="DE-de"/>')->parseBasic();
 
 		static::assertSame('de', $config->getDefaultLanguage());
+	}
+
+	/**
+	 * The language is the first two letters in lower case, an English text stays the English one.
+	 *
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testTheLanguagesOfTheNames(): void
+	{
+		$config = $this->fromString('<name xml:lang="DE-de">Hallo</name><name xml:lang="en">Hello</name>')->parseBasic();
+
+		static::assertSame(['de' => 'Hallo', 'en' => 'Hello'], $config->getName());
+	}
+
+	/**
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testTheLanguageOfANoteAndItsTrimmedText(): void
+	{
+		$config = $this->fromString('<preference name="p" value="1"><ia:note xml:lang="DE-de">  Die Länge  </ia:note></preference>')->parsePreferences();
+
+		static::assertSame(['p' => ['value' => '1', 'notes' => ['de' => 'Die Länge']]], $config->getPreferences());
+	}
+
+	/**
+	 * Other attributes of an option are no value.
+	 *
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testAnOptionOfARadioHasItsKeyAndValue(): void
+	{
+		$config = $this->fromString('<preference name="p" value="1" ia:types="radio"><ia:options resourceKey="a" value="b" label="x"/></preference>')->parsePreferences();
+
+		static::assertSame(['p' => ['value' => '1', 'types' => 'radio', 'options' => ['a' => 'b']]], $config->getPreferences());
 	}
 
 	/**
@@ -452,6 +493,18 @@ class ConfigXMLTest extends TestCase
 		$config = $this->fromString('<preference name="p" value="1"><ia:options resourceKey="a" value="b"/></preference>')->parsePreferences();
 
 		static::assertSame(['p' => ['value' => '1']], $config->getPreferences());
+	}
+
+	/**
+	 * @throws FrameworkException
+	 * @throws ModuleException
+	 */
+	#[Group('units')]
+	public function testThePreferencesAfterAReadonlyOneAreKept(): void
+	{
+		$config = $this->fromString('<preference name="a" value="0" readonly="true"/><preference name="b" value="1"/>')->parsePreferences();
+
+		static::assertSame(['b' => ['value' => '1']], $config->getPreferences());
 	}
 
 	/**

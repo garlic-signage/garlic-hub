@@ -228,6 +228,32 @@ class DatatableQueryTest extends RepositoryTestCase
 	}
 
 	/**
+	 * Without a page and with page 0 the first page comes.
+	 *
+	 * @throws Exception
+	 */
+	public function testThePageZeroIsTheFirstPage(): void
+	{
+		$fields = $this->fields(['sort_column' => 'template_id', 'sort_order' => 'ASC', BaseFilterParametersInterface::PARAMETER_ELEMENTS_PER_PAGE => 2]);
+
+		static::assertSame([1, 2], $this->ids($this->query->findForModuleAdmin($this->definition, $fields)));
+		$fields[BaseFilterParametersInterface::PARAMETER_ELEMENTS_PAGE] = ['value' => 0];
+		static::assertSame([1, 2], $this->ids($this->query->findForModuleAdmin($this->definition, $fields)));
+	}
+
+	/**
+	 * A sort column which is no column falls back to the default of the parameter, without order ascending.
+	 *
+	 * @throws Exception
+	 */
+	public function testAnInvalidSortColumnFallsBackToItsDefault(): void
+	{
+		$fields = ['sort_column' => ['value' => 'name; DROP TABLE templates', 'default_value' => 'name']];
+
+		static::assertSame([1, 2, 4, 3, 5], $this->ids($this->query->findForModuleAdmin($this->definition, $fields)));
+	}
+
+	/**
 	 * A reseller sees what belongs to him and to the companies he is responsible for.
 	 *
 	 * @throws Exception

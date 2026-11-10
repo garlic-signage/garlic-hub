@@ -323,6 +323,28 @@ class SessionTest extends TestCase
 		static::assertSame(PHP_SESSION_NONE, session_status());
 	}
 
+	/**
+	 * Without the cookie the data of another request in this process is not read either.
+	 */
+	#[Group('units')]
+	public function testWithoutTheSessionCookieNothingIsRead(): void
+	{
+		unset($_COOKIE[session_name()]);
+		$_SESSION = ['locale' => 'de_DE'];
+
+		static::assertNull($this->session->get('locale'));
+		static::assertSame([], $this->session->getSession());
+		static::assertSame(PHP_SESSION_NONE, session_status());
+	}
+
+	#[Group('units')]
+	public function testGetSessionGivesTheDataOfTheSession(): void
+	{
+		$this->session->set('locale', 'de_DE');
+
+		static::assertSame(['locale' => 'de_DE'], $this->session->getSession());
+	}
+
 	#[Group('units')]
 	public function testReadingWithTheSessionCookieStartsTheSession(): void
 	{
@@ -381,5 +403,20 @@ class SessionTest extends TestCase
 	{
 		$id = $this->session->id();
 		static::assertEmpty($id); // Should be empty if the session hasn't started
+	}
+
+	#[Group('units')]
+	public function testTheIdStaysWithoutTheWishForANewOne(): void
+	{
+		$this->session->start();
+
+		static::assertSame($this->session->id(), $this->session->id());
+	}
+
+	#[Group('units')]
+	public function testANewIdNeedsAStartedSession(): void
+	{
+		static::assertSame('', $this->session->id(true));
+		static::assertSame(PHP_SESSION_NONE, session_status());
 	}
 }

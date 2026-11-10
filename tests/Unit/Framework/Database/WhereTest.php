@@ -95,6 +95,19 @@ class WhereTest extends TestCase
 		static::assertSame(ArrayParameterType::INTEGER, $queryBuilder->getParameterTypes()['where1']);
 	}
 
+	/**
+	 * Named conditions (e.g. spread from an array with keys) become a list.
+	 */
+	#[Group('units')]
+	public function testNamedConditionsBecomeAList(): void
+	{
+		$first  = Where::equals('a', 1);
+		$second = Where::equals('b', 2);
+
+		static::assertSame([$first, $second], Where::anyOf(...['x' => $first, 'y' => $second])->conditions);
+		static::assertSame([$first, $second], Where::allOf(...['x' => $first, 'y' => $second])->conditions);
+	}
+
 	#[Group('units')]
 	public function testAnEmptyListMatchesNothing(): void
 	{

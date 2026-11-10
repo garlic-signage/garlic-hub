@@ -59,6 +59,46 @@ class ServiceTest extends NestedSetsTestCase
 		static::assertSame(3, (int) $this->node($ids['B1'])['level']);
 	}
 
+	/**
+	 * A new folder is no user folder, not visible to others and has no order of its own.
+	 */
+	public function testANewFolderHasTheDefaults(): void
+	{
+		$ids = $this->buildTree();
+
+		$root = $this->node($ids['A']);
+		$sub  = $this->node($ids['B']);
+		static::assertSame([0, 0], [(int) $root['is_user_folder'], (int) $root['visibility']]);
+		static::assertSame([0, 0], [(int) $sub['root_order'], (int) $sub['visibility']]);
+	}
+
+	/**
+	 * Every change is committed, a failed one is rolled back: no transaction stays open.
+	 */
+	public function testNoTransactionStaysOpen(): void
+	{
+		$ids = $this->buildTree();
+		static::assertFalse($this->connection->isTransactionActive(), 'after adding');
+
+		$this->service->moveNode($this->node($ids['D']), $this->node($ids['B']), Calculator::REGION_APPENDCHILD);
+		static::assertFalse($this->connection->isTransactionActive(), 'after moving');
+
+		$this->service->deleteSingleNode($this->node($ids['C']));
+		static::assertFalse($this->connection->isTransactionActive(), 'after deleting a node');
+
+		$this->service->deleteTree($this->node($ids['B']));
+		static::assertFalse($this->connection->isTransactionActive(), 'after deleting a tree');
+
+		try
+		{
+			$this->service->deleteSingleNode(['node_id' => 9999, 'root_id' => $ids['A'], 'lft' => 20, 'rgt' => 21]);
+		}
+		catch (FrameworkException)
+		{
+			static::assertFalse($this->connection->isTransactionActive(), 'after a failure');
+		}
+	}
+
 	public function testAddSubNodeInTheTreeOfTheMigration(): void
 	{
 		$id = $this->addSub(3, 'Neu unter videos', 1);

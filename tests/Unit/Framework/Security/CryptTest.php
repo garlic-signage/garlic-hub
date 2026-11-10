@@ -178,6 +178,54 @@ class CryptTest extends TestCase
 	 * @throws Exception
 	 */
 	#[Group('units')]
+	public function testTheDefaultsOfTheGenerators(): void
+	{
+		static::assertSame(64, strlen($this->crypt->generateRandomString()));
+		static::assertSame(1, strlen($this->crypt->generateRandomBytes(1)), 'One byte is a length.');
+		static::assertSame(9, strlen((string) $this->crypt->generateRandomNumber()));
+	}
+
+	/**
+	 * Every value of the range shows up, the first and the last, too. 300 draws of 9 numbers miss
+	 * one of them with a chance of 10^-15.
+	 *
+	 * @throws Exception
+	 */
+	#[Group('units')]
+	public function testARandomNumberCoversItsWholeRange(): void
+	{
+		$numbers = [];
+		for ($i = 0; $i < 300; $i++)
+			$numbers[$this->crypt->generateRandomNumber(1)] = true;
+		ksort($numbers);
+
+		static::assertSame(range(1, 9), array_keys($numbers));
+
+		for ($i = 0; $i < 300; $i++)
+		{
+			$number = $this->crypt->generateRandomNumber(2);
+			static::assertTrue($number >= 10 && $number <= 99, (string) $number);
+		}
+	}
+
+	/**
+	 * The first and the last sign of the alphabet show up in a long password as well.
+	 *
+	 * @throws Exception
+	 */
+	#[Group('units')]
+	public function testAPasswordUsesTheWholeAlphabet(): void
+	{
+		$password = $this->crypt->generatePassword(5000);
+
+		static::assertStringContainsString('a', $password);
+		static::assertStringContainsString('?', $password);
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	#[Group('units')]
 	#[DataProvider('invalidPlacesProvider')]
 	public function testGenerateRandomNumberRejectsInvalidPlaces(int $places): void
 	{

@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Framework\Media;
 
 use App\Framework\Media\MediaUrlSigner;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
@@ -162,14 +163,39 @@ class MediaUrlSignerTest extends TestCase
 		));
 	}
 
-	#[Group('units')]
-	public function testVerifyRejectsNonStringParameters(): void
+	/**
+	 * @return array<string,array{string,mixed}>
+	 */
+	public static function nonStringParameters(): array
 	{
-		static::assertFalse(MediaUrlSigner::verify(
-			['c' => self::CHECKSUM, 'ext' => 'jpg', 'v' => 'thumb', 'exp' => 1760004000, 'sig' => ['array']],
-			self::SECRET,
-			self::NOW
-		));
+		return [
+			'checksum'  => ['c', [self::CHECKSUM]],
+			'extension' => ['ext', ['jpg']],
+			'variant'   => ['v', ['thumb']],
+			'expiry'    => ['exp', 'as number'],
+			'signature' => ['sig', 'as array'],
+		];
+	}
+
+	/**
+	 * Every parameter must be text, also when the others are those of a valid url.
+	 */
+	#[Group('units')]
+	#[DataProvider('nonStringParameters')]
+	public function testVerifyRejectsNonStringParameters(string $name, mixed $value): void
+	{
+		$signature = $this->mediaUrlSigner->sign(self::CHECKSUM, 'jpg', 'thumb', self::NOW);
+		$get       = ['c' => self::CHECKSUM, 'ext' => 'jpg', 'v' => 'thumb', 'exp' => (string) $signature['exp'], 'sig' => $signature['sig']];
+		static::assertTrue(MediaUrlSigner::verify($get, self::SECRET, self::NOW), 'The url without the change is valid.');
+
+		$get[$name] = match ($value)
+		{
+			'as number' => $signature['exp'],
+			'as array'  => [$signature['sig']],
+			default     => $value
+		};
+
+		static::assertFalse(MediaUrlSigner::verify($get, self::SECRET, self::NOW));
 	}
 
 	#[Group('units')]
