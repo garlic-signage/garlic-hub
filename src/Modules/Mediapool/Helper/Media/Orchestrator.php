@@ -154,6 +154,7 @@ class Orchestrator
 		if (!is_array($tags))
 			return null;
 
+		// @infection-ignore-all MediaService::encodeTags walks the tags with foreach, their keys do not matter
 		return array_values(array_filter($tags, is_string(...)));
 	}
 

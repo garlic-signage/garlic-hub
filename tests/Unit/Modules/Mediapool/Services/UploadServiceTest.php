@@ -22,6 +22,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Mediapool\Services;
 
 use App\Framework\Exceptions\AccessDeniedException;
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Exceptions\ModuleException;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Framework\Media\MimeTypeService;
@@ -439,5 +441,157 @@ class UploadServiceTest extends TestCase
 		}
 
 		static::assertLessThanOrEqual(4, count($this->sent), 'at most three redirects are followed');
+	}
+
+	/** @var list<array<string,mixed>> the rows which were inserted */
+	private array $inserted = [];
+
+	/**
+	 * A service with a handler which passes everything, a repository which notes the inserted rows and maybe knows
+	 * the file already.
+	 *
+	 * @param array<string,mixed> $existing the row of the same file, if there is one
+	 */
+	private function storingService(AbstractMediaHandler $handler, array $existing = []): UploadService
+	{
+		$this->inserted = [];
+		$nodes = $this->createStub(NodesService::class);
+		$nodes->method('isNodeUploadable')->willReturn(true);
+		$factory = $this->createStub(MediaHandlerFactory::class);
+		$factory->method('createMediaHandler')->willReturn($handler);
+		$repository = $this->createStub(FilesRepository::class);
+		$repository->method('findFirstBy')->willReturn($existing);
+		$repository->method('insert')->willReturnCallback(function (array $fields): string
+		{
+			$this->inserted[] = $fields;
+			return 'id';
+		});
+		$mimeTypes = $this->createStub(MimeTypeService::class);
+		$mimeTypes->method('detectFromFile')->willReturn('image/png');
+		$mimeTypes->method('determineExtensionByMimeType')->willReturn('png');
+
+		return new UploadService($factory, $nodes, new Client(), $repository, $mimeTypes, new SsrfValidator(static fn(string $host): string => $host));
+	}
+
+	/**
+	 * @return AbstractMediaHandler&\PHPUnit\Framework\MockObject\Stub
+	 */
+	private function passingHandler(): AbstractMediaHandler
+	{
+		$handler = $this->createStub(AbstractMediaHandler::class);
+		$handler->method('uploadFromLocal')->willReturn('/var/uploads/x/a.png');
+		$handler->method('determineNewFilename')->willReturn('abc');
+		$handler->method('determineNewFilePath')->willReturn('/var/originals/abc.png');
+		$handler->method('getFileSize')->willReturn(10);
+		$handler->method('getDimensions')->willReturn(['width' => 8, 'height' => 6]);
+		$handler->method('getDuration')->willReturn(12.5);
+		$handler->method('getMetadata')->willReturn(['duration' => 99, 'codec' => 'png']);
+		$handler->method('getThumbExtension')->willReturn('png');
+		$handler->method('getConfigData')->willReturn('');
+
+		return $handler;
+	}
+
+	private function upload(UploadService $service): void
+	{
+		$service->uploadMediaFile(7, 1, new UploadedFile('/tmp/x', 'a.png', 'image/png', 10), []);
+	}
+
+	/**
+	 * The duration is the one of the handler, a duration in the metadata of the file does not replace it.
+	 */
+	#[Group('units')]
+	public function testTheMetadataHaveTheSizeTheDimensionsAndTheDurationOfTheHandler(): void
+	{
+		$this->upload($this->storingService($this->passingHandler()));
+
+		static::assertCount(1, $this->inserted);
+		static::assertSame(
+			['size' => 10, 'dimensions' => ['width' => 8, 'height' => 6], 'duration' => 12.5, 'codec' => 'png'],
+			json_decode((string) $this->inserted[0]['metadata'], true)
+		);
+	}
+
+	/**
+	 * @return array<string,array{string|null,string}>
+	 */
+	public static function tagsOfTheKnownFile(): array
+	{
+		return [
+			'tags'    => ['strand,meer', 'strand,meer'],
+			'no tags' => [null, ''],
+		];
+	}
+
+	/**
+	 * A file which is in the mediapool already takes the data of the stored one, with its tags.
+	 */
+	#[Group('units')]
+	#[DataProvider('tagsOfTheKnownFile')]
+	public function testTheSameFileAgainTakesTheTagsOfTheStoredOne(?string $tags, string $expected): void
+	{
+		$existing = ['mimetype' => 'image/png', 'config_data' => '', 'metadata' => '{}', 'extension' => 'png', 'media_description' => 'Strand', 'tags' => $tags, 'thumb_extension' => 'png'];
+
+		$this->upload($this->storingService($this->passingHandler(), $existing));
+
+		static::assertCount(1, $this->inserted);
+		static::assertSame($expected, $this->inserted[0]['tags']);
+		static::assertSame('Strand', $this->inserted[0]['media_description']);
+	}
+
+	/**
+	 * @return array<string,array{\Throwable}>
+	 */
+	public static function errorsOfTheLibraries(): array
+	{
+		return [
+			'imagick'   => [new \ImagickException('broken')],
+			'framework' => [new FrameworkException('no video stream')],
+			'core'      => [new CoreException('broken')],
+		];
+	}
+
+	/**
+	 * A file which the libraries can not read is a text for the user, the reason stays for the log.
+	 */
+	#[Group('units')]
+	#[DataProvider('errorsOfTheLibraries')]
+	public function testAFileWhichTheLibrariesCanNotReadIsATextForTheUser(\Throwable $error): void
+	{
+		$handler = $this->passingHandler();
+		$handler->method('validateStoredFile')->willThrowException($error);
+
+		try
+		{
+			$this->upload($this->storingService($handler));
+			static::fail('Expected a TranslatableModuleException');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertSame('file_not_readable', $e->getTranslationKey());
+			static::assertSame($error, $e->getPrevious());
+		}
+		static::assertSame([], $this->inserted);
+	}
+
+	/**
+	 * The checks of the handler have their own texts already.
+	 */
+	#[Group('units')]
+	public function testTheErrorOfACheckStaysAsItIs(): void
+	{
+		$error   = new TranslatableModuleException('mediapool', 'width_exceeded');
+		$handler = $this->passingHandler();
+		$handler->method('validateStoredFile')->willThrowException($error);
+
+		try
+		{
+			$this->upload($this->storingService($handler));
+			static::fail('Expected a TranslatableModuleException');
+		}
+		catch (TranslatableModuleException $e)
+		{
+			static::assertSame($error, $e);
+		}
 	}
 }
