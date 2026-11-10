@@ -43,6 +43,7 @@ class MediapoolUnitProvider extends TableUnitProvider
 		$paths = $this->nodesRepository->findPaths(array_column($units, 'id'));
 		foreach ($units as $key => $unit)
 		{
+			// @infection-ignore-all every directory has a path, at least its own name: the fallback is only for the type
 			$units[$key]['name'] = implode(self::PATH_SEPARATOR, $paths[$unit['id']] ?? [$unit['name']]);
 		}
 

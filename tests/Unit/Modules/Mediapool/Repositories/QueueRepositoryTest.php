@@ -33,12 +33,12 @@ class QueueRepositoryTest extends TestCase
 	 * @throws Exception
 	 */
 	#[Group('units')]
-	public function testConstructor(): void
+	public function testTheQueueIsItsTableWithItsId(): void
 	{
 		$connectionStub = $this->createStub(Connection::class);
 		$repository = new QueueRepository($connectionStub);
 
-		// @phpstan-ignore-next-line
-		static::assertInstanceOf(QueueRepository::class, $repository);
+		static::assertSame('mediapool_queue', $repository->getTable());
+		static::assertSame('queue_id', $repository->getIdField());
 	}
 }

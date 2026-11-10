@@ -152,17 +152,28 @@ class NodesRepository extends SqlBase
 			->from($this->table, 'node')
 			->innerJoin('node', $this->table, 'ancestor', 'ancestor.root_id = node.root_id AND ancestor.lft <= node.lft AND ancestor.rgt >= node.rgt')
 			->where('node.node_id IN (:ids)')
-			->setParameter('ids', array_map('strval', $nodeIds), ArrayParameterType::STRING)
+			->setParameter('ids', $this->asText($nodeIds), ArrayParameterType::STRING)
 			->orderBy('node.node_id')
 			->addOrderBy('ancestor.lft');
 
 		$paths = [];
 		foreach ($queryBuilder->executeQuery()->fetchAllAssociative() as $row)
 		{
+			// @infection-ignore-all the casts are for the type: a key of digits is a number in PHP, the name is text
 			$paths[(string) $row['node_id']][] = (string) $row['name'];
 		}
 
 		return $paths;
+	}
+
+	/**
+	 * @param list<int|string> $nodeIds
+	 * @return list<string>
+	 */
+	private function asText(array $nodeIds): array
+	{
+		// @infection-ignore-all the database compares numbers and digits as text alike
+		return array_map('strval', $nodeIds);
 	}
 
 	/**
@@ -187,6 +198,7 @@ class NodesRepository extends SqlBase
 		$ancestors = [];
 		foreach ($queryBuilder->executeQuery()->fetchAllAssociative() as $row)
 		{
+			// @infection-ignore-all the casts are for databases which give text, ours gives numbers
 			$ancestors[(string) $row['node_id']][] = (int) $row['ancestor_id'];
 		}
 

@@ -278,6 +278,8 @@ class NodesControllerTest extends ControllerTestCase
 		$response = $this->controller->move($this->request('POST', ['src_node_id' => '9', 'target_node_id' => '8', 'target_region' => 'before']), $this->newResponse());
 
 		$this->assertSuccess($response);
+		// the browser gets the number of moved directories
+		static::assertSame(['count_deleted_nodes' => 1], $this->json($response)['data']);
 		static::assertSame([9, 8], array_column($this->json($this->controller->list($this->request('GET'), $this->newResponse(), ['parent_id' => '7'])), 'key'));
 	}
 

@@ -88,4 +88,22 @@ class ResponseBuilderTest extends TestCase
 		static::assertSame(200, $response->getStatusCode());
 		static::assertSame($nodes, json_decode((string) $response->getBody(), true));
 	}
+
+	/**
+	 * The root "shared with me" is a folder of its own name, but nothing may be done with it.
+	 */
+	#[Group('units')]
+	public function testTheSharedRootIsAFolderWithoutRights(): void
+	{
+		$children = [['title' => 'Annas Ordner', 'key' => 7]];
+
+		static::assertSame([
+			'title'    => 'mediapool.shared_with_me',
+			'folder'   => true,
+			'key'      => 'shared',
+			'virtual'  => true,
+			'rights'   => ['create' => false, 'edit' => false, 'delete' => false, 'share' => '', 'share_unit' => false],
+			'children' => $children
+		], $this->responseBuilder->sharedRootNode($children));
+	}
 }

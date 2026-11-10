@@ -23,6 +23,7 @@ namespace Tests\Integration\Modules\Mediapool\Controller;
 
 use App\Framework\Controller\JsonResponseHandler;
 use App\Framework\Exceptions\AccessDeniedException;
+use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Llm\LlmClientFactory;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Media\Ffmpeg;
@@ -157,6 +158,17 @@ class MediaTaggingControllerTest extends ControllerTestCase
 		static::assertNull($this->endpoint?->getLastRequest());
 	}
 
+	/**
+	 * Without an AI the medium is not prepared at all: no frame of a video, no message about the file.
+	 */
+	public function testWithoutAnLlmTheMediumIsNotPrepared(): void
+	{
+		$this->actingAs(2);
+		unlink($this->workspace->absolute($this->workspace->original('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg')));
+
+		$this->assertError($this->suggest(self::PHOTO), $this->text('llm_not_configured', 'main'));
+	}
+
 	public function testAnAnswerWhichIsNoSuggestionIsAnError(): void
 	{
 		$this->actingAs(2);
@@ -194,6 +206,18 @@ class MediaTaggingControllerTest extends ControllerTestCase
 
 		$this->expectException(AccessDeniedException::class);
 		$this->suggest(self::SHARED);
+	}
+
+	/**
+	 * A medium which does not exist is a missing page, not a message of the AI.
+	 */
+	public function testAnUnknownMediumIsNotFound(): void
+	{
+		$this->actingAs(2);
+		$this->withLlm(2);
+
+		$this->expectException(NotFoundException::class);
+		$this->suggest('doesnotexist');
 	}
 
 	public function testWithoutAMediumIdNothingIsSent(): void

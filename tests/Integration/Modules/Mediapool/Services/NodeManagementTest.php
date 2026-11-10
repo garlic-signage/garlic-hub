@@ -212,22 +212,24 @@ class NodeManagementTest extends ContainerTestCase
 	public static function refusedMoves(): array
 	{
 		return [
-			'unknown region'            => [8, 9, 'inside', ModuleException::class],
-			'empty region'              => [8, 9, '', ModuleException::class],
-			'a root directory'          => [7, 9, 'appendChild', TranslatableModuleException::class],
-			'unknown moved directory'   => [999, 9, 'appendChild', NotFoundException::class],
-			'unknown target'            => [8, 999, 'appendChild', NotFoundException::class],
-			'as new root by appending'  => [8, 0, 'appendChild', TranslatableModuleException::class],
-			'before a root directory'   => [8, 7, 'before', TranslatableModuleException::class],
-			'after a root directory'    => [8, 7, 'after', TranslatableModuleException::class],
+			'unknown region'            => [8, 9, 'inside', ModuleException::class, 'inside is not supported'],
+			'empty region'              => [8, 9, '', ModuleException::class, ' is not supported'],
+			'a root directory'          => [7, 9, 'appendChild', TranslatableModuleException::class, 'root_node_not_movable'],
+			'unknown moved directory'   => [999, 9, 'appendChild', NotFoundException::class, 'node_not_found'],
+			'unknown target'            => [8, 999, 'appendChild', NotFoundException::class, 'node_not_found'],
+			'as new root by appending'  => [8, 0, 'appendChild', TranslatableModuleException::class, 'root_node_not_creatable_by_move'],
+			'before a root directory'   => [8, 7, 'before', TranslatableModuleException::class, 'root_node_not_creatable_by_move'],
+			'after a root directory'    => [8, 7, 'after', TranslatableModuleException::class, 'root_node_not_creatable_by_move'],
 		];
 	}
 
 	/**
+	 * The exact class and key: a missing check must not be hidden by a later one.
+	 *
 	 * @param class-string<\Throwable> $exception
 	 */
 	#[DataProvider('refusedMoves')]
-	public function testAnImpossibleMoveChangesNothing(int $moved, int $target, string $region, string $exception): void
+	public function testAnImpossibleMoveChangesNothing(int $moved, int $target, string $region, string $exception, string $key): void
 	{
 		$this->actingAs(1);
 		$before = $this->connection->fetchAllAssociative('SELECT node_id, parent_id, lft, rgt FROM mediapool_nodes ORDER BY node_id');
@@ -239,7 +241,8 @@ class NodeManagementTest extends ContainerTestCase
 		}
 		catch (\Throwable $e)
 		{
-			static::assertInstanceOf($exception, $e);
+			static::assertSame($exception, $e::class);
+			static::assertSame($key, $e instanceof TranslatableModuleException ? $e->getTranslationKey() : $e->getMessage());
 		}
 
 		static::assertSame($before, $this->connection->fetchAllAssociative('SELECT node_id, parent_id, lft, rgt FROM mediapool_nodes ORDER BY node_id'));
@@ -256,6 +259,131 @@ class NodeManagementTest extends ContainerTestCase
 		$this->nodesService->moveNode(9, 8, 'after');
 
 		static::assertSame([8, 9], array_column($this->nodesService->getNodes(7), 'key'));
+	}
+
+	public function testAMoveGivesOne(): void
+	{
+		$this->actingAs(1);
+
+		static::assertSame(1, $this->nodesService->moveNode(9, 12, 'appendChild'));
+		static::assertSame(12, (int) $this->connection->fetchOne('SELECT parent_id FROM mediapool_nodes WHERE node_id = 9'));
+	}
+
+	/**
+	 * Appending into a root directory is allowed: only a new root is not.
+	 */
+	public function testADirectoryCanBeAppendedToARootDirectory(): void
+	{
+		$this->actingAs(1);
+
+		$this->nodesService->moveNode(9, 10, 'appendChild');
+
+		static::assertSame(10, (int) $this->connection->fetchOne('SELECT parent_id FROM mediapool_nodes WHERE node_id = 9'));
+	}
+
+	/**
+	 * Appended, the target is the new parent: an editor of the shared directory 12 may put her directory into it.
+	 */
+	public function testAnEditorOfASharedDirectoryMayAppendHerDirectoryToIt(): void
+	{
+		$this->shareWithAnna(12, AclSections::EDITOR);
+		$this->actingAs(2);
+
+		$this->nodesService->moveNode(9, 12, 'appendChild');
+
+		static::assertSame(12, (int) $this->connection->fetchOne('SELECT parent_id FROM mediapool_nodes WHERE node_id = 9'));
+	}
+
+	/**
+	 * Before or after, the parent of the target is the new parent: that is the folder of bernd, not shared.
+	 */
+	public function testAnEditorOfASharedDirectoryMayNotPutHerDirectoryNextToIt(): void
+	{
+		$this->shareWithAnna(12, AclSections::EDITOR);
+		$this->actingAs(2);
+
+		try
+		{
+			$this->nodesService->moveNode(9, 12, 'before');
+			static::fail('Expected node_not_creatable');
+		}
+		catch (AccessDeniedException $e)
+		{
+			static::assertSame('node_not_creatable', $e->getTranslationKey());
+		}
+
+		static::assertSame(7, (int) $this->connection->fetchOne('SELECT parent_id FROM mediapool_nodes WHERE node_id = 9'));
+	}
+
+	public function testADeleteIsCommitted(): void
+	{
+		$this->actingAs(1);
+
+		$this->nodesService->deleteNode(7);
+
+		static::assertFalse($this->connection->isTransactionActive());
+		static::assertSame(0, $this->countNodes('root_id = 7'));
+	}
+
+	/**
+	 * Shared directories are shown under "shared with me" with their path, sorted by it regardless of the case.
+	 */
+	public function testSharedDirectoriesAreSortedByTheirPath(): void
+	{
+		$this->connection->executeStatement("UPDATE mediapool_nodes SET name = 'archiv' WHERE node_id = 9");
+		$this->shareWithBernd(8);
+		$this->shareWithBernd(9);
+		$this->actingAs(3);
+
+		$shared = $this->nodesService->getSharedNodes();
+
+		static::assertSame([9, 8], array_map('intval', array_column($shared, 'key')));
+		static::assertSame(['anna / archiv', 'anna / Fotos'], array_column($shared, 'title'));
+	}
+
+	/**
+	 * A directory whose parents the user can read is in the tree anyway: it is not shown twice. 13 is below the
+	 * public 2 below the public 1, so every ancestor counts.
+	 */
+	public function testASharedDirectoryWithReadableParentsIsNotShownAgain(): void
+	{
+		$this->actingAs(1);
+		$logos = $this->nodesService->addNode(2, 'Logos');
+		$this->connection->executeStatement('UPDATE mediapool_nodes SET visibility = 2 WHERE node_id = ?', [$logos]);
+		$this->shareWithBernd($logos);
+		$this->shareWithBernd(8);
+		$this->actingAs(3);
+
+		static::assertSame([8], array_map('intval', array_column($this->nodesService->getSharedNodes(), 'key')));
+	}
+
+	/**
+	 * An own directory below a directory of somebody else: it is no directory shared with the user.
+	 */
+	public function testAnOwnDirectoryIsNotSharedWithMe(): void
+	{
+		$this->actingAs(1);
+		$own = $this->nodesService->addNode(11, 'Von Anna');
+		$this->connection->executeStatement('UPDATE mediapool_nodes SET UID = 2 WHERE node_id = ?', [$own]);
+		$this->shareWithAnna($own, AclSections::EDITOR);
+		$this->shareWithAnna(12, AclSections::VIEWER);
+		$this->actingAs(2);
+
+		static::assertSame([12], array_map('intval', array_column($this->nodesService->getSharedNodes(), 'key')));
+	}
+
+	private function shareWithAnna(int $nodeId, AclSections $role): void
+	{
+		$grants = $this->container->get(AclGrantService::class);
+		$grants->setRole(1, 2, 'mediapool', $role, true);
+		$grants->setUnitRole(1, 2, 'mediapool', $nodeId, $role);
+	}
+
+	private function shareWithBernd(int $nodeId): void
+	{
+		$grants = $this->container->get(AclGrantService::class);
+		$grants->setRole(1, 3, 'mediapool', AclSections::VIEWER, true);
+		$grants->setUnitRole(1, 3, 'mediapool', $nodeId, AclSections::VIEWER);
 	}
 
 	public function testRenamingAnUnknownDirectoryIsNotFound(): void

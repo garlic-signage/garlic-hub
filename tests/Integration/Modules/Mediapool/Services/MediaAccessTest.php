@@ -24,6 +24,8 @@ namespace Tests\Integration\Modules\Mediapool\Services;
 use App\Framework\Exceptions\AccessDeniedException;
 use App\Framework\Exceptions\NotFoundException;
 use App\Modules\Mediapool\Services\MediaService;
+use App\Shared\Acl\AclGrantService;
+use App\Shared\Acl\AclSections;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Throwable;
@@ -309,6 +311,109 @@ class MediaAccessTest extends ContainerTestCase
 
 		static::assertSame('geheim.png', $media['filename']);
 		static::assertSame([], $this->mediaService->fetchMediaByChecksum('0000'));
+	}
+
+	/**
+	 * The key tells whether the user may not read the directory or only not change it.
+	 */
+	public function testTheRejectionTellsWhetherReadingOrChangingIsNotAllowed(): void
+	{
+		$this->actingAs(2);
+
+		static::assertSame('directory_not_readable', $this->deniedKey(fn() => $this->mediaService->listMedia(11)));
+		static::assertSame('directory_not_editable', $this->deniedKey(fn() => $this->mediaService->deleteMedia(self::BERND_SHARED)));
+	}
+
+	public function testTheMediaHaveThePathsOfAllTheirFiles(): void
+	{
+		$this->actingAs(2);
+
+		$media = $this->mediaService->fetchMedia(self::ANNA_VIDEO);
+
+		static::assertSame([
+			'original'  => 'var/storage/mediapool/originals/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.mp4',
+			'preview'   => 'var/storage/mediapool/previews/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.mp4',
+			'thumbnail' => 'var/storage/mediapool/thumbs/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.jpg',
+		], $media['paths']);
+	}
+
+	/**
+	 * Only a widget gets a preview url: the widget runs from its archive.
+	 */
+	public function testOnlyAWidgetHasAPreview(): void
+	{
+		$this->connection->executeStatement("INSERT INTO mediapool_files (media_id, node_id, deleted, UID, checksum, mimetype, filename, extension, thumb_extension, metadata, upload_time)
+			VALUES ('77777777-7777-4777-8777-777777777777', 8, 0, 2, '77777777777777777777777777777777', 'application/widget', 'uhr.wgt', 'wgt', 'svg', '{}', '2025-01-07 10:00:00')");
+		$this->actingAs(2);
+
+		$urls = array_column($this->mediaService->listMedia(8), 'urls', 'filename');
+
+		static::assertStringStartsWith('/widget.php', $urls['uhr.wgt']['preview'] ?? '');
+		static::assertArrayNotHasKey('preview', $urls['urlaub.jpg']);
+		static::assertArrayNotHasKey('preview', $urls['film.mp4']);
+	}
+
+	public function testAClonedMediaGivesItsTags(): void
+	{
+		$this->connection->executeStatement("UPDATE mediapool_files SET tags = ',Kantine,Essen,' WHERE media_id = ?", [self::ANNA_PHOTO]);
+		$this->actingAs(2);
+
+		static::assertSame(['Kantine', 'Essen'], $this->mediaService->cloneMedia(self::ANNA_PHOTO)['tags']);
+	}
+
+	/**
+	 * The search finds the media of directories shared with an editor and gives the path of the directory.
+	 */
+	public function testAnEditorFindsTheMediaOfADirectorySharedWithHim(): void
+	{
+		$grants = $this->container->get(AclGrantService::class);
+		$grants->setRole(1, 3, 'mediapool', AclSections::EDITOR, true);
+		$grants->setUnitRole(1, 3, 'mediapool', 8, AclSections::EDITOR);
+		$this->actingAs(3);
+
+		$found = $this->mediaService->searchMedia('urlaub');
+
+		static::assertSame(['urlaub.jpg'], array_column($found, 'filename'));
+		static::assertSame('/ anna / Fotos', $found[0]['path']);
+		static::assertTrue($this->mediaService->isReadableFile('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg'));
+	}
+
+	public function testAViewerFindsTheMediaOfADirectorySharedWithHim(): void
+	{
+		$grants = $this->container->get(AclGrantService::class);
+		$grants->setRole(1, 3, 'mediapool', AclSections::VIEWER, true);
+		$grants->setUnitRole(1, 3, 'mediapool', 8, AclSections::VIEWER);
+		$this->actingAs(3);
+
+		static::assertTrue($this->mediaService->isReadableFile('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg'));
+	}
+
+	public function testWithoutAShareTheMediaOfAPrivateDirectoryAreNotReadable(): void
+	{
+		$this->actingAs(3);
+
+		static::assertFalse($this->mediaService->isReadableFile('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg'));
+		// a deleted media is gone, even in an own directory
+		$this->actingAs(2);
+		static::assertFalse($this->mediaService->isReadableFile('ffffffffffffffffffffffffffffffff.jpg'));
+		static::assertTrue($this->mediaService->isReadableFile('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg'));
+	}
+
+	/**
+	 * @param callable():mixed $call
+	 */
+	private function deniedKey(callable $call): string
+	{
+		try
+		{
+			$call();
+		}
+		catch (AccessDeniedException $e)
+		{
+			return $e->getTranslationKey();
+		}
+
+		static::fail('The call was not rejected.');
 	}
 
 	/**

@@ -190,6 +190,57 @@ class SsrfValidatorTest extends TestCase
 	/**
 	 * Without an own resolver the system is asked: localhost is always the own machine.
 	 */
+	/**
+	 * The edges of the blocked ranges: link local 169.254/16, shared space 100.64/10, multicast 224/4.
+	 *
+	 * @return array<string, array{string}>
+	 */
+	public static function edgeProvider(): array
+	{
+		return [
+			'before link local'    => ['169.253.255.255'],
+			'after link local'     => ['169.255.0.0'],
+			'before shared space'  => ['100.63.255.255'],
+			'after shared space'   => ['100.128.0.0'],
+			'before multicast'     => ['223.255.255.255'],
+		];
+	}
+
+	/**
+	 * @throws TranslatableModuleException
+	 */
+	#[Group('units')]
+	#[DataProvider('edgeProvider')]
+	public function testAnAddressNextToABlockedRangeIsAllowed(string $ip): void
+	{
+		static::assertSame($ip, $this->validator()->validateAndResolveUrl('http://' . $ip . '/a.jpg')['ip']);
+	}
+
+	/**
+	 * @return array<string, array{string}>
+	 */
+	public static function blockedEdgeProvider(): array
+	{
+		return [
+			'first link local'    => ['169.254.0.0'],
+			'last link local'     => ['169.254.255.255'],
+			'first shared space'  => ['100.64.0.0'],
+			'last shared space'   => ['100.127.255.255'],
+			'first multicast'     => ['224.0.0.0'],
+			'last multicast'      => ['239.255.255.255'],
+		];
+	}
+
+	#[Group('units')]
+	#[DataProvider('blockedEdgeProvider')]
+	public function testTheEdgesOfABlockedRangeAreNotAllowed(string $ip): void
+	{
+		$this->expectException(TranslatableModuleException::class);
+		$this->expectExceptionMessage('url_not_allowed');
+
+		$this->validator()->validateAndResolveUrl('http://' . $ip . '/a.jpg');
+	}
+
 	#[Group('units')]
 	public function testTheSystemResolverKnowsLocalhost(): void
 	{

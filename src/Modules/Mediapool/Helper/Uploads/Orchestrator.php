@@ -177,9 +177,10 @@ class Orchestrator
 	 */
 	/**
 	 * The metadata of the media come as JSON text from the client. Only values of one kind are taken (text, number,
-	 * yes/no), no lists or objects, and the description is a text.
+	 * yes/no), no lists or objects, and the description is a text. The one exception is the author of a stock
+	 * platform: "user" with the texts username, name and url, which the information of the media shows.
 	 *
-	 * @return array<string,string|int|float|bool>
+	 * @return array<string,string|int|float|bool|array<string,string>>
 	 */
 	private function decodeMetadata(): array
 	{
@@ -190,11 +191,36 @@ class Orchestrator
 		$metadata = [];
 		foreach ($decoded as $key => $value)
 		{
-			if (is_string($key) && is_scalar($value))
+			if (!is_string($key))
+				continue;
+
+			if (is_scalar($value))
 				$metadata[$key] = $key === 'description' ? (string) $value : $value;
+			elseif ($key === 'user' && is_array($value))
+			{
+				$user = $this->decodeAuthor($value);
+				if ($user !== [])
+					$metadata['user'] = $user;
+			}
 		}
 
 		return $metadata;
+	}
+
+	/**
+	 * @param array<mixed> $user
+	 * @return array<string,string> only the filled texts of username, name and url
+	 */
+	private function decodeAuthor(array $user): array
+	{
+		$author = [];
+		foreach (['username', 'name', 'url'] as $field)
+		{
+			if (is_string($user[$field] ?? null) && $user[$field] !== '')
+				$author[$field] = $user[$field];
+		}
+
+		return $author;
 	}
 
 	private function validateNode(ResponseInterface $response): ?ResponseInterface

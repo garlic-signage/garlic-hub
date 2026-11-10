@@ -90,9 +90,31 @@ class NodesRepositoryTest extends RepositoryTestCase
 	{
 		static::assertSame(7, (int) $this->repository->getUserRootNode(2)['node_id']);
 		static::assertSame(10, (int) $this->repository->getUserRootNode(3)['node_id']);
+		static::assertSame(3, (int) ($this->repository->getUserRootNode(3)['UID'] ?? 0));
 		// the admin owns the public tree, but no user folder
 		static::assertSame([], $this->repository->getUserRootNode(1));
 		static::assertSame([], $this->repository->getUserRootNode(999));
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function testThePathsOfSeveralDirectoriesGoFromTheRoot(): void
+	{
+		static::assertSame(
+			['8' => ['anna', 'Fotos'], '10' => ['bernd'], '12' => ['bernd', 'Geteilt']],
+			$this->repository->findPaths([8, '10', 12])
+		);
+		static::assertSame([], $this->repository->findPaths([]));
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function testTheAncestorsOfSeveralDirectories(): void
+	{
+		static::assertSame(['8' => [7], '12' => [10]], $this->repository->findAncestorIds([7, 8, 12]));
+		static::assertSame([], $this->repository->findAncestorIds([]));
 	}
 
 	/**

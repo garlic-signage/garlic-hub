@@ -161,7 +161,21 @@ class ShowControllerTest extends ControllerTestCase
 		$service->saveTasks(2, [LlmTask::IMAGE_GENERATION => ['connection_id' => $service->findConnections(2)[0]['connection_id'], 'model' => 'flux-schnell']]);
 
 		$page = $this->show();
-		static::assertSame(['landscape', 'portrait', 'square'], array_column($page->getTemplateData()['image_generation']['image_formats'], 'VALUE'));
+		$translator = $this->container->get(Translator::class);
+		static::assertSame([
+			'LANG_UPLOAD_AI_IMAGE'      => $translator->translate('upload_ai_image', 'mediapool'),
+			'LANG_DESCRIBE_IMAGE'       => $translator->translate('describe_image', 'mediapool'),
+			'LANG_NEGATIVE_PROMPT'      => $translator->translate('negative_prompt', 'mediapool'),
+			'LANG_NEGATIVE_PROMPT_HINT' => $translator->translate('negative_prompt_hint', 'mediapool'),
+			'LANG_IMAGE_FORMAT'         => $translator->translate('image_format', 'mediapool'),
+			'LANG_GENERATE_IMAGE'       => $translator->translate('generate_image', 'mediapool'),
+			'MAX_PROMPT_LENGTH'         => ImageGeneration::MAX_PROMPT_LENGTH,
+			'image_formats'             => [
+				['VALUE' => 'landscape', 'LANG_VALUE' => $translator->translate('image_format_landscape', 'mediapool')],
+				['VALUE' => 'portrait', 'LANG_VALUE' => $translator->translate('image_format_portrait', 'mediapool')],
+				['VALUE' => 'square', 'LANG_VALUE' => $translator->translate('image_format_square', 'mediapool')],
+			]
+		], $page->getTemplateData()['image_generation']);
 		$html = $this->html($page);
 		static::assertStringContainsString('id="aiImageTab"', $html);
 		static::assertStringContainsString('data-tab="aiImageTab"', $html);
@@ -221,5 +235,142 @@ class ShowControllerTest extends ControllerTestCase
 
 		static::assertStringContainsString($page->getTemplateData()['LANG_START_UPLOAD'], $html);
 		static::assertStringContainsString($page->getTemplateData()['LANG_UPLOAD_LOCAL_FILES'], $html);
+	}
+
+	/**
+	 * Every text of the page belongs to its key: a text under the wrong key or a lost key is a wrong or empty button.
+	 */
+	public function testEveryTextOfThePageHasItsTranslation(): void
+	{
+		$this->actingAs(2);
+		$translator = $this->container->get(Translator::class);
+		$expected   = [];
+		foreach ([
+			'LANG_DRAG_AND_DROP' => ['drag_and_drop', 'mediapool'],
+			'LANG_INSERT_FILES_HERE' => ['insert_files_here', 'mediapool'],
+			'LANG_START_UPLOAD' => ['start_upload', 'mediapool'],
+			'LANG_SAVE' => ['save', 'main'],
+			'LANG_CANCEL' => ['cancel', 'main'],
+			'LANG_CLOSE' => ['close', 'main'],
+			'LANG_FOLDER_NAME' => ['name', 'main'],
+			'LANG_EDIT' => ['edit', 'main'],
+			'LANG_CLONE' => ['clone', 'main'],
+			'LANG_DOWNLOAD' => ['download', 'main'],
+			'LANG_ADD_SUB_FOLDER' => ['add_sub_folder', 'mediapool'],
+			'LANG_EDIT_FOLDER' => ['edit_folder', 'mediapool'],
+			'LANG_REMOVE' => ['remove', 'main'],
+			'LANG_SHARE' => ['share_unit', 'users'],
+			'LANG_INFORMATION' => ['information', 'main'],
+			'LANG_OWNER' => ['owner', 'main'],
+			'LANG_UPLOADER' => ['uploader', 'mediapool'],
+			'LANG_FILENAME' => ['filename', 'mediapool'],
+			'LANG_DESCRIPTION' => ['description', 'mediapool'],
+			'LANG_TAGS' => ['tags', 'mediapool'],
+			'LANG_SEARCH_MEDIA' => ['search_media', 'mediapool'],
+			'LANG_MEDIA_TYPE' => ['media_type', 'mediapool'],
+			'LANG_TAGS_HINT' => ['tags_hint', 'mediapool'],
+			'LANG_MIMETYPE' => ['mimetype', 'mediapool'],
+			'LANG_FILESIZE' => ['filesize', 'mediapool'],
+			'LANG_DIMENSIONS' => ['dimensions', 'mediapool'],
+			'LANG_MEDIA_DURATION' => ['media_duration', 'mediapool'],
+			'LANG_ENTER_FILE_URL' => ['enter_file_url', 'mediapool'],
+			'LANG_DETECT_CAMERAS' => ['detect_cameras', 'mediapool'],
+			'LANG_RECORD_CAMERA' => ['record_camera', 'mediapool'],
+			'LANG_SELECT_CAMERA' => ['select_camera', 'mediapool'],
+			'LANG_ACTIVATE_CAMERA' => ['activate_camera', 'mediapool'],
+			'LANG_CAPTURE_PHOTO' => ['capture_photo', 'mediapool'],
+			'LANG_START_RECORD_VIDEO' => ['start_record_video', 'mediapool'],
+			'LANG_STOP_RECORD_VIDEO' => ['stop_record_video', 'mediapool'],
+			'LANG_RECORD_YOUR_SCREEN' => ['record_your_screen', 'mediapool'],
+			'LANG_ACTIVATE_SCREENCAST' => ['activate_screencast', 'mediapool'],
+			'LANG_SEARCH_STOCK_MEDIA' => ['search_stock_media', 'mediapool'],
+			'LANG_ENTER_SEARCH_TERM' => ['enter_search_term', 'mediapool'],
+			'LANG_ENTER_API_TOKEN' => ['enter_api_token', 'mediapool'],
+			'LANG_SEARCH' => ['search', 'main'],
+			'LANG_MARK_FOR_DOWNLOAD' => ['mark_for_download', 'mediapool'],
+			'LANG_DOWNLOAD_MARKED' => ['download_marked', 'mediapool'],
+			'LANG_UPLOAD_LOCAL_FILES' => ['upload_local_files', 'mediapool'],
+			'LANG_UPLOAD_EXTERNAL_FILES' => ['upload_external_files', 'mediapool'],
+			'LANG_UPLOAD_CAMERA' => ['upload_camera', 'mediapool'],
+			'LANG_UPLOAD_SCREENCAST' => ['upload_screencast', 'mediapool'],
+			'LANG_UPLOAD_STOCK_LIBRARIES' => ['upload_stock_libraries', 'mediapool'],
+			'LANG_UPLOADED_AT' => ['uploaded_at', 'mediapool'],
+			'LANG_MEDIA_ORIGIN' => ['media_origin', 'mediapool'],
+			'LANG_PAGE_URL' => ['page_url', 'mediapool'],
+			'LANG_STOCK_DESCRIPTION' => ['stock_description', 'mediapool'],
+			'LANG_STOCK_USERNAME' => ['stock_username', 'mediapool'],
+			'LANG_STOCK_REALNAME' => ['stock_realname', 'mediapool'],
+			'LANG_STOCK_USER_URL' => ['stock_user_url', 'mediapool'],
+			'LANG_CONFIGURATION' => ['configuration', 'main'],
+			'LANG_IMAGES_SEARCH' => ['images_search', 'mediapool'],
+			'LANG_VIDEOS_SEARCH' => ['videos_search', 'mediapool'],
+		] as $key => [$text, $module])
+			$expected[$key] = $translator->translate($text, $module);
+
+		$data  = $this->show()->getTemplateData();
+		$texts = array_filter($data, static fn(int|string $key): bool => is_string($key) && str_starts_with($key, 'LANG_') && $key !== 'LANG_JS', ARRAY_FILTER_USE_KEY);
+
+		ksort($expected);
+		ksort($texts);
+		static::assertSame($expected, $texts);
+		// no text slipped in without a key
+		static::assertSame([], array_filter(array_keys($data), is_int(...)));
+	}
+
+	public function testTheStylesAndScriptsOfThePage(): void
+	{
+		$this->actingAs(2);
+
+		$layout = $this->show()->getMainLayoutData();
+
+		static::assertSame([
+			'/css/external/bootstrap-icons.min.css',
+			'/css/external/wunderbaum.css',
+			'/css/external/glightbox.min.css',
+			'/css/mediapool/overview.css',
+			'/css/mediapool/media-list.css',
+			'/css/mediapool/uploads.css'
+		], $layout['additional_css']);
+		static::assertSame(['/js/external/glightbox.min.js', '/js/external/jszip.min.js'], $layout['footer_scripts']);
+	}
+
+	public function testTheAdminGetsTheTextToAddARootFolder(): void
+	{
+		$this->actingAs(1);
+		$text = $this->container->get(Translator::class)->translate('add_root_folder', 'mediapool');
+
+		$data = $this->show()->getTemplateData();
+
+		static::assertSame(['LANG_ADD_ROOT_FOLDER' => $text], $data['add_root_folder']);
+		static::assertSame($text, $data['LANG_ADD_ROOT_FOLDER']);
+	}
+
+	public function testEveryKindOfMediaHasItsText(): void
+	{
+		$this->actingAs(2);
+		$translator = $this->container->get(Translator::class);
+
+		$options = $this->show()->getTemplateData()['media_type_filter'];
+
+		static::assertSame([
+			['VALUE' => '', 'LANG_VALUE' => $translator->translate('media_type_all', 'mediapool')],
+			['VALUE' => 'images', 'LANG_VALUE' => $translator->translate('media_type_images', 'mediapool')],
+			['VALUE' => 'videos', 'LANG_VALUE' => $translator->translate('media_type_videos', 'mediapool')],
+			['VALUE' => 'audios', 'LANG_VALUE' => $translator->translate('media_type_audios', 'mediapool')],
+			['VALUE' => 'documents', 'LANG_VALUE' => $translator->translate('media_type_documents', 'mediapool')],
+		], $options);
+	}
+
+	public function testTheVisibilityOfTheEditionEnterpriseHasItsTextAndOptions(): void
+	{
+		$this->actingAs(2);
+		$translator = $this->container->get(Translator::class);
+
+		$dialog = $this->show(Config::PLATFORM_EDITION_ENTERPRISE)->getTemplateData()['folder_dialog_visibility'];
+
+		static::assertSame([
+			'LANG_FOLDER_VISIBILITY' => $translator->translate('visibility', 'main'),
+			'visibility_options'     => $translator->translateArrayForOptions('visibility_selects', 'main')
+		], $dialog);
 	}
 }

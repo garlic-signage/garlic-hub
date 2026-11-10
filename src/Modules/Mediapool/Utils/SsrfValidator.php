@@ -75,11 +75,16 @@ class SsrfValidator
 			return false;
 
 		// the filter has accepted an IPv4 address, so ip2long() gives a number
+		// @infection-ignore-all the cast is only for the type, the filter has accepted an IPv4 address
 		$long = (int) ip2long($ip);
 
-		// not covered by the filter: link local (cloud metadata services), the shared address space of carriers
-		// (100.64.0.0/10, where some providers put their metadata services) and multicast
-		return ($long & 0xFFFF0000) !== 0xA9FE0000
+		// link local (cloud metadata services): the filter rejects it since PHP 8.2 already, this check stays for safety
+		// @infection-ignore-all the filter above rejects 169.254.0.0/16 before, so the check can not be reached
+		$linkLocal = ($long & 0xFFFF0000) === 0xA9FE0000;
+
+		// not covered by the filter: the shared address space of carriers (100.64.0.0/10, where some providers put
+		// their metadata services) and multicast
+		return !$linkLocal
 			&& ($long & 0xFFC00000) !== 0x64400000
 			&& ($long & 0xF0000000) !== 0xE0000000;
 	}

@@ -182,6 +182,9 @@ class UploadControllerTest extends ControllerTestCase
 		foreach ($stored as $value)
 			static::assertTrue(is_scalar($value) || is_array($value));
 		static::assertArrayNotHasKey('a', $stored);
+		// the description is a text in the metadata as well, also when a number was sent
+		if ($description !== '')
+			static::assertSame($description, $stored['description'] ?? null);
 	}
 
 	/**
@@ -211,6 +214,40 @@ class UploadControllerTest extends ControllerTestCase
 		static::assertSame('stock', $stored['source']);
 		static::assertSame(4.5, $stored['rating']);
 		static::assertTrue($stored['public']);
+	}
+
+	/**
+	 * @return array<string,array{string,array<string,string>|string|null}> the user which is sent and the one which is stored
+	 */
+	public static function authors(): array
+	{
+		return [
+			'all fields'        => ['{"username":"jane","name":"Jane Doe","url":"https://example.com/jane"}',
+									['username' => 'jane', 'name' => 'Jane Doe', 'url' => 'https://example.com/jane']],
+			'empty or null'     => ['{"username":"jane","name":"","url":null}', ['username' => 'jane']],
+			'other fields'      => ['{"username":"jane","id":7,"links":{"a":"b"}}', ['username' => 'jane']],
+			'no texts'          => ['{"username":5,"name":["Jane"]}', null],
+			'nothing filled'    => ['{"username":null,"name":null,"url":null}', null],
+			// like every simple value, the information of the media shows no author for it
+			'a text, no object' => ['"jane"', 'jane'],
+		];
+	}
+
+	/**
+	 * The author of a stock platform is the one object which is kept, the information of the media shows it.
+	 *
+	 * @param array<string,string>|string|null $stored
+	 */
+	#[DataProvider('authors')]
+	public function testTheAuthorOfAStockPlatformIsKeptWithItsTexts(string $user, array|string|null $stored): void
+	{
+		$this->actingAs(2);
+
+		$this->uploadLocal($this->controller(), ['node_id' => '8', 'metadata' => '{"origin":"Unsplash","user":' . $user . '}'], ['file' => $this->pngUpload()]);
+
+		$metadata = json_decode((string) $this->databaseValue('SELECT metadata FROM mediapool_files WHERE filename = ?', 'bild.png'), true);
+		static::assertSame('Unsplash', $metadata['origin']);
+		static::assertSame($stored, $metadata['user'] ?? null);
 	}
 
 	public function testALocalUploadWithoutFilesIsRefused(): void

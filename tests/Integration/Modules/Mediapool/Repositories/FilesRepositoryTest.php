@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Modules\Mediapool\Repositories;
 
+use App\Framework\Database\Where;
 use App\Modules\Mediapool\Repositories\FilesRepository;
 use Doctrine\DBAL\Exception;
 use PHPUnit\Framework\Attributes\Group;
@@ -51,6 +52,43 @@ class FilesRepositoryTest extends RepositoryTestCase
 		static::assertSame(11, (int) $media['node_id']);
 		static::assertSame('geheim.png', $media['filename']);
 		static::assertSame('image/png', $media['mimetype']);
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function testTheListOfADirectoryHasTheOwner(): void
+	{
+		$media = $this->repository->findAllByNodeId(11);
+
+		static::assertSame(['username', 'company_id', 'media_id', 'node_id', 'UID', 'upload_time', 'checksum', 'mimetype', 'metadata', 'tags', 'filename', 'extension', 'thumb_extension', 'media_description'], array_keys($media[0]));
+		static::assertSame('bernd', $media[0]['username']);
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function testTheSearchHasTheOwner(): void
+	{
+		$media = $this->repository->search('geheim', '', null, 10);
+
+		static::assertSame(['username', 'company_id', 'media_id', 'node_id', 'UID', 'upload_time', 'checksum', 'mimetype', 'metadata', 'tags', 'filename', 'extension', 'thumb_extension', 'media_description'], array_keys($media[0]));
+		static::assertSame('bernd', $media[0]['username']);
+	}
+
+	/**
+	 * Only one medium has the file: it is found, a deleted one is not, and only in a readable directory.
+	 *
+	 * @throws Exception
+	 */
+	public function testAFileExistsOnlyUndeletedInAReadableDirectory(): void
+	{
+		static::assertTrue($this->repository->existsReadable('cccccccccccccccccccccccccccccccc', 'png', null));
+		static::assertFalse($this->repository->existsReadable('cccccccccccccccccccccccccccccccc', 'jpg', null));
+		static::assertFalse($this->repository->existsReadable('ffffffffffffffffffffffffffffffff', 'jpg', null));
+		static::assertTrue($this->repository->existsReadable('cccccccccccccccccccccccccccccccc', 'png', Where::equals('mediapool_nodes.UID', 3)));
+		// the directory 11 of bernd is not readable for anna, though she has other directories
+		static::assertFalse($this->repository->existsReadable('cccccccccccccccccccccccccccccccc', 'png', Where::equals('mediapool_nodes.UID', 2)));
 	}
 
 	/**

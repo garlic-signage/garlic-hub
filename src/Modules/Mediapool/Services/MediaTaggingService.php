@@ -74,6 +74,7 @@ readonly class MediaTaggingService
 		if (!$this->isAvailable())
 			throw new LlmException('llm_not_configured');
 
+		// @infection-ignore-all the mimetype of the database is a text
 		$mimetype = (string) $media['mimetype'];
 		if (!TaggingImage::supports($mimetype))
 			throw new TranslatableModuleException('mediapool', 'media_not_taggable');

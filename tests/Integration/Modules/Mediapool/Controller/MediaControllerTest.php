@@ -353,6 +353,8 @@ class MediaControllerTest extends ControllerTestCase
 		$response = $this->controller->move($this->request('POST', ['media_id' => self::PHOTO, 'node_id' => '9']), $this->newResponse());
 
 		$this->assertSuccess($response);
+		// the browser gets the number of moved media
+		static::assertSame(['deleted_media' => 1], $this->json($response)['data']);
 		static::assertSame(9, (int) $this->field(self::PHOTO, 'node_id'));
 	}
 

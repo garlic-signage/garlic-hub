@@ -160,6 +160,16 @@ class ImageGenerationControllerTest extends ControllerTestCase
 		static::assertNull($this->endpoint?->getLastRequest());
 	}
 
+	/**
+	 * Without an AI the user learns that first, not that the description is missing.
+	 */
+	public function testWithoutAnLlmTheMissingAiComesFirst(): void
+	{
+		$this->actingAs(2);
+
+		$this->assertError($this->generate(['prompt' => '']), $this->text('llm_not_configured'));
+	}
+
 	public function testAnEmptyOrTooLongDescriptionIsNotSent(): void
 	{
 		$this->actingAs(2);

@@ -144,6 +144,7 @@ class MediaService
 		$UID    = $this->userSession->getUID();
 		$result = $this->mediaRepository->search($term, $filter, $this->readableDirectories($UID), self::MAX_SEARCH_RESULTS);
 
+		// @infection-ignore-all the cast is for databases which give text; unique and values only save queries
 		$nodeIds  = array_values(array_unique(array_map(static fn(array $media): int => (int) $media['node_id'], $result)));
 		$paths    = $this->nodesRepository->findPaths($nodeIds);
 		$editable = [];
@@ -154,7 +155,9 @@ class MediaService
 		{
 			$media['metadata'] = json_decode((string) $media['metadata'], true);
 			$media['tags']     = self::decodeTags(is_string($media['tags']) ? $media['tags'] : null);
+			// @infection-ignore-all a key of digits is a number in PHP: the cast is for the type
 			$media['path']     = '/ ' . implode(' / ', $paths[(string) $media['node_id']] ?? []);
+			// @infection-ignore-all the cast is for databases which give text, ours gives numbers
 			$media['editable'] = $editable[(int) $media['node_id']];
 			$media = $this->addFileLocations($media);
 		}
@@ -173,6 +176,7 @@ class MediaService
 	{
 		$checksum  = pathinfo($fileName, PATHINFO_FILENAME);
 		$extension = pathinfo($fileName, PATHINFO_EXTENSION);
+		// @infection-ignore-all a file without checksum or extension is never stored: the query would not find it either
 		if ($checksum === '' || $extension === '' || basename($fileName) !== $fileName)
 			return false;
 
@@ -346,7 +350,9 @@ class MediaService
 	 */
 	private function addFileLocations(array $media): array
 	{
+		// @infection-ignore-all the casts are for the type, the columns are text
 		$checksum       = (string) $media['checksum'];
+		// @infection-ignore-all the casts are for the type, the columns are text
 		$extension      = (string) $media['extension'];
 		$thumbExtension = (string) $media['thumb_extension'];
 
@@ -400,6 +406,7 @@ class MediaService
 			$roles[] = AclSections::EDITOR;
 		if ($this->aclValidator->isViewer($UID))
 			$roles[] = AclSections::VIEWER;
+		// @infection-ignore-all the ids are numbers as text, intval is for the type
 		$shared = $roles === [] ? [] : array_map(intval(...), $this->aclValidator->findSharedUnitIds($UID, ...$roles));
 
 		return Where::anyOf(

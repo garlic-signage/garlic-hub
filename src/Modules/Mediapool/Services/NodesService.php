@@ -94,6 +94,7 @@ class NodesService
 	 */
 	public function getNodes(int $parent_id): array
 	{
+		// @infection-ignore-all the children of 0 are the root nodes as well, only the query differs
 		if ($parent_id === 0)
 			$nodes = $this->nestedSetsService->findAllRootNodes();
 		else
@@ -121,13 +122,15 @@ class NodesService
 		if ($this->aclValidator->isModuleAdmin($UID))
 			return [];
 
+		// @infection-ignore-all the ids are numbers as text, intval is for the type
 		$nodeIds = array_map('intval', $this->aclValidator->findSharedUnitIds($UID, ...AclSections::UNIT_ROLES));
 		$paths   = $this->nodesRepository->findPaths($nodeIds);
 
 		$nodeIds = $this->findUnreachableNodeIds($nodeIds);
 		// the own directories are in the tree already
-		$nodes = array_values(array_filter($this->nodesRepository->findNodesByIds($nodeIds), fn(array $node) => (int) $node['UID'] !== $UID));
-		$tree  = $this->prepareTree($nodes, $paths);
+		$nodes = array_filter($this->nodesRepository->findNodesByIds($nodeIds), fn(array $node) => !$this->isOwnNode($node, $UID));
+		// @infection-ignore-all the tree is built in a loop, the keys do not count
+		$tree  = $this->prepareTree(array_values($nodes), $paths);
 		usort($tree, fn(array $a, array $b) => strcasecmp((string) $a['title'], (string) $b['title']));
 
 		return $tree;
@@ -146,13 +149,34 @@ class NodesService
 	private function findUnreachableNodeIds(array $nodeIds): array
 	{
 		$ancestors = $this->nodesRepository->findAncestorIds($nodeIds);
-		$allIds    = array_values(array_unique(array_merge(...array_values($ancestors ?: [[]]))));
-		$readable  = array_map('intval', array_column($this->prepareTree($this->nodesRepository->findNodesByIds($allIds)), 'key'));
+		// @infection-ignore-all unique and values only make the IN list shorter
+		$allIds    = array_values(array_unique(array_merge([], ...array_values($ancestors))));
+		// array_diff compares as text: the keys need no cast
+		$readable  = array_column($this->prepareTree($this->nodesRepository->findNodesByIds($allIds)), 'key');
 
-		return array_values(array_filter(
-			$nodeIds,
-			fn(int $nodeId) => array_diff($ancestors[(string) $nodeId] ?? [], $readable) !== []
-		));
+		$unreachable = array_filter($nodeIds, fn(int $nodeId) => array_diff($this->ancestorsOf($ancestors, $nodeId), $readable) !== []);
+
+		// @infection-ignore-all the ids only go into an IN list
+		return array_values($unreachable);
+	}
+
+	/**
+	 * @param array<string,list<int>> $ancestors
+	 * @return list<int>
+	 */
+	private function ancestorsOf(array $ancestors, int $nodeId): array
+	{
+		// @infection-ignore-all a key of digits is a number in PHP: the cast is for the type
+		return $ancestors[(string) $nodeId] ?? [];
+	}
+
+	/**
+	 * @param array<string,mixed> $node
+	 */
+	private function isOwnNode(array $node, int $UID): bool
+	{
+		// @infection-ignore-all the cast is for databases which give text, ours gives numbers
+		return (int) $node['UID'] === $UID;
 	}
 
 	/**
@@ -182,8 +206,10 @@ class NodesService
 			if ($rights === null)
 				continue;
 
-			if (isset($paths[(string) $node['node_id']]))
-				$node['name'] = implode(MediapoolUnitProvider::PATH_SEPARATOR, $paths[(string) $node['node_id']]);
+			// @infection-ignore-all a key of digits is a number in PHP: the cast is for the type
+			$path = $paths[(string) $node['node_id']] ?? null;
+			if ($path !== null)
+				$node['name'] = implode(MediapoolUnitProvider::PATH_SEPARATOR, $path);
 
 			$tree[] = $this->prepareForWunderbaum($node, $rights);
 		}
@@ -247,6 +273,7 @@ class NodesService
 		if ($this->nodesRepository->deleteBy($condition) == 0)
 			throw new ModuleException('mediapool','Delete nodes by root id failed.');
 
+		// @infection-ignore-all the ids only go into an IN list
 		$this->aclGrantService->removeUnitShares('mediapool', array_values(array_column($result, 'node_id')));
 	}
 
@@ -354,10 +381,11 @@ class NodesService
 
 			if ($node['children'] == 0)
 				$this->nestedSetsService->deleteSingleNode($node);
-			elseif ($node['children'] > 0)
+			else
 				$this->nestedSetsService->deleteTree($node);
 
 			// the sub directories are gone, too
+			// @infection-ignore-all the ids only go into an IN list
 			$this->aclGrantService->removeUnitShares('mediapool', array_values(array_column($deleted_nodes, 'node_id')));
 			$this->transactions->commit();
 		}
@@ -442,6 +470,7 @@ class NodesService
 	 */
 	private function determineRights(array $node): array
 	{
+		// @infection-ignore-all of these rights only create, edit and delete are read
 		return $this->determineReadableRights($node) ?? ['create' => false, 'edit' => false, 'delete' => false, 'share' => '', 'share_unit' => false];
 	}
 

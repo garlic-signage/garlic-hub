@@ -100,6 +100,26 @@ class MediaSearchTest extends ControllerTestCase
 		static::assertTrue($own[0]['editable']);
 	}
 
+	/**
+	 * Spaces around the term come from typing or copying, they are no part of the search.
+	 */
+	public function testTheSpacesAroundTheTermAreNotSearched(): void
+	{
+		$this->actingAs(2);
+
+		static::assertSame(['urlaub.jpg'], self::names($this->search(['term' => '  urlaub  '])));
+	}
+
+	/**
+	 * Two letters are enough, also two umlauts.
+	 */
+	public function testTwoUmlautsAreASearch(): void
+	{
+		$this->actingAs(2);
+
+		$this->assertSuccess($this->controller->search($this->request('GET', [], ['term' => 'äö']), $this->newResponse()));
+	}
+
 	public function testTheFilterOfTheKindWorksLikeInTheList(): void
 	{
 		$this->actingAs(2);
@@ -121,7 +141,7 @@ class MediaSearchTest extends ControllerTestCase
 	 */
 	public static function tooShort(): array
 	{
-		return ['none' => [[]], 'empty' => [['term' => '']], 'one letter' => [['term' => 'a']], 'spaces' => [['term' => '  a  ']], 'a list' => [['term' => ['urlaub']]]];
+		return ['none' => [[]], 'empty' => [['term' => '']], 'one letter' => [['term' => 'a']], 'spaces' => [['term' => '  a  ']], 'one umlaut' => [['term' => 'ä']], 'a list' => [['term' => ['urlaub']]]];
 	}
 
 	/**
