@@ -23,8 +23,8 @@ namespace App\Framework\System;
 
 /**
  * The version of the hub: VERSION is in the repository and changes only with a release (1.3.0-dev),
- * VERSION_BUILD is written by the build (Docker image, dev-install.sh) with the number of all commits.
- * Without VERSION_BUILD, e.g. an installation without .git, the version stays without the number.
+ * VERSION_BUILD is written by the deploy script of the test server with the number of all commits:
+ * 1.3.0-dev (Build: 1234). Releases and local installations have no VERSION_BUILD, there it stays 1.3.0-dev.
  */
 readonly class AppVersion
 {
@@ -41,7 +41,7 @@ readonly class AppVersion
 		if (!ctype_digit($build))
 			return $version;
 
-		return $version . '.' . $build;
+		return $version . ' (Build: ' . $build . ')';
 	}
 
 	private function readFirstLine(string $fileName): string

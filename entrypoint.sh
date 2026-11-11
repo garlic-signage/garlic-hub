@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 # create .env secret only when not exists
 
 umask 002

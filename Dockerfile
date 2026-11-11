@@ -39,9 +39,6 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --no-autoloader
 # see dockerignore
 COPY . /var/www/
-# the number of all commits for the version, the image has no git: the release workflow gives it
-ARG VERSION_BUILD=""
-RUN if [ -n "$VERSION_BUILD" ]; then echo "$VERSION_BUILD" > /var/www/VERSION_BUILD; fi
 # build the classmap after the sources are copied, otherwise App\ classes are missing
 RUN composer dump-autoload --no-dev --optimize --classmap-authoritative
 COPY dockerapp-configs/http.conf /etc/apache2/sites-available/000-default.conf

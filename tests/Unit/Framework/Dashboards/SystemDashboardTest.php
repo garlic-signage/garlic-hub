@@ -55,7 +55,7 @@ class SystemDashboardTest extends TestCase
 			['version', 'main', [], 'Version'],
 		]);
 		$this->appVersionStub = $this->createStub(AppVersion::class);
-		$this->appVersionStub->method('getVersion')->willReturn('1.3.0-dev.1234');
+		$this->appVersionStub->method('getVersion')->willReturn('1.3.0-dev (Build: 1234)');
 
 		$this->systemDashboard = new SystemDashboard(
 			$this->systemStatsStub,
@@ -139,7 +139,7 @@ class SystemDashboardTest extends TestCase
 	<li><strong>System Load:</strong><span>1.23 | 4.56 | 7.89</span></li>
 	<li><strong>Memory Usage:</strong><span>2000 of 8000</span></li>
 	<li><strong>Disc Usage:</strong><span>100G of 500G (20%)</span></li>
-	<li><strong>Version:</strong><span>1.3.0-dev.1234</span></li>
+	<li><strong>Version:</strong><span>1.3.0-dev (Build: 1234)</span></li>
 </ul>';
 
 		static::assertSame($expected, $this->systemDashboard->renderContent());

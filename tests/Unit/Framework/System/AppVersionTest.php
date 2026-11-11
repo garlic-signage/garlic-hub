@@ -53,7 +53,7 @@ class AppVersionTest extends TestCase
 		file_put_contents($this->dir . '/VERSION', "1.3.0-dev\n");
 		file_put_contents($this->dir . '/VERSION_BUILD', "1234\n");
 
-		static::assertSame('1.3.0-dev.1234', new AppVersion($this->dir)->getVersion());
+		static::assertSame('1.3.0-dev (Build: 1234)', new AppVersion($this->dir)->getVersion());
 	}
 
 	#[Group('units')]
