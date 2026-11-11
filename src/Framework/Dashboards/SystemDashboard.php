@@ -21,10 +21,12 @@ declare(strict_types=1);
 
 namespace App\Framework\Dashboards;
 
+use App\Framework\System\AppVersion;
 use App\Framework\System\SystemStats;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use Closure;
 
 /**
  * Works only in Linux
@@ -36,11 +38,19 @@ readonly class SystemDashboard implements DashboardInterface
 {
 	private SystemStats $systemStats;
 	private Translator $translator;
+	private AppVersion $appVersion;
+	/** @var Closure():bool the ACL lives outside the framework, the factory gives the check */
+	private Closure $isSystemAdmin;
 
-	public function __construct(SystemStats $systemStats, Translator $translator)
+	/**
+	 * @param Closure():bool $isSystemAdmin
+	 */
+	public function __construct(SystemStats $systemStats, Translator $translator, AppVersion $appVersion, Closure $isSystemAdmin)
 	{
-		$this->systemStats = $systemStats;
-		$this->translator = $translator;
+		$this->systemStats   = $systemStats;
+		$this->translator    = $translator;
+		$this->appVersion    = $appVersion;
+		$this->isSystemAdmin = $isSystemAdmin;
 	}
 
 	public function getId(): string
@@ -77,7 +87,21 @@ readonly class SystemDashboard implements DashboardInterface
 	<li><strong>'.$this->translator->translate('system_load', 'main').':</strong><span>'.$load.'</span></li>
 	<li><strong>'.$this->translator->translate('memory_usage', 'main').':</strong><span>'.$memory.'</span></li>
 	<li><strong>'.$this->translator->translate('disc_usage', 'main').':</strong><span>'.$disc.'</span></li>
-</ul>';
+'.$this->renderVersion().'</ul>';
+	}
 
+	/**
+	 * Only the system admin sees the version, it tells an attacker what runs.
+	 *
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	private function renderVersion(): string
+	{
+		$version = $this->appVersion->getVersion();
+		if ($version === '' || !($this->isSystemAdmin)())
+			return '';
+
+		return "\t<li><strong>".$this->translator->translate('version', 'main').':</strong><span>'.htmlspecialchars($version)."</span></li>\n";
 	}
 }

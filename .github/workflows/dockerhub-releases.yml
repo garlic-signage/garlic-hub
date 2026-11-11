@@ -13,6 +13,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v7
+      with:
+        fetch-depth: 0 # all commits, the version counts them
+
+    - name: Determine version
+      id: version
+      run: |
+        echo "version=$(head -n1 VERSION | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
+        echo "build=$(git rev-list --count HEAD)" >> "$GITHUB_OUTPUT"
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v4
@@ -29,6 +37,8 @@ jobs:
         context: .
         platforms: linux/amd64,linux/arm64
         push: true
+        build-args: |
+          VERSION_BUILD=${{ steps.version.outputs.build }}
         tags: |
           sagiadinos/garlic-hub:latest
-          sagiadinos/garlic-hub:1.2.0
+          sagiadinos/garlic-hub:${{ steps.version.outputs.version }}

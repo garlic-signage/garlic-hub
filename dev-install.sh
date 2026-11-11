@@ -13,6 +13,11 @@ mkdir -p var/storage/templates/thumbs
 mkdir -p var/storage/playlists/items/originals
 mkdir -p var/storage/playlists/items/thumbs
 
+# the number of all commits for the version (VERSION + this number), run it again after a pull
+if build=$(git rev-list --count HEAD 2>/dev/null); then
+    echo "$build" > VERSION_BUILD
+fi
+
 # media.php signs its delivery urls with it, so an empty value (as in .env.dist) counts as missing
 if [[ -f .env ]] && ! grep -qE '^APP_SECRET=[[:space:]]*[^[:space:]#]' .env; then
     echo "Create random APP_SECRET..."

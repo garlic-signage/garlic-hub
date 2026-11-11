@@ -54,6 +54,7 @@ use App\Framework\Localization\Locales\Locales;
 use App\Framework\Localization\Locales\SessionLocaleExtractor;
 use App\Framework\Validation\Sanitizer;
 use App\Framework\Http\Session;
+use App\Framework\System\AppVersion;
 use App\Framework\System\ShellExecutor;
 use App\Framework\System\SystemStats;
 use App\Framework\Localization\Translate\IniTranslationLoader;
@@ -506,10 +507,19 @@ $dependencies[SystemStats::class] = DI\factory(function (ContainerInterface $con
 });
 $dependencies[SystemDashboard::class] = DI\factory(function (ContainerInterface $container)
 {
+	$aclHelper   = $container->get(AclHelper::class);
+	$userSession = $container->get(UserSession::class);
+
 	return new SystemDashboard(
 		$container->get(SystemStats::class),
 		$container->get(Translator::class),
+		$container->get(AppVersion::class),
+		fn(): bool => $aclHelper->isModuleAdmin($userSession->getUID(), 'system')
 	);
+});
+$dependencies[AppVersion::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new AppVersion($container->get(Config::class)->getPaths('systemDir'));
 });
 $dependencies[CsrfToken::class] = DI\factory(function (ContainerInterface $container)
 {

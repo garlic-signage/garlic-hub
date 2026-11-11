@@ -25,6 +25,7 @@ use App\Framework\Dashboards\SystemDashboard;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Localization\Translate\Translator;
+use App\Framework\System\AppVersion;
 use App\Framework\System\SystemStats;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Stub;
@@ -34,6 +35,8 @@ class SystemDashboardTest extends TestCase
 {
 	private SystemStats&Stub $systemStatsStub;
 	private Translator&Stub $translatorStub;
+	private AppVersion&Stub $appVersionStub;
+	private bool $isSystemAdmin = false;
 	private SystemDashboard $systemDashboard;
 
 	protected function setUp(): void
@@ -49,9 +52,17 @@ class SystemDashboardTest extends TestCase
 			['system_load', 'main', [], 'System Load'],
 			['memory_usage', 'main', [], 'Memory Usage'],
 			['disc_usage', 'main', [], 'Disc Usage'],
+			['version', 'main', [], 'Version'],
 		]);
+		$this->appVersionStub = $this->createStub(AppVersion::class);
+		$this->appVersionStub->method('getVersion')->willReturn('1.3.0-dev.1234');
 
-		$this->systemDashboard = new SystemDashboard($this->systemStatsStub, $this->translatorStub);
+		$this->systemDashboard = new SystemDashboard(
+			$this->systemStatsStub,
+			$this->translatorStub,
+			$this->appVersionStub,
+			fn(): bool => $this->isSystemAdmin
+		);
 	}
 
 	#[Group('units')]
@@ -110,5 +121,45 @@ class SystemDashboardTest extends TestCase
 </ul>';
 
 		static::assertSame($expected, $this->systemDashboard->renderContent());
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testRenderContentShowsVersionToSystemAdmin(): void
+	{
+		$this->isSystemAdmin = true;
+		$this->systemStatsStub->method('getLoadData')->willReturn(['1_min' => '1.23', '5_min' => '4.56', '15_min' => '7.89']);
+		$this->systemStatsStub->method('getRamStats')->willReturn(['total' => 8000, 'used' => 2000, 'free' => 6000]);
+		$this->systemStatsStub->method('getDiscInfo')->willReturn(['size' => '500G', 'used' => '100G', 'available' => '400G', 'percent' => '20%']);
+
+		$expected = '<ul>
+	<li><strong>System Load:</strong><span>1.23 | 4.56 | 7.89</span></li>
+	<li><strong>Memory Usage:</strong><span>2000 of 8000</span></li>
+	<li><strong>Disc Usage:</strong><span>100G of 500G (20%)</span></li>
+	<li><strong>Version:</strong><span>1.3.0-dev.1234</span></li>
+</ul>';
+
+		static::assertSame($expected, $this->systemDashboard->renderContent());
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 */
+	#[Group('units')]
+	public function testRenderContentWithoutVersionFileHasNoVersionLine(): void
+	{
+		$this->isSystemAdmin = true;
+		$appVersionStub = $this->createStub(AppVersion::class);
+		$appVersionStub->method('getVersion')->willReturn('');
+		$dashboard = new SystemDashboard($this->systemStatsStub, $this->translatorStub, $appVersionStub, fn(): bool => true);
+		$this->systemStatsStub->method('getLoadData')->willReturn(['1_min' => '1', '5_min' => '2', '15_min' => '3']);
+		$this->systemStatsStub->method('getRamStats')->willReturn(['total' => 8, 'used' => 2, 'free' => 6]);
+		$this->systemStatsStub->method('getDiscInfo')->willReturn(['size' => '5G', 'used' => '1G', 'available' => '4G', 'percent' => '20%']);
+
+		static::assertStringNotContainsString('Version', $dashboard->renderContent());
 	}
 }

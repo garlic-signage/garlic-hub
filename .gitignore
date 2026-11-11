@@ -10,3 +10,4 @@
 /public/var/
 .DS_Store
 /tests/Load/media/
+/VERSION_BUILD

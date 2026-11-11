@@ -25,6 +25,7 @@ use App\Framework\Dashboards\SystemDashboard;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Localization\Translate\Translator;
+use App\Framework\System\AppVersion;
 use App\Framework\System\ShellExecutor;
 use App\Framework\System\SystemStats;
 use PHPUnit\Framework\Attributes\Group;
@@ -83,7 +84,8 @@ class SystemDashboardTest extends TestCase
 		]);
 
 		$this->systemStats     = new SystemStats($shell);
-		$this->systemDashboard = new SystemDashboard($this->systemStats, $translator);
+		// the version has its own test, a user without system rights does not see it
+		$this->systemDashboard = new SystemDashboard($this->systemStats, $translator, new AppVersion(sys_get_temp_dir()), fn(): bool => false);
 	}
 
 	/**
