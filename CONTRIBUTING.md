@@ -15,12 +15,15 @@ ddev composer install
 
 ## Before you open a pull request
 
-Run these two. They are fast (under a minute) and cover what the CI checks on every PR:
+Run these. They are fast (under a minute) and cover what the CI checks on every PR:
 
 ```bash
 ddev exec vendor/bin/phpstan analyse --no-progress
 ddev exec vendor/bin/phpunit --testsuite unit,architecture,integration
+cd tests/Js && deno test     # only if you changed JavaScript
 ```
+
+`ddev exec vendor/bin/paratest` runs all PHP tests (without the browser tests) in parallel processes, much faster than `phpunit`.
 
 You do **not** need to run the blackbox suite or the coverage locally; the CI does it. If something is red in the CI and you do not understand why, just push and ask in the PR.
 
@@ -35,7 +38,7 @@ A PR into `main` needs these four checks to be green:
 | integration tests (real database) | Real SQLite database built from the real migrations, real services |
 | security checks | Secret scan (gitleaks), `composer audit` |
 
-The blackbox tests (the real application behind a web server, asked over HTTP) and the coverage badge run in the CI as well.
+The blackbox tests (the real application behind a web server, asked over HTTP), the JavaScript unit tests (Deno) and the coverage badge run in the CI as well. Once a month the mutation tests run over the whole code.
 
 ## Code style
 
@@ -52,6 +55,7 @@ New behaviour and bug fixes come with a test. Which kind:
 2. **Unit test** in `tests/Unit/` for pure logic (calculations, mapping, validation) and for real boundaries (filesystem, network, time). Please do not mock your way through a whole service: such tests break with every refactoring and prove little. If you need five mocks, write an integration test instead.
 3. **Blackbox test** in `tests/Blackbox/` only for behaviour that is visible over HTTP: redirects, headers, cookies, status codes.
 4. **Browser test** in `tests/Browser/` for the JavaScript of a page: a headless Chromium (Symfony Panther) clicks through it. Chromium comes with ddev. These tests are slow and not in the default run, keep them few and check results in the database where possible.
+5. **JavaScript unit test** in `tests/Js/` for the logic of a JavaScript module, with [Deno](https://deno.com) and without a browser. The folders mirror `public/js/`, the DOM and fakes are in `tests/Js/support/`. Keep the browser tests for the paths through the UI.
 
 Every test class needs its own `#[Group(...)]` attribute, groups are not inherited by PHPUnit. The architecture test checks this and says which class is missing one.
 
@@ -63,6 +67,8 @@ ddev exec vendor/bin/phpunit --testsuite integration --group db
 ddev exec vendor/bin/phpunit --testsuite integration --group acl
 ddev exec vendor/bin/phpunit --testsuite browser
 ddev exec vendor/bin/phpunit --filter SomeTestName
+ddev exec vendor/bin/paratest
+cd tests/Js && deno test
 ```
 
 ## Pull requests

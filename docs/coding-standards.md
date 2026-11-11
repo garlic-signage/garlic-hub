@@ -238,9 +238,10 @@ The following are the guidelines for writing templates:
 |-------|-----------|--------|---------|
 | `unit` | `tests/Unit` | `units` | Logic of one class, collaborators are stubbed. Must stay fast. |
 | `integration` | `tests/Integration` | `db`, `acl`, `auth`, `io` | Real SQLite database, real code, no mocks of our own classes. |
-| `blackbox` | `tests/Blackbox` | `blackbox` | The application over HTTP with a PHP built-in server. |
+| `blackbox` | `tests/Blackbox` | `blackbox` | The application over HTTP with a PHP built-in server. The migrations run once per class, every test gets a copy of that database. |
 | `architecture` | `tests/Architecture` | | Rules of the code: layers, routes, test groups, JavaScript sinks. |
 | `browser` | `tests/Browser` | `browser` | Headless Chromium (Panther) for the JavaScript. Not in the default run: `--testsuite browser`. |
+| Deno (no PHPUnit suite) | `tests/Js` | | Logic of the JavaScript modules without a browser: `cd tests/Js && deno test`. The folders mirror `public/js/`. |
 
 - Unit tests put `#[Group('units')]` above every test method.
 - `auth`: login, remember me cookie, passwords and tokens. `io`: real files or other system boundaries without a database.

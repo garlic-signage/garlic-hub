@@ -57,6 +57,7 @@ CLI entry points.
 - `console.php` — Symfony console, loads the commands from `src/Commands`.
 - `migrate-storage.sh` — moves uploaded files from `public/var` to `var/storage`.
 - `check-code.sh` — runs the tests with coverage and PHPStan.
+- `infection.sh` — mutation tests with Infection, over the whole code or only the lines changed since a git ref.
 - `create-sbom.sh` — writes `sbom.json`.
 
 ### `config/`
@@ -81,7 +82,9 @@ Configuration files copied into the Docker image: Apache vhost, PHP ini, ImageMa
 Local development environment with DDEV.
 
 ### `.github/`
-- `workflows/tests.yml` — CI on every push and pull request, one job each: static analysis with the architecture tests, unit tests, integration tests, blackbox tests, coverage, security checks (`composer audit`, secret scan with `.gitleaks.toml`). On `main` the job `badge` writes the coverage badge of the README into the branch `badges` (one commit, replaced on every run).
+- `workflows/tests.yml` — CI on every push and pull request, one job each: static analysis with the architecture tests, unit tests, integration tests, blackbox tests (in parallel with ParaTest), JavaScript unit tests (Deno), coverage, security checks (`composer audit`, secret scan with `.gitleaks.toml`). On `main` the job `badge` writes the coverage badge of the README into the branch `badges` (one commit, replaced on every run).
+- `workflows/mutation.yml` — mutation tests with Infection over the whole code, once a month and by hand; the mutation score goes as a badge into the branch `badges`, the reports are kept as artifacts.
+- `scripts/` — `msi-badge.php` makes the badge of the mutation score, `publish-badge.sh` writes a badge into the branch `badges`.
 - `workflows/dockerhub-releases.yml` — Docker Hub images, started by hand.
 - `actions/setup-app/` — PHP, Composer packages and environment, shared by the jobs of the tests.
 - `dependabot.yml` — weekly updates of the Composer packages and the actions.
@@ -132,6 +135,7 @@ Technical building blocks without business knowledge.
 | `Database/Datatable/` | Query building and filter conditions for datatables                      |
 | `Database/Migration/` | Migration runner and its repository                                      |
 | `Database/NestedSets/` | Nested set trees (e.g. mediapool folders)                               |
+| `Database/SlowQueries/` | DBAL middleware which logs queries slower than `DB_SLOW_QUERY_MS` into `var/logs/slow-queries.log`, off when empty |
 | `Exceptions/`      | Exception hierarchy, incl. `TranslatableModuleException`, `NotFoundException`, `AccessDeniedException` |
 | `Helper/`          | Small helpers, e.g. secure (un)serialization                                |
 | `Http/`            | `Session` and `Cookie`                                                      |
@@ -210,17 +214,18 @@ Mustache templates, one folder per module.
 - `player/index/`, `player/configs/` — SMIL index and player configuration templates.
 
 ### `tests/`
-PHPUnit tests, namespace `Tests\`.
+PHPUnit tests (namespace `Tests\`), the JavaScript unit tests and the load tests.
 - `Unit/` — unit tests with mocks, mirroring the structure of `src/`. Test suite `unit`.
 - `Integration/` — tests against a real database built by the real migrations. Test suite `integration`.
   - `Support/` — base classes (`DatabaseTestCase`, `RepositoryTestCase`, `ContainerTestCase`) and the factory for the real DI container.
   - `Modules/<Module>/Repositories/` — repository tests, group `db`.
   - `Modules/<Module>/Services/` — tests of who sees and may change what through the real services, group `acl`.
-- `Blackbox/` — tests over HTTP, suite `blackbox`, group `blackbox`: `Support/MiniDeployment` starts the application with the PHP web server in a temporary directory (own `var/`, own database file), `Support/Browser` is a visitor with cookies. They cover e.g. the login and the password flow, the way of a player (`/smil-index`), CSRF, the security headers and the CSP, error responses, redirects, uploads and the upload from a URL, and the rights as a user would try them.
+- `Blackbox/` — tests over HTTP, suite `blackbox`, group `blackbox`: `Support/MiniDeployment` starts the application with the PHP web server in a temporary directory (own `var/`, own database file), `Support/Browser` is a visitor with cookies. The migrations run once per class, every test gets a copy of that database. They cover e.g. the login and the password flow, the way of a player (`/smil-index`), CSRF, the security headers and the CSP, error responses, redirects, uploads and the upload from a URL, and the rights as a user would try them.
 - `Architecture/` — rules for the structure, suite `architecture`: the layers and module dependencies of `src/` (`LayersTest`), the groups of the integration tests (`TestGroupsTest`), a controller for every route (`RoutesTest`), a list of the places where the own JavaScript writes HTML (`JavaScriptSinksTest`) and a ratchet for `@var` assertions on arrays, whose number per file may only go down (`ArrayCastsTest`).
 - `Browser/` — tests in a headless Chromium (Symfony Panther), suite and group `browser`: the JavaScript of the mediapool, the playlist composer, the multizone editor, the template composer and the context menus. `Support/BrowserTestCase` extends the `BlackboxTestCase` and serves the assets, too. Chromium and chromedriver come with ddev (`.ddev/config.yaml`). Not in the default run and not in the CI: `--testsuite browser`.
+- `Js/` — unit tests of the JavaScript logic with Deno, without a browser (`cd tests/Js && deno test`). The folders mirror `public/js/`; `deno.json` maps `@js/` to `public/js/` and replaces the external libraries with fakes; `support/` holds the DOM (linkedom) and the fakes. The UI paths stay with the browser tests.
 - `Support/` — fakes shared by the suites, e.g. `MemorySession`, `ArrayCache`, `RecordingLogger`, `ScriptedShellExecutor`.
-- `Load/` — a load test with k6 (`pi.js`: users and players at the same time on a Raspberry Pi) and `make-media.sh`, which creates its media.
+- `Load/` — load tests with k6: `pi.js` (users and players at the same time on a Raspberry Pi), `seed.js` (fills a fresh installation through the API: 2000 media, 200 playlists, 200 players) and `make-media.sh`, which creates the media.
 - `resources/` — fixtures: config files, translations, widgets, temporary files.
   - `sql/<topic>/` — SQL scripts which insert test data for integration tests (`acl/` holds the shared users).
 

@@ -93,6 +93,8 @@ DB_MASTER_PASSWORD="db"
 
 `APP_SECRET` can stay empty, the installer creates it.
 
+Optional: `DB_SLOW_QUERY_MS` (e.g. `100`) writes every query which takes longer into `var/logs/slow-queries.log`. Empty is off.
+
 ### 5. Run the installer
 
 ```bash
