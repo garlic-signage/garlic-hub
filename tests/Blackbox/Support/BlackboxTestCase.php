@@ -41,11 +41,27 @@ abstract class BlackboxTestCase extends TestCase
 
 	protected Connection $connection;
 
+	/**
+	 * The migrations run once per class into this file, each test gets a copy: a fresh database, without
+	 * running all migrations again for every test.
+	 */
 	public static function setUpBeforeClass(): void
 	{
 		parent::setUpBeforeClass();
 		self::$deployment = new MiniDeployment(static::withAssets());
 		self::$deployment->start();
+
+		$connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'path' => self::migratedDatabase()]);
+		(new Runner(
+			new Repository($connection),
+			new Filesystem(new LocalFilesystemAdapter(__DIR__ . '/../../../migrations/core'))
+		))->execute();
+		$connection->close();
+	}
+
+	private static function migratedDatabase(): string
+	{
+		return self::$deployment?->databaseFile() . '.migrated';
 	}
 
 	public static function tearDownAfterClass(): void
@@ -60,17 +76,15 @@ abstract class BlackboxTestCase extends TestCase
 		parent::setUp();
 		$this->deployment()->resetState();
 		$file = $this->deployment()->databaseFile();
-		foreach ([$file, $file . '-journal'] as $old)
+		// the app writes in WAL mode: its files of the database before go, too
+		foreach ([$file, $file . '-journal', $file . '-wal', $file . '-shm'] as $old)
 		{
 			if (is_file($old))
 				unlink($old);
 		}
+		copy(self::migratedDatabase(), $file);
 
 		$this->connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'path' => $file]);
-		(new Runner(
-			new Repository($this->connection),
-			new Filesystem(new LocalFilesystemAdapter(__DIR__ . '/../../../migrations/core'))
-		))->execute();
 	}
 
 	protected function tearDown(): void

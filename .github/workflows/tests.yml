@@ -62,8 +62,9 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-app
 
+      # each test class has its own server and directory, so the classes run in parallel
       - name: PHPUnit blackbox
-        run: vendor/bin/phpunit --testsuite blackbox
+        run: vendor/bin/paratest --testsuite blackbox --processes="$(nproc)"
 
   javascript:
     name: javascript unit tests (Deno)

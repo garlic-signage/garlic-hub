@@ -96,6 +96,7 @@ Then open https://garlic-hub.ddev.site and create the admin user. The full guide
 
 ```bash
 ddev exec vendor/bin/phpunit                                          # everything except the browser tests
+ddev exec vendor/bin/paratest                                         # the same in parallel processes, much faster
 ddev exec vendor/bin/phpunit --testsuite unit                         # fast unit tests with mocks
 ddev exec vendor/bin/phpunit --testsuite integration                  # real database, real migrations, real services
 ddev exec vendor/bin/phpunit --testsuite integration --group db       # only repository tests

@@ -63,6 +63,7 @@
     "php-mock/php-mock-phpunit": "^2.13",
     "cyclonedx/cyclonedx-php-composer": "^6.2",
     "symfony/panther": "^2.4",
-    "infection/infection": "^0.35.10"
+    "infection/infection": "^0.35.10",
+    "brianium/paratest": "^7.20"
   }
 }
