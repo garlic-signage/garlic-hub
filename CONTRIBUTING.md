@@ -29,16 +29,17 @@ You do **not** need to run the blackbox suite or the coverage locally; the CI do
 
 ## What the CI checks
 
-A PR into `main` needs these four checks to be green:
+A PR into `main` needs these five checks to be green:
 
 | Check | What it does |
 |---|---|
 | static analysis and architecture | PHPStan level 8, layer and module dependency rules, test group rules |
 | unit tests | Fast tests with mocks |
 | integration tests (real database) | Real SQLite database built from the real migrations, real services |
+| javascript unit tests (Deno) | The logic of the JavaScript modules, without a browser |
 | security checks | Secret scan (gitleaks), `composer audit` |
 
-The blackbox tests (the real application behind a web server, asked over HTTP), the JavaScript unit tests (Deno) and the coverage badge run in the CI as well. Once a month the mutation tests run over the whole code.
+The blackbox tests (the real application behind a web server, asked over HTTP) and the coverage badge run in the CI as well. Once a month the mutation tests run over the whole code.
 
 ## Code style
 
