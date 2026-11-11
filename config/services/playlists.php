@@ -367,6 +367,7 @@ $dependencies[PlaylistRelease::class] = DI\factory(function (ContainerInterface 
 $dependencies[PlaylistsDashboard::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new PlaylistsDashboard(
+		$container->get(PlaylistsService::class),
 		$container->get(PlaylistRelease::class),
 		$container->get(Translator::class)
 	);

@@ -40,6 +40,39 @@ class PlaylistsRepository extends SqlBase
 	}
 
 	/**
+	 * All playlists and the ones with the given release status. Without UID all playlists (module admin),
+	 * with UID the own ones and the shared ones, like the list.
+	 *
+	 * @param list<int> $sharedPlaylistIds
+	 * @return array{total:int, with_status:int}
+	 * @throws Exception
+	 */
+	public function countForDashboard(string $releaseStatus, ?int $UID = null, array $sharedPlaylistIds = []): array
+	{
+		$queryBuilder = $this->connection->createQueryBuilder();
+		$queryBuilder->select('COUNT(1) AS total', 'SUM(CASE WHEN release_status = :release_status THEN 1 ELSE 0 END) AS with_status')
+			->from('playlists')
+			->setParameter('release_status', $releaseStatus);
+
+		if ($UID !== null)
+		{
+			$scope = ['playlists.UID = :uid'];
+			$queryBuilder->setParameter('uid', $UID, ParameterType::INTEGER);
+			if ($sharedPlaylistIds !== [])
+			{
+				$scope[] = 'playlists.playlist_id IN (:shared_ids)';
+				$queryBuilder->setParameter('shared_ids', $sharedPlaylistIds, ArrayParameterType::INTEGER);
+			}
+			$queryBuilder->where('(' . implode(' OR ', $scope) . ')');
+		}
+
+		$result = $queryBuilder->executeQuery()->fetchAssociative();
+
+		// the sum of a table without playlists is NULL
+		return ['total' => (int) ($result['total'] ?? 0), 'with_status' => (int) ($result['with_status'] ?? 0)];
+	}
+
+	/**
 	 * @param list<int> $playlistIds
 	 * @return list<int> the ones which exist
 	 * @throws Exception

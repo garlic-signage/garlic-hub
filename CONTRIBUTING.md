@@ -72,6 +72,22 @@ ddev exec vendor/bin/paratest
 cd tests/Js && deno test
 ```
 
+## Version number
+
+The version is in the file `VERSION` (for example `1.3.0-dev`). The maintainer changes it with a release, a pull
+request leaves it as it is. The release workflow tags the Docker image with it.
+
+On the test server the deploy script writes the number of all commits into `VERSION_BUILD` after the `git pull`,
+so the testers see which state runs:
+
+```bash
+git rev-list --count HEAD > VERSION_BUILD
+```
+
+The hub then shows `1.3.0-dev (Build: 1234)`, without the file only `1.3.0-dev` (`Framework\System\AppVersion`).
+The file is not in git. The script needs the whole history: a shallow clone (`--depth`) counts only the fetched
+commits. The version is visible to the module admin of `system` in the system usage on the home page.
+
 ## Pull requests
 
 - One topic per PR, a short description of what changes and why.

@@ -24,18 +24,19 @@ namespace App\Modules\Playlists\Dashboard;
 use App\Framework\Dashboards\DashboardInterface;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\UserException;
 use App\Framework\Localization\Translate\Translator;
 use App\Modules\Playlists\Helper\ReleaseStatus;
 use App\Modules\Playlists\Services\PlaylistRelease;
+use App\Modules\Playlists\Services\PlaylistsService;
 use Doctrine\DBAL\Exception;
 
 /**
- * The playlists which wait for the release. Only for the module admin and only while the release is on,
- * otherwise the content is empty and the home page leaves the dashboard out.
+ * The playlists in the scope of the list: all of them and, while the release is on, the ones which wait for it.
  */
 readonly class PlaylistsDashboard implements DashboardInterface
 {
-	public function __construct(private PlaylistRelease $playlistRelease, private Translator $translator) {}
+	public function __construct(private PlaylistsService $playlistsService, private PlaylistRelease $playlistRelease, private Translator $translator) {}
 
 	public function getId(): string
 	{
@@ -55,16 +56,20 @@ readonly class PlaylistsDashboard implements DashboardInterface
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 * @throws Exception
+	 * @throws UserException
 	 */
 	public function renderContent(): string
 	{
-		$waiting = $this->playlistRelease->countWaiting();
-		if ($waiting === null)
-			return '';
+		$counts = $this->playlistsService->countForDashboard();
 
+		$html = '<ul>
+	<li><strong>'.$this->translator->translate('count_total', 'playlists').':</strong><span><a href="/playlists">'.$counts['total'].'</a></span></li>
+';
 		// the number leads to the list of the waiting playlists
-		return '<ul>
-	<li><strong>'.$this->translator->translate('count_release_ready', 'playlists').':</strong><span><a href="/playlists?release_status='.ReleaseStatus::READY->value.'">'.$waiting.'</a></span></li>
-</ul>';
+		if ($this->playlistRelease->isEnabled())
+			$html .= '	<li><strong>'.$this->translator->translate('count_release_ready', 'playlists').':</strong><span><a href="/playlists?release_status='.ReleaseStatus::READY->value.'">'.$counts['waiting'].'</a></span></li>
+';
+
+		return $html.'</ul>';
 	}
 }

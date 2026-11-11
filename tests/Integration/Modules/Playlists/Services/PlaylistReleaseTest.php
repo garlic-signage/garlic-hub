@@ -162,36 +162,52 @@ class PlaylistReleaseTest extends ContainerTestCase
 		static::assertSame('in_progress', $this->releaseStatus(1));
 	}
 
-	public function testTheModuleAdminCountsThePlaylistsWhichWait(): void
+	public function testTheModuleAdminCountsAllPlaylistsWhichWait(): void
 	{
 		$this->actingAs(2);
 		$this->release->requestRelease(1);
 		$this->release->requestRelease(3);
 
 		$this->actingAs(1);
+		$html = $this->buildDashboard($this->release)->renderContent();
 
-		static::assertSame(2, $this->release->countWaiting());
+		static::assertStringContainsString('<span><a href="/playlists">3</a></span>', $html);
+		static::assertStringContainsString('<span><a href="/playlists?release_status=ready">2</a></span>', $html);
 	}
 
-	public function testOnlyTheModuleAdminSeesTheDashboard(): void
+	/**
+	 * Every user sees the dashboard in the scope of the list: bernd neither counts the playlists of anna nor waits for them.
+	 */
+	public function testAUserCountsOnlyThePlaylistsOfHisScope(): void
 	{
 		$this->actingAs(2);
 		$this->release->requestRelease(1);
-		$dashboard = new PlaylistsDashboard($this->release, $this->container->get(Translator::class));
+		$dashboard = $this->buildDashboard($this->release);
+		$label     = $this->container->get(Translator::class)->translate('count_release_ready', 'playlists');
 
-		static::assertSame('', $dashboard->renderContent());
+		$html = $dashboard->renderContent();
+		static::assertStringContainsString('<span><a href="/playlists">2</a></span>', $html);
+		static::assertStringContainsString('<strong>' . $label . ':</strong><span><a href="/playlists?release_status=ready">1</a></span>', $html);
 
-		$this->actingAs(1);
-		$label = $this->container->get(Translator::class)->translate('count_release_ready', 'playlists');
-		static::assertStringContainsString('<strong>' . $label . ':</strong><span><a href="/playlists?release_status=ready">1</a></span>', $dashboard->renderContent());
+		$this->actingAs(3);
+		$html = $dashboard->renderContent();
+		static::assertStringContainsString('<span><a href="/playlists">1</a></span>', $html);
+		static::assertStringContainsString('<span><a href="/playlists?release_status=ready">0</a></span>', $html);
 	}
 
-	public function testNobodySeesTheDashboardWhileTheReleaseIsOff(): void
+	public function testWhileTheReleaseIsOffOnlyTheTotalIsShown(): void
 	{
 		$this->actingAs(1);
+		$html = $this->container->get(PlaylistsDashboard::class)->renderContent();
 
-		static::assertNull($this->buildRelease(false)->countWaiting());
-		static::assertSame('', $this->container->get(PlaylistsDashboard::class)->renderContent());
+		static::assertStringContainsString('<span><a href="/playlists">3</a></span>', $html);
+		static::assertStringNotContainsString('release_status', $html);
+		static::assertSame(1, substr_count($html, '<li>'));
+	}
+
+	private function buildDashboard(PlaylistRelease $release): PlaylistsDashboard
+	{
+		return new PlaylistsDashboard($this->container->get(PlaylistsService::class), $release, $this->container->get(Translator::class));
 	}
 
 	private function buildRelease(bool $enabled): PlaylistRelease

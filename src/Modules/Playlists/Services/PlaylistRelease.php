@@ -85,19 +85,4 @@ readonly class PlaylistRelease
 		$this->playlistsService->loadWithUserById($playlistId); // checks the rights
 		$this->playlistsService->update($playlistId, ['release_status' => ReleaseStatus::READY->value]);
 	}
-
-	/**
-	 * The number of the playlists which wait for the release, for the dashboard of the module admin.
-	 * Null when there is nothing to show: the release is off or the user is no module admin.
-	 *
-	 * @throws CoreException
-	 * @throws Exception
-	 */
-	public function countWaiting(): ?int
-	{
-		if (!$this->enabled || !$this->aclValidator->isModuleAdmin($this->userSession->getUID()))
-			return null;
-
-		return $this->playlistsService->countByReleaseStatus(ReleaseStatus::READY);
-	}
 }

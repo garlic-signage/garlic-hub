@@ -37,6 +37,7 @@ use App\Modules\Playlists\Repositories\PlaylistsRepository;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
 use App\Shared\Acl\AclGrantService;
+use App\Shared\Acl\AclSections;
 use App\Shared\Audit\AuditAction;
 use App\Shared\Audit\AuditLog;
 use App\Shared\Versioning\UnitVersions;
@@ -150,11 +151,30 @@ class PlaylistsService extends AbstractBaseService
 	}
 
 	/**
+	 * The numbers for the dashboard in the scope of the list: all playlists and the ones waiting for the release.
+	 *
+	 * @return array{total:int, waiting:int}
+	 * @throws CoreException
 	 * @throws Exception
+	 * @throws FrameworkException
+	 * @throws UserException
 	 */
-	public function countByReleaseStatus(ReleaseStatus $status): int
+	public function countForDashboard(): array
 	{
-		return $this->playlistsRepository->countAllBy(['release_status' => $status->value]);
+		$UID    = $this->userSession->getUID();
+		$status = ReleaseStatus::READY->value;
+
+		if ($this->aclValidator->isModuleAdmin($UID))
+			$counts = $this->playlistsRepository->countForDashboard($status);
+		elseif ($this->aclValidator->isSubAdmin($UID)) // his scope comes with the Enterprise edition, the list is empty too
+			return ['total' => 0, 'waiting' => 0];
+		else
+		{
+			$sharedIds = array_map(intval(...), $this->aclValidator->findSharedUnitIds($UID, AclSections::EDITOR));
+			$counts    = $this->playlistsRepository->countForDashboard($status, $UID, $sharedIds);
+		}
+
+		return ['total' => $counts['total'], 'waiting' => $counts['with_status']];
 	}
 
 	/**

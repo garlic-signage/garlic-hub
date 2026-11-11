@@ -40,12 +40,24 @@ Editor and viewer are general bits of the module. Which units a user gets is set
 Modules differ in the details:
 - **Playlists**: the owner edits and deletes his own playlists (`Playlists\Services\AclValidator`).
   While the release is enabled in the playlist settings (off by default), owner and editor only ask for the release
-  ("ready for release"), the module admin exports. Every change sets the playlist back to "in progress", the home
-  page shows the module admin how many playlists wait and links to the list filtered by the status
-  (`Playlists\Services\PlaylistRelease`).
+  ("ready for release"), the module admin exports. Every change sets the playlist back to "in progress"
+  (`Playlists\Services\PlaylistRelease`). The home page shows how many playlists wait (see below).
 - **Mediapool**: folders are shared one by one, a sub folder does not inherit the rights of its parent.
   The owner of a folder has all rights on it. An editor may upload into a shared folder but not change the
   folder. A viewer and everybody for a public folder may read it (`Mediapool\Services\AclValidator`).
+
+## Dashboards on the home page
+
+The boxes on the home page count in the same scope as the lists of the modules: the module admin counts all
+units, a user his own ones and the ones shared with him to edit (shared only to view do not count, like in the list),
+a sub admin nothing until his scope comes with the Enterprise edition. A box without content is left out
+(`Framework\Dashboards\DashboardsAggregator`).
+
+- **Players**: active, pending and inactive players by their last access (`Player\Dashboard\PlayerDashboard`).
+- **Playlists**: all playlists, linked to the list, and while the release is enabled the playlists waiting for it,
+  linked to the list filtered by the status (`Playlists\Dashboard\PlaylistsDashboard`).
+- **System usage**: load, memory, disc and the version of the hub, only for the module admin of `system`. The
+  version tells an attacker what runs, so nobody else sees it (`Framework\Dashboards\SystemDashboard`).
 
 ## Rules for granting
 
