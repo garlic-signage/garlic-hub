@@ -69,11 +69,17 @@ readonly class SystemDashboard implements DashboardInterface
 	}
 
 	/**
+	 * Only the system admin sees the box: the load of the server and the version are nothing for the users,
+	 * the version tells an attacker what runs. Without content the aggregator leaves the box out.
+	 *
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
 	public function renderContent(): string
 	{
+		if (!($this->isSystemAdmin)())
+			return '';
+
 		$this->systemStats->determineSystemStats();
 		$load = implode( ' | ', $this->systemStats->getLoadData());
 
@@ -91,15 +97,13 @@ readonly class SystemDashboard implements DashboardInterface
 	}
 
 	/**
-	 * Only the system admin sees the version, it tells an attacker what runs.
-	 *
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
 	private function renderVersion(): string
 	{
 		$version = $this->appVersion->getVersion();
-		if ($version === '' || !($this->isSystemAdmin)())
+		if ($version === '')
 			return '';
 
 		return "\t<li><strong>".$this->translator->translate('version', 'main').':</strong><span>'.htmlspecialchars($version)."</span></li>\n";

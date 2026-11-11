@@ -43,11 +43,30 @@ class PlayerRepository extends SqlBase
 	}
 
 	/**
+	 * Without UID all players (module admin), with UID the own ones and the shared ones, like the list.
+	 *
+	 * @param list<int> $sharedPlayerIds
 	 * @return array<string,mixed>
 	 * @throws Exception
 	 */
-	public function findAllForDashboard(): array
+	public function findAllForDashboard(?int $UID = null, array $sharedPlayerIds = []): array
 	{
+		$where  = '';
+		$params = [];
+		$types  = [];
+		if ($UID !== null)
+		{
+			$where         = ' WHERE (player.UID = :uid';
+			$params['uid'] = $UID;
+			if ($sharedPlayerIds !== [])
+			{
+				$where                .= ' OR player.player_id IN (:shared_ids)';
+				$params['shared_ids'] = $sharedPlayerIds;
+				$types['shared_ids']  = ArrayParameterType::INTEGER;
+			}
+			$where .= ')';
+		}
+
 		$platform   = $this->connection->getDatabasePlatform();
 		$driverName = strtolower(str_replace('Doctrine\DBAL\Platforms\\', '', get_class($platform)));
 		if ($driverName === 'sqliteplatform')
@@ -58,7 +77,7 @@ class PlayerRepository extends SqlBase
 						 AND last_access >= DATETIME('now', '-' || (4 * refresh) || ' seconds') THEN 1 ELSE 0 END) AS pending,
 				SUM(CASE WHEN last_access < DATETIME('now', '-' || (4 * refresh) || ' seconds') THEN 1 ELSE 0 END) AS inactive
 			FROM
-				player;";
+				player" . $where;
 		}
 		else
 		{
@@ -68,10 +87,10 @@ class PlayerRepository extends SqlBase
                       AND last_access >= DATE_SUB(NOW(), INTERVAL (4 * refresh) SECOND) THEN 1 ELSE 0 END) AS pending,
             SUM(CASE WHEN last_access < DATE_SUB(NOW(), INTERVAL (4 * refresh) SECOND) THEN 1 ELSE 0 END) AS inactive
         FROM
-            player;';
+            player' . $where;
 		}
 
-		$result =  $this->connection->fetchAssociative($sql);
+		$result = $this->connection->fetchAssociative($sql, $params, $types);
 		if ($result === false)
 			return [];
 

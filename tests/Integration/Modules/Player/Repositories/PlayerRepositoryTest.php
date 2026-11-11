@@ -72,6 +72,54 @@ class PlayerRepositoryTest extends RepositoryTestCase
 	}
 
 	/**
+	 * UID 1 owns the players 1 and 2, UID 2 the players 3 and 4.
+	 *
+	 * @throws Exception
+	 */
+	public function testFindAllForDashboardCountsOnlyTheOwnPlayers(): void
+	{
+		$this->setLastAccess(1, 10);
+		$this->setLastAccess(2, 5000);
+		$this->setLastAccess(3, 10);
+		$this->setLastAccess(4, 10);
+
+		$result = $this->repository->findAllForDashboard(1);
+
+		static::assertSame(1, (int) $result['active']);
+		static::assertSame(0, (int) $result['pending']);
+		static::assertSame(1, (int) $result['inactive']);
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function testFindAllForDashboardCountsTheSharedPlayers(): void
+	{
+		$this->setLastAccess(1, 10);
+		$this->setLastAccess(2, 10);
+		$this->setLastAccess(3, 700);
+		$this->setLastAccess(4, 10);
+
+		$result = $this->repository->findAllForDashboard(1, [3]);
+
+		static::assertSame(2, (int) $result['active']);
+		static::assertSame(1, (int) $result['pending']);
+		static::assertSame(0, (int) $result['inactive']);
+	}
+
+	/**
+	 * @throws Exception
+	 */
+	public function testFindAllForDashboardOfAUserWithoutPlayers(): void
+	{
+		$result = $this->repository->findAllForDashboard(99);
+
+		static::assertSame(0, (int) $result['active']);
+		static::assertSame(0, (int) $result['pending']);
+		static::assertSame(0, (int) $result['inactive']);
+	}
+
+	/**
 	 * @throws Exception
 	 */
 	public function testFindPlaylistIdsByPlaylistIdsReturnsOneRowPerPlayer(): void

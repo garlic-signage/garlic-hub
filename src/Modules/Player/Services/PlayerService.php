@@ -35,6 +35,7 @@ use App\Modules\Playlists\Helper\PlaylistMode;
 use App\Modules\Playlists\Services\PlaylistsService;
 use Doctrine\DBAL\Exception;
 use App\Shared\Acl\AclGrantService;
+use App\Shared\Acl\AclSections;
 use Throwable;
 
 /**
@@ -67,9 +68,22 @@ class PlayerService
 	 */
 	public function findAllForDashboard(): array
 	{
-		$ret = $this->playerRepository->findAllForDashboard();
+		$zero = ['active' => 0, 'inactive' => 0, 'pending' => 0];
+		$UID  = $this->userSession->getUID();
+
+		// the same scope as the list of the players
+		if ($this->playerValidator->isModuleAdmin($UID))
+			$ret = $this->playerRepository->findAllForDashboard();
+		elseif ($this->playerValidator->isSubAdmin($UID)) // his scope comes with the Enterprise edition, the list is empty too
+			return $zero;
+		else
+		{
+			$sharedIds = array_map(intval(...), $this->playerValidator->findSharedUnitIds($UID, AclSections::EDITOR));
+			$ret = $this->playerRepository->findAllForDashboard($UID, $sharedIds);
+		}
+
 		if (empty($ret))
-			return ['active' => 0, 'inactive' => 0, 'pending' => 0];
+			return $zero;
 
 		// the sums of a table without players are NULL, the dashboard shows 0
 		$ret = [

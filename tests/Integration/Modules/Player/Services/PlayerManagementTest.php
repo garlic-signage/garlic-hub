@@ -220,6 +220,7 @@ class PlayerManagementTest extends ContainerTestCase
 
 	public function testTheDashboardCountsThePlayersByTheirLastAccess(): void
 	{
+		$this->actingAs(1);
 		$this->connection->executeStatement("UPDATE player SET refresh = 300, last_access = CURRENT_TIMESTAMP WHERE player_id = 1");
 		$this->connection->executeStatement("UPDATE player SET refresh = 300, last_access = DATETIME('now', '-700 seconds') WHERE player_id = 2");
 		$this->connection->executeStatement("UPDATE player SET refresh = 300, last_access = DATETIME('now', '-5000 seconds') WHERE player_id IN (3, 4)");
@@ -229,6 +230,7 @@ class PlayerManagementTest extends ContainerTestCase
 
 	public function testTheDashboardOfNoPlayersIsZero(): void
 	{
+		$this->actingAs(1);
 		$this->connection->executeStatement('DELETE FROM player');
 
 		static::assertEqualsCanonicalizing(['active' => 0, 'inactive' => 0, 'pending' => 0], array_map('intval', $this->playerService->findAllForDashboard()));

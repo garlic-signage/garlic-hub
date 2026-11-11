@@ -30,11 +30,13 @@ use App\Modules\Playlists\Services\PlaylistsService;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use App\Shared\Acl\AclGrantService;
+use App\Shared\Acl\AclSections;
 
 /**
  * The rights and the changes of the players are tested with the real database in
  * tests/Integration/Modules/Player/Services (PlayerAccessTest, PlayerManagementTest).
- * Here is the one answer which the database of the tests does not give: the dashboard query has no result.
+ * Here is the one answer which the database of the tests does not give: the dashboard query has no result,
+ * and which scope the dashboard asks the repository for.
  */
 class PlayerServiceTest extends TestCase
 {
@@ -59,5 +61,51 @@ class PlayerServiceTest extends TestCase
 		$service = new PlayerService($repository, $this->createStub(PlaylistsService::class), $this->createStub(AclValidator::class), $this->createStub(UserSession::class), $this->createStub(AclGrantService::class), $this->createStub(Transactions::class));
 
 		static::assertSame(['active' => 2, 'inactive' => 0, 'pending' => 1], $service->findAllForDashboard());
+	}
+
+	#[Group('units')]
+	public function testTheModuleAdminCountsAllPlayers(): void
+	{
+		$validator = $this->createStub(AclValidator::class);
+		$validator->method('isModuleAdmin')->willReturn(true);
+		$repository = $this->createMock(PlayerRepository::class);
+		$repository->expects($this->once())->method('findAllForDashboard')->with()->willReturn(['active' => '5', 'inactive' => '0', 'pending' => '0']);
+
+		static::assertSame(['active' => 5, 'inactive' => 0, 'pending' => 0], $this->createService($repository, $validator)->findAllForDashboard());
+	}
+
+	/**
+	 * The list of the players is empty for a sub admin until his scope comes with the Enterprise edition.
+	 */
+	#[Group('units')]
+	public function testTheSubAdminCountsNoPlayers(): void
+	{
+		$validator = $this->createStub(AclValidator::class);
+		$validator->method('isSubAdmin')->willReturn(true);
+		$repository = $this->createMock(PlayerRepository::class);
+		$repository->expects($this->never())->method('findAllForDashboard');
+
+		static::assertSame(['active' => 0, 'inactive' => 0, 'pending' => 0], $this->createService($repository, $validator)->findAllForDashboard());
+	}
+
+	#[Group('units')]
+	public function testAUserCountsHisOwnAndTheSharedPlayers(): void
+	{
+		$validator = $this->createMock(AclValidator::class);
+		$validator->method('isModuleAdmin')->willReturn(false);
+		$validator->method('isSubAdmin')->willReturn(false);
+		$validator->expects($this->once())->method('findSharedUnitIds')->with(7, AclSections::EDITOR)->willReturn(['3', '4']);
+		$repository = $this->createMock(PlayerRepository::class);
+		$repository->expects($this->once())->method('findAllForDashboard')->with(7, [3, 4])->willReturn(['active' => '1', 'inactive' => '1', 'pending' => '0']);
+
+		static::assertSame(['active' => 1, 'inactive' => 1, 'pending' => 0], $this->createService($repository, $validator, 7)->findAllForDashboard());
+	}
+
+	private function createService(PlayerRepository $repository, AclValidator $validator, int $UID = 1): PlayerService
+	{
+		$userSession = $this->createStub(UserSession::class);
+		$userSession->method('getUID')->willReturn($UID);
+
+		return new PlayerService($repository, $this->createStub(PlaylistsService::class), $validator, $userSession, $this->createStub(AclGrantService::class), $this->createStub(Transactions::class));
 	}
 }

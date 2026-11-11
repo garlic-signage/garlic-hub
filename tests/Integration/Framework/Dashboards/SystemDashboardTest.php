@@ -84,8 +84,8 @@ class SystemDashboardTest extends TestCase
 		]);
 
 		$this->systemStats     = new SystemStats($shell);
-		// the version has its own test, a user without system rights does not see it
-		$this->systemDashboard = new SystemDashboard($this->systemStats, $translator, new AppVersion(sys_get_temp_dir()), fn(): bool => false);
+		// the system admin sees the box, the version has its own test: an empty directory has no VERSION
+		$this->systemDashboard = new SystemDashboard($this->systemStats, $translator, new AppVersion(sys_get_temp_dir()), fn(): bool => true);
 	}
 
 	/**

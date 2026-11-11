@@ -35,8 +35,7 @@ class SystemDashboardTest extends TestCase
 {
 	private SystemStats&Stub $systemStatsStub;
 	private Translator&Stub $translatorStub;
-	private AppVersion&Stub $appVersionStub;
-	private bool $isSystemAdmin = false;
+	private bool $isSystemAdmin = true;
 	private SystemDashboard $systemDashboard;
 
 	protected function setUp(): void
@@ -54,15 +53,7 @@ class SystemDashboardTest extends TestCase
 			['disc_usage', 'main', [], 'Disc Usage'],
 			['version', 'main', [], 'Version'],
 		]);
-		$this->appVersionStub = $this->createStub(AppVersion::class);
-		$this->appVersionStub->method('getVersion')->willReturn('1.3.0-dev (Build: 1234)');
-
-		$this->systemDashboard = new SystemDashboard(
-			$this->systemStatsStub,
-			$this->translatorStub,
-			$this->appVersionStub,
-			fn(): bool => $this->isSystemAdmin
-		);
+		$this->systemDashboard = $this->createDashboard('');
 	}
 
 	#[Group('units')]
@@ -128,9 +119,8 @@ class SystemDashboardTest extends TestCase
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testRenderContentShowsVersionToSystemAdmin(): void
+	public function testRenderContentShowsTheVersion(): void
 	{
-		$this->isSystemAdmin = true;
 		$this->systemStatsStub->method('getLoadData')->willReturn(['1_min' => '1.23', '5_min' => '4.56', '15_min' => '7.89']);
 		$this->systemStatsStub->method('getRamStats')->willReturn(['total' => 8000, 'used' => 2000, 'free' => 6000]);
 		$this->systemStatsStub->method('getDiscInfo')->willReturn(['size' => '500G', 'used' => '100G', 'available' => '400G', 'percent' => '20%']);
@@ -142,24 +132,31 @@ class SystemDashboardTest extends TestCase
 	<li><strong>Version:</strong><span>1.3.0-dev (Build: 1234)</span></li>
 </ul>';
 
-		static::assertSame($expected, $this->systemDashboard->renderContent());
+		static::assertSame($expected, $this->createDashboard('1.3.0-dev (Build: 1234)')->renderContent());
 	}
 
 	/**
+	 * Only the system admin sees the box, the aggregator leaves out a box without content.
+	 *
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 */
 	#[Group('units')]
-	public function testRenderContentWithoutVersionFileHasNoVersionLine(): void
+	public function testRenderContentIsEmptyForAUserWhoIsNoSystemAdmin(): void
 	{
-		$this->isSystemAdmin = true;
-		$appVersionStub = $this->createStub(AppVersion::class);
-		$appVersionStub->method('getVersion')->willReturn('');
-		$dashboard = new SystemDashboard($this->systemStatsStub, $this->translatorStub, $appVersionStub, fn(): bool => true);
-		$this->systemStatsStub->method('getLoadData')->willReturn(['1_min' => '1', '5_min' => '2', '15_min' => '3']);
-		$this->systemStatsStub->method('getRamStats')->willReturn(['total' => 8, 'used' => 2, 'free' => 6]);
-		$this->systemStatsStub->method('getDiscInfo')->willReturn(['size' => '5G', 'used' => '1G', 'available' => '4G', 'percent' => '20%']);
+		$this->isSystemAdmin = false;
+		$systemStatsMock = $this->createMock(SystemStats::class);
+		$systemStatsMock->expects($this->never())->method('determineSystemStats');
+		$dashboard = new SystemDashboard($systemStatsMock, $this->translatorStub, $this->createStub(AppVersion::class), fn(): bool => $this->isSystemAdmin);
 
-		static::assertStringNotContainsString('Version', $dashboard->renderContent());
+		static::assertSame('', $dashboard->renderContent());
+	}
+
+	private function createDashboard(string $version): SystemDashboard
+	{
+		$appVersionStub = $this->createStub(AppVersion::class);
+		$appVersionStub->method('getVersion')->willReturn($version);
+
+		return new SystemDashboard($this->systemStatsStub, $this->translatorStub, $appVersionStub, fn(): bool => $this->isSystemAdmin);
 	}
 }

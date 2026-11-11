@@ -27,7 +27,8 @@ use PHPUnit\Framework\Attributes\Group;
 use Tests\Integration\Support\ContainerTestCase;
 
 /**
- * The dashboard of the players on the start page: the numbers of the players by their last access.
+ * The dashboard of the players on the start page: the numbers of the players by their last access,
+ * in the scope of the list. Player 1 and 2 belong to anna, 3 to bernd, 4 to the admin.
  */
 #[Group('acl')]
 class PlayerDashboardTest extends ContainerTestCase
@@ -40,6 +41,7 @@ class PlayerDashboardTest extends ContainerTestCase
 		$this->loadFixture('acl/users.sql');
 		$this->loadFixture('acl/players.sql');
 		$this->dashboard = $this->container->get(PlayerDashboard::class);
+		$this->actingAs(1);
 	}
 
 	private function lastAccessSecondsAgo(int $playerId, int $seconds): void
@@ -97,5 +99,39 @@ class PlayerDashboardTest extends ContainerTestCase
 		static::assertStringStartsWith('<ul>', $html);
 		static::assertSame(3, substr_count($html, '<li>'));
 		static::assertStringEndsWith('</ul>', $html);
+	}
+
+	public function testAUserCountsOnlyHisOwnPlayers(): void
+	{
+		$this->actingAs(2);
+		$this->lastAccessSecondsAgo(1, 10);
+		$this->lastAccessSecondsAgo(2, 5000);
+		$this->lastAccessSecondsAgo(3, 10);
+		$this->lastAccessSecondsAgo(4, 10);
+
+		static::assertSame(['count_active' => 1, 'count_pending' => 0, 'count_inactive' => 1], $this->numbers());
+	}
+
+	/**
+	 * Like the list: a player shared to edit counts, one shared only to view does not.
+	 */
+	public function testAUserCountsThePlayersSharedToEdit(): void
+	{
+		$this->connection->executeStatement("INSERT INTO user_vip (UID, vip_name, unit_id) VALUES (2, 'player_editor', '3'), (2, 'player_viewer', '4')");
+		$this->actingAs(2);
+		$this->lastAccessSecondsAgo(1, 10);
+		$this->lastAccessSecondsAgo(2, 10);
+		$this->lastAccessSecondsAgo(3, 700);
+		$this->lastAccessSecondsAgo(4, 10);
+
+		static::assertSame(['count_active' => 2, 'count_pending' => 1, 'count_inactive' => 0], $this->numbers());
+	}
+
+	public function testAUserWithoutPlayersSeesZeros(): void
+	{
+		$this->connection->executeStatement('DELETE FROM player WHERE UID = 3');
+		$this->actingAs(3);
+
+		static::assertSame(['count_active' => 0, 'count_pending' => 0, 'count_inactive' => 0], $this->numbers());
 	}
 }
