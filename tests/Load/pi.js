@@ -11,7 +11,10 @@
      -e BASE_URL=http://<pi> -e USERNAME=<admin> -e PASSWORD=<password> grafana/k6 run /load/pi.js
 
  BASE_URL must be an IP or a host name of the Pi, localhost or *.ddev.site are taken for the local player.
- Optional: PLAYERS (200), USERS (10), DURATION (15m).
+ Optional: PLAYERS (200), USERS (10), DURATION (15m), POLL (300 = seconds between two index requests of a player).
+
+ The rate of the index requests is PLAYERS / POLL: 400 players with POLL=30 ask as often as 4000 players every 5 minutes.
+ After the first download the index is unchanged (304), then such a run measures the index server alone.
 
  On the data of seed.js: add -e PLAYLIST_ID=<id> -e NODE_ID=<id> from its output. Then the setup creates nothing,
  every player keeps its own playlist and the users work in the seeded playlist and folder.
@@ -26,7 +29,7 @@ const BASE_URL = (__ENV.BASE_URL || '').replace(/\/$/, '');
 const PLAYERS  = parseInt(__ENV.PLAYERS || '200', 10);
 const USERS    = parseInt(__ENV.USERS || '10', 10);
 const DURATION = __ENV.DURATION || '15m';
-const POLL     = 300;
+const POLL     = parseInt(__ENV.POLL || '300', 10);
 const SEEDED   = __ENV.PLAYLIST_ID !== undefined && __ENV.NODE_ID !== undefined;
 
 const MEDIA = [
@@ -39,6 +42,8 @@ const files = __VU === 0 && !SEEDED ? MEDIA.map((m) => ({ ...m, bytes: open(`./m
 
 export const options = {
 	setupTimeout: '15m',
+	// k6 empties the cookie jar before every iteration: the users log in once and keep their session
+	noCookiesReset: true,
 	scenarios: {
 		players: { executor: 'constant-vus', exec: 'player', vus: PLAYERS, duration: DURATION, gracefulStop: '5m' },
 		users:   { executor: 'constant-vus', exec: 'user', vus: USERS, duration: DURATION },
@@ -114,16 +119,18 @@ export function setup() {
 		playlist_id: String(playlist.id), id: m.media_id, source: 'mediapool', position: String(i + 1), csrf_token: token,
 	}), `insert ${m.filename}`));
 
-	// a new player is registered by its first request, the core edition releases it
-	const uuids = new Set();
-	for (let number = 1; number <= PLAYERS; number++)
+	// a new player is registered by its first request, the core edition releases it.
+	// A player is the number of its VU, k6 numbers the VUs of both scenarios together: all of them get the playlist
+	const numbers = PLAYERS + USERS;
+	const uuids   = new Set();
+	for (let number = 1; number <= numbers; number++)
 	{
 		http.get(`${BASE_URL}/smil-index`, { headers: { 'User-Agent': agentOf(number) } });
 		uuids.add(uuidOf(number));
 	}
 	// the ids of the players are not known: the local player and others may be there already
 	let assigned = 0;
-	for (let playerId = 1; assigned < PLAYERS && playerId <= PLAYERS + 100; playerId++)
+	for (let playerId = 1; assigned < numbers && playerId <= numbers + 100; playerId++)
 	{
 		const res = http.get(`${BASE_URL}/async/player/${playerId}`, { tags: { name: '/async/player/id' }, responseCallback: http.expectedStatuses(200, 404) });
 		if (res.status !== 200 || !uuids.has(res.json().uuid))
@@ -132,8 +139,8 @@ export function setup() {
 		json(http.patch(`${BASE_URL}/async/player/playlist`, { player_id: String(playerId), playlist_id: String(playlist.id), csrf_token: token }), 'assign');
 		assigned++;
 	}
-	if (assigned !== PLAYERS)
-		fail(`only ${assigned} of ${PLAYERS} players got the playlist`);
+	if (assigned !== numbers)
+		fail(`only ${assigned} of ${numbers} players got the playlist`);
 
 	json(http.put(`${BASE_URL}/async/playlists`, { playlist_id: String(playlist.id), csrf_token: token }), 'export');
 
