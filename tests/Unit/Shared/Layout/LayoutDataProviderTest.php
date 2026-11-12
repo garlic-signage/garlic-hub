@@ -58,7 +58,7 @@ class LayoutDataProviderTest extends TestCase
 	/**
 	 * @throws \PHPUnit\Framework\MockObject\Exception
 	 */
-	private function createProvider(string $textDirection): LayoutDataProvider
+	private function createProvider(string $textDirection, bool $isSystemAdmin = false): LayoutDataProvider
 	{
 		$mainMenuStub = $this->createStub(MainMenuBuilder::class);
 		$mainMenuStub->method('build')->willReturn([['URL' => '/login', 'LANG_MENU_POINT' => 'Login']]);
@@ -77,7 +77,7 @@ class LayoutDataProviderTest extends TestCase
 		$translatorStub->method('translate')->willReturnCallback(static fn(string $key, string $module): string => $module . '.' . $key);
 
 		return new LayoutDataProvider($mainMenuStub, $userMenuStub, $languageSelectStub, $flashStub,
-			$csrfTokenStub, $localesStub, $translatorStub, $this->configStub);
+			$csrfTokenStub, $localesStub, $translatorStub, $this->configStub, static fn(): bool => $isSystemAdmin);
 	}
 
 	/**
@@ -88,7 +88,7 @@ class LayoutDataProviderTest extends TestCase
 	#[Group('units')]
 	public function testCollectReturnsLayoutData(): void
 	{
-		$this->configStub->method('getEnv')->willReturnMap([['APP_NAME', 'Garlic Hub'], ['APP_DEBUG', 'false']]);
+		$this->configStub->method('getEnv')->willReturnMap([['APP_NAME', 'Garlic Hub'], ['APP_ENV', 'prod']]);
 
 		static::assertSame([
 			'messages'             => [['MESSAGE_TEXT' => 'Saved']],
@@ -114,7 +114,7 @@ class LayoutDataProviderTest extends TestCase
 	#[Group('units')]
 	public function testCollectPassesTheTextDirectionOfTheLocale(): void
 	{
-		$this->configStub->method('getEnv')->willReturnMap([['APP_NAME', 'Garlic Hub'], ['APP_DEBUG', 'false']]);
+		$this->configStub->method('getEnv')->willReturnMap([['APP_NAME', 'Garlic Hub'], ['APP_ENV', 'prod']]);
 
 		$data = $this->createProvider('rtl')->collect($this->requestStub);
 
@@ -127,9 +127,9 @@ class LayoutDataProviderTest extends TestCase
 	 * @throws Exception
 	 */
 	#[Group('units')]
-	public function testCollectAddsDebugStatsInDebugMode(): void
+	public function testCollectAddsTheStatsInDevForEveryone(): void
 	{
-		$this->configStub->method('getEnv')->willReturnMap([['APP_NAME', 'Garlic Hub'], ['APP_DEBUG', 'true']]);
+		$this->configStub->method('getEnv')->willReturnMap([['APP_NAME', 'Garlic Hub'], ['APP_ENV', 'dev']]);
 		$startTime = microtime(true) - 0.5;
 		$this->requestStub->method('getAttribute')->willReturnCallback(
 			static fn(string $name): float|int => $name === 'start_time' ? $startTime : 0
@@ -140,5 +140,19 @@ class LayoutDataProviderTest extends TestCase
 		static::assertMatchesRegularExpression('/^0\.5\d{5}sec$/', $data['EXECUTION_TIME']);
 		static::assertStringEndsWith(' KB', $data['MEMORY_USAGE']);
 		static::assertStringEndsWith(' KB', $data['PEAK_MEMORY_USAGE']);
+	}
+
+	/**
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws Exception
+	 */
+	#[Group('units')]
+	public function testCollectAddsTheStatsOutsideDevOnlyForTheSystemAdmin(): void
+	{
+		$this->configStub->method('getEnv')->willReturnMap([['APP_NAME', 'Garlic Hub'], ['APP_ENV', 'prod']]);
+
+		static::assertArrayNotHasKey('EXECUTION_TIME', $this->provider->collect($this->requestStub));
+		static::assertArrayHasKey('EXECUTION_TIME', $this->createProvider('ltr', true)->collect($this->requestStub));
 	}
 }

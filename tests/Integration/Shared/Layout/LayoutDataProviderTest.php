@@ -198,12 +198,24 @@ class LayoutDataProviderTest extends ContainerTestCase
 			static::assertNotSame('', $data[$key], $key);
 	}
 
-	public function testTheDebugNumbersAreOnlyGivenInTheDebugMode(): void
+	public function testTheNumbersOfTheRequestAreOnlyForTheSystemAdmin(): void
 	{
 		static::assertArrayNotHasKey('EXECUTION_TIME', $this->layout());
+		$this->actingAs(2);
+		static::assertArrayNotHasKey('EXECUTION_TIME', $this->layout());
 
+		$this->actingAs(1);
+		$data = $this->container->get(LayoutDataProvider::class)->collect((new ServerRequestFactory())->createServerRequest('GET', '/')->withAttribute('start_time', microtime(true) - 1.0)->withAttribute('start_memory', 0));
+
+		static::assertMatchesRegularExpression('/^1\.\d{6}sec$/', $data['EXECUTION_TIME']);
+		static::assertMatchesRegularExpression('/^[\d.]+ KB$/', $data['MEMORY_USAGE']);
+		static::assertMatchesRegularExpression('/^[\d.]+ KB$/', $data['PEAK_MEMORY_USAGE']);
+	}
+
+	public function testInDevEveryoneGetsTheNumbersOfTheRequest(): void
+	{
 		$config = $this->createStub(Config::class);
-		$config->method('getEnv')->willReturnMap([['APP_DEBUG', 'true'], ['APP_NAME', 'garlic-hub']]);
+		$config->method('getEnv')->willReturnMap([['APP_ENV', 'dev'], ['APP_NAME', 'garlic-hub']]);
 		$provider = new LayoutDataProvider(
 			$this->container->get(MainMenuBuilder::class),
 			$this->container->get(UserMenuBuilder::class),
@@ -212,14 +224,13 @@ class LayoutDataProviderTest extends ContainerTestCase
 			$this->container->get(CsrfToken::class),
 			$this->container->get(Locales::class),
 			$this->container->get(Translator::class),
-			$config
+			$config,
+			static fn(): bool => false
 		);
 
-		$data = $provider->collect((new ServerRequestFactory())->createServerRequest('GET', '/')->withAttribute('start_time', microtime(true) - 1.0)->withAttribute('start_memory', 0));
+		$data = $provider->collect((new ServerRequestFactory())->createServerRequest('GET', '/'));
 
 		static::assertSame('garlic-hub', $data['APP_NAME']);
-		static::assertMatchesRegularExpression('/^1\.\d{6}sec$/', $data['EXECUTION_TIME']);
-		static::assertMatchesRegularExpression('/^[\d.]+ KB$/', $data['MEMORY_USAGE']);
-		static::assertMatchesRegularExpression('/^[\d.]+ KB$/', $data['PEAK_MEMORY_USAGE']);
+		static::assertArrayHasKey('EXECUTION_TIME', $data);
 	}
 }

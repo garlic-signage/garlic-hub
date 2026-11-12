@@ -28,6 +28,7 @@ use App\Framework\Localization\Locales\Locales;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Security\CsrfToken;
 use App\Framework\TemplateEngine\LayoutDataProviderInterface;
+use Closure;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -36,6 +37,9 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 readonly class LayoutDataProvider implements LayoutDataProviderInterface
 {
+	/**
+	 * @param Closure():bool $isSystemAdmin
+	 */
 	public function __construct(
 		private MainMenuBuilder $mainMenuBuilder,
 		private UserMenuBuilder $userMenuBuilder,
@@ -44,7 +48,8 @@ readonly class LayoutDataProvider implements LayoutDataProviderInterface
 		private CsrfToken $csrfToken,
 		private Locales $locales,
 		private Translator $translator,
-		private Config $config
+		private Config $config,
+		private Closure $isSystemAdmin
 	) {}
 
 	/**
@@ -71,7 +76,9 @@ readonly class LayoutDataProvider implements LayoutDataProviderInterface
 			'LANG_TERMS'           => $this->translator->translate('terms', 'menu')
 		];
 
-		if (filter_var($this->config->getEnv('APP_DEBUG'), FILTER_VALIDATE_BOOLEAN))
+		// the numbers of the request are for the developer and the system admin, they tell others nothing
+		// useful but something about the load of the server
+		if ($this->config->getEnv('APP_ENV') === 'dev' || ($this->isSystemAdmin)())
 			$data = array_merge($data, $this->collectDebugStats($request));
 
 		return $data;

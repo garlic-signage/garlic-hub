@@ -154,9 +154,11 @@ $dependencies[FinalRenderMiddleware::class] = DI\factory(function (ContainerInte
 		new StreamFactory()
 	);
 });
-$dependencies[LayoutDataProviderInterface::class] = DI\factory(function (ContainerInterface $container)
+$dependencies[LayoutDataProviderInterface::class] = DI\get(LayoutDataProvider::class);
+$dependencies[LayoutDataProvider::class] = DI\factory(function (ContainerInterface $container)
 {
 	$session    = $container->get(Session::class);
+	$aclHelper  = $container->get(AclHelper::class);
 	$translator = $container->get(Translator::class);
 	$locales    = $container->get(Locales::class);
 	// The flash messages need the session. This provider is built for every request, but only pages
@@ -171,7 +173,12 @@ $dependencies[LayoutDataProviderInterface::class] = DI\factory(function (Contain
 		$container->get(CsrfToken::class),
 		$locales,
 		$translator,
-		$container->get(Config::class)
+		$container->get(Config::class),
+		static function () use ($session, $aclHelper): bool
+		{
+			$user = $session->get('user');
+			return is_array($user) && isset($user['UID']) && $aclHelper->isModuleAdmin((int) $user['UID'], 'system');
+		}
 	);
 });
 $dependencies[App::class] = Di\factory([AppFactory::class, 'createFromContainer']); // Slim App
