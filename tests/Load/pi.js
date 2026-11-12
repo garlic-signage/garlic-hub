@@ -154,8 +154,8 @@ export function player() {
 	if (index.status === 200)
 	{
 		lastModified = index.headers['Last-Modified'] || '';
-		// the SMIL has the urls of the configured server, the test asks the Pi under BASE_URL
-		const paths = new Set([...index.body.matchAll(/src="[^"]*?(\/delivery\.php\/[^"]+)"/g)].map((m) => m[1]));
+		// the SMIL has relative urls (delivery.php/...) or those of the configured server, the test asks the Pi under BASE_URL
+		const paths = new Set([...index.body.matchAll(/src="(?:[^"]*?\/)?(delivery\.php\/[^"]+)"/g)].map((m) => '/' + m[1]));
 		check(paths, { 'index has media': (p) => p.size > 0 });
 		for (const path of paths)
 			download(path);
