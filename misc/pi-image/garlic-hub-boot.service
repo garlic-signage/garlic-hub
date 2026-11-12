@@ -1,0 +1,11 @@
+[Unit]
+Description=garlic-hub: PHP workers and memory limits by the memory of this Pi, on the first start secret, keys and database
+Before=php8.4-fpm.service apache2.service cron.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/lib/garlic-hub/boot.sh
+
+[Install]
+WantedBy=multi-user.target

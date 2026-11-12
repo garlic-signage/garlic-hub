@@ -4,6 +4,8 @@ name: raspberry pi image
 # Built for every published release and attached to it. By hand under Actions for a tag or a branch:
 # with a release of that name it is attached there, otherwise it is kept as an artifact of the run.
 # The arm runner runs the chroot natively, without qemu.
+# garlic-hub-pi.json is the content repository for the Raspberry Pi Imager, the same name in every release:
+# https://github.com/garlic-signage/garlic-hub/releases/latest/download/garlic-hub-pi.json stays its address.
 on:
   release:
     types: [published]
@@ -36,8 +38,9 @@ jobs:
 
       - name: Build the image
         run: |
+          DOWNLOAD_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/$TAG"
           git rev-parse --verify --quiet "$TAG^{commit}" > /dev/null || TAG="origin/$TAG"
-          sudo misc/pi-image/build.sh "$TAG" "$RUNNER_TEMP/out"
+          sudo DOWNLOAD_URL="$DOWNLOAD_URL" misc/pi-image/build.sh "$TAG" "$RUNNER_TEMP/out"
 
       - name: Attach it to the release
         id: release

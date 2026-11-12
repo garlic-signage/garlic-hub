@@ -139,6 +139,7 @@ and shows the mutation score in the badge above; the reports are kept as artifac
 **Start here**
 - [Architecture](ARCHITECTURE.md) — layers, request flow and every directory explained
 - [Installation](docs/install.md)
+- [Raspberry Pi Image](docs/raspberry-pi.md) — write the image with the Raspberry Pi Imager
 - [Coding Standards](docs/coding-standards.md)
 
 **Concepts**
