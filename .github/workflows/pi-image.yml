@@ -1,0 +1,59 @@
+name: raspberry pi image
+
+# Raspberry Pi OS Lite (arm64) with garlic-hub installed bare metal, CMS only, see misc/pi-image/build.sh.
+# Built for every published release and attached to it. By hand under Actions for a tag or a branch:
+# with a release of that name it is attached there, otherwise it is kept as an artifact of the run.
+# The arm runner runs the chroot natively, without qemu.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag or branch, e.g. v1.3.0 or main
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pi-image-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  image:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 90
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # the tag for git archive
+
+      - name: Tools
+        run: sudo apt-get update -q && sudo apt-get install -y -q parted xz-utils e2fsprogs
+
+      - name: Build the image
+        run: |
+          git rev-parse --verify --quiet "$TAG^{commit}" > /dev/null || TAG="origin/$TAG"
+          sudo misc/pi-image/build.sh "$TAG" "$RUNNER_TEMP/out"
+
+      - name: Attach it to the release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" "$RUNNER_TEMP"/out/* --clobber
+          else
+            echo "no release $TAG" && echo "missing=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Keep it as an artifact
+        if: steps.release.outputs.missing == '1'
+        uses: actions/upload-artifact@v7
+        with:
+          name: pi-image
+          path: ${{ runner.temp }}/out/
+          compression-level: 0
