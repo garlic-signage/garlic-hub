@@ -40,6 +40,7 @@ export class PageTabs
 			button.addEventListener("click", () =>
 			{
 				show(button.dataset.tab);
+				// Stryker disable next-line StringLiteral: the browsers ignore the title
 				history.replaceState(null, "", "#" + button.dataset.tab);
 			});
 		}

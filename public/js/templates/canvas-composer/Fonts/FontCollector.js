@@ -40,9 +40,12 @@ export class FontCollector
 		const styles = object.styles ?? {};
 		for (const entry of Object.values(styles))
 		{
-			if (entry === null || typeof entry !== "object")
+			if (entry === null ||
+				// Stryker disable next-line ConditionalExpression: the values of a string or a number have no fontFamily either
+				typeof entry !== "object")
 				continue;
 
+			// Stryker disable next-line ConditionalExpression: read as a line, a range finds the font in its style object too
 			if (entry.style !== undefined)
 				this.#addFont(entry.style.fontFamily);
 			else

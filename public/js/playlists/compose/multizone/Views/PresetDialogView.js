@@ -86,7 +86,9 @@ export class PresetDialogView
 	{
 		// the longer side of the screen gets the full size of the preview
 		const ratio   = width > 0 && height > 0 ? width / height : 16 / 9;
+		// Stryker disable next-line EqualityOperator: a square gets 120 x 120 in both branches
 		const svgWidth  = ratio >= 1 ? PresetDialogView.#PREVIEW_SIZE : Math.round(PresetDialogView.#PREVIEW_SIZE * ratio);
+		// Stryker disable next-line EqualityOperator: a square gets 120 x 120 in both branches
 		const svgHeight = ratio >= 1 ? Math.round(PresetDialogView.#PREVIEW_SIZE / ratio) : PresetDialogView.#PREVIEW_SIZE;
 
 		const svg = document.createElementNS(PresetDialogView.#SVG_NS, "svg");

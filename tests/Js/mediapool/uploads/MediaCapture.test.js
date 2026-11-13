@@ -37,6 +37,7 @@ class FakeMediaRecorder
 	ondataavailable = null;
 	onstop          = null;
 	stopsLater      = false;
+	stops           = 0;
 
 	constructor(stream)
 	{
@@ -57,6 +58,7 @@ class FakeMediaRecorder
 
 	stop()
 	{
+		this.stops++;
 		this.state = 'inactive';
 		if (!this.stopsLater)
 			this.finish();
@@ -246,4 +248,30 @@ Deno.test('a data URL of a canvas becomes a file with its type', async () =>
 Deno.test('a text without a type is no data URL', () =>
 {
 	assertThrows(() => MediaCapture.fileFromDataUrl('data:,abc', 'shot.jpg'), TypeError);
+});
+
+Deno.test('a recording that is stopping is no longer recorded', () =>
+{
+	using page = createCapture();
+	const recorder = page.start(page.capture);
+	recorder.stopsLater = true;
+
+	page.capture.stop();
+	assertEquals(page.capture.isRecording(), false);
+
+	page.capture.stop();
+	assertEquals(recorder.stops, 1);
+});
+
+Deno.test('the time limit does not stop a recording the browser has stopped already', () =>
+{
+	using time = new FakeTime();
+	using page = createCapture();
+	const recorder = page.start(page.capture);
+	recorder.stopsLater = true;
+
+	recorder.stop();
+	time.tick(MediaCapture.MAX_RECORD_SECONDS * 1000);
+
+	assertEquals(recorder.stops, 1);
 });

@@ -133,19 +133,23 @@ export class FetchClient
                 const response = {
                     status: this.#xhr.status,
                     statusText: this.#xhr.statusText,
+                    // Stryker disable next-line ArrowFunction: nothing reads the text of an upload answer
                     text: () => Promise.resolve(responseText),
                     json: () => new Promise((resolve, reject) => {
                         try
                         {
                             resolve(JSON.parse(responseText));
                         }
+                        // Stryker disable BlockStatement,StringLiteral: json() is called only after #isJSON(), it cannot fail
                         catch (error)
                         {
                             reject(new Error(`JSON Parse Error: ${error.message}`));
                         }
+                        // Stryker restore BlockStatement,StringLiteral
                     })
                 };
 
+                // Stryker disable next-line ConditionalExpression: onload never gets a status below 200, so ">= 200" cannot be false
                 if (this.#xhr.status >= 200 && this.#xhr.status < 300)
                 {
                     if (this.#isJSON(responseText))
@@ -174,6 +178,7 @@ export class FetchClient
             JSON.parse(str);
             return true;
         }
+        // Stryker disable next-line BlockStatement: undefined is as false as false for the callers
         catch
         {
             return false;
@@ -186,6 +191,7 @@ export class FetchClient
             return false;
 
         const body = JSON.parse(responseText);
+        // Stryker disable next-line ConditionalExpression: a number or a string has no success, so "object" cannot be skipped
         return body !== null && typeof body === 'object' && body.success === false;
     }
 
@@ -198,6 +204,7 @@ export class FetchClient
         try
         {
             const body = await response.json();
+            // Stryker disable next-line ConditionalExpression,LogicalOperator: null fails in the catch, a number or a string has no success
             if (body !== null && typeof body === 'object' && body.success === false)
                 return body;
         }

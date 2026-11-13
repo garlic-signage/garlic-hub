@@ -27,8 +27,10 @@ import {FlashMessageHandler} from "./FlashMessageHandler.js";
  */
 export class UnitVersionsDialog
 {
+	// Stryker disable StringLiteral: open() sets them before they are read
 	#module              = "";
 	#unitId              = "";
+	// Stryker restore StringLiteral
 	#service             = null;
 	#flashMessageHandler = null;
 	#dialog              = null;

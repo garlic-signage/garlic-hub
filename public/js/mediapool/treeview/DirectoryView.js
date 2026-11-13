@@ -57,12 +57,15 @@ export class DirectoryView
             source: { url: TreeViewApiConfig.ROOT_NODES_URI },
             init: async (e) => {
                 // JSON keeps the type of the keys: node ids are numbers, the shared root is a string
+                // Stryker disable next-line ArrayDeclaration: the parse below sets it or returns
                 let parentList = [];
                 try
                 {
+                    // Stryker disable next-line StringLiteral: nothing saved and an empty text both open nothing
                     parentList = JSON.parse(localStorage.getItem('parent_list') ?? "[]");
                 }
                 catch (error)
+                // Stryker disable next-line BlockStatement: an unreadable list leaves the empty one, which opens nothing too
                 {
                     return; // an old comma separated list
                 }
@@ -237,7 +240,7 @@ export class DirectoryView
         if (this.#activeNode === null)
             return "";
 
-        return this.#activeNode.title;
+        return this.#activeNode.data.visibility;
     }
 
     getActiveNodeTitle()

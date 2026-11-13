@@ -35,6 +35,7 @@ export class BaseTypes
 	}
 
 	get exists()
+	// Stryker disable next-line BlockStatement: the class field exists hides this getter
 	{
 		return this.exists;
 	}

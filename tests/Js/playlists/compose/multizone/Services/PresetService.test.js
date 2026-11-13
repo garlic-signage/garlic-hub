@@ -68,6 +68,17 @@ Deno.test('a preset replaces the zones by its zones in pixel', () =>
 	]);
 });
 
+Deno.test('a zone below the top keeps its height', () =>
+{
+	const {zoneService, service} = createService(1920, 1080);
+
+	service.apply({zones: [{left: 0, top: 75, width: 100, height: 25, bgcolor: '#333333'}]});
+
+	assertEquals(zoneService.created, [
+		{zone_name: 'Zone 1', zone_left: 0, zone_top: 810, zone_width: 1920, zone_height: 270, zone_bgcolor: '#333333'},
+	]);
+});
+
 Deno.test('neighbouring zones of a third touch without a gap and fill the screen', () =>
 {
 	const {zoneService, service} = createService('1366', '768');

@@ -79,3 +79,11 @@ Deno.test('without a shadow the panel shows a transparent colour and zeros', () 
 			['rgba(0, 0, 0, 0)', 0, 0, 0], String(shadow));
 	}
 });
+
+Deno.test('an object that never had a shadow has none', () =>
+{
+	const {object, service} = createService();
+	delete object.shadow;
+
+	assertEquals(service.hasShadow(), false);
+});

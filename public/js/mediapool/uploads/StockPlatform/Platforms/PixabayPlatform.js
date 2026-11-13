@@ -24,6 +24,7 @@ export class PixabayPlatform extends AbstractStockPlatform
 	#searchImageUri = "https://pixabay.com/api"
 	#searchVideoUri = "https://pixabay.com/api/videos";
 	hasVideos  = true;
+	// Stryker disable next-line StringLiteral: search() sets the media type before the first query
 	#mediatype = "images";
 
 	constructor(fetchClient)
@@ -125,7 +126,9 @@ export class PixabayPlatform extends AbstractStockPlatform
 				}
 			};
 			return acc;
-		}, this.resultList || {});
+		},
+		// Stryker disable next-line LogicalOperator: the getter of AbstractStockPlatform always gives an object
+		this.resultList || {});
 	}
 
 	#prepareVideosResults(json)
@@ -154,7 +157,9 @@ export class PixabayPlatform extends AbstractStockPlatform
 				}
 			};
 			return acc;
-		}, this.resultList || {});
+		},
+		// Stryker disable next-line LogicalOperator: the getter of AbstractStockPlatform always gives an object
+		this.resultList || {});
 
 	}
 

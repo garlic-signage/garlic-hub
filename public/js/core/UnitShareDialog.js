@@ -29,8 +29,10 @@ import {FlashMessageHandler} from "./FlashMessageHandler.js";
  */
 export class UnitShareDialog
 {
+	// Stryker disable StringLiteral: open() sets them before they are read
 	#module              = "";
 	#unitId              = "";
+	// Stryker restore StringLiteral
 	#service             = null;
 	#flashMessageHandler = null;
 	#dialog              = null;
@@ -122,6 +124,7 @@ export class UnitShareDialog
 			const search = filter.value.trim().toLowerCase();
 			for (const item of list.children)
 			{
+				// Stryker disable next-line ConditionalExpression,StringLiteral: every name includes "", the check only says it
 				item.hidden = search !== "" && !item.dataset.username.includes(search);
 			}
 		});

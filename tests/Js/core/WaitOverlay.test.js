@@ -26,7 +26,7 @@ Deno.test('the overlay lies over the page while it waits', () =>
 	const overlay = new WaitOverlay();
 
 	overlay.start();
-	assertEquals(dom.document.querySelectorAll('body > #waitOverlay').length, 1);
+	assertEquals(dom.document.querySelectorAll('body > div#waitOverlay').length, 1);
 
 	overlay.stop();
 	assertEquals(dom.document.getElementById('waitOverlay'), null);

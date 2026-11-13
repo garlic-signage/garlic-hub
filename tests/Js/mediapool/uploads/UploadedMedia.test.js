@@ -28,6 +28,12 @@ function emptyList()
 	UploadedMedia.take();
 }
 
+// the first test of the file: nothing has been added to the static list yet
+Deno.test('before the first upload there are no ids', () =>
+{
+	assertEquals(UploadedMedia.take(), []);
+});
+
 Deno.test('the ids are taken in the order of the uploads', () =>
 {
 	emptyList();

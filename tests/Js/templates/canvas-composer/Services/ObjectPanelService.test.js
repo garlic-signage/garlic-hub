@@ -70,9 +70,16 @@ Deno.test('a long label is cut after 30 characters', () =>
 
 Deno.test('an object locked in one direction only is not locked in the list', () =>
 {
-	const page = createService([shape({lockMovementX: true})]);
+	const page = createService([shape({lockMovementX: true}), shape({lockMovementY: true})]);
 
-	assertEquals(page.service.listObjects()[0].isLocked, false);
+	assertEquals(page.service.listObjects().map(entry => entry.isLocked), [false, false]);
+});
+
+Deno.test('a text without text has an empty label', () =>
+{
+	const page = createService([shape({type: 'textbox'})]);
+
+	assertEquals(page.service.listObjects()[0].text, '');
 });
 
 Deno.test('an object of the list is selected by its index', () =>

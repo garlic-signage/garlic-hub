@@ -156,6 +156,15 @@ Deno.test('the items know whether they belong to a master playlist', async () =>
 	}
 });
 
+Deno.test('an item added before the playlist is loaded belongs to no master playlist', () =>
+{
+	using page = createPage();
+
+	page.list.createPlaylistItem({item_id: 1});
+
+	assertEquals(page.factory.created[0][0].belongsToMasterPlaylist, false);
+});
+
 Deno.test('a playlist which could not be loaded shows nothing', async () =>
 {
 	using page = createPage();

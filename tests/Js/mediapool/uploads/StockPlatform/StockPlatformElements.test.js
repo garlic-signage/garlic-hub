@@ -42,6 +42,7 @@ const TAB = `
 		<button id="savePlatformApiToken"></button>
 	</div>
 	<div id="downloadStatus"></div>
+	<div id="previewPlatformArea"></div>
 	<button id="startPlatformsUpload"></button>`;
 
 const GETTERS = {
@@ -49,7 +50,7 @@ const GETTERS = {
 	checkSearchPlatform: 'checkSearchPlatform', checkConfigPlatform: 'checkConfigPlatform',
 	searchTerms: 'searchTerms', searchStockPlatform: 'searchStockPlatform', platformApiToken: 'platformApiToken',
 	savePlatformApiToken: 'savePlatformApiToken', searchInPlatform: 'searchInPlatform', configPlatform: 'configPlatform',
-	searchResultsArea: 'searchResultsArea', startPlatformsUpload: 'startPlatformsUpload',
+	searchResultsArea: 'searchResultsArea', previewPlatformArea: 'previewPlatformArea', startPlatformsUpload: 'startPlatformsUpload',
 	startFileUpload: 'startPlatformsUpload', downloadStatus: 'downloadStatus', radioSelectMediatype: 'radioSelectMediatype',
 	searchMediatypeVideos: 'searchMediatypeVideos', searchMediatypeImages: 'searchMediatypeImages'
 };

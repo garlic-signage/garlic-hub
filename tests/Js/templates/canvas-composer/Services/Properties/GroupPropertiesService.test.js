@@ -81,3 +81,13 @@ Deno.test('the objects of a group take its place and are selected', () =>
 	assertEquals(canvas.active.canvas === canvas, true);
 	assertEquals(wrapper.modified[0] === objects.b, true);
 });
+
+Deno.test('the group goes where the topmost selected object was, below the objects above it', () =>
+{
+	using _fabric = useFakeFabric();
+	const {objects, canvas, service} = createService();
+
+	service.toGroup(new FakeActiveSelection([objects.a, objects.c]));
+
+	assertEquals(names(canvas.getObjects()), ['b', 'd', 'group', 'e']);
+});

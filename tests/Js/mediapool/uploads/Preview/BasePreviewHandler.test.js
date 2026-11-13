@@ -97,6 +97,8 @@ Deno.test('a file gets a preview with its metadata and enables the upload', () =
 	assertEquals(container.querySelector('.tooltip').innerHTML, 'lobby.jpg<br>1.50 MB<br>image/jpeg');
 	assertEquals(container.querySelector('.closeButton').textContent, '×');
 	assertEquals(container.querySelector('img').className, 'previewElement');
+	assertEquals([container.tagName, container.querySelector('.tooltip').tagName, container.querySelector('.closeButton').tagName],
+		['DIV', 'DIV', 'BUTTON']);
 	assertEquals(page.uploader.calls, ['enable']);
 });
 
@@ -205,4 +207,14 @@ Deno.test('https uses the UUID of the browser', () =>
 	using _uuid = stub(crypto, 'randomUUID', () => '11111111-1111-4111-8111-111111111111');
 
 	assertEquals(page.handler.generateUUID(), '11111111-1111-4111-8111-111111111111');
+});
+
+Deno.test('without https the UUID of the browser is not used, it is missing there', () =>
+{
+	using page   = createPage('http:');
+	using _uuid  = stub(crypto, 'randomUUID', () => { throw new Error('only in a secure context'); });
+	using _bytes = stub(crypto, 'getRandomValues', (array) => array.fill(0xff));
+
+	// the random bits set, the version 4 and the variant 10 kept
+	assertEquals(page.handler.generateUUID(), 'efffffff-efff-4fff-bfff-efffffffffff');
 });

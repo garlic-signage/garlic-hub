@@ -172,6 +172,18 @@ Deno.test('the search starts 300 ms after the last input with the trimmed term a
 	assertEquals(parts.mediaService.searches.map(s => [s.term, s.filter]), [['lobby', 'images']]);
 });
 
+Deno.test('two letters are enough for a search', async () =>
+{
+	using time  = new FakeTime();
+	using dom   = createDom();
+	const parts = createSearch(dom.document);
+
+	type(parts, 'lo');
+	await wait(time);
+
+	assertEquals(parts.mediaService.searches.map(s => s.term), ['lo']);
+});
+
 Deno.test('the results are shown with their number and the upload is disabled', async () =>
 {
 	using time  = new FakeTime();
@@ -297,6 +309,20 @@ Deno.test('a directory chosen in the tree ends the search and empties the field'
 	assertEquals(parts.input.value, '');
 	assertEquals(parts.directoryView.reloads, 1);
 	assertEquals(parts.mediaService.searches.length, 1);
+});
+
+Deno.test('after a directory was chosen one letter does not load it again', async () =>
+{
+	using time  = new FakeTime();
+	using dom   = createDom();
+	const parts = createSearch(dom.document);
+	await search(time, parts, 'lobby', []);
+	parts.mediaList.element.dispatchEvent(new Event('directoryloaded'));
+
+	type(parts, 'l');
+	await wait(time);
+
+	assertEquals(parts.directoryView.reloads, 0);
 });
 
 Deno.test('a directory loaded without a search keeps the field', () =>

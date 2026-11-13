@@ -146,9 +146,10 @@ class FakeUploaderDialog
 }
 
 function createPage({lastPlatform = null, platforms = {Pexels: new FakePlatform(true, 'secret'), Unsplash: new FakePlatform()},
-	answer = {success: true, media_id: 'new'}} = {})
+	answer = {success: true, media_id: 'new'}, prepare = () => {}} = {})
 {
 	const dom      = createDom(PAGE);
+	prepare(dom.document);
 	const storage  = new MemoryStorage();
 	if (lastPlatform !== null)
 		storage.setItem('lastPlatform', lastPlatform);
@@ -349,7 +350,8 @@ Deno.test('a search shows the results with their thumbnail and a hidden preview'
 	assertEquals(first.querySelector('.result-preview').getAttribute('src'), 'https://stock.example.com/preview/1.jpg');
 	assertEquals([first, second, third].map(item => item.querySelector('.result-preview').getAttribute('alt')),
 		['A lobby', 'hall, lobby', '']);
-	assertEquals(second.querySelector('.result-thumbnail').getAttribute('alt'), 'hall, lobby');
+	assertEquals([first, second, third].map(item => item.querySelector('.result-thumbnail').getAttribute('alt')),
+		['A lobby', 'hall, lobby', '']);
 });
 
 Deno.test('a video is previewed muted in a loop with its thumbnail as poster', async () =>
@@ -401,6 +403,7 @@ Deno.test('a new search replaces the results before', async () =>
 	await search(page, 'Pexels', 'hall');
 
 	assertEquals(shownResults(page), ['2', '3']);
+	assertEquals(page.document.getElementById('searchResultsArea').childNodes.length, 2);
 });
 
 Deno.test('a failed search shows nothing', async () =>
@@ -593,4 +596,36 @@ Deno.test('a video preview plays while it is shown', async () =>
 	eye.dispatchEvent(new Event('mouseout'));
 
 	assertEquals(calls, ['play', 'pause']);
+});
+
+Deno.test('a remembered platform that is not registered any more leaves the choice alone', () =>
+{
+	const chosen = [];
+	using _page  = createPage({lastPlatform: 'Shutterstock', prepare: (document) =>
+	{
+		const select = document.getElementById('selectStockPlatform');
+		Object.defineProperty(select, 'value', {set: (value) => chosen.push(value), get: () => '-'});
+	}});
+
+	assertEquals(chosen, []);
+});
+
+Deno.test('the status names the file while its address is asked for', async () =>
+{
+	using page = createPage();
+	page.platforms.Pexels.searchAnswer = {1: image(1)};
+	await search(page);
+	mark(page, '1');
+	const status = [];
+	const determine = page.platforms.Pexels.determineMediaDownloadUrl.bind(page.platforms.Pexels);
+	page.platforms.Pexels.determineMediaDownloadUrl = (uri) =>
+	{
+		status.push(page.document.getElementById('downloadStatus').textContent);
+		return determine(uri);
+	};
+
+	click(page, 'startPlatformsUpload');
+	await wait();
+
+	assertEquals(status, ['Start downloading: 1.jpg']);
 });

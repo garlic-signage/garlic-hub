@@ -95,12 +95,14 @@ export class ItemsService extends BaseService
 	async loadPreview(playlistId)
 	{
 		const url = ItemsApiConfig.PREVIEW_URI + "/" + playlistId;
+		// Stryker disable next-line ArrayDeclaration: a GET sends no body
 		return await this._sendRequest(url, "GET",  []);
 	}
 
 	async loadByPlaylistId(playlistId)
 	{
 		const url = ItemsApiConfig.LOAD_PLAYLIST_ITEMS_URI + "/" + playlistId;
+		// Stryker disable next-line ArrayDeclaration: a GET sends no body
 		return await this._sendRequest(url, "GET",  []);
 	}
 }

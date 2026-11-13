@@ -138,6 +138,26 @@ Deno.test('the changes of a frame build the list once', () =>
 	assertEquals(page.renders(), 3);
 });
 
+Deno.test('every change alone builds the list again', () =>
+{
+	using page = createController();
+	const changes = ['object:added', 'object:removed', 'object:modified', 'text:changed', 'selection:created',
+		'selection:updated', 'selection:cleared', 'history:undo', 'history:redo'];
+
+	for (const name of changes)
+	{
+		page.wrapper.emit(name);
+		page.nextFrame();
+	}
+	for (const name of ['canvasUpdated', 'objectsChanged'])
+	{
+		page.bus.send(name);
+		page.nextFrame();
+	}
+
+	assertEquals(page.renders(), 1 + changes.length + 2);
+});
+
 Deno.test('while an object is moved only the fields follow it', () =>
 {
 	using page = createController();

@@ -111,6 +111,7 @@ export class BasePreviewHandler
 
 	removeFromPreview(id)
 	{
+		// Stryker disable next-line ConditionalExpression: the id is only set together with an upload
 		if (this.#xhrUpload !== null && this.#upload_id === id)
 			this.#xhrUpload.abort();
 

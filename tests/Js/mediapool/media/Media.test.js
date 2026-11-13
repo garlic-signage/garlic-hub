@@ -178,6 +178,16 @@ Deno.test('a widget opens its sandboxed preview as external page', () =>
 	assertEquals(link.dataset.type, 'external');
 });
 
+Deno.test('only a widget opens the preview, a picture with one opens its original', () =>
+{
+	using page = createMedia({urls: {thumbnail: 't', original: '/media.php?original=abc', preview: '/widget.php?id=abc'}});
+
+	const link = page.media.renderForDisplayInMediaPool().querySelector('a');
+
+	assertEquals(link.getAttribute('href'), '/media.php?original=abc');
+	assertEquals(link.dataset.type, undefined);
+});
+
 Deno.test('other files and widgets without preview have no eye', () =>
 {
 	for (const mimetype of ['application/zip', 'application/widget', 'text/plain'])

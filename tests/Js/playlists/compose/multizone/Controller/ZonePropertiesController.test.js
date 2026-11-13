@@ -162,6 +162,17 @@ Deno.test('the playlist of the zone is shown in the search, none empties it', as
 	}
 });
 
+Deno.test('a playlist without a name, e.g. one of another user, leaves the search as it is', async () =>
+{
+	using page = createController();
+	page.service.playlist = {id: 5, name: ''};
+
+	page.controller.activate(zone());
+	await wait();
+
+	assertEquals(page.autocomplete.calls, []);
+});
+
 Deno.test('without a zone the properties are cleared and disabled', () =>
 {
 	for (const target of [null, undefined])
@@ -190,13 +201,15 @@ Deno.test('a zone resized by the mouse gets its real size before it is shown', (
 {
 	using page   = createController();
 	const scaled = {...zone(), scaleX: 2};
+	const higher = {...zone(), scaleY: 2};
 	const moved  = zone();
 
 	page.canvas.handlers['object:modified']({target: scaled});
+	page.canvas.handlers['object:modified']({target: higher});
 	page.canvas.handlers['object:modified']({target: moved});
 
-	assertEquals([scaled.scaled, moved.scaled], [1, 0]);
-	assertEquals(page.view.calls.filter(call => call[0] === 'show').length, 2);
+	assertEquals([scaled.scaled, higher.scaled, moved.scaled], [1, 1, 0]);
+	assertEquals(page.view.calls.filter(call => call[0] === 'show').length, 3);
 });
 
 Deno.test('the fields change the zone', () =>
@@ -252,8 +265,9 @@ Deno.test('an emptied search removes the playlist, a filled one not', () =>
 
 	page.autocomplete.edit.value = 'Morn';
 	page.autocomplete.edit.dispatchEvent(new Event('blur'));
+	assertEquals(page.service.calls, []);
+
 	page.autocomplete.edit.value = '';
 	page.autocomplete.edit.dispatchEvent(new Event('blur'));
-
 	assertEquals(page.service.calls, [['removePlaylist']]);
 });

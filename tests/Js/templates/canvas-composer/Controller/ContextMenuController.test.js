@@ -80,6 +80,18 @@ Deno.test('a group has no menu', () =>
 	assertEquals(page.view.calls, []);
 });
 
+Deno.test('no text or shape can be replaced by an image', () =>
+{
+	using bus  = busOfTest();
+	const page = createController();
+
+	for (const type of ['text', 'i-text', 'textbox', 'circle', 'rect', 'triangle', 'polygon'])
+		rightClick(bus, {type});
+
+	assertEquals(page.view.calls.filter(call => call[0] === 'hideReplaceImage').length, 7);
+	assertEquals(page.view.calls.some(call => call[0] === 'showReplaceImage'), false);
+});
+
 Deno.test('a shape opens the menu at the mouse without replace and crop', () =>
 {
 	using bus  = busOfTest();

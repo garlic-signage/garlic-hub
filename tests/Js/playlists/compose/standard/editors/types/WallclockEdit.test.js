@@ -238,3 +238,34 @@ Deno.test('the remove button takes the wallclock away', () =>
 	assertEquals(wallclock.editor.exists, false);
 	assertSameElement(page.container.querySelector('.trigger-form'), null);
 });
+
+Deno.test('only the own values of the saved wallclock are taken, nothing else of the object', () =>
+{
+	// fields without saved value keep their start: in the browser a value of undefined would empty a select
+	using page      = createPage();
+	const wallclock = page.add(Object.create({iso_date: '2026-11-10T08:30:00', weekday: '3', weekday_prefix: '-',
+		repeat_counts: '0', repeat_minutes: '15', repeat_hours: '2', repeat_days: '1', repeat_weeks: '1', repeat_months: '1', repeat_years: '1'}));
+	click(wallclock.part('.infinite-repeats-select'));
+	wallclock.part('.infinite-repeats-select').checked = true;
+
+	assertEquals(wallclock.editor.getValues(), {weekday: 0, iso_date: '', repeat_counts: '0',
+		repeat_minutes: '', repeat_hours: '', repeat_days: '', repeat_weeks: '', repeat_months: '', repeat_years: ''});
+});
+
+Deno.test('an own weekday without own prefix is after the date, whatever the object has else', () =>
+{
+	using page      = createPage();
+	const data      = Object.assign(Object.create({weekday_prefix: '-'}), {weekday: '3'});
+	const wallclock = page.add(data);
+
+	assertEquals(wallclock.editor.getValues().weekday, '+3');
+});
+
+Deno.test('a weekday without date or repeats is given back with its prefix', () =>
+{
+	using page      = createPage();
+	const wallclock = page.add({weekday: '3', weekday_prefix: '-'});
+
+	assertEquals(wallclock.part('.edit-weekday-prefix').value, '-');
+	assertEquals(wallclock.editor.getValues().weekday, '-3');
+});

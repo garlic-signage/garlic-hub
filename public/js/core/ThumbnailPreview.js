@@ -28,6 +28,7 @@ export class ThumbnailPreview
 	static #GAP = 8;
 
 	#container      = null;
+	// Stryker disable next-line StringLiteral: the constructor sets it
 	#thumbnailClass = "";
 	#preview        = null;
 	#isTouch        = false;
@@ -58,11 +59,13 @@ export class ThumbnailPreview
 				this.#hide();
 		});
 
+		// Stryker disable ObjectLiteral,BooleanLiteral: passive only tells the browser that it may scroll at once
 		this.#container.addEventListener("touchstart", (event) => {
 			this.#isTouch = true;
 			this.#show(event.target);
 		}, {passive: true});
 		this.#container.addEventListener("touchmove", () => this.#hide(), {passive: true}); // dragging or scrolling begins
+		// Stryker restore ObjectLiteral,BooleanLiteral
 		this.#container.addEventListener("touchend", () => this.#endTouch());
 		this.#container.addEventListener("touchcancel", () => this.#endTouch());
 
@@ -74,6 +77,7 @@ export class ThumbnailPreview
 
 		this.#container.addEventListener("mousedown", () => this.#hide()); // dragula starts dragging
 		// capture: a list inside the container scrolls, too (scroll does not bubble)
+		// Stryker disable next-line BooleanLiteral: linkedom has no capture phase, the scroll of an inner list cannot be tested
 		this.#container.addEventListener("scroll", () => this.#hide(), true);
 	}
 

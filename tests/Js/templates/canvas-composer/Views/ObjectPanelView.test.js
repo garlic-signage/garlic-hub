@@ -103,11 +103,11 @@ Deno.test('the icon comes from the kind, else from the shape, else it is a squar
 
 	page.view.renderList([
 		entry({kind: 'group', shape: 'group'}), entry({kind: 'shape', shape: 'circle'}), entry({kind: 'shape', shape: 'triangle'}),
-		entry({kind: 'shape', shape: 'polygon'}), entry({kind: 'shape', shape: 'ellipse'})
+		entry({kind: 'shape', shape: 'polygon'}), entry({kind: 'shape', shape: 'ellipse'}), entry({kind: 'shape', shape: 'rect'})
 	], 'No objects');
 
 	assertEquals(shownEntries(page).map(item => item.icon),
-		['bi bi-collection', 'bi bi-circle', 'bi bi-triangle', 'bi bi-pentagon', 'bi bi-square']);
+		['bi bi-collection', 'bi bi-circle', 'bi bi-triangle', 'bi bi-pentagon', 'bi bi-square', 'bi bi-square']);
 });
 
 Deno.test('a locked object has a lock, one which cannot be selected is marked', () =>
@@ -118,6 +118,7 @@ Deno.test('a locked object has a lock, one which cannot be selected is marked', 
 
 	const [locked, unselectable] = shownEntries(page);
 	assertEquals(locked.locked, true);
+	assertEquals(page.list.querySelector('.bi-lock-fill').tagName, 'I');
 	assertEquals(unselectable.classes, 'unselectable');
 });
 
@@ -129,6 +130,7 @@ Deno.test('an empty template says so', () =>
 	page.view.renderList([], 'No objects');
 
 	assertEquals(page.list.children.length, 1);
+	assertEquals(page.list.firstElementChild.tagName, 'LI');
 	assertEquals([page.list.firstElementChild.className, page.list.firstElementChild.textContent], ['object-list-empty', 'No objects']);
 });
 

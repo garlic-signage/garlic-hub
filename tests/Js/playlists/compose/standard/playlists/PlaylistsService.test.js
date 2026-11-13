@@ -127,7 +127,7 @@ Deno.test('the name of a zone playlist is found by its id', async () =>
 
 Deno.test('a playlist that is not found or not usable has no name', async () =>
 {
-	for (const answer of [{}, {success: false, error_message: 'Not found'}, {playlist_id: 3}, {playlist_id: 3, name: null}, new Error('Timeout')])
+	for (const answer of [{}, null, {success: false, error_message: 'Not found'}, {playlist_id: 3}, {playlist_id: 3, name: null}, new Error('Timeout')])
 	{
 		const service = new PlaylistsService(new FakeFetchClient(answer));
 		assertEquals(await service.findNameById(3), '', JSON.stringify(answer));

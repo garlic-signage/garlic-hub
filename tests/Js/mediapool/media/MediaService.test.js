@@ -106,6 +106,7 @@ Deno.test('the suggested tags wait as long as the AI and return only description
 
 	const request = client.requests[0];
 	assertEquals(request.url, '/async/mediapool/media/tags');
+	assertEquals(request.options.method, 'POST');
 	assertEquals(request.options.timeout, FetchClient.LLM_TIMEOUT);
 	assertEquals(client.bodyOf(), {media_id: 'abc', csrf_token: 'the-token'});
 });
@@ -118,6 +119,7 @@ Deno.test('a medium is moved to a directory', async () =>
 
 	assertEquals(await new MediaService(client).moveMedia('abc', 5), result);
 	assertEquals(client.requests[0].url, '/async/mediapool/media/move');
+	assertEquals(client.requests[0].options.method, 'POST');
 	assertEquals(client.bodyOf(), {media_id: 'abc', node_id: 5, csrf_token: 'the-token'});
 });
 
@@ -128,6 +130,7 @@ Deno.test('a clone returns the new medium', async () =>
 
 	assertEquals(await new MediaService(client).cloneMedia('abc'), {media_id: 'def'});
 	assertEquals(client.requests[0].url, '/async/mediapool/media/clone');
+	assertEquals(client.requests[0].options.method, 'POST');
 	assertEquals(client.bodyOf(), {media_id: 'abc', csrf_token: 'the-token'});
 });
 

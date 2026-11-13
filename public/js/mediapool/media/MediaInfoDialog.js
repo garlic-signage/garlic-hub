@@ -55,6 +55,7 @@ export class MediaInfoDialog
 				else
 					this.#hide(".media-dimensions");
 
+				// Stryker disable next-line ConditionalExpression: a missing duration is no number above 0 either
 				if (media.metadata.duration !== undefined && media.metadata.duration > 0 )
 					this.#dialogElement.querySelector(".media-duration").textContent = Utils.formatSecondsToTime(media.metadata.duration);
 				else

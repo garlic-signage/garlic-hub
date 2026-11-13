@@ -74,7 +74,7 @@ class FakeContext
 
 	strokeText(text, x, y)
 	{
-		this.drawn.push(['strokeText', text, x, y]);
+		this.drawn.push(['strokeText', text, x, y, this.font, this.textBaseline, this.lineWidth, this.strokeStyle]);
 	}
 
 	fillText(text, x, y)
@@ -128,6 +128,19 @@ Deno.test('the check runs half a second after the last change', () =>
 
 	page.time.tick(1);
 	assertEquals(page.service.runs, 1);
+});
+
+Deno.test('every change alone starts the check', () =>
+{
+	using page = createController();
+
+	for (const name of ['object:added', 'object:removed', 'object:modified', 'text:changed'])
+	{
+		page.wrapper.emit(name);
+		page.time.tick(DesignCheckController.DELAY_MS);
+	}
+
+	assertEquals(page.service.runs, 4);
 });
 
 Deno.test('the hints are listed with their values and counted', () =>
@@ -198,6 +211,6 @@ Deno.test('the elements of the hints get a mark beside their upper right corner'
 
 	// once per element, the removed one not
 	assertEquals(ctx.drawn, [
-		'save', ['strokeText', DesignCheckController.MARK, 304, 50], ['fillText', DesignCheckController.MARK, 304, 50, '#d97706'], 'restore'
+		'save', ['strokeText', '⚠', 304, 50, 'bold 22px sans-serif', 'top', 3, '#ffffff'], ['fillText', '⚠', 304, 50, '#d97706'], 'restore'
 	]);
 });

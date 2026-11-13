@@ -52,6 +52,7 @@ export class Spectra6Dither
 	{
 		const { width, height, data } = imageData;
 
+		// Stryker disable next-line EqualityOperator: a row after the last one reads and writes outside the array, which a typed array ignores
 		for (let y = 0; y < height; y++) {
 			for (let x = 0; x < width; x++) {
 				const idx = (y * width + x) * 4;
@@ -83,7 +84,11 @@ export class Spectra6Dither
 
 	#distributeError(data, width, height, x, y, errR, errG, errB, factor)
 	{
-		if (x < 0 || x >= width || y < 0 || y >= height) return;
+		if (x < 0 || x >= width ||
+			// Stryker disable next-line ConditionalExpression: y is never below 0, it is the row of the pixel or the next one
+			y < 0 ||
+			// Stryker disable next-line EqualityOperator,ConditionalExpression: a row after the last one is outside the array, a typed array ignores the writes
+			y >= height) return;
 		const idx = (y * width + x) * 4;
 		data[idx]     = Math.max(0, Math.min(255, data[idx]     + errR * factor));
 		data[idx + 1] = Math.max(0, Math.min(255, data[idx + 1] + errG * factor));
@@ -103,6 +108,7 @@ export class Spectra6Dither
 		view.setUint8(0, 0x42); // B
 		view.setUint8(1, 0x4D); // M
 		view.setUint32(2,  fileSize, true);
+		// Stryker disable next-line BooleanLiteral: 0 has the same bytes in both byte orders
 		view.setUint32(6,  0, true);
 		view.setUint32(10, 54, true);
 
@@ -112,11 +118,14 @@ export class Spectra6Dither
 		view.setInt32(22,  -height, true); // negativ = top-down
 		view.setUint16(26, 1, true);
 		view.setUint16(28, 24, true);
+		// Stryker disable next-line BooleanLiteral: 0 has the same bytes in both byte orders
 		view.setUint32(30, 0, true);
 		view.setUint32(34, pixelArraySize, true);
 		view.setInt32(38,  2835, true);
 		view.setInt32(42,  2835, true);
+		// Stryker disable next-line BooleanLiteral: 0 has the same bytes in both byte orders
 		view.setUint32(46, 0, true);
+		// Stryker disable next-line BooleanLiteral: 0 has the same bytes in both byte orders
 		view.setUint32(50, 0, true);
 
 		// Pixel Daten (BGR)

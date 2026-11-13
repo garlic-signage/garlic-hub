@@ -35,6 +35,7 @@ export class WidgetForm
 		if (size === 0)
 			return;
 
+		// Stryker disable next-line StringLiteral: every preference sets the value before it is read
 		var value = "";
 		this.html_form = '<ul class="form_edit">';
 		for (const [key, props] of Object.entries(this.preferences))
@@ -53,6 +54,7 @@ export class WidgetForm
 			switch(props.types)
 			{
 				default:
+				// Stryker disable next-line StringLiteral: a text is the default anyway
 				case "text":
 					this.html_form += this.generateEdit(key, props, value);
 					break;
@@ -85,9 +87,11 @@ export class WidgetForm
 		let result = {};
 		for (const [key, props] of Object.entries(this.preferences))
 		{
+			// the default reads the value of the field: text, number and color would do without their case
 			switch (props.types)
 			{
 				default:
+				// Stryker disable next-line StringLiteral: see above
 				case "text":
 					result[key] = document.getElementById(this._elementId(key)).value;
 					break;
@@ -101,16 +105,20 @@ export class WidgetForm
 						}
 					}
 					break;
+				// Stryker disable next-line ConditionalExpression,StringLiteral: see above
 				case "colorOpacity":
 					result[key] = document.getElementById(this._elementId(key)).value;
 					break;
+				// Stryker disable next-line ConditionalExpression,StringLiteral: see above
 				case "integer":
 					result[key] = document.getElementById(this._elementId(key)).value;
 					break;
+				// Stryker disable next-line StringLiteral: see above
 				case "color":
 					result[key] = document.getElementById(this._elementId(key)).value;
 					break;
 				case "list":
+				// Stryker disable next-line StringLiteral: the value of a select is the one of its selected option, as the default reads it
 				case "combo":
 					const el = document.getElementById(this._elementId(key));
 					result[key] = el[el.selectedIndex].value;
@@ -152,6 +160,7 @@ export class WidgetForm
 	{
 		let the_value = this.checkForDefaultValue(props, value);
 		let min_max = "";
+		// Stryker disable next-line ConditionalExpression: every number has a minimum of 0 yet
 		if (min !== undefined)
 			min_max += ' min="'+min+'"';
 		if (max !== undefined)
@@ -197,6 +206,7 @@ export class WidgetForm
 
 	standardizeColor(str)
 	{
+		// Stryker disable next-line StringLiteral: linkedom has no canvas, the test gives every element its fake context
 		let ctx = document.createElement("canvas").getContext("2d");
 		ctx.fillStyle = str;
 		return ctx.fillStyle;
@@ -223,6 +233,7 @@ export class WidgetForm
 
 	checkMandatory(props)
 	{
+		// Stryker disable next-line ConditionalExpression: without the property the check below gives "" too
 		if(!props.hasOwnProperty("mandatory"))
 			return ""
 

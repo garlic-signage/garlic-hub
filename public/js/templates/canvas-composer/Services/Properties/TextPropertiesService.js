@@ -30,6 +30,7 @@ export class TextPropertiesService extends BasePropertyService
 	getTextFontFamily()
 	{
 		const object = this._getActiveObject();
+		// Stryker disable next-line BooleanLiteral: complete styles carry the font of the text, the same as the fallback
 		const styles = object.getSelectionStyles(object.isEditing ? object.selectionStart : 0, object.isEditing ? object.selectionEnd : 9, false)
 		return styles[0] && styles[0].fontFamily ? styles[0].fontFamily : object.fontFamily
 	}
@@ -119,10 +120,11 @@ export class TextPropertiesService extends BasePropertyService
 		this._updateCanvas(object);
 	}
 
+	/**
+	 * setTextUnderline() underlines the whole text, so the text itself knows it.
+	 */
 	getTextUnderline()
 	{
-		const object = this._getActiveObject();
-		const styles = object.getSelectionStyles(object.isEditing ? object.selectionStart : 0, object.isEditing ? object.selectionEnd : 1, true)
-		return styles && styles[0] ? styles[0].fontStyle : object.fontStyle
+		return this._getActiveObject().underline === true;
 	}
 }

@@ -90,11 +90,12 @@ function createPage({conditional = true, date = true, time = false} = {})
 	box('enable_date_period').checked      = date;
 	box('enable_time_period').checked      = time;
 	const clicked = [];
+	const checkedOnClick = [];
 	for (const day of WEEKDAYS)
-		box('enable_weekday_' + day).addEventListener('click', () => clicked.push(day));
+		box('enable_weekday_' + day).addEventListener('click', (event) => { clicked.push(day); checkedOnClick.push(event.target.checked); });
 
 	return {
-		document, factory, box, clicked,
+		document, factory, box, clicked, checkedOnClick,
 		form:    new ConditionalPlayForm(factory),
 		display: (id) => box(id).style.display,
 		[Symbol.dispose]: () => dom[Symbol.dispose]()
@@ -140,9 +141,11 @@ Deno.test('without conditional play everything is hidden, emptied and the weekda
 	assertEquals(page.display('edit_conditional_play'), 'none');
 	assertEquals([page.box('enable_date_period').checked, page.box('enable_time_period').checked], [false, false]);
 	assertEquals([page.display('edit_date_period'), page.display('edit_time_period')], ['none', 'none']);
-	assertEquals([page.box('date_from').value, page.box('time_until').value], ['', '']);
+	assertEquals([page.box('date_from').value, page.box('date_until').value], ['', '']);
+	assertEquals([page.box('time_from').value, page.box('time_until').value], ['', '']);
 	// checked and clicked: the browser unchecks them and their sliders are disabled
 	assertEquals(page.clicked, WEEKDAYS);
+	assertEquals(page.checkedOnClick, WEEKDAYS.map(() => true));
 });
 
 Deno.test('the checkboxes show and hide their parts', () =>
@@ -168,6 +171,15 @@ Deno.test('without conditional play nothing is saved', () =>
 {
 	using page = createPage({conditional: false});
 	page.form.init({});
+
+	assertEquals(page.form.collectValues(), {});
+});
+
+Deno.test('without conditional play an enabled weekday is not saved either', () =>
+{
+	using page = createPage({conditional: false});
+	page.form.init({});
+	page.factory.sliders[2].enabled = true;
 
 	assertEquals(page.form.collectValues(), {});
 });

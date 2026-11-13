@@ -229,6 +229,20 @@ Deno.test('the copy opens in the composer', async () =>
 	assertEquals(page.location.href, '/templates/composer/12');
 });
 
+Deno.test('a closed menu copies nothing anymore', async () =>
+{
+	using page = createPage();
+	const menu = await open(page);
+	const copy = page.document.querySelector('body > .context-menu .copy');
+
+	menu.close();
+	copy.dispatchEvent(new Event('click', {cancelable: true}));
+	for (let i = 0; i < 5; i++)
+		await new Promise(resolve => setTimeout(resolve, 0));
+
+	assertEquals(page.service.calls, [['determineRights', 7]]);
+});
+
 Deno.test('a refused copy shows the error and stays on the page', async () =>
 {
 	using page = createPage();

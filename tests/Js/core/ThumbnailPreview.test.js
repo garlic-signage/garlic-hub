@@ -116,6 +116,17 @@ Deno.test('without room on the right the preview goes to the left', () =>
 	assertEquals(position(page)[0], '542px');
 });
 
+Deno.test('a preview which ends exactly at the right edge stays on the right', () =>
+{
+	using page = createPreview();
+	placeThumbnail(page.document.getElementById('thumb'), {left: 712, top: 300, width: 80, height: 60});
+
+	fire(page, 'thumb', 'mouseover');
+
+	// 712 + 80 + 8 + 200 = 1000
+	assertEquals(position(page)[0], '800px');
+});
+
 Deno.test('without room on both sides the preview keeps the gap to the left edge', () =>
 {
 	using page = createPreview();

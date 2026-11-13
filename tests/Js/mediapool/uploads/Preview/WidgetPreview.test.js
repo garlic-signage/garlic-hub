@@ -91,12 +91,14 @@ Deno.test('the png icon of the widget is shown, else the jpg icon', async () =>
 
 Deno.test('a widget without icon keeps the widget icon', async () =>
 {
-	using _dom = createDom();
+	using _dom      = createDom();
+	using errorStub = stub(console, 'error');
 
 	const {image, blobs} = await preview(['config.xml', 'images/icon.png', 'icon.svg']);
 
 	assertEquals(image.getAttribute('src'), '/images/icons/widget.svg');
 	assertEquals(blobs, []);
+	assertEquals(errorStub.calls, []);
 });
 
 Deno.test('a broken zip is logged and keeps the widget icon', async () =>

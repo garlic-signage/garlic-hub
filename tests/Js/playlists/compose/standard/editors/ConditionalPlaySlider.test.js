@@ -148,6 +148,16 @@ Deno.test('moving a handle shows the new times of an enabled weekday only', () =
 	assertEquals(page.range(), ['01:00', '23:15']);
 });
 
+Deno.test('from ten o\'clock the hours have two digits of their own', () =>
+{
+	using page = createPage(true);
+	new ConditionalPlaySlider().create(2, 32, 72);
+
+	page.api().handlers.update(['36.00', '40.00']);
+
+	assertEquals(page.range(), ['09:00', '10:00']);
+});
+
 Deno.test('the end of the day is shown as midnight', () =>
 {
 	using page = createPage(true, [0, 96]);

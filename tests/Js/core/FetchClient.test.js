@@ -99,6 +99,15 @@ Deno.test('a GET is sent with JSON and no-cache headers and the own headers win'
 	assertEquals(config.signal instanceof AbortSignal, true);
 });
 
+Deno.test('without own headers JSON is asked for and nothing from the cache', async () =>
+{
+	using fetchStub = stub(globalThis, 'fetch', answer('{}'));
+
+	await new FetchClient().fetchData('/async/list');
+
+	assertEquals(fetchStub.calls[0].args[1].headers, {'Accept': 'application/json', 'Cache-Control': 'no-cache'});
+});
+
 Deno.test('the method and the body are passed on, but not the timeout', async () =>
 {
 	using fetchStub = stub(globalThis, 'fetch', answer('{}'));
@@ -127,9 +136,12 @@ Deno.test('an answer that is no JSON is returned as text', async () =>
 
 Deno.test('a structured error of a 4xx is returned, so the caller shows the message', async () =>
 {
-	using _fetchStub = stub(globalThis, 'fetch', answer('{"success": false, "error_message": "Name taken"}', 422));
+	for (const status of [400, 422, 499])
+	{
+		using _fetchStub = stub(globalThis, 'fetch', answer('{"success": false, "error_message": "Name taken"}', status));
 
-	assertEquals(await new FetchClient().fetchData('/async/save'), {success: false, error_message: 'Name taken'});
+		assertEquals(await new FetchClient().fetchData('/async/save'), {success: false, error_message: 'Name taken'});
+	}
 });
 
 Deno.test('a 4xx without a structured error throws the HTTP error', async () =>
@@ -173,7 +185,7 @@ Deno.test('a failed request is a network error', async () =>
 Deno.test('a request is aborted after 6 seconds', async () =>
 {
 	using time       = new FakeTime();
-	using _fetchStub = stub(globalThis, 'fetch', hangingFetch());
+	using fetchStub = stub(globalThis, 'fetch', hangingFetch());
 
 	const request = new FetchClient().fetchData('/async/list');
 	let   settled = false;
@@ -181,15 +193,17 @@ Deno.test('a request is aborted after 6 seconds', async () =>
 
 	await time.tickAsync(5999);
 	assertEquals(settled, false);
+	assertEquals(fetchStub.calls[0].args[1].signal.aborted, false);
 
 	await time.tickAsync(1);
+	assertEquals(fetchStub.calls[0].args[1].signal.aborted, true);
 	await assertRejects(() => request, Error, 'Timeout: Server did not respond.');
 });
 
 Deno.test('a longer timeout lets the request wait longer', async () =>
 {
 	using time       = new FakeTime();
-	using _fetchStub = stub(globalThis, 'fetch', hangingFetch());
+	using fetchStub = stub(globalThis, 'fetch', hangingFetch());
 
 	const request = new FetchClient().fetchData('/async/llm', {timeout: FetchClient.LLM_TIMEOUT});
 	let   settled = false;
@@ -197,6 +211,7 @@ Deno.test('a longer timeout lets the request wait longer', async () =>
 
 	await time.tickAsync(64999);
 	assertEquals(settled, false);
+	assertEquals(fetchStub.calls[0].args[1].signal.aborted, false);
 
 	await time.tickAsync(1);
 	await assertRejects(() => request, Error, 'Timeout: Server did not respond.');
@@ -276,7 +291,8 @@ Deno.test('an upload whose answer is no JSON fails with the answer', async () =>
 
 	xhr.respond(200, 'PHP Warning');
 
-	await assertRejects(() => promise, Error, 'PHP Warning');
+	const error = await assertRejects(() => promise, Error);
+	assertEquals(error.message, 'PHP Warning');
 });
 
 Deno.test('a structured error of an upload is returned like in fetchData()', async () =>
@@ -287,12 +303,17 @@ Deno.test('a structured error of an upload is returned like in fetchData()', asy
 	xhr.respond(413, '{"success": false, "error_message": "File too large"}');
 
 	assertEquals(await promise, {success: false, error_message: 'File too large'});
+
+	const first = startUpload(new FetchClient());
+	first.xhr.respond(400, '{"success": false, "error_message": "No file"}');
+	assertEquals(await first.promise, {success: false, error_message: 'No file'});
 });
 
 Deno.test('an upload fails with the HTTP error for 401, 5xx and 4xx without structured error', async () =>
 {
 	using _xhr     = fakeXhr();
 	const cases    = [
+		[300, '{"success": false}'],
 		[401, '{"success": false}'],
 		[500, '{"success": false}'],
 		[404, '{"success": true}'],

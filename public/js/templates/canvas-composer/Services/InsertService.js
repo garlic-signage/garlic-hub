@@ -59,6 +59,7 @@ export class InsertService
 			element = await fabric.util.loadImage(url, {crossOrigin: "anonymous"});
 		}
 		catch
+		// Stryker disable next-line BlockStatement: an undefined element fails the check below as null does
 		{
 			element = null;
 		}

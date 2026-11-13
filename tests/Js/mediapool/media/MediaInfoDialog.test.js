@@ -176,6 +176,18 @@ Deno.test('empty dimensions, a zero duration and a stock user without data are h
 	assertEquals(hiddenRows(page), ['media-dimensions', 'media-duration', 'stock-username', 'stock-realname', 'stock-user-url']);
 });
 
+Deno.test('an empty page and description of the stock platform are hidden', async () =>
+{
+	using page = createInfoDialog();
+	const media = structuredClone(STOCK_PICTURE);
+	media.metadata.page_url    = '';
+	media.metadata.description = '';
+
+	await show(page, media);
+
+	assertEquals(hiddenRows(page), ['media-duration', 'stock-page-url', 'stock-description']);
+});
+
 Deno.test('a medium without origin hides the row of the origin', async () =>
 {
 	using page = createInfoDialog();
@@ -195,6 +207,7 @@ Deno.test('the rows hidden for one medium are shown again for the next', async (
 	await show(page, STOCK_PICTURE);
 
 	assertEquals(hiddenRows(page), ['media-duration']);
+	assertEquals([...page.dialog.querySelectorAll('li')].filter(row => row.style.display !== 'none').every(row => row.style.display === ''), true);
 	assertEquals(page.state.opened, 2);
 });
 

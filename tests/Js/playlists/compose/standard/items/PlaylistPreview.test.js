@@ -139,6 +139,9 @@ Deno.test('a nested playlist shows the list of its items', async () =>
 	assertEquals([...list.querySelectorAll('li')].map(entry => [
 		entry.querySelector('img').getAttribute('src'), entry.querySelectorAll('span')[0].textContent, entry.querySelector('.preview-nested-duration').textContent
 	]), [['/thumb/w.jpg', 'Weather', '00:00:15'], ['/thumb/s.jpg', 'Sports', '00:01:30']]);
+	// the name is beside the thumbnail, the thumbnail needs no text of its own
+	assertEquals([...list.querySelectorAll('li img')].map(img => img.getAttribute('alt')), ['', '']);
+	assertEquals(list.querySelector('.preview-nested-duration').tagName, 'SPAN');
 });
 
 Deno.test('a nested playlist which could not be loaded stays an empty list', async () =>

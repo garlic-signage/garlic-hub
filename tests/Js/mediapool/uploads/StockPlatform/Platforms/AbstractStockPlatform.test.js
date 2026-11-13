@@ -17,7 +17,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import {assertEquals, assertStrictEquals, assertThrows} from "@std/assert";
+import {assertEquals, assertStrictEquals}               from "@std/assert";
 import {createDom}                                      from "@support/dom.js";
 import {FakeFetchClient}                                from "@support/FakeFetchClient.js";
 import {MemoryStorage, replaceGlobals}                  from "@support/globals.js";
@@ -42,9 +42,11 @@ Deno.test('search, download and the token must come from the platform', () =>
 {
 	const platform = new AbstractStockPlatform(new FakeFetchClient({}));
 
-	assertThrows(() => platform.search('lobby'));
-	assertThrows(() => platform.download());
-	assertThrows(() => platform.setApiToken());
+	const thrown = (call) => { try { call(); } catch (error) { return error; } };
+
+	assertEquals(thrown(() => platform.search('lobby')), 'search() must be implemented in subclass');
+	assertEquals(thrown(() => platform.download()), 'download() must be implemented in subclass');
+	assertEquals(thrown(() => platform.setApiToken()), 'setApiToken() must be implemented in subclass');
 });
 
 Deno.test('a saved token is taken, an empty or missing one is no token', () =>

@@ -145,12 +145,12 @@ Deno.test('a failed download address is logged and gives null', async () =>
 	const download  = (answer) => createPlatform(answer).platform.determineMediaDownloadUrl('https://api.unsplash.com/d?x=1');
 
 	assertEquals(await download(null), null);
-	assertEquals(await download({errors: ['Rate Limit Exceeded']}), null);
+	assertEquals(await download({errors: ['Rate Limit Exceeded', 'Invalid token']}), null);
 	assertEquals(await download({}), null);
 	assertEquals(await download(new Error('HTTP error: 403')), null);
 
 	assertEquals(errorStub.calls.map(call => call.args), [
-		['Error:', 'Unknown error'], ['Error:', 'Rate Limit Exceeded'], ['Error:', 'Unknown error']
+		['Error:', 'Unknown error'], ['Error:', 'Rate Limit Exceeded, Invalid token'], ['Error:', 'Unknown error']
 	]);
 	assertEquals(logStub.calls[0].args, ['Download error:', 'HTTP error: 403']);
 });
@@ -195,4 +195,13 @@ Deno.test('a page that failed to load is asked for again by the next scroll', as
 	await platform.loadNextPage();
 	assertEquals(client.requests[2].url, 'https://api.unsplash.com/search/photos/?query=lobby&page=2&per_page=20&client_id=secret');
 	assertEquals(platform.currentPage, 2);
+});
+
+Deno.test('results that are no list are logged as another format', async () =>
+{
+	using logStub = stub(console, 'log');
+
+	assertEquals(await createPlatform({total: 1, total_pages: 1, results: 'none'}).platform.search('lobby'), undefined);
+
+	assertEquals(logStub.calls[0].args, ['Search error:', 'Wrong JSON format']);
 });

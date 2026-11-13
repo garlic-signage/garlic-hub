@@ -312,3 +312,32 @@ Deno.test('an answer without videos is logged and gives nothing', async () =>
 	assertEquals(await platform.search('lobby', 'videos'), undefined);
 	assertEquals(logStub.calls[0].args, ['Search error:', 'Wrong JSON format']);
 });
+
+Deno.test('photos or videos that are no list are logged as another format', async () =>
+{
+	using _dom    = createDom(CSRF_META);
+	using logStub = stub(console, 'log');
+
+	assertEquals(await createPlatform({success: true, data: {total_results: 1, photos: 'none'}}).platform.search('lobby', 'images'), undefined);
+	assertEquals(await createPlatform({success: true, data: {total_results: 1, videos: 'none'}}).platform.search('lobby', 'videos'), undefined);
+
+	assertEquals(logStub.calls.map(call => call.args), [['Search error:', 'Wrong JSON format'], ['Search error:', 'Wrong JSON format']]);
+});
+
+Deno.test('the files of a video are compared by their area, only those of their quality', async () =>
+{
+	using _dom = createDom(CSRF_META);
+	const video = {...VIDEO, video_files: [
+		{quality: 'hd', width: 1920, height: 1920, link: 'hd-1920'},
+		{quality: 'hd', width: 320, height: 180, link: 'hd-180'},
+		{quality: 'sd', width: 600, height: 600, link: 'sd-600'},
+		{quality: 'sd', width: 640, height: 360, link: 'sd-360'},
+		{quality: 'sd', width: 4000, height: 3000, link: 'sd-3000'},
+		{quality: 'hd', width: 1920, height: 1080, link: 'hd-1080'},
+	]};
+	const {platform} = createPlatform({success: true, data: {total_results: 1, videos: [video]}});
+
+	const results = await platform.search('lobby', 'videos');
+
+	assertEquals([results[202].preview, results[202].downloadUrl], ['sd-360', 'hd-1920']);
+});

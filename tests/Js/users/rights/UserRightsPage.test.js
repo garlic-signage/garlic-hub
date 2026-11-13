@@ -226,6 +226,19 @@ Deno.test('a changed role of a unit is saved', async () =>
 	assertEquals(page.units(), [['5', 'Lobby', 'viewer']]);
 });
 
+Deno.test('while the role of a unit is saved its select is locked', async () =>
+{
+	using page = createPage();
+	const select = page.tab.querySelector('select');
+	const locked = [];
+	const save   = page.services.save.bind(page.services);
+	page.services.save = (...args) => { locked.push(select.disabled); return save(...args); };
+
+	await choose(select, 'viewer');
+
+	assertEquals([locked, select.disabled], [[true], false]);
+});
+
 Deno.test('a refused role of a unit goes back to the saved one', async () =>
 {
 	using page = createPage();

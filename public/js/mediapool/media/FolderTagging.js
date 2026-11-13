@@ -31,6 +31,7 @@ export class FolderTagging
 	#mediaService;
 	#flashMessageHandler;
 	#lang;
+	// Stryker disable next-line BooleanLiteral: run() sets it before it is read
 	#isCancelled = false;
 
 	constructor(mediaService, flashMessageHandler, lang)

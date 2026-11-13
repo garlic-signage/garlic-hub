@@ -96,6 +96,7 @@ Deno.test('an empty list empties the selector', () =>
 	page.view.displayList([]);
 
 	assertSameElement(page.document.querySelector('#templatesList .template-select-item'), null);
+	assertEquals(page.document.getElementById('templatesList').childNodes.length, 0);
 });
 
 Deno.test('a template without a thumbnail gets the text of the missing source', () =>

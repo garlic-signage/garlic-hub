@@ -22,6 +22,7 @@ export class EditDialog
 	#itemIdElement        = document.getElementById("editItemId");
 	#itemNameElement      = document.getElementById("editItemName");
 	#itemContentElement   = document.getElementById("editItemContent");
+	// Stryker disable next-line StringLiteral: linkedom finds an element for an empty id, the bubbling submit reaches it
 	#editItemForm         = document.getElementById("editItemForm");
 	#closeEditDialog      = document.getElementById("closeEditDialog");
 	#editItemErrorMessage = document.getElementById("editItemErrorMessage");
@@ -38,7 +39,9 @@ export class EditDialog
 		{
 			this.#controller.abort();
 			this.setWidth("");
-		}, {once: true, signal: this.#controller.signal});
+		},
+		// Stryker disable next-line ObjectLiteral,BooleanLiteral: the abort in the listener ends everything of this edit anyway
+		{once: true, signal: this.#controller.signal});
 		this.#dialogElement.showModal();
 	}
 
@@ -75,6 +78,7 @@ export class EditDialog
 	empty()
 	{
 		this.#itemIdElement.value = "";
+		// Stryker disable next-line StringLiteral: the name is a span, its value is shown nowhere; setTitle() sets the next one
 		this.#itemNameElement.value = "";
 		this.#itemContentElement.innerHTML = "";
 	}

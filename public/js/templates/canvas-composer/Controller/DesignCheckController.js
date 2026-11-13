@@ -35,6 +35,7 @@ export class DesignCheckController
 	#countElement = document.getElementById("designCheckCount");
 	#okElement    = document.getElementById("designCheckOk");
 	#listElement  = document.getElementById("designCheckHints");
+	// Stryker disable next-line ArrayDeclaration: only objects of the canvas get a mark, an entry of no object draws nothing
 	#marked       = [];
 	#timer        = null;
 
@@ -69,6 +70,7 @@ export class DesignCheckController
 	{
 		const hints = this.#designCheckService.check();
 
+		// Stryker disable next-line MethodExpression,ConditionalExpression: null is no object of the canvas and gets no mark anyway
 		this.#marked = [...new Set(hints.filter(hint => hint.object !== null).map(hint => hint.object))];
 		this.#countElement.textContent = String(hints.length);
 		this.#countElement.hidden      = hints.length === 0;

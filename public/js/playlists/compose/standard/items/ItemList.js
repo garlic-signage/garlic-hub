@@ -69,6 +69,7 @@ export class ItemList
 		
 		// console.log('Listenlänge', this.#dropTarget.children.length, 'Position', position);
 
+		// Stryker disable next-line ConditionalExpression,LogicalOperator: insertBefore() without an item after it appends too
 		if (position === null || this.#dropTarget.children.length < position)
 			this.#dropTarget.appendChild(item.buildItemElement());
 		else

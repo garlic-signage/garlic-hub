@@ -61,6 +61,7 @@ export class CropService
 	{
 		if (!CropService.isCroppable(image) || this.#image === image)
 			return;
+		// Stryker disable next-line ConditionalExpression: apply() without an image in the crop mode returns at once
 		if (this.#image !== null)
 			this.apply();
 
@@ -151,7 +152,9 @@ export class CropService
 		const p = new fabric.Point(target.left - original.left, target.top - original.top)
 			.transform(fabric.util.invertTransform(fabric.util.createRotateMatrix({angle: target.getTotalAngle()})));
 		const element = target.getElement();
+		// Stryker disable next-line ArithmeticOperator: times or divided by 1 or -1 is the same
 		let cropX = original.cropX - p.x / target.scaleX * (target.flipX ? -1 : 1);
+		// Stryker disable next-line ArithmeticOperator: times or divided by 1 or -1 is the same
 		let cropY = original.cropY - p.y / target.scaleY * (target.flipY ? -1 : 1);
 		cropX = Math.max(0, Math.min(cropX, element.width - target.width));
 		cropY = Math.max(0, Math.min(cropY, element.height - target.height));

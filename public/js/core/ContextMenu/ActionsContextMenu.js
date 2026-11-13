@@ -100,6 +100,7 @@ export class ActionsContextMenu
 		document.body.appendChild(this.#view.menu);
 		this.#view.placeMenu(event.clientX, event.clientY);
 
+		// Stryker disable next-line ObjectLiteral,BooleanLiteral: a second close() of the same menu changes nothing
 		document.addEventListener("click", () => this.close(), {once: true});
 	}
 

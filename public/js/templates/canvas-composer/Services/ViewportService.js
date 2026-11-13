@@ -109,6 +109,7 @@ export class ViewportService
 	{
 		let p1 = Math.floor((100/this.#width)  * browserWidth);
 		let p2 = Math.floor((100/this.#height) * browserHeight);
+		// Stryker disable next-line EqualityOperator: with p1 equal to p2 both answers are the same
 		if (p1 > p2)
 			return  p2;
 		else
@@ -119,6 +120,7 @@ export class ViewportService
 	{
 		let p1 = Math.floor((100/w)  * this.#width);
 		let p2 = Math.floor((100/h) * this.#height);
+		// Stryker disable next-line EqualityOperator: with p1 equal to p2 both answers are the same
 		if (p1 > p2)
 			return  p2;
 		else

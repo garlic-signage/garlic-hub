@@ -40,7 +40,7 @@ function canvasOf(background)
 			for (let i = 0; i < pixels.length; i += 4)
 				pixels.set(background, i);
 
-			return {width: 4, height: 4, getContext: () => ({getImageData: () => ({data: pixels})})};
+			return {width: 4, height: 4, getContext: (type) => type === '2d' ? {getImageData: () => ({data: pixels})} : null};
 		}
 	};
 }
@@ -213,4 +213,41 @@ Deno.test('text, i-text and textbox are texts', () =>
 {
 	assertEquals(['text', 'i-text', 'textbox', 'image', 'rect'].map(type => DesignCheckService.isText({type})),
 		[true, true, true, false, false]);
+});
+
+Deno.test('words are counted without the spaces around the text', () =>
+{
+	// 2 seconds to look and 30 words at three a second: 12 seconds
+	const words = '  ' + Array.from({length: 30}, (_, i) => 'word' + i).join(' ') + ' \n';
+	using page  = createService([text({text: words})], {duration: 12});
+
+	assertEquals(page.service.check(), []);
+});
+
+Deno.test('the colour of a gradient is not measured, also not on black', () =>
+{
+	using page = createService([text({fill: {type: 'linear'}})], {background: [0, 0, 0, 255]});
+
+	assertEquals(page.service.check(), []);
+});
+
+Deno.test('a transparent background counts as white in the ratio, too', () =>
+{
+	using page = createService([text({fill: '#999999', fontSize: 40})], {background: [0, 0, 0, 0]});
+
+	assertEquals(page.service.check().map(hint => hint.values), [{ratio: '2.8', min: 4.5}]);
+});
+
+Deno.test('a very dark text on black is measured with the linear part of the luminance', () =>
+{
+	using page = createService([text({fill: '#0a0a0a'})], {background: [0, 0, 0, 255]});
+
+	assertEquals(page.service.check().map(hint => hint.values), [{ratio: '1.1', min: 3}]);
+});
+
+Deno.test('a blue text on white has enough contrast', () =>
+{
+	using page = createService([text({fill: '#0000ff'})]);
+
+	assertEquals(page.service.check(), []);
 });

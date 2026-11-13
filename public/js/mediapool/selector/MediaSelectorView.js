@@ -21,6 +21,7 @@ export class MediaSelectorView
 {
 	#mediaFactory = null;
 	#mediaItems = {};
+	// Stryker disable next-line StringLiteral: displayMediaList() looks the list up again
 	#mediaListElement = document.getElementById("mediaList");
 	#selectorTemplate = document.getElementById("mediaSelectorTemplate");
 	#selectorElement = null;

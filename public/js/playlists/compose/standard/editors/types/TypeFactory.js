@@ -28,6 +28,7 @@ export class TypeFactory
 	#triggerService = null;
 
 	constructor(triggerService)
+	// Stryker disable next-line BlockStatement: nothing uses the service yet
 	{
 		this.#triggerService = triggerService;
 	}

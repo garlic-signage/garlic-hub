@@ -24,6 +24,7 @@ export class Media
 {
     #mediaElement = null;
 	#mediaData     = null;
+	// Stryker disable StringLiteral: the constructor sets them all
 	#mediaId       = ""
 	#thumbnailUrl  = "";
 	#originalUrl   = "";
@@ -33,6 +34,7 @@ export class Media
 	#description   = ""
 	#filesize      = 0;
 	#username      = "";
+	// Stryker restore StringLiteral
 	#dimensions    = "";
 	#duration      = 0;
 	#mediaItem     = null;
@@ -53,6 +55,7 @@ export class Media
 		this.#filesize     	= Utils.formatBytes(mediaData.metadata.size);
 		if (mediaData.metadata.dimensions !== undefined && Object.keys(mediaData.metadata.dimensions).length > 0 )
 			this.#dimensions = mediaData.metadata.dimensions.width + "x" + mediaData.metadata.dimensions.height;
+		// Stryker disable next-line ConditionalExpression,LogicalOperator,EqualityOperator: a missing or zero duration gives 0 either way, durations are never negative
 		if (mediaData.metadata.duration !== undefined && mediaData.metadata.duration > 0)
 			this.#duration = mediaData.metadata.duration;
 		this.#mediaData = mediaData;

@@ -66,6 +66,7 @@ export class DesignCheckService
 
 			const ratio       = this.#contrastRatio(text);
 			const minContrast = fontSize >= side * DesignCheckService.LARGE_FONT_SHARE ? DesignCheckService.MIN_CONTRAST_LARGE : DesignCheckService.MIN_CONTRAST;
+			// Stryker disable next-line EqualityOperator: a ratio of exactly 4.5 or 3 does not come from colours of 8 bits
 			if (ratio !== null && ratio < minContrast)
 				hints.push({object: text, key: "design_low_contrast", values: {ratio: ratio.toFixed(1), min: minContrast}});
 		}
@@ -76,6 +77,7 @@ export class DesignCheckService
 				hints.push({object: object, key: "design_placeholder", values: {}});
 		}
 
+		// Stryker disable next-line Regex: with the empty words filtered out one space counts like several
 		const words  = texts.reduce((sum, text) => sum + text.text.split(/\s+/).filter(word => word !== "").length, 0);
 		const needed = Math.ceil(DesignCheckService.ORIENTATION_SECONDS + words / DesignCheckService.WORDS_PER_SECOND);
 		if (words > 0 && needed > this.#duration)
@@ -131,6 +133,7 @@ export class DesignCheckService
 			);
 			count++;
 		}
+		// Stryker disable next-line ConditionalExpression: the average of no pixels is NaN, which gives no hint either
 		if (count === 0)
 			return null;
 
@@ -149,6 +152,7 @@ export class DesignCheckService
 		const channel = (value) =>
 		{
 			const c = value / 255;
+			// Stryker disable next-line ConditionalExpression,EqualityOperator: both formulas of WCAG meet at 0.03928
 			return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
 		};
 

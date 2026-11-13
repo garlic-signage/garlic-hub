@@ -82,6 +82,7 @@ export class FlashMessageHandler
 
 	#removeMessage(messageElement)
 	{
+		// Stryker disable next-line ConditionalExpression,LogicalOperator: clearAllMessages() passes found messages only, they have a parent
 		if (messageElement && messageElement.parentNode) {
 			messageElement.style.transition = 'opacity 0.3s ease-out';
 			messageElement.style.opacity = '0';

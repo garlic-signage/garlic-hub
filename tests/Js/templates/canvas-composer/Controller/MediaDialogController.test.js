@@ -153,10 +153,12 @@ Deno.test('an image which could not replace the active one shows the error, the 
 Deno.test('both close buttons close the dialog', async () =>
 {
 	using page = createController();
+	assertEquals(page.controller.isOpen, false);
 
 	for (const button of [page.view.closeEditMediaDialog, page.view.closeDialogButton])
 	{
 		await page.controller.displayMediaSelector();
+		assertEquals(page.controller.isOpen, true);
 		fire(button, 'click');
 		assertEquals(page.controller.isOpen, false);
 	}

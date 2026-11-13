@@ -67,6 +67,7 @@ Deno.test('all messages fade out and go', async () =>
 
 	const bars = [...dom.document.querySelectorAll('#messages .message-bar')];
 	assertEquals(bars.map(bar => bar.style.opacity), ['0', '0']);
+	assertEquals(bars.map(bar => bar.style.transition), ['opacity 0.3s ease-out', 'opacity 0.3s ease-out']);
 	await new Promise(resolve => setTimeout(resolve, 350));
 	assertEquals(messages(dom.document), []);
 });
@@ -82,4 +83,13 @@ Deno.test('a message removed meanwhile is no error', async () =>
 
 	await new Promise(resolve => setTimeout(resolve, 350));
 	assertEquals(messages(dom.document), []);
+});
+
+Deno.test('without a container the messages come at the top of the body', () =>
+{
+	using dom = createDom(PAGE);
+
+	new FlashMessageHandler().showError('Failed');
+
+	assertEquals(dom.document.body.firstElementChild.className, 'message-bar message-bar--error');
 });

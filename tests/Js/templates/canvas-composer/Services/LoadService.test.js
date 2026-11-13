@@ -131,7 +131,9 @@ Deno.test('the fonts of all texts, also in groups, are loaded before the content
 		{type: 'Textbox', fontFamily: 'Roboto'},
 		{type: 'group', objects: [{type: 'textbox', fontFamily: 'Lato'}, {type: 'group', objects: [{type: 'Textbox', fontFamily: 'Oswald'}]}]},
 		{type: 'image', fontFamily: 'none'},
-		{type: 'group'}
+		{type: 'group'},
+		// only a group is searched for texts
+		{type: 'clipPath', objects: [{type: 'textbox', fontFamily: 'Arial'}]}
 	])};
 
 	await page.service.loadFromTemplateDataBase(7);

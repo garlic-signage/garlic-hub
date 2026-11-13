@@ -141,6 +141,7 @@ Deno.test('only the layout of the own player counts', async (t) =>
 		'another message':       (playerWindow) => ({origin: ORIGIN, source: playerWindow, data: {type: 'something', width: 800, height: 600}}),
 		'no data':               (playerWindow) => ({origin: ORIGIN, source: playerWindow, data: null}),
 		'a size of zero':        (playerWindow) => ({origin: ORIGIN, source: playerWindow, data: {type: 'garlic-preview-layout', width: 0, height: 600}}),
+		'a height of zero':      (playerWindow) => ({origin: ORIGIN, source: playerWindow, data: {type: 'garlic-preview-layout', width: 800, height: 0}}),
 		'a size which is no number': (playerWindow) => ({origin: ORIGIN, source: playerWindow, data: {type: 'garlic-preview-layout', width: 800, height: 'x'}}),
 	};
 
@@ -178,9 +179,21 @@ Deno.test('while the corner of the frame is dragged a cover lies over the player
 	page.frame.dispatchEvent(new Event('pointerdown'));
 	const cover = page.frame.querySelector('.drag-cover');
 	assertSameElement(page.frame.lastElementChild, cover);
+	assertEquals(cover.tagName, 'DIV');
 
 	page.window.fire('pointerup');
 	assertEquals(page.frame.querySelector('.drag-cover'), null);
+	assertEquals(page.window.listeners.filter(entry => entry.type === 'pointerup').length, 0);
+});
+
+Deno.test('a close without a preview has no player to end', () =>
+{
+	using page = createPage();
+	page.dialog.showModal();
+
+	page.dialog.close();
+
+	assertEquals(page.iframe(), null);
 });
 
 Deno.test('a press inside the player is no drag of the corner', () =>

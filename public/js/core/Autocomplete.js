@@ -39,6 +39,7 @@ export class Autocomplete
 	#autocompleteView  = null;
 	#apiEndpoint       = null;
 	#debounce_timeout  = null;
+	// Stryker disable next-line StringLiteral: the constructor sets it
 	#fieldName         = ""
 	#ignoreBlur         = false; // datalist do not fire events sometimes. @see #handleNotSelected()
 	#request            = null; // the answer of an older request must not replace a newer one
@@ -178,6 +179,7 @@ export class Autocomplete
 	 */
 	#handleSelection()
 	{
+		// Stryker disable next-line BooleanLiteral: #doSelectionChange() sets it too, this line only states it here
 		this.#ignoreBlur = true;
 		this.#doSelectionChange();
 //		this.#autocompleteView.inputElement.blur();

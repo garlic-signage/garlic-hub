@@ -49,6 +49,7 @@ export class TransformService extends BasePropertyService
 			case "ArrowDown":
 				object.top += step;
 				break;
+			// Stryker disable next-line ConditionalExpression: the default does nothing, without it nothing is done either
 			default:
 				break;
 		}

@@ -24,10 +24,12 @@ import {MemoryStorage, replaceGlobals} from "@support/globals.js";
 import {Wunderbaum}                    from "@support/FakeWunderbaum.js";
 
 // DirectoryView loads UploadDialogElements, which reads the document when it is loaded
-let DirectoryView, UploadDialogElements;
+let DirectoryView, UploadDialogElements, initialDraggedMedium;
 {
 	using _dom = createDom('<button id="openUploadDialog"></button>');
 	({DirectoryView}        = await import("@js/mediapool/treeview/DirectoryView.js"));
+	// no medium is dragged until one starts it
+	initialDraggedMedium = DirectoryView.workaroundShitForMediaIdBecauseOfChrome;
 	({UploadDialogElements} = await import("@js/mediapool/uploads/UploadDialogElements.js"));
 }
 
@@ -62,6 +64,9 @@ function treeNode(key, title, data = {}, parent = null)
 			const list = includeSelf ? [this] : [];
 			for (let node = this.parent; node !== null; node = node.parent)
 				list.unshift(node);
+			// the invisible system root of Wunderbaum
+			if (includeRoot)
+				list.unshift({key: '__root__', title: 'root'});
 			return list;
 		},
 		async setExpanded(flag) { this.calls.push(['setExpanded', flag]); },
@@ -169,6 +174,22 @@ Deno.test('the tree loads the root folders and the sub folders when they are ope
 	assertEquals(page.options.lazyLoad({node: {key: 7}}), {url: '/async/mediapool/node/7', params: {parentKey: 7}});
 });
 
+Deno.test('at first no medium is dragged', () =>
+{
+	assertEquals(initialDraggedMedium, '');
+});
+
+Deno.test('the tree filters by hiding and moves by drag and drop without guessing', () =>
+{
+	using page = createPage();
+
+	assertEquals(page.options.filter, {autoApply: true, mode: 'hide'});
+	const {effectAllowed, dropEffectDefault, guessDropEffect, preventNonNodes, preventForeignNodes} = page.options.dnd;
+	assertEquals({effectAllowed, dropEffectDefault, guessDropEffect, preventNonNodes, preventForeignNodes},
+		{effectAllowed: 'move', dropEffectDefault: 'move', guessDropEffect: false, preventNonNodes: false, preventForeignNodes: false});
+	assertEquals([page.options.dnd.dragOver({}), page.options.dnd.dragLeave({})], [true, true]);
+});
+
 Deno.test('the last opened folder is opened again', async () =>
 {
 	using page = createPage();
@@ -257,6 +278,7 @@ Deno.test('without an active folder there is nothing to read or change', () =>
 	assertEquals(page.view.getActiveNodeId(), 0);
 	assertEquals(page.view.getActiveNodeRights(), 0);
 	assertEquals(page.view.getActiveNodeVisibility(), 0);
+	assertEquals(page.view.getActiveVisibility(), '');
 	assertEquals(page.view.isActiveNode(treeNode(1, 'Lobby')), false);
 	assertThrows(() => page.view.setActiveTitle('Hall'), Error, 'No active node');
 	assertThrows(() => page.view.setActiveNodeVisibility(1), Error, 'No active node');
@@ -275,6 +297,7 @@ Deno.test('the active folder gets a new title and visibility', async () =>
 
 	assertEquals(screens.title, 'Hall');
 	assertEquals(page.view.getActiveNodeVisibility(), 2);
+	assertEquals(page.view.getActiveVisibility(), 2);
 	assertEquals(screens.calls, [['update'], ['update']]);
 });
 
@@ -371,6 +394,13 @@ Deno.test('media go only into a folder, folders also before and after it', () =>
 	assertEquals(enter({node: lobby, sourceNode: treeNode(2, 'Screens')}), ['before', 'after', 'appendChild']);
 });
 
+Deno.test('a folder finds its place also when no medium was dragged before', () =>
+{
+	using page = createPage();
+
+	assertEquals(page.options.dnd.dragEnter({node: treeNode(1, 'Lobby'), sourceNode: treeNode(2, 'Screens')}), ['before', 'after', 'appendChild']);
+});
+
 Deno.test('a file of the desktop or a text finds no place in the tree and moves nothing', async () =>
 {
 	using page = createPage();
@@ -446,7 +476,7 @@ class FakeContextMenu
 	show(event)                          { this.calls.push('show'); }
 	addEditEvent(element, view)          { this.calls.push('edit'); }
 	addAddEvent(element, view)           { this.calls.push('add'); }
-	addShareEvent(element, node)         { this.calls.push('share'); }
+	addShareEvent(element, node)         { this.calls.push('share'); this.shareElement = element; }
 	addTagEvent(element, node, view)     { this.calls.push('tag'); }
 	addRemoveEvent(element, node)        { this.calls.push('remove'); }
 }
@@ -477,6 +507,20 @@ Deno.test('the context menu activates the folder and offers all entries for all 
 	assertEquals(node.calls, [['setActive', true]]);
 	assertEquals(menu.calls, ['show', 'edit', 'add', 'share', 'tag', 'remove']);
 	assertEquals(entries, ['edit_node', 'add_node', 'share_node', 'tag_node', 'remove_node']);
+	assertEquals(menu.shareElement.id, 'share_node');
+});
+
+Deno.test('one right is enough for the context menu', () =>
+{
+	for (const right of ['create', 'edit', 'delete', 'share_unit'])
+	{
+		using page = createPage();
+		const rights = {create: false, edit: false, delete: false, share_unit: false, [right]: true};
+
+		const {menu} = openContextMenu(page, {rights: rights});
+
+		assertEquals(menu.calls.slice(0, 1), ['show'], right);
+	}
 });
 
 Deno.test('without any right there is no context menu', () =>

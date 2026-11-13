@@ -176,6 +176,18 @@ Deno.test('cancel and the close button empty and close the dialog without the fo
 	}
 });
 
+Deno.test('a click elsewhere in the dialog does not cancel it', () =>
+{
+	using page = createPage();
+	const editDialog = new EditDialog();
+	editDialog.onCancel();
+	editDialog.openDialog();
+
+	fire(page.element('editItemContent'), 'click');
+
+	assertEquals(page.dialog.hasAttribute('open'), true);
+});
+
 Deno.test('the listeners of an edit end with its dialog, the next edit has its own', () =>
 {
 	using page  = createPage();
@@ -194,5 +206,6 @@ Deno.test('the listeners of an edit end with its dialog, the next edit has its o
 	assertEquals(saved, ['second']);
 	// the cancel of the first edit is gone too: the dialog stays open
 	fire(page.element('closeEditDialog'), 'click');
+	fire(page.dialog.querySelector('button[value="cancel"]'), 'click');
 	assertEquals(page.dialog.hasAttribute('open'), true);
 });

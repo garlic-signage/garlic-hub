@@ -39,6 +39,7 @@ export class WallclockEdit extends BaseTypes
 	#repeatMonths = 0;
 	#repeatYears = 0;
 
+	// Stryker disable next-line BooleanLiteral: nothing reads it yet
 	#has_save_errors = false;
 
 
@@ -54,6 +55,7 @@ export class WallclockEdit extends BaseTypes
 		if (data.hasOwnProperty("weekday"))
 			this.#editWeekday.value = data.weekday;
 		else
+			// Stryker disable next-line StringLiteral: linkedom selects the first option for a value without option, the test cannot see it
 			this.#editWeekday.value = "0";
 
 		this.#editWeekdayPrefix = this.node.querySelector(".edit-weekday-prefix");
@@ -89,6 +91,7 @@ export class WallclockEdit extends BaseTypes
 					this.#numberRepeatsSelect.checked = true;
 					this.#repeatsPeriods.style.visibility = "visible";
 					this.#numberRepeats.style.visibility = "visible";
+					// Stryker disable next-line ConditionalExpression: always true, the outer if checked it already
 					if (data.hasOwnProperty("repeat_counts"))
 						this.#numberRepeats.value =  data.repeat_counts;
 					break;
@@ -144,6 +147,7 @@ export class WallclockEdit extends BaseTypes
 		if (ar.iso_date === "")
 		{
 			this.#editDatetime.style.color = "red";
+			// Stryker disable next-line BooleanLiteral: nothing reads it yet
 			this.#has_save_errors = true;
 		}
 		else
@@ -152,6 +156,7 @@ export class WallclockEdit extends BaseTypes
 		}
 
 		// datetime-local did not commit seconds when 0. Let's add it here to get a valid ISO date.
+		// Stryker disable next-line EqualityOperator: a date has 16 characters without and 19 with seconds, never 17
 		if (ar.iso_date !== "" && ar.iso_date.length < 17)
 			ar.iso_date += ':00';
 

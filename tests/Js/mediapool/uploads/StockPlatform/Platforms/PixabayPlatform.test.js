@@ -281,3 +281,14 @@ Deno.test('an answer without images is logged and gives nothing', async () =>
 	assertEquals(await platform.search('lobby'), undefined);
 	assertEquals(logStub.calls[0].args, ['Search error:', 'Wrong JSON format']);
 });
+
+Deno.test('videos that are no list are logged as another format', async () =>
+{
+	using _dom    = createDom(CSRF_META);
+	using logStub = stub(console, 'log');
+
+	const {platform} = createPlatform({success: true, data: {total: 1, totalHits: 1, hits: 'none'}});
+
+	assertEquals(await platform.search('lobby', 'videos'), undefined);
+	assertEquals(logStub.calls[0].args, ['Search error:', 'Wrong JSON format']);
+});

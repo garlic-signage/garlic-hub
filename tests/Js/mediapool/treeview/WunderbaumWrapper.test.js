@@ -17,12 +17,15 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import {assertEquals}                  from "@std/assert";
+import {assertEquals, assertThrows}    from "@std/assert";
 import {assertSameElement, createDom}  from "@support/dom.js";
 import {MemoryStorage, replaceGlobals} from "@support/globals.js";
 import {Wunderbaum}                    from "@support/FakeWunderbaum.js";
 import {TreeViewElements}              from "@js/mediapool/treeview/TreeViewElements.js";
 import {WunderbaumWrapper}             from "@js/mediapool/treeview/WunderbaumWrapper.js";
+
+// no medium is dragged until one starts it
+const initialDraggedMedium = WunderbaumWrapper.workaroundShitForMediaIdBecauseOfChrome;
 
 // the tree of templates/generic/media_selector.mustache, the path only in the mediapool
 const SELECTOR = '<input id="treeViewFilter" type="search"><div id="mediapoolTree"><span id="lobbyTitle"></span></div>';
@@ -43,6 +46,9 @@ function treeNode(key, title, data = {}, parent = null)
 			const list = includeSelf ? [this] : [];
 			for (let node = this.parent; node !== null; node = node.parent)
 				list.unshift(node);
+			// the invisible system root of Wunderbaum
+			if (includeRoot)
+				list.unshift({key: '__root__', title: 'root'});
 			return list;
 		},
 		async setExpanded(flag) { this.calls.push(['setExpanded', flag]); },
@@ -90,6 +96,8 @@ Deno.test('the tree is created in the element of the selector and loads the root
 	assertEquals(page.options.selectMode, 'single');
 	assertEquals(page.options.lazyLoad({node: {key: 7}}), {url: '/async/mediapool/node/7', params: {parentKey: 7}});
 	assertEquals('dnd' in page.options, false);
+	assertEquals(page.options.filter, {autoApply: true, mode: 'hide'});
+	assertEquals(initialDraggedMedium, '');
 });
 
 Deno.test('without the tree in the page there is no tree', () =>
@@ -225,6 +233,10 @@ Deno.test('the drag and drop is added to the tree, the filter takes no drop', ()
 	page.wrapper.addDragNDrop();
 
 	assertEquals(page.tree.calls, [['setOption', 'dnd']]);
+	const {effectAllowed, dropEffectDefault, guessDropEffect, preventNonNodes, preventForeignNodes} = page.options.dnd;
+	assertEquals({effectAllowed, dropEffectDefault, guessDropEffect, preventNonNodes, preventForeignNodes},
+		{effectAllowed: 'move', dropEffectDefault: 'move', guessDropEffect: false, preventNonNodes: false, preventForeignNodes: false});
+	assertEquals([page.options.dnd.dragOver({}), page.options.dnd.dragLeave({})], [true, true]);
 	for (const type of ['dragover', 'drop'])
 	{
 		const event = new Event(type, {cancelable: true});
@@ -259,6 +271,19 @@ Deno.test('media go only into a folder, folders also before and after it', () =>
 	assertEquals(enter({node: lobby, sourceNode: null}), ['appendChild']);
 	assertEquals(enter({node: folder, sourceNode: lobby}), ['appendChild']);
 	assertEquals(enter({node: lobby, sourceNode: treeNode(2, 'Screens')}), ['before', 'after', 'appendChild']);
+});
+
+Deno.test('a dropped medium without its id is an error and moves nothing', () =>
+{
+	for (const mediaId of [null, undefined])
+	{
+		using page = createPage();
+		page.wrapper.addDragNDrop();
+		WunderbaumWrapper.workaroundShitForMediaIdBecauseOfChrome = mediaId;
+
+		assertThrows(() => page.options.dnd.drop({node: treeNode(1, 'Lobby'), sourceNode: null}), Error, 'mediaId is not defined');
+		assertEquals(page.events, [], String(mediaId));
+	}
 });
 
 Deno.test('a dropped medium or folder is passed on to the listeners', () =>

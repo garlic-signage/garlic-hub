@@ -30,6 +30,7 @@ export class DragDropHandler
 	#items   = null;
 	#drake        = null;
 	#playlistId     = 0;
+	// Stryker disable next-line StringLiteral: without a source set the drop throws for any start value
 	#source         = "";
 	#flashMessageHandler = new FlashMessageHandler();
 
@@ -60,10 +61,12 @@ export class DragDropHandler
 		this.#source = value;
 	}
 
+	// Stryker disable all: the dragged item is kept, but nothing reads it yet
 	set items(value)
 	{
 		this.#items = value;
 	}
+	// Stryker restore all
 
 	preparePlaylistDragDrop(hasDropSource = false)
 	{
@@ -72,9 +75,12 @@ export class DragDropHandler
 				return el.hasAttribute("data-select-id") === true;
 			},
 			accepts: (el, target, source) => {
+				// dragula has only these two containers: a source which is no selector is the playlist
+				// Stryker disable next-line ConditionalExpression: see above
 				if (source === this.#dropSource)
 					return target === this.#dropTarget;
 
+				// Stryker disable next-line ConditionalExpression: see above
 				return source === this.#dropTarget && target === this.#dropTarget;
 
 			}
@@ -85,8 +91,13 @@ export class DragDropHandler
 			dropContainers.push(this.#dropSource);
 
 		this.#drake   = dragula(dropContainers, options)
-			.on('drag', (el, source) => {
+			// the dragged item is kept, but nothing reads it yet
+			.on(
+				// Stryker disable next-line all: see above
+				'drag', (el, source) => {
+				// Stryker disable next-line all: see above
 				if (source === this.#dropSource)
+					// Stryker disable next-line all: see above
 					this.#dragItem = this.#items[el.getAttribute('select-data-id')];
 			})
 			.on('shadow', (el) => {

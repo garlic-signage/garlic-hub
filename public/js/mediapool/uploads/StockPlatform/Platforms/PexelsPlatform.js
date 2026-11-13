@@ -23,6 +23,7 @@ export class PexelsPlatform extends AbstractStockPlatform
 	#searchImageUri = "https://api.pexels.com/v1/search";
 	#searchVideoUri = "https://api.pexels.com/videos/search";
 	hasVideos  = true;
+	// Stryker disable next-line StringLiteral: search() sets the media type before the first query
 	#mediatype = "images";
 
 	constructor(fetchClient)
@@ -119,7 +120,9 @@ export class PexelsPlatform extends AbstractStockPlatform
 				}
 			};
 			return acc;
-		}, this.resultList || {});
+		},
+		// Stryker disable next-line LogicalOperator: the getter of AbstractStockPlatform always gives an object
+		this.resultList || {});
 	}
 
 	#prepareVideosResults(json)
@@ -144,7 +147,9 @@ export class PexelsPlatform extends AbstractStockPlatform
 				}
 			};
 			return acc;
-		}, this.resultList || {});
+		},
+		// Stryker disable next-line LogicalOperator: the getter of AbstractStockPlatform always gives an object
+		this.resultList || {});
 	}
 
 

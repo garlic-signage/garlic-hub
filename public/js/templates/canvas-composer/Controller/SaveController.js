@@ -91,6 +91,7 @@ export class SaveController
 				return;
 
 			event.preventDefault();
+			// Stryker disable next-line StringLiteral: any string asks the user, the browser shows its own text
 			event.returnValue = ''; // older browsers
 		});
 	}

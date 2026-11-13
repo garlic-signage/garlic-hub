@@ -63,9 +63,11 @@ export class ContextMenuView
 		const windowHeight = window.innerHeight;
 		const windowWidth  = window.innerWidth;
 
+		// Stryker disable next-line EqualityOperator: exactly at the edge both give the same position
 		if (y + rect.height > windowHeight)
 			y = windowHeight - rect.height;
 
+		// Stryker disable next-line EqualityOperator: exactly at the edge both give the same position
 		if (x + rect.width > windowWidth)
 			x = windowWidth - rect.width;
 

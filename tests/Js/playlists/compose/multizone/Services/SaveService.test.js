@@ -81,6 +81,7 @@ Deno.test('the layout is posted with resolution, zoom, unit, zones and the CSRF 
 
 	const [url, options] = page.requests[0];
 	assertEquals([url, options.method], ['/async/playlists/multizone/12', 'POST']);
+	assertEquals(options.headers, {'Content-Type': 'application/json;charset=UTF-8'});
 	const body = page.bodyOf();
 	assertEquals([body.resolution, body.zoom, body.export_unit, body.csrf_token], ['1920x1080', 50, 'pixel', 'the-token']);
 	assertEquals(body.zones.map(saved => [saved.zone_name, saved.zone_left, saved.zone_width, saved['zone_z-index']]),
@@ -133,6 +134,10 @@ Deno.test('an answer without JSON is judged by its status', async () =>
 	{
 		using page = createService(answer(undefined, 500));
 		assertEquals(await page.service.save(), {success: false, error_message: 'HTTP-Error: 500'});
+	}
+	{
+		using page = createService(answer('saved', 200));
+		assertEquals(await page.service.save(), {success: true});
 	}
 	{
 		using page = createService(answer({saved: 1}, 502));

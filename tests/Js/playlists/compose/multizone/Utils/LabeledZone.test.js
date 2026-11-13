@@ -35,10 +35,21 @@ Deno.test('a zone is a rectangle with its name and its playlist in the middle', 
 	assertEquals([labeled.left, labeled.top, labeled.width, labeled.height], [10, 20, 300, 200]);
 	assertEquals(labeled.rect.fill, '#ffffff');
 	assertEquals([labeled.label.text, labeled.label.left, labeled.label.top], ['Lobby', 159.5, 119.5]);
-	assertEquals([labeled.playlist_name.text, labeled.playlist_name.top], ['Morning', 159.5]);
+	assertEquals([labeled.playlist_name.text, labeled.playlist_name.left, labeled.playlist_name.top], ['Morning', 159.5, 159.5]);
 	assertEquals([labeled.zone_playlist_id, labeled.zone_playlist_name], [5, 'Morning']);
 	assertEquals(labeled.name, 'Lobby');
 	assertEquals(labeled.getType(), 'LabeledZone');
+});
+
+Deno.test('the rectangle has a black border from its top left corner, the texts are centred in their fonts', () =>
+{
+	const labeled = zone();
+
+	assertEquals([labeled.rect.originX, labeled.rect.originY, labeled.rect.stroke, labeled.rect.strokeWidth], ['left', 'top', 'black', 1]);
+	for (const text of [labeled.label, labeled.playlist_name])
+		assertEquals([text.originX, text.originY], ['center', 'center']);
+	assertEquals([labeled.label.fontFamily, labeled.label.fontSize], ['OpenSans-Bold', 32]);
+	assertEquals([labeled.playlist_name.fontFamily, labeled.playlist_name.fontSize], ['OpenSans-Regular', 24]);
 });
 
 Deno.test('a zone can be moved and resized, not rotated, skewed or flipped', () =>
@@ -46,6 +57,7 @@ Deno.test('a zone can be moved and resized, not rotated, skewed or flipped', () 
 	const labeled = zone();
 
 	assertEquals([labeled.lockRotation, labeled.lockSkewingX, labeled.lockSkewingY, labeled.lockScalingFlip], [true, true, true, true]);
+	assertEquals(labeled.hasRotatingPoint, false);
 	assertEquals(labeled.controlsVisibility, {mtr: false});
 });
 
@@ -72,6 +84,7 @@ Deno.test('every zone gets its own id', () =>
 
 	assertEquals(first.getId().startsWith('id-'), true);
 	assertEquals(first.getId() === second.getId(), false);
+	assertEquals(Number(second.getId().slice(3)), Number(first.getId().slice(3)) + 1);
 	assertEquals(first.getId(), first.id);
 });
 
@@ -100,7 +113,8 @@ Deno.test('a new color changes the text color, too', () =>
 Deno.test('a new width or height is centred and keeps the size of the texts', () =>
 {
 	const labeled = zone();
-	labeled.label.fontSize = 10;
+	labeled.label.fontSize         = 10;
+	labeled.playlist_name.fontSize = 10;
 
 	labeled.changeWidth(400);
 	labeled.changeHeight(100);
@@ -109,6 +123,17 @@ Deno.test('a new width or height is centred and keeps the size of the texts', ()
 	assertEquals([labeled.height, labeled.rect.height, labeled.rect.top], [100, 100, -50]);
 	assertEquals([labeled.label.fontSize, labeled.playlist_name.fontSize], [32, 24]);
 	assertEquals(labeled.dirty, true);
+});
+
+Deno.test('a new width or a new height alone draws the zone again', () =>
+{
+	const wider  = zone();
+	const higher = zone();
+
+	wider.changeWidth(400);
+	higher.changeHeight(100);
+
+	assertEquals([wider.dirty, higher.dirty], [true, true]);
 });
 
 Deno.test('a zone scaled by the mouse gets the real size and the scale 1', () =>

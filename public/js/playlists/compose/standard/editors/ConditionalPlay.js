@@ -38,6 +38,7 @@ export class ConditionalPlay
 	async fetch (itemId)
 	{
 		const result = await this.#conditionalPlayService.fetchEditor(itemId);
+		// Stryker disable next-line ConditionalExpression: after a failed fetch no dialog opens, nothing reads these fields
 		if (result.success === true)
 		{
 			this.#itemData = result.data;

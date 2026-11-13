@@ -88,9 +88,12 @@ export class ComposerKeyboardController
 					case "ArrowDown":
 						this.#transformService.moveActiveObject(event.key, 1);
 						break;
+					// Stryker disable next-line ConditionalExpression: the default only breaks, like no case
 					default:
 						break;
 				}
 			}
-		}, false);
+		},
+		// Stryker disable next-line BooleanLiteral: the listener of the canvas wrap only, capture or bubble is the same
+		false);
 	}}

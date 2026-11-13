@@ -38,6 +38,7 @@ export class AbstractStockPlatform
 		this.#fetchClient = fetchClient;
 	}
 
+	// Stryker disable next-line StringLiteral: the default of a method that only throws
 	search(query, mediatype = "images")
 	{
 		throw "search() must be implemented in subclass";
@@ -78,6 +79,7 @@ export class AbstractStockPlatform
 
 	get resultList() {	return this.#resultList;}
 
+	// Stryker disable next-line BlockStatement: never called, the field hasVideos hides the getter
 	get hasVideos()	{return this.hasVideos;}
 
 	resetResultList()

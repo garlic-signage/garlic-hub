@@ -42,6 +42,7 @@ export class ToolbarController
 		this.#view.addZone.addEventListener("click", () =>
 			this.#zoneService.insert({"zone_name": "Zone " + (this.#zoneService.countObjects() + 1)})
 		);
+		// Stryker disable next-line BooleanLiteral: the keys come from the canvas wrap itself, capture or bubble is the same
 		this.#view.canvasWrap.addEventListener("keydown", (event) => this.#onKey(event), false);
 		this.#view.save.addEventListener("click", () => this.#save());
 		this.#view.close.addEventListener("click", () =>

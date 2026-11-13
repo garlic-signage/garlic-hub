@@ -80,3 +80,23 @@ Deno.test('the colour of a text is set for the whole text or only for the select
 	assertEquals(part.fill, '#000000');
 	assertEquals(part.charStyles.map(style => style.fill ?? null), ['#ff0000', '#ff0000', null, null, null]);
 });
+
+Deno.test('a text whose characters have no colour shows its own colour', () =>
+{
+	const text = new FakeText({fill: '#000000'});
+	const {service} = createService(text);
+
+	assertEquals(service.getFillColor(), '#000000');
+});
+
+Deno.test('every kind of text gets the colour only for the selected characters', () =>
+{
+	for (const type of ['i-text', 'text', 'textbox'])
+	{
+		const text = new FakeText({type, fill: '#000000', selectionStart: 0, selectionEnd: 2});
+		createService(text).service.setFillColor('#ff0000');
+
+		assertEquals(text.fill, '#000000', type);
+		assertEquals(text.charStyles.map(style => style.fill ?? null), ['#ff0000', '#ff0000', null, null, null], type);
+	}
+});

@@ -127,6 +127,7 @@ export class BaseUploader
 		return progressBar;
 	}
 
+	// Stryker disable all: #disableActions() and #enableActions() are not called, the dead code stays
 	#disableActions()
 	{
 		this.#uploaderDialog.disableActions();
@@ -140,4 +141,5 @@ export class BaseUploader
 		this.disableUploadButton();
 		document.getElementById("linkTab").disabled = false;
 	}
+	// Stryker restore all
 }

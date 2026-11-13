@@ -134,7 +134,10 @@ Deno.test('every user gets a select with none and the roles he may get', async (
 	assertEquals(dialog.hasAttribute('open'), true);
 	assertEquals(dialog.querySelector('header span').textContent, 'Share');
 	assertEquals(dialog.querySelector('header button').getAttribute('aria-label'), 'Close');
+	assertEquals([dialog.querySelector('header button').type, dialog.querySelector('header button').className], ['button', 'close-button bi bi-x']);
 	assertEquals(dialog.querySelector('.unit-share-filter').placeholder, 'Filter users');
+	assertEquals([dialog.querySelector('.unit-share-filter').tagName, dialog.querySelector('.unit-share-filter').type], ['INPUT', 'search']);
+	assertEquals(dialog.querySelector('.unit-share-users').tagName, 'UL');
 
 	const users = [...dialog.querySelectorAll('.unit-share-users li')].map(item => {
 		const label   = item.querySelector('label');
@@ -157,6 +160,7 @@ Deno.test('without users with a role the dialog says so', async () =>
 
 	const [dialog] = openDialogs(page);
 	assertEquals(dialog.querySelector('.unit-share-empty').textContent, 'No users with a role');
+	assertEquals(dialog.querySelector('.unit-share-empty').tagName, 'P');
 	assertSameElement(dialog.querySelector('.unit-share-filter'), null);
 	assertSameElement(dialog.querySelector('.unit-share-users'), null);
 });

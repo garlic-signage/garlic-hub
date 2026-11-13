@@ -150,6 +150,18 @@ Deno.test('a round clip path keeps its size on the template while the picture is
 	assertEquals([image.clipPath.scaleX, image.clipPath.scaleY], [0.5, 0.5]);
 });
 
+Deno.test('a picture zoomed out makes the clip path larger in it', () =>
+{
+	using page  = createService();
+	const image = page.image({clipPath: new FakeFabricObject({scaleX: 1, scaleY: 1})});
+	page.service.enter(image);
+	image.set({scaleX: 0.25, scaleY: 0.25});
+
+	page.service.apply();
+
+	assertEquals([image.clipPath.scaleX, image.clipPath.scaleY], [2, 2]);
+});
+
 Deno.test('cancel brings the clip path back, too', () =>
 {
 	using page  = createService();
@@ -203,6 +215,32 @@ Deno.test('a flipped picture is dragged the other way', () =>
 	image.handlers.moving({transform: {target: image, original: {left: 10, top: 20, cropX: 50, cropY: 40}}});
 
 	assertEquals(image.cropX, 70);
+});
+
+Deno.test('a picture flipped upside down is dragged the other way up and down', () =>
+{
+	using page  = createService();
+	const image = page.image({flipY: true});
+	page.service.enter(image);
+
+	image.set({left: 10, top: 25});
+	image.handlers.moving({transform: {target: image, original: {left: 10, top: 20, cropX: 50, cropY: 40}}});
+
+	assertEquals([image.cropX, image.cropY], [50, 50]);
+});
+
+Deno.test('the drag of a rotated picture is turned back by its angle', () =>
+{
+	using page  = createService();
+	const rotations = [];
+	page.fabric.util.createRotateMatrix = (options) => { rotations.push(options); return [1, 0, 0, 1, 0, 0]; };
+	const image = page.image({angle: 90});
+	page.service.enter(image);
+
+	image.set({left: 20, top: 20});
+	image.handlers.moving({transform: {target: image, original: {left: 10, top: 20, cropX: 50, cropY: 40}}});
+
+	assertEquals(rotations, [{angle: 90}]);
 });
 
 Deno.test('the whole picture is drawn half transparent around the frame', () =>

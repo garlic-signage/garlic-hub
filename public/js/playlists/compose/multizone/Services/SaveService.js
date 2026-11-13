@@ -59,6 +59,7 @@ export class SaveService
 				headers: {'Content-Type': 'application/json;charset=UTF-8'},
 				body: JSON.stringify(properties)
 			});
+			// Stryker disable next-line ArrowFunction: undefined is no object either, the status decides the same way
 			const result = await response.json().catch(() => null);
 			if (result !== null && typeof result === "object" && "success" in result)
 				return result;

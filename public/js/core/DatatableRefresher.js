@@ -46,6 +46,7 @@ export class DatatableRefresher
 			page = await DatatableRefresher.#load(url);
 			if (page === null)
 				return false;
+			// Stryker disable next-line StringLiteral: the browsers ignore the title
 			window.history.replaceState(null, "", url);
 		}
 

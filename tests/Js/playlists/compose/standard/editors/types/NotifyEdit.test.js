@@ -100,3 +100,11 @@ Deno.test('the remove button takes the notification away', () =>
 	assertEquals(page.editor.exists, false);
 	assertSameElement(page.container.querySelector('.trigger-form'), null);
 });
+
+Deno.test('only an own value of the saved trigger is taken, nothing else of the object', () =>
+{
+	// a field without saved value stays empty: in the browser a value of undefined would show "undefined"
+	using page = createEditor(Object.create({notify: 'doorbell'}));
+
+	assertEquals(page.editor.getValues(), {notify: ''});
+});

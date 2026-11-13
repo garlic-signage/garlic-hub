@@ -186,6 +186,7 @@ Deno.test('the suggestions replace the old options and the input gets a focus ev
 
 	const options = [...view.datalistElement.querySelectorAll('option')].map(option => [option.value, option.getAttribute('data-value')]);
 	assertEquals(options, [['Lobby', '1'], ['Canteen', '2']]);
+	assertEquals(view.datalistElement.childNodes.length, 2);
 	assertEquals(focused.length, 1);
 });
 
@@ -224,6 +225,7 @@ Deno.test('an HTTP error is logged and keeps the options', async () =>
 	await wait(time, Autocomplete.DEBOUNCE_DELAY);
 
 	assertEquals(errorStub.calls.length, 1);
+	assertEquals(errorStub.calls[0].args[0], 'Error fetching suggestions:');
 	assertEquals(errorStub.calls[0].args[1].message, 'HTTP-Error: 500');
 	assertEquals(view.datalistElement.querySelectorAll('option').length, 1);
 });
@@ -318,7 +320,7 @@ Deno.test('the input fields are set and cleared', () =>
 	autocomplete.clearAll();
 	assertEquals(view.hiddenElement.value, '');
 	assertEquals(view.inputElement.value, '');
-	assertEquals(view.datalistElement.querySelectorAll('option').length, 0);
+	assertEquals(view.datalistElement.innerHTML, '');
 });
 
 Deno.test('the elements and restore() come from the view', () =>
@@ -331,4 +333,21 @@ Deno.test('the elements and restore() come from the view', () =>
 	assertSameElement(autocomplete.getEditFieldElement(), view.inputElement);
 	assertEquals(autocomplete.restore('New name'), 'restored');
 	assertEquals(view.calls[1], ['restore', 'New name']);
+});
+
+Deno.test('only the first blur after a choice is ignored, the next one selects again', () =>
+{
+	using dom        = createDom();
+	const view       = new FakeView(dom.document);
+	const selections = countSelections(view);
+	addOptions(view, [['Lobby', 1], ['Canteen', 2]]);
+	createAutocomplete(view);
+
+	view.inputElement.value = 'Lobby';
+	view.inputElement.dispatchEvent(new Event('change'));
+	view.inputElement.dispatchEvent(new Event('blur'));
+	view.inputElement.value = 'Canteen';
+	view.inputElement.dispatchEvent(new Event('blur'));
+
+	assertEquals(selections, ['1', '2']);
 });

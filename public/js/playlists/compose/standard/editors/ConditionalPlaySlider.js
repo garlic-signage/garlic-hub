@@ -106,6 +106,7 @@ export class ConditionalPlaySlider
 		minutes = minutes % 60;
 		if (hours < 10)
 			hours = "0" + hours;
+		// Stryker disable next-line EqualityOperator: the slider moves in quarters of an hour, 10 minutes never come
 		if (minutes < 10)
 			minutes = "0" + minutes;
 		if (hours === 24)

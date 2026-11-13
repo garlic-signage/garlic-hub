@@ -153,6 +153,11 @@ Deno.test('the dialog lists the models with a filter', async () =>
 	assertEquals(dialog.querySelector('header button').getAttribute('aria-label'), 'Close');
 	const filterField = dialog.querySelector('.llm-models-filter');
 	assertEquals([filterField.placeholder, filterField.getAttribute('aria-label')], ['Filter models', 'Filter models']);
+	assertEquals([filterField.tagName, filterField.type, filterField.autofocus], ['INPUT', 'search', true]);
+	const close = dialog.querySelector('header button');
+	assertEquals([close.type, close.className], ['button', 'close-button bi bi-x']);
+	assertEquals(dialog.querySelector('.llm-models-list').tagName, 'UL');
+	assertEquals([...dialog.querySelectorAll('.llm-models-list button')].map(button => button.type), ['button', 'button', 'button']);
 	assertEquals(shownModels(page), ['gpt-4o', 'gpt-4o-mini', 'o3']);
 });
 
@@ -204,6 +209,7 @@ Deno.test('an address without a list says so', async () =>
 
 	const [dialog] = openDialogs(page);
 	assertEquals(dialog.querySelector('.llm-models-message').textContent, 'No list here');
+	assertEquals(dialog.querySelector('.llm-models-message').tagName, 'P');
 	assertSameElement(dialog.querySelector('.llm-models-error'), null);
 	assertSameElement(dialog.querySelector('.llm-models-filter'), null);
 });

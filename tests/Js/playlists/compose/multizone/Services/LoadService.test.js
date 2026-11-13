@@ -92,18 +92,21 @@ Deno.test('the layout of the playlist is asked from the server', async () =>
 
 	assertEquals(page.requests[0][0], '/async/playlists/multizone/12');
 	assertEquals(page.requests[0][1].method, 'GET');
+	assertEquals(page.requests[0][1].headers, {'Content-Type': 'application/json;charset=UTF-8'});
 });
 
 Deno.test('a new playlist has a screen of full HD and no zones', async () =>
 {
 	for (const zones of [null, []])
 	{
-		using page = createService(answer({zones}));
+		using page      = createService(answer({zones}));
+		using alertStub = stub(globalThis, 'alert');
 
 		await page.service.load(12);
 
 		assertEquals(page.viewport.calls, [['setDimensions', 1920, 1080], ['scaleCanvas', 70]], String(zones));
 		assertEquals(page.zones.created, []);
+		assertEquals(alertStub.calls.length, 0, String(zones));
 	}
 });
 
@@ -183,6 +186,18 @@ Deno.test('the old format in pixel takes the screen from the borders of the zone
 	assertEquals(page.zones.created.map(created => created.zone_name), ['Main', 'Ticker']);
 });
 
+Deno.test('the old format in pixel reaches from the leftmost to the rightmost border, a wide screen is zoomed by its width', async () =>
+{
+	using page = createService(answer({zones: [
+		zone('Main', '0', '0', '1280', '720', 0), zone('Side', '1280', '0', '1280', '720', 1), zone('Small', '100', '100', '200', '200', 2),
+	]}));
+
+	await page.service.load(12);
+
+	// 2560 x 720: the width decides the zoom
+	assertEquals(page.viewport.calls, [['setDimensions', 2560, 720], ['scaleCanvas', 50]]);
+});
+
 Deno.test('the old format may be an object of zones', async () =>
 {
 	using page = createService(answer({zones: {a: zone('B', 0, 0, 640, 360, 1), b: zone('A', 0, 0, 1920, 1080, 0)}}));
@@ -210,6 +225,8 @@ Deno.test('an error of the server is shown and the editor starts empty', async (
 	const answers = [
 		[answer({success: false, error_message: 'Not allowed'}, 403), 'Not allowed'],
 		[answer(undefined, 500), 'HTTP-Fehler! Status: 500'],
+		[answer({zones: null}, 500), 'HTTP-Fehler! Status: 500'],
+		[answer(undefined, 200), 'HTTP-Fehler! Status: 200'],
 		[answer({error: 'No multizone playlist'}), 'No multizone playlist'],
 	];
 

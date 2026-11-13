@@ -84,6 +84,7 @@ export class LoadService
 
 		let j = JSON.parse(jsonContent);
 		this.#traverseObjects(j.objects);
+		// Stryker disable next-line StringLiteral: a message for the console only
 		console.log("Collected all fonts");
 
 		await this.#fontCollector.preloadUsedFonts();
@@ -118,6 +119,7 @@ export class LoadService
 	#migrateScaleToPixel(obj)
 	{
 		// a text without a scale (not saved by fabric.js) has nothing to migrate
+		// Stryker disable next-line ConditionalExpression: a scale of 1 migrates to the same values
 		if (typeof obj.scaleY === "number" && obj.scaleY !== 1 && obj.scaleY === obj.scaleX)
 		{
 			obj.fontSize = Math.round(obj.fontSize * obj.scaleY);

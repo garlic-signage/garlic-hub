@@ -123,10 +123,17 @@ Deno.test('the underline is switched for the whole text', () =>
 	const {wrapper, text, service} = createService();
 
 	service.setTextUnderline();
-	assertEquals(text.underline, true);
+	assertEquals([text.underline, service.getTextUnderline()], [true, true]);
 	service.setTextUnderline();
-	assertEquals(text.underline, false);
+	assertEquals([text.underline, service.getTextUnderline()], [false, false]);
 	assertEquals(wrapper.renders, 2);
+});
+
+Deno.test('an italic text is not underlined', () =>
+{
+	const {service} = createService({fontStyle: 'italic'});
+
+	assertEquals(service.getTextUnderline(), false);
 });
 
 Deno.test('the canvas can be drawn again for the text', () =>
@@ -172,4 +179,23 @@ Deno.test('italic of the selected characters is switched by the first of them', 
 	service.setTextItalic();
 
 	assertEquals(text.charStyles.map(style => style.fontStyle ?? null), [null, 'italic', 'italic', null, null]);
+});
+
+Deno.test('with the cursor inside the text and no selection the whole text is changed', () =>
+{
+	for (const change of ['setTextFontFamily', 'setTextBold', 'setTextItalic'])
+	{
+		const {text, service} = createService({isEditing: true, selectionStart: 2, selectionEnd: 2});
+
+		service[change]('Lato');
+
+		assertEquals(text.calls.find(call => call[0] === 'setSelectionStyles').slice(2), [0, 5], change);
+	}
+});
+
+Deno.test('bold and italic of the text count when its characters have no styles', () =>
+{
+	const {service} = createService({fontWeight: 'bold', fontStyle: 'italic'});
+
+	assertEquals([service.getTextBold(), service.getTextItalic()], ['bold', 'italic']);
 });

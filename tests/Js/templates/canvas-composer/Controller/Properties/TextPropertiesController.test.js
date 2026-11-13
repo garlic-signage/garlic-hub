@@ -137,11 +137,23 @@ Deno.test('the fonts of the server are listed with their preview', () =>
 
 Deno.test('without a list of fonts the list stays empty', () =>
 {
-	const loader = new FakeFontLoader();
-	loader.fontsList = {};
-	using page = createController(loader);
+	for (const fontsList of [{}, null])
+	{
+		const loader = new FakeFontLoader();
+		loader.fontsList = fontsList;
+		using page = createController(loader);
 
-	assertEquals(fonts(page), []);
+		assertEquals(fonts(page), []);
+	}
+});
+
+Deno.test('a font of the list is an entry which shows the mouse over it', () =>
+{
+	using page = createController();
+
+	const entries = [...page.document.querySelectorAll('#fontsDropdown .template_edit_dropdown_content_font')];
+
+	assertEquals(entries.map(entry => [entry.tagName, entry.classList.contains('template_edit_dropdown_content_hover')]), [['DIV', true], ['DIV', true]]);
 });
 
 Deno.test('a chosen font is set when it is loaded', () =>

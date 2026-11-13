@@ -98,6 +98,18 @@ Deno.test('other keys do nothing', () =>
 	assertEquals([page.transform.calls, page.contextMenu.calls, page.wrapper.calls], [[], [], []]);
 });
 
+Deno.test('the keys of the shortcuts do nothing without their modifiers', () =>
+{
+	const page = createController();
+
+	page.press('z');
+	page.press('Z', {shiftKey: true});
+	page.press('a', {ctrlKey: true});
+	page.press('a', {ctrlKey: true, shiftKey: true});
+
+	assertEquals([page.transform.calls, page.contextMenu.calls, page.wrapper.calls], [[], [], []]);
+});
+
 Deno.test('while a text is edited the keys belong to the text', () =>
 {
 	const page = createController();

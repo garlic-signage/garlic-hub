@@ -180,6 +180,28 @@ Deno.test('with multiselect several media are selected', async () =>
 	assertEquals(selectedIds(page), ['c']);
 });
 
+Deno.test('the multiselect of the template composer can be switched off again', async () =>
+{
+	using page = createSelector();
+	page.selector.enableMultiSelect();
+	page.selector.disableMultiSelect();
+	await showSelector(page);
+
+	click(page, '[data-media-id="a"]');
+	click(page, '[data-media-id="b"]');
+
+	assertEquals(selectedIds(page), ['b']);
+});
+
+Deno.test('nothing is selected and no filter is set at first', async () =>
+{
+	using page = createSelector();
+
+	assertEquals([page.selector.selectedMediaId, page.selector.selectedMediaLink], [0, '']);
+	await page.selector.loadMedia(4);
+	assertEquals(page.mediaService.loads, [[4, '']]);
+});
+
 Deno.test('the selected media come with their original and file name', async () =>
 {
 	using page = createSelector();

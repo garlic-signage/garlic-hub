@@ -45,6 +45,7 @@ export class ContextMenuMedia
         this.#menuElement.style.left = `${event.pageX}px`;
         this.#menuElement.style.top = `${event.pageY}px`;
         document.body.appendChild(this.#menuElement);
+        // Stryker disable next-line ObjectLiteral,BooleanLiteral: a second remove() of the removed menu changes nothing
         document.addEventListener('click', () => this.#menuElement.remove(), {once: true});
     }
 

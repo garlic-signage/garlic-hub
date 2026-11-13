@@ -80,6 +80,7 @@ Deno.test('the corrected text replaces the old one as one step of the history', 
 	assertEquals(page.active.text, 'Welcome to the lobby');
 	// the styles of single characters belong to the old text
 	assertEquals(page.active.styles, {});
+	assertEquals(page.active.calls.filter(call => call[0] === 'exitEditing'), []);
 	assertEquals(callNames(page.wrapper), ['getActiveObject', 'fireObjectModified', 'renderAll']);
 	assertEquals(flashMessages(page.document), [['success', 'lang text_corrected']]);
 	assertEquals(page.overlay.calls, ['start', 'stop']);

@@ -108,6 +108,13 @@ Deno.test('the uploader opens only after a directory with the right to create is
 	assertEquals(page.elements.openUploadDialog.disabled, true);
 });
 
+Deno.test('a new uploader can be closed with Escape', () =>
+{
+	using page = createPage();
+
+	assertEquals(pressEscape(page).defaultPrevented, false);
+});
+
 Deno.test('the button opens the uploader, both close buttons close it', () =>
 {
 	for (const closeButton of ['closeDialog', 'closeUploadDialog'])

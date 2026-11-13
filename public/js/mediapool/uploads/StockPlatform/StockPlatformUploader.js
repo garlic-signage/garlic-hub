@@ -37,6 +37,7 @@ export class StockPlatformUploader extends BaseUploader
 		}
 
 		const lastPlatform = localStorage.getItem("lastPlatform");
+		// Stryker disable next-line ConditionalExpression: without a platform #selectPlatform() hides what is hidden already
 		if (lastPlatform !== null)
 		{
 			this.#selectPlatform(lastPlatform);

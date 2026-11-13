@@ -73,13 +73,24 @@ Deno.test('a moved object snaps, an image in the crop mode does not', () =>
 {
 	const guidelines = new TemplateGuidelines(createCanvas());
 	const moved      = {target: {type: 'rect'}};
+	const notCropped = {target: {isCropping: false}};
 
 	guidelines.moving(moved);
 	guidelines.moving({target: {isCropping: true}});
-	guidelines.moving({target: {isCropping: false}});
+	guidelines.moving(notCropped);
 
 	assertEquals(guidelines.calls.map(call => call[0]), ['moving', 'moving']);
 	assertEquals(guidelines.calls[0][1] === moved, true);
+	assertEquals(guidelines.calls[1][1] === notCropped, true);
+});
+
+Deno.test('a move without an object is passed on as well', () =>
+{
+	const guidelines = new TemplateGuidelines(createCanvas());
+
+	guidelines.moving({});
+
+	assertEquals(guidelines.calls, [['moving', {}]]);
 });
 
 Deno.test('the lines are drawn only on a canvas with its top layer', () =>

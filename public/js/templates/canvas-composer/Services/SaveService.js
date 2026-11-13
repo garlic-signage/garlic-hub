@@ -27,6 +27,7 @@ export class SaveService
 	#templatesService;
 	#bmpDitherFactory;
 	#waitOverlay;
+	// Stryker disable next-line StringLiteral: an unknown format becomes "jpg" anyway
 	#allowed = ["jpg", "png", "webp", "bmp"];
 	#imageData = {"format": "jpeg", "quality": 90 };
 

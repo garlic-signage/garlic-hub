@@ -39,6 +39,7 @@ export class Trigger
 	async fetchBeginTrigger (itemId)
 	{
 		const result = await this.#triggerService.fetchBeginTrigger(itemId);
+		// Stryker disable next-line ConditionalExpression: after a failed fetch no dialog opens, nothing reads these fields
 		if (result.success === true)
 		{
 			this.#itemData = result.item_data;

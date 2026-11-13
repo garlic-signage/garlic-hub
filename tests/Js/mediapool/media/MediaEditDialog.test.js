@@ -134,6 +134,20 @@ Deno.test('a suggestion for a medium without description and tags fills them', (
 	assertEquals(fields(page), ['Canteen', 'A canteen', 'food']);
 });
 
+Deno.test('the description of the medium is trimmed before the suggestion, blanks only count as empty', () =>
+{
+	using page = createEditDialog();
+	const img  = page.medium('abc').querySelector('img');
+
+	img.setAttribute('data-description', ' The lobby \n');
+	page.editDialog.show(page.medium('abc'), {description: 'A bright hall', tags: []});
+	assertEquals(page.description.value, 'The lobby\nA bright hall');
+
+	img.setAttribute('data-description', '  ');
+	page.editDialog.show(page.medium('abc'), {description: 'A bright hall', tags: []});
+	assertEquals(page.description.value, 'A bright hall');
+});
+
 Deno.test('a suggestion without description keeps the one of the medium', () =>
 {
 	using page = createEditDialog();

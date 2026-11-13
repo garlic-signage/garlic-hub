@@ -91,6 +91,7 @@ export class MediaCapture
 
 		const binary = atob(base64);
 		const array  = new Uint8Array(binary.length);
+		// Stryker disable next-line EqualityOperator: a typed array ignores the write behind its end
 		for (let i = 0; i < binary.length; i++)
 			array[i] = binary.charCodeAt(i);
 

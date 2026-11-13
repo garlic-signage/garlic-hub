@@ -58,9 +58,12 @@ Deno.test('the dialog shows its title, a close button and a tile per preset', ()
 	const [dialog] = dialogs(dom.document);
 	assertEquals(dialog.hasAttribute('open'), true);
 	assertEquals(dialog.querySelector('header span').textContent, 'Presets');
-	assertEquals(dialog.querySelector('header button').getAttribute('aria-label'), 'Close');
+	const close = dialog.querySelector('header button');
+	assertEquals([close.getAttribute('aria-label'), close.type, close.className], ['Close', 'button', 'close-button bi bi-x']);
+	assertEquals(dialog.querySelector('.multizone-presets-list').tagName, 'UL');
 	const tiles = [...dialog.querySelectorAll('.multizone-presets-list li button')];
-	assertEquals(tiles.map(tile => [tile.title, tile.querySelector('span').textContent]), [['Main and side', 'Main and side'], ['Full', 'Full']]);
+	assertEquals(tiles.map(tile => [tile.title, tile.querySelector('span').textContent, tile.type]),
+		[['Main and side', 'Main and side', 'button'], ['Full', 'Full', 'button']]);
 });
 
 Deno.test('the preview draws the zones in percent', () =>
@@ -71,6 +74,9 @@ Deno.test('the preview draws the zones in percent', () =>
 
 	const svg = dialogs(dom.document)[0].querySelector('svg');
 	assertEquals([svg.getAttribute('viewBox'), svg.getAttribute('preserveAspectRatio')], ['0 0 100 100', 'none']);
+	assertEquals([svg.namespaceURI, svg.getAttribute('aria-hidden')], ['http://www.w3.org/2000/svg', 'true']);
+	assertEquals([...svg.querySelectorAll('rect')].map(rect => [rect.namespaceURI, rect.getAttribute('vector-effect')]),
+		[['http://www.w3.org/2000/svg', 'non-scaling-stroke'], ['http://www.w3.org/2000/svg', 'non-scaling-stroke']]);
 	const rects = [...svg.querySelectorAll('rect')].map(rect =>
 		['x', 'y', 'width', 'height', 'fill'].map(name => rect.getAttribute(name)));
 	assertEquals(rects, [['0', '0', '75', '100', '#111111'], ['75', '0', '25', '100', '#222222']]);
@@ -78,7 +84,8 @@ Deno.test('the preview draws the zones in percent', () =>
 
 Deno.test('the preview has the aspect ratio of the screen, the longer side is 120', () =>
 {
-	const cases = [[1920, 1080, '120', '68'], [1080, 1920, '68', '120'], [1000, 1000, '120', '120'], [0, 0, '120', '68']];
+	const cases = [[1920, 1080, '120', '68'], [1080, 1920, '68', '120'], [1000, 1000, '120', '120'], [0, 0, '120', '68'],
+		[0, 1080, '120', '68'], [1920, 0, '120', '68']];
 
 	for (const [width, height, svgWidth, svgHeight] of cases)
 	{

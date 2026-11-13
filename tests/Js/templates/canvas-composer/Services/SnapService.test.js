@@ -82,6 +82,7 @@ Deno.test('without the grid the guidelines come back, new ones', () =>
 	page.service.enable();
 
 	page.service.disable();
+	assertEquals(page.service.isGridEnabled, false);
 	page.service.disable();
 	page.service.enable();
 

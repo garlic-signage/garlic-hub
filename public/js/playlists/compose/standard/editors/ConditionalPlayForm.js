@@ -173,8 +173,11 @@ export class ConditionalPlayForm
 			"weekdays": this.#getWeekdays()
 		};
 
-		if (Object.keys(ret["date"]).length === 0 && Object.keys(ret["time"]).length === 0
-			&& Object.keys(ret["weekdays"]).length === 0 )
+		// date, time and weekdays are empty only together, when conditional play is off: each part alone decides
+		// Stryker disable next-line ConditionalExpression,LogicalOperator: see above
+		if (Object.keys(ret["date"]).length === 0 && Object.keys(ret["time"]).length === 0 &&
+			// Stryker disable next-line ConditionalExpression: see above
+			Object.keys(ret["weekdays"]).length === 0)
 			return {};
 
 		return ret;
@@ -187,10 +190,13 @@ export class ConditionalPlayForm
 
 		let	date_from_val  = "";
 		let	date_until_val = "";
+		// Stryker disable next-line ConditionalExpression: unchecking the period empties its fields
 		if (this.enable_date_period.checked)
 		{
+			// Stryker disable next-line ConditionalExpression,StringLiteral: an empty value gives the empty default
 			if (this.#dateFrom.value !== "")
 				date_from_val  = this.#dateFrom.value;
+			// Stryker disable next-line ConditionalExpression,StringLiteral: an empty value gives the empty default
 			if (this.#dateUntil.value !== "")
 				date_until_val = this.#dateUntil.value;
 		}
@@ -205,6 +211,7 @@ export class ConditionalPlayForm
 
 		let	time_from_val  = "";
 		let	time_until_val = "";
+		// Stryker disable next-line ConditionalExpression: unchecking the period empties its fields
 		if (this.enable_time_period.checked)
 		{
 			time_from_val  = this.#timeFrom.value;

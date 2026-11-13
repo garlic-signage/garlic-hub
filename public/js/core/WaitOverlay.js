@@ -19,6 +19,7 @@
 
 export class WaitOverlay
 {
+	// Stryker disable next-line StringLiteral: the constructor sets it
 	overlay = "";
 
 	constructor()

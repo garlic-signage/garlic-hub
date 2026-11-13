@@ -174,8 +174,31 @@ Deno.test('a list selects the saved key, else the default by key or text', () =>
 
 		const selected = (id) => field(page, id).querySelector('option[selected]')?.getAttribute('value');
 		assertEquals([selected('byKey'), selected('byText'), selected('saved')], ['en', 'fr', 'de'], type);
+		// the saved key only, not also the default
+		assertEquals(field(page, 'saved').querySelectorAll('option[selected]').length, 1, type);
 		assertEquals([...field(page, 'saved').querySelectorAll('option')].map(option => option.textContent), ['German', 'English', 'French']);
 	}
+});
+
+Deno.test('the form is a list of labeled fields', () =>
+{
+	using page = createPage();
+
+	page.form.parsePreferences({
+		city:    {types: 'text', tooltip: "Today's city", mandatory: 'false'},
+		opacity: {types: 'colorOpacity'},
+		color:   {types: 'color'},
+		units:   {types: 'radio', options: {C: 'metric'}},
+		lang:    {types: 'list', options: {de: 'German & Co', en: 'English'}}
+	}, {lang: 'de'});
+
+	assertEquals(page.form.getForm(), '<ul class="form_edit">'
+		+ '<li><label>Today&#39;s city<br /><input type="text" id="city" name="city" title="Today&#39;s city" value=""/></label></li>'
+		+ '<li><label>opacity<br /><input type="number" id="opacity" name="opacity" min="0" max="100" value=""/></label></li>'
+		+ '<li><label>color<br /><input type="color" id="color" name="color" value=""/></label></li>'
+		+ '<li><label>units<br /><input type="radio" id="units_C" name="units" value="metric"/>C</label></li>'
+		+ '<li><label>lang<br /><select id="lang" name="lang"><option value="de" selected="selected">German &amp; Co</option><option value="en">English</option></select></label></li>'
+		+ '</ul>');
 });
 
 Deno.test('the fields are named by the item, two widgets in a page do not mix', () =>

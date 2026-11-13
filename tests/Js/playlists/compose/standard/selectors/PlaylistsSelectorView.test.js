@@ -105,5 +105,6 @@ Deno.test('an empty list empties the selector', () =>
 	page.view.displayList([]);
 
 	assertEquals(shownPlaylists(page), []);
+	assertEquals(page.document.getElementById('playlistsList').childNodes.length, 0);
 	assertSameElement(page.document.getElementById('playlistsList').parentElement, page.document.getElementById('itemSelectContainer'));
 });

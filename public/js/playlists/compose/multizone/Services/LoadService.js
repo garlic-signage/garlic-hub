@@ -53,6 +53,7 @@ export class LoadService
 		for (let i = 0; i < zones.length; i++)
 		{
 			// convert zone_smil_playlist_id to zone playlist_id (SmilControl)
+			// Stryker disable next-line OptionalChaining: zones[i] is always a zone of the list
 			if (zones[i]?.zone_smil_playlist_id != null)
 			{
 				zones[i].zone_playlist_id = zones[i].zone_smil_playlist_id;
@@ -122,6 +123,7 @@ export class LoadService
 		}
 
 		// the old format: sometimes old zones will be parsed to an object not an array
+		// Stryker disable next-line ConditionalExpression: Object.values() of an array is a copy of it
 		if (!Array.isArray(zones))
 			zones = Object.values(zones);
 
@@ -138,6 +140,7 @@ export class LoadService
 			return zones;
 
 		let converted_zones = [];
+		// Stryker disable next-line ConditionalExpression: there are only pixel and percent, pixel returned above
 		if (this.#settings.exportUnit === LayoutSettings.UNIT_PERCENT)
 		{
 			for (let i = 0; i < zones.length; i++)
@@ -189,9 +192,11 @@ export class LoadService
 		const y = Number(zone.zone_height) + Number(zone.zone_top);
 		const x = Number(zone.zone_width) + Number(zone.zone_left);
 
+		// Stryker disable next-line EqualityOperator: an equal border sets the same maximum
 		if (y > this.#maxY)
 			this.#maxY = y;
 
+		// Stryker disable next-line EqualityOperator: an equal border sets the same maximum
 		if (x > this.#maxX)
 			this.#maxX = x;
 	}

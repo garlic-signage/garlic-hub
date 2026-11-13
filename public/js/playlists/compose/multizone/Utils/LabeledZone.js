@@ -31,11 +31,13 @@ export class LabeledZone extends fabric.Group
 	_type = "LabeledZone";
 	// transparent must have shown more usable in editor, so we fake it with a grey plus opacity
 	zone_playlist_id = 0;
+	// Stryker disable next-line StringLiteral: the constructor sets it
 	zone_playlist_name = '';
 
 	constructor(options = {})
 	{
 		let fill;
+		// Stryker disable next-line ConditionalExpression,StringLiteral: the else gives transparent for it, too
 		if (options.zone_bgcolor === "transparent")
 			fill = LabeledZone._transparent;
 		else
@@ -188,6 +190,7 @@ export class LabeledZone extends fabric.Group
 		if (hexColor === this._transparent)
 			return 'black';
 
+		// Stryker disable next-line Regex: a color has its # only at the start
 		hexColor = hexColor.replace(/^#/, '');
 		let r = parseInt(hexColor.substring(0, 2), 16);
 		let g = parseInt(hexColor.substring(2, 4), 16);

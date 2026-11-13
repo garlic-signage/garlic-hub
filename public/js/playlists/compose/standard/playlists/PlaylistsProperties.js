@@ -168,9 +168,11 @@ export class PlaylistsProperties
 
 		this.#shufflePicking.disabled    = !this.#toggleShuffle.checked;
 
+		// Stryker disable next-line ConditionalExpression: the same number of items would build the same choice again
 		if (this.#shufflePicking.disabled || playlistMetrics.count_items === this.#shufflePicking.length)
 			return
 
+		// Stryker disable next-line EqualityOperator: an equal value is set to itself
 		if (this.#pickingValue > playlistMetrics.count_items) // if something is deleted
 			this.#pickingValue = playlistMetrics.count_items;
 
@@ -194,6 +196,7 @@ export class PlaylistsProperties
 		this.#calculatePickingValue(countItems);
 	}
 
+	// Stryker disable all: display() has limited the picking to the items before
 	#calculatePickingValue(countItems)
 	{
 		if (this.#pickingValue > countItems)
@@ -201,6 +204,7 @@ export class PlaylistsProperties
 			 this.#pickingValue = countItems;
 		}
 	}
+	// Stryker restore all
 
 	/**
 	 * Sends the request and shows errors as flash message.

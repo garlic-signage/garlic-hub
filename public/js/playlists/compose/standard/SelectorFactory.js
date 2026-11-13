@@ -34,7 +34,8 @@ export class SelectorFactory
 					this.#mediaSelector = new MediaSelector(
 						new WunderbaumWrapper(new TreeViewElements()),
 						new MediaService(new FetchClient()),
-						new MediaSelectorView(new MediaFactory(document.getElementById('mediaTemplate')))
+						// Stryker disable next-line StringLiteral: linkedom finds an element for an empty id
+					new MediaSelectorView(new MediaFactory(document.getElementById('mediaTemplate')))
 					);
 				}
 				return this.#mediaSelector;

@@ -122,9 +122,9 @@ class FakeMediaService
 /**
  * A page with the media list: the storage, GLightbox and the DOM are replaced until the test ends.
  */
-function createPage(storedView = null)
+function createPage(storedView = null, markup = PAGE)
 {
-	const dom        = createDom(PAGE);
+	const dom        = createDom(markup);
 	const storage    = new MemoryStorage();
 	const lightboxes = [];
 	if (storedView !== null)
@@ -179,6 +179,26 @@ Deno.test('the list view is the default and is stored', () =>
 	assertEquals(page.storage.getItem('media-list-view'), 'media-list-list-view');
 });
 
+Deno.test('without a stored view a grid of the markup becomes the list', () =>
+{
+	using page = createPage(null, PAGE.replace('<div id="mediaList">', '<div id="mediaList" class="media-list-grid-view">'));
+
+	assertEquals(page.element.className, 'media-list-list-view');
+});
+
+Deno.test('the list knows its element and has no filter at first', async () =>
+{
+	using page = createPage();
+
+	assertSameElement(page.mediaList.element, page.element);
+	assertEquals(page.mediaList.filter, '');
+	await page.mediaList.loadMediaListByNode(5, {create: true});
+	assertEquals(page.mediaService.loads, [[5, '']]);
+
+	page.mediaList.filter = 'videos';
+	assertEquals(page.mediaList.filter, 'videos');
+});
+
 Deno.test('a stored view stays and is set when the list is shown', () =>
 {
 	using page = createPage('media-list-grid-view');
@@ -227,8 +247,11 @@ Deno.test('a new list replaces the old one and its lightbox', () =>
 	page.mediaList.render([{media_id: 'b'}, {media_id: 'c'}]);
 
 	assertEquals(shownIds(page), ['b', 'c']);
+	assertEquals(page.element.childNodes.length, 2);
 	assertEquals(page.lightboxes.map(lightbox => lightbox.destroyed), [true, false]);
 	assertEquals(page.lightboxes[1].options.plyr, {css: '/css/external/plyr.css', js: '/js/external/plyr.js'});
+	const {plyr: _plyr, ...options} = page.lightboxes[1].options;
+	assertEquals(options, {width: '90vw', height: '90vh', loop: false, autoplayVideos: true});
 });
 
 Deno.test('the results of a search are shown without ending the search', () =>
@@ -252,6 +275,17 @@ Deno.test('a moved medium leaves the list', async () =>
 
 	assertEquals(page.mediaService.moves, [['a', 7]]);
 	assertEquals(shownIds(page), ['b']);
+});
+
+Deno.test('a moved medium which is not in the list is no error', async () =>
+{
+	using page = createPage();
+	page.mediaList.render([{media_id: 'a'}]);
+
+	await page.mediaList.moveMediaTo('b', 7);
+
+	assertEquals(page.mediaService.moves, [['b', 7]]);
+	assertEquals(shownIds(page), ['a']);
 });
 
 Deno.test('a medium that could not be moved stays in the list', async () =>
@@ -301,6 +335,18 @@ Deno.test('without an AI the menu has no suggestion and still works', async () =
 	using page = createPage();
 	page.document.getElementById('suggestTags').remove();
 	page.mediaService.media = [{media_id: 'a'}];
+	await page.mediaList.loadMediaListByNode(5, {create: true});
+
+	const {menu} = openContextMenu(page, 'a');
+
+	assertEquals(menu.calls.map(call => call[0]), ['show', 'info', 'remove', 'edit', 'clone']);
+});
+
+Deno.test('without an AI an audio has no suggestion and still works', async () =>
+{
+	using page = createPage();
+	page.document.getElementById('suggestTags').remove();
+	page.mediaService.media = [{media_id: 'a', mimetype: 'audio/mpeg'}];
 	await page.mediaList.loadMediaListByNode(5, {create: true});
 
 	const {menu} = openContextMenu(page, 'a');

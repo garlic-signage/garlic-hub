@@ -117,13 +117,14 @@ Deno.test('the AI gets the visible texts of the template from top to bottom', as
 		{type: 'textbox', text: ' Opening hours ', top: 300},
 		{type: 'i-text', text: 'Welcome', top: 20},
 		{type: 'text', text: 'hidden', top: 50, visible: false},
+		{type: 'text', text: 'Prices', top: 100},
 		{type: 'textbox', text: '   ', top: 60},
 		{type: 'rect', top: 0},
 	);
 
 	await page.suggest();
 
-	assertEquals(page.templates.texts, ['Welcome\nOpening hours']);
+	assertEquals(page.templates.texts, ['Welcome\nPrices\nOpening hours']);
 });
 
 Deno.test('the suggested pictures are shown in the dialog while the overlay waits for the AI', async () =>
@@ -136,6 +137,7 @@ Deno.test('the suggested pictures are shown in the dialog while the overlay wait
 	assertEquals(page.dialog.hasAttribute('open'), true);
 	assertEquals(page.buttons().map(button => [button.title, button.querySelector('img').getAttribute('src'),
 		button.querySelector('img').getAttribute('alt')]), [['Beach', '/thumb/m1', 'Beach'], ['Lobby', '/thumb/m2', 'Lobby']]);
+	assertEquals(page.buttons().map(button => [button.parentElement.tagName, button.getAttribute('type')]), [['LI', 'button'], ['LI', 'button']]);
 });
 
 Deno.test('a refused or failed suggestion shows the error and no dialog', async () =>

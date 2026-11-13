@@ -109,6 +109,7 @@ export class MediaSelector
 		element.replaceChildren(this.#selectorView.loadSelectorTemplate());
 		this.#treeViewWrapper.initTree();
 
+		// Stryker disable next-line StringLiteral: linkedom finds an element for an empty id, a browser would fail at once
 		document.getElementById('mediaList').addEventListener('click', (e) => {
 			const item = e.target.closest('.media-item');
 			if (!item)

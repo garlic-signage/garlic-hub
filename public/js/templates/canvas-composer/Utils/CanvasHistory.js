@@ -30,6 +30,7 @@ export class CanvasHistory
 	#properties;
 	#undo       = [];
 	#redo       = [];
+	// Stryker disable next-line StringLiteral: the constructor sets the state of the canvas at once
 	#nextState  = "";
 	#processing = false;
 	#paused     = false;

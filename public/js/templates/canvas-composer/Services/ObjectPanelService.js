@@ -148,6 +148,7 @@ export class ObjectPanelService extends BasePropertyService
 	{
 		const object = this.#findSingleObject();
 		const number = Number(value);
+		// Stryker disable next-line ConditionalExpression: without an object getEditable() allows no field either
 		if (object === null || value === "" || !Number.isFinite(number) || !this.getEditable()[field])
 			return;
 

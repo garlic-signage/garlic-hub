@@ -119,8 +119,9 @@ Deno.test('the content of a template has the properties of the composer', () =>
 
 	assertEquals(page.wrapper.toTemplateJSON(), {objects: ['image']});
 	assertEquals(page.canvas.asked.at(-1), TemplateFabricWrapper.PROPERTIES);
-	assertEquals(TemplateFabricWrapper.PROPERTIES.includes('mediaId'), true);
-	assertEquals(TemplateFabricWrapper.PROPERTIES.includes('fileName'), true);
+	assertEquals(TemplateFabricWrapper.PROPERTIES, [
+		'mediaId', 'fileName', 'placeholder', 'lockMovementX', 'lockMovementY', 'lockRotation', 'lockScalingX', 'lockScalingY'
+	]);
 });
 
 Deno.test('the history keeps besides them whether an object can be selected', () =>
@@ -158,6 +159,21 @@ Deno.test('a step can be saved by hand and the history can be paused', async () 
 
 	await page.wrapper.undo();
 	assertEquals(page.canvas.objects, ['a']);
+});
+
+Deno.test('after the pause the changes are steps again', async () =>
+{
+	using page = createWrapper();
+	page.canvas.objects = ['a'];
+	page.wrapper.historySaveAction();
+
+	page.wrapper.pauseHistory();
+	page.wrapper.resumeHistory();
+	page.canvas.change('b');
+	page.canvas.change('c');
+
+	await page.wrapper.undo();
+	assertEquals(page.canvas.objects, ['a', 'b']);
 });
 
 Deno.test('a loaded template starts a new history and measures its fonts again', async () =>
@@ -221,6 +237,17 @@ Deno.test('a template without a color gets the given one in its image and keeps 
 
 	assertEquals(page.canvas.images[0].backgroundColor, '#000000');
 	assertEquals(page.canvas.backgroundColor, '');
+});
+
+Deno.test('a template whose color is not set at all gets the given one too', () =>
+{
+	using page = createWrapper();
+	page.canvas.backgroundColor = undefined;
+
+	page.wrapper.toBase64Image('png', 1, '#000000');
+
+	assertEquals(page.canvas.images[0].backgroundColor, '#000000');
+	assertEquals(page.canvas.backgroundColor, undefined);
 });
 
 Deno.test('a transparent template stays transparent in png and webp, a jpeg gets the given color', () =>

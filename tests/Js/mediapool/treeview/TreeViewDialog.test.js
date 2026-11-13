@@ -263,7 +263,22 @@ Deno.test('cancel and the close button save nothing', async () =>
 	page.document.getElementById('closeEditDialog').dispatchEvent(new Event('click'));
 	await new Promise(resolve => setTimeout(resolve, 0));
 	assertEquals(isOpen(page), false);
+	assertEquals(page.element.returnValue, 'cancel');
 
+	assertEquals(page.service.calls, []);
+});
+
+Deno.test('a submit without a pressed button saves nothing', async () =>
+{
+	using page = createPage();
+	open(page, 'add_sub_folder');
+	page.folderName.value = 'Lobby';
+
+	const event = new Event('submit', {bubbles: true, cancelable: true});
+	page.element.querySelector('form').dispatchEvent(event);
+	await new Promise(resolve => setTimeout(resolve, 0));
+
+	assertEquals(event.defaultPrevented, false);
 	assertEquals(page.service.calls, []);
 });
 
@@ -303,6 +318,9 @@ Deno.test('each action needs its own right on the active folder', async () =>
 		['add_sub_folder', {create: false, edit: true, delete: true}, 'Missing create right for this node.'],
 		['edit_folder', {create: true, edit: false, delete: true}, 'Missing edit right for this node.'],
 		['add_sub_folder', {create: false, edit: false, delete: false}, 'There are no rights for this node.'],
+		['add_sub_folder', {create: false, edit: false, delete: true}, 'Missing create right for this node.'],
+		['add_sub_folder', {create: false, edit: true, delete: false}, 'Missing create right for this node.'],
+		['edit_folder', {create: true, edit: false, delete: false}, 'Missing edit right for this node.'],
 	];
 
 	for (const [action, rights, error] of cases)

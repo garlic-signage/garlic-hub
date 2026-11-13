@@ -28,9 +28,11 @@ class FakeFontLoader
 	names  = ['Roboto', 'Lato', 'Open Sans'];
 	loaded = [1];
 	calls  = [];
+	asked  = [];
 
 	findFontListKey(name)
 	{
+		this.asked.push(name);
 		return this.names.indexOf(name);
 	}
 
@@ -101,4 +103,5 @@ Deno.test('only the known fonts which are not loaded yet are loaded, one after t
 	await collector.preloadUsedFonts();
 
 	assertEquals(loader.calls, [2, 0]);
+	assertEquals(loader.asked, ['Open Sans', 'Lato', 'Comic Sans', 'Roboto']);
 });

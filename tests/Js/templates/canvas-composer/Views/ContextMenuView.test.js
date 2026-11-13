@@ -26,7 +26,7 @@ import {ContextMenuView}              from "@js/templates/canvas-composer/Views/
  * The context menu of templates/templates/canvas.mustache: the entries of the AI only with text correction,
  * the lock only for templates with selectable objects. The entry to toggle "selectable" is commented out there.
  */
-function page({textCorrection = true, selectable = true} = {})
+function page({textCorrection = true, selectable = true, selectableEntry = false} = {})
 {
 	return `
 	<ul id="composerContextMenu" class="context-menu">
@@ -45,6 +45,7 @@ function page({textCorrection = true, selectable = true} = {})
 			</ul>
 		</li>` : ''}
 		${selectable ? '<li><hr /></li><li id="toggleLock"><span id="lock" class="bi-lock"> Lock</span><span id="unlock" class="bi-unlock"> Unlock</span></li>' : ''}
+		${selectableEntry ? '<li id="toggleSelectable"><span id="selectable"> Selectable</span><span id="unselectable"> Unselectable</span></li>' : ''}
 		<li><hr /></li>
 		<li id="moveBackground" class="bi-back">Background</li>
 		<li id="moveBack" class="bi-arrow-down">Back</li>
@@ -61,10 +62,15 @@ function createMenu(options = {})
 	const dom     = createDom(page(options));
 	const globals = replaceGlobals({window: {innerWidth: 1000, innerHeight: 800}});
 	const menu    = dom.document.getElementById('composerContextMenu');
-	menu.getBoundingClientRect = () => ({left: 0, top: 0, width: 200, height: 300});
+	const measured = [];
+	menu.getBoundingClientRect = () =>
+	{
+		measured.push(menu.style.visibility);
+		return {left: 0, top: 0, width: 200, height: 300};
+	};
 
 	return {
-		document: dom.document, menu, view: new ContextMenuView(),
+		document: dom.document, menu, measured, view: new ContextMenuView(),
 		byId: (id) => dom.document.getElementById(id),
 		[Symbol.dispose]: () => { globals[Symbol.dispose](); dom[Symbol.dispose](); }
 	};
@@ -98,6 +104,26 @@ Deno.test('at the right and the bottom edge the menu stays inside the window', (
 
 	// 1000 - 200 and 800 - 300
 	assertEquals([page.menu.style.left, page.menu.style.top], ['800px', '500px']);
+});
+
+Deno.test('the menu is measured invisible, before it is placed', () =>
+{
+	using page = createMenu();
+
+	page.view.show(900, 700);
+
+	assertEquals(page.measured, ['hidden']);
+});
+
+Deno.test('with the entry of selectable it is offered or taken back', () =>
+{
+	using page = createMenu({selectableEntry: true});
+
+	page.view.showSelectable();
+	assertEquals([page.byId('selectable').style.display, page.byId('unselectable').style.display], ['inline', 'none']);
+
+	page.view.showUnSelectable();
+	assertEquals([page.byId('selectable').style.display, page.byId('unselectable').style.display], ['none', 'inline']);
 });
 
 Deno.test('the menu is hidden again', () =>

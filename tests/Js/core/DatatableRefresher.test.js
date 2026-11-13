@@ -25,13 +25,13 @@ import {DatatableRefresher} from "@js/core/DatatableRefresher.js";
 /**
  * A datatable page: the search form with page, count and pager, and the rows.
  */
-function table(page, rows, count = String(rows.length))
+function table(page, rows, count = String(rows.length), pager = `page ${page}`)
 {
 	return `
 		<form id="form_elements_search">
 			<input id="elements_page" value="${page}">
 			<span class="results-count">${count}</span>
-			<nav class="results-pager">page ${page}</nav>
+			<nav class="results-pager">${pager}</nav>
 		</form>
 		<ul class="results-listing">${rows.map(id => `<li><ul class="results-body" data-id="${id}"></ul></li>`).join('')}</ul>`;
 }
@@ -39,9 +39,9 @@ function table(page, rows, count = String(rows.length))
 /**
  * The page in the browser and the answers of the server, one per request.
  */
-function createPage(url, answers)
+function createPage(url, answers, initial = table(2, [7, 8], '2', 'old pager'))
 {
-	const dom      = createDom(table(2, [7, 8]) + '<aside id="other">stays</aside>');
+	const dom      = createDom(initial + '<aside id="other">stays</aside>');
 	const requests = [];
 	const history  = [];
 	const globals  = replaceGlobals({
@@ -81,7 +81,7 @@ Deno.test('when the last row of the last page is gone the page before comes and 
 	using page = createPage('https://hub.example.com/player?elements_page=3&name=a', [
 		{text: async () => table(3, [], '10')},
 		{text: async () => table(2, [5, 6], '10')}
-	]);
+	], table(3, [7]));
 
 	assertEquals(await DatatableRefresher.refresh(), true);
 
@@ -131,4 +131,27 @@ Deno.test('the page before which cannot be loaded changes nothing', async () =>
 
 	assertEquals(page.rows(), ['7', '8']);
 	assertEquals(page.history, []);
+});
+
+Deno.test('an answer with the rows only keeps count, pager and page', async () =>
+{
+	using page = createPage('https://hub.example.com/player', [
+		{text: async () => '<ul class="results-listing"><li><ul class="results-body" data-id="9"></ul></li></ul>'}
+	]);
+
+	assertEquals(await DatatableRefresher.refresh(), true);
+
+	assertEquals(page.rows(), ['9']);
+	assertEquals(page.state(), ['2', 'old pager', '2']);
+});
+
+Deno.test('a datatable without search form gets its rows only', async () =>
+{
+	using page = createPage('https://hub.example.com/player', [{text: async () => table(1, [9])}],
+		'<ul class="results-listing"><li><ul class="results-body" data-id="7"></ul></li></ul>');
+
+	assertEquals(await DatatableRefresher.refresh(), true);
+
+	assertEquals(page.rows(), ['9']);
+	assertEquals(page.document.getElementById('elements_page'), null);
 });

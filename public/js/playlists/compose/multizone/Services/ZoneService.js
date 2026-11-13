@@ -129,6 +129,7 @@ export class ZoneService
 			case "ArrowDown":
 				active.top += step;
 				break;
+			// Stryker disable next-line ConditionalExpression: other keys change nothing with or without the break
 			default:
 				break;
 		}

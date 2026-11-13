@@ -127,4 +127,5 @@ Deno.test('an empty directory empties the list', () =>
 	page.view.displayMediaList([]);
 
 	assertEquals(shownItems(page), []);
+	assertEquals(page.document.querySelector('#dialog #mediaList').childNodes.length, 0);
 });

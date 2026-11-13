@@ -167,6 +167,7 @@ export class Item
 		this.#itemDuration.dataset.seconds = this.#itemData.item_duration;
 		this.#itemDuration.addEventListener('click', (event) => {
 			const target = event.target;
+			// Stryker disable next-line ConditionalExpression: the duration is a span without children, it is always the target
 			if (target.tagName === "SPAN")
 			{
 				const inputGroup = document.createElement("span");
@@ -191,8 +192,10 @@ export class Item
 					if (state !== "editing")
 						return;
 
+					// Stryker disable next-line StringLiteral: only "editing" counts, any other state blocks
 					state = "saving";
 					// a failed save keeps the field for a correction
+					// Stryker disable next-line StringLiteral: only "editing" counts, any other state blocks
 					state = await this.#saveDuration(inputField) ? "done" : "editing";
 				};
 
@@ -202,6 +205,7 @@ export class Item
 					if (state !== "editing")
 						return;
 
+					// Stryker disable next-line StringLiteral: only "editing" counts, any other state blocks
 					state = "saving";
 					const result = await this.#itemsService.fetchDefaultSeconds(this.#itemData.item_id);
 					state = "editing";
@@ -289,6 +293,7 @@ export class Item
 		{
 			this.#conditionalPlayAction = this.#playlistItem.querySelector('.conditional-play');
 			if (this.#itemData.conditional === undefined || this.#itemData.conditional === "" || this.#itemData.conditional === "a:0:{}")
+				// Stryker disable next-line StringLiteral: the template has no mark, the remove is only for safety
 				this.#conditionalPlayAction.classList.remove("icon-values-setted");
 			else
 				this.#conditionalPlayAction.classList.add("icon-values-setted");
@@ -297,6 +302,7 @@ export class Item
 			{
 				this.#editTriggerAction     = this.#playlistItem.querySelector('.edit-trigger');
 				if (this.#itemData.begin_trigger === undefined || this.#itemData.begin_trigger === "" || this.#itemData.begin_trigger === "a:0:{}")
+					// Stryker disable next-line StringLiteral: the template has no mark, the remove is only for safety
 					this.#editTriggerAction.classList.remove("icon-values-setted");
 				else
 					this.#editTriggerAction.classList.add("icon-values-setted");
@@ -340,6 +346,7 @@ export class Item
 		else
 			this.#playlistItem.querySelector('.edit-widget').remove();
 
+		// Stryker disable all: an empty listener, the link opens the composer by itself
 		if (this.#editTemplateAction !== null)
 		{
 			this.#editTemplateAction.addEventListener("click", async () =>
@@ -347,6 +354,7 @@ export class Item
 
 			});
 		}
+		// Stryker restore all
 
 		if (this.#cmsEdition !== "core" && (this.#itemData.item_type === "template" || this.#itemData.item_type === "playlist"))
 			this.#copyItemAction = this.#playlistItem.querySelector('.copy-item');

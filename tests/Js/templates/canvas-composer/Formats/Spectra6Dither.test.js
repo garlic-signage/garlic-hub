@@ -56,6 +56,8 @@ function createPage(width, height, rgb)
 	FakeImage.pixels = {width, height, data: rgb.flatMap(([r, g, b]) => [r, g, b, 255])};
 	Object.defineProperty(prototype, 'getContext', {configurable: true, value(type)
 	{
+		if (type !== '2d')
+			return null;
 		const canvas = this;
 		return {
 			type,
@@ -94,7 +96,8 @@ function header(bytes)
 	return {
 		magic: String.fromCharCode(bytes[0], bytes[1]), fileSize: view.getUint32(2, true), offset: view.getUint32(10, true),
 		dibSize: view.getUint32(14, true), width: view.getInt32(18, true), height: view.getInt32(22, true),
-		planes: view.getUint16(26, true), bits: view.getUint16(28, true), imageSize: view.getUint32(34, true)
+		planes: view.getUint16(26, true), bits: view.getUint16(28, true), imageSize: view.getUint32(34, true),
+		xPixelsPerMeter: view.getInt32(38, true), yPixelsPerMeter: view.getInt32(42, true)
 	};
 }
 
@@ -126,7 +129,8 @@ Deno.test('the image becomes a 24 bit BMP from the top down in its size', async 
 	const bytes = bytesOf(await new Spectra6Dither().convert('data:image/png;base64,AAAA'));
 
 	// a row of 2 pixels has 6 bytes and is filled up to 8
-	assertEquals(header(bytes), {magic: 'BM', fileSize: 62, offset: 54, dibSize: 40, width: 2, height: -1, planes: 1, bits: 24, imageSize: 8});
+	assertEquals(header(bytes), {magic: 'BM', fileSize: 62, offset: 54, dibSize: 40, width: 2, height: -1, planes: 1, bits: 24, imageSize: 8,
+		xPixelsPerMeter: 2835, yPixelsPerMeter: 2835});
 	assertEquals(bytes.length, 62);
 	assertEquals(page.drawn, [[2, 1, 0, 0, 2, 1]]);
 });
@@ -173,4 +177,44 @@ Deno.test('an image which cannot be loaded fails the conversion', async () =>
 	FakeImage.fails = true;
 
 	await assertRejects(() => new Spectra6Dither().convert('data:image/png;base64,broken'));
+});
+
+Deno.test('the height of more rows is stored negative in little endian', async () =>
+{
+	using _page = createPage(1, 2, [[0, 0, 0], [255, 255, 255]]);
+
+	const bytes = bytesOf(await new Spectra6Dither().convert('data:image/png;base64,AAAA'));
+
+	assertEquals(header(bytes).height, -2);
+	assertEquals([...bytes.slice(22, 26)], [0xFE, 0xFF, 0xFF, 0xFF]);
+	assertEquals(pixelsOf(bytes, 1, 2), [[0, 0, 0], [255, 255, 255]]);
+});
+
+Deno.test('of two colors at the same distance the first of the palette wins', async () =>
+{
+	// red and blue are both 55² + 200² away, all others farther
+	using _page = createPage(1, 1, [[200, 0, 200]]);
+
+	const bytes = bytesOf(await new Spectra6Dither().convert('data:image/png;base64,AAAA'));
+
+	assertEquals(pixelsOf(bytes, 1, 1), [[255, 0, 0]]);
+});
+
+Deno.test('the error goes 7/16 right, 3/16 below left, 5/16 below and 1/16 below right', async () =>
+{
+	// computed with a separate Floyd-Steinberg in Python: every other share, direction or edge gives another image
+	const image = [
+		[210, 90, 128], [90, 90, 160], [128, 40, 160], [210, 40, 90],
+		[128, 40, 128], [210, 160, 210], [90, 128, 128], [210, 160, 210],
+		[160, 210, 40], [160, 90, 160], [160, 90, 128], [210, 128, 40]
+	];
+	using _page = createPage(4, 3, image);
+
+	const bytes = bytesOf(await new Spectra6Dither().convert('data:image/png;base64,AAAA'));
+
+	assertEquals(pixelsOf(bytes, 4, 3), [
+		[255, 0, 0], [0, 0, 255], [255, 0, 0], [255, 0, 0],
+		[0, 0, 255], [255, 255, 255], [0, 255, 0], [255, 255, 255],
+		[255, 255, 0], [0, 0, 255], [255, 0, 0], [255, 255, 0]
+	]);
 });

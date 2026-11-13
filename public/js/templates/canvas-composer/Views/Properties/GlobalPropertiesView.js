@@ -80,6 +80,7 @@ export class GlobalPropertiesView
 		return this.#strokeColor.value;
 	}
 
+	// Stryker disable all: no page has the fields of the scale and nothing calls these four, see the test of the template
 	setScaleXValue(value)
 	{
 		this.#scaleX.value = value;
@@ -99,6 +100,7 @@ export class GlobalPropertiesView
 	{
 		return this.#scaleY.value;
 	}
+	// Stryker restore all
 
 	get strokeWidth()
 	{

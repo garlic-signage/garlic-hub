@@ -75,3 +75,8 @@ Deno.test('without the size of the window the one of the document counts', () =>
 
 	assertEquals([dropdown.style.left, dropdown.style.right, dropdown.style.top], ['auto', '0', '80px']);
 });
+
+Deno.test('a dropdown exactly at the edges of the window stays where it is', () =>
+{
+	assertEquals(adjust({left: 0, right: 800, bottom: 600}, '40px'), ['', '', '40px']);
+});

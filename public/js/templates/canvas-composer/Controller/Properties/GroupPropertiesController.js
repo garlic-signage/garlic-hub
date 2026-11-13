@@ -47,6 +47,7 @@ export class GroupPropertiesController
 
 	activate(object)
 	{
+		// Stryker disable next-line StringLiteral: the view tells only a group from the rest
 		this.#groupPropertiesView.show(object instanceof fabric.ActiveSelection ? 'activeSelection' : 'group');
 	}
 

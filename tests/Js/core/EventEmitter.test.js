@@ -53,6 +53,7 @@ Deno.test('off() removes one listener or all of an event', () =>
 	assertEquals(calls, ['second']);
 	assertEquals(emitter.emit('saved'), false);
 	assertStrictEquals(emitter.off('unknown'), emitter);
+	assertStrictEquals(emitter.off('unknown', first), emitter);
 });
 
 Deno.test('a once listener is called one time only', () =>

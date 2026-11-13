@@ -35,6 +35,7 @@ export class AdjustMenus
 			dropdownElement.style.right = "auto";
 		}
 
+		// Stryker disable next-line EqualityOperator: exactly at the edge the overlap is 0, the top stays
 		if (rect.bottom > viewportHeight)
 		{
 			const overlap = rect.bottom - viewportHeight;

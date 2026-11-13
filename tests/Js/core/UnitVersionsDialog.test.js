@@ -126,6 +126,9 @@ Deno.test('the dialog lists the versions with a restore button each', async () =
 	assertEquals(dialog.hasAttribute('open'), true);
 	assertEquals(dialog.querySelector('header span').textContent, 'Versions');
 	assertEquals(dialog.querySelector('header button').getAttribute('aria-label'), 'Close');
+	assertEquals([dialog.querySelector('header button').type, dialog.querySelector('header button').className], ['button', 'close-button bi bi-x']);
+	assertEquals(dialog.querySelector('.unit-versions-list').tagName, 'UL');
+	assertEquals([...dialog.querySelectorAll('.unit-versions-list li button')].every(button => button.type === 'button'), true);
 	assertEquals(versionRows(page), [['3 · 2026-11-10 09:30 · admin', 'Restore'], ['2 · 2026-11-09 17:00 · jdoe', 'Restore']]);
 	assertSameElement(dialog.querySelector('.unit-versions-empty'), null);
 });
@@ -139,6 +142,7 @@ Deno.test('without versions the dialog says so', async () =>
 
 	const [dialog] = openDialogs(page);
 	assertEquals(dialog.querySelector('.unit-versions-empty').textContent, 'No versions yet');
+	assertEquals(dialog.querySelector('.unit-versions-empty').tagName, 'P');
 	assertSameElement(dialog.querySelector('.unit-versions-list'), null);
 });
 

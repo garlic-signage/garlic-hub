@@ -89,6 +89,33 @@ Deno.test('the arrows move the active zone by one pixel, with shift by 50', () =
 	assertEquals(page.zones.calls, [['moveActive', 'ArrowLeft', 1], ['moveActive', 'ArrowDown', 50]]);
 });
 
+Deno.test('all four arrows move the active zone', () =>
+{
+	using page = createController();
+
+	for (const key of ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'])
+	{
+		press(page, key);
+		press(page, key, {shiftKey: true});
+	}
+
+	assertEquals(page.zones.calls, [
+		['moveActive', 'ArrowLeft', 1], ['moveActive', 'ArrowLeft', 50], ['moveActive', 'ArrowRight', 1], ['moveActive', 'ArrowRight', 50],
+		['moveActive', 'ArrowUp', 1], ['moveActive', 'ArrowUp', 50], ['moveActive', 'ArrowDown', 1], ['moveActive', 'ArrowDown', 50],
+	]);
+});
+
+Deno.test('other keys, D without ctrl and ctrl with another key change no zone', () =>
+{
+	using page = createController();
+
+	press(page, 'a');
+	press(page, 'd');
+	press(page, 's', {ctrlKey: true});
+
+	assertEquals(page.zones.calls, []);
+});
+
 Deno.test('ctrl and D duplicate, Delete removes the active zone', () =>
 {
 	using page = createController();

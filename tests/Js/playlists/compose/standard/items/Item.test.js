@@ -74,6 +74,8 @@ class FakeItemsService
 	defaultSeconds = {success: true, item: {default_duration: 15}};
 	/** a promise the save waits for, to see what happens meanwhile */
 	editWait       = null;
+	/** a promise the default duration waits for */
+	defaultWait    = null;
 
 	async editItem(id, name, value)
 	{
@@ -86,6 +88,8 @@ class FakeItemsService
 	async fetchDefaultSeconds(id)
 	{
 		this.calls.push(['fetchDefaultSeconds', id]);
+		if (this.defaultWait !== null)
+			await this.defaultWait;
 		return this.defaultSeconds;
 	}
 }
@@ -238,13 +242,47 @@ Deno.test('the other editions have settings and copy nested playlists and templa
 		using page = createItem({item_type: 'template'}, {edition: 'enterprise'});
 		assertSameElement(page.item.editSettingsAction, page.find('.edit-settings'));
 		assertSameElement(page.item.copyItemAction, page.find('.copy-item'));
+		assertEquals(page.find('.copy-item') === null, false);
 		assertSameElement(page.item.conditionalPlayAction, null);
+	}
+	{
+		using page = createItem({item_type: 'playlist', file_resource: '9'}, {edition: 'enterprise'});
+		assertEquals(page.find('.copy-item') === null, false);
+		assertSameElement(page.item.copyItemAction, page.find('.copy-item'));
 	}
 	{
 		using page = createItem({item_type: 'mediapool'}, {edition: 'enterprise'});
 		assertSameElement(page.item.copyItemAction, null);
 		assertSameElement(page.find('.copy-item'), null);
 	}
+});
+
+Deno.test('the core edition copies no nested playlists and no templates', () =>
+{
+	for (const type of ['template', 'playlist'])
+	{
+		using page = createItem({item_type: type, file_resource: '9'});
+		assertSameElement(page.item.copyItemAction, null);
+		assertSameElement(page.find('.copy-item'), null);
+	}
+});
+
+Deno.test('an item is no part of a master playlist until it is told so: no trigger', () =>
+{
+	using dom   = createDom(page());
+	const item  = new Item(itemData(), new FakeItemsService(), new FakeEditorFactory(), new FakeEditorFactory(), new FakeEditorFactory());
+	dom.document.getElementById('playlist').appendChild(item.buildItemElement());
+
+	assertSameElement(item.editTriggerAction, null);
+	assertSameElement(dom.document.querySelector('.edit-trigger'), null);
+});
+
+Deno.test('only a widget with content data can be edited, not another medium with content data', () =>
+{
+	using page = createItem({mimetype: 'image/jpeg', content_data: 'a:1:{}'});
+
+	assertSameElement(page.item.editWidgetAction, null);
+	assertSameElement(page.find('.edit-widget'), null);
 });
 
 Deno.test('the other editions have no conditional play and no trigger, also in a master playlist', () =>
@@ -319,6 +357,15 @@ Deno.test('the name of a medium is saved when the field is left', async () =>
 	assertEquals(page.service.calls, [['editItem', 12, 'item_name', 'Hall']]);
 });
 
+Deno.test('a name left without editing it is not saved', async () =>
+{
+	using page = createItem();
+
+	await fire(page.find('.item-name'), 'blur');
+
+	assertEquals(page.service.calls, []);
+});
+
 Deno.test('other keys do not save the name', async () =>
 {
 	using page = createItem();
@@ -346,7 +393,8 @@ Deno.test('a click on the duration opens a field with the seconds', async () =>
 	const {field, reset} = await openDuration(page);
 
 	assertEquals([field.type, field.value], ['number', '75']);
-	assertEquals(reset.classList.contains('bi-arrow-clockwise'), true);
+	assertEquals(field.parentElement.tagName, 'SPAN');
+	assertEquals([reset.tagName, [...reset.classList]], ['I', ['duration-reset', 'bi', 'bi-arrow-clockwise']]);
 	assertSameElement(page.find('.item-duration'), null);
 });
 
@@ -362,6 +410,31 @@ Deno.test('the duration is saved with Enter and shown again', async () =>
 	assertSameElement(page.find('.item-duration-input'), null);
 	assertEquals([page.find('.item-duration').textContent, page.find('.item-duration').dataset.seconds], ['00:01:30', '90']);
 	assertEquals(isNotified(page), true);
+});
+
+Deno.test('other keys in the duration field do not save it', async () =>
+{
+	using page = createItem();
+	const {field} = await openDuration(page);
+
+	await fire(field, 'keydown', {key: '9'});
+
+	assertEquals(page.service.calls, []);
+});
+
+Deno.test('the reset asks once for the default duration while it is loading', async () =>
+{
+	using page   = createItem();
+	const answer = Promise.withResolvers();
+	page.service.defaultWait = answer.promise;
+	const {reset} = await openDuration(page);
+
+	await fire(reset, 'click');
+	await fire(reset, 'click');
+	answer.resolve();
+	await new Promise(resolve => setTimeout(resolve, 0));
+
+	assertEquals(page.service.calls.filter(call => call[0] === 'fetchDefaultSeconds').length, 1);
 });
 
 Deno.test('the duration is saved when the field is left', async () =>

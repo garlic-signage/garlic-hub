@@ -85,6 +85,7 @@ export class PropertiesController
 				this.#globalPropertiesController.activate();
 				this.#shadowPropertiesController.activate();
 				break;
+			// Stryker disable next-line ConditionalExpression: the default only breaks, like no case
 			default:
 				break;
 		}

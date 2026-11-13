@@ -84,6 +84,7 @@ export class MediaSearch
 	{
 		const term = this.#inputElement.value.trim();
 		// only the answer of the last input counts, a slower one before it does not overwrite it
+		// Stryker disable next-line UpdateOperator: counting down gives every input its own id too
 		const requestId = ++this.#requestId;
 		if (term.length < MediaSearch.MIN_LENGTH)
 		{

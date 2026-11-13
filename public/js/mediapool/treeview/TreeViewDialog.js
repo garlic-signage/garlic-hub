@@ -29,6 +29,7 @@
 
 export class TreeViewDialog
 {
+	// Stryker disable next-line StringLiteral: without prepareShow() every text is an unknown action
 	#action           = "";
 	#treeViewService  = null;
 	#treeViewElements = null;

@@ -167,6 +167,7 @@ Deno.test('with shuffle the picking offers every number of items, the last one i
 
 	assertEquals(page.picking.disabled, false);
 	assertEquals(options(page), [['1', '1', false], ['2', '2', true], ['3', 'All', false]]);
+	assertEquals(page.picking.childNodes.length, 3);
 });
 
 Deno.test('a picking larger than the items after a delete becomes all', () =>
@@ -201,6 +202,11 @@ Deno.test('a playlist changed after the last export asks for the export', () =>
 		using page = createPage();
 		page.properties.setOptions(playlist());
 		assertEquals(isNotified(page), false);
+	}
+	{
+		using page = createPage();
+		page.properties.setOptions(playlist({export_time: '2026-11-10 09:00:00'}));
+		assertEquals(isNotified(page), false, 'exported at the time of the change');
 	}
 });
 
@@ -327,6 +333,18 @@ Deno.test('the export removes the hint to export', async () =>
 
 	assertEquals(page.service.calls, [['export', 7]]);
 	assertEquals(isNotified(page), false);
+});
+
+Deno.test('an export of the admin ends the waiting for the release', async () =>
+{
+	using page = createPage();
+	page.properties.init(7);
+	page.properties.setOptions(playlist({release_status: 'ready'}));
+	assertEquals(isWaiting(page), true);
+
+	await click(page.exportButton);
+
+	assertEquals(isWaiting(page), false);
 });
 
 Deno.test('a failed export keeps the hint and shows the error', async () =>

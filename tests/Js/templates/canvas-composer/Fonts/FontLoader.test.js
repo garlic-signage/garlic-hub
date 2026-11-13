@@ -73,7 +73,7 @@ function createLoader(list = fontsList())
 	const log     = stub(console, 'log');
 
 	return {
-		loader: new FontLoader(list), list, added,
+		loader: new FontLoader(list), list, added, log,
 		[Symbol.dispose]: () => { log.restore(); globals[Symbol.dispose](); dom[Symbol.dispose](); }
 	};
 }
@@ -98,6 +98,7 @@ Deno.test('a font is loaded from its address and added to the document', async (
 	assertEquals([face.family, face.source, face.descriptors], ['Roboto', 'url(/resources/fonts/Roboto.woff2)', {style: 'normal', weight: 'normal'}]);
 	assertEquals(page.added.length, 1);
 	assertEquals(page.added[0] === face, true);
+	assertEquals(page.log.calls.map(call => call.args), [['loaded: Roboto']]);
 	assertEquals(page.loader.isFontLoaded(0), true);
 });
 

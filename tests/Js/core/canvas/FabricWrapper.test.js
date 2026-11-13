@@ -90,6 +90,7 @@ Deno.test('a change marked by hand tells nobody, a reset tells the composer', ()
 {
 	using bus     = listen();
 	const wrapper = new FabricWrapper(new FakeCanvas());
+	assertEquals(wrapper.hasChanged, false);
 
 	wrapper.markChanged();
 	assertEquals([wrapper.hasChanged, bus.events], [true, []]);
@@ -127,6 +128,7 @@ Deno.test('the right button is reported as such and does not end the moving, an 
 	canvas.trigger('mouse:up', {});
 
 	assertEquals(bus.events.map(([name]) => name), ['snapToGrid', 'mouseRightUp', 'drawGrid', 'mouseLeftUp']);
+	assertEquals(bus.events[1][1], {e: {button: 2}});
 });
 
 Deno.test('the box of an object on the element has the zoom and the position of the view', () =>

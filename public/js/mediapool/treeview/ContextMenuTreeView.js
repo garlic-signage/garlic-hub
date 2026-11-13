@@ -48,6 +48,7 @@ export class ContextMenuTreeView
 
 		document.body.appendChild(this.#menu);
 		AdjustMenus.adjustDropdownPosition(this.#menu);
+        // Stryker disable next-line ObjectLiteral,BooleanLiteral: a second remove() of the removed menu changes nothing
         document.addEventListener('click', () => this.#menu.remove(), {once: true});
     }
 

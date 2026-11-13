@@ -163,6 +163,34 @@ Deno.test('a reset forgets all steps', async () =>
 	assertEquals(canvas.objects, ['a', 'b']);
 });
 
+Deno.test('after a reset the first change again cannot be undone', async () =>
+{
+	const {canvas, history} = createHistory();
+	canvas.change('a');
+	canvas.change('b');
+
+	history.reset();
+	canvas.change('c');
+	await history.undo();
+
+	assertEquals(canvas.objects, ['a', 'b', 'c']);
+	assertEquals(canvas.fired.includes('history:undo'), false);
+});
+
+Deno.test('a reset forgets the steps forward too', async () =>
+{
+	const {canvas, history} = createHistory();
+	canvas.change('a');
+	canvas.change('b');
+	await history.undo();
+
+	history.reset();
+	await history.redo();
+
+	assertEquals(canvas.objects, ['a']);
+	assertEquals(canvas.fired.includes('history:redo'), false);
+});
+
 Deno.test('while paused the changes make no steps', async () =>
 {
 	const {canvas, history} = createHistory();

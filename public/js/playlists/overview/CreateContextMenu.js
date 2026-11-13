@@ -35,6 +35,7 @@ export class CreateContextMenu
 			this.#menu.style.top = `${event.pageY}px`;
 			document.body.appendChild(this.#menu);
 			event.stopPropagation(); // not to close menu immediately
+			// Stryker disable next-line ObjectLiteral,BooleanLiteral: a second remove() of the removed menu changes nothing
 			document.addEventListener('click', () => this.#menu.remove(), { once: true });});
 	}
 }

@@ -56,11 +56,13 @@ export class CropController
 		this.#fabricWrapper.on("selection:created", (event) => this.#keepWhenOtherSelected(event));
 
 		// before the keys of the composer, e.g. Delete for the selected object
+		// Stryker disable next-line BooleanLiteral: linkedom has no capture phase, the order before the composer is not testable
 		document.addEventListener("keydown", (event) => this.#onKey(event), true);
 	}
 
 	#keepWhenOtherSelected(event)
 	{
+		// Stryker disable next-line ArrayDeclaration: without a selection the cut is kept, an entry which is not the image does the same
 		const selected = event.selected ?? [];
 		if (this.#cropService.isCropping() && !(selected.length === 1 && selected[0] === this.#cropService.image))
 			this.#cropService.apply();

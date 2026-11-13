@@ -106,3 +106,11 @@ Deno.test('the remove button takes the touch away without an error', () =>
 	assertEquals(page.editor.exists, false);
 	assertSameElement(page.container.querySelector('.trigger-form'), null);
 });
+
+Deno.test('only an own value of the saved trigger is taken, nothing else of the object', () =>
+{
+	// without saved item the empty choice stays: in the browser a value of undefined would select nothing
+	using page = createEditor(Object.create({touch_item_id: 12}));
+
+	assertEquals(page.editor.getValues(), {touch_item_id: '0'});
+});

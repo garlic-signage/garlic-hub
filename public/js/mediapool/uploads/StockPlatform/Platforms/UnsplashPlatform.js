@@ -28,6 +28,7 @@ export class UnsplashPlatform extends AbstractStockPlatform
 		super(fetchClient);
 	}
 
+	// Stryker disable next-line StringLiteral: Unsplash has images only, the media type is not used
 	async search(query, mediatype = "images")
 	{
 		this.currentPage = 0;
@@ -128,6 +129,7 @@ export class UnsplashPlatform extends AbstractStockPlatform
 					origin: "Unsplash",
 					description: item.description || null,
 					// the server takes the tags as text separated by commas, like the ones of Pixabay
+					// Stryker disable next-line ArrayDeclaration: entries without a title are dropped anyway
 					tags: (item.tags ?? []).map(tag => tag.title).filter(title => typeof title === "string" && title !== "").join(", ") || null,
 					page_url: item.links?.html || null,
 					user: {
@@ -138,7 +140,9 @@ export class UnsplashPlatform extends AbstractStockPlatform
 				}
 			};
 			return acc;
-		}, this.resultList || {});
+		},
+		// Stryker disable next-line LogicalOperator: the getter of AbstractStockPlatform always gives an object
+		this.resultList || {});
 	}
 
 	hasApiToken()

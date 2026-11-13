@@ -138,7 +138,7 @@ Deno.test('the chosen format and quality are taken', async () =>
 
 Deno.test('an unknown format is a JPEG, a quality out of range 90', async () =>
 {
-	for (const [format, quality, expected] of [['gif', 50, ['jpeg', 0.5]], ['jpg', 0, ['jpeg', 0.9]], ['png', 101, ['png', 0.9]], ['png', 100, ['png', 1]]])
+	for (const [format, quality, expected] of [['gif', 50, ['jpeg', 0.5]], ['jpg', 0, ['jpeg', 0.9]], ['png', 101, ['png', 0.9]], ['png', 100, ['png', 1]], ['png', 1, ['png', 0.01]]])
 	{
 		using page = createService();
 		page.service.validateImageData(format, quality);

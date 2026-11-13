@@ -123,6 +123,7 @@ export class AiFiller
 				this.#itemList.createPlaylistItem(result.data.item);
 				this.#itemList.displayPlaylistMetrics(result.data.playlist_metrics);
 				entry.remove();
+				// Stryker disable next-line UpdateOperator: only whether something was inserted counts
 				inserted++;
 			}
 		}
