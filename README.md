@@ -125,6 +125,16 @@ The report is in `var/infection/infection.html`. The rules for the tests and the
 GitHub runs them over the whole code once a month (`.github/workflows/mutation.yml`, also by hand under Actions)
 and shows the mutation score in the badge above; the reports are kept as artifacts of the run.
 
+The JavaScript has its own mutation tests with [StrykerJS](https://stryker-mutator.io), in Docker on the host, not in
+ddev:
+
+```bash
+bin/stryker.sh                       # all groups of public/js one after another (takes hours)
+bin/stryker.sh core uploads          # only these groups, the list is in the script
+```
+
+The reports are in `var/stryker/<group>.html`, the surviving mutants are listed at the end of each group.
+
 ### Tech Stack
 
 - PHP 8.4 with strict types, PHPStan level 8, PHPUnit 12

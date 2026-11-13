@@ -280,3 +280,12 @@ a release, or with a git ref for the lines changed since then (see the README). 
   The marker covers every mutant of the next statement. Never put it above a `throw` or an `if` which wraps a throw:
   it would hide the mutant which removes the throw. Move the equivalent part into its own line instead.
 - The detail arrays of exceptions and internal, untranslated messages may stay escaped.
+
+The JavaScript is mutated with StrykerJS: `bin/stryker.sh` (see the README), the reports go to `var/stryker/`. The
+same rules apply. The marker names the mutators and the reason and must stand directly before the mutated
+expression; split a line starting with `||` or `&&` when only one part is equivalent:
+
+```js
+// Stryker disable next-line ObjectLiteral,BooleanLiteral: a second close() of the same menu changes nothing
+document.addEventListener("click", () => this.close(), {once: true});
+```

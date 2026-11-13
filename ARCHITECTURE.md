@@ -58,6 +58,7 @@ CLI entry points.
 - `migrate-storage.sh` — moves uploaded files from `public/var` to `var/storage`.
 - `check-code.sh` — runs the tests with coverage and PHPStan.
 - `infection.sh` — mutation tests with Infection, over the whole code or only the lines changed since a git ref.
+- `stryker.sh` — mutation tests of `public/js` with StrykerJS in Docker, per group of folders.
 - `create-sbom.sh` — writes `sbom.json`.
 
 ### `config/`
