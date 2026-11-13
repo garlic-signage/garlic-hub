@@ -152,7 +152,6 @@ export class MediaList
 				// Stryker disable next-line StringLiteral: no mimetype and any other text are both not taggable
 				if (suggestTags !== null && FolderTagging.isTaggable(mediaItem.getAttribute("data-mimetype") ?? ""))
 					contextMenu.addSuggestTagsEvent(suggestTags);
-				// Stryker disable next-line ConditionalExpression: without the entry it fails on the last statement of the listener, nothing visible changes
 				else if (suggestTags !== null)
 					suggestTags.remove();
 			}

@@ -369,6 +369,19 @@ Deno.test('without the right to create a directory only shows the information', 
 	}
 });
 
+Deno.test('without an AI and without the right to edit only the information is shown', async () =>
+{
+	using page = createPage();
+	page.document.getElementById('suggestTags').remove();
+	page.mediaService.media = [{media_id: 'a'}];
+	await page.mediaList.loadMediaListByNode(5, {create: false});
+
+	const {menu} = openContextMenu(page, 'a');
+
+	assertEquals(menu.calls.map(call => call[0]), ['show', 'info']);
+	assertEquals(menuEntries(page), ['infoMedia']);
+});
+
 Deno.test('a result of the search decides itself whether it may be edited', () =>
 {
 	using page = createPage();

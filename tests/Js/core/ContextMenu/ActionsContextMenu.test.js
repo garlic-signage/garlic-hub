@@ -283,6 +283,20 @@ Deno.test('a row which is gone already is no error', async () =>
 	assertEquals(page.document.querySelectorAll('.results-listing ul[data-id]').length, 1);
 });
 
+Deno.test('a row without its list entry is no error', async () =>
+{
+	const {page, menu, removed} = await openDelete({refreshed: false});
+	using _page = page;
+	const listing = page.document.querySelector('.results-listing');
+	listing.append(listing.querySelector('ul[data-id="7"]'));
+
+	menu.view.item('delete').dispatchEvent(new Event('click'));
+	await flush();
+
+	assertEquals(removed, [7]);
+	assertEquals(page.document.querySelectorAll('.results-listing ul[data-id]').length, 2);
+});
+
 Deno.test('a failed delete shows the error and keeps the row', async () =>
 {
 	const {page, menu} = await openDelete({deleted: {success: false, error_message: 'In use'}});

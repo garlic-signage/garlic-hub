@@ -108,6 +108,7 @@ export class ActionsContextMenu
 	{
 		this.#controller.abort();
 		this.#view.menu.remove();
+		// Stryker disable next-line ConditionalExpression: a closed menu kept as the current one is only closed again, which changes nothing
 		if (ActionsContextMenu.#current === this)
 			ActionsContextMenu.#current = null;
 	}
