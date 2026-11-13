@@ -155,6 +155,16 @@ Deno.test('only the kinds with values are saved', () =>
 	assertEquals(page.form.collectValues(), {wallclocks: [{iso_date: '2026-01-01T08:00'}], notifies: {0: {notify: 'open'}}});
 });
 
+Deno.test('access keys and touches are saved with the others', () =>
+{
+	using page = createPage();
+	page.form.init({}, {});
+	page.manager.values.accesskeys = [{accesskey: 'a'}];
+	page.manager.values.touches    = [{touch_item_id: '7'}];
+
+	assertEquals(page.form.collectValues(), {accesskeys: [{accesskey: 'a'}], touches: [{touch_item_id: '7'}]});
+});
+
 Deno.test('without any trigger nothing is saved', () =>
 {
 	using page = createPage();

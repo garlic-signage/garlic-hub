@@ -139,3 +139,37 @@ Deno.test('the canvas can be drawn again for the text', () =>
 	assertEquals(wrapper.modified[0] === text, true);
 	assertEquals(wrapper.renders, 1);
 });
+
+Deno.test('in editing the size comes from the selected characters', () =>
+{
+	const {text, service} = createService({isEditing: true, selectionStart: 3, selectionEnd: 5});
+	text.charStyles[3].fontSize = 20;
+
+	assertEquals(service.getTextFontSize(), 20);
+	assertEquals(text.calls.at(-1), ['getSelectionStyles', 3, 5, false]);
+});
+
+Deno.test('in editing bold and italic come from the first selected character', () =>
+{
+	const {text, service} = createService({isEditing: true, selectionStart: 2, selectionEnd: 4});
+	text.charStyles[2].fontWeight = 'bold';
+	text.charStyles[2].fontStyle  = 'italic';
+
+	assertEquals([service.getTextBold(), service.getTextItalic()], ['bold', 'italic']);
+});
+
+Deno.test('in editing without a selection bold and italic come from the text', () =>
+{
+	const {service} = createService({isEditing: true, selectionStart: 2, selectionEnd: 2, fontWeight: 'bold', fontStyle: 'italic'});
+
+	assertEquals([service.getTextBold(), service.getTextItalic()], ['bold', 'italic']);
+});
+
+Deno.test('italic of the selected characters is switched by the first of them', () =>
+{
+	const {text, service} = createService({isEditing: true, selectionStart: 1, selectionEnd: 3});
+
+	service.setTextItalic();
+
+	assertEquals(text.charStyles.map(style => style.fontStyle ?? null), [null, 'italic', 'italic', null, null]);
+});

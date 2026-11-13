@@ -257,3 +257,27 @@ Deno.test('an empty answer is logged as unknown error', async () =>
 
 	assertEquals(errorStub.calls[0].args, ['Error:', 'Unknown error']);
 });
+
+Deno.test('missing fields of a video are null', async () =>
+{
+	using _dom = createDom(CSRF_META);
+	const {platform} = createPlatform({success: true, data: {total: 1, totalHits: 1,
+		hits: [{id: 5, videos: {tiny: {}, large: {}}}]}});
+
+	const results = await platform.search('lobby', 'videos');
+
+	assertEquals([results[5].preview, results[5].thumb, results[5].downloadUrl], [null, null, null]);
+	assertEquals([results[5].metadata.tags, results[5].metadata.page_url], [null, null]);
+	assertEquals(results[5].metadata.user, {username: null, name: null, url: null});
+});
+
+Deno.test('an answer without images is logged and gives nothing', async () =>
+{
+	using _dom    = createDom(CSRF_META);
+	using logStub = stub(console, 'log');
+
+	const {platform} = createPlatform({success: true, data: {total: 1, totalHits: 1, hits: 'none'}});
+
+	assertEquals(await platform.search('lobby'), undefined);
+	assertEquals(logStub.calls[0].args, ['Search error:', 'Wrong JSON format']);
+});
