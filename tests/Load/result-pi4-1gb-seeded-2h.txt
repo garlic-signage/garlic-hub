@@ -1,0 +1,67 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+     execution: local
+        script: /load/pi.js
+        output: -
+
+     scenarios: (100.00%) 2 scenarios, 210 max VUs, 2h5m0s max duration (incl. graceful stop):
+              * players: 200 looping VUs for 2h0m0s (exec: player, gracefulStop: 5m0s)
+              * users: 10 looping VUs for 2h0m0s (exec: user, gracefulStop: 30s)
+
+time="2026-11-12T21:53:13Z" level=warning msg="Request Failed" error="Post \"http://192.168.10.239/login\": EOF"
+time="2026-11-12T21:53:13Z" level=error msg="GoError: login failed\n\tat go.k6.io/k6/v2/internal/js/modules/k6.(*K6).Fail-fm (native)\n\tat login (file:///load/pi.js:71:7(38))\n\tat user (file:///load/pi.js:188:8(6))\n" executor=constant-vus hint="script exception" scenario=users source=stacktrace
+time="2026-11-12T21:53:13Z" level=warning msg="Request Failed" error="Post \"http://192.168.10.239/login\": EOF"
+time="2026-11-12T21:53:13Z" level=error msg="GoError: login failed\n\tat go.k6.io/k6/v2/internal/js/modules/k6.(*K6).Fail-fm (native)\n\tat login (file:///load/pi.js:71:7(38))\n\tat user (file:///load/pi.js:188:8(6))\n" executor=constant-vus hint="script exception" scenario=users source=stacktrace
+time="2026-11-12T21:53:13Z" level=warning msg="Request Failed" error="Post \"http://192.168.10.239/login\": EOF"
+time="2026-11-12T21:53:13Z" level=error msg="GoError: login failed\n\tat go.k6.io/k6/v2/internal/js/modules/k6.(*K6).Fail-fm (native)\n\tat login (file:///load/pi.js:71:7(38))\n\tat user (file:///load/pi.js:188:8(6))\n" executor=constant-vus hint="script exception" scenario=users source=stacktrace
+
+  █ THRESHOLDS 
+
+    checks
+    ✓ 'rate>0.99' rate=99.98%
+
+    http_req_duration{name:smil-index}
+    ✓ 'p(95)<2000' p(95)=87.05ms
+
+    http_req_duration{scenario:users}
+    ✓ 'p(95)<1000' p(95)=53.21ms
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.01%
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 17931  2.39362/s
+    checks_succeeded...: 99.98% 17928 out of 17931
+    checks_failed......: 0.01%  3 out of 17931
+
+    ✗ logged in
+      ↳  78% — ✓ 11 / ✗ 3
+    ✓ index 200 or 304
+    ✓ index has media
+    ✓ media 200 or 304
+    ✓ page 200
+
+    HTTP
+    http_req_duration..............: avg=3.26s    min=621.78µs med=29.58ms max=4m15s  p(90)=9.17s   p(95)=19.31s 
+      { expected_response:true }...: avg=3.26s    min=20.16ms  med=29.58ms max=4m15s  p(90)=9.17s   p(95)=19.31s 
+      { name:smil-index }..........: avg=310.36ms min=23.97ms  med=33.39ms max=20.58s p(90)=54.61ms p(95)=87.05ms
+      { scenario:users }...........: avg=52.75ms  min=621.78µs med=25.53ms max=11.1s  p(90)=42.67ms p(95)=53.21ms
+    http_req_failed................: 0.01%  3 out of 17756
+    http_reqs......................: 17756  2.370259/s
+
+    EXECUTION
+    iteration_duration.............: avg=3m55s    min=75.7ms   med=5m0s    max=11m27s p(90)=5m0s    p(95)=5m0s   
+    iterations.....................: 6532   0.871961/s
+    vus............................: 1      min=1          max=210
+    vus_max........................: 210    min=210        max=210
+
+    NETWORK
+    data_received..................: 19 GB  2.5 MB/s
+    data_sent......................: 3.0 MB 404 B/s
+

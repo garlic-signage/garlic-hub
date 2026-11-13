@@ -1,0 +1,86 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+     execution: local
+        script: /load/seed.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 1 max VUs, 10m30s max duration (incl. graceful stop):
+              * default: 1 iterations shared among 1 VUs (maxDuration: 10m0s, gracefulStop: 30s)
+
+time="2026-11-12T20:58:14Z" level=info msg="4 of 2000 media, 18 s" source=console
+
+time="2026-11-12T20:59:51Z" level=info msg="104 of 2000 media, 115 s" source=console
+
+time="2026-11-12T21:01:29Z" level=info msg="204 of 2000 media, 212 s" source=console
+
+time="2026-11-12T21:03:05Z" level=info msg="304 of 2000 media, 308 s" source=console
+
+time="2026-11-12T21:04:39Z" level=info msg="404 of 2000 media, 403 s" source=console
+
+time="2026-11-12T21:06:16Z" level=info msg="504 of 2000 media, 499 s" source=console
+
+time="2026-11-12T21:07:48Z" level=info msg="604 of 2000 media, 592 s" source=console
+
+time="2026-11-12T21:09:22Z" level=info msg="704 of 2000 media, 685 s" source=console
+
+time="2026-11-12T21:10:55Z" level=info msg="804 of 2000 media, 778 s" source=console
+
+time="2026-11-12T21:12:29Z" level=info msg="904 of 2000 media, 872 s" source=console
+
+time="2026-11-12T21:14:05Z" level=info msg="1004 of 2000 media, 968 s" source=console
+
+time="2026-11-12T21:15:40Z" level=info msg="1104 of 2000 media, 1063 s" source=console
+
+time="2026-11-12T21:17:16Z" level=info msg="1204 of 2000 media, 1159 s" source=console
+
+time="2026-11-12T21:18:51Z" level=info msg="1304 of 2000 media, 1255 s" source=console
+
+time="2026-11-12T21:20:27Z" level=info msg="1404 of 2000 media, 1351 s" source=console
+
+time="2026-11-12T21:22:02Z" level=info msg="1504 of 2000 media, 1445 s" source=console
+
+time="2026-11-12T21:23:38Z" level=info msg="1604 of 2000 media, 1542 s" source=console
+
+time="2026-11-12T21:25:15Z" level=info msg="1704 of 2000 media, 1638 s" source=console
+
+time="2026-11-12T21:26:51Z" level=info msg="1804 of 2000 media, 1734 s" source=console
+
+time="2026-11-12T21:28:27Z" level=info msg="1904 of 2000 media, 1830 s" source=console
+
+time="2026-11-12T21:31:56Z" level=info msg="seeded: PLAYLIST_ID=3 NODE_ID=10" source=console
+
+  █ THRESHOLDS 
+
+    checks
+    ✓ 'rate>0.99' rate=100.00%
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 2001    0.980373/s
+    checks_succeeded...: 100.00% 2001 out of 2001
+    checks_failed......: 0.00%   0 out of 2001
+
+    ✓ logged in
+    ✓ uploaded
+
+    HTTP
+    http_req_duration..............: avg=951.52ms min=17.6ms med=40.8ms max=19.12s p(90)=2.9s   p(95)=3.1s  
+      { expected_response:true }...: avg=951.52ms min=17.6ms med=40.8ms max=19.12s p(90)=2.9s   p(95)=3.1s  
+    http_req_failed................: 0.00% 0 out of 5444
+    http_reqs......................: 5444  2.667241/s
+
+    EXECUTION
+    iteration_duration.............: avg=1.87µs   min=1.87µs med=1.87µs max=1.87µs p(90)=1.87µs p(95)=1.87µs
+    iterations.....................: 1     0.00049/s
+    vus............................: 0     min=0         max=0
+    vus_max........................: 1     min=1         max=1
+
+    NETWORK
+    data_received..................: 13 MB 6.5 kB/s
+    data_sent......................: 13 GB 6.6 MB/s
+

@@ -64,7 +64,8 @@ so the card also works after a move to another Pi:
 | 4 GB+     | 16          | 512M               | 512MiB / 1GiB            |
 
 More requests than workers wait in a queue instead of filling the memory. Downloads of the players do not
-occupy a PHP worker: `delivery.php` hands them to Apache with X-Sendfile.
+occupy a PHP worker: `delivery.php` hands them to Apache with X-Sendfile. With these settings a Pi 4 with 1 GB
+served 200 players and 10 users at the same time, see [Load Tests](load-tests.md).
 
 ## Backup
 

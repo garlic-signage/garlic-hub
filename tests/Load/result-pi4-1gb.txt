@@ -1,0 +1,64 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+     execution: local
+        script: /load/pi.js
+        output: -
+
+     scenarios: (100.00%) 2 scenarios, 210 max VUs, 20m0s max duration (incl. graceful stop):
+              * players: 200 looping VUs for 15m0s (exec: player, gracefulStop: 5m0s)
+              * users: 10 looping VUs for 15m0s (exec: user, gracefulStop: 30s)
+
+time="2026-11-12T19:27:56Z" level=warning msg="Request Failed" error="Post \"http://192.168.10.239/login\": EOF"
+time="2026-11-12T19:27:56Z" level=error msg="GoError: login failed\n\tat go.k6.io/k6/v2/internal/js/modules/k6.(*K6).Fail-fm (native)\n\tat login (file:///load/pi.js:71:7(38))\n\tat user (file:///load/pi.js:188:8(6))\n" executor=constant-vus hint="script exception" scenario=users source=stacktrace
+
+  █ THRESHOLDS 
+
+    checks
+    ✓ 'rate>0.99' rate=99.97%
+
+    http_req_duration{name:smil-index}
+    ✗ 'p(95)<2000' p(95)=4.24s
+
+    http_req_duration{scenario:users}
+    ✓ 'p(95)<1000' p(95)=88.55ms
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.01%
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 4718   3.838931/s
+    checks_succeeded...: 99.97% 4717 out of 4718
+    checks_failed......: 0.02%  1 out of 4718
+
+    ✗ logged in
+      ↳  91% — ✓ 11 / ✗ 1
+    ✓ index 200 or 304
+    ✓ index has media
+    ✓ page 200
+    ✓ media 200 or 304
+
+    HTTP
+    http_req_duration..............: avg=11.54s   min=17.55ms  med=345.71ms max=2m41s  p(90)=1m8s    p(95)=1m19s  
+      { expected_response:true }...: avg=11.54s   min=17.55ms  med=345.86ms max=2m41s  p(90)=1m8s    p(95)=1m19s  
+      { name:smil-index }..........: avg=997.34ms min=25.28ms  med=54.74ms  max=5.03s  p(90)=3.55s   p(95)=4.24s  
+      { scenario:users }...........: avg=68.12ms  min=18.43ms  med=27.26ms  max=4.58s  p(90)=64.55ms p(95)=88.55ms
+    http_req_failed................: 0.01%  1 out of 5204
+    http_reqs......................: 5204   4.234378/s
+
+    EXECUTION
+    iteration_duration.............: avg=4m59s    min=185.74ms med=5m0s     max=10m27s p(90)=10m4s   p(95)=10m8s  
+    iterations.....................: 719    0.585034/s
+    vus............................: 2      min=0         max=210
+    vus_max........................: 210    min=210       max=210
+
+    NETWORK
+    data_received..................: 38 GB  31 MB/s
+    data_sent......................: 193 MB 157 kB/s
+
+time="2026-11-12T19:47:56Z" level=error msg="thresholds on metrics 'http_req_duration{name:smil-index}' have been crossed"
