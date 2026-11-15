@@ -2,7 +2,7 @@
   "name": "garlic-signage/garlic-hub",
   "description": "Digital Signage Content and Device Management for SMIL compatible Media Player",
   "type": "project",
-  "license": "AGPL",
+  "license": "AGPL-3.0-only",
   "require": {
     "php": ">=8.4.0",
     "slim/slim": "4.*",

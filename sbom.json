@@ -2,10 +2,10 @@
     "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
     "bomFormat": "CycloneDX",
     "specVersion": "1.5",
-    "serialNumber": "urn:uuid:286d31ca-64d6-4a38-a8f9-f6a28b906c98",
+    "serialNumber": "urn:uuid:8a4d7c57-6e25-4eac-9df0-35d73f3555e0",
     "version": 1,
     "metadata": {
-        "timestamp": "2026-11-05T12:29:59Z",
+        "timestamp": "2026-11-15T20:49:17Z",
         "tools": [
             {
                 "name": "composer",
@@ -91,7 +91,7 @@
             "licenses": [
                 {
                     "license": {
-                        "name": "AGPL"
+                        "id": "AGPL-3.0-only"
                     }
                 }
             ],
@@ -99,11 +99,11 @@
             "properties": [
                 {
                     "name": "cdx:composer:package:distReference",
-                    "value": "8fc794c6f63f47f13e447894c136bf4637e33d61"
+                    "value": "22f16c8fae1cf57daf95e4bceeb7d6a399450421"
                 },
                 {
                     "name": "cdx:composer:package:sourceReference",
-                    "value": "8fc794c6f63f47f13e447894c136bf4637e33d61"
+                    "value": "22f16c8fae1cf57daf95e4bceeb7d6a399450421"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -113,6 +113,64 @@
         }
     },
     "components": [
+        {
+            "bom-ref": "bacon/bacon-qr-code-3.1.1.0",
+            "type": "library",
+            "name": "bacon-qr-code",
+            "version": "v3.1.1",
+            "group": "bacon",
+            "description": "BaconQrCode is a QR code generator for PHP.",
+            "author": "Ben Scholzen 'DASPRiD'",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "BSD-2-Clause"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/bacon/bacon-qr-code@v3.1.1",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/Bacon/BaconQrCode/zipball/4da2233e72eeecd9be3b62e0dc2cc9ed8e2e31c2",
+                    "comment": "dist reference: 4da2233e72eeecd9be3b62e0dc2cc9ed8e2e31c2"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/Bacon/BaconQrCode.git",
+                    "comment": "source reference: 4da2233e72eeecd9be3b62e0dc2cc9ed8e2e31c2"
+                },
+                {
+                    "type": "website",
+                    "url": "https://github.com/Bacon/BaconQrCode",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/Bacon/BaconQrCode/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/Bacon/BaconQrCode/tree/v3.1.1",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "4da2233e72eeecd9be3b62e0dc2cc9ed8e2e31c2"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "4da2233e72eeecd9be3b62e0dc2cc9ed8e2e31c2"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
         {
             "bom-ref": "brick/math-1.0.0.0",
             "type": "library",
@@ -158,6 +216,59 @@
                 {
                     "name": "cdx:composer:package:sourceReference",
                     "value": "2effe05d2177c451b86c6a073196a4034c02f211"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
+            "bom-ref": "dasprid/enum-1.0.7.0",
+            "type": "library",
+            "name": "enum",
+            "version": "1.0.7",
+            "group": "dasprid",
+            "description": "PHP 7.1 enum implementation",
+            "author": "Ben Scholzen 'DASPRiD'",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "BSD-2-Clause"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/dasprid/enum@1.0.7",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/DASPRiD/Enum/zipball/b5874fa9ed0043116c72162ec7f4fb50e02e7cce",
+                    "comment": "dist reference: b5874fa9ed0043116c72162ec7f4fb50e02e7cce"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/DASPRiD/Enum.git",
+                    "comment": "source reference: b5874fa9ed0043116c72162ec7f4fb50e02e7cce"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/DASPRiD/Enum/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/DASPRiD/Enum/tree/1.0.7",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "b5874fa9ed0043116c72162ec7f4fb50e02e7cce"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "b5874fa9ed0043116c72162ec7f4fb50e02e7cce"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -326,6 +437,112 @@
                 {
                     "name": "cdx:composer:package:sourceReference",
                     "value": "d4fe3e6fd9bb9e72557a19674f44d8ac7db4c6ca"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
+            "bom-ref": "facile-it/php-jose-verifier-1.0.0.0",
+            "type": "library",
+            "name": "php-jose-verifier",
+            "version": "1.0.0",
+            "group": "facile-it",
+            "description": "JWT Token Verifier. A JWT verifier for access tokens, id tokens and others",
+            "author": "Thomas Vargiu",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/facile-it/php-jose-verifier@1.0.0",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/facile-it/php-jose-verifier/zipball/2fed59e21b28729c1fa57456ac129ffc2bc2c08e",
+                    "comment": "dist reference: 2fed59e21b28729c1fa57456ac129ffc2bc2c08e"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/facile-it/php-jose-verifier.git",
+                    "comment": "source reference: 2fed59e21b28729c1fa57456ac129ffc2bc2c08e"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/facile-it/php-jose-verifier/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/facile-it/php-jose-verifier/tree/1.0.0",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "2fed59e21b28729c1fa57456ac129ffc2bc2c08e"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "2fed59e21b28729c1fa57456ac129ffc2bc2c08e"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
+            "bom-ref": "facile-it/php-openid-client-1.0.0.0",
+            "type": "library",
+            "name": "php-openid-client",
+            "version": "1.0.0",
+            "group": "facile-it",
+            "description": "OpenID (OIDC) Client",
+            "author": "Thomas Vargiu",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/facile-it/php-openid-client@1.0.0",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/facile-it/php-openid-client/zipball/4257463518a8a9f1de6fe6014c130330030331fb",
+                    "comment": "dist reference: 4257463518a8a9f1de6fe6014c130330030331fb"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/facile-it/php-openid-client.git",
+                    "comment": "source reference: 4257463518a8a9f1de6fe6014c130330030331fb"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/facile-it/php-openid-client/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/facile-it/php-openid-client/tree/1.0.0",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "4257463518a8a9f1de6fe6014c130330030331fb"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "4257463518a8a9f1de6fe6014c130330030331fb"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -1323,6 +1540,175 @@
             ]
         },
         {
+            "bom-ref": "nyholm/psr7-1.8.2.0",
+            "type": "library",
+            "name": "psr7",
+            "version": "1.8.2",
+            "group": "nyholm",
+            "description": "A fast PHP7 implementation of PSR-7",
+            "author": "Tobias Nyholm, Martijn van der Ven",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/nyholm/psr7@1.8.2",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/Nyholm/psr7/zipball/a71f2b11690f4b24d099d6b16690a90ae14fc6f3",
+                    "comment": "dist reference: a71f2b11690f4b24d099d6b16690a90ae14fc6f3"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/Nyholm/psr7.git",
+                    "comment": "source reference: a71f2b11690f4b24d099d6b16690a90ae14fc6f3"
+                },
+                {
+                    "type": "website",
+                    "url": "https://tnyholm.se",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/Nyholm/psr7/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/Nyholm/psr7/tree/1.8.2",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "a71f2b11690f4b24d099d6b16690a90ae14fc6f3"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "a71f2b11690f4b24d099d6b16690a90ae14fc6f3"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
+            "bom-ref": "openai-php/client-0.22.0.0",
+            "type": "library",
+            "name": "client",
+            "version": "v0.22.0",
+            "group": "openai-php",
+            "description": "OpenAI PHP is a supercharged PHP API client that allows you to interact with the Open AI API",
+            "author": "Nuno Maduro, Sandro Gehri",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/openai-php/client@v0.22.0",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/openai-php/client/zipball/23e1da353c02a39be03980ae968fba802cf70555",
+                    "comment": "dist reference: 23e1da353c02a39be03980ae968fba802cf70555"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/openai-php/client.git",
+                    "comment": "source reference: 23e1da353c02a39be03980ae968fba802cf70555"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/openai-php/client/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/openai-php/client/tree/v0.22.0",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "23e1da353c02a39be03980ae968fba802cf70555"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "23e1da353c02a39be03980ae968fba802cf70555"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
+            "bom-ref": "paragonie/constant_time_encoding-3.1.4.0",
+            "type": "library",
+            "name": "constant_time_encoding",
+            "version": "v3.1.4",
+            "group": "paragonie",
+            "description": "Constant-time Implementations of RFC 4648 Encoding (Base-64, Base-32, Base-16)",
+            "author": "Paragon Initiative Enterprises, Steve 'Sc00bz' Thomas",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/paragonie/constant_time_encoding@v3.1.4",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/paragonie/constant_time_encoding/zipball/5efef6e6cb43e088ccab7d0c1e2f2ab25b9e8b54",
+                    "comment": "dist reference: 5efef6e6cb43e088ccab7d0c1e2f2ab25b9e8b54"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/paragonie/constant_time_encoding.git",
+                    "comment": "source reference: 5efef6e6cb43e088ccab7d0c1e2f2ab25b9e8b54"
+                },
+                {
+                    "type": "other",
+                    "url": "info@paragonie.com",
+                    "comment": "as detected from Composer manifest 'support.email'"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/paragonie/constant_time_encoding/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/paragonie/constant_time_encoding",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "5efef6e6cb43e088ccab7d0c1e2f2ab25b9e8b54"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "5efef6e6cb43e088ccab7d0c1e2f2ab25b9e8b54"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
             "bom-ref": "paragonie/random_compat-9.99.100.0",
             "type": "library",
             "name": "random_compat",
@@ -1487,6 +1873,122 @@
                 {
                     "name": "cdx:composer:package:sourceReference",
                     "value": "f88054cc052e40dbe7b383c8817c19442d480352"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
+            "bom-ref": "php-http/discovery-1.20.0.0",
+            "type": "library",
+            "name": "discovery",
+            "version": "1.20.0",
+            "group": "php-http",
+            "description": "Finds and installs PSR-7, PSR-17, PSR-18 and HTTPlug implementations",
+            "author": "M\u00e1rk S\u00e1gi-Kaz\u00e1r",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/php-http/discovery@1.20.0",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/php-http/discovery/zipball/82fe4c73ef3363caed49ff8dd1539ba06044910d",
+                    "comment": "dist reference: 82fe4c73ef3363caed49ff8dd1539ba06044910d"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/php-http/discovery.git",
+                    "comment": "source reference: 82fe4c73ef3363caed49ff8dd1539ba06044910d"
+                },
+                {
+                    "type": "website",
+                    "url": "http://php-http.org",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/php-http/discovery/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/php-http/discovery/tree/1.20.0",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "82fe4c73ef3363caed49ff8dd1539ba06044910d"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "82fe4c73ef3363caed49ff8dd1539ba06044910d"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "composer-plugin"
+                }
+            ]
+        },
+        {
+            "bom-ref": "php-http/multipart-stream-builder-1.4.2.0",
+            "type": "library",
+            "name": "multipart-stream-builder",
+            "version": "1.4.2",
+            "group": "php-http",
+            "description": "A builder class that help you create a multipart stream",
+            "author": "Tobias Nyholm",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/php-http/multipart-stream-builder@1.4.2",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/php-http/multipart-stream-builder/zipball/10086e6de6f53489cca5ecc45b6f468604d3460e",
+                    "comment": "dist reference: 10086e6de6f53489cca5ecc45b6f468604d3460e"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/php-http/multipart-stream-builder.git",
+                    "comment": "source reference: 10086e6de6f53489cca5ecc45b6f468604d3460e"
+                },
+                {
+                    "type": "website",
+                    "url": "http://php-http.org",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/php-http/multipart-stream-builder/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/php-http/multipart-stream-builder/tree/1.4.2",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "10086e6de6f53489cca5ecc45b6f468604d3460e"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "10086e6de6f53489cca5ecc45b6f468604d3460e"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -2614,6 +3116,238 @@
             ]
         },
         {
+            "bom-ref": "spomky-labs/aes-key-wrap-7.0.0.0",
+            "type": "library",
+            "name": "aes-key-wrap",
+            "version": "v7.0.0",
+            "group": "spomky-labs",
+            "description": "AES Key Wrap for PHP.",
+            "author": "Florent Morselli",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/spomky-labs/aes-key-wrap@v7.0.0",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/Spomky-Labs/aes-key-wrap/zipball/fbeb834b1f83aa8fbdfbd4c12124f71d4c1606ae",
+                    "comment": "dist reference: fbeb834b1f83aa8fbdfbd4c12124f71d4c1606ae"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/Spomky-Labs/aes-key-wrap.git",
+                    "comment": "source reference: fbeb834b1f83aa8fbdfbd4c12124f71d4c1606ae"
+                },
+                {
+                    "type": "website",
+                    "url": "https://github.com/Spomky-Labs/aes-key-wrap",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/Spomky-Labs/aes-key-wrap/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/Spomky-Labs/aes-key-wrap/tree/v7.0.0",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "fbeb834b1f83aa8fbdfbd4c12124f71d4c1606ae"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "fbeb834b1f83aa8fbdfbd4c12124f71d4c1606ae"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
+            "bom-ref": "spomky-labs/base64url-2.0.4.0",
+            "type": "library",
+            "name": "base64url",
+            "version": "v2.0.4",
+            "group": "spomky-labs",
+            "description": "Base 64 URL Safe Encoding/Decoding PHP Library",
+            "author": "Florent Morselli",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/spomky-labs/base64url@v2.0.4",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/Spomky-Labs/base64url/zipball/7752ce931ec285da4ed1f4c5aa27e45e097be61d",
+                    "comment": "dist reference: 7752ce931ec285da4ed1f4c5aa27e45e097be61d"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/Spomky-Labs/base64url.git",
+                    "comment": "source reference: 7752ce931ec285da4ed1f4c5aa27e45e097be61d"
+                },
+                {
+                    "type": "website",
+                    "url": "https://github.com/Spomky-Labs/base64url",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/Spomky-Labs/base64url/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/Spomky-Labs/base64url/tree/v2.0.4",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "7752ce931ec285da4ed1f4c5aa27e45e097be61d"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "7752ce931ec285da4ed1f4c5aa27e45e097be61d"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
+            "bom-ref": "spomky-labs/otphp-11.5.0.0",
+            "type": "library",
+            "name": "otphp",
+            "version": "11.5.0",
+            "group": "spomky-labs",
+            "description": "A PHP library for generating one time passwords according to RFC 4226 (HOTP Algorithm) and the RFC 6238 (TOTP Algorithm) and compatible with Google Authenticator",
+            "author": "Florent Morselli, All contributors",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/spomky-labs/otphp@11.5.0",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/Spomky-Labs/otphp/zipball/877683d6352b80cdc7020fd43a725629c2524435",
+                    "comment": "dist reference: 877683d6352b80cdc7020fd43a725629c2524435"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/Spomky-Labs/otphp.git",
+                    "comment": "source reference: 877683d6352b80cdc7020fd43a725629c2524435"
+                },
+                {
+                    "type": "website",
+                    "url": "https://github.com/Spomky-Labs/otphp",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/Spomky-Labs/otphp/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/Spomky-Labs/otphp/tree/11.5.0",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "877683d6352b80cdc7020fd43a725629c2524435"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "877683d6352b80cdc7020fd43a725629c2524435"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
+            "bom-ref": "spomky-labs/pki-framework-1.6.3.0",
+            "type": "library",
+            "name": "pki-framework",
+            "version": "1.6.3",
+            "group": "spomky-labs",
+            "description": "A PHP framework for managing Public Key Infrastructures. It comprises X.509 public key certificates, attribute certificates, certification requests and certification path validation.",
+            "author": "Joni Eskelinen, Florent Morselli",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/spomky-labs/pki-framework@1.6.3",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/Spomky-Labs/pki-framework/zipball/792e909d4e387adffe3c4f404451c7d57a3d2022",
+                    "comment": "dist reference: 792e909d4e387adffe3c4f404451c7d57a3d2022"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/Spomky-Labs/pki-framework.git",
+                    "comment": "source reference: 792e909d4e387adffe3c4f404451c7d57a3d2022"
+                },
+                {
+                    "type": "website",
+                    "url": "https://github.com/spomky-labs/pki-framework",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/Spomky-Labs/pki-framework/issues",
+                    "comment": "as detected from Composer manifest 'support.issues'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/Spomky-Labs/pki-framework/tree/1.6.3",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "792e909d4e387adffe3c4f404451c7d57a3d2022"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "792e909d4e387adffe3c4f404451c7d57a3d2022"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
             "bom-ref": "symfony/console-7.4.23.0",
             "type": "library",
             "name": "console",
@@ -2712,6 +3446,112 @@
                 {
                     "name": "cdx:composer:package:sourceReference",
                     "value": "feb1edf4e546af3b85c5caebe8359a20db230ca3"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
+            "bom-ref": "symfony/http-client-7.4.23.0",
+            "type": "library",
+            "name": "http-client",
+            "version": "v7.4.23",
+            "group": "symfony",
+            "description": "Provides powerful methods to fetch HTTP resources synchronously or asynchronously",
+            "author": "Nicolas Grekas, Symfony Community",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/symfony/http-client@v7.4.23",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/symfony/http-client/zipball/ed012bfca0f7b45d97016efcdf9b0639c52a1722",
+                    "comment": "dist reference: ed012bfca0f7b45d97016efcdf9b0639c52a1722"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/symfony/http-client.git",
+                    "comment": "source reference: ed012bfca0f7b45d97016efcdf9b0639c52a1722"
+                },
+                {
+                    "type": "website",
+                    "url": "https://symfony.com",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/symfony/http-client/tree/v7.4.23",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "ed012bfca0f7b45d97016efcdf9b0639c52a1722"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "ed012bfca0f7b45d97016efcdf9b0639c52a1722"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
+            "bom-ref": "symfony/http-client-contracts-3.8.1.0",
+            "type": "library",
+            "name": "http-client-contracts",
+            "version": "v3.8.1",
+            "group": "symfony",
+            "description": "Generic abstractions related to HTTP clients",
+            "author": "Nicolas Grekas, Symfony Community",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/symfony/http-client-contracts@v3.8.1",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/symfony/http-client-contracts/zipball/f9f94260f787446c6fd430b2ae1969fe41ae1ba8",
+                    "comment": "dist reference: f9f94260f787446c6fd430b2ae1969fe41ae1ba8"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/symfony/http-client-contracts.git",
+                    "comment": "source reference: f9f94260f787446c6fd430b2ae1969fe41ae1ba8"
+                },
+                {
+                    "type": "website",
+                    "url": "https://symfony.com",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/symfony/http-client-contracts/tree/v3.8.1",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "f9f94260f787446c6fd430b2ae1969fe41ae1ba8"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "f9f94260f787446c6fd430b2ae1969fe41ae1ba8"
                 },
                 {
                     "name": "cdx:composer:package:type",
@@ -3038,6 +3878,59 @@
             ]
         },
         {
+            "bom-ref": "symfony/polyfill-php83-1.43.0.0",
+            "type": "library",
+            "name": "polyfill-php83",
+            "version": "v1.43.0",
+            "group": "symfony",
+            "description": "Symfony polyfill backporting some PHP 8.3+ features to lower PHP versions",
+            "author": "Nicolas Grekas, Symfony Community",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/symfony/polyfill-php83@v1.43.0",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/symfony/polyfill-php83/zipball/80ccff923a8d61f73ebe9da0aa94e25232f004ce",
+                    "comment": "dist reference: 80ccff923a8d61f73ebe9da0aa94e25232f004ce"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/symfony/polyfill-php83.git",
+                    "comment": "source reference: 80ccff923a8d61f73ebe9da0aa94e25232f004ce"
+                },
+                {
+                    "type": "website",
+                    "url": "https://symfony.com",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/symfony/polyfill-php83/tree/v1.43.0",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "80ccff923a8d61f73ebe9da0aa94e25232f004ce"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "80ccff923a8d61f73ebe9da0aa94e25232f004ce"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
             "bom-ref": "symfony/service-contracts-3.8.1.0",
             "type": "library",
             "name": "service-contracts",
@@ -3195,11 +4088,542 @@
                     "value": "library"
                 }
             ]
+        },
+        {
+            "bom-ref": "web-token/jwt-library-4.2.5.0",
+            "type": "library",
+            "name": "jwt-library",
+            "version": "4.2.5",
+            "group": "web-token",
+            "description": "JWT library",
+            "author": "Florent Morselli, All contributors",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:composer/web-token/jwt-library@4.2.5",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://api.github.com/repos/web-token/jwt-library/zipball/2ff6e4bac74e8921e07bd1336ebae82a1c5478c6",
+                    "comment": "dist reference: 2ff6e4bac74e8921e07bd1336ebae82a1c5478c6"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/web-token/jwt-library.git",
+                    "comment": "source reference: 2ff6e4bac74e8921e07bd1336ebae82a1c5478c6"
+                },
+                {
+                    "type": "website",
+                    "url": "https://github.com/web-token",
+                    "comment": "as detected from Composer manifest 'homepage'"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/web-token/jwt-library/tree/4.2.5",
+                    "comment": "as detected from Composer manifest 'support.source'"
+                }
+            ],
+            "properties": [
+                {
+                    "name": "cdx:composer:package:distReference",
+                    "value": "2ff6e4bac74e8921e07bd1336ebae82a1c5478c6"
+                },
+                {
+                    "name": "cdx:composer:package:sourceReference",
+                    "value": "2ff6e4bac74e8921e07bd1336ebae82a1c5478c6"
+                },
+                {
+                    "name": "cdx:composer:package:type",
+                    "value": "library"
+                }
+            ]
+        },
+        {
+            "bom-ref": "frontend/dragula@3.7.3",
+            "type": "library",
+            "name": "dragula",
+            "version": "3.7.3",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:npm/dragula@3.7.3",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://cdn.jsdelivr.net/npm/dragula@3.7.3/dist/"
+                }
+            ],
+            "components": [
+                {
+                    "type": "file",
+                    "name": "public/js/external/dragula.min.js",
+                    "hashes": [
+                        {
+                            "alg": "SHA-256",
+                            "content": "7a08f9c71b63e340ecd0651b39b559ee6d8b10eb27beef62e4e82d99dd48fa39"
+                        }
+                    ]
+                },
+                {
+                    "type": "file",
+                    "name": "public/css/external/dragula.min.css",
+                    "hashes": [
+                        {
+                            "alg": "SHA-256",
+                            "content": "91b8ce3fade464207e97186cb0dfa1e6a0c22d22c8ec484fdffaf64bf8cf09de"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "bom-ref": "frontend/fabric@7.4.0",
+            "type": "library",
+            "name": "fabric",
+            "version": "7.4.0",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:npm/fabric@7.4.0",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://cdn.jsdelivr.net/npm/fabric@7.4.0/"
+                }
+            ],
+            "components": [
+                {
+                    "type": "file",
+                    "name": "public/js/external/fabric.min.js",
+                    "hashes": [
+                        {
+                            "alg": "SHA-256",
+                            "content": "d4e908b3b3654db92c08ff0f31aa6a72ba1ddeeeb43a93bc41c833e51fe37f58"
+                        }
+                    ]
+                },
+                {
+                    "type": "file",
+                    "name": "public/js/external/fabric-extensions.min.js",
+                    "hashes": [
+                        {
+                            "alg": "SHA-256",
+                            "content": "09a14f1bf07ce7eef4d464a32b7f3dfaa8c19d256c87ea5725124c695ffeff10"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "bom-ref": "frontend/glightbox@3.3.1",
+            "type": "library",
+            "name": "glightbox",
+            "version": "3.3.1",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:npm/glightbox@3.3.1",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://cdn.jsdelivr.net/npm/glightbox@3.3.1/dist/"
+                }
+            ],
+            "components": [
+                {
+                    "type": "file",
+                    "name": "public/js/external/glightbox.min.js",
+                    "hashes": [
+                        {
+                            "alg": "SHA-256",
+                            "content": "c67c59cdf980793b0216c9de9c6ebf688418838822af1e50b09439e3aa289ff3"
+                        }
+                    ]
+                },
+                {
+                    "type": "file",
+                    "name": "public/css/external/glightbox.min.css",
+                    "hashes": [
+                        {
+                            "alg": "SHA-256",
+                            "content": "6d3f62d4d17969f9c70e9438cf671004725019e868123f2ebc295a006f8d5d2d"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "bom-ref": "frontend/jszip@3.10.1",
+            "type": "library",
+            "name": "jszip",
+            "version": "3.10.1",
+            "licenses": [
+                {
+                    "expression": "MIT OR GPL-3.0-or-later"
+                }
+            ],
+            "purl": "pkg:npm/jszip@3.10.1",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/"
+                }
+            ],
+            "components": [
+                {
+                    "type": "file",
+                    "name": "public/js/external/jszip.min.js",
+                    "hashes": [
+                        {
+                            "alg": "SHA-256",
+                            "content": "acc7e41455a80765b5fd9c7ee1b8078a6d160bbbca455aeae854de65c947d59e"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "bom-ref": "frontend/nouislider@15.8.1",
+            "type": "library",
+            "name": "nouislider",
+            "version": "15.8.1",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:npm/nouislider@15.8.1",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/"
+                }
+            ],
+            "components": [
+                {
+                    "type": "file",
+                    "name": "public/js/external/nouislider.min.mjs",
+                    "hashes": [
+                        {
+                            "alg": "SHA-256",
+                            "content": "51f2cef94f58f92b13c105fb32c3e784bd8eba8030c60707fcd77c94b7c9734c"
+                        }
+                    ]
+                },
+                {
+                    "type": "file",
+                    "name": "public/js/external/nouislider.d.ts",
+                    "hashes": [
+                        {
+                            "alg": "SHA-256",
+                            "content": "f7a4cf7f892379eb959c95322eb24fa486bce9723afca7ab0c03068cbfc5f8eb"
+                        }
+                    ]
+                },
+                {
+                    "type": "file",
+                    "name": "public/css/external/nouislider.min.css",
+                    "hashes": [
+                        {
+                            "alg": "SHA-256",
+                            "content": "9dc9155cfd6331d1f5629881ac0bc63928243fa4c1d83b17ce4921b5200be0ae"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "bom-ref": "frontend/pdfjs-dist@4.9.155",
+            "type": "library",
+            "name": "pdfjs-dist",
+            "version": "4.9.155",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "Apache-2.0"
+                    }
+                }
+            ],
+            "purl": "pkg:npm/pdfjs-dist@4.9.155",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.9.155/build/"
+                }
+            ],
+            "components": [
+                {
+                    "type": "file",
+                    "name": "public/js/external/pdf.min.mjs",
+                    "hashes": [
+                        {
+                            "alg": "SHA-256",
+                            "content": "b20bebbb3b5febecf6d574434bd90aceddeffc4ca4385aaf9917332061ec6a29"
+                        }
+                    ]
+                },
+                {
+                    "type": "file",
+                    "name": "public/js/external/pdf.worker.min.mjs",
+                    "hashes": [
+                        {
+                            "alg": "SHA-256",
+                            "content": "bd60ec6eb849c4ae65fbd1c3695ebbd4518350cdff89536529f97dbaaca5ade8"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "bom-ref": "frontend/plyr@3.7.8",
+            "type": "library",
+            "name": "plyr",
+            "version": "3.7.8",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:npm/plyr@3.7.8",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://cdn.plyr.io/3.7.8/"
+                }
+            ],
+            "components": [
+                {
+                    "type": "file",
+                    "name": "public/js/external/plyr.js",
+                    "hashes": [
+                        {
+                            "alg": "SHA-256",
+                            "content": "7572410db5bf0c2a553dc8f92e5127d25c8eef78cce7243687ff557aad99e59f"
+                        }
+                    ]
+                },
+                {
+                    "type": "file",
+                    "name": "public/css/external/plyr.css",
+                    "hashes": [
+                        {
+                            "alg": "SHA-256",
+                            "content": "2ee720801746a99015c74144707638048778223b2520c8228b627f7262fb122b"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "bom-ref": "frontend/wunderbaum@0.14.1",
+            "type": "library",
+            "name": "wunderbaum",
+            "version": "0.14.1",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:npm/wunderbaum@0.14.1",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://cdn.jsdelivr.net/npm/wunderbaum@0.14.1/dist/"
+                }
+            ],
+            "components": [
+                {
+                    "type": "file",
+                    "name": "public/js/external/wunderbaum.esm.min.js",
+                    "hashes": [
+                        {
+                            "alg": "SHA-256",
+                            "content": "36f11403bbcb062b87fb2a152567d01f79f2cf36b91c4f71ffede47931a6caeb"
+                        }
+                    ]
+                },
+                {
+                    "type": "file",
+                    "name": "public/js/external/wunderbaum.d.ts",
+                    "hashes": [
+                        {
+                            "alg": "SHA-256",
+                            "content": "d7db456be7142ff9762f9a51cc7f25d6cdaf5faa347f03260c13b43912fc460b"
+                        }
+                    ]
+                },
+                {
+                    "type": "file",
+                    "name": "public/css/external/wunderbaum.css",
+                    "hashes": [
+                        {
+                            "alg": "SHA-256",
+                            "content": "1ae1d7d7e5a78650b49b3b4d5e0af9c3119ce06ad23a05b0ddc8931e99776ddb"
+                        }
+                    ]
+                },
+                {
+                    "type": "file",
+                    "name": "public/css/external/wunderbaum.css.map",
+                    "hashes": [
+                        {
+                            "alg": "SHA-256",
+                            "content": "bbfe56ac0c2ca717a1c6e5b51374365e0a4d996a49c52e73501b8f87457c489a"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "bom-ref": "frontend/bootstrap-icons@1.11.3",
+            "type": "library",
+            "name": "bootstrap-icons",
+            "version": "1.11.3",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:npm/bootstrap-icons@1.11.3",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/"
+                }
+            ],
+            "pedigree": {
+                "notes": "bootstrap-icons.min.css: path of the font changed to /fonts/"
+            },
+            "components": [
+                {
+                    "type": "file",
+                    "name": "public/css/external/bootstrap-icons.min.css",
+                    "hashes": [
+                        {
+                            "alg": "SHA-256",
+                            "content": "9d07a78c2aceaf1d284b7e762afb883a0ac6aaf07e2e031e89bff99ced3ffe38"
+                        }
+                    ]
+                },
+                {
+                    "type": "file",
+                    "name": "public/fonts/bootstrap-icons.woff2",
+                    "hashes": [
+                        {
+                            "alg": "SHA-256",
+                            "content": "476adf42b40325098fcfa8b36ab3e769186bb4f6ce6a249753e2e1a9c22bf99e"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "bom-ref": "frontend/modern-normalize@3.0.1",
+            "type": "library",
+            "name": "modern-normalize",
+            "version": "3.0.1",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:npm/modern-normalize@3.0.1",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://cdn.jsdelivr.net/npm/modern-normalize@3.0.1/"
+                }
+            ],
+            "pedigree": {
+                "notes": "minified locally"
+            },
+            "components": [
+                {
+                    "type": "file",
+                    "name": "public/css/external/normalize.css",
+                    "hashes": [
+                        {
+                            "alg": "SHA-256",
+                            "content": "b8a9c4ea9689f0552429597bd5928b35bcd9e1ded2b85e20de0bcb0058d4bafc"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "bom-ref": "frontend/SpicyCamCast@1.0.0",
+            "type": "library",
+            "name": "SpicyCamCast",
+            "version": "1.0.0",
+            "licenses": [
+                {
+                    "license": {
+                        "id": "LGPL-3.0-only"
+                    }
+                }
+            ],
+            "purl": "pkg:github/sagiadinos/SpicyCamCast@v1.0.0",
+            "externalReferences": [
+                {
+                    "type": "distribution",
+                    "url": "https://github.com/sagiadinos/SpicyCamCast/blob/v1.0.0/dist/SpicyCamCast.min.js"
+                }
+            ],
+            "pedigree": {
+                "notes": "dist/SpicyCamCast.min.js renamed to spicy-camcast.min.js"
+            },
+            "components": [
+                {
+                    "type": "file",
+                    "name": "public/js/external/spicy-camcast.min.js",
+                    "hashes": [
+                        {
+                            "alg": "SHA-256",
+                            "content": "2e3e0cf6d3f6f386dcfbb9bfb2498a0e2c390101d4504ebac99781a498d8a00e"
+                        }
+                    ]
+                }
+            ]
         }
     ],
     "dependencies": [
         {
+            "ref": "bacon/bacon-qr-code-3.1.1.0",
+            "dependsOn": [
+                "dasprid/enum-1.0.7.0"
+            ]
+        },
+        {
             "ref": "brick/math-1.0.0.0"
+        },
+        {
+            "ref": "dasprid/enum-1.0.7.0"
         },
         {
             "ref": "defuse/php-encryption-2.4.0.0",
@@ -3217,6 +4641,35 @@
         },
         {
             "ref": "doctrine/deprecations-1.1.6.0"
+        },
+        {
+            "ref": "facile-it/php-jose-verifier-1.0.0.0",
+            "dependsOn": [
+                "nyholm/psr7-1.8.2.0",
+                "psr/clock-1.0.0.0",
+                "psr/http-client-1.0.3.0",
+                "psr/http-message-2.0.0.0",
+                "psr/simple-cache-3.0.0.0",
+                "spomky-labs/base64url-2.0.4.0",
+                "symfony/http-client-7.4.23.0",
+                "symfony/polyfill-mbstring-1.43.3.0",
+                "symfony/polyfill-php83-1.43.0.0",
+                "web-token/jwt-library-4.2.5.0"
+            ]
+        },
+        {
+            "ref": "facile-it/php-openid-client-1.0.0.0",
+            "dependsOn": [
+                "facile-it/php-jose-verifier-1.0.0.0",
+                "php-http/discovery-1.20.0.0",
+                "psr/http-client-1.0.3.0",
+                "psr/http-factory-1.1.0.0",
+                "psr/http-message-2.0.0.0",
+                "psr/http-server-middleware-1.0.2.0",
+                "spomky-labs/aes-key-wrap-7.0.0.0",
+                "symfony/polyfill-php83-1.43.0.0",
+                "web-token/jwt-library-4.2.5.0"
+            ]
         },
         {
             "ref": "fig/http-message-util-1.1.5.0"
@@ -3330,6 +4783,25 @@
             "ref": "nikic/fast-route-1.3.1.0"
         },
         {
+            "ref": "nyholm/psr7-1.8.2.0",
+            "dependsOn": [
+                "psr/http-factory-1.1.0.0",
+                "psr/http-message-2.0.0.0"
+            ]
+        },
+        {
+            "ref": "openai-php/client-0.22.0.0",
+            "dependsOn": [
+                "php-http/discovery-1.20.0.0",
+                "php-http/multipart-stream-builder-1.4.2.0",
+                "psr/http-client-1.0.3.0",
+                "psr/http-message-2.0.0.0"
+            ]
+        },
+        {
+            "ref": "paragonie/constant_time_encoding-3.1.4.0"
+        },
+        {
             "ref": "paragonie/random_compat-9.99.100.0"
         },
         {
@@ -3344,6 +4816,15 @@
                 "laravel/serializable-closure-2.1.0.0",
                 "php-di/invoker-2.3.7.0",
                 "psr/container-2.0.2.0"
+            ]
+        },
+        {
+            "ref": "php-http/discovery-1.20.0.0"
+        },
+        {
+            "ref": "php-http/multipart-stream-builder-1.4.2.0",
+            "dependsOn": [
+                "php-http/discovery-1.20.0.0"
             ]
         },
         {
@@ -3447,6 +4928,26 @@
             ]
         },
         {
+            "ref": "spomky-labs/aes-key-wrap-7.0.0.0"
+        },
+        {
+            "ref": "spomky-labs/base64url-2.0.4.0"
+        },
+        {
+            "ref": "spomky-labs/otphp-11.5.0.0",
+            "dependsOn": [
+                "paragonie/constant_time_encoding-3.1.4.0",
+                "psr/clock-1.0.0.0",
+                "symfony/deprecation-contracts-3.8.1.0"
+            ]
+        },
+        {
+            "ref": "spomky-labs/pki-framework-1.6.3.0",
+            "dependsOn": [
+                "brick/math-1.0.0.0"
+            ]
+        },
+        {
             "ref": "symfony/console-7.4.23.0",
             "dependsOn": [
                 "symfony/deprecation-contracts-3.8.1.0",
@@ -3457,6 +4958,19 @@
         },
         {
             "ref": "symfony/deprecation-contracts-3.8.1.0"
+        },
+        {
+            "ref": "symfony/http-client-7.4.23.0",
+            "dependsOn": [
+                "psr/log-3.0.2.0",
+                "symfony/deprecation-contracts-3.8.1.0",
+                "symfony/http-client-contracts-3.8.1.0",
+                "symfony/polyfill-php83-1.43.0.0",
+                "symfony/service-contracts-3.8.1.0"
+            ]
+        },
+        {
+            "ref": "symfony/http-client-contracts-3.8.1.0"
         },
         {
             "ref": "symfony/polyfill-ctype-1.37.0.0"
@@ -3475,6 +4989,9 @@
         },
         {
             "ref": "symfony/polyfill-php82-1.43.0.0"
+        },
+        {
+            "ref": "symfony/polyfill-php83-1.43.0.0"
         },
         {
             "ref": "symfony/service-contracts-3.8.1.0",
@@ -3503,6 +5020,15 @@
             ]
         },
         {
+            "ref": "web-token/jwt-library-4.2.5.0",
+            "dependsOn": [
+                "brick/math-1.0.0.0",
+                "psr/clock-1.0.0.0",
+                "spomky-labs/pki-framework-1.6.3.0",
+                "symfony/deprecation-contracts-3.8.1.0"
+            ]
+        },
+        {
             "ref": "garlic-signage/garlic-hub-dev-main",
             "dependsOn": [
                 "slim/slim-4.15.3.0",
@@ -3521,8 +5047,56 @@
                 "symfony/console-7.4.23.0",
                 "guzzlehttp/guzzle-8.3.1.0",
                 "defuse/php-encryption-2.4.0.0",
-                "ramsey/uuid-4.9.4.0"
+                "ramsey/uuid-4.9.4.0",
+                "spomky-labs/otphp-11.5.0.0",
+                "bacon/bacon-qr-code-3.1.1.0",
+                "facile-it/php-openid-client-1.0.0.0",
+                "openai-php/client-0.22.0.0",
+                "frontend/dragula@3.7.3",
+                "frontend/fabric@7.4.0",
+                "frontend/glightbox@3.3.1",
+                "frontend/jszip@3.10.1",
+                "frontend/nouislider@15.8.1",
+                "frontend/pdfjs-dist@4.9.155",
+                "frontend/plyr@3.7.8",
+                "frontend/wunderbaum@0.14.1",
+                "frontend/bootstrap-icons@1.11.3",
+                "frontend/modern-normalize@3.0.1",
+                "frontend/SpicyCamCast@1.0.0"
             ]
+        },
+        {
+            "ref": "frontend/dragula@3.7.3"
+        },
+        {
+            "ref": "frontend/fabric@7.4.0"
+        },
+        {
+            "ref": "frontend/glightbox@3.3.1"
+        },
+        {
+            "ref": "frontend/jszip@3.10.1"
+        },
+        {
+            "ref": "frontend/nouislider@15.8.1"
+        },
+        {
+            "ref": "frontend/pdfjs-dist@4.9.155"
+        },
+        {
+            "ref": "frontend/plyr@3.7.8"
+        },
+        {
+            "ref": "frontend/wunderbaum@0.14.1"
+        },
+        {
+            "ref": "frontend/bootstrap-icons@1.11.3"
+        },
+        {
+            "ref": "frontend/modern-normalize@3.0.1"
+        },
+        {
+            "ref": "frontend/SpicyCamCast@1.0.0"
         }
     ]
 }

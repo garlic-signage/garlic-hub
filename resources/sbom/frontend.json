@@ -1,0 +1,129 @@
+{
+	"_comment": "Third party libraries in public/, which composer does not know. bin/sbom-frontend.php adds them to sbom.json, tests/Architecture/FrontendSbomTest.php checks the hashes. Update a library: replace the files, set version, purl, source and the new sha256 here.",
+	"components": [
+		{
+			"name": "dragula",
+			"version": "3.7.3",
+			"license": "MIT",
+			"purl": "pkg:npm/dragula@3.7.3",
+			"source": "https://cdn.jsdelivr.net/npm/dragula@3.7.3/dist/",
+			"files": {
+				"public/js/external/dragula.min.js": "7a08f9c71b63e340ecd0651b39b559ee6d8b10eb27beef62e4e82d99dd48fa39",
+				"public/css/external/dragula.min.css": "91b8ce3fade464207e97186cb0dfa1e6a0c22d22c8ec484fdffaf64bf8cf09de"
+			}
+		},
+		{
+			"name": "fabric",
+			"version": "7.4.0",
+			"license": "MIT",
+			"purl": "pkg:npm/fabric@7.4.0",
+			"source": "https://cdn.jsdelivr.net/npm/fabric@7.4.0/",
+			"files": {
+				"public/js/external/fabric.min.js": "d4e908b3b3654db92c08ff0f31aa6a72ba1ddeeeb43a93bc41c833e51fe37f58",
+				"public/js/external/fabric-extensions.min.js": "09a14f1bf07ce7eef4d464a32b7f3dfaa8c19d256c87ea5725124c695ffeff10"
+			}
+		},
+		{
+			"name": "glightbox",
+			"version": "3.3.1",
+			"license": "MIT",
+			"purl": "pkg:npm/glightbox@3.3.1",
+			"source": "https://cdn.jsdelivr.net/npm/glightbox@3.3.1/dist/",
+			"files": {
+				"public/js/external/glightbox.min.js": "c67c59cdf980793b0216c9de9c6ebf688418838822af1e50b09439e3aa289ff3",
+				"public/css/external/glightbox.min.css": "6d3f62d4d17969f9c70e9438cf671004725019e868123f2ebc295a006f8d5d2d"
+			}
+		},
+		{
+			"name": "jszip",
+			"version": "3.10.1",
+			"license": "MIT OR GPL-3.0-or-later",
+			"purl": "pkg:npm/jszip@3.10.1",
+			"source": "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/",
+			"files": {
+				"public/js/external/jszip.min.js": "acc7e41455a80765b5fd9c7ee1b8078a6d160bbbca455aeae854de65c947d59e"
+			}
+		},
+		{
+			"name": "nouislider",
+			"version": "15.8.1",
+			"license": "MIT",
+			"purl": "pkg:npm/nouislider@15.8.1",
+			"source": "https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/",
+			"files": {
+				"public/js/external/nouislider.min.mjs": "51f2cef94f58f92b13c105fb32c3e784bd8eba8030c60707fcd77c94b7c9734c",
+				"public/js/external/nouislider.d.ts": "f7a4cf7f892379eb959c95322eb24fa486bce9723afca7ab0c03068cbfc5f8eb",
+				"public/css/external/nouislider.min.css": "9dc9155cfd6331d1f5629881ac0bc63928243fa4c1d83b17ce4921b5200be0ae"
+			}
+		},
+		{
+			"name": "pdfjs-dist",
+			"version": "4.9.155",
+			"license": "Apache-2.0",
+			"purl": "pkg:npm/pdfjs-dist@4.9.155",
+			"source": "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.9.155/build/",
+			"files": {
+				"public/js/external/pdf.min.mjs": "b20bebbb3b5febecf6d574434bd90aceddeffc4ca4385aaf9917332061ec6a29",
+				"public/js/external/pdf.worker.min.mjs": "bd60ec6eb849c4ae65fbd1c3695ebbd4518350cdff89536529f97dbaaca5ade8"
+			}
+		},
+		{
+			"name": "plyr",
+			"version": "3.7.8",
+			"license": "MIT",
+			"purl": "pkg:npm/plyr@3.7.8",
+			"source": "https://cdn.plyr.io/3.7.8/",
+			"files": {
+				"public/js/external/plyr.js": "7572410db5bf0c2a553dc8f92e5127d25c8eef78cce7243687ff557aad99e59f",
+				"public/css/external/plyr.css": "2ee720801746a99015c74144707638048778223b2520c8228b627f7262fb122b"
+			}
+		},
+		{
+			"name": "wunderbaum",
+			"version": "0.14.1",
+			"license": "MIT",
+			"purl": "pkg:npm/wunderbaum@0.14.1",
+			"source": "https://cdn.jsdelivr.net/npm/wunderbaum@0.14.1/dist/",
+			"files": {
+				"public/js/external/wunderbaum.esm.min.js": "36f11403bbcb062b87fb2a152567d01f79f2cf36b91c4f71ffede47931a6caeb",
+				"public/js/external/wunderbaum.d.ts": "d7db456be7142ff9762f9a51cc7f25d6cdaf5faa347f03260c13b43912fc460b",
+				"public/css/external/wunderbaum.css": "1ae1d7d7e5a78650b49b3b4d5e0af9c3119ce06ad23a05b0ddc8931e99776ddb",
+				"public/css/external/wunderbaum.css.map": "bbfe56ac0c2ca717a1c6e5b51374365e0a4d996a49c52e73501b8f87457c489a"
+			}
+		},
+		{
+			"name": "bootstrap-icons",
+			"version": "1.11.3",
+			"license": "MIT",
+			"purl": "pkg:npm/bootstrap-icons@1.11.3",
+			"source": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/",
+			"note": "bootstrap-icons.min.css: path of the font changed to /fonts/",
+			"files": {
+				"public/css/external/bootstrap-icons.min.css": "9d07a78c2aceaf1d284b7e762afb883a0ac6aaf07e2e031e89bff99ced3ffe38",
+				"public/fonts/bootstrap-icons.woff2": "476adf42b40325098fcfa8b36ab3e769186bb4f6ce6a249753e2e1a9c22bf99e"
+			}
+		},
+		{
+			"name": "modern-normalize",
+			"version": "3.0.1",
+			"license": "MIT",
+			"purl": "pkg:npm/modern-normalize@3.0.1",
+			"source": "https://cdn.jsdelivr.net/npm/modern-normalize@3.0.1/",
+			"note": "minified locally",
+			"files": {
+				"public/css/external/normalize.css": "b8a9c4ea9689f0552429597bd5928b35bcd9e1ded2b85e20de0bcb0058d4bafc"
+			}
+		},
+		{
+			"name": "SpicyCamCast",
+			"version": "1.0.0",
+			"license": "LGPL-3.0-only",
+			"purl": "pkg:github/sagiadinos/SpicyCamCast@v1.0.0",
+			"source": "https://github.com/sagiadinos/SpicyCamCast/blob/v1.0.0/dist/SpicyCamCast.min.js",
+			"note": "dist/SpicyCamCast.min.js renamed to spicy-camcast.min.js",
+			"files": {
+				"public/js/external/spicy-camcast.min.js": "2e3e0cf6d3f6f386dcfbb9bfb2498a0e2c390101d4504ebac99781a498d8a00e"
+			}
+		}
+	]
+}
