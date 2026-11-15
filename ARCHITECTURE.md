@@ -59,7 +59,7 @@ CLI entry points.
 - `check-code.sh` — runs the tests with coverage and PHPStan.
 - `infection.sh` — mutation tests with Infection, over the whole code or only the lines changed since a git ref.
 - `stryker.sh` — mutation tests of `public/js` with StrykerJS in Docker, per group of folders.
-- `create-sbom.sh` — writes the SBOM `garlic-hub.cdx.json` (CycloneDX): composer packages plus `resources/sbom/frontend.json` via `sbom-frontend.php`. The docker hub workflow runs it for each release.
+- `create-sbom.sh` — writes the SBOM `garlic-hub.cdx.json` (CycloneDX): composer packages plus `resources/sbom/frontend.json` via `sbom-frontend.php`. `workflows/release.yml` runs it for each release.
 
 ### `config/`
 Wiring of the application.
@@ -86,7 +86,7 @@ Local development environment with DDEV.
 - `workflows/tests.yml` — CI on every push and pull request, one job each: static analysis with the architecture tests, unit tests, integration tests, blackbox tests (in parallel with ParaTest), JavaScript unit tests (Deno), coverage, security checks (`composer audit`, secret scan with `.gitleaks.toml`). On `main` the job `badge` writes the coverage badge of the README into the branch `badges` (one commit, replaced on every run).
 - `workflows/mutation.yml` — mutation tests with Infection over the whole code, once a month and by hand; the mutation score goes as a badge into the branch `badges`, the reports are kept as artifacts.
 - `scripts/` — `msi-badge.php` makes the badge of the mutation score, `publish-badge.sh` writes a badge into the branch `badges`.
-- `workflows/dockerhub-releases.yml` — Docker Hub images, started by hand.
+- `workflows/release.yml` — everything of a release, started by hand with the tag: tarball for `garlic-hub-update`, SBOM, Docker Hub image, Raspberry Pi image. The files go to the release of the tag, a draft too.
 - `actions/setup-app/` — PHP, Composer packages and environment, shared by the jobs of the tests.
 - `dependabot.yml` — weekly updates of the Composer packages and the actions.
 

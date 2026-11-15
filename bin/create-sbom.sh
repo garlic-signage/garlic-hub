@@ -1,6 +1,6 @@
 #!/bin/bash
 # garlic-hub.cdx.json: the composer packages, then the third party libraries in public/ from resources/sbom/frontend.json
-# Made by the docker hub workflow for each release: attached to the release and copied into the image.
+# Made by .github/workflows/release.yml: attached to the release and copied into the Docker image.
 set -e
 cd "$(dirname "$0")/.."
 

@@ -1,0 +1,171 @@
+name: release
+
+# Everything of a release, started by hand under Actions with the tag (or a branch to try it):
+#   garlic-hub.tar.gz + .sha256   garlic-hub ready to run, for garlic-hub-update on the Pi
+#   garlic-hub.cdx.json           the SBOM: composer packages and the libraries in public/ (bin/create-sbom.sh)
+#   Docker image                  to Docker Hub as latest and the number in VERSION, with the SBOM inside
+#                                 (/var/www, outside the document root) and SBOM and provenance as attestations
+#   Pi image + garlic-hub-pi.json Raspberry Pi OS Lite with garlic-hub, see misc/pi-image/build.sh
+# The files go to the release of the tag, a draft too. Without a release they stay artifacts of the run.
+#
+# Steps of a release: set the number in VERSION, push the tag, create the release as a draft, run this workflow
+# with the tag, publish the release. A published release takes no more files once immutable releases are on.
+# The same file names in every release: releases/latest/download/<name> always points to the latest one.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag or branch, e.g. v1.3.0 or main
+        required: true
+
+permissions:
+  contents: write # attach the files to the release
+
+concurrency:
+  group: release-${{ inputs.tag }}
+  cancel-in-progress: false
+
+env:
+  TAG: ${{ inputs.tag }}
+
+jobs:
+
+  files:
+    name: tarball and SBOM
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag }}
+
+      - name: Determine version
+        id: version
+        run: echo "version=$(head -n1 VERSION | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: curl, fileinfo, imagick, intl, mbstring, openssl, simplexml, zip
+          tools: composer:v2
+
+      # the code without the development files (as .dockerignore and the Pi image), vendor/ without the dev packages
+      - name: Tarball
+        run: |
+          APP="$RUNNER_TEMP/app"
+          mkdir -p "$APP" "$RUNNER_TEMP/out"
+          git archive HEAD | tar -x -C "$APP"
+          rm -rf "$APP"/{.ddev,.github,tests,misc}
+          composer install --working-dir="$APP" --no-dev --no-interaction --no-progress --prefer-dist --classmap-authoritative
+          tar -czf "$RUNNER_TEMP/out/garlic-hub.tar.gz" --owner=0 --group=0 --sort=name -C "$APP" .
+          (cd "$RUNNER_TEMP/out" && sha256sum garlic-hub.tar.gz > garlic-hub.tar.gz.sha256)
+
+      # the CycloneDX plugin is a dev package
+      - name: SBOM
+        env:
+          COMPOSER_ROOT_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          composer install --no-interaction --no-progress --prefer-dist --no-scripts
+          bash bin/create-sbom.sh
+          cp garlic-hub.cdx.json "$RUNNER_TEMP/out/"
+          ls -lh "$RUNNER_TEMP/out"
+
+      - name: Keep them for the Docker image
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-files
+          path: ${{ runner.temp }}/out/
+
+      - name: Attach them to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" "$RUNNER_TEMP"/out/* --clobber
+          else
+            echo "no release $TAG, the files are an artifact of this run"
+          fi
+
+  docker:
+    name: Docker image
+    needs: files
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag }}
+
+      - name: Determine version
+        id: version
+        run: echo "version=$(head -n1 VERSION | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
+
+      # COPY . in the Dockerfile takes it into the image
+      - name: SBOM into the build context
+        uses: actions/download-artifact@v8
+        with:
+          name: release-files
+          path: ${{ runner.temp }}/files
+
+      - run: cp "$RUNNER_TEMP/files/garlic-hub.cdx.json" .
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v4
+        with:
+          username: sagiadinos
+          password: ${{ secrets.SAGIADINOS }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          sbom: true
+          provenance: mode=max
+          tags: |
+            sagiadinos/garlic-hub:latest
+            sagiadinos/garlic-hub:${{ steps.version.outputs.version }}
+
+  # the arm runner runs the chroot natively, without qemu
+  pi-image:
+    name: Raspberry Pi image
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # the tag for git archive
+
+      - name: Tools
+        run: sudo apt-get update -q && sudo apt-get install -y -q parted xz-utils e2fsprogs
+
+      - name: Build the image
+        run: |
+          DOWNLOAD_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/$TAG"
+          REF="$TAG"
+          git rev-parse --verify --quiet "$REF^{commit}" > /dev/null || REF="origin/$REF"
+          sudo DOWNLOAD_URL="$DOWNLOAD_URL" misc/pi-image/build.sh "$REF" "$RUNNER_TEMP/out"
+
+      - name: Attach it to the release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" "$RUNNER_TEMP"/out/* --clobber
+          else
+            echo "no release $TAG" && echo "missing=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Keep it as an artifact
+        if: steps.release.outputs.missing == '1'
+        uses: actions/upload-artifact@v7
+        with:
+          name: pi-image
+          path: ${{ runner.temp }}/out/
+          compression-level: 0

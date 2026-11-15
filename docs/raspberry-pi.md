@@ -142,9 +142,9 @@ this owner, and garlic-hub fails with "unable to open database file" until they 
 
 ## Build the image yourself
 
-The workflow `.github/workflows/pi-image.yml` builds the image for every published release and attaches it with
-`garlic-hub-pi.json` to the release. `.github/workflows/release-tarball.yml` attaches `garlic-hub.tar.gz` for
-`garlic-hub-update`. By hand on an arm64 Linux host:
+The workflow `.github/workflows/release.yml`, started by hand with the tag, builds the image and attaches it with
+`garlic-hub-pi.json` to the release, together with `garlic-hub.tar.gz` for `garlic-hub-update`. By hand on an
+arm64 Linux host:
 
 ```bash
 sudo misc/pi-image/build.sh <git-tag> [output-dir]
