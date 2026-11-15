@@ -8,7 +8,9 @@
 #    everything in it may run twice.
 set -euo pipefail
 
-APP=/var/www/garlic-hub
+APP=/var/www/garlic-hub/current
+# the data of all releases; .env is edited here, sed -i on the link in the release would replace it by a file
+SHARED=/var/www/garlic-hub/shared
 DONE=/var/lib/garlic-hub/firstboot.done
 POOL=/etc/php/8.4/fpm/pool.d/zz-garlic-hub.conf
 INI=/etc/php/8.4/fpm/conf.d/zz-garlic-hub-memory.ini
@@ -47,7 +49,7 @@ done
 
 [ -f "$DONE" ] && exit 0
 
-cd "$APP"
+cd "$SHARED"
 umask 027
 
 # media.php signs its delivery urls with it, so an empty value counts as missing
@@ -63,11 +65,11 @@ else
     echo "Create crypto keys..."
     openssl genpkey -algorithm RSA -out var/keys/private.key -pkeyopt rsa_keygen_bits:2048
     openssl rsa -pubout -in var/keys/private.key -out var/keys/public.key
-    php vendor/bin/generate-defuse-key > var/keys/encryption.key
+    php "$APP/vendor/bin/generate-defuse-key" > var/keys/encryption.key
 fi
 chown -R www-data:www-data var
 
-runuser -u www-data -- php bin/console.php db:migrate
+(cd "$APP" && runuser -u www-data -- php bin/console.php db:migrate)
 
 mkdir -p "$(dirname "$DONE")"
 touch "$DONE"

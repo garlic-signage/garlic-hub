@@ -9,6 +9,9 @@
 # packs it again. Secrets, keys and the database are NOT in the image, every Pi creates its own on
 # the first start (boot.sh).
 #
+# Layout for updates (update.sh, as garlic-hub-update): releases/<version> holds the code, shared/ the data
+# (var/, .env), current points to the running release. Apache and cron use current.
+#
 # RASPIOS_URL pins another base image, default is the latest Raspberry Pi OS Lite.
 #
 # Besides the image it writes garlic-hub-pi.json, a content repository for the Raspberry Pi Imager: with it the
@@ -21,7 +24,9 @@ OUT="${2:-$PWD/pi-image-out}"
 BASE_URL="${RASPIOS_URL:-https://downloads.raspberrypi.com/raspios_lite_arm64_latest}"
 GROW_MB="${GROW_MB:-1536}"
 DOWNLOAD_URL="${DOWNLOAD_URL:-https://github.com/garlic-signage/garlic-hub/releases/download/$REF}"
-APP=/var/www/garlic-hub
+BASE=/var/www/garlic-hub
+SHARED=$BASE/shared
+APP=$BASE/current
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 REPO="$(cd "$HERE/../.." && pwd)"
@@ -31,6 +36,8 @@ NAME="garlic-hub-${REF//\//-}-raspios-lite-arm64"
 
 [ "$(id -u)" = 0 ] || { echo "run as root" >&2; exit 1; }
 git -C "$REPO" rev-parse --verify --quiet "$REF^{commit}" > /dev/null || { echo "unknown ref $REF" >&2; exit 1; }
+VERSION="$(git -C "$REPO" show "$REF:VERSION" | head -n1 | tr -d '[:space:]')"
+REL=$BASE/releases/$VERSION
 
 WORK="$(mktemp -d)"
 ROOT="$WORK/root"
@@ -92,36 +99,42 @@ in_root apt-get -y -q install --no-install-recommends \
     apache2 libapache2-mod-xsendfile \
     php8.4-fpm php8.4-cli php8.4-curl php8.4-intl php8.4-mbstring php8.4-xml php8.4-zip \
     php8.4-sqlite3 php8.4-opcache php-imagick \
-    composer unzip sqlite3 ffmpeg ghostscript cron openssl unattended-upgrades
+    composer unzip sqlite3 ffmpeg ghostscript cron openssl curl unattended-upgrades
 
-echo "== garlic-hub $REF"
-mkdir -p "$ROOT$APP"
-git -C "$REPO" archive "$REF" | tar -x -C "$ROOT$APP"
-# not needed to run it, as in .dockerignore
-rm -rf "$ROOT$APP"/{.ddev,.github,tests,misc}
-in_root sh -c "cd $APP && COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --no-interaction --no-progress --classmap-authoritative"
+echo "== garlic-hub $REF ($VERSION)"
+mkdir -p "$ROOT$REL"
+git -C "$REPO" archive "$REF" | tar -x -C "$ROOT$REL"
+# not needed to run it, as in .dockerignore and the release tarball
+rm -rf "$ROOT$REL"/{.ddev,.github,tests,misc}
+in_root sh -c "cd $REL && COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --no-interaction --no-progress --classmap-authoritative"
 rm -rf "$ROOT/root/.cache/composer" "$ROOT/root/.config/composer"
 
-for dir in cache tmp logs weblogs devicelogs keys settings sessions \
+for dir in cache tmp logs weblogs devicelogs keys settings sessions backups \
     storage/mediapool/thumbs storage/mediapool/originals \
     storage/templates/thumbs storage/templates/originals \
     storage/playlists/items/thumbs storage/playlists/items/originals; do
-    mkdir -p "$ROOT$APP/var/$dir"
+    mkdir -p "$ROOT$SHARED/var/$dir"
 done
 
 # without APP_SECRET: boot.sh adds a random one
-sed "s#^DB_MASTER_PATH=.*#DB_MASTER_PATH=$APP/var/garlic-hub.sqlite#" "$ROOT$APP/dockerapp-configs/env.core" > "$ROOT$APP/.env"
+sed "s#^DB_MASTER_PATH=.*#DB_MASTER_PATH=$SHARED/var/garlic-hub.sqlite#" "$ROOT$REL/dockerapp-configs/env.core" > "$ROOT$SHARED/.env"
+
+rm -rf "$ROOT$REL/var"
+ln -s "$SHARED/var"  "$ROOT$REL/var"
+ln -s "$SHARED/.env" "$ROOT$REL/.env"
+ln -s "$REL" "$ROOT$APP"
 
 # the code belongs to root, PHP writes only below var/
-chown -R root:root "$ROOT$APP"
-in_root chown root:www-data "$APP/.env"
-chmod 640 "$ROOT$APP/.env"
-in_root chown -R www-data:www-data "$APP/var"
-chmod -R u=rwX,g=rwX,o= "$ROOT$APP/var"
+chown -R root:root "$ROOT$BASE"
+in_root chown root:www-data "$SHARED/.env"
+chmod 640 "$ROOT$SHARED/.env"
+in_root chown -R www-data:www-data "$SHARED/var"
+chmod -R u=rwX,g=rwX,o= "$ROOT$SHARED/var"
 
 echo "== Apache, PHP, ImageMagick"
-# the configuration of the Docker image, with the path of this installation
-sed "s#/var/www#$APP#g" "$ROOT$APP/dockerapp-configs/http.conf" > "$ROOT/etc/apache2/sites-available/garlic-hub.conf"
+# the configuration of the Docker image, with the paths of this installation. The data with its real path:
+# delivery.php hands the realpath of a file to X-Sendfile, it must be below XSendFilePath.
+sed -e "s#/var/www/var#$SHARED/var#g" -e "s#/var/www#$APP#g" "$ROOT$REL/dockerapp-configs/http.conf" > "$ROOT/etc/apache2/sites-available/garlic-hub.conf"
 # not mod_php with prefork as in the Docker image: mpm_event with PHP-FPM, so it fits on a Pi with 1 GB
 in_root a2dismod -q mpm_prefork || true
 in_root a2enmod -q mpm_event proxy_fcgi setenvif rewrite xsendfile headers
@@ -134,14 +147,14 @@ in_root a2ensite -q garlic-hub
 # memory_limit sets boot.sh by the memory of the Pi. The uploads go to the card, not to /tmp:
 # as a tmpfs it is in the memory, and a video of 1 GB does not fit in a Pi with 1 GB.
 {
-    sed '/^memory_limit/d' "$ROOT$APP/dockerapp-configs/php.ini-custom"
-    printf '\nupload_tmp_dir = %s\nsys_temp_dir = %s\n' "$APP/var/tmp" "$APP/var/tmp"
+    sed '/^memory_limit/d' "$ROOT$REL/dockerapp-configs/php.ini-custom"
+    printf '\nupload_tmp_dir = %s\nsys_temp_dir = %s\n' "$SHARED/var/tmp" "$SHARED/var/tmp"
 } > "$ROOT/etc/php/8.4/fpm/conf.d/99-garlic-hub.ini"
 
 found=0
 for dir in "$ROOT"/etc/ImageMagick-*; do
     [ -d "$dir" ] || continue
-    cp "$ROOT$APP/dockerapp-configs/policy.xml" "$dir/policy.xml"
+    cp "$ROOT$REL/dockerapp-configs/policy.xml" "$dir/policy.xml"
     found=1
 done
 [ "$found" = 1 ] || { echo "no ImageMagick configuration found" >&2; exit 1; }
@@ -151,12 +164,15 @@ mkdir -p "$ROOT/etc/systemd/system/php8.4-fpm.service.d"
 printf '[Service]\nUMask=0002\n' > "$ROOT/etc/systemd/system/php8.4-fpm.service.d/garlic-hub.conf"
 
 # the scheduler: every 5 minutes, it ends at once while it is not enabled on the settings page
-echo "*/5 * * * * www-data cd $APP && /usr/bin/php bin/console.php schedule:run >> $APP/var/logs/scheduler.log 2>&1" > "$ROOT/etc/cron.d/garlic-hub"
+echo "*/5 * * * * www-data cd $APP && /usr/bin/php bin/console.php schedule:run >> $SHARED/var/logs/scheduler.log 2>&1" > "$ROOT/etc/cron.d/garlic-hub"
 chmod 644 "$ROOT/etc/cron.d/garlic-hub"
 
 echo "== Updates: security updates daily, a restart at 3 at night only when one needs it"
 install -m 644 "$HERE/unattended-upgrades.conf" "$ROOT/etc/apt/apt.conf.d/52garlic-hub-unattended-upgrades"
 in_root systemctl enable apt-daily.timer apt-daily-upgrade.timer
+
+echo "== Update of garlic-hub by hand: sudo garlic-hub-update"
+install -m 755 "$HERE/update.sh" "$ROOT/usr/local/sbin/garlic-hub-update"
 
 echo "== Start: tuning on every boot, secret, keys and database on the first one"
 install -D -m 755 "$HERE/boot.sh" "$ROOT/usr/local/lib/garlic-hub/boot.sh"

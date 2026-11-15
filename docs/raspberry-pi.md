@@ -80,16 +80,49 @@ The settings are in `/etc/apt/apt.conf.d/52garlic-hub-unattended-upgrades`, e.g.
 `Unattended-Upgrade::Automatic-Reboot-Time` or `"false"` in `Unattended-Upgrade::Automatic-Reboot` to restart by
 hand. What was installed is logged in `/var/log/unattended-upgrades/`.
 
-garlic-hub itself is not part of these updates.
+garlic-hub itself is not part of these updates, see [Update garlic-hub](#update-garlic-hub).
+
+## Update garlic-hub
+
+```bash
+sudo garlic-hub-update
+```
+
+It installs the latest release, if it is newer than the running one:
+
+1. downloads `garlic-hub.tar.gz` of the latest release and checks its sha256,
+2. unpacks it beside the running release,
+3. saves the database to `shared/var/backups/before-<version>.sqlite` and migrates it,
+4. switches to the new release and reloads PHP,
+5. keeps the latest three releases.
+
+If a step fails, the old release keeps running. The installation is laid out for this:
+
+| Path                                    | Content                                      |
+|-----------------------------------------|----------------------------------------------|
+| `/var/www/garlic-hub/releases/<version>` | the code of a release                        |
+| `/var/www/garlic-hub/shared`            | the data of all releases: `var/` and `.env`  |
+| `/var/www/garlic-hub/current`           | link to the running release, Apache uses it  |
+
+Back to the previous release: let `current` point to it again, put the backup of the database back and reload PHP:
+
+```bash
+cd /var/www/garlic-hub
+sudo ln -sfn releases/<old version> current
+sudo -u www-data sqlite3 shared/var/garlic-hub.sqlite ".restore shared/var/backups/before-<new version>.sqlite"
+sudo systemctl reload php8.4-fpm
+```
+
+The configuration of Apache, PHP and ImageMagick from the image is not changed by an update.
 
 ## Backup
 
-garlic-hub is in `/var/www/garlic-hub`. Save the database, the media in `var/storage` and the keys in `var/keys`,
+The data of garlic-hub is in `/var/www/garlic-hub/shared`. Save the database, the media in `var/storage` and the keys in `var/keys`,
 without the keys the encrypted data cannot be read anymore. Let SQLite write the backup of the running database,
 as the user `www-data`:
 
 ```bash
-sudo -u www-data sqlite3 /var/www/garlic-hub/var/garlic-hub.sqlite ".backup /var/www/garlic-hub/var/garlic-hub-backup.sqlite"
+sudo -u www-data sqlite3 /var/www/garlic-hub/shared/var/garlic-hub.sqlite ".backup /var/www/garlic-hub/shared/var/garlic-hub-backup.sqlite"
 ```
 
 Never open the database as another user, not even to read it: SQLite then creates its `-wal` and `-shm` files with
@@ -98,7 +131,8 @@ this owner, and garlic-hub fails with "unable to open database file" until they 
 ## Build the image yourself
 
 The workflow `.github/workflows/pi-image.yml` builds the image for every published release and attaches it with
-`garlic-hub-pi.json` to the release. By hand on an arm64 Linux host:
+`garlic-hub-pi.json` to the release. `.github/workflows/release-tarball.yml` attaches `garlic-hub.tar.gz` for
+`garlic-hub-update`. By hand on an arm64 Linux host:
 
 ```bash
 sudo misc/pi-image/build.sh <git-tag> [output-dir]
