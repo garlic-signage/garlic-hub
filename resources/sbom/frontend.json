@@ -1,5 +1,5 @@
 {
-	"_comment": "Third party libraries in public/, which composer does not know. bin/sbom-frontend.php adds them to sbom.json, tests/Architecture/FrontendSbomTest.php checks the hashes. Update a library: replace the files, set version, purl, source and the new sha256 here.",
+	"_comment": "Third party libraries in public/, which composer does not know. bin/sbom-frontend.php adds them to the SBOM, tests/Architecture/FrontendSbomTest.php checks the hashes. Update a library: replace the files, set version, purl, source and the new sha256 here.",
 	"components": [
 		{
 			"name": "dragula",

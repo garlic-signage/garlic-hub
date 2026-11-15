@@ -48,7 +48,7 @@ in `config/services/`.
 | `.htaccess`                        | Forwards requests to `public/` when Apache serves the project root |
 | `dev-install.sh`                   | Development setup: `var/` directories, `APP_SECRET`, keys, migrations |
 | `getloc.sh`                        | Counts lines of code with `cloc`                                |
-| `sbom.json`                        | Software bill of materials (CycloneDX), made by `bin/create-sbom.sh` |
+| `resources/sbom/frontend.json`     | Third party libraries in `public/` for the SBOM, checked by `FrontendSbomTest` |
 
 ## Directories
 
@@ -59,7 +59,7 @@ CLI entry points.
 - `check-code.sh` — runs the tests with coverage and PHPStan.
 - `infection.sh` — mutation tests with Infection, over the whole code or only the lines changed since a git ref.
 - `stryker.sh` — mutation tests of `public/js` with StrykerJS in Docker, per group of folders.
-- `create-sbom.sh` — writes `sbom.json`.
+- `create-sbom.sh` — writes the SBOM `garlic-hub.cdx.json` (CycloneDX): composer packages plus `resources/sbom/frontend.json` via `sbom-frontend.php`. The docker hub workflow runs it for each release.
 
 ### `config/`
 Wiring of the application.

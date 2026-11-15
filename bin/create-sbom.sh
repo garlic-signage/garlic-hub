@@ -1,7 +1,8 @@
 #!/bin/bash
-# sbom.json: the composer packages, then the third party libraries in public/ from resources/sbom/frontend.json
+# garlic-hub.cdx.json: the composer packages, then the third party libraries in public/ from resources/sbom/frontend.json
+# Made by the docker hub workflow for each release: attached to the release and copied into the image.
 set -e
 cd "$(dirname "$0")/.."
 
-composer CycloneDX:make-sbom --omit=dev --output-format=JSON --output-file=sbom.json
+composer CycloneDX:make-sbom --omit=dev --output-format=JSON --output-file=garlic-hub.cdx.json
 php bin/sbom-frontend.php

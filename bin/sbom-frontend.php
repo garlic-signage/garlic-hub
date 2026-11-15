@@ -20,13 +20,13 @@
 declare(strict_types=1);
 
 /*
- * Adds the third party libraries in public/ (resources/sbom/frontend.json) to the sbom.json of composer.
+ * Adds the third party libraries in public/ (resources/sbom/frontend.json) to the SBOM of composer (garlic-hub.cdx.json).
  * Each library becomes a component with its files as sub components and their sha256.
  * Called by bin/create-sbom.sh after composer CycloneDX:make-sbom.
  */
 
 $root     = dirname(__DIR__);
-$sbomFile = $root . '/sbom.json';
+$sbomFile = $root . '/garlic-hub.cdx.json';
 $sbom     = json_decode((string) file_get_contents($sbomFile), true, 512, JSON_THROW_ON_ERROR);
 $manifest = json_decode((string) file_get_contents($root . '/resources/sbom/frontend.json'), true, 512, JSON_THROW_ON_ERROR);
 
@@ -90,4 +90,4 @@ foreach ($refs as $ref)
 $sbom['dependencies'] = array_values(array_unique($sbom['dependencies'], SORT_REGULAR));
 
 file_put_contents($sbomFile, json_encode($sbom, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
-echo count($components) . " frontend libraries added to sbom.json\n";
+echo count($components) . " frontend libraries added to garlic-hub.cdx.json\n";
