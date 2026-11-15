@@ -3,6 +3,17 @@
 Reporting process and GPG key: see the
 [organization security policy](https://github.com/garlic-signage/.github/blob/main/SECURITY.md).
 
+## Supported Versions
+
+Only the latest release receives security fixes. Please update to it.
+
+## Security Advisories
+
+Fixed vulnerabilities are published as
+[GitHub Security Advisories](https://github.com/garlic-signage/garlic-hub/security/advisories),
+with a CVE identifier where one is assigned. Dependabot and other scanners pick them up
+from there. Ordinary bugs are tracked in the issues and the release notes.
+
 ## Before Reporting
 
 Please read the [Threat Model](docs/threat-model.md). It documents which
