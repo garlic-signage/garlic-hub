@@ -92,7 +92,7 @@ in_root apt-get -y -q install --no-install-recommends \
     apache2 libapache2-mod-xsendfile \
     php8.4-fpm php8.4-cli php8.4-curl php8.4-intl php8.4-mbstring php8.4-xml php8.4-zip \
     php8.4-sqlite3 php8.4-opcache php-imagick \
-    composer unzip sqlite3 ffmpeg ghostscript cron openssl
+    composer unzip sqlite3 ffmpeg ghostscript cron openssl unattended-upgrades
 
 echo "== garlic-hub $REF"
 mkdir -p "$ROOT$APP"
@@ -153,6 +153,10 @@ printf '[Service]\nUMask=0002\n' > "$ROOT/etc/systemd/system/php8.4-fpm.service.
 # the scheduler: every 5 minutes, it ends at once while it is not enabled on the settings page
 echo "*/5 * * * * www-data cd $APP && /usr/bin/php bin/console.php schedule:run >> $APP/var/logs/scheduler.log 2>&1" > "$ROOT/etc/cron.d/garlic-hub"
 chmod 644 "$ROOT/etc/cron.d/garlic-hub"
+
+echo "== Updates: security updates daily, a restart at 3 at night only when one needs it"
+install -m 644 "$HERE/unattended-upgrades.conf" "$ROOT/etc/apt/apt.conf.d/52garlic-hub-unattended-upgrades"
+in_root systemctl enable apt-daily.timer apt-daily-upgrade.timer
 
 echo "== Start: tuning on every boot, secret, keys and database on the first one"
 install -D -m 755 "$HERE/boot.sh" "$ROOT/usr/local/lib/garlic-hub/boot.sh"

@@ -67,6 +67,21 @@ More requests than workers wait in a queue instead of filling the memory. Downlo
 occupy a PHP worker: `delivery.php` hands them to Apache with X-Sendfile. With these settings a Pi 4 with 1 GB
 served 200 players and 10 users at the same time, see [Load Tests](load-tests.md).
 
+## Updates
+
+The operating system updates itself with `unattended-upgrades`: once a day it installs the updates of Debian
+(security and point releases) and of the Raspberry Pi archive (kernel and firmware). When an update needs a
+restart, e.g. a new kernel or libc, the Pi restarts at **3:00 at night** in its time zone, the one set in the Imager.
+Without such an update it does not restart. The players keep playing their cached content during the restart.
+
+Your own changes to configuration files stay when a package brings a new version of them (`--force-confold`).
+
+The settings are in `/etc/apt/apt.conf.d/52garlic-hub-unattended-upgrades`, e.g. another time in
+`Unattended-Upgrade::Automatic-Reboot-Time` or `"false"` in `Unattended-Upgrade::Automatic-Reboot` to restart by
+hand. What was installed is logged in `/var/log/unattended-upgrades/`.
+
+garlic-hub itself is not part of these updates.
+
 ## Backup
 
 garlic-hub is in `/var/www/garlic-hub`. Save the database, the media in `var/storage` and the keys in `var/keys`,
