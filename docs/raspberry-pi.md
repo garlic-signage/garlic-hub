@@ -84,11 +84,18 @@ garlic-hub itself is not part of these updates, see [Update garlic-hub](#update-
 
 ## Update garlic-hub
 
+In the web interface: **Administration → Update**, for the module admin of system. Or by SSH:
+
 ```bash
 sudo garlic-hub-update
 ```
 
-It installs the latest release, if it is newer than the running one:
+The button gets no root rights: it only writes the file `shared/var/update/requested`. The systemd unit
+`garlic-hub-update.path` sees it and starts `garlic-hub-update.service`, which runs the same script as root. The
+page shows the progress and the result of the last run from `shared/var/update/status.json`. The script always
+takes the latest release from GitHub, nothing of the page.
+
+The update installs the latest release, if it is newer than the running one:
 
 1. downloads `garlic-hub.tar.gz` of the latest release and checks its sha256,
 2. unpacks it beside the running release,

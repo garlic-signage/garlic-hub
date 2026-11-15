@@ -1,0 +1,15 @@
+<h1>{{LANG_PAGE_HEADER}}</h1>
+<section id="systemUpdate" class="main-element-group">
+	<p>{{LANG_INSTALLED}}</p>
+	<p class="update-status">{{LANG_STATUS}}</p>
+	{{#is_busy}}
+	<p>{{LANG_RELOAD}}</p>
+	{{/is_busy}}
+	<p>{{LANG_EXPLANATION}}</p>
+	<form action="/system/update" method="post">
+		<input type="hidden" name="csrf_token" value="{{CSRF_TOKEN}}">
+		<div class="form-submits">
+			<button type="submit" class="primary" {{BUTTON_DISABLED}}>{{LANG_BUTTON}}</button>
+		</div>
+	</form>
+</section>

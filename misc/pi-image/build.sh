@@ -109,15 +109,18 @@ rm -rf "$ROOT$REL"/{.ddev,.github,tests,misc}
 in_root sh -c "cd $REL && COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --no-interaction --no-progress --classmap-authoritative"
 rm -rf "$ROOT/root/.cache/composer" "$ROOT/root/.config/composer"
 
-for dir in cache tmp logs weblogs devicelogs keys settings sessions backups \
+for dir in cache tmp logs weblogs devicelogs keys settings sessions backups update \
     storage/mediapool/thumbs storage/mediapool/originals \
     storage/templates/thumbs storage/templates/originals \
     storage/playlists/items/thumbs storage/playlists/items/originals; do
     mkdir -p "$ROOT$SHARED/var/$dir"
 done
 
-# without APP_SECRET: boot.sh adds a random one
-sed "s#^DB_MASTER_PATH=.*#DB_MASTER_PATH=$SHARED/var/garlic-hub.sqlite#" "$ROOT$REL/dockerapp-configs/env.core" > "$ROOT$SHARED/.env"
+# without APP_SECRET: boot.sh adds a random one. APP_SELF_UPDATE shows the update page (garlic-hub-update below).
+{
+    sed "s#^DB_MASTER_PATH=.*#DB_MASTER_PATH=$SHARED/var/garlic-hub.sqlite#" "$ROOT$REL/dockerapp-configs/env.core"
+    echo "APP_SELF_UPDATE=true"
+} > "$ROOT$SHARED/.env"
 
 rm -rf "$ROOT$REL/var"
 ln -s "$SHARED/var"  "$ROOT$REL/var"
@@ -171,8 +174,10 @@ echo "== Updates: security updates daily, a restart at 3 at night only when one 
 install -m 644 "$HERE/unattended-upgrades.conf" "$ROOT/etc/apt/apt.conf.d/52garlic-hub-unattended-upgrades"
 in_root systemctl enable apt-daily.timer apt-daily-upgrade.timer
 
-echo "== Update of garlic-hub by hand: sudo garlic-hub-update"
+echo "== Update of garlic-hub: sudo garlic-hub-update or the button on /system/update"
 install -m 755 "$HERE/update.sh" "$ROOT/usr/local/sbin/garlic-hub-update"
+install -m 644 "$HERE/garlic-hub-update.path" "$HERE/garlic-hub-update.service" "$ROOT/etc/systemd/system/"
+in_root systemctl enable garlic-hub-update.path
 
 echo "== Start: tuning on every boot, secret, keys and database on the first one"
 install -D -m 755 "$HERE/boot.sh" "$ROOT/usr/local/lib/garlic-hub/boot.sh"

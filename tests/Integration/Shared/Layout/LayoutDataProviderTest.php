@@ -31,6 +31,8 @@ use App\Shared\Layout\LanguageSelectBuilder;
 use App\Shared\Layout\LayoutDataProvider;
 use App\Shared\Layout\MainMenuBuilder;
 use App\Shared\Layout\UserMenuBuilder;
+use App\Framework\System\SelfUpdate;
+use DI\Container;
 use App\Shared\Layout\AdministrationLinks;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
@@ -145,6 +147,25 @@ class LayoutDataProviderTest extends ContainerTestCase
 
 		static::assertSame($links, array_column($this->layout()['user_menu'][0]['has_user_access'], 'LINK_USER_ACCESS'));
 		static::assertSame($areas, array_column($this->container->get(AdministrationLinks::class)->build(2), 'LINK'));
+	}
+
+	public function testTheModuleAdminOfSystemGetsTheUpdateWhereTheUpdaterIsInstalled(): void
+	{
+		$dir = sys_get_temp_dir() . '/garlic-update-links-' . bin2hex(random_bytes(4));
+		mkdir($dir);
+		static::assertInstanceOf(Container::class, $this->container);
+		$this->container->set(SelfUpdate::class, new SelfUpdate(true, $dir));
+		$this->connection->executeStatement('INSERT INTO user_acl (UID, acl, module) VALUES (2, 8, ?)', ['system']);
+		$this->actingAs(2);
+
+		try
+		{
+			static::assertSame(['/system/audit', '/system/update'], array_column($this->container->get(AdministrationLinks::class)->build(2), 'LINK'));
+		}
+		finally
+		{
+			rmdir($dir);
+		}
 	}
 
 	public function testTheLanguageSwitchOffersTheLanguagesWhichAreTranslated(): void

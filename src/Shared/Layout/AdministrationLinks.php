@@ -24,6 +24,7 @@ namespace App\Shared\Layout;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Framework\Localization\Translate\Translator;
+use App\Framework\System\SelfUpdate;
 use App\Shared\Acl\AclHelper;
 use Doctrine\DBAL\Exception;
 
@@ -33,7 +34,7 @@ use Doctrine\DBAL\Exception;
  */
 readonly class AdministrationLinks
 {
-	public function __construct(private AclHelper $aclHelper, private Translator $translator)
+	public function __construct(private AclHelper $aclHelper, private Translator $translator, private SelfUpdate $selfUpdate)
 	{}
 
 	/**
@@ -59,7 +60,12 @@ readonly class AdministrationLinks
 			$links[] = $this->link('/templates', $this->translator->translate('overview', 'templates'), 'administration_templates');
 
 		if ($this->aclHelper->isModuleAdmin($UID, 'system'))
+		{
 			$links[] = $this->link('/system/audit', $this->translator->translate('audit_log', 'system'), 'administration_audit');
+			// only where garlic-hub-update is installed (Raspberry Pi image)
+			if ($this->selfUpdate->isAvailable())
+				$links[] = $this->link('/system/update', $this->translator->translate('update', 'system'), 'administration_update');
+		}
 
 		return $links;
 	}

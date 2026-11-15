@@ -41,6 +41,9 @@ use App\Shared\Acl\AclHelper;
 use App\Shared\Acl\AclUnitProvider;
 use App\Shared\Acl\EditionAclModules;
 use App\Modules\System\Controller\ShowSettingsController;
+use App\Modules\System\Controller\ShowUpdateController;
+use App\Framework\System\AppVersion;
+use App\Framework\System\SelfUpdate;
 use App\Modules\System\Scheduler\AuditCleanupTask;
 use App\Modules\System\Scheduler\SystemScheduledTasks;
 use App\Shared\Audit\AuditLog;
@@ -107,6 +110,18 @@ $dependencies[ShowSettingsController::class] = DI\factory(function (ContainerInt
 {
 	return new ShowSettingsController(
 		$container->get(SettingsService::class),
+		$container->get(UserSession::class),
+		$container->get(Translator::class),
+		$container->get(CsrfToken::class),
+		$container->get(Messages::class)
+	);
+});
+$dependencies[ShowUpdateController::class] = DI\factory(function (ContainerInterface $container)
+{
+	return new ShowUpdateController(
+		$container->get(SelfUpdate::class),
+		$container->get(AppVersion::class),
+		$container->get(AclValidator::class),
 		$container->get(UserSession::class),
 		$container->get(Translator::class),
 		$container->get(CsrfToken::class),

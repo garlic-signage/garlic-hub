@@ -1,0 +1,11 @@
+# The button on the page /system/update writes this file, then the update runs as root.
+# PHP only requests it: garlic-hub-update takes the latest release, nothing of PHP, and deletes the request.
+[Unit]
+Description=garlic-hub: update requested on the web page
+
+[Path]
+PathExists=/var/www/garlic-hub/shared/var/update/requested
+Unit=garlic-hub-update.service
+
+[Install]
+WantedBy=multi-user.target

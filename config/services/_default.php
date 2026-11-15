@@ -55,6 +55,7 @@ use App\Framework\Localization\Locales\SessionLocaleExtractor;
 use App\Framework\Validation\Sanitizer;
 use App\Framework\Http\Session;
 use App\Framework\System\AppVersion;
+use App\Framework\System\SelfUpdate;
 use App\Framework\System\ShellExecutor;
 use App\Framework\System\SystemStats;
 use App\Framework\Localization\Translate\IniTranslationLoader;
@@ -167,7 +168,7 @@ $dependencies[LayoutDataProvider::class] = DI\factory(function (ContainerInterfa
 
 	return new LayoutDataProvider(
 		new MainMenuBuilder($session, $translator),
-		new UserMenuBuilder($session, $translator, $container->get(SettingsService::class), new AdministrationLinks($container->get(AclHelper::class), $translator)),
+		new UserMenuBuilder($session, $translator, $container->get(SettingsService::class), new AdministrationLinks($container->get(AclHelper::class), $translator, $container->get(SelfUpdate::class))),
 		new LanguageSelectBuilder($translator, $locales),
 		new FlashMessagesBuilder($flash),
 		$container->get(CsrfToken::class),
@@ -527,6 +528,12 @@ $dependencies[SystemDashboard::class] = DI\factory(function (ContainerInterface 
 $dependencies[AppVersion::class] = DI\factory(function (ContainerInterface $container)
 {
 	return new AppVersion($container->get(Config::class)->getPaths('systemDir'));
+});
+// the update from the web page, only with APP_SELF_UPDATE=true (Raspberry Pi image)
+$dependencies[SelfUpdate::class] = DI\factory(function (ContainerInterface $container)
+{
+	$config = $container->get(Config::class);
+	return new SelfUpdate($config->getEnv('APP_SELF_UPDATE') === 'true', $config->getPaths('varDir') . '/update');
 });
 $dependencies[CsrfToken::class] = DI\factory(function (ContainerInterface $container)
 {

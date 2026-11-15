@@ -109,6 +109,8 @@ $app->group('', function (RouteCollectorProxy $group) use ($container)
 	$group->get('/administration', resolve([\App\Modules\System\Controller\ShowAdministrationController::class, 'show'], $container));
 	$group->get('/system/settings', resolve([\App\Modules\System\Controller\ShowSettingsController::class, 'show'], $container));
 	$group->post('/system/settings', resolve([\App\Modules\System\Controller\ShowSettingsController::class, 'store'], $container));
+	$group->get('/system/update', resolve([\App\Modules\System\Controller\ShowUpdateController::class, 'show'], $container));
+	$group->post('/system/update', resolve([\App\Modules\System\Controller\ShowUpdateController::class, 'request'], $container));
 
 	$group->get('/users', resolve([\App\Modules\Users\Controller\ShowDatatableController::class, 'show'], $container));
 	$group->post('/users/edit', resolve([ShowAdminController::class, 'store'], $container));
