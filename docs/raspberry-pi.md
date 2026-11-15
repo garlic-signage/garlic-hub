@@ -95,6 +95,11 @@ The button gets no root rights: it only writes the file `shared/var/update/reque
 page shows the progress and the result of the last run from `shared/var/update/status.json`. The script always
 takes the latest release from GitHub, nothing of the page.
 
+**Automatic updates** are off by default. Switch them on in the system settings under *Automatic updates of
+garlic-hub*: every night between 1:00 and 2:00 the timer `garlic-hub-update-auto.timer` runs
+`garlic-hub-update --auto`, which only continues while the switch is on. It is done before the restart of the
+security updates at 3:00. The page *Update* shows the result of the last night.
+
 The update installs the latest release, if it is newer than the running one:
 
 1. downloads `garlic-hub.tar.gz` of the latest release and checks its sha256,

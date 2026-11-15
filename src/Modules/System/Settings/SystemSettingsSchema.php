@@ -21,18 +21,23 @@ declare(strict_types=1);
 
 namespace App\Modules\System\Settings;
 
+use App\Framework\System\SelfUpdate;
 use App\Shared\Settings\SettingField;
 use App\Shared\Settings\SettingsSchema;
 use App\Shared\Settings\SettingType;
 
 /**
  * The settings of the whole installation. All of them are off by default: the system is lean.
+ * The automatic update only where garlic-hub-update is installed (Raspberry Pi image): its timer reads the switch.
  */
 final readonly class SystemSettingsSchema implements SettingsSchema
 {
+	public function __construct(private SelfUpdate $selfUpdate)
+	{}
+
 	public function fields(): array
 	{
-		return [
+		$fields = [
 			new SettingField('Scheduler', 'enabled', SettingType::SWITCH, 'scheduler_enabled'),
 			// the scheduler deletes the old entries of the audit log
 			new SettingField('Audit', 'enabled', SettingType::SWITCH, 'audit_enabled', dependsOn: 'Scheduler.enabled'),
@@ -40,5 +45,9 @@ final readonly class SystemSettingsSchema implements SettingsSchema
 			new SettingField('Versioning', 'enabled', SettingType::SWITCH, 'versioning_enabled'),
 			new SettingField('Versioning', 'max_versions', SettingType::NUMBER, 'versioning_max_versions', 1, 100, dependsOn: 'Versioning.enabled'),
 		];
+		if ($this->selfUpdate->isAvailable())
+			$fields[] = new SettingField('Update', 'auto', SettingType::SWITCH, 'update_auto');
+
+		return $fields;
 	}
 }

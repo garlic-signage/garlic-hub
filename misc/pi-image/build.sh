@@ -174,10 +174,12 @@ echo "== Updates: security updates daily, a restart at 3 at night only when one 
 install -m 644 "$HERE/unattended-upgrades.conf" "$ROOT/etc/apt/apt.conf.d/52garlic-hub-unattended-upgrades"
 in_root systemctl enable apt-daily.timer apt-daily-upgrade.timer
 
-echo "== Update of garlic-hub: sudo garlic-hub-update or the button on /system/update"
+echo "== Update of garlic-hub: sudo garlic-hub-update, the button on /system/update or at night by the switch in the settings"
 install -m 755 "$HERE/update.sh" "$ROOT/usr/local/sbin/garlic-hub-update"
-install -m 644 "$HERE/garlic-hub-update.path" "$HERE/garlic-hub-update.service" "$ROOT/etc/systemd/system/"
-in_root systemctl enable garlic-hub-update.path
+install -m 644 "$HERE/garlic-hub-update.path" "$HERE/garlic-hub-update.service" \
+    "$HERE/garlic-hub-update-auto.timer" "$HERE/garlic-hub-update-auto.service" "$ROOT/etc/systemd/system/"
+# the timer runs every night, the update only while the switch in the settings is on
+in_root systemctl enable garlic-hub-update.path garlic-hub-update-auto.timer
 
 echo "== Start: tuning on every boot, secret, keys and database on the first one"
 install -D -m 755 "$HERE/boot.sh" "$ROOT/usr/local/lib/garlic-hub/boot.sh"

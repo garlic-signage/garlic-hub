@@ -2,6 +2,8 @@
 # Updates garlic-hub on a Pi with the garlic-hub image to the latest release. Installed as /usr/local/sbin/garlic-hub-update.
 # Started by hand (sudo garlic-hub-update) or by the button on the page /system/update: PHP writes
 # shared/var/update/requested, garlic-hub-update.path sees it and starts garlic-hub-update.service.
+# At night garlic-hub-update-auto.timer starts it with --auto: then it only runs when the switch
+# "Automatic updates" is on in the system settings (Update.auto in shared/var/settings/config_system.ini).
 #
 # Layout: releases/<version> holds the code, shared/ the data (var/, .env), current points to the running release.
 # The new release is unpacked beside the running one and gets the shared data as links. The database is saved and
@@ -17,8 +19,22 @@ SHARED=$BASE/shared
 UPDATE_DIR=$SHARED/var/update
 URL="${GARLIC_HUB_RELEASE_URL:-https://github.com/garlic-signage/garlic-hub/releases/latest/download}"
 KEEP=3
+AUTO=0
+[ "${1:-}" = "--auto" ] && AUTO=1
 
 [ "$(id -u)" = 0 ] || { echo "run as root: sudo garlic-hub-update" >&2; exit 1; }
+
+# the switch of the settings page, off without the file: PHP writes only the changed values
+auto_enabled() {
+    local ini="$SHARED/var/settings/config_system.ini"
+    [ -f "$ini" ] || return 1
+    awk '/^\[/ { section = $0; next }
+         section == "[Update]" && $0 ~ /^[ \t]*auto[ \t]*=/ { sub(/^[^=]*=[ \t]*/, ""); gsub(/"/, ""); sub(/[ \t;].*$/, ""); value = $0 }
+         END { exit value == "1" ? 0 : 1 }' "$ini"
+}
+if [ "$AUTO" = 1 ] && ! auto_enabled; then
+    exit 0
+fi
 
 exec 9> /run/garlic-hub-update.lock
 flock -n 9 || { echo "an update is already running" >&2; exit 1; }

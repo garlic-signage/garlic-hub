@@ -1,0 +1,12 @@
+# Automatic updates of garlic-hub: every night between 1 and 2, before the restart of unattended-upgrades at 3.
+# The script only updates while the switch "Automatic updates" is on in the system settings.
+# The random delay spreads the downloads of many Pis.
+[Unit]
+Description=garlic-hub: automatic update at night
+
+[Timer]
+OnCalendar=*-*-* 01:00
+RandomizedDelaySec=1h
+
+[Install]
+WantedBy=timers.target
