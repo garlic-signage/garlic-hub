@@ -62,6 +62,7 @@ class AuthServiceTest extends TestCase
 	/** @var list<array{int,string}> the hashes which were stored */
 	private array $storedHashes = [];
 	private int $removedCookies = 0;
+	private int $forgottenCookies = 0;
 	private ?string $remoteAddress;
 
 	protected function setUp(): void
@@ -84,6 +85,7 @@ class AuthServiceTest extends TestCase
 
 		$this->autoLoginService = $this->createStub(AutoLoginService::class);
 		$this->autoLoginService->method('removeAutoLogin')->willReturnCallback(function (): void { $this->removedCookies++; });
+		$this->autoLoginService->method('forgetCookie')->willReturnCallback(function (): void { $this->forgottenCookies++; });
 
 		$this->logs        = new TestHandler();
 		$this->authService = new AuthService($this->userService, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new MemoryLoginAttempts()), new NullAuditLog(), $this->createStub(TwoFactorService::class), new ClientIp('', new NullLogger()));
@@ -308,6 +310,7 @@ class AuthServiceTest extends TestCase
 		$this->autoLoginService->method('loadTokenFromCookie')->willThrowException(new AuthException('Autologin expired.'));
 		static::assertNull($this->authService->loginByCookie());
 		static::assertSame('Autologin expired.', $this->authService->getErrorMessage());
+		static::assertSame(1, $this->forgottenCookies, 'the cookie is no login at the next request either');
 
 		$entity = $this->authService->login('user@example.com', self::PASSWORD);
 
@@ -342,6 +345,7 @@ class AuthServiceTest extends TestCase
 
 		static::assertSame(1, $entity?->getMain()['UID']);
 		static::assertSame(0, $this->removedCookies);
+		static::assertSame(0, $this->forgottenCookies);
 	}
 
 	/**

@@ -31,7 +31,6 @@ use Defuse\Crypto\Exception\CryptoException;
 use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 use Slim\Flash\Messages;
 use Throwable;
 
@@ -68,7 +67,6 @@ readonly class TwoFactorController
 	 * @throws CryptoException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws Throwable
 	 * @throws UserException
 	 */
@@ -86,7 +84,6 @@ readonly class TwoFactorController
 	 * @throws CryptoException
 	 * @throws Exception
 	 * @throws FrameworkException
-	 * @throws InvalidArgumentException
 	 * @throws Throwable
 	 * @throws UserException
 	 */

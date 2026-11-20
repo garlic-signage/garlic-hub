@@ -47,6 +47,7 @@ use App\Shared\User\Repositories\Core\UserVipRepository;
 use App\Framework\Config\Config;
 use App\Framework\Config\ConfigOverrides;
 use App\Framework\Config\IniConfigLoader;
+use App\Framework\Http\ClientIp;
 use App\Framework\Http\Cookie;
 use App\Framework\Security\Crypt;
 use App\Framework\Security\CsrfToken;
@@ -202,6 +203,12 @@ $dependencies[Crypt::class] = DI\factory(function (ContainerInterface $container
 
 	$keyString = Key::loadFromAsciiSafeString(trim($keyString));
 	return new Crypt($keyString);
+});
+$dependencies[ClientIp::class] = DI\factory(function (ContainerInterface $container)
+{
+	$trustedProxies = $container->get(Config::class)->getConfigValue('trusted_proxies', 'main', 'Proxy');
+
+	return new ClientIp(IniConfigLoader::withoutComment($trustedProxies), $container->get('FrameworkLogger'));
 });
 $dependencies[Cookie::class] = DI\factory(function (ContainerInterface $container)
 {

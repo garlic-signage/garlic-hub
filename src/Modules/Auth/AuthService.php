@@ -270,6 +270,8 @@ class AuthService
 		}
 		catch (AuthException $e)
 		{
+			// a cookie which is no login now is none at the next request either: a database error keeps it
+			$this->autoLoginService->forgetCookie();
 			$this->logger->error($e->getMessage());
 			$this->errorMessage = $e->getMessage();
 			return null;

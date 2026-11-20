@@ -158,6 +158,51 @@ class AutoLoginTest extends ContainerTestCase
 		static::assertNull($this->loginByCookie());
 	}
 
+	/**
+	 * @return array<string, array{string}>
+	 */
+	public static function invalidCookies(): array
+	{
+		return ['unknown' => ['unknown'], 'expired' => ['expired'], 'used' => ['used'], 'another purpose' => ['purpose'], 'empty' => ['empty']];
+	}
+
+	/**
+	 * A cookie which is no login is taken away: otherwise every request without a session would ask the database and
+	 * log it again. A token of another purpose stays (testTheTokenOfAnotherPurposeStaysUsable).
+	 */
+	#[DataProvider('invalidCookies')]
+	public function testAnInvalidCookieIsTakenAway(string $case): void
+	{
+		$name = AutoLoginService::COOKIE_NAME_AUTO_LOGIN;
+		switch ($case)
+		{
+			case 'unknown':
+				$_COOKIE[$name] = bin2hex(random_bytes(32));
+				break;
+			case 'expired':
+				$this->autoLoginFor(10)->createAutologinCookie(10);
+				$this->connection->executeStatement("UPDATE user_tokens SET expires_at = '2000-01-01 00:00:00'");
+				break;
+			case 'used':
+				$this->autoLoginFor(10)->createAutologinCookie(10);
+				$used = (string) $_COOKIE[$name];
+				$this->loginByCookie();
+				$_COOKIE[$name] = $used;
+				break;
+			case 'purpose':
+				$token = $this->tokenService->generateToken();
+				$this->tokenService->insertToken(10, $token, TokenPurposes::PASSWORD_RESET);
+				$_COOKIE[$name] = $token;
+				break;
+			default:
+				$_COOKIE[$name] = '';
+		}
+
+		static::assertNull($this->loginByCookie());
+
+		static::assertFalse($this->cookie->hasCookie($name));
+	}
+
 	public function testNoCookieNoLogin(): void
 	{
 		static::assertNull($this->loginByCookie());

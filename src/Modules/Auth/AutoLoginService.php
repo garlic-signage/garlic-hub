@@ -115,6 +115,14 @@ class AutoLoginService
 	}
 
 	/**
+	 * Only the cookie: its token is not valid or gone already. Without it the next request does not try it again.
+	 */
+	public function forgetCookie(): void
+	{
+		$this->cookie->deleteCookie(self::COOKIE_NAME_AUTO_LOGIN);
+	}
+
+	/**
 	 * @throws Exception
 	 */
 	public function removeAutoLogin(): void
