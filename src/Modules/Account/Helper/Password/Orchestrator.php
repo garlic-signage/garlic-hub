@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Account\Helper\Password;
 
+use App\Framework\Http\ClientIp;
 use App\Framework\Config\Config;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Exceptions\CoreException;
@@ -51,7 +52,8 @@ readonly class Orchestrator
 		private SettingsFormBuilder $settingsFormBuilder,
 		private Config              $config,
 		private Translator          $translator,
-		private LoginThrottle       $loginThrottle
+		private LoginThrottle       $loginThrottle,
+		private ClientIp            $clientIp
 	) {}
 
 	/**
@@ -114,17 +116,15 @@ readonly class Orchestrator
 		$UID = $this->userSession->getUID();
 		// wrong current passwords count together with the login: a stolen session does not help to guess it
 		$identifier = $this->userSession->getUsername();
-		$ip         = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-		if ($this->loginThrottle->isBlocked($identifier, $ip))
+		$ip         = $this->clientIp->resolve($_SERVER);
+		if (!$this->loginThrottle->attempt($identifier, $ip))
 			return ['success' => false, 'errors' => [$this->translator->translate('current_password_blocked', 'account')]];
 
 		$current = is_string($post[SettingsFormBuilder::CURRENT_PASSWORD] ?? null) ? $post[SettingsFormBuilder::CURRENT_PASSWORD] : '';
 		if (!$this->accountService->checkPassword($UID, $current))
-		{
-			$this->loginThrottle->registerFailure($identifier, $ip);
 			return ['success' => false, 'errors' => [$this->translator->translate('wrong_current_password', 'account')]];
-		}
-		$this->loginThrottle->reset($identifier, $ip);
+
+		$this->loginThrottle->succeeded($identifier, $ip);
 
 		$errors = $this->formInputHandler->validate($post, $this->getPasswordPattern());
 		if ($errors !== [])

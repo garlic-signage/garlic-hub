@@ -19,6 +19,7 @@
 */
 declare(strict_types=1);
 
+use App\Framework\Http\ClientIp;
 use App\Framework\Config\Config;
 use App\Framework\Localization\Translate\Translator;
 use Slim\Flash\Messages;
@@ -32,6 +33,7 @@ use App\Modules\Auth\AuthService;
 use App\Modules\Auth\AutoLoginService;
 use App\Modules\Auth\LoginController;
 use App\Modules\Auth\LoginThrottle;
+use App\Modules\Auth\Repositories\LoginAttemptsRepository;
 use App\Modules\Auth\SsoLogin;
 use App\Shared\User\Sso\SsoUserProvisioning;
 use App\Shared\User\Repositories\Core\SsoProvidersRepository;
@@ -82,7 +84,7 @@ $dependencies[TwoFactorService::class] = DI\factory(function (ContainerInterface
 });
 $dependencies[LoginThrottle::class] = DI\factory(function (ContainerInterface $container)
 {
-	return new LoginThrottle($container->get(Psr16Adapter::class));
+	return new LoginThrottle(new LoginAttemptsRepository($container->get('SqlConnection'), new SystemClock()));
 });
 $dependencies[AuthService::class] = DI\factory(function (ContainerInterface $container)
 {
@@ -92,7 +94,8 @@ $dependencies[AuthService::class] = DI\factory(function (ContainerInterface $con
 		$container->get('ModuleLogger'),
 		$container->get(LoginThrottle::class),
 		$container->get(AuditLog::class),
-		$container->get(TwoFactorService::class)
+		$container->get(TwoFactorService::class),
+		$container->get(ClientIp::class)
 	);
 });
 $dependencies[LoginController::class] = DI\factory(function (ContainerInterface $container)

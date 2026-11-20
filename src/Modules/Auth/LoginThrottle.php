@@ -21,17 +21,17 @@ declare(strict_types=1);
 
 namespace App\Modules\Auth;
 
-use Psr\SimpleCache\CacheInterface;
-use Psr\SimpleCache\InvalidArgumentException;
-
 /**
  * Limits failed login attempts to slow down password guessing.
  *
- * Failures are counted per combination of username and IP address and additionally per IP address.
+ * Attempts are counted per combination of username and IP address and additionally per IP address.
  * The username alone is not blocked on purpose, otherwise anybody could lock out an admin by
- * sending wrong passwords. Every failure restarts the lock window.
+ * sending wrong passwords. Every attempt restarts the lock window.
  *
- * Behind a reverse proxy REMOTE_ADDR is the proxy, so the IP limit is rather high.
+ * An attempt counts before the password is checked: parallel requests must not all pass a limit which none of them
+ * raised yet. A right password takes its attempt back.
+ *
+ * The address is the one of the visitor (ClientIp), also behind a trusted reverse proxy.
  */
 readonly class LoginThrottle
 {
@@ -41,8 +41,35 @@ readonly class LoginThrottle
 	/** the codes of the second factor of a user from all addresses: who has the password tries from many */
 	public const int MAX_SECOND_FACTOR_FAILURES_PER_USER = 10;
 
-	public function __construct(private CacheInterface $cache)
+	public function __construct(private LoginAttempts $attempts)
 	{
+	}
+
+	/**
+	 * Counts the attempt before the password is checked.
+	 *
+	 * @return bool false when the user or the address is blocked: then the attempt does not count
+	 * @phpstan-impure it counts the attempt
+	 */
+	public function attempt(string $identifier, string $ip): bool
+	{
+		return $this->attempts->add($this->limits($identifier, $ip), self::LOCK_WINDOW_SECONDS) !== null;
+	}
+
+	/**
+	 * A right password frees the user, but not the address: a guesser who knows one password must not reset the
+	 * counter of the address with it. Only the attempt of the right password is taken back there.
+	 */
+	public function succeeded(string $identifier, string $ip): void
+	{
+		$this->attempts->delete($this->userKey($identifier, $ip));
+		$this->attempts->remove($this->ipKey($ip));
+	}
+
+	public function isBlocked(string $identifier, string $ip): bool
+	{
+		return $this->attempts->count($this->userKey($identifier, $ip)) >= self::MAX_FAILURES_PER_USER_AND_IP
+			|| $this->attempts->count($this->ipKey($ip)) >= self::MAX_FAILURES_PER_IP;
 	}
 
 	/**
@@ -50,38 +77,54 @@ readonly class LoginThrottle
 	 * a password, and per user from all addresses. Who guesses them has the password already, so the user may be
 	 * locked out for the window: the password login does not lock the user alone on purpose.
 	 *
-	 * @throws InvalidArgumentException
+	 * @return int the number of this attempt of the user on all addresses, 0 when blocked: then it does not count
+	 * @phpstan-impure it counts the attempt
 	 */
+	public function attemptSecondFactor(int $UID, string $ip): int
+	{
+		$userKey = self::secondFactorUserKey($UID);
+		$counts  = $this->attempts->add(
+			$this->limits(self::secondFactor($UID), $ip) + [$userKey => self::MAX_SECOND_FACTOR_FAILURES_PER_USER],
+			self::LOCK_WINDOW_SECONDS
+		);
+
+		return $counts[$userKey] ?? 0;
+	}
+
+	/**
+	 * Whether the failure of this attempt locks the user on all addresses (for the audit log): only the one which
+	 * reaches the limit, the following attempts are blocked before.
+	 */
+	public function locksSecondFactor(int $attempt): bool
+	{
+		return $attempt === self::MAX_SECOND_FACTOR_FAILURES_PER_USER;
+	}
+
+	/**
+	 * A valid code ends the lock of this address. The failures of the user stay until the window ends: the valid
+	 * code of the user must not give the one who guesses new tries. Only the attempt of the valid code is taken back.
+	 */
+	public function succeededSecondFactor(int $UID, string $ip): void
+	{
+		$this->attempts->delete($this->userKey(self::secondFactor($UID), $ip));
+		$this->attempts->remove($this->ipKey($ip), self::secondFactorUserKey($UID));
+	}
+
 	public function isSecondFactorBlocked(int $UID, string $ip): bool
 	{
 		return $this->isBlocked(self::secondFactor($UID), $ip)
-			|| $this->count(self::secondFactorUserKey($UID)) >= self::MAX_SECOND_FACTOR_FAILURES_PER_USER;
+			|| $this->attempts->count(self::secondFactorUserKey($UID)) >= self::MAX_SECOND_FACTOR_FAILURES_PER_USER;
 	}
 
 	/**
-	 * @return bool true when this failure locks the user on all addresses (for the audit log)
-	 * @throws InvalidArgumentException
-	 * @phpstan-impure it counts the failure, a check before is outdated afterwards
+	 * @return array<string,int>
 	 */
-	public function registerSecondFactorFailure(int $UID, string $ip): bool
+	private function limits(string $identifier, string $ip): array
 	{
-		$this->registerFailure(self::secondFactor($UID), $ip);
-		$key   = self::secondFactorUserKey($UID);
-		$count = $this->count($key) + 1;
-		$this->cache->set($key, $count, self::LOCK_WINDOW_SECONDS);
-
-		return $count === self::MAX_SECOND_FACTOR_FAILURES_PER_USER;
-	}
-
-	/**
-	 * A valid code ends the lock of this address. The count of the user stays until the window ends: the valid code
-	 * of the user must not give the one who guesses new tries.
-	 *
-	 * @throws InvalidArgumentException
-	 */
-	public function resetSecondFactor(int $UID, string $ip): void
-	{
-		$this->reset(self::secondFactor($UID), $ip);
+		return [
+			$this->userKey($identifier, $ip) => self::MAX_FAILURES_PER_USER_AND_IP,
+			$this->ipKey($ip)                => self::MAX_FAILURES_PER_IP
+		];
 	}
 
 	private static function secondFactor(int $UID): string
@@ -94,43 +137,6 @@ readonly class LoginThrottle
 	{
 		// @infection-ignore-all any order of the parts gives a key of its own
 		return 'two_factor_fail_user_' . $UID;
-	}
-
-	/**
-	 * @throws InvalidArgumentException
-	 */
-	public function isBlocked(string $identifier, string $ip): bool
-	{
-		return $this->count($this->userKey($identifier, $ip)) >= self::MAX_FAILURES_PER_USER_AND_IP
-			|| $this->count($this->ipKey($ip)) >= self::MAX_FAILURES_PER_IP;
-	}
-
-	/**
-	 * @throws InvalidArgumentException
-	 */
-	public function registerFailure(string $identifier, string $ip): void
-	{
-		foreach ([$this->userKey($identifier, $ip), $this->ipKey($ip)] as $key)
-			$this->cache->set($key, $this->count($key) + 1, self::LOCK_WINDOW_SECONDS);
-	}
-
-	/**
-	 * @throws InvalidArgumentException
-	 */
-	public function reset(string $identifier, string $ip): void
-	{
-		$this->cache->delete($this->userKey($identifier, $ip));
-	}
-
-	/**
-	 * @throws InvalidArgumentException
-	 */
-	private function count(string $key): int
-	{
-		$value = $this->cache->get($key, 0);
-
-		// @infection-ignore-all only a foreign value in the cache, the throttle writes integers
-		return is_int($value) ? $value : 0;
 	}
 
 	private function userKey(string $identifier, string $ip): string

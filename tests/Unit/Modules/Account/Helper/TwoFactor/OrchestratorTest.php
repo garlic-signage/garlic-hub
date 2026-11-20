@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Account\Helper\TwoFactor;
 
+use Psr\Log\NullLogger;
+use App\Framework\Http\ClientIp;
 use App\Framework\Config\Config;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Security\CsrfToken;
@@ -35,7 +37,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use Tests\Support\ArrayCache;
+use Tests\Support\MemoryLoginAttempts;
 use Tests\Support\MemorySession;
 
 /**
@@ -87,10 +89,11 @@ class OrchestratorTest extends TestCase
 			$this->configStub,
 			$translator,
 			$csrfTokenStub,
-			new LoginThrottle(new ArrayCache()),
+			new LoginThrottle(new MemoryLoginAttempts()),
 			new NullAuditLog(),
 			$usersServiceStub,
-			$this->createStub(UserTokenService::class)
+			$this->createStub(UserTokenService::class),
+			new ClientIp('', new NullLogger())
 		);
 	}
 

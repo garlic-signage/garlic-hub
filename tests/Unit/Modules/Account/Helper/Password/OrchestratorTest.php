@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Account\Helper\Password;
 
+use Psr\Log\NullLogger;
+use App\Framework\Http\ClientIp;
 use App\Framework\Config\Config;
 use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Exceptions\TranslatableModuleException;
@@ -40,7 +42,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use Tests\Support\ArrayCache;
+use Tests\Support\MemoryLoginAttempts;
 use Tests\Support\RecordingConfigLoader;
 
 /**
@@ -89,7 +91,8 @@ class OrchestratorTest extends TestCase
 			new SettingsFormBuilder(new FormElementsCreator($this->fixture->formBuilder, $translator)),
 			$config,
 			$translator,
-			new LoginThrottle(new ArrayCache())
+			new LoginThrottle(new MemoryLoginAttempts()),
+			new ClientIp('', new NullLogger())
 		);
 	}
 
@@ -496,7 +499,8 @@ class OrchestratorTest extends TestCase
 			new SettingsFormBuilder(new FormElementsCreator($this->fixture->formBuilder, $translator)),
 			new Config(new RecordingConfigLoader(['main' => ['password_pattern' => PasswordFixture::PATTERN]])),
 			$translator,
-			new LoginThrottle(new ArrayCache())
+			new LoginThrottle(new MemoryLoginAttempts()),
+			new ClientIp('', new NullLogger())
 		);
 	}
 }

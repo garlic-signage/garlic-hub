@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Auth;
 
+use App\Framework\Http\ClientIp;
 use App\Framework\Exceptions\AuthException;
 use App\Framework\Exceptions\FrameworkException;
 use App\Shared\User\UserStatus;
@@ -33,7 +34,6 @@ use DateMalformedStringException;
 use Defuse\Crypto\Exception\CryptoException;
 use Doctrine\DBAL\Exception;
 use Psr\Log\LoggerInterface;
-use Psr\SimpleCache\InvalidArgumentException;
 use Throwable;
 
 /**
@@ -54,7 +54,8 @@ class AuthService
 								private readonly LoggerInterface    $logger,
 								private readonly LoginThrottle      $loginThrottle,
 								private readonly AuditLog           $auditLog,
-								private readonly TwoFactorService   $twoFactorService)
+								private readonly TwoFactorService   $twoFactorService,
+								private readonly ClientIp           $clientIp)
 	{}
 
 	public function getErrorMessage(): string
@@ -64,15 +65,14 @@ class AuthService
 
 	/**
 	 * @throws Exception
-	 * @throws InvalidArgumentException
 	 */
 	public function login(string $identifier, string $password): ?UserEntity
 	{
 		// the service lives for the whole request: a failed login by cookie before must not stop this one
 		$this->errorMessage = '';
-		$ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+		$ip = $this->clientIp->resolve($_SERVER);
 		$userData = $this->userService->findUser($identifier);
-		if ($this->loginThrottle->isBlocked($identifier, $ip))
+		if (!$this->loginThrottle->attempt($identifier, $ip))
 		{
 			$this->errorMessage = 'Too many failed login attempts. Please try again later.';
 			$this->logger->warning('Login blocked', ['username' => self::loggableIdentifier($identifier, $userData !== []), 'ip_address' => $ip]);
@@ -86,10 +86,9 @@ class AuthService
 		if ($hash === '')
 			password_hash($password, PASSWORD_DEFAULT);
 
-		// an empty hash matches no password
+		// an empty hash matches no password, the attempt counts already
 		if (!password_verify($password, $hash))
 		{
-			$this->loginThrottle->registerFailure($identifier, $ip);
 			$this->errorMessage = 'Invalid credentials.';
 			$this->logger->error('Login failed', [
 				'username' => self::loggableIdentifier($identifier, $userData !== []),
@@ -100,11 +99,11 @@ class AuthService
 			$this->recordFailedLogin($identifier, $ip, isset($userData['UID']) ? (int) $userData['UID'] : null);
 			return null;
 		}
+		$this->loginThrottle->succeeded($identifier, $ip);
 		$this->validateUserStatus($userData['status']);
 		if (!empty($this->errorMessage))
 			return null;
 
-		$this->loginThrottle->reset($identifier, $ip);
 		$this->rehashPasswordIfOutdated($userData['UID'], $password, $userData['password']);
 		$this->userService->invalidateCache($userData['UID']);
 		$this->logger->info('Invalidate user cache for: '. $identifier. ' with id:'. $userData['UID']);
@@ -132,13 +131,13 @@ class AuthService
 	 *
 	 * @throws CryptoException
 	 * @throws Exception
-	 * @throws InvalidArgumentException
 	 */
 	public function loginWithSecondFactor(int $UID, string $code): ?UserEntity
 	{
 		$this->errorMessage = '';
-		$ip         = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-		if ($this->loginThrottle->isSecondFactorBlocked($UID, $ip))
+		$ip         = $this->clientIp->resolve($_SERVER);
+		$attempt    = $this->loginThrottle->attemptSecondFactor($UID, $ip);
+		if ($attempt === 0)
 		{
 			$this->errorMessage = 'two_factor_blocked';
 			$this->logger->warning('Second factor blocked', ['UID' => $UID, 'ip_address' => $ip]);
@@ -147,14 +146,14 @@ class AuthService
 
 		if (!$this->twoFactorService->verify($UID, $code))
 		{
-			$locked = $this->loginThrottle->registerSecondFactorFailure($UID, $ip);
+			$locked = $this->loginThrottle->locksSecondFactor($attempt);
 			$this->errorMessage = $this->loginThrottle->isSecondFactorBlocked($UID, $ip) ? 'two_factor_blocked' : 'two_factor_wrong';
 			$this->logger->error('Second factor failed', ['UID' => $UID, 'ip_address' => $ip]);
 			$this->recordFailedSecondFactor($UID, $ip, $locked);
 			return null;
 		}
 
-		$this->loginThrottle->resetSecondFactor($UID, $ip);
+		$this->loginThrottle->succeededSecondFactor($UID, $ip);
 		// an admin may have blocked the user since the password was checked
 		$entity = $this->getCurrentUser($UID);
 		$this->validateUserStatus((int) $entity->getMain()['status']);

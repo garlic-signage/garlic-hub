@@ -21,13 +21,13 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Modules\Account\Services;
 
+use App\Framework\Http\ClientIp;
 use App\Framework\Exceptions\TranslatableModuleException;
 use App\Modules\Auth\AuthService;
 use App\Modules\Auth\AutoLoginService;
 use App\Modules\Auth\LoginThrottle;
 use App\Shared\Audit\AuditLog;
 use App\Shared\User\UsersService;
-use Phpfastcache\Helper\Psr16Adapter;
 use App\Modules\Account\Helper\Password\Orchestrator;
 use App\Modules\Account\Services\AccountService;
 use App\Shared\User\TokenPurposes;
@@ -239,9 +239,10 @@ class PasswordTest extends ContainerTestCase
 			$this->container->get(UsersService::class),
 			$this->container->get(AutoLoginService::class),
 			$this->container->get('ModuleLogger'),
-			new LoginThrottle($this->container->get(Psr16Adapter::class)),
+			$this->container->get(LoginThrottle::class),
 			$this->container->get(AuditLog::class),
-			$this->container->get(TwoFactorService::class)
+			$this->container->get(TwoFactorService::class),
+			$this->container->get(ClientIp::class)
 		);
 
 		static::assertNull($authService->loginByCookie());

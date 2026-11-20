@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Account\Helper\TwoFactor;
 
+use App\Framework\Http\ClientIp;
 use App\Framework\Config\Config;
 use App\Framework\Exceptions\CoreException;
 use App\Framework\Exceptions\FrameworkException;
@@ -38,7 +39,6 @@ use App\Shared\User\UsersService;
 use App\Shared\User\TwoFactor\TwoFactorService;
 use Defuse\Crypto\Exception\CryptoException;
 use Doctrine\DBAL\Exception;
-use Psr\SimpleCache\InvalidArgumentException;
 use Throwable;
 
 /**
@@ -60,7 +60,8 @@ readonly class Orchestrator
 		private LoginThrottle $loginThrottle,
 		private AuditLog $auditLog,
 		private UsersService $usersService,
-		private UserTokenService $userTokenService
+		private UserTokenService $userTokenService,
+		private ClientIp $clientIp
 	) {}
 
 	/**
@@ -125,22 +126,22 @@ readonly class Orchestrator
 	 * @return string the key of the error, empty when the new codes are in the session
 	 * @throws CryptoException
 	 * @throws Exception
-	 * @throws InvalidArgumentException
 	 * @throws Throwable
 	 * @throws UserException
 	 */
 	public function createRecoveryCodes(string $code): string
 	{
 		$UID = $this->userSession->getUID();
-		$ip  = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-		if ($this->loginThrottle->isSecondFactorBlocked($UID, $ip))
+		$ip  = $this->clientIp->resolve($_SERVER);
+		$attempt = $this->loginThrottle->attemptSecondFactor($UID, $ip);
+		if ($attempt === 0)
 			return 'two_factor_blocked';
 
 		$codes = $this->twoFactorService->createRecoveryCodes($UID, $code);
 		if ($codes === [])
-			return $this->failSecondFactor($UID, $ip);
+			return $this->failSecondFactor($UID, $ip, $attempt);
 
-		$this->loginThrottle->resetSecondFactor($UID, $ip);
+		$this->loginThrottle->succeededSecondFactor($UID, $ip);
 		$this->session->set(self::NEW_CODES, ['codes' => $codes]);
 
 		return '';
@@ -154,7 +155,6 @@ readonly class Orchestrator
 	 * @throws CoreException
 	 * @throws CryptoException
 	 * @throws Exception
-	 * @throws InvalidArgumentException
 	 * @throws Throwable
 	 * @throws UserException
 	 */
@@ -164,14 +164,15 @@ readonly class Orchestrator
 			return 'two_factor_wrong_code';
 
 		$UID = $this->userSession->getUID();
-		$ip  = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-		if ($this->loginThrottle->isSecondFactorBlocked($UID, $ip))
+		$ip  = $this->clientIp->resolve($_SERVER);
+		$attempt = $this->loginThrottle->attemptSecondFactor($UID, $ip);
+		if ($attempt === 0)
 			return 'two_factor_blocked';
 
 		if (!$this->twoFactorService->disable($UID, $code))
-			return $this->failSecondFactor($UID, $ip);
+			return $this->failSecondFactor($UID, $ip, $attempt);
 
-		$this->loginThrottle->resetSecondFactor($UID, $ip);
+		$this->loginThrottle->succeededSecondFactor($UID, $ip);
 		// the other sessions know that he had it: one of them must not keep it when the admin requires it later
 		$this->userSession->keepAfterPasswordChange($this->usersService->endSessions($UID));
 		$this->userSession->setTwoFactor(false);
@@ -249,11 +250,10 @@ readonly class Orchestrator
 
 	/**
 	 * @return string the key of the error
-	 * @throws InvalidArgumentException
 	 */
-	private function failSecondFactor(int $UID, string $ip): string
+	private function failSecondFactor(int $UID, string $ip, int $attempt): string
 	{
-		if ($this->loginThrottle->registerSecondFactorFailure($UID, $ip))
+		if ($this->loginThrottle->locksSecondFactor($attempt))
 			$this->auditLog->record($UID, self::MODULE_NAME, AuditAction::TWO_FACTOR_LOCKED, null, $UID, ['ip_address' => $ip]);
 
 		return $this->loginThrottle->isSecondFactorBlocked($UID, $ip) ? 'two_factor_blocked' : 'two_factor_wrong_code';

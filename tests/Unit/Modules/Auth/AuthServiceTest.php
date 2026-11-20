@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Auth;
 
+use Psr\Log\NullLogger;
+use App\Framework\Http\ClientIp;
 use App\Framework\Exceptions\AuthException;
 use App\Modules\Auth\AuthService;
 use App\Modules\Auth\AutoLoginService;
@@ -39,7 +41,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use Tests\Support\ArrayCache;
+use Tests\Support\MemoryLoginAttempts;
 use App\Shared\User\TwoFactor\TwoFactorService;
 
 /**
@@ -84,7 +86,7 @@ class AuthServiceTest extends TestCase
 		$this->autoLoginService->method('removeAutoLogin')->willReturnCallback(function (): void { $this->removedCookies++; });
 
 		$this->logs        = new TestHandler();
-		$this->authService = new AuthService($this->userService, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new ArrayCache()), new NullAuditLog(), $this->createStub(TwoFactorService::class));
+		$this->authService = new AuthService($this->userService, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new MemoryLoginAttempts()), new NullAuditLog(), $this->createStub(TwoFactorService::class), new ClientIp('', new NullLogger()));
 	}
 
 	protected function tearDown(): void
@@ -255,6 +257,46 @@ class AuthServiceTest extends TestCase
 	}
 
 	/**
+	 * Behind a trusted reverse proxy the failures of one visitor do not lock the others: every one has his address.
+	 *
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testBehindATrustedProxyTheVisitorsHaveTheirOwnLimit(): void
+	{
+		$service = new AuthService($this->userService, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new MemoryLoginAttempts()), new NullAuditLog(), $this->createStub(TwoFactorService::class), new ClientIp('10.0.0.1', new NullLogger()));
+		try
+		{
+			for ($i = 0; $i < LoginThrottle::MAX_FAILURES_PER_IP; $i++)
+			{
+				$_SERVER['HTTP_X_FORWARDED_FOR'] = '203.0.113.7';
+				$service->login('user' . $i . '@example.com', 'wrong');
+			}
+			static::assertNull($service->login('user@example.com', self::PASSWORD));
+
+			$_SERVER['HTTP_X_FORWARDED_FOR'] = '198.51.100.9';
+			static::assertNotNull($service->login('user@example.com', self::PASSWORD));
+		}
+		finally
+		{
+			unset($_SERVER['HTTP_X_FORWARDED_FOR']);
+		}
+	}
+
+	/**
+	 * The attempt counts before the password is checked, a right one takes it back: the logins of an office
+	 * behind one address do not fill its limit.
+	 *
+	 * @throws \Exception
+	 */
+	#[Group('units')]
+	public function testRightPasswordsDoNotCountForTheAddress(): void
+	{
+		for ($i = 0; $i <= LoginThrottle::MAX_FAILURES_PER_IP; $i++)
+			static::assertNotNull($this->authService->login('user@example.com', self::PASSWORD));
+	}
+
+	/**
 	 * The service lives for the whole request. A failed login by cookie before (the AuthMiddleware tries it
 	 * for every guest with a cookie) must not stop the login by password.
 	 *
@@ -385,7 +427,7 @@ class AuthServiceTest extends TestCase
 		$users->method('findUser')->willReturn($this->users['user@example.com']);
 		$users->method('getUserById')->willReturn($this->entity(1));
 		$users->method('updatePasswordHash')->willThrowException(new DbalException('database is read only'));
-		$service = new AuthService($users, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new ArrayCache()), new NullAuditLog(), $this->createStub(TwoFactorService::class));
+		$service = new AuthService($users, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new MemoryLoginAttempts()), new NullAuditLog(), $this->createStub(TwoFactorService::class), new ClientIp('', new NullLogger()));
 
 		static::assertNotNull($service->login('user@example.com', self::PASSWORD));
 		static::assertTrue($this->logs->hasWarningThatContains('could not be renewed'));
@@ -441,7 +483,7 @@ class AuthServiceTest extends TestCase
 	{
 		$auditLog = $this->createStub(AuditLog::class);
 		$auditLog->method('record')->willThrowException(new DbalException('database is locked'));
-		$service = new AuthService($this->userService, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new ArrayCache()), $auditLog, $this->createStub(TwoFactorService::class));
+		$service = new AuthService($this->userService, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new MemoryLoginAttempts()), $auditLog, $this->createStub(TwoFactorService::class), new ClientIp('', new NullLogger()));
 
 		static::assertNull($service->login('user@example.com', 'wrong'));
 		static::assertSame('Invalid credentials.', $service->getErrorMessage());
@@ -462,7 +504,7 @@ class AuthServiceTest extends TestCase
 		{
 			$recorded[] = [$UID, $module, $action, $unitId, $targetUID, $details];
 		});
-		$service = new AuthService($this->userService, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new ArrayCache()), $auditLog, $this->createStub(TwoFactorService::class));
+		$service = new AuthService($this->userService, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new MemoryLoginAttempts()), $auditLog, $this->createStub(TwoFactorService::class), new ClientIp('', new NullLogger()));
 
 		for ($i = 1; $i <= LoginThrottle::MAX_SECOND_FACTOR_FAILURES_PER_USER; $i++)
 		{
@@ -491,7 +533,7 @@ class AuthServiceTest extends TestCase
 		});
 		$twoFactor = $this->createStub(TwoFactorService::class);
 		$twoFactor->method('verify')->willReturnCallback(static fn(int $UID, string $code): bool => $code === '123456');
-		$service = new AuthService($this->userService, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new ArrayCache()), $auditLog, $twoFactor);
+		$service = new AuthService($this->userService, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new MemoryLoginAttempts()), $auditLog, $twoFactor, new ClientIp('', new NullLogger()));
 
 		for ($i = 1; $i <= LoginThrottle::MAX_SECOND_FACTOR_FAILURES_PER_USER; $i++)
 		{
@@ -560,7 +602,7 @@ class AuthServiceTest extends TestCase
 			$targets[] = $targetUID;
 		});
 		$this->users['user@example.com']['UID'] = '1';
-		$service = new AuthService($this->userService, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new ArrayCache()), $auditLog, $this->createStub(TwoFactorService::class));
+		$service = new AuthService($this->userService, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new MemoryLoginAttempts()), $auditLog, $this->createStub(TwoFactorService::class), new ClientIp('', new NullLogger()));
 
 		static::assertNull($service->login('user@example.com', 'wrong'));
 		static::assertSame([1], $targets);
@@ -583,7 +625,7 @@ class AuthServiceTest extends TestCase
 
 			return $this->entity($UID);
 		});
-		$service = new AuthService($users, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new ArrayCache()), new NullAuditLog(), $this->createStub(TwoFactorService::class));
+		$service = new AuthService($users, $this->autoLoginService, new Logger('test', [$this->logs]), new LoginThrottle(new MemoryLoginAttempts()), new NullAuditLog(), $this->createStub(TwoFactorService::class), new ClientIp('', new NullLogger()));
 
 		static::assertNotNull($service->loginBySso(1));
 		static::assertSame(['invalidate 1', 'read 1'], $events);

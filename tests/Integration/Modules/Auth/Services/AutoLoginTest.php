@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Modules\Auth\Services;
 
+use App\Framework\Http\ClientIp;
 use App\Modules\Auth\AuthService;
 use App\Modules\Auth\AutoLoginService;
 use App\Modules\Auth\LoginThrottle;
@@ -31,7 +32,6 @@ use App\Shared\User\UsersService;
 use App\Shared\User\UserTokenService;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
-use Phpfastcache\Helper\Psr16Adapter;
 use Tests\Integration\Support\ContainerTestCase;
 use Tests\Integration\Support\InMemoryCookie;
 use App\Shared\User\TwoFactor\TwoFactorService;
@@ -321,9 +321,10 @@ class AutoLoginTest extends ContainerTestCase
 			$this->container->get(UsersService::class),
 			$this->container->get(AutoLoginService::class),
 			$this->container->get('ModuleLogger'),
-			new LoginThrottle($this->container->get(Psr16Adapter::class)),
+			$this->container->get(LoginThrottle::class),
 			$this->container->get(AuditLog::class),
-			$this->container->get(TwoFactorService::class)
+			$this->container->get(TwoFactorService::class),
+			$this->container->get(ClientIp::class)
 		);
 	}
 }
