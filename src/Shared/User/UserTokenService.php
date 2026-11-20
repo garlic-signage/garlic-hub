@@ -206,7 +206,7 @@ class UserTokenService extends AbstractBaseService
 	{
 		$token = $this->crypt->createHmacSha256($token);
 
-		return $this->userTokensRepository->update($token, ['used_at' => date('Y-m-d H:i:s')]);
+		return $this->userTokensRepository->markUsed($token, date('Y-m-d H:i:s'));
 	}
 
 	private function determineExpireAtByPurpose(TokenPurposes $purpose): string

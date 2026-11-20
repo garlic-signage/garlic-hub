@@ -104,6 +104,7 @@ class AutoLoginTest extends ContainerTestCase
 		$this->autoLoginFor(10)->createAutologinCookie(10);
 		$stolen = (string) $this->cookie->getCookie(AutoLoginService::COOKIE_NAME_AUTO_LOGIN);
 		$this->loginByCookie();
+		$this->ageUsedTokens();
 
 		$_COOKIE[AutoLoginService::COOKIE_NAME_AUTO_LOGIN] = $stolen;
 		static::assertNull($this->loginByCookie());
@@ -123,6 +124,7 @@ class AutoLoginTest extends ContainerTestCase
 		$other          = $this->connection->fetchOne('SELECT last_password_change FROM user_main WHERE UID = 14');
 		static::assertTrue($this->newAuthService()->isUserActive(10, is_string($sessionVersion) ? $sessionVersion : null));
 		sleep(1);
+		$this->ageUsedTokens();
 
 		$_COOKIE[AutoLoginService::COOKIE_NAME_AUTO_LOGIN] = $stolen;
 		$this->loginByCookie();
@@ -131,12 +133,50 @@ class AutoLoginTest extends ContainerTestCase
 		static::assertSame($other, $this->connection->fetchOne('SELECT last_password_change FROM user_main WHERE UID = 14'));
 	}
 
+	/**
+	 * Restored tabs after the start of the browser send the same cookie: every request logs in, only the first one
+	 * gets the next cookie. Nobody is logged out for a theft.
+	 */
+	public function testParallelRequestsWithTheSameCookieLogIn(): void
+	{
+		$this->autoLoginFor(10)->createAutologinCookie(10);
+		$cookie = (string) $this->cookie->getCookie(AutoLoginService::COOKIE_NAME_AUTO_LOGIN);
+		$first = $this->loginByCookie();
+		$next  = (string) $this->cookie->getCookie(AutoLoginService::COOKIE_NAME_AUTO_LOGIN);
+
+		$_COOKIE[AutoLoginService::COOKIE_NAME_AUTO_LOGIN] = $cookie;
+		$second = $this->loginByCookie();
+
+		static::assertSame([10, 10], [$first?->getMain()['UID'], $second?->getMain()['UID']]);
+
+		static::assertSame($cookie, $this->cookie->getCookie(AutoLoginService::COOKIE_NAME_AUTO_LOGIN), 'no further cookie');
+		static::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_tokens WHERE UID = 10 AND used_at IS NULL'));
+		static::assertNotNull($this->tokenService->findByToken($next), 'the cookie of the first answer stays valid');
+	}
+
+	/**
+	 * The grace time ends after 60 seconds: a request at its end still logs in, a later one is a theft.
+	 */
+	public function testTheGraceTimeIncludesItsLastSecond(): void
+	{
+		$this->autoLoginFor(10)->createAutologinCookie(10);
+		$cookie = (string) $this->cookie->getCookie(AutoLoginService::COOKIE_NAME_AUTO_LOGIN);
+		$this->loginByCookie();
+		$this->connection->executeStatement('UPDATE user_tokens SET used_at = ? WHERE used_at IS NOT NULL',
+			[date('Y-m-d H:i:s', time() - AutoLoginService::REUSE_GRACE_SECONDS)]);
+
+		$_COOKIE[AutoLoginService::COOKIE_NAME_AUTO_LOGIN] = $cookie;
+
+		static::assertSame(10, $this->loginByCookie()?->getMain()['UID']);
+	}
+
 	public function testReplayDoesNotTouchTheTokensOfOtherUsers(): void
 	{
 		$this->autoLoginFor(14)->createAutologinCookie(14);
 		$this->autoLoginFor(10)->createAutologinCookie(10);
 		$stolen = (string) $this->cookie->getCookie(AutoLoginService::COOKIE_NAME_AUTO_LOGIN);
 		$this->loginByCookie();
+		$this->ageUsedTokens();
 		$_COOKIE[AutoLoginService::COOKIE_NAME_AUTO_LOGIN] = $stolen;
 		$this->loginByCookie();
 
@@ -187,6 +227,7 @@ class AutoLoginTest extends ContainerTestCase
 				$this->autoLoginFor(10)->createAutologinCookie(10);
 				$used = (string) $_COOKIE[$name];
 				$this->loginByCookie();
+				$this->ageUsedTokens();
 				$_COOKIE[$name] = $used;
 				break;
 			case 'purpose':
@@ -348,6 +389,15 @@ class AutoLoginTest extends ContainerTestCase
 		static::assertFalse($this->cookie->hasCookie(AutoLoginService::COOKIE_NAME_AUTO_LOGIN));
 		static::assertSame(1, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_tokens'));
 		static::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM user_tokens WHERE UID = 14'));
+	}
+
+	/**
+	 * The used tokens were used before the grace time: a request with one of them is no parallel one.
+	 */
+	private function ageUsedTokens(): void
+	{
+		$this->connection->executeStatement('UPDATE user_tokens SET used_at = ? WHERE used_at IS NOT NULL',
+			[date('Y-m-d H:i:s', time() - AutoLoginService::REUSE_GRACE_SECONDS - 1)]);
 	}
 
 	private function autoLoginFor(int $UID): AutoLoginService

@@ -19,64 +19,44 @@
 */
 declare(strict_types=1);
 
-
 namespace Tests\Unit\Modules\Auth;
 
-use App\Framework\Exceptions\AuthException;
 use App\Framework\Http\Cookie;
 use App\Modules\Auth\AutoLoginService;
-use App\Shared\User\UserTokenService;
+use App\Shared\User\TokenPurposes;
 use App\Shared\User\UsersService;
+use App\Shared\User\UserTokenService;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
 /**
- * The cookie is the only border here. Everything which works with the tokens in the database is tested
- * with the real database in tests/Integration/Modules/Auth/Services/AutoLoginTest.
+ * The race of parallel requests, which the database tests can not run: the token is unused when the request reads
+ * it and used when it wants to use it. The rest is tested against the database (AutoLoginTest).
  */
+#[Group('units')]
 class AutoLoginServiceTest extends TestCase
 {
-	private Cookie&Stub $cookie;
-	private AutoLoginService $autoLoginService;
-
-	protected function setUp(): void
+	/**
+	 * @throws \Exception
+	 */
+	public function testARequestWhichLostTheRaceLogsInWithoutANewCookie(): void
 	{
-		parent::setUp();
-		$this->cookie           = $this->createStub(Cookie::class);
-		$this->autoLoginService = new AutoLoginService($this->createStub(UserTokenService::class), $this->cookie, new NullLogger(), $this->createStub(UsersService::class));
-	}
+		$tokens = $this->createMock(UserTokenService::class);
+		$tokens->method('findByTokenForAction')->willReturn([
+			'UID' => 10, 'company_id' => 1, 'username' => 'user', 'status' => 3, 'purpose' => TokenPurposes::AUTOLOGIN->value,
+			'expires_at' => date('Y-m-d H:i:s', time() + 3600), 'used_at' => null
+		]);
+		$tokens->method('useToken')->willReturn(0);
+		$tokens->expects($this->never())->method('insertToken');
+		$tokens->expects($this->never())->method('deleteAllUserTokens');
+		$cookie = $this->createMock(Cookie::class);
+		$cookie->expects($this->never())->method('createCookie');
+		$users = $this->createMock(UsersService::class);
+		$users->expects($this->never())->method('endSessions');
 
-	#[Group('units')]
-	public function testTheTokenIsTheValueOfTheCookie(): void
-	{
-		$this->cookie->method('hasCookie')->willReturnCallback(static fn(string $name): bool => $name === 'UserLogin');
-		$this->cookie->method('getCookie')->willReturnCallback(static fn(string $name): ?string => $name === 'UserLogin' ? 'valid_token' : null);
+		$service = new AutoLoginService($tokens, $cookie, new NullLogger(), $users);
 
-		static::assertSame('valid_token', $this->autoLoginService->loadTokenFromCookie());
-	}
-
-	#[Group('units')]
-	public function testWithoutACookieThereIsNoToken(): void
-	{
-		$this->cookie->method('hasCookie')->willReturn(false);
-
-		$this->expectException(AuthException::class);
-		$this->expectExceptionMessage('No cookie for autologin was found.');
-
-		$this->autoLoginService->loadTokenFromCookie();
-	}
-
-	#[Group('units')]
-	public function testACookieWithoutAValueIsNoToken(): void
-	{
-		$this->cookie->method('hasCookie')->willReturn(true);
-		$this->cookie->method('getCookie')->willReturn(null);
-
-		$this->expectException(AuthException::class);
-		$this->expectExceptionMessage('No token in cookie cookie found.');
-
-		$this->autoLoginService->loadTokenFromCookie();
+		static::assertSame(10, $service->loginSilent('token'));
 	}
 }

@@ -217,6 +217,8 @@ class LoginFlowTest extends BlackboxTestCase
 		// the owner comes back first: the token is replaced
 		$owner->forgetCookie('GhSid');
 		$owner->get('/player');
+		// later than the parallel requests of a browser with restored tabs
+		$this->connection->executeStatement('UPDATE user_tokens SET used_at = ? WHERE used_at IS NOT NULL', [date('Y-m-d H:i:s', time() - 61)]);
 
 		$thief = $this->browser();
 		$response = $thief->request('GET', '/player', ['headers' => ['Cookie' => 'UserLogin=' . $stolen]]);

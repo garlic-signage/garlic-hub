@@ -96,6 +96,17 @@ class UserTokensRepository extends SqlBase
 
 
 	/**
+	 * Only an unused token: of two parallel requests with the same token only one uses it.
+	 *
+	 * @return int 1 when this request used it
+	 * @throws Exception
+	 */
+	public function markUsed(string $token, string $usedAt): int
+	{
+		return (int) $this->connection->executeStatement('UPDATE ' . $this->table . ' SET used_at = ? WHERE token = ? AND used_at IS NULL', [$usedAt, $token]);
+	}
+
+	/**
 	 * @param array{token:string, expires_at: string, used_at:null} $fields
 	 * @throws Exception
 	 */
