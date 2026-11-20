@@ -85,14 +85,22 @@ class AutoLoginService
 			throw new AuthException('Autologin expired.');
 		}
 		// only the request which uses the token gets the next one: of parallel requests only one
-		if ($dbToken['used_at'] === null && $this->userTokenService->useToken($cookieToken) === 1)
+		if ($dbToken['used_at'] === null)
 		{
-			$this->createAutologinCookie($dbToken['UID']);
-			return (int) $dbToken['UID'];
+			if ($this->userTokenService->useToken($cookieToken) === 1)
+			{
+				$this->createAutologinCookie($dbToken['UID']);
+				return (int) $dbToken['UID'];
+			}
+
+			// not used: either a parallel request used it just now or it was deleted meanwhile (logout, new password)
+			$dbToken = $this->userTokenService->findByTokenForAction($cookieToken);
+			if ($dbToken === null)
+				throw new AuthException('Autologin token deleted meanwhile.');
 		}
 
 		// the browser sends the same cookie in parallel requests (restored tabs): they log in without a new cookie,
-		// the browser keeps the one of the first answer. A request which lost the race used it just now.
+		// the browser keeps the one of the first answer.
 		$usedAt = $dbToken['used_at'] ?? date('Y-m-d H:i:s');
 		if ($usedAt >= date('Y-m-d H:i:s', time() - self::REUSE_GRACE_SECONDS))
 		{

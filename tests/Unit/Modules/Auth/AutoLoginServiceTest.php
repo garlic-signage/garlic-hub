@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\Auth;
 
+use App\Framework\Exceptions\AuthException;
 use App\Framework\Http\Cookie;
 use App\Modules\Auth\AutoLoginService;
 use App\Shared\User\TokenPurposes;
@@ -32,7 +33,7 @@ use Psr\Log\NullLogger;
 
 /**
  * The race of parallel requests, which the database tests can not run: the token is unused when the request reads
- * it and used when it wants to use it. The rest is tested against the database (AutoLoginTest).
+ * it and used or deleted when it wants to use it. The rest is tested against the database (AutoLoginTest).
  */
 #[Group('units')]
 class AutoLoginServiceTest extends TestCase
@@ -43,20 +44,50 @@ class AutoLoginServiceTest extends TestCase
 	public function testARequestWhichLostTheRaceLogsInWithoutANewCookie(): void
 	{
 		$tokens = $this->createMock(UserTokenService::class);
-		$tokens->method('findByTokenForAction')->willReturn([
-			'UID' => 10, 'company_id' => 1, 'username' => 'user', 'status' => 3, 'purpose' => TokenPurposes::AUTOLOGIN->value,
-			'expires_at' => date('Y-m-d H:i:s', time() + 3600), 'used_at' => null
-		]);
+		$tokens->method('findByTokenForAction')->willReturnOnConsecutiveCalls(self::token(null), self::token(date('Y-m-d H:i:s')));
 		$tokens->method('useToken')->willReturn(0);
 		$tokens->expects($this->never())->method('insertToken');
 		$tokens->expects($this->never())->method('deleteAllUserTokens');
 		$cookie = $this->createMock(Cookie::class);
 		$cookie->expects($this->never())->method('createCookie');
+		$cookie->expects($this->never())->method('deleteCookie');
 		$users = $this->createMock(UsersService::class);
 		$users->expects($this->never())->method('endSessions');
 
 		$service = new AutoLoginService($tokens, $cookie, new NullLogger(), $users);
 
 		static::assertSame(10, $service->loginSilent('token'));
+	}
+
+	/**
+	 * Deleted between reading and using it (logout in another tab, new password): no login.
+	 *
+	 * @throws \Exception
+	 */
+	public function testATokenDeletedMeanwhileDoesNotLogIn(): void
+	{
+		$tokens = $this->createMock(UserTokenService::class);
+		$tokens->method('findByTokenForAction')->willReturnOnConsecutiveCalls(self::token(null), null);
+		$tokens->method('useToken')->willReturn(0);
+		$tokens->expects($this->never())->method('insertToken');
+		$cookie = $this->createMock(Cookie::class);
+		$cookie->expects($this->never())->method('createCookie');
+
+		$service = new AutoLoginService($tokens, $cookie, new NullLogger(), $this->createStub(UsersService::class));
+
+		$this->expectException(AuthException::class);
+		$this->expectExceptionMessage('Autologin token deleted meanwhile.');
+		$service->loginSilent('token');
+	}
+
+	/**
+	 * @return array{UID:int, company_id:int, username:string, status:int, purpose:string, expires_at:string, used_at:null|string}
+	 */
+	private static function token(?string $usedAt): array
+	{
+		return [
+			'UID' => 10, 'company_id' => 1, 'username' => 'user', 'status' => 3, 'purpose' => TokenPurposes::AUTOLOGIN->value,
+			'expires_at' => date('Y-m-d H:i:s', time() + 3600), 'used_at' => $usedAt
+		];
 	}
 }
