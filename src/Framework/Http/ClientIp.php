@@ -29,8 +29,8 @@ use Psr\Log\LoggerInterface;
  * the right, the first one which is no trusted proxy is the visitor. A request straight from the internet has a
  * public REMOTE_ADDR, so nobody outside can give another address in the header.
  *
- * The private networks are trusted by default (config main, trusted_proxies): Docker, nginx on the same host and
- * internal proxies. Networks which trust almost everybody are ignored and logged.
+ * No proxy is trusted by default (config main, trusted_proxies): without a proxy a visitor in the own network could
+ * give another address. Networks which trust almost everybody are ignored and logged.
  */
 final readonly class ClientIp
 {

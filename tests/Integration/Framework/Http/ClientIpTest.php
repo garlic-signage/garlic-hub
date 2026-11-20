@@ -33,11 +33,11 @@ use Tests\Integration\Support\ContainerTestCase;
 #[Group('acl')]
 class ClientIpTest extends ContainerTestCase
 {
-	public function testThePrivateNetworksAreTrustedByDefault(): void
+	public function testNoProxyIsTrustedByDefault(): void
 	{
 		$clientIp = $this->container->get(ClientIp::class);
 
-		static::assertSame('203.0.113.7', $clientIp->resolve(['REMOTE_ADDR' => '172.18.0.1', 'HTTP_X_FORWARDED_FOR' => '203.0.113.7']));
+		static::assertSame('172.18.0.1', $clientIp->resolve(['REMOTE_ADDR' => '172.18.0.1', 'HTTP_X_FORWARDED_FOR' => '203.0.113.7']));
 	}
 
 	public function testAChangeOfTheAdminCounts(): void

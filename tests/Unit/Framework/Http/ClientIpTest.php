@@ -36,6 +36,9 @@ use Tests\Support\RecordingLogger;
 #[Group('units')]
 class ClientIpTest extends TestCase
 {
+	// Docker, nginx on the same host and internal proxies
+	private const string PRIVATE_NETWORKS = '127.0.0.0/8, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, ::1, fc00::/7';
+
 	private static function defaultProxies(): string
 	{
 		$value = new IniConfigLoader(__DIR__ . '/../../../../config/settings')->load('main')['Proxy']['trusted_proxies'] ?? '';
@@ -49,7 +52,7 @@ class ClientIpTest extends TestCase
 	 */
 	private static function resolve(array $server, ?string $proxies = null): string
 	{
-		return new ClientIp($proxies ?? self::defaultProxies(), new NullLogger())->resolve($server);
+		return new ClientIp($proxies ?? self::PRIVATE_NETWORKS, new NullLogger())->resolve($server);
 	}
 
 	/**
@@ -80,6 +83,15 @@ class ClientIpTest extends TestCase
 		$server = array_filter(['REMOTE_ADDR' => $remote, 'HTTP_X_FORWARDED_FOR' => $forwarded], static fn(string $value) => $value !== '');
 
 		static::assertSame($visitor, self::resolve($server));
+	}
+
+	/**
+	 * Without a proxy in front a visitor in the own network must not give another address.
+	 */
+	public function testByDefaultNoProxyIsTrusted(): void
+	{
+		static::assertSame('', self::defaultProxies());
+		static::assertSame('192.168.1.5', self::resolve(['REMOTE_ADDR' => '192.168.1.5', 'HTTP_X_FORWARDED_FOR' => '203.0.113.7'], self::defaultProxies()));
 	}
 
 	public function testWithoutTrustedProxiesTheHeaderIsIgnored(): void
@@ -141,11 +153,11 @@ class ClientIpTest extends TestCase
 	/**
 	 * The limits: a public /8 (IPv6 /16) is allowed, a private network may be larger (fc00::/7).
 	 */
-	public function testTheDefaultAndNetworksAtTheLimitAreAccepted(): void
+	public function testThePrivateNetworksAndNetworksAtTheLimitAreAccepted(): void
 	{
 		$logger = new RecordingLogger();
 
-		new ClientIp(self::defaultProxies() . ', 64.0.0.0/8, 2000::/16', $logger);
+		new ClientIp(self::PRIVATE_NETWORKS . ', 64.0.0.0/8, 2000::/16', $logger);
 
 		static::assertSame([], $logger->messages);
 	}
