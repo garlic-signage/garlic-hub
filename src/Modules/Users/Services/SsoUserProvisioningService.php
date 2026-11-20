@@ -23,6 +23,7 @@ namespace App\Modules\Users\Services;
 
 use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Exceptions\ModuleException;
+use App\Framework\Localization\Locales\Locales;
 use App\Modules\Mediapool\Services\NodesService;
 use App\Shared\User\UserStatus;
 use App\Shared\Audit\AuditAction;
@@ -38,7 +39,8 @@ use Throwable;
  * The user of a login by SSO. A known identity is its user. Otherwise an account with the same email is linked,
  * of the company of the provider, but only when the provider verified the email: an email which anybody
  * may enter at the provider would take over the account. Without one the first login creates the user in
- * the company of the provider, without rights and without password, with his media folder.
+ * the company of the provider, without rights and without password, with his media folder and the locale
+ * of the login page (the default locale when the session has none).
  * The admin grants the rights later.
  */
 class SsoUserProvisioningService implements SsoUserProvisioning
@@ -51,7 +53,8 @@ class SsoUserProvisioningService implements SsoUserProvisioning
 		private readonly UserMainRepository $userMainRepository,
 		private readonly NodesService $nodesService,
 		private readonly Transactions $transactions,
-		private readonly AuditLog $auditLog
+		private readonly AuditLog $auditLog,
+		private readonly Locales $locales
 	) {}
 
 	/**
@@ -113,6 +116,7 @@ class SsoUserProvisioningService implements SsoUserProvisioning
 			'company_id' => $identity->provider->companyId,
 			'username'   => $username,
 			'email'      => $identity->email,
+			'locale'     => $this->locales->getCurrentLocale(),
 			'status'     => UserStatus::REGISTERED->value
 		]);
 		if ($UID === 0)

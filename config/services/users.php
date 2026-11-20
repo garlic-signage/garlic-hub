@@ -28,6 +28,7 @@ use App\Shared\Acl\AclHelper;
 use App\Framework\Config\Config;
 use App\Framework\Validation\Sanitizer;
 use App\Framework\Http\Session;
+use App\Framework\Localization\Locales\Locales;
 use App\Framework\Localization\Translate\Translator;
 use App\Framework\Database\BaseRepositories\Transactions;
 use App\Framework\Database\Datatable\DatatableQuery;
@@ -237,7 +238,8 @@ $dependencies[SsoUserProvisioning::class] = DI\factory(function (ContainerInterf
 		$repositories['main'],
 		$container->get(NodesService::class),
 		$container->get(Transactions::class),
-		$container->get(AuditLog::class)
+		$container->get(AuditLog::class),
+		$container->get(Locales::class)
 	);
 });
 $dependencies[SsoProvidersService::class] = DI\factory(function (ContainerInterface $container)

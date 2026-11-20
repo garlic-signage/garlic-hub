@@ -21,7 +21,10 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Modules\Users\Services;
 
+use App\Framework\Config\Config;
 use App\Framework\Database\BaseRepositories\Transactions;
+use App\Framework\Localization\Locales\LocaleExtractorInterface;
+use App\Framework\Localization\Locales\Locales;
 use App\Modules\Mediapool\Services\NodesService;
 use App\Modules\Users\Services\SsoUserProvisioningService;
 use App\Shared\Audit\AuditLogRepository;
@@ -49,8 +52,30 @@ class SsoUserProvisioningServiceTest extends ContainerTestCase
 		parent::setUp();
 		$this->loadFixture('acl/users.sql');
 		$this->connection->insert('sso_providers', ['provider_id' => 1, 'company_id' => 1, 'name' => 'Example', 'issuer' => 'https://idp.example.test', 'client_id' => 'x', 'client_secret' => '']);
-		$this->service = new SsoUserProvisioningService(new UserSsoRepository($this->connection), new UserMainRepository($this->connection),
-			$this->container->get(NodesService::class), $this->container->get(Transactions::class), new DatabaseAuditLog($this->container->get(AuditLogRepository::class)));
+		$this->service = $this->createService('');
+	}
+
+	/**
+	 * @param string $sessionLocale the locale of the login page, empty when the session has none
+	 */
+	private function createService(string $sessionLocale): SsoUserProvisioningService
+	{
+		$extractor = new class($sessionLocale) implements LocaleExtractorInterface
+		{
+			public function __construct(private readonly string $locale) {}
+
+			/** @param string[] $whiteList */
+			public function extractLocale(array $whiteList): string
+			{
+				return $this->locale;
+			}
+		};
+		$locales = new Locales($this->container->get(Config::class), $extractor);
+		$locales->determineCurrentLocale();
+
+		return new SsoUserProvisioningService(new UserSsoRepository($this->connection), new UserMainRepository($this->connection),
+			$this->container->get(NodesService::class), $this->container->get(Transactions::class), new DatabaseAuditLog($this->container->get(AuditLogRepository::class)),
+			$locales);
 	}
 
 	private function identity(string $email, bool $verified = true, int $companyId = 1): SsoIdentity
@@ -124,6 +149,29 @@ class SsoUserProvisioningServiceTest extends ContainerTestCase
 		$UID = $this->service->provide($this->identity($email));
 
 		static::assertSame($username, $this->connection->fetchOne('SELECT username FROM user_main WHERE UID = ?', [$UID]));
+	}
+
+	/**
+	 * @return array<string, array{string, string}> the locale of the login page and the one of the user
+	 */
+	public static function locales(): array
+	{
+		return [
+			'of the login page'      => ['de_DE', 'de_DE'],
+			'none in the session'    => ['', 'en_US'],
+			'not configured'         => ['xx_XX', 'en_US'],
+		];
+	}
+
+	/**
+	 * Without a locale the session of the user is broken: every new user gets one.
+	 */
+	#[DataProvider('locales')]
+	public function testANewUserGetsTheLocaleOfTheLoginPage(string $sessionLocale, string $locale): void
+	{
+		$UID = $this->createService($sessionLocale)->provide($this->identity('carla@example.com'));
+
+		static::assertSame($locale, $this->connection->fetchOne('SELECT locale FROM user_main WHERE UID = ?', [$UID]));
 	}
 
 	public function testAUsernameInOtherLettersCountsAsTaken(): void
