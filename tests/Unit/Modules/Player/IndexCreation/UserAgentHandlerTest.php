@@ -63,6 +63,7 @@ class UserAgentHandlerTest extends TestCase
 			'garlic'               => ['GAPI/1.0 (UUID:3f0cd56c-d511-486a-a8e1-9d2cefd78b3f; NAME:9d2cefd78b3f) garlic-macOS/v0.6.0.679 (MODEL:Garlic)', '3f0cd56c-d511-486a-a8e1-9d2cefd78b3f', 'garlic-macOS/v0.6.0.679', '9d2cefd78b3f', PlayerModel::GARLIC],
 			'name url encoded'     => ['GAPI/1.0 (UUID:3f0cd56c-d511-486a-a8e1-9d2cefd78b3f; NAME:Eingang%20Nord%C3%A4) garlic/v1 (MODEL:Garlic)', '3f0cd56c-d511-486a-a8e1-9d2cefd78b3f', 'garlic/v1', 'Eingang Nordä', PlayerModel::GARLIC],
 			'upper case uuid'      => ['GAPI/1.0 (UUID:F9D65C88-E4CD-43B4-89EB-5C338E856344; NAME:x) garlic/v1 (MODEL:Garlic)', 'F9D65C88-E4CD-43B4-89EB-5C338E856344', 'garlic/v1', 'x', PlayerModel::GARLIC],
+			'philips serial as uuid' => ['GAPI/1.0 (UUID:43BDL4550D-AU0A2123004336; NAME:Philips PPDS mit Garlic-Player v2) garlic-android/v2.0.0-devLphilips-FB01.09 (MODEL:Garlic)', '43BDL4550D-AU0A2123004336', 'garlic-android/v2.0.0-devLphilips-FB01.09', 'Philips PPDS mit Garlic-Player v2', PlayerModel::GARLIC],
 		];
 	}
 
@@ -143,18 +144,16 @@ class UserAgentHandlerTest extends TestCase
 			'markup'           => ['<b>abc</b>'],
 			'trailing newline' => ["abc\n"],
 			'too long'         => [str_repeat('a', 65)],
-			'not hex'          => ['a8294bat-c28f-50af-f94o-800869af5854'],
-			'uuid too short'   => ['f9d65c88-e4cd-43b4-89eb-5c338e85634'],
-			'uuid without dash' => ['f9d65c88e4cd43b489eb5c338e856344'],
-			'hex 15 digits'    => ['1628414f155256b'],
-			'hex 17 digits'    => ['1628414f155256b4a'],
+			'too short'        => ['abcdefg'],
+			'underscore'       => ['abc_defgh'],
+			'umlaut'           => ['abcdefgä'],
 			'sql'              => ["' OR '1'='1"],
 			'empty'            => [''],
 		];
 	}
 
 	/**
-	 * The uuid becomes a directory name of the index file: only the two formats of the players pass.
+	 * The uuid becomes a directory name of the index file: only letters, digits and dashes pass.
 	 */
 	#[Group('units')]
 	#[DataProvider('invalidUuids')]

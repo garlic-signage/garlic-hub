@@ -30,9 +30,10 @@ class UserAgentHandler
 {
 	/**
 	 * The UUID is a directory name of the SMIL index and part of report URLs.
-	 * Known formats: UUIDv4 (f9d65c88-e4cd-43b4-89eb-5c338e856344) and 16 digit hex (1628414f155256b4).
+	 * Players send different formats: UUIDv4 (f9d65c88-e4cd-43b4-89eb-5c338e856344), 16 digit hex (1628414f155256b4)
+	 * or a serial number (43BDL4550D-AU0A2123004336). Only letters, digits and dashes pass, so it is safe in paths and URLs.
 	 */
-	private const string UUID_PATTERN = '/^(?:[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}|[0-9a-f]{16})$/iD';
+	private const string UUID_PATTERN = '/^[A-Za-z0-9-]{8,64}$/D';
 
 	private readonly PlayerDetector $playerDetector;
 	private string $uuid;
