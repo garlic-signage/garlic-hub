@@ -92,6 +92,30 @@ class PlayerIndexService extends AbstractBaseService
 
 
 	/**
+	 * The preview of a player in the hub gets the index which the device gets, but without a trace in the
+	 * database: no last access, so the player is not shown as online, and no registration of an unknown player.
+	 * The access to the player is checked by the caller.
+	 */
+	public function handlePreviewRequest(int $playerId): string
+	{
+		try
+		{
+			$this->playerEntity = $this->playerDataAssembler->fetchStoredPlayer($playerId);
+			if ($this->playerEntity->getStatus() === PlayerStatus::UNREGISTERED->value)
+				return '';
+
+			$this->handlePlayerStats(0);
+
+			return $this->indexProvider->getFilePath();
+		}
+		catch (Throwable $e)
+		{
+			$this->logger->error('Error fetch preview index: ' . $e->getMessage());
+		}
+		return '';
+	}
+
+	/**
 	 * @throws ModuleException
 	 * @throws CoreException
 	 * @throws Exception

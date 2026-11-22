@@ -148,6 +148,27 @@ class PlayerDataAssembler
 	}
 
 	/**
+	 * The player for the preview in the hub: as the database knows it, with its model, firmware and name, so the
+	 * preview gets the same index as the device. Nothing is written: the preview is no contact of the device.
+	 * An unknown player gets the status unregistered.
+	 *
+	 * @throws Exception
+	 */
+	public function fetchStoredPlayer(int $playerId): PlayerEntity
+	{
+		$result = $this->playerRepository->findPlayerById($playerId);
+
+		$this->userAgentHandler->takeStoredIdentity(
+			(string) ($result['uuid'] ?? ''),
+			(string) ($result['player_name'] ?? ''),
+			(string) ($result['firmware'] ?? ''),
+			PlayerModel::tryFrom((int) ($result['model'] ?? 0)) ?? PlayerModel::UNKNOWN
+		);
+
+		return $this->playerEntityFactory->create($result, $this->userAgentHandler);
+	}
+
+	/**
 	 * @return array<string,mixed>
 	 */
 	private function buildInsertArray(int $ownerId = 1): array

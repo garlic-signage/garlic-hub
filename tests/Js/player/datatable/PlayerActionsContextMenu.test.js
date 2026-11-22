@@ -140,7 +140,7 @@ function createPage()
 		},
 		{create: (name, url) => { autocomplete.created = [name, url]; return autocomplete; }},
 		service,
-		{open: (uuid, name) => previews.push([uuid, name])},
+		{open: (playerId, uuid, name) => previews.push([playerId, uuid, name])},
 		{attachTo: (item, unitId, allowed) => { shared.push([item, unitId, allowed]); if (!allowed) item.remove(); }}
 	);
 
@@ -255,7 +255,7 @@ Deno.test('the preview plays as the player', async () =>
 
 	await click(page, 'preview');
 
-	assertEquals(page.previews, [['11111111-1111-4111-8111-111111111111', 'Eingang']]);
+	assertEquals(page.previews, [[7, '11111111-1111-4111-8111-111111111111', 'Eingang']]);
 });
 
 Deno.test('the unassign takes the playlist and empties its cell', async () =>

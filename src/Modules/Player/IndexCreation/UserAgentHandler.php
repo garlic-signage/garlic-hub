@@ -115,6 +115,20 @@ class UserAgentHandler
 		return $this;
 	}
 
+	/**
+	 * The identity of a player as the database knows it, for the preview in the hub: the preview gets the index of
+	 * the device, not one for the agent of the browser.
+	 */
+	public function takeStoredIdentity(string $uuid, string $name, string $firmware, PlayerModel $model): static
+	{
+		$this->uuid     = $uuid;
+		$this->name     = $name;
+		$this->firmware = $firmware;
+		$this->model    = $model;
+
+		return $this;
+	}
+
 	private function resetToUnknown(): void
 	{
 		$this->uuid     = '';

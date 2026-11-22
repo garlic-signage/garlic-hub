@@ -82,16 +82,16 @@ function playerWindowOf(iframe)
 	return playerWindow;
 }
 
-Deno.test('the preview plays as the player from the SMIL index of the hub, without a cache', () =>
+Deno.test('the preview plays as the player from the preview index of the hub, without a cache', () =>
 {
 	using page = createPage();
 
-	page.overlay.open('11111111-1111-4111-8111-111111111111', 'Eingang & Lobby');
+	page.overlay.open(7, '11111111-1111-4111-8111-111111111111', 'Eingang & Lobby');
 
 	const url = new URL(page.iframe().getAttribute('src'), ORIGIN);
 	assertEquals(url.pathname, '/js/player/preview/index.html');
 	assertEquals(Object.fromEntries(url.searchParams), {
-		index: ORIGIN + '/smil-index', uuid: '11111111-1111-4111-8111-111111111111', name: 'Eingang & Lobby', storage: 'memory'
+		index: ORIGIN + '/async/player/preview-index/7', uuid: '11111111-1111-4111-8111-111111111111', name: 'Eingang & Lobby', storage: 'memory'
 	});
 	assertEquals(page.iframe().getAttribute('allow'), 'autoplay');
 	assertEquals(page.document.querySelector('.dialog-name').textContent, 'Eingang & Lobby');
@@ -102,7 +102,7 @@ Deno.test('the preview plays as the player from the SMIL index of the hub, witho
 Deno.test('closing ends the player: the iframe goes', () =>
 {
 	using page = createPage();
-	page.overlay.open('uuid-1', 'Eingang');
+	page.overlay.open(1, 'uuid-1', 'Eingang');
 
 	page.document.querySelector('.close-button').dispatchEvent(new Event('click'));
 
@@ -113,10 +113,10 @@ Deno.test('closing ends the player: the iframe goes', () =>
 Deno.test('every preview gets a new player', () =>
 {
 	using page = createPage();
-	page.overlay.open('uuid-1', 'Eingang');
+	page.overlay.open(1, 'uuid-1', 'Eingang');
 	page.dialog.close();
 
-	page.overlay.open('uuid-2', 'Kasse');
+	page.overlay.open(1, 'uuid-2', 'Kasse');
 
 	assertEquals(page.frame.querySelectorAll('iframe').length, 1);
 	assertEquals(new URL(page.iframe().getAttribute('src'), ORIGIN).searchParams.get('uuid'), 'uuid-2');
@@ -125,7 +125,7 @@ Deno.test('every preview gets a new player', () =>
 Deno.test('the frame gets the proportions of the layout the player sends', () =>
 {
 	using page = createPage();
-	page.overlay.open('uuid-1', 'Eingang');
+	page.overlay.open(1, 'uuid-1', 'Eingang');
 	const playerWindow = playerWindowOf(page.iframe());
 
 	page.window.fire('message', {origin: ORIGIN, source: playerWindow, data: {type: 'garlic-preview-layout', width: 1080, height: '1920'}});
@@ -150,7 +150,7 @@ Deno.test('only the layout of the own player counts', async (t) =>
 		await t.step(name, () =>
 		{
 			using page = createPage();
-			page.overlay.open('uuid-1', 'Eingang');
+			page.overlay.open(1, 'uuid-1', 'Eingang');
 
 			page.window.fire('message', message(playerWindowOf(page.iframe())));
 
@@ -162,7 +162,7 @@ Deno.test('only the layout of the own player counts', async (t) =>
 Deno.test('a message after the close is ignored', () =>
 {
 	using page = createPage();
-	page.overlay.open('uuid-1', 'Eingang');
+	page.overlay.open(1, 'uuid-1', 'Eingang');
 	const playerWindow = playerWindowOf(page.iframe());
 	page.dialog.close();
 
@@ -174,7 +174,7 @@ Deno.test('a message after the close is ignored', () =>
 Deno.test('while the corner of the frame is dragged a cover lies over the player', () =>
 {
 	using page = createPage();
-	page.overlay.open('uuid-1', 'Eingang');
+	page.overlay.open(1, 'uuid-1', 'Eingang');
 
 	page.frame.dispatchEvent(new Event('pointerdown'));
 	const cover = page.frame.querySelector('.drag-cover');
@@ -199,7 +199,7 @@ Deno.test('a close without a preview has no player to end', () =>
 Deno.test('a press inside the player is no drag of the corner', () =>
 {
 	using page = createPage();
-	page.overlay.open('uuid-1', 'Eingang');
+	page.overlay.open(1, 'uuid-1', 'Eingang');
 
 	page.iframe().dispatchEvent(new Event('pointerdown', {bubbles: true}));
 

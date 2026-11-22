@@ -239,4 +239,80 @@ class PlayerIndexServiceTest extends PlayerIndexTestCase
 
 		static::assertGreaterThan('2000-01-01 00:00:00', $this->playerRow()['last_access']);
 	}
+
+	/**
+	 * The device as the database knows it after its registration: model and firmware of its agent.
+	 */
+	private function giveDevice(int $status, int $playlistId, PlayerModel $model, string $firmware): void
+	{
+		$this->givePlayer($status, $playlistId);
+		$this->connection->executeStatement('UPDATE player SET model = ?, firmware = ? WHERE player_id = 5', [$model->value, $firmware]);
+	}
+
+	/**
+	 * @return array<string,array{string,PlayerModel,string}> the agent of the device, its model and firmware
+	 */
+	public static function devices(): array
+	{
+		return [
+			'garlic'       => [self::AGENT, PlayerModel::GARLIC, 'garlic-macOS/v0.6.0.679'],
+			'an old garlic' => ['GAPI/1.0 (UUID:' . self::UUID . '; NAME:Eingang) garlic-linux/v0.5.0.400 (MODEL:Garlic)', PlayerModel::GARLIC, 'garlic-linux/v0.5.0.400'],
+			'iadea android' => ['ADAPI/1.0 (UUID:' . self::UUID . '; NAME:Eingang) SK8855-ADAPI/2.0.5 (MODEL:XMP-2200)', PlayerModel::IADEA_XMP2X00, 'SK8855-ADAPI/2.0.5'],
+			'iadea 330'    => ['ADAPI/1.0 (UUID:' . self::UUID . '; NAME:Eingang) SK8855-ADAPI/2.0.5 (MODEL:XMP-330)', PlayerModel::IADEA_XMP3X0, 'SK8855-ADAPI/2.0.5'],
+		];
+	}
+
+	/**
+	 * The preview gets the index of the device, whatever the device is: the file of the device stays untouched.
+	 */
+	#[DataProvider('devices')]
+	public function testThePreviewGetsTheIndexOfTheDevice(string $agent, PlayerModel $model, string $firmware): void
+	{
+		$this->giveDevice(PlayerStatus::RELEASED->value, 1, $model, $firmware);
+		$devicePath = $this->service()->handleIndexRequest(2, $agent, [], false);
+		$device     = (string) file_get_contents($devicePath);
+		touch($devicePath, 1_750_000_000);
+		clearstatcache();
+
+		$previewPath = $this->service()->handlePreviewRequest(5);
+		clearstatcache();
+
+		static::assertSame($devicePath, $previewPath);
+		static::assertSame($device, (string) file_get_contents($previewPath));
+		static::assertSame(1_750_000_000, filemtime($previewPath));
+	}
+
+	public function testThePreviewLeavesNoLastAccess(): void
+	{
+		$this->giveDevice(PlayerStatus::RELEASED->value, 1, PlayerModel::GARLIC, 'garlic-macOS/v0.6.0.679');
+
+		$path = $this->service()->handlePreviewRequest(5);
+
+		static::assertSame('/var/smil/indexes/' . self::UUID . '/1.smil', $this->relative($path));
+		static::assertSame('2000-01-01 00:00:00', $this->playerRow()['last_access']);
+	}
+
+	public function testThePreviewOfAPlayerInATestStatusGetsItsTestFile(): void
+	{
+		$this->givePlayer(PlayerStatus::TEST_SMIL_OK->value);
+
+		$path = $this->service()->handlePreviewRequest(5);
+
+		static::assertSame('/public/smil/simulations/without_errors.smil', $this->relative($path));
+		static::assertSame('2000-01-01 00:00:00', $this->playerRow()['last_access']);
+	}
+
+	public function testThePreviewOfAnUnknownPlayerGivesNothingAndRegistersNothing(): void
+	{
+		static::assertSame('', $this->service()->handlePreviewRequest(5));
+		static::assertSame(0, $this->countPlayers());
+	}
+
+	public function testThePreviewOfAPlayerWithAnUnknownStatusGivesNothingAndAnEntryInTheLog(): void
+	{
+		$this->givePlayer(99);
+
+		static::assertSame('', $this->service()->handlePreviewRequest(5));
+		static::assertTrue($this->logs->hasErrorThatContains('Error fetch preview index'));
+	}
 }

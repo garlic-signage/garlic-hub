@@ -20,7 +20,8 @@
 
 /**
  * The preview player (public/js/player/preview, the WASM player of garlic-player) in an overlay. It plays as the
- * chosen player, so it gets its playlist from the SMIL index like the device; the cache stays in memory.
+ * chosen player and gets the SMIL index of the device, but from the preview route of the hub: only for a logged in
+ * user, and without a trace in the database (the player is not shown as online). The cache stays in memory.
  *
  * The player sits in an iframe: the CSP of the CMS pages allows no WebAssembly, and its keys and styles stay apart.
  * The frame has the proportions of the layout (the player sends them when it has read the index); its width is
@@ -56,10 +57,10 @@ export class PreviewOverlay
 		window.addEventListener("message", (event) => this.#layoutOfPlayer(event));
 	}
 
-	open(uuid, playerName)
+	open(playerId, uuid, playerName)
 	{
 		const params = new URLSearchParams({
-			index: location.origin + "/smil-index",
+			index: location.origin + "/async/player/preview-index/" + encodeURIComponent(playerId),
 			uuid: uuid,
 			name: playerName,
 			storage: "memory"

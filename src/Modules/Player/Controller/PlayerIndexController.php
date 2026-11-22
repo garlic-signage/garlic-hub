@@ -21,10 +21,15 @@ declare(strict_types=1);
 
 namespace App\Modules\Player\Controller;
 
+use App\Framework\Exceptions\CoreException;
+use App\Framework\Exceptions\FrameworkException;
+use App\Framework\Exceptions\UserException;
 use App\Framework\Validation\Sanitizer;
 use App\Framework\Exceptions\ModuleException;
 use App\Modules\Player\Helper\Index\IndexResponseHandler;
 use App\Modules\Player\Services\PlayerIndexService;
+use App\Modules\Player\Services\PlayerService;
+use Doctrine\DBAL\Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -37,9 +42,11 @@ readonly class PlayerIndexController
 	private PlayerIndexService $indexService;
 	private IndexResponseHandler $indexResponseHandler;
 	private Sanitizer $sanitizer;
+	private PlayerService $playerService;
 
-	public function __construct(PlayerIndexService $indexService, IndexResponseHandler $indexResponseHandler, Sanitizer $sanitizer)
+	public function __construct(PlayerIndexService $indexService, IndexResponseHandler $indexResponseHandler, Sanitizer $sanitizer, PlayerService $playerService)
 	{
+		$this->playerService        = $playerService;
 		$this->indexService         = $indexService;
 		$this->indexResponseHandler = $indexResponseHandler;
 		$this->sanitizer            = $sanitizer;
@@ -73,6 +80,30 @@ readonly class PlayerIndexController
 			return $this->indexResponseHandler->doNotFound($response);
 
 		return $this->sendSmilHeader($response, $server, $filePath);
+	}
+
+	/**
+	 * GET /player/preview-index/{player_id}: the index for the preview of a player in the hub. Only for a logged in
+	 * user who may see the player. It is the index of the device, but the request leaves no trace in the database.
+	 *
+	 * @param array<string,string> $args
+	 * @throws ModuleException
+	 * @throws CoreException
+	 * @throws FrameworkException
+	 * @throws UserException
+	 * @throws Exception
+	 */
+	public function preview(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+	{
+		$playerId = (int) ($args['player_id'] ?? 0);
+		// throws when the player is missing or the user may not see it
+		$this->playerService->fetchAclCheckedPlayerData($playerId);
+
+		$filePath = $this->indexService->handlePreviewRequest($playerId);
+		if ($filePath === '')
+			return $this->indexResponseHandler->doNotFound($response);
+
+		return $this->sendSmilHeader($response, $request->getServerParams(), $filePath);
 	}
 
 	/**

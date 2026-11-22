@@ -21,11 +21,14 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Modules\Player\Index;
 
+use App\Framework\Exceptions\AccessDeniedException;
+use App\Framework\Exceptions\NotFoundException;
 use App\Framework\Validation\Sanitizer;
 use App\Modules\Player\Controller\PlayerIndexController;
 use App\Modules\Player\Enums\PlayerStatus;
 use App\Modules\Player\Helper\Index\FileUtils;
 use App\Modules\Player\Helper\Index\IndexResponseHandler;
+use App\Modules\Player\Services\PlayerService;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Psr\Http\Message\ResponseInterface;
@@ -39,13 +42,18 @@ use Slim\Psr7\Response;
 #[Group('io')]
 class PlayerIndexControllerTest extends PlayerIndexTestCase
 {
+	private function controller(): PlayerIndexController
+	{
+		return new PlayerIndexController($this->service(), new IndexResponseHandler(new FileUtils()), new Sanitizer(), $this->container->get(PlayerService::class));
+	}
+
 	/**
 	 * @param array<string,string> $server
 	 * @param array<string,mixed> $query
 	 */
 	private function call(array $server, array $query = ['owner_id' => '2'], string $method = 'GET'): ResponseInterface
 	{
-		$controller = new PlayerIndexController($this->service(), new IndexResponseHandler(new FileUtils()), new Sanitizer());
+		$controller = $this->controller();
 		$request    = new ServerRequestFactory()->createServerRequest($method, '/smil-index', $server + ['SERVER_NAME' => 'hub.example.com', 'REQUEST_METHOD' => $method])->withQueryParams($query);
 
 		return $controller->index($request, new Response());
@@ -53,7 +61,7 @@ class PlayerIndexControllerTest extends PlayerIndexTestCase
 
 	public function testThePreflightIsAllowedWithoutAgent(): void
 	{
-		$controller = new PlayerIndexController($this->service(), new IndexResponseHandler(new FileUtils()), new Sanitizer());
+		$controller = $this->controller();
 		$request    = new ServerRequestFactory()->createServerRequest('OPTIONS', '/smil-index', ['SERVER_NAME' => 'hub.example.com', 'REQUEST_METHOD' => 'OPTIONS']);
 
 		$response = $controller->preflight($request, new Response());
@@ -216,5 +224,57 @@ class PlayerIndexControllerTest extends PlayerIndexTestCase
 		$this->call(['HTTP_USER_AGENT' => self::AGENT], $owner === null ? [] : ['owner_id' => $owner]);
 
 		static::assertSame($expected, (int) $this->playerRow()['UID']);
+	}
+
+	private function preview(int $playerId): ResponseInterface
+	{
+		$request = new ServerRequestFactory()->createServerRequest('GET', '/async/player/preview-index/' . $playerId, ['SERVER_NAME' => 'hub.example.com', 'REQUEST_METHOD' => 'GET']);
+
+		return $this->controller()->preview($request, new Response(), ['player_id' => (string) $playerId]);
+	}
+
+	public function testThePreviewGetsTheIndexOfThePlayerWithoutALastAccess(): void
+	{
+		$this->givePlayer(PlayerStatus::RELEASED->value, 1);
+		$this->actingAs(1);
+
+		$response = $this->preview(5);
+
+		static::assertSame(200, $response->getStatusCode());
+		static::assertStringContainsString('Eingang - Annas Lobby', (string) $response->getBody());
+		static::assertSame('application/smil+xml', $response->getHeaderLine('Content-Type'));
+		static::assertSame('2000-01-01 00:00:00', $this->playerRow()['last_access']);
+	}
+
+	public function testAUserWhoMayNotSeeThePlayerGetsNoPreview(): void
+	{
+		$this->givePlayer(PlayerStatus::RELEASED->value, 1);
+		$this->actingAs(3);
+
+		$this->expectException(AccessDeniedException::class);
+		$this->preview(5);
+	}
+
+	public function testThePreviewOfAMissingPlayerIsNotFound(): void
+	{
+		$this->actingAs(1);
+
+		$this->expectException(NotFoundException::class);
+		try
+		{
+			$this->preview(5);
+		}
+		finally
+		{
+			static::assertSame(0, $this->countPlayers());
+		}
+	}
+
+	public function testThePreviewOfAPlayerWithoutAFileIsAnEmptyAnswer(): void
+	{
+		$this->givePlayer(99);
+		$this->actingAs(1);
+
+		static::assertSame(404, $this->preview(5)->getStatusCode());
 	}
 }

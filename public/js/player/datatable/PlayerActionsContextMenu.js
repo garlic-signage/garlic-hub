@@ -57,7 +57,7 @@ export class PlayerActionsContextMenu extends ActionsContextMenu
 			this.#addUnAssignEventListener();
 			this.view.setLink("goto", "/playlists/compose/" + rights.playlist_id);
 			this.view.item("preview").addEventListener("click", () => {
-				this.#previewOverlay.open(rights.uuid, rights.player_name);
+				this.#previewOverlay.open(this.unitId, rights.uuid, rights.player_name);
 			});
 		}
 
