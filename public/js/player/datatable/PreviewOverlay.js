@@ -63,7 +63,8 @@ export class PreviewOverlay
 			index: location.origin + "/async/player/preview-index/" + encodeURIComponent(playerId),
 			uuid: uuid,
 			name: playerName,
-			storage: "memory"
+			storage: "memory",
+			preview: "1" // the core sends no reports and fetches no tasks
 		});
 
 		this.#title.textContent = playerName;
