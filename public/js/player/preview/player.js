@@ -1,7 +1,7 @@
 // garlic-player in the browser. The core runs as WebAssembly (garlic-core.js, bindings.cpp); the page only shows:
 // it polls the core, hands the events to the stage and reports what only it knows (end of a video, a file that cannot
-// be played, a click, a key). The same behaviour as the qwidget and qml players: menu with ten fast clicks or holding
-// 10 s, settings, debug infos, shortcuts.
+// be played, a click, a key). The same behaviour as the SDL and Android players: menu with ten fast clicks or holding
+// 10 s, settings, information, shortcuts.
 //
 // URL parameters: index=<SMIL index> (like SMIL_INDEX on the command line), storage=memory (no IndexedDB: the cache
 // is gone with the page), uuid=<uuid>&name=<player name> (preview of a player in garlic-hub: the player plays as
@@ -16,7 +16,7 @@ const ROOT = '/garlic'; // configuration, cache and logs in the file system of t
 
 class GarlicPlayer {
     #params = new URLSearchParams(location.search);
-    #preview = this.#params.has('uuid'); // preview of a player in garlic-hub: no menu, of the keys only the debug infos
+    #preview = this.#params.has('uuid'); // preview of a player in garlic-hub: no menu, of the keys only the information
     #storage = null;
     #player = null; // Player of bindings.cpp
     #stage = null;
@@ -77,7 +77,6 @@ class GarlicPlayer {
         });
         this.#debug = new DebugDialog(document.getElementById('debug'), this.#player, {
             playing: () => this.#stage.playing(),
-            quit: () => this.#quit(),
             changed,
         });
         if (this.#preview)
@@ -127,6 +126,8 @@ class GarlicPlayer {
         case 'clearCaches': this.#call(() => this.#player.cachesCleared()); break;
         // the browser cannot take a picture of the screen: the core answers without one
         case 'screenshot': this.#call(() => this.#player.screenshotTaken(event.path)); break;
+        // master volume and brightness are for a supervisor, the browser has none
+        case 'deviceSettings': break;
         case 'layout':
             // as preview in an overlay of garlic-hub: the page around gets the size of the layout for its proportions
             if (window.parent !== window)

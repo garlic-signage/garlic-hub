@@ -1,4 +1,4 @@
-// The menu of all players (Settings, Debug infos, Exit) with its gesture, and the two dialogs. Reading, checking and
+// The menu of all players (Settings, Information, Exit) with its gesture, and the two dialogs. Reading, checking and
 // storing the settings is done by the core; the dialogs only show.
 
 const MENU_CLICKS = 10;
@@ -155,7 +155,7 @@ export class DebugDialog {
     #actions;
     #timer = null;
 
-    /// actions: {playing, quit, changed}; playing() gives the lines of the media shown
+    /// actions: {playing, changed}; playing() gives the lines of the media shown
     constructor(dialog, player, actions) {
         this.#dialog = dialog;
         this.#player = player;
@@ -177,8 +177,6 @@ export class DebugDialog {
     #closed() {
         clearInterval(this.#timer);
         this.#actions.changed();
-        if (this.#dialog.returnValue === 'quit')
-            this.#actions.quit();
     }
 
     #refresh() {
@@ -192,10 +190,44 @@ export class DebugDialog {
             playerMemory: info.memoryUsed === 0 ? '-'
                 : `${DebugDialog.#bytes(info.memoryUsed)}, max ${DebugDialog.#bytes(info.memoryMax)} at ${info.memoryMaxTime}`,
             threads: info.threads === 0 ? '-' : `${info.threads}, max ${info.threadsMax}`,
-            playing: playing.length > 0 ? playing.join('\n') : '-',
+            cpu: 'Player ' + (info.cpu === null || info.cpu === undefined ? '-'
+                : `${info.cpu} %` + (info.cpuMax === null ? '' : `, max ${info.cpuMax} % at ${info.cpuMaxTime} (5 min)`))
+                + ' · System ' + (info.cpuSystem === null || info.cpuSystem === undefined ? '-' : `${info.cpuSystem} %`),
+            temperature: `CPU ${DebugDialog.#celsius(info.temperatureCpu)} · RAM ${DebugDialog.#celsius(info.temperatureRam)}`
+                + ` · SSD ${DebugDialog.#celsius(info.temperatureSsd)} · Throttling `,
+            throttling: info.throttling === null || info.throttling === undefined ? '-' : '●',
         };
+        this.#dialog.querySelector('[data-info="heading"]').textContent =
+            info.version ? `Information · ${info.version}` : 'Information';
         for (const [key, value] of Object.entries(values))
             this.#dialog.querySelector(`[data-info="${key}"]`).textContent = value;
+        this.#dialog.querySelector('[data-info="throttling"]').style.color =
+            info.throttling === true ? 'rgb(235, 90, 90)' : info.throttling === false ? 'rgb(0, 190, 90)' : '';
+        this.#dialog.querySelector('[data-info="downloads"]').replaceChildren(...DebugDialog.#downloads(info));
+        // a line per medium, each cut on its own
+        this.#dialog.querySelector('[data-info="playing"]').replaceChildren(...(playing.length > 0 ? playing : ['-'])
+            .map((text) => Object.assign(document.createElement('div'), { textContent: text })));
+    }
+
+    /// A line per running download, the name left (cut), "42 %  136.0 / 323.0 MiB" right; then how many wait;
+    /// like the sdl player
+    static #downloads(info) {
+        const mib = (value) => (value / (1024 * 1024)).toFixed(1);
+        const line = (name, amount) => {
+            const row = document.createElement('div');
+            row.className = 'download';
+            const left = document.createElement('span');
+            left.textContent = name;
+            const right = document.createElement('span');
+            right.textContent = amount;
+            row.append(left, right);
+            return row;
+        };
+        const lines = info.downloads.map((d) => line(d.name, d.total === 0 ? `${mib(d.received)} MiB`
+            : `${Math.floor((100 * d.received) / d.total)} %  ${mib(d.received)} / ${mib(d.total)} MiB`));
+        if (info.downloadsWaiting > 0)
+            lines.push(line(`+${info.downloadsWaiting} waiting`, ''));
+        return lines.length > 0 ? lines : [line('-', '')];
     }
 
     static #bytes(value) {
@@ -206,6 +238,10 @@ export class DebugDialog {
             ++unit;
         }
         return `${value.toFixed(unit === 0 ? 0 : 2)} ${units[unit]}`;
+    }
+
+    static #celsius(value) {
+        return value === null || value === undefined ? '-' : `${value} °C`;
     }
 
     static #freeOf(free, total) {

@@ -140,7 +140,10 @@ class Media {
         } else if (this.#playable) {
             element = document.createElement(this.kind);
             element.volume = region.volume;
-            element.style.objectFit = region.fit === 'fill' ? 'fill' : region.fit === 'slice' ? 'cover' : 'contain';
+            // fit and mediaAlign like images (SMIL standard: without fit the original size; the legacy player always
+            // kept the aspect inside and centered videos)
+            element.style.objectFit = IMAGE_FIT[region.fit] ?? 'none';
+            element.style.objectPosition = `${Media.#horizontal(region.align)} ${Media.#vertical(region.align)}`;
             element.onended = () => this.#finished();
             element.onerror = () => this.#failed(element.error?.message || 'invalid media');
             element.src = this.#url;
@@ -234,6 +237,9 @@ export class Stage {
     #storage;
     #reports;
     #regions = [];
+    #loading;
+    #downloads = { done: 0, total: 0, bytesDone: 0, bytesTotal: 0 };
+    #mediaShown = false; // since the layout: "Loading" only before its first medium, not in gaps later
     #rootImageSrc = '';
     #backgroundUrls = [];
 
@@ -242,6 +248,13 @@ export class Stage {
         this.#element = element;
         this.#storage = storage;
         this.#reports = reports;
+        // "Loading 2 / 7" and a bar while downloads run and no region shows a medium; beside the stage, which a new
+        // layout empties
+        this.#loading = document.createElement('div');
+        this.#loading.id = 'loading';
+        this.#loading.hidden = true;
+        this.#loading.innerHTML = '<span></span><div class="bar"><div></div></div>';
+        element.after(this.#loading);
     }
 
     /// The events of the core that change what is shown.
@@ -259,7 +272,26 @@ export class Stage {
                 region.raise(media);
             });
             break;
+        case 'downloads':
+            this.#downloads = { done: event.done, total: event.total, bytesDone: event.bytesDone, bytesTotal: event.bytesTotal };
+            break;
         }
+        this.#updateLoading();
+    }
+
+    /// Like the sdl player: while downloads run and no medium was shown since the layout; gone with the first medium,
+    /// not back in a gap between media later (it would flash), again with the next layout
+    #updateLoading() {
+        const { done, total, bytesDone, bytesTotal } = this.#downloads;
+        if (this.#regions.some((region) => region.media.length > 0))
+            this.#mediaShown = true;
+        this.#loading.hidden = total === 0 || this.#mediaShown;
+        if (this.#loading.hidden)
+            return;
+        this.#loading.querySelector('span').textContent = `Loading ${Math.min(done + 1, total)} / ${total}`;
+        // the bytes of the first download, so the bar moves at once; without a size the files
+        const fraction = bytesTotal > 0 ? bytesDone / bytesTotal : done / total;
+        this.#loading.querySelector('.bar > div').style.width = `${100 * fraction}%`;
     }
 
     /// "region: medium" for every medium shown, for the debug dialog
@@ -278,6 +310,7 @@ export class Stage {
 
     /// A new index: the old media are stopped already (StopMedia come first), so only the regions go.
     #newLayout(layout) {
+        this.#mediaShown = false; // a new playlist may wait for its files again
         this.#backgroundUrls.forEach(Storage.release);
         this.#backgroundUrls = [];
         this.#element.replaceChildren();
