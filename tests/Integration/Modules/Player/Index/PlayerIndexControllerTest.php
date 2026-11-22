@@ -226,11 +226,12 @@ class PlayerIndexControllerTest extends PlayerIndexTestCase
 		static::assertSame($expected, (int) $this->playerRow()['UID']);
 	}
 
-	private function preview(int $playerId): ResponseInterface
+	private function preview(mixed $playerId): ResponseInterface
 	{
-		$request = new ServerRequestFactory()->createServerRequest('GET', '/async/player/preview-index/' . $playerId, ['SERVER_NAME' => 'hub.example.com', 'REQUEST_METHOD' => 'GET']);
+		$request = new ServerRequestFactory()->createServerRequest('GET', '/smil-preview', ['SERVER_NAME' => 'hub.example.com', 'REQUEST_METHOD' => 'GET'])
+			->withQueryParams($playerId === null ? [] : ['player_id' => $playerId]);
 
-		return $this->controller()->preview($request, new Response(), ['player_id' => (string) $playerId]);
+		return $this->controller()->preview($request, new Response());
 	}
 
 	public function testThePreviewGetsTheIndexOfThePlayerWithoutALastAccess(): void
@@ -238,12 +239,53 @@ class PlayerIndexControllerTest extends PlayerIndexTestCase
 		$this->givePlayer(PlayerStatus::RELEASED->value, 1);
 		$this->actingAs(1);
 
-		$response = $this->preview(5);
+		$response = $this->preview('5');
 
 		static::assertSame(200, $response->getStatusCode());
 		static::assertStringContainsString('Eingang - Annas Lobby', (string) $response->getBody());
 		static::assertSame('application/smil+xml', $response->getHeaderLine('Content-Type'));
 		static::assertSame('2000-01-01 00:00:00', $this->playerRow()['last_access']);
+	}
+
+	public function testThePreviewIsPrivateAndOnlyForTheHub(): void
+	{
+		$this->givePlayer(PlayerStatus::RELEASED->value, 1);
+		$this->actingAs(1);
+
+		$response = $this->preview('5');
+
+		static::assertSame('private, no-cache', $response->getHeaderLine('Cache-Control'));
+		static::assertFalse($response->hasHeader('Access-Control-Allow-Origin'));
+	}
+
+	/**
+	 * @return array<string,array{mixed}>
+	 */
+	public static function invalidPlayerIds(): array
+	{
+		return [
+			'missing'       => [null],
+			'empty'         => [''],
+			'zero'          => ['0'],
+			'negative'      => ['-5'],
+			'text'          => ['5abc'],
+			'leading zero'  => ['05'],
+			'too long'      => ['12345678901'],
+			'a list'        => [['5']],
+			'line break'    => ["5\n"],
+		];
+	}
+
+	#[DataProvider('invalidPlayerIds')]
+	public function testThePreviewOfAnInvalidPlayerIdIsNotFoundWithoutAQuery(mixed $playerId): void
+	{
+		$this->givePlayer(PlayerStatus::RELEASED->value, 1);
+		$this->actingAs(1);
+
+		$response = $this->preview($playerId);
+
+		static::assertSame(404, $response->getStatusCode());
+		static::assertFalse($response->hasHeader('Access-Control-Allow-Origin'));
 	}
 
 	public function testAUserWhoMayNotSeeThePlayerGetsNoPreview(): void
@@ -252,7 +294,7 @@ class PlayerIndexControllerTest extends PlayerIndexTestCase
 		$this->actingAs(3);
 
 		$this->expectException(AccessDeniedException::class);
-		$this->preview(5);
+		$this->preview('5');
 	}
 
 	public function testThePreviewOfAMissingPlayerIsNotFound(): void
@@ -262,7 +304,7 @@ class PlayerIndexControllerTest extends PlayerIndexTestCase
 		$this->expectException(NotFoundException::class);
 		try
 		{
-			$this->preview(5);
+			$this->preview('5');
 		}
 		finally
 		{
@@ -275,6 +317,6 @@ class PlayerIndexControllerTest extends PlayerIndexTestCase
 		$this->givePlayer(99);
 		$this->actingAs(1);
 
-		static::assertSame(404, $this->preview(5)->getStatusCode());
+		static::assertSame(404, $this->preview('5')->getStatusCode());
 	}
 }

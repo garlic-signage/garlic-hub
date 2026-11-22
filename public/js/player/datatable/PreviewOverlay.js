@@ -60,7 +60,8 @@ export class PreviewOverlay
 	open(playerId, uuid, playerName)
 	{
 		const params = new URLSearchParams({
-			index: location.origin + "/async/player/preview-index/" + encodeURIComponent(playerId),
+			// one segment: the media of the index are relative to it (delivery.php/...)
+			index: location.origin + "/smil-preview?player_id=" + encodeURIComponent(playerId),
 			uuid: uuid,
 			name: playerName,
 			storage: "memory",

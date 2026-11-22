@@ -143,6 +143,42 @@ class IndexResponseTest extends TestCase
 		static::assertStringContainsString('If-None-Match', $response->getHeaderLine('Access-Control-Allow-Headers'));
 	}
 
+	public function testThePreviewIsPrivateWithoutCorsButKeepsEtagAndLastModified(): void
+	{
+		$this->handler->init([], $this->file, true);
+
+		$response = $this->handler->doGET(new Response());
+
+		static::assertSame(200, $response->getStatusCode());
+		static::assertSame('private, no-cache', $response->getHeaderLine('Cache-Control'));
+		static::assertSame($this->etag(), $response->getHeaderLine('etag'));
+		static::assertSame($this->lastModified(), $response->getHeaderLine('Last-Modified'));
+		static::assertFalse($response->hasHeader('Access-Control-Allow-Origin'));
+		static::assertFalse($response->hasHeader('Vary'));
+	}
+
+	public function testThePreviewGets304WithoutCors(): void
+	{
+		$this->handler->init(['HTTP_IF_NONE_MATCH' => $this->etag()], $this->file, true);
+
+		$response = $this->handler->doGET(new Response());
+
+		static::assertSame(304, $response->getStatusCode());
+		static::assertSame('private, no-cache', $response->getHeaderLine('Cache-Control'));
+		static::assertFalse($response->hasHeader('Access-Control-Allow-Origin'));
+	}
+
+	public function testAPlayerAfterThePreviewGetsThePublicAnswerAgain(): void
+	{
+		$this->handler->init([], $this->file, true);
+		$this->init();
+
+		$response = $this->handler->doGET(new Response());
+
+		static::assertSame('*', $response->getHeaderLine('Access-Control-Allow-Origin'));
+		static::assertStringStartsWith('public', $response->getHeaderLine('Cache-Control'));
+	}
+
 	public function testHeadHasTheHeadersButNoBody(): void
 	{
 		$this->init();

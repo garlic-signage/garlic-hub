@@ -83,27 +83,32 @@ readonly class PlayerIndexController
 	}
 
 	/**
-	 * GET /player/preview-index/{player_id}: the index for the preview of a player in the hub. Only for a logged in
+	 * GET /smil-preview?player_id=<id>: the index for the preview of a player in the hub. Only for a logged in
 	 * user who may see the player. It is the index of the device, but the request leaves no trace in the database.
+	 * The address has one segment: the media in the index are relative (delivery.php/...) and stay below /.
+	 * The answer is private and has no CORS headers: it needs the session, no cache between may keep it.
 	 *
-	 * @param array<string,string> $args
 	 * @throws ModuleException
 	 * @throws CoreException
 	 * @throws FrameworkException
 	 * @throws UserException
 	 * @throws Exception
 	 */
-	public function preview(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
+	public function preview(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
 	{
-		$playerId = (int) ($args['player_id'] ?? 0);
+		$playerId = $request->getQueryParams()['player_id'] ?? null;
+		// only a positive whole number
+		if (!is_string($playerId) || preg_match('/^[1-9]\d{0,9}$/D', $playerId) !== 1)
+			return $response->withStatus(404);
+
 		// throws when the player is missing or the user may not see it
-		$this->playerService->fetchAclCheckedPlayerData($playerId);
+		$this->playerService->fetchAclCheckedPlayerData((int) $playerId);
 
-		$filePath = $this->indexService->handlePreviewRequest($playerId);
+		$filePath = $this->indexService->handlePreviewRequest((int) $playerId);
 		if ($filePath === '')
-			return $this->indexResponseHandler->doNotFound($response);
+			return $response->withStatus(404);
 
-		return $this->sendSmilHeader($response, $request->getServerParams(), $filePath);
+		return $this->sendSmilHeader($response, $request->getServerParams(), $filePath, true);
 	}
 
 	/**
@@ -118,9 +123,9 @@ readonly class PlayerIndexController
 	 * @param array<string,mixed> $server
 	 * @throws ModuleException
 	 */
-	private function sendSmilHeader(ResponseInterface $response, array $server, string $filePath): ResponseInterface
+	private function sendSmilHeader(ResponseInterface $response, array $server, string $filePath, bool $private = false): ResponseInterface
 	{
-		$this->indexResponseHandler->init($server, $filePath);
+		$this->indexResponseHandler->init($server, $filePath, $private);
 		if ($server['REQUEST_METHOD'] === 'HEAD')
 		{
 			return $this->indexResponseHandler->doHEAD($response);

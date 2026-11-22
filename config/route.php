@@ -95,6 +95,8 @@ $app->group('', function (RouteCollectorProxy $group) use ($container)
 	$group->get('/create-initial', resolve([ShowInitialAdminController::class, 'show'], $container));
 	$group->post('/create-initial', resolve([ShowInitialAdminController::class, 'store'], $container));
 	$group->get('/legals', resolve([HomeController::class, 'legals'], $container));
+	// the index of a player for its preview in the hub: one segment, so the relative paths in the index stay below /
+	$group->get('/smil-preview', resolve([PlayerIndexController::class, 'preview'], $container));
 	$group->get('/login', resolve([LoginController::class, 'showLogin'], $container));
 	$group->post('/login', resolve([LoginController::class, 'login'], $container));
 	$group->get('/login/two-factor', resolve([LoginController::class, 'showSecondFactor'], $container));
@@ -226,7 +228,6 @@ $app->group('/async', function (RouteCollectorProxy $group) use ($container)
 
 	$group->patch('/player/playlist', resolve([PlayerPlaylistController::class, 'replacePlaylist'], $container));
 	$group->patch('/player/push', resolve([PlayerPlaylistController::class, 'pushPlaylist'], $container));
-	$group->get('/player/preview-index/{player_id:\d+}', resolve([PlayerIndexController::class, 'preview'], $container));
 	$group->get('/player/acls/{player_id:\d+}', resolve([PlayerController::class, 'determineRights'], $container));
 	$group->get('/player/{player_id:\d+}', resolve([PlayerController::class, 'fetchPlayer'], $container));
 	$group->delete('/player', resolve([PlayerController::class, 'delete'], $container));

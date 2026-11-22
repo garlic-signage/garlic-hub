@@ -55,6 +55,7 @@ class IndexResponseHandler
 	 private string $filePath;
 	 private ?string $clientHasNoneMatch;
 	 private ?string $clientHasModifiedSince;
+	 private bool $private = false;
 
 	/**
 	 * @param FileUtils $fileUtils
@@ -66,10 +67,12 @@ class IndexResponseHandler
 
 	/**
 	 * @param array<string,mixed> $server
+	 * @param bool $private the preview in the hub: only for the logged in user, no cache between and no CORS
 	 * @throws ModuleException
 	 */
-	public function init(array $server, string $filePath): void
+	public function init(array $server, string $filePath, bool $private = false): void
 	{
+		$this->private                = $private;
 		$this->filePath               = $filePath;
 		$this->clientHasNoneMatch     = $server['HTTP_IF_NONE_MATCH'] ?? $server['If-None-Match'] ?? null;
 		$this->clientHasModifiedSince = $server['HTTP_IF_MODIFIED_SINCE'] ?? $server['If-Modified-Since'] ?? null;
@@ -77,7 +80,8 @@ class IndexResponseHandler
 		$this->fileMTime    = $this->fileUtils->getFileMTime($filePath);
 		$this->etag         = $this->fileUtils->getETag($filePath);
 		$this->lastModified = gmdate('D, d M Y H:i:s', $this->fileMTime) . ' GMT';
-		$this->cacheControl = 'public, must-revalidate, max-age=864000, pre-check=864000';
+		// the browser keeps the private one, but asks every time: ETag and Last-Modified give a 304
+		$this->cacheControl = $private ? 'private, no-cache' : 'public, must-revalidate, max-age=864000, pre-check=864000';
 	}
 
 /*
@@ -199,6 +203,10 @@ class IndexResponseHandler
 
 	private function addAccessControlHeader(ResponseInterface $response): ResponseInterface
 	{
+		// the preview is only for the hub itself
+		if ($this->private)
+			return $response;
+
 		// the answer depends on who asks (the uuid is in the agent): a cache between must not give it to another player
 		return $response->withHeader('Vary', 'User-Agent, X-Signage-Agent')
 						->withHeader('Access-Control-Allow-Origin', '*')

@@ -91,7 +91,7 @@ Deno.test('the preview plays as the player from the preview index of the hub, wi
 	const url = new URL(page.iframe().getAttribute('src'), ORIGIN);
 	assertEquals(url.pathname, '/js/player/preview/index.html');
 	assertEquals(Object.fromEntries(url.searchParams), {
-		index: ORIGIN + '/async/player/preview-index/7', uuid: '11111111-1111-4111-8111-111111111111', name: 'Eingang & Lobby', storage: 'memory', preview: '1'
+		index: ORIGIN + '/smil-preview?player_id=7', uuid: '11111111-1111-4111-8111-111111111111', name: 'Eingang & Lobby', storage: 'memory', preview: '1'
 	});
 	assertEquals(page.iframe().getAttribute('allow'), 'autoplay');
 	assertEquals(page.document.querySelector('.dialog-name').textContent, 'Eingang & Lobby');
