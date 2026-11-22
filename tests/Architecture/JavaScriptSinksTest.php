@@ -66,6 +66,8 @@ class JavaScriptSinksTest extends TestCase
 		],
 		'templates/selectors/TemplatesSelectorView.js'                    => ['this.#templatesListElement.innerHTML = "";'],
 		'playlists/compose/standard/selectors/PlaylistsSelectorView.js'   => ['this.#playlistsListElement.innerHTML = "";'],
+		// fixed markup of the loading bar of the preview player
+		'player/preview/stage.js'                                         => ["this.#loading.innerHTML = '<span></span><div class=\"bar\"><div></div></div>';"],
 		// the list of the fonts is a fixed file of the application
 		'templates/canvas-composer/Controller/Properties/TextPropertiesController.js' => ['div.innerHTML = this.#fontLoader.fontsList[i].preview'],
 		// the labels, options and values of the widget and of the user are escaped by WidgetForm.#escape()
