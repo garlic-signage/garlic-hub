@@ -108,8 +108,9 @@ class PlaylistContent
 			{
 				foreach ($item['begin_trigger']['touches'] as $touch)
 				{
+					// throw new \RuntimeException(json_encode($touch));
 					// @infection-ignore-all the keys of an array are numbers anyway, the item ids are not used
-					$this->touchTrigger[(int)$touch['touch_item_id']] = (int)$item['item_id'];
+					$this->touchTrigger[(int)$touch['data']['touch_item_id']] = (int)$item['item_id'];
 				}
 			}
 		}

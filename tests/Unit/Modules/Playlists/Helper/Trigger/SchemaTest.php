@@ -52,14 +52,14 @@ class SchemaTest extends TestCase
 			'item_id'    => '1',
 			'wallclocks' => [self::wallclock()],
 			'accesskeys' => [['accesskey' => 'a'], ['accesskey' => '7']],
-			'touches'    => [['touch_item_id' => '42']],
+			'touches'    => [['touch_item_id' => '42', 'selected_action' => 0]],
 			'notifies'   => [['notify' => 'Go2']],
 		];
 
 		static::assertSame([
 			'wallclocks' => [['iso_date' => '2030-01-31T10:00:00', 'weekday' => 3, 'repeat_counts' => 5, 'repeat_minutes' => 30, 'repeat_hours' => 1, 'repeat_days' => 0, 'repeat_weeks' => 0, 'repeat_months' => 0, 'repeat_years' => 2]],
 			'accesskeys' => [['accesskey' => 'a'], ['accesskey' => '7']],
-			'touches'    => [['touch_item_id' => 42]],
+			'touches'    => [['action' => 0, 'data' => ['touch_item_id' => 42, 'selected_action' => 0]]],
 			'notifies'   => [['notify' => 'Go2']],
 		], $this->schema->parse($input));
 	}

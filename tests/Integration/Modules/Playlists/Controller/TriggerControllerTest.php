@@ -144,9 +144,9 @@ class TriggerControllerTest extends PlaylistsControllerTestCase
 	{
 		$this->actingAs(2);
 
-		$this->assertSuccess($this->controller->save($this->request('PATCH', body: ['item_id' => '1', 'touches' => [['touch_item_id' => '5']]]), $this->newResponse()));
+		$this->assertSuccess($this->controller->save($this->request('PATCH', body: ['item_id' => '1', 'touches' => [['touch_item_id' => '5', 'selected_action' => 0]]]), $this->newResponse()));
 
-		static::assertSame(['touches' => [['touch_item_id' => 5]]], unserialize((string) $this->databaseValue('SELECT begin_trigger FROM playlists_items WHERE item_id = 1')));
+		static::assertSame(['touches' => [['action' => 0, 'data' => ['touch_item_id' => 5, 'selected_action' => 0]]]], unserialize((string) $this->databaseValue('SELECT begin_trigger FROM playlists_items WHERE item_id = 1')));
 	}
 
 	/**
@@ -170,7 +170,7 @@ class TriggerControllerTest extends PlaylistsControllerTestCase
 
 		try
 		{
-			$this->controller->save($this->request('PATCH', body: ['item_id' => '1', 'touches' => [['touch_item_id' => $touchItemId]]]), $this->newResponse());
+			$this->controller->save($this->request('PATCH', body: ['item_id' => '1', 'touches' => [['action' => 0, 'data' => ['touch_item_id' => $touchItemId, 'selected_action' => 0]]]]), $this->newResponse());
 			static::fail('Expected TranslatableModuleException');
 		}
 		catch (TranslatableModuleException $e)
@@ -186,7 +186,7 @@ class TriggerControllerTest extends PlaylistsControllerTestCase
 	public function testTheValuesOfATriggerCanNotBreakTheExportedFile(): void
 	{
 		$this->actingAs(2);
-		$stored = ['wallclocks' => [['iso_date' => '2030-01-01T10:00" evil="1', 'weekday' => '0" x="1', 'repeat_counts' => '3" y="1', 'repeat_hours' => '1" z="1']], 'touches' => [['touch_item_id' => '2" w="1']]];
+		$stored = ['wallclocks' => [['iso_date' => '2030-01-01T10:00" evil="1', 'weekday' => '0" x="1', 'repeat_counts' => '3" y="1', 'repeat_hours' => '1" z="1']], 'touches' => [['action' => 0, 'data' => ['touch_item_id' => '2" w="1', 'selected_action' => 0]]]];
 		$this->connection->executeStatement('UPDATE playlists_items SET begin_trigger = ? WHERE item_id = 1', [serialize($stored)]);
 
 		$workspace = new MediaWorkspace();

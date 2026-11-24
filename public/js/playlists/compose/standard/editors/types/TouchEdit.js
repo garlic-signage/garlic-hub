@@ -18,27 +18,35 @@
 */
 'use strict';
 
-import {BaseTypes} from "./BaseTypes.js";
+import { BaseTypes } from "./BaseTypes.js";
 
-export class TouchEdit extends BaseTypes
-{
+export class TouchEdit extends BaseTypes {
 	#valueField = null;
-	#touchableMedialist =null;
-	
-	set touchableMedialist(value)
-	{
+	#actionField = null;
+	#touchableMedialist = null;
+
+	set touchableMedialist(value) {
 		this.#touchableMedialist = value;
 	}
 
-	init(data)
-	{
+	init(data) {
 		this.cloneNode("touchTemplate")
 		this.addRemoveListener();
 
-		this.#valueField = this.node.querySelector(".edit-touch-item");
+		this.#valueField = this.node.querySelector(".action-options");
+		this.#actionField = this.node.querySelector(".selected-action");
 
-		for (const item of this.#touchableMedialist)
-		{
+		const actionOptions = this.node.querySelector(".action-options");
+		const selectedAction = this.node.querySelector(".action-options");
+		selectedAction.addEventListener("change", function (event) {
+			if (selectedAction.value === "0") {
+				actionOptions.classList.add("show");
+			} else {
+				actionOptions.classList.remove("show");
+			}
+
+		});
+		for (const item of this.#touchableMedialist) {
 			const option = document.createElement('option');
 			option.value = item.item_id;
 			option.textContent = item.item_name;
@@ -48,12 +56,16 @@ export class TouchEdit extends BaseTypes
 		if (data.hasOwnProperty("touch_item_id"))
 			this.#valueField.value = data.touch_item_id;
 
+		if (data.hasOwnProperty("selected_action"))
+			this.#actionField.value = data.selected_action;
+
+		this.#valueField.classList.toggle("show", this.#actionField.value === "0");
 	}
 
-	getValues()
-	{
+	getValues() {
 		let obj = {}
-		obj.touch_item_id  = this.#valueField.value;
+		obj.touch_item_id = this.#valueField.value;
+		obj.selected_action = parseInt(this.#actionField.value);
 
 		return obj;
 	}

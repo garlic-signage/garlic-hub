@@ -209,7 +209,7 @@ class PlaylistContentTest extends TestCase
 	#[Group('units')]
 	public function testAnItemWithATouchTriggerIsTheTargetOfTheOthers(): void
 	{
-		$source = self::video(['item_id' => 1, 'item_name' => 'source', 'begin_trigger' => ['touches' => [['touch_item_id' => 2]]]]);
+		$source = self::video(['item_id' => 1, 'item_name' => 'source', 'begin_trigger' => ['touches' => [['action' => 0, 'data' => ['touch_item_id' => 2, 'selected_action' => 0]]]]]);
 		$target = self::video(['item_id' => 2, 'item_name' => 'target', 'file_resource' => 'other']);
 
 		$content = $this->build([$source, $target]);
@@ -262,7 +262,7 @@ class PlaylistContentTest extends TestCase
 	#[Group('units')]
 	public function testExternalFilesAndTemplatesCanBeTheTargetOfATouch(): void
 	{
-		$source   = self::video(['item_id' => 1, 'begin_trigger' => ['touches' => [['touch_item_id' => 2], ['touch_item_id' => 3]]]]);
+		$source   = self::video(['item_id' => 1, 'begin_trigger' => ['touches' => [['action' => 0, 'data' => ['touch_item_id' => 2, 'selected_action' => 0]], ['action' => 0, 'data' => ['touch_item_id' => 3, 'selected_action' => 0]]]]]);
 		$external = self::video(['item_id' => 2, 'item_type' => ItemType::MEDIA_EXTERN->value, 'file_resource' => '', 'content_data' => serialize(['url' => 'https://acme.com/a.mp4'])]);
 		$template = self::video(['item_id' => 3, 'item_type' => ItemType::TEMPLATE->value, 'mimetype' => 'image/jpeg', 'extension' => null, 'content_data' => '{"objects":[]}']);
 
@@ -275,7 +275,7 @@ class PlaylistContentTest extends TestCase
 	#[Group('units')]
 	public function testOnlyAMasterPlaylistHasTouchTargets(): void
 	{
-		$source = self::video(['item_id' => 1, 'begin_trigger' => ['touches' => [['touch_item_id' => 2]]]]);
+		$source = self::video(['item_id' => 1, 'begin_trigger' => ['touches' => [['action' => 0, 'data' => ['touch_item_id' => 2, 'selected_action' => 0]]]]]);
 		$target = self::video(['item_id' => 2, 'item_type' => ItemType::MEDIA_EXTERN->value, 'file_resource' => '', 'content_data' => serialize(['url' => 'https://acme.com/a.mp4'])]);
 
 		$content = $this->build([$source, $target], ['playlist_mode' => PlaylistMode::INTERNAL->value]);

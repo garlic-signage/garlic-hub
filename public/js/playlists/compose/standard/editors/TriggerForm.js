@@ -18,8 +18,7 @@
 */
 'use strict';
 
-export class TriggerForm
-{
+export class TriggerForm {
 	#triggerTypeFactory = null;
 	#addWallclock = null;
 	#wallclocksContainer = null;
@@ -31,22 +30,21 @@ export class TriggerForm
 	#notifiesContainer = null;
 	#editorsManager = null;
 
-	constructor(triggertypeFactory, editorsManager)
-	{
+	constructor(triggertypeFactory, editorsManager) {
 		this.#triggerTypeFactory = triggertypeFactory;
 		this.#editorsManager = editorsManager;
 	}
 
-	init(triggerData, touchableMedialist)
-	{
-		this.#editorsManager.triggerData  = triggerData;
+	init(triggerData, touchableMedialist) {
+		this.#editorsManager.triggerData = triggerData.begin_trigger;
+		this.#editorsManager.triggerDataEnd = triggerData.end_trigger;
 		this.#editorsManager.touchableMedialist = touchableMedialist;
 
 		this.#addWallclock = document.getElementById("addWallclock");
 		this.#wallclocksContainer = document.getElementById("wallclocksContainer");
 		this.#addWallclock.addEventListener("click", () => {
 			const editor = this.#triggerTypeFactory.create("wallclock");
-			const html   = this.#editorsManager.addWallclockEditor(editor);
+			const html = this.#editorsManager.addWallclockEditor(editor);
 			this.#wallclocksContainer.appendChild(html);
 		});
 
@@ -54,19 +52,19 @@ export class TriggerForm
 		this.#accesskeysContainer = document.getElementById("accesskeysContainer");
 		this.#addAccesskey.addEventListener("click", () => {
 			const editor = this.#triggerTypeFactory.create("accesskey");
-			const html   = this.#editorsManager.addAccesskeyEditor(editor);
+			const html = this.#editorsManager.addAccesskeyEditor(editor);
 			this.#accesskeysContainer.appendChild(html);
 		});
 
-		this.#addTouch     = document.getElementById("addTouch");
+		this.#addTouch = document.getElementById("addTouch");
 		this.#touchesContainer = document.getElementById("touchesContainer");
 		this.#addTouch.addEventListener("click", () => {
 			const editor = this.#triggerTypeFactory.create("touch");
-			const html   = this.#editorsManager.addTouchEditor(editor);
+			const html = this.#editorsManager.addTouchEditor(editor);
 			this.#touchesContainer.appendChild(html);
 		});
 
-		this.#addNotify    = document.getElementById("addNotify");
+		this.#addNotify = document.getElementById("addNotify");
 		this.#notifiesContainer = document.getElementById("notifiesContainer");
 		this.#addNotify.addEventListener("click", () => {
 			const editor = this.#triggerTypeFactory.create("notify");
@@ -75,46 +73,48 @@ export class TriggerForm
 		});
 
 		// init existing from data
-		if (triggerData.hasOwnProperty("wallclocks"))
-		{
-			for (let i = 0; i < triggerData.wallclocks.length; i++)
-			{
-				const editor = this.#triggerTypeFactory.create("wallclock");
-				const html = this.#editorsManager.addWallclockEditor(editor);
-				this.#wallclocksContainer.appendChild(html);
+		if (triggerData.hasOwnProperty("begin_trigger")) {
+			if (triggerData.hasOwnProperty("wallclocks")) {
+				for (let i = 0; i < triggerData.wallclocks.length; i++) {
+					const editor = this.#triggerTypeFactory.create("wallclock");
+					const html = this.#editorsManager.addWallclockEditor(editor);
+					this.#wallclocksContainer.appendChild(html);
+				}
+			}
+			if (triggerData.hasOwnProperty("accesskeys")) {
+				for (let i = 0; i < triggerData.accesskeys.length; i++) {
+					const editor = this.#triggerTypeFactory.create("accesskey");
+					const html = this.#editorsManager.addAccesskeyEditor(editor);
+					this.#accesskeysContainer.appendChild(html);
+				}
+			}
+			if (triggerData.hasOwnProperty("touches")) {
+				for (let i = 0; i < triggerData.touches.length; i++) {
+					const editor = this.#triggerTypeFactory.create("touch");
+					const html = this.#editorsManager.addTouchEditor(editor);
+					this.#touchesContainer.appendChild(html);
+				}
+			}
+			if (triggerData.hasOwnProperty("notifies")) {
+				for (let i = 0; i < triggerData.notifies.length; i++) {
+					const editor = this.#triggerTypeFactory.create("notify");
+					const html = this.#editorsManager.addNotifyEditor(editor);
+					this.#notifiesContainer.appendChild(html);
+				}
 			}
 		}
-		if (triggerData.hasOwnProperty("accesskeys"))
-		{
-			for (let i = 0; i < triggerData.accesskeys.length; i++)
-			{
-				const editor = this.#triggerTypeFactory.create("accesskey");
-				const html = this.#editorsManager.addAccesskeyEditor(editor);
-				this.#accesskeysContainer.appendChild(html);
-			}
-		}
-		if (triggerData.hasOwnProperty("touches"))
-		{
-			for (let i = 0; i < triggerData.touches.length; i++)
-			{
-				const editor = this.#triggerTypeFactory.create("touch");
-				const html = this.#editorsManager.addTouchEditor(editor);
-				this.#touchesContainer.appendChild(html);
-			}
-		}
-		if (triggerData.hasOwnProperty("notifies"))
-		{
-			for (let i = 0; i < triggerData.notifies.length; i++)
-			{
-				const editor = this.#triggerTypeFactory.create("notify");
-				const html = this.#editorsManager.addNotifyEditor(editor);
-				this.#notifiesContainer.appendChild(html);
+		if (triggerData.hasOwnProperty("end_trigger")) {
+			if (triggerData.end_trigger.hasOwnProperty("touches")) {
+				for (let i = 0; i < triggerData.end_trigger.touches.length; i++) {
+					const editor = this.#triggerTypeFactory.create("touch");
+					const html = this.#editorsManager.addTouchEditor(editor);
+					this.#touchesContainer.appendChild(html);
+				}
 			}
 		}
 	}
 
-	collectValues()
-	{
+	collectValues() {
 		let triggers = {}
 
 		let wallclocks = this.#editorsManager.collectWallclockValues();

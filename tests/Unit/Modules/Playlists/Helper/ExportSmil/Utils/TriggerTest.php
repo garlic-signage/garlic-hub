@@ -246,7 +246,7 @@ class TriggerTest extends TestCase
 	#[Group('units')]
 	public function testDetermineTriggerReturnsExpectedStringForTouches(): void
 	{
-		$touches = [['touch_item_id' => '123']];
+		$touches = [['action' => 0, 'data' => ['touch_item_id' => '123', 'selected_action' => 0]]];
 		$triggers = new Trigger(['touches' => $touches]);
 		$result = $triggers->determineTrigger();
 		static::assertEquals(Base::ID_PREFIX.'123.activateEvent', $result);
@@ -329,7 +329,7 @@ class TriggerTest extends TestCase
 		$trigger = new Trigger([
 			'wallclocks' => [['iso_date' => '2025-11-03T10:00:00'], ['iso_date' => '2025-11-04T11:00:00']],
 			'accesskeys' => [['accesskey' => 'a'], ['accesskey' => 'b']],
-			'touches'    => [['touch_item_id' => '1'], ['touch_item_id' => '2']],
+			'touches'    => [['action' => 0, 'data' => ['touch_item_id' => '1', 'selected_action' => 0]], ['action' => 0, 'data' => ['touch_item_id' => '2', 'selected_action' => 0]]],
 			'notifies'   => [['notify' => 'x'], ['notify' => 'y']],
 		]);
 

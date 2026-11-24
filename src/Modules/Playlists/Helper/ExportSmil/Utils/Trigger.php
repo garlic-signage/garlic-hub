@@ -106,8 +106,12 @@ class Trigger
 		$determined = [];
 		foreach ($touches as $touch)
 		{
-			$determined[] = Base::ID_PREFIX.(int) $touch['touch_item_id'].'.activateEvent';
+			if ($touch['data']['selected_action'] === 0) {
+			$determined[] = Base::ID_PREFIX.(int) $touch['data']['touch_item_id'].'.activateEvent';
 		}
+		else if($touch ['data']['selected_action'] === 1) {
+				$determined[] = 'activateEvent';
+		}}
 
 		return $determined;
 	}

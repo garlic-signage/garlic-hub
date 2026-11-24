@@ -103,11 +103,14 @@
 			<p>
 				<button type="button" title="{{LANG_REMOVE_TOUCH}}" class="bi bi-trash remove naked-button"> {{LANG_REMOVE_TOUCH}}</button>
 			</p>
-			<label>
-				<select class="edit-touch-item">
-					<option value="0">-</option>
-				</select>
-			</label>
+		<p>Actions</p>
+		<select class="selected-action">
+			<option value=0>Show when click item</option>
+			<option value=1>Next</option>
+		</select> 
+		
+		<select class="action-options">
+		</select>
 	</div>
 </template>
 <template id="notifyTemplate">

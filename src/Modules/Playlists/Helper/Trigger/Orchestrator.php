@@ -115,7 +115,7 @@ class Orchestrator
 	public function save(ResponseInterface $response): ?ResponseInterface
 	{
 		$this->triggerService->saveBeginTrigger($this->itemId, $this->trigger);
-
+		$this->triggerService->saveEndTrigger($this->itemId, $this->trigger);
 		return $this->responseBuilder->generalSuccess($response, []);
 	}
 }

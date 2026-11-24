@@ -18,10 +18,9 @@
 */
 'use strict';
 
-import {PlaylistsProperties} from "../playlists/PlaylistsProperties.js";
+import { PlaylistsProperties } from "../playlists/PlaylistsProperties.js";
 
-export class Trigger
-{
+export class Trigger {
 	#editDialog = null;
 	#triggerForm = null;
 	#triggerService = null;
@@ -29,19 +28,16 @@ export class Trigger
 	#touchableMedialist = null;
 	#html = null;
 
-	constructor(editDialog, triggerForm, triggerService)
-	{
-		this.#editDialog    = editDialog;
-		this.#triggerForm    = triggerForm;
+	constructor(editDialog, triggerForm, triggerService) {
+		this.#editDialog = editDialog;
+		this.#triggerForm = triggerForm;
 		this.#triggerService = triggerService;
 	}
 
-	async fetchBeginTrigger (itemId)
-	{
+	async fetchBeginTrigger(itemId) {
 		const result = await this.#triggerService.fetchBeginTrigger(itemId);
 		// Stryker disable next-line ConditionalExpression: after a failed fetch no dialog opens, nothing reads these fields
-		if (result.success === true)
-		{
+		if (result.success === true) {
 			this.#itemData = result.item_data;
 			this.#touchableMedialist = result.touchable_medialist;
 			this.#html = result.html;
@@ -49,25 +45,21 @@ export class Trigger
 		return result;
 	}
 
-	initDialog(actionButton)
-	{
+	initDialog(actionButton) {
 		this.#editDialog.setTitle(this.#itemData.item_name);
 		this.#editDialog.setId(this.#itemData.item_id);
 		this.#editDialog.setContent(this.#html);
 
-		this.#triggerForm.init(this.#itemData.begin_trigger, this.#touchableMedialist);
+		this.#triggerForm.init(this.#itemData, this.#touchableMedialist);
 
-		let saveCallBack = async (e) =>
-		{
+		let saveCallBack = async (e) => {
 			e.preventDefault();
 			let values = this.#triggerForm.collectValues();
 			let result = await this.#triggerService.storeBeginTrigger(this.#itemData.item_id, values);
-			if (result.success === false)
-			{
+			if (result.success === false) {
 				this.#editDialog.setErrorMessage(result.error_message);
 			}
-			else
-			{
+			else {
 				this.#editDialog.closeDialog();
 				PlaylistsProperties.notifySave();
 				if (values.hasOwnProperty("wallclocks") || values.hasOwnProperty("accesskeys") || values.hasOwnProperty("touches") || values.hasOwnProperty("notifies"))
