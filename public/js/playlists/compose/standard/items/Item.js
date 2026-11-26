@@ -17,12 +17,11 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import {Utils} from "../../../../core/Utils.js";
-import {FlashMessageHandler} from "../../../../core/FlashMessageHandler.js";
-import {PlaylistsProperties} from "../playlists/PlaylistsProperties.js";
+import { Utils } from "../../../../core/Utils.js";
+import { FlashMessageHandler } from "../../../../core/FlashMessageHandler.js";
+import { PlaylistsProperties } from "../playlists/PlaylistsProperties.js";
 
-export class Item
-{
+export class Item {
 	#itemData = null
 	#itemsService = null;
 	#widgetFactory = null;
@@ -31,22 +30,21 @@ export class Item
 	#playlistItem = null;
 	#cmsEdition = document.getElementById("cms_edition").value;
 	#belongsToMasterPlaylist = false;
-	#previewAction         = null;
-	#linkPlaylistAction    = null;
-	#editTemplateAction    = null;
+	#previewAction = null;
+	#linkPlaylistAction = null;
+	#editTemplateAction = null;
 	#conditionalPlayAction = null;
-	#editTriggerAction     = null;
-	#editWidgetAction      = null;
-	#editSettingsAction    = null;
-	#copyItemAction        = null;
-	#deleteItemAction      = null;
-	#itemName     = null;
+	#editTriggerAction = null;
+	#editWidgetAction = null;
+	#editSettingsAction = null;
+	#copyItemAction = null;
+	#deleteItemAction = null;
+	#itemName = null;
 	#editItemName = false;
 	#itemDuration = null;
-	#flashMessageHandler     = new FlashMessageHandler();
+	#flashMessageHandler = new FlashMessageHandler();
 
-	constructor(itemData, itemsService, widgetFactory, conditionalPlayFactory, triggerFactory)
-	{
+	constructor(itemData, itemsService, widgetFactory, conditionalPlayFactory, triggerFactory) {
 		this.#itemData = itemData;
 		this.#itemsService = itemsService;
 		this.#widgetFactory = widgetFactory;
@@ -55,58 +53,47 @@ export class Item
 	}
 
 
-	set belongsToMasterPlaylist(value)
-	{
+	set belongsToMasterPlaylist(value) {
 		this.#belongsToMasterPlaylist = value;
 	}
 
-	get previewAction()
-	{
+	get previewAction() {
 		return this.#previewAction;
 	}
 
-	get linkPlaylistAction()
-	{
+	get linkPlaylistAction() {
 		return this.#linkPlaylistAction;
 	}
 
-	get editTemplateAction()
-	{
+	get editTemplateAction() {
 		return this.#editTemplateAction;
 	}
 
-	get conditionalPlayAction()
-	{
+	get conditionalPlayAction() {
 		return this.#conditionalPlayAction;
 	}
 
-	get editTriggerAction()
-	{
+	get editTriggerAction() {
 		return this.#editTriggerAction;
 	}
 
-	get editWidgetAction()
-	{
+	get editWidgetAction() {
 		return this.#editWidgetAction;
 	}
 
-	get editSettingsAction()
-	{
+	get editSettingsAction() {
 		return this.#editSettingsAction;
 	}
 
-	get copyItemAction()
-	{
+	get copyItemAction() {
 		return this.#copyItemAction;
 	}
 
-	get deleteItemAction()
-	{
+	get deleteItemAction() {
 		return this.#deleteItemAction;
 	}
 
-	buildItemElement()
-	{
+	buildItemElement() {
 		const template = document.getElementById("playlistItemTemplate");
 		const playlistItem = template.content.cloneNode(true);
 		this.#playlistItem = playlistItem;
@@ -131,15 +118,12 @@ export class Item
 		return playlistItem;
 	}
 
-	#buildItemName()
-	{
+	#buildItemName() {
 		this.#itemName.textContent = this.#itemData.item_name;
-		if (this.#itemData.item_type === "mediapool")
-		{
+		if (this.#itemData.item_type === "mediapool") {
 			this.#itemName.contentEditable = true;
 			this.#itemName.addEventListener('keydown', (event) => {
-				if (event.key === 'Enter')
-				{
+				if (event.key === 'Enter') {
 					event.preventDefault(); // prevent a carriage return.
 					this.#itemsService.editItem(this.#itemData.item_id, 'item_name', this.#itemName.textContent)
 					this.#editItemName = false;
@@ -151,8 +135,7 @@ export class Item
 				this.#editItemName = true;
 			});
 			this.#itemName.addEventListener('blur', () => {
-				if (this.#editItemName)
-				{
+				if (this.#editItemName) {
 					this.#itemsService.editItem(this.#itemData.item_id, 'item_name', this.#itemName.textContent)
 					this.#editItemName = false;
 					PlaylistsProperties.notifySave();
@@ -161,15 +144,13 @@ export class Item
 		}
 	}
 
-	#buildItemDuration()
-	{
+	#buildItemDuration() {
 		this.#itemDuration.textContent = Utils.formatSecondsToTime(this.#itemData.item_duration);
 		this.#itemDuration.dataset.seconds = this.#itemData.item_duration;
 		this.#itemDuration.addEventListener('click', (event) => {
 			const target = event.target;
 			// Stryker disable next-line ConditionalExpression: the duration is a span without children, it is always the target
-			if (target.tagName === "SPAN")
-			{
+			if (target.tagName === "SPAN") {
 				const inputGroup = document.createElement("span");
 				inputGroup.classList.add("item-duration-input");
 				const inputField = document.createElement("input");
@@ -209,8 +190,7 @@ export class Item
 					state = "saving";
 					const result = await this.#itemsService.fetchDefaultSeconds(this.#itemData.item_id);
 					state = "editing";
-					if (!result.success)
-					{
+					if (!result.success) {
 						this.#flashMessageHandler.showError(result.error_message);
 						return;
 					}
@@ -235,11 +215,9 @@ export class Item
 	/**
 	 * @return {Promise<boolean>} whether the duration was saved and the field closed
 	 */
-	async #saveDuration(inputElement)
-	{
+	async #saveDuration(inputElement) {
 		const result = await this.#itemsService.editItem(this.#itemData.item_id, 'item_duration', inputElement.value);
-		if (!result.success)
-		{
+		if (!result.success) {
 			this.#flashMessageHandler.showError(result.error_message);
 			return false;
 		}
@@ -253,8 +231,7 @@ export class Item
 		return true;
 	}
 
-	#isLoaded(result)
-	{
+	#isLoaded(result) {
 		if (result.success === true)
 			return true;
 
@@ -262,35 +239,30 @@ export class Item
 		return false;
 	}
 
-	#initActions()
-	{
+	#initActions() {
 		this.#previewAction = this.#playlistItem.querySelector('.item-preview');
 
-		if (this.#itemData.item_type === "playlist")
-		{
+		if (this.#itemData.item_type === "playlist") {
 			this.#linkPlaylistAction = this.#playlistItem.querySelector('.link-playlist');
 			this.#linkPlaylistAction.href = "/playlists/compose/" + this.#itemData.file_resource;
 		}
 		else
 			this.#playlistItem.querySelector('.link-playlist').remove();
 
-		if (this.#itemData.item_type === "template")
-		{
+		if (this.#itemData.item_type === "template") {
 			this.#editTemplateAction = this.#playlistItem.querySelector('.edit-template');
 			this.#editTemplateAction.href = "/playlist-item/composer/" + this.#itemData.item_id;
 		}
 		else
 			this.#playlistItem.querySelector('.edit-template').remove();
 
-		if (this.#cmsEdition !== "core")
-		{
-			this.#editSettingsAction    = this.#playlistItem.querySelector('.edit-settings');
+		if (this.#cmsEdition !== "core") {
+			this.#editSettingsAction = this.#playlistItem.querySelector('.edit-settings');
 			// these editors are part of the core edition only: without them the buttons would do nothing
 			this.#playlistItem.querySelector('.conditional-play').remove();
 			this.#playlistItem.querySelector('.edit-trigger').remove();
 		}
-		else
-		{
+		else {
 			this.#conditionalPlayAction = this.#playlistItem.querySelector('.conditional-play');
 			if (this.#itemData.conditional === undefined || this.#itemData.conditional === "" || this.#itemData.conditional === "a:0:{}")
 				// Stryker disable next-line StringLiteral: the template has no mark, the remove is only for safety
@@ -298,46 +270,43 @@ export class Item
 			else
 				this.#conditionalPlayAction.classList.add("icon-values-setted");
 
-			if (this.#belongsToMasterPlaylist)
-			{
-				this.#editTriggerAction     = this.#playlistItem.querySelector('.edit-trigger');
-				if (this.#itemData.begin_trigger === undefined || this.#itemData.begin_trigger === "" || this.#itemData.begin_trigger === "a:0:{}")
-					// Stryker disable next-line StringLiteral: the template has no mark, the remove is only for safety
-					this.#editTriggerAction.classList.remove("icon-values-setted");
-				else
-					this.#editTriggerAction.classList.add("icon-values-setted");
+			if (this.#belongsToMasterPlaylist) {
+				this.#editTriggerAction = this.#playlistItem.querySelector('.edit-trigger');
+				const hasTrigger = (val) =>
+					val !== undefined &&
+					val !== null &&
+					val !== "" &&
+					val !== "a:0:{}" &&
+					!(Array.isArray(val) && val.length === 0) &&
+					!(typeof val === "object" && Object.keys(val).length === 0);
+				const isSet = hasTrigger(this.#itemData.begin_trigger) || hasTrigger(this.#itemData.end_trigger);
+				// Stryker disable next-line StringLiteral: the template has no mark, the remove is only for safety
+				this.#editTriggerAction.classList.toggle("icon-values-setted", isSet);
 			}
-			else
-			{
+			else {
 				this.#playlistItem.querySelector('.edit-trigger').remove();
 			}
 
 			this.#playlistItem.querySelector('.edit-settings').remove();
 		}
 
-		if (this.#conditionalPlayAction !== null)
-		{
-			this.#conditionalPlayAction.addEventListener("click", async () =>
-			{
+		if (this.#conditionalPlayAction !== null) {
+			this.#conditionalPlayAction.addEventListener("click", async () => {
 				let conditionalPlay = this.#conditionalPlayFactory.create();
 				if (this.#isLoaded(await conditionalPlay.fetch(this.#itemData.item_id)))
 					conditionalPlay.initDialog(this.#conditionalPlayAction);
 			});
 		}
-		if (this.#editTriggerAction !== null)
-		{
-			this.#editTriggerAction.addEventListener("click", async () =>
-			{
+		if (this.#editTriggerAction !== null) {
+			this.#editTriggerAction.addEventListener("click", async () => {
 				let trigger = this.#triggerFactory.create();
 				if (this.#isLoaded(await trigger.fetchBeginTrigger(this.#itemData.item_id)))
 					trigger.initDialog(this.#editTriggerAction);
 			});
 		}
-		if (this.#itemData.mimetype === "application/widget" && this.#itemData.content_data !== "")
-		{
-			this.#editWidgetAction  = this.#playlistItem.querySelector('.edit-widget');
-			this.#editWidgetAction.addEventListener("click", async () =>
-			{
+		if (this.#itemData.mimetype === "application/widget" && this.#itemData.content_data !== "") {
+			this.#editWidgetAction = this.#playlistItem.querySelector('.edit-widget');
+			this.#editWidgetAction.addEventListener("click", async () => {
 				let widget = this.#widgetFactory.create();
 				if (this.#isLoaded(await widget.fetch(this.#itemData.item_id)))
 					widget.initDialog();
@@ -347,10 +316,8 @@ export class Item
 			this.#playlistItem.querySelector('.edit-widget').remove();
 
 		// Stryker disable all: an empty listener, the link opens the composer by itself
-		if (this.#editTemplateAction !== null)
-		{
-			this.#editTemplateAction.addEventListener("click", async () =>
-			{
+		if (this.#editTemplateAction !== null) {
+			this.#editTemplateAction.addEventListener("click", async () => {
 
 			});
 		}

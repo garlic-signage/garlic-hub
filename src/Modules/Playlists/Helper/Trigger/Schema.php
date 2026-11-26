@@ -37,6 +37,21 @@ class Schema
 		'repeat_years'   => 11,
 	];
 
+	public function __construct()
+	{
+		$this->triggers = [
+			'wallclocks' => $this->wallclockTrigger(...),
+			'accesskeys' => $this->accesskeyTrigger(...),
+			'touches'    => $this->touchTrigger(...),
+			'notifies'   => $this->notifyTrigger(...),
+		];
+
+		$this->actions = [
+			0 => $this->playItemAction(...),
+			1 => $this->endCurrentItemAction(...),
+		];
+	}
+
 	/**
 	 * @param array<mixed> $input the body of the request, other fields than the triggers (csrf_token, item_id) are dropped
 	 * @return array<string,list<array<string,int|string>>>|null null when a value is not valid
@@ -122,11 +137,34 @@ class Schema
 	 * @return array<string,int>|null
 	 */
 	private function parseTouch(array $entry): ?array
-	{
-		$itemId = $this->toInt($entry['touch_item_id'] ?? null, 1, PHP_INT_MAX);
+{
+	$data = is_array($entry['data'] ?? null) ? $entry['data'] : $entry;
 
-		return $itemId === null ? null : ['touch_item_id' => $itemId];
+	$action = $this->toInt($data['selected_action'] ?? null, 0, 1);
+	if ($action === null) {
+		return null;
 	}
+
+	if ($action === 0) {
+		$itemId = $this->toInt($data['touch_item_id'] ?? null, 1, PHP_INT_MAX);
+
+		return $itemId !== null ? [
+			'action' => 0,
+			'data'   => [
+				'touch_item_id'   => $itemId,
+				'selected_action' => 0,
+			],
+		] : null;
+	}
+
+	return [
+		'action' => 1,
+		'data'   => [
+			'selected_action' => 1,
+		],
+	];
+}
+
 
 	/**
 	 * @param array<mixed> $entry
@@ -157,4 +195,121 @@ class Schema
 
 		return is_int($value) && $value >= $min && $value <= $max ? $value : null;
 	}
+
+	
+	// --- TRIGGERS (array = enabled, null = disabled, false = invalid) ---
+
+	/** @param array<string,mixed> $entry */
+	private function touchTrigger(array $entry): array|false|null
+	{
+		if (!isset($entry['selected_action'])) {
+			return false;
+		}
+
+		$action = (int)$entry['selected_action'];
+		$itemId = (int)($entry['touch_item_id'] ?? 0);
+
+		// Action 0 (Play item / Show when click x) vaatii kohde-ID:n
+		if ($action === 0) {
+			return $itemId > 0 ? [
+				'action' => 0,
+				'data'   => [
+					'touch_item_id'   => $itemId,
+					'selected_action' => 0,
+				],
+			] : false;
+		}
+
+		// Action 1 (End current / next) ei käytä kohde-ID:tä
+		if ($action === 1) {
+			return [
+				'action' => 1,
+				'data'   => [
+					'selected_action' => 1,
+				],
+			];
+		}
+
+		return false;
+	}
+
+
+	/** @param array<string,mixed> $entry */
+	private function wallclockTrigger(array $entry): array|false|null
+	{
+		if (empty($entry['iso_date'])) {
+			return null;
+		}
+
+		return [
+			'action' => (int)($entry['selected_action'] ?? 0),
+			'data'   => $entry,
+		];
+	}
+
+	/** @param array<string,mixed> $entry */
+	private function accesskeyTrigger(array $entry): array|false|null
+	{
+		if (!isset($entry['accesskey']) || !is_string($entry['accesskey'])) {
+			return false;
+		}
+
+		return $entry['accesskey'] !== '' ? [
+			'action' => (int)($entry['selected_action'] ?? 0),
+			'data'   => ['accesskey' => $entry['accesskey']],
+		] : null;
+	}
+
+	/** @param array<string,mixed> $entry */
+	private function notifyTrigger(array $entry): array|false|null
+	{
+		if (!isset($entry['notify']) || !is_string($entry['notify'])) {
+			return false;
+		}
+
+		return $entry['notify'] !== '' ? [
+			'action' => (int)($entry['selected_action'] ?? 0),
+			'data'   => ['notify' => $entry['notify']],
+		] : null;
+	}
+
+
+		// --- ACTIONS ---
+
+/** @param array<string,mixed> $raw */
+	private function playItemAction(string $key, array $raw): bool
+	{
+		if ($key === 'touches') {
+			$itemId = (int)($raw['touch_item_id'] ?? 0);
+
+			// Action 0: kohde-ID:n täytyy olla > 0 ja kuulua saman soittolistan sallittuihin kohteisiin
+			if ($itemId <= 0 || !in_array($itemId, $this->allowedTouchIds, true)) {
+				return false;
+			}
+
+			$this->begin[$key][] = [
+				'selected_action' => 0,
+				'touch_item_id'   => $itemId,
+			];
+			return true;
+		}
+
+		//$this->begin[$key][] = $raw;
+		return false;
+	}
+
+	/** @param array<string,mixed> $raw */
+	private function endCurrentItemAction(string $key, array $raw): bool
+	{
+		if ($key === 'touches') {
+			$this->end[$key][] = [
+				'selected_action' => 1,
+			];
+			return true;
+		}
+
+		//$this->end[$key][] = $raw;
+		return false;
+	}
 }
+

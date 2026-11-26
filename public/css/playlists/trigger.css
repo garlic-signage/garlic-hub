@@ -1,40 +1,85 @@
-#trigger {padding:0;margin:0;width:20rem;}
-#trigger {display: flex; gap:0.5rem;flex-direction: column;}
-#trigger .naked-button{white-space: nowrap;}
+#trigger {
+    padding: 0;
+    margin: 0;
+    width: 20rem;
+}
+
+#trigger {
+    display: flex;
+    gap: 0.5rem;
+    flex-direction: column;
+}
+
+#trigger .naked-button {
+    white-space: nowrap;
+}
 
 
-	#trigger .trigger-form-container
-	{
-		display:flex;
-		flex-direction: row;
-		gap: 0.5rem;
-        padding: 0;
-        margin:  0;
-	}
-    #trigger .trigger-form
-    {
-        background-color:var(--gh-form-background);
-        padding: 0.25rem 0.5rem;
-    }
+#trigger .trigger-form-container {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    padding: 0;
+    margin: 0;
+}
+
+#trigger .trigger-form {
+    background-color: var(--gh-form-background);
+    padding: 0.25rem 0.5rem;
+}
 
 
-    #trigger .edit-point {display: flex; gap:0.5rem;}
-        #trigger .edit-weekday {width:8rem;}
-        #trigger .edit-weekday-prefix {width:7rem;}
-        #trigger .edit-datetime {width:13rem;}
+#trigger .edit-point {
+    display: flex;
+    gap: 0.5rem;
+}
+
+#trigger .edit-weekday {
+    width: 8rem;
+}
+
+#trigger .edit-weekday-prefix {
+    width: 7rem;
+}
+
+#trigger .edit-datetime {
+    width: 13rem;
+}
 
 
-    #trigger .edit-repeats{display:flex;gap:1rem;padding:0;margin:0;align-items: center}
-        #trigger .edit-repeats label{flex-direction: unset;}
+#trigger .edit-repeats {
+    display: flex;
+    gap: 1rem;
+    padding: 0;
+    margin: 0;
+    align-items: center
+}
 
-    #trigger .edit-repeat-periods div {display: flex; gap:0.5rem;}
-    #trigger .edit-repeat-periods label{width:4.4rem;}
+#trigger .edit-repeats label {
+    flex-direction: unset;
+}
 
-    #trigger .edit-accesskey
-	{
-		width:3em;
-	}
-	#trigger .edit-notify
-	{
-		width:18em;
-	}
+#trigger .edit-repeat-periods div {
+    display: flex;
+    gap: 0.5rem;
+}
+
+#trigger .edit-repeat-periods label {
+    width: 4.4rem;
+}
+
+#trigger .edit-accesskey {
+    width: 3em;
+}
+
+#trigger .edit-notify {
+    width: 18em;
+}
+
+.action-options {
+    visibility: hidden;
+}
+
+.show {
+    visibility: visible;
+}

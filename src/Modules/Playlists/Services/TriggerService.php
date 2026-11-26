@@ -56,38 +56,44 @@ class TriggerService extends AbstractBaseService
 		$item = $this->itemService->fetchItemById($itemId); // check rights on playlists, too
 
 		$item['begin_trigger'] = Serialization::unserializeSecure($item['begin_trigger']);
+		$item['end_trigger'] = Serialization::unserializeSecure($item['end_trigger']);
 
 		return ['item_data' => $item, 'touchable_media' => $this->findTouchableMedia($item['playlist_id'], $itemId)];
 	}
 
-	/**
-	 * Saving an unchanged trigger changes no rows, which is no error.
-	 *
-	 * @param array<string,mixed> $requestData
-	 * @throws AccessDeniedException
-	 * @throws CoreException
-	 * @throws Exception
-	 * @throws FrameworkException
-	 * @throws ModuleException
-	 * @throws NotFoundException
-	 * @throws UserException
-	 */
-	public function saveBeginTrigger(int $itemId, array $requestData): void
-	{
-		$item = $this->itemService->fetchItemById($itemId); // check rights on playlists, too
+        public function saveBeginTrigger(int $itemId, array $requestData): void
+        {
+                $this->saveTriggerField($itemId, 'begin_trigger', $requestData);
+        }
 
-		// an item can only be touched in the playlist it is in
-		// @infection-ignore-all the casts are for databases which give text, ours gives numbers
-		$touchableIds = array_map('intval', array_column($this->findTouchableMedia($item['playlist_id'], $itemId), 'item_id'));
-		foreach ($requestData['touches'] ?? [] as $touch)
-		{
-			if (!in_array((int) $touch['touch_item_id'], $touchableIds, true))
-				throw new TranslatableModuleException('playlists', 'invalid_trigger_data', ['item_id' => $itemId]);
-		}
+        public function saveEndTrigger(int $itemId, array $requestData): void
+        {
+                $this->saveTriggerField($itemId, 'end_trigger', $requestData);
+        }
 
-		$this->itemService->updateField($itemId, 'begin_trigger', @serialize($requestData));
-	}
+        /**
+         * @param array<string,list<array<string,int|string>>> $requestData
+         */
+        private function saveTriggerField(int $itemId, string $field, array $requestData): void
+        {
+            $item = $this->itemService->fetchItemById($itemId); // check rights on playlists, too
+			if ($field==='begin_trigger') {
+				// throw new \RuntimeException(json_encode($requestData));
+				// an item can only be touched in the playlist it is in
+				// @infection-ignore-all the casts are for databases which give text, ours gives numbers
+				$touchableIds = array_map('intval', array_column($this->findTouchableMedia($item['playlist_id'], $itemId), 'item_id'));
+				foreach ($requestData['touches'] ?? [] as $touch)
+				{
+					if (!in_array((int) $touch['data']['touch_item_id'], $touchableIds, true))
+						throw new TranslatableModuleException('playlists', 'invalid_trigger_data', ['item_id' => $itemId]);
+				};
+			}
+            $serialized = $requestData !== [] ? serialize($requestData) : '';
+            $this->itemService->updateField($itemId, $field, $serialized);
+        }
 
+
+	
 	/**
 	 * All media of the playlist except the item itself.
 	 *
