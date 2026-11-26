@@ -8,6 +8,8 @@ on:
   pull_request:
   push:
     branches: [main]
+  schedule:
+    - cron: '0 5 * * *' # daily, so a new advisory shows up without a push
   workflow_dispatch:
 
 permissions:
@@ -80,8 +82,10 @@ jobs:
         working-directory: tests/Js
         run: deno test
 
+  # only for the badge, which is made on main; a pull request gets nothing from it
   coverage:
     name: coverage
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -129,6 +133,8 @@ jobs:
 
       - name: Known vulnerabilities in the packages
         run: composer audit --locked --no-interaction
+        # a new advisory is no fault of a pull request: only a warning there, a failure on main and daily
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
 
       - name: Secrets in the code and the history
         run: |
