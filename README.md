@@ -1,5 +1,5 @@
 [![tests](https://github.com/garlic-signage/garlic-hub/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/garlic-signage/garlic-hub/actions/workflows/tests.yml)
-[![release](https://github.com/garlic-signage/garlic-hub/actions/workflows/release.yml/badge.svg)](https://github.com/garlic-signage/garlic-hub/actions/workflows/release.yml)
+[![release](https://img.shields.io/github/v/release/garlic-signage/garlic-hub)](https://github.com/garlic-signage/garlic-hub/releases/latest)
 [![garlic-hub coverage](https://raw.githubusercontent.com/garlic-signage/garlic-hub/badges/coverage.svg)](https://github.com/garlic-signage/garlic-hub/actions/workflows/tests.yml)
 [![garlic-hub mutation score](https://raw.githubusercontent.com/garlic-signage/garlic-hub/badges/mutation.svg)](https://github.com/garlic-signage/garlic-hub/actions/workflows/mutation.yml)
 [![phpstan level](https://github.com/garlic-signage/garlic-hub/blob/main/misc/phpstan-level.svg)](https://github.com/garlic-signage/garlic-hub/blob/main/misc/phpstan-level.svg)
